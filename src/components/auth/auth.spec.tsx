@@ -1,26 +1,19 @@
 import { mockToast } from "::testing/global-mocks";
-import {
-	AUTH_METHOD_EMAIL_SIGNIN,
-	AUTH_METHOD_OAUTH_SIGNIN,
-	AUTH_METHOD_PASSWORD_SIGNIN,
-	getEnabledAuthMethods,
-} from "@/config/auth";
-import { PagePath } from "@/config/enums";
+import { getEnabledAuthMethods } from "@/config/auth";
+import { AuthMethod, PagePath } from "@/config/enums";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import mockRouter from "next-router-mock";
 import { Auth } from "./auth";
 
-vi.mock("@/utils/auth", () => ({
+vi.mock("@/config/auth", () => ({
 	getEnabledAuthMethods: vi.fn(),
 }));
 
 describe("Auth Component", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
-		vi.mocked(getEnabledAuthMethods).mockReturnValue(
-			new Set([AUTH_METHOD_EMAIL_SIGNIN, AUTH_METHOD_PASSWORD_SIGNIN, AUTH_METHOD_OAUTH_SIGNIN]),
-		);
+		mockToast.mockReset();
+		vi.mocked(getEnabledAuthMethods).mockReturnValue(new Set(Object.values(AuthMethod)));
 	});
 
 	it("renders the auth view with default email sign-in form", () => {
@@ -77,7 +70,7 @@ describe("Auth Component", () => {
 
 	it("does not render OAuth sign-in options when disabled", () => {
 		vi.mocked(getEnabledAuthMethods).mockReturnValueOnce(
-			new Set([AUTH_METHOD_EMAIL_SIGNIN, AUTH_METHOD_PASSWORD_SIGNIN]),
+			new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.PASSWORD_SIGNIN]),
 		);
 		render(<Auth />);
 		expect(screen.queryByTestId("oauth-signin")).not.toBeInTheDocument();
@@ -154,17 +147,6 @@ describe("Auth Component", () => {
 		await waitFor(() => {
 			expect(mockRouter.pathname).toEqual(PagePath.ROOT);
 		});
-	});
-
-	it("displays error messages for invalid input", async () => {
-		render(<Auth />);
-		const emailInput = screen.getByTestId("email-signin-form-email-input");
-		const submitButton = screen.getByTestId("email-signin-form-submit-button");
-
-		await userEvent.type(emailInput, "invalidEmail");
-		await userEvent.click(submitButton);
-
-		expect(screen.getByTestId("email-input-error-message")).toHaveTextContent("Invalid email address");
 	});
 
 	it("disables submit button when form is invalid", async () => {

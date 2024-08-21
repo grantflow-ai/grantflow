@@ -10,6 +10,7 @@ import { FormButton } from "@/components/form-button";
 import { PagePath } from "@/config/enums";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
+import { toast } from "sonner";
 
 const formSchema = z
 	.object({
@@ -29,7 +30,11 @@ export function UpdatePasswordForm() {
 	});
 
 	const onSubmit: SubmitHandler<z.infer<typeof formSchema>> = async (values) => {
-		await updatePassword(values.password, values.passwordConfirm);
+		const error = await updatePassword(values.password, values.passwordConfirm);
+		if (error) {
+			toast.error(error, { duration: 3000 });
+			return;
+		}
 		router.push(PagePath.ROOT);
 	};
 
@@ -41,7 +46,9 @@ export function UpdatePasswordForm() {
 					control={form.control}
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel htmlFor="password">New Password</FormLabel>
+							<FormLabel htmlFor="password" data-testid="update-password-form-password-input-label">
+								New Password
+							</FormLabel>
 							<FormControl>
 								<Input
 									id="password"
@@ -66,7 +73,9 @@ export function UpdatePasswordForm() {
 					control={form.control}
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel htmlFor="passwordConfirm">Confirm New Password</FormLabel>
+							<FormLabel htmlFor="passwordConfirm" data-testid="update-password-form-password-confirm-input-label">
+								Confirm New Password
+							</FormLabel>
 							<FormControl>
 								<Input
 									id="passwordConfirm"

@@ -1,3 +1,5 @@
+"use server";
+
 import { PagePath } from "@/config/enums";
 import { ErrorType } from "@/constants";
 import { serverLogger as logger } from "@/utils/logging/server";

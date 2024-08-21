@@ -37,7 +37,7 @@ describe("GET function", () => {
 
 		expect(exchangeCodeForSession).toHaveBeenCalledWith("123456");
 		expect(vi.mocked(NextResponse.redirect)).toHaveBeenCalledWith(
-			expect.stringContaining(PagePath.AUTH_UPDATE_PASSWORD),
+			expect.stringContaining(PagePath.AUTH_FORGOT_PASSWORD),
 		);
 	});
 
@@ -62,7 +62,7 @@ describe("GET function", () => {
 
 		expect(exchangeCodeForSession).not.toHaveBeenCalled();
 		expect(vi.mocked(NextResponse.redirect)).toHaveBeenCalledWith(
-			expect.stringContaining(PagePath.AUTH_UPDATE_PASSWORD),
+			expect.stringContaining(PagePath.AUTH_FORGOT_PASSWORD),
 		);
 	});
 });

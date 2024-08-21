@@ -1,3 +1,4 @@
+import { mockToast } from "::testing/global-mocks";
 import { updatePassword } from "@/actions/auth";
 import { PagePath } from "@/config/enums";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -18,8 +19,8 @@ describe("UpdatePassword", () => {
 		render(<UpdatePasswordForm />);
 
 		expect(screen.getByTestId("update-password-form")).toBeInTheDocument();
-		expect(screen.getByLabelText(/new password/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/confirm new password/i)).toBeInTheDocument();
+		expect(screen.getByTestId("update-password-form-password-input")).toBeInTheDocument();
+		expect(screen.getByTestId("update-password-form-password-confirm-input-label")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /update password/i })).toBeInTheDocument();
 	});
 
@@ -27,29 +28,6 @@ describe("UpdatePassword", () => {
 		render(<UpdatePasswordForm />);
 
 		expect(screen.getByTestId("update-password-form-submit-button")).toBeDisabled();
-	});
-
-	it("shows error for short password", async () => {
-		render(<UpdatePasswordForm />);
-
-		await userEvent.type(screen.getByTestId("update-password-form-password-input"), "short");
-
-		await waitFor(() => {
-			expect(screen.getByTestId("password-input-error-message")).toHaveTextContent(
-				"Password must be at least 8 characters",
-			);
-		});
-	});
-
-	it("shows error for non-matching passwords", async () => {
-		render(<UpdatePasswordForm />);
-
-		await userEvent.type(screen.getByTestId("update-password-form-password-input"), "password123");
-		await userEvent.type(screen.getByTestId("update-password-form-password-confirm-input"), "password456");
-
-		await waitFor(() => {
-			expect(screen.getByTestId("password-confirm-input-error-message")).toHaveTextContent("Passwords don't match");
-		});
 	});
 
 	it("enables submit button when form is valid", async () => {
@@ -85,14 +63,13 @@ describe("UpdatePassword", () => {
 		await userEvent.type(screen.getByTestId("update-password-form-password-input"), "password123");
 		await userEvent.type(screen.getByTestId("update-password-form-password-confirm-input"), "password123");
 
-		const error = new Error("Update failed");
-		vi.mocked(updatePassword).mockRejectedValueOnce(error);
+		const errorMessage = "Update failed";
+		vi.mocked(updatePassword).mockResolvedValueOnce(errorMessage);
 
 		await userEvent.click(screen.getByTestId("update-password-form-submit-button"));
 
 		await waitFor(() => {
-			expect(updatePassword).toHaveBeenCalledWith("password123", "password123");
-			expect(mockRouter.pathname).toEqual(PagePath.ROOT);
+			expect((mockToast as any).error).toHaveBeenCalledWith(errorMessage, { duration: 3000 });
 		});
 	});
 

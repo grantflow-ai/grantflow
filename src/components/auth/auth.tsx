@@ -6,12 +6,8 @@ import { OauthSigninForm } from "@/components/auth/oauth-signin-form";
 import { PasswordSigninForm } from "@/components/auth/password-signin-form";
 import { SignupForm } from "@/components/auth/signup-form";
 import { Separator } from "@/components/separator";
-import {
-	AUTH_METHOD_EMAIL_SIGNIN,
-	AUTH_METHOD_OAUTH_SIGNIN,
-	AUTH_METHOD_PASSWORD_SIGNIN,
-	getEnabledAuthMethods,
-} from "@/config/auth";
+import { getEnabledAuthMethods } from "@/config/auth";
+import { AuthMethod } from "@/config/enums";
 import { Button } from "gen/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
 import { type FC, useState } from "react";
@@ -36,7 +32,7 @@ export function Auth() {
 	const enabledAuthMethods = getEnabledAuthMethods();
 
 	const [currentForm, setCurrentForm] = useState<AuthForm>(
-		enabledAuthMethods.has(AUTH_METHOD_EMAIL_SIGNIN) ? "email-signin" : "password-signin",
+		enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) ? "email-signin" : "password-signin",
 	);
 
 	const Component = formMap[currentForm];
@@ -50,7 +46,7 @@ export function Auth() {
 				</CardHeader>
 				<CardContent data-testid="card-content">
 					<Component />
-					{enabledAuthMethods.has(AUTH_METHOD_PASSWORD_SIGNIN) && currentForm !== "signup" && (
+					{enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN) && currentForm !== "signup" && (
 						<Button
 							className="text-sm font-light block"
 							data-testid="signup-button"
@@ -76,7 +72,7 @@ export function Auth() {
 							Forgot password?
 						</Button>
 					)}
-					{currentForm === "password-signin" && enabledAuthMethods.has(AUTH_METHOD_EMAIL_SIGNIN) && (
+					{currentForm === "password-signin" && enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) && (
 						<Button
 							className="text-sm font-light block"
 							data-testid="email-signin-button"
@@ -89,7 +85,7 @@ export function Auth() {
 							Sign in with email link
 						</Button>
 					)}
-					{["email-signin", "signup"].includes(currentForm) && enabledAuthMethods.has(AUTH_METHOD_PASSWORD_SIGNIN) && (
+					{["email-signin", "signup"].includes(currentForm) && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN) && (
 						<Button
 							className="text-sm font-light block"
 							data-testid="password-signin-button"
@@ -102,7 +98,7 @@ export function Auth() {
 							Sign in with password
 						</Button>
 					)}
-					{enabledAuthMethods.has(AUTH_METHOD_OAUTH_SIGNIN) && (
+					{enabledAuthMethods.has(AuthMethod.OAUTH_SIGNIN) && (
 						<div data-testid="oauth-signin">
 							<Separator text="Or sign in with" />
 							<OauthSigninForm />

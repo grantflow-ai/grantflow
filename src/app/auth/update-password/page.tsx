@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { UpdatePasswordForm } from "@/components/auth/update-password-form";
-import { AUTH_METHOD_PASSWORD_SIGNIN, getEnabledAuthMethods } from "@/config/auth";
-import { PagePath } from "@/config/enums";
+import { getEnabledAuthMethods } from "@/config/auth";
+import { AuthMethod, PagePath } from "@/config/enums";
 import { getServerClient } from "@/utils/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
 
@@ -15,7 +15,7 @@ export default async function UpdatePasswordPage() {
 
 	const enabledAuthMethods = getEnabledAuthMethods();
 
-	if (user || !enabledAuthMethods.has(AUTH_METHOD_PASSWORD_SIGNIN)) {
+	if (user || !enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN)) {
 		return redirect(PagePath.AUTH);
 	}
 

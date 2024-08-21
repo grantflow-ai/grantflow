@@ -7,5 +7,5 @@ import { getEnv } from "@/utils/env";
  * @returns - The normalized URL string.
  */
 export function urlWithHost(path: string | PagePath | ApiPath) {
-	return new URL(path, getEnv().NEXT_PUBLIC_SITE_URL).toString();
+	return new URL(path.replace(/^\/+/, ""), getEnv().NEXT_PUBLIC_SITE_URL).toString();
 }

@@ -1,10 +1,6 @@
-export const AUTH_METHOD_PASSWORD_SIGNIN = "PASSWORD_SIGNIN";
-export const AUTH_METHOD_EMAIL_SIGNIN = "EMAIL_SIGNIN";
-export const AUTH_METHOD_OAUTH_SIGNIN = "OAUTH_SIGNIN";
+import { AuthMethod } from "@/config/enums";
 
-const enabledAuthMethods = new Set<
-	typeof AUTH_METHOD_EMAIL_SIGNIN | typeof AUTH_METHOD_PASSWORD_SIGNIN | typeof AUTH_METHOD_OAUTH_SIGNIN
->([AUTH_METHOD_EMAIL_SIGNIN, AUTH_METHOD_OAUTH_SIGNIN, AUTH_METHOD_PASSWORD_SIGNIN]);
+const enabledAuthMethods = new Set<AuthMethod>(Object.values(AuthMethod));
 
 /**
  * Retrieves a set of the enabled signing methods.
