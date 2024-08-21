@@ -1,0 +1,19 @@
+{
+	"private": true,
+	"scripts": {
+		"start": "supabase start || true",
+		"stop": "supabase stop || true",
+		"status": "supabase status",
+		"restart": "pnpm run stop && pnpm run start",
+		"reset": "supabase db reset",
+		"link": "supabase link",
+		"generate:types": "supabase gen types typescript --local > ../gen/database-types/index.ts",
+		"generate:migration": "supabase db diff | supabase migration new",
+		"generate:seed": "supabase db dump --data-only --file seed.sql",
+		"push": "supabase db push",
+		"pull": "supabase db pull"
+	},
+	"devDependencies": {
+		"supabase": "^1.190.0"
+	}
+}

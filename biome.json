@@ -1,0 +1,120 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+	"formatter": {
+		"enabled": true,
+		"lineWidth": 120,
+		"ignore": [".next", ".turbo", "__tmp__", "_next", "node_modules", "target", "coverage"]
+	},
+	"linter": {
+		"enabled": true,
+		"ignore": [".next", ".turbo", "__tmp__", "_next", "node_modules", "target", "eslint.config.mjs", "coverage", "gen"],
+		"rules": {
+			"correctness": {
+				"all": true,
+				"useExhaustiveDependencies": {
+					"level": "error",
+					"options": {
+						"hooks": [
+							{
+								"name": "useToast",
+								"stableResult": true
+							},
+							{
+								"name": "useRouter",
+								"stableResult": true
+							}
+						]
+					}
+				}
+			},
+			"complexity": {
+				"all": true,
+				"noVoid": "off"
+			},
+			"style": {
+				"all": true,
+				"useNamingConvention": "off",
+				"useFilenamingConvention": {
+					"level": "error",
+					"options": {
+						"requireAscii": true,
+						"filenameCases": ["kebab-case"]
+					}
+				}
+			},
+			"suspicious": {
+				"all": true
+			},
+			"a11y": {
+				"all": true
+			},
+			"security": {
+				"all": true
+			},
+			"performance": {
+				"all": true
+			}
+		}
+	},
+	"json": {
+		"formatter": {
+			"enabled": true
+		}
+	},
+	"css": {
+		"linter": {
+			"enabled": true
+		}
+	},
+	"overrides": [
+		{
+			"include": ["**/*.spec.ts", "**/*.spec.tsx", "testing/*.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useAsConstAssertion": "off"
+					},
+					"suspicious": {
+						"noEmptyBlockStatements": "off",
+						"noExplicitAny": "off",
+						"useAwait": "off"
+					}
+				}
+			},
+			"javascript": {
+				"globals": [
+					"suite",
+					"test",
+					"describe",
+					"it",
+					"expectTypeOf",
+					"assertType",
+					"expect",
+					"assert",
+					"vitest",
+					"vi",
+					"beforeAll",
+					"afterAll",
+					"beforeEach",
+					"afterEach",
+					"onTestFailed",
+					"onTestFinished"
+				]
+			}
+		},
+		{
+			"include": ["testing/*.ts", "src/**/page.tsx", "src/**/layout.tsx", "*.config.mjs", "*.config.mts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noDefaultExport": "off",
+						"noNamespaceImport": "off"
+					},
+					"correctness": {
+						"noNodejsModules": "off"
+					}
+				}
+			}
+		}
+	]
+}
