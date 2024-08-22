@@ -1,11 +1,12 @@
 "use server";
 
-import { isEmail } from "validator";
+import { isEmail, isMobilePhone } from "validator";
 
 import { ApiPath, PagePath } from "@/config/enums";
 import { ErrorType } from "@/constants";
 import { getServerClient } from "@/utils/supabase/server";
 import { urlWithHost } from "@/utils/url";
+import type { AuthOtpResponse } from "@supabase/supabase-js";
 
 /**
  * Sign out the current user.
@@ -21,24 +22,84 @@ export async function signOut() {
 /**
  * Sign in with email OTP.
  * @param email - The user's email.
- * @returns The path to redirect to.
+ * @returns An error message if there's an error, otherwise undefined.
  */
 export async function signInWithEmailOTP(email: string) {
-	const callbackURL = urlWithHost(ApiPath.CALLBACK_OPENID);
-
 	if (!isEmail(email)) {
 		return ErrorType.INVALID_EMAIL;
 	}
 
 	const supabase = getServerClient();
-	const options = {
-		emailRedirectTo: callbackURL,
-		shouldCreateUser: false,
-	};
-
 	const { error } = await supabase.auth.signInWithOtp({
 		email,
-		options,
+		options: {
+			emailRedirectTo: urlWithHost(ApiPath.CALLBACK_OPENID),
+		},
+	});
+
+	return error?.message;
+}
+
+/**
+ * Verify email OTP.
+ * @param email - The user's email.
+ * @param otp - The one-time password.
+ * @returns An error message if there's an error, otherwise undefined.
+ */
+export async function verifyEmailOTP(email: string, otp: string) {
+	if (!isEmail(email)) {
+		return ErrorType.INVALID_EMAIL;
+	}
+
+	const supabase = getServerClient();
+	const { error } = await supabase.auth.verifyOtp({
+		email,
+		token: otp,
+		type: "email",
+	});
+
+	return error?.message;
+}
+
+/**
+ * Sign in with phone OTP.
+ * @param phoneNumber - The user's phone number.
+ * @returns An error message if there's an error, otherwise undefined.
+ */
+export async function signInWithPhoneOTP(phoneNumber: string): Promise<
+	Partial<Pick<AuthOtpResponse, "data">> & {
+		error?: string;
+	}
+> {
+	if (!isMobilePhone(phoneNumber)) {
+		return { error: ErrorType.INVALID_PHONE };
+	}
+
+	const supabase = getServerClient();
+	const { error, data } = await supabase.auth.signInWithOtp({
+		phone: phoneNumber,
+		options: { channel: "sms" },
+	});
+
+	return { data, error: error?.message };
+}
+
+/**
+ * Verify phone OTP.
+ * @param phoneNumber - The user's phone number.
+ * @param otp - The one-time password.
+ * @returns An error message if there's an error, otherwise undefined.
+ */
+export async function verifyPhoneOTP(phoneNumber: string, otp: string) {
+	if (!isMobilePhone(phoneNumber)) {
+		return ErrorType.INVALID_PHONE;
+	}
+
+	const supabase = getServerClient();
+	const { error } = await supabase.auth.verifyOtp({
+		phone: phoneNumber,
+		token: otp,
+		type: "sms",
 	});
 
 	return error?.message;

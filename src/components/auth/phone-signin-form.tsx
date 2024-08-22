@@ -5,28 +5,29 @@ import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { signInWithEmailOTP, verifyEmailOTP } from "@/actions/auth";
+import { signInWithPhoneOTP, verifyPhoneOTP } from "@/actions/auth";
 import { FormButton } from "@/components/form-button";
 import { InfoMessage } from "@/constants";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
 import { toast } from "sonner";
+import { isMobilePhone } from "validator";
 
-const emailSchema = z.object({
-	email: z.string().email({ message: "Invalid email address" }),
+const phoneSchema = z.object({
+	phoneNumber: z.string().refine(isMobilePhone),
 });
 
 const otpSchema = z.object({
 	otp: z.string().length(6, { message: "OTP must be 6 digits" }),
 });
 
-export function EmailSigninForm() {
+export function PhoneSigninForm() {
 	const [isOtpSent, setIsOtpSent] = useState(false);
 
-	const emailForm = useForm<z.infer<typeof emailSchema>>({
-		resolver: zodResolver(emailSchema),
+	const phoneForm = useForm<z.infer<typeof phoneSchema>>({
+		resolver: zodResolver(phoneSchema),
 		defaultValues: {
-			email: "",
+			phoneNumber: "",
 		},
 	});
 
@@ -37,29 +38,28 @@ export function EmailSigninForm() {
 		},
 	});
 
-	const onEmailSubmit: SubmitHandler<z.infer<typeof emailSchema>> = async (values) => {
-		const error = await signInWithEmailOTP(values.email);
+	const onPhoneSubmit: SubmitHandler<z.infer<typeof phoneSchema>> = async (values) => {
+		const { error, data } = await signInWithPhoneOTP(values.phoneNumber);
 		if (error) {
 			toast.error(error, { duration: 3000 });
 			return;
 		}
 		setIsOtpSent(true);
-		toast.info(InfoMessage.EMAIL_OTP_SENT, { duration: 3000 });
+		toast.info(InfoMessage.PHONE_OTP_SENT, { duration: 3000 });
 	};
 
 	const onOtpSubmit: SubmitHandler<z.infer<typeof otpSchema>> = async (values) => {
-		const { email } = emailForm.getValues();
-		const error = await verifyEmailOTP(email, values.otp);
+		const phoneNumber = phoneForm.getValues().phoneNumber;
+		const error = await verifyPhoneOTP(phoneNumber, values.otp);
 		if (error) {
 			toast.error(error, { duration: 3000 });
 			return;
 		}
-		toast.success(InfoMessage.EMAIL_OTP_VERIFIED, { duration: 3000 });
-		// Handle successful sign-in (e.g., redirect to dashboard)
+		toast.success(InfoMessage.PHONE_OTP_VERIFIED, { duration: 3000 });
 	};
 
 	return (
-		<div data-testid="email-signin-form">
+		<div data-testid="phone-signin-form">
 			{isOtpSent ? (
 				<Form {...otpForm}>
 					<form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="mb-4">
@@ -79,7 +79,7 @@ export function EmailSigninForm() {
 											maxLength={6}
 											autoComplete="one-time-code"
 											className="form-input"
-											data-testid="email-signin-form-otp-input"
+											data-testid="phone-signin-form-otp-input"
 											{...field}
 										/>
 									</FormControl>
@@ -95,37 +95,37 @@ export function EmailSigninForm() {
 							className="mt-4 mb-2 w-full"
 							isLoading={otpForm.formState.isSubmitting}
 							disabled={!otpForm.formState.isValid}
-							data-testid="email-signin-form-verify-button"
+							data-testid="phone-signin-form-verify-button"
 						>
 							Verify OTP
 						</FormButton>
 					</form>
 				</Form>
 			) : (
-				<Form {...emailForm}>
-					<form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="mb-4">
+				<Form {...phoneForm}>
+					<form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="mb-4">
 						<FormField
-							name="email"
-							control={emailForm.control}
+							name="phoneNumber"
+							control={phoneForm.control}
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel htmlFor="email">Email</FormLabel>
+									<FormLabel htmlFor="phoneNumber">Phone Number</FormLabel>
 									<FormControl>
 										<Input
-											id="email"
-											placeholder="name@example.com"
-											type="email"
+											id="phoneNumber"
+											placeholder="+1234567890"
+											type="tel"
 											autoCapitalize="none"
-											autoComplete="email"
+											autoComplete="tel"
 											autoCorrect="off"
 											className="form-input"
-											data-testid="email-signin-form-email-input"
+											data-testid="phone-signin-form-phone-input"
 											{...field}
 										/>
 									</FormControl>
-									{emailForm.formState.errors.email?.message && (
-										<FormMessage data-testid="email-input-error-message" className="text-destructive">
-											{emailForm.formState.errors.email.message}
+									{phoneForm.formState.errors.phoneNumber?.message && (
+										<FormMessage data-testid="phone-input-error-message" className="text-destructive">
+											{phoneForm.formState.errors.phoneNumber.message}
 										</FormMessage>
 									)}
 								</FormItem>
@@ -133,9 +133,9 @@ export function EmailSigninForm() {
 						/>
 						<FormButton
 							className="mt-4 mb-2 w-full"
-							isLoading={emailForm.formState.isSubmitting}
-							disabled={!emailForm.formState.isValid}
-							data-testid="email-signin-form-submit-button"
+							isLoading={phoneForm.formState.isSubmitting}
+							disabled={!phoneForm.formState.isValid}
+							data-testid="phone-signin-form-submit-button"
 						>
 							Send OTP
 						</FormButton>

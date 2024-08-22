@@ -16,6 +16,11 @@ const EmailSigninForm = lazy(async () => {
 	return { default: EmailSigninForm };
 });
 
+const PhoneSigninForm = lazy(async () => {
+	const { PhoneSigninForm } = await import("@/components/auth/phone-signin-form");
+	return { default: PhoneSigninForm };
+});
+
 const SignupForm = lazy(async () => {
 	const { SignupForm } = await import("@/components/auth/signup-form");
 	return { default: SignupForm };
@@ -31,7 +36,7 @@ const OauthSigninForm = lazy(async () => {
 	return { default: OauthSigninForm };
 });
 
-type AuthForm = "passwordSignin" | "emailSignin" | "signup" | "forgotPassword";
+type AuthForm = "passwordSignin" | "emailSignin" | "phoneSignin" | "signup" | "forgotPassword";
 
 const LinkButton: FC<{
 	formName: AuthForm;
@@ -54,7 +59,7 @@ const LinkButton: FC<{
 		}}
 		size="sm"
 		variant="link"
-		aria-formName={`Switch to ${text}`}
+		aria-label={`Switch to ${text}`}
 	>
 		{text}
 	</Button>
@@ -66,12 +71,18 @@ export function Auth({
 	enabledAuthMethods: Set<AuthMethod>;
 }) {
 	const [currentForm, setCurrentForm] = useState<AuthForm>(
-		enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) ? "emailSignin" : "passwordSignin",
+		enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN)
+			? "emailSignin"
+			: // eslint-disable-next-line unicorn/no-nested-ternary
+				enabledAuthMethods.has(AuthMethod.PHONE_SIGNIN)
+				? "phoneSignin"
+				: "passwordSignin",
 	);
 
 	const formMap = useMemo(
 		() => ({
 			emailSignin: EmailSigninForm,
+			phoneSignin: PhoneSigninForm,
 			forgotPassword: ForgotPasswordForm,
 			passwordSignin: PasswordSigninForm,
 			signup: SignupForm,
@@ -83,6 +94,7 @@ export function Auth({
 		() => ({
 			passwordSignin: "Sign in",
 			emailSignin: "Sign in",
+			phoneSignin: "Sign in",
 			signup: "Sign up",
 			forgotPassword: "Forgot password",
 		}),
@@ -92,9 +104,12 @@ export function Auth({
 	const Component = formMap[currentForm];
 	const title = titleMap[currentForm];
 
-	const showSignupLink = currentForm !== "signup" && enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN);
+	const showSignupLink =
+		currentForm !== "signup" &&
+		(enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) || enabledAuthMethods.has(AuthMethod.PHONE_SIGNIN));
 	const showForgotPasswordLink = currentForm === "passwordSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
-	const showEmailSigninLink = currentForm !== "emailSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
+	const showEmailSigninLink = currentForm !== "emailSignin" && enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN);
+	const showPhoneSigninLink = currentForm !== "phoneSignin" && enabledAuthMethods.has(AuthMethod.PHONE_SIGNIN);
 	const showPasswordSigninLink = currentForm !== "passwordSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
 	const showOauthSignin = enabledAuthMethods.has(AuthMethod.OAUTH_SIGNIN);
 
@@ -115,6 +130,9 @@ export function Auth({
 						)}
 						{showEmailSigninLink && (
 							<LinkButton formName="emailSignin" text="Sign in with email" onClick={setCurrentForm} />
+						)}
+						{showPhoneSigninLink && (
+							<LinkButton formName="phoneSignin" text="Sign in with phone" onClick={setCurrentForm} />
 						)}
 						{showPasswordSigninLink && (
 							<LinkButton formName="passwordSignin" text="Sign in with password" onClick={setCurrentForm} />

@@ -1,5 +1,9 @@
+// @vitest-environment jsdom
+
 import { type NextRequest, NextResponse } from "next/server";
 
+import { mockEnv } from "::testing/global-mocks";
+import { getEnv } from "@/utils/env";
 import { beforeEach } from "vitest";
 import { GET } from "./route";
 
@@ -8,6 +12,12 @@ vi.mock("next/server", () => ({
 		redirect: vi.fn(),
 	},
 }));
+
+vi.mock("@/utils/env", () => {
+	return {
+		getEnv: vi.fn().mockReturnValue({ NEXT_PUBLIC_DEBUG: true }),
+	};
+});
 
 const mockExchangeCodeForSession = vi.fn();
 vi.mock("@/utils/supabase/server", () => ({
@@ -19,6 +29,8 @@ vi.mock("@/utils/supabase/server", () => ({
 }));
 
 describe("GET function", () => {
+	vi.mocked(getEnv).mockReturnValue(mockEnv);
+
 	beforeEach(() => {
 		mockExchangeCodeForSession.mockReset();
 	});
