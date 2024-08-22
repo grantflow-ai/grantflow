@@ -1,7 +1,9 @@
 import { Auth } from "@/components/auth/auth";
+import { getEnabledAuthMethods } from "@/config/auth";
 import { PagePath } from "@/config/enums";
 import { getServerClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { useMemo } from "react";
 
 export default async function AuthPage() {
 	const supabase = getServerClient();
@@ -13,5 +15,7 @@ export default async function AuthPage() {
 		return redirect(PagePath.ROOT);
 	}
 
-	return <Auth />;
+	const enabledAuthMethods = useMemo(getEnabledAuthMethods, []);
+
+	return <Auth enabledAuthMethods={enabledAuthMethods} />;
 }

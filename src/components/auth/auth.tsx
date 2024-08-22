@@ -1,107 +1,131 @@
 "use client";
 
-import { EmailSigninForm } from "@/components/auth/email-signin-form";
-import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
-import { OauthSigninForm } from "@/components/auth/oauth-signin-form";
-import { PasswordSigninForm } from "@/components/auth/password-signin-form";
-import { SignupForm } from "@/components/auth/signup-form";
 import { Separator } from "@/components/separator";
-import { getEnabledAuthMethods } from "@/config/auth";
 import { AuthMethod } from "@/config/enums";
 import { Button } from "gen/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
-import { type FC, useState } from "react";
+import { type Dispatch, type FC, type SetStateAction, Suspense, lazy, useMemo, useState } from "react";
 
-type AuthForm = "password-signin" | "email-signin" | "signup" | "forgot-password";
+const PasswordSigninForm = lazy(async () => {
+	const { PasswordSigninForm } = await import("@/components/auth/password-signin-form");
+	return { default: PasswordSigninForm };
+});
 
-const formMap: Record<AuthForm, FC> = {
-	"password-signin": PasswordSigninForm,
-	"email-signin": EmailSigninForm,
-	signup: SignupForm,
-	"forgot-password": ForgotPasswordForm,
-};
+const EmailSigninForm = lazy(async () => {
+	const { EmailSigninForm } = await import("@/components/auth/email-signin-form");
+	return { default: EmailSigninForm };
+});
 
-const titleMap: Record<AuthForm, string> = {
-	"password-signin": "Sign in",
-	"email-signin": "Sign in",
-	signup: "Sign up",
-	"forgot-password": "Forgot password",
-};
+const SignupForm = lazy(async () => {
+	const { SignupForm } = await import("@/components/auth/signup-form");
+	return { default: SignupForm };
+});
 
-export function Auth() {
-	const enabledAuthMethods = getEnabledAuthMethods();
+const ForgotPasswordForm = lazy(async () => {
+	const { ForgotPasswordForm } = await import("@/components/auth/forgot-password-form");
+	return { default: ForgotPasswordForm };
+});
 
+const OauthSigninForm = lazy(async () => {
+	const { OauthSigninForm } = await import("@/components/auth/oauth-signin-form");
+	return { default: OauthSigninForm };
+});
+
+type AuthForm = "passwordSignin" | "emailSignin" | "signup" | "forgotPassword";
+
+const LinkButton: FC<{
+	formName: AuthForm;
+	text: string;
+	onClick: Dispatch<SetStateAction<AuthForm>>;
+}> = ({
+	formName,
+	text,
+	onClick,
+}: {
+	formName: AuthForm;
+	text: string;
+	onClick: Dispatch<SetStateAction<AuthForm>>;
+}) => (
+	<Button
+		className="text-sm font-light block"
+		data-testid={`${formName}-button`}
+		onClick={() => {
+			onClick(formName);
+		}}
+		size="sm"
+		variant="link"
+		aria-formName={`Switch to ${text}`}
+	>
+		{text}
+	</Button>
+);
+
+export function Auth({
+	enabledAuthMethods,
+}: {
+	enabledAuthMethods: Set<AuthMethod>;
+}) {
 	const [currentForm, setCurrentForm] = useState<AuthForm>(
-		enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) ? "email-signin" : "password-signin",
+		enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) ? "emailSignin" : "passwordSignin",
+	);
+
+	const formMap = useMemo(
+		() => ({
+			emailSignin: EmailSigninForm,
+			forgotPassword: ForgotPasswordForm,
+			passwordSignin: PasswordSigninForm,
+			signup: SignupForm,
+		}),
+		[],
+	);
+
+	const titleMap = useMemo(
+		() => ({
+			passwordSignin: "Sign in",
+			emailSignin: "Sign in",
+			signup: "Sign up",
+			forgotPassword: "Forgot password",
+		}),
+		[],
 	);
 
 	const Component = formMap[currentForm];
 	const title = titleMap[currentForm];
 
+	const showSignupLink = currentForm !== "signup" && enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN);
+	const showForgotPasswordLink = currentForm === "passwordSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
+	const showEmailSigninLink = currentForm !== "emailSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
+	const showPasswordSigninLink = currentForm !== "passwordSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
+	const showOauthSignin = enabledAuthMethods.has(AuthMethod.OAUTH_SIGNIN);
+
 	return (
-		<div className="flex justify-center" data-testid="auth-view">
+		<div className="flex justify-center" data-testid="auth-view" role="region">
 			<Card className="w-96" data-testid="card-container">
 				<CardHeader className="pb-0" data-testid="card-header">
 					<CardTitle data-testid="card-title">{title}</CardTitle>
 				</CardHeader>
 				<CardContent data-testid="card-content">
-					<Component />
-					{enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN) && currentForm !== "signup" && (
-						<Button
-							className="text-sm font-light block"
-							data-testid="signup-button"
-							onClick={() => {
-								setCurrentForm("signup");
-							}}
-							size="sm"
-							variant="link"
-						>
-							Don't have an account? Sign up
-						</Button>
-					)}
-					{currentForm === "password-signin" && (
-						<Button
-							className="text-sm font-light block"
-							data-testid="forgot-password-button"
-							onClick={() => {
-								setCurrentForm("forgot-password");
-							}}
-							size="sm"
-							variant="link"
-						>
-							Forgot password?
-						</Button>
-					)}
-					{currentForm === "password-signin" && enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) && (
-						<Button
-							className="text-sm font-light block"
-							data-testid="email-signin-button"
-							onClick={() => {
-								setCurrentForm("email-signin");
-							}}
-							size="sm"
-							variant="link"
-						>
-							Sign in with email link
-						</Button>
-					)}
-					{["email-signin", "signup"].includes(currentForm) && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN) && (
-						<Button
-							className="text-sm font-light block"
-							data-testid="password-signin-button"
-							onClick={() => {
-								setCurrentForm("password-signin");
-							}}
-							size="sm"
-							variant="link"
-						>
-							Sign in with password
-						</Button>
-					)}
-					{enabledAuthMethods.has(AuthMethod.OAUTH_SIGNIN) && (
+					<Suspense fallback={<div aria-live="polite">Loading form...</div>}>
+						<Component />
+					</Suspense>
+					<nav>
+						{showSignupLink && <LinkButton formName="signup" text="Sign up" onClick={setCurrentForm} />}
+						{showForgotPasswordLink && (
+							<LinkButton formName="forgotPassword" text="Forgot password?" onClick={setCurrentForm} />
+						)}
+						{showEmailSigninLink && (
+							<LinkButton formName="emailSignin" text="Sign in with email" onClick={setCurrentForm} />
+						)}
+						{showPasswordSigninLink && (
+							<LinkButton formName="passwordSignin" text="Sign in with password" onClick={setCurrentForm} />
+						)}
+					</nav>
+					{showOauthSignin && (
 						<div data-testid="oauth-signin">
 							<Separator text="Or sign in with" />
-							<OauthSigninForm />
+							<Suspense fallback={<div aria-live="polite">Loading OAuth options...</div>}>
+								<OauthSigninForm />
+							</Suspense>
 						</div>
 					)}
 				</CardContent>

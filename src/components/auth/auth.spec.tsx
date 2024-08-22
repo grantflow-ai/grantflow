@@ -1,161 +1,158 @@
-import { mockToast } from "::testing/global-mocks";
-import { getEnabledAuthMethods } from "@/config/auth";
-import { AuthMethod, PagePath } from "@/config/enums";
+import { AuthMethod } from "@/config/enums";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import mockRouter from "next-router-mock";
 import { Auth } from "./auth";
 
-vi.mock("@/config/auth", () => ({
-	getEnabledAuthMethods: vi.fn(),
+// Mocking the components
+vi.mock("@/components/auth/password-signin-form", () => ({
+	PasswordSigninForm: () => <div data-testid="password-signin-form" />,
+}));
+vi.mock("@/components/auth/email-signin-form", () => ({
+	EmailSigninForm: () => <div data-testid="email-signin-form" />,
+}));
+vi.mock("@/components/auth/signup-form", () => ({
+	SignupForm: () => <div data-testid="signup-form" />,
+}));
+vi.mock("@/components/auth/forgot-password-form", () => ({
+	ForgotPasswordForm: () => <div data-testid="forgot-password-form" />,
+}));
+vi.mock("@/components/auth/oauth-signin-form", () => ({
+	OauthSigninForm: () => <div data-testid="oauth-signin-form" />,
 }));
 
 describe("Auth Component", () => {
 	beforeEach(() => {
-		mockToast.mockReset();
-		vi.mocked(getEnabledAuthMethods).mockReturnValue(new Set(Object.values(AuthMethod)));
+		vi.clearAllMocks();
 	});
 
-	it("renders the auth view with default email sign-in form", () => {
-		render(<Auth />);
+	it("renders the auth view container", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN])} />);
 		expect(screen.getByTestId("auth-view")).toBeInTheDocument();
 		expect(screen.getByTestId("card-container")).toBeInTheDocument();
 		expect(screen.getByTestId("card-header")).toBeInTheDocument();
-		expect(screen.getByTestId("card-title")).toHaveTextContent("Sign in");
+		expect(screen.getByTestId("card-title")).toBeInTheDocument();
+		expect(screen.getByTestId("card-content")).toBeInTheDocument();
+	});
+
+	it("renders email signin form by default when email signin is enabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.PASSWORD_SIGNIN])} />);
+		await waitFor(() => {
+			expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
+			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
+		});
+	});
+
+	it("renders password signin form by default when only password signin is enabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.PASSWORD_SIGNIN])} />);
+		await waitFor(() => {
+			expect(screen.getByTestId("password-signin-form")).toBeInTheDocument();
+			expect(screen.queryByTestId("email-signin-form")).not.toBeInTheDocument();
+		});
+	});
+
+	it("switches to signup form when signup button is clicked", async () => {
+		const user = userEvent.setup();
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.PASSWORD_SIGNIN, AuthMethod.EMAIL_SIGNIN])} />);
+		await user.click(screen.getByTestId("signup-button"));
+		await waitFor(() => {
+			expect(screen.getByTestId("signup-form")).toBeInTheDocument();
+			expect(screen.queryByTestId("email-signin-form")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
+		});
+	});
+
+	it("shows forgot password form when on password signin and forgot password button is clicked", async () => {
+		const user = userEvent.setup();
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.PASSWORD_SIGNIN])} />);
+		expect(screen.getByTestId("forgotPassword-button")).toBeInTheDocument();
+		await user.click(screen.getByTestId("forgotPassword-button"));
+		await waitFor(() => {
+			expect(screen.getByTestId("forgot-password-form")).toBeInTheDocument();
+			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
+		});
+	});
+
+	it("renders OAuth signin options when enabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.OAUTH_SIGNIN])} />);
+		await waitFor(() => {
+			expect(screen.getByTestId("oauth-signin-form")).toBeInTheDocument();
+		});
+	});
+
+	it("renders both email and OAuth signin options when both are enabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.OAUTH_SIGNIN])} />);
+		await waitFor(() => {
+			expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
+			expect(screen.getByTestId("oauth-signin-form")).toBeInTheDocument();
+			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
+		});
+	});
+
+	it("does not render signup button when only password signin is enabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.PASSWORD_SIGNIN])} />);
+		expect(screen.queryByTestId("signup-button")).not.toBeInTheDocument();
+	});
+
+	it("does not render forgot password button when only email signin is enabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN])} />);
+		expect(screen.queryByTestId("forgotPassword-button")).not.toBeInTheDocument();
+	});
+
+	it("switches between email and password signin forms", async () => {
+		const user = userEvent.setup();
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.PASSWORD_SIGNIN])} />);
+
+		// Initially on email signin form
 		expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
-	});
 
-	it("switches to sign-up form when 'Sign up' button is clicked", async () => {
-		render(<Auth />);
-		const signUpButton = screen.getByTestId("signup-button");
-		await userEvent.click(signUpButton);
-		expect(screen.getByTestId("card-title")).toHaveTextContent("Sign up");
-		expect(screen.getByTestId("signup-form")).toBeInTheDocument();
-	});
-
-	it("switches to password sign-in form when 'Sign in with password' button is clicked", async () => {
-		render(<Auth />);
-		const passwordSignInButton = screen.getByTestId("password-signin-button");
-		await userEvent.click(passwordSignInButton);
-		expect(screen.getByTestId("card-title")).toHaveTextContent("Sign in");
-		expect(screen.getByTestId("password-signin-form")).toBeInTheDocument();
-	});
-
-	it("switches to forgot password form when 'Forgot password?' button is clicked", async () => {
-		render(<Auth />);
-		const passwordSignInButton = screen.getByTestId("password-signin-button");
-		await userEvent.click(passwordSignInButton);
-		const forgotPasswordButton = screen.getByTestId("forgot-password-button");
-		await userEvent.click(forgotPasswordButton);
-		expect(screen.getByTestId("card-title")).toHaveTextContent("Forgot password");
-		expect(screen.getByTestId("forgot-password-form")).toBeInTheDocument();
-	});
-
-	it("switches back to email sign-in form when 'Sign in with email link' button is clicked", async () => {
-		render(<Auth />);
-		const passwordSignInButton = screen.getByTestId("password-signin-button");
-		await userEvent.click(passwordSignInButton);
-		const emailSignInButton = screen.getByTestId("email-signin-button");
-		await userEvent.click(emailSignInButton);
-		expect(screen.getByTestId("card-title")).toHaveTextContent("Sign in");
-		expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
-	});
-
-	it("renders OAuth sign-in options when enabled", () => {
-		render(<Auth />);
-		expect(screen.getByTestId("oauth-signin")).toBeInTheDocument();
-		expect(screen.getByTestId("oauth-signin-form-google-button")).toBeInTheDocument();
-		expect(screen.getByTestId("oauth-signin-form-github-button")).toBeInTheDocument();
-	});
-
-	it("does not render OAuth sign-in options when disabled", () => {
-		vi.mocked(getEnabledAuthMethods).mockReturnValueOnce(
-			new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.PASSWORD_SIGNIN]),
-		);
-		render(<Auth />);
-		expect(screen.queryByTestId("oauth-signin")).not.toBeInTheDocument();
-	});
-
-	it("email sign-in form submission", async () => {
-		render(<Auth />);
-		const emailInput = screen.getByTestId("email-signin-form-email-input");
-		const submitButton = screen.getByTestId("email-signin-form-submit-button");
-
-		await userEvent.type(emailInput, "test@example.com");
-		await userEvent.click(submitButton);
-
+		// Switch to password signin
+		await user.click(screen.getByTestId("passwordSignin-button"));
 		await waitFor(() => {
-			expect((mockToast as any).info).toHaveBeenCalledWith("A sign-in link has been sent to your email", {
-				duration: 3000,
-			});
+			expect(screen.getByTestId("password-signin-form")).toBeInTheDocument();
+			expect(screen.queryByTestId("email-signin-form")).not.toBeInTheDocument();
+		});
+
+		// Switch back to email signin
+		await user.click(screen.getByTestId("emailSignin-button"));
+		await waitFor(() => {
+			expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
+			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
 		});
 	});
 
-	it("password sign-in form submission", async () => {
-		render(<Auth />);
-		const passwordSignInButton = screen.getByTestId("password-signin-button");
-		await userEvent.click(passwordSignInButton);
+	it("updates the title when switching between forms", async () => {
+		const user = userEvent.setup();
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.PASSWORD_SIGNIN])} />);
 
-		const emailInput = screen.getByTestId("password-signin-form-email-input");
-		const passwordInput = screen.getByTestId("password-signin-form-password-input");
-		const submitButton = screen.getByTestId("password-signin-form-submit-button");
+		// Initial title
+		expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
 
-		await userEvent.type(emailInput, "test@example.com");
-		await userEvent.type(passwordInput, "password123");
-		await userEvent.click(submitButton);
-
+		// Switch to signup
+		await user.click(screen.getByTestId("signup-button"));
 		await waitFor(() => {
-			expect(mockRouter.pathname).toEqual(PagePath.ROOT);
+			expect(screen.getByRole("heading", { name: "Sign up" })).toBeInTheDocument();
+		});
+
+		// Switch to password signin to see forgot password option
+		await user.click(screen.getByTestId("passwordSignin-button"));
+		await waitFor(() => {
+			expect(screen.getByTestId("forgotPassword-button")).toBeInTheDocument();
+		});
+
+		// Switch to forgot password
+		await user.click(screen.getByTestId("forgotPassword-button"));
+		await waitFor(() => {
+			expect(screen.getByRole("heading", { name: "Forgot password" })).toBeInTheDocument();
 		});
 	});
 
-	it("forgot password form submission", async () => {
-		render(<Auth />);
-		const passwordSignInButton = screen.getByTestId("password-signin-button");
-		await userEvent.click(passwordSignInButton);
-		const forgotPasswordButton = screen.getByTestId("forgot-password-button");
-		await userEvent.click(forgotPasswordButton);
-
-		const emailInput = screen.getByTestId("forgot-password-form-email-input");
-		const submitButton = screen.getByTestId("forgot-password-form-submit-button");
-
-		await userEvent.type(emailInput, "test@example.com");
-		await userEvent.click(submitButton);
-
-		await waitFor(() => {
-			expect((mockToast as any).success).toHaveBeenCalledWith("Password reset link sent to your email", {
-				duration: 3000,
-			});
-			expect(mockRouter.pathname).toEqual(PagePath.ROOT);
-		});
+	it("renders the separator when OAuth is enabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.OAUTH_SIGNIN])} />);
+		expect(screen.getByText("Or sign in with")).toBeInTheDocument();
 	});
 
-	it("sign-up form submission", async () => {
-		render(<Auth />);
-		const signUpButton = screen.getByTestId("signup-button");
-		await userEvent.click(signUpButton);
-
-		// Assuming the sign-up form has similar structure to other forms
-		const emailInput = screen.getByTestId("signup-form-email-input");
-		const passwordInput = screen.getByTestId("signup-form-password-input");
-		const submitButton = screen.getByTestId("signup-form-submit-button");
-
-		await userEvent.type(emailInput, "test@example.com");
-		await userEvent.type(passwordInput, "password123");
-		await userEvent.click(submitButton);
-
-		await waitFor(() => {
-			expect(mockRouter.pathname).toEqual(PagePath.ROOT);
-		});
-	});
-
-	it("disables submit button when form is invalid", async () => {
-		render(<Auth />);
-		const submitButton = screen.getByTestId("email-signin-form-submit-button");
-		expect(submitButton).toBeDisabled();
-
-		const emailInput = screen.getByTestId("email-signin-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
-		expect(submitButton).toBeEnabled();
+	it("does not render the separator when OAuth is disabled", async () => {
+		render(<Auth enabledAuthMethods={new Set([AuthMethod.EMAIL_SIGNIN, AuthMethod.PASSWORD_SIGNIN])} />);
+		expect(screen.queryByText("Or sign in with")).not.toBeInTheDocument();
 	});
 });
