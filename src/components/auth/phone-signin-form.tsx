@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { signInWithPhone, verifyPhoneOTP } from "@/actions/auth";
 import { FormButton } from "@/components/form-button";
+import { PhoneSigninType } from "@/config/enums";
 import { InfoMessage } from "@/constants";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
@@ -21,7 +22,7 @@ const otpSchema = z.object({
 	otp: z.string().length(6, { message: "OTP must be 6 digits" }),
 });
 
-export function PhoneSigninForm({ channel = "sms" }: { channel?: "sms" | "whatsapp" }) {
+export function PhoneSigninForm({ signingType = PhoneSigninType.SMS }: { signingType?: PhoneSigninType }) {
 	const [isOtpSent, setIsOtpSent] = useState(false);
 
 	const phoneForm = useForm<z.infer<typeof phoneSchema>>({
@@ -39,7 +40,7 @@ export function PhoneSigninForm({ channel = "sms" }: { channel?: "sms" | "whatsa
 	});
 
 	const onPhoneSubmit: SubmitHandler<z.infer<typeof phoneSchema>> = async (values) => {
-		const error = await signInWithPhone(values.phoneNumber, channel);
+		const error = await signInWithPhone(values.phoneNumber, signingType);
 		if (error) {
 			toast.error(error, { duration: 3000 });
 			return;
@@ -137,7 +138,7 @@ export function PhoneSigninForm({ channel = "sms" }: { channel?: "sms" | "whatsa
 							disabled={!phoneForm.formState.isValid}
 							data-testid="phone-signin-form-submit-button"
 						>
-							{channel === "sms" ? "Send OTP" : "Send WhatsApp OTP"}
+							{signingType === PhoneSigninType.SMS ? "Send OTP" : "Send WhatsApp OTP"}
 						</FormButton>
 					</form>
 				</Form>
