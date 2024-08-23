@@ -2,11 +2,10 @@
 
 import { isEmail, isMobilePhone } from "validator";
 
-import { ApiPath, PagePath } from "@/config/enums";
+import { ApiPath, EmailSigninType, PagePath, PhoneSigninType } from "@/config/enums";
 import { ErrorType } from "@/constants";
 import { getServerClient } from "@/utils/supabase/server";
 import { urlWithHost } from "@/utils/url";
-import type { AuthOtpResponse } from "@supabase/supabase-js";
 
 /**
  * Sign out the current user.
@@ -22,9 +21,10 @@ export async function signOut() {
 /**
  * Sign in with email OTP.
  * @param email - The user's email.
+ * @param signinType - The type of email sign-in.
  * @returns An error message if there's an error, otherwise undefined.
  */
-export async function signInWithEmailOTP(email: string) {
+export async function signInWithEmail(email: string, signinType: EmailSigninType) {
 	if (!isEmail(email)) {
 		return ErrorType.INVALID_EMAIL;
 	}
@@ -32,9 +32,8 @@ export async function signInWithEmailOTP(email: string) {
 	const supabase = getServerClient();
 	const { error } = await supabase.auth.signInWithOtp({
 		email,
-		options: {
-			emailRedirectTo: urlWithHost(ApiPath.CALLBACK_OPENID),
-		},
+		options:
+			signinType === EmailSigninType.MAGIC_LINK ? { emailRedirectTo: urlWithHost(ApiPath.CALLBACK_OPENID) } : undefined,
 	});
 
 	return error?.message;
@@ -64,24 +63,21 @@ export async function verifyEmailOTP(email: string, otp: string) {
 /**
  * Sign in with phone OTP.
  * @param phoneNumber - The user's phone number.
+ * @param signinType - The type of phone sign-in.
  * @returns An error message if there's an error, otherwise undefined.
  */
-export async function signInWithPhoneOTP(phoneNumber: string): Promise<
-	Partial<Pick<AuthOtpResponse, "data">> & {
-		error?: string;
-	}
-> {
+export async function signInWithPhone(phoneNumber: string, signinType: PhoneSigninType) {
 	if (!isMobilePhone(phoneNumber)) {
-		return { error: ErrorType.INVALID_PHONE };
+		return ErrorType.INVALID_PHONE;
 	}
 
 	const supabase = getServerClient();
-	const { error, data } = await supabase.auth.signInWithOtp({
+	const { error } = await supabase.auth.signInWithOtp({
 		phone: phoneNumber,
-		options: { channel: "sms" },
+		options: { channel: signinType === PhoneSigninType.SMS ? "sms" : "whatsapp" },
 	});
 
-	return { data, error: error?.message };
+	return error?.message;
 }
 
 /**
@@ -111,8 +107,6 @@ export async function verifyPhoneOTP(phoneNumber: string, otp: string) {
  * @returns The path to redirect to.
  */
 export async function requestPasswordUpdate(email: string) {
-	const callbackURL = urlWithHost(ApiPath.CALLBACK_PASSWORD_RESET);
-
 	if (!isEmail(email)) {
 		return ErrorType.INVALID_EMAIL;
 	}
@@ -120,7 +114,7 @@ export async function requestPasswordUpdate(email: string) {
 	const supabase = getServerClient();
 
 	const { error } = await supabase.auth.resetPasswordForEmail(email, {
-		redirectTo: callbackURL,
+		redirectTo: urlWithHost(ApiPath.CALLBACK_PASSWORD_RESET),
 	});
 
 	return error?.message;

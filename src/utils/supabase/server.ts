@@ -10,7 +10,6 @@ import type { Database } from "gen/database-types";
 
 const serverClientRef: {
 	value: null | DatabaseClient;
-	cookies?: Record<string, string>;
 } = { value: null };
 
 /**

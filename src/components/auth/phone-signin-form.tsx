@@ -5,7 +5,7 @@ import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { signInWithPhoneOTP, verifyPhoneOTP } from "@/actions/auth";
+import { signInWithPhone, verifyPhoneOTP } from "@/actions/auth";
 import { FormButton } from "@/components/form-button";
 import { InfoMessage } from "@/constants";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
@@ -21,7 +21,7 @@ const otpSchema = z.object({
 	otp: z.string().length(6, { message: "OTP must be 6 digits" }),
 });
 
-export function PhoneSigninForm() {
+export function PhoneSigninForm({ channel = "sms" }: { channel?: "sms" | "whatsapp" }) {
 	const [isOtpSent, setIsOtpSent] = useState(false);
 
 	const phoneForm = useForm<z.infer<typeof phoneSchema>>({
@@ -39,7 +39,7 @@ export function PhoneSigninForm() {
 	});
 
 	const onPhoneSubmit: SubmitHandler<z.infer<typeof phoneSchema>> = async (values) => {
-		const { error, data } = await signInWithPhoneOTP(values.phoneNumber);
+		const error = await signInWithPhone(values.phoneNumber, channel);
 		if (error) {
 			toast.error(error, { duration: 3000 });
 			return;
@@ -49,7 +49,7 @@ export function PhoneSigninForm() {
 	};
 
 	const onOtpSubmit: SubmitHandler<z.infer<typeof otpSchema>> = async (values) => {
-		const phoneNumber = phoneForm.getValues().phoneNumber;
+		const { phoneNumber } = phoneForm.getValues();
 		const error = await verifyPhoneOTP(phoneNumber, values.otp);
 		if (error) {
 			toast.error(error, { duration: 3000 });
@@ -137,7 +137,7 @@ export function PhoneSigninForm() {
 							disabled={!phoneForm.formState.isValid}
 							data-testid="phone-signin-form-submit-button"
 						>
-							Send OTP
+							{channel === "sms" ? "Send OTP" : "Send WhatsApp OTP"}
 						</FormButton>
 					</form>
 				</Form>

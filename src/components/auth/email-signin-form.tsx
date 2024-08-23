@@ -5,7 +5,7 @@ import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { signInWithEmailOTP, verifyEmailOTP } from "@/actions/auth";
+import { signInWithEmail, verifyEmailOTP } from "@/actions/auth";
 import { FormButton } from "@/components/form-button";
 import { InfoMessage } from "@/constants";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
@@ -38,7 +38,7 @@ export function EmailSigninForm() {
 	});
 
 	const onEmailSubmit: SubmitHandler<z.infer<typeof emailSchema>> = async (values) => {
-		const error = await signInWithEmailOTP(values.email);
+		const error = await signInWithEmail(values.email);
 		if (error) {
 			toast.error(error, { duration: 3000 });
 			return;

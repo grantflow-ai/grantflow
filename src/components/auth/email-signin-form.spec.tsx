@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { mockToast } from "::testing/global-mocks";
-import { signInWithEmailOTP } from "@/actions/auth";
+import { signInWithEmail } from "@/actions/auth";
 import { InfoMessage } from "@/constants";
 import { EmailSigninForm } from "./email-signin-form";
 
@@ -42,7 +42,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("calls signInWithEmailOTP with correct email on form submission", async () => {
-		const mockSignInWithEmailOTP = vi.mocked(signInWithEmailOTP);
+		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
 		mockSignInWithEmailOTP.mockResolvedValueOnce(undefined);
 
 		render(<EmailSigninForm />);
@@ -57,7 +57,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("displays success toast when OTP is sent successfully", async () => {
-		const mockSignInWithEmailOTP = vi.mocked(signInWithEmailOTP);
+		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
 		mockSignInWithEmailOTP.mockResolvedValueOnce(undefined);
 
 		render(<EmailSigninForm />);
@@ -74,7 +74,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("displays error toast when signInWithEmailOTP fails", async () => {
-		const mockSignInWithEmailOTP = vi.mocked(signInWithEmailOTP);
+		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
 		const errorMessage = "Failed to send OTP";
 		mockSignInWithEmailOTP.mockResolvedValueOnce(errorMessage);
 
@@ -92,7 +92,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("shows loading state on submit button while form is submitting", async () => {
-		const mockSignInWithEmailOTP = vi.mocked(signInWithEmailOTP);
+		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
 		mockSignInWithEmailOTP.mockImplementationOnce(
 			() =>
 				new Promise((resolve) =>
@@ -118,7 +118,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("maintains the email input value after failed submission", async () => {
-		const mockSignInWithEmailOTP = vi.mocked(signInWithEmailOTP);
+		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
 		mockSignInWithEmailOTP.mockResolvedValueOnce("Error message");
 
 		render(<EmailSigninForm />);

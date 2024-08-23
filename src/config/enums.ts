@@ -10,8 +10,18 @@ export enum ApiPath {
 }
 
 export enum AuthMethod {
-	PASSWORD_SIGNIN = "PASSWORD_SIGNIN",
 	EMAIL_SIGNIN = "EMAIL_SIGNIN",
 	OAUTH_SIGNIN = "OAUTH_SIGNIN",
+	PASSWORD_SIGNIN = "PASSWORD_SIGNIN",
 	PHONE_SIGNIN = "PHONE_SIGNIN",
+}
+
+export enum EmailSigninType {
+	OTP = "OTP",
+	MAGIC_LINK = "MAGIC_LINK",
+}
+
+export enum PhoneSigninType {
+	SMS = "SMS",
+	WHATSAPP = "WHATSAPP",
 }
