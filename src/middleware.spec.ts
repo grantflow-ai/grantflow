@@ -62,7 +62,7 @@ describe("updateSession middleware", () => {
 	it("should redirect to /auth when accessing protected routes without authentication", async () => {
 		const mockRequest = {
 			nextUrl: {
-				pathname: "/account",
+				pathname: "/protected",
 				clone: vi.fn().mockReturnThis(),
 			},
 			cookies: {

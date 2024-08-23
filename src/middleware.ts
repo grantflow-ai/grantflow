@@ -9,7 +9,7 @@ import { type MiddlewareConfig, type NextRequest, NextResponse } from "next/serv
 import { PagePath } from "@/config/enums";
 import { getEnv } from "@/utils/env";
 
-const protectedRoutes: string[] = [];
+const protectedRoutes: string[] = ["protected"];
 
 /**
  * Middleware to update the session.
