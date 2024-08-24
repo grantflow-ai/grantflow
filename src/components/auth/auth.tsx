@@ -1,9 +1,9 @@
 "use client";
 
 import { Separator } from "@/components/separator";
-import { AuthMethod } from "@/config/enums";
-import { Button } from "gen/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
+import { authConfig } from "@/config/auth";
+import { Button, type ButtonProps } from "gen/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "gen/ui/card";
 import { type Dispatch, type FC, type SetStateAction, Suspense, lazy, useMemo, useState } from "react";
 
 const PasswordSigninForm = lazy(async () => {
@@ -38,46 +38,73 @@ const OauthSigninForm = lazy(async () => {
 
 type AuthForm = "passwordSignin" | "emailSignin" | "phoneSignin" | "signup" | "forgotPassword";
 
-const LinkButton: FC<{
-	formName: AuthForm;
-	text: string;
-	onClick: Dispatch<SetStateAction<AuthForm>>;
-}> = ({
+const titleMap: Record<AuthForm, string> = {
+	passwordSignin: "Sign in",
+	emailSignin: "Sign in",
+	phoneSignin: "Sign in",
+	signup: "Sign up",
+	forgotPassword: "Forgot password",
+};
+
+const LinkButton: FC<
+	{
+		formName: AuthForm;
+		text: string;
+		onClick: Dispatch<SetStateAction<AuthForm>>;
+	} & Partial<Omit<ButtonProps, "onClick">>
+> = ({
 	formName,
 	text,
 	onClick,
+	className,
+	variant = "link",
+	size = "sm",
 }: {
 	formName: AuthForm;
 	text: string;
 	onClick: Dispatch<SetStateAction<AuthForm>>;
-}) => (
+} & Partial<Omit<ButtonProps, "onClick">>) => (
 	<Button
-		className="text-sm font-light block"
+		className={className}
 		data-testid={`${formName}-button`}
 		onClick={() => {
 			onClick(formName);
 		}}
-		size="sm"
-		variant="link"
+		size={size}
+		variant={variant}
 		aria-label={`Switch to ${text}`}
 	>
 		{text}
 	</Button>
 );
 
-export function Auth({
-	enabledAuthMethods,
-}: {
-	enabledAuthMethods: Set<AuthMethod>;
-}) {
+const createFormConfig = (currentForm: AuthForm) => {
+	const config = {
+		showSignupLink: currentForm !== "signup" && (authConfig.emailSignin || authConfig.phoneSignin),
+		showForgotPasswordLink: currentForm === "passwordSignin" && authConfig.passwordSignin,
+		showEmailSigninLink: currentForm !== "emailSignin" && authConfig.emailSignin,
+		showPhoneSigninLink: currentForm !== "phoneSignin" && authConfig.phoneSignin,
+		showPasswordSigninLink: currentForm !== "passwordSignin" && authConfig.passwordSignin,
+		showOauthSignin: authConfig.oauthSignin && authConfig.oauthProviders.length,
+		showSigninLinkContainers: false,
+	};
+
+	config.showSigninLinkContainers =
+		config.showEmailSigninLink || config.showPhoneSigninLink || config.showPasswordSigninLink;
+
+	return config;
+};
+
+export function Auth() {
 	const [currentForm, setCurrentForm] = useState<AuthForm>(
-		enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN)
+		authConfig.emailSignin
 			? "emailSignin"
 			: // eslint-disable-next-line unicorn/no-nested-ternary
-				enabledAuthMethods.has(AuthMethod.PHONE_SIGNIN)
+				authConfig.phoneSignin
 				? "phoneSignin"
 				: "passwordSignin",
 	);
+	const formConfig = useMemo(() => createFormConfig(currentForm), [currentForm]);
 
 	const formMap = useMemo(
 		() => ({
@@ -90,64 +117,82 @@ export function Auth({
 		[],
 	);
 
-	const titleMap = useMemo(
-		() => ({
-			passwordSignin: "Sign in",
-			emailSignin: "Sign in",
-			phoneSignin: "Sign in",
-			signup: "Sign up",
-			forgotPassword: "Forgot password",
-		}),
-		[],
-	);
-
 	const Component = formMap[currentForm];
 	const title = titleMap[currentForm];
 
-	const showSignupLink =
-		currentForm !== "signup" &&
-		(enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN) || enabledAuthMethods.has(AuthMethod.PHONE_SIGNIN));
-	const showForgotPasswordLink = currentForm === "passwordSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
-	const showEmailSigninLink = currentForm !== "emailSignin" && enabledAuthMethods.has(AuthMethod.EMAIL_SIGNIN);
-	const showPhoneSigninLink = currentForm !== "phoneSignin" && enabledAuthMethods.has(AuthMethod.PHONE_SIGNIN);
-	const showPasswordSigninLink = currentForm !== "passwordSignin" && enabledAuthMethods.has(AuthMethod.PASSWORD_SIGNIN);
-	const showOauthSignin = enabledAuthMethods.has(AuthMethod.OAUTH_SIGNIN);
-
 	return (
-		<div className="flex justify-center" data-testid="auth-view" role="region">
-			<Card className="w-96" data-testid="card-container">
-				<CardHeader className="pb-0" data-testid="card-header">
-					<CardTitle data-testid="card-title">{title}</CardTitle>
-				</CardHeader>
-				<CardContent data-testid="card-content">
-					<Suspense fallback={<div aria-live="polite">Loading form...</div>}>
-						<Component />
-					</Suspense>
-					<nav>
-						{showSignupLink && <LinkButton formName="signup" text="Sign up" onClick={setCurrentForm} />}
-						{showForgotPasswordLink && (
-							<LinkButton formName="forgotPassword" text="Forgot password?" onClick={setCurrentForm} />
+		<Card className="w-1/3 p-4" data-testid="card-container">
+			<CardHeader data-testid="card-header">
+				<CardTitle data-testid="card-title" className="text-center">
+					{title}
+				</CardTitle>
+			</CardHeader>
+			<CardContent data-testid="card-content">
+				<Suspense fallback={<div aria-live="polite">Loading form...</div>}>
+					<Component />
+				</Suspense>
+				{formConfig.showSignupLink && (
+					<div className="flex justify-end">
+						<LinkButton
+							formName="signup"
+							text="Don't have an account? Signup!"
+							onClick={setCurrentForm}
+							className="text-right text-sm font-light block underline"
+						/>
+					</div>
+				)}
+				{formConfig.showForgotPasswordLink && (
+					<LinkButton
+						formName="forgotPassword"
+						text="Forgot Password?"
+						onClick={setCurrentForm}
+						className="text-sm font-light block underline"
+					/>
+				)}
+			</CardContent>
+			<CardFooter>
+				{(formConfig.showSigninLinkContainers || formConfig.showOauthSignin) && (
+					<nav className="w-full">
+						<Separator text="Or sign in with" />
+						{formConfig.showSigninLinkContainers && (
+							<section className="flex flex-col gap-2 mb-2">
+								{formConfig.showPhoneSigninLink && (
+									<LinkButton
+										formName="phoneSignin"
+										text={`Sign in with ${authConfig.phoneSigninType} OTP`}
+										onClick={setCurrentForm}
+										variant="secondary"
+										className="w-full p-1 border rounded"
+									/>
+								)}
+								{formConfig.showPasswordSigninLink && (
+									<LinkButton
+										formName="passwordSignin"
+										text="Sign in with Email and Password"
+										onClick={setCurrentForm}
+										variant="secondary"
+										className="w-full p-1 border rounded"
+									/>
+								)}
+								{formConfig.showEmailSigninLink && (
+									<LinkButton
+										formName="emailSignin"
+										text={`Sign in with Email ${authConfig.emailSigninType}`}
+										onClick={setCurrentForm}
+										variant="secondary"
+										className="w-full p-1 border rounded"
+									/>
+								)}
+							</section>
 						)}
-						{showEmailSigninLink && (
-							<LinkButton formName="emailSignin" text="Sign in with email" onClick={setCurrentForm} />
-						)}
-						{showPhoneSigninLink && (
-							<LinkButton formName="phoneSignin" text="Sign in with phone" onClick={setCurrentForm} />
-						)}
-						{showPasswordSigninLink && (
-							<LinkButton formName="passwordSignin" text="Sign in with password" onClick={setCurrentForm} />
-						)}
-					</nav>
-					{showOauthSignin && (
-						<div data-testid="oauth-signin">
-							<Separator text="Or sign in with" />
+						{formConfig.showOauthSignin && (
 							<Suspense fallback={<div aria-live="polite">Loading OAuth options...</div>}>
 								<OauthSigninForm />
 							</Suspense>
-						</div>
-					)}
-				</CardContent>
-			</Card>
-		</div>
+						)}
+					</nav>
+				)}
+			</CardFooter>
+		</Card>
 	);
 }

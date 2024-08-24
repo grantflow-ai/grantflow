@@ -1,31 +1,12 @@
 "use client";
 
+import { authConfig } from "@/config/auth";
 import { ApiPath } from "@/config/enums";
 import { getBrowserClient } from "@/utils/supabase/client";
 import { urlWithHost } from "@/utils/url";
-import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import type { Provider } from "@supabase/supabase-js";
 import { Button } from "gen/ui/button";
-import { type ReactElement, useState } from "react";
-
-interface OAuthProvider {
-	id: Provider;
-	displayName: string;
-	icon: ReactElement;
-}
-
-const oAuthProviders: OAuthProvider[] = [
-	{
-		id: "google",
-		displayName: "Google",
-		icon: <SiGoogle className="h-5 w-5" />,
-	},
-	{
-		id: "github",
-		displayName: "GitHub",
-		icon: <SiGithub className="h-5 w-5" />,
-	},
-];
+import { useState } from "react";
 
 export function OauthSigninForm() {
 	const [error, setError] = useState<string | null>(null);
@@ -46,20 +27,23 @@ export function OauthSigninForm() {
 	};
 
 	return (
-		<div data-testid="oauth-signin-form">
-			{oAuthProviders.map((provider) => (
+		<section data-testid="oauth-signin-form" className="flex flex-col gap-2">
+			{authConfig.oauthProviders.map((provider) => (
 				<Button
 					key={provider.id}
-					className="w-full mb-2"
+					variant="secondary"
+					className="w-full p-1 border rounded"
 					data-testid={`oauth-signin-form-${provider.id}-button`}
 					onClick={() => {
 						void handleSubmit(provider.id);
 					}}
 				>
-					<span className="mr-2" data-testid={`oauth-signin-form-${provider.id}-icon`}>
-						{provider.icon}
-					</span>
-					<span data-testid={`oauth-signin-form-${provider.id}-text`}>{provider.displayName}</span>
+					<p className="flex justify-center items-center gap-3">
+						<span data-testid={`oauth-signin-form-${provider.id}-text`} className="text-md bold">
+							Sign in with {provider.displayName}
+						</span>
+						<span data-testid={`oauth-signin-form-${provider.id}-icon`}>{<provider.icon className="h-4 w-4" />}</span>
+					</p>
 				</Button>
 			))}
 			{error && (
@@ -67,6 +51,6 @@ export function OauthSigninForm() {
 					{error}
 				</div>
 			)}
-		</div>
+		</section>
 	);
 }

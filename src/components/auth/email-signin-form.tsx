@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { signInWithEmail, verifyEmailOTP } from "@/actions/auth";
 import { FormButton } from "@/components/form-button";
+import { EmailSigninType } from "@/config/enums";
 import { InfoMessage } from "@/constants";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
@@ -38,7 +39,7 @@ export function EmailSigninForm() {
 	});
 
 	const onEmailSubmit: SubmitHandler<z.infer<typeof emailSchema>> = async (values) => {
-		const error = await signInWithEmail(values.email);
+		const error = await signInWithEmail(values.email, EmailSigninType.OTP);
 		if (error) {
 			toast.error(error, { duration: 3000 });
 			return;
@@ -55,7 +56,6 @@ export function EmailSigninForm() {
 			return;
 		}
 		toast.success(InfoMessage.EMAIL_OTP_VERIFIED, { duration: 3000 });
-		// Handle successful sign-in (e.g., redirect to dashboard)
 	};
 
 	return (
@@ -78,7 +78,7 @@ export function EmailSigninForm() {
 											pattern="[0-9]*"
 											maxLength={6}
 											autoComplete="one-time-code"
-											className="form-input"
+											className="form-input rounded p-10"
 											data-testid="email-signin-form-otp-input"
 											{...field}
 										/>

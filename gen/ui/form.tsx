@@ -1,8 +1,8 @@
 "use client";
 
+import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
-import * as React from "react";
 import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, useFormContext } from "react-hook-form";
 
 import { cn } from "gen/cn";
@@ -92,7 +92,7 @@ const FormControl = React.forwardRef<React.ElementRef<typeof Slot>, React.Compon
 			<Slot
 				ref={ref}
 				id={formItemId}
-				aria-describedby={error ? `${formDescriptionId} ${formMessageId}` : `${formDescriptionId}`}
+				aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
 				aria-invalid={!!error}
 				{...props}
 			/>

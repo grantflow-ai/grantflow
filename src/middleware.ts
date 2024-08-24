@@ -8,7 +8,7 @@ import { type MiddlewareConfig, type NextRequest, NextResponse } from "next/serv
 
 import { PagePath } from "@/config/enums";
 import { getEnv } from "@/utils/env";
-import { COOKIE_NAME, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "@/utils/i18n/settings";
+import { COOKIE_NAME, DEFAULT_LANGUAGE, SEARCH_PARAM_NAME, SUPPORTED_LANGUAGES } from "@/utils/i18n/settings";
 
 import acceptLanguage from "accept-language";
 
@@ -88,24 +88,12 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
  * @returns The response object.
  */
 export async function middleware(request: NextRequest) {
-	let language = DEFAULT_LANGUAGE;
-	const cookieValue = acceptLanguage.get(request.cookies.get(COOKIE_NAME)?.value);
-	const headerValue = acceptLanguage.get(request.headers.get("Accept-Language"));
+	const language_from_qs = acceptLanguage.get(request.nextUrl.searchParams.get(SEARCH_PARAM_NAME));
+	const language =
+		language_from_qs && SUPPORTED_LANGUAGES.includes(language_from_qs) ? language_from_qs : DEFAULT_LANGUAGE;
 
-	if (cookieValue) {
-		language = cookieValue;
-	} else if (headerValue) {
-		language = headerValue;
-	}
-
-	if (
-		!(
-			SUPPORTED_LANGUAGES.some((lang) => request.nextUrl.pathname.startsWith(`/${lang}`)) ||
-			request.nextUrl.pathname.startsWith("/_next")
-		)
-	) {
-		return NextResponse.redirect(new URL(`/${language}${request.nextUrl.pathname}`, request.url));
-	}
+	request.cookies.set(COOKIE_NAME, language);
+	request.nextUrl.searchParams.set(SEARCH_PARAM_NAME, language);
 	return await updateSession(request);
 }
 
