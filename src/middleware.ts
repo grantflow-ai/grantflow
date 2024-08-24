@@ -8,6 +8,11 @@ import { type MiddlewareConfig, type NextRequest, NextResponse } from "next/serv
 
 import { PagePath } from "@/config/enums";
 import { getEnv } from "@/utils/env";
+import { COOKIE_NAME, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "@/utils/i18n/settings";
+
+import acceptLanguage from "accept-language";
+
+acceptLanguage.languages(SUPPORTED_LANGUAGES);
 
 const protectedRoutes: string[] = ["protected"];
 
@@ -83,6 +88,24 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
  * @returns The response object.
  */
 export async function middleware(request: NextRequest) {
+	let language = DEFAULT_LANGUAGE;
+	const cookieValue = acceptLanguage.get(request.cookies.get(COOKIE_NAME)?.value);
+	const headerValue = acceptLanguage.get(request.headers.get("Accept-Language"));
+
+	if (cookieValue) {
+		language = cookieValue;
+	} else if (headerValue) {
+		language = headerValue;
+	}
+
+	if (
+		!(
+			SUPPORTED_LANGUAGES.some((lang) => request.nextUrl.pathname.startsWith(`/${lang}`)) ||
+			request.nextUrl.pathname.startsWith("/_next")
+		)
+	) {
+		return NextResponse.redirect(new URL(`/${language}${request.nextUrl.pathname}`, request.url));
+	}
 	return await updateSession(request);
 }
 
