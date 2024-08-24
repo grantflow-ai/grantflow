@@ -1,8 +1,9 @@
 "use client";
 
+import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getNavItems } from "@/config/navigation";
 import type { PagePath } from "@/config/enums";
+import { getNavItems } from "@/config/navigation";
 import { cn } from "gen/cn";
 import { buttonVariants } from "gen/ui/button";
 import Link from "next/link";
@@ -13,7 +14,8 @@ export function Navbar() {
 	const { items, links } = getNavItems(pathName as PagePath);
 
 	return (
-		<nav className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
+		<nav className="container flex h-16 items-center sm:justify-between sm:space-x-0">
+			<Logo />
 			<div className="flex gap-6 md:gap-10">
 				{items.map(
 					(item) =>
@@ -31,8 +33,8 @@ export function Navbar() {
 						),
 				)}
 			</div>
-			<div className="flex flex-1 items-center justify-end space-x-4">
-				<div className="flex items-center space-x-1">
+			<div className="flex flex-1 gap-6 items-center justify-end">
+				<div className="flex gap-2">
 					{links.map((link) => (
 						<Link key={link.name} href={link.href} target="_blank" rel="noreferrer">
 							<div
@@ -46,8 +48,8 @@ export function Navbar() {
 							</div>
 						</Link>
 					))}
-					<ThemeToggle />
 				</div>
+				<ThemeToggle />
 			</div>
 		</nav>
 	);
