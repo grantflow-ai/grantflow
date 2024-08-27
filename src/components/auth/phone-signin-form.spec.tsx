@@ -2,7 +2,6 @@ import { signInWithPhone, verifyPhoneOTP } from "@/actions/auth";
 import { PhoneSigninType } from "@/config/enums";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PhoneSigninForm } from "./phone-signin-form";
 
 vi.mock("@/actions/auth", () => ({

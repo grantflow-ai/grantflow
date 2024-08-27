@@ -11,6 +11,7 @@ export function FormButton({ children, isLoading, className = "", ...props }: Bu
 			)}
 			type="submit"
 			aria-busy={isLoading}
+			data-testid="form-button"
 			{...props}
 		>
 			{isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : children}

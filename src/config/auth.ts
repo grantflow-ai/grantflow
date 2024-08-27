@@ -32,13 +32,14 @@ export interface AuthConfig {
 	oauthProviders: OAuthProvider[];
 }
 
-export const getAuthConfig = (): Readonly<AuthConfig> =>
-	Object.freeze({
-		emailSignin: true,
-		emailSigninType: EmailSigninType.OTP,
-		phoneSignin: true,
-		phoneSigninType: PhoneSigninType.SMS,
-		passwordSignin: true,
-		oauthSignin: true,
-		oauthProviders: oAuthProviders,
-	});
+const config = Object.freeze({
+	emailSignin: true,
+	emailSigninType: EmailSigninType.OTP,
+	phoneSignin: true,
+	phoneSigninType: PhoneSigninType.SMS,
+	passwordSignin: true,
+	oauthSignin: true,
+	oauthProviders: oAuthProviders,
+});
+
+export const getAuthConfig = (): Readonly<AuthConfig> => config;

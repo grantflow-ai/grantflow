@@ -1,7 +1,6 @@
 import { PagePath } from "@/config/enums";
 import { getNavItems } from "@/config/navigation";
 import { SiGithub } from "@icons-pack/react-simple-icons";
-import { describe, expect, it } from "vitest";
 
 describe("Navigation Items", () => {
 	describe("getNavItems function", () => {

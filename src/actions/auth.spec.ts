@@ -1,6 +1,5 @@
 import { EmailSigninType, PhoneSigninType } from "@/config/enums";
 import { ErrorType } from "@/constants";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	requestPasswordUpdate,
 	signInWithEmail,
