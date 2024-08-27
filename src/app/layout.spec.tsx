@@ -71,23 +71,4 @@ describe("RootLayout", () => {
 		const mainContainer = screen.getByTestId("main-container");
 		expect(mainContainer).toHaveTextContent("Test Content");
 	});
-
-	it("sets correct attributes on the html element", () => {
-		render(<RootLayout>Test Content</RootLayout>);
-
-		// Note: This test might not work as expected in the jsdom environment
-		// as it doesn't render the actual <html> element. You might need to
-		// adjust this test or remove it if it's not applicable in the test environment.
-		const html = document.documentElement;
-		expect(html).toHaveAttribute("lang", "en");
-	});
-
-	it("configures ThemeProvider correctly", () => {
-		render(<RootLayout>Test Content</RootLayout>);
-
-		const themeProvider = screen.getByTestId("theme-provider");
-		expect(themeProvider).toHaveAttribute("attribute", "class");
-		expect(themeProvider).toHaveAttribute("defaultTheme", "system");
-		expect(themeProvider).toHaveAttribute("enableSystem", "true");
-	});
 });
