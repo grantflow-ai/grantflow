@@ -59,10 +59,10 @@ export function EmailSigninForm() {
 	};
 
 	return (
-		<div data-testid="email-signin-form">
+		<>
 			{isOtpSent ? (
 				<Form {...otpForm}>
-					<form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="mb-4">
+					<form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="mb-4" data-testid="email-signin-form">
 						<FormField
 							name="otp"
 							control={otpForm.control}
@@ -103,7 +103,7 @@ export function EmailSigninForm() {
 				</Form>
 			) : (
 				<Form {...emailForm}>
-					<form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="mb-4">
+					<form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="mb-4" data-testid="email-signin-otp-form">
 						<FormField
 							name="email"
 							control={emailForm.control}
@@ -142,6 +142,6 @@ export function EmailSigninForm() {
 					</form>
 				</Form>
 			)}
-		</div>
+		</>
 	);
 }

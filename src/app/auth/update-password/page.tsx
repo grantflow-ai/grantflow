@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 
 import { UpdatePasswordForm } from "@/components/auth/update-password-form";
 
-import { authConfig } from "@/config/auth";
+import { getAuthConfig } from "@/config/auth";
 import { PagePath } from "@/config/enums";
 import { getServerClient } from "@/utils/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
-
+const authConfig = getAuthConfig();
 export default async function UpdatePasswordPage() {
 	const supabase = getServerClient();
 

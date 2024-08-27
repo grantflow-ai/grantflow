@@ -9,7 +9,7 @@ interface OAuthProvider {
 	icon: ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
 }
 
-const oAuthProviders = [
+export const oAuthProviders = [
 	{
 		id: "google",
 		displayName: "Google",
@@ -32,12 +32,13 @@ export interface AuthConfig {
 	oauthProviders: OAuthProvider[];
 }
 
-export const authConfig: Readonly<AuthConfig> = Object.freeze({
-	emailSignin: true,
-	emailSigninType: EmailSigninType.OTP,
-	phoneSignin: true,
-	phoneSigninType: PhoneSigninType.SMS,
-	passwordSignin: true,
-	oauthSignin: true,
-	oauthProviders: oAuthProviders,
-});
+export const getAuthConfig = (): Readonly<AuthConfig> =>
+	Object.freeze({
+		emailSignin: true,
+		emailSigninType: EmailSigninType.OTP,
+		phoneSignin: true,
+		phoneSigninType: PhoneSigninType.SMS,
+		passwordSignin: true,
+		oauthSignin: true,
+		oauthProviders: oAuthProviders,
+	});

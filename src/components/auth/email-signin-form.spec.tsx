@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { mockToast } from "::testing/global-mocks";
 import { signInWithEmail } from "@/actions/auth";
+import { EmailSigninType } from "@/config/enums";
 import { InfoMessage } from "@/constants";
 import { EmailSigninForm } from "./email-signin-form";
 
@@ -16,7 +17,6 @@ describe("EmailSigninForm", () => {
 	it("renders the form correctly", () => {
 		render(<EmailSigninForm />);
 
-		expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
 		expect(screen.getByLabelText("Email")).toBeInTheDocument();
 		expect(screen.getByTestId("email-signin-form-email-input")).toBeInTheDocument();
 		expect(screen.getByTestId("email-signin-form-submit-button")).toBeInTheDocument();
@@ -53,7 +53,9 @@ describe("EmailSigninForm", () => {
 		const submitButton = screen.getByTestId("email-signin-form-submit-button");
 		await userEvent.click(submitButton);
 
-		expect(mockSignInWithEmailOTP).toHaveBeenCalledWith("test@example.com");
+		await waitFor(() => {
+			expect(mockSignInWithEmailOTP).toHaveBeenCalledWith("test@example.com", EmailSigninType.OTP);
+		});
 	});
 
 	it("displays success toast when OTP is sent successfully", async () => {

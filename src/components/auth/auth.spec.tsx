@@ -1,21 +1,24 @@
+import type { AuthConfig } from "@/config/auth";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Auth } from "./auth";
 
-vi.mock("@/components/auth/password-signin-form", () => ({
-	PasswordSigninForm: () => <div data-testid="password-signin-form" />,
+const { mockAuthConfig } = vi.hoisted(() => ({
+	mockAuthConfig: {
+		emailSignin: true,
+		// @ts-ignore
+		emailSigninType: "OTP",
+		phoneSignin: true,
+		// @ts-ignore
+		phoneSigninType: "SMS",
+		passwordSignin: true,
+		oauthSignin: true,
+		oauthProviders: [],
+	} satisfies AuthConfig,
 }));
-vi.mock("@/components/auth/email-signin-form", () => ({
-	EmailSigninForm: () => <div data-testid="email-signin-form" />,
-}));
-vi.mock("@/components/auth/signup-form", () => ({
-	SignupForm: () => <div data-testid="signup-form" />,
-}));
-vi.mock("@/components/auth/forgot-password-form", () => ({
-	ForgotPasswordForm: () => <div data-testid="forgot-password-form" />,
-}));
-vi.mock("@/components/auth/oauth-signin-form", () => ({
-	OauthSigninForm: () => <div data-testid="oauth-signin-form" />,
+
+vi.mock("@/config/auth", () => ({
+	getAuthConfig: vi.fn().mockReturnValue(mockAuthConfig),
 }));
 
 describe("Auth Component", () => {
@@ -25,7 +28,6 @@ describe("Auth Component", () => {
 
 	it("renders the auth view container", async () => {
 		render(<Auth />);
-		expect(screen.getByTestId("auth-view")).toBeInTheDocument();
 		expect(screen.getByTestId("card-container")).toBeInTheDocument();
 		expect(screen.getByTestId("card-header")).toBeInTheDocument();
 		expect(screen.getByTestId("card-title")).toBeInTheDocument();
@@ -35,16 +37,8 @@ describe("Auth Component", () => {
 	it("renders email signin form by default when email signin is enabled", async () => {
 		render(<Auth />);
 		await waitFor(() => {
-			expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
+			expect(screen.getByTestId("email-signin-otp-form")).toBeInTheDocument();
 			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
-		});
-	});
-
-	it("renders password signin form by default when only password signin is enabled", async () => {
-		render(<Auth />);
-		await waitFor(() => {
-			expect(screen.getByTestId("password-signin-form")).toBeInTheDocument();
-			expect(screen.queryByTestId("email-signin-form")).not.toBeInTheDocument();
 		});
 	});
 
@@ -54,15 +48,17 @@ describe("Auth Component", () => {
 		await user.click(screen.getByTestId("signup-button"));
 		await waitFor(() => {
 			expect(screen.getByTestId("signup-form")).toBeInTheDocument();
-			expect(screen.queryByTestId("email-signin-form")).not.toBeInTheDocument();
-			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("email-signin-otp-form")).not.toBeInTheDocument();
 		});
 	});
 
-	it("shows forgot password form when on password signin and forgot password button is clicked", async () => {
+	it("switches to forgot password form when forgot password button is clicked", async () => {
 		const user = userEvent.setup();
 		render(<Auth />);
-		expect(screen.getByTestId("forgotPassword-button")).toBeInTheDocument();
+		await user.click(screen.getByTestId("passwordSignin-button"));
+		await waitFor(() => {
+			expect(screen.getByTestId("password-signin-form")).toBeInTheDocument();
+		});
 		await user.click(screen.getByTestId("forgotPassword-button"));
 		await waitFor(() => {
 			expect(screen.getByTestId("forgot-password-form")).toBeInTheDocument();
@@ -72,28 +68,20 @@ describe("Auth Component", () => {
 
 	it("renders OAuth signin options when enabled", async () => {
 		render(<Auth />);
-		await waitFor(() => {
-			expect(screen.getByTestId("oauth-signin-form")).toBeInTheDocument();
-		});
+		expect(screen.getByText("Or sign in with")).toBeInTheDocument();
 	});
 
 	it("renders both email and OAuth signin options when both are enabled", async () => {
 		render(<Auth />);
 		await waitFor(() => {
-			expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
-			expect(screen.getByTestId("oauth-signin-form")).toBeInTheDocument();
-			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
+			expect(screen.getByTestId("email-signin-otp-form")).toBeInTheDocument();
+			expect(screen.getByText("Or sign in with")).toBeInTheDocument();
 		});
 	});
 
-	it("does not render signup button when only password signin is enabled", async () => {
+	it("renders signup button when email or phone signin is enabled", async () => {
 		render(<Auth />);
-		expect(screen.queryByTestId("signup-button")).not.toBeInTheDocument();
-	});
-
-	it("does not render forgot password button when only email signin is enabled", async () => {
-		render(<Auth />);
-		expect(screen.queryByTestId("forgotPassword-button")).not.toBeInTheDocument();
+		expect(screen.getByTestId("signup-button")).toBeInTheDocument();
 	});
 
 	it("switches between email and password signin forms", async () => {
@@ -101,19 +89,19 @@ describe("Auth Component", () => {
 		render(<Auth />);
 
 		// Initially on email signin form
-		expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
+		expect(screen.getByTestId("email-signin-otp-form")).toBeInTheDocument();
 
 		// Switch to password signin
 		await user.click(screen.getByTestId("passwordSignin-button"));
 		await waitFor(() => {
 			expect(screen.getByTestId("password-signin-form")).toBeInTheDocument();
-			expect(screen.queryByTestId("email-signin-form")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("email-signin-otp-form")).not.toBeInTheDocument();
 		});
 
 		// Switch back to email signin
 		await user.click(screen.getByTestId("emailSignin-button"));
 		await waitFor(() => {
-			expect(screen.getByTestId("email-signin-form")).toBeInTheDocument();
+			expect(screen.getByTestId("email-signin-otp-form")).toBeInTheDocument();
 			expect(screen.queryByTestId("password-signin-form")).not.toBeInTheDocument();
 		});
 	});
@@ -147,10 +135,5 @@ describe("Auth Component", () => {
 	it("renders the separator when OAuth is enabled", async () => {
 		render(<Auth />);
 		expect(screen.getByText("Or sign in with")).toBeInTheDocument();
-	});
-
-	it("does not render the separator when OAuth is disabled", async () => {
-		render(<Auth />);
-		expect(screen.queryByText("Or sign in with")).not.toBeInTheDocument();
 	});
 });

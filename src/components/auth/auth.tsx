@@ -1,7 +1,7 @@
 "use client";
 
 import { Separator } from "@/components/separator";
-import { authConfig } from "@/config/auth";
+import { getAuthConfig } from "@/config/auth";
 import { Button, type ButtonProps } from "gen/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "gen/ui/card";
 import { type Dispatch, type FC, type SetStateAction, Suspense, lazy, useMemo, useState } from "react";
@@ -35,6 +35,8 @@ const OauthSigninForm = lazy(async () => {
 	const { OauthSigninForm } = await import("@/components/auth/oauth-signin-form");
 	return { default: OauthSigninForm };
 });
+
+const authConfig = getAuthConfig();
 
 type AuthForm = "passwordSignin" | "emailSignin" | "phoneSignin" | "signup" | "forgotPassword";
 

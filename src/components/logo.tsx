@@ -75,7 +75,7 @@ export function Logo({ height = 72, width = 72, ...props }: LogoProps) {
 					rx={2.757_24 * widthRatio}
 					ry={2.9793 * heightRatio}
 					transform={`rotate(7.49586 ${90.3484 * widthRatio} ${58.6207 * heightRatio})`}
-					fill="#FF6B6B"
+					fill="var(--background)"
 				/>
 			</g>
 			<g filter="url(#filter1_f_28_75)">
@@ -84,7 +84,7 @@ export function Logo({ height = 72, width = 72, ...props }: LogoProps) {
 					cy={53.5551 * heightRatio}
 					rx={1.989_15 * widthRatio}
 					ry={2.015_32 * heightRatio}
-					fill="#FF6B6B"
+					fill="var(--background)"
 				/>
 			</g>
 			<g filter="url(#filter2_f_28_75)">
@@ -93,7 +93,7 @@ export function Logo({ height = 72, width = 72, ...props }: LogoProps) {
 					cy={68.081 * heightRatio}
 					rx={1.989_15 * widthRatio}
 					ry={2.146_19 * heightRatio}
-					fill="#FF6B6B"
+					fill="var(--background)"
 				/>
 			</g>
 			<path
