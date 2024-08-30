@@ -26,7 +26,7 @@ export default async function LandingPage() {
 				<p className="text-sm max-w-screen-md text-balance  text-muted-foreground sm:text-xl sm:leading-8">
 					BaseMind is a world class SaaS project Starter, clean code with 95% test coverage.
 				</p>
-				<Link href="/onboarding">
+				<Link href="/auth">
 					<Button className={cn(buttonVariants({ variant: "default", size: "lg" }))}>Get Started</Button>
 				</Link>
 			</div>
