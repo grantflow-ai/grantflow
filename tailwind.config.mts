@@ -2,7 +2,10 @@ import type { Config } from "tailwindcss";
 
 const config = {
 	darkMode: ["class"],
-	content: ["./src/**/*.{ts,tsx}"],
+	content: [
+		"./src/**/*.{ts,tsx}",
+		"./gen/**/*.{ts,tsx}",
+	],
 	prefix: "",
 	theme: {
 		container: {
@@ -69,8 +72,7 @@ const config = {
 			},
 		},
 	},
-	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	plugins: [require("tailwindcss-animate")],
+	plugins: [],
 } satisfies Config;
 
 export default config;
