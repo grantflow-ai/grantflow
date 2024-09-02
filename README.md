@@ -18,7 +18,6 @@ This repository contains a modern, scalable SaaS (Software as a Service) templat
 - Form handling with React Hook Form and Zod for validation
 - Comprehensive testing setup with Vitest and React Testing Library
 - Linting and formatting with ESLint, Oxlint, and Biome
-- Internationalization support with i18next
 - Logging with Pino
 
 ## Authentication Flow

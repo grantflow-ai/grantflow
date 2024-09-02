@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RootLayout from "./layout";
 
@@ -23,7 +24,7 @@ vi.mock("next-themes", async (importOriginal) => {
 	const original = await importOriginal();
 	return {
 		...(original as Record<string, unknown>),
-		ThemeProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="theme-provider">{children}</div>,
+		ThemeProvider: ({ children }: { children: ReactNode }) => <div data-testid="theme-provider">{children}</div>,
 	};
 });
 

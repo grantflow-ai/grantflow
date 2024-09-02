@@ -8,11 +8,6 @@ import { type MiddlewareConfig, type NextRequest, NextResponse } from "next/serv
 
 import { PagePath } from "@/config/enums";
 import { getEnv } from "@/utils/env";
-import { COOKIE_NAME, DEFAULT_LANGUAGE, SEARCH_PARAM_NAME, SUPPORTED_LANGUAGES } from "@/utils/i18n/settings";
-
-import acceptLanguage from "accept-language";
-
-acceptLanguage.languages(SUPPORTED_LANGUAGES);
 
 const protectedRoutes: string[] = ["protected"];
 
@@ -88,13 +83,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
  * @returns The response object.
  */
 export async function middleware(request: NextRequest) {
-	const response = await updateSession(request);
-
-	const language = acceptLanguage.get(request.nextUrl.searchParams.get(SEARCH_PARAM_NAME));
-
-	response.cookies.set(COOKIE_NAME, language && SUPPORTED_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE);
-
-	return response;
+	return await updateSession(request);
 }
 
 export const config: MiddlewareConfig = {
