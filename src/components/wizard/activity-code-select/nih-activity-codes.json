@@ -1,0 +1,1832 @@
+[
+	{
+		"id": 117,
+		"category": "Research Construction Programs",
+		"code": "C06",
+		"title": "Research Facilities Construction Grant",
+		"description": "To provide matching Federal funds, up to 75%, for construction or major remodeling, to create new research facilities. In addition to basic research laboratories this may include, under certain circumstances, animal facilities and/or limited clinical facilities where they are an integral part of an overall research effort."
+	},
+	{
+		"id": 1,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "D43",
+		"title": "International Research Training Grants",
+		"description": "To support research training programs for US and foreign professionals and students to strengthen global health research and international research collaboration.",
+		"url": "https://researchtraining.nih.gov/programs/training-grants/D43"
+	},
+	{
+		"id": 2,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "D71",
+		"title": "International Research Training Planning Grant",
+		"description": "To plan for the preparation of an application for a D43 international research training grant or for a U2R international research training cooperative agreement.",
+		"url": "https://researchtraining.nih.gov/programs/training-grants/D71"
+	},
+	{
+		"id": 3,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "DP1",
+		"title": "NIH Director\u2019s Pioneer Award (NDPA)",
+		"description": "To support individuals who have the potential to make extraordinary contributions to medical research. The NIH Director\u2019s Pioneer Award is not renewable.",
+		"url": "http://commonfund.nih.gov/pioneer/"
+	},
+	{
+		"id": 4,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "DP2",
+		"title": "NIH Director\u2019s New Innovator Awards",
+		"description": "To support highly innovative research projects by new investigators in all areas of biomedical and behavioral research.",
+		"url": "http://commonfund.nih.gov/newinnovator/"
+	},
+	{
+		"id": 195,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "DP3",
+		"title": "Type 1 Diabetes Targeted Research Award",
+		"description": "To support research tackling major challenges in type 1 diabetes and promoting new approaches to these challenges by scientific teams."
+	},
+	{
+		"id": 212,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "DP4",
+		"title": "NIH Director\u2019s Pathfinder Award - Multi-Yr Funding",
+		"description": "To support multi-year funded research with unique, high impact ideas for addressing biomedical research including assuring a balanced and effective workforce.  This research grant program will encourage exceptionally creative scientists to develop potentially transforming approaches for supported research.  The proposed research must reflect ideas that are substantially different from those already being pursued or they must apply existing research designs in new and innovative ways.  This is a multi-year, funded companion activity code to the existing Pioneer Award (DP1); thus ICs need OER prior approval to use the DP4."
+	},
+	{
+		"id": 215,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "DP5",
+		"title": "Early Independence Award",
+		"description": "To support the independent research project of a recent doctoral degree recipient. This research grant program will encourage exceptionally creative scientists to bypass the typical post-doc research training period in order to move rapidly to research independence.  It will encourage institutions to develop independent career tracks for recent graduates in order to demonstrate the benefits of early transition to independence both in terms of career productivity for the candidate and research capability for the institution.",
+		"url": "https://commonfund.nih.gov/earlyindependence"
+	},
+	{
+		"id": 228,
+		"category": "Institutional Training and Director Program Projects",
+		"code": "DP7",
+		"title": "NIH Director\u2019s Workforce Innovation Award",
+		"description": "To stimulate transformative approaches to training and/or workforce management with the intent of promoting culture change in the field of biomedical training."
+	},
+	{
+		"id": 118,
+		"category": "Health Professions Programs",
+		"code": "E11",
+		"title": "Grants for Public Health Special Projects",
+		"description": "To provide grants to public or nonprofit organizations for planning, development, demonstration, research, training, public information projects for preventive medicine, health promotion and disease prevention to improve the health of targeted populations."
+	},
+	{
+		"id": 5,
+		"category": "Fellowship Programs",
+		"code": "F05",
+		"title": "International Research Fellowships (FIC)",
+		"description": "To provide collaborative research opportunities for qualified non-immigrant alien scientists who hold a doctoral degree or its equivalent in one of the biomedical or behavioral sciences."
+	},
+	{
+		"id": 6,
+		"category": "Fellowship Programs",
+		"code": "F30",
+		"title": "Individual Predoctoral NRSA for M.D./Ph.D. Fellowships",
+		"description": "Individual fellowships for predoctoral training which leads to the combined M.D./Ph.D. degrees.",
+		"url": "https://researchtraining.nih.gov/programs/fellowships/F30"
+	},
+	{
+		"id": 7,
+		"category": "Fellowship Programs",
+		"code": "F31",
+		"title": "Predoctoral Individual National Research Service Award",
+		"description": "To provide predoctoral individuals with supervised research training in specified health and health-related areas leading toward the research degree (e.g., Ph.D.).",
+		"url": "https://researchtraining.nih.gov/programs/fellowships/F31"
+	},
+	{
+		"id": 8,
+		"category": "Fellowship Programs",
+		"code": "F32",
+		"title": "Postdoctoral Individual National Research Service Award",
+		"description": "To provide postdoctoral research training to individuals to broaden their scientific background and extend their potential for research in specified health-related areas.",
+		"url": "https://researchtraining.nih.gov/programs/fellowships/F32"
+	},
+	{
+		"id": 9,
+		"category": "Fellowship Programs",
+		"code": "F33",
+		"title": "National Research Service Awards for Senior Fellows",
+		"description": "To provide opportunities for experienced scientists to make major changes in the direction of research careers, to broaden scientific background, to acquire new research capabilities, to enlarge command of an allied research field, or to take time from regular professional responsibilities for the purpose of increasing capabilities to engage in health-related research.",
+		"url": "https://researchtraining.nih.gov/programs/fellowships/F33"
+	},
+	{
+		"id": 120,
+		"category": "Fellowship Programs",
+		"code": "F37",
+		"title": "Medical Informatics Fellowships",
+		"description": "To provide training to individuals in the synthesis, organization, and management of knowledge. The training should be interdisciplinary - involving medicine, biotechnology, and cognitive sciences, information science, and computer science.",
+		"url": "http://grants.nih.gov/training/F_files_non_nrsa.htm"
+	},
+	{
+		"id": 121,
+		"category": "Fellowship Programs",
+		"code": "F38",
+		"title": "Applied Medical Informatics Fellowships",
+		"description": "To provide opportunities for scientists to make major changes in the direction of research careers for the purpose of engaging in the synthesis, organization, and management of knowledge.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 250,
+		"category": "Fellowship Programs",
+		"code": "F99",
+		"title": "Pre-doc to Post-doc Transition Award",
+		"description": "To support the Pre-doctoral Phase of a Pre-doctoral to Post-doctoral transition award that provides 1-2 years of predoctoral support for highly motivated graduate students. The F99 activity code is intended to only be used in conjunction with a K00 Award",
+		"url": "https://researchtraining.nih.gov/programs/fellowships/F99-K00"
+	},
+	{
+		"id": 239,
+		"category": "Fellowship Programs",
+		"code": "FI2",
+		"title": "Intramural Postdoctoral Research Associate",
+		"description": "To provide postdoctoral research training to individuals in the NIH or FDA intramural research programs to broaden their scientific background and extend their potential for research in specified health-related areas."
+	},
+	{
+		"id": 264,
+		"category": "Fellowship Programs",
+		"code": "FM1",
+		"title": "Fellowship for Intramural Dual-Degree Scientists (FIDDS)",
+		"description": "To provide predoctoral individuals with training which leads to the combined degrees (e.g., MD/PhD) for trainees completing PhD dissertation research in NIH intramural labs."
+	},
+	{
+		"id": 10,
+		"category": "Resource Programs",
+		"code": "G07",
+		"title": "Resources Improvement Grant",
+		"description": "A non-renewable grant available to health related organizations to establish, expand or improve Internet connectivity and improve access to digital information resources."
+	},
+	{
+		"id": 11,
+		"category": "Resource Programs",
+		"code": "G08",
+		"title": "Resources Project Grant (NLM)",
+		"description": "A grant available to health-related institutions to improve the organization and management of health related information using computers and networks."
+	},
+	{
+		"id": 12,
+		"category": "Resource Programs",
+		"code": "G11",
+		"title": "Extramural Associate Research Development Award (EARDA)",
+		"description": "To provide funds to institutions eligible to participate in the NIH Extramural Associates Program for establishing or enhancing an office of sponsored research and for other research infrastructure needs."
+	},
+	{
+		"id": 13,
+		"category": "Resource Programs",
+		"code": "G12",
+		"title": "Research Centers in Minority Institutions Award",
+		"description": "To assist predominantly minority institutions that offer the doctorate in the health professions and/or health-related sciences in strengthening and augmenting their human and physical resources for the conduct of biomedical research."
+	},
+	{
+		"id": 14,
+		"category": "Resource Programs",
+		"code": "G13",
+		"title": "Health Sciences Publication Support Awards (NLM)",
+		"description": "To provide short-term assistance for the preparation of book-length manuscripts about important scientific information needed by U.S. health professionals. Grants are awarded for major critical reviews and analyses of historical studies and current developments in informatics, technology, librarianship, and secondary reference materials in the biomedical field.  Publication in formats other than print-on-paper (e.g., electronic, film, etc.) are encouraged, as are new and innovative ways of organizing and presenting information. Publication grants do not support journals or other serials and are not suitable for operation of established databases. Work judged to have significant commercial viability will not be supported by these grants."
+	},
+	{
+		"id": 15,
+		"category": "Resource Programs",
+		"code": "G20",
+		"title": "Grants for Repair, Renovation and Modernization of Existing Research Facilities",
+		"description": "To provide funds for major repair, renovation, and modernization of existing research facilities.  These facilities may be the clinical research facilities, animal research facilities, and other related research facilities."
+	},
+	{
+		"id": 122,
+		"category": "Resource Programs",
+		"code": "G94",
+		"title": "Administrative Support for Public Health Service Agency Foundations",
+		"description": "Provides financial assistance, as specified by legislation or other authority, for administration of an agency foundation which supports and carries out research, educational, health services, or other activities related to the mission of that PHS agency."
+	},
+	{
+		"id": 124,
+		"category": "Community Services Program",
+		"code": "H13",
+		"title": "Conferences Active",
+		"description": "To support international, national, or regional conferences, symposiums, or workshops dealing with services for the rehabilitation, prevention, and treatment of categorical diseases."
+	},
+	{
+		"id": 258,
+		"category": "Community Services Program",
+		"code": "H23",
+		"title": "Immunization Program",
+		"description": "Provides financial assistance to public agencies for the purposes of planning, developing, implementing, and studying\nimmunization programs to control serious diseases for which effective immunizing agents are available."
+	},
+	{
+		"id": 125,
+		"category": "Community Services Program",
+		"code": "H25",
+		"title": "Venereal Disease Control",
+		"description": "Provides financial assistance to public agencies for the purpose of planning, developing, implementing, and studying venereal disease control programs to inhibit the spread of venereal disease throughout the country."
+	},
+	{
+		"id": 259,
+		"category": "Community Services Program",
+		"code": "H28",
+		"title": "State and Community-Based Injury Control Programs",
+		"description": "Provides financial assistance to health agencies serving populations of over 1 million for them to develop, expand, or improve injury control programs to reduce morbidity, mortality, severity, disability, and cost from injuries."
+	},
+	{
+		"id": 126,
+		"category": "Community Services Program",
+		"code": "H50",
+		"title": "Maternal and Child Health Services Project, RB Funds Active",
+		"description": "(Definition not available)"
+	},
+	{
+		"id": 127,
+		"category": "Community Services Program",
+		"code": "H57",
+		"title": "Indian Health Service Loan Repayment Program",
+		"description": "To provide periodic reimbursement for educational loan payment to IHS professionals who agree to serve an applicable period of time in a Retention/Recruitment Priority Site."
+	},
+	{
+		"id": 128,
+		"category": "Community Services Program",
+		"code": "H62",
+		"title": "Services or Education on AIDS",
+		"description": "Provides financial assistance to public and non-profit private entities for information and education programs on the Acquired Immune Deficiency Syndrome, and for diagnostic, prevention, and control services of AIDS."
+	},
+	{
+		"id": 129,
+		"category": "Community Services Program",
+		"code": "H64",
+		"title": "State and Community-Based Childhood Lead Poisoning Prevention Program",
+		"description": "Provides financial assistance to State agencies and city/country agencies, based on need, to enable them to develop, expand, or improve childhood lead poisoning prevention programs."
+	},
+	{
+		"id": 130,
+		"category": "Community Services Program",
+		"code": "H75",
+		"title": "Health Investigations/Assessments of Control/Preven. Methods",
+		"description": "Provides financial assistance to States or local governments or other health-related organizations, to perform special investigations of communicable diseases and other preventable health conditions, or to research and evaluate methods of preventing disease or controlling health conditions."
+	},
+	{
+		"id": 131,
+		"category": "Community Services Program",
+		"code": "H79",
+		"title": "Mental Health and/or Substance Abuse Services Grants",
+		"description": "To support services and other activities for the prevention and/or treatment of mental illness and/or substance abuse disorders and/or for the promotion of health."
+	},
+	{
+		"id": 123,
+		"category": "Community Services Program",
+		"code": "HD4",
+		"title": "Drug Use/Alcohol Abuse Prevention Demo: Community Partnership Study",
+		"description": "Provides financial assistance to local governments and/or local private non-profit organizations, designated to act on behalf of larger coalitions, to demonstrate models for elimination of alcohol and other drug abuse, especially by development of partnerships to encourage various individuals and groups in a community to more effectively coordinate prevention programs and to develop prevention initiatives; and to demonstrate the effectiveness of such community-based groups in prevention and early intervention. The Community Prevention Coalitions Demonstration (CPCD) program is included in this activity code."
+	},
+	{
+		"id": 191,
+		"category": "Non-HHS Federal Awards",
+		"code": "I01",
+		"title": "Non-HHS Research Projects",
+		"description": "To support research projects of non-DHHS entities.  For the VA, this will be used for intramural research projects."
+	},
+	{
+		"id": 253,
+		"category": "Research Projects",
+		"code": "I80",
+		"title": "DoD Research Project Grant Program (I80)",
+		"description": "The DoD Research Project (I80) grant is an award made to support a discrete, specified,\ncircumscribed project to be performed by the named investigator(s) in an area\nrepresenting the investigator's specific interest and competencies, based on the mission\nof the DoD."
+	},
+	{
+		"id": 229,
+		"category": "Non-DHHS Federal Awards",
+		"code": "IK3",
+		"title": "Non-DHHS Nursing Research Initiative",
+		"description": "To provide research and salary support for a supervised/mentored career development experience for nurses.  Awards are not renewable, nor are they transferable from one principal investigator to another."
+	},
+	{
+		"id": 251,
+		"category": "Research Career Programs",
+		"code": "K00",
+		"title": "Post-doctoral Transition Award",
+		"description": "To support the second phase of a Pre-Doctoral to Post-Doctoral Transition award program that provides 3-4 years of career support. Note: The K00 Post-doctoral Transition Award is anticipated to only be used in conjunction with the F99 Pre-Doctoral Award.",
+		"url": "https://researchtraining.nih.gov/programs/fellowships/F99-K00"
+	},
+	{
+		"id": 16,
+		"category": "Research Career Programs",
+		"code": "K01",
+		"title": "Research Scientist Development Award - Research & Training",
+		"description": "For support of a scientist, committed to research, in need of both advanced research training and additional experience.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K01"
+	},
+	{
+		"id": 17,
+		"category": "Research Career Programs",
+		"code": "K02",
+		"title": "Research Scientist Development Award - Research",
+		"description": "For support of a scientist, committed to research, in need of additional experience.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K02"
+	},
+	{
+		"id": 18,
+		"category": "Research Career Programs",
+		"code": "K05",
+		"title": "Research Scientist Award",
+		"description": "For the support of a research scientist qualified to pursue independent research which would extend the research program of the sponsoring institution, or to direct an essential part of this research program."
+	},
+	{
+		"id": 19,
+		"category": "Research Career Programs",
+		"code": "K06",
+		"title": "Research Career Awards",
+		"description": "To enable institutions to finance positions favorable to the intellectual growth and research productivity of established investigators of high competence for the duration of their careers."
+	},
+	{
+		"id": 20,
+		"category": "Research Career Programs",
+		"code": "K07",
+		"title": "Academic/Teacher Award (ATA)",
+		"description": "To create and encourage a stimulating approach to disease curricula that will attract high quality students, foster academic career development of promising young teacher-investigators, develop and implement excellent multidisciplinary curricula through interchange of ideas and enable the recipient institution to strengthen its existing teaching program.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K07"
+	},
+	{
+		"id": 21,
+		"category": "Research Career Programs",
+		"code": "K08",
+		"title": "Clinical Investigator Award (CIA)",
+		"description": "To provide the opportunity for promising medical scientists with demonstrated aptitude to develop into independent investigators, or for faculty members to pursue research aspects of categorical areas applicable to the awarding unit, and aid in filling the academic faculty gap in these shortage areas within health profession's institutions of the country.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K08"
+	},
+	{
+		"id": 22,
+		"category": "Research Career Programs",
+		"code": "K12",
+		"title": "Physician Scientist Award (Program) (PSA)",
+		"description": "For support to a newly trained clinician appointed by an institution for development of independent research skills and experience in a fundamental science within the framework of an  interdisciplinary research and development program.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K12"
+	},
+	{
+		"id": 23,
+		"category": "Research Career Programs",
+		"code": "K14",
+		"title": "Minority School Faculty Development Awards",
+		"description": "To encourage the development of faculty investigators at minority schools and to enhance their research capabilities in specified health and health related areas."
+	},
+	{
+		"id": 24,
+		"category": "Research Career Programs",
+		"code": "K18",
+		"title": "The Career Enhancement Award",
+		"description": "Provides either full-time or part-time support for experienced scientists who wish to broaden their scientific capabilities or to make changes in their research careers by acquiring new research skills or knowledge.  Career enhancement experiences supported by this award should usually last no more than one year.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K18"
+	},
+	{
+		"id": 214,
+		"category": "Research Career Programs",
+		"code": "K21",
+		"title": "Scientist Development Award",
+		"description": "To foster the development of outstanding scientists with potential for making important contributions to the fields of alcoholism, drug abuse or mental health (ADM) research. Primarily intended to meet the need for supervised research experience for highly promising biological or behavioral scientists who need further supervised research experience."
+	},
+	{
+		"id": 25,
+		"category": "Research Career Programs",
+		"code": "K22",
+		"title": "Career Transition Award",
+		"description": "To provide support to outstanding newly trained basic or clinical investigators to develop their independent research skills through a two phase program; an initial period involving and intramural appointment at the NIH and a final period of support at an extramural institution.  The award is intended to facilitate the establishment of a record of independent research by the investigator in order to sustain or promote a successful research career.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K22"
+	},
+	{
+		"id": 26,
+		"category": "Research Career Programs",
+		"code": "K23",
+		"title": "Mentored Patient-Oriented Research Career Development Award",
+		"description": "To provide support for the career development of investigators who have made a commitment to focus their research endeavors on patient-oriented research.  This mechanism provides support for a 3 year minimum up to 5 year period of supervised study and research for clinically trained professionals who have the potential to develop into productive, clinical investigators.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K23"
+	},
+	{
+		"id": 27,
+		"category": "Research Career Programs",
+		"code": "K24",
+		"title": "Midcareer Investigator Award in Patient-Oriented Research",
+		"description": "To provide support for the clinicians to allow them protected time to devote to patient-oriented research and to act as mentors for beginning clinical investigators.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K24"
+	},
+	{
+		"id": 28,
+		"category": "Research Career Programs",
+		"code": "K25",
+		"title": "Mentored Quantitative Research Career Development Award",
+		"description": "To engender and foster such activities by supporting the career development of investigators with quantitative scientific and engineering backgrounds outside of biology or medicine who have made a commitment to focus their research endeavors on behavioral and biomedical research (basic or clinical).  This mechanism is aimed at research-oriented scientists with experience at the level of junior faculty (e.g., early to mid-levels of assistant professor or research assistant professor ranks).  This award provides support for a period of mentored study and research for professionals with such backgrounds who have the potential to integrate their expertise with biomedicine and develop into productive investigators. Examples of quantitative scientific and technical backgrounds outside of biology or medicine considered appropriate for this award include, but are not limited to:  mathematics, statistics, computer science, informatics, physics, chemistry, and engineering.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K25"
+	},
+	{
+		"id": 29,
+		"category": "Research Career Programs",
+		"code": "K26",
+		"title": "Midcareer Investigator Award in Biomedical and Behavioral Research",
+		"description": "The purpose of the Midcareer Investigator Award in Biomedical and Behavioral Research is to provide grant support for biomedical and behavioral scientists to allow them protected time to devote to their research and mentoring.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K26"
+	},
+	{
+		"id": 30,
+		"category": "Research Career Programs",
+		"code": "K30",
+		"title": "Clinical Research Curriculum Award (CRCA)",
+		"description": "The CRCA is an award to institutions and is intended to stimulate the inclusion of high-quality, multi-disciplinary didactic training as part of the career development of clinical investigators.  This award is intended to support the development of new didactic programs in clinical research at institutions that do not currently offer such programs or, in institutions with existing didactic programs in clinical research to support or expand their programs or to improve the quality of instruction."
+	},
+	{
+		"id": 256,
+		"category": "Research Career Programs",
+		"code": "K38",
+		"title": "Early Stage Mentored Research and Career Development",
+		"description": "To provide the opportunity for postdoctoral health professionals to engage in research and career development in categorical areas applicable to the awarding unit."
+	},
+	{
+		"id": 241,
+		"category": "Research Career Programs",
+		"code": "K43",
+		"title": "International Research Career Development Award",
+		"description": "For support of a Low- or Middle-Income Country scientist, committed to research at a Low- or Middle-Income Country institution, in need of career development and additional mentored research experience.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K43"
+	},
+	{
+		"id": 247,
+		"category": "Research Career Programs",
+		"code": "K76",
+		"title": "Emerging Leaders Career Development Award",
+		"description": "To advance the development of physician-scientists prepared to take an active role in addressing both present and future challenges of a global biomedical research enterprise as relevant to their field of expertise.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K76"
+	},
+	{
+		"id": 31,
+		"category": "Research Career Programs",
+		"code": "K99",
+		"title": "Career Transition Award",
+		"description": "To support the initial phase of a Career/Research Transition award program that provides 1-2 years of mentored support for highly motivated, advanced postdoctoral research scientists.",
+		"url": "https://researchtraining.nih.gov/programs/career-development/K99-R00"
+	},
+	{
+		"id": 132,
+		"category": "Research Career Programs",
+		"code": "KD1",
+		"title": "Mental Health and/or Substance Abuse KD&A Grants",
+		"description": "To provide support to develop new knowledge about ways to improve the prevention and/or treatment of substance abuse and/or mental illness, and to work with State and local governments as well as providers, families, and consumers to apply that knowledge effectively in everyday practice. Outcome measures are the heart and core of the KD&A program. KD&As do not provide operating funds for service programs, except as required by the knowledge development activity.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 32,
+		"category": "Research Career Programs",
+		"code": "KL1",
+		"title": "Linked Research Career Development Award",
+		"description": "For support of a scientist, committed to research, in need of both advanced research training and additional experience. The grant is administratively linked to another project or projects. A KL1 award may only be disaggregated from a U54 application and organizations may not apply for a KL1, Linked Research Career Development Award. The KL1 is used in lieu of the K01 for those programs that offer linked awards.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 33,
+		"category": "Research Career Programs",
+		"code": "KL2",
+		"title": "Mentored Career Development Award",
+		"description": "To support newly trained clinicians appointed by an institution for activities related to the development of a successful clinical and translational research career. The award is administratively linked to another project or projects. A KL2 award may only be disaggregated from a U54 application and organizations may not apply for a KL2, Mentored Career Development Award. The KL2 is used in lieu of the K12 for those programs that offer linked awards.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 211,
+		"category": "Research Career Programs",
+		"code": "KM1",
+		"title": "Institutional Career Enhancement Awards - Multi-Yr Funding",
+		"description": "Provides for part time (minimum 25% effort) up to full-time support for medical, scientific, statistics and health care professionals with post-doctoral or equivalent experience selected by an institution, to broaden their research capabilities by acquiring new research skills or knowledge.  Further it provides for curriculum development of new programs to support these same types of individuals.  This is an institutional mentored career program, not an individual program. It is also a multi-year funded institutional mentored career development activity thus ICs need OER prior approval to use the KM1.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 34,
+		"category": "Research Career Programs",
+		"code": "L30",
+		"title": "Loan Repayment Program for Clinical Researchers",
+		"description": "To provide for the repayment of the educational loan debt of qualified health professionals involved in clinical research.   Qualified health professionals who contractually agree to conduct qualified clinical research are eligible to apply for this program.",
+		"url": "https://www.lrp.nih.gov/program/applicants/extramural/clinical-research"
+	},
+	{
+		"id": 35,
+		"category": "Research Career Programs",
+		"code": "L32",
+		"title": "Loan Repayment Program for Clinical Researchers from Disadvantaged Backgrounds",
+		"description": "To provide for the repayment of the educational loan debt of qualified health professionals from disadvantaged backgrounds involved in clinical research. Qualified health professionals from disadvantaged backgrounds who contractually agree to conduct qualified clinical research are eligible to apply for this program.",
+		"url": "https://www.lrp.nih.gov/program/renew/extramural/clinical-research-disadvantaged-backgrounds-extramural"
+	},
+	{
+		"id": 36,
+		"category": "Research Career Programs",
+		"code": "L40",
+		"title": "Loan Repayment Program for Pediatric Research",
+		"description": "To provide for the repayment of the educational loan debt of qualified health professionals involved in research directly related to diseases, disorders, and other conditions in children. Qualified health professionals who contractually agree to conduct qualified pediatric research are eligible to apply for this program.",
+		"url": "https://www.lrp.nih.gov/program/applicants/extramural/pediatric-research"
+	},
+	{
+		"id": 37,
+		"category": "Research Career Programs",
+		"code": "L50",
+		"title": "Loan Repayment Program for Contraception and Infertility Research",
+		"description": "To provide for the repayment of the educational loan debt of qualified health professionals (including graduate students) who contractually agree to commit to conduct qualified contraception and/or infertility research.",
+		"url": "https://www.lrp.nih.gov/program/renew/extramural/contraception-infertility-research"
+	},
+	{
+		"id": 38,
+		"category": "Research Career Programs",
+		"code": "L60",
+		"title": "Loan Repayment Program for Health Disparities Research",
+		"description": "To provide for the repayment of the educational loan debt of qualified health professionals involved in minority health and health disparities research, for the purposes of improving minority health and reducing health disparities. Qualified health professionals who contractually agree to conduct qualified minority health disparities research or other health disparities research eligible to apply for this program.",
+		"url": "https://www.lrp.nih.gov/program/applicants/extramural/health-disparities-research"
+	},
+	{
+		"id": 269,
+		"category": "Research Career Programs",
+		"code": "L70",
+		"title": "Loan Repayment Program for Research in Emerging Areas Critical to Human Health",
+		"description": "For investigators pursuing major opportunities or gaps in emerging high-priority research areas, as defined by NIH Institutes and Centers."
+	},
+	{
+		"id": 39,
+		"category": "General Clinical Research Centers Program",
+		"code": "M01",
+		"title": "General Clinical Research Centers Program",
+		"description": "An award made to an institution solely for the support of a General Clinical Research Center where scientists conduct studies on a wide range of human diseases using the full spectrum of the biomedical sciences.  Costs underwritten by these grants include those for renovation, for operational expenses  such as staff salaries, equipment, and supplies, and for hospitalization.  A General Clinical Research Center is a discrete unit of research beds separated from the general care wards."
+	},
+	{
+		"id": 249,
+		"category": "Other Transactions",
+		"code": "OT2",
+		"title": "Research Project-Other Transaction Award",
+		"description": "An award other than a procurement contract, grant or cooperative agreement to carry out a specific function, initiative, program, project, or research under an Other Transactions Authority.",
+		"url": "https://www.nih.gov/research-training/allofus-research-program/funding/all-us-research-program-engagement-partners-ot2"
+	},
+	{
+		"id": 40,
+		"category": "Research Program Projects and Centers",
+		"code": "P01",
+		"title": "Research Program Projects",
+		"description": "For the support of a broadly based, multidisciplinary, often long-term research program which has a specific major objective or a basic theme. A program project generally involves the organized efforts of relatively large groups, members of which are conducting research projects designed to elucidate the various aspects or components of this objective. Each research project is usually under the leadership of an established investigator. The grant can provide support for certain basic resources used by these groups in the program, including clinical components, the sharing of which facilitates the total research effort. A program project is directed toward a range of problems having a central research focus, in contrast to the usually narrower thrust of the traditional research project. Each project supported through this mechanism should contribute or be directly related to the common theme of the total research effort. These scientifically meritorious projects should demonstrate an essential element of unity and interdependence, i.e., a system of research activities and projects directed toward a well-defined research program goal.",
+		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+	},
+	{
+		"id": 41,
+		"category": "Research Program Projects and Centers",
+		"code": "P20",
+		"title": "Exploratory Grants",
+		"description": "To support planning for new programs, expansion or modification of existing resources, and feasibility studies to explore various approaches to the development of interdisciplinary programs that offer potential solutions to problems of special significance to the mission of the NIH.  These exploratory studies may lead to specialized or comprehensive centers.",
+		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+	},
+	{
+		"id": 230,
+		"category": "Research Program Projects and Centers",
+		"code": "P2C",
+		"title": "Resource-Related Research Multi-Component Projects and Centers",
+		"description": "To support multi-component research resource projects and centers that will enhance the capability of resources to serve biomedical research."
+	},
+	{
+		"id": 42,
+		"category": "Research Program Projects and Centers",
+		"code": "P30",
+		"title": "Center Core Grants",
+		"description": "To support shared resources and facilities for categorical research by a number of investigators from different disciplines who provide a multidisciplinary approach to a joint research effort or from the same discipline who focus on a common research problem.  The core grant is integrated with the center's component projects or program projects, though funded independently from them.  This support, by providing more accessible resources, is expected to assure a greater productivity than from the separate projects and program projects.",
+		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+	},
+	{
+		"id": 43,
+		"category": "Research Program Projects and Centers",
+		"code": "P40",
+		"title": "Animal (Mammalian and Nonmammalian) Model, and Animal and Biological Material Resource Grants",
+		"description": "To develop and support animal (mammalian and nonmammalian) models, or animal or biological materials resources available to all qualified investigators without regard to the scientific disciplines or disease orientations of their research activities or specifically directed to a categorical program.  Nonmammalian resources include nonmammalian vertebrates, invertebrates, cell systems, and nonbiological systems."
+	},
+	{
+		"id": 44,
+		"category": "Research Program Projects and Centers",
+		"code": "P41",
+		"title": "Biotechnology Resource Grants",
+		"description": "To support biotechnology resources available to all qualified investigators without regard to the scientific disciplines or disease orientations of their research activities or specifically directed to a categorical program area."
+	},
+	{
+		"id": 45,
+		"category": "Research Program Projects and Centers",
+		"code": "P42",
+		"title": "Hazardous Substances Basic Research Grants Program (NIEHS)",
+		"description": "To support basic research directed towards understanding and attenuating the public health effects resulting from exposure to hazardous substances, including 1) advanced techniques for detection, assessment and evaluation of the effects on human health of hazardous substances; 2) methods to assess risks to human health presented by hazardous substances; 3) methods and technologies to detect hazardous substances in the environment and 4) basic biological, chemical, and physical methods to reduce the amount and toxicity of hazardous substances. This special program, authorized under Superfund legislation, is for a broadly based, multi-disciplinary research effort which must include biomedical research components and which may include research components related to engineering, hydrogeology, ecology and epidemiology so long as they are linked to basic biomedical science. Each research project is generally under the leadership of an established investigator. The grant can provide support for certain basic resources used by the groups in the program (cores), including an administrative structure for effective coordination."
+	},
+	{
+		"id": 46,
+		"category": "Research Program Projects and Centers",
+		"code": "P50",
+		"title": "Specialized Center",
+		"description": "To support any part of the full range of research and development from very basic to clinical; may involve ancillary supportive activities such as protracted patient care necessary to the primary research or R&D effort.  The spectrum of activities comprises a multidisciplinary attack on a specific disease entity or biomedical problem area.  These grants differ from program project grants in that they are usually developed in response to an announcement of the programmatic needs of an Institute or Division and subsequently receive continuous attention from its staff.  Centers may also serve as regional or national resources for special research purposes.",
+		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+	},
+	{
+		"id": 47,
+		"category": "Research Program Projects and Centers",
+		"code": "P51",
+		"title": "Primate Research Center Grants",
+		"description": "To support centers which include a multidisciplinary and multi-categorical core research program using primate animals and to maintain a large and varied primate colony which is available to affiliated, collaborative, and visiting investigators for basic and applied biomedical research and training."
+	},
+	{
+		"id": 48,
+		"category": "Research Program Projects and Centers",
+		"code": "P60",
+		"title": "Comprehensive Center",
+		"description": "To support a multipurpose unit designed to bring together into a common focus divergent but related facilities within a given  community.  It may be based in a university or may involve other locally available resources, such as hospitals, computer facilities, regional centers, and primate colonies.  It may include specialized centers, program projects and projects as integral components.  Regardless of the facilities available to a program, it usually includes the following objectives:  to foster biomedical research and development at both the fundamental and clinical levels; to initiate and expand community education, screening, and counseling programs; and to educate medical and allied health professionals concerning the problems of diagnosis and treatment of a specific disease."
+	},
+	{
+		"id": 49,
+		"category": "Research Program Projects and Centers",
+		"code": "PL1",
+		"title": "Linked Center Core Grant",
+		"description": "To support shared resources and facilities for categorical research by a number of investigators from different disciplines who provide a multidisciplinary approach to a joint research effort or from the same discipline who focus on a common research problem. The core grant is integrated with the center's component projects or program projects, though funded independently from them. This support, by providing more accessible resources, is expected to assure a greater productivity than from the separate projects and program projects. The Linked Center Core Grant is administratively linked to another project or projects. A PL1 award may only be disaggregated from a U54 application and organizations may not apply for a PL1, Linked Center Core Grant. The PL1 is used in lieu of the P30 for those programs that offer linked awards."
+	},
+	{
+		"id": 232,
+		"category": "Research Program Projects and Centers",
+		"code": "PM1",
+		"title": "Program Project or Center with Complex Structure",
+		"description": "To support a complex research program or center with complicated structures that cannot be appropriately categorized into an available multicomponent activity code. The performance period may extend up to seven years but only through the established deviation request process.  ICs desiring to use this activity code for programs greater than 5 years must receive OPERA prior approval through the deviation request process."
+	},
+	{
+		"id": 50,
+		"category": "Research Program Projects and Centers",
+		"code": "PN1",
+		"title": "Concept Development Award",
+		"description": "To support the planning and research activities required to assemble multidisciplinary research teams in order to generate an extensive plan that describes the scientific areas, organization, and operation of a research center. Concept Development Awards are not renewable."
+	},
+	{
+		"id": 51,
+		"category": "Research Program Projects and Centers",
+		"code": "PN2",
+		"title": "Research Development Center",
+		"description": "To support any part of the full range of research and development from very basic to clinical as well as any educational, administrative, or other activities required in the center. The spectrum of research activities comprises a multidisciplinary approach to promote research primarily in a new or emerging biomedical scientific area. These centers are expected to operate as a networkof centers to promote interactions and resource sharing. Only recipients of the PN1 are eligible to apply for the PN2."
+	},
+	{
+		"id": 52,
+		"category": "Research Projects",
+		"code": "R00",
+		"title": "Research Transition Award",
+		"description": "To support the second phase of a Career/Research Transition award program that provides 1 -3 years of independent research support (R00) contingent on securing an independent research position. Award recipients will be expected to compete successfully for independent R01 support from the NIH during the R00 research transition award period.",
+		"url": "http://grants.nih.gov/training/careerdevelopmentawards.htm"
+	},
+	{
+		"id": 53,
+		"category": "Research Projects",
+		"code": "R01",
+		"title": "Research Project",
+		"description": "To support a discrete, specified, circumscribed project to be performed by the named investigator(s) in an area representing his or her specific interest and competencies.",
+		"url": "http://grants.nih.gov/grants/funding/r01.htm"
+	},
+	{
+		"id": 54,
+		"category": "Research Projects",
+		"code": "R03",
+		"title": "Small Research Grants",
+		"description": "To provide research support specifically limited in time and amount for studies in categorical program areas.  Small grants provide flexibility for initiating studies which are generally for preliminary short-term projects and are non-renewable.",
+		"url": "http://grants.nih.gov/grants/funding/r03.htm"
+	},
+	{
+		"id": 55,
+		"category": "Research Projects",
+		"code": "R13",
+		"title": "Conference",
+		"description": "To support recipient sponsored and directed international, national or regional meetings, conferences and workshops.",
+		"url": "http://grants.nih.gov/grants/funding/r13/index.htm"
+	},
+	{
+		"id": 56,
+		"category": "Research Projects",
+		"code": "R15",
+		"title": "Research Enhancement Awards",
+		"description": "Supports small-scale research projects at educational institutions that provide baccalaureate or advanced degrees for a significant number of the Nation\u2019s research scientists but that have not been major recipients of NIH support. The goals of the program are to (1) support meritorious research, (2) expose students to research, and (3) strengthen the research environment of the institution. Awards provide limited Direct Costs, plus applicable F&amp;A costs, for periods not to exceed 36 months. This activity code uses multi-year funding authority; however, OER approval is NOT needed prior to an IC using this activity code.",
+		"url": "https://grants.nih.gov/grants/funding/r15.htm"
+	},
+	{
+		"id": 262,
+		"category": "Research Projects",
+		"code": "R16",
+		"title": "Research Excellence Award",
+		"description": "Supports small-scale research projects at educational institutions that that enroll significant\nnumbers of students from backgrounds nationally underrepresented in biomedical research,\naward baccalaureate and graduate degrees in biomedical sciences, and receive limited NIH\nfunding."
+	},
+	{
+		"id": 57,
+		"category": "Research Projects",
+		"code": "R18",
+		"title": "Research Demonstration and Dissemination Projects",
+		"description": "To provide support designed to develop, test, and evaluate health service activities, and to foster the application of existing knowledge for the control of categorical diseases."
+	},
+	{
+		"id": 58,
+		"category": "Research Projects",
+		"code": "R21",
+		"title": "Exploratory/Developmental Grants",
+		"description": "To encourage the development of new research activities in categorical program areas.  (Support generally is restricted in level of support and in time.)",
+		"url": "http://grants.nih.gov/grants/funding/r21.htm"
+	},
+	{
+		"id": 59,
+		"category": "Research Projects",
+		"code": "R24",
+		"title": "Resource-Related Research Projects",
+		"description": "To support research projects that will enhance the capability of resources to serve biomedical research.",
+		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#Resource"
+	},
+	{
+		"id": 60,
+		"category": "Research Projects",
+		"code": "R25",
+		"title": "Education Projects",
+		"description": "For support to develop and/or implement a program as it relates to a category in one or more of the areas of education, information, training, technical assistance, coordination, or evaluation.",
+		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#Resource"
+	},
+	{
+		"id": 225,
+		"category": "Research Projects",
+		"code": "R28",
+		"title": "Resource-Related Research Projects",
+		"description": "To support research projects contributing to improvement of the capability of resources to serve clinical research."
+	},
+	{
+		"id": 260,
+		"category": "Research Projects",
+		"code": "R2F",
+		"title": "Food Safety Capacity and Infrastructure Building",
+		"description": "To build food safety capacity and infrastructure by assisting State, locality, territory, Indian tribe, or nonprofit food safety training entity that collaborates with 1 or more institutions of higher education to undertake food safety inspections, investigations, and examinations; train to the standards established by the HHS Secretary; build lab capacity; and respond to notifications received under Section 1008 and recalls."
+	},
+	{
+		"id": 134,
+		"category": "Research Projects",
+		"code": "R30",
+		"title": "Preventive Health Service - Venereal Disease Research, Demonstration, and Public Information and Education Grants",
+		"description": "(Definition not available)"
+	},
+	{
+		"id": 61,
+		"category": "Research Projects",
+		"code": "R33",
+		"title": "Exploratory/Developmental Grants Phase II",
+		"description": "The R33 award is to provide  a second phase for the support for innovative exploratory and development research activities initiated under the R21 mechanism.  Although only R21 awardees are generally eligible to apply for R33 support, specific program initiatives may establish eligibility criteria under which applications could be accepted from applicants demonstrating progress equivalent to that expected under R33."
+	},
+	{
+		"id": 62,
+		"category": "Research Projects",
+		"code": "R34",
+		"title": "Planning Grant",
+		"description": "To provide support for the initial development of a clinical trial or research project, including the establishment of the research team; the development of tools for data management and oversight of the research; the development of a trial design or experimental research designs and other essential elements of the study or project, such as the protocol, recruitment strategies, procedure manuals and collection of feasibility data.",
+		"url": "http://grants.nih.gov/grants/funding/r34.htm"
+	},
+	{
+		"id": 237,
+		"category": "Research Projects",
+		"code": "R35",
+		"title": "Outstanding Investigator Award",
+		"description": "To provide long term support to an experienced investigator with an outstanding record of research productivity. This support is intended to encourage investigators to embark on long-term projects of unusual potential."
+	},
+	{
+		"id": 135,
+		"category": "Research Projects",
+		"code": "R36",
+		"title": "Dissertation Award",
+		"description": "To support dissertation research costs of students in accredited research doctoral programs in the United States (including Puerto Rico and other U.S. territories or possessions). Dissertation awards are not renewable.",
+		"url": "https://researchtraining.nih.gov/programs/other-training-related/R36"
+	},
+	{
+		"id": 63,
+		"category": "Research Projects",
+		"code": "R37",
+		"title": "Method to Extend Research in Time (MERIT) Award",
+		"description": "To provide long-term grant support to investigators whose research competence and productivity are distinctly superior and who are highly likely to continue to perform in an outstanding manner.  Investigators may not apply for a MERIT award.  Program staff and/or members of the cognizant National Advisory Council/Board will identify candidates for the MERIT award during the course of review of competing research grant applications prepared and submitted in accordance with regular PHS requirements."
+	},
+	{
+		"id": 255,
+		"category": "Research Projects",
+		"code": "R38",
+		"title": "Mentored Research Pathway in Residency",
+		"description": "For support to develop and/or implement an institutional program offering mentored\nresearch in residency."
+	},
+	{
+		"id": 64,
+		"category": "Research Projects",
+		"code": "R41",
+		"title": "Small Business Technology Transfer (STTR) Grants - Phase I",
+		"description": "To support cooperative R&D projects between small business concerns and research institutions, limited in time and amount, to establish the technical merit and feasibility of ideas that have potential for commercialization.  Awards are made to small business concerns only.",
+		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+	},
+	{
+		"id": 65,
+		"category": "Research Projects",
+		"code": "R42",
+		"title": "Small Business Technology Transfer (STTR) Grants - Phase II",
+		"description": "To support in - depth development of cooperative R&D projects between small business concerns and research institutions, limited in time and amount, whose feasibility has been established in Phase I and that have potential for commercialization.  Awards are made to small business concerns only.",
+		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+	},
+	{
+		"id": 66,
+		"category": "Research Projects",
+		"code": "R43",
+		"title": "Small Business Innovation Research Grants (SBIR) - Phase I",
+		"description": "To support projects, limited in time and amount, to establish the technical merit and feasibility of R&D ideas which may ultimately lead to a commercial product(s) or service(s).",
+		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+	},
+	{
+		"id": 67,
+		"category": "Research Projects",
+		"code": "R44",
+		"title": "Small Business Innovation Research Grants (SBIR) - Phase II",
+		"description": "To support in - depth development of R&D ideas whose feasibility has been established in Phase I and which are likely to result in commercial products or services.  SBIR Phase II are considered \u201cFast-Track\u201d and do not require National Council Review.",
+		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+	},
+	{
+		"id": 136,
+		"category": "Research Projects",
+		"code": "R49",
+		"title": "Injury Control Research and Demonstration Projects and Injury Prevention Research Centers",
+		"description": "Provides financial assistance to non-profit and for-profit organizations to conduct research and demonstration projects as well as training programs to develop a comprehensive and integrated approach to injury control. These projects will integrate aspects of the disciplines of engineering, public health, behavioral sciences, medicine, and others in order to prevent and control injuries."
+	},
+	{
+		"id": 246,
+		"category": "Research Projects",
+		"code": "R50",
+		"title": "Research Specialist Award",
+		"description": "The Research Specialist Award is designed to encourage the development of stable research career opportunities for exceptional scientists who want to pursue research within the context of an existing research program, but not serve as Principal Investigators. The Award is intended to provide desirable salaries and sufficient autonomy so that individuals are not solely dependent on grants held by Principal Investigators for career continuity."
+	},
+	{
+		"id": 68,
+		"category": "Research Projects",
+		"code": "R55",
+		"title": "James A. Shannon Director's Award",
+		"description": "To provide a limited award to investigators to further develop, test, and refine research techniques; perform secondary analysis of available data sets;  test the feasibility of innovative and creative approaches;  and conduct other discrete projects that can  demonstrate their research capabilities and lend additional weight to their already meritorious applications."
+	},
+	{
+		"id": 69,
+		"category": "Research Projects",
+		"code": "R56",
+		"title": "High Priority, Short Term Project Award",
+		"description": "To provide limited interim research support based on the merit of a pending R01 application while applicant gathers additional data to revise a new or competing renewal application. This grant will underwrite highly meritorious applications that if given the opportunity to revise their application could meet IC recommended standards and would be missed opportunities if not funded. Interim funded ends when the applicant succeeds in obtaining an R01 or other competing award built on the R56 grant. These awards are not renewable.",
+		"url": "http://grants.nih.gov/grants/funding/r56.htm"
+	},
+	{
+		"id": 244,
+		"category": "Research Projects",
+		"code": "R61",
+		"title": "Phase 1 Exploratory/Developmental Grant",
+		"description": "As part of a bi-phasic approach to funding exploratory and/or developmental research, the R61 provides support for the first phase of the award. This activity code is used in lieu of the R21 activity code when larger budgets and/or project periods are required to establish feasibility for the project."
+	},
+	{
+		"id": 70,
+		"category": "Research Projects",
+		"code": "R90",
+		"title": "Interdisciplinary Regular Research Training Award",
+		"description": "To support comprehensive interdisciplinary research training programs at the undergraduate, predoctoral and/or postdoctoral levels, by capitalizing on the infrastructure of existing multidisciplinary and interdisciplinary research programs.  This Activity Code is for trainees who do not meet the qualifications for NRSA authority.",
+		"url": "https://researchtraining.nih.gov/programs/training-grants/T90-R90"
+	},
+	{
+		"id": 196,
+		"category": "Research Projects",
+		"code": "RC1",
+		"title": "NIH Challenge Grants and Partnerships Program",
+		"description": "NIH Challenge Grants in Health and Science Research"
+	},
+	{
+		"id": 205,
+		"category": "Research Projects",
+		"code": "RC2",
+		"title": "High Impact Research and Research Infrastructure Programs",
+		"description": "To support high impact ideas that may lay the foundation for new fields of investigation; accelerate breakthroughs; stimulate early and applied research on cutting-edge technologies; foster new approaches to improve the interactions among multi- and interdisciplinary research teams; or, advance the research enterprise in a way that could stimulate future growth and investments and advance public health and health care delivery.  This activity code could support either a specific research question or propose the creation of a unique infrastructure/resource designed to accelerate scientific progress in the future."
+	},
+	{
+		"id": 206,
+		"category": "Research Projects",
+		"code": "RC3",
+		"title": "Biomedical Research, Development, and Growth to Spur the Acceleration of New Technologies (BRDG-SPAN) Program",
+		"description": "To accelerate the transition of NIH-supported research innovations and technologies toward the development of products or services that will improve human health, through grants that may advance the mission of NIH and its Institutes and Centers (ICs), and create significant value and economic stimulus or, advance the research enterprise in a way that could stimulate future growth and investments and advance public health and health care delivery.  This activity code is intended to support research and development (R&D) specifically targeted at activities that can help address the funding gap between promising R&D and transitioning to the market, often called the \u201cValley of Death\u201d by contributing the critical funding needed by applicants to pursue the next appropriate milestone(s) toward ultimate commercialization; i.e., to carry out later stage research activities necessary to that end; to foster partnerships among a variety of research and development (R&D) collaborators working toward these aims. Awards are made only to U.S.-owned, for-profit enterprises doing a majority of its business in the United States. RC3 applications may be given funding priority if the applicant organization is associated with an enterprise that is of small size (e.g., 500 or fewer employees), and/or of limited resources, such as an early-stage company, and/or one positioned for receiving funding or in-kind support from a third-party investor and/or strategic partner. The RC3 SPAN program is not intended to support \u201cupstream\u201d R&D for doing feasibility testing of an innovative idea or to conduct early-stage R&D as an extension of such ideas. (Projects such as these should be submitted under the NIH SBIR/STTR programs.)"
+	},
+	{
+		"id": 209,
+		"category": "Research Projects",
+		"code": "RC4",
+		"title": "High Impact Research and Research Infrastructure Programs\u2014Multi-Yr Funding",
+		"description": "To support multi-year funded research with high impact ideas that may lay the foundation for new fields of investigation; accelerate breakthroughs; stimulate early and applied research on cutting-edge technologies; foster new approaches to improve the interactions among multi- and interdisciplinary research teams; or, advance the research enterprise in a way that could stimulate future growth and investments and advance public health and health care delivery. This activity code could support either a specific research question or propose the creation of a unique infrastructure/resource designed to accelerate scientific progress in the future. It is the multi-year funded companion activity code to the existing RC2; thus ICs need OER prior approval to use the RC4."
+	},
+	{
+		"id": 223,
+		"category": "Research Projects",
+		"code": "RF1",
+		"title": "Multi-Year Funded Research Project Grant",
+		"description": "To support a discrete, specific, circumscribed project to be performed by the named investigator(s) in an area representing specific interest and competencies based on the mission of the agency, using standard peer review criteria.  This is the multi-year funded equivalent of the R01 but can be used also for multi-year funding of other research project grants such as R03, R21 as appropriate."
+	},
+	{
+		"id": 71,
+		"category": "Research Projects",
+		"code": "RL1",
+		"title": "Linked Research project Grant",
+		"description": "To support a discrete, specified, circumscribed project that is administratively linked to another project or projects, and to be performed by the named investigator(s) in an area representing his or her specific interest and competencies. An RL1 award may only be disaggregated from U54 application and organizations may not apply for an RL1, Linked Research Project Grant. The RL1 activity code is used in Lieu of the R01 for those programs that offer linked awards."
+	},
+	{
+		"id": 72,
+		"category": "Research Projects",
+		"code": "RL2",
+		"title": "Linked Exploratory/Development Grant",
+		"description": "To encourage the development of new research activities in categorical program areas. (Support generally is restricted in level of support and in time). The grant is administratively linked to another project or projects. An RL2 award may only be disaggregated from a U54 application and organizations may not apply for an RL2, Linked Exploratory/Development Grant. The RL2 activity code is used in lieu of the R21 for those programs that offer linked awards."
+	},
+	{
+		"id": 73,
+		"category": "Research Projects",
+		"code": "RL5",
+		"title": "Linked Education Project",
+		"description": "For support to develop and/or implement a program as it relates to a category in one or more of the areas of education, information, training, technical assistance, coordination, or evaluation.  The grant is administratively linked to another project or projects.  A RL5 award may only be disaggregated from a U54 application and organizations may not apply for an RL5, Linked Education Project.  The RL5 is used in lieu of the R25 for those programs that offer linked awards."
+	},
+	{
+		"id": 74,
+		"category": "Research Projects",
+		"code": "RL9",
+		"title": "Linked Research Training Award",
+		"description": "To support comprehensive interdisciplinary research training programs at the undergraduate, pre-doctoral and/or postdoctoral levels, by capitalizing on the infrastructure of existing multidisciplinary and interdisciplinary research programs. The RL9 is for trainees who do not meet the qualifications for NRSA authority.  The training program is administratively linked to another project or projects.  An RL9 award may only be disaggregated from a U54 application and organizations may not apply for an RL9, Linked Research Training Award.  The RL9 is used in lieu of the R90 for those programs that offer linked awards."
+	},
+	{
+		"id": 233,
+		"category": "Research Projects",
+		"code": "RM1",
+		"title": "Research Project with Complex Structure",
+		"description": "To support a large-scale research project with a complex structure that cannot be appropriately categorized into an available single component activity code. The performance period may extend up to seven years but only through the established deviation request process.  ICs desiring to use this activity code for programs greater than 5 years must receive OPERA prior approval through the deviation request process."
+	},
+	{
+		"id": 75,
+		"category": "Research Projects",
+		"code": "RS1",
+		"title": "Programs to Prevent the Emergence and Spread of Antimicrobial Resistance in the United States",
+		"description": "Develop, implement, and evaluate an antimicrobial project to prevent and control the emergence, prevalence, and spread of antimicrobial resistance in rural areas, and microbiologic mechanisms of dissemination of antimicrobial resistance genes and the relationship to antimicrobial drug use."
+	},
+	{
+		"id": 76,
+		"category": "Research-Related Programs",
+		"code": "S06",
+		"title": "Minority Biomedical Research Support - MBRS",
+		"description": "To strengthen the biomedical research and research training capability of ethnic minority institutions, and thus establish a more favorable milieu for increasing the involvement of minority faculty and students in biomedical research."
+	},
+	{
+		"id": 213,
+		"category": "Research-Related Programs",
+		"code": "S07",
+		"title": "Biomedical Research Support Grants",
+		"description": "To strengthen, balance, and stabilize Public Health Service supported biomedical and behavioral research programs at qualifying institutions through flexible funds, awarded on a formula basis, that permit recipient institutions to respond quickly and effectively to emerging needs and opportunities, to enhance creativity and innovation, to support pilot studies, and to improve research resources, both physical and human."
+	},
+	{
+		"id": 268,
+		"category": "Research-Related Programs",
+		"code": "S10",
+		"title": "Biomedical Research Support Shared Instrumentation Grants",
+		"description": "To make available to institutions with a high concentration of NIH extramural research awards, research instruments which will be used on a shared basis."
+	},
+	{
+		"id": 78,
+		"category": "Research-Related Programs",
+		"code": "S11",
+		"title": "Minority Biomedical Research Support Thematic Project Grants",
+		"description": "To promote increased faculty and interdepartmental collaboration through programs that focus on specific research themes or scientific disciplines at developing minority institutions.  These  grants are intended to strengthen the biomedical research capability in defined areas and to attract other competent biomedical scientists through an improved research environment."
+	},
+	{
+		"id": 267,
+		"category": "Research-Related Programs",
+		"code": "S15",
+		"title": "Small Instrumentation Grants Program",
+		"description": "An institutional award to support the purchase of equipment costing no less than $5,000 and no more than $60,000, to be used by one or more recipients of active NIH research grants."
+	},
+	{
+		"id": 79,
+		"category": "Research-Related Programs",
+		"code": "S21",
+		"title": "Research and Institutional Resources Health Disparities Endowment Grants -Capacity Building",
+		"description": "To strengthen the research and training infrastructure of the institution, while addressing current and emerging needs in minority  health and other health disparities research."
+	},
+	{
+		"id": 80,
+		"category": "Research-Related Programs",
+		"code": "S22",
+		"title": "Research and Student Resources Health Disparities Endowment Grants - Educational Programs",
+		"description": "To increase the investment in student-centered programs: to improve the academic success of underrepresented minorities and    socio-economically disadvantaged individuals in biomedical and bio-behavioral fields of study."
+	},
+	{
+		"id": 242,
+		"category": "Research Projects",
+		"code": "SB1",
+		"title": "Commercialization Readiness Program",
+		"description": "To support follow-on awards to small businesses for technology development, testing, evaluation, and commercialization assistance for SBIR or STTR Phase II technologies or for awards to small businesses to support the progress of research, research and development, and commercialization conducted under the SBIR or STTR programs to Phase III."
+	},
+	{
+		"id": 81,
+		"category": "Research-Related Programs",
+		"code": "SC1",
+		"title": "Research Enhancement Award",
+		"description": "Individual investigator-initiated research projects aimed at developing researchers at minority-serving institutions (MSIs) to a stage where they can transition successfully to other     s extramural support (R01 or equivalent)."
+	},
+	{
+		"id": 82,
+		"category": "Research-Related Programs",
+		"code": "SC2",
+		"title": "Pilot Research Project",
+		"description": "Individual investigator-initiated pilot research projects for faculty at MSIs to generate preliminary data for a more ambitious research project."
+	},
+	{
+		"id": 83,
+		"category": "Research-Related Programs",
+		"code": "SC3",
+		"title": "Research Continuance Award",
+		"description": "Individual investigator-initiated research projects for faculty at MSIs to conduct research of limited scope in environments with limited research infrastructure/facilities."
+	},
+	{
+		"id": 220,
+		"category": "Research-Related Programs",
+		"code": "SI2",
+		"title": "Intramural Clinical Scholar Research Award",
+		"description": "This program will encourage exceptionally talented clinical researchers to conduct research in the Intramural Research Program for a specified period of time who will then be able to work with an extramural institution to develop an independent research grant application for follow-on support.  This code can only be used as phase 1 (intramural) of a 2-phase intramural/extramural program. No extramural award can be issued using this activity code.  NIH Intramural and OPERA prior approval is required to use this activity code."
+	},
+	{
+		"id": 138,
+		"category": "Training Programs",
+		"code": "T01",
+		"title": "Graduate Training Program",
+		"description": "To assist and extend training of individuals preparing for research and academic careers in fundamental, preclinical, clinical, public health, and other disciplines related to the area of interest of the awarding Institute/Division."
+	},
+	{
+		"id": 139,
+		"category": "Training Programs",
+		"code": "T02",
+		"title": "Undergraduate Training Program",
+		"description": "To assist qualified institutions to improve and expand the training of undergraduate students in disciplines related to an area of interest of the awarding Institute/Division.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 140,
+		"category": "Training Programs",
+		"code": "T09",
+		"title": "Scientific Evaluation",
+		"description": "To provide the chairman of the training committee funds for operation of the review group.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 84,
+		"category": "Training Programs",
+		"code": "T14",
+		"title": "Conferences",
+		"description": "For support of international and national meetings, conferences and workshops.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 85,
+		"category": "Training Programs",
+		"code": "T15",
+		"title": "Continuing Education Training Grants",
+		"description": "To assist professional schools and other public and nonprofit institutions to establish, expand, or improve programs of continuing professional education, especially for programs of extensive continuation, extension, or refresher education dealing with new developments in the science of technology of the profession."
+	},
+	{
+		"id": 86,
+		"category": "Training Programs",
+		"code": "T32",
+		"title": "Institutional National Research Service Award",
+		"description": "To enable institutions to make National Research Service Awards to individuals selected by them for predoctoral and postdoctoral research training in specified shortage areas.",
+		"url": "https://researchtraining.nih.gov/programs/training-grants/T32-a"
+	},
+	{
+		"id": 87,
+		"category": "Training Programs",
+		"code": "T34",
+		"title": "Undergraduate NRSA Institutional Research Training Grants",
+		"description": "To enhance the undergraduate research training of individuals from groups underrepresented in biomedical, behavioral, clinical and social sciences through Institutional National Research Service Award Training Grants, in preparation for research doctorate degree programs.",
+		"url": "http://grants.nih.gov/training/T_Table.htm"
+	},
+	{
+		"id": 88,
+		"category": "Training Programs",
+		"code": "T35",
+		"title": "NRSA Short -Term Research Training",
+		"description": "To provide individuals with research training during off-quarters or summer periods to encourage research careers and/or research in areas of national need.",
+		"url": "https://researchtraining.nih.gov/programs/training-grants/T35"
+	},
+	{
+		"id": 90,
+		"category": "Training Programs",
+		"code": "T37",
+		"title": "Minority International Research Training Grants (FIC)",
+		"description": "Institutional training grants awarded to domestic institutions supporting opportunities for biomedical and behavioral research training for minority students and faculty members at foreign sites.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 141,
+		"category": "Training Programs",
+		"code": "T42",
+		"title": "Educational Resource Center Training Grants",
+		"description": "To provide assistance to regional centers in developing specialized personnel in the occupational safety and health field with academic training, research training, and continuing education and outreach in industrial hygiene, occupational health nursing, occupational medicine, and occupational safety.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 91,
+		"category": "Training Programs",
+		"code": "T90",
+		"title": "Interdisciplinary Research Training Award",
+		"description": "To support comprehensive interdisciplinary research training programs at the undergraduate, predoctoral and/or postdoctoral levels, by capitalizing on the infrastructure of existing multidisciplinary and interdisciplinary research programs.",
+		"url": "https://researchtraining.nih.gov/programs/training-grants/T90-R90"
+	},
+	{
+		"id": 92,
+		"category": "Training Programs",
+		"code": "TL1",
+		"title": "Linked Training Award",
+		"description": "To support research training experiences for pre- and post-doctoral trainees who are interested in pursuing research careers in multi-disciplinary clinical and translational science. The training award is administratively linked to another project or projects. A TL1 award may only be disaggregated from a U54 application and organizations may not apply for a TL1, Linked Training Award. The TL1 is used in lieu of the T32 for those programs that offer linked awards.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 235,
+		"category": "Training Programs",
+		"code": "TL4",
+		"title": "Undergraduate NRSA Institutional Research Training Grants",
+		"description": "To enhance the undergraduate research training of individuals from groups underrepresented in biomedical, behavioral, clinical and social sciences through Institutional National Research Service Award Training Grants, in preparation for research doctorate degree programs.  This is the linked equivalent of the T34.",
+		"url": "http://grants.nih.gov/training/T_Table.htm"
+	},
+	{
+		"id": 137,
+		"category": "Training Programs",
+		"code": "TU2",
+		"title": "Institutional National Research Service Award with Involvement of NIH Intramural Faculty",
+		"description": "The cooperative agreement counterpart to the T32, this award enables institutions to provide research-training experiences for graduate students and postdoctoral scientists in specified shortage areas. In addition, these awards involve identified NIH Intramural Staff who serve as a part of the training faculty and participate in the operation of the training program.",
+		"url": "http://grants.nih.gov/training/extramural.htm"
+	},
+	{
+		"id": 93,
+		"category": "Cooperative Agreements",
+		"code": "U01",
+		"title": "Research Project--Cooperative Agreements",
+		"description": "To support a discrete, specified, circumscribed project to be performed by the named investigator(s) in an area representing his or her specific interest and competencies.",
+		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#u01"
+	},
+	{
+		"id": 94,
+		"category": "Cooperative Agreements",
+		"code": "U09",
+		"title": "Scientific Review and Evaluation--Cooperative Agreements",
+		"description": "To provide the chairman of an initial review group funds for operation of the review group."
+	},
+	{
+		"id": 95,
+		"category": "Cooperative Agreements",
+		"code": "U10",
+		"title": "Cooperative Clinical Research--Cooperative Agreements",
+		"description": "To support clinical evaluation of various methods of therapy and/or prevention in specific disease areas.  These represent cooperative programs between sponsoring institutions and participating principal investigators, and are usually conducted under established protocols."
+	},
+	{
+		"id": 149,
+		"category": "Cooperative Agreements",
+		"code": "U11",
+		"title": "Study (in China) of Periconceptional Vitamin Supplements to Prevent Spina Bifida and Anencephaly Cooperative Agreements",
+		"description": "In cooperation with the Beijing Medical University (BMU) of the People\u2019s Republic of China, to support a project undertaken by BMU to conduct a randomized controlled trial in china to determine whether vitamins, taken before pregnancy begins and through the first trimester, prevent spina bifida and anencephaly. The project will consist of an initial preparation stage and a 1-2 year pilot study which will document the potential for a full-scale randomized controlled trial."
+	},
+	{
+		"id": 96,
+		"category": "Cooperative Agreements",
+		"code": "U13",
+		"title": "Conference--Cooperative Agreements",
+		"description": "To support international, national or regional meetings, conferences and workshops where substantial programmatic involvement is planned to assist the recipient.",
+		"url": "http://grants.nih.gov/grants/funding/r13/index.htm"
+	},
+	{
+		"id": 150,
+		"category": "Cooperative Agreements",
+		"code": "U17",
+		"title": "Applied Methods in Violence-Related or Accidental Injury Surveillance Cooperative Agreements",
+		"description": "Provides financial assistance to State and territorial health agencies to develop, implement, and/or evaluate new or existing methods and techniques used in accidental-injury and violence-related injury surveillance and /or prevention. Such injuries include violence against women; alcohol or firearm-related injury; bicycle or automobile-occupant injury; fire-related burns; head and spinal cord injury, and others. These methods and techniques are applicable to statewide injury surveillance systems and are replicable in other public health jurisdictions."
+	},
+	{
+		"id": 97,
+		"category": "Cooperative Agreements",
+		"code": "U18",
+		"title": "Research Demonstration--Cooperative Agreements",
+		"description": "To provide support for testing, by means of a research design, the effectiveness of the transfer and application of techniques or interventions derived from a research base for the control of diseases or disorders or for the promotion of health.  The project should be capable of making conclusions which are generalizable to other sites.  These are usually cooperative programs between participating principal investigators, institutions, and the sponsoring Institute(s)."
+	},
+	{
+		"id": 98,
+		"category": "Cooperative Agreements",
+		"code": "U19",
+		"title": "Research Program--Cooperative Agreements",
+		"description": "To support a research program of multiple projects directed toward a specific major objective, basic theme or program goal, requiring a broadly based, multidisciplinary and often long-term approach. A cooperative agreement research program generally involves the organized efforts of large groups, members of which are conducting research projects designed to elucidate the various aspects of a specific objective. Substantial Federal programmatic staff involvement is intended to assist investigators during performance of the research activities, as defined in the terms and conditions of award. The investigators have primary authorities and responsibilities to define research objectives and approaches, and to plan, conduct, analyze, and publish results, interpretations and conclusions of their studies. Each research project is usually under the leadership of an established investigator in an area representing his/her special interest and competencies. Each project supported through this mechanism should contribute to or be directly related to the common theme of the total research effort. The award can provide support for certain basic shared resources, including clinical components, which facilitate the total research effort. These scientifically meritorious projects should demonstrate an essential element of unity and interdependence."
+	},
+	{
+		"id": 151,
+		"category": "Cooperative Agreements",
+		"code": "U1A",
+		"title": "Capacity Building for Core Components of Tobacco Prevention and Control Programs Cooperative Agreements",
+		"description": "In cooperation with Stat health agencies, to 1) supplement existing tobacco control efforts and provide assistance in the development of the essential components of a comprehensive public health tobacco control program, or 2) develop the infrastructure in preparation for carrying out a tobacco control program."
+	},
+	{
+		"id": 217,
+		"category": "Cooperative Agreements",
+		"code": "U1B",
+		"title": "Cooperative Agreement for Research and Surveillance Activities to Reduce the Incidence of HIV/AIDS",
+		"description": "In cooperation with State and local public health authorities and other non-profit organizations, to assist in detecting and preventing the further spread of AIDS/HIV through research and active surveillance."
+	},
+	{
+		"id": 152,
+		"category": "Cooperative Agreements",
+		"code": "U1Q",
+		"title": "Emergency Disaster Relief Relating to CDC Programs Cooperative Agreement",
+		"description": "In cooperation with eligible State health departments, to provide assistance to States impacted by designated natural disasters to assess the health threats and address health issues associated with the disaster, and to restore CDC-related public health programs that were impacted by the disaster."
+	},
+	{
+		"id": 153,
+		"category": "Cooperative Agreements",
+		"code": "U1V",
+		"title": "Capacity Building for Core Components of Tobacco Prevention and Control Programs Cooperative Agreements",
+		"description": "In cooperation with Stat health agencies, to 1) supplement existing tobacco control efforts and provide assistance in the development of the essential components of a comprehensive public health tobacco control program, or 2) develop the infrastructure in preparation for carrying out a tobacco control program."
+	},
+	{
+		"id": 154,
+		"category": "Cooperative Agreements",
+		"code": "U21",
+		"title": "Immunization Service for Racial and Ethnic Minorities, Cooperative Agreements",
+		"description": "(Definition not available)"
+	},
+	{
+		"id": 155,
+		"category": "Cooperative Agreements",
+		"code": "U22",
+		"title": "HIV/STD Preventive Services for Racial and Minorities",
+		"description": "(Definition not available)"
+	},
+	{
+		"id": 156,
+		"category": "Cooperative Agreements",
+		"code": "U23",
+		"title": "TB Prevention and Control Services for Racial and Ethnic Minorities Cooperative Agreements",
+		"description": "In cooperation with national and regional racial and ethnic minority nonprofit organizations, to strengthen and increase the effectiveness of tuberculosis prevention and treatment services for racial and ethnic minority populations (especially the 25-44 years old age group); to improve organizational capabilities, programmatic efforts, and coordination of tuberculosis awareness; and to promote tuberculosis prevention and control, information dissemination, and training and education."
+	},
+	{
+		"id": 99,
+		"category": "Cooperative Agreements",
+		"code": "U24",
+		"title": "Resource-Related Research Projects--Cooperative Agreements",
+		"description": "To support research projects contributing to improvement of the capability of resources to serve biomedical research."
+	},
+	{
+		"id": 157,
+		"category": "Cooperative Agreements",
+		"code": "U27",
+		"title": "Surveillance of Complications of Hemophilia Cooperative Agreements",
+		"description": "In cooperation with State public health agencies, to characterize the epidemiology of hemophilia and its complications by using surveillance methodologies such as data collection, interviews, and progress reports. The data collected through this program can assist hemophilia treatment providers and States in developing, implementing, and evaluating education and prevention programs designed to reduce the morbidity, mortality, and costs of hemophilia and its complications."
+	},
+	{
+		"id": 231,
+		"category": "Cooperative Agreements",
+		"code": "U2C",
+		"title": "Resource-Related Research Multi-Component Projects and Centers Cooperative Agreements",
+		"description": "To support multi-component research resource projects and centers that will enhance the capability of resources to serve biomedical research. Substantial federal programmatic staff involvement is intended to assist investigators during performance of the research activities, as defined in the terms and conditions of the award."
+	},
+	{
+		"id": 261,
+		"category": "Research Projects",
+		"code": "U2F",
+		"title": "Food Safety Capacity and Infrastructure Building",
+		"description": "To build food safety capacity and infrastructure by assisting State, locality, territory, Indian tribe, or nonprofit food safety training entity that collaborates with 1 or more institutions of higher education to undertake food safety inspections, investigations, and examinations; train to the standards established by the HHS Secretary; build lab capacity; and respond to notifications received under Section 1008 and recalls."
+	},
+	{
+		"id": 100,
+		"category": "Cooperative Agreements",
+		"code": "U2G",
+		"title": "Global HIV/AIDS Non-Research Cooperative Agreements",
+		"description": "In cooperation with other countries, international organizations, and other partners to conduct HIV/AIDS prevention, care and treatment of non-research activities in international countries most heavily affected by the HIV/AIDS epidemic."
+	},
+	{
+		"id": 101,
+		"category": "Cooperative Agreements",
+		"code": "U2R",
+		"title": "International Research Training Cooperative Agreements",
+		"description": "Cooperative agreement mechanism for D43 to support research training programs for US and foreign professionals and students to strengthen global health research and international research collaboration."
+	},
+	{
+		"id": 158,
+		"category": "Cooperative Agreements",
+		"code": "U30",
+		"title": "Prev. Health Services: Venereal Disease Research, Demonstration, and Public Information and Education Projects",
+		"description": "Cooperative Agreements to provide assistance to programs designed for the conduct of research, demonstration, and public information and education for the prevention and control of venereal disease."
+	},
+	{
+		"id": 159,
+		"category": "Cooperative Agreements",
+		"code": "U32",
+		"title": "State-based Diabetes Control Programs",
+		"description": "In cooperation with State health agencies: To reduce the effect of preventable problems in service delivery to diabetics (such as excess days of hospitalization, high amputation rates, and the effect of insurance policy on securing care), to define the preventable service delivery problems, and to demonstrate improved service delivery to diabetics."
+	},
+	{
+		"id": 187,
+		"category": "Cooperative Agreements",
+		"code": "U34",
+		"title": "Planning Cooperative Agreement",
+		"description": "This cooperative agreement would provide support, substantial Federal programmatic involvement, and technical assistance for the initial development of a clinical trial or research project. Also, it would include the establishment of the research team; the development of tools for data management and oversight of the research; the development of a trial design or experimental research designs and other essential elements of the study or project, such as the protocol, recruitment strategies, and procedure manuals; and to collect feasibility data."
+	},
+	{
+		"id": 160,
+		"category": "Cooperative Agreements",
+		"code": "U36",
+		"title": "Program Improvements for Schools of Public Health",
+		"description": "In cooperation with the Associated Schools of Public Health, to stimulate improvements in the educational programs of schools of public health."
+	},
+	{
+		"id": 161,
+		"category": "Cooperative Agreements",
+		"code": "U38",
+		"title": "Uniform National Health Program Reporting System",
+		"description": "In cooperation with the States to operate a uniform national health program reporting system, which is to provide data for analytical purposes to assist health planners and health program managers in their decision-making processes."
+	},
+	{
+		"id": 263,
+		"category": "Research Projects",
+		"code": "U3R",
+		"title": "NIH Small Research Grant Program (Cooperative Agreement)",
+		"description": "This grant mechanism will support small research projects that can be carried out in a short period of time with limited resources and will be used as the companion cooperative agreement activity code to the R03."
+	},
+	{
+		"id": 162,
+		"category": "Cooperative Agreements",
+		"code": "U41",
+		"title": "Biotechnology Resource Cooperative Agreements",
+		"description": "To support biotechnology resources available to all qualified investigators without regard to the scientific disciplines or disease orientations of their research activities or specifically directed to a categorical program area."
+	},
+	{
+		"id": 102,
+		"category": "Cooperative Agreements",
+		"code": "U42",
+		"title": "Animal (Mammalian and Nonmammalian) Model, and Animal and Biological Materials Resource Cooperative Agreements",
+		"description": "To develop and support animal (mammalian and nonmammalian) model, or animal or biological materials resources available to all qualified investigators without regard to the scientific disciplines or disease orientations of their research activities or specifically directed to a categorical program.  Nonmammalian resources include nonmammalian vertebrates, invertebrates, cell systems, and nonbiological systems."
+	},
+	{
+		"id": 163,
+		"category": "Cooperative Agreements",
+		"code": "U43",
+		"title": "Small Business Innovation Research (SBIR) Cooperative Agreements - Phase I",
+		"description": "To support projects, limited in time and amount, to establish the technical merit and feasibility of R&D ideas that may ultimately lead to commercial products or services.",
+		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+	},
+	{
+		"id": 103,
+		"category": "Cooperative Agreements",
+		"code": "U44",
+		"title": "Small Business Innovation Research (SBIR) Cooperative Agreements  - Phase II",
+		"description": "To support in-depth development of R&D ideas whose feasibility has been established in Phase I and that are likely to result in commercial products or services.",
+		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+	},
+	{
+		"id": 104,
+		"category": "Cooperative Agreements",
+		"code": "U45",
+		"title": "Hazardous Waste Worker Health and Safety Training Cooperative Agreements (NIEHS)",
+		"description": "To develop, implement, and evaluate programs to train workers who are or may be engaged in activities related to hazardous waste removal, containment, or emergency response."
+	},
+	{
+		"id": 164,
+		"category": "Cooperative Agreements",
+		"code": "U47",
+		"title": "Laboratory/Other Diagnostic Medical Quality Improvement Cooperative Agreements",
+		"description": "In cooperation with public or private health-related organizations, to establish data collection networks or other methods to increase the effectiveness of primary care physicians in determining the level and impact of problems in laboratory testing, or in other services for diagnosis of health problems, by determining what problems exist; how often problems occur; what impact these problems have on patient care, and what interventions can be developed to improve the disease testing or control process."
+	},
+	{
+		"id": 165,
+		"category": "Cooperative Agreements",
+		"code": "U48",
+		"title": "Health Promotion and Disease Prevention Research Centers",
+		"description": "In cooperation with schools of public health, medicine, or osteopathy, to establish and maintain interdisciplinary academic centers focused on health issues or themes of national importance and to promote translation of the results of the school\u2019s research into improved public health practice."
+	},
+	{
+		"id": 166,
+		"category": "Cooperative Agreements",
+		"code": "U49",
+		"title": "Coop: Injury Control Res. and Demo and Injury Prevention",
+		"description": "<Long Text>In cooperation with public and private nonprofit and for-profit organizations to conduct research and demonstration projects as well as training programs to develop a comprehensive and integrated approach to injury control. This is to include those directed toward violence toward women, intimate partners, and youth. These projects will integrate aspects of the disciplines of engineering, public health, behavioral sciences, medicine, and others in order to prevent and control injuries."
+	},
+	{
+		"id": 167,
+		"category": "Cooperative Agreements",
+		"code": "U50",
+		"title": "Special Cooperative Investigations/Assessment of Control/Prevention Methods",
+		"description": "In cooperation with State or local government or other health-related organization, to perform special investigations of communicable diseases and other preventable health conditions, or to evaluate special methods of preventing disease or controlling health conditions."
+	},
+	{
+		"id": 168,
+		"category": "Cooperative Agreements",
+		"code": "U51",
+		"title": "Health Planning Strategies/National Academy of Sciences Activities",
+		"description": "Financial support for activities of interest to the Public Health Service, primarily, support for a series of Boards to oversee a variety of health and health administration topics."
+	},
+	{
+		"id": 169,
+		"category": "Cooperative Agreements",
+		"code": "U52",
+		"title": "Cooperative Agreement for Tuberculosis Control",
+		"description": "In cooperation with State and local health departments, to reduce the number of tuberculosis cases by case finding and follow-up of patient compliance with treatment."
+	},
+	{
+		"id": 170,
+		"category": "Cooperative Agreements",
+		"code": "U53",
+		"title": "Capacity Bldg: Occupational Safety/Community Environmental Health",
+		"description": "In cooperation with State and local health departments to expand State capacities in the area of occupational safety and community environmental public health."
+	},
+	{
+		"id": 105,
+		"category": "Cooperative Agreements",
+		"code": "U54",
+		"title": "Specialized Center--Cooperative Agreements",
+		"description": "To support any part of the full range of research and development from very basic to clinical; may involve ancillary supportive activities such as protracted patient care necessary to the primary research or R&D effort.  The spectrum of activities comprises a multidisciplinary attack on a specific disease entity or biomedical problem area.  These differ from program project in that they are usually developed in response to an announcement of the programmatic needs of an Institute or Division and subsequently receive continuous attention from its staff.  Centers may also serve as regional or national resources for special research purposes, with funding component staff helping to identify appropriate priority needs."
+	},
+	{
+		"id": 171,
+		"category": "Cooperative Agreements",
+		"code": "U55",
+		"title": "Core Support For American Council on Transplantation Active",
+		"description": "(Definition not available)"
+	},
+	{
+		"id": 106,
+		"category": "Cooperative Agreements",
+		"code": "U56",
+		"title": "Exploratory Grants--Cooperative Agreements",
+		"description": "To support planning for new programs, expansion or modification of existing resources, and feasibility studies to explore various to the development of interdisciplinary programs that offer potential solutions to problems of special significance to the mission of the NIH. These exploratory studies may lead to specialized or comprehensive centers. Substantial Federal programmatic staff involvement is intended to assist investigators during performance of the research activities, as defined in the terms and conditions of award."
+	},
+	{
+		"id": 172,
+		"category": "Cooperative Agreements",
+		"code": "U57",
+		"title": "State-Based Comprehensive Breast/Cervical Cancer Control Program Cooperative Agreements",
+		"description": "In cooperation with State and territorial health agencies, to develop comprehensive breast and cervical cancer control programs, increasing screening and follow-up among all groups of women in the State or territory, with special efforts to reach women who are of low income, uninsured, underinsured, minority, or Native American."
+	},
+	{
+		"id": 173,
+		"category": "Cooperative Agreements",
+		"code": "U58",
+		"title": "Chronic Disease Control Cooperative Agreement",
+		"description": "In cooperation with State and local public health agencies and other public or private organizations to assist in controlling and preventing chronic diseases. Efforts are directed at the integrated application of surveillance; applied epidemiology; laboratory sciences; evaluation; health education; dynamic and productive relationships; training; and extensive applied management of effective disease control programs."
+	},
+	{
+		"id": 174,
+		"category": "Cooperative Agreements",
+		"code": "U59",
+		"title": "Disabilities Prevention Cooperative Agreement Program",
+		"description": "In cooperation with State and local agencies or private organizations, to conduct and evaluate interventions to prevent disabilities and to support demonstration and epidemiology programs for States in building capacity to coordinate disability prevention activities."
+	},
+	{
+		"id": 175,
+		"category": "Cooperative Agreements",
+		"code": "U60",
+		"title": "Cooperative Agreements in Occupational Safety and Health Research, Demonstrations, Evaluation and Education Research, Demonstrations, Evaluation and Education",
+		"description": "In cooperation with universities or other eligible recipients, to investigate the underlying characteristics and causes of occupational safety and health problems; to eliminate or control factors in the work environment which are harmful to the health and/or safety of workers, or to demonstrate effective solutions for occupational safety and health problems."
+	},
+	{
+		"id": 176,
+		"category": "Cooperative Agreements",
+		"code": "U61",
+		"title": "Preventive Health Activities Regarding Hazardous Substances",
+		"description": "In cooperation with State and local health authorities, to provide programs and activities designed to protect the public from exposure to hazardous substances, and to protect the worker from hazards associated with hazardous waste removal or other remedial response actions."
+	},
+	{
+		"id": 177,
+		"category": "Cooperative Agreements",
+		"code": "U62",
+		"title": "Prevention/Surveillance Activities/Studies of AIDS",
+		"description": "In cooperation with the State and local public health authorities and other non-profit organizations, to assist in detecting and preventing the further spread of AIDS through active surveillance and epidemiologic investigation, sero-prevalence surveys, laboratory services, public information campaigns, health education and risk reduction activities, and counseling, testing and partner notification."
+	},
+	{
+		"id": 178,
+		"category": "Cooperative Agreements",
+		"code": "U65",
+		"title": "Minority/Other Community-based HIV Prevention Project, Cooperative Agreements",
+		"description": "In cooperation with non-profit organizations based in communities most heavily affected by the HIV epidemic, to assist in achieving a reduction of the risk of HIV transmission through education programs."
+	},
+	{
+		"id": 179,
+		"category": "Cooperative Agreements",
+		"code": "U66",
+		"title": "Immunization Demonstration Projects Cooperative Agreements",
+		"description": "Provides financial assistance to State and local health agencies and other public and non-profit entities for (1) assessment of projects to develop methods/strategies to effectively assess preschool-age immunization protection at the State or county level and/or (2) intervention projects to develop innovative ways to successfully identify and vaccinate preschool-age children living in inner-city, high-disease morbidity areas."
+	},
+	{
+		"id": 180,
+		"category": "Cooperative Agreements",
+		"code": "U75",
+		"title": "National Cancer Registries Cooperative Agreements",
+		"description": "In cooperation with State health agencies or eligible academic or other nonprofit organizations, to establish a national program of cancer registries by supporting and enhancing existing State cancer registries so that they are statewide and population-based, and by planning, implementing, and supporting statewide population-based cancer registries where State registries do not currently exist."
+	},
+	{
+		"id": 181,
+		"category": "Cooperative Agreements",
+		"code": "U79",
+		"title": "Mental Health and/or Substance Abuse Services Cooperative Agreements",
+		"description": "To support the provision of mental health and/or substance abuse prevention and treatment services. These are cooperative programs between participating principal investigators. Organizations and sponsoring Centers and where substantial programmatic involvement is planned to assist the recipient."
+	},
+	{
+		"id": 182,
+		"category": "Cooperative Agreements",
+		"code": "U81",
+		"title": "Injury Community Demonstration Projects: Evaluation of Youth Violence Prevention Program",
+		"description": "In cooperation with qualified recipients to design, implement, and determine the effectiveness of multifaceted, community-based youth violence prevention programs in reducing the incidence of interpersonal violent behavior and associated injuries and deaths."
+	},
+	{
+		"id": 107,
+		"category": "Cooperative Agreements",
+		"code": "U82",
+		"title": "Enhancement of State and Local Capacity to Assess the Progress toward Healthy People 2010 Objectives",
+		"description": "In cooperation with State and local health agencies and Federally-recognized Indian Tribes, to increase the assessment capacity of State and local health agencies and to develop new surveillance models to measure currently underassessed conditions or populations."
+	},
+	{
+		"id": 183,
+		"category": "Cooperative Agreements",
+		"code": "U83",
+		"title": "Research to Advance the Understanding of the Health of Racial and Ethnic Populations or Subpopulations Cooperative Agreements",
+		"description": "In cooperation with public and private non-profit organizations, to advance the understanding of the health of racial and ethnic populations or subpopulations through 1) special studies and analyses to improve existing knowledge, and 2) improvements in existing research methodological techniques used to gather information on these groups."
+	},
+	{
+		"id": 184,
+		"category": "Cooperative Agreements",
+		"code": "U84",
+		"title": "Cooperative Agreements for Fetal Alcohol Syndrome Prevention Research Programs",
+		"description": "In cooperation with qualified recipients, to develop methods for identifying women at high risk for having children with Fetal Alcohol Syndrome or other adverse alcohol effects, to design primary prevention strategies for these women, and to rigorously evaluate the effectiveness of these strategies."
+	},
+	{
+		"id": 265,
+		"category": "Cooperative Agreements",
+		"code": "U86",
+		"title": "State Demonstration: Comprehensive School Health Programs to Prevent  Important Health Problems and Improve Educational Outcome",
+		"description": "In cooperation with State education agencies of the States with specified high total mortality rates, to strengthen the capacity of those States to plan, implement, and evaluate effective comprehensive school health programs to prevent important health-risk behavior among youth, including: tobacco use; dietary patterns that contribute to disease; sedentary lifestyle; STDs and unintended pregnancy; alcohol and other drug use; behaviors that result unintentional and intentional injuries, and other behaviors or conditions that are leading causes of death and disability. The U87 code is to be used for aspects of the demonstration project that deal with HIV infection. (PHS Act, S.301a, 311b, and 317K0)"
+	},
+	{
+		"id": 266,
+		"category": "Cooperative Agreements",
+		"code": "U87",
+		"title": "State Demonstration:  Comprehensive School Health Program to Prevent Sexual Behaviors that Result in HIV Infection and to Improve Educational Outcome",
+		"description": "In cooperation with State education agencies of the States with specified high total mortality rates, to strengthen the capacity of those States to plan, implement, and evaluate effective comprehensive school health programs to prevent sexual behaviors that result in HIV infection. This program is a companion to U86"
+	},
+	{
+		"id": 185,
+		"category": "Cooperative Agreements",
+		"code": "U90",
+		"title": "Cooperative Agreements for Special Projects of National Significance (SPNS)",
+		"description": "In cooperation with State and local public health agencies and other public or private nonprofit entities, to conduct HIV service-related projects which meet the criteria for funding and target one of the specified priority areas. The primary purpose of the SPNS program is to contribute to the advancement of knowledge and skill in the delivery of health and support services to persons with HIV disease."
+	},
+	{
+		"id": 142,
+		"category": "Cooperative Agreements",
+		"code": "UA1",
+		"title": "AIDS Research Project Cooperative Agreement",
+		"description": "In cooperation with a named investigator, to support a discrete, specified, circumscribed project on Acquired Immune Deficiency Syndrome in an area representing the investigator's specific interest and competencies."
+	},
+	{
+		"id": 221,
+		"category": "Cooperative Agreements",
+		"code": "UA5",
+		"title": "Academic Research Enhancement Award (AREA) Cooperative Agreements",
+		"description": "Supports small-scale research projects at educational institutions that provide baccalaureate or advanced degrees for a significant number of the Nation's research scientists but that have not been major recipients of NIH support. The goals of the program are to (1) support meritorious research, (2) expose students to research, and (3) strengthen the research environment of the institution.  Awards provide limited Direct Costs, plus applicable F&A costs, for periods not to exceed 36 months. This activity code uses multi-year funding authority; however, OER approval is NOT needed prior to an IC using this activity code. This is the Cooperative Agreement companion to the R15 Activity Code."
+	},
+	{
+		"id": 243,
+		"category": "Cooperative Agreements",
+		"code": "UB1",
+		"title": "Commercialization Readiness Program \u2013 Cooperative Agreement",
+		"description": "To support follow-on awards to small businesses for technology development, testing, evaluation, and commercialization assistance for SBIR or STTR Phase II technologies or for awards to small businesses to support the progress of research, research and development, and commercialization conducted under the SBIR or STTR programs to Phase III."
+	},
+	{
+		"id": 143,
+		"category": "Cooperative Agreements",
+		"code": "UC1",
+		"title": "NIH Challenge Grants and Partnerships Program - Phase II-Coop.Agreement",
+		"description": "To promote the implementation of joint ventures between the NIH and both domestic and global entities to facilitate rapid implementation of R&D in biomedical or biotechnology projects for infectious diseases that benefit public health and have a commercial potential that otherwise could not have been attained without matching funds. <br><br>\nEssential elements of recipient responsibility would include: 1) interim research and development of target goals upon whose achievement funds would be incrementally released to the awardee; 2) a single principle investigator who would be scientifically and administratively responsible for the project's research and development, and 3) a single applicant organization that would be legally and financially responsible for the funds awarded."
+	},
+	{
+		"id": 204,
+		"category": "Cooperative Agreements",
+		"code": "UC2",
+		"title": "High Impact Research and Research Infrastructure Cooperative Agreement Programs",
+		"description": "To support high impact ideas through cooperative agreements that that may lay the foundation for new fields of investigation; accelerate breakthroughs; stimulate early and applied research on cutting-edge technologies; foster new approaches to improve the interactions among multi- and interdisciplinary research teams; or, advance the research enterprise in a way that could stimulate future growth and investments and advance public health and health care delivery.  This activity code could support either a specific research question or propose the creation of a unique infrastructure/resource designed to accelerate scientific progress in the future. This is the cooperative agreement companion to the RC2."
+	},
+	{
+		"id": 207,
+		"category": "Cooperative Agreements",
+		"code": "UC3",
+		"title": "Biomedical Research, Development, and Growth to Spur the Acceleration of New Technologies (BRDG-SPAN) Cooperative Agreement Program",
+		"description": "To accelerate the transition of NIH-supported research innovations and technologies toward the development of products or services that will improve human health, through cooperative agreements that may advance the mission of NIH and its Institutes and Centers (ICs), and create significant value and economic stimulus or, advance the research enterprise in a way that could stimulate future growth and investments and advance public health and health care delivery.  This activity code is intended to support research and development (R&D) specifically targeted at activities that can help address the funding gap between promising R&D and transitioning to the market, often called the \u201cValley of Death\u201d by contributing the critical funding needed by applicants to pursue the next appropriate milestone(s) toward ultimate commercialization; i.e., to carry out later stage cooperative agreement activities necessary to that end; to foster partnerships among a variety of research and development (R&D) collaborators working toward these aims. The UC3 SPAN program is not intended to support \u201cupstream\u201d R&D for doing feasibility testing of an innovative idea or to conduct early-stage R&D as an extension of such ideas. (Projects such as these should be submitted under the NIH SBIR/STTR programs.)"
+	},
+	{
+		"id": 210,
+		"category": "Cooperative Agreements",
+		"code": "UC4",
+		"title": "High Impact Research and Research Infrastructure Cooperative Agreement Programs\u2014Multi-Yr Funding",
+		"description": "To support multi-year funded cooperative agreement research with high impact ideas that may lay the foundation for new fields of investigation; accelerate breakthroughs; stimulate early and applied research on cutting-edge technologies; foster new approaches to improve the interactions among multi- and interdisciplinary research teams; or, advance the research enterprise in a way that could stimulate future growth and investments and advance public health and health care delivery. This activity code could support either a specific research question or propose the creation of a unique infrastructure/resource designed to accelerate scientific progress in the future. It is the cooperative agreement companion to the RC4.  It is also the multi-year funded companion to the existing UC2; thus ICs need OER prior approval to use the UC4."
+	},
+	{
+		"id": 108,
+		"category": "Cooperative Agreements",
+		"code": "UC6",
+		"title": "Construction Cooperative Agreement",
+		"description": "To provide financial support, substantial programmatic involvement and technical assistance for designing, constructing and commissioning of laboratories to be used as extramural facilities for bio-defense and emerging infectious diseases research."
+	},
+	{
+		"id": 109,
+		"category": "Cooperative Agreements",
+		"code": "UC7",
+		"title": "Biocontainment Laboratory Operation Cooperative Agreement",
+		"description": "To support core and shared resources for biocontainment laboratories enabling them to develop and maintain the research resources and facilities needed to meet national, regional and local biodefense and emerging infectious diseases research needs. This support, by providing more accessible resources, is expected to assure greater productivity at biocontainment laboratories."
+	},
+	{
+		"id": 144,
+		"category": "Cooperative Agreements",
+		"code": "UD1",
+		"title": "Mental Health and/or Substance Abuse KD&A Cooperative Agreements",
+		"description": "To provide support to develop new knowledge about ways to improve the prevention and/or treatment of substance abuse and/or mental illness, and to work with State and local governments as well as providers, families, and consumers to apply that knowledge effectively in everyday practice. Outcome measures are the heart and core of the KD&As, do not provide operating funds for service programs, except as required by the knowledge development activity."
+	},
+	{
+		"id": 193,
+		"category": "Cooperative Agreements",
+		"code": "UE1",
+		"title": "Studies of Environmental Hazards and Health Effects",
+		"description": "Studies ways to prevent or control health problems associated with exposure to air pollution, radiation, and other toxicants, as well as health problems resulting from natural, technological or terrorist disasters."
+	},
+	{
+		"id": 194,
+		"category": "Cooperative Agreements",
+		"code": "UE2",
+		"title": "Emergency and Environmental Health Services",
+		"description": "Provide national and international leadership for coordinating, delivering, and evaluating emergency and environmental public health services."
+	},
+	{
+		"id": 257,
+		"category": "Research Projects",
+		"code": "UE5",
+		"title": "Education Projects - Cooperative Agreements",
+		"description": "For support to develop and/or implement a program as it relates to a category in one or more of the areas of education, information, training, technical assistance, coordination, or evaluation."
+	},
+	{
+		"id": 224,
+		"category": "Cooperative Agreements",
+		"code": "UF1",
+		"title": "Multi-Year Funded Research Project Cooperative Agreement",
+		"description": "To support a discrete, specific, circumscribed project to be performed by the named investigator(s) in an area representing specific interest and competencies based on the mission of the agency, using standard peer review criteria.  This is the multi-year funded equivalent of the U01 but can be used also for multi-year funding of other research project cooperative agreements such as UM1 as appropriate."
+	},
+	{
+		"id": 226,
+		"category": "Cooperative Agreements",
+		"code": "UF2",
+		"title": "Rape Prevention and Education Cooperative Agreement",
+		"description": "To provide financial assistance to States for rape prevention and education programs conducted by rape crisis centers, State sexual assault coalitions, and other public and private nonprofit entities for: educational seminars, operation of hotlines, training for professionals, preparation of informational material; education and training for college and university students and personnel to reduce sexual assault; and awareness programs. The awards are based on a formula."
+	},
+	{
+		"id": 236,
+		"category": "Cooperative Agreements",
+		"code": "UG1",
+		"title": "Clinical Research Cooperative Agreements - Single Project",
+		"description": "To support single project applications conducting clinical evaluation of various methods of therapy and/or prevention (in specific disease areas).  Substantial federal programmatic staff involvement is intended to assist investigators during performance of the research activities, as defined in the terms and conditions of the award. NOTE: The UG1 is the single-component companion to the U10 which is used for multi-project applications only."
+	},
+	{
+		"id": 245,
+		"category": "Cooperative Agreements",
+		"code": "UG3",
+		"title": "Phase 1 Exploratory/Developmental Cooperative Agreement",
+		"description": "As part of a bi-phasic approach to funding exploratory and/or developmental research, the UG3 provides support for the first phase of the award. This activity code is used in lieu of the UH2 activity code when larger budgets and/or project periods are required to establish feasibility for the project."
+	},
+	{
+		"id": 240,
+		"category": "Cooperative Agreements",
+		"code": "UG4",
+		"title": "National Network of Libraries of Medicine",
+		"description": "Multicomponent cooperative agreements are awarded to medical libraries to enable them to serve as regional medical libraries for their geographical areas. The purpose of the program is to develop a national system of regional medical libraries, each of which would have sufficient facilities to supplement the services of other medical libraries in its region."
+	},
+	{
+		"id": 110,
+		"category": "Cooperative Agreements",
+		"code": "UH1",
+		"title": "HBCU Research Scientist Award",
+		"description": "To assist HBCUs in strengthening and augmenting their human resources by recruiting an established research scientist; to enhance the career of the recruited research scientist; and to strengthen other HBCU resources for the conduct of biomedical and/or behavioral research.  The recruited research scientist must have received competitive and independent research support."
+	},
+	{
+		"id": 188,
+		"category": "Cooperative Agreements",
+		"code": "UH2",
+		"title": "Exploratory/Developmental Cooperative Agreement Phase I",
+		"description": "To support the development of new research activities in categorical program areas. (Support generally is restricted in level of support and in time.)"
+	},
+	{
+		"id": 189,
+		"category": "Cooperative Agreements",
+		"code": "UH3",
+		"title": "Exploratory/Developmental Cooperative Agreement Phase II",
+		"description": "The UH3 award is to provide a second phase for the support for innovative exploratory and development research activities initiated under the UH2 mechanism. Although only UH2 awardees are generally eligible to apply for UH3 support, specific program initiatives may establish eligibility criteria under which applications could be accepted from applicants demonstrating progress equivalent to that expected under UH2."
+	},
+	{
+		"id": 238,
+		"category": "Cooperative Agreements",
+		"code": "UH4",
+		"title": "Hazmat Training at DOE Nuclear Weapons Complex",
+		"description": "To develop, implement, and evaluate programs to train workers who are or may be engaged in activities related to hazardous waste removal, containment, or emergency response at the DOE Nuclear Weapons Complex. This is the single project equivalent to the U45"
+	},
+	{
+		"id": 111,
+		"category": "Cooperative Agreements",
+		"code": "UL1",
+		"title": "Linked Specialized Center Cooperative Agreement",
+		"description": "To support clinical and translational research. The UL1 administratively linked to another project or projects. AUL1 award may only be disaggregated from a U54 application and organizations may not apply for a UL1, Linked Specialized Center Cooperative Agreement. The UL 1 activity code is used in lieu of the U54 for those programs that offer linked awards."
+	},
+	{
+		"id": 219,
+		"category": "Cooperative Agreements",
+		"code": "UM1",
+		"title": "Research Project with Complex Structure Cooperative Agreement",
+		"description": "To support cooperative agreements involving large-scale research activities with complicated structures that cannot be appropriately categorized into an available single component activity code, e.g. clinical networks, research programs or consortium.  The components represent a variety of supporting functions and are not independent of each component.  Substantial federal programmatic staff involvement is intended to assist investigators during performance of the research activities, as defined in the terms and conditions of the award.  The performance period may extend up to seven years but only through the established deviation request process.  ICs desiring to use this activity code for programs greater than 5 years must receive OPERA prior approval through the deviation request process."
+	},
+	{
+		"id": 234,
+		"category": "Cooperative Agreements",
+		"code": "UM2",
+		"title": "Program Project or Center with Complex Structure Cooperative Agreement",
+		"description": "To support cooperative agreements involving program projects or centers with complicated structures that cannot be appropriately categorized into an available multicomponent activity code, e.g. clinical networks, research programs or consortiums.  At least one component must be UM1-like, supporting a variety of functions that are dependent on each other and cannot be separated into distinct components.  Substantial federal programmatic staff involvement is intended to assist investigators during performance of the research activities, as defined in the terms and conditions of the award.  The performance period may extend up to seven years but only through the established deviation request process."
+	},
+	{
+		"id": 216,
+		"category": "Training Projects",
+		"code": "UP5",
+		"title": "Early Independence Award Cooperative Agreement",
+		"description": "To support the independent research project of a recent doctoral degree recipient. This research grant program will encourage exceptionally creative scientists to bypass the typical post-doc research training period in order to move rapidly to research independence.  It will encourage institutions to develop independent career tracks for recent graduates in order to demonstrate the benefits of early transition to independence both in terms of career productivity for the candidate and research capability for the institution."
+	},
+	{
+		"id": 145,
+		"category": "Cooperative Agreements",
+		"code": "UR6",
+		"title": "Prevention Intervention Research on Substance Abuse in Children Cooperative Agreements",
+		"description": "In cooperation with public and private nonprofit and for-profit organizations, to support research to determine the most effective interventions to change the developmental course of early predictor markers for substance abuse in children at several defined developmental stages."
+	},
+	{
+		"id": 146,
+		"category": "Cooperative Agreements",
+		"code": "UR8",
+		"title": "Applied Research in Emerging Infections-(including Tick-borne Diseases) Cooperative Agreements",
+		"description": "In cooperation with eligible organizations, to research emerging infections, such as tick borne diseases, through epidemiological studies and development and evaluation of diagnostic tests. Associated grant program under Activity Code RR8."
+	},
+	{
+		"id": 147,
+		"category": "Cooperative Agreements",
+		"code": "US3",
+		"title": "Hantaviral Reservoir Studies Cooperative Agreements",
+		"description": "In cooperation with eligible organizations, to study the behavior, movement, reproductive biology, population"
+	},
+	{
+		"id": 148,
+		"category": "Cooperative Agreements",
+		"code": "US4",
+		"title": "Community-Based Primary Prevention Programs: Intimate Partner Violence Cooperative Agreements",
+		"description": "In cooperation with non-profit community-based organizations, to develop, implement, expand the capacity of, and evaluate the process and outcomes of, programs for preventing intimate partner violence."
+	},
+	{
+		"id": 112,
+		"category": "Cooperative Agreements",
+		"code": "UT1",
+		"title": "Small Business Technology Transfer (STTR) \u2013 Cooperative Agreements - Phase I",
+		"description": "To support cooperative research and development projects between small business concerns and research institutions, limited in time and amount, to establish the technical merit and feasibility of ideas that have potential for commercialization."
+	},
+	{
+		"id": 113,
+		"category": "Cooperative Agreements",
+		"code": "UT2",
+		"title": "Small Business Technology Transfer (STTR) \u2013 Cooperative Agreements - Phase II",
+		"description": "To support in-depth development of cooperative research and development projects between small business concerns and research institutions, limited in time and amount, whose feasibility has been established in Phase I and that have potential for commercialization."
+	},
+	{
+		"id": 114,
+		"category": "V Programs",
+		"code": "VF1",
+		"title": "Rape Prevention and Education Grants",
+		"description": "Provides financial assistance to States for rape prevention and education programs conducted by rape crisis centers, State sexual assault coalitions, and other public and private nonprofit entities for: educational seminars, operation of hotlines, training for professionals, preparation of informational material; education and training for college and university students and personnel to reduce sexual assault; and awareness programs. The awards are based on a formula."
+	},
+	{
+		"id": 186,
+		"category": "V Programs",
+		"code": "VF1",
+		"title": "Rape Prevention and Education Grants",
+		"description": "Provides financial assistance to States for rape prevention and education programs conducted by rape crisis centers, State sexual assault coalitions, and other public and private nonprofit entities for: educational seminars, operation of hotlines, training for professionals, preparation of informational material; education and training for college and university students and personnel to reduce sexual assault; and awareness programs. The awards are based on a formula."
+	},
+	{
+		"id": 115,
+		"category": "Formula Grants",
+		"code": "X01",
+		"title": "Resource Access Program",
+		"description": "A Program to invite eligible institutions to seek access to NIH research resources. This includes programs where institutions will request access to submit to the resource, e.g., high throughput screening assays. It also includes programs where access to a specific NIH research resource is needed to conduct certain research."
+	},
+	{
+		"id": 116,
+		"category": "Formula Grants",
+		"code": "X02",
+		"title": "Preapplication",
+		"description": "A program to invite eligible institutions to submit a pre-application (also known as a \u201cwhite paper\u201d or \u201cpr\u00e9cis\u201d) to facilitate certain approaches or economies, such as reducing burden on the applicant community, for a funding opportunity"
+	},
+	{
+		"id": 190,
+		"category": "Formula Grants",
+		"code": "X98",
+		"title": "Protection and Advocacy for Mentally Ill Individuals",
+		"description": "Provides financial assistance to State and local government agencies and public and private organizations, to establish systems to protect and advocate the rights of the mentally ill.  This program is to ensure that the rights of mentally ill individuals are protected and advocated in conformance with constitutional, Federal and State mandates."
+	},
+	{
+		"id": 208,
+		"category": "Formula Grants",
+		"code": "X99",
+		"title": "National All Schedules Prescription Electronic Reporting (NASPER)",
+		"description": "Provides financial assistance to States and the District of Columbia who by July 10, 2009, have enacted legislation or regulations that permit the implementation of a State controlled substance monitoring program as well as the imposition of appropriate penalties for the unauthorized use and disclosure of information maintained in the program."
+	}
+]
