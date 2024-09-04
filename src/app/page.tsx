@@ -1,9 +1,9 @@
 import Image from "next/image";
 
 import { getServerClient } from "@/utils/supabase/server";
-import Link from "next/link";
-import { Button, buttonVariants } from "gen/ui/button";
 import { cn } from "gen/cn";
+import { Button, buttonVariants } from "gen/ui/button";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function LandingPage() {
@@ -24,7 +24,7 @@ export default async function LandingPage() {
 					Get to month three on day one
 				</h1>
 				<p className="text-sm max-w-screen-md text-balance  text-muted-foreground sm:text-xl sm:leading-8">
-					BaseMind is a world class SaaS project Starter, clean code with 95% test coverage.
+					Trumpet is a world class SaaS project Starter, clean code with 95% test coverage.
 				</p>
 				<Link href="/auth">
 					<Button className={cn(buttonVariants({ variant: "default", size: "lg" }))}>Get Started</Button>
