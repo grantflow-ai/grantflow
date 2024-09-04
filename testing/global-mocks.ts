@@ -2,6 +2,7 @@ import process from "node:process";
 
 import { PagePath } from "@/config/enums";
 import type { Env } from "@/types/env-types";
+import { faker } from "@faker-js/faker";
 import { beforeEach, vi } from "vitest";
 
 const { mockUsePathname, mockRedirect, mockToast } = vi.hoisted(() => {
@@ -58,6 +59,8 @@ export class MockPointerEvent extends Event {
 export const mockScrollIntoView = vi.fn();
 export const mockHasPointerCapture = vi.fn();
 export const mockReleasePointerCapture = vi.fn();
+export const mockCreateObjectURL = vi.fn().mockImplementation(() => faker.image.url());
+export const mockRevokeObjectURL = vi.fn();
 
 // see: https://github.com/jsdom/jsdom/issues/3294
 export const mockShowModal = vi.fn();
@@ -83,22 +86,21 @@ beforeAll(() => {
 	window.HTMLElement.prototype.releasePointerCapture = mockReleasePointerCapture;
 	window.HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
 	window.PointerEvent = MockPointerEvent as any;
+	window.URL.createObjectURL = mockCreateObjectURL;
+	window.URL.revokeObjectURL = mockRevokeObjectURL;
 });
 
 beforeEach(() => {
-	mockClose.mockReset();
 	mockClose.mockReset();
 	mockHasPointerCapture.mockReset();
 	mockRedirect.mockReset();
 	mockReleasePointerCapture.mockReset();
 	mockScrollIntoView.mockReset();
 	mockShow.mockReset();
-	mockShow.mockReset();
-	mockShowModal.mockReset();
 	mockShowModal.mockReset();
 	mockToast.mockReset();
-    mockUsePathname.mockReset().mockReturnValue(PagePath.ROOT);
-    mockFetch.mockReset().mockResolvedValue({
+	mockUsePathname.mockReset().mockReturnValue(PagePath.ROOT);
+	mockFetch.mockReset().mockResolvedValue({
 		json: () => Promise.resolve({}),
 		ok: true,
 		status: 200,
