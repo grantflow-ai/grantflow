@@ -26,6 +26,7 @@
 		"@hookform/resolvers": "^3.9.0",
 		"@icons-pack/react-simple-icons": "^10.0.0",
 		"@radix-ui/react-label": "^2.1.0",
+		"@radix-ui/react-slot": "^1.1.0",
 		"@radix-ui/react-toast": "^1.2.1",
 		"@supabase/ssr": "^0.5.1",
 		"@supabase/supabase-js": "^2.45.3",
