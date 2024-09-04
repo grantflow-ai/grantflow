@@ -1,17 +1,19 @@
-"use client";
-
 import { Cross2Icon, FileTextIcon, UploadIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Dropzone, { type DropzoneProps, type FileRejection } from "react-dropzone";
 import { toast } from "sonner";
 
+import { generateUploadUrls } from "@/actions/file";
 import { useControllableState } from "@/hooks/use-controllable-state";
 import { formatBytes } from "@/utils/format";
+import { clientLogger } from "@/utils/logging/client";
+import axios from "axios";
 import { cn } from "gen/cn";
 import { Button } from "gen/ui/button";
 import { Progress } from "gen/ui/progress";
 import { ScrollArea } from "gen/ui/scroll-area";
-import { type HTMLAttributes, useCallback, useEffect, useMemo } from "react";
+import { nanoid } from "nanoid";
+import { type HTMLAttributes, useCallback, useEffect, useMemo, useState } from "react";
 
 const DEFAULT_FILE_ACCEPTS = {
 	// the format of accept is defined in MDN: https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker
@@ -44,73 +46,109 @@ const DEFAULT_FILE_ACCEPTS = {
 	"text/x-rst": [".rst"],
 };
 
+async function handleFileUpload(files: File[], setProgresses: (progresses: Record<string, number>) => void) {
+	const target = files.length > 1 ? `${files.length} files` : "file";
+	const fileDataMapping = Object.fromEntries(files.map((file) => [file.name, [file.type, nanoid()]]));
+	try {
+		const fileIdToUploadURLMap = await generateUploadUrls(Object.values(fileDataMapping) as [string, string][]);
+
+		const progresses: Record<string, number> = {};
+
+		const promises = files.map(async (file) => {
+			const [fileType, fileId] = fileDataMapping[file.name];
+			const uploadUrl = fileIdToUploadURLMap.get(fileId);
+
+			if (!uploadUrl) {
+				throw new Error(`No upload URL found for file: ${file.name}`);
+			}
+
+			await axios.put(uploadUrl, file, {
+				headers: {
+					"Content-Type": fileType,
+				},
+				onUploadProgress: (progressEvent) => {
+					if (progressEvent.total) {
+						progresses[file.name] = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+						setProgresses({ ...progresses });
+					}
+				},
+			});
+		});
+		await Promise.all(promises);
+	} catch {
+		clientLogger.debug(fileDataMapping, `Failed to upload ${target}`);
+		toast.error(`Failed to upload ${target}`);
+	}
+}
+
 export function FileUploader({
-	value: valueProp,
-	onValueChange,
-	onUpload,
-	progresses,
 	accept = DEFAULT_FILE_ACCEPTS,
+	className,
 	disabled = false,
 	maxFileCount = Number.POSITIVE_INFINITY,
 	maxSize = 1024 * 1024 * 20,
-	className,
+	onProgressChange,
+	onValueChange,
+	progresses: progressesProp,
+	value: valueProp,
 	...dropzoneProps
-}: HTMLAttributes<HTMLDivElement> & {
-	accept?: DropzoneProps["accept"];
-	disabled?: boolean;
-	maxFileCount?: DropzoneProps["maxFiles"];
-	maxSize?: DropzoneProps["maxSize"];
-	onUpload?: (files: File[]) => Promise<void>;
-	onValueChange?: (files: File[]) => void;
-	progresses?: Record<string, number>;
-	value?: File[];
-}) {
+}: HTMLAttributes<HTMLDivElement> &
+	DropzoneProps & {
+		disabled?: boolean;
+		maxFileCount?: number;
+		onProgressChange?: (progresses: Record<string, number>) => void;
+		onValueChange?: (files: File[]) => void;
+		progresses?: Record<string, number>;
+		value?: File[];
+	}) {
 	const [files, setFiles] = useControllableState({
 		prop: valueProp,
 		onChange: onValueChange,
 	});
+	const [progresses, setProgresses] = useControllableState({
+		prop: progressesProp,
+		onChange: onProgressChange,
+	});
+
+	const [previewUrls, setPreviewUrls] = useState(new Map<string, string>());
+
+	const validateFileUploads = useCallback(
+		(newFileUploads: File[]) => {
+			if (maxFileCount === 1 && newFileUploads.length > 1) {
+				toast.error("Cannot upload more than 1 file at a time");
+				return false;
+			}
+
+			const totalFiles = (files?.length ?? 0) + newFileUploads.length;
+			if (totalFiles > maxFileCount) {
+				toast.error(`Cannot upload more than ${maxFileCount} files`);
+				return false;
+			}
+
+			return true;
+		},
+		[maxFileCount, files],
+	);
 
 	const onDrop = useCallback(
 		(acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-			if (maxFileCount === 1 && acceptedFiles.length > 1) {
-				toast.error("Cannot upload more than 1 file at a time");
-				return;
-			}
+			if (validateFileUploads(acceptedFiles)) {
+				const updatedFiles = [...(files ?? []), ...acceptedFiles];
 
-			const totalFiles = (files?.length ?? 0) + acceptedFiles.length;
-			if (totalFiles > maxFileCount) {
-				toast.error(`Cannot upload more than ${maxFileCount} files`);
-				return;
-			}
+				setFiles(updatedFiles);
 
-			const updatedFiles = (files ? [...files, ...acceptedFiles] : acceptedFiles).map((file) => {
-				if (!Reflect.has(file, "previewUrl") && file.type.startsWith("image/")) {
-					Reflect.set(file, "previewUrl", URL.createObjectURL(file));
+				if (rejectedFiles.length > 0) {
+					for (const { file } of rejectedFiles) {
+						toast.error(`File ${file.name} was rejected`);
+					}
 				}
-				return file;
-			});
 
-			setFiles(updatedFiles);
-
-			if (rejectedFiles.length > 0) {
-				for (const { file } of rejectedFiles) {
-					toast.error(`File ${file.name} was rejected`);
+				if (updatedFiles.length) {
+					void handleFileUpload(updatedFiles, setProgresses);
 				}
-			}
-
-			if (onUpload && updatedFiles.length > 0 && updatedFiles.length <= maxFileCount) {
-				const target = updatedFiles.length > 1 ? `${updatedFiles.length} files` : "file";
-				toast.promise(onUpload(updatedFiles), {
-					loading: `Uploading ${target}...`,
-					success: () => {
-						setFiles([]);
-						return `${target} uploaded`;
-					},
-					error: `Failed to upload ${target}`,
-				});
 			}
 		},
-		[files, maxFileCount, onUpload, setFiles],
+		[validateFileUploads, files, setProgresses, setFiles],
 	);
 
 	const onRemove = useCallback(
@@ -123,15 +161,24 @@ export function FileUploader({
 	);
 
 	useEffect(() => {
+		for (const file of files ?? []) {
+			if (!previewUrls.has(file.name) && file.type.startsWith("image/")) {
+				setPreviewUrls(new Map(previewUrls).set(file.name, URL.createObjectURL(file)));
+			}
+		}
+
+		for (const fileName of previewUrls.keys()) {
+			if (!files?.some((file) => file.name === fileName)) {
+				previewUrls.delete(fileName);
+			}
+		}
+
 		return () => {
-			for (const file of files ?? []) {
-				const previewUrl = Reflect.get(file, "previewUrl") as string | undefined;
-				if (previewUrl) {
-					URL.revokeObjectURL(previewUrl);
-				}
+			for (const previewUrl of previewUrls.values()) {
+				URL.revokeObjectURL(previewUrl);
 			}
 		};
-	}, [files]);
+	}, [files, previewUrls]);
 
 	const isDisabled = useMemo(
 		() => disabled || (files?.length ?? 0) >= maxFileCount,
@@ -206,6 +253,7 @@ export function FileUploader({
 									onRemove(index);
 								}}
 								progress={progresses?.[file.name]}
+								previewUrl={previewUrls.get(file.name)}
 							/>
 						))}
 					</div>
@@ -219,15 +267,17 @@ function FileCard({
 	file,
 	progress,
 	onRemove,
+	previewUrl,
 }: {
 	file: File;
 	progress?: number;
 	onRemove: () => void;
+	previewUrl?: string;
 }) {
 	return (
 		<div className="relative flex items-center gap-2.5" data-testid={`file-card-${file.name}`}>
 			<div className="flex flex-1 gap-2.5">
-				<FilePreview file={file} />
+				<FilePreview file={file} previewUrl={previewUrl} />
 				<div className="flex w-full flex-col gap-2">
 					<div className="flex flex-col gap-px">
 						<p
@@ -260,8 +310,7 @@ function FileCard({
 	);
 }
 
-function FilePreview({ file }: { file: File }) {
-	const previewUrl = Reflect.get(file, "previewUrl") as string | undefined;
+function FilePreview({ file, previewUrl }: { file: File; previewUrl?: string }) {
 	if (previewUrl) {
 		return (
 			<Image
