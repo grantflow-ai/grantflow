@@ -1,7 +1,6 @@
 import type { Env } from "@/types/env-types";
 import { getEnv } from "@/utils/env";
 import { S3Client } from "@aws-sdk/client-s3";
-import { describe, expect, it, vi } from "vitest";
 import { getS3Client } from "./s3";
 
 vi.mock("@aws-sdk/client-s3");
