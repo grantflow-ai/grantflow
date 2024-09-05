@@ -1,15 +1,3 @@
-import { mockToast } from "::testing/global-mocks";
-import { faker } from "@faker-js/faker";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FileUploader } from "./file-uploader";
-
-const createFile = (name: string, size: number, type: string): File => {
-	const file = new File(["file"], name, { type });
-	Object.defineProperty(file, "size", { value: size });
-	return file;
-};
-
 describe("FileUploader", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -185,6 +173,63 @@ describe("FileUploader", () => {
 
 		await waitFor(() => {
 			expect(screen.getByTestId("file-preview-icon")).toBeInTheDocument();
+		});
+	});
+});
+
+import { mockToast } from "::testing/global-mocks";
+import { generateUploadUrls } from "@/actions/file";
+import { faker } from "@faker-js/faker";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import axios from "axios";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FileUploader } from "./file-uploader";
+
+vi.mock("axios");
+vi.mock("@/actions/file", () => ({
+	generateUploadUrls: vi.fn(),
+}));
+
+const createFile = (name: string, size: number, type: string): File => {
+	const file = new File(["file"], name, { type });
+	Object.defineProperty(file, "size", { value: size });
+	return file;
+};
+
+describe("FileUploader - handleFileUpload and validation", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("handles file upload correctly with mock generateUploadUrls and axios", async () => {
+		const file = createFile("test.jpg", 1024, "image/jpeg");
+
+		vi.mocked(generateUploadUrls).mockImplementation((identifiers: [string, string][]) =>
+			Promise.resolve(new Map([[identifiers[0][1], "https://fake-upload-url.com"]])),
+		);
+
+		const mockOnValueChange = vi.fn();
+		vi.mocked(axios.put).mockResolvedValue({ status: 200 });
+
+		render(<FileUploader onValueChange={mockOnValueChange} />);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("dropzone")).toBeInTheDocument();
+		});
+
+		const input = screen.getByTestId("file-input");
+
+		Object.defineProperty(input, "files", { value: [file] });
+
+		fireEvent.drop(input);
+
+		await waitFor(() => {
+			expect(screen.getByText("test.jpg")).toBeInTheDocument();
+		});
+
+		expect(generateUploadUrls).toHaveBeenCalled();
+		await waitFor(() => {
+			expect(axios.put).toHaveBeenCalledWith("https://fake-upload-url.com", file, expect.any(Object));
 		});
 	});
 });
