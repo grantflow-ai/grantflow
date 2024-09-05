@@ -9,6 +9,7 @@ const { mockUsePathname, mockRedirect, mockToast } = vi.hoisted(() => {
 	Reflect.set(mockToast, "error", vi.fn());
 	Reflect.set(mockToast, "success", vi.fn());
 	Reflect.set(mockToast, "info", vi.fn());
+	Reflect.set(mockToast, "promise", vi.fn());
 
 	return {
 		mockUsePathname: vi.fn(),
@@ -40,9 +41,9 @@ vi.mock("sonner", async (importOriginal) => {
 export { mockUsePathname, mockRedirect, mockToast };
 
 // see: https://github.com/jsdom/jsdom/issues/3294
-export const showModalMock = vi.fn();
-export const showMock = vi.fn();
-export const closeMock = vi.fn();
+export const mockShowModal = vi.fn();
+export const mockShow = vi.fn();
+export const mockClose = vi.fn();
 
 // mock the fetch function
 export const mockFetch = vi.fn();
@@ -56,18 +57,18 @@ export const mockEnv = {
 } satisfies Env;
 
 beforeAll(() => {
-	HTMLDialogElement.prototype.show = showMock;
-	HTMLDialogElement.prototype.showModal = showModalMock;
-	HTMLDialogElement.prototype.close = closeMock;
+	HTMLDialogElement.prototype.close = mockClose;
+	HTMLDialogElement.prototype.show = mockShow;
+	HTMLDialogElement.prototype.showModal = mockShowModal;
 });
 
 beforeEach(() => {
+	mockClose.mockReset();
 	mockRedirect.mockReset();
-	mockUsePathname.mockReset().mockReturnValue(PagePath.ROOT);
+	mockShow.mockReset();
+	mockShowModal.mockReset();
 	mockToast.mockReset();
-	showModalMock.mockReset();
-	showMock.mockReset();
-	closeMock.mockReset();
+	mockUsePathname.mockReset().mockReturnValue(PagePath.ROOT);
 	mockFetch.mockReset().mockResolvedValue({
 		json: () => Promise.resolve({}),
 		ok: true,

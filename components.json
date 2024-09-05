@@ -10,7 +10,7 @@
 		"cssVariables": true
 	},
 	"aliases": {
-		"components": "gen/ui",
-		"utils": "gen/cn.ts"
+		"components": "gen",
+		"utils": "gen"
 	}
 }

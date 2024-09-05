@@ -13,7 +13,7 @@
 		"test": "NODE_NO_WARNINGS=1 vitest",
 		"test:coverage": "pnpm run test --coverage",
 		"test:watch": "pnpm run test --watch --coverage",
-		"ui": "pnpm dlx shadcn-ui@latest"
+		"ui": "pnpm dlx shadcn@latest"
 	},
 	"lint-staged": {
 		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx,json,html,css}": "biome format --write",
