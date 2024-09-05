@@ -1,20 +1,11 @@
 "use server";
 
-import { getEnv } from "@/utils/env";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getS3Client } from "@/utils/s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const REGION = "eu-central-1";
 const BUCKET_NAME = "bucketName";
 const URL_EXPIRATION_SECONDS = 600;
-
-const s3Client = new S3Client({
-	region: REGION,
-	credentials: {
-		accessKeyId: getEnv().AWS_ACCESS_KEY_ID,
-		secretAccessKey: getEnv().AWS_SECRET_ACCESS_KEY,
-	},
-});
 
 async function generateSignedUrl(bucketName: string, objectKey: string, mimeType: string): Promise<string> {
 	const command = new PutObjectCommand({
@@ -22,7 +13,7 @@ async function generateSignedUrl(bucketName: string, objectKey: string, mimeType
 		Key: objectKey,
 		ContentType: mimeType,
 	});
-	return await getSignedUrl(s3Client, command, { expiresIn: URL_EXPIRATION_SECONDS });
+	return await getSignedUrl(getS3Client(), command, { expiresIn: URL_EXPIRATION_SECONDS });
 }
 
 /**
