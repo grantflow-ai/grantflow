@@ -1,7 +1,6 @@
 import { getServerClient } from "@/utils/supabase/server";
 import { render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import LandingPage from "./page";
 
 // Mock the necessary imports and functions
