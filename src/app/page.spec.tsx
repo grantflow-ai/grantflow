@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import LandingPage from "./page";
 import { getServerClient } from "@/utils/supabase/server";
+import { render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import LandingPage from "./page";
 
 // Mock the necessary imports and functions
 vi.mock("@/utils/supabase/server", () => ({
@@ -48,7 +48,7 @@ describe("LandingPage", () => {
 
 		expect(screen.getByText("Get to month three on day one")).toBeInTheDocument();
 		expect(
-			screen.getByText("BaseMind is a world class SaaS project Starter, clean code with 95% test coverage."),
+			screen.getByText("Trumpet is a world class SaaS project Starter, clean code with 95% test coverage."),
 		).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Get Started" })).toBeInTheDocument();
 		expect(container.querySelector('img[alt="screenshot"]')).toBeInTheDocument();
