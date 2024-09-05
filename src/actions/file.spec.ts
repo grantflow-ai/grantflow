@@ -1,7 +1,6 @@
 import { getS3Client } from "@/utils/s3";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateUploadUrls } from "./file";
 
 vi.mock("@/utils/s3", () => ({
