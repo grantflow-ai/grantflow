@@ -16,9 +16,15 @@ const createFile = (name: string, size: number, type: string): File => {
 	return file;
 };
 
+const mockCreateObjectURL = vi.fn().mockImplementation(() => faker.image.url());
+const mockRevokeObjectURL = vi.fn();
+
 describe("FileUploader", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+
+		window.URL.createObjectURL = mockCreateObjectURL;
+		window.URL.revokeObjectURL = mockRevokeObjectURL;
 	});
 
 	it("renders the component correctly", async () => {

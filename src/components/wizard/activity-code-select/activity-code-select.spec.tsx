@@ -1,8 +1,33 @@
-import { MockPointerEvent } from "::testing/global-mocks";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ActivityCodeSelect, SupportedActivityCodes } from "./activity-code-select";
 
+// see: https://stackoverflow.com/questions/78561620/need-help-unit-testing-select-from-shadcn-ui
+class MockPointerEvent extends Event {
+	button: number | undefined;
+	ctrlKey: boolean | undefined;
+
+	constructor(type: string, props: EventInit & { button?: number | null; ctrlKey?: boolean | null }) {
+		super(type, props);
+		if (props.button !== null) {
+			this.button = props.button;
+		}
+		if (props.ctrlKey !== null) {
+			this.ctrlKey = props.ctrlKey;
+		}
+	}
+}
+
+const mockScrollIntoView = vi.fn();
+const mockHasPointerCapture = vi.fn();
+const mockReleasePointerCapture = vi.fn();
+
 describe("ActivityCodeSelect", () => {
+	beforeEach(() => {
+		window.PointerEvent = MockPointerEvent as any;
+		window.HTMLElement.prototype.hasPointerCapture = mockHasPointerCapture;
+		window.HTMLElement.prototype.releasePointerCapture = mockReleasePointerCapture;
+		window.HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
+	});
 	it("renders the component", () => {
 		render(<ActivityCodeSelect />);
 
