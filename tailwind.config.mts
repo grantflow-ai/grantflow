@@ -13,6 +13,9 @@ const config = {
 			},
 		},
 		extend: {
+			fontFamily: {
+				"filicudi-solid": ["filicudi-solid", "sans-serif"],
+			},
 			colors: {
 				border: "hsl(var(--border))",
 				input: "hsl(var(--input))",
