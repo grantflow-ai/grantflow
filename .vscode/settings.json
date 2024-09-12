@@ -1,0 +1,12 @@
+{
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "always",
+		"source.fixAll.biome": "always"
+	},
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "biomejs.biome",
+	"eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+	"biome.lspBin": "node_modules/@biomejs/biome/bin/biome",
+	"biome.enabled": true
+}
