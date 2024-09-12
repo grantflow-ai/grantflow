@@ -1,0 +1,15 @@
+{
+	"recommendations": [
+		"austenc.tailwind-docs",
+		"biomejs.biome",
+		"bradlc.vscode-tailwindcss",
+		"davidanson.vscode-markdownlint",
+		"dbaeumer.vscode-eslint",
+		"github.vscode-github-actions",
+		"github.vscode-pull-request-github",
+		"ms-vscode.vscode-typescript-next",
+		"redhat.vscode-yaml",
+		"stylelint.vscode-stylelint",
+		"vitest.explorer"
+	]
+}
