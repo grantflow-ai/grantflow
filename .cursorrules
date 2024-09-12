@@ -1,0 +1,64 @@
+# GrantFlow.AI Frontend Project
+
+This project is the frontend for GrantFlow.ai, an AI-powered platform for writing STEM grant applications.
+
+## Tech Stack
+
+- **Next.js** ≥ 14 with App Router
+- **TypeScript** ≥ 5.6
+- **TailwindCSS**
+- **Supabase** (both client-side and SSR)
+
+## Development Guidelines
+
+1. **Programming Paradigm**
+
+   - Prefer **functional programming** when applicable.
+   - Use **OOP** only for service classes (e.g., API clients).
+
+2. **TypeScript**
+
+   - Use **strict mode** targeting ESNext.
+   - Assume a team of skilled, experienced developers.
+
+3. **Documentation**
+
+   - Add comprehensive **JSDoc comments** for all non-private functions and classes.
+
+4. **React Components**
+   - Add `data-testid` attributes to all components for testing purposes.
+5. **Code Complexity**
+   - Aim for a cyclomatic complexity **≤ 10** (max: 15).
+6. **Code Style**
+
+   - **Avoid switch statements** whenever possible.
+   - Prefer `for...of` loops with `const` over `Array.forEach`.
+   - Use the `@/` alias for imports from the `src` folder; avoid relative imports.
+   - Always **use named imports**, for example:
+
+     ```typescript
+     // Instead of:
+     import React;
+     const MyComponent: React.FC = () => { ... }
+
+     // Do this:
+     import { FC } from 'react';
+     const MyComponent: FC = () => { ... }
+     ```
+
+## Testing Guidelines
+
+When writing tests, follow these instructions:
+
+1. **Testing Framework**
+
+   - Use **Vitest** as the testing framework.
+   - Assume Vitest globals (e.g., `describe`, `it`, `beforeEach`) are available without imports.
+
+2. **Test Syntax**
+
+   - Use **`it`** over `test`.
+   - Apply **parameterized tests** when useful, using `it.each` or `describe.each`.
+
+3. **Selectors**
+   - Always use **`data-testid`** attributes for selecting React components during tests.
