@@ -3,151 +3,160 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { subscribeToMailingList } from "@/actions/mailing-list";
 import { toast } from "sonner";
-import { SubscribeForm } from "./SubscribeForm";
+import { SubscribeToMailingListForm } from "./mailing-list-subscribe-form";
 
 vi.mock("@/actions/mailing-list");
 vi.mock("sonner");
 
 describe("SubscribeForm", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-	it("renders the form correctly", () => {
-		render(<SubscribeForm />);
+  it("renders the form correctly", () => {
+    render(<SubscribeToMailingListForm />);
 
-		expect(screen.getByLabelText("Email")).toBeInTheDocument();
-		expect(screen.getByTestId("subscribe-form-email-input")).toBeInTheDocument();
-		expect(screen.getByTestId("subscribe-form-submit-button")).toBeInTheDocument();
-	});
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("subscribe-form-email-input")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("subscribe-form-submit-button")
+    ).toBeInTheDocument();
+  });
 
-	it("disables submit button when form is invalid", () => {
-		render(<SubscribeForm />);
+  it("disables submit button when form is invalid", () => {
+    render(<SubscribeToMailingListForm />);
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		expect(submitButton).toBeDisabled();
-	});
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    expect(submitButton).toBeDisabled();
+  });
 
-	it("enables submit button when form is valid", async () => {
-		render(<SubscribeForm />);
+  it("enables submit button when form is valid", async () => {
+    render(<SubscribeToMailingListForm />);
 
-		const emailInput = screen.getByTestId("subscribe-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
+    const emailInput = screen.getByTestId("subscribe-form-email-input");
+    await userEvent.type(emailInput, "test@example.com");
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		await waitFor(() => {
-			expect(submitButton).not.toBeDisabled();
-		});
-	});
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    await waitFor(() => {
+      expect(submitButton).not.toBeDisabled();
+    });
+  });
 
-	it("calls subscribeToMailingList with correct email on form submission", async () => {
-		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce(null);
+  it("calls subscribeToMailingList with correct email on form submission", async () => {
+    const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
+    mockSubscribeToMailingList.mockResolvedValueOnce("");
 
-		render(<SubscribeForm />);
+    render(<SubscribeToMailingListForm />);
 
-		const emailInput = screen.getByTestId("subscribe-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
+    const emailInput = screen.getByTestId("subscribe-form-email-input");
+    await userEvent.type(emailInput, "test@example.com");
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		await userEvent.click(submitButton);
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    await userEvent.click(submitButton);
 
-		await waitFor(() => {
-			expect(mockSubscribeToMailingList).toHaveBeenCalledWith("test@example.com");
-		});
-	});
+    await waitFor(() => {
+      expect(mockSubscribeToMailingList).toHaveBeenCalledWith(
+        "test@example.com"
+      );
+    });
+  });
 
-	it("displays success toast when subscription is successful", async () => {
-		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce(null);
+  it("displays success toast when subscription is successful", async () => {
+    const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
+    mockSubscribeToMailingList.mockResolvedValueOnce("");
 
-		render(<SubscribeForm />);
+    render(<SubscribeToMailingListForm />);
 
-		const emailInput = screen.getByTestId("subscribe-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
+    const emailInput = screen.getByTestId("subscribe-form-email-input");
+    await userEvent.type(emailInput, "test@example.com");
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		await userEvent.click(submitButton);
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    await userEvent.click(submitButton);
 
-		await waitFor(() => {
-			expect(vi.mocked(toast.success)).toHaveBeenCalledWith("Successfully subscribed to the mailing list!", {
-				duration: 3000,
-			});
-		});
-	});
+    await waitFor(() => {
+      expect(vi.mocked(toast.success)).toHaveBeenCalledWith(
+        "Successfully subscribed to the mailing list!",
+        { duration: 3000 }
+      );
+    });
+  });
 
-	it("displays error toast when subscription fails", async () => {
-		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		const errorMessage = "Failed to subscribe";
-		mockSubscribeToMailingList.mockResolvedValueOnce(errorMessage);
+  it("displays error toast when subscription fails", async () => {
+    const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
+    const errorMessage = "Failed to subscribe";
+    mockSubscribeToMailingList.mockResolvedValueOnce(errorMessage);
 
-		render(<SubscribeForm />);
+    render(<SubscribeToMailingListForm />);
 
-		const emailInput = screen.getByTestId("subscribe-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
+    const emailInput = screen.getByTestId("subscribe-form-email-input");
+    await userEvent.type(emailInput, "test@example.com");
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		await userEvent.click(submitButton);
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    await userEvent.click(submitButton);
 
-		await waitFor(() => {
-			expect(vi.mocked(toast.error)).toHaveBeenCalledWith(errorMessage, {
-				duration: 3000,
-			});
-		});
-	});
+    await waitFor(() => {
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith(errorMessage, {
+        duration: 3000,
+      });
+    });
+  });
 
-	it("shows loading state on submit button while form is submitting", async () => {
-		vi.mocked(subscribeToMailingList).mockImplementationOnce(
-			() =>
-				new Promise((resolve) =>
-					setTimeout(() => {
-						resolve(null);
-					}, 5),
-				),
-		);
+  it("shows loading state on submit button while form is submitting", async () => {
+    vi.mocked(subscribeToMailingList).mockImplementationOnce(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => {
+            resolve("");
+          }, 5)
+        )
+    );
 
-		render(<SubscribeForm />);
+    render(<SubscribeToMailingListForm />);
 
-		const emailInput = screen.getByTestId("subscribe-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
+    const emailInput = screen.getByTestId("subscribe-form-email-input");
+    await userEvent.type(emailInput, "test@example.com");
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		await userEvent.click(submitButton);
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    await userEvent.click(submitButton);
 
-		expect(submitButton).toHaveAttribute("aria-busy", "true");
-	});
+    expect(submitButton).toHaveAttribute("aria-busy", "true");
+  });
 
-	it("maintains the email input value after failed submission", async () => {
-		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce("Error message");
+  it("maintains the email input value after failed submission", async () => {
+    const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
+    mockSubscribeToMailingList.mockResolvedValueOnce("Error message");
 
-		render(<SubscribeForm />);
+    render(<SubscribeToMailingListForm />);
 
-		const emailInput = screen.getByTestId("subscribe-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
+    const emailInput = screen.getByTestId("subscribe-form-email-input");
+    await userEvent.type(emailInput, "test@example.com");
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		await userEvent.click(submitButton);
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    await userEvent.click(submitButton);
 
-		await waitFor(() => {
-			expect(emailInput).toHaveValue("test@example.com");
-		});
-	});
+    await waitFor(() => {
+      expect(emailInput).toHaveValue("test@example.com");
+    });
+  });
 
-	it("renders thank you message after successful subscription", async () => {
-		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce(null);
+  it("renders thank you message after successful subscription", async () => {
+    const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
+    mockSubscribeToMailingList.mockResolvedValueOnce("");
 
-		render(<SubscribeForm />);
+    render(<SubscribeToMailingListForm />);
 
-		const emailInput = screen.getByTestId("subscribe-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
+    const emailInput = screen.getByTestId("subscribe-form-email-input");
+    await userEvent.type(emailInput, "test@example.com");
 
-		const submitButton = screen.getByTestId("subscribe-form-submit-button");
-		await userEvent.click(submitButton);
+    const submitButton = screen.getByTestId("subscribe-form-submit-button");
+    await userEvent.click(submitButton);
 
-		await waitFor(() => {
-			expect(screen.getByText("Thank you for subscribing!")).toBeInTheDocument();
-		});
-	});
+    await waitFor(() => {
+      expect(
+        screen.getByText("Thank you for subscribing!")
+      ).toBeInTheDocument();
+    });
+  });
 });
