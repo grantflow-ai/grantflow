@@ -126,6 +126,9 @@
 				"rules": {
 					"performance": {
 						"useTopLevelRegex": "off"
+					},
+					"a11y": {
+						"useAltText": "off"
 					}
 				}
 			}
