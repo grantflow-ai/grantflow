@@ -7,7 +7,7 @@ export function FormButton({ children, isLoading, className = "", ...props }: Bu
 		<Button
 			className={cn(
 				className,
-				"disabled:text-gray-400 disabled:cursor-not-allowed invalid:text-gray-400 invalid:cursor-not-allowed",
+				"disabled:text-muted-foreground-400 disabled:cursor-not-allowed invalid:text-destructive-400 invalid:cursor-not-allowed",
 			)}
 			type="submit"
 			aria-busy={isLoading}

@@ -19,7 +19,7 @@ pnpm install -r
 After the `supabase` cli is installed with the above command, you can use the available scripts
 in [package.json](./package.json):
 
-# start
+### start
 
 ```sh
 pnpm run start
@@ -27,7 +27,7 @@ pnpm run start
 
 Starts the database.
 
-# stop
+### stop
 
 ```sh
 pnpm run stop
@@ -35,7 +35,7 @@ pnpm run stop
 
 Stops the database.
 
-# status
+### status
 
 ```sh
 pnpm run status
@@ -43,7 +43,7 @@ pnpm run status
 
 Shows the status of the database.
 
-# restart
+### restart
 
 ```sh
 pnpm run restart
@@ -51,7 +51,7 @@ pnpm run restart
 
 Restarts the database.
 
-# reset
+### reset
 
 ```sh
 pnpm run reset
@@ -59,7 +59,7 @@ pnpm run reset
 
 Resets the database.
 
-# link
+### link
 
 ```sh
 pnpm run link <remote>
@@ -67,7 +67,7 @@ pnpm run link <remote>
 
 Links the database to a remote.
 
-# generate:types
+### generate:types
 
 ```sh
 pnpm run generate:types
@@ -75,7 +75,7 @@ pnpm run generate:types
 
 Generates the types for the database. These are set under the [gen folder](../gen/database-types).
 
-# generate:migration
+### generate:migration
 
 ```sh
 pnpm run generate:migration <migration-name>
@@ -83,7 +83,7 @@ pnpm run generate:migration <migration-name>
 
 Generates a migration file under the [migrations folder](./migrations).
 
-# generate:seed
+### generate:seed
 
 ```sh
 pnpm run generate:seed
@@ -91,7 +91,7 @@ pnpm run generate:seed
 
 Generates a seed file and saves it as [seed.sql](./seed.sql).
 
-# push
+### push
 
 ```sh
 pnpm run push
@@ -99,7 +99,7 @@ pnpm run push
 
 Pushes the database to the remote.
 
-# pull
+### pull
 
 ```sh
 pnpm run pull

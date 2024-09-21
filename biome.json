@@ -11,6 +11,8 @@
 		"rules": {
 			"correctness": {
 				"all": true,
+				"useImportExtensions": "off",
+				"noUndeclaredDependencies": "off",
 				"useExhaustiveDependencies": {
 					"level": "error",
 					"options": {
@@ -40,10 +42,12 @@
 						"requireAscii": true,
 						"filenameCases": ["kebab-case"]
 					}
-				}
+				},
+				"useExplicitLengthCheck": "off"
 			},
 			"suspicious": {
-				"all": true
+				"all": true,
+				"noReactSpecificProps": "off"
 			},
 			"a11y": {
 				"all": true
@@ -112,6 +116,16 @@
 					},
 					"correctness": {
 						"noNodejsModules": "off"
+					}
+				}
+			}
+		},
+		{
+			"include": ["*/*.spec.*"],
+			"linter": {
+				"rules": {
+					"performance": {
+						"useTopLevelRegex": "off"
 					}
 				}
 			}
