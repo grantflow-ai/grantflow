@@ -14,6 +14,6 @@
 		"pull": "supabase db pull"
 	},
 	"devDependencies": {
-		"supabase": "^1.191.3"
+		"supabase": "^1.192.5"
 	}
 }
