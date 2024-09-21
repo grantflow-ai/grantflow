@@ -73,10 +73,13 @@ export type Database = {
 					declined_at: string | null;
 					deleted_at: string | null;
 					email: string;
+					expires_at: string;
 					id: string;
 					invited_by: string;
-					status: Database["public"]["Enums"]["invitation_status"];
-					workspace_id: string;
+					organization_id: string;
+					role: "owner" | "admin" | "member";
+					status: "pending" | "accepted" | "declined";
+					token: string;
 				};
 				Insert: {
 					accepted_at?: string | null;
@@ -84,10 +87,13 @@ export type Database = {
 					declined_at?: string | null;
 					deleted_at?: string | null;
 					email: string;
-					id: string;
+					expires_at?: string;
+					id?: string;
 					invited_by: string;
-					status?: Database["public"]["Enums"]["invitation_status"];
-					workspace_id: string;
+					organization_id: string;
+					role: "owner" | "admin" | "member";
+					status?: "pending" | "accepted" | "declined";
+					token?: string;
 				};
 				Update: {
 					accepted_at?: string | null;
@@ -95,10 +101,13 @@ export type Database = {
 					declined_at?: string | null;
 					deleted_at?: string | null;
 					email?: string;
+					expires_at?: string;
 					id?: string;
 					invited_by?: string;
-					status?: Database["public"]["Enums"]["invitation_status"];
-					workspace_id?: string;
+					organization_id?: string;
+					role?: "owner" | "admin" | "member";
+					status?: "pending" | "accepted" | "declined";
+					token?: string;
 				};
 				Relationships: [
 					{
@@ -109,10 +118,10 @@ export type Database = {
 						referencedColumns: ["id"];
 					},
 					{
-						foreignKeyName: "invitations_workspace_id_fkey";
-						columns: ["workspace_id"];
+						foreignKeyName: "invitations_organization_id_fkey";
+						columns: ["organization_id"];
 						isOneToOne: false;
-						referencedRelation: "workspaces";
+						referencedRelation: "organizations";
 						referencedColumns: ["id"];
 					},
 				];
@@ -123,15 +132,21 @@ export type Database = {
 					created_at: string;
 					deleted_at: string | null;
 					id: string;
+					link: string | null;
 					read: boolean | null;
+					title: string | null;
+					type: "invitation" | "message" | "alert";
 					user_id: string;
 				};
 				Insert: {
 					content: string;
 					created_at?: string;
 					deleted_at?: string | null;
-					id: string;
+					id?: string;
+					link?: string | null;
 					read?: boolean | null;
+					title?: string | null;
+					type?: "invitation" | "message" | "alert";
 					user_id: string;
 				};
 				Update: {
@@ -139,7 +154,10 @@ export type Database = {
 					created_at?: string;
 					deleted_at?: string | null;
 					id?: string;
+					link?: string | null;
 					read?: boolean | null;
+					title?: string | null;
+					type?: "invitation" | "message" | "alert";
 					user_id?: string;
 				};
 				Relationships: [
@@ -152,22 +170,97 @@ export type Database = {
 					},
 				];
 			};
+			organization_users: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					organization_id: string;
+					role: "owner" | "admin" | "member";
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					deleted_at?: string | null;
+					organization_id: string;
+					role: "owner" | "admin" | "member";
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					organization_id?: string;
+					role?: "owner" | "admin" | "member";
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "organization_users_organization_id_fkey";
+						columns: ["organization_id"];
+						isOneToOne: false;
+						referencedRelation: "organizations";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "organization_users_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "app_users";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			organizations: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					id: string;
+					logo: string | null;
+					name: string;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					deleted_at?: string | null;
+					id?: string;
+					logo?: string | null;
+					name: string;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					id?: string;
+					logo?: string | null;
+					name?: string;
+					updated_at?: string;
+				};
+				Relationships: [];
+			};
 			workspace_users: {
 				Row: {
+					created_at: string;
 					deleted_at: string | null;
-					role: Database["public"]["Enums"]["workspace_role"];
+					role: "owner" | "admin" | "member";
+					updated_at: string;
 					user_id: string;
 					workspace_id: string;
 				};
 				Insert: {
+					created_at?: string;
 					deleted_at?: string | null;
-					role: Database["public"]["Enums"]["workspace_role"];
+					role: "owner" | "admin" | "member";
+					updated_at?: string;
 					user_id: string;
 					workspace_id: string;
 				};
 				Update: {
+					created_at?: string;
 					deleted_at?: string | null;
-					role?: Database["public"]["Enums"]["workspace_role"];
+					role?: "owner" | "admin" | "member";
+					updated_at?: string;
 					user_id?: string;
 					workspace_id?: string;
 				};
@@ -195,14 +288,16 @@ export type Database = {
 					description: string | null;
 					id: string;
 					name: string;
+					organization_id: string;
 					updated_at: string;
 				};
 				Insert: {
 					created_at?: string;
 					deleted_at?: string | null;
 					description?: string | null;
-					id: string;
+					id?: string;
 					name: string;
+					organization_id: string;
 					updated_at?: string;
 				};
 				Update: {
@@ -211,9 +306,18 @@ export type Database = {
 					description?: string | null;
 					id?: string;
 					name?: string;
+					organization_id?: string;
 					updated_at?: string;
 				};
-				Relationships: [];
+				Relationships: [
+					{
+						foreignKeyName: "workspaces_organization_id_fkey";
+						columns: ["organization_id"];
+						isOneToOne: false;
+						referencedRelation: "organizations";
+						referencedColumns: ["id"];
+					},
+				];
 			};
 		};
 		Views: {
@@ -224,7 +328,8 @@ export type Database = {
 		};
 		Enums: {
 			invitation_status: "pending" | "accepted" | "declined";
-			workspace_role: "owner" | "admin" | "viewer";
+			notification_type: "invitation" | "message" | "alert";
+			user_role: "owner" | "admin" | "member";
 		};
 		CompositeTypes: {
 			[_ in never]: never;
