@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      sqlfluff:
+        specifier: github:Goldziher/sqlfluff-js
+        version: https://codeload.github.com/Goldziher/sqlfluff-js/tar.gz/44d1624366eaaf5bcd893893a17fdc5c1956db07
       supabase:
         specifier: ^1.192.5
         version: 1.192.5
@@ -196,6 +199,12 @@ packages:
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
+
+  sqlfluff@https://codeload.github.com/Goldziher/sqlfluff-js/tar.gz/44d1624366eaaf5bcd893893a17fdc5c1956db07:
+    resolution: {tarball: https://codeload.github.com/Goldziher/sqlfluff-js/tar.gz/44d1624366eaaf5bcd893893a17fdc5c1956db07}
+    version: 1.0.0
+    engines: {node: '>=20.0.0'}
+    hasBin: true
 
   string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
@@ -413,6 +422,8 @@ snapshots:
   shebang-regex@3.0.0: {}
 
   signal-exit@4.1.0: {}
+
+  sqlfluff@https://codeload.github.com/Goldziher/sqlfluff-js/tar.gz/44d1624366eaaf5bcd893893a17fdc5c1956db07: {}
 
   string-width@4.2.3:
     dependencies:
