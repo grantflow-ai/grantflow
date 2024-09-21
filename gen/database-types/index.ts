@@ -33,31 +33,28 @@ export type Database = {
 					avatar_url: string | null;
 					created_at: string;
 					email: string;
-					first_name: string | null;
+					first_name: string;
 					id: string;
-					last_name: string | null;
+					last_name: string;
 					updated_at: string;
-					username: string;
 				};
 				Insert: {
 					avatar_url?: string | null;
 					created_at?: string;
 					email: string;
-					first_name?: string | null;
+					first_name: string;
 					id: string;
-					last_name?: string | null;
+					last_name: string;
 					updated_at?: string;
-					username: string;
 				};
 				Update: {
 					avatar_url?: string | null;
 					created_at?: string;
 					email?: string;
-					first_name?: string | null;
+					first_name?: string;
 					id?: string;
-					last_name?: string | null;
+					last_name?: string;
 					updated_at?: string;
-					username?: string;
 				};
 				Relationships: [
 					{
@@ -69,6 +66,155 @@ export type Database = {
 					},
 				];
 			};
+			invitations: {
+				Row: {
+					accepted_at: string | null;
+					created_at: string;
+					declined_at: string | null;
+					deleted_at: string | null;
+					email: string;
+					id: string;
+					invited_by: string;
+					status: Database["public"]["Enums"]["invitation_status"];
+					workspace_id: string;
+				};
+				Insert: {
+					accepted_at?: string | null;
+					created_at?: string;
+					declined_at?: string | null;
+					deleted_at?: string | null;
+					email: string;
+					id: string;
+					invited_by: string;
+					status?: Database["public"]["Enums"]["invitation_status"];
+					workspace_id: string;
+				};
+				Update: {
+					accepted_at?: string | null;
+					created_at?: string;
+					declined_at?: string | null;
+					deleted_at?: string | null;
+					email?: string;
+					id?: string;
+					invited_by?: string;
+					status?: Database["public"]["Enums"]["invitation_status"];
+					workspace_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "invitations_invited_by_fkey";
+						columns: ["invited_by"];
+						isOneToOne: false;
+						referencedRelation: "app_users";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "invitations_workspace_id_fkey";
+						columns: ["workspace_id"];
+						isOneToOne: false;
+						referencedRelation: "workspaces";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			notifications: {
+				Row: {
+					content: string;
+					created_at: string;
+					deleted_at: string | null;
+					id: string;
+					read: boolean | null;
+					user_id: string;
+				};
+				Insert: {
+					content: string;
+					created_at?: string;
+					deleted_at?: string | null;
+					id: string;
+					read?: boolean | null;
+					user_id: string;
+				};
+				Update: {
+					content?: string;
+					created_at?: string;
+					deleted_at?: string | null;
+					id?: string;
+					read?: boolean | null;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "notifications_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "app_users";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			workspace_users: {
+				Row: {
+					deleted_at: string | null;
+					role: Database["public"]["Enums"]["workspace_role"];
+					user_id: string;
+					workspace_id: string;
+				};
+				Insert: {
+					deleted_at?: string | null;
+					role: Database["public"]["Enums"]["workspace_role"];
+					user_id: string;
+					workspace_id: string;
+				};
+				Update: {
+					deleted_at?: string | null;
+					role?: Database["public"]["Enums"]["workspace_role"];
+					user_id?: string;
+					workspace_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "workspace_users_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "app_users";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "workspace_users_workspace_id_fkey";
+						columns: ["workspace_id"];
+						isOneToOne: false;
+						referencedRelation: "workspaces";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			workspaces: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					description: string | null;
+					id: string;
+					name: string;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string | null;
+					id: string;
+					name: string;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string | null;
+					id?: string;
+					name?: string;
+					updated_at?: string;
+				};
+				Relationships: [];
+			};
 		};
 		Views: {
 			[_ in never]: never;
@@ -77,7 +223,8 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Enums: {
-			[_ in never]: never;
+			invitation_status: "pending" | "accepted" | "declined";
+			workspace_role: "owner" | "admin" | "viewer";
 		};
 		CompositeTypes: {
 			[_ in never]: never;
