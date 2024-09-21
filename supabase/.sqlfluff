@@ -1,0 +1,35 @@
+[sqlfluff]
+dialect = postgres
+max_line_length = 120
+exclude_rules = RF05
+
+[sqlfluff:indentation]
+tab_space_size = 4
+indent_unit = space
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = upper
+
+[sqlfluff:rules:capitalisation.identifiers]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.literals]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.types]
+capitalisation_policy = upper
+
+[sqlfluff:rules:layout.spacing]
+spacing_before_comment = any
+
+[sqlfluff:rules:layout.commas]
+line_position = trailing
+
+[sqlfluff:rules:layout.long_lines]
+max_line_length = 120
+
+[sqlfluff:rules:structure.column_order]
+order_by_style = explicit

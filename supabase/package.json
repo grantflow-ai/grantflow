@@ -11,9 +11,11 @@
 		"generate:migration": "supabase db diff | supabase migration new",
 		"generate:seed": "supabase db dump --data-only --file seed.sql",
 		"push": "supabase db push",
-		"pull": "supabase db pull"
+		"pull": "supabase db pull",
+		"lint": "sqlfluff fix"
 	},
 	"devDependencies": {
-		"supabase": "^1.192.5"
+		"supabase": "^1.192.5",
+		"sqlfluff": "github:Goldziher/sqlfluff-js"
 	}
 }
