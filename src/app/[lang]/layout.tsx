@@ -1,14 +1,18 @@
 import "@/styles/globals.css";
 
-import type { Metadata } from "next";
-import type { PropsWithChildren } from "react";
-
 import { Navbar } from "@/components/navbar";
+import { type SupportedLocale, i18n } from "@/i18n";
 import { getEnv } from "@/utils/env";
 import { fontSans } from "@/utils/fonts";
 import { cn } from "gen/cn";
 import { Toaster } from "gen/ui/sonner";
+import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
+import type { ReactNode } from "react";
+
+export function generateStaticParams() {
+	return i18n.locales.map((locale) => ({ lang: locale }));
+}
 
 export const metadata = {
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
@@ -20,9 +24,15 @@ export const metadata = {
 	},
 } satisfies Metadata;
 
-export default function RootLayout({ children }: PropsWithChildren) {
+export default function RootLayout({
+	children,
+	params,
+}: {
+	children: ReactNode;
+	params: { lang: SupportedLocale };
+}) {
 	return (
-		<html lang="en">
+		<html lang={params.lang}>
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
 					<Navbar />

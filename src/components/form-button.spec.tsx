@@ -61,14 +61,14 @@ describe("FormButton Component", () => {
 	it("applies correct classes for disabled state", () => {
 		render(<FormButton disabled={true}>Submit</FormButton>);
 		const button = screen.getByTestId("form-button");
-		expect(button).toHaveClass("disabled:text-gray-400");
+		expect(button).toHaveClass("disabled:text-muted-foreground-400");
 		expect(button).toHaveClass("disabled:cursor-not-allowed");
 	});
 
 	it("applies correct classes for invalid state", () => {
 		render(<FormButton className="invalid">Submit</FormButton>);
 		const button = screen.getByTestId("form-button");
-		expect(button).toHaveClass("invalid:text-gray-400");
+		expect(button).toHaveClass("invalid:text-destructive-400");
 		expect(button).toHaveClass("invalid:cursor-not-allowed");
 	});
 });

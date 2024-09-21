@@ -1,117 +1,49 @@
-import { createServerClient } from "@supabase/ssr";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { middleware, config } from "./middleware";
+import { i18nMiddleware } from "@/middleware/i18n-middleware";
+import { updateSession } from "@/middleware/auth";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { PagePath } from "@/config/enums";
-import { updateSession } from "./middleware";
+vi.mock("@/middleware/i18n-middleware");
+vi.mock("@/middleware/auth");
 
-vi.mock("@supabase/ssr");
-
-describe("updateSession middleware", () => {
-	vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-	vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "mock-anon-key");
-
-	const createServerMock = vi.mocked(createServerClient).mockReturnValue({
-		auth: {
-			getUser: vi.fn(),
-		},
-	});
-	const nextSpy = vi.spyOn(NextResponse, "next").mockReturnValue({
-		// @ts-expect-error, this is a mock.
-		cookies: {
-			set: vi.fn(),
-		},
-	});
-	const redirectSpy = vi.spyOn(NextResponse, "redirect").mockReturnValue({
-		// @ts-expect-error, this is a mock.
-		cookies: {
-			set: vi.fn(),
-		},
-	});
+describe("middleware", () => {
+	let mockRequest: NextRequest;
 
 	beforeEach(() => {
-		vi.clearAllMocks();
+		mockRequest = {} as NextRequest;
+		vi.resetAllMocks();
 	});
 
-	it("should allow access to public routes when user is not authenticated", async () => {
-		const mockRequest = {
-			nextUrl: {
-				pathname: "/",
-				clone: vi.fn().mockReturnThis(),
-			},
-			cookies: {
-				getAll: vi.fn().mockReturnValue([]),
-				set: vi.fn(),
-			},
-		} as unknown as NextRequest;
+	it("should return i18nMiddleware response if status is not 200", async () => {
+		const mockI18nResponse = { status: 301, headers: new Headers() } as NextResponse;
+		vi.mocked(i18nMiddleware).mockReturnValue(mockI18nResponse);
 
-		createServerMock.mockReturnValueOnce({
-			auth: {
-				getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
-			},
-		});
+		const result = await middleware(mockRequest);
 
-		const response = await updateSession(mockRequest);
-
-		expect(nextSpy).toHaveBeenCalledWith({
-			request: mockRequest,
-		});
-		expect(redirectSpy).not.toHaveBeenCalled();
-		expect(response).toBeDefined();
+		expect(i18nMiddleware).toHaveBeenCalledWith(mockRequest);
+		expect(updateSession).not.toHaveBeenCalled();
+		expect(result).toBe(mockI18nResponse);
 	});
 
-	it("should redirect to /auth when accessing protected routes without authentication", async () => {
-		const mockRequest = {
-			nextUrl: {
-				pathname: "/protected",
-				clone: vi.fn().mockReturnThis(),
-			},
-			cookies: {
-				getAll: vi.fn().mockReturnValue([]),
-				set: vi.fn(),
-			},
-		} as unknown as NextRequest;
+	it("should call updateSession if i18nMiddleware status is 200", async () => {
+		const mockI18nResponse = NextResponse.next();
+		const mockUpdateSessionResponse = NextResponse.next();
+		Object.defineProperty(mockI18nResponse, "status", { value: 200, writable: false });
+		Object.defineProperty(mockUpdateSessionResponse, "status", { value: 200, writable: false });
+		vi.mocked(i18nMiddleware).mockReturnValue(mockI18nResponse);
+		vi.mocked(updateSession).mockResolvedValue(mockUpdateSessionResponse);
 
-		createServerMock.mockReturnValueOnce({
-			auth: {
-				getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
-			},
-		});
+		const result = await middleware(mockRequest);
 
-		await updateSession(mockRequest);
-
-		expect(redirectSpy).toHaveBeenCalled();
-
-		const [[redirectCall]] = redirectSpy.mock.calls;
-		expect(redirectCall).toEqual(
-			expect.objectContaining({
-				pathname: PagePath.AUTH,
-			}),
-		);
+		expect(i18nMiddleware).toHaveBeenCalledWith(mockRequest);
+		expect(updateSession).toHaveBeenCalledWith(mockRequest);
+		expect(result).toBe(mockUpdateSessionResponse);
 	});
+});
 
-	it("should allow access to protected routes when user is authenticated", async () => {
-		const mockRequest = {
-			nextUrl: {
-				pathname: "/account",
-				clone: vi.fn().mockReturnThis(),
-			},
-			cookies: {
-				getAll: vi.fn().mockReturnValue([]),
-				set: vi.fn(),
-			},
-		} as unknown as NextRequest;
-		createServerMock.mockReturnValueOnce({
-			auth: {
-				getUser: vi.fn().mockResolvedValue({ data: { user: { id: "123" } } }),
-			},
-		});
-
-		const response = await updateSession(mockRequest);
-
-		expect(nextSpy).toHaveBeenCalledWith({
-			request: mockRequest,
-		});
-		expect(redirectSpy).not.toHaveBeenCalled();
-		expect(response).toBeDefined();
+describe("config", () => {
+	it("should have the correct matcher", () => {
+		expect(config.matcher).toEqual(["/((?!_next/static|_next/image|icon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"]);
 	});
 });
