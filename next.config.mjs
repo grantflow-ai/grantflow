@@ -9,6 +9,7 @@ getEnv();
 const nextConfig = {
 	experimental: {
 		serverComponentsExternalPackages: ["pino", "pino-pretty"],
+		externalDir: true,
 	},
 };
 

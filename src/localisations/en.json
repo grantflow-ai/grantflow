@@ -14,6 +14,19 @@
 		"sendMagicLink": "Send Magic Link"
 	},
 	"footer": {
-		"copyRightText": "&copy; 2024 ACME. All rights reserved."
+		"copyRightText": "&copy; 2024 Grantflow.AI. All rights reserved."
+	},
+	"organizationView": {
+		"createWorkspace": "Create Workspace",
+		"title": "Organization",
+		"workspaces": "Workspaces"
+	},
+	"workspaceView": {
+		"title": "Workspace",
+		"grantApplications": {
+			"title": "Grant Applications",
+			"createApplication": "Create Grant Application",
+			"noApplications": "No grant applications have been created yet."
+		}
 	}
 }
