@@ -19,7 +19,12 @@
 	"organizationView": {
 		"createWorkspace": "Create Workspace",
 		"title": "Organization",
-		"workspaces": "Workspaces"
+		"workspaces": "Workspaces",
+		"workspaceNamePlaceholder": "Workspace Name",
+		"workspaceNameLabel": "Workspace Name",
+		"workspaceCreatedSuccess": "Workspace created successfully.",
+		"workspaceCreatedError": "An error occurred while creating the workspace.",
+		"createWorkspaceModalTitle": "Create Workspace"
 	},
 	"workspaceView": {
 		"title": "Workspace",

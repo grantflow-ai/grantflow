@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
 import { FileText, PlusCircle } from "lucide-react";
 import Link from "next/link";
 
-export async function WorkspaceDetailPage({
+export default async function WorkspaceDetailPage({
 	params: { lang, workspaceId },
 }: {
 	params: {
