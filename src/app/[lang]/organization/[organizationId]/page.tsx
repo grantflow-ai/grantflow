@@ -1,9 +1,8 @@
+import { CreateWorkspaceModal } from "@/components/organization/create-workspace-modal";
 import { type SupportedLocale, getLocale } from "@/i18n";
 import { handleServerError } from "@/utils/server-side";
 import { getServerClient } from "@/utils/supabase/server";
-import { Button } from "gen/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
-import { PlusCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -92,14 +91,7 @@ export default async function OrganizationDetailPage({
 								</Card>
 							</Link>
 						))}
-						<Button
-							variant="outline"
-							className="h-full flex flex-col items-center justify-center p-6"
-							data-testid="create-workspace-button"
-						>
-							<PlusCircle className="h-12 w-12 mb-2" />
-							<span>{locales.organizationView.createWorkspace}</span>
-						</Button>
+						<CreateWorkspaceModal organizationId={organizationId} locales={locales} />
 					</div>
 				</CardContent>
 			</Card>
