@@ -66,6 +66,47 @@ export type Database = {
 					},
 				];
 			};
+			grant_applications: {
+				Row: {
+					content: Json;
+					created_at: string;
+					deleted_at: string | null;
+					funding_organization: string;
+					id: string;
+					title: string;
+					updated_at: string;
+					workspace_id: string;
+				};
+				Insert: {
+					content: Json;
+					created_at?: string;
+					deleted_at?: string | null;
+					funding_organization: string;
+					id?: string;
+					title: string;
+					updated_at?: string;
+					workspace_id: string;
+				};
+				Update: {
+					content?: Json;
+					created_at?: string;
+					deleted_at?: string | null;
+					funding_organization?: string;
+					id?: string;
+					title?: string;
+					updated_at?: string;
+					workspace_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "grant_applications_workspace_id_fkey";
+						columns: ["workspace_id"];
+						isOneToOne: false;
+						referencedRelation: "workspaces";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			invitations: {
 				Row: {
 					accepted_at: string | null;
