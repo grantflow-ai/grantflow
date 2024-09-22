@@ -4,8 +4,7 @@
 		"paths": {
 			"@/*": ["src/*"],
 			"gen/*": ["gen/*"],
-			"::testing/*": ["testing/*"],
-			"::localisations/*": ["localisations/*"]
+			"::testing/*": ["testing/*"]
 		},
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"allowJs": true,

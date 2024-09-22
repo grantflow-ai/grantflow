@@ -1,7 +1,7 @@
-import en from "::localisations/en.json";
+import en from "@/localisations/en.json";
 
+export type Localisation = typeof en;
 export type SupportedLocale = "en";
-
 export interface I18n {
 	defaultLocale: SupportedLocale;
 	locales: SupportedLocale[];
@@ -12,16 +12,19 @@ export const i18n = {
 	locales: ["en"],
 } satisfies I18n;
 
+export const localesMap: Record<SupportedLocale, Localisation> = {
+	en,
+};
+
 /**
- * Get the locale dictionary for the specified locale.
+ * Get the localisation dictionary for the specified locale.
  * @param locale - The locale to get the dictionary for.
  * @returns The locale dictionary.
  */
-export async function getLocale(locale: SupportedLocale): Promise<typeof en> {
-	try {
-		const { default: defaultExport } = (await import(`::localisations/${locale}.json`)) as { default: typeof en };
-		return defaultExport;
-	} catch {
-		return en;
+export async function getLocale(locale: SupportedLocale): Promise<Localisation> {
+	if (!Reflect.has(localesMap, locale)) {
+		const { default: localisation } = (await import(`@/localisations/${locale}.json`)) as { default: Localisation };
+		localesMap[locale] = localisation;
 	}
+	return localesMap[locale];
 }

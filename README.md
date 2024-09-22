@@ -9,11 +9,11 @@ using Supabase Auth, providing a robust and flexible solution for user authentic
 - Next.js framework for server-side rendering and API routes
 - TypeScript for enhanced type safety and developer experience
 - Full authentication flow using Supabase Auth, including:
-    - Email/Password Sign In
-    - Email (Magic Link) Sign In
-    - OAuth Sign In (supporting multiple providers)
-    - User Registration
-    - Password Reset
+  - Email/Password Sign In
+  - Email (Magic Link) Sign In
+  - OAuth Sign In (supporting multiple providers)
+  - User Registration
+  - Password Reset
 - Dynamic and lazy-loaded authentication forms
 - Customizable UI components using Tailwind CSS and Radix UI
 - State management with Zustand
