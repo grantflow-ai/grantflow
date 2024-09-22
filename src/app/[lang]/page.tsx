@@ -31,17 +31,17 @@ export default async function LandingPage({
 					className="text-balance text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl"
 					data-testid="landing-title"
 				>
-					{locale.landingTitle}
+					{locale.landingPage.title}
 				</h1>
 				<p
 					className="text-sm max-w-screen-md text-balance  text-muted-foreground sm:text-xl sm:leading-8"
 					data-testid="landing-description"
 				>
-					{locale.landingDescription}
+					{locale.landingPage.description}
 				</p>
 				<Link href={`${lang}/auth`}>
 					<Button className={cn(buttonVariants({ variant: "default", size: "lg" }))} data-testid="landing-cta">
-						{locale.landingCta}
+						{locale.landingPage.cta}
 					</Button>
 				</Link>
 			</div>

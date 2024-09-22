@@ -1,14 +1,12 @@
 "use client";
 
-import { getAuthConfig } from "@/config/auth";
+import { oAuthProviders } from "@/config/auth";
 import { ApiPath } from "@/config/enums";
 import { getBrowserClient } from "@/utils/supabase/client";
 import { urlWithHost } from "@/utils/url";
 import type { Provider } from "@supabase/supabase-js";
 import { Button } from "gen/ui/button";
 import { useState } from "react";
-
-const authConfig = getAuthConfig();
 
 export function OauthSigninForm() {
 	const [error, setError] = useState<string | null>(null);
@@ -30,7 +28,7 @@ export function OauthSigninForm() {
 
 	return (
 		<section data-testid="oauth-signin-form" className="flex flex-col gap-2">
-			{authConfig.oauthProviders.map((provider) => (
+			{oAuthProviders.map((provider) => (
 				<Button
 					key={provider.id}
 					variant="secondary"

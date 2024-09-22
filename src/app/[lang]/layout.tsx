@@ -26,13 +26,13 @@ export const metadata = {
 
 export default function RootLayout({
 	children,
-	params,
+	params: { lang },
 }: {
 	children: ReactNode;
 	params: { lang: SupportedLocale };
 }) {
 	return (
-		<html lang={params.lang}>
+		<html lang={lang}>
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
 					<Navbar />

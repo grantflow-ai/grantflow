@@ -1,5 +1,16 @@
 {
-	"landingTitle": "Get to month three on day one",
-	"landingDescription": "Trumpet.dev is a world-class SaaS project Starter, clean code with 95% test coverage.",
-	"landingCta": "Get Started"
+	"landingPage": {
+		"title": "Get to month three on day one",
+		"description": "Trumpet.dev is a world-class SaaS project Starter, clean code with 95% test coverage.",
+		"cta": "Get Started"
+	},
+	"authPage": {
+		"description": "Sign in to get started",
+		"oAuthSeperator": "Or sign in with",
+		"title": "Welcome to our App"
+	},
+	"emailSigninForm": {
+		"magicLinkSent": "A login link has been sent to your email",
+		"sendMagicLink": "Send Magic Link"
+	}
 }

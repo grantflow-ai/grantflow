@@ -75,10 +75,10 @@ describe("LandingPage", () => {
 		render(await LandingPage({ params: { lang: "en" } }));
 
 		await waitFor(() => {
-			expect(screen.getByTestId("landing-title")).toHaveTextContent(en.landingTitle);
+			expect(screen.getByTestId("landing-title")).toHaveTextContent(en.landingPage.title);
 		});
 
-		expect(screen.getByTestId("landing-description")).toHaveTextContent(en.landingDescription);
-		expect(screen.getByTestId("landing-cta")).toHaveTextContent(en.landingCta);
+		expect(screen.getByTestId("landing-description")).toHaveTextContent(en.landingPage.description);
+		expect(screen.getByTestId("landing-cta")).toHaveTextContent(en.landingPage.cta);
 	});
 });

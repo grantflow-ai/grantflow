@@ -5,64 +5,51 @@ import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { signInWithEmail, verifyEmailOTP } from "@/actions/auth";
+import { signInWithEmail } from "@/actions/auth";
 import { FormButton } from "@/components/form-button";
-import { EmailSigninType } from "@/config/enums";
 import { InfoMessage } from "@/constants";
+import type { Localisation } from "@/i18n";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
+import { CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const emailSchema = z.object({
 	email: z.string().email({ message: "Invalid email address" }),
 });
 
-const otpSchema = z.object({
-	otp: z.string().length(6, { message: "OTP must be 6 digits" }),
-});
-
 export type EmailFormValues = z.infer<typeof emailSchema>;
-export type OtpFormValues = z.infer<typeof otpSchema>;
 
-export function EmailSigninForm() {
-	const [isOtpSent, setIsOtpSent] = useState(false);
+export function EmailSigninForm({ locales }: { locales: Localisation }) {
+	const [isEmailSent, setIsEmailSent] = useState(false);
 
 	const emailForm = useForm<EmailFormValues>({
 		resolver: zodResolver(emailSchema),
 		defaultValues: { email: "" },
 	});
 
-	const otpForm = useForm<OtpFormValues>({
-		resolver: zodResolver(otpSchema),
-		defaultValues: { otp: "" },
-	});
-
 	const onEmailSubmit: SubmitHandler<EmailFormValues> = async (values) => {
-		const error = await signInWithEmail(values.email, EmailSigninType.OTP);
+		const error = await signInWithEmail(values.email);
 		if (error) {
 			toast.error(error, { duration: 3000 });
 			return;
 		}
-		setIsOtpSent(true);
-		toast.info(InfoMessage.EMAIL_OTP_SENT, { duration: 3000 });
-	};
-
-	const onOtpSubmit: SubmitHandler<OtpFormValues> = async (values) => {
-		const { email } = emailForm.getValues();
-		const error = await verifyEmailOTP(email, values.otp);
-		if (error) {
-			toast.error(error, { duration: 3000 });
-			return;
-		}
-		toast.success(InfoMessage.EMAIL_OTP_VERIFIED, { duration: 3000 });
+		setIsEmailSent(true);
+		toast.info(InfoMessage.MAGIC_LINK_SENT, { duration: 3000 });
 	};
 
 	return (
 		<div data-testid="email-signin-form">
-			{isOtpSent ? (
-				<OtpForm form={otpForm} onSubmit={onOtpSubmit} />
+			{isEmailSent ? (
+				<div
+					className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3"
+					data-testid="email-signin-form-magic-link-sent-message"
+				>
+					<CheckCircle className="h-6 w-6 text-green-500" />
+					<p className="text-green-700 font-medium">{locales.emailSigninForm.magicLinkSent}</p>
+				</div>
 			) : (
-				<EmailForm form={emailForm} onSubmit={onEmailSubmit} />
+				<EmailForm form={emailForm} onSubmit={onEmailSubmit} locales={locales} />
 			)}
 		</div>
 	);
@@ -71,13 +58,15 @@ export function EmailSigninForm() {
 function EmailForm({
 	form,
 	onSubmit,
+	locales,
 }: {
 	form: ReturnType<typeof useForm<EmailFormValues>>;
 	onSubmit: SubmitHandler<EmailFormValues>;
+	locales: Localisation;
 }) {
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="mb-4" data-testid="email-signin-otp-form">
+			<form onSubmit={form.handleSubmit(onSubmit)} className="mb-4" data-testid="email-signin-form">
 				<FormField
 					name="email"
 					control={form.control}
@@ -107,54 +96,7 @@ function EmailForm({
 					disabled={!form.formState.isValid}
 					data-testid="email-signin-form-submit-button"
 				>
-					Send OTP
-				</FormButton>
-			</form>
-		</Form>
-	);
-}
-
-function OtpForm({
-	form,
-	onSubmit,
-}: {
-	form: ReturnType<typeof useForm<OtpFormValues>>;
-	onSubmit: SubmitHandler<OtpFormValues>;
-}) {
-	return (
-		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="mb-4" data-testid="email-signin-otp-form">
-				<FormField
-					name="otp"
-					control={form.control}
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel htmlFor="otp">One-Time Password</FormLabel>
-							<FormControl>
-								<Input
-									id="otp"
-									placeholder="123456"
-									type="text"
-									inputMode="numeric"
-									pattern="[0-9]*"
-									maxLength={6}
-									autoComplete="one-time-code"
-									className="form-input rounded p-10"
-									data-testid="email-signin-form-otp-input"
-									{...field}
-								/>
-							</FormControl>
-							<FormMessage data-testid="otp-input-error-message" className="text-destructive" />
-						</FormItem>
-					)}
-				/>
-				<FormButton
-					className="mt-4 mb-2 w-full"
-					isLoading={form.formState.isSubmitting}
-					disabled={!form.formState.isValid}
-					data-testid="email-signin-form-verify-button"
-				>
-					Verify OTP
+					{locales.emailSigninForm.sendMagicLink}
 				</FormButton>
 			</form>
 		</Form>
