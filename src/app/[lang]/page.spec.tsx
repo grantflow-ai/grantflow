@@ -1,4 +1,4 @@
-import en from "::localisations/en.json";
+import en from "@/localisations/en.json";
 import { getServerClient } from "@/utils/supabase/server";
 import { render, screen, waitFor } from "@testing-library/react";
 import { redirect } from "next/navigation";

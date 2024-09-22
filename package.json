@@ -18,10 +18,7 @@
 	},
 	"lint-staged": {
 		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx,json,html,css}": "biome format --write",
-		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx,md,mdx,css}": [
-			"biome lint --fix",
-			"eslint --fix --no-warn-ignored"
-		]
+		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}": ["biome lint --fix", "eslint --fix --no-warn-ignored"]
 	},
 	"dependencies": {
 		"@formatjs/intl-localematcher": "^0.5.4",
@@ -73,7 +70,7 @@
 		"husky": "^9.1.6",
 		"interface-forge": "^2.0.1",
 		"jiti": "2.0.0-beta.3",
-		"jsdom": "^25.0.0",
+		"jsdom": "^25.0.1",
 		"lint-staged": "^15.2.10",
 		"next-router-mock": "^0.9.13",
 		"postcss": "^8.4.47",
