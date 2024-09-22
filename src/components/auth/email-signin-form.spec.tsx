@@ -1,9 +1,9 @@
+import en from "@/localisations/en.json";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { mockToast } from "::testing/global-mocks";
-import { signInWithEmail, verifyEmailOTP } from "@/actions/auth";
-import { EmailSigninType } from "@/config/enums";
+import { signInWithEmail } from "@/actions/auth";
 import { InfoMessage } from "@/constants";
 import { toast } from "sonner";
 import { EmailSigninForm } from "./email-signin-form";
@@ -16,7 +16,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("renders the form correctly", () => {
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		expect(screen.getByLabelText("Email")).toBeInTheDocument();
 		expect(screen.getByTestId("email-signin-form-email-input")).toBeInTheDocument();
@@ -24,14 +24,14 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("disables submit button when form is invalid", () => {
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		const submitButton = screen.getByTestId("email-signin-form-submit-button");
 		expect(submitButton).toBeDisabled();
 	});
 
 	it("enables submit button when form is valid", async () => {
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -42,11 +42,11 @@ describe("EmailSigninForm", () => {
 		});
 	});
 
-	it("calls signInWithEmailOTP with correct email on form submission", async () => {
+	it("displays success toast when email link is sent successfully", async () => {
 		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
 		mockSignInWithEmailOTP.mockResolvedValueOnce(undefined);
 
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -55,24 +55,7 @@ describe("EmailSigninForm", () => {
 		await userEvent.click(submitButton);
 
 		await waitFor(() => {
-			expect(mockSignInWithEmailOTP).toHaveBeenCalledWith("test@example.com", EmailSigninType.OTP);
-		});
-	});
-
-	it("displays success toast when OTP is sent successfully", async () => {
-		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
-		mockSignInWithEmailOTP.mockResolvedValueOnce(undefined);
-
-		render(<EmailSigninForm />);
-
-		const emailInput = screen.getByTestId("email-signin-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
-
-		const submitButton = screen.getByTestId("email-signin-form-submit-button");
-		await userEvent.click(submitButton);
-
-		await waitFor(() => {
-			expect((mockToast as any).info).toHaveBeenCalledWith(InfoMessage.EMAIL_OTP_SENT, { duration: 3000 });
+			expect((mockToast as any).info).toHaveBeenCalledWith(InfoMessage.MAGIC_LINK_SENT, { duration: 3000 });
 		});
 	});
 
@@ -81,7 +64,7 @@ describe("EmailSigninForm", () => {
 		const errorMessage = "Failed to send OTP";
 		mockSignInWithEmailOTP.mockResolvedValueOnce(errorMessage);
 
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -104,7 +87,7 @@ describe("EmailSigninForm", () => {
 				),
 		);
 
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -119,7 +102,7 @@ describe("EmailSigninForm", () => {
 		const mockSignInWithEmailOTP = vi.mocked(signInWithEmail);
 		mockSignInWithEmailOTP.mockResolvedValueOnce("Error message");
 
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -136,7 +119,7 @@ describe("EmailSigninForm", () => {
 		const mockSignInWithEmail = vi.mocked(signInWithEmail);
 		mockSignInWithEmail.mockResolvedValueOnce("Error in sending OTP");
 
-		render(<EmailSigninForm />);
+		render(<EmailSigninForm locales={en} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -145,85 +128,8 @@ describe("EmailSigninForm", () => {
 		await userEvent.click(submitButton);
 
 		await waitFor(() => {
-			expect(mockSignInWithEmail).toHaveBeenCalledWith("test@example.com", EmailSigninType.OTP);
+			expect(mockSignInWithEmail).toHaveBeenCalledWith("test@example.com");
 		});
 		expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Error in sending OTP", { duration: 3000 });
-	});
-
-	it("renders OTP form after successful email submission", async () => {
-		const mockSignInWithEmail = vi.mocked(signInWithEmail);
-		mockSignInWithEmail.mockResolvedValueOnce(undefined);
-
-		render(<EmailSigninForm />);
-
-		const emailInput = screen.getByTestId("email-signin-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
-
-		const submitButton = screen.getByTestId("email-signin-form-submit-button");
-		await userEvent.click(submitButton);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("email-signin-otp-form")).toBeInTheDocument();
-		});
-	});
-
-	it("shows error toast on OTP submission failure", async () => {
-		const mockSignInWithEmail = vi.mocked(signInWithEmail);
-		const mockVerifyEmailOTP = vi.mocked(verifyEmailOTP);
-		mockSignInWithEmail.mockResolvedValueOnce(undefined);
-		mockVerifyEmailOTP.mockResolvedValueOnce("Invalid OTP");
-
-		render(<EmailSigninForm />);
-
-		const emailInput = screen.getByTestId("email-signin-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
-
-		const submitButton = screen.getByTestId("email-signin-form-submit-button");
-		await userEvent.click(submitButton);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("email-signin-otp-form")).toBeInTheDocument();
-		});
-
-		const otpInput = screen.getByTestId("email-signin-form-otp-input");
-		await userEvent.type(otpInput, "123456");
-
-		const otpSubmitButton = screen.getByTestId("email-signin-form-verify-button");
-		await userEvent.click(otpSubmitButton);
-
-		await waitFor(() => {
-			expect(mockVerifyEmailOTP).toHaveBeenCalledWith("test@example.com", "123456");
-		});
-		expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Invalid OTP", { duration: 3000 });
-	});
-
-	it("shows success toast on OTP submission success", async () => {
-		const mockSignInWithEmail = vi.mocked(signInWithEmail);
-		const mockVerifyEmailOTP = vi.mocked(verifyEmailOTP);
-		mockSignInWithEmail.mockResolvedValueOnce(undefined);
-		mockVerifyEmailOTP.mockResolvedValueOnce(undefined);
-
-		render(<EmailSigninForm />);
-
-		const emailInput = screen.getByTestId("email-signin-form-email-input");
-		await userEvent.type(emailInput, "test@example.com");
-
-		const submitButton = screen.getByTestId("email-signin-form-submit-button");
-		await userEvent.click(submitButton);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("email-signin-otp-form")).toBeInTheDocument();
-		});
-
-		const otpInput = screen.getByTestId("email-signin-form-otp-input");
-		await userEvent.type(otpInput, "123456");
-
-		const otpSubmitButton = screen.getByTestId("email-signin-form-verify-button");
-		await userEvent.click(otpSubmitButton);
-
-		await waitFor(() => {
-			expect(mockVerifyEmailOTP).toHaveBeenCalledWith("test@example.com", "123456");
-		});
-		expect(vi.mocked(toast.success)).toHaveBeenCalled();
 	});
 });
