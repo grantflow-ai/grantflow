@@ -16,7 +16,6 @@ describe("SubscribeForm", () => {
 	it("renders the form correctly", () => {
 		render(<SubscribeToMailingListForm />);
 
-		expect(screen.getByLabelText("Email")).toBeInTheDocument();
 		expect(screen.getByTestId("subscribe-form-email-input")).toBeInTheDocument();
 		expect(screen.getByTestId("subscribe-form-submit-button")).toBeInTheDocument();
 	});

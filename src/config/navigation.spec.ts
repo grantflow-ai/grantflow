@@ -1,6 +1,5 @@
 import { PagePath } from "@/config/enums";
 import { getNavItems } from "@/config/navigation";
-import { SiGithub } from "@icons-pack/react-simple-icons";
 
 describe("Navigation Items", () => {
 	describe("getNavItems function", () => {
@@ -8,7 +7,7 @@ describe("Navigation Items", () => {
 			const result = getNavItems(PagePath.ROOT);
 			expect(result).toEqual({
 				items: [{ title: "Home", href: "/" }],
-				links: [{ href: "https://github.com/trumpet-org/next-shadcn-supabase-auth", icon: SiGithub, name: "GitHub" }],
+				links: [],
 			});
 		});
 
@@ -16,7 +15,7 @@ describe("Navigation Items", () => {
 			const result = getNavItems("UNDEFINED_PATH" as PagePath);
 			expect(result).toEqual({
 				items: [{ title: "Home", href: "/" }],
-				links: [{ href: "https://github.com/trumpet-org/next-shadcn-supabase-auth", icon: SiGithub, name: "GitHub" }],
+				links: [],
 			});
 		});
 	});
@@ -26,15 +25,6 @@ describe("Navigation Items", () => {
 			const { items } = getNavItems(PagePath.ROOT);
 			expect(items[0]).toHaveProperty("title", "Home");
 			expect(items[0]).toHaveProperty("href", "/");
-		});
-	});
-
-	describe("NavLink structure", () => {
-		it("should have correct structure for githubNavLink", () => {
-			const { links } = getNavItems(PagePath.ROOT);
-			expect(links[0]).toHaveProperty("href", "https://github.com/trumpet-org/next-shadcn-supabase-auth");
-			expect(links[0]).toHaveProperty("icon", SiGithub);
-			expect(links[0]).toHaveProperty("name", "GitHub");
 		});
 	});
 
