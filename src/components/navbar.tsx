@@ -35,27 +35,29 @@ export function Navbar() {
 				)}
 			</div>
 			<div className="flex flex-1 gap-6 items-center justify-end" data-testid="navbar-actions">
-				<div className="flex gap-2" data-testid="navbar-links">
-					{links.map((link) => (
-						<Link
-							key={link.name}
-							href={link.href}
-							target="_blank"
-							rel="noreferrer"
-							data-testid={`navbar-link-${link.name.toLowerCase().replaceAll(/\s+/g, "-")}`}
-						>
-							<div
-								className={buttonVariants({
-									size: "icon",
-									variant: "ghost",
-								})}
+				{links.length && (
+					<div className="flex gap-2" data-testid="navbar-links">
+						{links.map((link) => (
+							<Link
+								key={link.name}
+								href={link.href}
+								target="_blank"
+								rel="noreferrer"
+								data-testid={`navbar-link-${link.name.toLowerCase().replaceAll(/\s+/g, "-")}`}
 							>
-								<link.icon className="h-5 w-5" />
-								<span className="sr-only">{link.name}</span>
-							</div>
-						</Link>
-					))}
-				</div>
+								<div
+									className={buttonVariants({
+										size: "icon",
+										variant: "ghost",
+									})}
+								>
+									<link.icon className="h-5 w-5" />
+									<span className="sr-only">{link.name}</span>
+								</div>
+							</Link>
+						))}
+					</div>
+				)}
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>
 		</nav>

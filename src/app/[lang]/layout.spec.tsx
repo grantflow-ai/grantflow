@@ -53,8 +53,8 @@ describe("RootLayout", () => {
 		vi.clearAllMocks();
 	});
 
-	it("renders the layout with all expected components", () => {
-		render(<RootLayout params={{ lang: "en" }}>Test Content</RootLayout>);
+	it("renders the layout with all expected components", async () => {
+		render(await RootLayout({ children: "Test Content", params: { lang: "en" } }));
 
 		expect(screen.getByTestId("navbar")).toBeInTheDocument();
 		expect(screen.getByTestId("main-container")).toBeInTheDocument();
@@ -62,23 +62,23 @@ describe("RootLayout", () => {
 		expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
 	});
 
-	it("applies correct classes to the body", () => {
-		render(<RootLayout params={{ lang: "en" }}>Test Content</RootLayout>);
+	it("applies correct classes to the body", async () => {
+		render(await RootLayout({ children: "Test Content", params: { lang: "en" } }));
 
 		const body = screen.getByText("Test Content").closest("body");
 		expect(body).toHaveClass("min-h-screen bg-background font-sans antialiased");
 		expect(body).toHaveClass(fontSans.variable);
 	});
 
-	it("renders children within the main container", () => {
-		render(<RootLayout params={{ lang: "en" }}>Test Content</RootLayout>);
+	it("renders children within the main container", async () => {
+		render(await RootLayout({ children: "Test Content", params: { lang: "en" } }));
 
 		const mainContainer = screen.getByTestId("main-container");
 		expect(mainContainer).toHaveTextContent("Test Content");
 		expect(mainContainer).toHaveClass("md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)]");
 	});
-	it("sets the correct lang attribute on the html element", () => {
-		const { container } = render(<RootLayout params={{ lang: "en" }}>Test Content</RootLayout>);
+	it("sets the correct lang attribute on the html element", async () => {
+		const { container } = render(await RootLayout({ children: "Test Content", params: { lang: "en" } }));
 
 		const htmlElement = container.firstChild as HTMLElement;
 		expect(htmlElement.getAttribute("lang")).toBe("en");

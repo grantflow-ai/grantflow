@@ -2,7 +2,7 @@
 
 import { PagePath } from "@/config/enums";
 import { ErrorType } from "@/constants";
-import { serverLogger as logger } from "@/utils/logging/server";
+import { errorRedirect } from "@/utils/request";
 import { getServerClient } from "@/utils/supabase/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -16,23 +16,25 @@ import { NextResponse } from "next/server";
  */
 export async function GET(request: NextRequest) {
 	const requestUrl = new URL(request.url);
-	const code = requestUrl.searchParams.get("code");
 
+	const code = requestUrl.searchParams.get("code");
 	if (!code) {
-		const url = new URL(PagePath.AUTH, requestUrl.origin);
-		url.searchParams.set("error", ErrorType.INVALID_CREDENTIALS);
-		return NextResponse.redirect(url);
+		return errorRedirect({
+			url: new URL(PagePath.AUTH, requestUrl.origin),
+			errorType: ErrorType.INVALID_CREDENTIALS,
+			error: new Error("No code provided"),
+		});
 	}
 
 	const supabase = getServerClient();
 
 	const { error } = await supabase.auth.exchangeCodeForSession(code);
-
 	if (error) {
-		const url = new URL(PagePath.AUTH, requestUrl.origin);
-		url.searchParams.set("error", ErrorType.UNEXPECTED_ERROR);
-		logger.debug(error, "Sign in failed");
-		return NextResponse.redirect(url);
+		return errorRedirect({
+			url: new URL(PagePath.AUTH, requestUrl.origin),
+			errorType: ErrorType.UNEXPECTED_ERROR,
+			error,
+		});
 	}
 
 	return NextResponse.redirect(new URL(PagePath.ROOT, requestUrl.origin));

@@ -11,6 +11,7 @@ vi.mock("@/utils/supabase/server", () => ({
 		auth: {
 			signOut: SupabaseSignOutMock,
 			updateUser: SupabaseUpdateUserMock,
+			signInWithOtp: SupabaseSignInWithOtpMock,
 		},
 	}),
 }));
@@ -44,7 +45,7 @@ describe("Auth server actions", () => {
 			await signInWithEmail("test@example.com");
 			expect(SupabaseSignInWithOtpMock).toHaveBeenCalledWith({
 				email: "test@example.com",
-				options: { emailRedirectTo: "https://example.com/auth/callbacks/openid" },
+				options: { emailRedirectTo: "https://example.com/auth/callbacks/email-signin" },
 			});
 		});
 	});

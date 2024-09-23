@@ -1,22 +1,20 @@
 import { i18n } from "@/i18n";
-import { match as matchLocale } from "@formatjs/intl-localematcher";
+import { match } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
 import { type NextRequest, NextResponse } from "next/server";
 
-function getLocale(request: NextRequest): string | undefined {
+function getLocaleFromRequest(request: NextRequest): string | undefined {
 	const { locales, defaultLocale } = i18n;
 
-	if (locales.length < 2) {
-		return defaultLocale;
-	}
-	const negotiatorHeaders: Record<string, string> = {};
-	for (const [key, value] of request.headers.entries()) {
-		negotiatorHeaders[key] = value;
+	if (locales.length > 1) {
+		return match(
+			new Negotiator({ headers: Object.fromEntries(request.headers.entries()) }).languages(locales),
+			locales,
+			i18n.defaultLocale,
+		);
 	}
 
-	const languages = new Negotiator({ headers: negotiatorHeaders }).languages(locales);
-
-	return matchLocale(languages, locales, i18n.defaultLocale);
+	return defaultLocale;
 }
 
 /**
@@ -27,12 +25,9 @@ function getLocale(request: NextRequest): string | undefined {
 export function i18nMiddleware(request: NextRequest) {
 	const { pathname, search } = request.nextUrl;
 
-	const pathnameIsMissingLocale = i18n.locales.every(
-		(locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
-	);
+	if (!i18n.locales.some((locale) => pathname.startsWith(`/${locale}/`))) {
+		const locale = getLocaleFromRequest(request);
 
-	if (pathnameIsMissingLocale) {
-		const locale = getLocale(request);
 		return NextResponse.redirect(
 			new URL(`/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}${search}`, request.url),
 		);
