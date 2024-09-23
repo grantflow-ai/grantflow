@@ -12,5 +12,8 @@
 	"emailSigninForm": {
 		"magicLinkSent": "A login link has been sent to your email",
 		"sendMagicLink": "Send Magic Link"
+	},
+	"footer": {
+		"copyRightText": "&copy; 2024 ACME. All rights reserved."
 	}
 }

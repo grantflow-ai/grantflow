@@ -17,6 +17,12 @@ export function getBrowserClient() {
 		browserClientRef.value = createBrowserClient<Database, "public", Database["public"]>(
 			getEnv().NEXT_PUBLIC_SUPABASE_URL,
 			getEnv().NEXT_PUBLIC_SUPABASE_ANON_KEY,
+			{
+				auth: {
+					detectSessionInUrl: true,
+					flowType: "pkce",
+				},
+			},
 		);
 	}
 

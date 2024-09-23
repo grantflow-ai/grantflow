@@ -24,6 +24,10 @@ export function getServerClient() {
 			getEnv().NEXT_PUBLIC_SUPABASE_URL,
 			getEnv().NEXT_PUBLIC_SUPABASE_ANON_KEY,
 			{
+				auth: {
+					detectSessionInUrl: true,
+					flowType: "pkce",
+				},
 				cookies: {
 					getAll() {
 						return cookieStore.getAll();

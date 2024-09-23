@@ -2,6 +2,7 @@
 
 import { PagePath } from "@/config/enums";
 import { ErrorType } from "@/constants";
+import { errorRedirect } from "@/utils/request";
 import { getServerClient } from "@/utils/supabase/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -18,21 +19,23 @@ export async function GET(request: NextRequest) {
 	const requestUrl = new URL(request.url);
 
 	const tokenHash = requestUrl.searchParams.get("token_hash");
+	if (!tokenHash) {
+		return errorRedirect({
+			url: new URL(PagePath.AUTH, requestUrl.origin),
+			errorType: ErrorType.INVALID_CREDENTIALS,
+			error: new Error("No token hash provided"),
+		});
+	}
 
 	const supabase = getServerClient();
 
-	if (!tokenHash) {
-		const url = new URL(PagePath.AUTH, requestUrl.origin);
-		url.searchParams.set("error", ErrorType.INVALID_CREDENTIALS);
-		return NextResponse.redirect(url);
-	}
-
 	const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
-
 	if (error) {
-		const url = new URL(PagePath.AUTH, requestUrl.origin);
-		url.searchParams.set("error", ErrorType.UNEXPECTED_ERROR);
-		return NextResponse.redirect(url);
+		return errorRedirect({
+			url: new URL(PagePath.AUTH, requestUrl.origin),
+			errorType: ErrorType.UNEXPECTED_ERROR,
+			error,
+		});
 	}
 
 	return NextResponse.redirect(new URL(PagePath.ROOT, requestUrl.origin));

@@ -47,7 +47,8 @@
 			},
 			"suspicious": {
 				"all": true,
-				"noReactSpecificProps": "off"
+				"noReactSpecificProps": "off",
+				"useAwait": "off"
 			},
 			"a11y": {
 				"all": true
