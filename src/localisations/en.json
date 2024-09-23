@@ -33,5 +33,8 @@
 			"createApplication": "Create Grant Application",
 			"noApplications": "No grant applications have been created yet."
 		}
+	},
+	"footer": {
+		"copyRightText": "&copy; 2023 GrantFlow.AI. All rights reserved."
 	}
 }

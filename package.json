@@ -18,10 +18,7 @@
 	},
 	"lint-staged": {
 		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx,json,html,css}": "biome format --write",
-		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}": [
-			"biome lint --fix",
-			"eslint --fix --no-warn-ignored"
-		]
+		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}": ["biome lint --fix", "eslint --fix --no-warn-ignored"]
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.654.0",
@@ -100,11 +97,7 @@
 	},
 	"pnpm": {
 		"peerDependencyRules": {
-			"allowAny": [
-				"eslint",
-				"react",
-				"react-dom"
-			]
+			"allowAny": ["eslint", "react", "react-dom"]
 		}
 	}
 }
