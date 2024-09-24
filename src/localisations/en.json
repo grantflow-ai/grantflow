@@ -13,9 +13,6 @@
 		"magicLinkSent": "A login link has been sent to your email",
 		"sendMagicLink": "Send Magic Link"
 	},
-	"footer": {
-		"copyRightText": "&copy; 2024 Grantflow.AI. All rights reserved."
-	},
 	"organizationView": {
 		"createWorkspace": "Create Workspace",
 		"title": "Organization",
@@ -24,7 +21,8 @@
 		"workspaceNameLabel": "Workspace Name",
 		"workspaceCreatedSuccess": "Workspace created successfully.",
 		"workspaceCreatedError": "An error occurred while creating the workspace.",
-		"createWorkspaceModalTitle": "Create Workspace"
+		"createWorkspaceModalTitle": "Create Workspace",
+		"workspaceDescriptionPlaceholder": "Workspace Description"
 	},
 	"workspaceView": {
 		"title": "Workspace",
@@ -35,6 +33,6 @@
 		}
 	},
 	"footer": {
-		"copyRightText": "&copy; 2023 GrantFlow.AI. All rights reserved."
+		"copyRightText": "&copy; 2024 GrantFlow.AI. All rights reserved."
 	}
 }
