@@ -26,6 +26,7 @@ export function EmailSigninForm({ locales }: { locales: Localisation }) {
 	const emailForm = useForm<EmailFormValues>({
 		resolver: zodResolver(emailSchema),
 		defaultValues: { email: "" },
+		delayError: 5,
 	});
 
 	const onEmailSubmit: SubmitHandler<EmailFormValues> = async (values) => {
@@ -86,7 +87,11 @@ function EmailForm({
 									{...field}
 								/>
 							</FormControl>
-							<FormMessage data-testid="email-input-error-message" className="text-destructive" />
+							{form.formState.errors.email?.message && (
+								<FormMessage data-testid="email-input-error-message" className="text-destructive">
+									{form.formState.errors.email.message}
+								</FormMessage>
+							)}
 						</FormItem>
 					)}
 				/>

@@ -2,14 +2,16 @@ import { createWorkspace } from "@/actions/workspace";
 import { FormButton } from "@/components/form-button";
 import type { Localisation } from "@/i18n";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "gen/ui/form";
 import { Input } from "gen/ui/input";
+import { Textarea } from "gen/ui/textarea";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const workspaceSchema = z.object({
 	name: z.string().min(3, { message: "Workspace name must be at least 3 characters long" }),
+	description: z.string().optional(),
 });
 
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
@@ -30,7 +32,7 @@ export function CreateWorkspaceForm({
 
 	const onSubmit = async (values: WorkspaceFormValues) => {
 		try {
-			await createWorkspace(organizationId, values.name);
+			await createWorkspace({ organizationId, name: values.name });
 			toast.success(locales.organizationView.workspaceCreatedSuccess);
 		} catch {
 			toast.error(locales.organizationView.workspaceCreatedError);
@@ -55,13 +57,29 @@ export function CreateWorkspaceForm({
 									placeholder={locales.organizationView.workspaceNamePlaceholder}
 								/>
 							</FormControl>
-							<FormMessage data-testid="create-workspace-name-error" />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					name="description"
+					control={form.control}
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>{locales.organizationView.workspaceNameLabel}</FormLabel>
+							<FormControl>
+								<Textarea
+									{...field}
+									data-testid="create-workspace-description-textarea"
+									placeholder={locales.organizationView.workspaceNamePlaceholder}
+								/>
+							</FormControl>
 						</FormItem>
 					)}
 				/>
 				<FormButton
 					className="w-full"
 					data-testid="create-workspace-submit-button"
+					disabled={!form.formState.isValid}
 					isLoading={form.formState.isSubmitting}
 				>
 					{locales.organizationView.createWorkspace}
