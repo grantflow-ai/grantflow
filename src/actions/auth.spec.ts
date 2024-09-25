@@ -45,7 +45,7 @@ describe("Auth server actions", () => {
 			await signInWithEmail("test@example.com");
 			expect(SupabaseSignInWithOtpMock).toHaveBeenCalledWith({
 				email: "test@example.com",
-				options: { emailRedirectTo: "https://example.com/auth/callbacks/email-signin" },
+				options: { emailRedirectTo: "https://example.com/auth/email-signin" },
 			});
 		});
 	});

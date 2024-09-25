@@ -8,6 +8,14 @@ import { SubscribeToMailingListForm } from "./mailing-list-subscribe-form";
 vi.mock("@/actions/mailing-list");
 vi.mock("sonner");
 
+// this is required because the serverLogger declares 'use server';
+vi.mock("@t3-oss/env-nextjs");
+vi.mock("@/utils/env", () => ({
+	getEnv: vi.fn().mockReturnValue({
+		NEXT_PUBLIC_DEBUG: true,
+	}),
+}));
+
 describe("SubscribeForm", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();

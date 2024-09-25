@@ -147,6 +147,14 @@ CREATE INDEX idx_notifications_created_at ON public.notifications (created_at);
 CREATE INDEX idx_notifications_deleted_at ON public.notifications (deleted_at);
 CREATE INDEX idx_notifications_read ON public.notifications (read);
 
+-- mailing-list table
+CREATE TABLE public.mailing_list (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now())
+);
+CREATE INDEX idx_mailing_list_email ON public.mailing_list (email);
+
 -- ============================================= 
 -- Supabase Realtime Subscriptions
 -- =============================================

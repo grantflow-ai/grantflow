@@ -28,7 +28,7 @@
 		"code": "DP1",
 		"title": "NIH Director\u2019s Pioneer Award (NDPA)",
 		"description": "To support individuals who have the potential to make extraordinary contributions to medical research. The NIH Director\u2019s Pioneer Award is not renewable.",
-		"url": "http://commonfund.nih.gov/pioneer/"
+		"url": "https://commonfund.nih.gov/pioneer/"
 	},
 	{
 		"id": 4,
@@ -36,7 +36,7 @@
 		"code": "DP2",
 		"title": "NIH Director\u2019s New Innovator Awards",
 		"description": "To support highly innovative research projects by new investigators in all areas of biomedical and behavioral research.",
-		"url": "http://commonfund.nih.gov/newinnovator/"
+		"url": "https://commonfund.nih.gov/newinnovator/"
 	},
 	{
 		"id": 195,
@@ -119,7 +119,7 @@
 		"code": "F37",
 		"title": "Medical Informatics Fellowships",
 		"description": "To provide training to individuals in the synthesis, organization, and management of knowledge. The training should be interdisciplinary - involving medicine, biotechnology, and cognitive sciences, information science, and computer science.",
-		"url": "http://grants.nih.gov/training/F_files_non_nrsa.htm"
+		"url": "https://grants.nih.gov/training/F_files_non_nrsa.htm"
 	},
 	{
 		"id": 121,
@@ -127,7 +127,7 @@
 		"code": "F38",
 		"title": "Applied Medical Informatics Fellowships",
 		"description": "To provide opportunities for scientists to make major changes in the direction of research careers for the purpose of engaging in the synthesis, organization, and management of knowledge.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 250,
@@ -402,7 +402,7 @@
 		"id": 27,
 		"category": "Research Career Programs",
 		"code": "K24",
-		"title": "Midcareer Investigator Award in Patient-Oriented Research",
+		"title": "Mid career Investigator Award in Patient-Oriented Research",
 		"description": "To provide support for the clinicians to allow them protected time to devote to patient-oriented research and to act as mentors for beginning clinical investigators.",
 		"url": "https://researchtraining.nih.gov/programs/career-development/K24"
 	},
@@ -466,7 +466,7 @@
 		"code": "KD1",
 		"title": "Mental Health and/or Substance Abuse KD&A Grants",
 		"description": "To provide support to develop new knowledge about ways to improve the prevention and/or treatment of substance abuse and/or mental illness, and to work with State and local governments as well as providers, families, and consumers to apply that knowledge effectively in everyday practice. Outcome measures are the heart and core of the KD&A program. KD&As do not provide operating funds for service programs, except as required by the knowledge development activity.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 32,
@@ -474,7 +474,7 @@
 		"code": "KL1",
 		"title": "Linked Research Career Development Award",
 		"description": "For support of a scientist, committed to research, in need of both advanced research training and additional experience. The grant is administratively linked to another project or projects. A KL1 award may only be disaggregated from a U54 application and organizations may not apply for a KL1, Linked Research Career Development Award. The KL1 is used in lieu of the K01 for those programs that offer linked awards.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 33,
@@ -482,7 +482,7 @@
 		"code": "KL2",
 		"title": "Mentored Career Development Award",
 		"description": "To support newly trained clinicians appointed by an institution for activities related to the development of a successful clinical and translational research career. The award is administratively linked to another project or projects. A KL2 award may only be disaggregated from a U54 application and organizations may not apply for a KL2, Mentored Career Development Award. The KL2 is used in lieu of the K12 for those programs that offer linked awards.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 211,
@@ -490,7 +490,7 @@
 		"code": "KM1",
 		"title": "Institutional Career Enhancement Awards - Multi-Yr Funding",
 		"description": "Provides for part time (minimum 25% effort) up to full-time support for medical, scientific, statistics and health care professionals with post-doctoral or equivalent experience selected by an institution, to broaden their research capabilities by acquiring new research skills or knowledge.  Further it provides for curriculum development of new programs to support these same types of individuals.  This is an institutional mentored career program, not an individual program. It is also a multi-year funded institutional mentored career development activity thus ICs need OER prior approval to use the KM1.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 34,
@@ -560,7 +560,7 @@
 		"code": "P01",
 		"title": "Research Program Projects",
 		"description": "For the support of a broadly based, multidisciplinary, often long-term research program which has a specific major objective or a basic theme. A program project generally involves the organized efforts of relatively large groups, members of which are conducting research projects designed to elucidate the various aspects or components of this objective. Each research project is usually under the leadership of an established investigator. The grant can provide support for certain basic resources used by these groups in the program, including clinical components, the sharing of which facilitates the total research effort. A program project is directed toward a range of problems having a central research focus, in contrast to the usually narrower thrust of the traditional research project. Each project supported through this mechanism should contribute or be directly related to the common theme of the total research effort. These scientifically meritorious projects should demonstrate an essential element of unity and interdependence, i.e., a system of research activities and projects directed toward a well-defined research program goal.",
-		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+		"url": "https://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
 	},
 	{
 		"id": 41,
@@ -568,7 +568,7 @@
 		"code": "P20",
 		"title": "Exploratory Grants",
 		"description": "To support planning for new programs, expansion or modification of existing resources, and feasibility studies to explore various approaches to the development of interdisciplinary programs that offer potential solutions to problems of special significance to the mission of the NIH.  These exploratory studies may lead to specialized or comprehensive centers.",
-		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+		"url": "https://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
 	},
 	{
 		"id": 230,
@@ -583,7 +583,7 @@
 		"code": "P30",
 		"title": "Center Core Grants",
 		"description": "To support shared resources and facilities for categorical research by a number of investigators from different disciplines who provide a multidisciplinary approach to a joint research effort or from the same discipline who focus on a common research problem.  The core grant is integrated with the center's component projects or program projects, though funded independently from them.  This support, by providing more accessible resources, is expected to assure a greater productivity than from the separate projects and program projects.",
-		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+		"url": "https://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
 	},
 	{
 		"id": 43,
@@ -612,7 +612,7 @@
 		"code": "P50",
 		"title": "Specialized Center",
 		"description": "To support any part of the full range of research and development from very basic to clinical; may involve ancillary supportive activities such as protracted patient care necessary to the primary research or R&D effort.  The spectrum of activities comprises a multidisciplinary attack on a specific disease entity or biomedical problem area.  These grants differ from program project grants in that they are usually developed in response to an announcement of the programmatic needs of an Institute or Division and subsequently receive continuous attention from its staff.  Centers may also serve as regional or national resources for special research purposes.",
-		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
+		"url": "https://grants.nih.gov/grants/funding/funding_program.htm#PSeries"
 	},
 	{
 		"id": 47,
@@ -662,7 +662,7 @@
 		"code": "R00",
 		"title": "Research Transition Award",
 		"description": "To support the second phase of a Career/Research Transition award program that provides 1 -3 years of independent research support (R00) contingent on securing an independent research position. Award recipients will be expected to compete successfully for independent R01 support from the NIH during the R00 research transition award period.",
-		"url": "http://grants.nih.gov/training/careerdevelopmentawards.htm"
+		"url": "https://grants.nih.gov/training/careerdevelopmentawards.htm"
 	},
 	{
 		"id": 53,
@@ -670,7 +670,7 @@
 		"code": "R01",
 		"title": "Research Project",
 		"description": "To support a discrete, specified, circumscribed project to be performed by the named investigator(s) in an area representing his or her specific interest and competencies.",
-		"url": "http://grants.nih.gov/grants/funding/r01.htm"
+		"url": "https://grants.nih.gov/grants/funding/r01.htm"
 	},
 	{
 		"id": 54,
@@ -678,7 +678,7 @@
 		"code": "R03",
 		"title": "Small Research Grants",
 		"description": "To provide research support specifically limited in time and amount for studies in categorical program areas.  Small grants provide flexibility for initiating studies which are generally for preliminary short-term projects and are non-renewable.",
-		"url": "http://grants.nih.gov/grants/funding/r03.htm"
+		"url": "https://grants.nih.gov/grants/funding/r03.htm"
 	},
 	{
 		"id": 55,
@@ -686,7 +686,7 @@
 		"code": "R13",
 		"title": "Conference",
 		"description": "To support recipient sponsored and directed international, national or regional meetings, conferences and workshops.",
-		"url": "http://grants.nih.gov/grants/funding/r13/index.htm"
+		"url": "https://grants.nih.gov/grants/funding/r13/index.htm"
 	},
 	{
 		"id": 56,
@@ -716,7 +716,7 @@
 		"code": "R21",
 		"title": "Exploratory/Developmental Grants",
 		"description": "To encourage the development of new research activities in categorical program areas.  (Support generally is restricted in level of support and in time.)",
-		"url": "http://grants.nih.gov/grants/funding/r21.htm"
+		"url": "https://grants.nih.gov/grants/funding/r21.htm"
 	},
 	{
 		"id": 59,
@@ -724,7 +724,7 @@
 		"code": "R24",
 		"title": "Resource-Related Research Projects",
 		"description": "To support research projects that will enhance the capability of resources to serve biomedical research.",
-		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#Resource"
+		"url": "https://grants.nih.gov/grants/funding/funding_program.htm#Resource"
 	},
 	{
 		"id": 60,
@@ -732,7 +732,7 @@
 		"code": "R25",
 		"title": "Education Projects",
 		"description": "For support to develop and/or implement a program as it relates to a category in one or more of the areas of education, information, training, technical assistance, coordination, or evaluation.",
-		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#Resource"
+		"url": "https://grants.nih.gov/grants/funding/funding_program.htm#Resource"
 	},
 	{
 		"id": 225,
@@ -768,7 +768,7 @@
 		"code": "R34",
 		"title": "Planning Grant",
 		"description": "To provide support for the initial development of a clinical trial or research project, including the establishment of the research team; the development of tools for data management and oversight of the research; the development of a trial design or experimental research designs and other essential elements of the study or project, such as the protocol, recruitment strategies, procedure manuals and collection of feasibility data.",
-		"url": "http://grants.nih.gov/grants/funding/r34.htm"
+		"url": "https://grants.nih.gov/grants/funding/r34.htm"
 	},
 	{
 		"id": 237,
@@ -805,7 +805,7 @@
 		"code": "R41",
 		"title": "Small Business Technology Transfer (STTR) Grants - Phase I",
 		"description": "To support cooperative R&D projects between small business concerns and research institutions, limited in time and amount, to establish the technical merit and feasibility of ideas that have potential for commercialization.  Awards are made to small business concerns only.",
-		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+		"url": "https://grants.nih.gov/grants/funding/sbir.htm"
 	},
 	{
 		"id": 65,
@@ -813,7 +813,7 @@
 		"code": "R42",
 		"title": "Small Business Technology Transfer (STTR) Grants - Phase II",
 		"description": "To support in - depth development of cooperative R&D projects between small business concerns and research institutions, limited in time and amount, whose feasibility has been established in Phase I and that have potential for commercialization.  Awards are made to small business concerns only.",
-		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+		"url": "https://grants.nih.gov/grants/funding/sbir.htm"
 	},
 	{
 		"id": 66,
@@ -821,7 +821,7 @@
 		"code": "R43",
 		"title": "Small Business Innovation Research Grants (SBIR) - Phase I",
 		"description": "To support projects, limited in time and amount, to establish the technical merit and feasibility of R&D ideas which may ultimately lead to a commercial product(s) or service(s).",
-		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+		"url": "https://grants.nih.gov/grants/funding/sbir.htm"
 	},
 	{
 		"id": 67,
@@ -829,7 +829,7 @@
 		"code": "R44",
 		"title": "Small Business Innovation Research Grants (SBIR) - Phase II",
 		"description": "To support in - depth development of R&D ideas whose feasibility has been established in Phase I and which are likely to result in commercial products or services.  SBIR Phase II are considered \u201cFast-Track\u201d and do not require National Council Review.",
-		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+		"url": "https://grants.nih.gov/grants/funding/sbir.htm"
 	},
 	{
 		"id": 136,
@@ -858,7 +858,7 @@
 		"code": "R56",
 		"title": "High Priority, Short Term Project Award",
 		"description": "To provide limited interim research support based on the merit of a pending R01 application while applicant gathers additional data to revise a new or competing renewal application. This grant will underwrite highly meritorious applications that if given the opportunity to revise their application could meet IC recommended standards and would be missed opportunities if not funded. Interim funded ends when the applicant succeeds in obtaining an R01 or other competing award built on the R56 grant. These awards are not renewable.",
-		"url": "http://grants.nih.gov/grants/funding/r56.htm"
+		"url": "https://grants.nih.gov/grants/funding/r56.htm"
 	},
 	{
 		"id": 244,
@@ -1049,7 +1049,7 @@
 		"code": "T02",
 		"title": "Undergraduate Training Program",
 		"description": "To assist qualified institutions to improve and expand the training of undergraduate students in disciplines related to an area of interest of the awarding Institute/Division.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 140,
@@ -1057,7 +1057,7 @@
 		"code": "T09",
 		"title": "Scientific Evaluation",
 		"description": "To provide the chairman of the training committee funds for operation of the review group.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 84,
@@ -1065,7 +1065,7 @@
 		"code": "T14",
 		"title": "Conferences",
 		"description": "For support of international and national meetings, conferences and workshops.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 85,
@@ -1088,7 +1088,7 @@
 		"code": "T34",
 		"title": "Undergraduate NRSA Institutional Research Training Grants",
 		"description": "To enhance the undergraduate research training of individuals from groups underrepresented in biomedical, behavioral, clinical and social sciences through Institutional National Research Service Award Training Grants, in preparation for research doctorate degree programs.",
-		"url": "http://grants.nih.gov/training/T_Table.htm"
+		"url": "https://grants.nih.gov/training/T_Table.htm"
 	},
 	{
 		"id": 88,
@@ -1104,7 +1104,7 @@
 		"code": "T37",
 		"title": "Minority International Research Training Grants (FIC)",
 		"description": "Institutional training grants awarded to domestic institutions supporting opportunities for biomedical and behavioral research training for minority students and faculty members at foreign sites.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 141,
@@ -1112,7 +1112,7 @@
 		"code": "T42",
 		"title": "Educational Resource Center Training Grants",
 		"description": "To provide assistance to regional centers in developing specialized personnel in the occupational safety and health field with academic training, research training, and continuing education and outreach in industrial hygiene, occupational health nursing, occupational medicine, and occupational safety.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 91,
@@ -1128,7 +1128,7 @@
 		"code": "TL1",
 		"title": "Linked Training Award",
 		"description": "To support research training experiences for pre- and post-doctoral trainees who are interested in pursuing research careers in multi-disciplinary clinical and translational science. The training award is administratively linked to another project or projects. A TL1 award may only be disaggregated from a U54 application and organizations may not apply for a TL1, Linked Training Award. The TL1 is used in lieu of the T32 for those programs that offer linked awards.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 235,
@@ -1136,7 +1136,7 @@
 		"code": "TL4",
 		"title": "Undergraduate NRSA Institutional Research Training Grants",
 		"description": "To enhance the undergraduate research training of individuals from groups underrepresented in biomedical, behavioral, clinical and social sciences through Institutional National Research Service Award Training Grants, in preparation for research doctorate degree programs.  This is the linked equivalent of the T34.",
-		"url": "http://grants.nih.gov/training/T_Table.htm"
+		"url": "https://grants.nih.gov/training/T_Table.htm"
 	},
 	{
 		"id": 137,
@@ -1144,7 +1144,7 @@
 		"code": "TU2",
 		"title": "Institutional National Research Service Award with Involvement of NIH Intramural Faculty",
 		"description": "The cooperative agreement counterpart to the T32, this award enables institutions to provide research-training experiences for graduate students and postdoctoral scientists in specified shortage areas. In addition, these awards involve identified NIH Intramural Staff who serve as a part of the training faculty and participate in the operation of the training program.",
-		"url": "http://grants.nih.gov/training/extramural.htm"
+		"url": "https://grants.nih.gov/training/extramural.htm"
 	},
 	{
 		"id": 93,
@@ -1152,7 +1152,7 @@
 		"code": "U01",
 		"title": "Research Project--Cooperative Agreements",
 		"description": "To support a discrete, specified, circumscribed project to be performed by the named investigator(s) in an area representing his or her specific interest and competencies.",
-		"url": "http://grants.nih.gov/grants/funding/funding_program.htm#u01"
+		"url": "https://grants.nih.gov/grants/funding/funding_program.htm#u01"
 	},
 	{
 		"id": 94,
@@ -1181,7 +1181,7 @@
 		"code": "U13",
 		"title": "Conference--Cooperative Agreements",
 		"description": "To support international, national or regional meetings, conferences and workshops where substantial programmatic involvement is planned to assist the recipient.",
-		"url": "http://grants.nih.gov/grants/funding/r13/index.htm"
+		"url": "https://grants.nih.gov/grants/funding/r13/index.htm"
 	},
 	{
 		"id": 150,
@@ -1357,7 +1357,7 @@
 		"code": "U43",
 		"title": "Small Business Innovation Research (SBIR) Cooperative Agreements - Phase I",
 		"description": "To support projects, limited in time and amount, to establish the technical merit and feasibility of R&D ideas that may ultimately lead to commercial products or services.",
-		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+		"url": "https://grants.nih.gov/grants/funding/sbir.htm"
 	},
 	{
 		"id": 103,
@@ -1365,7 +1365,7 @@
 		"code": "U44",
 		"title": "Small Business Innovation Research (SBIR) Cooperative Agreements  - Phase II",
 		"description": "To support in-depth development of R&D ideas whose feasibility has been established in Phase I and that are likely to result in commercial products or services.",
-		"url": "http://grants.nih.gov/grants/funding/sbir.htm"
+		"url": "https://grants.nih.gov/grants/funding/sbir.htm"
 	},
 	{
 		"id": 104,
