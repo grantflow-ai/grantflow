@@ -4,6 +4,6 @@ export enum PagePath {
 }
 
 export enum ApiPath {
-	CALLBACK_OPENID = "/auth/callbacks/openid",
-	CALLBACK_MAGIC_LINK = "/auth/callbacks/email-signin",
+	CALLBACK_OPENID = "/auth/openid",
+	CALLBACK_MAGIC_LINK = "/auth/email-signin",
 }

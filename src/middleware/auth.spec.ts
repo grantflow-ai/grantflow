@@ -1,9 +1,9 @@
+import { PagePath } from "@/config/enums";
+import { getEnv } from "@/utils/env";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { PagePath } from "@/config/enums";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { updateSession } from "./auth";
-import { getEnv } from "@/utils/env";
-import { vi, describe, it, expect, beforeEach } from "vitest";
 
 vi.mock("@supabase/ssr");
 vi.mock("@/utils/env");
@@ -13,7 +13,7 @@ describe("updateSession middleware", () => {
 		NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
 		NEXT_PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
 		NEXT_PUBLIC_SITE_URL: "",
-	});
+	} as any);
 
 	const createServerMock = vi.mocked(createServerClient).mockReturnValue({
 		auth: {
