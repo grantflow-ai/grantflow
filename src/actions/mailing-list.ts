@@ -1,6 +1,8 @@
 "use server";
 
 import { ErrorType } from "@/constants";
+import { handleServerError } from "@/utils/server-side";
+import { getServerClient } from "@/utils/supabase/server";
 import isEmail from "validator/lib/isEmail";
 
 /**
@@ -13,8 +15,12 @@ export async function subscribeToMailingList(email: string) {
 		return ErrorType.INVALID_EMAIL;
 	}
 	try {
-		await new Promise((resolve) => setTimeout(resolve, 1000));
+		const supabase = getServerClient();
+		const client = supabase.from("mailing_list");
+		return await client.insert({
+			email,
+		});
 	} catch (error) {
-		return (error as Error).message;
+		return handleServerError(error as Error, (error as Error).message);
 	}
 }
