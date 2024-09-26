@@ -35,7 +35,7 @@ export function Navbar() {
 				)}
 			</div>
 			<div className="flex flex-1 gap-6 items-center justify-end" data-testid="navbar-actions">
-				{links.length && (
+				{links.length ? (
 					<div className="flex gap-2" data-testid="navbar-links">
 						{links.map((link) => (
 							<Link
@@ -57,7 +57,7 @@ export function Navbar() {
 							</Link>
 						))}
 					</div>
-				)}
+				) : null}
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>
 		</nav>
