@@ -1,5 +1,6 @@
 import { PagePath } from "@/config/enums";
 import type { NavItem, NavMapping } from "@/types/nav-types";
+import { getEnv } from "@/utils/env";
 
 const homeNavItem = {
 	title: "Home",
@@ -7,7 +8,7 @@ const homeNavItem = {
 } satisfies NavItem;
 
 const rootNavMapping = {
-	items: [homeNavItem],
+	items: getEnv().NEXT_PUBLIC_IS_DEVELOPMENT ? [homeNavItem] : [],
 	links: [],
 } satisfies NavMapping;
 

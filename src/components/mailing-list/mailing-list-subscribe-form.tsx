@@ -7,10 +7,10 @@ import { z } from "zod";
 
 import { subscribeToMailingList } from "@/actions/mailing-list";
 import { FormButton } from "@/components/form-button";
+import { cn } from "gen/cn";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
 import { toast } from "sonner";
-import { cn } from "gen/cn";
 
 const subscribeSchema = z.object({
 	email: z.string().email({ message: "Invalid email address" }),
@@ -42,7 +42,7 @@ export function SubscribeToMailingListForm({ className, ...rest }: FormHTMLAttri
 		return (
 			<div className="text-center">
 				<h2 className="text-2xl font-bold mb-2">Thank you for subscribing!</h2>
-				<p>You'll receive our newsletter at the email address you provided.</p>
+				<p>You&apos;ll receive our newsletter at the email address you provided.</p>
 			</div>
 		);
 	}
@@ -51,7 +51,7 @@ export function SubscribeToMailingListForm({ className, ...rest }: FormHTMLAttri
 		<Form {...form}>
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
-				className={cn("mb-4 w-full", className)}
+				className={cn("w-fit mx-auto", className)}
 				data-testid="subscribe-form-email"
 				{...rest}
 			>
@@ -60,7 +60,7 @@ export function SubscribeToMailingListForm({ className, ...rest }: FormHTMLAttri
 					control={form.control}
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel htmlFor="email" className="text-2xl md:text-3xl font-bold mb-6 text-primary-foreground">
+							<FormLabel htmlFor="email" className="text-2xl md:text-3xl font-bold mb-6">
 								Subscribe to our mailing list
 							</FormLabel>
 							<FormControl>

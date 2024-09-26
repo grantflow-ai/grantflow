@@ -8,7 +8,9 @@ function getLocaleFromRequest(request: NextRequest): string | undefined {
 
 	if (locales.length > 1) {
 		return match(
-			new Negotiator({ headers: Object.fromEntries(request.headers.entries()) }).languages(locales),
+			new Negotiator({
+				headers: Object.fromEntries(request.headers.entries()),
+			}).languages(locales),
 			locales,
 			i18n.defaultLocale,
 		);
@@ -25,12 +27,10 @@ function getLocaleFromRequest(request: NextRequest): string | undefined {
 export function i18nMiddleware(request: NextRequest) {
 	const { pathname, search } = request.nextUrl;
 
-	if (!i18n.locales.some((locale) => pathname.startsWith(`/${locale}/`))) {
+	if (pathname === "/") {
 		const locale = getLocaleFromRequest(request);
 
-		return NextResponse.redirect(
-			new URL(`/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}${search}`, request.url),
-		);
+		return NextResponse.redirect(new URL(`/${locale}?${search}`, request.url));
 	}
 
 	return NextResponse.next();
