@@ -9,4 +9,5 @@ export interface Env {
 
 	// Shared
 	NEXT_PUBLIC_DEBUG?: boolean;
+	NEXT_PUBLIC_IS_DEVELOPMENT?: boolean;
 }

@@ -48,7 +48,8 @@
 			"suspicious": {
 				"all": true,
 				"noReactSpecificProps": "off",
-				"useAwait": "off"
+				"useAwait": "off",
+				"noConsoleLog": "off"
 			},
 			"a11y": {
 				"all": true

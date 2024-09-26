@@ -1,6 +1,6 @@
+import { updateSession } from "@/middleware/auth";
 import { i18nMiddleware } from "@/middleware/i18n-middleware";
 import type { MiddlewareConfig, NextRequest } from "next/server";
-import { updateSession } from "@/middleware/auth";
 
 /**
  * The middleware entry point.
@@ -25,6 +25,6 @@ export const config: MiddlewareConfig = {
 		 * - icon.ico (icon file)
 		 * Feel free to modify this pattern to include more paths.
 		 */
-		"/((?!_next/static|_next/image|icon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+		"/((?!_next/static|_next/image|icon.ico|favicon.ico.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
 	],
 };
