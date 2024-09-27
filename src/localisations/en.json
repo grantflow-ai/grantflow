@@ -1,8 +1,8 @@
 {
 	"landingPage": {
 		"headingSection": {
-			"title": "Collaborative Scientific Grant Writing",
-			"subtitle": "Empower your lab with an AI-driven platform that accelerates grant writing and fosters collaboration—so you can focus on what matters most: research."
+			"title": "GrantFlow.ai",
+			"subtitle": "Supercharge your grant writing"
 		},
 		"problemAndSolutionSection": {
 			"title": "Simplify Grant Applications with a Collaborative Workspace",
@@ -40,8 +40,7 @@
 			}
 		},
 		"callToAction": {
-			"title": "Ready to Transform Your Grant Writing Process?",
-			"content": "Join the growing community of researchers who are using GrantFlow.AI to streamline their grant applications, increase their success rates, and focus more on their groundbreaking research."
+			"title": "Ready to Transform Your Grant Writing Process?"
 		}
 	},
 	"authPage": {
@@ -74,5 +73,9 @@
 	},
 	"footer": {
 		"copyRightText": "Copyright 2024 GrantFlow.AI. All rights reserved."
+	},
+	"mailingListForm": {
+		"submit": "Join",
+		"cta": "Join the waitlist!"
 	}
 }

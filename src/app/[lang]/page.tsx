@@ -10,27 +10,18 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 
 	return (
 		<div className="flex-grow bg-background text-foreground" data-testid="landing-page">
-			<section
-				className="bg-gradient-to-b from-primary to-background py-20 text-center relative overflow-hidden"
-				data-testid="heading-section"
-			>
+			<section className="bg-base py-20 text-center relative overflow-hidden" data-testid="heading-section">
 				<div className="flex flex-col px-4 relative z-10 gap-8">
 					<div>
-						<h1
-							className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up font-filicudi-solid"
-							data-testid="heading-title"
-						>
+						<h1 className="text-8xl font-bold mb-6 animate-fade-in-up font-filicudi-solid" data-testid="heading-title">
 							{locales.landingPage.headingSection.title}
 						</h1>
-						<p
-							className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto animate-fade-in-up animation-delay-200"
-							data-testid="heading-subtitle"
-						>
+						<h2 className="text-2xl font-filicudi-solid" data-testid="heading-subtitle">
 							{locales.landingPage.headingSection.subtitle}
-						</p>
+						</h2>
 					</div>
 					<div className="mb-4">
-						<SubscribeToMailingListForm data-testid="mailing-list-form" />
+						<SubscribeToMailingListForm data-testid="mailing-list-form" locales={locales} />
 					</div>
 				</div>
 			</section>
@@ -122,10 +113,7 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 					<h2 className="text-3xl font-bold mb-8 font-filicudi-solid" data-testid="cta-title">
 						{locales.landingPage.callToAction.title}
 					</h2>
-					<p className="text-lg mb-8 max-w-3xl mx-auto" data-testid="cta-content">
-						{locales.landingPage.callToAction.content}
-					</p>
-					<SubscribeToMailingListForm data-testid="cta-mailing-list-form" />
+					<SubscribeToMailingListForm data-testid="cta-mailing-list-form" locales={locales} />
 				</div>
 			</section>
 		</div>

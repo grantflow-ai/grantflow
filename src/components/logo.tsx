@@ -3,7 +3,7 @@ import type { HTMLProps } from "react";
 
 export function Logo({ className, ...props }: HTMLProps<HTMLDivElement>) {
 	return (
-		<div className={cn("font-filicudi-solid pr-2", className)} {...props} data-testid="logo">
+		<div className={cn("font-filicudi-solid pr-2 text-2xl", className)} {...props} data-testid="logo">
 			GrantFlow.AI
 		</div>
 	);
