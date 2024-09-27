@@ -14,7 +14,7 @@ export function Navbar() {
 	const { items, links } = getNavItems(pathName as PagePath);
 
 	return (
-		<nav className="container flex h-16 items-center sm:justify-between sm:space-x-0" data-testid="navbar">
+		<nav className="px-6 bg-muted flex h-16 items-center sm:justify-between sm:space-x-0 w-full" data-testid="navbar">
 			<Logo data-testid="navbar-logo" />
 			<div className="flex gap-6 md:gap-10" data-testid="navbar-items">
 				{items.map(

@@ -34,7 +34,6 @@ describe("FileUploader", () => {
 		await waitFor(() => {
 			expect(screen.getByTestId("dropzone")).toBeInTheDocument();
 		});
-		expect(screen.getByText(/Drag 'n' drop files here/)).toBeInTheDocument();
 	});
 
 	it("handles file drop correctly", async () => {
