@@ -15,7 +15,7 @@ export async function subscribeToMailingList(email: string): Promise<string | nu
 		return ErrorType.INVALID_EMAIL;
 	}
 	try {
-		const supabase = getServerClient();
+		const supabase = await getServerClient();
 		const client = supabase.from("mailing_list");
 		await client.insert({
 			email,

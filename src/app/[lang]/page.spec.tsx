@@ -1,84 +1,65 @@
 import en from "@/localisations/en.json";
-import { getServerClient } from "@/utils/supabase/server";
-import { render, screen, waitFor } from "@testing-library/react";
-import { redirect } from "next/navigation";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import LandingPage from "./page";
 
-vi.mock("@/utils/supabase/server", () => ({
-	getServerClient: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-	redirect: vi.fn(),
-}));
-
-vi.mock("next/image", () => ({
-	default: ({ alt, ...props }: any) => <img alt={alt ?? "mock image"} {...props} />,
-}));
-
 describe("LandingPage", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
+	it("renders the heading section correctly", () => {
+		render(<LandingPage params={{ lang: "en" }} />);
+
+		// Check for title and subtitle
+		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(en.landingPage.headingSection.title);
+		expect(screen.getByText(en.landingPage.headingSection.subtitle)).toBeInTheDocument();
 	});
 
-	it("redirects when user is authenticated", async () => {
-		const mockSupabase = {
-			auth: {
-				getUser: vi.fn().mockResolvedValue({ data: { user: { id: "test-user-id" } } }),
-			},
-		};
-		vi.mocked(getServerClient).mockReturnValue(mockSupabase as any);
+	it("renders the problem and solution section correctly", () => {
+		render(<LandingPage params={{ lang: "en" }} />);
 
-		await LandingPage({ params: { lang: "en" } });
+		// Check for Problem and Solution section titles and subtitles
+		expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(en.landingPage.problemAndSolutionSection.title);
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.subtitle)).toBeInTheDocument();
 
-		expect(vi.mocked(redirect)).toHaveBeenCalledWith("/test-user-id");
+		// Card 1 - The Challenge for Principal Investigators
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card1.title)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card1.subtitle)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card1.content)).toBeInTheDocument();
+
+		// Card 2 - Our Solution
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card2.title)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card2.subtitle)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card2.content)).toBeInTheDocument();
+
+		// Card 2 list items
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card2.list.item1)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card2.list.item2)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.problemAndSolutionSection.card2.list.item3)).toBeInTheDocument();
 	});
 
-	it("renders landing page content with correct structure", async () => {
-		const mockSupabase = {
-			auth: {
-				getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
-			},
-		};
-		vi.mocked(getServerClient).mockReturnValue(mockSupabase as any);
+	it("renders the features section correctly", () => {
+		render(<LandingPage params={{ lang: "en" }} />);
 
-		render(await LandingPage({ params: { lang: "en" } }));
+		// Features Section Title and Subtitle
+		expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(en.landingPage.featuresSection.title);
+		expect(screen.getByText(en.landingPage.featuresSection.subtitle)).toBeInTheDocument();
 
-		expect(screen.getByTestId("landing-title")).toBeInTheDocument();
-		expect(screen.getByTestId("landing-description")).toBeInTheDocument();
-		expect(screen.getByTestId("landing-cta")).toBeInTheDocument();
-		expect(screen.getByTestId("landing-screenshot")).toBeInTheDocument();
+		// Card 1 - Collaborative Tools
+		expect(screen.getByText(en.landingPage.featuresSection.card1.title)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.featuresSection.card1.content)).toBeInTheDocument();
+
+		// Card 2 - Customizable Proposals
+		expect(screen.getByText(en.landingPage.featuresSection.card2.title)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.featuresSection.card2.content)).toBeInTheDocument();
+
+		// Card 3 - Grant Discovery & Tracking
+		expect(screen.getByText(en.landingPage.featuresSection.card3.title)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.featuresSection.card3.content)).toBeInTheDocument();
 	});
 
-	it("uses the correct language parameter for the auth link", async () => {
-		const mockSupabase = {
-			auth: {
-				getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
-			},
-		};
-		vi.mocked(getServerClient).mockReturnValue(mockSupabase as any);
+	it("renders the call to action section correctly", () => {
+		render(<LandingPage params={{ lang: "en" }} />);
 
-		render(await LandingPage({ params: { lang: "en" } }));
-
-		const link = screen.getByRole("link");
-		expect(link).toHaveAttribute("href", "en/auth");
-	});
-
-	it("applies translations from getLocale", async () => {
-		const mockSupabase = {
-			auth: {
-				getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
-			},
-		};
-		vi.mocked(getServerClient).mockReturnValue(mockSupabase as any);
-		render(await LandingPage({ params: { lang: "en" } }));
-
-		await waitFor(() => {
-			expect(screen.getByTestId("landing-title")).toHaveTextContent(en.landingPage.title);
-		});
-
-		expect(screen.getByTestId("landing-description")).toHaveTextContent(en.landingPage.description);
-		expect(screen.getByTestId("landing-cta")).toHaveTextContent(en.landingPage.cta);
+		// Call to Action Title and Content
+		expect(screen.getByText(en.landingPage.callToAction.title)).toBeInTheDocument();
+		expect(screen.getByText(en.landingPage.callToAction.content)).toBeInTheDocument();
 	});
 });

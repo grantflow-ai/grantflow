@@ -1,73 +1,83 @@
 "use client";
+
 import { SubscribeToMailingListForm } from "@/components/mailing-list/mailing-list-subscribe-form";
+import { type SupportedLocale, getLocale } from "@/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
 import { FileText, Lock, Users } from "lucide-react";
 
-export default function LandingPage() {
+export default async function LandingPage({ params: { lang } }: { params: { lang: SupportedLocale } }) {
+	const locales = await getLocale(lang);
+
 	return (
-		<div className="flex-grow bg-background text-foreground">
-			<section className="bg-gradient-to-b from-primary to-background py-20 text-center relative overflow-hidden">
+		<div className="flex-grow bg-background text-foreground" data-testid="landing-page">
+			<section
+				className="bg-gradient-to-b from-primary to-background py-20 text-center relative overflow-hidden"
+				data-testid="heading-section"
+			>
 				<div className="flex flex-col px-4 relative z-10 gap-8">
 					<div>
-						<h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up font-filicudi-solid">
-							Collaborative Scientific Grant Writing
+						<h1
+							className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up font-filicudi-solid"
+							data-testid="heading-title"
+						>
+							{locales.landingPage.headingSection.title}
 						</h1>
-						<p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
-							Empower your lab with an AI-driven platform that automates grant writing and fosters collaboration—so you
-							can focus on what matters most: research.
+						<p
+							className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto animate-fade-in-up animation-delay-200"
+							data-testid="heading-subtitle"
+						>
+							{locales.landingPage.headingSection.subtitle}
 						</p>
 					</div>
 					<div className="mb-4">
-						<SubscribeToMailingListForm />
+						<SubscribeToMailingListForm data-testid="mailing-list-form" />
 					</div>
 				</div>
 			</section>
 
-			<section id="features" className="py-16 bg-muted">
+			<section id="features" className="py-16 bg-muted" data-testid="problem-solution-section">
 				<div className="container mx-auto px-4">
-					<h2 className="text-3xl font-bold mb-8 text-center font-filicudi-solid">
-						Simplify Grant Applications with a Collaborative Workspace
+					<h2 className="text-3xl font-bold mb-8 text-center font-filicudi-solid" data-testid="problem-solution-title">
+						{locales.landingPage.problemAndSolutionSection.title}
 					</h2>
-					<p className="text-xl text-center mb-12 max-w-3xl mx-auto">
-						GrantFlow.ai transforms the complex grant application process into a streamlined, collaborative experience.
-						Manage all aspects of grant writing with your team in one shared workspace.
+					<p className="text-xl text-center mb-12 max-w-3xl mx-auto" data-testid="problem-solution-subtitle">
+						{locales.landingPage.problemAndSolutionSection.subtitle}
 					</p>
 					<div className="grid md:grid-cols-2 gap-8">
-						<Card className="transition-transform hover:scale-105">
+						<Card className="transition-transform hover:scale-105" data-testid="card-1">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">The Challenge for Principal Investigators</CardTitle>
+								<CardTitle className="font-filicudi-solid">
+									{locales.landingPage.problemAndSolutionSection.card1.title}
+								</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<h3 className="text-xl font-semibold mb-4">More Time on Grant Writing, Less on Research?</h3>
-								<p>
-									As a PI, you need to balance running a lab, publishing research, and securing funding. The complex and
-									time-consuming grant writing process can drain your focus from leading groundbreaking research.
-									Collaborating with students, administrators, and expert grant writers adds another layer of
-									complexity.
-								</p>
+								<p>{locales.landingPage.problemAndSolutionSection.card1.subtitle}</p>
 							</CardContent>
 						</Card>
-						<Card className="transition-transform hover:scale-105">
+						<Card className="transition-transform hover:scale-105" data-testid="card-2">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">Our Solution</CardTitle>
+								<CardTitle className="font-filicudi-solid">
+									{locales.landingPage.problemAndSolutionSection.card2.title}
+								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<h3 className="text-xl font-semibold mb-4">A Collaborative Platform Built for Researchers</h3>
-								<p>
-									GrantFlow.ai provides a comprehensive platform designed to streamline the grant application process:
-								</p>
+								<h3 className="text-xl font-semibold mb-4">
+									{locales.landingPage.problemAndSolutionSection.card2.subtitle}
+								</h3>
+								<p>{locales.landingPage.problemAndSolutionSection.card2.content}</p>
 								<ul className="mt-4 space-y-2">
-									<li className="flex items-start">
+									<li className="flex items-start" data-testid="card2-item1">
 										<Users className="mr-2 h-5 w-5 text-primary" />
-										<span>Collaborative Workspace: Our "Grant Studio" allows seamless collaboration.</span>
+										<span>{locales.landingPage.problemAndSolutionSection.card2.list.item1}</span>
 									</li>
-									<li className="flex items-start">
+									<li className="flex items-start" data-testid="card2-item2">
 										<FileText className="mr-2 h-5 w-5 text-primary" />
-										<span>AI-Driven Support: Leverage advanced AI to generate and refine proposals.</span>
+										<span>{locales.landingPage.problemAndSolutionSection.card2.list.item2}</span>
 									</li>
-									<li className="flex items-start">
+									<li className="flex items-start" data-testid="card2-item3">
 										<Lock className="mr-2 h-5 w-5 text-primary" />
-										<span>Security & Compliance: Ensures data privacy and adheres to industry standards.</span>
+										<span>{locales.landingPage.problemAndSolutionSection.card2.list.item3}</span>
 									</li>
 								</ul>
 							</CardContent>
@@ -76,51 +86,46 @@ export default function LandingPage() {
 				</div>
 			</section>
 
-			<section className="py-16">
+			<section className="py-16" data-testid="features-section">
 				<div className="container mx-auto px-4">
-					<h2 className="text-3xl font-bold mb-8 text-center font-filicudi-solid">Why GrantFlow.ai?</h2>
-					<h3 className="text-xl text-center mb-12">Tailored for the Complex Needs of Principal Investigators</h3>
+					<h2 className="text-3xl font-bold mb-8 text-center font-filicudi-solid" data-testid="features-title">
+						{locales.landingPage.featuresSection.title}
+					</h2>
+					<h3 className="text-xl text-center mb-12" data-testid="features-subtitle">
+						{locales.landingPage.featuresSection.subtitle}
+					</h3>
 					<div className="grid md:grid-cols-3 gap-8">
-						<Card className="transition-transform hover:scale-105">
+						<Card className="transition-transform hover:scale-105" data-testid="feature-card-1">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">Collaborative Tools</CardTitle>
+								<CardTitle className="font-filicudi-solid">{locales.landingPage.featuresSection.card1.title}</CardTitle>
 							</CardHeader>
-							<CardContent>
-								Your entire team can participate in the application process, ensuring everyone from administrators to
-								researchers can contribute efficiently.
-							</CardContent>
+							<CardContent>{locales.landingPage.featuresSection.card1.content}</CardContent>
 						</Card>
-						<Card className="transition-transform hover:scale-105">
+						<Card className="transition-transform hover:scale-105" data-testid="feature-card-2">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">Customizable Proposals</CardTitle>
+								<CardTitle className="font-filicudi-solid">{locales.landingPage.featuresSection.card2.title}</CardTitle>
 							</CardHeader>
-							<CardContent>
-								Create proposals that meet the specific guidelines of major funding bodies like NIH, NSF, and NASA, with
-								AI assistance for technical and cutting-edge research language.
-							</CardContent>
+							<CardContent>{locales.landingPage.featuresSection.card2.content}</CardContent>
 						</Card>
-						<Card className="transition-transform hover:scale-105">
+						<Card className="transition-transform hover:scale-105" data-testid="feature-card-3">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">Grant Discovery & Tracking</CardTitle>
+								<CardTitle className="font-filicudi-solid">{locales.landingPage.featuresSection.card3.title}</CardTitle>
 							</CardHeader>
-							<CardContent>
-								Discover relevant grants, track progress, and ensure compliance, all within a single platform.
-							</CardContent>
+							<CardContent>{locales.landingPage.featuresSection.card3.content}</CardContent>
 						</Card>
 					</div>
 				</div>
 			</section>
 
-			<section className="py-16">
+			<section className="py-16" data-testid="cta-section">
 				<div className="container mx-auto px-4 text-center">
-					<h2 className="text-3xl font-bold mb-8 font-filicudi-solid">
-						Ready to Transform Your Grant Writing Process?
+					<h2 className="text-3xl font-bold mb-8 font-filicudi-solid" data-testid="cta-title">
+						{locales.landingPage.callToAction.title}
 					</h2>
-					<p className="text-lg mb-8 max-w-3xl mx-auto">
-						Join the growing community of researchers who are using GrantFlow.AI to streamline their grant applications,
-						increase their success rates, and focus more on their groundbreaking research.
+					<p className="text-lg mb-8 max-w-3xl mx-auto" data-testid="cta-content">
+						{locales.landingPage.callToAction.content}
 					</p>
-					<SubscribeToMailingListForm />
+					<SubscribeToMailingListForm data-testid="cta-mailing-list-form" />
 				</div>
 			</section>
 		</div>

@@ -14,7 +14,7 @@ export default async function WorkspaceDetailPage({
 		workspaceId: string;
 	};
 }) {
-	const supabase = getServerClient();
+	const supabase = await getServerClient();
 	const client = supabase.from("workspaces");
 	const { data: workspace, error: workspaceFetchErr } = await client
 		.select("*")

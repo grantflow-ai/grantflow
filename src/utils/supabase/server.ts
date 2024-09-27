@@ -1,3 +1,5 @@
+"use server";
+
 import { createServerClient } from "@supabase/ssr";
 import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { cookies } from "next/headers";
@@ -16,7 +18,8 @@ const serverClientRef: {
  * Get the Supabase server client.
  * @returns The Supabase server client.
  */
-export function getServerClient() {
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function getServerClient() {
 	const cookieStore = cookies();
 
 	if (!serverClientRef.value) {

@@ -12,7 +12,7 @@ import { urlWithHost } from "@/utils/url";
  * @returns The path to redirect to.
  */
 export async function signOut() {
-	const supabase = getServerClient();
+	const supabase = await getServerClient();
 	const { error } = await supabase.auth.signOut();
 
 	return error?.message;
@@ -28,7 +28,7 @@ export async function signInWithEmail(email: string) {
 		return ErrorType.INVALID_EMAIL;
 	}
 
-	const supabase = getServerClient();
+	const supabase = await getServerClient();
 	const { error } = await supabase.auth.signInWithOtp({
 		email,
 		options: { emailRedirectTo: urlWithHost(ApiPath.CALLBACK_MAGIC_LINK) },

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 		});
 	}
 
-	const supabase = getServerClient();
+	const supabase = await getServerClient();
 	const client = supabase.from("mailing_list");
 	try {
 		await client.delete().eq("id", recordId);
