@@ -30,7 +30,7 @@ export function i18nMiddleware(request: NextRequest) {
 	if (pathname === "/") {
 		const locale = getLocaleFromRequest(request);
 
-		return NextResponse.redirect(new URL(`/${locale}?${search}`, request.url));
+		return NextResponse.redirect(new URL(`/${locale}${search}`, request.url));
 	}
 
 	return NextResponse.next();

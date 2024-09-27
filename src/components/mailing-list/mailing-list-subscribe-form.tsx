@@ -7,8 +7,9 @@ import { z } from "zod";
 
 import { subscribeToMailingList } from "@/actions/mailing-list";
 import { FormButton } from "@/components/form-button";
+import type { Localisation } from "@/i18n";
 import { cn } from "gen/cn";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
 import { toast } from "sonner";
 
@@ -18,7 +19,11 @@ const subscribeSchema = z.object({
 
 export type SubscribeFormValues = z.infer<typeof subscribeSchema>;
 
-export function SubscribeToMailingListForm({ className, ...rest }: FormHTMLAttributes<HTMLFormElement>) {
+export function SubscribeToMailingListForm({
+	className,
+	locales,
+	...rest
+}: FormHTMLAttributes<HTMLFormElement> & { locales: Localisation }) {
 	const [isSubscribed, setIsSubscribed] = useState(false);
 
 	const form = useForm<SubscribeFormValues>({
@@ -41,54 +46,56 @@ export function SubscribeToMailingListForm({ className, ...rest }: FormHTMLAttri
 	if (isSubscribed) {
 		return (
 			<div className="text-center">
-				<h2 className="text-2xl font-bold mb-2">Thank you for subscribing!</h2>
-				<p>You&apos;ll receive our newsletter at the email address you provided.</p>
+				<h2 className="text-2xl font-bold mb-2">Thank you for joining the waiting list!</h2>
+				<p>You&apos;ll hear from us soon!</p>
 			</div>
 		);
 	}
 
 	return (
-		<Form {...form}>
-			<form
-				onSubmit={form.handleSubmit(onSubmit)}
-				className={cn("w-fit mx-auto", className)}
-				data-testid="subscribe-form-email"
-				{...rest}
-			>
-				<FormField
-					name="email"
-					control={form.control}
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel htmlFor="email" className="text-2xl md:text-3xl font-bold mb-6">
-								Subscribe to our mailing list
-							</FormLabel>
-							<FormControl>
-								<Input
-									id="email"
-									placeholder="name@example.com"
-									type="email"
-									autoCapitalize="none"
-									autoComplete="email"
-									autoCorrect="off"
-									className="form-input rounded"
-									data-testid="subscribe-form-email-input"
-									{...field}
-								/>
-							</FormControl>
-							<FormMessage data-testid="email-input-error-message" className="text-destructive" />
-						</FormItem>
-					)}
-				/>
-				<FormButton
-					className="mt-4 mb-2 max-w-[50%]"
-					isLoading={form.formState.isSubmitting}
-					disabled={!form.formState.isValid}
-					data-testid="subscribe-form-submit-button"
+		<div>
+			<h3 className="font-filicudi-solid">{locales.mailingListForm.cta}</h3>
+			<Form {...form}>
+				<form
+					onSubmit={form.handleSubmit(onSubmit)}
+					className={cn("w-[20rem] p-4 mx-auto flex gap-4 items-center justify-around", className)}
+					data-testid="subscribe-form-email"
+					{...rest}
 				>
-					Subscribe
-				</FormButton>
-			</form>
-		</Form>
+					<FormField
+						name="email"
+						control={form.control}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<Input
+										id="email"
+										placeholder="name@example.com"
+										type="email"
+										autoCapitalize="none"
+										autoComplete="email"
+										autoCorrect="off"
+										className="form-input rounded"
+										data-testid="subscribe-form-email-input"
+										{...field}
+									/>
+								</FormControl>
+								<FormMessage data-testid="email-input-error-message" className="text-destructive" />
+							</FormItem>
+						)}
+					/>
+					<div>
+						<FormButton
+							variant="secondary"
+							isLoading={form.formState.isSubmitting}
+							disabled={!form.formState.isValid}
+							data-testid="subscribe-form-submit-button"
+						>
+							{locales.mailingListForm.submit}
+						</FormButton>
+					</div>
+				</form>
+			</Form>
+		</div>
 	);
 }

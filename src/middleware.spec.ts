@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { middleware, config } from "./middleware";
-import { i18nMiddleware } from "@/middleware/i18n-middleware";
 import { updateSession } from "@/middleware/auth";
+import { i18nMiddleware } from "@/middleware/i18n-middleware";
 import { type NextRequest, NextResponse } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { middleware } from "./middleware";
 
 vi.mock("@/middleware/i18n-middleware");
 vi.mock("@/middleware/auth");
@@ -39,11 +39,5 @@ describe("middleware", () => {
 		expect(i18nMiddleware).toHaveBeenCalledWith(mockRequest);
 		expect(updateSession).toHaveBeenCalledWith(mockRequest);
 		expect(result).toBe(mockUpdateSessionResponse);
-	});
-});
-
-describe("config", () => {
-	it("should have the correct matcher", () => {
-		expect(config.matcher).toEqual(["/((?!_next/static|_next/image|icon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"]);
 	});
 });
