@@ -15,21 +15,24 @@ describe("updateSession middleware", () => {
 		NEXT_PUBLIC_SITE_URL: "",
 	} as any);
 
+	// eslint-disable-next-line @typescript-eslint/no-deprecated
 	const createServerMock = vi.mocked(createServerClient).mockReturnValue({
 		auth: {
 			getUser: vi.fn(),
+			getAll: vi.fn(),
+			setAll: vi.fn(),
 		},
 	} as any);
 
 	const nextSpy = vi.spyOn(NextResponse, "next").mockReturnValue({
 		cookies: {
-			set: vi.fn(),
+			setAll: vi.fn(),
 		},
 	} as any);
 
 	const redirectSpy = vi.spyOn(NextResponse, "redirect").mockReturnValue({
 		cookies: {
-			set: vi.fn(),
+			setAll: vi.fn(),
 		},
 	} as any);
 

@@ -18,7 +18,7 @@ export async function createWorkspace({
 	organizationId: string;
 }) {
 	try {
-		const supabase = getServerClient();
+		const supabase = await getServerClient();
 		const client = supabase.from("workspaces");
 		return await client.insert({
 			organization_id: organizationId,

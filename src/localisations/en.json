@@ -1,8 +1,48 @@
 {
 	"landingPage": {
-		"title": "Get to month three on day one",
-		"description": "Trumpet.dev is a world-class SaaS project Starter, clean code with 95% test coverage.",
-		"cta": "Get Started"
+		"headingSection": {
+			"title": "Collaborative Scientific Grant Writing",
+			"subtitle": "Empower your lab with an AI-driven platform that accelerates grant writing and fosters collaboration—so you can focus on what matters most: research."
+		},
+		"problemAndSolutionSection": {
+			"title": "Simplify Grant Applications with a Collaborative Workspace",
+			"subtitle": "GrantFlow.ai transforms the complex grant application process into a streamlined, collaborative experience. Manage all aspects of grant writing with your team in one shared workspace.",
+			"card1": {
+				"title": "The Challenge for Principal Investigators",
+				"subtitle": "As a PI, you need to balance running a lab, publishing research, and securing funding for future studies. The complex and time-consuming grant writing process can drain your focus from leading groundbreaking research. Collaborating with students, administrators, and other researchers adds another layer of complexity.",
+				"content": "Our AI-powered platform generates grant proposals based on your input, research data, and existing documents, saving you time and effort."
+			},
+			"card2": {
+				"title": "Our Solution",
+				"subtitle": "A Collaborative Platform Built for Researchers",
+				"content": "GrantFlow.ai provides a comprehensive platform designed to streamline the grant application writing process:",
+				"list": {
+					"item1": "Collaborative Workspace: Our \"Grant Studio\" allows seamless collaboration.",
+					"item2": "AI-Driven Support: Leverage advanced AI to accelerate writing and refine proposals.",
+					"item3": "Security & Compliance: Ensures data privacy and adheres to industry standards."
+				}
+			}
+		},
+		"featuresSection": {
+			"title": "Why GrantFlow.ai?",
+			"subtitle": "Tailored for the Complex Needs of Principal Investigators",
+			"card1": {
+				"title": "Collaborative Tools",
+				"content": "Your entire team can participate in the application process, ensuring everyone from administrators to researchers can contribute efficiently."
+			},
+			"card2": {
+				"title": "Customizable Proposals",
+				"content": "Create proposals that meet the specific guidelines of major funding bodies like NIH, NSF, and ERC, with AI assistance fine-tuned for technical and cutting-edge research language."
+			},
+			"card3": {
+				"title": "Grant Discovery & Tracking",
+				"content": "Discover relevant grants, track progress, and ensure compliance, all within a single platform."
+			}
+		},
+		"callToAction": {
+			"title": "Ready to Transform Your Grant Writing Process?",
+			"content": "Join the growing community of researchers who are using GrantFlow.AI to streamline their grant applications, increase their success rates, and focus more on their groundbreaking research."
+		}
 	},
 	"authPage": {
 		"description": "Sign in to get started",
@@ -33,6 +73,6 @@
 		}
 	},
 	"footer": {
-		"copyRightText": "Copywrite 2024 GrantFlow.AI. All rights reserved."
+		"copyRightText": "Copyright 2024 GrantFlow.AI. All rights reserved."
 	}
 }
