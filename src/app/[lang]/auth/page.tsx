@@ -12,7 +12,7 @@ export default async function AuthPage({
 }: {
 	params: { lang: SupportedLocale };
 }) {
-	const supabase = getServerClient();
+	const supabase = await getServerClient();
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();

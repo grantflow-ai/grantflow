@@ -14,7 +14,7 @@ export default async function OrganizationDetailPage({
 		organizationId: string;
 	};
 }) {
-	const supabase = getServerClient();
+	const supabase = await getServerClient();
 	const client = supabase.from("organizations");
 	const { data: organization, error: orgFetchErr } = await client
 		.select("*")
