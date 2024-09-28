@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { subscribeToMailingList } from "@/actions/mailing-list";
-import en from "@/localisations/en";
+import en from "@/localisations/en.json";
 import { toast } from "sonner";
 import { SubscribeToMailingListForm } from "./mailing-list-subscribe-form";
 vi.mock("@/actions/mailing-list");

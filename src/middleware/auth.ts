@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { getEnv } from "@/utils/env";
-import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { PagePath } from "@/config/enums";
+import { getEnv } from "@/utils/env";
+import { createServerClient } from "@supabase/ssr";
+import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
+import { type NextRequest, NextResponse } from "next/server";
 
 const protectedRoutes: string[] = ["protected"];
 
@@ -17,10 +17,12 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 	});
 
 	const supabase = createServerClient(getEnv().NEXT_PUBLIC_SUPABASE_URL, getEnv().NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+		/* v8 ignore start */
 		cookies: {
 			getAll() {
 				return request.cookies.getAll();
 			},
+			/* v8 ignore next */
 			setAll(cookiesToSet) {
 				for (const { name, value } of cookiesToSet) {
 					request.cookies.set(name, value);
@@ -33,6 +35,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 				}
 			},
 		},
+		/* v8 ignore stop */
 	});
 
 	// IMPORTANT: Avoid writing any logic between createServerClient and

@@ -1,3 +1,4 @@
+import { ErrorType } from "@/constants";
 import { signInWithEmail, signOut } from "./auth";
 
 const { SupabaseSignOutMock, SupabaseSignInWithOtpMock, SupabaseUpdateUserMock } = vi.hoisted(() => ({
@@ -14,6 +15,10 @@ vi.mock("@/utils/supabase/server", () => ({
 			signInWithOtp: SupabaseSignInWithOtpMock,
 		},
 	}),
+}));
+
+vi.mock("validator", () => ({
+	isEmail: vi.fn((email) => email.includes("@")),
 }));
 
 describe("Auth server actions", () => {
@@ -47,6 +52,12 @@ describe("Auth server actions", () => {
 				email: "test@example.com",
 				options: { emailRedirectTo: "https://example.com/auth/email-signin" },
 			});
+		});
+
+		it("should return an error message when an invalid email is provided", async () => {
+			const result = await signInWithEmail("invalid-email");
+			expect(result).toBe(ErrorType.INVALID_EMAIL);
+			expect(SupabaseSignInWithOtpMock).not.toHaveBeenCalled();
 		});
 	});
 });
