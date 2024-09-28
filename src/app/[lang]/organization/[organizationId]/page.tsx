@@ -63,7 +63,7 @@ export default async function OrganizationDetailPage({
 						{organization.name}
 					</h2>
 					<p className="text-muted-foreground" data-testid="organization-id">
-						ID: {organization.id}
+						{organization.id}
 					</p>
 				</CardContent>
 			</Card>

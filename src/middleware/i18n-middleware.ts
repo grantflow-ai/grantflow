@@ -16,6 +16,7 @@ function getLocaleFromRequest(request: NextRequest): string | undefined {
 		);
 	}
 
+	/* v8 ignore next */
 	return defaultLocale;
 }
 
@@ -27,10 +28,10 @@ function getLocaleFromRequest(request: NextRequest): string | undefined {
 export function i18nMiddleware(request: NextRequest) {
 	const { pathname, search } = request.nextUrl;
 
-	if (pathname === "/") {
+	if (i18n.locales.every((locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`)) {
 		const locale = getLocaleFromRequest(request);
 
-		return NextResponse.redirect(new URL(`/${locale}${search}`, request.url));
+		return NextResponse.redirect(new URL(`/${locale}${pathname}${search}`, request.url));
 	}
 
 	return NextResponse.next();
