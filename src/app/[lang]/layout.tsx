@@ -18,11 +18,14 @@ export function generateStaticParams() {
 
 export const metadata = {
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
-	title: "SaaS Template",
-	description: "A template for building SaaS applications.",
+	title: "GrantFlow.AI",
+	description: "AI powered grant writing",
 	openGraph: {
-		title: "SaaS Template",
-		description: "A template for building SaaS applications.",
+		title: "GrantFlow.AI",
+		description: "AI powered grant writing",
+		siteName: "GrantFlow.AI",
+		url: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
+		emails: ["naaman@grantflow.ai", "asaf@grantflow.ai"],
 	},
 } satisfies Metadata;
 
