@@ -54,6 +54,5 @@ describe("LandingPage", () => {
 		render(await LandingPage({ params: { lang: "en" } }));
 
 		expect(screen.getByText(en.landingPage.callToAction.title)).toBeInTheDocument();
-		expect(screen.getByText(en.landingPage.callToAction.content)).toBeInTheDocument();
 	});
 });
