@@ -45,7 +45,7 @@ export function SubscribeToMailingListForm({
 
 	if (isSubscribed) {
 		return (
-			<div className="text-center">
+			<div className="text-center" data-testid="waiting-list-thank-you">
 				<h2 className="text-2xl font-bold mb-2">Thank you for joining the waiting list!</h2>
 				<p>You&apos;ll hear from us soon!</p>
 			</div>
@@ -53,7 +53,7 @@ export function SubscribeToMailingListForm({
 	}
 
 	return (
-		<div>
+		<div data-testid="waiting-list-form">
 			<h3 className="font-filicudi-solid">{locales.mailingListForm.cta}</h3>
 			<Form {...form}>
 				<form

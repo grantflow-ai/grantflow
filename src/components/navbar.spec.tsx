@@ -8,6 +8,9 @@ import { Navbar } from "./navbar";
 vi.mock("next/navigation");
 vi.mock("next-themes");
 vi.mock("@/config/navigation");
+vi.mock("@/utils/env", () => ({
+	getEnv: () => ({}),
+}));
 
 describe("Navbar", () => {
 	beforeEach(() => {

@@ -45,8 +45,10 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<h3 className="text-xl font-semibold mb-4">More Time on Grant Writing, Less on Research?</h3>
-								<p>{locales.landingPage.problemAndSolutionSection.card1.subtitle}</p>
+								<h3 className="text-xl font-semibold mb-4">
+									{locales.landingPage.problemAndSolutionSection.card1.subtitle}
+								</h3>
+								<p>{locales.landingPage.problemAndSolutionSection.card1.content}</p>
 							</CardContent>
 						</Card>
 						<Card className="transition-transform hover:scale-105" data-testid="card-2">
