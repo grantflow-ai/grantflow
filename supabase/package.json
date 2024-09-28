@@ -15,7 +15,7 @@
 		"lint": "sqlfluff fix"
 	},
 	"devDependencies": {
-		"supabase": "^1.192.5",
-		"sqlfluff": "github:Goldziher/sqlfluff-js"
+		"sqlfluff": "github:Goldziher/sqlfluff-js",
+		"supabase": "^1.200.3"
 	}
 }
