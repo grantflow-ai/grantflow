@@ -13,7 +13,10 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 			<section className="bg-base py-20 text-center relative overflow-hidden" data-testid="heading-section">
 				<div className="flex flex-col px-4 relative z-10 gap-8">
 					<div>
-						<h1 className="text-8xl font-bold mb-6 animate-fade-in-up font-filicudi-solid" data-testid="heading-title">
+						<h1
+							className="text-4xl md:text-8xl font-bold mb-6 animate-fade-in-up font-filicudi-solid"
+							data-testid="heading-title"
+						>
 							{locales.landingPage.headingSection.title}
 						</h1>
 						<h2 className="text-2xl font-filicudi-solid" data-testid="heading-subtitle">
