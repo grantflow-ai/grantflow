@@ -2,9 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { subscribeToMailingList } from "@/actions/mailing-list";
+import en from "@/localisations/en";
 import { toast } from "sonner";
 import { SubscribeToMailingListForm } from "./mailing-list-subscribe-form";
-
 vi.mock("@/actions/mailing-list");
 vi.mock("sonner");
 
@@ -22,21 +22,21 @@ describe("SubscribeForm", () => {
 	});
 
 	it("renders the form correctly", () => {
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		expect(screen.getByTestId("subscribe-form-email-input")).toBeInTheDocument();
 		expect(screen.getByTestId("subscribe-form-submit-button")).toBeInTheDocument();
 	});
 
 	it("disables submit button when form is invalid", () => {
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const submitButton = screen.getByTestId("subscribe-form-submit-button");
 		expect(submitButton).toBeDisabled();
 	});
 
 	it("enables submit button when form is valid", async () => {
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const emailInput = screen.getByTestId("subscribe-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -51,7 +51,7 @@ describe("SubscribeForm", () => {
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
 		mockSubscribeToMailingList.mockResolvedValueOnce("");
 
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const emailInput = screen.getByTestId("subscribe-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -68,7 +68,7 @@ describe("SubscribeForm", () => {
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
 		mockSubscribeToMailingList.mockResolvedValueOnce("");
 
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const emailInput = screen.getByTestId("subscribe-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -88,7 +88,7 @@ describe("SubscribeForm", () => {
 		const errorMessage = "Failed to subscribe";
 		mockSubscribeToMailingList.mockResolvedValueOnce(errorMessage);
 
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const emailInput = screen.getByTestId("subscribe-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -113,7 +113,7 @@ describe("SubscribeForm", () => {
 				),
 		);
 
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const emailInput = screen.getByTestId("subscribe-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -128,7 +128,7 @@ describe("SubscribeForm", () => {
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
 		mockSubscribeToMailingList.mockResolvedValueOnce("Error message");
 
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const emailInput = screen.getByTestId("subscribe-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -145,7 +145,7 @@ describe("SubscribeForm", () => {
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
 		mockSubscribeToMailingList.mockResolvedValueOnce("");
 
-		render(<SubscribeToMailingListForm />);
+		render(<SubscribeToMailingListForm locales={en} />);
 
 		const emailInput = screen.getByTestId("subscribe-form-email-input");
 		await userEvent.type(emailInput, "test@example.com");
@@ -154,7 +154,7 @@ describe("SubscribeForm", () => {
 		await userEvent.click(submitButton);
 
 		await waitFor(() => {
-			expect(screen.getByText("Thank you for subscribing!")).toBeInTheDocument();
+			expect(screen.getByTestId("waiting-list-thank-you")).toBeInTheDocument();
 		});
 	});
 });
