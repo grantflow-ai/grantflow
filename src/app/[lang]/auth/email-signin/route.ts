@@ -1,6 +1,6 @@
 "use server";
 
-import { PagePath } from "@/config/enums";
+import { PagePath } from "@/enums";
 import { ErrorType } from "@/constants";
 import { errorRedirect } from "@/utils/request";
 import { getServerClient } from "@/utils/supabase/server";

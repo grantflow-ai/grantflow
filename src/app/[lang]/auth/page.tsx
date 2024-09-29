@@ -1,7 +1,7 @@
 import { EmailSigninForm } from "@/components/auth/email-signin-form";
 import { OauthSigninForm } from "@/components/auth/oauth-signin-form";
 import { Separator } from "@/components/separator";
-import { PagePath } from "@/config/enums";
+import { PagePath } from "@/enums";
 import { type SupportedLocale, getLocale } from "@/i18n";
 import { getServerClient } from "@/utils/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";

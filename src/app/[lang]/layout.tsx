@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { type SupportedLocale, getLocale, i18n } from "@/i18n";
 import { getEnv } from "@/utils/env";
 import { fontSans } from "@/utils/fonts";
+import { getServerClient } from "@/utils/supabase/server";
 import { cn } from "gen/cn";
 import { Toaster } from "gen/ui/sonner";
 import { ThemeProvider } from "next-themes";
@@ -38,6 +39,9 @@ export default async function RootLayout({
 }) {
 	const locales = await getLocale(lang);
 
+	const client = await getServerClient();
+	const { data } = await client.auth.getUser();
+
 	return (
 		<html lang={lang}>
 			<head>
@@ -45,7 +49,7 @@ export default async function RootLayout({
 			</head>
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-					<Navbar />
+					<Navbar isSignedIn={!!data.user} />
 					<main className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)]" data-testid="main-container">
 						{children}
 					</main>
