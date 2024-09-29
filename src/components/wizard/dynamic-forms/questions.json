@@ -1,0 +1,533 @@
+{
+	"title": [
+		{
+			"questionId": 1,
+			"questionText": "What is the title of the grant application?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": 200
+		}
+	],
+	"significance": [
+		{
+			"questionId": 2,
+			"questionText": "What is the problem or challenge your project aims to solve?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 3,
+			"questionText": "Why is this problem significant and how does it impact human lives?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 4,
+			"questionText": "How is the problem related to the stated aims of the program you are submitting to?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 5,
+			"questionText": "What is the current state of research in the relevant fields related to the problem?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 6,
+			"questionText": "What has been done in recent years to solve the problem?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 5,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 7,
+			"questionText": "Why were those efforts insufficient?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 6,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 8,
+			"questionText": "What is your hypothesis about the right path to solving the problem?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 2,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 9,
+			"questionText": "How is this solution transformational in comparison to what has been done before?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": "7 & 8",
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 10,
+			"questionText": "How could this solution improve human lives in the future?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 8,
+			"answerType": "text",
+			"maxLength": null
+		}
+	],
+	"aims": [
+		{
+			"questionId": 11,
+			"questionText": "What are the aims you plan to complete to test your hypothesis?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		}
+	],
+	"innovation": [
+		{
+			"questionId": 12,
+			"questionText": "What makes your project unique compared to what has been done before?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 9,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 13,
+			"questionText": "What state-of-the-art technologies are you planning to use?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 14,
+			"questionText": "How is the use of these technologies in your context innovative?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 13,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 15,
+			"questionText": "If you plan to develop new tools as part of the project, explain what makes your development different from what already exists in the field.",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 16,
+			"questionText": "How will your new tools be significant as part of the project and for the field in general?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 15,
+			"answerType": "text",
+			"maxLength": null
+		}
+	],
+	"researchPlan": [
+		{
+			"questionId": 17,
+			"questionText": "For each aim, please provide the following details:",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": null,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 18,
+			"questionText": "What strategy do you plan to use to accomplish Aim #?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 11,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 19,
+			"questionText": "What are the tasks, sub-aims, or studies you plan to undertake as part of this aim?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 18,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 20,
+			"questionText": "What is the experimental design you plan to use in this task?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 19,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 21,
+			"questionText": "What methods will you use to collect data?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 20,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 22,
+			"questionText": "How will you analyze the data?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 20,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 23,
+			"questionText": "How will you interpret the results?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 20,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 24,
+			"questionText": "Does this task include randomized groups or interventions?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": 20,
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 25,
+			"questionText": "Describe your methods for analysis and sample size, and explain how they fit your plans for this task.",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 24,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 26,
+			"questionText": "Does this task include the study of vertebrate animals or humans?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": 20,
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 27,
+			"questionText": "Please describe how you factor all relevant biological variables—especially the sex of the subjects/tested animals—into your study design.",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 26,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 28,
+			"questionText": "Does this task include any procedures, situations, or materials that may be hazardous to personnel?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": 20,
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 29,
+			"questionText": "If so, please describe them and the measures and precautions you plan to exercise.",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 28,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 30,
+			"questionText": "Does this task include the use of Human Embryonic Stem Cells (hESCs) not included in the NIH hESC Registry?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": 20,
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 31,
+			"questionText": "Please describe why the use of such hESCs is necessary.",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 30,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 32,
+			"questionText": "Does this task include the use of Human Fetal Tissue (HFT)?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": 20,
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 33,
+			"questionText": "Why can't the research goals be accomplished by using an alternative to HFT?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 32,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 34,
+			"questionText": "What methods were used (e.g., literature review, preliminary data) to determine that alternatives could not be used?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 32,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 35,
+			"questionText": "What results from a literature review were used to provide justifications?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 32,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 36,
+			"questionText": "What are the plans for the treatment of HFT and the disposal of HFT when research is complete?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 32,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 37,
+			"questionText": "What is the planned written, voluntary, informed consent process for cell/tissue donation?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 32,
+			"answerType": "text",
+			"maxLength": null
+		}
+	],
+	"preliminaryResults": [
+		{
+			"questionId": 38,
+			"questionText": "What preliminary studies have you already conducted related to this aim? What were the results?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 11,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 39,
+			"questionText": "How do these preliminary studies support the feasibility of your proposed research?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 38,
+			"answerType": "text",
+			"maxLength": null
+		}
+	],
+	"risksAndAlternativeApproaches": [
+		{
+			"questionId": 40,
+			"questionText": "What are the benchmarks for success for this aim?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 11,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 41,
+			"questionText": "What potential problems do you anticipate that might occur in this aim?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 11,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 42,
+			"questionText": "What is your strategy for establishing the feasibility of the aim?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 11,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 43,
+			"questionText": "How do you plan to address the high-risk aspects of your project?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 11,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 44,
+			"questionText": "What alternative approaches do you plan to implement if the risks materialize?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 11,
+			"answerType": "text",
+			"maxLength": null
+		}
+	],
+	"clinicalTrials": [
+		{
+			"questionId": 45,
+			"questionText": "Does your project involve clinical trials?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": "11,20",
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 46,
+			"questionText": "How do you plan to recruit subjects for your clinical trial?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 45,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 47,
+			"questionText": "What strategies will you use to retain subjects throughout the trial?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 45,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 48,
+			"questionText": "How will you ensure the inclusion of women, minorities, children, and other underrepresented groups, if relevant?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 45,
+			"answerType": "text",
+			"maxLength": null
+		}
+	],
+	"progressReport": [
+		{
+			"questionId": 49,
+			"questionText": "Is this application a Renewal or Revision application?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": null,
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 50,
+			"questionText": "What were the beginning and ending dates for the period covered since the last competitive review?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": 49,
+			"answerType": "date-range",
+			"maxLength": null
+		},
+		{
+			"questionId": 51,
+			"questionText": "What were the specific aims of the previous project period?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 49,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 52,
+			"questionText": "Why are these aims important?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 51,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 53,
+			"questionText": "What progress was made toward their achievement?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 51,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 54,
+			"questionText": "What changes do you plan to make in the aims of the project?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 49,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 55,
+			"questionText": "What new directions do you plan to explore?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 54,
+			"answerType": "text",
+			"maxLength": null
+		},
+		{
+			"questionId": 56,
+			"questionText": "Does the renewal application include changing the number or composition of applicants from the previous proposal?",
+			"required": true,
+			"allowFileUpload": false,
+			"dependsOn": 49,
+			"answerType": "boolean",
+			"maxLength": null
+		},
+		{
+			"questionId": 57,
+			"questionText": "If so, what is the reason and rationale for the change?",
+			"required": true,
+			"allowFileUpload": true,
+			"dependsOn": 56,
+			"answerType": "text",
+			"maxLength": null
+		}
+	]
+}
