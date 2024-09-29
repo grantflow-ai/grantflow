@@ -1,6 +1,6 @@
 import process from "node:process";
 
-import { PagePath } from "@/config/enums";
+import { PagePath } from "@/enums";
 import type { Env } from "@/types/env-types";
 import { beforeEach, vi } from "vitest";
 

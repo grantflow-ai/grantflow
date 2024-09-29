@@ -1,4 +1,4 @@
-"use client";
+"use server";
 
 import { SubscribeToMailingListForm } from "@/components/mailing-list/mailing-list-subscribe-form";
 import { type SupportedLocale, getLocale } from "@/i18n";

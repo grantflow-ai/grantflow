@@ -2,16 +2,22 @@
 
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import type { PagePath } from "@/config/enums";
+import { PagePath } from "@/enums";
 import { getNavItems } from "@/config/navigation";
 import { cn } from "gen/cn";
-import { buttonVariants } from "gen/ui/button";
+import { Button, buttonVariants } from "gen/ui/button";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { getEnv } from "@/utils/env";
+import { LogInIcon, LogOutIcon } from "lucide-react";
+import { getBrowserClient } from "@/utils/supabase/client";
 
-export function Navbar() {
+export function Navbar({ isSignedIn }: { isSignedIn: boolean }) {
 	const pathName = usePathname();
+	const router = useRouter();
 	const { items, links } = getNavItems(pathName as PagePath);
+
+	const client = getBrowserClient();
 
 	return (
 		<nav className="px-6 bg-muted flex h-16 items-center sm:justify-between sm:space-x-0 w-full" data-testid="navbar">
@@ -58,6 +64,21 @@ export function Navbar() {
 						))}
 					</div>
 				) : null}
+				{getEnv().NEXT_PUBLIC_IS_DEVELOPMENT && (
+					<Button
+						variant="ghost"
+						onClick={async () => {
+							if (isSignedIn) {
+								await client.auth.signOut();
+								router.push(PagePath.ROOT);
+							} else {
+								router.push(PagePath.AUTH);
+							}
+						}}
+					>
+						{isSignedIn ? <LogOutIcon className="h-6 w-6" /> : <LogInIcon className="h-6 w-6" />}
+					</Button>
+				)}
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>
 		</nav>

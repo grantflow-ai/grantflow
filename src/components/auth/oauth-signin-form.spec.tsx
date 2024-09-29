@@ -1,4 +1,4 @@
-import { ApiPath } from "@/config/enums";
+import { ApiPath } from "@/enums";
 import { getBrowserClient } from "@/utils/supabase/client";
 import { urlWithHost } from "@/utils/url";
 import { render, screen } from "@testing-library/react";
