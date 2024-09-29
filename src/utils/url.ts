@@ -1,4 +1,4 @@
-import type { ApiPath, PagePath } from "@/config/enums";
+import type { ApiPath, PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 
 const slashRegex = /^\/+/;

@@ -1,4 +1,4 @@
-import { PagePath } from "@/config/enums";
+import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";

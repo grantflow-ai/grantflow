@@ -1,4 +1,4 @@
-import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
+import { SiGoogle } from "@icons-pack/react-simple-icons";
 import type { Provider } from "@supabase/supabase-js";
 import type { ForwardRefExoticComponent, SVGProps } from "react";
 
@@ -13,10 +13,5 @@ export const oAuthProviders = [
 		id: "google",
 		displayName: "Google",
 		icon: SiGoogle,
-	},
-	{
-		id: "github",
-		displayName: "GitHub",
-		icon: SiGithub,
 	},
 ] satisfies OAuthProvider[];

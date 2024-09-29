@@ -1,7 +1,7 @@
 "use client";
 
 import { oAuthProviders } from "@/config/auth";
-import { ApiPath } from "@/config/enums";
+import { ApiPath } from "@/enums";
 import { getBrowserClient } from "@/utils/supabase/client";
 import { urlWithHost } from "@/utils/url";
 import type { Provider } from "@supabase/supabase-js";

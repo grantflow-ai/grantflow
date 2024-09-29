@@ -2,7 +2,7 @@
 
 import { isEmail } from "validator";
 
-import { ApiPath } from "@/config/enums";
+import { ApiPath } from "@/enums";
 import { ErrorType } from "@/constants";
 import { getServerClient } from "@/utils/supabase/server";
 import { urlWithHost } from "@/utils/url";
