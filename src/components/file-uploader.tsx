@@ -4,7 +4,6 @@ import Dropzone, { type DropzoneProps, type FileRejection } from "react-dropzone
 import { toast } from "sonner";
 
 import { generateUploadUrls } from "@/actions/file";
-import { useControllableState } from "@/hooks/use-controllable-state";
 import { formatBytes } from "@/utils/format";
 import { clientLogger } from "@/utils/logging/client";
 import axios from "axios";
@@ -18,32 +17,33 @@ import { type HTMLAttributes, useCallback, useEffect, useMemo, useState } from "
 const DEFAULT_FILE_ACCEPTS = {
 	// the format of accept is defined in MDN: https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker
 	// we support here the files we can extract using such libraries as unstructured.io etc.
-	"application/epub+zip": [".epub"],
+
 	"application/msword": [".doc"],
 	"application/pdf": [".pdf"],
-	"application/pkcs7-signature": [".p7s"],
 	"application/rtf": [".rtf"],
 	"application/vnd.ms-excel": [".xls"],
-	"application/vnd.ms-outlook": [".msg"],
 	"application/vnd.ms-powerpoint": [".ppt"],
 	"application/vnd.oasis.opendocument.text": [".odt"],
 	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
 	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-	"application/xml": [".xml"],
-	"image/bmp": [".bmp"],
-	"image/heic": [".heic"],
 	"image/jpeg": [".jpg", ".jpeg"],
 	"image/png": [".png"],
-	"image/tiff": [".tiff"],
-	"message/rfc822": [".eml"],
 	"text/csv": [".csv"],
-	"text/html": [".html"],
 	"text/markdown": [".md"],
 	"text/plain": [".txt"],
-	"text/tab-separated-values": [".tsv"],
-	"text/x-org": [".org"],
-	"text/x-rst": [".rst"],
+	// "application/epub+zip": [".epub"],
+	// "application/pkcs7-signature": [".p7s"],
+	// "application/vnd.ms-outlook": [".msg"],
+	// "application/xml": [".xml"],
+	// "image/bmp": [".bmp"],
+	// "image/heic": [".heic"],
+	// "image/tiff": [".tiff"],
+	// "message/rfc822": [".eml"],
+	// "text/html": [".html"],
+	// "text/tab-separated-values": [".tsv"],
+	// "text/x-org": [".org"],
+	// "text/x-rst": [".rst"],
 };
 
 async function handleFileUpload(files: File[], setProgresses: (progresses: Record<string, number>) => void) {
@@ -87,10 +87,7 @@ export function FileUploader({
 	disabled = false,
 	maxFileCount = Number.POSITIVE_INFINITY,
 	maxSize = 1024 * 1024 * 20,
-	onProgressChange,
 	onValueChange,
-	progresses: progressesProp,
-	value: valueProp,
 	...dropzoneProps
 }: HTMLAttributes<HTMLDivElement> &
 	DropzoneProps & {
@@ -101,14 +98,8 @@ export function FileUploader({
 		progresses?: Record<string, number>;
 		value?: File[];
 	}) {
-	const [files, setFiles] = useControllableState({
-		prop: valueProp,
-		onChange: onValueChange,
-	});
-	const [progresses, setProgresses] = useControllableState({
-		prop: progressesProp,
-		onChange: onProgressChange,
-	});
+	const [files, setFiles] = useState<File[]>([]);
+	const [progresses, setProgresses] = useState<Record<string, number>>({});
 
 	const [previewUrls, setPreviewUrls] = useState(new Map<string, string>());
 
@@ -119,7 +110,7 @@ export function FileUploader({
 				return false;
 			}
 
-			const totalFiles = (files?.length ?? 0) + newFileUploads.length;
+			const totalFiles = files.length + newFileUploads.length;
 			if (totalFiles > maxFileCount) {
 				toast.error(`Cannot upload more than ${maxFileCount} files`);
 				return false;
@@ -133,7 +124,7 @@ export function FileUploader({
 	const onDrop = useCallback(
 		(acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
 			if (validateFileUploads(acceptedFiles)) {
-				const updatedFiles = [...(files ?? []), ...acceptedFiles];
+				const updatedFiles = [...files , ...acceptedFiles];
 
 				setFiles(updatedFiles);
 
@@ -153,7 +144,7 @@ export function FileUploader({
 
 	const onRemove = useCallback(
 		(index: number) => {
-			const newFiles = files?.filter((_, i) => i !== index) ?? [];
+			const newFiles = files.filter((_, i) => i !== index)
 			setFiles(newFiles);
 			onValueChange?.(newFiles);
 		},
@@ -161,14 +152,14 @@ export function FileUploader({
 	);
 
 	useEffect(() => {
-		for (const file of files ?? []) {
+		for (const file of files) {
 			if (!previewUrls.has(file.name) && file.type.startsWith("image/")) {
 				setPreviewUrls(new Map(previewUrls).set(file.name, URL.createObjectURL(file)));
 			}
 		}
 
 		for (const fileName of previewUrls.keys()) {
-			if (!files?.some((file) => file.name === fileName)) {
+			if (!files.some((file) => file.name === fileName)) {
 				previewUrls.delete(fileName);
 			}
 		}
@@ -181,8 +172,8 @@ export function FileUploader({
 	}, [files, previewUrls]);
 
 	const isDisabled = useMemo(
-		() => disabled || (files?.length ?? 0) >= maxFileCount,
-		[disabled, files?.length, maxFileCount],
+		() => disabled || files.length >= maxFileCount,
+		[disabled, files.length, maxFileCount],
 	);
 
 	const instructions = `You can upload ${maxFileCount === 1 ? "a single file" : "multiple files"} with a maximal size of ${formatBytes(maxSize)} each`;
@@ -242,7 +233,7 @@ export function FileUploader({
 					</div>
 				)}
 			</Dropzone>
-			{files?.length ? (
+			{files.length ? (
 				<ScrollArea className="h-fit w-full px-3" data-testid="file-list-container">
 					<div className="flex max-h-48 flex-col gap-4">
 						{files.map((file, index) => (
@@ -252,7 +243,7 @@ export function FileUploader({
 								onRemove={() => {
 									onRemove(index);
 								}}
-								progress={progresses?.[file.name]}
+								progress={progresses[file.name]}
 								previewUrl={previewUrls.get(file.name)}
 							/>
 						))}
