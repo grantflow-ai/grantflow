@@ -1,11 +1,47 @@
-{
-	"title": "Provide a concise, descriptive title for your project, adhering to NIH guidelines for clarity and simplicity.",
-	"significance": "Explain the importance of the problem or critical barrier that your project addresses, and how it impacts human lives.",
-	"aims": "Define the specific objectives of your research project, outlining the aims you plan to achieve to test your hypothesis.",
-	"innovation": "Describe the novel aspects of your project and how it challenges or shifts current research or clinical practice paradigms.",
-	"researchPlan": "Detail the strategies, methodologies, and analyses you plan to use to accomplish each aim of your project.",
-	"preliminaryResults": "Provide any preliminary studies you have already done to substantiate and support the feasibility of your aims.",
-	"risksAndAlternativeApproaches": "Identify potential risks and outline alternative strategies to achieve your aims in case of unexpected challenges.",
-	"clinicalTrials": "Provide details on recruitment, retention, and inclusion of subjects if your project involves clinical trials.",
-	"progressReport": "Provide a Progress Report as part of your Research Strategy, detailing previous aims, progress, and planned changes."
-}
+[
+	{
+		"sectionId": 1,
+		"name": "title",
+		"description": "Provide a concise, descriptive title for your project, adhering to NIH guidelines for clarity and simplicity."
+	},
+	{
+		"sectionId": 2,
+		"name": "significance",
+		"description": "Explain the importance of the problem or critical barrier that your project addresses, and how it impacts human lives."
+	},
+	{
+		"sectionId": 3,
+		"name": "aims",
+		"description": "Define the specific objectives of your research project, outlining the aims you plan to achieve to test your hypothesis."
+	},
+	{
+		"sectionId": 4,
+		"name": "innovation",
+		"description": "Describe the novel aspects of your project and how it challenges or shifts current research or clinical practice paradigms."
+	},
+	{
+		"sectionId": 5,
+		"name": "researchPlan",
+		"description": "Detail the strategies, methodologies, and analyses you plan to use to accomplish each aim of your project."
+	},
+	{
+		"sectionId": 6,
+		"name": "preliminaryResults",
+		"description": "Provide any preliminary studies you have already done to substantiate and support the feasibility of your aims."
+	},
+	{
+		"sectionId": 7,
+		"name": "risksAndAlternativeApproaches",
+		"description": "Identify potential risks and outline alternative strategies to achieve your aims in case of unexpected challenges."
+	},
+	{
+		"sectionId": 8,
+		"name": "clinicalTrials",
+		"description": "Provide details on recruitment, retention, and inclusion of subjects if your project involves clinical trials."
+	},
+	{
+		"sectionId": 9,
+		"name": "progressReport",
+		"description": "Provide a Progress Report as part of your Research Strategy, detailing previous aims, progress, and planned changes."
+	}
+]
