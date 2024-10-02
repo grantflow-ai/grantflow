@@ -124,7 +124,7 @@ export function FileUploader({
 	const onDrop = useCallback(
 		(acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
 			if (validateFileUploads(acceptedFiles)) {
-				const updatedFiles = [...files , ...acceptedFiles];
+				const updatedFiles = [...files, ...acceptedFiles];
 
 				setFiles(updatedFiles);
 
@@ -139,16 +139,16 @@ export function FileUploader({
 				}
 			}
 		},
-		[validateFileUploads, files, setProgresses, setFiles],
+		[validateFileUploads, files],
 	);
 
 	const onRemove = useCallback(
 		(index: number) => {
-			const newFiles = files.filter((_, i) => i !== index)
+			const newFiles = files.filter((_, i) => i !== index);
 			setFiles(newFiles);
 			onValueChange?.(newFiles);
 		},
-		[files, setFiles, onValueChange],
+		[files, onValueChange],
 	);
 
 	useEffect(() => {
@@ -171,10 +171,7 @@ export function FileUploader({
 		};
 	}, [files, previewUrls]);
 
-	const isDisabled = useMemo(
-		() => disabled || files.length >= maxFileCount,
-		[disabled, files.length, maxFileCount],
-	);
+	const isDisabled = useMemo(() => disabled || files.length >= maxFileCount, [disabled, files.length, maxFileCount]);
 
 	const instructions = `You can upload ${maxFileCount === 1 ? "a single file" : "multiple files"} with a maximal size of ${formatBytes(maxSize)} each`;
 

@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "gen/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "gen/ui/card";
 import { Separator } from "gen/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "gen/ui/sheet";
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { Progress } from "gen/ui/progress";
-import { SectionData, type QuestionData } from "@/components/wizard/dynamic-forms/types";
+import type { SectionData, QuestionData } from "@/components/wizard/dynamic-forms/types";
 import { titleize, underscore } from "inflection";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import { Question } from "@/components/wizard/dynamic-forms/question";
-import {ValueType} from "@/components/wizard/dynamic-forms/inputs";
+import type { ValueType } from "@/components/wizard/dynamic-forms/inputs";
 
 interface DynamicWizardProps {
 	sections: SectionData[];
@@ -27,7 +27,7 @@ const isQuestionEnabled = (dependsOn: QuestionData["dependsOn"], answers: Record
 	return answers[dependsOn] !== undefined;
 };
 
-export default function DynamicWizard({ sections }: DynamicWizardProps) {
+export function DynamicWizard({ sections }: DynamicWizardProps) {
 	const [currentStep, setCurrentStep] = useState(0);
 	const [answers, setAnswers] = useState<Record<number, ValueType>>({});
 	const [progress, setProgress] = useState(0);
@@ -47,10 +47,10 @@ export default function DynamicWizard({ sections }: DynamicWizardProps) {
 	const StepsList = () => (
 		<nav className="space-y-1" data-testid="steps-list">
 			{sections.map((section, index) => (
-				<Tooltip>
-					<TooltipTrigger asChild>
+				<Tooltip key={section.sectionId}>
+					<TooltipTrigger asChild={true}>
 						<Button
-							key={index}
+							key={section.name}
 							data-testid={`step-${index}`}
 							className={`w-full flex justify-start px-3 py-2 text-sm font-medium rounded-md ${
 								index === currentStep ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
@@ -78,7 +78,7 @@ export default function DynamicWizard({ sections }: DynamicWizardProps) {
 						Dynamic Wizard
 					</CardTitle>
 					<Sheet>
-						<SheetTrigger asChild>
+						<SheetTrigger asChild={true}>
 							<Button variant="ghost" size="icon" className="md:hidden" data-testid="mobile-menu-button">
 								<Menu className="h-4 w-4" />
 								<span className="sr-only">Toggle steps menu</span>
@@ -99,27 +99,22 @@ export default function DynamicWizard({ sections }: DynamicWizardProps) {
 							</TooltipProvider>
 						</div>
 						<div className="w-full md:w-3/4 space-y-6" data-testid="form-content">
-							{currentSection.questions.map(({
-								allowFileUpload,
-								answerType,
-								dependsOn,
-								questionId,
-								questionText,
-								required,
-														   }) => (
-								<Question
-									key={questionId}
-									answerType={answerType}
-									questionId={questionId}
-									questionText={questionText}
-									required={required}
-									allowFileUpload={allowFileUpload}
-									dependsOn={dependsOn}
-									handleAnswerChange={handleAnswerChange}
-									disabled={isQuestionEnabled(dependsOn, answers)}
-									value={answers[questionId]}
-								/>
-							))}
+							{currentSection.questions.map(
+								({ allowFileUpload, answerType, dependsOn, questionId, questionText, required }) => (
+									<Question
+										key={questionId}
+										answerType={answerType}
+										questionId={questionId}
+										questionText={questionText}
+										required={required}
+										allowFileUpload={allowFileUpload}
+										dependsOn={dependsOn}
+										handleAnswerChange={handleAnswerChange}
+										disabled={isQuestionEnabled(dependsOn, answers)}
+										value={answers[questionId]}
+									/>
+								),
+							)}
 						</div>
 					</div>
 				</CardContent>

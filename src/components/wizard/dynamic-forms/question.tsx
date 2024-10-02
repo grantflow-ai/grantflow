@@ -1,7 +1,6 @@
-import {getInputComponent, InputType, ValueType} from "@/components/wizard/dynamic-forms/inputs";
+import { getInputComponent, type InputType, type ValueType } from "@/components/wizard/dynamic-forms/inputs";
 import { Label } from "gen/ui/label";
-import React from "react";
-import { type QuestionData } from "@/components/wizard/dynamic-forms/types";
+import type { QuestionData } from "@/components/wizard/dynamic-forms/types";
 
 export function Question({
 	handleAnswerChange,
