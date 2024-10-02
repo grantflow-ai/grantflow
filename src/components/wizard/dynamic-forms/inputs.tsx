@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { Calendar } from "gen/ui/calendar";
 import type { JSX } from "react";
 
-export type ValueType =  undefined | boolean | string | number | Date | {from?: Date, to?: Date}
+export type ValueType = undefined | boolean | string | number | Date | { from?: Date; to?: Date };
 
 export type InputType<T extends QuestionData["answerType"]> = T extends "text"
 	? string
