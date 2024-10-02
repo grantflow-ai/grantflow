@@ -1,173 +1,19 @@
 "use client";
 
-import { format } from "date-fns";
-import { cn } from "gen/cn";
 import { Button } from "gen/ui/button";
-import { Calendar } from "gen/ui/calendar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "gen/ui/popover";
-import { Switch } from "gen/ui/switch";
-import { Textarea } from "gen/ui/textarea";
-import { CalendarIcon } from "lucide-react";
-import { type JSX, useState } from "react";
+import { useEffect, useState } from "react";
 import { titleize, underscore } from "inflection";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "gen/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "gen/ui/collapsible";
-import { CaretSortIcon } from "@radix-ui/react-icons";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { Progress } from "gen/ui/progress";
+import { type Question, Section } from "@/components/wizard/dynamic-forms/types";
+import { getInputComponent } from "@/components/wizard/dynamic-forms/inputs";
 
-export interface Question {
-	questionId: number;
-	questionText: string;
-	required: boolean;
-	allowFileUpload: boolean;
-	dependsOn: number | number[] | null;
-	answerType: "text" | "boolean" | "date-range" | "date";
-	maxLength?: number | null;
-}
-
-export interface Section {
-	sectionId: number;
-	name: string;
-	description: string;
-	questions: Question[];
-}
-
-interface QuestionProps extends Question {
+export interface QuestionProps extends Question {
 	onValueChange: (value: unknown) => void;
 	dependencyMet: boolean;
 }
-
-type QuestionInputProps = Pick<QuestionProps, "questionId" | "onValueChange" | "required" | "maxLength">;
-
-const TextInput = ({ questionId, onValueChange, maxLength, required }: QuestionInputProps) => {
-	return (
-		<div data-testid={`question-${questionId}-input`} className="w-full h-full">
-			<Textarea
-				id={`question-${questionId}`}
-				onChange={onValueChange}
-				maxLength={maxLength ?? undefined}
-				required={required}
-				className="mt-1"
-			/>
-		</div>
-	);
-};
-
-const BooleanInput = ({ questionId, onValueChange, required }: QuestionInputProps) => {
-	return (
-		<div data-testid={`question-${questionId}-input`} className="flex items-center gap-2">
-			<Switch id={`question-${questionId}`} onCheckedChange={onValueChange} required={required} />
-		</div>
-	);
-};
-
-const DateInput = ({ questionId, onValueChange, required }: QuestionInputProps) => {
-	const [date, setDate] = useState<Date | undefined>(undefined);
-
-	return (
-		<div data-testid={`question-${questionId}-input`}>
-			<Popover>
-				<PopoverTrigger asChild={true}>
-					<Button
-						variant="outline"
-						className={cn("w-full justify-start text-left font-normal mt-1", !date && "text-muted-foreground")}
-					>
-						<CalendarIcon className="mr-2 h-4 w-4" />
-						{date ? format(date, "PPP") : <span>Pick a date</span>}
-					</Button>
-				</PopoverTrigger>
-				<PopoverContent className="w-auto p-0">
-					<Calendar
-						mode="single"
-						selected={date}
-						onSelect={(newDate) => {
-							setDate(newDate);
-							onValueChange(newDate);
-						}}
-						initialFocus={true}
-						required={required}
-					/>
-				</PopoverContent>
-			</Popover>
-		</div>
-	);
-};
-
-const DateRangeInput = ({ questionId, onValueChange, required }: QuestionInputProps) => {
-	const [dateRange, setDateRange] = useState<{
-		from: Date | undefined;
-		to: Date | undefined;
-	}>({
-		from: undefined,
-		to: undefined,
-	});
-
-	return (
-		<div data-testid={`question-${questionId}-input`}>
-			<div className="flex gap-2 mt-1">
-				<Popover>
-					<PopoverTrigger asChild={true}>
-						<Button
-							id={`question-${questionId}-from`}
-							variant="outline"
-							className={cn(
-								"w-[240px] justify-start text-left font-normal",
-								!dateRange.from && "text-muted-foreground",
-							)}
-						>
-							<CalendarIcon className="mr-2 h-4 w-4" />
-							{dateRange.from ? format(dateRange.from, "PPP") : <span>Start date</span>}
-						</Button>
-					</PopoverTrigger>
-					<PopoverContent className="w-auto p-0" align="start">
-						<Calendar
-							mode="single"
-							selected={dateRange.from}
-							onSelect={(date) => {
-								const newRange = { ...dateRange, from: date };
-								setDateRange(newRange);
-								onValueChange(newRange);
-							}}
-							initialFocus={true}
-							required={required}
-						/>
-					</PopoverContent>
-				</Popover>
-				<Popover>
-					<PopoverTrigger asChild={true}>
-						<Button
-							id={`question-${questionId}-to`}
-							variant="outline"
-							className={cn("w-[240px] justify-start text-left font-normal", !dateRange.to && "text-muted-foreground")}
-						>
-							<CalendarIcon className="mr-2 h-4 w-4" />
-							{dateRange.to ? format(dateRange.to, "PPP") : <span>End date</span>}
-						</Button>
-					</PopoverTrigger>
-					<PopoverContent className="w-auto p-0" align="start">
-						<Calendar
-							mode="single"
-							selected={dateRange.to}
-							onSelect={(date) => {
-								const newRange = { ...dateRange, to: date };
-								setDateRange(newRange);
-								onValueChange(newRange);
-							}}
-							initialFocus={true}
-							required={required}
-						/>
-					</PopoverContent>
-				</Popover>
-			</div>
-		</div>
-	);
-};
-
-const inputMap: Record<Question["answerType"], (props: QuestionInputProps) => JSX.Element> = {
-	text: TextInput,
-	boolean: BooleanInput,
-	date: DateInput,
-	"date-range": DateRangeInput,
-};
 
 const Question = ({
 	answerType,
@@ -178,90 +24,133 @@ const Question = ({
 	questionId,
 	questionText,
 }: QuestionProps) => {
-	const [isOpen, setIsOpen] = useState(false);
-
 	if (!dependencyMet) {
 		return null;
 	}
 
-	const InputComponent = inputMap[answerType];
+	const InputComponent = getInputComponent(answerType);
 	return (
-		<Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-2">
-			<div className="mb-4">
-				<CollapsibleTrigger asChild>
-					<Button variant="ghost" size="sm" className="flex gap-2 items-center">
-						<h4 className="font-semibold">{questionText}</h4>
-						<CaretSortIcon className="h-4 w-4"/>
-						<span className="sr-only">Toggle</span>
-					</Button>
-				</CollapsibleTrigger>
-				<CollapsibleContent className="space-y-2 ml-3">
-					<InputComponent
-						onValueChange={onValueChange}
-						required={required}
-						maxLength={maxLength}
-						questionId={questionId}
-					/>
-				</CollapsibleContent>
-			</div>
-		</Collapsible>
+		<div className="mb-4">
+			<h4 className="font-semibold mb-2">{questionText}</h4>
+			<InputComponent onValueChange={onValueChange} required={required} maxLength={maxLength} questionId={questionId} />
+		</div>
 	);
 };
 
-function GrantSection({ description, name, questions, sectionId }: Section) {
-	const [answers, setAnswers] = useState<Record<number, unknown>>({});
+function GrantSection({
+	description,
+	name,
+	sectionId,
+	onActivate,
+}: {
+	description: string;
+	name: string;
+	sectionId: number;
+	onActivate: () => void;
+}) {
+	const [isOpen, setIsOpen] = useState(false);
 
-	const handleValueChange = (questionId: number, value: unknown) => {
-		setAnswers((prev) => ({ ...prev, [questionId]: value }));
-	};
-
-	const isDependencyMet = (dependsOn?: number | number[] | null): boolean => {
-		if (!dependsOn) {
-			return true;
+	useEffect(() => {
+		if (isOpen) {
+			onActivate();
 		}
-		if (Array.isArray(dependsOn)) {
-			return dependsOn.map(Number).every((id) => !!answers[id]);
-		}
-		return !!answers[Number(dependsOn)];
-	};
+	}, [isOpen]);
 
 	return (
-		<Card className="mb-6" data-testid={`grant-section-${sectionId}`}>
-			<CardHeader>
-				<CardTitle>{titleize(underscore(name).replace("_", " "))}</CardTitle>
-				<CardDescription>{description}</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<div className="border-2 rounded p-2">
-				{questions.map((question) => (
-					<Question
-						key={question.questionId}
-						{...question}
-						onValueChange={(value) => {
-							handleValueChange(question.questionId, value);
-						}}
-						dependencyMet={isDependencyMet(question.dependsOn)}
-					/>
-				))}
-				</div>
-			</CardContent>
-		</Card>
+		<Collapsible
+			open={isOpen}
+			onOpenChange={() => {
+				setIsOpen((prev) => !prev);
+			}}
+			className="mb-2"
+			data-testid={`grant-section-${sectionId}`}
+		>
+			<CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left bg-background hover:bg-accent rounded-md">
+				<h2 className="text-xl font-semibold">{titleize(underscore(name).replace("_", " "))}</h2>
+				<ChevronDownIcon className={`w-6 h-6 transition-transform ${isOpen ? "transform rotate-180" : ""}`} />
+			</CollapsibleTrigger>
+			<CollapsibleContent className="mt-2 mb-4">
+				<p className="text-muted-foreground mb-4">{description}</p>
+			</CollapsibleContent>
+		</Collapsible>
 	);
 }
-
 export function GrantApplication({ sections }: { sections: Section[] }) {
+	const [activeSection, setActiveSection] = useState<number>(sections[0].sectionId);
+	const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
+	const [completionPercentage, setCompletionPercentage] = useState(0);
+
+	const totalRequiredQuestions = sections.reduce(
+		(total, section) => total + section.questions.filter((q) => q.required).length,
+		0,
+	);
+
+	useEffect(() => {
+		const answeredRequired = [...answeredQuestions].filter((qId) =>
+			sections.some((section) => section.questions.some((q) => q.questionId === qId && q.required)),
+		).length;
+		const newPercentage = (answeredRequired / totalRequiredQuestions) * 100;
+		setCompletionPercentage(newPercentage);
+	}, [answeredQuestions, sections, totalRequiredQuestions]);
+
+	const handleQuestionAnswer = (questionId: number, value: unknown) => {
+		setAnsweredQuestions((prev) => {
+			const newSet = new Set(prev);
+			if (value !== undefined && value !== "") {
+				newSet.add(questionId);
+			} else {
+				newSet.delete(questionId);
+			}
+			return newSet;
+		});
+	};
+
 	return (
-		<div className="w-full">
-			{sections.map(({ sectionId, name, description, questions }) => (
-				<GrantSection
-					key={sectionId}
-					sectionId={sectionId}
-					name={name}
-					description={description}
-					questions={questions}
-				/>
-			))}
-			<Button type="submit">Submit Application</Button>
+		<div className="flex flex-col w-full h-screen overflow-hidden">
+			<div className="p-4 bg-background border-b">
+				<Progress value={completionPercentage} className="w-full" />
+				<p className="text-sm text-muted-foreground mt-2">{completionPercentage.toFixed(0)}% complete</p>
+			</div>
+			<div className="flex flex-1 overflow-hidden">
+				<div className="w-1/3 overflow-y-auto p-4 border-r">
+					{sections.map(({ sectionId, name, description }) => (
+						<GrantSection
+							key={sectionId}
+							sectionId={sectionId}
+							name={name}
+							description={description}
+							onActivate={() => {
+								setActiveSection(sectionId);
+							}}
+						/>
+					))}
+				</div>
+				<div className="w-2/3 overflow-y-auto p-4">
+					<Accordion type="single" collapsible className="w-full">
+						{sections
+							.find((section) => section.sectionId === activeSection)
+							?.questions.map((question) => (
+								<AccordionItem key={question.questionId} value={`question-${question.questionId}`}>
+									<AccordionTrigger>{question.questionText}</AccordionTrigger>
+									<AccordionContent>
+										<Question
+											{...question}
+											onValueChange={(value) => {
+												handleQuestionAnswer(question.questionId, value);
+											}}
+											dependencyMet={true} // This should be calculated based on the actual dependencies
+										/>
+									</AccordionContent>
+								</AccordionItem>
+							))}
+					</Accordion>
+				</div>
+				<div className="fixed bottom-4 right-4">
+					<Button type="submit" disabled={completionPercentage < 100}>
+						Submit Application
+					</Button>
+				</div>
+			</div>
 		</div>
 	);
 }
