@@ -79,7 +79,7 @@
 			"questionText": "How is this solution transformational in comparison to what has been done before?",
 			"required": true,
 			"allowFileUpload": true,
-			"dependsOn": "7 & 8",
+			"dependsOn": [7, 8],
 			"answerType": "text",
 			"maxLength": null
 		},
@@ -415,7 +415,7 @@
 			"questionText": "Does your project involve clinical trials?",
 			"required": true,
 			"allowFileUpload": false,
-			"dependsOn": "11,20",
+			"dependsOn": [11, 20],
 			"answerType": "boolean",
 			"maxLength": null
 		},

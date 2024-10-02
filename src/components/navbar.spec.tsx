@@ -21,7 +21,7 @@ describe("Navbar", () => {
 	});
 
 	const renderNavbar = () => {
-		return render(<Navbar />);
+		return render(<Navbar isSignedIn={true} />);
 	};
 
 	it("renders the logo", () => {
