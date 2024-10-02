@@ -1,8 +1,9 @@
-import { GrantApplication } from "@/components/wizard/dynamic-forms/section";
 import sectionsData from "@/components/wizard/dynamic-forms/sections.json";
 import questionsData from "@/components/wizard/dynamic-forms/questions.json";
 
 import { z } from "zod";
+import DynamicWizard from "@/components/wizard/dynamic-forms/dynamic-wizard";
+import { SectionData } from "@/components/wizard/dynamic-forms/types";
 
 const QuestionSchema = z.object({
 	questionId: z.number(),
@@ -23,21 +24,18 @@ const SectionSchema = z.object({
 const QuestionsSchema = z.record(z.string(), z.array(QuestionSchema));
 const SectionsArraySchema = z.array(SectionSchema);
 
-type Question = z.infer<typeof QuestionSchema>;
-type Section = z.infer<typeof SectionSchema> & { questions: Question[] };
-
 export default function GrantWizard() {
 	const questions = QuestionsSchema.parse(questionsData);
 	const sections = SectionsArraySchema.parse(sectionsData);
 
-	const sectionsWithQuestions: Section[] = sections.map((section) => ({
+	const sectionsWithQuestions: SectionData[] = sections.map((section) => ({
 		...section,
 		questions: questions[section.name],
 	}));
 
 	return (
 		<section className="flex justify-center">
-			<GrantApplication sections={sectionsWithQuestions as any} />
+			<DynamicWizard sections={sectionsWithQuestions} />
 		</section>
 	);
 }
