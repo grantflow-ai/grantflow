@@ -2,8 +2,8 @@ import sectionsData from "@/components/wizard/dynamic-forms/sections.json";
 import questionsData from "@/components/wizard/dynamic-forms/questions.json";
 
 import { z } from "zod";
-import DynamicWizard from "@/components/wizard/dynamic-forms/dynamic-wizard";
-import { SectionData } from "@/components/wizard/dynamic-forms/types";
+import { DynamicWizard } from "@/components/wizard/dynamic-forms/dynamic-wizard";
+import type { SectionData } from "@/components/wizard/dynamic-forms/types";
 
 const QuestionSchema = z.object({
 	questionId: z.number(),
