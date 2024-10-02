@@ -231,7 +231,7 @@ export function FileUploader({
 								</div>
 								<div className="flex flex-col gap-px">
 									<p className="font-medium text-muted-foreground">
-										Drag &amp;n&amp; drop files here, or click to select files
+										Drag &amp; drop files here, or click to select files
 									</p>
 									<p className="text-sm text-muted-foreground/70" data-testid="drag-inactive-content-instructions">
 										{instructions}
