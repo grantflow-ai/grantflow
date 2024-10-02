@@ -1,7 +1,6 @@
 import { Switch } from "gen/ui/switch";
-import type { Question } from "@/components/wizard/dynamic-forms/types";
+import type { QuestionData } from "@/components/wizard/dynamic-forms/types";
 import { Textarea } from "gen/ui/textarea";
-import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "gen/ui/popover";
 import { Button } from "gen/ui/button";
 import { cn } from "gen/cn";
@@ -10,7 +9,9 @@ import { format } from "date-fns";
 import { Calendar } from "gen/ui/calendar";
 import type { JSX } from "react";
 
-export type InputType<T extends Question["answerType"]> = T extends "text"
+export type ValueType =  undefined | boolean | string | number | Date | {from?: Date, to?: Date}
+
+export type InputType<T extends QuestionData["answerType"]> = T extends "text"
 	? string
 	: T extends "boolean"
 		? boolean
@@ -20,21 +21,29 @@ export type InputType<T extends Question["answerType"]> = T extends "text"
 				? { from?: Date; to?: Date }
 				: never;
 
-export type QuestionInputProps<T extends Question["answerType"]> = Pick<
-	Question,
+export type QuestionInputProps<T extends QuestionData["answerType"]> = Pick<
+	QuestionData,
 	"questionId" | "required" | "maxLength"
 > & {
 	onValueChange: (value?: InputType<T>) => void;
+	value?: InputType<T>;
+	disabled: boolean;
 };
 
-export type QuestionInputComponent<T extends Question["answerType"]> = (props: QuestionInputProps<T>) => JSX.Element;
+export type QuestionInputComponent<T extends QuestionData["answerType"]> = (
+	props: QuestionInputProps<T>,
+) => JSX.Element;
 
-const TextInput = ({ questionId, onValueChange, maxLength, required }: QuestionInputProps<"text">) => {
+const TextInput = ({ questionId, onValueChange, maxLength, required, value, disabled }: QuestionInputProps<"text">) => {
 	return (
 		<div data-testid={`question-${questionId}-input`} className="w-full h-full">
 			<Textarea
 				id={`question-${questionId}`}
-				onChange={(event) => {onValueChange(event.target.value)}}
+				onChange={(event) => {
+					onValueChange(event.target.value);
+				}}
+				disabled={disabled}
+				value={value}
 				maxLength={maxLength ?? undefined}
 				required={required}
 				className="mt-1"
@@ -43,35 +52,39 @@ const TextInput = ({ questionId, onValueChange, maxLength, required }: QuestionI
 	);
 };
 
-const BooleanInput = ({ questionId, onValueChange, required }: QuestionInputProps<"boolean">) => {
+const BooleanInput = ({ questionId, onValueChange, required, value, disabled }: QuestionInputProps<"boolean">) => {
 	return (
 		<div data-testid={`question-${questionId}-input`} className="flex items-center gap-2">
-			<Switch id={`question-${questionId}`} onCheckedChange={onValueChange} required={required} />
+			<Switch
+				id={`question-${questionId}`}
+				onCheckedChange={onValueChange}
+				required={required}
+				checked={value}
+				disabled={disabled}
+			/>
 		</div>
 	);
 };
 
-const DateInput = ({ questionId, onValueChange, required }: QuestionInputProps<"date">) => {
-	const [date, setDate] = useState<Date | undefined>(undefined);
-
+const DateInput = ({ questionId, onValueChange, required, value, disabled }: QuestionInputProps<"date">) => {
 	return (
 		<div data-testid={`question-${questionId}-input`}>
 			<Popover>
 				<PopoverTrigger asChild={true}>
 					<Button
 						variant="outline"
-						className={cn("w-full justify-start text-left font-normal mt-1", !date && "text-muted-foreground")}
+						disabled={disabled}
+						className={cn("w-full justify-start text-left font-normal mt-1", disabled && "text-muted-foreground")}
 					>
 						<CalendarIcon className="mr-2 h-4 w-4" />
-						{date ? format(date, "PPP") : <span>Pick a date</span>}
+						{value ? format(value, "PPP") : <span>Pick a date</span>}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-0">
 					<Calendar
 						mode="single"
-						selected={date}
+						selected={value}
 						onSelect={(newDate) => {
-							setDate(newDate);
 							onValueChange(newDate);
 						}}
 						initialFocus={true}
@@ -83,15 +96,7 @@ const DateInput = ({ questionId, onValueChange, required }: QuestionInputProps<"
 	);
 };
 
-const DateRangeInput = ({ questionId, onValueChange, required }: QuestionInputProps<"date-range">) => {
-	const [dateRange, setDateRange] = useState<{
-		from: Date | undefined;
-		to: Date | undefined;
-	}>({
-		from: undefined,
-		to: undefined,
-	});
-
+const DateRangeInput = ({ questionId, onValueChange, required, value, disabled }: QuestionInputProps<"date-range">) => {
 	return (
 		<div data-testid={`question-${questionId}-input`}>
 			<div className="flex gap-2 mt-1">
@@ -100,22 +105,19 @@ const DateRangeInput = ({ questionId, onValueChange, required }: QuestionInputPr
 						<Button
 							id={`question-${questionId}-from`}
 							variant="outline"
-							className={cn(
-								"w-[240px] justify-start text-left font-normal",
-								!dateRange.from && "text-muted-foreground",
-							)}
+							disabled={disabled}
+							className={cn("w-[240px] justify-start text-left font-normal", !value?.from && "text-muted-foreground")}
 						>
 							<CalendarIcon className="mr-2 h-4 w-4" />
-							{dateRange.from ? format(dateRange.from, "PPP") : <span>Start date</span>}
+							{value?.from ? format(value.from, "PPP") : <span>Start date</span>}
 						</Button>
 					</PopoverTrigger>
 					<PopoverContent className="w-auto p-0" align="start">
 						<Calendar
 							mode="single"
-							selected={dateRange.from}
+							selected={value?.from}
 							onSelect={(date) => {
-								const newRange = { ...dateRange, from: date };
-								setDateRange(newRange);
+								const newRange = { ...value, from: date };
 								onValueChange(newRange);
 							}}
 							initialFocus={true}
@@ -128,19 +130,19 @@ const DateRangeInput = ({ questionId, onValueChange, required }: QuestionInputPr
 						<Button
 							id={`question-${questionId}-to`}
 							variant="outline"
-							className={cn("w-[240px] justify-start text-left font-normal", !dateRange.to && "text-muted-foreground")}
+							disabled={disabled}
+							className={cn("w-[240px] justify-start text-left font-normal", !value?.to && "text-muted-foreground")}
 						>
 							<CalendarIcon className="mr-2 h-4 w-4" />
-							{dateRange.to ? format(dateRange.to, "PPP") : <span>End date</span>}
+							{value?.to ? format(value.to, "PPP") : <span>End date</span>}
 						</Button>
 					</PopoverTrigger>
 					<PopoverContent className="w-auto p-0" align="start">
 						<Calendar
 							mode="single"
-							selected={dateRange.to}
+							selected={value?.to}
 							onSelect={(date) => {
-								const newRange = { ...dateRange, to: date };
-								setDateRange(newRange);
+								const newRange = { ...value, to: date };
 								onValueChange(newRange);
 							}}
 							initialFocus={true}
@@ -153,7 +155,7 @@ const DateRangeInput = ({ questionId, onValueChange, required }: QuestionInputPr
 	);
 };
 
-export function getInputComponent<T extends Question["answerType"]>(answerType: T): QuestionInputComponent<T> {
+export function getInputComponent<T extends QuestionData["answerType"]>(answerType: T): QuestionInputComponent<T> {
 	if (answerType === "text") {
 		return TextInput as QuestionInputComponent<T>;
 	}

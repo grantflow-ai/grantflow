@@ -1,4 +1,4 @@
-export interface Question {
+export interface QuestionData {
 	questionId: number;
 	questionText: string;
 	required: boolean;
@@ -8,9 +8,9 @@ export interface Question {
 	maxLength?: number | null;
 }
 
-export interface Section {
+export interface SectionData {
 	sectionId: number;
 	name: string;
 	description: string;
-	questions: Question[];
+	questions: QuestionData[];
 }
