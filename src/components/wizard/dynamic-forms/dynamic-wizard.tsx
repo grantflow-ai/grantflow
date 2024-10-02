@@ -64,7 +64,9 @@ export function DynamicWizard({ sections }: DynamicWizardProps) {
 							{titleize(underscore(section.name))}
 						</Button>
 					</TooltipTrigger>
-					<TooltipContent>{section.description}</TooltipContent>
+					<TooltipContent>
+						<span className="bg-secondary">{section.description}</span>
+					</TooltipContent>
 				</Tooltip>
 			))}
 		</nav>
