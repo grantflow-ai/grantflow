@@ -7,26 +7,16 @@ import { Separator } from "gen/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "gen/ui/sheet";
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { Progress } from "gen/ui/progress";
-import type { SectionData, QuestionData } from "@/components/wizard/dynamic-forms/types";
+import type { SectionData } from "@/components/wizard/dynamic-forms/types";
 import { titleize, underscore } from "inflection";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
-import { Question } from "@/components/wizard/dynamic-forms/question";
 import type { ValueType } from "@/components/wizard/dynamic-forms/inputs";
+import QuestionsAccordion from "@/components/wizard/dynamic-forms/question-list";
 
 interface DynamicWizardProps {
 	formName: string;
 	sections: SectionData[];
 }
-
-const isQuestionEnabled = (dependsOn: QuestionData["dependsOn"], answers: Record<number, ValueType>) => {
-	if (!dependsOn) {
-		return true;
-	}
-	if (Array.isArray(dependsOn)) {
-		return dependsOn.every((dependencyId) => answers[dependencyId] !== undefined);
-	}
-	return answers[dependsOn] !== undefined;
-};
 
 export function DynamicWizard({ sections, formName }: DynamicWizardProps) {
 	const [currentStep, setCurrentStep] = useState(0);
@@ -101,25 +91,12 @@ export function DynamicWizard({ sections, formName }: DynamicWizardProps) {
 								<StepsList />
 							</TooltipProvider>
 						</div>
-						<div className="w-full md:w-3/4 space-y-6" data-testid="form-content">
-							{currentSection.questions.map(
-								({ allowFileUpload, answerType, dependsOn, questionId, questionText, required }) => (
-									<Question
-										key={questionId}
-										answerType={answerType}
-										questionId={questionId}
-										questionText={questionText}
-										required={required}
-										allowFileUpload={allowFileUpload}
-										dependsOn={dependsOn}
-										handleAnswerChange={handleAnswerChange}
-										disabled={isQuestionEnabled(dependsOn, answers)}
-										value={answers[questionId]}
-										setFileIds={(questionId, fileIds) => {}}
-									/>
-								),
-							)}
-						</div>
+						<QuestionsAccordion
+							questions={currentSection.questions}
+							answers={answers}
+							handleAnswerChange={handleAnswerChange}
+							setFileIds={() => {}}
+						/>
 					</div>
 				</CardContent>
 				<Separator className="my-4" />
