@@ -37,5 +37,5 @@ export async function GET(request: NextRequest) {
 		});
 	}
 
-	return NextResponse.redirect(new URL(PagePath.ROOT, requestUrl.origin));
+	return NextResponse.redirect(new URL(PagePath.WIZARD, requestUrl.origin));
 }
