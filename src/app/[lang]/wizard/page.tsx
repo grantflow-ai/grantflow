@@ -35,7 +35,7 @@ export default function GrantWizard() {
 
 	return (
 		<section className="flex justify-center">
-			<DynamicWizard sections={sectionsWithQuestions} />
+			<DynamicWizard sections={sectionsWithQuestions} formName="NIH: R01" />
 		</section>
 	);
 }

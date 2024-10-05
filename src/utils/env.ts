@@ -13,8 +13,9 @@ export function getEnv(): Env {
 	if (envRef.value === null) {
 		envRef.value = createEnv({
 			server: {
-				AWS_ACCESS_KEY_ID: z.string().default("PLACEHOLDER"),
-				AWS_SECRET_ACCESS_KEY: z.string().default("PLACEHOLDER"),
+				AZURE_STORAGE_ACCOUNT_NAME: z.string(),
+				AZURE_STORAGE_ACCOUNT_KEY: z.string(),
+				AZURE_STORAGE_CONTAINER_NAME: z.string(),
 			},
 			client: {
 				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
