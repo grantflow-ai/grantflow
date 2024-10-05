@@ -1,6 +1,7 @@
 export enum PagePath {
 	ROOT = "/",
 	AUTH = "/auth",
+	WIZARD = "/wizard",
 }
 
 export enum ApiPath {

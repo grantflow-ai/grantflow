@@ -9,18 +9,15 @@ export function ThemeToggle() {
 	return (
 		<Button
 			data-testid="theme-toggle-button"
-			variant="ghost"
+			variant="outline"
 			size="icon"
+			className="bg-inherit dark:border-slate-700"
 			onClick={() => {
 				setTheme(theme === "light" ? "dark" : "light");
 			}}
 		>
-			<Button variant="outline" size="sm" className="dark:hidden bg-inherit ">
-				<SunIcon data-testid="theme-toggle-sun-icon" className="h-5 w-5" />
-			</Button>
-			<Button variant="outline" size="sm" className="hidden dark:block bg-inherit border-slate-700">
-				<MoonIcon data-testid="theme-toggle-moon-icon" className="h-5 w-5" />
-			</Button>
+			<SunIcon data-testid="theme-toggle-sun-icon" className="h-5 w-5 dark:hidden" />
+			<MoonIcon data-testid="theme-toggle-moon-icon" className="h-5 w-5 hidden dark:block bg-inherit" />
 			<span data-testid="theme-toggle-sr-text" className="sr-only">
 				Toggle theme
 			</span>
