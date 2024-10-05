@@ -5,6 +5,7 @@ export interface NavItem {
 	href?: string;
 	disabled?: boolean;
 	external?: boolean;
+	icon?: FC<Partial<SVGProps<SVGSVGElement>>>;
 }
 
 export interface NavLink {
