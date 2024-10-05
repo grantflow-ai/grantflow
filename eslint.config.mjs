@@ -4,8 +4,8 @@ export default [
 	...eslintConfigTrumpet,
 	{
 		rules: {
-			"n/no-unsupported-features/node-builtins": "off",
 			"unicorn/no-nested-ternary": "off",
+			"unicorn/no-useless-promise-resolve-reject": "off",
 		},
 	},
 ];

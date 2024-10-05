@@ -1,7 +1,9 @@
 export interface Env {
 	// Server only
-	AWS_ACCESS_KEY_ID: string;
-	AWS_SECRET_ACCESS_KEY: string;
+	AZURE_STORAGE_ACCOUNT_NAME: string;
+	AZURE_STORAGE_ACCOUNT_KEY: string;
+	AZURE_STORAGE_CONTAINER_NAME: string;
+
 	// Client only
 	NEXT_PUBLIC_SITE_URL: string;
 	NEXT_PUBLIC_SUPABASE_ANON_KEY: string;

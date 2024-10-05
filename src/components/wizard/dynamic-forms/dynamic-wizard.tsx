@@ -14,6 +14,7 @@ import { Question } from "@/components/wizard/dynamic-forms/question";
 import type { ValueType } from "@/components/wizard/dynamic-forms/inputs";
 
 interface DynamicWizardProps {
+	formName: string;
 	sections: SectionData[];
 }
 
@@ -27,7 +28,7 @@ const isQuestionEnabled = (dependsOn: QuestionData["dependsOn"], answers: Record
 	return answers[dependsOn] !== undefined;
 };
 
-export function DynamicWizard({ sections }: DynamicWizardProps) {
+export function DynamicWizard({ sections, formName }: DynamicWizardProps) {
 	const [currentStep, setCurrentStep] = useState(0);
 	const [answers, setAnswers] = useState<Record<number, ValueType>>({});
 	const [progress, setProgress] = useState(0);
@@ -77,7 +78,7 @@ export function DynamicWizard({ sections }: DynamicWizardProps) {
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle className="text-lg sm:text-2xl" data-testid="form-title">
-						Dynamic Wizard
+						{formName}
 					</CardTitle>
 					<Sheet>
 						<SheetTrigger asChild={true}>
@@ -114,6 +115,7 @@ export function DynamicWizard({ sections }: DynamicWizardProps) {
 										handleAnswerChange={handleAnswerChange}
 										disabled={isQuestionEnabled(dependsOn, answers)}
 										value={answers[questionId]}
+										setFileIds={(questionId, fileIds) => {}}
 									/>
 								),
 							)}

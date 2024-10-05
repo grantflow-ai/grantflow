@@ -1,317 +1,148 @@
-import { Cross2Icon, FileTextIcon, UploadIcon } from "@radix-ui/react-icons";
-import Image from "next/image";
-import Dropzone, { type DropzoneProps, type FileRejection } from "react-dropzone";
+import { type ChangeEvent, useCallback } from "react";
 import { toast } from "sonner";
-
-import { generateUploadUrls } from "@/actions/file";
 import { formatBytes } from "@/utils/format";
-import { clientLogger } from "@/utils/logging/client";
-import axios from "axios";
 import { cn } from "gen/cn";
-import { Button } from "gen/ui/button";
+import { FileTextIcon, UploadIcon, X } from "lucide-react";
+import type { FileData } from "@/types";
 import { Progress } from "gen/ui/progress";
-import { ScrollArea } from "gen/ui/scroll-area";
-import { nanoid } from "nanoid";
-import { type HTMLAttributes, useCallback, useEffect, useMemo, useState } from "react";
-
-const DEFAULT_FILE_ACCEPTS = {
-	// the format of accept is defined in MDN: https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker
-	// we support here the files we can extract using such libraries as unstructured.io etc.
-
-	"application/msword": [".doc"],
-	"application/pdf": [".pdf"],
-	"application/rtf": [".rtf"],
-	"application/vnd.ms-excel": [".xls"],
-	"application/vnd.ms-powerpoint": [".ppt"],
-	"application/vnd.oasis.opendocument.text": [".odt"],
-	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
-	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-	"image/jpeg": [".jpg", ".jpeg"],
-	"image/png": [".png"],
-	"text/csv": [".csv"],
-	"text/markdown": [".md"],
-	"text/plain": [".txt"],
-	// "application/epub+zip": [".epub"],
-	// "application/pkcs7-signature": [".p7s"],
-	// "application/vnd.ms-outlook": [".msg"],
-	// "application/xml": [".xml"],
-	// "image/bmp": [".bmp"],
-	// "image/heic": [".heic"],
-	// "image/tiff": [".tiff"],
-	// "message/rfc822": [".eml"],
-	// "text/html": [".html"],
-	// "text/tab-separated-values": [".tsv"],
-	// "text/x-org": [".org"],
-	// "text/x-rst": [".rst"],
-};
-
-async function handleFileUpload(files: File[], setProgresses: (progresses: Record<string, number>) => void) {
-	const target = files.length > 1 ? `${files.length} files` : "file";
-	const fileDataMapping = Object.fromEntries(files.map((file) => [file.name, [file.type, nanoid()]]));
-	try {
-		const fileIdToUploadURLMap = await generateUploadUrls(Object.values(fileDataMapping) as [string, string][]);
-
-		const progresses: Record<string, number> = {};
-
-		const promises = files.map(async (file) => {
-			const [fileType, fileId] = fileDataMapping[file.name];
-			const uploadUrl = fileIdToUploadURLMap.get(fileId);
-
-			if (!uploadUrl) {
-				throw new Error(`No upload URL found for file: ${file.name}`);
-			}
-
-			await axios.put(uploadUrl, file, {
-				headers: {
-					"Content-Type": fileType,
-				},
-				onUploadProgress: (progressEvent) => {
-					if (progressEvent.total) {
-						progresses[file.name] = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-						setProgresses({ ...progresses });
-					}
-				},
-			});
-		});
-		await Promise.all(promises);
-	} catch {
-		clientLogger.debug(fileDataMapping, `Failed to upload ${target}`);
-		toast.error(`Failed to upload ${target}`);
-	}
-}
+import { Button } from "gen/ui/button";
+import Image from "next/image";
 
 export function FileUploader({
-	accept = DEFAULT_FILE_ACCEPTS,
-	className,
-	disabled = false,
-	maxFileCount = Number.POSITIVE_INFINITY,
-	maxSize = 1024 * 1024 * 20,
-	onValueChange,
-	...dropzoneProps
-}: HTMLAttributes<HTMLDivElement> &
-	DropzoneProps & {
-		disabled?: boolean;
-		maxFileCount?: number;
-		onProgressChange?: (progresses: Record<string, number>) => void;
-		onValueChange?: (files: File[]) => void;
-		progresses?: Record<string, number>;
-		value?: File[];
-	}) {
-	const [files, setFiles] = useState<File[]>([]);
-	const [progresses, setProgresses] = useState<Record<string, number>>({});
-
-	const [previewUrls, setPreviewUrls] = useState(new Map<string, string>());
+	accept,
+	maxSize,
+	maxFileCount,
+	currentFileCount,
+	onFilesAdded,
+}: {
+	accept: string[];
+	maxSize: number;
+	maxFileCount: number;
+	currentFileCount: number;
+	onFilesAdded: (files: File[]) => void;
+}) {
+	const isDisabled = currentFileCount >= maxFileCount;
 
 	const validateFileUploads = useCallback(
 		(newFileUploads: File[]) => {
-			if (maxFileCount === 1 && newFileUploads.length > 1) {
-				toast.error("Cannot upload more than 1 file at a time");
+			const totalFiles = currentFileCount + newFileUploads.length;
+			if (totalFiles > maxFileCount) {
+				toast.error(`Upload is limited to ${maxFileCount} file(s)`);
 				return false;
 			}
 
-			const totalFiles = files.length + newFileUploads.length;
-			if (totalFiles > maxFileCount) {
-				toast.error(`Cannot upload more than ${maxFileCount} files`);
-				return false;
+			for (const file of newFileUploads) {
+				if (file.size > maxSize) {
+					toast.error(`File ${file.name} is too large. The max size per file is ${formatBytes(maxSize)}`);
+					return false;
+				}
 			}
 
 			return true;
 		},
-		[maxFileCount, files],
+		[currentFileCount, maxFileCount, maxSize],
 	);
 
-	const onDrop = useCallback(
-		(acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-			if (validateFileUploads(acceptedFiles)) {
-				const updatedFiles = [...files, ...acceptedFiles];
-
-				setFiles(updatedFiles);
-
-				if (rejectedFiles.length > 0) {
-					for (const { file } of rejectedFiles) {
-						toast.error(`File ${file.name} was rejected`);
-					}
-				}
-
-				if (updatedFiles.length) {
-					void handleFileUpload(updatedFiles, setProgresses);
-				}
+	const handleFileChange = useCallback(
+		(event: ChangeEvent<HTMLInputElement>) => {
+			if (!event.target.files) {
+				return;
 			}
+
+			const newFiles = [...event.target.files];
+
+			if (validateFileUploads(newFiles)) {
+				onFilesAdded(newFiles);
+			}
+
+			// Reset the input
+			event.target.value = "";
 		},
-		[validateFileUploads, files],
+		[onFilesAdded, validateFileUploads],
 	);
-
-	const onRemove = useCallback(
-		(index: number) => {
-			const newFiles = files.filter((_, i) => i !== index);
-			setFiles(newFiles);
-			onValueChange?.(newFiles);
-		},
-		[files, onValueChange],
-	);
-
-	useEffect(() => {
-		for (const file of files) {
-			if (!previewUrls.has(file.name) && file.type.startsWith("image/")) {
-				setPreviewUrls(new Map(previewUrls).set(file.name, URL.createObjectURL(file)));
-			}
-		}
-
-		for (const fileName of previewUrls.keys()) {
-			if (!files.some((file) => file.name === fileName)) {
-				previewUrls.delete(fileName);
-			}
-		}
-
-		return () => {
-			for (const previewUrl of previewUrls.values()) {
-				URL.revokeObjectURL(previewUrl);
-			}
-		};
-	}, [files, previewUrls]);
-
-	const isDisabled = useMemo(() => disabled || files.length >= maxFileCount, [disabled, files.length, maxFileCount]);
-
-	const instructions = `You can upload ${maxFileCount === 1 ? "a single file" : "multiple files"} with a maximal size of ${formatBytes(maxSize)} each`;
 
 	return (
-		<div className="relative flex flex-col gap-6 overflow-hidden" data-testid="file-uploader">
-			<Dropzone
-				onDrop={onDrop}
-				accept={accept}
-				maxSize={maxSize}
-				maxFiles={maxFileCount}
-				multiple={maxFileCount > 1}
+		<div className="relative">
+			<input
+				type="file"
+				id="file-upload"
+				data-testid="file-input"
+				accept={accept.join(", ")}
 				disabled={isDisabled}
-			>
-				{({ getRootProps, getInputProps, isDragActive }) => (
-					<div
-						{...getRootProps()}
-						className={cn(
-							"group relative grid h-52 w-full cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25",
-							"ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-							isDragActive && "border-muted-foreground/50",
-							isDisabled && "pointer-events-none opacity-60",
-							className,
-						)}
-						{...dropzoneProps}
-						data-testid="dropzone"
-					>
-						<input {...getInputProps()} data-testid="file-input" />
-						{isDragActive ? (
-							<div
-								className="flex flex-col items-center justify-center gap-4 sm:px-5"
-								data-testid="drag-active-content"
-							>
-								<div className="rounded-full border border-dashed p-3">
-									<UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
-								</div>
-								<p className="font-medium text-muted-foreground">Drop the files here</p>
-							</div>
-						) : (
-							<div
-								className="flex flex-col items-center justify-center gap-4 sm:px-5"
-								data-testid="drag-inactive-content"
-							>
-								<div className="rounded-full border border-dashed p-3">
-									<UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
-								</div>
-								<div className="flex flex-col gap-px">
-									<p className="font-medium text-muted-foreground">
-										Drag &amp; drop files here, or click to select files
-									</p>
-									<p className="text-sm text-muted-foreground/70" data-testid="drag-inactive-content-instructions">
-										{instructions}
-									</p>
-								</div>
-							</div>
-						)}
-					</div>
+				onChange={handleFileChange}
+				multiple={true}
+				className="sr-only"
+			/>
+			<label
+				htmlFor="file-upload"
+				className={cn(
+					"flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2",
+					isDisabled && "cursor-not-allowed opacity-50",
 				)}
-			</Dropzone>
-			{files.length ? (
-				<ScrollArea className="h-fit w-full px-3" data-testid="file-list-container">
-					<div className="flex max-h-48 flex-col gap-4">
-						{files.map((file, index) => (
-							<FileCard
-								key={file.name + file.type}
-								file={file}
-								onRemove={() => {
-									onRemove(index);
-								}}
-								progress={progresses[file.name]}
-								previewUrl={previewUrls.get(file.name)}
-							/>
-						))}
-					</div>
-				</ScrollArea>
-			) : null}
+			>
+				<UploadIcon className="mr-2 h-5 w-5" />
+				<span>Upload Files</span>
+			</label>
 		</div>
 	);
 }
 
-function FileCard({
+export function FileCard({
 	file,
 	progress,
 	onRemove,
-	previewUrl,
 }: {
-	file: File;
-	progress?: number;
+	file: FileData;
+	progress: number;
 	onRemove: () => void;
-	previewUrl?: string;
 }) {
 	return (
-		<div className="relative flex items-center gap-2.5" data-testid={`file-card-${file.name}`}>
-			<div className="flex flex-1 gap-2.5">
-				<FilePreview file={file} previewUrl={previewUrl} />
-				<div className="flex w-full flex-col gap-2">
-					<div className="flex flex-col gap-px">
-						<p
-							className="line-clamp-1 text-sm font-medium text-foreground/80"
-							data-testid={`file-name-display-${file.name}`}
-						>
-							{file.name}
-						</p>
-						<p className="text-xs text-muted-foreground" data-testid="file-size">
-							{formatBytes(file.size)}
-						</p>
-					</div>
-					{progress ? <Progress value={progress} data-testid="file-progress" /> : null}
-				</div>
+		<div
+			className="relative flex items-center gap-4 rounded-lg border p-4 shadow-sm"
+			data-testid={`file-card-${file.name}`}
+		>
+			<FilePreview file={file} />
+			<div className="flex flex-1 flex-col gap-1">
+				<p className="text-sm font-medium text-gray-700 truncate" data-testid={`file-name-display-${file.name}`}>
+					{file.name}
+				</p>
+				<p className="text-xs text-gray-500" data-testid="file-size">
+					{formatBytes(file.size)}
+				</p>
+				<Progress value={progress} className="h-1" data-testid="file-progress" />
 			</div>
-			<div className="flex items-center gap-2">
-				<Button
-					type="button"
-					variant="outline"
-					size="icon"
-					className="size-7"
-					onClick={onRemove}
-					data-testid="remove-file-button"
-				>
-					<Cross2Icon className="size-4" aria-hidden="true" />
-					<span className="sr-only">Remove file</span>
-				</Button>
-			</div>
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				className="absolute top-1 right-1"
+				onClick={onRemove}
+				data-testid="remove-file-button"
+			>
+				<X className="h-4 w-4" />
+				<span className="sr-only">Remove file</span>
+			</Button>
 		</div>
 	);
 }
 
-function FilePreview({ file, previewUrl }: { file: File; previewUrl?: string }) {
-	if (previewUrl) {
+export function FilePreview({ file }: { file: FileData }) {
+	if (file.previewUrl) {
 		return (
 			<Image
-				src={previewUrl}
+				src={file.previewUrl}
 				alt={file.name}
 				width={48}
 				height={48}
-				loading="lazy"
-				className="aspect-square shrink-0 rounded-md object-cover"
+				className="h-12 w-12 rounded-md object-cover"
 				data-testid="file-preview-image"
 			/>
 		);
 	}
 
-	return <FileTextIcon className="size-10 text-muted-foreground" aria-hidden="true" data-testid="file-preview-icon" />;
+	return (
+		<div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100">
+			<FileTextIcon className="h-6 w-6 text-gray-400" aria-hidden="true" data-testid="file-preview-icon" />
+		</div>
+	);
 }

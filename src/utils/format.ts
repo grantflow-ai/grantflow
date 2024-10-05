@@ -15,7 +15,7 @@ export function formatBytes(bytes: number): string {
 		return "0 Bytes";
 	}
 
-	const base = 1000;
+	const base = 1024;
 	const i = Math.floor(Math.log(Math.max(bytes, 1)) / Math.log(base));
 	const size = sizes[Math.min(i, sizes.length - 1)];
 
