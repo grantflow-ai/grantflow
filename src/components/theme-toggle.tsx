@@ -1,6 +1,6 @@
 "use client";
+import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { Button } from "gen/ui/button";
-import { MoonStar, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 export function ThemeToggle() {
@@ -15,8 +15,12 @@ export function ThemeToggle() {
 				setTheme(theme === "light" ? "dark" : "light");
 			}}
 		>
-			<Sun data-testid="theme-toggle-sun-icon" className="h-7 w-7 dark:hidden" />
-			<MoonStar data-testid="theme-toggle-moon-icon" className="hidden h-7 w-7 dark:block" />
+			<Button variant="outline" size="sm" className="dark:hidden bg-inherit ">
+				<SunIcon data-testid="theme-toggle-sun-icon" className="h-5 w-5" />
+			</Button>
+			<Button variant="outline" size="sm" className="hidden dark:block bg-inherit border-slate-700">
+				<MoonIcon data-testid="theme-toggle-moon-icon" className="h-5 w-5" />
+			</Button>
 			<span data-testid="theme-toggle-sr-text" className="sr-only">
 				Toggle theme
 			</span>

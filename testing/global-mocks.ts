@@ -54,8 +54,9 @@ export const mockEnv = {
 	NEXT_PUBLIC_SITE_URL: "https://example.com",
 	NEXT_PUBLIC_SUPABASE_ANON_KEY: "valid_key",
 	NEXT_PUBLIC_SUPABASE_URL: "https://supabase.co",
-	AWS_ACCESS_KEY_ID: "valid_key",
-	AWS_SECRET_ACCESS_KEY: "valid_key",
+	AZURE_STORAGE_ACCOUNT_KEY: "valid_key",
+	AZURE_STORAGE_ACCOUNT_NAME: "account_name",
+	AZURE_STORAGE_CONTAINER_NAME: "container_name",
 } satisfies Env;
 
 beforeAll(() => {
