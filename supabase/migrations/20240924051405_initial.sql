@@ -1,106 +1,106 @@
-create type "public"."invitation_status" as enum ('pending', 'accepted', 'declined');
+CREATE TYPE "public"."invitation_status" AS ENUM ('pending', 'accepted', 'declined');
 
-create type "public"."notification_type" as enum ('invitation', 'message', 'alert');
+CREATE TYPE "public"."notification_type" AS ENUM ('invitation', 'message', 'alert');
 
-create type "public"."user_role" as enum ('owner', 'admin', 'member');
+CREATE TYPE "public"."user_role" AS ENUM ('owner', 'admin', 'member');
 
-create table "public"."app_users" (
-    "id" uuid not null,
-    "email" text not null,
-    "first_name" text not null,
-    "last_name" text not null,
+CREATE TABLE "public"."app_users" (
+    "id" uuid NOT NULL,
+    "email" text NOT NULL,
+    "first_name" text NOT NULL,
+    "last_name" text NOT NULL,
     "avatar_url" text,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
-    "updated_at" timestamp with time zone not null default timezone('utc'::text, now())
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    "updated_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
 
-create table "public"."grant_applications" (
-    "id" uuid not null default uuid_generate_v4(),
-    "title" text not null,
-    "funding_organization" text not null,
-    "workspace_id" uuid not null,
-    "content" jsonb not null,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
-    "updated_at" timestamp with time zone not null default timezone('utc'::text, now()),
+CREATE TABLE "public"."grant_applications" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "title" text NOT NULL,
+    "funding_organization" text NOT NULL,
+    "workspace_id" uuid NOT NULL,
+    "content" jsonb NOT NULL,
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    "updated_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "deleted_at" timestamp with time zone
 );
 
 
-create table "public"."invitations" (
-    "id" uuid not null default uuid_generate_v4(),
-    "invited_by" uuid not null,
-    "organization_id" uuid not null,
-    "email" text not null,
-    "role" user_role not null,
-    "status" invitation_status not null default 'pending'::invitation_status,
-    "token" uuid not null default uuid_generate_v4(),
-    "expires_at" timestamp with time zone not null default (now() + '7 days'::interval),
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
+CREATE TABLE "public"."invitations" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "invited_by" uuid NOT NULL,
+    "organization_id" uuid NOT NULL,
+    "email" text NOT NULL,
+    "role" user_role NOT NULL,
+    "status" invitation_status NOT NULL DEFAULT 'pending'::invitation_status,
+    "token" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "expires_at" timestamp with time zone NOT NULL DEFAULT (now() + '7 days'::interval),
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "accepted_at" timestamp with time zone,
     "declined_at" timestamp with time zone,
     "deleted_at" timestamp with time zone
 );
 
 
-create table "public"."mailing_list" (
-    "id" uuid not null default uuid_generate_v4(),
-    "email" text not null,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
+CREATE TABLE "public"."mailing_list" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "email" text NOT NULL,
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "deleted_at" timestamp with time zone
 );
 
 
-create table "public"."notifications" (
-    "id" uuid not null default uuid_generate_v4(),
-    "user_id" uuid not null,
-    "type" notification_type not null default 'message'::notification_type,
+CREATE TABLE "public"."notifications" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "user_id" uuid NOT NULL,
+    "type" notification_type NOT NULL DEFAULT 'message'::notification_type,
     "title" text,
-    "content" text not null,
+    "content" text NOT NULL,
     "link" text,
-    "read" boolean default false,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
+    "read" boolean DEFAULT false,
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "deleted_at" timestamp with time zone
 );
 
 
-create table "public"."organization_users" (
-    "organization_id" uuid not null,
-    "user_id" uuid not null,
-    "role" user_role not null,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
-    "updated_at" timestamp with time zone not null default timezone('utc'::text, now()),
+CREATE TABLE "public"."organization_users" (
+    "organization_id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "role" user_role NOT NULL,
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    "updated_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "deleted_at" timestamp with time zone
 );
 
 
-create table "public"."organizations" (
-    "id" uuid not null default uuid_generate_v4(),
-    "name" text not null,
+CREATE TABLE "public"."organizations" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "name" text NOT NULL,
     "logo" text,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
-    "updated_at" timestamp with time zone not null default timezone('utc'::text, now()),
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    "updated_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "deleted_at" timestamp with time zone
 );
 
 
-create table "public"."workspace_users" (
-    "workspace_id" uuid not null,
-    "user_id" uuid not null,
-    "role" user_role not null,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
-    "updated_at" timestamp with time zone not null default timezone('utc'::text, now()),
+CREATE TABLE "public"."workspace_users" (
+    "workspace_id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "role" user_role NOT NULL,
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    "updated_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "deleted_at" timestamp with time zone
 );
 
 
-create table "public"."workspaces" (
-    "id" uuid not null default uuid_generate_v4(),
-    "name" text not null,
+CREATE TABLE "public"."workspaces" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "name" text NOT NULL,
     "description" text,
-    "organization_id" uuid not null,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now()),
-    "updated_at" timestamp with time zone not null default timezone('utc'::text, now()),
+    "organization_id" uuid NOT NULL,
+    "created_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    "updated_at" timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     "deleted_at" timestamp with time zone
 );
 
@@ -183,79 +183,100 @@ CREATE UNIQUE INDEX workspace_users_pkey ON public.workspace_users USING btree (
 
 CREATE UNIQUE INDEX workspaces_pkey ON public.workspaces USING btree (id);
 
-alter table "public"."app_users" add constraint "app_users_pkey" PRIMARY KEY using index "app_users_pkey";
+ALTER TABLE "public"."app_users" ADD CONSTRAINT "app_users_pkey" PRIMARY KEY USING INDEX "app_users_pkey";
 
-alter table "public"."grant_applications" add constraint "grant_applications_pkey" PRIMARY KEY using index "grant_applications_pkey";
+ALTER TABLE "public"."grant_applications" ADD CONSTRAINT "grant_applications_pkey" PRIMARY KEY USING INDEX "grant_applications_pkey";
 
-alter table "public"."invitations" add constraint "invitations_pkey" PRIMARY KEY using index "invitations_pkey";
+ALTER TABLE "public"."invitations" ADD CONSTRAINT "invitations_pkey" PRIMARY KEY USING INDEX "invitations_pkey";
 
-alter table "public"."mailing_list" add constraint "mailing_list_pkey" PRIMARY KEY using index "mailing_list_pkey";
+ALTER TABLE "public"."mailing_list" ADD CONSTRAINT "mailing_list_pkey" PRIMARY KEY USING INDEX "mailing_list_pkey";
 
-alter table "public"."notifications" add constraint "notifications_pkey" PRIMARY KEY using index "notifications_pkey";
+ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_pkey" PRIMARY KEY USING INDEX "notifications_pkey";
 
-alter table "public"."organization_users" add constraint "organization_users_pkey" PRIMARY KEY using index "organization_users_pkey";
+ALTER TABLE "public"."organization_users" ADD CONSTRAINT "organization_users_pkey" PRIMARY KEY USING INDEX "organization_users_pkey";
 
-alter table "public"."organizations" add constraint "organizations_pkey" PRIMARY KEY using index "organizations_pkey";
+ALTER TABLE "public"."organizations" ADD CONSTRAINT "organizations_pkey" PRIMARY KEY USING INDEX "organizations_pkey";
 
-alter table "public"."workspace_users" add constraint "workspace_users_pkey" PRIMARY KEY using index "workspace_users_pkey";
+ALTER TABLE "public"."workspace_users" ADD CONSTRAINT "workspace_users_pkey" PRIMARY KEY USING INDEX "workspace_users_pkey";
 
-alter table "public"."workspaces" add constraint "workspaces_pkey" PRIMARY KEY using index "workspaces_pkey";
+ALTER TABLE "public"."workspaces" ADD CONSTRAINT "workspaces_pkey" PRIMARY KEY USING INDEX "workspaces_pkey";
 
-alter table "public"."app_users" add constraint "app_users_email_key" UNIQUE using index "app_users_email_key";
+ALTER TABLE "public"."app_users" ADD CONSTRAINT "app_users_email_key" UNIQUE USING INDEX "app_users_email_key";
 
-alter table "public"."app_users" add constraint "app_users_id_fkey" FOREIGN KEY (id) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."app_users" ADD CONSTRAINT "app_users_id_fkey" FOREIGN KEY (id) REFERENCES auth.users (
+    id
+) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."app_users" validate constraint "app_users_id_fkey";
+ALTER TABLE "public"."app_users" VALIDATE CONSTRAINT "app_users_id_fkey";
 
-alter table "public"."grant_applications" add constraint "grant_applications_workspace_id_fkey" FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."grant_applications" ADD CONSTRAINT "grant_applications_workspace_id_fkey" FOREIGN KEY (
+    workspace_id
+) REFERENCES workspaces (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."grant_applications" validate constraint "grant_applications_workspace_id_fkey";
+ALTER TABLE "public"."grant_applications" VALIDATE CONSTRAINT "grant_applications_workspace_id_fkey";
 
-alter table "public"."invitations" add constraint "invitations_invited_by_fkey" FOREIGN KEY (invited_by) REFERENCES app_users(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."invitations" ADD CONSTRAINT "invitations_invited_by_fkey" FOREIGN KEY (
+    invited_by
+) REFERENCES app_users (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."invitations" validate constraint "invitations_invited_by_fkey";
+ALTER TABLE "public"."invitations" VALIDATE CONSTRAINT "invitations_invited_by_fkey";
 
-alter table "public"."invitations" add constraint "invitations_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."invitations" ADD CONSTRAINT "invitations_organization_id_fkey" FOREIGN KEY (
+    organization_id
+) REFERENCES organizations (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."invitations" validate constraint "invitations_organization_id_fkey";
+ALTER TABLE "public"."invitations" VALIDATE CONSTRAINT "invitations_organization_id_fkey";
 
-alter table "public"."mailing_list" add constraint "mailing_list_email_key" UNIQUE using index "mailing_list_email_key";
+ALTER TABLE "public"."mailing_list" ADD CONSTRAINT "mailing_list_email_key" UNIQUE USING INDEX "mailing_list_email_key";
 
-alter table "public"."notifications" add constraint "notifications_user_id_fkey" FOREIGN KEY (user_id) REFERENCES app_users(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."notifications" ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY (
+    user_id
+) REFERENCES app_users (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."notifications" validate constraint "notifications_user_id_fkey";
+ALTER TABLE "public"."notifications" VALIDATE CONSTRAINT "notifications_user_id_fkey";
 
-alter table "public"."organization_users" add constraint "check_valid_organization_role" CHECK ((role = ANY (ARRAY['owner'::user_role, 'admin'::user_role, 'member'::user_role]))) not valid;
+ALTER TABLE "public"."organization_users" ADD CONSTRAINT "check_valid_organization_role" CHECK (
+    (role = any(ARRAY['owner'::user_role, 'admin'::user_role, 'member'::user_role]))
+) NOT VALID;
 
-alter table "public"."organization_users" validate constraint "check_valid_organization_role";
+ALTER TABLE "public"."organization_users" VALIDATE CONSTRAINT "check_valid_organization_role";
 
-alter table "public"."organization_users" add constraint "organization_users_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."organization_users" ADD CONSTRAINT "organization_users_organization_id_fkey" FOREIGN KEY (
+    organization_id
+) REFERENCES organizations (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."organization_users" validate constraint "organization_users_organization_id_fkey";
+ALTER TABLE "public"."organization_users" VALIDATE CONSTRAINT "organization_users_organization_id_fkey";
 
-alter table "public"."organization_users" add constraint "organization_users_user_id_fkey" FOREIGN KEY (user_id) REFERENCES app_users(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."organization_users" ADD CONSTRAINT "organization_users_user_id_fkey" FOREIGN KEY (
+    user_id
+) REFERENCES app_users (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."organization_users" validate constraint "organization_users_user_id_fkey";
+ALTER TABLE "public"."organization_users" VALIDATE CONSTRAINT "organization_users_user_id_fkey";
 
-alter table "public"."organization_users" add constraint "unique_organization_user" UNIQUE using index "unique_organization_user";
+ALTER TABLE "public"."organization_users" ADD CONSTRAINT "unique_organization_user" UNIQUE USING INDEX "unique_organization_user";
 
-alter table "public"."workspace_users" add constraint "check_valid_workspace_role" CHECK ((role = ANY (ARRAY['owner'::user_role, 'admin'::user_role, 'member'::user_role]))) not valid;
+ALTER TABLE "public"."workspace_users" ADD CONSTRAINT "check_valid_workspace_role" CHECK (
+    (role = any(ARRAY['owner'::user_role, 'admin'::user_role, 'member'::user_role]))
+) NOT VALID;
 
-alter table "public"."workspace_users" validate constraint "check_valid_workspace_role";
+ALTER TABLE "public"."workspace_users" VALIDATE CONSTRAINT "check_valid_workspace_role";
 
-alter table "public"."workspace_users" add constraint "unique_workspace_user" UNIQUE using index "unique_workspace_user";
+ALTER TABLE "public"."workspace_users" ADD CONSTRAINT "unique_workspace_user" UNIQUE USING INDEX "unique_workspace_user";
 
-alter table "public"."workspace_users" add constraint "workspace_users_user_id_fkey" FOREIGN KEY (user_id) REFERENCES app_users(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."workspace_users" ADD CONSTRAINT "workspace_users_user_id_fkey" FOREIGN KEY (
+    user_id
+) REFERENCES app_users (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."workspace_users" validate constraint "workspace_users_user_id_fkey";
+ALTER TABLE "public"."workspace_users" VALIDATE CONSTRAINT "workspace_users_user_id_fkey";
 
-alter table "public"."workspace_users" add constraint "workspace_users_workspace_id_fkey" FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."workspace_users" ADD CONSTRAINT "workspace_users_workspace_id_fkey" FOREIGN KEY (
+    workspace_id
+) REFERENCES workspaces (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."workspace_users" validate constraint "workspace_users_workspace_id_fkey";
+ALTER TABLE "public"."workspace_users" VALIDATE CONSTRAINT "workspace_users_workspace_id_fkey";
 
-alter table "public"."workspaces" add constraint "workspaces_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."workspaces" ADD CONSTRAINT "workspaces_organization_id_fkey" FOREIGN KEY (
+    organization_id
+) REFERENCES organizations (id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
-alter table "public"."workspaces" validate constraint "workspaces_organization_id_fkey";
-
-
-
+ALTER TABLE "public"."workspaces" VALIDATE CONSTRAINT "workspaces_organization_id_fkey";
