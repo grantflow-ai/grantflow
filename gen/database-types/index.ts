@@ -66,46 +66,239 @@ export type Database = {
 					},
 				];
 			};
-			grant_applications: {
+			application_drafts: {
 				Row: {
-					content: Json;
+					cfp_id: string;
+					created_at: string;
+					deleted_at: string | null;
+					id: string;
+					updated_at: string;
+				};
+				Insert: {
+					cfp_id: string;
+					created_at?: string;
+					deleted_at?: string | null;
+					id?: string;
+					updated_at?: string;
+				};
+				Update: {
+					cfp_id?: string;
+					created_at?: string;
+					deleted_at?: string | null;
+					id?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "application_drafts_cfp_id_fkey";
+						columns: ["cfp_id"];
+						isOneToOne: false;
+						referencedRelation: "grant_cfps";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			application_questions: {
+				Row: {
+					allow_file_upload: boolean;
+					created_at: string;
+					deleted_at: string | null;
+					grant_application_section_id: string;
+					id: string;
+					input_type: Database["public"]["Enums"]["question_input_type"];
+					max_length: number | null;
+					parent_id: string | null;
+					position: number;
+					required: boolean;
+					text: string;
+					updated_at: string;
+				};
+				Insert: {
+					allow_file_upload?: boolean;
+					created_at?: string;
+					deleted_at?: string | null;
+					grant_application_section_id: string;
+					id?: string;
+					input_type: Database["public"]["Enums"]["question_input_type"];
+					max_length?: number | null;
+					parent_id?: string | null;
+					position: number;
+					required: boolean;
+					text: string;
+					updated_at?: string;
+				};
+				Update: {
+					allow_file_upload?: boolean;
+					created_at?: string;
+					deleted_at?: string | null;
+					grant_application_section_id?: string;
+					id?: string;
+					input_type?: Database["public"]["Enums"]["question_input_type"];
+					max_length?: number | null;
+					parent_id?: string | null;
+					position?: number;
+					required?: boolean;
+					text?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "application_questions_grant_application_section_id_fkey";
+						columns: ["grant_application_section_id"];
+						isOneToOne: false;
+						referencedRelation: "application_sections";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "application_questions_parent_id_fkey";
+						columns: ["parent_id"];
+						isOneToOne: false;
+						referencedRelation: "application_questions";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			application_sections: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					description: string;
+					grant_cfp_id: string;
+					id: string;
+					position: number;
+					title: string;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description: string;
+					grant_cfp_id: string;
+					id?: string;
+					position: number;
+					title: string;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string;
+					grant_cfp_id?: string;
+					id?: string;
+					position?: number;
+					title?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "application_sections_grant_cfp_id_fkey";
+						columns: ["grant_cfp_id"];
+						isOneToOne: false;
+						referencedRelation: "grant_cfps";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			grant_application_answers: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					draft_id: string;
+					file_urls: string[] | null;
+					id: string;
+					question_id: string;
+					research_aim_id: string | null;
+					task_id: string | null;
+					updated_at: string;
+					value: Json;
+				};
+				Insert: {
+					created_at?: string;
+					deleted_at?: string | null;
+					draft_id: string;
+					file_urls?: string[] | null;
+					id?: string;
+					question_id: string;
+					research_aim_id?: string | null;
+					task_id?: string | null;
+					updated_at?: string;
+					value: Json;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					draft_id?: string;
+					file_urls?: string[] | null;
+					id?: string;
+					question_id?: string;
+					research_aim_id?: string | null;
+					task_id?: string | null;
+					updated_at?: string;
+					value?: Json;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "grant_application_answers_draft_id_fkey";
+						columns: ["draft_id"];
+						isOneToOne: false;
+						referencedRelation: "application_drafts";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "grant_application_answers_question_id_fkey";
+						columns: ["question_id"];
+						isOneToOne: false;
+						referencedRelation: "application_questions";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "grant_application_answers_research_aim_id_fkey";
+						columns: ["research_aim_id"];
+						isOneToOne: false;
+						referencedRelation: "research_aims";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "grant_application_answers_task_id_fkey";
+						columns: ["task_id"];
+						isOneToOne: false;
+						referencedRelation: "tasks";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			grant_cfps: {
+				Row: {
 					created_at: string;
 					deleted_at: string | null;
 					funding_organization: string;
 					id: string;
-					title: string;
+					identifier: string;
+					text: string | null;
 					updated_at: string;
-					workspace_id: string;
+					url: string | null;
 				};
 				Insert: {
-					content: Json;
 					created_at?: string;
 					deleted_at?: string | null;
 					funding_organization: string;
 					id?: string;
-					title: string;
+					identifier: string;
+					text?: string | null;
 					updated_at?: string;
-					workspace_id: string;
+					url?: string | null;
 				};
 				Update: {
-					content?: Json;
 					created_at?: string;
 					deleted_at?: string | null;
 					funding_organization?: string;
 					id?: string;
-					title?: string;
+					identifier?: string;
+					text?: string | null;
 					updated_at?: string;
-					workspace_id?: string;
+					url?: string | null;
 				};
-				Relationships: [
-					{
-						foreignKeyName: "grant_applications_workspace_id_fkey";
-						columns: ["workspace_id"];
-						isOneToOne: false;
-						referencedRelation: "workspaces";
-						referencedColumns: ["id"];
-					},
-				];
+				Relationships: [];
 			};
 			invitations: {
 				Row: {
@@ -170,19 +363,16 @@ export type Database = {
 			mailing_list: {
 				Row: {
 					created_at: string;
-					deleted_at: string | null;
 					email: string;
 					id: string;
 				};
 				Insert: {
 					created_at?: string;
-					deleted_at?: string | null;
 					email: string;
 					id?: string;
 				};
 				Update: {
 					created_at?: string;
-					deleted_at?: string | null;
 					email?: string;
 					id?: string;
 				};
@@ -301,6 +491,131 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			question_dependencies: {
+				Row: {
+					condition: Json | null;
+					depends_on_question_id: string;
+					question_id: string;
+				};
+				Insert: {
+					condition?: Json | null;
+					depends_on_question_id: string;
+					question_id: string;
+				};
+				Update: {
+					condition?: Json | null;
+					depends_on_question_id?: string;
+					question_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "question_dependencies_depends_on_question_id_fkey";
+						columns: ["depends_on_question_id"];
+						isOneToOne: false;
+						referencedRelation: "application_questions";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "question_dependencies_question_id_fkey";
+						columns: ["question_id"];
+						isOneToOne: false;
+						referencedRelation: "application_questions";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			research_aims: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					description: string | null;
+					draft_id: string;
+					file_urls: string[] | null;
+					id: string;
+					question_id: string;
+					title: string;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string | null;
+					draft_id: string;
+					file_urls?: string[] | null;
+					id?: string;
+					question_id: string;
+					title: string;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string | null;
+					draft_id?: string;
+					file_urls?: string[] | null;
+					id?: string;
+					question_id?: string;
+					title?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "research_aims_draft_id_fkey";
+						columns: ["draft_id"];
+						isOneToOne: false;
+						referencedRelation: "application_drafts";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "research_aims_question_id_fkey";
+						columns: ["question_id"];
+						isOneToOne: false;
+						referencedRelation: "application_questions";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			tasks: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					description: string | null;
+					file_urls: string[] | null;
+					id: string;
+					research_aim_id: string;
+					title: string;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string | null;
+					file_urls?: string[] | null;
+					id?: string;
+					research_aim_id: string;
+					title: string;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string | null;
+					file_urls?: string[] | null;
+					id?: string;
+					research_aim_id?: string;
+					title?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "tasks_research_aim_id_fkey";
+						columns: ["research_aim_id"];
+						isOneToOne: false;
+						referencedRelation: "research_aims";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			workspace_users: {
 				Row: {
 					created_at: string;
@@ -391,6 +706,8 @@ export type Database = {
 		Enums: {
 			invitation_status: "pending" | "accepted" | "declined";
 			notification_type: "invitation" | "message" | "alert";
+			question_input_type: "text" | "boolean" | "date" | "date-range" | "for-each-item";
+			question_item_type: "aim" | "task";
 			user_role: "owner" | "admin" | "member";
 		};
 		CompositeTypes: {
