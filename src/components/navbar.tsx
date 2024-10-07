@@ -8,26 +8,29 @@ import { getBrowserClient } from "@/utils/supabase/client";
 import { EnterIcon, ExitIcon, HomeIcon } from "@radix-ui/react-icons";
 import { Button } from "gen/ui/button";
 import { usePathname, useRouter } from "next/navigation";
+import { SupportedLocale} from "@/i18n";
 
-export function Navbar({ isSignedIn }: { isSignedIn: boolean }) {
+export function Navbar({ isSignedIn, locale }: { isSignedIn: boolean, locale: SupportedLocale }) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const client = getBrowserClient();
+	const isRoot = ["/", `/${locale}`].includes(pathname)
 
 	return (
-		<nav className="px-4 bg-muted flex h-16 items-center justify-between sm:space-x-0 w-full" data-testid="navbar">
+		<nav className="px-4 border-2 flex h-14 items-center justify-between sm:space-x-0 w-full" data-testid="navbar">
 			<div
-				className="bg-slate-100 dark:bg-slate-900 dark:border-slate-700 light:border-slate-200 cursor-pointer border-2 rounded-lg p-1"
+				className="bg-slate-100 dark:bg-slate-800 hover:dark:bg-slate-600/50 hover:bg-slate-200/70 dark:border-slate-700 light:border-slate-200 cursor-pointer rounded-lg p-1"
 				onClick={() => {
 					router.push(PagePath.ROOT);
 				}}
 			>
 				<Logo data-testid="navbar-logo" />
 			</div>
-			<div className="flex flex-1 gap-3 items-center justify-end" data-testid="navbar-actions">
-				{pathname !== (PagePath.ROOT as string) && (
+			<div className="flex flex-1 gap-5 items-center justify-end" data-testid="navbar-actions">
+				<div className="flex gap-3">
+				{!isRoot && (
 					<Button variant="outline" size="sm" className="bg-inherit dark:border-slate-700">
-						<HomeIcon className="h-5 w-5" />
+						<HomeIcon />
 					</Button>
 				)}
 				{getEnv().NEXT_PUBLIC_IS_DEVELOPMENT && (
@@ -44,9 +47,10 @@ export function Navbar({ isSignedIn }: { isSignedIn: boolean }) {
 							}
 						}}
 					>
-						{isSignedIn ? <ExitIcon className="h-5 w-5" /> : <EnterIcon className="h-5 w-5" />}
+						{isSignedIn ? <ExitIcon /> : <EnterIcon />}
 					</Button>
 				)}
+				</div>
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>
 		</nav>
