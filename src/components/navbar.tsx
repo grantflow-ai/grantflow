@@ -8,13 +8,13 @@ import { getBrowserClient } from "@/utils/supabase/client";
 import { EnterIcon, ExitIcon, HomeIcon } from "@radix-ui/react-icons";
 import { Button } from "gen/ui/button";
 import { usePathname, useRouter } from "next/navigation";
-import { SupportedLocale} from "@/i18n";
+import { SupportedLocale } from "@/i18n";
 
-export function Navbar({ isSignedIn, locale }: { isSignedIn: boolean, locale: SupportedLocale }) {
+export function Navbar({ isSignedIn, locale }: { isSignedIn: boolean; locale: SupportedLocale }) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const client = getBrowserClient();
-	const isRoot = ["/", `/${locale}`].includes(pathname)
+	const isRoot = ["/", `/${locale}`].includes(pathname);
 
 	return (
 		<nav className="px-4 border-2 flex h-14 items-center justify-between sm:space-x-0 w-full" data-testid="navbar">
@@ -28,28 +28,28 @@ export function Navbar({ isSignedIn, locale }: { isSignedIn: boolean, locale: Su
 			</div>
 			<div className="flex flex-1 gap-5 items-center justify-end" data-testid="navbar-actions">
 				<div className="flex gap-3">
-				{!isRoot && (
-					<Button variant="outline" size="sm" className="bg-inherit dark:border-slate-700">
-						<HomeIcon />
-					</Button>
-				)}
-				{getEnv().NEXT_PUBLIC_IS_DEVELOPMENT && (
-					<Button
-						variant="outline"
-						size="sm"
-						className="bg-inherit dark:border-slate-700"
-						onClick={async () => {
-							if (isSignedIn) {
-								await client.auth.signOut();
-								router.push(PagePath.ROOT);
-							} else {
-								router.push(PagePath.AUTH);
-							}
-						}}
-					>
-						{isSignedIn ? <ExitIcon /> : <EnterIcon />}
-					</Button>
-				)}
+					{!isRoot && (
+						<Button variant="outline" size="sm" className="bg-inherit dark:border-slate-700">
+							<HomeIcon />
+						</Button>
+					)}
+					{getEnv().NEXT_PUBLIC_IS_DEVELOPMENT && (
+						<Button
+							variant="outline"
+							size="sm"
+							className="bg-inherit dark:border-slate-700"
+							onClick={async () => {
+								if (isSignedIn) {
+									await client.auth.signOut();
+									router.push(PagePath.ROOT);
+								} else {
+									router.push(PagePath.AUTH);
+								}
+							}}
+						>
+							{isSignedIn ? <ExitIcon /> : <EnterIcon />}
+						</Button>
+					)}
 				</div>
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>
