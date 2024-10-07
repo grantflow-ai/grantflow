@@ -5,7 +5,6 @@ import { FileUploadContainer } from "@/components/file-upload-container";
 import { getInputComponent, type InputType, type ValueType } from "@/components/wizard/dynamic-forms/inputs";
 import type { QuestionData } from "@/components/wizard/dynamic-forms/types";
 import type { FileData } from "@/types";
-import { Label } from "gen/ui/label";
 
 const TWENTY_MB = 20 * 1024 * 1024;
 
@@ -13,7 +12,6 @@ function Question({
 	handleAnswerChange,
 	answerType,
 	questionId,
-	questionText,
 	required,
 	maxLength,
 	allowFileUpload,
@@ -22,7 +20,7 @@ function Question({
 	setFileIds,
 	maxFileCount = 5,
 	files,
-}: QuestionData & {
+}: Omit<QuestionData, "questionText"> & {
 	disabled: boolean;
 	handleAnswerChange: (questionId: number, value: ValueType) => void;
 	value: ValueType;
@@ -32,8 +30,7 @@ function Question({
 }) {
 	const InputComponent = getInputComponent(answerType);
 	return (
-		<div className="space-y-2">
-			<Label htmlFor={`question-${questionId}`}>{questionText}</Label>
+		<div className="space-y-2 p-1">
 			<InputComponent
 				questionId={questionId}
 				required={required}
@@ -101,7 +98,6 @@ export default function QuestionsAccordion({
 						<Question
 							answerType={answerType}
 							questionId={questionId}
-							questionText={questionText}
 							required={required}
 							allowFileUpload={allowFileUpload}
 							dependsOn={dependsOn}

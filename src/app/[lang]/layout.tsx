@@ -50,8 +50,8 @@ export default async function RootLayout({
 			</head>
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-					<Navbar isSignedIn={!!data.user} />
-					<main className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)]" data-testid="main-container">
+					<Navbar isSignedIn={!!data.user} locale={lang} />
+					<main className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto" data-testid="main-container">
 						{children}
 					</main>
 					<Footer locales={locales} />
