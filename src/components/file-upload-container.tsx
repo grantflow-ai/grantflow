@@ -43,7 +43,7 @@ export function FileUploadContainer({
 
 	useEffect(() => {
 		setFileIds(files.map((file) => file.fileId));
-	}, [files]);
+	}, [files, setFileIds]);
 
 	const handleFilesAdded = useCallback(
 		async (newFiles: File[]) => {
@@ -62,7 +62,7 @@ export function FileUploadContainer({
 				}));
 			});
 		},
-		[files],
+		[parentId],
 	);
 
 	const handleRemoveFile = useCallback(
@@ -78,7 +78,7 @@ export function FileUploadContainer({
 				);
 			});
 		},
-		[files],
+		[],
 	);
 
 	return (
