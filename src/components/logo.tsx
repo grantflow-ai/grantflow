@@ -1,6 +1,6 @@
 import type { HTMLProps } from "react";
 
-export function Logo({ height = 34, width = 34, ...props }: HTMLProps<SVGSVGElement>) {
+export function Logo({ height = 28, width = 28, ...props }: HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

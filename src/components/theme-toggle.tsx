@@ -16,8 +16,8 @@ export function ThemeToggle() {
 				setTheme(theme === "light" ? "dark" : "light");
 			}}
 		>
-			<SunIcon data-testid="theme-toggle-sun-icon" className="h-5 w-5 dark:hidden" />
-			<MoonIcon data-testid="theme-toggle-moon-icon" className="h-5 w-5 hidden dark:block bg-inherit" />
+			<SunIcon data-testid="theme-toggle-sun-icon" className="dark:hidden" />
+			<MoonIcon data-testid="theme-toggle-moon-icon" className="hidden dark:block bg-inherit" />
 			<span data-testid="theme-toggle-sr-text" className="sr-only">
 				Toggle theme
 			</span>
