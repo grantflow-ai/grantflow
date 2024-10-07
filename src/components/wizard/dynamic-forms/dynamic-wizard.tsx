@@ -11,7 +11,7 @@ import type { SectionData } from "@/components/wizard/dynamic-forms/types";
 import { titleize, underscore } from "inflection";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import type { ValueType } from "@/components/wizard/dynamic-forms/inputs";
-import QuestionsAccordion from "@/components/wizard/dynamic-forms/question-list";
+import {QuestionsAccordion} from "@/components/wizard/dynamic-forms/question-list";
 
 interface DynamicWizardProps {
 	formName: string;

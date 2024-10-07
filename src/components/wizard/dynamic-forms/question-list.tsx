@@ -65,7 +65,7 @@ const isQuestionEnabled = (dependsOn: QuestionData["dependsOn"], answers: Record
 	return answers[dependsOn] !== undefined;
 };
 
-export default function QuestionsAccordion({
+export function QuestionsAccordion({
 	questions,
 	answers,
 	handleAnswerChange,
