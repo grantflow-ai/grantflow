@@ -11,26 +11,27 @@ import { titleize, underscore } from "inflection";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import type { ValueType } from "@/components/wizard/dynamic-forms/form-components";
 import { QuestionsAccordion } from "@/components/wizard/dynamic-forms/questions-accordion";
-import type { GrantApplicationQuestion, GrantCFP, GrantWizardSection } from "@/types/database-types";
+import type { GrantApplicationQuestion, GrantWizardSection } from "@/types/database-types";
 
-export function DynamicWizard({
-	cfp,
+export function WizardStep({
+	title,
+	sections,
 }: {
-	cfp: GrantCFP & {
-		sections: (GrantWizardSection & { questions: GrantApplicationQuestion[] })[];
-	};
+	title: string;
+	sections: (GrantWizardSection & { questions: GrantApplicationQuestion[] })[];
+	onPressNext: () => void;
 }) {
 	const [currentStep, setCurrentStep] = useState(0);
 	const [answers, setAnswers] = useState<Record<number, ValueType>>({});
 	const [progress, setProgress] = useState(0);
 
 	useEffect(() => {
-		const totalQuestions = cfp.sections.reduce((acc, section) => acc + section.questions.length, 0);
+		const totalQuestions = sections.reduce((acc, section) => acc + section.questions.length, 0);
 		const answeredQuestions = Object.keys(answers).length;
 		setProgress((answeredQuestions / totalQuestions) * 100);
-	}, [answers, cfp]);
+	}, [answers, sections]);
 
-	const currentSection = cfp.sections[currentStep];
+	const currentSection = sections[currentStep];
 
 	const handleAnswerChange = (questionId: string, value: ValueType) => {
 		setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -38,7 +39,7 @@ export function DynamicWizard({
 
 	const StepsList = () => (
 		<nav className="space-y-1" data-testid="steps-list">
-			{cfp.sections.map((section, index) => (
+			{sections.map((section, index) => (
 				<Tooltip key={section.id}>
 					<TooltipTrigger asChild={true}>
 						<Button
@@ -69,7 +70,7 @@ export function DynamicWizard({
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle className="text-lg sm:text-2xl" data-testid="form-title">
-						{cfp.grant_identifier}
+						{title}
 					</CardTitle>
 					<Sheet>
 						<SheetTrigger asChild={true}>
@@ -116,9 +117,9 @@ export function DynamicWizard({
 						</Button>
 						<Button
 							onClick={() => {
-								setCurrentStep(Math.min(cfp.sections.length - 1, currentStep + 1));
+								setCurrentStep(Math.min(sections.length - 1, currentStep + 1));
 							}}
-							disabled={currentStep === cfp.sections.length - 1}
+							disabled={currentStep === sections.length - 1}
 							data-testid="next-button"
 						>
 							Next <ChevronRight className="ml-2 h-4 w-4" />
