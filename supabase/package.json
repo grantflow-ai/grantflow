@@ -16,6 +16,6 @@
 	},
 	"devDependencies": {
 		"sqlfluff": "github:Goldziher/sqlfluff-js",
-		"supabase": "^1.200.3"
+		"supabase": "^1.203.0"
 	}
 }

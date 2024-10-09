@@ -65,21 +65,16 @@ export function FileUploadContainer({
 		[parentId],
 	);
 
-	const handleRemoveFile = useCallback(
-		(fileToRemove: FileData) => {
-			if (fileToRemove.previewUrl) {
-				URL.revokeObjectURL(fileToRemove.previewUrl);
-			}
+	const handleRemoveFile = useCallback((fileToRemove: FileData) => {
+		if (fileToRemove.previewUrl) {
+			URL.revokeObjectURL(fileToRemove.previewUrl);
+		}
 
-			setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileToRemove.name));
-			setProgresses((prevProgresses) => {
-				return Object.fromEntries(
-					Object.entries(prevProgresses).filter(([fileName]) => fileName !== fileToRemove.name),
-				);
-			});
-		},
-		[],
-	);
+		setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileToRemove.name));
+		setProgresses((prevProgresses) => {
+			return Object.fromEntries(Object.entries(prevProgresses).filter(([fileName]) => fileName !== fileToRemove.name));
+		});
+	}, []);
 
 	return (
 		<div className="space-y-4">

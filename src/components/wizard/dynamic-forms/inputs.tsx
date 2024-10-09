@@ -1,4 +1,3 @@
-import type { QuestionData } from "@/components/wizard/dynamic-forms/types";
 import { format } from "date-fns";
 import { cn } from "gen/cn";
 import { Button } from "gen/ui/button";
@@ -8,10 +7,11 @@ import { Switch } from "gen/ui/switch";
 import { Textarea } from "gen/ui/textarea";
 import { CalendarIcon } from "lucide-react";
 import type { JSX } from "react";
+import { GrantApplicationQuestion } from "@/types/database-types";
 
 export type ValueType = undefined | boolean | string | number | Date | { from?: Date; to?: Date };
 
-export type InputType<T extends QuestionData["answerType"]> = T extends "text"
+export type InputType<T extends GrantApplicationQuestion["input_type"]> = T extends "text"
 	? string
 	: T extends "boolean"
 		? boolean
@@ -21,16 +21,16 @@ export type InputType<T extends QuestionData["answerType"]> = T extends "text"
 				? { from?: Date; to?: Date }
 				: never;
 
-export type QuestionInputProps<T extends QuestionData["answerType"]> = Pick<
-	QuestionData,
-	"questionId" | "required" | "maxLength"
-> & {
+export interface QuestionInputProps<T extends GrantApplicationQuestion["input_type"]> {
+	questionId: string;
+	required: boolean;
+	maxLength: number | null;
 	onValueChange: (value?: InputType<T>) => void;
 	value?: InputType<T>;
 	disabled: boolean;
-};
+}
 
-export type QuestionInputComponent<T extends QuestionData["answerType"]> = (
+export type QuestionInputComponent<T extends GrantApplicationQuestion["input_type"]> = (
 	props: QuestionInputProps<T>,
 ) => JSX.Element;
 
@@ -155,7 +155,9 @@ const DateRangeInput = ({ questionId, onValueChange, required, value, disabled }
 	);
 };
 
-export function getInputComponent<T extends QuestionData["answerType"]>(answerType: T): QuestionInputComponent<T> {
+export function getInputComponent<T extends GrantApplicationQuestion["input_type"]>(
+	answerType: T,
+): QuestionInputComponent<T> {
 	if (answerType === "text") {
 		return TextInput as QuestionInputComponent<T>;
 	}
