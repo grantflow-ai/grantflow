@@ -1,47 +1,48 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "gen/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "gen/ui/card";
 import { Separator } from "gen/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "gen/ui/sheet";
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { Progress } from "gen/ui/progress";
-import type { SectionData } from "@/components/wizard/dynamic-forms/types";
 import { titleize, underscore } from "inflection";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import type { ValueType } from "@/components/wizard/dynamic-forms/inputs";
-import {QuestionsAccordion} from "@/components/wizard/dynamic-forms/question-list";
+import { QuestionsAccordion } from "@/components/wizard/dynamic-forms/question-list";
+import type { GrantApplicationQuestion, GrantCFP, GrantWizardSection } from "@/types/database-types";
 
-interface DynamicWizardProps {
-	formName: string;
-	sections: SectionData[];
-}
-
-export function DynamicWizard({ sections, formName }: DynamicWizardProps) {
+export function DynamicWizard({
+	cfp,
+}: {
+	cfp: GrantCFP & {
+		sections: (GrantWizardSection & { questions: GrantApplicationQuestion[] })[];
+	};
+}) {
 	const [currentStep, setCurrentStep] = useState(0);
 	const [answers, setAnswers] = useState<Record<number, ValueType>>({});
 	const [progress, setProgress] = useState(0);
 
 	useEffect(() => {
-		const totalQuestions = sections.reduce((acc, section) => acc + section.questions.length, 0);
+		const totalQuestions = cfp.sections.reduce((acc, section) => acc + section.questions.length, 0);
 		const answeredQuestions = Object.keys(answers).length;
 		setProgress((answeredQuestions / totalQuestions) * 100);
-	}, [answers, sections]);
+	}, [answers, cfp]);
 
-	const currentSection = sections[currentStep];
+	const currentSection = cfp.sections[currentStep];
 
-	const handleAnswerChange = (questionId: number, value: ValueType) => {
+	const handleAnswerChange = (questionId: string, value: ValueType) => {
 		setAnswers((prev) => ({ ...prev, [questionId]: value }));
 	};
 
 	const StepsList = () => (
 		<nav className="space-y-1" data-testid="steps-list">
-			{sections.map((section, index) => (
-				<Tooltip key={section.sectionId}>
+			{cfp.sections.map((section, index) => (
+				<Tooltip key={section.id}>
 					<TooltipTrigger asChild={true}>
 						<Button
-							key={section.name}
+							key={section.title}
 							data-testid={`step-${index}`}
 							className={`w-full flex justify-start px-3 py-2 text-sm font-medium rounded-md ${
 								index === currentStep ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
@@ -52,11 +53,11 @@ export function DynamicWizard({ sections, formName }: DynamicWizardProps) {
 							}}
 						>
 							<span className="mr-3 text-sm">{index + 1}</span>
-							{titleize(underscore(section.name))}
+							{titleize(underscore(section.title))}
 						</Button>
 					</TooltipTrigger>
 					<TooltipContent>
-						<span className="bg-secondary">{section.description}</span>
+						<span className="bg-secondary">{section.help_text}</span>
 					</TooltipContent>
 				</Tooltip>
 			))}
@@ -68,7 +69,7 @@ export function DynamicWizard({ sections, formName }: DynamicWizardProps) {
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle className="text-lg sm:text-2xl" data-testid="form-title">
-						{formName}
+						{cfp.grant_identifier}
 					</CardTitle>
 					<Sheet>
 						<SheetTrigger asChild={true}>
@@ -115,9 +116,9 @@ export function DynamicWizard({ sections, formName }: DynamicWizardProps) {
 						</Button>
 						<Button
 							onClick={() => {
-								setCurrentStep(Math.min(sections.length - 1, currentStep + 1));
+								setCurrentStep(Math.min(cfp.sections.length - 1, currentStep + 1));
 							}}
-							disabled={currentStep === sections.length - 1}
+							disabled={currentStep === cfp.sections.length - 1}
 							data-testid="next-button"
 						>
 							Next <ChevronRight className="ml-2 h-4 w-4" />

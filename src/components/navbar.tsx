@@ -23,11 +23,11 @@ export function Navbar({ isSignedIn, locale }: { isSignedIn: boolean; locale: Su
 		} else {
 			router.push(PagePath.AUTH);
 		}
-	}
+	};
 
 	const handleHomeClick = () => {
 		router.push(PagePath.ROOT);
-	}
+	};
 
 	return (
 		<nav className="px-4 border-2 flex h-14 items-center justify-between sm:space-x-0 w-full" data-testid="navbar">
