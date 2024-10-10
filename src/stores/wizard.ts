@@ -1,44 +1,39 @@
-import type { ValueType } from "@/components/wizard/dynamic-forms/form-components";
-import { create, UseBoundStore } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import { Ref } from "@/utils/state";
-import { StoreApi } from "zustand/vanilla";
-import { type GrantApplicationQuestion, GrantWizardSection } from "@/types/database-types";
+import { GrantApplicationAnswer, GrantApplicationQuestion, GrantWizardSection } from "@/types/database-types";
 import { getBrowserClient } from "@/utils/supabase/client";
-
-const wizardStores = new Ref<Map<string, UseBoundStore<StoreApi<WizardStore>>>>();
-
-const comparator = (a: { ordering: number }, b: { ordering: number }) => a.ordering - b.ordering;
+import { create, StoreApi, UseBoundStore } from "zustand";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 export type WizardStep = "overview" | "researchPlan";
+export type ValueType = string | number | boolean | null;
 
 export interface WizardStore {
 	cfpIdentifier: string;
+	draftId: string;
 	resetStore: () => void;
-	// sections
 	sections: Record<WizardStep, (GrantWizardSection & { questions: GrantApplicationQuestion[] })[]>;
 	setSections: (sections: (GrantWizardSection & { questions: GrantApplicationQuestion[] })[]) => void;
-	// wizard step
 	currentStep: WizardStep;
 	setStep: (step: WizardStep) => void;
-	// selected section
 	currentSectionIndex: number;
 	setSection: (section: number) => void;
-	// answers
-	answers: Record<
-		WizardStep,
-		Record<string, { id: string; inputValue?: ValueType; fileIds?: string[]; taskId?: string; researchAimId?: string }>
-	>;
+	answers: Record<WizardStep, Record<string, GrantApplicationAnswer>>;
 	setAnswer: (
 		questionId: string,
-		value: { inputValue?: ValueType; fileIds?: string[]; taskId?: string; researchAimId?: string },
+		value: {
+			inputValue?: ValueType;
+			fileIds?: string[];
+			taskId?: string;
+			researchAimId?: string;
+		},
 	) => Promise<Error | null>;
-	// progress
 	progresses: Record<WizardStep, number>;
 	setProgress: (progress: number) => void;
 }
 
-const initialState: Pick<WizardStore, "sections" | "currentStep" | "currentSectionIndex" | "answers" | "progresses"> = {
+const initialState: Omit<
+	WizardStore,
+	"cfpIdentifier" | "draftId" | "resetStore" | "setSections" | "setStep" | "setSection" | "setAnswer" | "setProgress"
+> = {
 	sections: {
 		overview: [],
 		researchPlan: [],
@@ -55,136 +50,117 @@ const initialState: Pick<WizardStore, "sections" | "currentStep" | "currentSecti
 	},
 };
 
-/**
- * Create a store for the wizard. The store is persisted in local storage and is specific to a CFP and a draft.
- *
- * @param cfpIdentifier - The identifier of the CFP.
- * @param draftId - The id of the draft.
- */
-export function createWizardStore({
-	cfpIdentifier,
+function createWizardStore({
 	draftId,
+	cfpIdentifier,
 }: {
-	cfpIdentifier: string;
 	draftId: string;
-}) {
-	return create(
-		persist<WizardStore>(
-			(set, get) => ({
-				cfpIdentifier,
-				...initialState,
-				resetStore: () => {
-					set(initialState);
-				},
-				setSections(sections) {
-					const applicationOverviewSections = sections
-						.filter((section) => !section.is_research_plan_section)
-						.sort(comparator)
-						.map((section) => {
-							section.questions.sort(comparator);
-							return section;
-						});
-					const researchPlanSections = sections
-						.filter((section) => section.is_research_plan_section)
-						.sort(comparator)
-						.map((section) => {
-							section.questions.sort(comparator);
-							return section;
-						});
+	cfpIdentifier: string;
+}): (set: StoreApi<WizardStore>["setState"], get: StoreApi<WizardStore>["getState"]) => WizardStore {
+	return (set, get) => ({
+		...initialState,
+		cfpIdentifier,
+		draftId,
+		resetStore: () => {
+			set(initialState);
+		},
+		setSections: (sections) => {
+			const applicationOverviewSections = sections
+				.filter((section) => !section.is_research_plan_section)
+				.sort((a, b) => a.ordering - b.ordering)
+				.map((section) => ({
+					...section,
+					questions: section.questions.sort((a, b) => a.ordering - b.ordering),
+				}));
+			const researchPlanSections = sections
+				.filter((section) => section.is_research_plan_section)
+				.sort((a, b) => a.ordering - b.ordering)
+				.map((section) => ({
+					...section,
+					questions: section.questions.sort((a, b) => a.ordering - b.ordering),
+				}));
 
-					set({
-						sections: {
-							overview: applicationOverviewSections,
-							researchPlan: researchPlanSections,
-						},
-					});
+			set({
+				sections: {
+					overview: applicationOverviewSections,
+					researchPlan: researchPlanSections,
 				},
-				setStep: (step) => {
-					set({ currentStep: step });
+			});
+		},
+		setStep: (step) => {
+			set({ currentStep: step });
+		},
+		setSection: (section) => {
+			set({ currentSectionIndex: section });
+		},
+		setAnswer: async (questionId, { inputValue, fileIds, taskId, researchAimId }) => {
+			const state = get();
+			const question = state.sections[state.currentStep][state.currentSectionIndex].questions.find(
+				({ id }) => id === questionId,
+			);
+			if (!question) {
+				return new Error(`Question with id ${questionId} not found`);
+			}
+
+			const client = getBrowserClient().from("grant_application_answers");
+			const existingAnswer = state.answers[state.currentStep][questionId] as { id: string } | undefined;
+
+			const { data, error } = await client.upsert({
+				id: existingAnswer?.id,
+				question_id: questionId,
+				question_type: question.question_type,
+				draft_id: state.draftId,
+				value: inputValue ?? null,
+				file_urls: fileIds,
+				task_id: taskId,
+				research_aim_id: researchAimId,
+			});
+
+			if (error) {
+				return new Error(`Failed to save answer for question ${questionId}: ${error.message}`);
+			}
+
+			set((state) => ({
+				answers: {
+					...state.answers,
+					[state.currentStep]: {
+						...state.answers[state.currentStep],
+						[questionId]: data,
+					},
 				},
-				setSection: (section) => {
-					set({ currentSectionIndex: section });
+			}));
+
+			return null;
+		},
+		setProgress: (progress) => {
+			set((state) => ({
+				progresses: {
+					...state.progresses,
+					[state.currentStep]: progress,
 				},
-				setAnswer: async (questionId, { inputValue, fileIds, taskId, researchAimId }) => {
-					const state = get();
-					const question = state.sections[state.currentStep][state.currentSectionIndex].questions.find(
-						({ id }) => id === questionId,
-					);
-					if (!question) {
-						return new Error(`Question with id ${questionId} not found`);
-					}
-
-					const client = getBrowserClient().from("grant_application_answers");
-					const existingAnswer = state.answers[state.currentStep][questionId] as { id: string } | undefined;
-
-					const { data, error } = await client.upsert({
-						id: existingAnswer?.id,
-						question_id: questionId,
-						question_type: question.question_type,
-						draft_id: draftId,
-						value: inputValue ?? null,
-						file_urls: fileIds,
-						task_id: taskId,
-						research_aim_id: researchAimId,
-					});
-
-					if (error) {
-						return new Error(`Failed to save answer for question ${questionId}: ${error.message}`);
-					}
-
-					set({
-						answers: {
-							...state.answers,
-							[state.currentStep]: {
-								...state.answers[state.currentStep],
-								[questionId]: data,
-							},
-						},
-					});
-
-					return null;
-				},
-				setProgress: (progress) => {
-					set((state) => {
-						return {
-							progresses: {
-								...state.progresses,
-								[state.currentStep]: progress,
-							},
-						};
-					});
-				},
-			}),
-			{ name: `wizard-store-${cfpIdentifier}-${draftId}`, storage: createJSONStorage(() => localStorage) },
-		),
-	);
+			}));
+		},
+	});
 }
 
-/**
- * Get the store for the wizard identified by the given cfpIdentifier and draftId. If the store doesn't exist, it is created.
- *
- * @param cfpIdentifier - The identifier of the CFP.
- * @param draftId - The id of the draft.
- *
- * @returns The store for the wizard.
- */
-export function getStore({
-	cfpIdentifier,
-	draftId,
-}: {
-	cfpIdentifier: string;
-	draftId: string;
-}) {
-	const id = `${cfpIdentifier}-${draftId}`;
-	if (!wizardStores.value) {
-		wizardStores.value = new Map();
-	}
+const stores = new Map<string, UseBoundStore<StoreApi<WizardStore>>>();
 
-	let store = wizardStores.value.get(id);
+export const useWizardStore = ({ cfpIdentifier, draftId }: { cfpIdentifier: string; draftId: string }) => {
+	const storeKey = `${cfpIdentifier}-${draftId}`;
+
+	let store = stores.get(storeKey);
+
 	if (!store) {
-		store = createWizardStore({ cfpIdentifier, draftId });
-		wizardStores.value.set(draftId, store);
+		store = create(
+			devtools(
+				persist((set, get) => createWizardStore({ cfpIdentifier, draftId })(set, get), {
+					name: `wizard-store-${cfpIdentifier}-${draftId}`,
+					storage: createJSONStorage(() => localStorage),
+				}),
+			),
+		);
+		stores.set(storeKey, store);
 	}
 
 	return store;
-}
+};
