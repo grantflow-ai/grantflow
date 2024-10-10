@@ -292,7 +292,7 @@ CREATE TABLE public.grant_application_answers
     question_type QUESTION_TYPE NOT NULL,
     research_aim_id UUID NULL REFERENCES public.research_aims (id) ON DELETE CASCADE ON UPDATE CASCADE,
     task_id UUID NULL REFERENCES public.research_tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    value JSONB NOT NULL,
+    value JSONB NULL,
     file_urls TEXT [] NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
@@ -312,9 +312,7 @@ CREATE INDEX idx_grant_application_answers_task_id ON public.grant_application_a
 CREATE INDEX idx_grant_application_answers_deleted_at ON public.grant_application_answers (deleted_at);
 CREATE UNIQUE INDEX idx_grant_application_answers_unique ON public.grant_application_answers (
     draft_id,
-    question_id,
-    coalesce(research_aim_id, '00000000-0000-0000-0000-000000000000'::UUID),
-    coalesce(task_id, '00000000-0000-0000-0000-000000000000'::UUID)
+    question_id
 );
 
 DROP PUBLICATION IF EXISTS supabase_realtime;
