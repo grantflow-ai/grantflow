@@ -8,10 +8,10 @@ import {
 	ResearchAim,
 	ResearchTask,
 } from "@/types/database-types";
-import { getStore } from "@/stores/wizard";
+import { useWizardStore } from "@/stores/wizard";
 import { useEffect } from "react";
 
-export function DynamicWizard({
+export function GrantApplicationWizard({
 	draftId,
 	cfp,
 }: {
@@ -22,14 +22,14 @@ export function DynamicWizard({
 	answers: GrantApplicationAnswer[];
 	researchAims: (ResearchAim & { tasks: ResearchTask[] })[];
 }) {
-	const store = getStore({ cfpIdentifier: cfp.grant_identifier, draftId })();
+	const setSections = useWizardStore({ cfpIdentifier: cfp.grant_identifier, draftId })((store) => store.setSections);
 
 	useEffect(() => {
-		store.setSections(cfp.sections);
+		setSections(cfp.sections);
 		// return () => {
 		// 	store.resetStore()
 		// }
-	}, [cfp]);
+	}, [cfp, setSections]);
 
 	return <div></div>;
 }
