@@ -9,16 +9,16 @@ import { CalendarIcon } from "lucide-react";
 import type { JSX } from "react";
 import { GrantApplicationQuestion } from "@/types/database-types";
 
-export type ValueType = undefined | boolean | string | number | Date | { from?: Date; to?: Date };
+export type ValueType = undefined | boolean | string | number | { from?: number; to?: number };
 
 export type InputType<T extends GrantApplicationQuestion["input_type"]> = T extends "text"
 	? string
 	: T extends "boolean"
 		? boolean
 		: T extends "date"
-			? Date
+			? number
 			: T extends "date-range"
-				? { from?: Date; to?: Date }
+				? { from?: number; to?: number }
 				: never;
 
 export interface QuestionInputProps<T extends GrantApplicationQuestion["input_type"]> {
@@ -83,9 +83,9 @@ const DateInput = ({ questionId, onValueChange, required, value, disabled }: Que
 				<PopoverContent className="w-auto p-0">
 					<Calendar
 						mode="single"
-						selected={value}
+						selected={value ? new Date(value) : undefined}
 						onSelect={(newDate) => {
-							onValueChange(newDate);
+							onValueChange(newDate?.getTime());
 						}}
 						initialFocus={true}
 						required={required}
@@ -115,9 +115,9 @@ const DateRangeInput = ({ questionId, onValueChange, required, value, disabled }
 					<PopoverContent className="w-auto p-0" align="start">
 						<Calendar
 							mode="single"
-							selected={value?.from}
+							selected={value?.from ? new Date(value.from) : undefined}
 							onSelect={(date) => {
-								const newRange = { ...value, from: date };
+								const newRange = { ...value, from: date?.getTime() };
 								onValueChange(newRange);
 							}}
 							initialFocus={true}
@@ -140,9 +140,9 @@ const DateRangeInput = ({ questionId, onValueChange, required, value, disabled }
 					<PopoverContent className="w-auto p-0" align="start">
 						<Calendar
 							mode="single"
-							selected={value?.to}
+							selected={value?.to ? new Date(value.to) : undefined}
 							onSelect={(date) => {
-								const newRange = { ...value, to: date };
+								const newRange = { ...value, to: date?.getTime() };
 								onValueChange(newRange);
 							}}
 							initialFocus={true}
