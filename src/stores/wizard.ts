@@ -1,12 +1,12 @@
 import type { ValueType } from "@/components/wizard/dynamic-forms/form-components";
-import { createStore } from "zustand";
+import { create, UseBoundStore } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { Ref } from "@/utils/state";
 import { StoreApi } from "zustand/vanilla";
 import { type GrantApplicationQuestion, GrantWizardSection } from "@/types/database-types";
 import { getBrowserClient } from "@/utils/supabase/client";
 
-const wizardStores = new Ref<Map<string, StoreApi<WizardStore>>>();
+const wizardStores = new Ref<Map<string, UseBoundStore<StoreApi<WizardStore>>>>();
 
 const comparator = (a: { ordering: number }, b: { ordering: number }) => a.ordering - b.ordering;
 
@@ -68,7 +68,7 @@ export function createWizardStore({
 	cfpIdentifier: string;
 	draftId: string;
 }) {
-	return createStore(
+	return create(
 		persist<WizardStore>(
 			(set, get) => ({
 				cfpIdentifier,
