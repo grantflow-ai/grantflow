@@ -7,3 +7,5 @@ export type GrantCFP = Database["public"]["Tables"]["grant_cfps"]["Row"];
 export type GrantWizardSection = Database["public"]["Tables"]["grant_wizard_sections"]["Row"];
 export type GrantApplicationQuestion = Database["public"]["Tables"]["grant_application_questions"]["Row"];
 export type GrantApplicationAnswer = Database["public"]["Tables"]["grant_application_answers"]["Row"];
+export type ResearchAim = Database["public"]["Tables"]["research_aims"]["Row"];
+export type ResearchTask = Database["public"]["Tables"]["research_tasks"]["Row"];
