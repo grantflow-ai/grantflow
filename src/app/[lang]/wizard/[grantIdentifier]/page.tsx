@@ -1,5 +1,5 @@
 import { getServerClient } from "@/utils/supabase/server";
-import { DynamicWizard } from "@/components/wizard/dynamic-forms/dynamic-wizard";
+import { GrantApplicationWizard } from "@/components/wizard/dynamic-forms/grant-application-wizard";
 import { serverLogger } from "@/utils/logging/server";
 
 export default async function GrantWizard({ params: { grantIdentifier } }: { params: { grantIdentifier: string } }) {
@@ -15,9 +15,9 @@ export default async function GrantWizard({ params: { grantIdentifier } }: { par
 		)
 	`)
 		.eq("grant_identifier", grantIdentifier)
-		.maybeSingle();
+		.single();
 
-	if (!cfp) {
+	if (cfpError) {
 		serverLogger.error("Failed to fetch CFP data", cfpError);
 		return null;
 	}
@@ -31,7 +31,8 @@ export default async function GrantWizard({ params: { grantIdentifier } }: { par
 			.insert({ cfp_id: cfp.id, title: "placeholder" })
 			.select("id")
 			.single();
-		if (!newDraft) {
+
+		if (newDraftError) {
 			serverLogger.error("Failed to create draft", newDraftError);
 			return null;
 		}
@@ -42,7 +43,8 @@ export default async function GrantWizard({ params: { grantIdentifier } }: { par
 		.from("grant_application_answers")
 		.select("*")
 		.eq("draft_id", draftId);
-	if (!answers) {
+
+	if (answersError) {
 		serverLogger.error("Failed to fetch answers", answersError);
 		return null;
 	}
@@ -54,14 +56,15 @@ export default async function GrantWizard({ params: { grantIdentifier } }: { par
 			tasks:research_tasks (*)
 		`)
 		.eq("draft_id", draftId);
-	if (!researchAims) {
+
+	if (researchAimsError) {
 		serverLogger.error("Failed to fetch research aims", researchAimsError);
 		return null;
 	}
 
 	return (
 		<section className="flex justify-center">
-			<DynamicWizard cfp={cfp} answers={answers} draftId={draftId} researchAims={researchAims} />
+			<GrantApplicationWizard cfp={cfp} answers={answers} draftId={draftId} researchAims={researchAims} />
 		</section>
 	);
 }
