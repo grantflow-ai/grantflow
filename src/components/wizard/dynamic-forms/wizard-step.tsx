@@ -46,7 +46,9 @@ export function WizardStep({
 							key={section.title}
 							data-testid={`step-${index}`}
 							className={`w-full flex justify-start px-3 py-2 text-sm font-medium rounded-md ${
-								index === currentStep ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+								index === currentStep
+									? "bg-primary text-primary-foreground"
+									: "text-muted-foreground hover:bg-muted"
 							}`}
 							variant="outline"
 							onClick={() => {

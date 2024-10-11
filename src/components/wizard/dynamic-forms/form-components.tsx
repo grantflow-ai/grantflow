@@ -73,7 +73,10 @@ const DateInput = ({ questionId, onValueChange, required, value, disabled }: Que
 					<Button
 						variant="outline"
 						disabled={disabled}
-						className={cn("w-full justify-start text-left font-normal mt-1", disabled && "text-muted-foreground")}
+						className={cn(
+							"w-full justify-start text-left font-normal mt-1",
+							disabled && "text-muted-foreground",
+						)}
 					>
 						<CalendarIcon className="mr-2 h-4 w-4" />
 						{value ? format(value, "PPP") : <span>Pick a date</span>}
@@ -105,7 +108,10 @@ const DateRangeInput = ({ questionId, onValueChange, required, value, disabled }
 							id={`question-${questionId}-from`}
 							variant="outline"
 							disabled={disabled}
-							className={cn("w-[240px] justify-start text-left font-normal", !value?.from && "text-muted-foreground")}
+							className={cn(
+								"w-[240px] justify-start text-left font-normal",
+								!value?.from && "text-muted-foreground",
+							)}
 						>
 							<CalendarIcon className="mr-2 h-4 w-4" />
 							{value?.from ? format(value.from, "PPP") : <span>Start date</span>}
@@ -130,7 +136,10 @@ const DateRangeInput = ({ questionId, onValueChange, required, value, disabled }
 							id={`question-${questionId}-to`}
 							variant="outline"
 							disabled={disabled}
-							className={cn("w-[240px] justify-start text-left font-normal", !value?.to && "text-muted-foreground")}
+							className={cn(
+								"w-[240px] justify-start text-left font-normal",
+								!value?.to && "text-muted-foreground",
+							)}
 						>
 							<CalendarIcon className="mr-2 h-4 w-4" />
 							{value?.to ? format(value.to, "PPP") : <span>End date</span>}
