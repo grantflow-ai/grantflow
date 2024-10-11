@@ -87,15 +87,7 @@ export function FileUploader({
 	);
 }
 
-export function FileCard({
-	file,
-	progress,
-	onRemove,
-}: {
-	file: FileData;
-	progress: number;
-	onRemove: () => void;
-}) {
+export function FileCard({ file, progress, onRemove }: { file: FileData; progress: number; onRemove: () => void }) {
 	return (
 		<div
 			className="relative flex items-center gap-4 rounded-lg border p-4 shadow-sm"

@@ -1,13 +1,6 @@
 import { ErrorType } from "@/constants";
-import { serverLogger } from "@/utils/logging/server";
 import { errorRedirect } from "@/utils/request";
 import { NextResponse } from "next/server";
-
-vi.mock("@/utils/logging/server", () => ({
-	serverLogger: {
-		error: vi.fn(),
-	},
-}));
 
 vi.mock("next/server", () => ({
 	NextResponse: {
@@ -25,8 +18,6 @@ describe("errorRedirect", () => {
 			errorType: ErrorType.UNEXPECTED_ERROR,
 			error: mockError,
 		});
-
-		expect(serverLogger.error).toHaveBeenCalledWith(`${ErrorType.UNEXPECTED_ERROR}: ${mockError.message}`);
 
 		expect(mockUrl.searchParams.get("error")).toBe(ErrorType.UNEXPECTED_ERROR);
 

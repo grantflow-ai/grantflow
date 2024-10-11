@@ -19,59 +19,19 @@ public.app_users
 
 CREATE INDEX idx_app_users_email ON public.app_users (email);
 
--- organizations table 
-CREATE TABLE
-public.organizations
-(
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name TEXT NOT NULL,
-    logo TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    deleted_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX idx_organizations_name ON public.organizations (name);
-CREATE INDEX idx_organizations_deleted_at ON public.organizations (deleted_at);
-
--- organization_users table 
-CREATE TABLE
-public.organization_users
-(
-    organization_id UUID REFERENCES public.organizations (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    user_id UUID REFERENCES public.app_users (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    role USER_ROLE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    deleted_at TIMESTAMP WITH TIME ZONE,
-    PRIMARY KEY (organization_id, user_id)
-);
-
-ALTER TABLE public.organization_users
-ADD CONSTRAINT unique_organization_user UNIQUE (organization_id, user_id);
-
-ALTER TABLE public.organization_users
-ADD CONSTRAINT check_valid_organization_role CHECK (role IN ('owner', 'admin', 'member'));
-
-CREATE INDEX idx_organization_users_role ON public.organization_users (role);
-CREATE INDEX idx_organization_users_organization_id ON public.organization_users (organization_id);
-CREATE INDEX idx_organization_users_user_id ON public.organization_users (user_id);
-CREATE INDEX idx_organization_users_deleted_at ON public.organization_users (deleted_at);
-
 -- workspaces table 
 CREATE TABLE
 public.workspaces
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
+    logo_url TEXT,
     description TEXT,
-    organization_id UUID REFERENCES public.organizations (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_workspaces_organization_id ON public.workspaces (organization_id);
 CREATE INDEX idx_workspaces_deleted_at ON public.workspaces (deleted_at);
 
 -- workspace_users table 
@@ -103,7 +63,7 @@ CREATE TABLE public.invitations
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     invited_by UUID REFERENCES public.app_users (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    organization_id UUID REFERENCES public.organizations (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+    workspace_id UUID REFERENCES public.workspaces (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
     email TEXT NOT NULL,
     role USER_ROLE NOT NULL,
     status INVITATION_STATUS DEFAULT 'pending' NOT NULL,
@@ -117,7 +77,7 @@ CREATE TABLE public.invitations
 
 CREATE INDEX idx_invitations_status ON public.invitations (status);
 CREATE INDEX idx_invitations_email ON public.invitations (email);
-CREATE INDEX idx_invitations_organization_id ON public.invitations (organization_id);
+CREATE INDEX idx_invitations_workspace_id ON public.invitations (workspace_id);
 CREATE INDEX idx_invitations_token ON public.invitations (token);
 CREATE INDEX idx_invitations_expires_at ON public.invitations (expires_at);
 CREATE INDEX idx_invitations_deleted_at ON public.invitations (deleted_at);

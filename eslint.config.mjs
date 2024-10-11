@@ -1,4 +1,5 @@
 import eslintConfigTrumpet from "@trumpet/eslint-config-next";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
 	...eslintConfigTrumpet,
@@ -8,4 +9,5 @@ export default [
 			"unicorn/no-useless-promise-resolve-reject": "off",
 		},
 	},
+	eslintConfigPrettier,
 ];

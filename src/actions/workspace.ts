@@ -11,21 +11,42 @@ import { getServerClient } from "@/utils/supabase/server";
 export async function createWorkspace({
 	description,
 	name,
-	organizationId,
+	logoUrl,
 }: {
 	description?: string;
 	name: string;
-	organizationId: string;
+	logoUrl?: string;
 }) {
-	try {
-		const supabase = await getServerClient();
-		const client = supabase.from("workspaces");
-		return await client.insert({
-			organization_id: organizationId,
+	const supabase = await getServerClient();
+
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return handleServerError(new Error("User is not logged in"));
+	}
+
+	const client = supabase.from("workspaces");
+	const { data, error: workspaceCreateErr } = await client
+		.insert({
 			name,
 			description,
+			logoUrl,
+		})
+		.select("id")
+		.single();
+
+	if (workspaceCreateErr) {
+		return handleServerError(workspaceCreateErr, {
+			message: "Failed to create workspace",
+			fallback: "Failed to create workspace",
 		});
-	} catch (error) {
-		return handleServerError(error as Error, (error as Error).message);
 	}
+
+	await supabase.from("workspace_users").insert({
+		workspace_id: data.id,
+		user_id: user.id,
+		role: "owner",
+	});
 }

@@ -29,7 +29,10 @@ export async function GET(request: NextRequest) {
 
 	const supabase = await getServerClient();
 
-	const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
+	const { error } = await supabase.auth.verifyOtp({
+		token_hash: tokenHash,
+		type: "magiclink",
+	});
 	if (error) {
 		return errorRedirect({
 			url: new URL(PagePath.AUTH, requestUrl.origin),

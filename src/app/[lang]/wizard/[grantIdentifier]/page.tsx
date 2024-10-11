@@ -1,25 +1,26 @@
-import { getServerClient } from "@/utils/supabase/server";
 import { GrantApplicationWizard } from "@/components/wizard/dynamic-forms/grant-application-wizard";
-import { serverLogger } from "@/utils/logging/server";
+import { handleServerError } from "@/utils/server-side";
+import { getServerClient } from "@/utils/supabase/server";
 
 export default async function GrantWizard({ params: { grantIdentifier } }: { params: { grantIdentifier: string } }) {
 	const supabase = await getServerClient();
 
 	const { data: cfp, error: cfpError } = await supabase
 		.from("grant_cfps")
-		.select(`
+		.select(
+			`
 		*,
 		sections:grant_wizard_sections (
 			*,
 			questions:grant_application_questions (*)
 		)
-	`)
+	`,
+		)
 		.eq("grant_identifier", grantIdentifier)
 		.single();
 
 	if (cfpError) {
-		serverLogger.error("Failed to fetch CFP data", cfpError);
-		return null;
+		return handleServerError(cfpError, { message: "Failed to fetch CFP" });
 	}
 
 	const { data: draft } = await supabase.from("application_drafts").select("*").eq("cfp_id", cfp.id).maybeSingle();
@@ -33,8 +34,9 @@ export default async function GrantWizard({ params: { grantIdentifier } }: { par
 			.single();
 
 		if (newDraftError) {
-			serverLogger.error("Failed to create draft", newDraftError);
-			return null;
+			return handleServerError(newDraftError, {
+				message: "Failed to create draft",
+			});
 		}
 		draftId = newDraft.id;
 	}
@@ -45,21 +47,25 @@ export default async function GrantWizard({ params: { grantIdentifier } }: { par
 		.eq("draft_id", draftId);
 
 	if (answersError) {
-		serverLogger.error("Failed to fetch answers", answersError);
-		return null;
+		return handleServerError(answersError, {
+			message: "Failed to fetch answers",
+		});
 	}
 
 	const { data: researchAims, error: researchAimsError } = await supabase
 		.from("research_aims")
-		.select(`
+		.select(
+			`
 			*,
 			tasks:research_tasks (*)
-		`)
+		`,
+		)
 		.eq("draft_id", draftId);
 
 	if (researchAimsError) {
-		serverLogger.error("Failed to fetch research aims", researchAimsError);
-		return null;
+		return handleServerError(researchAimsError, {
+			message: "Failed to fetch research aims",
+		});
 	}
 
 	return (
