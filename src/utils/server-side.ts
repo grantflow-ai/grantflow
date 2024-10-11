@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
  * @param redirect - The page to redirect to.
  * @returns returns the fallback
  */
-export function handleServerError<T extends ReactNode>(
+export function handleServerError<T extends ReactNode | string>(
 	error: PostgrestError | Error,
 	{
 		message = "A server side error occurred",

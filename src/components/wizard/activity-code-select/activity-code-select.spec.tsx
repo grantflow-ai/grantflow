@@ -23,10 +23,10 @@ const mockReleasePointerCapture = vi.fn();
 
 describe("ActivityCodeSelect", () => {
 	beforeEach(() => {
-		window.PointerEvent = MockPointerEvent as any;
-		window.HTMLElement.prototype.hasPointerCapture = mockHasPointerCapture;
-		window.HTMLElement.prototype.releasePointerCapture = mockReleasePointerCapture;
-		window.HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
+		globalThis.PointerEvent = MockPointerEvent as any;
+		globalThis.HTMLElement.prototype.hasPointerCapture = mockHasPointerCapture;
+		globalThis.HTMLElement.prototype.releasePointerCapture = mockReleasePointerCapture;
+		globalThis.HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
 	});
 	it("renders the component", () => {
 		render(<ActivityCodeSelect />);

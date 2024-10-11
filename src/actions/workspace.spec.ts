@@ -30,6 +30,8 @@ describe("Workspace Management", () => {
 
 		const result = await createWorkspace({
 			name: "Test Workspace",
+			description: "",
+			logoUrl: "",
 		});
 
 		expect(getServerClient).toHaveBeenCalled();
@@ -54,6 +56,7 @@ describe("Workspace Management", () => {
 		const result = await createWorkspace({
 			name: "Another Workspace",
 			description: "This is a test workspace",
+			logoUrl: "",
 		});
 
 		expect(getServerClient).toHaveBeenCalled();
@@ -73,6 +76,8 @@ describe("Workspace Management", () => {
 
 		const result = await createWorkspace({
 			name: "Error Workspace",
+			description: "",
+			logoUrl: "",
 		});
 
 		expect(getServerClient).toHaveBeenCalled();
