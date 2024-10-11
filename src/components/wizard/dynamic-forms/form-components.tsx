@@ -10,7 +10,6 @@ import type { JSX } from "react";
 import { GrantApplicationQuestion } from "@/types/database-types";
 
 export type ValueType = undefined | boolean | string | number | { from?: number; to?: number };
-
 export type InputType<T extends GrantApplicationQuestion["input_type"]> = T extends "text"
 	? string
 	: T extends "boolean"
