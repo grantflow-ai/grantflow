@@ -2,7 +2,6 @@ import type { FileData } from "@/types";
 import { generateUploadUrls } from "@/actions/file";
 import { zip } from "remeda";
 import axios from "axios";
-import { clientLogger } from "@/utils/logging/client";
 import { toast } from "sonner";
 
 /**
@@ -34,8 +33,7 @@ export async function handleFileUpload(files: FileData[], setProgresses: (progre
 			});
 		});
 		await Promise.all(promises);
-	} catch (error) {
-		clientLogger.error(`Failed to upload ${target}`, error);
+	} catch {
 		toast.error(`Failed to upload ${target}`);
 	}
 }

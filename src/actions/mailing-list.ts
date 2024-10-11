@@ -10,18 +10,17 @@ import isEmail from "validator/lib/isEmail";
  * @param email - The email address of the user to subscribe.
  * @returns - The result of the subscription.
  */
-export async function subscribeToMailingList(email: string): Promise<string | null> {
+export async function subscribeToMailingList(email: string) {
 	if (!isEmail(email)) {
 		return ErrorType.INVALID_EMAIL;
 	}
-	try {
-		const supabase = await getServerClient();
-		const client = supabase.from("mailing_list");
-		await client.insert({
-			email,
-		});
-		return null;
-	} catch (error) {
-		return handleServerError(error as Error, (error as Error).message);
+	const supabase = await getServerClient();
+	const client = supabase.from("mailing_list");
+	const { error } = await client.insert({
+		email,
+	});
+	if (error) {
+		return handleServerError(error, { message: "Failed to subscribe to mailing list" });
 	}
+	return null;
 }

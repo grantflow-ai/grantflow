@@ -95,7 +95,10 @@ export function FileCard({ file, progress, onRemove }: { file: FileData; progres
 		>
 			<FilePreview file={file} />
 			<div className="flex flex-1 flex-col gap-1">
-				<p className="text-sm font-medium text-gray-700 truncate" data-testid={`file-name-display-${file.name}`}>
+				<p
+					className="text-sm font-medium text-gray-700 truncate"
+					data-testid={`file-name-display-${file.name}`}
+				>
 					{file.name}
 				</p>
 				<p className="text-xs text-gray-500" data-testid="file-size">

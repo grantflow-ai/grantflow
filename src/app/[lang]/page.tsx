@@ -31,7 +31,10 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 
 			<section id="features" className="py-16 bg-muted" data-testid="problem-solution-section">
 				<div className="container mx-auto px-4">
-					<h2 className="text-3xl font-bold mb-8 text-center font-filicudi-solid" data-testid="problem-solution-title">
+					<h2
+						className="text-3xl font-bold mb-8 text-center font-filicudi-solid"
+						data-testid="problem-solution-title"
+					>
 						{locales.landingPage.problemAndSolutionSection.title}
 					</h2>
 					<p className="text-xl text-center mb-12 max-w-3xl mx-auto" data-testid="problem-solution-subtitle">
@@ -84,7 +87,10 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 
 			<section className="py-16" data-testid="features-section">
 				<div className="container mx-auto px-4">
-					<h2 className="text-3xl font-bold mb-8 text-center font-filicudi-solid" data-testid="features-title">
+					<h2
+						className="text-3xl font-bold mb-8 text-center font-filicudi-solid"
+						data-testid="features-title"
+					>
 						{locales.landingPage.featuresSection.title}
 					</h2>
 					<h3 className="text-xl text-center mb-12" data-testid="features-subtitle">
@@ -93,19 +99,25 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 					<div className="grid md:grid-cols-3 gap-8">
 						<Card className="transition-transform hover:scale-105" data-testid="feature-card-1">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">{locales.landingPage.featuresSection.card1.title}</CardTitle>
+								<CardTitle className="font-filicudi-solid">
+									{locales.landingPage.featuresSection.card1.title}
+								</CardTitle>
 							</CardHeader>
 							<CardContent>{locales.landingPage.featuresSection.card1.content}</CardContent>
 						</Card>
 						<Card className="transition-transform hover:scale-105" data-testid="feature-card-2">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">{locales.landingPage.featuresSection.card2.title}</CardTitle>
+								<CardTitle className="font-filicudi-solid">
+									{locales.landingPage.featuresSection.card2.title}
+								</CardTitle>
 							</CardHeader>
 							<CardContent>{locales.landingPage.featuresSection.card2.content}</CardContent>
 						</Card>
 						<Card className="transition-transform hover:scale-105" data-testid="feature-card-3">
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">{locales.landingPage.featuresSection.card3.title}</CardTitle>
+								<CardTitle className="font-filicudi-solid">
+									{locales.landingPage.featuresSection.card3.title}
+								</CardTitle>
 							</CardHeader>
 							<CardContent>{locales.landingPage.featuresSection.card3.content}</CardContent>
 						</Card>

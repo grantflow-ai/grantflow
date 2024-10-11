@@ -42,7 +42,9 @@ export function OauthSigninForm() {
 						<span data-testid={`oauth-signin-form-${provider.id}-text`} className="text-md bold">
 							Sign in with {provider.displayName}
 						</span>
-						<span data-testid={`oauth-signin-form-${provider.id}-icon`}>{<provider.icon className="h-4 w-4" />}</span>
+						<span data-testid={`oauth-signin-form-${provider.id}-icon`}>
+							{<provider.icon className="h-4 w-4" />}
+						</span>
 					</p>
 				</Button>
 			))}
