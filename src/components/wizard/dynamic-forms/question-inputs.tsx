@@ -1,5 +1,5 @@
 import { GrantApplicationQuestion } from "@/types/database-types";
-import { getInputComponent, type InputType, ValueType } from "@/components/wizard/dynamic-forms/form-components";
+import { getInputComponent, type InputType, type ValueType } from "@/components/wizard/dynamic-forms/form-components";
 import type { FileData } from "@/types";
 import { FileUploadContainer } from "@/components/file-upload-container";
 
