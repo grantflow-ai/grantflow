@@ -1,6 +1,7 @@
 "use client";
 
-import {
+import { useWizardStore } from "@/stores/wizard";
+import type {
 	GrantApplicationAnswer,
 	GrantApplicationQuestion,
 	GrantCFP,
@@ -8,12 +9,14 @@ import {
 	ResearchAim,
 	ResearchTask,
 } from "@/types/database-types";
-import { useWizardStore } from "@/stores/wizard";
 import { useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 export function GrantApplicationWizard({
 	draftId,
 	cfp,
+	answers,
+	researchAims,
 }: {
 	draftId: string;
 	cfp: GrantCFP & {
@@ -22,14 +25,19 @@ export function GrantApplicationWizard({
 	answers: GrantApplicationAnswer[];
 	researchAims: (ResearchAim & { tasks: ResearchTask[] })[];
 }) {
-	const setSections = useWizardStore({ cfpIdentifier: cfp.grant_identifier, draftId })((store) => store.setSections);
+	const { setSections, setAnswers, setResearchAims } = useWizardStore({ cfpIdentifier: cfp.grant_identifier, draftId })(
+		useShallow((state) => ({
+			setSections: state.setSections,
+			setAnswers: state.setAnswers,
+			setResearchAims: state.setResearchAims,
+		})),
+	);
 
 	useEffect(() => {
 		setSections(cfp.sections);
-		// return () => {
-		// 	store.resetStore()
-		// }
-	}, [cfp, setSections]);
+		setAnswers(answers);
+		setResearchAims(researchAims);
+	}, [cfp, answers, researchAims, setSections, setAnswers, setResearchAims]);
 
-	return <div></div>;
+	return <div />;
 }
