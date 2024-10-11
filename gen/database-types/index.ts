@@ -116,7 +116,7 @@ export type Database = {
 					research_aim_id: string | null;
 					task_id: string | null;
 					updated_at: string;
-					value: Json;
+					value: Json | null;
 				};
 				Insert: {
 					created_at?: string;
@@ -129,7 +129,7 @@ export type Database = {
 					research_aim_id?: string | null;
 					task_id?: string | null;
 					updated_at?: string;
-					value: Json;
+					value?: Json | null;
 				};
 				Update: {
 					created_at?: string;
@@ -142,7 +142,7 @@ export type Database = {
 					research_aim_id?: string | null;
 					task_id?: string | null;
 					updated_at?: string;
-					value?: Json;
+					value?: Json | null;
 				};
 				Relationships: [
 					{
@@ -323,7 +323,7 @@ export type Database = {
 					clinical_trials_only: boolean;
 					created_at: string;
 					deleted_at: string | null;
-					help_text: string;
+					help_text: string | null;
 					id: string;
 					is_research_plan_section: boolean;
 					ordering: number;
@@ -336,7 +336,7 @@ export type Database = {
 					clinical_trials_only?: boolean;
 					created_at?: string;
 					deleted_at?: string | null;
-					help_text: string;
+					help_text?: string | null;
 					id?: string;
 					is_research_plan_section?: boolean;
 					ordering: number;
@@ -349,7 +349,7 @@ export type Database = {
 					clinical_trials_only?: boolean;
 					created_at?: string;
 					deleted_at?: string | null;
-					help_text?: string;
+					help_text?: string | null;
 					id?: string;
 					is_research_plan_section?: boolean;
 					ordering?: number;
@@ -377,10 +377,10 @@ export type Database = {
 					expires_at: string;
 					id: string;
 					invited_by: string;
-					organization_id: string;
-					role: "owner" | "admin" | "member";
-					status: "pending" | "accepted" | "declined";
+					role: Database["public"]["Enums"]["user_role"];
+					status: Database["public"]["Enums"]["invitation_status"];
 					token: string;
+					workspace_id: string;
 				};
 				Insert: {
 					accepted_at?: string | null;
@@ -391,10 +391,10 @@ export type Database = {
 					expires_at?: string;
 					id?: string;
 					invited_by: string;
-					organization_id: string;
-					role: "owner" | "admin" | "member";
-					status?: "pending" | "accepted" | "declined";
+					role: Database["public"]["Enums"]["user_role"];
+					status?: Database["public"]["Enums"]["invitation_status"];
 					token?: string;
+					workspace_id: string;
 				};
 				Update: {
 					accepted_at?: string | null;
@@ -405,10 +405,10 @@ export type Database = {
 					expires_at?: string;
 					id?: string;
 					invited_by?: string;
-					organization_id?: string;
-					role?: "owner" | "admin" | "member";
-					status?: "pending" | "accepted" | "declined";
+					role?: Database["public"]["Enums"]["user_role"];
+					status?: Database["public"]["Enums"]["invitation_status"];
 					token?: string;
+					workspace_id?: string;
 				};
 				Relationships: [
 					{
@@ -419,10 +419,10 @@ export type Database = {
 						referencedColumns: ["id"];
 					},
 					{
-						foreignKeyName: "invitations_organization_id_fkey";
-						columns: ["organization_id"];
+						foreignKeyName: "invitations_workspace_id_fkey";
+						columns: ["workspace_id"];
 						isOneToOne: false;
-						referencedRelation: "organizations";
+						referencedRelation: "workspaces";
 						referencedColumns: ["id"];
 					},
 				];
@@ -454,7 +454,7 @@ export type Database = {
 					link: string | null;
 					read: boolean | null;
 					title: string | null;
-					type: "invitation" | "message" | "alert";
+					type: Database["public"]["Enums"]["notification_type"];
 					user_id: string;
 				};
 				Insert: {
@@ -465,7 +465,7 @@ export type Database = {
 					link?: string | null;
 					read?: boolean | null;
 					title?: string | null;
-					type?: "invitation" | "message" | "alert";
+					type?: Database["public"]["Enums"]["notification_type"];
 					user_id: string;
 				};
 				Update: {
@@ -476,7 +476,7 @@ export type Database = {
 					link?: string | null;
 					read?: boolean | null;
 					title?: string | null;
-					type?: "invitation" | "message" | "alert";
+					type?: Database["public"]["Enums"]["notification_type"];
 					user_id?: string;
 				};
 				Relationships: [
@@ -488,75 +488,6 @@ export type Database = {
 						referencedColumns: ["id"];
 					},
 				];
-			};
-			organization_users: {
-				Row: {
-					created_at: string;
-					deleted_at: string | null;
-					organization_id: string;
-					role: "owner" | "admin" | "member";
-					updated_at: string;
-					user_id: string;
-				};
-				Insert: {
-					created_at?: string;
-					deleted_at?: string | null;
-					organization_id: string;
-					role: "owner" | "admin" | "member";
-					updated_at?: string;
-					user_id: string;
-				};
-				Update: {
-					created_at?: string;
-					deleted_at?: string | null;
-					organization_id?: string;
-					role?: "owner" | "admin" | "member";
-					updated_at?: string;
-					user_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "organization_users_organization_id_fkey";
-						columns: ["organization_id"];
-						isOneToOne: false;
-						referencedRelation: "organizations";
-						referencedColumns: ["id"];
-					},
-					{
-						foreignKeyName: "organization_users_user_id_fkey";
-						columns: ["user_id"];
-						isOneToOne: false;
-						referencedRelation: "app_users";
-						referencedColumns: ["id"];
-					},
-				];
-			};
-			organizations: {
-				Row: {
-					created_at: string;
-					deleted_at: string | null;
-					id: string;
-					logo: string | null;
-					name: string;
-					updated_at: string;
-				};
-				Insert: {
-					created_at?: string;
-					deleted_at?: string | null;
-					id?: string;
-					logo?: string | null;
-					name: string;
-					updated_at?: string;
-				};
-				Update: {
-					created_at?: string;
-					deleted_at?: string | null;
-					id?: string;
-					logo?: string | null;
-					name?: string;
-					updated_at?: string;
-				};
-				Relationships: [];
 			};
 			research_aims: {
 				Row: {
@@ -647,7 +578,7 @@ export type Database = {
 				Row: {
 					created_at: string;
 					deleted_at: string | null;
-					role: "owner" | "admin" | "member";
+					role: Database["public"]["Enums"]["user_role"];
 					updated_at: string;
 					user_id: string;
 					workspace_id: string;
@@ -655,7 +586,7 @@ export type Database = {
 				Insert: {
 					created_at?: string;
 					deleted_at?: string | null;
-					role: "owner" | "admin" | "member";
+					role: Database["public"]["Enums"]["user_role"];
 					updated_at?: string;
 					user_id: string;
 					workspace_id: string;
@@ -663,7 +594,7 @@ export type Database = {
 				Update: {
 					created_at?: string;
 					deleted_at?: string | null;
-					role?: "owner" | "admin" | "member";
+					role?: Database["public"]["Enums"]["user_role"];
 					updated_at?: string;
 					user_id?: string;
 					workspace_id?: string;
@@ -691,8 +622,8 @@ export type Database = {
 					deleted_at: string | null;
 					description: string | null;
 					id: string;
+					logo_url: string | null;
 					name: string;
-					organization_id: string;
 					updated_at: string;
 				};
 				Insert: {
@@ -700,8 +631,8 @@ export type Database = {
 					deleted_at?: string | null;
 					description?: string | null;
 					id?: string;
+					logo_url?: string | null;
 					name: string;
-					organization_id: string;
 					updated_at?: string;
 				};
 				Update: {
@@ -709,19 +640,11 @@ export type Database = {
 					deleted_at?: string | null;
 					description?: string | null;
 					id?: string;
+					logo_url?: string | null;
 					name?: string;
-					organization_id?: string;
 					updated_at?: string;
 				};
-				Relationships: [
-					{
-						foreignKeyName: "workspaces_organization_id_fkey";
-						columns: ["organization_id"];
-						isOneToOne: false;
-						referencedRelation: "organizations";
-						referencedColumns: ["id"];
-					},
-				];
+				Relationships: [];
 			};
 		};
 		Views: {

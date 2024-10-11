@@ -12,33 +12,31 @@ import { z } from "zod";
 const workspaceSchema = z.object({
 	name: z.string().min(3, { message: "Workspace name must be at least 3 characters long" }),
 	description: z.string().optional(),
+	logoUrl: z.string().optional(),
 });
 
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
 
-export function CreateWorkspaceForm({
-	organizationId,
-	locales,
-	closeModal,
-}: {
-	organizationId: string;
-	locales: Localisation;
-	closeModal: () => void;
-}) {
+export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisation; closeModal: () => void }) {
 	const form = useForm<WorkspaceFormValues>({
 		resolver: zodResolver(workspaceSchema),
-		defaultValues: { name: "" },
+		defaultValues: { name: "", description: "", logoUrl: "" },
 	});
 
 	const onSubmit = async (values: WorkspaceFormValues) => {
-		try {
-			await createWorkspace({ organizationId, name: values.name });
-			toast.success(locales.organizationView.workspaceCreatedSuccess);
-		} catch {
-			toast.error(locales.organizationView.workspaceCreatedError);
-		} finally {
-			closeModal();
+		const error = await createWorkspace({
+			name: values.name,
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+			description: values.description || undefined,
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+			logoUrl: values.logoUrl || undefined,
+		});
+		if (error) {
+			toast.error(locales.workspaceListView.workspaceCreatedError);
+		} else {
+			toast.success(locales.workspaceListView.workspaceCreatedSuccess);
 		}
+		closeModal();
 	};
 
 	return (
@@ -49,12 +47,12 @@ export function CreateWorkspaceForm({
 					control={form.control}
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>{locales.organizationView.workspaceNameLabel}</FormLabel>
+							<FormLabel>{locales.workspaceListView.workspaceNameLabel}</FormLabel>
 							<FormControl>
 								<Input
 									{...field}
 									data-testid="create-workspace-name-input"
-									placeholder={locales.organizationView.workspaceNamePlaceholder}
+									placeholder={locales.workspaceListView.workspaceNamePlaceholder}
 								/>
 							</FormControl>
 						</FormItem>
@@ -65,12 +63,12 @@ export function CreateWorkspaceForm({
 					control={form.control}
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>{locales.organizationView.workspaceNameLabel}</FormLabel>
+							<FormLabel>{locales.workspaceListView.workspaceNameLabel}</FormLabel>
 							<FormControl>
 								<Textarea
 									{...field}
 									data-testid="create-workspace-description-textarea"
-									placeholder={locales.organizationView.workspaceNamePlaceholder}
+									placeholder={locales.workspaceListView.workspaceNamePlaceholder}
 								/>
 							</FormControl>
 						</FormItem>
@@ -82,7 +80,7 @@ export function CreateWorkspaceForm({
 					disabled={!form.formState.isValid}
 					isLoading={form.formState.isSubmitting}
 				>
-					{locales.organizationView.createWorkspace}
+					{locales.workspaceListView.createWorkspace}
 				</FormButton>
 			</form>
 		</Form>

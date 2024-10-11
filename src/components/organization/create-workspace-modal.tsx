@@ -7,13 +7,7 @@ import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { CreateWorkspaceForm } from "./create-workspace-form";
 
-export function CreateWorkspaceModal({
-	organizationId,
-	locales,
-}: {
-	organizationId: string;
-	locales: Localisation;
-}) {
+export function CreateWorkspaceModal({ locales }: { locales: Localisation }) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
@@ -25,15 +19,14 @@ export function CreateWorkspaceModal({
 					data-testid="create-workspace-button"
 				>
 					<PlusCircle className="h-12 w-12 mb-2" />
-					<span>{locales.organizationView.createWorkspace}</span>
+					<span>{locales.workspaceListView.createWorkspace}</span>
 				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{locales.organizationView.createWorkspaceModalTitle}</DialogTitle>
+					<DialogTitle>{locales.workspaceListView.createWorkspaceModalTitle}</DialogTitle>
 				</DialogHeader>
 				<CreateWorkspaceForm
-					organizationId={organizationId}
 					locales={locales}
 					closeModal={() => {
 						setIsOpen(false);

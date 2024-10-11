@@ -52,18 +52,18 @@
 		"magicLinkSent": "A login link has been sent to your email",
 		"sendMagicLink": "Send Magic Link"
 	},
-	"organizationView": {
+	"workspaceListView": {
 		"createWorkspace": "Create Workspace",
-		"title": "Organization",
-		"workspaces": "Workspaces",
+		"title": "Workspaces",
 		"workspaceNamePlaceholder": "Workspace Name",
 		"workspaceNameLabel": "Workspace Name",
 		"workspaceCreatedSuccess": "Workspace created successfully.",
 		"workspaceCreatedError": "An error occurred while creating the workspace.",
 		"createWorkspaceModalTitle": "Create Workspace",
-		"workspaceDescriptionPlaceholder": "Workspace Description"
+		"workspaceDescriptionPlaceholder": "Workspace Description",
+		"workspaceLogoLabel": "Workspace Logo"
 	},
-	"workspaceView": {
+	"workspaceDetailView": {
 		"title": "Workspace",
 		"grantApplications": {
 			"title": "Grant Applications",

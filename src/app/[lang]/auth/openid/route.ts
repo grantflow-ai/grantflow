@@ -1,7 +1,7 @@
 "use server";
 
-import { PagePath } from "@/enums";
 import { ErrorType } from "@/constants";
+import { PagePath } from "@/enums";
 import { errorRedirect } from "@/utils/request";
 import { getServerClient } from "@/utils/supabase/server";
 import type { NextRequest } from "next/server";
@@ -37,5 +37,5 @@ export async function GET(request: NextRequest) {
 		});
 	}
 
-	return NextResponse.redirect(new URL(PagePath.WIZARD, requestUrl.origin));
+	return NextResponse.redirect(new URL(PagePath.WORKSPACES, requestUrl.origin));
 }

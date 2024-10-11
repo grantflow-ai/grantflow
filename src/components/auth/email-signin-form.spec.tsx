@@ -73,7 +73,9 @@ describe("EmailSigninForm", () => {
 		await userEvent.click(submitButton);
 
 		await waitFor(() => {
-			expect((mockToast as any).error).toHaveBeenCalledWith(errorMessage, { duration: 3000 });
+			expect((mockToast as any).error).toHaveBeenCalledWith(errorMessage, {
+				duration: 3000,
+			});
 		});
 	});
 

@@ -21,7 +21,11 @@ describe("Workspace Management", () => {
 	});
 
 	it("should create a workspace with name and organization ID", async () => {
-		const mockWorkspace = { id: "123", name: "Test Workspace", organization_id: "org123" };
+		const mockWorkspace = {
+			id: "123",
+			name: "Test Workspace",
+			organization_id: "org123",
+		};
 		mockInsert.mockResolvedValueOnce({ data: mockWorkspace, error: null });
 
 		const result = await createWorkspace({
