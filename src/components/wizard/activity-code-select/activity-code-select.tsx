@@ -46,7 +46,11 @@ export function ActivityCodeSelect() {
 				<SelectContent>
 					<SelectGroup>
 						{activityCodeData.map((record) => (
-							<SelectItem key={record.id} value={record.code} data-testid={`activity-code-select-item-${record.code}`}>
+							<SelectItem
+								key={record.id}
+								value={record.code}
+								data-testid={`activity-code-select-item-${record.code}`}
+							>
 								{`(${record.code}) ${record.title}`}
 							</SelectItem>
 						))}

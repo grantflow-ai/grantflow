@@ -72,7 +72,9 @@ export function FileUploadContainer({
 
 		setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileToRemove.name));
 		setProgresses((prevProgresses) => {
-			return Object.fromEntries(Object.entries(prevProgresses).filter(([fileName]) => fileName !== fileToRemove.name));
+			return Object.fromEntries(
+				Object.entries(prevProgresses).filter(([fileName]) => fileName !== fileToRemove.name),
+			);
 		});
 	}, []);
 
