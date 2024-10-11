@@ -5,8 +5,8 @@
 	"scripts": {
 		"build": "next build",
 		"dev": "next dev",
-		"format": "biome format --write .",
-		"lint:check": "biome lint . && eslint .",
+		"format": "prettier --write .",
+		"lint:check": "eslint .",
 		"lint:fix": "eslint --fix '**/*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}'",
 		"preinstall": "npx only-allow pnpm",
 		"prepare": "husky",
@@ -17,8 +17,10 @@
 		"ui": "pnpm dlx shadcn@latest"
 	},
 	"lint-staged": {
-		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx,json,html,css}": "biome format --write",
-		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}": ["biome lint --fix", "eslint --fix --no-warn-ignored"]
+		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx,json,html,css,json,yaml,yml}": "prettier --write",
+		"*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}": [
+			"eslint --fix --no-warn-ignored"
+		]
 	},
 	"dependencies": {
 		"@azure/storage-blob": "^12.25.0",
@@ -56,6 +58,7 @@
 		"pino": "^9.4.0",
 		"pino-http": "^10.3.0",
 		"pino-pretty": "^11.2.2",
+		"prettier": "^3.3.3",
 		"react": "^18.3.1",
 		"react-day-picker": "8.10.1",
 		"react-dom": "^18.3.1",
@@ -67,7 +70,6 @@
 		"zustand": "5.0.0-rc.2"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.3",
 		"@commitlint/config-conventional": "^19.5.0",
 		"@faker-js/faker": "^9.0.3",
 		"@tailwindcss/forms": "^0.5.9",
@@ -85,6 +87,7 @@
 		"@vitest/coverage-v8": "^2.1.2",
 		"autoprefixer": "^10.4.20",
 		"eslint": "^9.12.0",
+		"eslint-config-prettier": "^9.1.0",
 		"googleapis": "^144.0.0",
 		"husky": "^9.1.6",
 		"interface-forge": "^2.0.1",
@@ -106,7 +109,11 @@
 	},
 	"pnpm": {
 		"peerDependencyRules": {
-			"allowAny": ["eslint", "react", "react-dom"]
+			"allowAny": [
+				"eslint",
+				"react",
+				"react-dom"
+			]
 		}
 	}
 }

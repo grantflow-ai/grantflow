@@ -29,7 +29,9 @@ describe("MagicLink SignIn Route", () => {
 	});
 
 	it("should handle a failure in OTP verification", async () => {
-		mockVerifyOtp.mockResolvedValueOnce({ error: new Error("Verification failed") });
+		mockVerifyOtp.mockResolvedValueOnce({
+			error: new Error("Verification failed"),
+		});
 		const tokenHash = faker.string.uuid();
 		const nextRequest = createNextRequest(`https://example.com?token_hash=${tokenHash}`);
 		const response = await GET(nextRequest);

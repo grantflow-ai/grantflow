@@ -11,7 +11,9 @@ import { type StoreApi, type UseBoundStore, create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 export type WizardStep = "overview" | "researchPlan";
-export type WizardSectionWithQuestions = GrantWizardSection & { questions: GrantApplicationQuestion[] };
+export type WizardSectionWithQuestions = GrantWizardSection & {
+	questions: GrantApplicationQuestion[];
+};
 export type ResearchAimWithTasks = ResearchAim & { tasks: ResearchTask[] };
 
 export interface WizardStore {
@@ -59,7 +61,7 @@ export interface WizardStore {
 		},
 	) => Promise<Error | null>;
 	setAnswers: (answers: GrantApplicationAnswer[]) => void;
-	// upload progresses
+	// step progresses
 	progresses: Record<WizardStep, number>;
 	setProgress: (progress: number) => void;
 }
@@ -145,10 +147,12 @@ function createWizardStore({
 					include_clinical_trials: includeClinicalTrials,
 					file_urls: fileIds,
 				})
-				.select(`
+				.select(
+					`
 				*,
 				tasks:research_tasks (*)
-			`)
+			`,
+				)
 				.single();
 
 			if (error) {
@@ -187,7 +191,10 @@ function createWizardStore({
 			set((state) => ({
 				researchAims: state.researchAims.map((aim) =>
 					aim.id === researchAimId
-						? { ...aim, tasks: [...aim.tasks.filter((task) => task.id !== data.id), data] }
+						? {
+								...aim,
+								tasks: [...aim.tasks.filter((task) => task.id !== data.id), data],
+							}
 						: aim,
 				),
 			}));

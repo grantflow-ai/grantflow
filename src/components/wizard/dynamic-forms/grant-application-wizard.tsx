@@ -20,12 +20,17 @@ export function GrantApplicationWizard({
 }: {
 	draftId: string;
 	cfp: GrantCFP & {
-		sections: (GrantWizardSection & { questions: GrantApplicationQuestion[] })[];
+		sections: (GrantWizardSection & {
+			questions: GrantApplicationQuestion[];
+		})[];
 	};
 	answers: GrantApplicationAnswer[];
 	researchAims: (ResearchAim & { tasks: ResearchTask[] })[];
 }) {
-	const { setSections, setAnswers, setResearchAims } = useWizardStore({ cfpIdentifier: cfp.grant_identifier, draftId })(
+	const { setSections, setAnswers, setResearchAims } = useWizardStore({
+		cfpIdentifier: cfp.grant_identifier,
+		draftId,
+	})(
 		useShallow((state) => ({
 			setSections: state.setSections,
 			setAnswers: state.setAnswers,

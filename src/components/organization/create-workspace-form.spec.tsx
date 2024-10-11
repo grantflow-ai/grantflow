@@ -47,7 +47,10 @@ describe("CreateWorkspaceForm", () => {
 		await userEvent.click(submitButton);
 
 		await waitFor(() => {
-			expect(mockedCreateWorkspace).toHaveBeenCalledWith({ organizationId, name: "New Workspace" });
+			expect(mockedCreateWorkspace).toHaveBeenCalledWith({
+				organizationId,
+				name: "New Workspace",
+			});
 			expect(toast.success).toHaveBeenCalledWith(en.organizationView.workspaceCreatedSuccess);
 			expect(mockCloseModal).toHaveBeenCalled();
 		});
@@ -79,7 +82,10 @@ describe("CreateWorkspaceForm", () => {
 		await userEvent.click(submitButton);
 
 		await waitFor(() => {
-			expect(createWorkspace).toHaveBeenCalledWith({ organizationId, name: "New Workspace" });
+			expect(createWorkspace).toHaveBeenCalledWith({
+				organizationId,
+				name: "New Workspace",
+			});
 			expect(toast.success).toHaveBeenCalledWith(en.organizationView.workspaceCreatedSuccess);
 			expect(mockCloseModal).toHaveBeenCalled();
 		});
@@ -98,7 +104,10 @@ describe("CreateWorkspaceForm", () => {
 		await userEvent.click(submitButton);
 
 		await waitFor(() => {
-			expect(createWorkspace).toHaveBeenCalledWith({ organizationId, name: "New Workspace" });
+			expect(createWorkspace).toHaveBeenCalledWith({
+				organizationId,
+				name: "New Workspace",
+			});
 			expect(toast.error).toHaveBeenCalledWith(en.organizationView.workspaceCreatedError);
 			expect(mockCloseModal).toHaveBeenCalled();
 		});

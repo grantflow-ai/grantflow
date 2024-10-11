@@ -15,7 +15,10 @@ describe("ThemeToggle", () => {
 	});
 
 	it("renders the button with sun icon in light mode", () => {
-		vi.mocked(useTheme).mockReturnValue({ theme: "light", setTheme: mockSetTheme } as any);
+		vi.mocked(useTheme).mockReturnValue({
+			theme: "light",
+			setTheme: mockSetTheme,
+		} as any);
 
 		render(<ThemeToggle />);
 
@@ -29,7 +32,10 @@ describe("ThemeToggle", () => {
 	});
 
 	it("renders the button with moon icon in dark mode", () => {
-		vi.mocked(useTheme).mockReturnValue({ theme: "dark", setTheme: mockSetTheme } as any);
+		vi.mocked(useTheme).mockReturnValue({
+			theme: "dark",
+			setTheme: mockSetTheme,
+		} as any);
 
 		render(<ThemeToggle />);
 
@@ -41,7 +47,10 @@ describe("ThemeToggle", () => {
 	});
 
 	it("toggles theme from light to dark when clicked", () => {
-		vi.mocked(useTheme).mockReturnValue({ theme: "light", setTheme: mockSetTheme } as any);
+		vi.mocked(useTheme).mockReturnValue({
+			theme: "light",
+			setTheme: mockSetTheme,
+		} as any);
 
 		render(<ThemeToggle />);
 
@@ -52,7 +61,10 @@ describe("ThemeToggle", () => {
 	});
 
 	it("toggles theme from dark to light when clicked", () => {
-		vi.mocked(useTheme).mockReturnValue({ theme: "dark", setTheme: mockSetTheme } as any);
+		vi.mocked(useTheme).mockReturnValue({
+			theme: "dark",
+			setTheme: mockSetTheme,
+		} as any);
 
 		render(<ThemeToggle />);
 

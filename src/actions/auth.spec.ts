@@ -23,9 +23,18 @@ vi.mock("validator", () => ({
 
 describe("Auth server actions", () => {
 	beforeEach(() => {
-		SupabaseSignOutMock.mockReset().mockResolvedValue({ error: null, data: null });
-		SupabaseSignInWithOtpMock.mockReset().mockResolvedValue({ error: null, data: null });
-		SupabaseUpdateUserMock.mockReset().mockResolvedValue({ error: null, data: null });
+		SupabaseSignOutMock.mockReset().mockResolvedValue({
+			error: null,
+			data: null,
+		});
+		SupabaseSignInWithOtpMock.mockReset().mockResolvedValue({
+			error: null,
+			data: null,
+		});
+		SupabaseUpdateUserMock.mockReset().mockResolvedValue({
+			error: null,
+			data: null,
+		});
 	});
 
 	describe("signOut", () => {
@@ -39,7 +48,9 @@ describe("Auth server actions", () => {
 		});
 
 		it("should return undefined if sign out is successful", async () => {
-			vi.mocked(SupabaseSignOutMock).mockResolvedValueOnce({ error: null } as any);
+			vi.mocked(SupabaseSignOutMock).mockResolvedValueOnce({
+				error: null,
+			} as any);
 			const result = await signOut();
 			expect(result).toBeUndefined();
 		});

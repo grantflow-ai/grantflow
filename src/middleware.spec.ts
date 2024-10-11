@@ -16,7 +16,10 @@ describe("middleware", () => {
 	});
 
 	it("should return i18nMiddleware response if status is not 200", async () => {
-		const mockI18nResponse = { status: 301, headers: new Headers() } as NextResponse;
+		const mockI18nResponse = {
+			status: 301,
+			headers: new Headers(),
+		} as NextResponse;
 		vi.mocked(i18nMiddleware).mockReturnValue(mockI18nResponse);
 
 		const result = await middleware(mockRequest);
@@ -29,8 +32,14 @@ describe("middleware", () => {
 	it("should call updateSession if i18nMiddleware status is 200", async () => {
 		const mockI18nResponse = NextResponse.next();
 		const mockUpdateSessionResponse = NextResponse.next();
-		Object.defineProperty(mockI18nResponse, "status", { value: 200, writable: false });
-		Object.defineProperty(mockUpdateSessionResponse, "status", { value: 200, writable: false });
+		Object.defineProperty(mockI18nResponse, "status", {
+			value: 200,
+			writable: false,
+		});
+		Object.defineProperty(mockUpdateSessionResponse, "status", {
+			value: 200,
+			writable: false,
+		});
 		vi.mocked(i18nMiddleware).mockReturnValue(mockI18nResponse);
 		vi.mocked(updateSession).mockResolvedValue(mockUpdateSessionResponse);
 

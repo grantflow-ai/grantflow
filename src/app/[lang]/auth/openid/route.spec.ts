@@ -29,7 +29,9 @@ describe("OpenID SignIn Route", () => {
 	});
 
 	it("should handle a failure in code exchange", async () => {
-		mockExchangeCodeForSession.mockResolvedValueOnce({ error: new Error("Exchange failed") });
+		mockExchangeCodeForSession.mockResolvedValueOnce({
+			error: new Error("Exchange failed"),
+		});
 		const code = faker.string.uuid();
 		const nextRequest = createNextRequest(`https://example.com?code=${code}`);
 		const response = await GET(nextRequest);

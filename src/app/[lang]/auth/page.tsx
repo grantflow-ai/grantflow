@@ -7,11 +7,7 @@ import { getServerClient } from "@/utils/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
 import { redirect } from "next/navigation";
 
-export default async function AuthPage({
-	params: { lang },
-}: {
-	params: { lang: SupportedLocale };
-}) {
+export default async function AuthPage({ params: { lang } }: { params: { lang: SupportedLocale } }) {
 	const supabase = await getServerClient();
 	const {
 		data: { user },

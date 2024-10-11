@@ -1,5 +1,4 @@
 import type { ErrorType } from "@/constants";
-import { serverLogger } from "@/utils/logging/server";
 import { NextResponse } from "next/server";
 
 /**
@@ -9,16 +8,9 @@ import { NextResponse } from "next/server";
  * @param error - The error object.
  * @returns A NextResponse object.
  */
-export function errorRedirect({
-	url,
-	errorType,
-	error,
-}: {
-	url: URL;
-	errorType: ErrorType;
-	error: Error;
-}) {
-	serverLogger.error(`${errorType}: ${error.message}`);
+export function errorRedirect({ url, errorType, error }: { url: URL; errorType: ErrorType; error: Error }) {
+	// eslint-disable-next-line no-console
+	console.error(`An error occurred:\n${error}`);
 	url.searchParams.set("error", errorType);
 	return NextResponse.redirect(url);
 }
