@@ -1,21 +1,23 @@
-import { handleServerError } from "@/utils/server-side";
+"use server";
+
 import { getServerClient } from "@/utils/supabase/server";
+import { handleServerError } from "@/utils/server-side";
 
 /**
  * Create a workspace with the given name and description.
- * @param description - The description of the workspace.
  * @param name - The name of the workspace.
- * @param organizationId - The ID of the organization.
+ * @param description - The description of the workspace.
+ * @param logoUrl - The URL of the workspace logo.
  * @returns The created workspace object.
  */
 export async function createWorkspace({
-	description,
 	name,
+	description,
 	logoUrl,
 }: {
-	description?: string;
 	name: string;
-	logoUrl?: string;
+	description: string;
+	logoUrl: string;
 }) {
 	const supabase = await getServerClient();
 
@@ -28,11 +30,11 @@ export async function createWorkspace({
 	}
 
 	const client = supabase.from("workspaces");
-	const { data, error: workspaceCreateErr } = await client
+	const { error: workspaceCreateErr } = await client
 		.insert({
 			name,
-			description,
-			logoUrl,
+			description: description || null,
+			logo_url: logoUrl || null,
 		})
 		.select("id")
 		.single();
@@ -43,10 +45,4 @@ export async function createWorkspace({
 			fallback: "Failed to create workspace",
 		});
 	}
-
-	await supabase.from("workspace_users").insert({
-		workspace_id: data.id,
-		user_id: user.id,
-		role: "owner",
-	});
 }

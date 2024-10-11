@@ -10,8 +10,7 @@ public.app_users
 (
     id UUID PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE ON UPDATE CASCADE,
     email TEXT NOT NULL UNIQUE,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
+    name TEXT,
     avatar_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now())

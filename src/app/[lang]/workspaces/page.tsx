@@ -55,7 +55,7 @@ export default async function OrganizationDetailPage({
 						{workspaces.map((workspace) => (
 							<Link
 								key={workspace.id}
-								href={`/${lang}/workspace/${workspace.id}`}
+								href={`/${lang}/workspaces/${workspace.id}`}
 								className="block"
 								data-testid={`workspace-link-${workspace.id}`}
 							>
