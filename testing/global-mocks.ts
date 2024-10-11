@@ -77,7 +77,7 @@ beforeEach(() => {
 		ok: true,
 		status: 200,
 	});
-	global.fetch = mockFetch;
+	globalThis.fetch = mockFetch;
 	Object.assign(
 		process.env,
 		Object.fromEntries(Object.entries(mockEnv).map(([key, value]) => [key, value.toString()])),

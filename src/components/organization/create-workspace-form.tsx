@@ -11,8 +11,8 @@ import { z } from "zod";
 
 const workspaceSchema = z.object({
 	name: z.string().min(3, { message: "Workspace name must be at least 3 characters long" }),
-	description: z.string().optional(),
-	logoUrl: z.string().optional(),
+	description: z.string(),
+	logoUrl: z.string(),
 });
 
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
@@ -24,13 +24,7 @@ export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisa
 	});
 
 	const onSubmit = async (values: WorkspaceFormValues) => {
-		const error = await createWorkspace({
-			name: values.name,
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-			description: values.description || undefined,
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-			logoUrl: values.logoUrl || undefined,
-		});
+		const error = await createWorkspace(values);
 		if (error) {
 			toast.error(locales.workspaceListView.workspaceCreatedError);
 		} else {

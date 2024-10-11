@@ -15,7 +15,7 @@ beforeAll(() => {
 	// see: https://github.com/testing-library/react-testing-library/issues/1108
 
 	// @ts-expect-error, we are setting a global variable that is undeclared in the global scope
-	global.IS_REACT_ACT_ENVIRONMENT = false;
+	globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 });
 
 // see: https://github.com/vercel/next.js/discussions/49304
