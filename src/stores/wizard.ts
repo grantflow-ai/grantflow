@@ -48,7 +48,7 @@ export interface WizardStore {
 	selectedSection: number;
 	setSelectedSection: (sectionIndex: number) => void;
 	// answers
-	answers: Record<WizardStep, Record<string, GrantApplicationAnswer>>;
+	answers: Record<string, GrantApplicationAnswer>;
 	setAnswer: (
 		questionId: string,
 		value: {
@@ -58,7 +58,7 @@ export interface WizardStore {
 			researchAimId?: string;
 		},
 	) => Promise<Error | null>;
-	setAnswers: (answers: Record<WizardStep, Record<string, GrantApplicationAnswer>>) => void;
+	setAnswers: (answers: GrantApplicationAnswer[]) => void;
 	// upload progresses
 	progresses: Record<WizardStep, number>;
 	setProgress: (progress: number) => void;
@@ -86,10 +86,7 @@ const initialState: Omit<
 	researchAims: [],
 	currentWizardStep: "overview",
 	selectedSection: 0,
-	answers: {
-		overview: {},
-		researchPlan: {},
-	},
+	answers: {},
 	progresses: {
 		overview: 0,
 		researchPlan: 0,
@@ -213,7 +210,7 @@ function createWizardStore({
 			}
 
 			const client = getBrowserClient().from("grant_application_answers");
-			const existingAnswer = state.answers[state.currentWizardStep][questionId] as { id: string } | undefined;
+			const existingAnswer = state.answers[questionId] as { id: string } | undefined;
 
 			const { data, error } = await client
 				.upsert({
@@ -236,17 +233,19 @@ function createWizardStore({
 			set((state) => ({
 				answers: {
 					...state.answers,
-					[state.currentWizardStep]: {
-						...state.answers[state.currentWizardStep],
-						[questionId]: data,
-					},
+					[questionId]: data,
 				},
 			}));
 
 			return null;
 		},
 		setAnswers: (answers) => {
-			set({ answers });
+			const answersMap = answers.reduce<Record<string, GrantApplicationAnswer>>((acc, answer) => {
+				acc[answer.question_id] = answer;
+				return acc;
+			}, {});
+
+			set({ answers: answersMap });
 		},
 		setProgress: (progress) => {
 			set((state) => ({
