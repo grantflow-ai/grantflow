@@ -13,18 +13,14 @@ export function CreateWorkspaceModal({ locales }: { locales: Localisation }) {
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild={true}>
-				<Button
-					variant="outline"
-					className="h-full flex flex-col items-center justify-center p-6"
-					data-testid="create-workspace-button"
-				>
-					<PlusCircle className="h-12 w-12 mb-2" />
-					<span>{locales.workspaceListView.createWorkspace}</span>
+				<Button size="sm" className="flex items-center gap-1" data-testid="create-workspace-button">
+					<PlusCircle className="h-3.5 w-3.5" />
+					<span>{locales.workspaceListView.newWorkspace}</span>
 				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{locales.workspaceListView.createWorkspaceModalTitle}</DialogTitle>
+					<DialogTitle>{locales.workspaceListView.newWorkspace}</DialogTitle>
 				</DialogHeader>
 				<CreateWorkspaceForm
 					locales={locales}

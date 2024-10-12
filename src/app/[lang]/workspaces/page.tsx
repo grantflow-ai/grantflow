@@ -1,13 +1,55 @@
-import { CreateWorkspaceModal } from "@/components/organization/create-workspace-modal";
 import { PagePath } from "@/enums";
-import { type SupportedLocale, getLocale } from "@/i18n";
-import type { Workspace } from "@/types/database-types";
+import { getLocale, type SupportedLocale } from "@/i18n";
+import { UserRole, Workspace } from "@/types/database-types";
 import { handleServerError } from "@/utils/server-side";
 import { getServerClient } from "@/utils/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
 import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "gen/ui/avatar";
+import { Badge } from "gen/ui/badge";
+import { ChevronRightIcon } from "@radix-ui/react-icons";
+import { CreateWorkspaceModal } from "@/components/organization/create-workspace-modal";
 
-export default async function OrganizationDetailPage({
+function WorkspaceCard({ workspace, userRole }: { workspace: Workspace; userRole: UserRole }) {
+	const roleColors: Record<UserRole, string> = {
+		owner: "bg-primary/20 text-primary",
+		admin: "bg-secondary/50 text-secondary-foreground",
+		member: "bg-accent/50 text-accent-foreground",
+	};
+
+	return (
+		<Card className="group relative h-[200px] overflow-hidden transition-all duration-300 hover:shadow-md hover:bg-muted/50">
+			<Link
+				href={`/workspaces/${workspace.id}`}
+				className="absolute inset-0 z-10"
+				data-testid={`workspace-link-${workspace.id}`}
+			>
+				<span className="sr-only">View {workspace.name} workspace</span>
+			</Link>
+			<CardHeader className="pb-2">
+				<div className="flex items-center justify-between">
+					<Avatar className="h-10 w-10">
+						<AvatarImage src={workspace.logo_url ?? ""} alt={`${workspace.name} logo`} />
+						<AvatarFallback>{workspace.name.charAt(0)}</AvatarFallback>
+					</Avatar>
+					<Badge
+						variant="secondary"
+						className={`${roleColors[userRole]} px-2 py-0.5 text-xs font-medium uppercase`}
+					>
+						{userRole}
+					</Badge>
+				</div>
+				<CardTitle className="p-1 line-clamp-1 text-lg font-bold">{workspace.name}</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<CardDescription className="line-clamp-2 text-sm">{workspace.description}</CardDescription>
+			</CardContent>
+			<ChevronRightIcon className="absolute bottom-4 right-4 h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:right-3 group-hover:text-foreground" />
+		</Card>
+	);
+}
+
+export default async function WorkspacesListPage({
 	params: { lang },
 }: {
 	params: {
@@ -41,38 +83,26 @@ export default async function OrganizationDetailPage({
 		});
 	}
 
-	const workspaces = userWorkspaces.map((workspaceUser) => workspaceUser.workspace).filter(Boolean) as Workspace[];
 	const locales = await getLocale(lang);
 
 	return (
-		<div className="container mx-auto px-4 py-8" data-testid="workspace-view-page">
-			<Card data-testid="workspace-view-workspaces-section">
-				<CardHeader>
-					<CardTitle>{locales.workspaceListView.title}</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						{workspaces.map((workspace) => (
-							<Link
-								key={workspace.id}
-								href={`/${lang}/workspaces/${workspace.id}`}
-								className="block"
-								data-testid={`workspace-link-${workspace.id}`}
-							>
-								<Card className="h-full hover:shadow-md transition-shadow">
-									<CardHeader>
-										<CardTitle className="text-lg">{workspace.name}</CardTitle>
-									</CardHeader>
-									<CardContent>
-										<p className="text-sm text-muted-foreground">{workspace.description}</p>
-									</CardContent>
-								</Card>
-							</Link>
+		<div className="container mx-auto flex-1 flex-grow overflow-y-auto">
+			<div className="p-5">
+				<div className="mx-auto w-full flex justify-end w-full">
+					<CreateWorkspaceModal locales={locales} />
+				</div>
+				<div className="my-6 space-y-8">
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+						{userWorkspaces.map((userWorkspace) => (
+							<WorkspaceCard
+								key={userWorkspace.workspace_id}
+								workspace={userWorkspace.workspace as Workspace}
+								userRole={userWorkspace.role}
+							/>
 						))}
-						<CreateWorkspaceModal locales={locales} />
 					</div>
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 		</div>
 	);
 }
