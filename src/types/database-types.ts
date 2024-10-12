@@ -4,6 +4,7 @@ import type { Database } from "gen/database-types";
 
 export type DatabaseClient = SupabaseClient<Database, "public", Database["public"]>;
 
+export type UserRole = Database["public"]["Tables"]["workspace_users"]["Row"]["role"];
 export type Workspace = Database["public"]["Tables"]["workspaces"]["Row"];
 export type GrantCFP = Database["public"]["Tables"]["grant_cfps"]["Row"];
 export type GrantWizardSection = Database["public"]["Tables"]["grant_wizard_sections"]["Row"];
