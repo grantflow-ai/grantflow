@@ -18,9 +18,12 @@ export async function Navbar() {
 	const isSignedIn = !!user;
 
 	return (
-		<nav className="px-4 border-2 flex h-14 items-center justify-between sm:space-x-0 w-full" data-testid="navbar">
+		<nav
+			className="flex h-12 items-center justify-between py-2 px-5 bg-dash-sidebar border-b border-default"
+			data-testid="navbar"
+		>
 			<Link
-				className="bg-slate-100 dark:bg-slate-800 hover:dark:bg-slate-600/50 hover:bg-slate-200/70 dark:border-slate-700 light:border-slate-200 cursor-pointer rounded-lg p-1"
+				className="hover:dark:bg-slate-600/50 hover:bg-slate-200/70 dark:border-slate-700 light:border-slate-200 cursor-pointer rounded-lg p-1"
 				href={PagePath.ROOT}
 				data-testid="navbar-logo-container"
 			>
@@ -31,14 +34,18 @@ export async function Navbar() {
 					{isSignedIn && (
 						<Button variant="outline" size="sm" className="bg-inherit dark:border-slate-700">
 							<Link href={PagePath.WORKSPACES}>
-								<HomeIcon />
+								<HomeIcon className="h-3.5 w-3.5" />
 							</Link>
 						</Button>
 					)}
 					{getEnv().NEXT_PUBLIC_IS_DEVELOPMENT && (
 						<Button variant="outline" size="sm" className="bg-inherit dark:border-slate-700">
 							<Link href={isSignedIn ? ApiPath.LOGOUT : PagePath.AUTH}>
-								{isSignedIn ? <ExitIcon /> : <EnterIcon />}
+								{isSignedIn ? (
+									<ExitIcon className="h-3.5 w-3.5" />
+								) : (
+									<EnterIcon className="h-3.5 w-3.5" />
+								)}
 							</Link>
 						</Button>
 					)}

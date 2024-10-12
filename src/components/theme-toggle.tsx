@@ -10,14 +10,14 @@ export function ThemeToggle() {
 		<Button
 			data-testid="theme-toggle-button"
 			variant="outline"
-			size="icon"
+			size="sm"
 			className="bg-inherit dark:border-slate-700"
 			onClick={() => {
 				setTheme(theme === "light" ? "dark" : "light");
 			}}
 		>
-			<SunIcon data-testid="theme-toggle-sun-icon" className="dark:hidden" />
-			<MoonIcon data-testid="theme-toggle-moon-icon" className="hidden dark:block bg-inherit" />
+			<SunIcon data-testid="theme-toggle-sun-icon" className="dark:hidden h-3.5 w-3.5" />
+			<MoonIcon data-testid="theme-toggle-moon-icon" className="hidden dark:block bg-inherit h-3.5 w-3.5" />
 			<span data-testid="theme-toggle-sr-text" className="sr-only">
 				Toggle theme
 			</span>
