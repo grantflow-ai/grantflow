@@ -53,15 +53,15 @@
 		"sendMagicLink": "Send Magic Link"
 	},
 	"workspaceListView": {
+		"newWorkspace": "New Workspace",
 		"createWorkspace": "Create Workspace",
 		"title": "Workspaces",
 		"workspaceNamePlaceholder": "Workspace Name",
-		"workspaceNameLabel": "Workspace Name",
+		"workspaceNameLabel": "Name *",
 		"workspaceCreatedSuccess": "Workspace created successfully.",
 		"workspaceCreatedError": "An error occurred while creating the workspace.",
-		"createWorkspaceModalTitle": "Create Workspace",
-		"workspaceDescriptionPlaceholder": "Workspace Description",
-		"workspaceLogoLabel": "Workspace Logo"
+		"workspaceDescriptionLabel": "Description",
+		"workspaceDescriptionPlaceholder": "Workspace Description"
 	},
 	"workspaceDetailView": {
 		"title": "Workspace",

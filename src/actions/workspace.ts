@@ -7,18 +7,9 @@ import { handleServerError } from "@/utils/server-side";
  * Create a workspace with the given name and description.
  * @param name - The name of the workspace.
  * @param description - The description of the workspace.
- * @param logoUrl - The URL of the workspace logo.
  * @returns The created workspace object.
  */
-export async function createWorkspace({
-	name,
-	description,
-	logoUrl,
-}: {
-	name: string;
-	description: string;
-	logoUrl: string;
-}) {
+export async function createWorkspace({ name, description }: { name: string; description: string }) {
 	const supabase = await getServerClient();
 
 	const {
@@ -34,7 +25,6 @@ export async function createWorkspace({
 		.insert({
 			name,
 			description: description || null,
-			logo_url: logoUrl || null,
 		})
 		.select("id")
 		.single();
