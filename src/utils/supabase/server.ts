@@ -5,8 +5,7 @@ import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { cookies } from "next/headers";
 import { cache } from "react";
 
-import type { User } from "@/types/auth-types";
-import type { DatabaseClient } from "@/types/database-types";
+import type { DatabaseClient, User } from "@/types/database-types";
 import { getEnv } from "@/utils/env";
 import type { Database } from "gen/database-types";
 

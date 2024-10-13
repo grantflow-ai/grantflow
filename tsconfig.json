@@ -40,14 +40,16 @@
 	"exclude": ["node_modules"],
 	"include": [
 		"**/*.d.ts",
+		"**/*.mjs",
 		"**/*.ts",
 		"**/*.tsx",
+		"**/*.mts",
 		"*.cjs",
 		"*.d.ts",
 		"*.js",
 		"*.mjs",
-		"*.ts",
 		"*.mts",
+		"*.ts",
 		".next/types/**/*.ts"
 	]
 }
