@@ -4,6 +4,15 @@ CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member');
 CREATE TYPE wizard_input_type AS ENUM ('text', 'boolean', 'date', 'date-range');
 CREATE TYPE question_type AS ENUM ('per-section', 'per-research-aim', 'per-research-task');
 
+-- mailing-list table
+CREATE TABLE public.mailing_list
+(
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now())
+);
+CREATE INDEX idx_mailing_list_email ON public.mailing_list (email);
+
 -- users table 
 CREATE TABLE
 public.app_users
@@ -100,15 +109,6 @@ CREATE INDEX idx_notifications_created_at ON public.notifications (created_at);
 CREATE INDEX idx_notifications_deleted_at ON public.notifications (deleted_at);
 CREATE INDEX idx_notifications_read ON public.notifications (read);
 
--- mailing-list table
-CREATE TABLE public.mailing_list
-(
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email TEXT NOT NULL UNIQUE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now())
-);
-CREATE INDEX idx_mailing_list_email ON public.mailing_list (email);
-
 -- grant-funding-organization table
 CREATE TABLE public.grant_funding_organization (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -197,6 +197,7 @@ CREATE UNIQUE INDEX idx_grant_application_questions_section_id_ordering ON publi
 CREATE TABLE public.application_drafts
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    workspace_id UUID REFERENCES public.workspaces (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
     cfp_id UUID REFERENCES public.grant_cfps (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
     title TEXT NOT NULL,
     is_resubmission BOOLEAN NOT NULL DEFAULT false,
