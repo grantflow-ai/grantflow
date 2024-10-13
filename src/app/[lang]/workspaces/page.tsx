@@ -24,7 +24,7 @@ function WorkspaceCard({ workspace, userRole }: { workspace: Workspace; userRole
 				className="absolute inset-0 z-10"
 				data-testid={`workspace-link-${workspace.id}`}
 			>
-				<span className="sr-only">View {workspace.name} workspace</span>
+				<span className="sr-only">Navigate to {workspace.name} workspace</span>
 			</Link>
 			<CardHeader className="pb-2">
 				<div className="flex items-center justify-between">
