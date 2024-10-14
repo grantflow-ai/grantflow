@@ -7,6 +7,7 @@ export type DatabaseClient = SupabaseClient<Database, "public", Database["public
 export type User = Database["public"]["Tables"]["app_users"]["Row"] & AuthUser;
 export type UserRole = Database["public"]["Tables"]["workspace_users"]["Row"]["role"];
 export type Workspace = Database["public"]["Tables"]["workspaces"]["Row"];
+export type GrantFundingOrganization = Database["public"]["Tables"]["grant_funding_organization"]["Row"];
 export type GrantCFP = Database["public"]["Tables"]["grant_cfps"]["Row"];
 export type GrantWizardSection = Database["public"]["Tables"]["grant_wizard_sections"]["Row"];
 export type GrantApplicationQuestion = Database["public"]["Tables"]["grant_application_questions"]["Row"];
