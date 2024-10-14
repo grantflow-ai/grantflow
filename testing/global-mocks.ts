@@ -56,14 +56,16 @@ export const mockFetch = vi.fn();
 
 // mock the env we expect
 export const mockEnv = {
-	NEXT_PUBLIC_DEBUG: true,
-	NEXT_PUBLIC_SITE_URL: "https://example.com",
+	AUTH_GOOGLE_ID: "client_id",
+	AUTH_GOOGLE_SECRET: "secret",
+	AUTH_RESEND_KEY: "resend_key",
+	AUTH_SECRET: "secret",
 	AZURE_STORAGE_ACCOUNT_KEY: "valid_key",
 	AZURE_STORAGE_ACCOUNT_NAME: "account_name",
 	AZURE_STORAGE_CONTAINER_NAME: "container_name",
-	GOOGLE_CLIENT_ID: "client_id",
-	GOOGLE_SECRET: "secret",
 	DATABASE_CONNECTION_STRING: "connection_string",
+	NEXT_PUBLIC_DEBUG: true,
+	NEXT_PUBLIC_SITE_URL: "https://example.com",
 } satisfies Env;
 
 beforeAll(() => {

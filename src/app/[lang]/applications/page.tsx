@@ -1,6 +1,7 @@
-import { getServerClient } from "@/utils/supabase/server";
-import { handleServerError } from "@/utils/server-side";
 import { CFPCombobox } from "@/components/applications/cfp-combobox";
+import { getDatabaseClient } from "db/connection";
+import { inArray } from "drizzle-orm";
+import { grantCfps } from "db/schema";
 
 export default async function ApplicationCreateView({
 	searchParams: { workspaceId },
@@ -9,11 +10,9 @@ export default async function ApplicationCreateView({
 		workspaceId: string;
 	};
 }) {
-	const supabase = await getServerClient();
-	const { data: cfps, error: fundingOrganizationsRetrieveError } = await supabase
-		.from("grant_cfps")
-		.select("*")
-		.in("code", [
+	const db = await getDatabaseClient();
+	const cfps = await db.query.grantCfps.findMany({
+		where: inArray(grantCfps.code, [
 			"R01",
 			"R03",
 			"R18",
@@ -29,17 +28,12 @@ export default async function ApplicationCreateView({
 			"R44",
 			"R50",
 			"R61",
-		]);
-
-	if (fundingOrganizationsRetrieveError) {
-		return handleServerError(fundingOrganizationsRetrieveError, {
-			message: "Failed to fetch funding organizations",
-		});
-	}
+		]),
+	});
 
 	return (
 		<div>
-			<h1>Application Create</h1>
+			<h1>{workspaceId}</h1>
 			<CFPCombobox cfps={cfps} />
 		</div>
 	);

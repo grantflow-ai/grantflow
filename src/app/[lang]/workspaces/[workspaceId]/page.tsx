@@ -1,11 +1,12 @@
 import { getLocale, type SupportedLocale } from "@/i18n";
-import { handleServerError } from "@/utils/server-side";
-import { getServerClient } from "@/utils/supabase/server";
 import { Button } from "gen/ui/button";
 import { SeparatorWithText } from "@/components/separator-with-text";
-import { GrantApplicationCard } from "@/components/workspaces/detail/grantApplicationCard";
+import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
 import Link from "next/link";
+import { getDatabaseClient } from "db/connection";
+import { workspaces, grantApplications } from "db/schema";
+import { eq } from "drizzle-orm";
 
 export default async function WorkspaceDetailPage({
 	params: { lang, workspaceId },
@@ -15,24 +16,18 @@ export default async function WorkspaceDetailPage({
 		workspaceId: string;
 	};
 }) {
-	const supabase = await getServerClient();
-	const client = supabase.from("workspaces");
-	const { data: workspace, error } = await client
-		.select(
-			`
-			*,
-			grant_applications (
-				id,
-				title			
-			)
-		`,
-		)
-		.eq("id", workspaceId)
-		.single();
+	const db = await getDatabaseClient();
+	const workspace = await db.query.workspaces.findFirst({
+		where: eq(workspaces.id, workspaceId),
+	});
 
-	if (error) {
-		return handleServerError(error, { message: "Failed to fetch workspace" });
+	if (!workspace) {
+		return null;
 	}
+
+	const applications = await db.query.grantApplications.findMany({
+		where: eq(grantApplications.workspaceId, workspace.id),
+	});
 
 	const locales = await getLocale(lang);
 
@@ -52,7 +47,7 @@ export default async function WorkspaceDetailPage({
 					</Button>
 				</div>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					{workspace.grantApplications.map(({ id, title }) => (
+					{applications.map(({ id, title }) => (
 						<GrantApplicationCard key={id} id={id} title={title} />
 					))}
 				</div>

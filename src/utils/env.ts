@@ -16,9 +16,11 @@ export function getEnv(): Env {
 				AZURE_STORAGE_ACCOUNT_NAME: z.string(),
 				AZURE_STORAGE_ACCOUNT_KEY: z.string(),
 				AZURE_STORAGE_CONTAINER_NAME: z.string(),
-				GOOGLE_CLIENT_ID: z.string(),
-				GOOGLE_SECRET: z.string(),
+				AUTH_GOOGLE_ID: z.string(),
+				AUTH_GOOGLE_SECRET: z.string(),
 				DATABASE_CONNECTION_STRING: z.string(),
+				AUTH_SECRET: z.string(),
+				AUTH_RESEND_KEY: z.string(),
 			},
 			client: {
 				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),

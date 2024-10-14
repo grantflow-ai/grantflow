@@ -1,9 +1,9 @@
 "use server";
 
 import { PagePath } from "@/enums";
-import { getServerClient } from "@/utils/supabase/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { signOut } from "@/auth";
 
 /**
  * Handle user logout.
@@ -14,7 +14,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
 	const requestUrl = new URL(request.url);
 
-	const client = await getServerClient();
-	await client.auth.signOut();
+	await signOut();
+
 	return NextResponse.redirect(new URL(PagePath.ROOT, requestUrl.origin));
 }
