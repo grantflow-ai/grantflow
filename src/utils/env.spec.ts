@@ -6,8 +6,6 @@ describe("getEnv (client side)", () => {
 		const env = getEnv();
 
 		expect(env.NEXT_PUBLIC_SITE_URL).toBe("https://example.com");
-		expect(env.NEXT_PUBLIC_SUPABASE_ANON_KEY).toBe("valid_key");
-		expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("https://supabase.co");
 		expect(env.NEXT_PUBLIC_DEBUG).toBe(true);
 	});
 });

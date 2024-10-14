@@ -10,47 +10,43 @@ import {
 } from "@/types/database-types";
 
 export const UserFactory = new Factory<User>((factory) => ({
-	app_metadata: {},
-	user_metadata: {},
-
-	aud: factory.string.uuid(),
-	avatar_url: factory.helpers.arrayElement([null, factory.image.avatar()]),
-	created_at: new Date().toISOString(),
+	avatarUrl: factory.helpers.arrayElement([null, factory.image.avatar()]),
+	createdAt: new Date(),
 	email: factory.internet.email(),
 	name: factory.person.fullName(),
 	id: factory.string.uuid(),
-	updated_at: new Date().toISOString(),
+	updatedAt: new Date(),
 }));
 
 export const WorkspaceFactory = new Factory<Workspace>((factory) => ({
-	created_at: new Date().toISOString(),
-	deleted_at: null,
+	createdAt: new Date(),
+	deletedAt: null,
 	description: factory.helpers.arrayElement([null, factory.lorem.sentence()]),
 	id: factory.string.uuid(),
-	logo_url: "https://via.placeholder.com/150?text=Logo+3",
+	logoUrl: "https://via.placeholder.com/150?text=Logo+3",
 	name: factory.lorem.sentence(),
-	updated_at: new Date().toISOString(),
+	updatedAt: new Date(),
 }));
 
 export const GrantApplicationFactory = new Factory<GrantApplication>((factory) => ({
-	cfp_id: factory.string.uuid(),
-	created_at: new Date().toISOString(),
-	deleted_at: null,
+	cfpId: factory.string.uuid(),
+	createdAt: new Date(),
+	deletedAt: null,
 	id: factory.string.uuid(),
-	is_resubmission: factory.datatype.boolean(),
+	isResubmission: factory.datatype.boolean(),
 	title: factory.lorem.words(),
 	innovation: factory.lorem.paragraphs(),
 	significance: factory.lorem.paragraphs(),
-	updated_at: new Date().toISOString(),
-	workspace_id: factory.string.uuid(),
+	updatedAt: new Date(),
+	workspaceId: factory.string.uuid(),
 }));
 
 export const GrantCFPFactory = new Factory<GrantCFP>((factory) => ({
-	allow_clinical_trials: factory.datatype.boolean(),
-	allow_resubmissions: factory.datatype.boolean(),
-	created_at: new Date().toISOString(),
-	deleted_at: null,
-	funding_organization_id: factory.string.uuid(),
+	allowClinicalTrials: factory.datatype.boolean(),
+	allowResubmissions: factory.datatype.boolean(),
+	createdAt: new Date(),
+	deletedAt: null,
+	fundingOrganizationId: factory.string.uuid(),
 	code: factory.helpers.arrayElement([
 		"R01",
 		"R03",
@@ -72,39 +68,39 @@ export const GrantCFPFactory = new Factory<GrantCFP>((factory) => ({
 	description: factory.lorem.sentence(),
 	category: factory.lorem.words(),
 	id: factory.string.uuid(),
-	updated_at: new Date().toISOString(),
+	updatedAt: new Date(),
 	url: factory.helpers.arrayElement([null, factory.internet.url()]),
 }));
 
 export const FundingOrganizationFactory = new Factory<FundingOrganization>((factory) => ({
-	created_at: new Date().toISOString(),
-	deleted_at: null,
+	createdAt: new Date(),
+	deletedAt: null,
 	id: factory.string.uuid(),
-	logo_url: "https://via.placeholder.com/150?text=Logo+3",
+	logoUrl: "https://via.placeholder.com/150?text=Logo+3",
 	name: factory.company.name(),
-	updated_at: new Date().toISOString(),
+	updatedAt: new Date(),
 }));
 
 export const ResearchAimFactory = new Factory<ResearchAim>((factory) => ({
-	created_at: new Date().toISOString(),
-	deleted_at: null,
+	createdAt: new Date(),
+	deletedAt: null,
 	description: factory.lorem.sentence(),
-	draft_id: factory.string.uuid(),
-	file_urls: factory.helpers.arrayElement([null, [factory.image.url()]]),
+	draftId: factory.string.uuid(),
+	fileUrls: factory.helpers.arrayElement([null, [factory.image.url()]]),
 	id: factory.string.uuid(),
-	required_clinical_trials: factory.datatype.boolean(),
-	application_id: factory.string.uuid(),
+	requiredClinicalTrials: factory.datatype.boolean(),
+	applicationId: factory.string.uuid(),
 	title: factory.lorem.words(),
-	updated_at: new Date().toISOString(),
+	updatedAt: new Date(),
 }));
 
 export const ResearchTaskFactory = new Factory<ResearchTask>((factory) => ({
-	created_at: new Date().toISOString(),
-	deleted_at: null,
+	createdAt: new Date(),
+	deletedAt: null,
 	description: factory.lorem.sentence(),
-	file_urls: factory.helpers.arrayElement([null, [factory.image.url()]]),
+	fileUrls: factory.helpers.arrayElement([null, [factory.image.url()]]),
 	id: factory.string.uuid(),
-	aim_id: factory.string.uuid(),
+	aimId: factory.string.uuid(),
 	title: factory.lorem.words(),
-	updated_at: new Date().toISOString(),
+	updatedAt: new Date(),
 }));
