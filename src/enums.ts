@@ -1,12 +1,10 @@
 export enum PagePath {
 	ROOT = "/",
-	AUTH = "/auth",
+	SIGNIN = "/signin",
 	WORKSPACES = "/workspaces",
 	APPLICATIONS = "/applications",
 }
 
 export enum ApiPath {
-	CALLBACK_OPENID = "/auth/openid",
-	CALLBACK_MAGIC_LINK = "/auth/email-signin",
-	LOGOUT = "/auth/logout",
+	LOGOUT = "/logout",
 }

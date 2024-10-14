@@ -4,8 +4,10 @@ export interface Env {
 	AZURE_STORAGE_ACCOUNT_NAME: string;
 	AZURE_STORAGE_CONTAINER_NAME: string;
 	DATABASE_CONNECTION_STRING: string;
-	GOOGLE_CLIENT_ID: string;
-	GOOGLE_SECRET: string;
+	AUTH_GOOGLE_ID: string;
+	AUTH_GOOGLE_SECRET: string;
+	AUTH_SECRET: string;
+	AUTH_RESEND_KEY: string;
 
 	// Client only
 	NEXT_PUBLIC_SITE_URL: string;

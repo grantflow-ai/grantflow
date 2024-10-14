@@ -1,10 +1,12 @@
 import { PagePath } from "@/enums";
 import { getLocale, type SupportedLocale } from "@/i18n";
-import { Workspace } from "@/types/database-types";
 import { handleServerError } from "@/utils/server-side";
-import { getServerClient } from "@/utils/supabase/server";
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
+import { getDatabaseClient } from "db/connection";
+import { auth } from "@/auth";
+import { eq } from "drizzle-orm";
+import { workspaceUsers, workspaces } from "db/schema";
 
 export default async function WorkspacesListPage({
 	params: { lang },
@@ -13,32 +15,27 @@ export default async function WorkspacesListPage({
 		lang: SupportedLocale;
 	};
 }) {
-	const supabase = await getServerClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const session = await auth();
 
-	if (!user) {
+	if (!session?.user?.id) {
 		return handleServerError(new Error("Failed to fetch user"), {
-			redirect: PagePath.AUTH,
+			redirect: PagePath.SIGNIN,
 		});
 	}
 
-	const client = supabase.from("workspace_users");
-	const { data: userWorkspaces, error: userWorkspacesFetchErr } = await client
-		.select(
-			`
-			*,
-			workspace:workspaces (*)
-		`,
-		)
-		.eq("user_id", user.id);
+	const db = await getDatabaseClient();
 
-	if (userWorkspacesFetchErr) {
-		return handleServerError(userWorkspacesFetchErr, {
-			message: "Failed to fetch user workspaces",
-		});
-	}
+	const userWorkspaces = await db
+		.select({
+			description: workspaces.description,
+			logoUrl: workspaces.logoUrl,
+			name: workspaces.name,
+			role: workspaceUsers.role,
+			workspaceId: workspaceUsers.workspaceId,
+		})
+		.from(workspaceUsers)
+		.leftJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
+		.where(eq(workspaceUsers.userId, session.user.id));
 
 	const locales = await getLocale(lang);
 
@@ -49,12 +46,8 @@ export default async function WorkspacesListPage({
 			</div>
 			<div className="my-6 space-y-8">
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-					{userWorkspaces.map((userWorkspace) => (
-						<WorkspaceCard
-							key={userWorkspace.workspace_id}
-							workspace={userWorkspace.workspace as Workspace}
-							userRole={userWorkspace.role}
-						/>
+					{userWorkspaces.map((data) => (
+						<WorkspaceCard key={data.workspaceId} {...data} />
 					))}
 				</div>
 			</div>

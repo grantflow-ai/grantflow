@@ -26,6 +26,7 @@
 		]
 	},
 	"dependencies": {
+		"@auth/drizzle-adapter": "^1.7.0",
 		"@azure/storage-blob": "^12.25.0",
 		"@formatjs/intl-localematcher": "^0.5.5",
 		"@hookform/resolvers": "^3.9.0",
@@ -58,8 +59,9 @@
 		"nanoid": "^5.0.7",
 		"negotiator": "^0.6.3",
 		"next": "14.2.15",
+		"next-auth": "5.0.0-beta.22",
 		"next-themes": "^0.3.0",
-		"pg": "^8.13.0",
+		"postgres": "^3.4.4",
 		"prettier": "^3.3.3",
 		"react": "^18.3.1",
 		"react-day-picker": "8.10.1",
@@ -82,7 +84,6 @@
 		"@trumpet/eslint-config-next": "^1.1.1",
 		"@types/negotiator": "^0.6.3",
 		"@types/node": "^22.7.5",
-		"@types/pg": "^8.11.10",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.1",
 		"@types/validator": "^13.12.2",
