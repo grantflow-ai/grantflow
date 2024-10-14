@@ -52,4 +52,5 @@ async function seedDatabase() {
 	console.log(`Inserted ${insertedRecords.length} records`);
 }
 
-await seedDatabase();
+// eslint-disable-next-line unicorn/prefer-top-level-await
+void seedDatabase();

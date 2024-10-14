@@ -2,6 +2,7 @@ export enum PagePath {
 	ROOT = "/",
 	AUTH = "/auth",
 	WORKSPACES = "/workspaces",
+	APPLICATIONS = "/applications",
 }
 
 export enum ApiPath {

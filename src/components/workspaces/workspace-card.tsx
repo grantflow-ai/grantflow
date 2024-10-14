@@ -34,7 +34,7 @@ export function WorkspaceCard({ workspace, userRole }: { workspace: Workspace; u
 						{userRole}
 					</Badge>
 				</div>
-				<CardTitle className="p-1 line-clamp-1 text-lg font-bold">{workspace.name}</CardTitle>
+				<CardTitle className="py-1 line-clamp-1 text-lg font-bold">{workspace.name}</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<CardDescription className="line-clamp-2 text-sm">{workspace.description}</CardDescription>
