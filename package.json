@@ -10,7 +10,7 @@
 		"lint:fix": "eslint --fix '**/*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}'",
 		"preinstall": "npx only-allow pnpm",
 		"prepare": "husky",
-		"seed-db": "pnpm dlx tsx scripts/seed-db.ts",
+		"seed-db": "pnpm dlx tsx --env-file=.env scripts/seed-db.ts",
 		"start": "next start",
 		"test": "NODE_NO_WARNINGS=1 vitest",
 		"test:coverage": "pnpm run test --coverage",
@@ -25,7 +25,7 @@
 	},
 	"dependencies": {
 		"@azure/storage-blob": "^12.25.0",
-		"@formatjs/intl-localematcher": "^0.5.4",
+		"@formatjs/intl-localematcher": "^0.5.5",
 		"@hookform/resolvers": "^3.9.0",
 		"@icons-pack/react-simple-icons": "^10.0.0",
 		"@radix-ui/react-accordion": "^1.2.1",
@@ -52,7 +52,7 @@
 		"clsx": "^2.1.1",
 		"date-fns": "^4.1.0",
 		"inflection": "^3.0.0",
-		"lucide-react": "^0.451.0",
+		"lucide-react": "^0.452.0",
 		"nanoid": "^5.0.7",
 		"negotiator": "^0.6.3",
 		"next": "14.2.15",
@@ -85,10 +85,8 @@
 		"@vitejs/plugin-react": "^4.3.2",
 		"@vitest/coverage-v8": "^2.1.2",
 		"autoprefixer": "^10.4.20",
-		"dotenv": "^16.4.5",
 		"eslint": "^9.12.0",
 		"eslint-config-prettier": "^9.1.0",
-		"googleapis": "^144.0.0",
 		"husky": "^9.1.6",
 		"interface-forge": "^2.0.1",
 		"jiti": "2.3.3",
@@ -101,8 +99,7 @@
 		"typescript": "^5.6.3",
 		"typescript-eslint": "^8.8.1",
 		"vite-tsconfig-paths": "^5.0.1",
-		"vitest": "^2.1.2",
-		"vitest-mock-extended": "^2.0.2"
+		"vitest": "^2.1.2"
 	},
 	"engines": {
 		"node": ">=20.0.0"
