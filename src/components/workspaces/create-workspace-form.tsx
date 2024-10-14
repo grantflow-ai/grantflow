@@ -1,5 +1,3 @@
-"use client";
-
 import { createWorkspace } from "@/actions/workspace";
 import { FormButton } from "@/components/form-button";
 import type { Localisation } from "@/i18n";
@@ -11,7 +9,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Card, CardContent } from "gen/ui/card";
-import { useRouter } from "next/navigation";
 
 const workspaceSchema = z.object({
 	name: z.string().min(3, { message: "Workspace name must be at least 3 characters long" }),
@@ -21,7 +18,6 @@ const workspaceSchema = z.object({
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
 
 export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisation; closeModal: () => void }) {
-	const router = useRouter();
 	const form = useForm<WorkspaceFormValues>({
 		resolver: zodResolver(workspaceSchema),
 		defaultValues: { name: "", description: "" },
@@ -33,7 +29,6 @@ export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisa
 			toast.error(locales.workspaceListView.workspaceCreatedError);
 		} else {
 			toast.success(locales.workspaceListView.workspaceCreatedSuccess);
-			router.refresh();
 		}
 		closeModal();
 	};

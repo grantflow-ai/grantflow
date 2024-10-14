@@ -6,8 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { CreateWorkspaceForm } from "./create-workspace-form";
+import { useRouter } from "next/navigation";
 
 export function CreateWorkspaceModal({ locales }: { locales: Localisation }) {
+	const router = useRouter();
+
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
@@ -26,6 +29,7 @@ export function CreateWorkspaceModal({ locales }: { locales: Localisation }) {
 					locales={locales}
 					closeModal={() => {
 						setIsOpen(false);
+						router.refresh();
 					}}
 				/>
 			</DialogContent>

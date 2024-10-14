@@ -1,4 +1,4 @@
-export function Separator({ text }: { text: string }) {
+export function SeparatorWithText({ text }: { text: string }) {
 	return (
 		<div className="relative" data-testid="separator">
 			<div className="relative flex items-center py-1">

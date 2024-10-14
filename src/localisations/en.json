@@ -67,8 +67,7 @@
 		"title": "Workspace",
 		"grantApplications": {
 			"title": "Grant Applications",
-			"createApplication": "Create Grant Application",
-			"noApplications": "No grant applications have been created yet."
+			"newApplication": "New Application"
 		}
 	},
 	"footer": {

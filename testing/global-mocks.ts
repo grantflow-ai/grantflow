@@ -4,7 +4,7 @@ import { PagePath } from "@/enums";
 import type { Env } from "@/types/env-types";
 import { beforeEach, vi } from "vitest";
 
-const { mockUsePathname, mockRedirect, mockToast } = vi.hoisted(() => {
+const { mockUsePathname, mockRedirect, mockUseRouter, mockToast } = vi.hoisted(() => {
 	const mockToast = vi.fn();
 	Reflect.set(mockToast, "error", vi.fn());
 	Reflect.set(mockToast, "success", vi.fn());
@@ -14,17 +14,23 @@ const { mockUsePathname, mockRedirect, mockToast } = vi.hoisted(() => {
 	return {
 		mockUsePathname: vi.fn(),
 		mockRedirect: vi.fn(),
+		mockRefresh: vi.fn(),
+		mockUseRouter: vi.fn().mockImplementation(() => ({
+			refresh: vi.fn(),
+			push: vi.fn(),
+			replace: vi.fn(),
+		})),
 		mockToast,
 	};
 });
 
 vi.mock("next/navigation", async (importOriginal) => {
 	const original = await importOriginal();
-	const { useRouter } = await vi.importActual("next-router-mock");
 
 	return {
+		__esModule: true,
 		...(original as Record<string, unknown>),
-		useRouter,
+		useRouter: mockUseRouter,
 		usePathname: mockUsePathname,
 		redirect: mockRedirect,
 	};

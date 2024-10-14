@@ -43,7 +43,7 @@ describe("Mailing List Subscription", () => {
 
 	it("should handle server errors", async () => {
 		const mockError = new Error("Database error");
-		mockInsert.mockRejectedValueOnce(mockError);
+		mockInsert.mockReturnValueOnce({ error: mockError });
 		vi.mocked(handleServerError).mockReturnValueOnce("Server error occurred");
 
 		const result = await subscribeToMailingList("test@example.com");
@@ -51,7 +51,9 @@ describe("Mailing List Subscription", () => {
 		expect(getServerClient).toHaveBeenCalled();
 		expect(mockFrom).toHaveBeenCalledWith("mailing_list");
 		expect(mockInsert).toHaveBeenCalledWith({ email: "test@example.com" });
-		expect(handleServerError).toHaveBeenCalledWith(mockError, "Database error");
+		expect(handleServerError).toHaveBeenCalledWith(mockError, {
+			message: "Failed to subscribe to mailing list",
+		});
 		expect(result).toBe("Server error occurred");
 	});
 });
