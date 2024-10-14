@@ -8,6 +8,7 @@ export function Logo({ height = 28, width = 28, ...props }: HTMLProps<SVGSVGElem
 			width={width}
 			height={height}
 			viewBox="284.086 125.941 208 208"
+			data-testid="logo"
 			{...props}
 		>
 			<title>Logo</title>

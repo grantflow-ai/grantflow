@@ -13,14 +13,6 @@ vi.mock("@/utils/supabase/server", () => ({
 	}),
 }));
 
-// this is required because the serverLogger declares 'use server';
-vi.mock("@t3-oss/env-nextjs");
-vi.mock("@/utils/env", () => ({
-	getEnv: vi.fn().mockReturnValue({
-		NEXT_PUBLIC_DEBUG: true,
-	}),
-}));
-
 describe("Unsubscribe Route", () => {
 	it("should delete a record when passed the record-id", async () => {
 		const recordId = faker.string.uuid();
