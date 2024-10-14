@@ -1,6 +1,6 @@
+/* eslint-disable no-console */
 import { createClient } from "@supabase/supabase-js";
 import { assertIsNotNullish } from "@tool-belt/type-predicates";
-import { config } from "dotenv";
 import type { Database } from "gen/database-types";
 import nihActivityCodes from "./nih-activity-codes.json";
 
@@ -13,7 +13,6 @@ interface CFPRecord {
 }
 
 async function seedDatabase() {
-	config();
 	const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = process.env;
 
 	assertIsNotNullish(NEXT_PUBLIC_SUPABASE_URL);
@@ -53,4 +52,4 @@ async function seedDatabase() {
 	console.log(`Inserted ${insertedRecords.length} records`);
 }
 
-void seedDatabase();
+await seedDatabase();
