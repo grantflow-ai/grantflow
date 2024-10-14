@@ -1,11 +1,11 @@
 import { getLocale, type SupportedLocale } from "@/i18n";
 import { handleServerError } from "@/utils/server-side";
 import { getServerClient } from "@/utils/supabase/server";
-import { Card, CardHeader, CardTitle } from "gen/ui/card";
-import { FileText } from "lucide-react";
-import Link from "next/link";
 import { Button } from "gen/ui/button";
 import { SeparatorWithText } from "@/components/separator-with-text";
+import { GrantApplicationCard } from "@/components/workspaces/detail/grantApplicationCard";
+import { PagePath } from "@/enums";
+import Link from "next/link";
 
 export default async function WorkspaceDetailPage({
 	params: { lang, workspaceId },
@@ -45,30 +45,18 @@ export default async function WorkspaceDetailPage({
 			<div className="py-24 flex flex-col gap-2">
 				<div>
 					<SeparatorWithText text={locales.workspaceDetailView.grantApplications.title} />
-					<Button size="sm">{locales.workspaceDetailView.grantApplications.newApplication}</Button>
+					<Button size="sm">
+						<Link href={`${PagePath.APPLICATIONS}?workspaceId=${workspace.id}`}>
+							{locales.workspaceDetailView.grantApplications.newApplication}
+						</Link>
+					</Button>
 				</div>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 					{workspace.grant_applications.map(({ id, title }) => (
-						<ApplicationDraftCard key={id} id={id} title={title} />
+						<GrantApplicationCard key={id} id={id} title={title} />
 					))}
 				</div>
 			</div>
 		</div>
-	);
-}
-
-function ApplicationDraftCard({ id, title }: { id: string; title: string }) {
-	return (
-		<Card className="overflow-hidden">
-			<Link href={`/drafts/${id}`} className="absolute inset-0 z-10" data-testid={`application-draft-link-${id}`}>
-				<span className="sr-only">Navigate to the {title} grant application</span>
-			</Link>
-			<CardHeader className="space-y-1">
-				<CardTitle className="text-2xl font-semibold flex items-center space-x-2">
-					<FileText className="h-6 w-6 text-primary" />
-					<span>{title}</span>
-				</CardTitle>
-			</CardHeader>
-		</Card>
 	);
 }
