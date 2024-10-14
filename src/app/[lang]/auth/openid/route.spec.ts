@@ -12,14 +12,6 @@ vi.mock("@/utils/supabase/server", () => ({
 	}),
 }));
 
-// this is required because the serverLogger declares 'use server';
-vi.mock("@t3-oss/env-nextjs");
-vi.mock("@/utils/env", () => ({
-	getEnv: vi.fn().mockReturnValue({
-		NEXT_PUBLIC_DEBUG: true,
-	}),
-}));
-
 describe("OpenID SignIn Route", () => {
 	it("should return an error when the code is missing", async () => {
 		const nextRequest = createNextRequest("https://example.com");

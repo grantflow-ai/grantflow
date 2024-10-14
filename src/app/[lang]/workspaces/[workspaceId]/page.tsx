@@ -3,8 +3,9 @@ import { handleServerError } from "@/utils/server-side";
 import { getServerClient } from "@/utils/supabase/server";
 import { Card, CardHeader, CardTitle } from "gen/ui/card";
 import { FileText } from "lucide-react";
-import { Button } from "gen/ui/button";
 import Link from "next/link";
+import { Button } from "gen/ui/button";
+import { SeparatorWithText } from "@/components/separator-with-text";
 
 export default async function WorkspaceDetailPage({
 	params: { lang, workspaceId },
@@ -36,24 +37,21 @@ export default async function WorkspaceDetailPage({
 	const locales = await getLocale(lang);
 
 	return (
-		<div className="container mx-auto my-16 space-y-8">
-			<div className="flex items-center justify-between">
+		<div className="p-5">
+			<div className="py-4">
 				<h1 className="text-4xl font-bold">{workspace.name}</h1>
-				<div className="flex items-center space-x-2">
-					<Button variant="outline" size="sm">
-						Security Issues
-					</Button>
-					<Button variant="outline" size="sm">
-						Project Status
-					</Button>
-					<Button size="sm">Connect</Button>
-				</div>
+				<h3 className="text-lg font-bold py-2">{workspace.description}</h3>
 			</div>
-
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-				{workspace.grant_applications.map(({ id, title }) => (
-					<ApplicationDraftCard key={id} id={id} title={title} />
-				))}
+			<div className="py-24 flex flex-col gap-2">
+				<div>
+					<SeparatorWithText text={locales.workspaceDetailView.grantApplications.title} />
+					<Button size="sm">{locales.workspaceDetailView.grantApplications.newApplication}</Button>
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+					{workspace.grant_applications.map(({ id, title }) => (
+						<ApplicationDraftCard key={id} id={id} title={title} />
+					))}
+				</div>
 			</div>
 		</div>
 	);

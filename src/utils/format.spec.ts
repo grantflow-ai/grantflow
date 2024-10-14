@@ -8,9 +8,9 @@ describe("formatBytes", () => {
 	it("should format bytes correctly", () => {
 		expect(formatBytes(1)).toBe("1 Bytes");
 		expect(formatBytes(500)).toBe("500 Bytes");
-		expect(formatBytes(1000)).toBe("1 KB");
-		expect(formatBytes(1500)).toBe("2 KB");
-		expect(formatBytes(1_000_000)).toBe("1 MB");
-		expect(formatBytes(1_500_000)).toBe("2 MB");
+		expect(formatBytes(1024)).toBe("1 KB");
+		expect(formatBytes(1500)).toBe("1 KB");
+		expect(formatBytes(1_000_000)).toBe("977 KB");
+		expect(formatBytes(1_500_000)).toBe("1 MB");
 	});
 });

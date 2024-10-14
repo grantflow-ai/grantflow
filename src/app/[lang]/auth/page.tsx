@@ -1,6 +1,6 @@
 import { EmailSigninForm } from "@/components/auth/email-signin-form";
 import { OauthSigninForm } from "@/components/auth/oauth-signin-form";
-import { Separator } from "@/components/separator";
+import { SeparatorWithText } from "@/components/separator-with-text";
 import { PagePath } from "@/enums";
 import { type SupportedLocale, getLocale } from "@/i18n";
 import { getServerClient } from "@/utils/supabase/server";
@@ -32,7 +32,7 @@ export default async function AuthPage({ params: { lang } }: { params: { lang: S
 				</CardHeader>
 				<CardContent className="space-y-6">
 					<EmailSigninForm locales={locale} />
-					<Separator text={locale.authPage.oAuthSeperator} />
+					<SeparatorWithText text={locale.authPage.oAuthSeperator} />
 					<OauthSigninForm />
 				</CardContent>
 			</Card>

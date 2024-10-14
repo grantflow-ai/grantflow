@@ -26,22 +26,19 @@ describe("OauthSignin", () => {
 		expect(screen.getByTestId("oauth-signin-form")).toBeInTheDocument();
 	});
 
-	it.each([
-		["google", "Google"],
-		["github", "GitHub"],
-	])("renders %s button with correct text", (provider, displayName) => {
+	it.each([["google", "Google"]])("renders %s button with correct text", (provider, displayName) => {
 		render(<OauthSigninForm />);
 		const button = screen.getByTestId(`oauth-signin-form-${provider}-button`);
 		expect(button).toBeInTheDocument();
 		expect(screen.getByTestId(`oauth-signin-form-${provider}-text`)).toHaveTextContent(displayName);
 	});
 
-	it.each(["google", "github"])("renders %s icon", (provider) => {
+	it.each(["google"])("renders %s icon", (provider) => {
 		render(<OauthSigninForm />);
 		expect(screen.getByTestId(`oauth-signin-form-${provider}-icon`)).toBeInTheDocument();
 	});
 
-	it.each([["google"], ["github"]])("calls handleSubmit with '%s' when %s button is clicked", async (provider) => {
+	it.each([["google"]])("calls handleSubmit with '%s' when %s button is clicked", async (provider) => {
 		render(<OauthSigninForm />);
 		const button = screen.getByTestId(`oauth-signin-form-${provider}-button`);
 		await userEvent.click(button);

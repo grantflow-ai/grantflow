@@ -212,9 +212,6 @@ importers:
             lint-staged:
                 specifier: ^15.2.10
                 version: 15.2.10
-            next-router-mock:
-                specifier: ^0.9.13
-                version: 0.9.13(next@14.2.15(@babel/core@7.25.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
             postcss:
                 specifier: ^8.4.47
                 version: 8.4.47
@@ -239,6 +236,9 @@ importers:
             vitest:
                 specifier: ^2.1.2
                 version: 2.1.2(@types/node@22.7.5)(jsdom@25.0.1)
+            vitest-mock-extended:
+                specifier: ^2.0.2
+                version: 2.0.2(typescript@5.6.3)(vitest@2.1.2(@types/node@22.7.5)(jsdom@25.0.1))
 
     supabase:
         devDependencies:
@@ -4678,15 +4678,6 @@ packages:
             }
         engines: { node: ">= 0.6" }
 
-    next-router-mock@0.9.13:
-        resolution:
-            {
-                integrity: sha512-906n2RRaE6Y28PfYJbaz5XZeJ6Tw8Xz1S6E31GGwZ0sXB6/XjldD1/2azn1ZmBmRk5PQRkzjg+n+RHZe5xQzWA==,
-            }
-        peerDependencies:
-            next: ">=10.0.0"
-            react: ">=17.0.0"
-
     next-themes@0.3.0:
         resolution:
             {
@@ -5948,6 +5939,17 @@ packages:
         peerDependencies:
             typescript: ">=4.2.0"
 
+    ts-essentials@10.0.2:
+        resolution:
+            {
+                integrity: sha512-Xwag0TULqriaugXqVdDiGZ5wuZpqABZlpwQ2Ho4GDyiu/R2Xjkp/9+zcFxL7uzeLl/QCPrflnvpVYyS3ouT7Zw==,
+            }
+        peerDependencies:
+            typescript: ">=4.5.0"
+        peerDependenciesMeta:
+            typescript:
+                optional: true
+
     ts-interface-checker@0.1.13:
         resolution:
             {
@@ -6215,6 +6217,15 @@ packages:
                 optional: true
             terser:
                 optional: true
+
+    vitest-mock-extended@2.0.2:
+        resolution:
+            {
+                integrity: sha512-n3MBqVITKyclZ0n0y66hkT4UiiEYFQn9tteAnIxT0MPz1Z8nFcPUG3Cf0cZOyoPOj/cq6Ab1XFw2lM/qM5EDWQ==,
+            }
+        peerDependencies:
+            typescript: 3.x || 4.x || 5.x
+            vitest: ">=2.0.0"
 
     vitest@2.1.2:
         resolution:
@@ -9360,11 +9371,6 @@ snapshots:
 
     negotiator@0.6.3: {}
 
-    next-router-mock@0.9.13(next@14.2.15(@babel/core@7.25.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1):
-        dependencies:
-            next: 14.2.15(@babel/core@7.25.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-            react: 18.3.1
-
     next-themes@0.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
         dependencies:
             react: 18.3.1
@@ -10128,6 +10134,10 @@ snapshots:
         dependencies:
             typescript: 5.6.3
 
+    ts-essentials@10.0.2(typescript@5.6.3):
+        optionalDependencies:
+            typescript: 5.6.3
+
     ts-interface-checker@0.1.13: {}
 
     ts-node@10.9.2(@types/node@22.7.5)(typescript@5.6.3):
@@ -10300,6 +10310,12 @@ snapshots:
         optionalDependencies:
             "@types/node": 22.7.5
             fsevents: 2.3.3
+
+    vitest-mock-extended@2.0.2(typescript@5.6.3)(vitest@2.1.2(@types/node@22.7.5)(jsdom@25.0.1)):
+        dependencies:
+            ts-essentials: 10.0.2(typescript@5.6.3)
+            typescript: 5.6.3
+            vitest: 2.1.2(@types/node@22.7.5)(jsdom@25.0.1)
 
     vitest@2.1.2(@types/node@22.7.5)(jsdom@25.0.1):
         dependencies:
