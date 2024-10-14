@@ -52,7 +52,7 @@ export default async function WorkspaceDetailPage({
 					</Button>
 				</div>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					{workspace.grant_applications.map(({ id, title }) => (
+					{workspace.grantApplications.map(({ id, title }) => (
 						<GrantApplicationCard key={id} id={id} title={title} />
 					))}
 				</div>

@@ -24,7 +24,7 @@ export function WorkspaceCard({ workspace, userRole }: { workspace: Workspace; u
 			<CardHeader className="pb-2">
 				<div className="flex items-center justify-between">
 					<Avatar className="h-10 w-10">
-						<AvatarImage src={workspace.logo_url ?? ""} alt={`${workspace.name} logo`} />
+						<AvatarImage src={workspace.logoUrl ?? ""} alt={`${workspace.name} logo`} />
 						<AvatarFallback>{workspace.name.charAt(0)}</AvatarFallback>
 					</Avatar>
 					<Badge

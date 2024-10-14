@@ -4,7 +4,6 @@ import { isEmail } from "validator";
 
 import { ApiPath } from "@/enums";
 import { ErrorType } from "@/constants";
-import { getServerClient } from "@/utils/supabase/server";
 import { urlWithHost } from "@/utils/url";
 
 /**
@@ -12,7 +11,6 @@ import { urlWithHost } from "@/utils/url";
  * @returns The path to redirect to.
  */
 export async function signOut() {
-	const supabase = await getServerClient();
 	const { error } = await supabase.auth.signOut();
 
 	return error?.message;
