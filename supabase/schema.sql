@@ -1,8 +1,4 @@
-CREATE TYPE invitation_status AS ENUM ('pending', 'accepted', 'declined');
-CREATE TYPE notification_type AS ENUM ('invitation', 'message', 'alert');
 CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member');
-CREATE TYPE wizard_input_type AS ENUM ('text', 'boolean', 'date', 'date-range');
-CREATE TYPE question_type AS ENUM ('per-section', 'per-research-aim', 'per-research-task');
 
 -- mailing-list table
 CREATE TABLE public.mailing_list
@@ -66,214 +62,89 @@ CREATE INDEX idx_workspace_users_workspace_id ON public.workspace_users (workspa
 CREATE INDEX idx_workspace_users_user_id ON public.workspace_users (user_id);
 CREATE INDEX idx_workspace_users_deleted_at ON public.workspace_users (deleted_at);
 
--- invitations table
-CREATE TABLE public.invitations
-(
+-- funding-organization table
+CREATE TABLE public.funding_organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    invited_by UUID REFERENCES public.app_users (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    workspace_id UUID REFERENCES public.workspaces (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    email TEXT NOT NULL,
-    role USER_ROLE NOT NULL,
-    status INVITATION_STATUS DEFAULT 'pending' NOT NULL,
-    token UUID NOT NULL DEFAULT uuid_generate_v4(),
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() + INTERVAL '7 days'),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    accepted_at TIMESTAMP WITH TIME ZONE,
-    declined_at TIMESTAMP WITH TIME ZONE,
-    deleted_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX idx_invitations_status ON public.invitations (status);
-CREATE INDEX idx_invitations_email ON public.invitations (email);
-CREATE INDEX idx_invitations_workspace_id ON public.invitations (workspace_id);
-CREATE INDEX idx_invitations_token ON public.invitations (token);
-CREATE INDEX idx_invitations_expires_at ON public.invitations (expires_at);
-CREATE INDEX idx_invitations_deleted_at ON public.invitations (deleted_at);
-
--- notifications table
-CREATE TABLE public.notifications
-(
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES public.app_users (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    type NOTIFICATION_TYPE NOT NULL DEFAULT 'message',
-    title TEXT,
-    content TEXT NOT NULL,
-    link TEXT,
-    read BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    deleted_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX idx_notifications_user_id ON public.notifications (user_id);
-CREATE INDEX idx_notifications_created_at ON public.notifications (created_at);
-CREATE INDEX idx_notifications_deleted_at ON public.notifications (deleted_at);
-CREATE INDEX idx_notifications_read ON public.notifications (read);
-
--- grant-funding-organization table
-CREATE TABLE public.grant_funding_organization (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name TEXT NOT NULL,
+    name VARCHAR(255) NOT NULL,
     logo_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_grant_funding_organization_name ON public.grant_funding_organization (name);
-CREATE INDEX idx_grant_funding_organization_deleted_at ON public.grant_funding_organization (deleted_at);
+CREATE INDEX idx_funding_organization_name ON public.funding_organizations (name);
+CREATE INDEX idx_funding_organization_deleted_at ON public.funding_organizations (deleted_at);
 
 -- grant-cfp table
 CREATE TABLE public.grant_cfps
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    funding_organization_id UUID REFERENCES public.grant_funding_organization (
+    funding_organization_id UUID REFERENCES public.funding_organizations (
         id
     ) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    grant_identifier TEXT NOT NULL,
-    allow_resubmissions BOOLEAN NOT NULL DEFAULT true,
     allow_clinical_trials BOOLEAN NOT NULL DEFAULT true,
-    max_research_aims INT NOT NULL DEFAULT 3 CHECK (max_research_aims > 0),
-    max_tasks INT NOT NULL DEFAULT 5 CHECK (max_tasks > 0),
-    text TEXT NULL,
-    url TEXT NULL,
+    allow_resubmissions BOOLEAN NOT NULL DEFAULT true,
+    category VARCHAR(255),
+    code VARCHAR(255) NOT NULL,
+    description TEXT,
+    title VARCHAR(255) NOT NULL,
+    url TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_grant_cfps_identifier ON public.grant_cfps (grant_identifier);
+CREATE INDEX idx_grant_cfps_identifier ON public.grant_cfps (code);
 CREATE INDEX idx_grant_cfps_funding_organization_id ON public.grant_cfps (funding_organization_id);
 CREATE INDEX idx_grant_cfps_deleted_at ON public.grant_cfps (deleted_at);
 
--- grant-wizard-sections table
-CREATE TABLE public.grant_wizard_sections
-(
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    cfp_id UUID REFERENCES public.grant_cfps (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    is_research_plan_section BOOLEAN NOT NULL DEFAULT false,
-    title TEXT NOT NULL,
-    help_text TEXT NULL,
-    ordering INT NOT NULL,
-    clinical_trials_only BOOLEAN NOT NULL DEFAULT false,
-    resubmission_only BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    deleted_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX idx_grant_wizard_sections_cfp_id ON public.grant_wizard_sections (cfp_id);
-CREATE INDEX idx_grant_wizard_sections_deleted_at ON public.grant_wizard_sections (deleted_at);
-CREATE UNIQUE INDEX idx_grant_wizard_sections_cfp_id_stage_ordering ON public.grant_wizard_sections (
-    cfp_id, is_research_plan_section, ordering
-);
-
--- grant-application-questions table
-CREATE TABLE public.grant_application_questions
-(
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    text TEXT NOT NULL,
-    depends_on UUID [] NULL,
-    external_links TEXT [] NULL,
-    file_upload BOOLEAN NOT NULL DEFAULT false,
-    help_text TEXT NULL,
-    input_type WIZARD_INPUT_TYPE NOT NULL DEFAULT 'text',
-    max_length SMALLINT NULL,
-    ordering INT NOT NULL,
-    required BOOLEAN NOT NULL DEFAULT true,
-    question_type QUESTION_TYPE NOT NULL DEFAULT 'per-section',
-    section_id UUID REFERENCES public.grant_wizard_sections (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    deleted_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX idx_grant_application_questions_section_id ON public.grant_application_questions (section_id);
-CREATE INDEX idx_grant_application_questions_deleted_at ON public.grant_application_questions (deleted_at);
-CREATE UNIQUE INDEX idx_grant_application_questions_section_id_ordering ON public.grant_application_questions (
-    section_id, ordering
-);
-
--- application-drafts table
-CREATE TABLE public.application_drafts
+-- grant-application table
+CREATE TABLE public.grant_applications
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID REFERENCES public.workspaces (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
     cfp_id UUID REFERENCES public.grant_cfps (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    title TEXT NOT NULL,
+    title VARCHAR(255) NOT NULL,
     is_resubmission BOOLEAN NOT NULL DEFAULT false,
+    significance TEXT NOT NULL,
+    innovation TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_application_drafts_grant_cfp_id ON public.application_drafts (cfp_id);
-CREATE INDEX idx_application_drafts_deleted_at ON public.application_drafts (deleted_at);
+CREATE INDEX idx_grant_application_grant_cfp_id ON public.grant_applications (cfp_id);
+CREATE INDEX idx_grant_application_deleted_at ON public.grant_applications (deleted_at);
 
 -- research-aims table
 CREATE TABLE public.research_aims
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    draft_id UUID REFERENCES public.application_drafts (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT NULL,
+    application_id UUID REFERENCES public.grant_applications (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
     file_urls TEXT [] NULL,
-    includes_clinical_trials BOOLEAN NOT NULL DEFAULT false,
+    required_clinical_trials BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_research_aims_draft_id ON public.research_aims (draft_id);
+CREATE INDEX idx_research_aims_application_id ON public.research_aims (application_id);
 CREATE INDEX idx_research_aims_deleted_at ON public.research_aims (deleted_at);
 
 -- research-tasks table
 CREATE TABLE public.research_tasks
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    research_aim_id UUID REFERENCES public.research_aims (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT NULL,
+    aim_id UUID REFERENCES public.research_aims (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
     file_urls TEXT [] NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_tasks_research_aim_id ON public.research_tasks (research_aim_id);
+CREATE INDEX idx_tasks_aim_id ON public.research_tasks (aim_id);
 CREATE INDEX idx_tasks_deleted_at ON public.research_tasks (deleted_at);
-
-
--- grant-application-answers table
-CREATE TABLE public.grant_application_answers
-(
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    draft_id UUID REFERENCES public.application_drafts (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    question_id UUID REFERENCES public.grant_application_questions (id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    question_type QUESTION_TYPE NOT NULL,
-    research_aim_id UUID NULL REFERENCES public.research_aims (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    task_id UUID NULL REFERENCES public.research_tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    value JSONB NULL,
-    file_urls TEXT [] NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc', now()),
-    deleted_at TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT check_aim_or_task_not_null
-    CHECK (
-        (question_type = 'per-section' AND research_aim_id IS null AND task_id IS null)
-        OR (question_type = 'per-research-aim' AND research_aim_id IS NOT null AND task_id IS null)
-        OR (question_type = 'per-research-task' AND research_aim_id IS NOT null AND task_id IS NOT null)
-    )
-);
-
-CREATE INDEX idx_grant_application_answers_draft_id ON public.grant_application_answers (draft_id);
-CREATE INDEX idx_grant_application_answers_question_id ON public.grant_application_answers (question_id);
-CREATE INDEX idx_grant_application_answers_research_aim_id ON public.grant_application_answers (research_aim_id);
-CREATE INDEX idx_grant_application_answers_task_id ON public.grant_application_answers (task_id);
-CREATE INDEX idx_grant_application_answers_deleted_at ON public.grant_application_answers (deleted_at);
-CREATE UNIQUE INDEX idx_grant_application_answers_unique ON public.grant_application_answers (
-    draft_id,
-    question_id
-);
-
-DROP PUBLICATION IF EXISTS supabase_realtime;
-CREATE PUBLICATION supabase_realtime FOR TABLE public.notifications;
