@@ -1,14 +1,5 @@
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "gen/ui/select";
-import NIHActivityCodeData from "./nih-activity-codes.json";
-
-interface ActivityCodeRecord {
-	id: number;
-	category: string;
-	code: string;
-	title: string;
-	description: string;
-	url?: string;
-}
+import { GrantCFP } from "@/types/database-types";
 
 export const SupportedActivityCodes = new Set([
 	"R01",
@@ -28,11 +19,7 @@ export const SupportedActivityCodes = new Set([
 	"R61",
 ]);
 
-const activityCodeData = (NIHActivityCodeData as ActivityCodeRecord[]).filter((record) =>
-	SupportedActivityCodes.has(record.code),
-);
-
-export function ActivityCodeSelect() {
+export function CfpSelect({ cfps }: { cfps: GrantCFP[] }) {
 	return (
 		<div data-testid="activity-code-select-container">
 			<Select>
@@ -45,13 +32,13 @@ export function ActivityCodeSelect() {
 				</SelectTrigger>
 				<SelectContent>
 					<SelectGroup>
-						{activityCodeData.map((record) => (
+						{cfps.map((cfp) => (
 							<SelectItem
-								key={record.id}
-								value={record.code}
-								data-testid={`activity-code-select-item-${record.code}`}
+								key={cfp.id}
+								value={cfp.code}
+								data-testid={`activity-code-select-item-${cfp.code}`}
 							>
-								{`(${record.code}) ${record.title}`}
+								{`(${cfp.code}) ${cfp.title}`}
 							</SelectItem>
 						))}
 					</SelectGroup>
