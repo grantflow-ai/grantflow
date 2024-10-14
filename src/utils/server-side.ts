@@ -1,5 +1,4 @@
 import type { PagePath } from "@/enums";
-import type { PostgrestError } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -13,7 +12,7 @@ import type { ReactNode } from "react";
  * @returns returns the fallback
  */
 export function handleServerError<T extends ReactNode | string>(
-	error: PostgrestError | Error,
+	error: Error,
 	{
 		message = "A server side error occurred",
 		fallback,

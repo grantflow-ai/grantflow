@@ -1,5 +1,4 @@
 import { SiGoogle } from "@icons-pack/react-simple-icons";
-import type { Provider } from "@supabase/supabase-js";
 import type { ForwardRefExoticComponent, SVGProps } from "react";
 
 interface OAuthProvider {

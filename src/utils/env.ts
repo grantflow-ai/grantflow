@@ -16,11 +16,12 @@ export function getEnv(): Env {
 				AZURE_STORAGE_ACCOUNT_NAME: z.string(),
 				AZURE_STORAGE_ACCOUNT_KEY: z.string(),
 				AZURE_STORAGE_CONTAINER_NAME: z.string(),
+				GOOGLE_CLIENT_ID: z.string(),
+				GOOGLE_SECRET: z.string(),
+				DATABASE_CONNECTION_STRING: z.string(),
 			},
 			client: {
 				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
-				NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
-				NEXT_PUBLIC_SUPABASE_URL: z.string().url("Please enter a valid URL"),
 			},
 			shared: {
 				NEXT_PUBLIC_DEBUG: z
@@ -40,8 +41,6 @@ export function getEnv(): Env {
 			},
 			experimental__runtimeEnv: {
 				NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-				NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-				NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
 				NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG,
 				NEXT_PUBLIC_IS_DEVELOPMENT: !!process.env.NEXT_PUBLIC_IS_DEVELOPMENT,
 			},
