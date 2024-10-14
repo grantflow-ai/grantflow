@@ -4,19 +4,19 @@
 	"private": true,
 	"scripts": {
 		"build": "next build",
+		"db:create-migration": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:seed": "pnpm dlx tsx --env-file=.env scripts/seed-db.ts",
 		"dev": "next dev",
 		"format": "prettier --write .",
 		"lint:check": "eslint .",
 		"lint:fix": "eslint --fix '**/*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}'",
 		"preinstall": "npx only-allow pnpm",
 		"prepare": "husky",
-		"seed-db": "pnpm dlx tsx --env-file=.env scripts/seed-db.ts",
 		"start": "next start",
 		"test": "NODE_NO_WARNINGS=1 vitest",
 		"test:coverage": "pnpm run test --coverage",
 		"test:watch": "pnpm run test --watch --coverage",
-		"db:create-migration": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
 		"ui": "pnpm dlx shadcn@latest"
 	},
 	"lint-staged": {
