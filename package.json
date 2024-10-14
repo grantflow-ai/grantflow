@@ -10,7 +10,7 @@
 		"lint:fix": "eslint --fix '**/*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}'",
 		"preinstall": "npx only-allow pnpm",
 		"prepare": "husky",
-		"script:mock-data": "node scripts/mock-data.mts",
+		"seed-db": "pnpm dlx tsx scripts/seed-db.ts",
 		"start": "next start",
 		"test": "NODE_NO_WARNINGS=1 vitest",
 		"test:coverage": "pnpm run test --coverage",
