@@ -1,19 +1,17 @@
 import { EmailSigninForm } from "@/components/auth/email-signin-form";
-import { OauthSigninForm } from "@/components/auth/oauth-signin-form";
 import { SeparatorWithText } from "@/components/separator-with-text";
 import { PagePath } from "@/enums";
-import { type SupportedLocale, getLocale } from "@/i18n";
-import { getServerClient } from "@/utils/supabase/server";
+import { getLocale, type SupportedLocale } from "@/i18n";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
 import { redirect } from "next/navigation";
+import { Button } from "gen/ui/button";
+import { auth, signIn } from "@/auth";
+import { SiGoogle } from "@icons-pack/react-simple-icons";
 
-export default async function AuthPage({ params: { lang } }: { params: { lang: SupportedLocale } }) {
-	const supabase = await getServerClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+export default async function SigninPage({ params: { lang } }: { params: { lang: SupportedLocale } }) {
+	const session = await auth();
 
-	if (user) {
+	if (session?.user) {
 		return redirect(PagePath.ROOT);
 	}
 
@@ -33,7 +31,25 @@ export default async function AuthPage({ params: { lang } }: { params: { lang: S
 				<CardContent className="space-y-6">
 					<EmailSigninForm locales={locale} />
 					<SeparatorWithText text={locale.authPage.oAuthSeperator} />
-					<OauthSigninForm />
+					<section data-testid="oauth-signin-form" className="flex flex-col gap-2">
+						<Button
+							variant="secondary"
+							className="w-full p-1 border rounded"
+							data-testid="oauth-signin-form-google-button"
+							onClick={async () => {
+								await signIn("google");
+							}}
+						>
+							<p className="flex justify-center items-center gap-3">
+								<span data-testid="oauth-signin-form-google-text" className="text-md bold">
+									Sign in with Google
+								</span>
+								<span data-testid="oauth-signin-form-google-icon">
+									<SiGoogle className="h-4 w-4" />
+								</span>
+							</p>
+						</Button>
+					</section>
 				</CardContent>
 			</Card>
 		</div>

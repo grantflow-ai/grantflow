@@ -1,5 +1,5 @@
 import {
-	appUsers,
+	users,
 	workspaces,
 	fundingOrganizations,
 	grantCfps,
@@ -10,7 +10,7 @@ import {
 
 export type UserRole = "owner" | "admin" | "member";
 
-export type User = typeof appUsers.$inferSelect;
+export type User = typeof users.$inferSelect;
 export type Workspace = typeof workspaces.$inferSelect;
 export type FundingOrganization = typeof fundingOrganizations.$inferSelect;
 export type GrantCFP = typeof grantCfps.$inferSelect;

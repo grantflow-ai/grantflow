@@ -7,15 +7,12 @@ import { getEnv } from "@/utils/env";
 import { EnterIcon, ExitIcon, HomeIcon } from "@radix-ui/react-icons";
 import { Button } from "gen/ui/button";
 import Link from "next/link";
-import { getServerClient } from "@/utils/supabase/server";
+import { auth } from "@/auth";
 
 export async function Navbar() {
-	const supabase = await getServerClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const session = await auth();
 
-	const isSignedIn = !!user;
+	const isSignedIn = !!session?.user;
 
 	return (
 		<nav
@@ -40,7 +37,7 @@ export async function Navbar() {
 					)}
 					{getEnv().NEXT_PUBLIC_IS_DEVELOPMENT && (
 						<Button variant="outline" size="sm" className="bg-inherit dark:border-slate-700">
-							<Link href={isSignedIn ? ApiPath.LOGOUT : PagePath.AUTH}>
+							<Link href={isSignedIn ? ApiPath.LOGOUT : PagePath.SIGNIN}>
 								{isSignedIn ? (
 									<ExitIcon className="h-3.5 w-3.5" />
 								) : (

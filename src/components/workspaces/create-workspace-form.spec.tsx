@@ -83,7 +83,7 @@ describe("CreateWorkspaceForm", () => {
 	});
 
 	it("shows error toast on failed submission", async () => {
-		vi.mocked(createWorkspace).mockResolvedValue("API Error");
+		vi.mocked(createWorkspace).mockResolvedValue("Failed to create workspace");
 
 		render(<CreateWorkspaceForm locales={en} closeModal={mockCloseModal} />);
 

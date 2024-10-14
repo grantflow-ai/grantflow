@@ -10,9 +10,10 @@ import {
 } from "@/types/database-types";
 
 export const UserFactory = new Factory<User>((factory) => ({
-	avatarUrl: factory.helpers.arrayElement([null, factory.image.avatar()]),
+	image: factory.helpers.arrayElement([null, factory.image.avatar()]),
 	createdAt: new Date(),
 	email: factory.internet.email(),
+	emailVerified: new Date(),
 	name: factory.person.fullName(),
 	id: factory.string.uuid(),
 	updatedAt: new Date(),
