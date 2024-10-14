@@ -58,11 +58,12 @@ export const mockFetch = vi.fn();
 export const mockEnv = {
 	NEXT_PUBLIC_DEBUG: true,
 	NEXT_PUBLIC_SITE_URL: "https://example.com",
-	NEXT_PUBLIC_SUPABASE_ANON_KEY: "valid_key",
-	NEXT_PUBLIC_SUPABASE_URL: "https://supabase.co",
 	AZURE_STORAGE_ACCOUNT_KEY: "valid_key",
 	AZURE_STORAGE_ACCOUNT_NAME: "account_name",
 	AZURE_STORAGE_CONTAINER_NAME: "container_name",
+	GOOGLE_CLIENT_ID: "client_id",
+	GOOGLE_SECRET: "secret",
+	DATABASE_CONNECTION_STRING: "connection_string",
 } satisfies Env;
 
 beforeAll(() => {

@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
-import { createClient } from "@supabase/supabase-js";
-import { assertIsNotNullish } from "@tool-belt/type-predicates";
-import type { Database } from "gen/database-types";
 import nihActivityCodes from "./nih-activity-codes.json";
+import { getDatabaseClient } from "db/connection";
+import { fundingOrganizations, grantCfps } from "db/schema";
 
 interface CFPRecord {
 	category: string;
@@ -13,43 +12,29 @@ interface CFPRecord {
 }
 
 async function seedDatabase() {
-	const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = process.env;
+	const db = await getDatabaseClient();
 
-	assertIsNotNullish(NEXT_PUBLIC_SUPABASE_URL);
-	assertIsNotNullish(NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-	const supabase = createClient<Database>(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-	const { data: fundingOrganization, error: fundingOrganizationInsertError } = await supabase
-		.from("funding_organizations")
-		.insert({
+	const [{ fundingOrganizationId }] = await db
+		.insert(fundingOrganizations)
+		.values({
 			name: "NIH",
 		})
-		.select("*")
-		.single();
-
-	if (fundingOrganizationInsertError) {
-		throw new Error(`Failed to insert funding organization: ${fundingOrganizationInsertError.message}`);
-	}
+		.returning({ fundingOrganizationId: fundingOrganizations.id });
 
 	console.log("Funding organization inserted");
 
-	const { data: insertedRecords, error: cfpInsertError } = await supabase
-		.from("grant_cfps")
-		.insert(
+	const results = await db
+		.insert(grantCfps)
+		.values(
 			(nihActivityCodes as CFPRecord[]).map(({ url, ...cfp }) => ({
 				...cfp,
 				url: url ?? null,
-				funding_organization_id: fundingOrganization.id,
+				fundingOrganizationId,
 			})),
 		)
-		.select("id");
+		.returning({ id: fundingOrganizations.id });
 
-	if (cfpInsertError) {
-		throw new Error(`Failed to retrieve CFP: ${cfpInsertError.message}`);
-	}
-
-	console.log(`Inserted ${insertedRecords.length} records`);
+	console.log(`Inserted ${results.length} records`);
 }
 
 // eslint-disable-next-line unicorn/prefer-top-level-await
