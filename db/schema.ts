@@ -27,7 +27,7 @@ export const mailingList = pgTable(
 	}),
 );
 
-export const users = pgTable("user", {
+export const users = pgTable("users", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	name: text("name"),
 	email: text("email").unique(),
@@ -36,7 +36,7 @@ export const users = pgTable("user", {
 });
 
 export const accounts = pgTable(
-	"account",
+	"accounts",
 	{
 		userId: uuid("userId")
 			.notNull()
@@ -59,7 +59,7 @@ export const accounts = pgTable(
 	}),
 );
 
-export const sessions = pgTable("session", {
+export const sessions = pgTable("sessions", {
 	sessionToken: text("sessionToken").primaryKey(),
 	userId: uuid("userId")
 		.notNull()
@@ -68,7 +68,7 @@ export const sessions = pgTable("session", {
 });
 
 export const verificationTokens = pgTable(
-	"verificationToken",
+	"verification_tokens",
 	{
 		identifier: text("identifier").notNull(),
 		token: text("token").notNull(),
@@ -82,7 +82,7 @@ export const verificationTokens = pgTable(
 );
 
 export const authenticators = pgTable(
-	"authenticator",
+	"authenticators",
 	{
 		credentialID: text("credentialID").notNull().unique(),
 		userId: uuid("userId")
