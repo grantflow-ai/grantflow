@@ -1,11 +1,11 @@
 {
-	"id": "5b31e37c-9c3f-4d97-85a2-e46750a013f6",
+	"id": "406f127c-246f-4c0e-8284-4448c698f4ae",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
-		"public.account": {
-			"name": "account",
+		"public.accounts": {
+			"name": "accounts",
 			"schema": "",
 			"columns": {
 				"userId": {
@@ -77,10 +77,10 @@
 			},
 			"indexes": {},
 			"foreignKeys": {
-				"account_userId_user_id_fk": {
-					"name": "account_userId_user_id_fk",
-					"tableFrom": "account",
-					"tableTo": "user",
+				"accounts_userId_users_id_fk": {
+					"name": "accounts_userId_users_id_fk",
+					"tableFrom": "accounts",
+					"tableTo": "users",
 					"columnsFrom": ["userId"],
 					"columnsTo": ["id"],
 					"onDelete": "cascade",
@@ -88,15 +88,15 @@
 				}
 			},
 			"compositePrimaryKeys": {
-				"account_provider_providerAccountId_pk": {
-					"name": "account_provider_providerAccountId_pk",
+				"accounts_provider_providerAccountId_pk": {
+					"name": "accounts_provider_providerAccountId_pk",
 					"columns": ["provider", "providerAccountId"]
 				}
 			},
 			"uniqueConstraints": {}
 		},
-		"public.authenticator": {
-			"name": "authenticator",
+		"public.authenticators": {
+			"name": "authenticators",
 			"schema": "",
 			"columns": {
 				"credentialID": {
@@ -150,10 +150,10 @@
 			},
 			"indexes": {},
 			"foreignKeys": {
-				"authenticator_userId_user_id_fk": {
-					"name": "authenticator_userId_user_id_fk",
-					"tableFrom": "authenticator",
-					"tableTo": "user",
+				"authenticators_userId_users_id_fk": {
+					"name": "authenticators_userId_users_id_fk",
+					"tableFrom": "authenticators",
+					"tableTo": "users",
 					"columnsFrom": ["userId"],
 					"columnsTo": ["id"],
 					"onDelete": "cascade",
@@ -161,14 +161,14 @@
 				}
 			},
 			"compositePrimaryKeys": {
-				"authenticator_userId_credentialID_pk": {
-					"name": "authenticator_userId_credentialID_pk",
+				"authenticators_userId_credentialID_pk": {
+					"name": "authenticators_userId_credentialID_pk",
 					"columns": ["userId", "credentialID"]
 				}
 			},
 			"uniqueConstraints": {
-				"authenticator_credentialID_unique": {
-					"name": "authenticator_credentialID_unique",
+				"authenticators_credentialID_unique": {
+					"name": "authenticators_credentialID_unique",
 					"nullsNotDistinct": false,
 					"columns": ["credentialID"]
 				}
@@ -784,8 +784,8 @@
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {}
 		},
-		"public.session": {
-			"name": "session",
+		"public.sessions": {
+			"name": "sessions",
 			"schema": "",
 			"columns": {
 				"sessionToken": {
@@ -809,10 +809,10 @@
 			},
 			"indexes": {},
 			"foreignKeys": {
-				"session_userId_user_id_fk": {
-					"name": "session_userId_user_id_fk",
-					"tableFrom": "session",
-					"tableTo": "user",
+				"sessions_userId_users_id_fk": {
+					"name": "sessions_userId_users_id_fk",
+					"tableFrom": "sessions",
+					"tableTo": "users",
 					"columnsFrom": ["userId"],
 					"columnsTo": ["id"],
 					"onDelete": "cascade",
@@ -822,8 +822,8 @@
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {}
 		},
-		"public.user": {
-			"name": "user",
+		"public.users": {
+			"name": "users",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -862,15 +862,15 @@
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {
-				"user_email_unique": {
-					"name": "user_email_unique",
+				"users_email_unique": {
+					"name": "users_email_unique",
 					"nullsNotDistinct": false,
 					"columns": ["email"]
 				}
 			}
 		},
-		"public.verificationToken": {
-			"name": "verificationToken",
+		"public.verification_tokens": {
+			"name": "verification_tokens",
 			"schema": "",
 			"columns": {
 				"identifier": {
@@ -895,8 +895,8 @@
 			"indexes": {},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {
-				"verificationToken_identifier_token_pk": {
-					"name": "verificationToken_identifier_token_pk",
+				"verification_tokens_identifier_token_pk": {
+					"name": "verification_tokens_identifier_token_pk",
 					"columns": ["identifier", "token"]
 				}
 			},
@@ -1018,10 +1018,10 @@
 					"onDelete": "cascade",
 					"onUpdate": "cascade"
 				},
-				"workspace_users_user_id_user_id_fk": {
-					"name": "workspace_users_user_id_user_id_fk",
+				"workspace_users_user_id_users_id_fk": {
+					"name": "workspace_users_user_id_users_id_fk",
 					"tableFrom": "workspace_users",
-					"tableTo": "user",
+					"tableTo": "users",
 					"columnsFrom": ["user_id"],
 					"columnsTo": ["id"],
 					"onDelete": "cascade",
