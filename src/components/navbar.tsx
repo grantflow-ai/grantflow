@@ -7,7 +7,7 @@ import { getEnv } from "@/utils/env";
 import { EnterIcon, ExitIcon, HomeIcon } from "@radix-ui/react-icons";
 import { Button } from "gen/ui/button";
 import Link from "next/link";
-import { auth } from "@/auth";
+import { auth } from "@/auth/helpers";
 
 export async function Navbar() {
 	const session = await auth();

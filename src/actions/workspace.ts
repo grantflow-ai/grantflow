@@ -13,7 +13,7 @@ import { workspaces } from "db/schema";
 export async function createWorkspace({ name, description }: { name: string; description: string }) {
 	try {
 		// TODO run in transaction and create workspace user
-		const db = await getDatabaseClient();
+		const db = getDatabaseClient();
 		await db
 			.insert(workspaces)
 			.values({

@@ -10,4 +10,7 @@ export default [
 		},
 	},
 	eslintConfigPrettier,
+	{
+		ignores: ["next.config.mjs"],
+	},
 ];

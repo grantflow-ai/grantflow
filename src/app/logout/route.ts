@@ -3,7 +3,7 @@
 import { PagePath } from "@/enums";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { signOut } from "@/auth";
+import { signOut } from "@/auth/helpers";
 
 /**
  * Handle user logout.
