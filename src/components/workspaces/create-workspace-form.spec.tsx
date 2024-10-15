@@ -1,5 +1,4 @@
 import { createWorkspace } from "@/actions/workspace";
-import en from "@/localisations/en.json";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -17,7 +16,7 @@ describe("CreateWorkspaceForm", () => {
 	});
 
 	it("renders the form correctly", () => {
-		render(<CreateWorkspaceForm locales={en} closeModal={mockCloseModal} />);
+		render(<CreateWorkspaceForm closeModal={mockCloseModal} />);
 
 		expect(screen.getByTestId("create-workspace-form")).toBeInTheDocument();
 		expect(screen.getByTestId("create-workspace-name-input")).toBeInTheDocument();
@@ -28,7 +27,7 @@ describe("CreateWorkspaceForm", () => {
 		const mockedCreateWorkspace = vi.mocked(createWorkspace);
 		mockedCreateWorkspace.mockResolvedValueOnce(null as any);
 
-		render(<CreateWorkspaceForm locales={en} closeModal={mockCloseModal} />);
+		render(<CreateWorkspaceForm closeModal={mockCloseModal} />);
 
 		const input = screen.getByTestId("create-workspace-name-input");
 		await userEvent.type(input, "New Workspace");
@@ -42,7 +41,7 @@ describe("CreateWorkspaceForm", () => {
 				description: "",
 				name: "New Workspace",
 			});
-			expect(toast.success).toHaveBeenCalledWith(en.workspaceListView.workspaceCreatedSuccess);
+			expect(toast.success).toHaveBeenCalled();
 			expect(mockCloseModal).toHaveBeenCalled();
 		});
 	});
@@ -51,7 +50,7 @@ describe("CreateWorkspaceForm", () => {
 		const mockedCreateWorkspace = vi.mocked(createWorkspace);
 		mockedCreateWorkspace.mockRejectedValueOnce(new Error("API Error"));
 
-		render(<CreateWorkspaceForm locales={en} closeModal={mockCloseModal} />);
+		render(<CreateWorkspaceForm closeModal={mockCloseModal} />);
 
 		const input = screen.getByTestId("create-workspace-name-input");
 		await userEvent.type(input, "Ne");
@@ -63,7 +62,7 @@ describe("CreateWorkspaceForm", () => {
 	it("calls createWorkspace and shows success toast on successful submission", async () => {
 		vi.mocked(createWorkspace).mockResolvedValue(null as any);
 
-		render(<CreateWorkspaceForm locales={en} closeModal={mockCloseModal} />);
+		render(<CreateWorkspaceForm closeModal={mockCloseModal} />);
 
 		const input = screen.getByTestId("create-workspace-name-input");
 		const submitButton = screen.getByTestId("create-workspace-submit-button");
@@ -77,7 +76,7 @@ describe("CreateWorkspaceForm", () => {
 				description: "",
 				name: "New Workspace",
 			});
-			expect(toast.success).toHaveBeenCalledWith(en.workspaceListView.workspaceCreatedSuccess);
+			expect(toast.success).toHaveBeenCalled();
 			expect(mockCloseModal).toHaveBeenCalled();
 		});
 	});
@@ -85,7 +84,7 @@ describe("CreateWorkspaceForm", () => {
 	it("shows error toast on failed submission", async () => {
 		vi.mocked(createWorkspace).mockResolvedValue("Failed to create workspace");
 
-		render(<CreateWorkspaceForm locales={en} closeModal={mockCloseModal} />);
+		render(<CreateWorkspaceForm closeModal={mockCloseModal} />);
 
 		const input = screen.getByTestId("create-workspace-name-input");
 		const submitButton = screen.getByTestId("create-workspace-submit-button");
@@ -99,7 +98,7 @@ describe("CreateWorkspaceForm", () => {
 				description: "",
 				name: "New Workspace",
 			});
-			expect(toast.error).toHaveBeenCalledWith(en.workspaceListView.workspaceCreatedError);
+			expect(toast.error).toHaveBeenCalled();
 			expect(mockCloseModal).toHaveBeenCalled();
 		});
 	});

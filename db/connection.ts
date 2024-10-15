@@ -1,16 +1,17 @@
 import { getEnv } from "@/utils/env";
-import { drizzle } from "drizzle-orm/connect";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { Ref } from "@/utils/state";
 import * as schema from "./schema";
-const ref = new Ref<Awaited<ReturnType<typeof drizzle<"postgres-js", typeof schema>>>>();
+import postgres from "postgres";
+const ref = new Ref<ReturnType<typeof drizzle<typeof schema>>>();
 
 /**
  * Get the database connection.
  */
-export async function getDatabaseClient() {
+export function getDatabaseClient() {
 	if (!ref.value) {
-		ref.value = await drizzle("postgres-js", {
-			connection: getEnv().DATABASE_CONNECTION_STRING,
+		const client = postgres(getEnv().DATABASE_CONNECTION_STRING);
+		ref.value = drizzle(client, {
 			schema,
 		});
 	}

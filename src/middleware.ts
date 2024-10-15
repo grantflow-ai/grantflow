@@ -1,11 +1,11 @@
-import { i18nMiddleware } from "@/middleware/i18n-middleware";
 import type { MiddlewareConfig } from "next/server";
 
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth/config";
 
-export const middleware = auth((request) => {
-	return i18nMiddleware(request);
-});
+const { auth } = NextAuth(authConfig);
+
+export default auth;
 
 export const config: MiddlewareConfig = {
 	matcher: ["/((?!api|_next/static|_next/image\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],

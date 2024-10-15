@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import { subscribeToMailingList } from "@/actions/mailing-list";
 import { FormButton } from "@/components/form-button";
-import type { Localisation } from "@/i18n";
 import { cn } from "gen/cn";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
@@ -19,11 +18,7 @@ const subscribeSchema = z.object({
 
 export type SubscribeFormValues = z.infer<typeof subscribeSchema>;
 
-export function SubscribeToMailingListForm({
-	className,
-	locales,
-	...rest
-}: FormHTMLAttributes<HTMLFormElement> & { locales: Localisation }) {
+export function SubscribeToMailingListForm({ className, ...rest }: FormHTMLAttributes<HTMLFormElement>) {
 	const [isSubscribed, setIsSubscribed] = useState(false);
 
 	const form = useForm<SubscribeFormValues>({
@@ -54,7 +49,7 @@ export function SubscribeToMailingListForm({
 
 	return (
 		<div data-testid="waiting-list-form">
-			<h3 className="font-filicudi-solid">{locales.mailingListForm.cta}</h3>
+			<h3 className="font-filicudi-solid">Join the waitlist!</h3>
 			<Form {...form}>
 				<form
 					onSubmit={form.handleSubmit(onSubmit)}
@@ -91,7 +86,7 @@ export function SubscribeToMailingListForm({
 							disabled={!form.formState.isValid}
 							data-testid="subscribe-form-submit-button"
 						>
-							{locales.mailingListForm.submit}
+							Join
 						</FormButton>
 					</div>
 				</form>

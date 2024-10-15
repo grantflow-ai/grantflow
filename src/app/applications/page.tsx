@@ -10,7 +10,7 @@ export default async function ApplicationCreateView({
 		workspaceId: string;
 	};
 }) {
-	const db = await getDatabaseClient();
+	const db = getDatabaseClient();
 	const cfps = await db.query.grantCfps.findMany({
 		where: inArray(grantCfps.code, [
 			"R01",

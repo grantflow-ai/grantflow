@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 		});
 	}
 
-	const db = await getDatabaseClient();
+	const db = getDatabaseClient();
 	try {
 		await db.delete(mailingList).where(eq(mailingList.id, recordId));
 		return NextResponse.redirect(new URL(PagePath.ROOT, requestUrl.origin));

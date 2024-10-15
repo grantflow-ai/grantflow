@@ -12,7 +12,7 @@ interface CFPRecord {
 }
 
 async function seedDatabase() {
-	const db = await getDatabaseClient();
+	const db = getDatabaseClient();
 
 	const [{ fundingOrganizationId }] = await db
 		.insert(fundingOrganizations)

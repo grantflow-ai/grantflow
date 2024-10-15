@@ -1,13 +1,61 @@
 "use server";
 
 import { SubscribeToMailingListForm } from "@/components/mailing-list/mailing-list-subscribe-form";
-import { type SupportedLocale, getLocale } from "@/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
 import { FileText, Lock, Users } from "lucide-react";
 
-export default async function LandingPage({ params: { lang } }: { params: { lang: SupportedLocale } }) {
-	const locales = await getLocale(lang);
+const locales = {
+	headingSection: {
+		title: "GrantFlow.ai",
+		subtitle: "Supercharge your grant writing",
+	},
+	problemAndSolutionSection: {
+		title: "Simplify Grant Applications with a Collaborative Workspace",
+		subtitle:
+			"GrantFlow.ai transforms the complex grant application process into a streamlined, collaborative experience. Manage all aspects of grant writing with your team in one shared workspace.",
+		card1: {
+			content:
+				"As a PI, you need to balance running a lab, publishing research, and securing funding for future studies. The complex and time-consuming grant writing process can drain your focus from leading groundbreaking research. Collaborating with students, administrators, and other researchers adds another layer of complexity.",
+			subtitle: "More Time on Grant Writing, Less on Research?",
+			title: "The Challenge for Principal Investigators",
+		},
+		card2: {
+			title: "Our Solution",
+			subtitle: "A Collaborative Platform Built for Researchers",
+			content:
+				"GrantFlow.ai provides a comprehensive platform designed to streamline the grant application writing process:",
+			list: {
+				item1: 'Collaborative Workspace: Our "Grant Studio" allows seamless collaboration.',
+				item2: "AI-Driven Support: Leverage advanced AI to accelerate writing and refine proposals.",
+				item3: "Security & Compliance: Ensures data privacy and adheres to industry standards.",
+			},
+		},
+	},
+	featuresSection: {
+		title: "Why GrantFlow.ai?",
+		subtitle: "Tailored for the Complex Needs of Principal Investigators",
+		card1: {
+			title: "Collaborative Tools",
+			content:
+				"Your entire team can participate in the application process, ensuring everyone from administrators to researchers can contribute efficiently.",
+		},
+		card2: {
+			title: "Customizable Proposals",
+			content:
+				"Create proposals that meet the specific guidelines of major funding bodies like NIH, NSF, and ERC, with AI assistance fine-tuned for technical and cutting-edge research language.",
+		},
+		card3: {
+			title: "Grant Discovery & Tracking",
+			content: "Discover relevant grants, track progress, and ensure compliance, all within a single platform.",
+		},
+	},
+	callToAction: {
+		title: "Ready to Transform Your Grant Writing Process?",
+	},
+};
 
+// eslint-disable-next-line @typescript-eslint/require-await
+export default async function LandingPage() {
 	return (
 		<div className="flex-grow bg-background text-foreground" data-testid="landing-page">
 			<section className="bg-base py-20 text-center relative overflow-hidden" data-testid="heading-section">
@@ -17,14 +65,14 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 							className="text-4xl md:text-8xl font-bold mb-6 animate-fade-in-up font-filicudi-solid"
 							data-testid="heading-title"
 						>
-							{locales.landingPage.headingSection.title}
+							{locales.headingSection.title}
 						</h1>
 						<h2 className="text-2xl font-filicudi-solid" data-testid="heading-subtitle">
-							{locales.landingPage.headingSection.subtitle}
+							{locales.headingSection.subtitle}
 						</h2>
 					</div>
 					<div className="mb-4">
-						<SubscribeToMailingListForm data-testid="mailing-list-form" locales={locales} />
+						<SubscribeToMailingListForm data-testid="mailing-list-form" />
 					</div>
 				</div>
 			</section>
@@ -35,48 +83,48 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 						className="text-3xl font-bold mb-8 text-center font-filicudi-solid"
 						data-testid="problem-solution-title"
 					>
-						{locales.landingPage.problemAndSolutionSection.title}
+						{locales.problemAndSolutionSection.title}
 					</h2>
 					<p className="text-xl text-center mb-12 max-w-3xl mx-auto" data-testid="problem-solution-subtitle">
-						{locales.landingPage.problemAndSolutionSection.subtitle}
+						{locales.problemAndSolutionSection.subtitle}
 					</p>
 					<div className="grid md:grid-cols-2 gap-8">
 						<Card className="transition-transform hover:scale-105" data-testid="card-1">
 							<CardHeader>
 								<CardTitle className="font-filicudi-solid">
-									{locales.landingPage.problemAndSolutionSection.card1.title}
+									{locales.problemAndSolutionSection.card1.title}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<h3 className="text-xl font-semibold mb-4">
-									{locales.landingPage.problemAndSolutionSection.card1.subtitle}
+									{locales.problemAndSolutionSection.card1.subtitle}
 								</h3>
-								<p>{locales.landingPage.problemAndSolutionSection.card1.content}</p>
+								<p>{locales.problemAndSolutionSection.card1.content}</p>
 							</CardContent>
 						</Card>
 						<Card className="transition-transform hover:scale-105" data-testid="card-2">
 							<CardHeader>
 								<CardTitle className="font-filicudi-solid">
-									{locales.landingPage.problemAndSolutionSection.card2.title}
+									{locales.problemAndSolutionSection.card2.title}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<h3 className="text-xl font-semibold mb-4">
-									{locales.landingPage.problemAndSolutionSection.card2.subtitle}
+									{locales.problemAndSolutionSection.card2.subtitle}
 								</h3>
-								<p>{locales.landingPage.problemAndSolutionSection.card2.content}</p>
+								<p>{locales.problemAndSolutionSection.card2.content}</p>
 								<ul className="mt-4 space-y-2">
 									<li className="flex items-start" data-testid="card2-item1">
 										<Users className="mr-2 h-5 w-5 text-primary" />
-										<span>{locales.landingPage.problemAndSolutionSection.card2.list.item1}</span>
+										<span>{locales.problemAndSolutionSection.card2.list.item1}</span>
 									</li>
 									<li className="flex items-start" data-testid="card2-item2">
 										<FileText className="mr-2 h-5 w-5 text-primary" />
-										<span>{locales.landingPage.problemAndSolutionSection.card2.list.item2}</span>
+										<span>{locales.problemAndSolutionSection.card2.list.item2}</span>
 									</li>
 									<li className="flex items-start" data-testid="card2-item3">
 										<Lock className="mr-2 h-5 w-5 text-primary" />
-										<span>{locales.landingPage.problemAndSolutionSection.card2.list.item3}</span>
+										<span>{locales.problemAndSolutionSection.card2.list.item3}</span>
 									</li>
 								</ul>
 							</CardContent>
@@ -91,35 +139,35 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 						className="text-3xl font-bold mb-8 text-center font-filicudi-solid"
 						data-testid="features-title"
 					>
-						{locales.landingPage.featuresSection.title}
+						{locales.featuresSection.title}
 					</h2>
 					<h3 className="text-xl text-center mb-12" data-testid="features-subtitle">
-						{locales.landingPage.featuresSection.subtitle}
+						{locales.featuresSection.subtitle}
 					</h3>
 					<div className="grid md:grid-cols-3 gap-8">
 						<Card className="transition-transform hover:scale-105" data-testid="feature-card-1">
 							<CardHeader>
 								<CardTitle className="font-filicudi-solid">
-									{locales.landingPage.featuresSection.card1.title}
+									{locales.featuresSection.card1.title}
 								</CardTitle>
 							</CardHeader>
-							<CardContent>{locales.landingPage.featuresSection.card1.content}</CardContent>
+							<CardContent>{locales.featuresSection.card1.content}</CardContent>
 						</Card>
 						<Card className="transition-transform hover:scale-105" data-testid="feature-card-2">
 							<CardHeader>
 								<CardTitle className="font-filicudi-solid">
-									{locales.landingPage.featuresSection.card2.title}
+									{locales.featuresSection.card2.title}
 								</CardTitle>
 							</CardHeader>
-							<CardContent>{locales.landingPage.featuresSection.card2.content}</CardContent>
+							<CardContent>{locales.featuresSection.card2.content}</CardContent>
 						</Card>
 						<Card className="transition-transform hover:scale-105" data-testid="feature-card-3">
 							<CardHeader>
 								<CardTitle className="font-filicudi-solid">
-									{locales.landingPage.featuresSection.card3.title}
+									{locales.featuresSection.card3.title}
 								</CardTitle>
 							</CardHeader>
-							<CardContent>{locales.landingPage.featuresSection.card3.content}</CardContent>
+							<CardContent>{locales.featuresSection.card3.content}</CardContent>
 						</Card>
 					</div>
 				</div>
@@ -128,9 +176,9 @@ export default async function LandingPage({ params: { lang } }: { params: { lang
 			<section className="py-16" data-testid="cta-section">
 				<div className="container mx-auto px-4 text-center">
 					<h2 className="text-3xl font-bold mb-8 font-filicudi-solid" data-testid="cta-title">
-						{locales.landingPage.callToAction.title}
+						{locales.callToAction.title}
 					</h2>
-					<SubscribeToMailingListForm data-testid="cta-mailing-list-form" locales={locales} />
+					<SubscribeToMailingListForm data-testid="cta-mailing-list-form" />
 				</div>
 			</section>
 		</div>

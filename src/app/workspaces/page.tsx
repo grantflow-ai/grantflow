@@ -1,20 +1,13 @@
 import { PagePath } from "@/enums";
-import { getLocale, type SupportedLocale } from "@/i18n";
 import { handleServerError } from "@/utils/server-side";
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
 import { getDatabaseClient } from "db/connection";
-import { auth } from "@/auth";
+import { auth } from "@/auth/helpers";
 import { eq } from "drizzle-orm";
 import { workspaceUsers, workspaces } from "db/schema";
 
-export default async function WorkspacesListPage({
-	params: { lang },
-}: {
-	params: {
-		lang: SupportedLocale;
-	};
-}) {
+export default async function WorkspacesListPage() {
 	const session = await auth();
 
 	if (!session?.user?.id) {
@@ -23,7 +16,7 @@ export default async function WorkspacesListPage({
 		});
 	}
 
-	const db = await getDatabaseClient();
+	const db = getDatabaseClient();
 
 	const userWorkspaces = await db
 		.select({
@@ -37,12 +30,10 @@ export default async function WorkspacesListPage({
 		.leftJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
 		.where(eq(workspaceUsers.userId, session.user.id));
 
-	const locales = await getLocale(lang);
-
 	return (
 		<div className="p-5">
 			<div className="py-4">
-				<CreateWorkspaceModal locales={locales} />
+				<CreateWorkspaceModal />
 			</div>
 			<div className="my-6 space-y-8">
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">

@@ -15,7 +15,7 @@ export async function subscribeToMailingList(email: string) {
 	if (!isEmail(email)) {
 		return ErrorType.INVALID_EMAIL;
 	}
-	const db = await getDatabaseClient();
+	const db = getDatabaseClient();
 
 	try {
 		await db.insert(mailingList).values({ email }).execute();
