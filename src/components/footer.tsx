@@ -1,10 +1,8 @@
-import type { Localisation } from "@/i18n";
-
-export function Footer({ locales }: { locales: Localisation }) {
+export function Footer() {
 	return (
 		<footer className="border-2 py-4" data-testid="footer">
 			<div className="container mx-auto px-4 text-center">
-				<p data-testid="footer-copyright-text">{locales.footer.copyRightText}</p>
+				<p data-testid="footer-copyright-text">Copyright 2024 GrantFlow.AI. All rights reserved.</p>
 			</div>
 		</footer>
 	);

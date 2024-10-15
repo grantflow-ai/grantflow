@@ -5,10 +5,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { FormButton } from "@/components/form-button";
-import type { Localisation } from "@/i18n";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
-import { signIn } from "@/auth";
+import { sendMagicLink } from "@/actions/send-magic-link";
 
 const emailSchema = z.object({
 	email: z.string().email({ message: "Invalid email address" }),
@@ -16,7 +15,7 @@ const emailSchema = z.object({
 
 export type EmailFormValues = z.infer<typeof emailSchema>;
 
-export function EmailSigninForm({ locales }: { locales: Localisation }) {
+export function EmailSigninForm() {
 	const form = useForm<EmailFormValues>({
 		resolver: zodResolver(emailSchema),
 		defaultValues: { email: "" },
@@ -30,9 +29,7 @@ export function EmailSigninForm({ locales }: { locales: Localisation }) {
 					className="mb-4"
 					data-testid="email-signin-form"
 					action={async (formData) => {
-						"use server";
-
-						await signIn("resend", formData);
+						await sendMagicLink(formData);
 					}}
 				>
 					<FormField
@@ -68,7 +65,7 @@ export function EmailSigninForm({ locales }: { locales: Localisation }) {
 						disabled={!form.formState.isValid}
 						data-testid="email-signin-form-submit-button"
 					>
-						{locales.emailSigninForm.sendMagicLink}
+						Send Magic Link
 					</FormButton>
 				</form>
 			</Form>

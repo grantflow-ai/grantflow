@@ -4,17 +4,12 @@ import type { Metadata } from "next";
 
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
-import { type SupportedLocale, getLocale, i18n } from "@/i18n";
 import { getEnv } from "@/utils/env";
 import { fontSans } from "@/utils/fonts";
 import { cn } from "gen/cn";
 import { Toaster } from "gen/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
-
-export function generateStaticParams() {
-	return i18n.locales.map((locale) => ({ lang: locale }));
-}
 
 export const metadata = {
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
@@ -29,17 +24,10 @@ export const metadata = {
 	},
 } satisfies Metadata;
 
-export default async function RootLayout({
-	children,
-	params: { lang },
-}: {
-	children: ReactNode;
-	params: { lang: SupportedLocale };
-}) {
-	const locales = await getLocale(lang);
-
+// eslint-disable-next-line @typescript-eslint/require-await
+export default async function RootLayout({ children }: { children: ReactNode }) {
 	return (
-		<html lang={lang}>
+		<html lang="en">
 			<head>
 				<link rel="stylesheet" href="https://use.typekit.net/ehf1zsz.css" />
 				<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -53,7 +41,7 @@ export default async function RootLayout({
 					>
 						{children}
 					</main>
-					<Footer locales={locales} />
+					<Footer />
 					<Toaster />
 				</ThemeProvider>
 			</body>

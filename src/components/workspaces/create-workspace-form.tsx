@@ -1,6 +1,5 @@
 import { createWorkspace } from "@/actions/workspace";
 import { FormButton } from "@/components/form-button";
-import type { Localisation } from "@/i18n";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "gen/ui/form";
 import { Input } from "gen/ui/input";
@@ -17,7 +16,7 @@ const workspaceSchema = z.object({
 
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
 
-export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisation; closeModal: () => void }) {
+export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) {
 	const form = useForm<WorkspaceFormValues>({
 		resolver: zodResolver(workspaceSchema),
 		defaultValues: { name: "", description: "" },
@@ -26,9 +25,9 @@ export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisa
 	const onSubmit = async (values: WorkspaceFormValues) => {
 		const error = await createWorkspace(values);
 		if (error) {
-			toast.error(locales.workspaceListView.workspaceCreatedError);
+			toast.error("An error occurred while creating the workspace.");
 		} else {
-			toast.success(locales.workspaceListView.workspaceCreatedSuccess);
+			toast.success("Workspace created successfully.");
 		}
 		closeModal();
 	};
@@ -47,12 +46,12 @@ export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisa
 							control={form.control}
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{locales.workspaceListView.workspaceNameLabel}</FormLabel>
+									<FormLabel>Name *</FormLabel>
 									<FormControl>
 										<Input
 											{...field}
 											data-testid="create-workspace-name-input"
-											placeholder={locales.workspaceListView.workspaceNamePlaceholder}
+											placeholder="Workspace Name"
 											className="w-full"
 										/>
 									</FormControl>
@@ -64,12 +63,12 @@ export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisa
 							control={form.control}
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{locales.workspaceListView.workspaceDescriptionLabel}</FormLabel>
+									<FormLabel>Description</FormLabel>
 									<FormControl>
 										<Textarea
 											{...field}
 											data-testid="create-workspace-description-textarea"
-											placeholder={locales.workspaceListView.workspaceDescriptionPlaceholder}
+											placeholder="Workspace Description"
 											className="w-full min-h-[100px]"
 										/>
 									</FormControl>
@@ -82,7 +81,7 @@ export function CreateWorkspaceForm({ locales, closeModal }: { locales: Localisa
 							disabled={!form.formState.isValid}
 							isLoading={form.formState.isSubmitting}
 						>
-							{locales.workspaceListView.createWorkspace}
+							Create Workspace
 						</FormButton>
 					</form>
 				</Form>
