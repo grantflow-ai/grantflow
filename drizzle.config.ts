@@ -7,4 +7,5 @@ export default defineConfig({
 	dbCredentials: {
 		url: getEnv().DATABASE_CONNECTION_STRING,
 	},
+	out: "./db/migrations",
 });
