@@ -30,3 +30,27 @@ export function handleServerError<T extends ReactNode | string>(
 	}
 	return fallback ?? null;
 }
+
+/**
+ * Redirect to a URL with toast parameters.
+ *
+ * @param url The URL to redirect to.
+ * @param type The type of toast to show.
+ * @param content The content of the toast.
+ *
+ * Note: "cookies" strategy will cause a reload, but it is necessary when a reload will already happen.
+ * @returns A NextResponse object.
+ */
+export function redirectWithToastParams({
+	path,
+	type,
+	content,
+}: {
+	path: string;
+	type: "error" | "success" | "info";
+	content: string;
+}) {
+	path = `${path}?toastType=${type}&toastContent=${content}`;
+
+	return redirect(path);
+}

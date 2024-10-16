@@ -10,6 +10,8 @@ import { cn } from "gen/cn";
 import { Toaster } from "gen/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
+import { SessionProvider } from "next-auth/react";
+import { ToastListener } from "@/components/toast-listener";
 
 export const metadata = {
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
@@ -34,15 +36,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 			</head>
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-					<Navbar />
-					<main
-						className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"
-						data-testid="main-container"
-					>
-						{children}
-					</main>
-					<Footer />
-					<Toaster />
+					<SessionProvider>
+						<Navbar />
+						<main
+							className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"
+							data-testid="main-container"
+						>
+							{children}
+						</main>
+						<Footer />
+						<Toaster />
+						<ToastListener />
+					</SessionProvider>
 				</ThemeProvider>
 			</body>
 		</html>
