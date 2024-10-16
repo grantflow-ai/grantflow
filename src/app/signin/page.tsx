@@ -3,7 +3,7 @@ import { SeparatorWithText } from "@/components/separator-with-text";
 import { PagePath } from "@/enums";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth/helpers";
+import { auth } from "@/auth";
 import { SigninWithGoogleButton } from "@/components/auth/signin-with-google-button";
 
 export default async function SigninPage() {

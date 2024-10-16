@@ -1,6 +1,5 @@
 "use server";
 
-import { ErrorType } from "@/constants";
 import { handleServerError } from "@/utils/server-side";
 import isEmail from "validator/lib/isEmail";
 import { getDatabaseClient } from "db/connection";
@@ -13,7 +12,7 @@ import { mailingList } from "db/schema";
  */
 export async function subscribeToMailingList(email: string) {
 	if (!isEmail(email)) {
-		return ErrorType.INVALID_EMAIL;
+		return handleServerError(new Error("Invalid email address"), { fallback: "Invalid email address" });
 	}
 	const db = getDatabaseClient();
 

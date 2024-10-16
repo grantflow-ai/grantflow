@@ -1,19 +1,23 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { FormButton } from "@/components/form-button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
-import { sendMagicLink } from "@/actions/send-magic-link";
+import { signInWithResend } from "@/actions/signin-with-resend";
 
 const emailSchema = z.object({
 	email: z.string().email({ message: "Invalid email address" }),
 });
 
 export type EmailFormValues = z.infer<typeof emailSchema>;
+
+const onSubmit: SubmitHandler<EmailFormValues> = async (values) => {
+	await signInWithResend(values.email);
+};
 
 export function EmailSigninForm() {
 	const form = useForm<EmailFormValues>({
@@ -25,13 +29,7 @@ export function EmailSigninForm() {
 	return (
 		<div data-testid="email-signin-form">
 			<Form {...form}>
-				<form
-					className="mb-4"
-					data-testid="email-signin-form"
-					action={async (formData) => {
-						await sendMagicLink(formData);
-					}}
-				>
+				<form className="mb-4" data-testid="email-signin-form" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
 						name="email"
 						control={form.control}
