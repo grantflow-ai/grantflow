@@ -1,8 +1,8 @@
 import { getEnv } from "@/utils/env";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { Ref } from "@/utils/state";
 import * as schema from "./schema";
-import postgres from "postgres";
+import { Pool } from "pg";
 const ref = new Ref<ReturnType<typeof drizzle<typeof schema>>>();
 
 /**
@@ -10,8 +10,8 @@ const ref = new Ref<ReturnType<typeof drizzle<typeof schema>>>();
  */
 export function getDatabaseClient() {
 	if (!ref.value) {
-		const client = postgres(getEnv().DATABASE_CONNECTION_STRING);
-		ref.value = drizzle(client, {
+		const pool = new Pool({ connectionString: getEnv().DATABASE_CONNECTION_STRING });
+		ref.value = drizzle(pool, {
 			schema,
 		});
 	}

@@ -106,9 +106,9 @@ importers:
             next-themes:
                 specifier: ^0.3.0
                 version: 0.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-            postgres:
-                specifier: ^3.4.4
-                version: 3.4.4
+            pg:
+                specifier: ^8.13.0
+                version: 8.13.0
             prettier:
                 specifier: ^3.3.3
                 version: 3.3.3
@@ -164,6 +164,9 @@ importers:
             "@types/node":
                 specifier: ^22.7.5
                 version: 22.7.5
+            "@types/pg":
+                specifier: ^8.11.10
+                version: 8.11.10
             "@types/react":
                 specifier: ^18.3.11
                 version: 18.3.11
@@ -8556,7 +8559,6 @@ snapshots:
             "@types/node": 22.7.5
             pg-protocol: 1.7.0
             pg-types: 4.0.2
-        optional: true
 
     "@types/prop-types@15.7.13": {}
 
@@ -10345,8 +10347,7 @@ snapshots:
             define-properties: 1.2.1
             es-object-atoms: 1.0.0
 
-    obuf@1.1.2:
-        optional: true
+    obuf@1.1.2: {}
 
     onetime@6.0.0:
         dependencies:
@@ -10436,22 +10437,17 @@ snapshots:
     pg-cloudflare@1.1.1:
         optional: true
 
-    pg-connection-string@2.7.0:
-        optional: true
+    pg-connection-string@2.7.0: {}
 
-    pg-int8@1.0.1:
-        optional: true
+    pg-int8@1.0.1: {}
 
-    pg-numeric@1.0.2:
-        optional: true
+    pg-numeric@1.0.2: {}
 
     pg-pool@3.7.0(pg@8.13.0):
         dependencies:
             pg: 8.13.0
-        optional: true
 
-    pg-protocol@1.7.0:
-        optional: true
+    pg-protocol@1.7.0: {}
 
     pg-types@2.2.0:
         dependencies:
@@ -10460,7 +10456,6 @@ snapshots:
             postgres-bytea: 1.0.0
             postgres-date: 1.0.7
             postgres-interval: 1.2.0
-        optional: true
 
     pg-types@4.0.2:
         dependencies:
@@ -10471,7 +10466,6 @@ snapshots:
             postgres-date: 2.1.0
             postgres-interval: 3.0.0
             postgres-range: 1.1.4
-        optional: true
 
     pg@8.13.0:
         dependencies:
@@ -10482,12 +10476,10 @@ snapshots:
             pgpass: 1.0.5
         optionalDependencies:
             pg-cloudflare: 1.1.1
-        optional: true
 
     pgpass@1.0.5:
         dependencies:
             split2: 4.2.0
-        optional: true
 
     picocolors@1.1.0: {}
 
@@ -10547,38 +10539,30 @@ snapshots:
             picocolors: 1.1.0
             source-map-js: 1.2.1
 
-    postgres-array@2.0.0:
-        optional: true
+    postgres-array@2.0.0: {}
 
-    postgres-array@3.0.2:
-        optional: true
+    postgres-array@3.0.2: {}
 
-    postgres-bytea@1.0.0:
-        optional: true
+    postgres-bytea@1.0.0: {}
 
     postgres-bytea@3.0.0:
         dependencies:
             obuf: 1.1.2
-        optional: true
 
-    postgres-date@1.0.7:
-        optional: true
+    postgres-date@1.0.7: {}
 
-    postgres-date@2.1.0:
-        optional: true
+    postgres-date@2.1.0: {}
 
     postgres-interval@1.2.0:
         dependencies:
             xtend: 4.0.2
-        optional: true
 
-    postgres-interval@3.0.0:
-        optional: true
+    postgres-interval@3.0.0: {}
 
-    postgres-range@1.1.4:
-        optional: true
+    postgres-range@1.1.4: {}
 
-    postgres@3.4.4: {}
+    postgres@3.4.4:
+        optional: true
 
     preact-render-to-string@5.2.3(preact@10.11.3):
         dependencies:
@@ -10892,8 +10876,7 @@ snapshots:
 
     spdx-license-ids@3.0.20: {}
 
-    split2@4.2.0:
-        optional: true
+    split2@4.2.0: {}
 
     stackback@0.0.2: {}
 
@@ -11391,8 +11374,7 @@ snapshots:
 
     xmlchars@2.2.0: {}
 
-    xtend@4.0.2:
-        optional: true
+    xtend@4.0.2: {}
 
     yallist@3.1.1: {}
 

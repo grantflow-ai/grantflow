@@ -1,19 +1,17 @@
-import { PagePath } from "@/enums";
-import { handleServerError } from "@/utils/server-side";
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
 import { getDatabaseClient } from "db/connection";
-import { auth } from "@/auth/helpers";
+import { auth } from "@/auth";
 import { eq } from "drizzle-orm";
-import { workspaceUsers, workspaces } from "db/schema";
+import { workspaces, workspaceUsers } from "db/schema";
+import { handleServerError } from "@/utils/server-side";
+import { PagePath } from "@/enums";
 
 export default async function WorkspacesListPage() {
 	const session = await auth();
 
-	if (!session?.user?.id) {
-		return handleServerError(new Error("Failed to fetch user"), {
-			redirect: PagePath.SIGNIN,
-		});
+	if (!session?.user) {
+		return handleServerError(new Error("User not authenticated"), { redirect: PagePath.SIGNIN });
 	}
 
 	const db = getDatabaseClient();
