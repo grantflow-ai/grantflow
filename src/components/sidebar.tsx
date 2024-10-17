@@ -1,12 +1,13 @@
 "use client";
 
-import { ElementType, useState } from "react";
+import { ElementType } from "react";
 import Link from "next/link";
 import { Home, Search, User as UserIcon } from "lucide-react";
 import { cn } from "gen/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "gen/ui/avatar";
 import { Button } from "gen/ui/button";
-import { User } from "@/types/database-types";
+import { Logo } from "@/components/logo";
+import { useSession } from "next-auth/react";
 
 interface NavItemProps {
 	icon: ElementType;
@@ -61,56 +62,48 @@ function UserButton({ name, email, image }: { name: string | null; email: string
 	);
 }
 
-export default function Sidebar({ user }: { user?: User }) {
-	const [isExpanded, setIsExpanded] = useState(false);
+export default function Sidebar() {
+	const { data: session } = useSession();
+
+	if (!session?.user) {
+		return null;
+	}
+
+	const { name, email, image } = session.user;
 
 	return (
-		<div
-			className="w-14 h-full flex flex-col"
-			data-testid="navigation-bar"
-			onMouseEnter={() => {
-				setIsExpanded(true);
-			}}
-			onMouseLeave={() => {
-				setIsExpanded(false);
-			}}
+		<nav
+			className={cn(
+				"bg-brand z-10 group z-10 border-r border-default shadow-xl transition-all duration-200 hide-scrollbar flex flex-col justify-between overflow-y-auto w-10 hover:w-32 fixed left-0 top-0 bottom-0",
+			)}
+			aria-label="Main Navigation"
 		>
-			<nav
-				data-state={isExpanded ? "expanded" : "collapsed"}
-				className={cn(
-					"group py-2 z-10 h-full w-14 border-r border-default shadow-xl transition-all duration-200 hide-scrollbar flex flex-col justify-between overflow-y-auto",
-					isExpanded && "w-[13rem]",
-				)}
-				aria-label="Main Navigation"
-			>
-				<div>
-					<Link href="/" className="mx-2 flex items-center h-[40px]" data-testid="grantflow-logo">
-						<img alt="Grantflow Logo" src="/logo.svg" className="h-[40px] w-6 cursor-pointer rounded" />
-					</Link>
-					<ul className="flex flex-col gap-y-1 justify-start px-2 relative" role="menu">
-						<li role="none">
-							<NavItem icon={Home} label="Home" href="/" current={true} />
-						</li>
-					</ul>
-				</div>
+			<div>
+				<Link href="/" className="mx-2 flex items-center h-[40px]" data-testid="grantflow-logo">
+					<Logo />
+				</Link>
+				<ul className="flex flex-col gap-y-1 justify-start px-2 relative" role="menu">
+					<li role="none">
+						<NavItem icon={Home} label="Home" href="/" current={true} />
+					</li>
+				</ul>
+			</div>
 
-				<div className="flex flex-col px-2 gap-y-1">
-					<Button
-						variant="ghost"
-						size="icon"
-						className="relative w-full h-10"
-						aria-label="Search"
-						data-testid="search-button"
-					>
-						<Search size={20} className="absolute left-2 text-foreground-lighter" />
-						<span className="absolute left-10 opacity-0 group-data-[state=expanded]:opacity-100 w-[10rem] text-sm flex flex-col items-center transition-all">
-							<span className="w-full text-left text-foreground-light truncate">Search</span>
-						</span>
-					</Button>
-
-					{user ? <UserButton name={user.name} email={user.email} image={user.image} /> : null}
-				</div>
-			</nav>
-		</div>
+			<div className="flex flex-col px-2 gap-y-1">
+				<Button
+					variant="ghost"
+					size="icon"
+					className="relative w-full h-10"
+					aria-label="Search"
+					data-testid="search-button"
+				>
+					<Search size={20} className="absolute left-2 text-foreground-lighter" />
+					<span className="absolute left-10 opacity-0 group-data-[state=expanded]:opacity-100 w-[10rem] text-sm flex flex-col items-center transition-all">
+						<span className="w-full text-left text-foreground-light truncate">Search</span>
+					</span>
+				</Button>
+				<UserButton name={name} email={email} image={image} />
+			</div>
+		</nav>
 	);
 }
