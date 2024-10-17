@@ -1,9 +1,4 @@
-DO $$ BEGIN
- CREATE TYPE "public"."user_role" AS ENUM('owner', 'admin', 'member');
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
+CREATE TYPE "public"."user_role" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "accounts" (
 	"userId" uuid NOT NULL,
 	"type" text NOT NULL,
@@ -49,6 +44,7 @@ CREATE TABLE IF NOT EXISTS "grant_applications" (
 	"is_resubmission" boolean DEFAULT false NOT NULL,
 	"significance" text NOT NULL,
 	"innovation" text NOT NULL,
+	"file_ids" text[],
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone
@@ -81,8 +77,8 @@ CREATE TABLE IF NOT EXISTS "research_aims" (
 	"application_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" text NOT NULL,
-	"file_urls" text[],
-	"required_clinical_trials" boolean DEFAULT false NOT NULL,
+	"file_ids" text[],
+	"requires_clinical_trials" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone
@@ -93,7 +89,7 @@ CREATE TABLE IF NOT EXISTS "research_tasks" (
 	"aim_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" text NOT NULL,
-	"file_urls" text[],
+	"file_ids" text[],
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone

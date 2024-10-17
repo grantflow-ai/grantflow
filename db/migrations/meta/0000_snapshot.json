@@ -1,5 +1,5 @@
 {
-	"id": "406f127c-246f-4c0e-8284-4448c698f4ae",
+	"id": "138d026d-bc90-443c-8302-1401a2768d62",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -93,7 +93,8 @@
 					"columns": ["provider", "providerAccountId"]
 				}
 			},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.authenticators": {
 			"name": "authenticators",
@@ -172,7 +173,8 @@
 					"nullsNotDistinct": false,
 					"columns": ["credentialID"]
 				}
-			}
+			},
+			"checkConstraints": {}
 		},
 		"public.funding_organizations": {
 			"name": "funding_organizations",
@@ -252,7 +254,8 @@
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.grant_applications": {
 			"name": "grant_applications",
@@ -301,6 +304,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"file_ids": {
+					"name": "file_ids",
+					"type": "text[]",
+					"primaryKey": false,
+					"notNull": false
 				},
 				"created_at": {
 					"name": "created_at",
@@ -376,7 +385,8 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.grant_cfps": {
 			"name": "grant_cfps",
@@ -519,7 +529,8 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.mailing_list": {
 			"name": "mailing_list",
@@ -571,7 +582,8 @@
 					"nullsNotDistinct": false,
 					"columns": ["email"]
 				}
-			}
+			},
+			"checkConstraints": {}
 		},
 		"public.research_aims": {
 			"name": "research_aims",
@@ -602,14 +614,14 @@
 					"primaryKey": false,
 					"notNull": true
 				},
-				"file_urls": {
-					"name": "file_urls",
+				"file_ids": {
+					"name": "file_ids",
 					"type": "text[]",
 					"primaryKey": false,
 					"notNull": false
 				},
-				"required_clinical_trials": {
-					"name": "required_clinical_trials",
+				"requires_clinical_trials": {
+					"name": "requires_clinical_trials",
 					"type": "boolean",
 					"primaryKey": false,
 					"notNull": true,
@@ -680,7 +692,8 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.research_tasks": {
 			"name": "research_tasks",
@@ -711,8 +724,8 @@
 					"primaryKey": false,
 					"notNull": true
 				},
-				"file_urls": {
-					"name": "file_urls",
+				"file_ids": {
+					"name": "file_ids",
 					"type": "text[]",
 					"primaryKey": false,
 					"notNull": false
@@ -782,7 +795,8 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.sessions": {
 			"name": "sessions",
@@ -820,7 +834,8 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.users": {
 			"name": "users",
@@ -867,7 +882,8 @@
 					"nullsNotDistinct": false,
 					"columns": ["email"]
 				}
-			}
+			},
+			"checkConstraints": {}
 		},
 		"public.verification_tokens": {
 			"name": "verification_tokens",
@@ -900,7 +916,8 @@
 					"columns": ["identifier", "token"]
 				}
 			},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
 		"public.workspace_users": {
 			"name": "workspace_users",
@@ -1040,7 +1057,8 @@
 					"nullsNotDistinct": false,
 					"columns": ["workspace_id", "user_id"]
 				}
-			}
+			},
+			"checkConstraints": {}
 		},
 		"public.workspaces": {
 			"name": "workspaces",
@@ -1111,7 +1129,8 @@
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {}
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		}
 	},
 	"enums": {
@@ -1123,6 +1142,7 @@
 	},
 	"schemas": {},
 	"sequences": {},
+	"views": {},
 	"_meta": {
 		"columns": {},
 		"schemas": {},
