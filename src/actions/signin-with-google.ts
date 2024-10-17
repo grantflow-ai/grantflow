@@ -20,7 +20,6 @@ export async function signInWithGoogle() {
 				path: PagePath.SIGNIN,
 				type: "error",
 				content: "Something went wrong. Please try again.",
-				strategy: "cookies",
 			});
 		}
 
