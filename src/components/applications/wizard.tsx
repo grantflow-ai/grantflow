@@ -3,30 +3,12 @@
 import { useState } from "react";
 import { Button } from "gen/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "gen/ui/card";
-import { Input } from "gen/ui/input";
-import { Label } from "gen/ui/label";
 import { Step, Stepper } from "@/components/stepper";
 import { GrantCFP } from "@/types/database-types";
 import { CFPSelectionForm } from "@/components/applications/cfp-selection-form";
-
-function GenericForm({ stepNumber }: { stepNumber: number }) {
-	return (
-		<div className="space-y-4">
-			<div>
-				<Label htmlFor={`field-${stepNumber}-1`}>Field 1</Label>
-				<Input id={`field-${stepNumber}-1`} placeholder={`Step ${stepNumber} Field 1`} />
-			</div>
-			<div>
-				<Label htmlFor={`field-${stepNumber}-2`}>Field 2</Label>
-				<Input id={`field-${stepNumber}-2`} placeholder={`Step ${stepNumber} Field 2`} />
-			</div>
-			<div>
-				<Label htmlFor={`field-${stepNumber}-3`}>Field 3</Label>
-				<Input id={`field-${stepNumber}-3`} placeholder={`Step ${stepNumber} Field 3`} />
-			</div>
-		</div>
-	);
-}
+import { GeneralInformationForm } from "@/components/applications/general-information-form";
+import SignificanceAndInnovationForm from "@/components/applications/significance-and-innovation-form";
+import { ResearchAimProp, ResearchAimsForm, ResearchTaskProp } from "@/components/applications/research-aims-form";
 
 const steps: Step[] = [
 	{ index: 1, name: "CFP Selection" },
@@ -38,6 +20,13 @@ const steps: Step[] = [
 
 export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; workspaceId: string }) {
 	const [selectedCFP, setSelectedCFP] = useState("");
+	const [title, setTitle] = useState("");
+	const [isResubmission, setIsResubmission] = useState(false);
+	const [significance, setSignificance] = useState("");
+	const [innovation, setInnovation] = useState("");
+	const [researchAims, setResearchAims] = useState<ResearchAimProp[]>([]);
+	const [researchTasks, setResearchTasks] = useState<ResearchTaskProp[]>([]);
+
 	const [currentStep, setCurrentStep] = useState(1);
 
 	const handleStepClick = (step: number) => {
@@ -60,6 +49,13 @@ export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; worksp
 		if (currentStep === 1) {
 			return !!selectedCFP;
 		}
+		if (currentStep === 2) {
+			return title.length >= 25;
+		}
+		if (currentStep === 3) {
+			return significance.length && innovation.length;
+		}
+
 		return currentStep !== steps.length;
 	};
 
@@ -74,16 +70,37 @@ export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; worksp
 				<CardContent>
 					<div className="flex flex-col gap-4 mb-4">
 						<Stepper steps={steps} currentStep={currentStep} onStepClick={handleStepClick} />
-
 						{currentStep === 1 && (
 							<CFPSelectionForm cfps={cfps} value={selectedCFP} setValue={setSelectedCFP} />
 						)}
-						{currentStep === 2 && <GenericForm stepNumber={2} />}
-						{currentStep === 3 && <GenericForm stepNumber={3} />}
+						{currentStep === 2 && (
+							<GeneralInformationForm
+								title={title}
+								isResubmission={isResubmission}
+								setTitle={setTitle}
+								setIsResubmission={setIsResubmission}
+							/>
+						)}
+						{currentStep === 3 && (
+							<SignificanceAndInnovationForm
+								significance={significance}
+								innovation={innovation}
+								setSignificance={setSignificance}
+								setInnovation={setInnovation}
+							/>
+						)}
 						{currentStep === 4 && (
+							<ResearchAimsForm
+								researchAims={researchAims}
+								researchTasks={researchTasks}
+								setResearchAims={setResearchAims}
+								setResearchTasks={setResearchTasks}
+							/>
+						)}
+						{currentStep === steps.length && (
 							<div>
 								<h3 className="text-lg font-semibold mb-4">Review Your Information</h3>
-								<p>Please review all the information you've entered before submitting.</p>
+								<p>Please review all the information you&apos;ve entered before submitting.</p>
 								{/* You would typically display a summary of all entered information here */}
 							</div>
 						)}
@@ -93,7 +110,7 @@ export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; worksp
 					<Button onClick={handlePrevious} disabled={currentStep === 1}>
 						Previous
 					</Button>
-					<Button onClick={handleNext} disabled={canStepForward}>
+					<Button onClick={handleNext} disabled={!canStepForward()}>
 						{currentStep === steps.length ? "Submit" : "Next"}
 					</Button>
 				</CardFooter>
