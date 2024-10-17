@@ -3,6 +3,7 @@
 import { SubscribeToMailingListForm } from "@/components/mailing-list/mailing-list-subscribe-form";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
 import { FileText, Lock, Users } from "lucide-react";
+import { Footer } from "@/components/footer";
 
 const locales = {
 	headingSection: {
@@ -199,6 +200,8 @@ export default async function LandingPage() {
 					<SubscribeToMailingListForm data-testid="cta-mailing-list-form" />
 				</div>
 			</section>
+
+			<Footer />
 		</div>
 	);
 }
