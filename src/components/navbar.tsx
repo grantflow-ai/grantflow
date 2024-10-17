@@ -16,10 +16,7 @@ export function Navbar() {
 	const isSignedIn = !!session?.user;
 
 	return (
-		<nav
-			className="flex h-12 items-center justify-between py-2 px-5 bg-dash-sidebar border-b border-default"
-			data-testid="navbar"
-		>
+		<nav className="flex h-12 items-center justify-between py-2 px-5 border-b border-default" data-testid="navbar">
 			<Button
 				variant="outline"
 				className="hover:dark:bg-slate-600/50 hover:bg-slate-200/70 dark:border-slate-700 light:border-slate-200 cursor-pointer rounded-lg p-1"

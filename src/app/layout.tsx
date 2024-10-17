@@ -3,7 +3,6 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 
 import { Footer } from "@/components/footer";
-import { Navbar } from "@/components/navbar";
 import { getEnv } from "@/utils/env";
 import { fontSans } from "@/utils/fonts";
 import { cn } from "gen/cn";
@@ -12,6 +11,8 @@ import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { ToastListener } from "@/components/toast-listener";
+import Sidebar from "@/components/sidebar";
+import { auth } from "@/auth";
 
 export const metadata = {
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
@@ -26,8 +27,9 @@ export const metadata = {
 	},
 } satisfies Metadata;
 
-// eslint-disable-next-line @typescript-eslint/require-await
 export default async function RootLayout({ children }: { children: ReactNode }) {
+	const session = await auth();
+
 	return (
 		<html lang="en">
 			<head>
@@ -37,7 +39,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
 					<SessionProvider>
-						<Navbar />
+						{session?.user && <Sidebar user={session.user} />}
 						<main
 							className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"
 							data-testid="main-container"

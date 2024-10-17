@@ -57,17 +57,17 @@ const locales = {
 // eslint-disable-next-line @typescript-eslint/require-await
 export default async function LandingPage() {
 	return (
-		<div className="flex-grow bg-background text-foreground" data-testid="landing-page">
-			<section className="bg-base py-20 text-center relative overflow-hidden" data-testid="heading-section">
+		<div className="flex-grow text-foreground" data-testid="landing-page">
+			<section className="py-20 text-center relative overflow-hidden" data-testid="heading-section">
 				<div className="flex flex-col px-4 relative z-10 gap-8">
 					<div>
 						<h1
-							className="text-4xl md:text-8xl font-bold mb-6 animate-fade-in-up font-filicudi-solid"
+							className="text-4xl md:text-8xl font-bold mb-6 animate-fade-in-up font-filicudi-solid text-primary"
 							data-testid="heading-title"
 						>
 							{locales.headingSection.title}
 						</h1>
-						<h2 className="text-2xl font-filicudi-solid" data-testid="heading-subtitle">
+						<h2 className="text-2xl font-filicudi-solid text-foreground" data-testid="heading-subtitle">
 							{locales.headingSection.subtitle}
 						</h2>
 					</div>
@@ -77,39 +77,48 @@ export default async function LandingPage() {
 				</div>
 			</section>
 
-			<section id="features" className="py-16 bg-muted" data-testid="problem-solution-section">
+			<section id="features" className="py-16" data-testid="problem-solution-section">
 				<div className="container mx-auto px-4">
 					<h2
-						className="text-3xl font-bold mb-8 text-center font-filicudi-solid"
+						className="text-3xl font-bold mb-8 text-center font-filicudi-solid text-primary"
 						data-testid="problem-solution-title"
 					>
 						{locales.problemAndSolutionSection.title}
 					</h2>
-					<p className="text-xl text-center mb-12 max-w-3xl mx-auto" data-testid="problem-solution-subtitle">
+					<p
+						className="text-xl text-center mb-12 max-w-3xl mx-auto text-muted-foreground"
+						data-testid="problem-solution-subtitle"
+					>
 						{locales.problemAndSolutionSection.subtitle}
 					</p>
 					<div className="grid md:grid-cols-2 gap-8">
-						<Card className="transition-transform hover:scale-105" data-testid="card-1">
+						<Card
+							className="transition-transform hover:scale-105 text-card-foreground"
+							data-testid="card-1"
+						>
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">
+								<CardTitle className="font-filicudi-solid text-primary">
 									{locales.problemAndSolutionSection.card1.title}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<h3 className="text-xl font-semibold mb-4">
+								<h3 className="text-xl font-semibold mb-4 text-accent-foreground">
 									{locales.problemAndSolutionSection.card1.subtitle}
 								</h3>
 								<p>{locales.problemAndSolutionSection.card1.content}</p>
 							</CardContent>
 						</Card>
-						<Card className="transition-transform hover:scale-105" data-testid="card-2">
+						<Card
+							className="transition-transform hover:scale-105 text-card-foreground"
+							data-testid="card-2"
+						>
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">
+								<CardTitle className="font-filicudi-solid text-primary">
 									{locales.problemAndSolutionSection.card2.title}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<h3 className="text-xl font-semibold mb-4">
+								<h3 className="text-xl font-semibold mb-4 text-accent-foreground">
 									{locales.problemAndSolutionSection.card2.subtitle}
 								</h3>
 								<p>{locales.problemAndSolutionSection.card2.content}</p>
@@ -133,37 +142,46 @@ export default async function LandingPage() {
 				</div>
 			</section>
 
-			<section className="py-16" data-testid="features-section">
+			<section className="py-16 bg-background" data-testid="features-section">
 				<div className="container mx-auto px-4">
 					<h2
-						className="text-3xl font-bold mb-8 text-center font-filicudi-solid"
+						className="text-3xl font-bold mb-8 text-center font-filicudi-solid text-primary"
 						data-testid="features-title"
 					>
 						{locales.featuresSection.title}
 					</h2>
-					<h3 className="text-xl text-center mb-12" data-testid="features-subtitle">
+					<h3 className="text-xl text-center mb-12 text-muted-foreground" data-testid="features-subtitle">
 						{locales.featuresSection.subtitle}
 					</h3>
 					<div className="grid md:grid-cols-3 gap-8">
-						<Card className="transition-transform hover:scale-105" data-testid="feature-card-1">
+						<Card
+							className="transition-transform hover:scale-105 text-card-foreground"
+							data-testid="feature-card-1"
+						>
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">
+								<CardTitle className="font-filicudi-solid text-primary">
 									{locales.featuresSection.card1.title}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>{locales.featuresSection.card1.content}</CardContent>
 						</Card>
-						<Card className="transition-transform hover:scale-105" data-testid="feature-card-2">
+						<Card
+							className="transition-transform hover:scale-105 text-card-foreground"
+							data-testid="feature-card-2"
+						>
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">
+								<CardTitle className="font-filicudi-solid text-primary">
 									{locales.featuresSection.card2.title}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>{locales.featuresSection.card2.content}</CardContent>
 						</Card>
-						<Card className="transition-transform hover:scale-105" data-testid="feature-card-3">
+						<Card
+							className="transition-transform hover:scale-105 text-card-foreground"
+							data-testid="feature-card-3"
+						>
 							<CardHeader>
-								<CardTitle className="font-filicudi-solid">
+								<CardTitle className="font-filicudi-solid text-primary">
 									{locales.featuresSection.card3.title}
 								</CardTitle>
 							</CardHeader>
@@ -175,7 +193,7 @@ export default async function LandingPage() {
 
 			<section className="py-16" data-testid="cta-section">
 				<div className="container mx-auto px-4 text-center">
-					<h2 className="text-3xl font-bold mb-8 font-filicudi-solid" data-testid="cta-title">
+					<h2 className="text-3xl font-bold mb-8 font-filicudi-solid text-primary" data-testid="cta-title">
 						{locales.callToAction.title}
 					</h2>
 					<SubscribeToMailingListForm data-testid="cta-mailing-list-form" />

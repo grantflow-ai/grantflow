@@ -1,5 +1,3 @@
-"use client";
-
 import { Label } from "gen/ui/label";
 import { Textarea } from "gen/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
