@@ -5,21 +5,16 @@ import { handleFileUpload } from "@/utils/file-upload";
 import { FileCard, FileUploader } from "@/components/file-uploader";
 
 const DEFAULT_FILE_ACCEPTS = [
-	"application/msword",
 	"application/pdf",
-	"application/rtf",
-	"application/vnd.ms-excel",
-	"application/vnd.ms-powerpoint",
-	"application/vnd.oasis.opendocument.text",
-	"application/vnd.openxmlformats-officedocument.presentationml.presentation",
-	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	"application/vnd.openxmlformats-officedocument.presentationml.presentation",
 	"image/jpeg",
 	"image/png",
 	"text/csv",
-	"text/markdown",
 	"text/plain",
 ];
+
 const DEFAULT_MAX_SIZE = 20 * 1024 * 1024;
 const DEFAULT_MAX_FILES = 5;
 
@@ -29,21 +24,21 @@ export function FileUploadContainer({
 	maxFileCount = DEFAULT_MAX_FILES,
 	initialValue,
 	parentId,
-	setFileIds,
+	setFileData,
 }: {
 	accept?: string[];
 	maxSize?: number;
 	maxFileCount?: number;
 	initialValue?: FileData[];
 	parentId: string;
-	setFileIds: (fileIds: string[]) => void;
+	setFileData: (fileData: FileData[]) => void;
 }) {
 	const [files, setFiles] = useState<FileData[]>(initialValue ?? []);
 	const [progresses, setProgresses] = useState<Record<string, number>>({});
 
 	useEffect(() => {
-		setFileIds(files.map((file) => file.fileId));
-	}, [files, setFileIds]);
+		setFileData(files);
+	}, [files, setFileData]);
 
 	const handleFilesAdded = useCallback(
 		async (newFiles: File[]) => {
