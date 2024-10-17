@@ -1,5 +1,3 @@
-"use client";
-
 import { Check, ChevronsUpDown } from "lucide-react";
 
 import { cn } from "gen/cn";
@@ -9,9 +7,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "gen/ui/popover";
 import { GrantCFP } from "@/types/database-types";
 import { useEffect, useState } from "react";
 
-export function CFPCombobox({ cfps }: { cfps: GrantCFP[] }) {
+export function CFPSelectionForm({
+	cfps,
+	value,
+	setValue,
+}: {
+	cfps: GrantCFP[];
+	value: string;
+	setValue: (value: string) => void;
+}) {
 	const [open, setOpen] = useState(false);
-	const [value, setValue] = useState("");
 	const [title, setTitle] = useState("Select an NIH Activity Code");
 
 	useEffect(() => {
@@ -24,7 +29,7 @@ export function CFPCombobox({ cfps }: { cfps: GrantCFP[] }) {
 	}, [value]);
 
 	return (
-		<div className="w-full max-w-md" data-testid="cfp-selection-form-container">
+		<div data-testid="cfp-selection-form-container">
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger asChild>
 					<Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">

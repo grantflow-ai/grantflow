@@ -1,7 +1,7 @@
-import { CFPCombobox } from "@/components/applications/cfp-combobox";
 import { getDatabaseClient } from "db/connection";
 import { inArray } from "drizzle-orm";
 import { grantCfps } from "db/schema";
+import { WizardFormPage } from "@/components/applications/wizard";
 
 export default async function ApplicationCreateView({
 	searchParams: { workspaceId },
@@ -32,9 +32,8 @@ export default async function ApplicationCreateView({
 	});
 
 	return (
-		<div>
-			<h1>{workspaceId}</h1>
-			<CFPCombobox cfps={cfps} />
+		<div className="container mx-auto p-4">
+			<WizardFormPage cfps={cfps} workspaceId={workspaceId} />
 		</div>
 	);
 }
