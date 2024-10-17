@@ -29,7 +29,7 @@ export default async function WorkspacesListPage() {
 		.where(eq(workspaceUsers.userId, session.user.id));
 
 	return (
-		<div className="p-5">
+		<div className="w-full h-full">
 			<div className="py-4">
 				<CreateWorkspaceModal />
 			</div>
