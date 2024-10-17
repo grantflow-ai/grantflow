@@ -15,14 +15,12 @@ export function ToastListener() {
 		if (toastType) {
 			toast[toastType](content);
 
-			setTimeout(() => {
-				const newSearchParams = new URLSearchParams(searchParams.toString());
-				newSearchParams.delete("toastType");
-				newSearchParams.delete("toastContent");
+			const newSearchParams = new URLSearchParams(searchParams.toString());
+			newSearchParams.delete("toastType");
+			newSearchParams.delete("toastContent");
 
-				const redirectPath = `${pathname}?${newSearchParams.toString()}`;
-				router.replace(redirectPath, { scroll: false });
-			}, 3000);
+			const redirectPath = `${pathname}?${newSearchParams.toString()}`;
+			router.replace(redirectPath, { scroll: false });
 		}
 	}, [searchParams]);
 
