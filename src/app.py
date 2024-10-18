@@ -1,13 +1,16 @@
 import logging
 from asyncio import gather
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from azure.functions import InputStream
 
-from src.ai_search import SearchSchema, ensure_index_exists, upload_to_ai_search
+from src.ai_search import ensure_index_exists, upload_to_ai_search
 from src.chunking import chunk_text, process_chunk
 from src.exceptions import RequestFailureError, ValidationError
 from src.extraction import parse_blob_data
+
+if TYPE_CHECKING:
+    from src.dto import SearchSchema
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +31,10 @@ async def blob_trigger_handler(blob: InputStream) -> None:
     if blob.name is None:
         raise ValidationError("Blob name is required")
 
+    workspace_id, parent_id, filename = blob.name.split("/")
+
     try:
-        extracted_text, mime_type = await parse_blob_data(blob_data=blob.read(), filename=blob.name)
+        extracted_text, mime_type = await parse_blob_data(blob_data=blob.read(), filename=filename)
         chunked_elements = chunk_text(text=extracted_text.decode(), mime_type=mime_type)
 
         documents_to_index: list[SearchSchema] = []
@@ -41,7 +46,10 @@ async def blob_trigger_handler(blob: InputStream) -> None:
                     process_chunk(
                         chunk_id=str(i + j),
                         chunk=chunked_element,
-                        filename=blob.name,
+                        filename=filename,
+                        workspace_id=workspace_id,
+                        parent_id=parent_id,
+                        page_number=None,  # TODO: support page numbers
                     )
                     for j, chunked_element in enumerate(batch)
                 ]

@@ -9,7 +9,7 @@ from openai import OpenAIError
 from openai.lib.azure import AsyncAzureOpenAI
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
-from src.ai_search import SearchSchema
+from src.dto import SearchSchema
 from src.env import get_env
 from src.exceptions import OpenAIFailureError
 from src.retry import exponential_backoff_retry
@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 MAX_CHARS: Final[int] = 2000
 OVERLAP: Final[int] = 100
+
+EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
+AZURE_API_VERSION: Final[str] = "2024-06-01"
 
 
 def chunk_text(*, text: str, mime_type: str) -> list[str]:
@@ -38,44 +41,12 @@ def chunk_text(*, text: str, mime_type: str) -> list[str]:
     return chunker.chunks(text)
 
 
-def map_chunk_element_to_search_schema(
-    chunk: str,
-    chunk_id: str,
-    filename: str,
-    embeddings: list[float] | None,
-    content_hash: str,
-) -> SearchSchema:
-    """Map chunk element to search schema.
-
-    Args:
-        chunk: chunked Element to be indexed.
-        chunk_id: Chunk ID for the document.
-        filename: The name of the file from which the content was extracted.
-        embeddings: Vector representation of the content.
-        content_hash: Hash of the content.
-
-    Returns:
-        SearchSchema: Dictionary compatible with index schema and ready for indexing.
-
-    """
-    return SearchSchema(
-        chunk_id=chunk_id,
-        content=chunk,
-        content_vector=embeddings,
-        content_hash=content_hash,
-        filename=filename,
-        id=str(uuid4()),
-        page_number=None,
-    )
-
-
 @exponential_backoff_retry(OpenAIError)
-async def get_embeddings(text: str, model: str) -> list[float] | None:
+async def get_embeddings(text: str) -> list[float] | None:
     """Generate embeddings for the given text using the specified model.
 
     Args:
         text: The text for which embeddings are to be created.
-        model: The model to use for creating embeddings.
 
     Returns:
         str: The embeddings for the given text or None if an error occurred.
@@ -83,12 +54,12 @@ async def get_embeddings(text: str, model: str) -> list[float] | None:
     """
     client = AsyncAzureOpenAI(
         api_key=get_env("AZURE_OPENAI_KEY"),
-        api_version=get_env("AZURE_OPENAI_API_VERSION"),
+        api_version=AZURE_API_VERSION,
         azure_endpoint=get_env("AZURE_OPENAI_ENDPOINT"),
     )
 
     try:
-        response = await client.embeddings.create(input=text, model=model)
+        response = await client.embeddings.create(input=text, model=EMBEDDING_MODEL)
         result = response.data[0].embedding
         logger.info("Successfully generated embeddings")
         return result
@@ -113,15 +84,21 @@ def compute_hash(chunk: str, filename: str) -> str:
 async def process_chunk(
     *,
     chunk: str,
-    filename: str,
     chunk_id: str,
-) -> SearchSchema | None:
+    filename: str,
+    parent_id: str,
+    workspace_id: str,
+    page_number: int | None,
+) -> SearchSchema:
     """Process a single chunked element.
 
     Args:
-        chunk: Element to be indexed.
-        filename: The name of the file from which the content was extracted.
-        chunk_id: Chunk ID for the document.
+        chunk: The chunked element.
+        chunk_id: The ID of the chunk.
+        filename: The file ID of the file.
+        parent_id: The ID of the parent element.
+        workspace_id: The ID of the workspace.
+        page_number: The page number of the chunk.
 
     Returns:
         SearchSchema | None
@@ -135,15 +112,18 @@ async def process_chunk(
     try:
         embeddings = await get_embeddings(
             text=chunk,
-            model=get_env("EMBEDDING_MODEL"),
         )
         logger.info("Got embeddings from OpenAI for chunk: %s", chunk_id)
-        return map_chunk_element_to_search_schema(
-            chunk,
-            filename=filename,
+        return SearchSchema(
             chunk_id=chunk_id,
-            embeddings=embeddings,
+            content=chunk,
+            content_vector=embeddings,
             content_hash=content_hash,
+            filename=filename,
+            id=str(uuid4()),
+            workspace_id=workspace_id,
+            parent_id=parent_id,
+            page_number=page_number,
         )
     except OpenAIFailureError as e:
         logger.error("Failed to get embeddings from OpenAI for chunk: %s", chunk_id)

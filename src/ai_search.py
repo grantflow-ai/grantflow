@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Final, TypedDict, cast
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
@@ -24,6 +24,10 @@ from src.env import get_env
 from src.exceptions import RequestFailureError
 from src.retry import exponential_backoff_retry
 
+if TYPE_CHECKING:
+    from src.dto import SearchSchema
+
+
 logger = logging.getLogger(__name__)
 
 EMBEDDING_DIMENSIONS: Final[int] = 1536
@@ -43,31 +47,6 @@ HNSW_METRIC: Final[str] = "cosine"
 HNSW_NAME: Final[str] = "default"
 HNSW_PROFILE_NAME: Final[str] = "myHnswProfile"
 STANDARD_LUCENE: Final[str] = "standard.lucene"
-
-
-class SearchSchema(TypedDict):
-    """Schema for indexing in Azure Search."""
-
-    id: str
-    """The unique identifier for the content to be indexed."""
-
-    filename: str
-    """The name of the file from which the content was extracted."""
-
-    content: str
-    """The text content of the document."""
-
-    content_vector: list[float] | None
-    """The vector representation of the document's content."""
-
-    chunk_id: str
-    """The chunk id of the document."""
-
-    page_number: int | None
-    """The page number of the document."""
-
-    content_hash: str
-    """The hash of the content."""
 
 
 def create_search_index(index_name: str) -> SearchIndex:

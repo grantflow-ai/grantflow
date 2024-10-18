@@ -9,6 +9,16 @@ from src.app import blob_trigger_handler
 
 app = FunctionApp()
 
-app.function_name(name="file_parser")(
-    app.blob_trigger(arg_name="blob", path="PATH/TO/BLOB", connection="CONNECTION_SETTING")(blob_trigger_handler)
+"""
+- see the documentation on Azure Blob trigger name patterns:
+    https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-storage-blob-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cextensionv5&pivots=programming-language-python#blob-name-patterns
+- see the documentation about Binding Expressions:
+    https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-expressions-patterns
+"""
+app.function_name(name="parser-indexer")(
+    app.blob_trigger(
+        arg_name="blob",
+        path="grant-application-files/{workspace_id}/{parent_id}/{filename}",
+        connection="AzureWebJobsStorage",
+    )(blob_trigger_handler)
 )
