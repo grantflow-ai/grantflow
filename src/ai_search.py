@@ -1,0 +1,226 @@
+from __future__ import annotations
+
+import logging
+from typing import Any, Final, TypedDict, cast
+
+from azure.core.credentials import AzureKeyCredential
+from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
+from azure.search.documents.aio import SearchClient
+from azure.search.documents.indexes.models import (
+    HnswAlgorithmConfiguration,
+    HnswParameters,
+    SearchableField,
+    SearchField,
+    SearchFieldDataType,
+    SearchIndex,
+    SimpleField,
+    VectorSearch,
+    VectorSearchAlgorithmKind,
+    VectorSearchAlgorithmMetric,
+    VectorSearchProfile,
+)
+
+from src.env import get_env
+from src.exceptions import RequestFailureError
+from src.retry import exponential_backoff_retry
+
+logger = logging.getLogger(__name__)
+
+EMBEDDING_DIMENSIONS: Final[int] = 1536
+FIELD_NAME_CHUNK_ID: Final[str] = "chunk_id"
+FIELD_NAME_CONTENT: Final[str] = "content"
+FIELD_NAME_CONTENT_HASH: Final[str] = "content_hash"
+FIELD_NAME_CONTENT_VECTOR: Final[str] = "content_vector"
+FIELD_NAME_FILENAME: Final[str] = "filename"
+FIELD_NAME_ID: Final[str] = "id"
+FIELD_NAME_PAGE_NUMBER: Final[str] = "page_number"
+FIELD_NAME_PARENT_ID: Final[str] = "parent_id"
+FIELD_NAME_WORKSPACE_ID: Final[str] = "workspace_id"
+HNSW_EF_CONSTRUCTION: Final[int] = 400
+HNSW_EF_SEARCH: Final[int] = 500
+HNSW_M: Final[int] = 4
+HNSW_METRIC: Final[str] = "cosine"
+HNSW_NAME: Final[str] = "default"
+HNSW_PROFILE_NAME: Final[str] = "myHnswProfile"
+STANDARD_LUCENE: Final[str] = "standard.lucene"
+
+
+class SearchSchema(TypedDict):
+    """Schema for indexing in Azure Search."""
+
+    id: str
+    """The unique identifier for the content to be indexed."""
+
+    filename: str
+    """The name of the file from which the content was extracted."""
+
+    content: str
+    """The text content of the document."""
+
+    content_vector: list[float] | None
+    """The vector representation of the document's content."""
+
+    chunk_id: str
+    """The chunk id of the document."""
+
+    page_number: int | None
+    """The page number of the document."""
+
+    content_hash: str
+    """The hash of the content."""
+
+
+def create_search_index(index_name: str) -> SearchIndex:
+    """Create a search index.
+
+    Args:
+        index_name: The name of the search index.
+
+    Returns:
+        SearchIndex: The search index.
+    """
+    # Fields configuration
+    fields = [
+        SimpleField(
+            name=FIELD_NAME_ID,
+            type=SearchFieldDataType.String,
+            key=True,
+            filterable=True,
+            retrievable=True,
+        ),
+        SearchableField(
+            name=FIELD_NAME_FILENAME,
+            type=SearchFieldDataType.String,
+            searchable=True,
+            retrievable=True,
+            filterable=True,
+            stored=True,
+            analyzer_name=STANDARD_LUCENE,
+        ),
+        SearchableField(
+            name=FIELD_NAME_WORKSPACE_ID,
+            type=SearchFieldDataType.String,
+            searchable=True,
+            retrievable=True,
+            filterable=True,
+            analyzer_name=STANDARD_LUCENE,
+        ),
+        SearchableField(
+            name=FIELD_NAME_PARENT_ID,
+            type=SearchFieldDataType.String,
+            searchable=True,
+            retrievable=True,
+            filterable=True,
+            analyzer_name=STANDARD_LUCENE,
+        ),
+        SearchableField(name=FIELD_NAME_CHUNK_ID, type=SearchFieldDataType.String, retrievable=True),
+        SearchableField(
+            name=FIELD_NAME_CONTENT,
+            type=SearchFieldDataType.String,
+            searchable=True,
+            retrievable=True,
+            analyzer_name=STANDARD_LUCENE,
+        ),
+        SearchField(
+            name=FIELD_NAME_CONTENT_VECTOR,
+            type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+            vector_search_dimensions=EMBEDDING_DIMENSIONS,
+            searchable=True,
+            retrievable=True,
+            vector_search_profile_name=HNSW_PROFILE_NAME,
+        ),
+        SimpleField(
+            name=FIELD_NAME_PAGE_NUMBER,
+            type=SearchFieldDataType.Int32,
+        ),
+        SearchableField(
+            name=FIELD_NAME_CONTENT_HASH,
+            type=SearchFieldDataType.String,
+            searchable=True,
+            filterable=True,
+            facetable=False,
+            sortable=False,
+        ),
+    ]
+
+    vector_search = VectorSearch(
+        algorithms=[
+            HnswAlgorithmConfiguration(
+                name=HNSW_NAME,
+                kind=VectorSearchAlgorithmKind.HNSW,
+                parameters=HnswParameters(
+                    m=HNSW_M,
+                    ef_construction=HNSW_EF_CONSTRUCTION,
+                    ef_search=HNSW_EF_SEARCH,
+                    metric=VectorSearchAlgorithmMetric.COSINE,
+                ),
+            ),
+        ],
+        profiles=[
+            VectorSearchProfile(
+                name=HNSW_PROFILE_NAME,
+                algorithm_configuration_name=HNSW_NAME,
+            ),
+        ],
+    )
+
+    return SearchIndex(
+        name=index_name,
+        fields=fields,
+        vector_search=vector_search,
+    )
+
+
+async def ensure_index_exists() -> None:
+    """Ensure that the search index exists.
+
+    Returns:
+        None
+    """
+    from azure.search.documents.indexes.aio import SearchIndexClient
+
+    index_name = get_env("AZURE_SEARCH_INDEX")
+
+    index_client = SearchIndexClient(
+        endpoint=get_env("AZURE_SEARCH_ENDPOINT"), credential=AzureKeyCredential(get_env("AZURE_SEARCH_KEY"))
+    )
+    logger.info("Checking if Search Index %s exists.", index_name)
+
+    try:
+        await index_client.get_index(name=index_name)
+        logger.info("Search Index %s exists.", index_name)
+    except ResourceNotFoundError:
+        logger.info(
+            "Search Index %s does not exist. Creating the search index with the required fields.",
+            index_name,
+        )
+        await index_client.create_index(create_search_index(index_name))
+        logger.info("Search Index %s created successfully.", index_name)
+
+
+@exponential_backoff_retry(HttpResponseError)
+async def upload_to_ai_search(data: list[SearchSchema]) -> None:
+    """Upload elements to Azure Search.
+
+    Args:
+        data: list of chunks to be uploaded to Azure Search.
+
+    Returns:
+        None
+
+    """
+    try:
+        client = SearchClient(
+            endpoint=get_env("AZURE_SEARCH_ENDPOINT"),
+            index_name=get_env("AZURE_SEARCH_INDEX"),
+            credential=AzureKeyCredential(get_env("AZURE_SEARCH_KEY")),
+        )
+        logger.info("Uploading %d documents to Azure Search.", len(data))
+        await client.upload_documents(documents=cast(list[dict[str, Any]], data))
+        logger.info("Uploaded chunks to Azure Search")
+    except HttpResponseError as e:
+        raise RequestFailureError(
+            message="Failed to upload documents to Azure Search",
+            status_code=e.status_code if e.status_code else 0,
+            context=str(e),
+        ) from e

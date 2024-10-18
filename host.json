@@ -1,0 +1,28 @@
+{
+  "version": "2.0",
+  "functionTimeout": "00:10:00",
+  "extensions": {
+  },
+  "logging": {
+    "fileLoggingMode": "debugOnly",
+    "logLevel": {
+      "Azure.Core": "Warning",
+      "Azure.Messaging.ServiceBus": "Warning",
+      "default": "Warning",
+      "Function": "Information",
+      "System.Net.Http.HttpClient": "Warning"
+    },
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
+    }
+  },
+  "watchDirectories": ["src"],
+  "watchFiles": ["function_app.py"],
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[4.*, 5.0.0)"
+  }
+}
