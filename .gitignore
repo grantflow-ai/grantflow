@@ -11,7 +11,6 @@
 .pdm-python
 .python_packages
 .venv
-.idea/
 .mypy_cache/
 .ruff_cache/
 __azurite_db*__.json
@@ -19,8 +18,5 @@ __blobstorage__
 __pycache__/
 __queuestorage__
 coverage.xml
-data/
-experiments/
 local.settings.*
-node_modules/
 requirements.txt
