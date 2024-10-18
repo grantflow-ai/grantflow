@@ -34,7 +34,7 @@ repos:
     hooks:
       - id: mypy
         name: mypy
-        entry: pdm run mypy --enable-incomplete-feature=NewGenericSyntax
+        entry: pdm run mypy
         require_serial: true
         language: system
         types: [python]

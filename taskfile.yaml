@@ -1,0 +1,47 @@
+version: '3'
+
+tasks:
+  update-brew:
+    cmds:
+      - brew update && brew upgrade && brew cleanup || true
+  setup:
+    desc: Setup the project
+    cmds:
+      - task: update-brew
+      - brew tap azure/functions
+      - brew install pre-commit azure-functions-core-tools@4 pdm azure-cli
+      - pdm setup
+  update:
+    desc: Update the project dependencies
+    cmds:
+      - task: update-brew
+      - pdm update
+      - pre-commit autoupdate
+  lint:
+    desc: Lint the project
+    cmds:
+      - pre-commit run --all-files
+  # local development
+  start:
+    desc: Start the Azure Functions
+    cmds:
+      - source .venv/bin/activate
+      - func start --verbose
+      - deactivate
+  start:log-to-file:
+    desc: Start the Azure Functions and log the output to file
+    cmds:
+      - source .venv/bin/activate
+      - func start --verbose > func.log 2>&1
+      - deactivate
+  # deployment commands
+  publish:functions:
+    desc: Publish the Azure Function app
+    cmds:
+      - pdm export --production --without-hashes >> requirements.txt
+      - func azure functionapp publish parser-indexer --publish-local-settings || true
+      - rm requirements.txt
+  sync-settings:
+    desc: Sync the local.settings.json file to the Azure Function app
+    cmds:
+      - func azure functionapp publish parser-indexer --publish-settings-only || true
