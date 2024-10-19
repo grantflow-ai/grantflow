@@ -45,6 +45,9 @@ async def parse_blob_data(
         blob_data: The contents of the file.
         filename: The name of the file.
 
+    Raises:
+        ValidationError: If the mime type is not supported.
+
     Returns:
         A tuple composed of the extracted text and mime_type.
     """
@@ -66,6 +69,9 @@ async def extract_document(file_content: bytes, filename: str) -> OCROutput:
     Args:
         file_content: The content of the document.
         filename: The name of the document.
+
+    Raises:
+        RequestFailureError: If the extraction fails.
 
     Returns:
         The extracted text from the document.

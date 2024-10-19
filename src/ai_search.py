@@ -184,9 +184,11 @@ async def upload_to_ai_search(data: list[SearchSchema]) -> None:
     Args:
         data: list of chunks to be uploaded to Azure Search.
 
+    Raises:
+        RequestFailureError: If the request fails.
+
     Returns:
         None
-
     """
     try:
         client = SearchClient(

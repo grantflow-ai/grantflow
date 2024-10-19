@@ -30,6 +30,11 @@ repos:
       - id: codespell
         additional_dependencies:
           - tomli
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.5.9
+    hooks:
+      - id: pydoclint
+        args: [ --style=google, --check-return-types=False, --arg-type-hints-in-docstring=False ]
   - repo: local
     hooks:
       - id: mypy
