@@ -6,13 +6,13 @@ from mimetypes import guess_type
 from typing import cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
-from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, AnalyzeResult, ContentFormat
+from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, ContentFormat
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 
+from src.dto import OCROutput
 from src.env import get_env
 from src.exceptions import RequestFailureError, ValidationError
-from src.retry import exponential_backoff_retry
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ async def parse_blob_data(
     *,
     blob_data: bytes,
     filename: str,
-) -> tuple[bytes, str]:
+) -> tuple[OCROutput | bytes, str]:
     """Extract the contents of a file.
 
     Args:
@@ -55,18 +55,17 @@ async def parse_blob_data(
         if mime_type in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES or any(
             mime_type.startswith(value) for value in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES
         ):
-            return await extract_text_with_document_intelligence(blob_data, filename), mime_type
+            return await extract_document(blob_data, filename), mime_type
 
     raise ValidationError(f"Unsupported mime type for file extraction: {mime_type}")
 
 
-@exponential_backoff_retry(HttpResponseError)
-async def extract_document(file_content: bytes, model: str = "prebuilt-read") -> AnalyzeResult:
+async def extract_document(file_content: bytes, filename: str) -> OCROutput:
     """Extract text from a document.
 
     Args:
         file_content: The content of the document.
-        model: The model to use for extracting the text.
+        filename: The name of the document.
 
     Returns:
         The extracted text from the document.
@@ -77,31 +76,12 @@ async def extract_document(file_content: bytes, model: str = "prebuilt-read") ->
             credential=AzureKeyCredential(get_env("AZURE_DOCUMENT_INTELLIGENCE_KEY")),
         )
         poller = await client.begin_analyze_document(
-            model_id=model,
+            model_id="prebuilt-read",
             analyze_request=AnalyzeDocumentRequest(bytes_source=file_content),
             output_content_format=ContentFormat.MARKDOWN,
         )
-        return await poller.result()
-    except HttpResponseError as e:
-        logger.error("Error extracting text from document: %s", e)
-        raise e
-
-
-async def extract_text_with_document_intelligence(data: bytes, filename: str) -> bytes:
-    """Extract text from a file using Azure Document Intelligence.
-
-    Args:
-        data: The content of the file.
-        filename: The name of the file.
-
-    Returns:
-        The extracted text.
-    """
-    try:
-        analysis_result = await extract_document(
-            file_content=data,
-        )
-        return cast(str, analysis_result.content).encode()
+        result = await poller.result()
+        return cast(OCROutput, result.as_dict())
     except HttpResponseError as e:
         logger.error("Error extracting text from from file: %s, Error: %s", filename, e)
         raise RequestFailureError(

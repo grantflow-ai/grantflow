@@ -15,12 +15,7 @@ from tenacity import (
 P = ParamSpec("P")
 R = TypeVar("R")
 
-RETRY_ATTEMPTS: Final[int] = 3
-RETRY_EXPONENTIAL_MULTIPLIER: Final[int] = 1
-RETRY_EXPONENTIAL_MIN: Final[int] = 20
-RETRY_EXPONENTIAL_MAX: Final[int] = 100
-
-RETRY_ATTEMPTS_WITH_JITTER: Final[int] = 7
+RETRY_ATTEMPTS_WITH_JITTER: Final[int] = 3
 INITIAL_WAIT_JITTER: Final[int] = 10
 MAX_WAIT_JITTER: Final[int] = 60
 EXP_BASE_JITTER: Final[int] = 2

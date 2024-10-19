@@ -1,16 +1,14 @@
 import logging
 from asyncio import gather
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 from azure.functions import InputStream
 
 from src.ai_search import ensure_index_exists, upload_to_ai_search
 from src.chunking import chunk_text, process_chunk
+from src.dto import SearchSchema
 from src.exceptions import RequestFailureError, ValidationError
 from src.extraction import parse_blob_data
-
-if TYPE_CHECKING:
-    from src.dto import SearchSchema
 
 logger = logging.getLogger(__name__)
 
@@ -34,32 +32,70 @@ async def blob_trigger_handler(blob: InputStream) -> None:
     workspace_id, parent_id, filename = blob.name.split("/")
 
     try:
-        extracted_text, mime_type = await parse_blob_data(blob_data=blob.read(), filename=filename)
-        chunked_elements = chunk_text(text=extracted_text.decode(), mime_type=mime_type)
+        if documents_to_index := await prepare_data(
+            blob_data=blob.read(),
+            filename=filename,
+            parent_id=parent_id,
+            workspace_id=workspace_id,
+        ):
+            await index_documents(documents_to_index)
+            logger.info("Data extraction and indexing Completed for blob: %s", blob.name)
+        else:
+            logger.warning("No documents to index for blob: %s", blob.name)
 
-        documents_to_index: list[SearchSchema] = []
-
-        for i in range(0, len(chunked_elements), CHUNKS_BATCH_SIZE):
-            batch = chunked_elements[i : i + CHUNKS_BATCH_SIZE]
-            results = await gather(
-                *[
-                    process_chunk(
-                        chunk_id=str(i + j),
-                        chunk=chunked_element,
-                        filename=filename,
-                        workspace_id=workspace_id,
-                        parent_id=parent_id,
-                        page_number=None,  # TODO: support page numbers
-                    )
-                    for j, chunked_element in enumerate(batch)
-                ]
-            )
-            documents_to_index.extend([result for result in results if result is not None])
-
-        if documents_to_index:
-            await ensure_index_exists()
-            await upload_to_ai_search(documents_to_index)
-
-        logger.info("Data extraction and indexing Completed for blob: %s", blob.name)
     except (RequestFailureError, ValidationError) as e:
         logger.error("Failed to parse blob: %s, Error: %s", blob.name, e)
+
+
+async def prepare_data(
+    *,
+    blob_data: bytes,
+    filename: str,
+    parent_id: str,
+    workspace_id: str,
+) -> list[SearchSchema]:
+    """Extract text from the given file blob data.
+
+    Args:
+        blob_data: The data of the file blob.
+        filename: The name of the file.
+        parent_id: The parent ID of the file.
+        workspace_id: The workspace ID
+
+    Returns:
+        The extracted text from the file blob.
+    """
+    extracted_data, mime_type = await parse_blob_data(blob_data=blob_data, filename=filename)
+    chunks = chunk_text(extracted_data=extracted_data, mime_type=mime_type)
+
+    documents_to_index: list[SearchSchema] = []
+
+    for i in range(0, len(chunks), CHUNKS_BATCH_SIZE):
+        results = await gather(
+            *[
+                process_chunk(
+                    chunk=chunk,
+                    filename=filename,
+                    workspace_id=workspace_id,
+                    parent_id=parent_id,
+                )
+                for chunk in chunks[i : i + CHUNKS_BATCH_SIZE]
+            ]
+        )
+        documents_to_index.extend([result for result in results if result is not None])
+
+    logger.info("Finishing parsing file: %s, with %d documents to upload", filename, len(documents_to_index))
+    return documents_to_index
+
+
+async def index_documents(documents_to_index: list[SearchSchema]) -> None:
+    """Index the given documents.
+
+    Args:
+        documents_to_index: The documents to index.
+
+    Returns:
+        None
+    """
+    await ensure_index_exists()
+    await upload_to_ai_search(documents_to_index)
