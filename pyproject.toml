@@ -18,6 +18,7 @@ dependencies = [
     "tenacity>=8.3.0",
     "semantic-text-splitter>=0.18.0",
     "anyio>=4.6.2.post1",
+    "aiohttp>=3.10.10",
 ]
 
 [tool.pdm]
@@ -72,7 +73,7 @@ lint.ignore = [
     "ISC001",  # Conflicts with formatter
     "PGH003",  # required specific mypy ignores
 ]
-src = ["src", "functions", "tests"]
+src = ["src", "tests"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.*" = ["S", "D", "PT006", "PT013"]
@@ -92,18 +93,13 @@ max-args = 10
 max-returns = 10
 
 [tool.mypy]
-packages = ["tests", "src"]
+packages = ["src", "tests"]
 python_version = "3.11"
 plugins = ["pydantic.mypy"]
 disable_error_code = 'import-untyped'
 implicit_reexport = false
 show_error_codes = true
 strict = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_any_generics = false
-disallow_untyped_decorators = false
 
 [tool.coverage.run]
 omit = ["tests/*"]

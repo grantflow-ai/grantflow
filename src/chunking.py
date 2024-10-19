@@ -9,7 +9,7 @@ from openai import OpenAIError
 from openai.lib.azure import AsyncAzureOpenAI
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
-from src.dto import SearchSchema
+from src.dto import Chunk, OCROutput, SearchSchema
 from src.env import get_env
 from src.exceptions import OpenAIFailureError
 from src.retry import exponential_backoff_retry
@@ -17,28 +17,48 @@ from src.retry import exponential_backoff_retry
 logger = logging.getLogger(__name__)
 
 MAX_CHARS: Final[int] = 2000
-OVERLAP: Final[int] = 100
 
 EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
 AZURE_API_VERSION: Final[str] = "2024-06-01"
 
 
-def chunk_text(*, text: str, mime_type: str) -> list[str]:
+def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chunk]:
     """Chunk the text into smaller pieces.
 
     Args:
-        text: The text to be chunked.
+        extracted_data: The extracted data from the file.
         mime_type: The MIME type of the text.
 
     Returns:
         list[str]: The list of chunks.
     """
     if mime_type == "text/markdown":
-        chunker: MarkdownSplitter | TextSplitter = MarkdownSplitter(MAX_CHARS, OVERLAP)
+        chunker: MarkdownSplitter | TextSplitter = MarkdownSplitter(capacity=MAX_CHARS)
     else:
-        chunker = TextSplitter(MAX_CHARS, OVERLAP)
+        chunker = TextSplitter(capacity=MAX_CHARS)
 
-    return chunker.chunks(text)
+    if isinstance(extracted_data, bytes):
+        return [
+            Chunk(
+                content=chunk,
+                page_number=None,
+            )
+            for chunk in chunker.chunks(extracted_data.decode())
+        ]
+
+    paged_chunks: list[Chunk] = []
+
+    for page in extracted_data["pages"]:
+        line_contents = "\n".join([line["content"] for line in page["lines"]])
+        paged_chunks.extend(
+            Chunk(
+                content=chunk,
+                page_number=page["pageNumber"],
+            )
+            for chunk in chunker.chunks(line_contents)
+        )
+
+    return paged_chunks
 
 
 @exponential_backoff_retry(OpenAIError)
@@ -68,63 +88,59 @@ async def get_embeddings(text: str) -> list[float] | None:
         raise OpenAIFailureError(message="Failed to get embeddings", context=str(e)) from e
 
 
-def compute_hash(chunk: str, filename: str) -> str:
+def compute_hash(*, chunk: Chunk, workspace_id: str, filename: str) -> str:
     """Compute the hash for the chunk content and metadata.
 
     Args:
         chunk: The chunked element.
+        workspace_id: The workspace ID.
         filename: The file ID of the file.
 
     Returns:
         str: Hash of the content.
     """
-    return sha256((chunk + filename).encode()).hexdigest()
+    value = chunk["content"] + workspace_id + filename
+    return sha256(value.encode()).hexdigest()
 
 
 async def process_chunk(
     *,
-    chunk: str,
-    chunk_id: str,
+    chunk: Chunk,
     filename: str,
     parent_id: str,
     workspace_id: str,
-    page_number: int | None,
 ) -> SearchSchema:
     """Process a single chunked element.
 
     Args:
         chunk: The chunked element.
-        chunk_id: The ID of the chunk.
         filename: The file ID of the file.
         parent_id: The ID of the parent element.
         workspace_id: The ID of the workspace.
-        page_number: The page number of the chunk.
 
     Returns:
         SearchSchema | None
 
     """
-    content_hash = compute_hash(chunk, filename)
+    content_hash = compute_hash(chunk=chunk, workspace_id=workspace_id, filename=filename)
 
-    logger.info(
+    logger.debug(
         "Preparing chunk for indexing with filename: %s and chunk_id: %s",
     )
     try:
         embeddings = await get_embeddings(
-            text=chunk,
+            text=chunk["content"],
         )
-        logger.info("Got embeddings from OpenAI for chunk: %s", chunk_id)
         return SearchSchema(
-            chunk_id=chunk_id,
-            content=chunk,
-            content_vector=embeddings,
-            content_hash=content_hash,
-            filename=filename,
             id=str(uuid4()),
-            workspace_id=workspace_id,
+            content=chunk["content"],
+            content_hash=content_hash,
+            content_vector=embeddings,
+            filename=filename,
+            page_number=chunk["page_number"],
             parent_id=parent_id,
-            page_number=page_number,
+            workspace_id=workspace_id,
         )
     except OpenAIFailureError as e:
-        logger.error("Failed to get embeddings from OpenAI for chunk: %s", chunk_id)
+        logger.error("Failed to get embeddings from OpenAI for chunk: %s", chunk["content"])
         raise e
