@@ -45,5 +45,8 @@ async def test_create_embeddings(logger: logging.Logger) -> None:
 
     assert results
 
-    results_file = Path(__file__).parent / "results" / "create_embeddings_test_result.json"
-    results_file.write_text(dumps(results))
+    result_data = dumps(results)
+    existing_results = Path(__file__).parent / "results" / "create_embeddings_test_result.json"
+
+    assert existing_results.exists(), f"Expected file {existing_results} to exist"
+    assert result_data == existing_results.read_text()

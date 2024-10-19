@@ -19,8 +19,8 @@ EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
 AZURE_API_VERSION: Final[str] = "2024-06-01"
 
 
-@exponential_backoff_retry(OpenAIError)
-async def get_embeddings(text: str) -> list[float] | None:
+@exponential_backoff_retry(OpenAIFailureError)
+async def generate_embeddings(text: str) -> list[float] | None:
     """Generate embeddings for the given text using the specified model.
 
     Args:
@@ -36,7 +36,7 @@ async def get_embeddings(text: str) -> list[float] | None:
     client = AsyncAzureOpenAI(
         api_key=get_env("AZURE_OPENAI_KEY"),
         api_version=AZURE_API_VERSION,
-        azure_endpoint=get_env("AZURE_OPENAI_ENDPOINT"),
+        azure_endpoint=get_env("AZURE_OPENAI_EMBEDDINGS_ENDPOINT"),
     )
 
     try:
@@ -88,7 +88,7 @@ async def process_chunk(
     logger.debug(
         "Preparing chunk for indexing with filename: %s and chunk_id: %s",
     )
-    embeddings = await get_embeddings(
+    embeddings = await generate_embeddings(
         text=chunk["content"],
     )
     return SearchSchema(
