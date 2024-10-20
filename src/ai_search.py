@@ -46,7 +46,8 @@ HNSW_M: Final[int] = 4
 HNSW_METRIC: Final[str] = "cosine"
 HNSW_NAME: Final[str] = "default"
 HNSW_PROFILE_NAME: Final[str] = "myHnswProfile"
-STANDARD_LUCENE: Final[str] = "standard.lucene"
+ANALYZER_STANDARD_LUCENE: Final[str] = "standard.lucene"
+ANALYZER_EN_MICROSOFT: Final[str] = "'en.microsoft"
 
 
 def create_search_index(index_name: str) -> SearchIndex:
@@ -58,7 +59,6 @@ def create_search_index(index_name: str) -> SearchIndex:
     Returns:
         SearchIndex: The search index.
     """
-    # Fields configuration
     fields = [
         SimpleField(
             name=FIELD_NAME_ID,
@@ -66,6 +66,7 @@ def create_search_index(index_name: str) -> SearchIndex:
             key=True,
             filterable=True,
             retrievable=True,
+            analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
         SearchableField(
             name=FIELD_NAME_FILENAME,
@@ -74,23 +75,25 @@ def create_search_index(index_name: str) -> SearchIndex:
             retrievable=True,
             filterable=True,
             stored=True,
-            analyzer_name=STANDARD_LUCENE,
+            analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
         SearchableField(
             name=FIELD_NAME_WORKSPACE_ID,
             type=SearchFieldDataType.String,
-            searchable=True,
+            searchable=False,
             retrievable=True,
+            sortable=True,
             filterable=True,
-            analyzer_name=STANDARD_LUCENE,
+            analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
         SearchableField(
             name=FIELD_NAME_PARENT_ID,
             type=SearchFieldDataType.String,
-            searchable=True,
+            searchable=False,
             retrievable=True,
+            sortable=True,
             filterable=True,
-            analyzer_name=STANDARD_LUCENE,
+            analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
         SearchableField(name=FIELD_NAME_CHUNK_ID, type=SearchFieldDataType.String, retrievable=True),
         SearchableField(
@@ -98,7 +101,7 @@ def create_search_index(index_name: str) -> SearchIndex:
             type=SearchFieldDataType.String,
             searchable=True,
             retrievable=True,
-            analyzer_name=STANDARD_LUCENE,
+            analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
         SearchField(
             name=FIELD_NAME_CONTENT_VECTOR,
@@ -177,7 +180,7 @@ async def ensure_index_exists() -> None:
         logger.info("Search Index %s created successfully.", index_name)
 
 
-@exponential_backoff_retry(HttpResponseError)
+@exponential_backoff_retry(RequestFailureError)
 async def upload_to_ai_search(data: list[SearchSchema]) -> None:
     """Upload elements to Azure Search.
 
