@@ -11,8 +11,8 @@
 .pdm-python
 .python_packages
 .venv
-.mypy_cache/
-.ruff_cache/
+.mypy_cache
+.ruff_cache
 __azurite_db*__.json
 __blobstorage__
 __pycache__/
