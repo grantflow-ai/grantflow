@@ -38,12 +38,12 @@ Make sure to be running a Python 3.11 shell.
 3. Install [taskfile](https://taskfile.dev/) with
 
    ```shell
-      brew install go-task
+   brew install go-task
    ```
 4. Inside the repository, execute the setup command:
 
    ```shell
-      task setup
+   task setup
    ```
 
    This command will install the necessary dependencies on the machine and use PDM to create a virtual environment under
@@ -54,7 +54,7 @@ Make sure to be running a Python 3.11 shell.
 1. Clone the repository
 2. Inside the repository, execute the setup command:
    ```shell
-      pdm run setup
+   pdm run setup
    ```
    This command will install the necessary dependencies on the machine and use PDM to create a virtual environment under
    the `.venv` folder, which is git ignored, and install the dependencies inside it. It will also setup pre-commit.
