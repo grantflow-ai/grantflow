@@ -11,17 +11,6 @@ tasks:
       - brew tap azure/functions
       - brew install pre-commit azure-functions-core-tools@4 pdm azure-cli
       - pdm setup
-  update:
-    desc: Update the project dependencies
-    cmds:
-      - task: update-brew
-      - pdm update
-      - pre-commit autoupdate
-  lint:
-    desc: Lint the project
-    cmds:
-      - pre-commit run --all-files
-  # local development
   start:
     desc: Start the Azure Functions
     cmds:
@@ -34,8 +23,7 @@ tasks:
       - source .venv/bin/activate
       - func start --verbose > func.log 2>&1
       - deactivate
-  # deployment commands
-  publish:functions:
+  publish:
     desc: Publish the Azure Function app
     cmds:
       - pdm export --production --without-hashes >> requirements.txt
