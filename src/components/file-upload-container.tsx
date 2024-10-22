@@ -1,5 +1,4 @@
 import type { FileData } from "@/types";
-import { nanoid } from "nanoid";
 import { useCallback, useEffect, useState } from "react";
 import { handleFileUpload } from "@/utils/file-upload";
 import { FileCard, FileUploader } from "@/components/file-uploader";
@@ -24,6 +23,7 @@ export function FileUploadContainer({
 	maxFileCount = DEFAULT_MAX_FILES,
 	initialValue,
 	parentId,
+	workspaceId,
 	setFileData,
 }: {
 	accept?: string[];
@@ -31,6 +31,7 @@ export function FileUploadContainer({
 	maxFileCount?: number;
 	initialValue?: FileData[];
 	parentId: string;
+	workspaceId: string;
 	setFileData: (fileData: FileData[]) => void;
 }) {
 	const [files, setFiles] = useState<FileData[]>(initialValue ?? []);
@@ -45,7 +46,7 @@ export function FileUploadContainer({
 			const fileData: FileData[] = newFiles.map((file) => ({
 				...file,
 				previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-				fileId: `${parentId}::${nanoid()}`,
+				fileId: `${workspaceId}/${parentId}/${file.name}`,
 			}));
 
 			setFiles((prevFiles) => [...prevFiles, ...fileData]);

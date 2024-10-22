@@ -1,5 +1,5 @@
 {
-	"id": "138d026d-bc90-443c-8302-1401a2768d62",
+	"id": "5ab980e7-1aa7-4f75-9224-3ec0ac998cf5",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -75,7 +75,23 @@
 					"notNull": false
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_accounts_user_id": {
+					"name": "idx_accounts_user_id",
+					"columns": [
+						{
+							"expression": "userId",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {
 				"accounts_userId_users_id_fk": {
 					"name": "accounts_userId_users_id_fk",
@@ -149,7 +165,23 @@
 					"notNull": false
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_authenticators_user_id": {
+					"name": "idx_authenticators_user_id",
+					"columns": [
+						{
+							"expression": "userId",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {
 				"authenticators_userId_users_id_fk": {
 					"name": "authenticators_userId_users_id_fk",
@@ -198,26 +230,6 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": false
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {
@@ -226,21 +238,6 @@
 					"columns": [
 						{
 							"expression": "name",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
-				},
-				"idx_funding_organization_deleted_at": {
-					"name": "idx_funding_organization_deleted_at",
-					"columns": [
-						{
-							"expression": "deleted_at",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"
@@ -293,46 +290,29 @@
 					"notNull": true,
 					"default": false
 				},
-				"significance": {
-					"name": "significance",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true
-				},
 				"innovation": {
 					"name": "innovation",
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
-				},
-				"file_ids": {
-					"name": "file_ids",
-					"type": "text[]",
-					"primaryKey": false,
-					"notNull": false
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {
+				"idx_grant_application_workspace_id": {
+					"name": "idx_grant_application_workspace_id",
+					"columns": [
+						{
+							"expression": "workspace_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
 				"idx_grant_application_grant_cfp_id": {
 					"name": "idx_grant_application_grant_cfp_id",
 					"columns": [
@@ -348,11 +328,11 @@
 					"method": "btree",
 					"with": {}
 				},
-				"idx_grant_application_deleted_at": {
-					"name": "idx_grant_application_deleted_at",
+				"idx_grant_application_title": {
+					"name": "idx_grant_application_title",
 					"columns": [
 						{
-							"expression": "deleted_at",
+							"expression": "title",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"
@@ -448,26 +428,6 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": false
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {
@@ -501,11 +461,11 @@
 					"method": "btree",
 					"with": {}
 				},
-				"idx_grant_cfps_deleted_at": {
-					"name": "idx_grant_cfps_deleted_at",
+				"idx_grant_cfps_title": {
+					"name": "idx_grant_cfps_title",
 					"columns": [
 						{
-							"expression": "deleted_at",
+							"expression": "title",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"
@@ -626,26 +586,6 @@
 					"primaryKey": false,
 					"notNull": true,
 					"default": false
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {
@@ -664,11 +604,11 @@
 					"method": "btree",
 					"with": {}
 				},
-				"idx_research_aims_deleted_at": {
-					"name": "idx_research_aims_deleted_at",
+				"idx_research_aims_title": {
+					"name": "idx_research_aims_title",
 					"columns": [
 						{
-							"expression": "deleted_at",
+							"expression": "title",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"
@@ -693,6 +633,142 @@
 			},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"public.research_innovation": {
+			"name": "research_innovation",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"application_id": {
+					"name": "application_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"text": {
+					"name": "text",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"file_ids": {
+					"name": "file_ids",
+					"type": "text[]",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {
+				"idx_research_innovation_application_id": {
+					"name": "idx_research_innovation_application_id",
+					"columns": [
+						{
+							"expression": "application_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"research_innovation_application_id_grant_applications_id_fk": {
+					"name": "research_innovation_application_id_grant_applications_id_fk",
+					"tableFrom": "research_innovation",
+					"tableTo": "grant_applications",
+					"columnsFrom": ["application_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"research_innovation_application_id_unique": {
+					"name": "research_innovation_application_id_unique",
+					"nullsNotDistinct": false,
+					"columns": ["application_id"]
+				}
+			},
+			"checkConstraints": {}
+		},
+		"public.research_significance": {
+			"name": "research_significance",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"application_id": {
+					"name": "application_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"text": {
+					"name": "text",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"file_ids": {
+					"name": "file_ids",
+					"type": "text[]",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {
+				"idx_research_significance_application_id": {
+					"name": "idx_research_significance_application_id",
+					"columns": [
+						{
+							"expression": "application_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"research_significance_application_id_grant_applications_id_fk": {
+					"name": "research_significance_application_id_grant_applications_id_fk",
+					"tableFrom": "research_significance",
+					"tableTo": "grant_applications",
+					"columnsFrom": ["application_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"research_significance_application_id_unique": {
+					"name": "research_significance_application_id_unique",
+					"nullsNotDistinct": false,
+					"columns": ["application_id"]
+				}
+			},
 			"checkConstraints": {}
 		},
 		"public.research_tasks": {
@@ -729,26 +805,6 @@
 					"type": "text[]",
 					"primaryKey": false,
 					"notNull": false
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {
@@ -767,11 +823,11 @@
 					"method": "btree",
 					"with": {}
 				},
-				"idx_tasks_deleted_at": {
-					"name": "idx_tasks_deleted_at",
+				"idx_tasks_title": {
+					"name": "idx_tasks_title",
 					"columns": [
 						{
-							"expression": "deleted_at",
+							"expression": "title",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"
@@ -821,7 +877,23 @@
 					"notNull": true
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_sessions_user_id": {
+					"name": "idx_sessions_user_id",
+					"columns": [
+						{
+							"expression": "userId",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {
 				"sessions_userId_users_id_fk": {
 					"name": "sessions_userId_users_id_fk",
@@ -871,9 +943,32 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_users_email": {
+					"name": "idx_users_email",
+					"columns": [
+						{
+							"expression": "email",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {
@@ -908,7 +1003,23 @@
 					"notNull": true
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_verification_tokens_token": {
+					"name": "idx_verification_tokens_token",
+					"columns": [
+						{
+							"expression": "token",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {
 				"verification_tokens_identifier_token_pk": {
@@ -941,26 +1052,6 @@
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {
@@ -999,21 +1090,6 @@
 					"columns": [
 						{
 							"expression": "user_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
-				},
-				"idx_workspace_users_deleted_at": {
-					"name": "idx_workspace_users_deleted_at",
-					"columns": [
-						{
-							"expression": "deleted_at",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"
@@ -1088,34 +1164,14 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": false
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {
-				"idx_workspaces_deleted_at": {
-					"name": "idx_workspaces_deleted_at",
+				"idx_workspaces_name": {
+					"name": "idx_workspaces_name",
 					"columns": [
 						{
-							"expression": "deleted_at",
+							"expression": "name",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"

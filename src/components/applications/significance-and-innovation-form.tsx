@@ -8,11 +8,13 @@ export default function SignificanceAndInnovationForm({
 	setInnovation,
 	setSignificance,
 	significance,
+	workspaceId,
 }: {
 	innovation: string;
 	setInnovation: (innovation: string) => void;
 	setSignificance: (significance: string) => void;
 	significance: string;
+	workspaceId: string;
 }) {
 	return (
 		<TooltipProvider>

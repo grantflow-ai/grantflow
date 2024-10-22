@@ -54,7 +54,7 @@ describe("RootLayout", () => {
 	});
 
 	it("renders the layout with all expected components", async () => {
-		render(await RootLayout({ children: "Test Content" }));
+		render(RootLayout({ children: "Test Content" }));
 
 		expect(screen.getByTestId("navbar")).toBeInTheDocument();
 		expect(screen.getByTestId("main-container")).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe("RootLayout", () => {
 	});
 
 	it("applies correct classes to the body", async () => {
-		render(await RootLayout({ children: "Test Content" }));
+		render(RootLayout({ children: "Test Content" }));
 
 		const body = screen.getByText("Test Content").closest("body");
 		expect(body).toHaveClass("min-h-screen bg-background font-sans antialiased");
@@ -71,14 +71,14 @@ describe("RootLayout", () => {
 	});
 
 	it("renders children within the main container", async () => {
-		render(await RootLayout({ children: "Test Content" }));
+		render(RootLayout({ children: "Test Content" }));
 
 		const mainContainer = screen.getByTestId("main-container");
 		expect(mainContainer).toHaveTextContent("Test Content");
 		expect(mainContainer).toHaveClass("md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)]");
 	});
 	it("sets the correct lang attribute on the html element", async () => {
-		const { container } = render(await RootLayout({ children: "Test Content" }));
+		const { container } = render(RootLayout({ children: "Test Content" }));
 
 		const htmlElement = container.firstChild as HTMLElement;
 		expect(htmlElement.getAttribute("lang")).toBe("en");
