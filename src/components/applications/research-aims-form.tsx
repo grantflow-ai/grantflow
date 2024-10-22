@@ -5,63 +5,33 @@ import { Textarea } from "gen/ui/textarea";
 import { Checkbox } from "gen/ui/checkbox";
 import { Label } from "gen/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
-import { ResearchAim, ResearchTask } from "@/types/database-types";
 import { FileUploadContainer } from "@/components/file-upload-container";
+import { useWizardStore } from "@/stores/wizard";
+import { useShallow } from "zustand/react/shallow";
+import { NewResearchAim, NewResearchTask } from "@/types/database-types";
 
-export type ResearchAimProp = Pick<ResearchAim, "id" | "title" | "description" | "requiresClinicalTrials" | "fileIds">;
-export type ResearchTaskProp = Pick<ResearchTask, "id" | "title" | "description" | "fileIds" | "aimId">;
-
-export function ResearchAimsForm({
-	researchAims,
-	researchTasks,
-	setResearchAims,
-	setResearchTasks,
-	workspaceId,
-}: {
-	researchAims: ResearchAimProp[];
-	researchTasks: ResearchTaskProp[];
-	setResearchAims: (values: ResearchAimProp[]) => void;
-	setResearchTasks: (values: ResearchTaskProp[]) => void;
-	workspaceId: string;
-}) {
-	const addResearchAim = () => {
-		const newAim: ResearchAimProp = {
-			id: Date.now().toString(),
-			title: "",
-			description: "",
-			requiresClinicalTrials: false,
-			fileIds: [],
-		};
-		setResearchAims([...researchAims, newAim]);
-	};
-
-	const removeResearchAim = (aimId: string) => {
-		setResearchAims(researchAims.filter((aim) => aim.id !== aimId));
-		setResearchTasks(researchTasks.filter((task) => task.aimId !== aimId));
-	};
-
-	const addResearchTask = (aimId: string) => {
-		const newTask: ResearchTaskProp = {
-			id: Date.now().toString(),
-			title: "",
-			description: "",
-			fileIds: [],
-			aimId,
-		};
-		setResearchTasks([...researchTasks, newTask]);
-	};
-
-	const removeResearchTask = (taskId: string) => {
-		setResearchTasks(researchTasks.filter((task) => task.id !== taskId));
-	};
-
-	const handleAimChange = (aimId: string, field: keyof ResearchAimProp, value: string | boolean) => {
-		setResearchAims(researchAims.map((aim) => (aim.id === aimId ? { ...aim, [field]: value } : aim)));
-	};
-
-	const handleTaskChange = (taskId: string, field: keyof ResearchTaskProp, value: string) => {
-		setResearchTasks(researchTasks.map((task) => (task.id === taskId ? { ...task, [field]: value } : task)));
-	};
+export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: string; applicationId: string }) {
+	const {
+		addResearchAim,
+		addResearchTask,
+		removeResearchAim,
+		removeResearchTask,
+		researchAims,
+		researchTasks,
+		updateResearchAim,
+		updateResearchTask,
+	} = useWizardStore({ workspaceId })(
+		useShallow((state) => ({
+			addResearchAim: state.addResearchAim,
+			addResearchTask: state.addResearchTask,
+			removeResearchAim: state.removeResearchAim,
+			removeResearchTask: state.removeResearchTask,
+			researchAims: state.researchAims,
+			researchTasks: state.researchTasks,
+			updateResearchAim: state.updateResearchAim,
+			updateResearchTask: state.updateResearchTask,
+		})),
+	);
 
 	return (
 		<div className="space-y-6">
@@ -76,8 +46,8 @@ export function ResearchAimsForm({
 							<Input
 								id={`aim-title-${aim.id}`}
 								value={aim.title}
-								onChange={(e) => {
-									handleAimChange(aim.id, "title", e.target.value);
+								onChange={async (e) => {
+									await updateResearchAim(aim.id, "title", e.target.value);
 								}}
 								minLength={3}
 								required
@@ -88,8 +58,8 @@ export function ResearchAimsForm({
 							<Textarea
 								id={`aim-description-${aim.id}`}
 								value={aim.description}
-								onChange={(e) => {
-									handleAimChange(aim.id, "description", e.target.value);
+								onChange={async (e) => {
+									await updateResearchAim(aim.id, "description", e.target.value);
 								}}
 								required
 							/>
@@ -98,8 +68,8 @@ export function ResearchAimsForm({
 							<Checkbox
 								id={`aim-clinical-trials-${aim.id}`}
 								checked={aim.requiresClinicalTrials}
-								onCheckedChange={(checked) => {
-									handleAimChange(aim.id, "requiresClinicalTrials", checked as boolean);
+								onCheckedChange={async (checked) => {
+									await updateResearchAim(aim.id, "requiresClinicalTrials", checked);
 								}}
 							/>
 							<Label htmlFor={`aim-clinical-trials-${aim.id}`}>Requires Clinical Trials</Label>
@@ -108,14 +78,11 @@ export function ResearchAimsForm({
 							<FileUploadContainer
 								parentId={aim.id}
 								workspaceId={workspaceId}
-								setFileData={(fileData) => {
-									setResearchAims(
-										researchAims.map((a) => {
-											if (a.id === aim.id) {
-												return { ...a, fileIds: fileData.map((file) => file.fileId) };
-											}
-											return a;
-										}),
+								setFileData={async (fileData) => {
+									await updateResearchAim(
+										aim.id,
+										"fileIds",
+										fileData.map((file) => file.fileId),
 									);
 								}}
 							/>
@@ -137,8 +104,8 @@ export function ResearchAimsForm({
 												<Input
 													id={`task-title-${task.id}`}
 													value={task.title}
-													onChange={(e) => {
-														handleTaskChange(task.id, "title", e.target.value);
+													onChange={async (e) => {
+														await updateResearchTask(task.id, "title", e.target.value);
 													}}
 													minLength={3}
 													required
@@ -149,8 +116,12 @@ export function ResearchAimsForm({
 												<Textarea
 													id={`task-description-${task.id}`}
 													value={task.description}
-													onChange={(e) => {
-														handleTaskChange(task.id, "description", e.target.value);
+													onChange={async (e) => {
+														await updateResearchTask(
+															task.id,
+															"description",
+															e.target.value,
+														);
 													}}
 													required
 												/>
@@ -161,19 +132,11 @@ export function ResearchAimsForm({
 													<FileUploadContainer
 														parentId={task.id}
 														workspaceId={workspaceId}
-														setFileData={(fileData) => {
-															setResearchTasks(
-																researchTasks.map((t) => {
-																	if (t.id === task.id) {
-																		return {
-																			...t,
-																			fileIds: fileData.map(
-																				(file) => file.fileId,
-																			),
-																		};
-																	}
-																	return t;
-																}),
+														setFileData={async (fileData) => {
+															await updateResearchTask(
+																task.id,
+																"fileIds",
+																fileData.map((file) => file.fileId),
 															);
 														}}
 													/>
@@ -184,8 +147,8 @@ export function ResearchAimsForm({
 													type="button"
 													variant="destructive"
 													size="sm"
-													onClick={() => {
-														removeResearchTask(task.id);
+													onClick={async () => {
+														await removeResearchTask(task.id);
 													}}
 												>
 													<Trash2 className="w-4 h-4 mr-2" />
@@ -198,8 +161,13 @@ export function ResearchAimsForm({
 							<Button
 								type="button"
 								variant="outline"
-								onClick={() => {
-									addResearchTask(aim.id);
+								onClick={async () => {
+									await addResearchTask({
+										aimId: aim.id,
+										title: "",
+										description: "",
+										fileIds: [],
+									} satisfies NewResearchTask);
 								}}
 							>
 								<Plus className="w-4 h-4 mr-2" />
@@ -210,8 +178,8 @@ export function ResearchAimsForm({
 							<Button
 								type="button"
 								variant="destructive"
-								onClick={() => {
-									removeResearchAim(aim.id);
+								onClick={async () => {
+									await removeResearchAim(aim.id);
 								}}
 							>
 								<Trash2 className="w-4 h-4 mr-2" />
@@ -222,7 +190,19 @@ export function ResearchAimsForm({
 				</Card>
 			))}
 			<div className="flex justify-start">
-				<Button type="button" variant="outline" onClick={addResearchAim}>
+				<Button
+					type="button"
+					variant="outline"
+					onClick={async () => {
+						await addResearchAim({
+							applicationId,
+							title: "",
+							description: "",
+							requiresClinicalTrials: false,
+							fileIds: [],
+						} satisfies NewResearchAim);
+					}}
+				>
 					<Plus className="w-4 h-4 mr-2" />
 					Add Research Aim
 				</Button>

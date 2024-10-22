@@ -2,20 +2,20 @@ import { Label } from "gen/ui/label";
 import { Textarea } from "gen/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import { InfoIcon } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
+import { useWizardStore } from "@/stores/wizard";
 
-export default function SignificanceAndInnovationForm({
-	innovation,
-	setInnovation,
-	setSignificance,
-	significance,
-	workspaceId,
-}: {
-	innovation: string;
-	setInnovation: (innovation: string) => void;
-	setSignificance: (significance: string) => void;
-	significance: string;
-	workspaceId: string;
-}) {
+export default function SignificanceAndInnovationForm({ workspaceId }: { workspaceId: string }) {
+	const { significance, innovation, updateResearchInnovation, updateResearchSignificance } = useWizardStore({
+		workspaceId,
+	})(
+		useShallow((state) => ({
+			significance: state.significance,
+			innovation: state.innovation,
+			updateResearchInnovation: state.updateResearchInnovation,
+			updateResearchSignificance: state.updateResearchSignificance,
+		})),
+	);
 	return (
 		<TooltipProvider>
 			<div className="space-y-8">
@@ -38,9 +38,9 @@ export default function SignificanceAndInnovationForm({
 					<Textarea
 						id="significance-textarea"
 						placeholder="Describe the significance of your research"
-						value={significance}
-						onChange={(e) => {
-							setSignificance(e.target.value);
+						value={significance?.text}
+						onChange={async (e) => {
+							await updateResearchSignificance("text", e.target.value);
 						}}
 						className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
 					/>
@@ -64,9 +64,9 @@ export default function SignificanceAndInnovationForm({
 					<Textarea
 						id="innovation-textarea"
 						placeholder="Describe the innovation of your research"
-						value={innovation}
-						onChange={(e) => {
-							setInnovation(e.target.value);
+						value={innovation?.text}
+						onChange={async (e) => {
+							await updateResearchInnovation("text", e.target.value);
 						}}
 						className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
 					/>

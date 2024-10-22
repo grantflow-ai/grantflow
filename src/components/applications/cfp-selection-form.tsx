@@ -6,27 +6,28 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "gen/ui/popover";
 import { GrantCFP } from "@/types/database-types";
 import { useEffect, useState } from "react";
+import { useWizardStore } from "@/stores/wizard";
+import { useShallow } from "zustand/react/shallow";
 
-export function CFPSelectionForm({
-	cfps,
-	value,
-	setValue,
-}: {
-	cfps: GrantCFP[];
-	value: string;
-	setValue: (value: string) => void;
-}) {
+export function CFPSelectionForm({ cfps, workspaceId }: { cfps: GrantCFP[]; workspaceId: string }) {
 	const [open, setOpen] = useState(false);
 	const [title, setTitle] = useState("Select an NIH Activity Code");
 
+	const { application, updateApplication } = useWizardStore({ workspaceId })(
+		useShallow((store) => ({
+			application: store.application,
+			updateApplication: store.updateApplication,
+		})),
+	);
+
 	useEffect(() => {
-		if (value) {
-			const cfp = cfps.find((cfp) => cfp.code === value);
+		if (application) {
+			const cfp = cfps.find((cfp) => cfp.id === application.cfpId);
 			setTitle(cfp ? `${cfp.code} - ${cfp.title}` : "Select an NIH Activity Code");
 		} else {
 			setTitle("Select an NIH Activity Code");
 		}
-	}, [value]);
+	}, [application]);
 
 	return (
 		<div data-testid="cfp-selection-form-container">
@@ -46,9 +47,9 @@ export function CFPSelectionForm({
 								{cfps.map((cfp) => (
 									<CommandItem
 										key={cfp.id}
-										value={cfp.code}
-										onSelect={(currentValue) => {
-											setValue(currentValue === value ? "" : currentValue);
+										value={cfp.id}
+										onSelect={async (currentValue) => {
+											await updateApplication("cfpId", currentValue);
 											setOpen(false);
 										}}
 										data-testid={`activity-code-select-item-${cfp.code}`}
@@ -56,7 +57,7 @@ export function CFPSelectionForm({
 										<Check
 											className={cn(
 												"mr-2 h-4 w-4",
-												value === cfp.code ? "opacity-100" : "opacity-0",
+												application?.cfpId === cfp.id ? "opacity-100" : "opacity-0",
 											)}
 										/>
 										<span className="font-medium">{cfp.code}</span>
