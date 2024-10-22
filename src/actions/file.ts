@@ -11,6 +11,5 @@ import type { FileData } from "@/types";
  * @returns A map of file identifiers to their corresponding upload URLs
  */
 export async function generateUploadUrls(fileData: FileData[]): Promise<string[]> {
-	const fileIds = fileData.map((file) => `${file.fileId}::${file.name}`);
-	return Promise.resolve(fileIds.map((fileId) => generateSignedUrl(fileId)));
+	return Promise.resolve(fileData.map((file) => generateSignedUrl(file.fileId)));
 }

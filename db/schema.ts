@@ -27,13 +27,20 @@ export const mailingList = pgTable(
 	}),
 );
 
-export const users = pgTable("users", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	name: text("name"),
-	email: text("email").unique(),
-	emailVerified: timestamp("emailVerified", { mode: "date" }),
-	image: text("image"),
-});
+export const users = pgTable(
+	"users",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		name: text("name"),
+		email: text("email").unique(),
+		emailVerified: timestamp("emailVerified", { mode: "date" }),
+		image: text("image"),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(table) => ({
+		emailIdx: index("idx_users_email").on(table.email),
+	}),
+);
 
 export const accounts = pgTable(
 	"accounts",
@@ -56,16 +63,23 @@ export const accounts = pgTable(
 		compoundKey: primaryKey({
 			columns: [account.provider, account.providerAccountId],
 		}),
+		userIdIdx: index("idx_accounts_user_id").on(account.userId),
 	}),
 );
 
-export const sessions = pgTable("sessions", {
-	sessionToken: text("sessionToken").primaryKey(),
-	userId: uuid("userId")
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
-	expires: timestamp("expires", { mode: "date" }).notNull(),
-});
+export const sessions = pgTable(
+	"sessions",
+	{
+		sessionToken: text("sessionToken").primaryKey(),
+		userId: uuid("userId")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		expires: timestamp("expires", { mode: "date" }).notNull(),
+	},
+	(table) => ({
+		userIdIdx: index("idx_sessions_user_id").on(table.userId),
+	}),
+);
 
 export const verificationTokens = pgTable(
 	"verification_tokens",
@@ -78,6 +92,7 @@ export const verificationTokens = pgTable(
 		compositePk: primaryKey({
 			columns: [verificationToken.identifier, verificationToken.token],
 		}),
+		tokenIdx: index("idx_verification_tokens_token").on(verificationToken.token),
 	}),
 );
 
@@ -99,6 +114,7 @@ export const authenticators = pgTable(
 		compositePK: primaryKey({
 			columns: [authenticator.userId, authenticator.credentialID],
 		}),
+		userIdIdx: index("idx_authenticators_user_id").on(authenticator.userId),
 	}),
 );
 
@@ -109,12 +125,9 @@ export const workspaces = pgTable(
 		name: text("name").notNull(),
 		logoUrl: text("logo_url"),
 		description: text("description"),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => ({
-		deletedAtIdx: index("idx_workspaces_deleted_at").on(table.deletedAt),
+		nameIdx: index("idx_workspaces_name").on(table.name),
 	}),
 );
 
@@ -128,9 +141,6 @@ export const workspaceUsers = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		role: userRoleEnum("role").notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => ({
 		pk: primaryKey({ columns: [table.workspaceId, table.userId] }),
@@ -138,7 +148,6 @@ export const workspaceUsers = pgTable(
 		roleIdx: index("idx_workspace_users_role").on(table.role),
 		workspaceIdIdx: index("idx_workspace_users_workspace_id").on(table.workspaceId),
 		userIdIdx: index("idx_workspace_users_user_id").on(table.userId),
-		deletedAtIdx: index("idx_workspace_users_deleted_at").on(table.deletedAt),
 	}),
 );
 
@@ -148,13 +157,9 @@ export const fundingOrganizations = pgTable(
 		id: uuid("id").primaryKey().defaultRandom(),
 		name: varchar("name", { length: 255 }).notNull(),
 		logoUrl: text("logo_url"),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => ({
 		nameIdx: index("idx_funding_organization_name").on(table.name),
-		deletedAtIdx: index("idx_funding_organization_deleted_at").on(table.deletedAt),
 	}),
 );
 
@@ -172,14 +177,11 @@ export const grantCfps = pgTable(
 		description: text("description"),
 		title: varchar("title", { length: 255 }).notNull(),
 		url: text("url"),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => ({
 		codeIdx: index("idx_grant_cfps_identifier").on(table.code),
 		fundingOrganizationIdIdx: index("idx_grant_cfps_funding_organization_id").on(table.fundingOrganizationId),
-		deletedAtIdx: index("idx_grant_cfps_deleted_at").on(table.deletedAt),
+		titleIdx: index("idx_grant_cfps_title").on(table.title),
 	}),
 );
 
@@ -195,16 +197,44 @@ export const grantApplications = pgTable(
 			.references(() => grantCfps.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		title: varchar("title", { length: 255 }).notNull(),
 		isResubmission: boolean("is_resubmission").notNull().default(false),
-		significance: text("significance").notNull(),
 		innovation: text("innovation").notNull(),
-		fileIds: text("file_ids").array(),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => ({
+		workspaceIdIdx: index("idx_grant_application_workspace_id").on(table.workspaceId),
 		cfpIdIdx: index("idx_grant_application_grant_cfp_id").on(table.cfpId),
-		deletedAtIdx: index("idx_grant_application_deleted_at").on(table.deletedAt),
+		titleIdx: index("idx_grant_application_title").on(table.title),
+	}),
+);
+
+export const researchSignificance = pgTable(
+	"research_significance",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		applicationId: uuid("application_id")
+			.notNull()
+			.unique()
+			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+		text: text("text").notNull(),
+		fileIds: text("file_ids").array(),
+	},
+	(table) => ({
+		applicationIdIdx: index("idx_research_significance_application_id").on(table.applicationId),
+	}),
+);
+
+export const researchInnovation = pgTable(
+	"research_innovation",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		applicationId: uuid("application_id")
+			.notNull()
+			.unique()
+			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+		text: text("text").notNull(),
+		fileIds: text("file_ids").array(),
+	},
+	(table) => ({
+		applicationIdIdx: index("idx_research_innovation_application_id").on(table.applicationId),
 	}),
 );
 
@@ -219,13 +249,10 @@ export const researchAims = pgTable(
 		description: text("description").notNull(),
 		fileIds: text("file_ids").array(),
 		requiresClinicalTrials: boolean("requires_clinical_trials").notNull().default(false),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => ({
 		applicationIdIdx: index("idx_research_aims_application_id").on(table.applicationId),
-		deletedAtIdx: index("idx_research_aims_deleted_at").on(table.deletedAt),
+		titleIdx: index("idx_research_aims_title").on(table.title),
 	}),
 );
 
@@ -239,12 +266,9 @@ export const researchTasks = pgTable(
 		title: varchar("title", { length: 255 }).notNull(),
 		description: text("description").notNull(),
 		fileIds: text("file_ids").array(),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => ({
 		aimIdIdx: index("idx_tasks_aim_id").on(table.aimId),
-		deletedAtIdx: index("idx_tasks_deleted_at").on(table.deletedAt),
+		titleIdx: index("idx_tasks_title").on(table.title),
 	}),
 );

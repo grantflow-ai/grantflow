@@ -83,6 +83,7 @@ export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; worksp
 						)}
 						{currentStep === 3 && (
 							<SignificanceAndInnovationForm
+								workspaceId={workspaceId}
 								significance={significance}
 								innovation={innovation}
 								setSignificance={setSignificance}
@@ -91,6 +92,7 @@ export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; worksp
 						)}
 						{currentStep === 4 && (
 							<ResearchAimsForm
+								workspaceId={workspaceId}
 								researchAims={researchAims}
 								researchTasks={researchTasks}
 								setResearchAims={setResearchAims}
