@@ -8,7 +8,9 @@ import { GrantCFP } from "@/types/database-types";
 import { CFPSelectionForm } from "@/components/applications/cfp-selection-form";
 import { GeneralInformationForm } from "@/components/applications/general-information-form";
 import SignificanceAndInnovationForm from "@/components/applications/significance-and-innovation-form";
-import { ResearchAimProp, ResearchAimsForm, ResearchTaskProp } from "@/components/applications/research-aims-form";
+import { ResearchAimsForm } from "@/components/applications/research-aims-form";
+import { useWizardStore, WizardStoreInit } from "@/stores/wizard";
+import { useShallow } from "zustand/react/shallow";
 
 const steps: Step[] = [
 	{ index: 1, name: "CFP Selection" },
@@ -18,14 +20,15 @@ const steps: Step[] = [
 	{ index: 5, name: "Review" },
 ];
 
-export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; workspaceId: string }) {
-	const [selectedCFP, setSelectedCFP] = useState("");
-	const [title, setTitle] = useState("");
-	const [isResubmission, setIsResubmission] = useState(false);
-	const [significance, setSignificance] = useState("");
-	const [innovation, setInnovation] = useState("");
-	const [researchAims, setResearchAims] = useState<ResearchAimProp[]>([]);
-	const [researchTasks, setResearchTasks] = useState<ResearchTaskProp[]>([]);
+export function WizardFormPage({ cfps, ...storeInit }: { cfps: GrantCFP[] } & WizardStoreInit) {
+	const { application, significance, innovation, workspaceId } = useWizardStore(storeInit)(
+		useShallow((store) => ({
+			application: store.application,
+			significance: store.significance,
+			innovation: store.innovation,
+			workspaceId: store.workspaceId,
+		})),
+	);
 
 	const [currentStep, setCurrentStep] = useState(1);
 
@@ -47,13 +50,13 @@ export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; worksp
 
 	const canStepForward = () => {
 		if (currentStep === 1) {
-			return !!selectedCFP;
+			return !!application;
 		}
 		if (currentStep === 2) {
-			return title.length >= 25;
+			return application?.title && application.title.length >= 25;
 		}
 		if (currentStep === 3) {
-			return significance.length && innovation.length;
+			return significance?.text && innovation?.text;
 		}
 
 		return currentStep !== steps.length;
@@ -70,34 +73,11 @@ export function WizardFormPage({ cfps, workspaceId }: { cfps: GrantCFP[]; worksp
 				<CardContent>
 					<div className="flex flex-col gap-4 mb-4">
 						<Stepper steps={steps} currentStep={currentStep} onStepClick={handleStepClick} />
-						{currentStep === 1 && (
-							<CFPSelectionForm cfps={cfps} value={selectedCFP} setValue={setSelectedCFP} />
-						)}
-						{currentStep === 2 && (
-							<GeneralInformationForm
-								title={title}
-								isResubmission={isResubmission}
-								setTitle={setTitle}
-								setIsResubmission={setIsResubmission}
-							/>
-						)}
-						{currentStep === 3 && (
-							<SignificanceAndInnovationForm
-								workspaceId={workspaceId}
-								significance={significance}
-								innovation={innovation}
-								setSignificance={setSignificance}
-								setInnovation={setInnovation}
-							/>
-						)}
-						{currentStep === 4 && (
-							<ResearchAimsForm
-								workspaceId={workspaceId}
-								researchAims={researchAims}
-								researchTasks={researchTasks}
-								setResearchAims={setResearchAims}
-								setResearchTasks={setResearchTasks}
-							/>
+						{currentStep === 1 && <CFPSelectionForm cfps={cfps} workspaceId={workspaceId} />}
+						{currentStep === 2 && <GeneralInformationForm workspaceId={workspaceId} />}
+						{currentStep === 3 && <SignificanceAndInnovationForm workspaceId={workspaceId} />}
+						{application && currentStep === 4 && (
+							<ResearchAimsForm workspaceId={workspaceId} applicationId={application.id} />
 						)}
 						{currentStep === steps.length && (
 							<div>
