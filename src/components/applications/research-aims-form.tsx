@@ -16,11 +16,13 @@ export function ResearchAimsForm({
 	researchTasks,
 	setResearchAims,
 	setResearchTasks,
+	workspaceId,
 }: {
 	researchAims: ResearchAimProp[];
 	researchTasks: ResearchTaskProp[];
 	setResearchAims: (values: ResearchAimProp[]) => void;
 	setResearchTasks: (values: ResearchTaskProp[]) => void;
+	workspaceId: string;
 }) {
 	const addResearchAim = () => {
 		const newAim: ResearchAimProp = {
@@ -105,6 +107,7 @@ export function ResearchAimsForm({
 						<div className="space-y-2">
 							<FileUploadContainer
 								parentId={aim.id}
+								workspaceId={workspaceId}
 								setFileData={(fileData) => {
 									setResearchAims(
 										researchAims.map((a) => {
@@ -157,6 +160,7 @@ export function ResearchAimsForm({
 												<div className="flex items-center space-x-2">
 													<FileUploadContainer
 														parentId={task.id}
+														workspaceId={workspaceId}
 														setFileData={(fileData) => {
 															setResearchTasks(
 																researchTasks.map((t) => {

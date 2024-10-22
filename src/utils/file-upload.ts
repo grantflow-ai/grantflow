@@ -5,7 +5,10 @@ import axios from "axios";
 import { toast } from "sonner";
 
 /**
+ * Uploads the given files to the server
  *
+ * @param files - An array of files to upload
+ * @param setProgresses - A function to set the upload progress
  */
 export async function handleFileUpload(files: FileData[], setProgresses: (progresses: Record<string, number>) => void) {
 	const target = files.length > 1 ? `${files.length} files` : "file";
