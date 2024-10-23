@@ -7,7 +7,7 @@
 		"db:create-migration": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:seed": "pnpm dlx tsx --env-file=.env scripts/seed-db.ts",
-		"dev": "NODE_NO_WARNINGS=1 next dev",
+		"dev": "NODE_NO_WARNINGS=1 next dev --turbopack",
 		"format": "prettier --write .",
 		"lint:check": "eslint .",
 		"lint:fix": "eslint --fix '**/*.{js,cjs,mjs,jsx,mjsx,cjsx,ts,tsx,mts,cjs,mtsx,ctsx}'",
@@ -30,7 +30,7 @@
 		"@auth/drizzle-adapter": "^1.7.2",
 		"@azure/storage-blob": "^12.25.0",
 		"@hookform/resolvers": "^3.9.0",
-		"@icons-pack/react-simple-icons": "^10.0.0",
+		"@icons-pack/react-simple-icons": "^10.1.0",
 		"@radix-ui/react-avatar": "^1.1.1",
 		"@radix-ui/react-checkbox": "^1.1.2",
 		"@radix-ui/react-dialog": "^1.1.2",
@@ -49,17 +49,17 @@
 		"class-variance-authority": "^0.7.0",
 		"clsx": "^2.1.1",
 		"cmdk": "1.0.0",
-		"drizzle-orm": "^0.35.2",
+		"drizzle-orm": "^0.35.3",
 		"inflection": "^3.0.0",
 		"lucide-react": "^0.453.0",
 		"nanoid": "^5.0.7",
-		"next": "15.0.0",
-		"next-auth": "5.0.0-beta.22",
+		"next": "15.0.1",
+		"next-auth": "5.0.0-beta.25",
 		"next-themes": "^0.3.0",
 		"pg": "^8.13.0",
-		"react": "^18.3.1",
+		"react": "19.0.0-rc-69d4b800-20241021",
 		"react-day-picker": "9.1.4",
-		"react-dom": "^18.3.1",
+		"react-dom": "19.0.0-rc-69d4b800-20241021",
 		"react-hook-form": "^7.53.1",
 		"remeda": "^2.16.0",
 		"sonner": "^1.5.0",
@@ -76,10 +76,10 @@
 		"@testing-library/react": "^16.0.1",
 		"@testing-library/user-event": "^14.5.2",
 		"@trumpet/eslint-config-next": "^1.1.1",
-		"@types/node": "^22.7.7",
+		"@types/node": "^22.7.9",
 		"@types/pg": "^8.11.10",
-		"@types/react": "^18.3.11",
-		"@types/react-dom": "^18.3.1",
+		"@types/react": "npm:types-react@19.0.0-rc.1",
+		"@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
 		"@types/validator": "^13.12.2",
 		"@vitejs/plugin-react": "^4.3.3",
 		"@vitest/coverage-v8": "^2.1.3",
@@ -110,8 +110,14 @@
 			"allowAny": [
 				"eslint",
 				"react",
-				"react-dom"
+				"react-dom",
+				"@types/react",
+				"@types/react-dom"
 			]
+		},
+		"overrides": {
+			"@types/react": "npm:types-react@19.0.0-rc.1",
+			"@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
 		}
 	}
 }

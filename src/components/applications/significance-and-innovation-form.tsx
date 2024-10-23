@@ -40,7 +40,7 @@ export default function SignificanceAndInnovationForm({ workspaceId }: { workspa
 						placeholder="Describe the significance of your research"
 						value={significance?.text}
 						onChange={async (e) => {
-							await updateResearchSignificance("text", e.target.value);
+							await updateResearchSignificance({ text: e.target.value });
 						}}
 						className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
 					/>
@@ -66,7 +66,7 @@ export default function SignificanceAndInnovationForm({ workspaceId }: { workspa
 						placeholder="Describe the innovation of your research"
 						value={innovation?.text}
 						onChange={async (e) => {
-							await updateResearchInnovation("text", e.target.value);
+							await updateResearchInnovation({ text: e.target.value });
 						}}
 						className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
 					/>

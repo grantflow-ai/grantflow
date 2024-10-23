@@ -40,7 +40,7 @@ describe("SubscribeForm", () => {
 
 	it("calls subscribeToMailingList with correct email on form submission", async () => {
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce("");
+		mockSubscribeToMailingList.mockResolvedValueOnce(null);
 
 		render(<SubscribeToMailingListForm />);
 
@@ -57,7 +57,7 @@ describe("SubscribeForm", () => {
 
 	it("displays success toast when subscription is successful", async () => {
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce("");
+		mockSubscribeToMailingList.mockResolvedValueOnce(null);
 
 		render(<SubscribeToMailingListForm />);
 
@@ -76,7 +76,7 @@ describe("SubscribeForm", () => {
 
 	it("displays error toast when subscription fails", async () => {
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		const errorMessage = "Failed to subscribe";
+		const errorMessage = "Invalid email address";
 		mockSubscribeToMailingList.mockResolvedValueOnce(errorMessage);
 
 		render(<SubscribeToMailingListForm />);
@@ -95,11 +95,12 @@ describe("SubscribeForm", () => {
 	});
 
 	it("shows loading state on submit button while form is submitting", async () => {
+		const errorMessage = "Invalid email address";
 		vi.mocked(subscribeToMailingList).mockImplementationOnce(
 			() =>
 				new Promise((resolve) =>
 					setTimeout(() => {
-						resolve("");
+						resolve(errorMessage);
 					}, 5),
 				),
 		);
@@ -116,8 +117,10 @@ describe("SubscribeForm", () => {
 	});
 
 	it("maintains the email input value after failed submission", async () => {
+		const errorMessage = "Invalid email address";
+
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce("Error message");
+		mockSubscribeToMailingList.mockResolvedValueOnce(errorMessage);
 
 		render(<SubscribeToMailingListForm />);
 
@@ -133,8 +136,9 @@ describe("SubscribeForm", () => {
 	});
 
 	it("renders thank you message after successful subscription", async () => {
+		const errorMessage = "Invalid email address";
 		const mockSubscribeToMailingList = vi.mocked(subscribeToMailingList);
-		mockSubscribeToMailingList.mockResolvedValueOnce("");
+		mockSubscribeToMailingList.mockResolvedValueOnce(errorMessage);
 
 		render(<SubscribeToMailingListForm />);
 

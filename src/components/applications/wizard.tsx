@@ -5,28 +5,33 @@ import { Button } from "gen/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "gen/ui/card";
 import { Step, Stepper } from "@/components/stepper";
 import { GrantCFP } from "@/types/database-types";
-import { CFPSelectionForm } from "@/components/applications/cfp-selection-form";
-import { GeneralInformationForm } from "@/components/applications/general-information-form";
+import { GeneralInfoForm } from "@/components/applications/general-info-form";
 import SignificanceAndInnovationForm from "@/components/applications/significance-and-innovation-form";
 import { ResearchAimsForm } from "@/components/applications/research-aims-form";
 import { useWizardStore, WizardStoreInit } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 
 const steps: Step[] = [
-	{ index: 1, name: "CFP Selection" },
-	{ index: 2, name: "General Information" },
-	{ index: 3, name: "Significance and Innovation" },
-	{ index: 4, name: "Research Plan" },
-	{ index: 5, name: "Review" },
+	{ index: 1, name: "General Information" },
+	{ index: 2, name: "Significance and Innovation" },
+	{ index: 3, name: "Research Plan" },
+	{ index: 4, name: "Review" },
 ];
 
-export function WizardFormPage({ cfps, ...storeInit }: { cfps: GrantCFP[] } & WizardStoreInit) {
-	const { application, significance, innovation, workspaceId } = useWizardStore(storeInit)(
+export function WizardFormPage({
+	cfps,
+	...storeInit
+}: { cfps: GrantCFP[] } & Pick<WizardStoreInit, "workspaceId"> & Partial<WizardStoreInit>) {
+	const { application, significance, innovation, workspaceId, researchAims, researchTasks } = useWizardStore(
+		storeInit,
+	)(
 		useShallow((store) => ({
 			application: store.application,
 			significance: store.significance,
 			innovation: store.innovation,
 			workspaceId: store.workspaceId,
+			researchAims: store.researchAims,
+			researchTasks: store.researchTasks,
 		})),
 	);
 
@@ -73,19 +78,24 @@ export function WizardFormPage({ cfps, ...storeInit }: { cfps: GrantCFP[] } & Wi
 				<CardContent>
 					<div className="flex flex-col gap-4 mb-4">
 						<Stepper steps={steps} currentStep={currentStep} onStepClick={handleStepClick} />
-						{currentStep === 1 && <CFPSelectionForm cfps={cfps} workspaceId={workspaceId} />}
-						{currentStep === 2 && <GeneralInformationForm workspaceId={workspaceId} />}
-						{currentStep === 3 && <SignificanceAndInnovationForm workspaceId={workspaceId} />}
-						{application && currentStep === 4 && (
+						{currentStep === 1 && <GeneralInfoForm cfps={cfps} workspaceId={workspaceId} />}
+						{application && currentStep === 2 && (
+							<SignificanceAndInnovationForm workspaceId={workspaceId} />
+						)}
+						{application && significance && innovation && currentStep === 3 && (
 							<ResearchAimsForm workspaceId={workspaceId} applicationId={application.id} />
 						)}
-						{currentStep === steps.length && (
-							<div>
-								<h3 className="text-lg font-semibold mb-4">Review Your Information</h3>
-								<p>Please review all the information you&apos;ve entered before submitting.</p>
-								{/* You would typically display a summary of all entered information here */}
-							</div>
-						)}
+						{application &&
+							significance &&
+							innovation &&
+							researchAims.length &&
+							researchTasks.length &&
+							currentStep === 4 && (
+								<div>
+									<h3 className="text-lg font-semibold mb-4">Review Your Information</h3>
+									<p>Please review all the information you&apos;ve entered before submitting.</p>
+								</div>
+							)}
 					</div>
 				</CardContent>
 				<CardFooter className="flex justify-between">

@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
  *
  * @param error - The error to handle.
  * @param message - The message to log.
- * @param fallback - The fallback to return.
+ * @param returnValue - The fallback to return.
  * @param redirect - The page to redirect to.
  * @returns returns the fallback
  */
@@ -15,11 +15,11 @@ export function handleServerError<T extends ReactNode | string>(
 	error: Error,
 	{
 		message = "A server side error occurred",
-		fallback,
+		returnValue,
 		redirect: serverRedirect,
 	}: {
 		message?: string;
-		fallback?: T;
+		returnValue?: T;
 		redirect?: PagePath;
 	} = {},
 ): T | null | never {
@@ -28,7 +28,7 @@ export function handleServerError<T extends ReactNode | string>(
 	if (serverRedirect) {
 		return redirect(serverRedirect);
 	}
-	return fallback ?? null;
+	return returnValue ?? null;
 }
 
 /**
