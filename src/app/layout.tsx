@@ -26,9 +26,9 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="en" className="dark" style={{ colorScheme: "dark" }}>
 			<head>
-				<link rel="stylesheet" href="https://use.typekit.net/ehf1zsz.css" />
+				<link rel="stylesheet" href="https://use.typekit.net/get1yhn.css" />
 				<link rel="icon" href="/favicon.ico" sizes="any" />
 			</head>
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>

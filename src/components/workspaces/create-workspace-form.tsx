@@ -1,5 +1,5 @@
 import { createWorkspace } from "@/actions/workspace";
-import { FormButton } from "@/components/form-button";
+import { SubmitButton } from "@/components/submit-button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "gen/ui/form";
 import { Input } from "gen/ui/input";
@@ -75,14 +75,14 @@ export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) 
 								</FormItem>
 							)}
 						/>
-						<FormButton
+						<SubmitButton
 							className="w-full"
 							data-testid="create-workspace-submit-button"
 							disabled={!form.formState.isValid}
 							isLoading={form.formState.isSubmitting}
 						>
 							Create Workspace
-						</FormButton>
+						</SubmitButton>
 					</form>
 				</Form>
 			</CardContent>

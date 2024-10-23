@@ -47,7 +47,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 								id={`aim-title-${aim.id}`}
 								value={aim.title}
 								onChange={async (e) => {
-									await updateResearchAim(aim.id, "title", e.target.value);
+									await updateResearchAim(aim.id, { title: e.target.value });
 								}}
 								minLength={3}
 								required
@@ -59,7 +59,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 								id={`aim-description-${aim.id}`}
 								value={aim.description}
 								onChange={async (e) => {
-									await updateResearchAim(aim.id, "description", e.target.value);
+									await updateResearchAim(aim.id, { description: e.target.value });
 								}}
 								required
 							/>
@@ -69,7 +69,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 								id={`aim-clinical-trials-${aim.id}`}
 								checked={aim.requiresClinicalTrials}
 								onCheckedChange={async (checked) => {
-									await updateResearchAim(aim.id, "requiresClinicalTrials", checked);
+									await updateResearchAim(aim.id, { requiresClinicalTrials: checked as boolean });
 								}}
 							/>
 							<Label htmlFor={`aim-clinical-trials-${aim.id}`}>Requires Clinical Trials</Label>
@@ -79,11 +79,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 								parentId={aim.id}
 								workspaceId={workspaceId}
 								setFileData={async (fileData) => {
-									await updateResearchAim(
-										aim.id,
-										"fileIds",
-										fileData.map((file) => file.fileId),
-									);
+									await updateResearchAim(aim.id, { fileIds: fileData.map((file) => file.fileId) });
 								}}
 							/>
 						</div>
@@ -105,7 +101,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 													id={`task-title-${task.id}`}
 													value={task.title}
 													onChange={async (e) => {
-														await updateResearchTask(task.id, "title", e.target.value);
+														await updateResearchTask(task.id, { title: e.target.value });
 													}}
 													minLength={3}
 													required
@@ -117,11 +113,9 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 													id={`task-description-${task.id}`}
 													value={task.description}
 													onChange={async (e) => {
-														await updateResearchTask(
-															task.id,
-															"description",
-															e.target.value,
-														);
+														await updateResearchTask(task.id, {
+															description: e.target.value,
+														});
 													}}
 													required
 												/>
@@ -133,11 +127,9 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 														parentId={task.id}
 														workspaceId={workspaceId}
 														setFileData={async (fileData) => {
-															await updateResearchTask(
-																task.id,
-																"fileIds",
-																fileData.map((file) => file.fileId),
-															);
+															await updateResearchTask(task.id, {
+																fileIds: fileData.map((file) => file.fileId),
+															});
 														}}
 													/>
 												</div>

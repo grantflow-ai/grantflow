@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { FormButton } from "@/components/form-button";
+import { SubmitButton } from "@/components/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
 import { signInWithResend } from "@/actions/signin-with-resend";
@@ -57,14 +57,14 @@ export function EmailSigninForm() {
 							</FormItem>
 						)}
 					/>
-					<FormButton
+					<SubmitButton
 						className="mt-4 mb-2 w-full"
 						isLoading={form.formState.isSubmitting}
 						disabled={!form.formState.isValid}
 						data-testid="email-signin-form-submit-button"
 					>
 						Send Magic Link
-					</FormButton>
+					</SubmitButton>
 				</form>
 			</Form>
 		</div>

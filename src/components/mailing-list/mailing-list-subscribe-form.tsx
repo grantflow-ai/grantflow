@@ -6,7 +6,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { subscribeToMailingList } from "@/actions/mailing-list";
-import { FormButton } from "@/components/form-button";
+import { SubmitButton } from "@/components/submit-button";
 import { cn } from "gen/cn";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
@@ -80,14 +80,14 @@ export function SubscribeToMailingListForm({ className, ...rest }: FormHTMLAttri
 						)}
 					/>
 					<div>
-						<FormButton
+						<SubmitButton
 							variant="secondary"
 							isLoading={form.formState.isSubmitting}
 							disabled={!form.formState.isValid}
 							data-testid="subscribe-form-submit-button"
 						>
 							Join
-						</FormButton>
+						</SubmitButton>
 					</div>
 				</form>
 			</Form>

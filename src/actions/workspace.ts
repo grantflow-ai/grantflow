@@ -43,7 +43,7 @@ export async function createWorkspace({ name, description }: { name: string; des
 	} catch (error) {
 		return handleServerError(error as Error, {
 			message: "Failed to create workspace",
-			fallback: "Failed to create workspace",
+			returnValue: "Failed to create workspace",
 		});
 	}
 }
