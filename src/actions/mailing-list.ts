@@ -12,7 +12,7 @@ import { mailingList } from "db/schema";
  */
 export async function subscribeToMailingList(email: string) {
 	if (!isEmail(email)) {
-		return handleServerError(new Error("Invalid email address"), { fallback: "Invalid email address" });
+		return handleServerError(new Error("Invalid email address"), { returnValue: "Invalid email address" });
 	}
 	const db = getDatabaseClient();
 
@@ -20,6 +20,9 @@ export async function subscribeToMailingList(email: string) {
 		await db.insert(mailingList).values({ email }).execute();
 		return null;
 	} catch (error) {
-		return handleServerError(error as Error, { message: "Failed to subscribe to mailing list" });
+		return handleServerError(error as Error, {
+			message: "Error adding email to mailing list",
+			returnValue: "Failed to subscribe to mailing list",
+		});
 	}
 }

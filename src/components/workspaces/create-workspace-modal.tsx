@@ -20,7 +20,7 @@ export function CreateWorkspaceModal() {
 					<span>New Workspace</span>
 				</Button>
 			</DialogTrigger>
-			<DialogContent>
+			<DialogContent aria-describedby="New workspace Dialog">
 				<DialogHeader>
 					<DialogTitle>New Workspace</DialogTitle>
 				</DialogHeader>

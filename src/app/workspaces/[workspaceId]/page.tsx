@@ -7,13 +7,15 @@ import { getDatabaseClient } from "db/connection";
 import { grantApplications, workspaces } from "db/schema";
 import { eq } from "drizzle-orm";
 
-export default async function WorkspaceDetailPage({
-	params: { workspaceId },
-}: {
-	params: {
+export default async function WorkspaceDetailPage(props: {
+	params: Promise<{
 		workspaceId: string;
-	};
+	}>;
 }) {
+	const params = await props.params;
+
+	const { workspaceId } = params;
+
 	const db = getDatabaseClient();
 	const workspace = await db.query.workspaces.findFirst({
 		where: eq(workspaces.id, workspaceId),

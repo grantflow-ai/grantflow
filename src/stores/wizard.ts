@@ -11,8 +11,6 @@ import {
 } from "@/types/database-types";
 import {
 	deleteResearchAim,
-	deleteResearchInnovation,
-	deleteResearchSignificance,
 	deleteResearchTask,
 	upsertGrantApplication,
 	upsertResearchAim,
@@ -20,10 +18,11 @@ import {
 	upsertResearchSignificance,
 	upsertResearchTask,
 } from "@/actions/wizard";
+import { isString } from "@tool-belt/type-predicates";
+import { toast } from "sonner";
 
-type UpdateAction<T, K extends keyof T = keyof T> = (field: K, value: T[K]) => Promise<void>;
-type UpdateActionWithId<T, K extends keyof T = keyof T> = (id: string, field: K, value: T[K]) => Promise<void>;
-
+type UpsertAction<T> = (values: Partial<T>) => Promise<void>;
+type UpsertActionWithId<T> = (id: string, values: Partial<T>) => Promise<void>;
 export interface WizardStoreInit {
 	application: GrantApplication | null;
 	innovation: ResearchInnovation | null;
@@ -31,6 +30,7 @@ export interface WizardStoreInit {
 	researchTasks: ResearchTask[];
 	significance: ResearchSignificance | null;
 	workspaceId: string;
+	loading: boolean;
 }
 
 export interface WizardStoreMethods {
@@ -38,16 +38,17 @@ export interface WizardStoreMethods {
 	addResearchTask: (task: NewResearchTask) => Promise<void>;
 	removeResearchAim: (aimId: string) => Promise<void>;
 	removeResearchTask: (taskId: string) => Promise<void>;
-	updateApplication: UpdateAction<GrantApplication>;
-	updateResearchAim: UpdateActionWithId<ResearchAim>;
-	updateResearchInnovation: UpdateAction<ResearchInnovation>;
-	updateResearchSignificance: UpdateAction<ResearchSignificance>;
-	updateResearchTask: UpdateActionWithId<ResearchTask>;
+	updateApplication: UpsertAction<GrantApplication>;
+	updateResearchAim: UpsertActionWithId<ResearchAim>;
+	updateResearchInnovation: UpsertAction<ResearchInnovation>;
+	updateResearchSignificance: UpsertAction<ResearchSignificance>;
+	updateResearchTask: UpsertActionWithId<ResearchTask>;
 }
 
 export type WizardStore = WizardStoreInit & WizardStoreMethods;
 
 const initialValue: Omit<WizardStoreInit, "workspaceId"> = {
+	loading: false,
 	application: null,
 	innovation: null,
 	researchAims: [],
@@ -58,88 +59,123 @@ const initialValue: Omit<WizardStoreInit, "workspaceId"> = {
 function createWizardStore(
 	values: Pick<WizardStoreInit, "workspaceId"> & Partial<WizardStoreInit>,
 ): (set: StoreApi<WizardStore>["setState"], get: StoreApi<WizardStore>["getState"]) => WizardStore {
-	return (set, get) => ({
-		...initialValue,
-		...values,
-		addResearchAim: async (values) => {
-			const aim = await upsertResearchAim(values);
-			set({ researchAims: [...get().researchAims, aim] });
-		},
-		addResearchTask: async (values) => {
-			const task = await upsertResearchTask(values);
-			set({ researchTasks: [...get().researchTasks, task] });
-		},
-		removeResearchAim: async (aimId) => {
-			await deleteResearchAim(aimId);
-			set({ researchAims: get().researchAims.filter((aim) => aim.id !== aimId) });
-		},
-		removeResearchInnovation: async () => {
-			const { innovation } = get();
-			if (!innovation) return;
+	return (set, get) => {
+		const withLoadingAndErrorHandling = async <T>(
+			value: Promise<T | string | null>,
+			setter?: ((value: T) => void) | (() => void),
+		): Promise<void> => {
+			set({ loading: true });
+			const result = await value;
+			set({ loading: false });
+			if (isString(result)) {
+				toast.error(result, { duration: 3000 });
+				return;
+			}
+			// @ts-expect-error - unnecessary gymnastics
+			setter?.(result);
+		};
+		return {
+			...initialValue,
+			...values,
+			addResearchAim: async (values) => {
+				await withLoadingAndErrorHandling(upsertResearchAim(values), (aim) => {
+					set({ researchAims: [...get().researchAims, aim] });
+				});
+			},
+			addResearchTask: async (values) => {
+				await withLoadingAndErrorHandling(upsertResearchTask(values), (values) => {
+					set({ researchTasks: [...get().researchTasks, values] });
+				});
+			},
+			removeResearchAim: async (aimId) => {
+				await withLoadingAndErrorHandling(deleteResearchAim(aimId), () => {
+					set({ researchAims: get().researchAims.filter((aim) => aim.id !== aimId) });
+				});
+			},
+			removeResearchTask: async (taskId) => {
+				await withLoadingAndErrorHandling(deleteResearchTask(taskId), () => {
+					set({ researchTasks: get().researchTasks.filter((task) => task.id !== taskId) });
+				});
+			},
+			updateApplication: async (values) => {
+				const { application } = get();
+				if (!application) {
+					return;
+				}
 
-			await deleteResearchInnovation(innovation.id);
-			set({ innovation: null });
-		},
-		removeResearchSignificance: async () => {
-			const { significance } = get();
-			if (!significance) return;
+				await withLoadingAndErrorHandling(
+					upsertGrantApplication({
+						id: application.id,
+						...values,
+					}),
+					(application) => {
+						set({ application });
+					},
+				);
+			},
+			updateResearchAim: async (aimId, values) => {
+				await withLoadingAndErrorHandling(
+					upsertResearchAim({
+						id: aimId,
+						...get().researchAims.find((aim) => aim.id === aimId),
+						...values,
+					}),
+					(updatedAim) => {
+						set({
+							researchAims: get().researchAims.map((aim) => (aim.id === aimId ? updatedAim : aim)),
+						});
+					},
+				);
+			},
+			updateResearchInnovation: async (values) => {
+				const { innovation } = get();
+				if (!innovation) {
+					return;
+				}
 
-			await deleteResearchSignificance(significance.id);
-			set({ significance: null });
-		},
-		removeResearchTask: async (taskId) => {
-			await deleteResearchTask(taskId);
-			set({ researchTasks: get().researchTasks.filter((task) => task.id !== taskId) });
-		},
-		updateApplication: async (field, value) => {
-			const { application } = get();
-			if (!application) return;
+				await withLoadingAndErrorHandling(
+					upsertResearchInnovation({
+						id: innovation.id,
+						...get().innovation,
+						...values,
+					}),
+					(innovation) => {
+						set({ innovation });
+					},
+				);
+			},
+			updateResearchSignificance: async (values) => {
+				const { significance } = get();
+				if (!significance) {
+					return;
+				}
 
-			const updatedApplication = await upsertGrantApplication({
-				id: application.id,
-				[field]: value,
-			});
-			set({ application: updatedApplication });
-		},
-		updateResearchAim: async (aimId, field, value) => {
-			const updatedResearchAim = await upsertResearchAim({
-				id: aimId,
-				[field]: value,
-			});
-			set({
-				researchAims: get().researchAims.map((aim) => (aim.id === aimId ? updatedResearchAim : aim)),
-			});
-		},
-		updateResearchInnovation: async (field, value) => {
-			const { innovation } = get();
-			if (!innovation) return;
-
-			const updatedInnovation = await upsertResearchInnovation({
-				id: innovation.id,
-				[field]: value,
-			});
-			set({ innovation: updatedInnovation });
-		},
-		updateResearchSignificance: async (field, value) => {
-			const { significance } = get();
-			if (!significance) return;
-
-			const updatedSignificance = await upsertResearchSignificance({
-				id: significance.id,
-				[field]: value,
-			});
-			set({ significance: updatedSignificance });
-		},
-		updateResearchTask: async (taskId, field, value) => {
-			const updatedTask = await upsertResearchTask({
-				id: taskId,
-				[field]: value,
-			});
-			set({
-				researchTasks: get().researchTasks.map((task) => (task.id === taskId ? updatedTask : task)),
-			});
-		},
-	});
+				await withLoadingAndErrorHandling(
+					upsertResearchSignificance({
+						id: significance.id,
+						...get().significance,
+						...values,
+					}),
+					(significance) => {
+						set({ significance });
+					},
+				);
+			},
+			updateResearchTask: async (taskId, values) => {
+				await withLoadingAndErrorHandling(
+					upsertResearchTask({
+						id: taskId,
+						...values,
+					}),
+					(updatedTask) => {
+						set({
+							researchTasks: get().researchTasks.map((task) => (task.id === taskId ? updatedTask : task)),
+						});
+					},
+				);
+			},
+		};
+	};
 }
 
 const stores = new Map<string, UseBoundStore<StoreApi<WizardStore>>>();
