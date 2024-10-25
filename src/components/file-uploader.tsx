@@ -1,10 +1,8 @@
 import { type ChangeEvent, useCallback } from "react";
 import { toast } from "sonner";
 import { formatBytes } from "@/utils/format";
-import { cn } from "gen/cn";
-import { FileTextIcon, UploadIcon, X } from "lucide-react";
+import { FileTextIcon, X, Paperclip } from "lucide-react";
 import type { FileData } from "@/types";
-import { Progress } from "gen/ui/progress";
 import { Button } from "gen/ui/button";
 import Image from "next/image";
 
@@ -55,7 +53,6 @@ export function FileUploader({
 				onFilesAdded(newFiles);
 			}
 
-			// Reset the input
 			event.target.value = "";
 		},
 		[onFilesAdded, validateFileUploads],
@@ -75,19 +72,16 @@ export function FileUploader({
 			/>
 			<label
 				htmlFor="file-upload"
-				className={cn(
-					"flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2",
-					isDisabled && "cursor-not-allowed opacity-50",
-				)}
+				className="inline-flex items-center justify-center border border-input rounded p-2 bg-background hover:bg-accent hover:text-accent-foreground"
 			>
-				<UploadIcon className="mr-2 h-5 w-5" />
-				<span>Upload Files</span>
+				<Paperclip className="mr-2 h-4 w-4" />
+				<span className="text-sm">Upload Files</span>
 			</label>
 		</div>
 	);
 }
 
-export function FileCard({ file, progress, onRemove }: { file: FileData; progress: number; onRemove: () => void }) {
+export function FileCard({ file, onRemove }: { file: FileData; onRemove: () => void }) {
 	return (
 		<div
 			className="relative flex items-center gap-4 rounded-lg border p-4 shadow-sm"
@@ -104,7 +98,6 @@ export function FileCard({ file, progress, onRemove }: { file: FileData; progres
 				<p className="text-xs text-gray-500" data-testid="file-size">
 					{formatBytes(file.size)}
 				</p>
-				<Progress value={progress} className="h-1" data-testid="file-progress" />
 			</div>
 			<Button
 				type="button"

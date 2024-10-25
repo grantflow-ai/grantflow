@@ -181,7 +181,6 @@ export const grantCfps = pgTable(
 	(table) => ({
 		codeIdx: index("idx_grant_cfps_identifier").on(table.code),
 		fundingOrganizationIdIdx: index("idx_grant_cfps_funding_organization_id").on(table.fundingOrganizationId),
-		titleIdx: index("idx_grant_cfps_title").on(table.title),
 	}),
 );
 
@@ -197,12 +196,10 @@ export const grantApplications = pgTable(
 			.references(() => grantCfps.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		title: varchar("title", { length: 255 }).notNull(),
 		isResubmission: boolean("is_resubmission").notNull().default(false),
-		innovation: text("innovation").notNull(),
 	},
 	(table) => ({
 		workspaceIdIdx: index("idx_grant_application_workspace_id").on(table.workspaceId),
 		cfpIdIdx: index("idx_grant_application_grant_cfp_id").on(table.cfpId),
-		titleIdx: index("idx_grant_application_title").on(table.title),
 	}),
 );
 
@@ -252,7 +249,6 @@ export const researchAims = pgTable(
 	},
 	(table) => ({
 		applicationIdIdx: index("idx_research_aims_application_id").on(table.applicationId),
-		titleIdx: index("idx_research_aims_title").on(table.title),
 	}),
 );
 
@@ -269,6 +265,5 @@ export const researchTasks = pgTable(
 	},
 	(table) => ({
 		aimIdIdx: index("idx_tasks_aim_id").on(table.aimId),
-		titleIdx: index("idx_tasks_title").on(table.title),
 	}),
 );

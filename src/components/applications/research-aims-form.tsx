@@ -76,8 +76,6 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 						</div>
 						<div className="space-y-2">
 							<FileUploadContainer
-								parentId={aim.id}
-								workspaceId={workspaceId}
 								setFileData={async (fileData) => {
 									await updateResearchAim(aim.id, { fileIds: fileData.map((file) => file.fileId) });
 								}}
