@@ -29,7 +29,7 @@ const dropId = <T extends { id: string }>({ id, ...rest }: T) => rest;
  * @returns The upserted grant application or string error message or null.
  */
 export async function upsertGrantApplication(
-	values: (Pick<GrantApplication, "id"> & Partial<Omit<GrantApplication, "id">>) | NewGrantApplication,
+	values: NewGrantApplication | GrantApplication,
 ): Promise<GrantApplication | string | null> {
 	try {
 		const db = getDatabaseClient();
