@@ -1,6 +1,6 @@
-import type { FileData } from "@/types";
 import { useCallback, useEffect, useState } from "react";
-import { FileCard, FileUploader } from "@/components/file-uploader";
+import { FileUploader } from "@/components/file-uploader";
+import { FileCard } from "@/components/file-card";
 
 const DEFAULT_FILE_ACCEPTS = [
 	"application/pdf",
@@ -26,27 +26,27 @@ export function FileUploadContainer({
 	accept?: string[];
 	maxSize?: number;
 	maxFileCount?: number;
-	initialValue?: FileData[];
-	setFileData: (fileData: FileData[]) => void;
+	initialValue?: File[];
+	setFileData: (fileData: File[]) => void;
 }) {
-	const [files, setFiles] = useState<FileData[]>(initialValue ?? []);
+	const [files, setFiles] = useState<File[]>(initialValue ?? []);
 
 	useEffect(() => {
 		setFileData(files);
 	}, [files, setFileData]);
 
 	const handleFilesAdded = useCallback((newFiles: File[]) => {
-		const fileData: FileData[] = newFiles.map((file) => ({
-			...file,
-			previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-		}));
+		const fileData: File[] = newFiles.map((file) => {
+			Reflect.set(file, "previewUrl", file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined);
+			return file;
+		});
 
 		setFiles((prevFiles) => [...prevFiles, ...fileData]);
 	}, []);
 
-	const handleRemoveFile = useCallback((fileToRemove: FileData) => {
-		if (fileToRemove.previewUrl) {
-			URL.revokeObjectURL(fileToRemove.previewUrl);
+	const handleRemoveFile = useCallback((fileToRemove: File) => {
+		if (Reflect.has(fileToRemove, "previewUrl")) {
+			URL.revokeObjectURL(Reflect.get(fileToRemove, "previewUrl") as string);
 		}
 
 		setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileToRemove.name));

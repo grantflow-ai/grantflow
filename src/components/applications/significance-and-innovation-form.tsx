@@ -12,6 +12,7 @@ import { useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { cn } from "gen/cn";
 import { FileUploadContainer } from "@/components/file-upload-container";
+import { uploadFiles } from "@/actions/file";
 
 const formSchema = z.object({
 	significance: z.string().min(50, "Significance description must be at least 50 characters"),
@@ -30,8 +31,8 @@ export default function SignificanceAndInnovationForm({
 	onPressPrevious: () => void;
 }) {
 	const [canSubmit, setCanSubmit] = useState(false);
-	const [innovationFiles, setInnovationFiles] = useState<FileData[]>([]);
-	const [significanceFiles, setSignificanceFiles] = useState<FileData[]>([]);
+	const [innovationFiles, setInnovationFiles] = useState<Files[]>([]);
+	const [significanceFiles, setSignificanceFiles] = useState<Files[]>([]);
 
 	const { significance, innovation, updateResearchInnovation, updateResearchSignificance, loading } = useWizardStore({
 		workspaceId,
@@ -66,10 +67,31 @@ export default function SignificanceAndInnovationForm({
 	});
 
 	const onSubmit = async (values: FormValues) => {
-		await Promise.all([
+		const [upsertedSignificance, upsertedInnovation] = await Promise.all([
 			updateResearchSignificance({ text: values.significance }),
 			updateResearchInnovation({ text: values.innovation }),
 		]);
+
+		if (upsertedSignificance && significanceFiles.length > 0) {
+			const results = await uploadFiles({
+				workspaceId,
+				parentId: upsertedSignificance.id,
+				files: significanceFiles as File[],
+			});
+
+			await updateResearchSignificance({ files: results });
+		}
+
+		if (upsertedInnovation && innovationFiles.length > 0) {
+			const results = await uploadFiles({
+				workspaceId,
+				parentId: upsertedInnovation.id,
+				files: innovationFiles as File[],
+			});
+
+			await updateResearchInnovation({ files: results });
+		}
+
 		setCanSubmit(false);
 		onPressNext();
 	};
@@ -245,7 +267,9 @@ export default function SignificanceAndInnovationForm({
 					/>
 
 					<div className="pt-10 flex justify-between">
-						<Button onClick={onPressPrevious}>Back</Button>
+						<Button onClick={onPressPrevious} aria-label="Go Back">
+							Go Back
+						</Button>
 						<SubmitButton
 							disabled={!canSubmit}
 							isLoading={loading}

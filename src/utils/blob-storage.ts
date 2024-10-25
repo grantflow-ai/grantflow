@@ -1,13 +1,6 @@
 import { getEnv } from "@/utils/env";
 import { Ref } from "@/utils/state";
-import {
-	BlobSASPermissions,
-	BlobServiceClient,
-	StorageSharedKeyCredential,
-	generateBlobSASQueryParameters,
-} from "@azure/storage-blob";
-
-const URL_EXPIRATION_SECONDS = 600;
+import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 
 const clientRef = new Ref<BlobServiceClient>();
 
@@ -43,45 +36,4 @@ export function getBlobClient(blobName: string) {
 
 	const containerClient = blobServiceClient.getContainerClient(getEnv().AZURE_STORAGE_CONTAINER_NAME);
 	return containerClient.getBlockBlobClient(blobName);
-}
-
-/**
- * Deletes the blob with the given name.
- * @param blobName - The name of the blob.
- * @returns A BlobPromiseResponse instance
- *
- */
-export async function deleteBlob(blobName: string) {
-	const blobClient = getBlobClient(blobName);
-	return await blobClient.delete();
-}
-
-/**
- * Generates a signed URL for the given blob name.
- * @param blobName - The name of the blob.
- * @returns The signed URL.
- */
-export function generateSignedUrl(blobName: string): string {
-	const blobClient = getBlobClient(blobName);
-	const url = new URL(blobClient.url);
-
-	const permissions = BlobSASPermissions.from({
-		read: true,
-		write: true,
-		create: true,
-	});
-
-	const sasToken = generateBlobSASQueryParameters(
-		{
-			containerName: getEnv().AZURE_STORAGE_CONTAINER_NAME,
-			blobName,
-			permissions,
-			expiresOn: new Date(Date.now() + URL_EXPIRATION_SECONDS * 1000),
-		},
-		getStorageSharedKeyCredential(),
-	);
-
-	url.search = sasToken.toString();
-
-	return url.toString();
 }

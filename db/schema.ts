@@ -10,6 +10,7 @@ import {
 	unique,
 	primaryKey,
 	integer,
+	json,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -212,7 +213,7 @@ export const researchSignificance = pgTable(
 			.unique()
 			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		text: text("text").notNull(),
-		fileIds: text("file_ids").array(),
+		files: json().$type<Record<string, string>>(),
 	},
 	(table) => ({
 		applicationIdIdx: index("idx_research_significance_application_id").on(table.applicationId),
@@ -228,7 +229,7 @@ export const researchInnovation = pgTable(
 			.unique()
 			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		text: text("text").notNull(),
-		fileIds: text("file_ids").array(),
+		files: json().$type<Record<string, string>>(),
 	},
 	(table) => ({
 		applicationIdIdx: index("idx_research_innovation_application_id").on(table.applicationId),
@@ -244,7 +245,7 @@ export const researchAims = pgTable(
 			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		title: varchar("title", { length: 255 }).notNull(),
 		description: text("description").notNull(),
-		fileIds: text("file_ids").array(),
+		files: json().$type<Record<string, string>>(),
 		requiresClinicalTrials: boolean("requires_clinical_trials").notNull().default(false),
 	},
 	(table) => ({
@@ -261,7 +262,7 @@ export const researchTasks = pgTable(
 			.references(() => researchAims.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		title: varchar("title", { length: 255 }).notNull(),
 		description: text("description").notNull(),
-		fileIds: text("file_ids").array(),
+		files: json().$type<Record<string, string>>(),
 	},
 	(table) => ({
 		aimIdIdx: index("idx_tasks_aim_id").on(table.aimId),

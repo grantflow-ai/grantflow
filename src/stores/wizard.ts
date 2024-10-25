@@ -24,8 +24,8 @@ import {
 import { isString } from "@tool-belt/type-predicates";
 import { toast } from "sonner";
 
-type UpsertAction<T> = (values: Partial<T>, cb?: () => void) => Promise<void>;
-type UpsertActionWithId<T> = (id: string, values: Partial<T>, cb?: () => void) => Promise<void>;
+type UpsertAction<T> = (values: Partial<T>, cb?: () => void) => Promise<T | null>;
+type UpsertActionWithId<T> = (id: string, values: Partial<T>, cb?: () => void) => Promise<T | null>;
 
 export interface WizardStoreInit {
 	application: GrantApplication | null;
@@ -38,10 +38,10 @@ export interface WizardStoreInit {
 }
 
 export interface WizardStoreMethods {
-	addResearchAim: (aim: NewResearchAim, cb?: () => void) => Promise<void>;
-	addResearchTask: (task: NewResearchTask, cb?: () => void) => Promise<void>;
-	removeResearchAim: (aimId: string, cb?: () => void) => Promise<void>;
-	removeResearchTask: (taskId: string, cb?: () => void) => Promise<void>;
+	addResearchAim: (aim: NewResearchAim, cb?: () => void) => Promise<ResearchAim | null>;
+	addResearchTask: (task: NewResearchTask, cb?: () => void) => Promise<ResearchTask | null>;
+	removeResearchAim: (aimId: string, cb?: () => void) => Promise<string | null>;
+	removeResearchTask: (taskId: string, cb?: () => void) => Promise<string | null>;
 	updateApplication: UpsertAction<GrantApplication>;
 	updateResearchAim: UpsertActionWithId<ResearchAim>;
 	updateResearchInnovation: UpsertAction<ResearchInnovation>;
@@ -68,23 +68,27 @@ function createWizardStore(
 			value: Promise<T | string | null>,
 			setter?: ((value: T) => void) | (() => void),
 			cb?: () => void,
-		): Promise<void> => {
+		): Promise<T | null> => {
 			set({ loading: true });
 			const result = await value;
 			set({ loading: false });
+
 			if (isString(result)) {
 				toast.error(result, { duration: 3000 });
-				return;
+				return null;
 			}
+
 			// @ts-expect-error - unnecessary gymnastics
 			setter?.(result);
 			cb?.();
+			return result;
 		};
+
 		return {
 			...initialValue,
 			...values,
 			addResearchAim: async (values, cb) => {
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					upsertResearchAim(values),
 					(aim) => {
 						set({ researchAims: [...get().researchAims, aim] });
@@ -93,7 +97,7 @@ function createWizardStore(
 				);
 			},
 			addResearchTask: async (values, cb) => {
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					upsertResearchTask(values),
 					(values) => {
 						set({ researchTasks: [...get().researchTasks, values] });
@@ -102,7 +106,7 @@ function createWizardStore(
 				);
 			},
 			removeResearchAim: async (aimId, cb) => {
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					deleteResearchAim(aimId),
 					() => {
 						set({ researchAims: get().researchAims.filter((aim) => aim.id !== aimId) });
@@ -111,7 +115,7 @@ function createWizardStore(
 				);
 			},
 			removeResearchTask: async (taskId, cb) => {
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					deleteResearchTask(taskId),
 					() => {
 						set({ researchTasks: get().researchTasks.filter((task) => task.id !== taskId) });
@@ -122,7 +126,7 @@ function createWizardStore(
 			updateApplication: async (values, cb) => {
 				const { application, workspaceId } = get();
 
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					upsertGrantApplication({ ...application, ...values, workspaceId } as
 						| NewGrantApplication
 						| GrantApplication),
@@ -133,7 +137,7 @@ function createWizardStore(
 				);
 			},
 			updateResearchAim: async (aimId, values, cb) => {
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					upsertResearchAim({
 						id: aimId,
 						...get().researchAims.find((aim) => aim.id === aimId),
@@ -150,7 +154,7 @@ function createWizardStore(
 			updateResearchInnovation: async (values, cb) => {
 				const { innovation } = get();
 
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					upsertResearchInnovation({
 						...innovation,
 						...values,
@@ -164,7 +168,7 @@ function createWizardStore(
 			updateResearchSignificance: async (values, cb) => {
 				const { significance } = get();
 
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					upsertResearchSignificance({
 						...significance,
 						...values,
@@ -176,7 +180,7 @@ function createWizardStore(
 				);
 			},
 			updateResearchTask: async (taskId, values, cb) => {
-				await withLoadingAndErrorHandling(
+				return await withLoadingAndErrorHandling(
 					upsertResearchTask({
 						id: taskId,
 						...get().researchTasks.find((task) => task.id === taskId),
