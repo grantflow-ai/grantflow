@@ -1,12 +1,39 @@
-import { Label } from "gen/ui/label";
+import { HelpCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "gen/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Textarea } from "gen/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
-import { InfoIcon } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { useWizardStore } from "@/stores/wizard";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { SubmitButton } from "@/components/submit-button";
+import { cn } from "gen/cn";
+import { FileUploadContainer } from "@/components/file-upload-container";
 
-export default function SignificanceAndInnovationForm({ workspaceId }: { workspaceId: string }) {
-	const { significance, innovation, updateResearchInnovation, updateResearchSignificance } = useWizardStore({
+const formSchema = z.object({
+	significance: z.string().min(50, "Significance description must be at least 50 characters"),
+	innovation: z.string().min(50, "Innovation description must be at least 50 characters"),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+export default function SignificanceAndInnovationForm({
+	workspaceId,
+	onPressNext,
+	onPressPrevious,
+}: {
+	workspaceId: string;
+	onPressNext: () => void;
+	onPressPrevious: () => void;
+}) {
+	const [canSubmit, setCanSubmit] = useState(false);
+	const [innovationFiles, setInnovationFiles] = useState<FileData[]>([]);
+	const [significanceFiles, setSignificanceFiles] = useState<FileData[]>([]);
+
+	const { significance, innovation, updateResearchInnovation, updateResearchSignificance, loading } = useWizardStore({
 		workspaceId,
 	})(
 		useShallow((state) => ({
@@ -14,64 +41,223 @@ export default function SignificanceAndInnovationForm({ workspaceId }: { workspa
 			innovation: state.innovation,
 			updateResearchInnovation: state.updateResearchInnovation,
 			updateResearchSignificance: state.updateResearchSignificance,
+			loading: state.loading,
 		})),
 	);
+
+	const form = useForm<FormValues>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
+			significance: significance?.text ?? "",
+			innovation: innovation?.text ?? "",
+		},
+	});
+
+	form.watch((values) => {
+		if (!significance || !innovation) {
+			setCanSubmit(form.formState.isValid);
+			return;
+		}
+
+		setCanSubmit(
+			form.formState.isValid &&
+				(significance.text !== values.significance || innovation.text !== values.innovation),
+		);
+	});
+
+	const onSubmit = async (values: FormValues) => {
+		await Promise.all([
+			updateResearchSignificance({ text: values.significance }),
+			updateResearchInnovation({ text: values.innovation }),
+		]);
+		setCanSubmit(false);
+		onPressNext();
+	};
+
 	return (
 		<TooltipProvider>
-			<div className="space-y-8">
-				<div className="space-y-2">
-					<div className="flex items-center space-x-2">
-						<Label htmlFor="significance-textarea" className="text-sm font-medium text-foreground">
-							Significance
-						</Label>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<InfoIcon className="h-4 w-4 text-muted-foreground cursor-help" />
-							</TooltipTrigger>
-							<TooltipContent side="right" align="start" className="max-w-xs">
-								<p className="text-sm">
-									Describe the importance and potential impact of your research in the field.
-								</p>
-							</TooltipContent>
-						</Tooltip>
-					</div>
-					<Textarea
-						id="significance-textarea"
-						placeholder="Describe the significance of your research"
-						value={significance?.text}
-						onChange={async (e) => {
-							await updateResearchSignificance({ text: e.target.value });
-						}}
-						className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
+			<Form {...form}>
+				<form
+					className="space-y-6"
+					data-testid="significance-innovation-form"
+					aria-label="Research Significance and Innovation Form"
+					onSubmit={form.handleSubmit(onSubmit)}
+				>
+					<FormField
+						control={form.control}
+						name="significance"
+						render={({ field }) => (
+							<FormItem>
+								<div className="flex items-center gap-2">
+									<FormLabel
+										htmlFor="significance"
+										className="flex items-center gap-2"
+										data-testid="significance-innovation-form-significance-label"
+									>
+										Research Significance
+									</FormLabel>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												type="button"
+												variant="ghost"
+												className="p-0 h-4 w-4"
+												data-testid="significance-innovation-form-significance-help"
+												aria-label="Research significance information"
+											>
+												<HelpCircle className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent
+											data-testid="significance-innovation-form-significance-tooltip"
+											role="tooltip"
+										>
+											Describe the importance and potential impact of your research in the field
+										</TooltipContent>
+									</Tooltip>
+								</div>
+								<FormControl>
+									<Textarea
+										{...field}
+										id="significance"
+										disabled={loading}
+										placeholder="Describe the significance of your research"
+										className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
+										data-testid="significance-innovation-form-significance-input"
+										aria-required="true"
+										aria-invalid={!!form.formState.errors.significance}
+										aria-describedby={
+											form.formState.errors.significance
+												? "significance-error significance-counter"
+												: "significance-counter"
+										}
+									/>
+								</FormControl>
+								{field.value && (
+									<p
+										id="significance-counter"
+										data-testid="significance-innovation-form-significance-char-count"
+										aria-live="polite"
+										className={cn(
+											"text-xs text-muted-foreground transition-colors duration-200",
+											field.value.length < 50 && "text-red-500",
+											field.value.length >= 50 && "text-green-500",
+										)}
+									>
+										{field.value.length} characters
+										{field.value.length < 50 ? ` (${50 - field.value.length} more required)` : ""}
+									</p>
+								)}
+								{form.formState.errors.significance?.message && (
+									<FormMessage
+										id="significance-error"
+										data-testid="significance-innovation-form-significance-error"
+										className="text-destructive"
+										role="alert"
+									>
+										{form.formState.errors.significance.message}
+									</FormMessage>
+								)}
+								<FileUploadContainer setFileData={setSignificanceFiles} />
+							</FormItem>
+						)}
 					/>
-				</div>
-				<div className="space-y-2">
-					<div className="flex items-center space-x-2">
-						<Label htmlFor="innovation-textarea" className="text-sm font-medium text-foreground">
-							Innovation
-						</Label>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<InfoIcon className="h-4 w-4 text-muted-foreground cursor-help" />
-							</TooltipTrigger>
-							<TooltipContent side="right" align="start" className="max-w-xs">
-								<p className="text-sm">
-									Explain how your research introduces new ideas, methods, or approaches to the field.
-								</p>
-							</TooltipContent>
-						</Tooltip>
-					</div>
-					<Textarea
-						id="innovation-textarea"
-						placeholder="Describe the innovation of your research"
-						value={innovation?.text}
-						onChange={async (e) => {
-							await updateResearchInnovation({ text: e.target.value });
-						}}
-						className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
+
+					<FormField
+						control={form.control}
+						name="innovation"
+						render={({ field }) => (
+							<FormItem>
+								<div className="flex items-center gap-2">
+									<FormLabel
+										htmlFor="innovation"
+										className="flex items-center gap-2"
+										data-testid="significance-innovation-form-innovation-label"
+									>
+										Research Innovation
+									</FormLabel>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												type="button"
+												variant="ghost"
+												className="p-0 h-4 w-4"
+												data-testid="significance-innovation-form-innovation-help"
+												aria-label="Research innovation information"
+											>
+												<HelpCircle className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent
+											data-testid="significance-innovation-form-innovation-tooltip"
+											role="tooltip"
+										>
+											Explain how your research introduces new ideas, methods, or approaches to
+											the field
+										</TooltipContent>
+									</Tooltip>
+								</div>
+								<FormControl>
+									<Textarea
+										{...field}
+										id="innovation"
+										disabled={loading}
+										placeholder="Describe the innovation of your research"
+										className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
+										data-testid="significance-innovation-form-innovation-input"
+										aria-required="true"
+										aria-invalid={!!form.formState.errors.innovation}
+										aria-describedby={
+											form.formState.errors.innovation
+												? "innovation-error innovation-counter"
+												: "innovation-counter"
+										}
+									/>
+								</FormControl>
+								{field.value && (
+									<p
+										id="innovation-counter"
+										data-testid="significance-innovation-form-innovation-char-count"
+										aria-live="polite"
+										className={cn(
+											"text-xs text-muted-foreground transition-colors duration-200",
+											field.value.length < 50 && "text-red-500",
+											field.value.length >= 50 && "text-green-500",
+										)}
+									>
+										{field.value.length} characters
+										{field.value.length < 50 ? ` (${50 - field.value.length} more required)` : ""}
+									</p>
+								)}
+								{form.formState.errors.innovation?.message && (
+									<FormMessage
+										id="innovation-error"
+										data-testid="significance-innovation-form-innovation-error"
+										className="text-destructive"
+										role="alert"
+									>
+										{form.formState.errors.innovation.message}
+									</FormMessage>
+								)}
+								<FileUploadContainer setFileData={setInnovationFiles} />
+							</FormItem>
+						)}
 					/>
-				</div>
-			</div>
+
+					<div className="pt-10 flex justify-between">
+						<Button onClick={onPressPrevious}>Back</Button>
+						<SubmitButton
+							disabled={!canSubmit}
+							isLoading={loading}
+							data-testid="significance-innovation-form-submit"
+							aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
+							aria-label={form.formState.isSubmitting ? "Saving changes..." : "Save changes"}
+						>
+							Save and Continue
+						</SubmitButton>
+					</div>
+				</form>
+			</Form>
 		</TooltipProvider>
 	);
 }

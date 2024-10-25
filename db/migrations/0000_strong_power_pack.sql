@@ -38,8 +38,7 @@ CREATE TABLE IF NOT EXISTS "grant_applications" (
 	"workspace_id" uuid NOT NULL,
 	"cfp_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
-	"is_resubmission" boolean DEFAULT false NOT NULL,
-	"innovation" text NOT NULL
+	"is_resubmission" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "grant_cfps" (
@@ -209,17 +208,13 @@ CREATE INDEX IF NOT EXISTS "idx_authenticators_user_id" ON "authenticators" USIN
 CREATE INDEX IF NOT EXISTS "idx_funding_organization_name" ON "funding_organizations" USING btree ("name");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_grant_application_workspace_id" ON "grant_applications" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_grant_application_grant_cfp_id" ON "grant_applications" USING btree ("cfp_id");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "idx_grant_application_title" ON "grant_applications" USING btree ("title");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_grant_cfps_identifier" ON "grant_cfps" USING btree ("code");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_grant_cfps_funding_organization_id" ON "grant_cfps" USING btree ("funding_organization_id");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "idx_grant_cfps_title" ON "grant_cfps" USING btree ("title");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_mailing_list_email" ON "mailing_list" USING btree ("email");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_research_aims_application_id" ON "research_aims" USING btree ("application_id");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "idx_research_aims_title" ON "research_aims" USING btree ("title");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_research_innovation_application_id" ON "research_innovation" USING btree ("application_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_research_significance_application_id" ON "research_significance" USING btree ("application_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_tasks_aim_id" ON "research_tasks" USING btree ("aim_id");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "idx_tasks_title" ON "research_tasks" USING btree ("title");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_sessions_user_id" ON "sessions" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_users_email" ON "users" USING btree ("email");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_verification_tokens_token" ON "verification_tokens" USING btree ("token");--> statement-breakpoint

@@ -1,6 +1,5 @@
 import type { FileData } from "@/types";
 import { useCallback, useEffect, useState } from "react";
-import { handleFileUpload } from "@/utils/file-upload";
 import { FileCard, FileUploader } from "@/components/file-uploader";
 
 const DEFAULT_FILE_ACCEPTS = [
@@ -22,44 +21,28 @@ export function FileUploadContainer({
 	maxSize = DEFAULT_MAX_SIZE,
 	maxFileCount = DEFAULT_MAX_FILES,
 	initialValue,
-	parentId,
-	workspaceId,
 	setFileData,
 }: {
 	accept?: string[];
 	maxSize?: number;
 	maxFileCount?: number;
 	initialValue?: FileData[];
-	parentId: string;
-	workspaceId: string;
 	setFileData: (fileData: FileData[]) => void;
 }) {
 	const [files, setFiles] = useState<FileData[]>(initialValue ?? []);
-	const [progresses, setProgresses] = useState<Record<string, number>>({});
 
 	useEffect(() => {
 		setFileData(files);
 	}, [files, setFileData]);
 
-	const handleFilesAdded = useCallback(
-		async (newFiles: File[]) => {
-			const fileData: FileData[] = newFiles.map((file) => ({
-				...file,
-				previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-				fileId: `${workspaceId}/${parentId}/${file.name}`,
-			}));
+	const handleFilesAdded = useCallback((newFiles: File[]) => {
+		const fileData: FileData[] = newFiles.map((file) => ({
+			...file,
+			previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+		}));
 
-			setFiles((prevFiles) => [...prevFiles, ...fileData]);
-
-			await handleFileUpload(fileData, (newProgresses) => {
-				setProgresses((prevProgresses) => ({
-					...prevProgresses,
-					...newProgresses,
-				}));
-			});
-		},
-		[parentId],
-	);
+		setFiles((prevFiles) => [...prevFiles, ...fileData]);
+	}, []);
 
 	const handleRemoveFile = useCallback((fileToRemove: FileData) => {
 		if (fileToRemove.previewUrl) {
@@ -67,11 +50,6 @@ export function FileUploadContainer({
 		}
 
 		setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileToRemove.name));
-		setProgresses((prevProgresses) => {
-			return Object.fromEntries(
-				Object.entries(prevProgresses).filter(([fileName]) => fileName !== fileToRemove.name),
-			);
-		});
 	}, []);
 
 	return (
@@ -89,7 +67,6 @@ export function FileUploadContainer({
 						<FileCard
 							key={file.name}
 							file={file}
-							progress={progresses[file.name] ?? 0}
 							onRemove={() => {
 								handleRemoveFile(file);
 							}}

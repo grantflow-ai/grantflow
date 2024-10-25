@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
 import { cn } from "gen/cn";
 import { Button } from "gen/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "gen/ui/command";
@@ -21,17 +20,26 @@ const formSchema = z.object({
 	cfpId: z.string({
 		required_error: "Please select an NIH Activity Code",
 	}),
-	title: z.string().min(25, "Title must be at least 25 characters").max(255, "Title must not exceed 255 characters"),
+	title: z.string().min(10, "Title must be at least 10 characters").max(255, "Title must not exceed 255 characters"),
 	isResubmission: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function GeneralInfoForm({ cfps, workspaceId }: { cfps: GrantCFP[]; workspaceId: string }) {
+export function GeneralInfoForm({
+	cfps,
+	workspaceId,
+	onPressNext,
+}: {
+	cfps: GrantCFP[];
+	workspaceId: string;
+	onPressNext: () => void;
+}) {
 	const [open, setOpen] = useState(false);
 	const [title, setTitle] = useState("Select an NIH Activity Code");
+	const [canSubmit, setCanSubmit] = useState(false);
 
-	const { application, updateApplication, loading } = useWizardStore({ workspaceId })(
+	const { updateApplication, application, loading } = useWizardStore({ workspaceId })(
 		useShallow((store) => ({
 			loading: store.loading,
 			application: store.application,
@@ -55,8 +63,25 @@ export function GeneralInfoForm({ cfps, workspaceId }: { cfps: GrantCFP[]; works
 		}
 	});
 
+	form.watch((values) => {
+		if (!application) {
+			setCanSubmit(form.formState.isValid);
+			return;
+		}
+
+		setCanSubmit(
+			form.formState.isValid &&
+				(application.cfpId !== values.cfpId ||
+					application.title !== values.title ||
+					application.isResubmission !== values.isResubmission),
+		);
+	});
+
 	const onSubmit = async (values: FormValues) => {
-		await updateApplication(values);
+		await updateApplication(values, () => {
+			setCanSubmit(false);
+			onPressNext();
+		});
 	};
 
 	return (
@@ -120,6 +145,7 @@ export function GeneralInfoForm({ cfps, workspaceId }: { cfps: GrantCFP[]; works
 										<PopoverContent className="w-full max-w-md p-0">
 											<Command>
 												<CommandInput
+													disabled={loading}
 													placeholder="Search NIH Activity Codes..."
 													data-testid="grant-application-form-cfp-search"
 													aria-label="Search NIH Activity Codes"
@@ -215,6 +241,7 @@ export function GeneralInfoForm({ cfps, workspaceId }: { cfps: GrantCFP[]; works
 									<Input
 										{...field}
 										id="title"
+										disabled={loading}
 										placeholder="Enter the Grant Application Title"
 										className="transition-all duration-200 focus:ring-2 focus:ring-primary"
 										data-testid="grant-application-form-title-input"
@@ -230,8 +257,8 @@ export function GeneralInfoForm({ cfps, workspaceId }: { cfps: GrantCFP[]; works
 										id="title-counter"
 										className={cn(
 											"text-xs text-muted-foreground transition-colors duration-200",
-											field.value.length < 25 && "text-red-500",
-											field.value.length >= 25 && field.value.length <= 255 && "text-green-500",
+											field.value.length < 10 && "text-red-500",
+											field.value.length >= 10 && field.value.length <= 255 && "text-green-500",
 										)}
 										data-testid="grant-application-form-title-char-count"
 										aria-live="polite"
@@ -262,6 +289,7 @@ export function GeneralInfoForm({ cfps, workspaceId }: { cfps: GrantCFP[]; works
 								<FormControl>
 									<Checkbox
 										id="isResubmission"
+										disabled={loading}
 										checked={field.value}
 										onCheckedChange={field.onChange}
 										className="h-5 w-5 transition-all duration-200 focus:ring-2 focus:ring-primary"
@@ -312,17 +340,21 @@ export function GeneralInfoForm({ cfps, workspaceId }: { cfps: GrantCFP[]; works
 							</FormItem>
 						)}
 					/>
-
-					<SubmitButton
-						className="w-full"
-						disabled={!form.formState.isValid || form.formState.isSubmitting}
-						isLoading={loading}
-						data-testid="grant-application-form-submit"
-						aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
-						aria-label={form.formState.isSubmitting ? "Saving changes..." : "Save changes"}
-					>
-						{form.formState.isSubmitting ? "Saving..." : "Save Changes"}
-					</SubmitButton>
+					<div className="pt-10 flex justify-end">
+						{application && !canSubmit ? (
+							<Button onClick={onPressNext}>Continue</Button>
+						) : (
+							<SubmitButton
+								disabled={!canSubmit}
+								isLoading={loading}
+								data-testid="grant-application-form-submit"
+								aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
+								aria-label={form.formState.isSubmitting ? "Saving changes..." : "Save changes"}
+							>
+								Save and Continue
+							</SubmitButton>
+						)}
+					</div>
 				</form>
 			</Form>
 		</TooltipProvider>

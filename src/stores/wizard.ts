@@ -2,7 +2,10 @@ import { create, type StoreApi, UseBoundStore } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import {
 	GrantApplication,
+	NewGrantApplication,
 	NewResearchAim,
+	NewResearchInnovation,
+	NewResearchSignificance,
 	NewResearchTask,
 	ResearchAim,
 	ResearchInnovation,
@@ -21,8 +24,9 @@ import {
 import { isString } from "@tool-belt/type-predicates";
 import { toast } from "sonner";
 
-type UpsertAction<T> = (values: Partial<T>) => Promise<void>;
-type UpsertActionWithId<T> = (id: string, values: Partial<T>) => Promise<void>;
+type UpsertAction<T> = (values: Partial<T>, cb?: () => void) => Promise<void>;
+type UpsertActionWithId<T> = (id: string, values: Partial<T>, cb?: () => void) => Promise<void>;
+
 export interface WizardStoreInit {
 	application: GrantApplication | null;
 	innovation: ResearchInnovation | null;
@@ -34,10 +38,10 @@ export interface WizardStoreInit {
 }
 
 export interface WizardStoreMethods {
-	addResearchAim: (aim: NewResearchAim) => Promise<void>;
-	addResearchTask: (task: NewResearchTask) => Promise<void>;
-	removeResearchAim: (aimId: string) => Promise<void>;
-	removeResearchTask: (taskId: string) => Promise<void>;
+	addResearchAim: (aim: NewResearchAim, cb?: () => void) => Promise<void>;
+	addResearchTask: (task: NewResearchTask, cb?: () => void) => Promise<void>;
+	removeResearchAim: (aimId: string, cb?: () => void) => Promise<void>;
+	removeResearchTask: (taskId: string, cb?: () => void) => Promise<void>;
 	updateApplication: UpsertAction<GrantApplication>;
 	updateResearchAim: UpsertActionWithId<ResearchAim>;
 	updateResearchInnovation: UpsertAction<ResearchInnovation>;
@@ -63,6 +67,7 @@ function createWizardStore(
 		const withLoadingAndErrorHandling = async <T>(
 			value: Promise<T | string | null>,
 			setter?: ((value: T) => void) | (() => void),
+			cb?: () => void,
 		): Promise<void> => {
 			set({ loading: true });
 			const result = await value;
@@ -73,47 +78,61 @@ function createWizardStore(
 			}
 			// @ts-expect-error - unnecessary gymnastics
 			setter?.(result);
+			cb?.();
 		};
 		return {
 			...initialValue,
 			...values,
-			addResearchAim: async (values) => {
-				await withLoadingAndErrorHandling(upsertResearchAim(values), (aim) => {
-					set({ researchAims: [...get().researchAims, aim] });
-				});
+			addResearchAim: async (values, cb) => {
+				await withLoadingAndErrorHandling(
+					upsertResearchAim(values),
+					(aim) => {
+						set({ researchAims: [...get().researchAims, aim] });
+					},
+					cb,
+				);
 			},
-			addResearchTask: async (values) => {
-				await withLoadingAndErrorHandling(upsertResearchTask(values), (values) => {
-					set({ researchTasks: [...get().researchTasks, values] });
-				});
+			addResearchTask: async (values, cb) => {
+				await withLoadingAndErrorHandling(
+					upsertResearchTask(values),
+					(values) => {
+						set({ researchTasks: [...get().researchTasks, values] });
+					},
+					cb,
+				);
 			},
-			removeResearchAim: async (aimId) => {
-				await withLoadingAndErrorHandling(deleteResearchAim(aimId), () => {
-					set({ researchAims: get().researchAims.filter((aim) => aim.id !== aimId) });
-				});
+			removeResearchAim: async (aimId, cb) => {
+				await withLoadingAndErrorHandling(
+					deleteResearchAim(aimId),
+					() => {
+						set({ researchAims: get().researchAims.filter((aim) => aim.id !== aimId) });
+					},
+					cb,
+				);
 			},
-			removeResearchTask: async (taskId) => {
-				await withLoadingAndErrorHandling(deleteResearchTask(taskId), () => {
-					set({ researchTasks: get().researchTasks.filter((task) => task.id !== taskId) });
-				});
+			removeResearchTask: async (taskId, cb) => {
+				await withLoadingAndErrorHandling(
+					deleteResearchTask(taskId),
+					() => {
+						set({ researchTasks: get().researchTasks.filter((task) => task.id !== taskId) });
+					},
+					cb,
+				);
 			},
-			updateApplication: async (values) => {
-				const { application } = get();
-				if (!application) {
-					return;
-				}
+			updateApplication: async (values, cb) => {
+				const { application, workspaceId } = get();
 
 				await withLoadingAndErrorHandling(
-					upsertGrantApplication({
-						id: application.id,
-						...values,
-					}),
+					upsertGrantApplication({ ...application, ...values, workspaceId } as
+						| NewGrantApplication
+						| GrantApplication),
 					(application) => {
 						set({ application });
 					},
+					cb,
 				);
 			},
-			updateResearchAim: async (aimId, values) => {
+			updateResearchAim: async (aimId, values, cb) => {
 				await withLoadingAndErrorHandling(
 					upsertResearchAim({
 						id: aimId,
@@ -125,46 +144,42 @@ function createWizardStore(
 							researchAims: get().researchAims.map((aim) => (aim.id === aimId ? updatedAim : aim)),
 						});
 					},
+					cb,
 				);
 			},
-			updateResearchInnovation: async (values) => {
+			updateResearchInnovation: async (values, cb) => {
 				const { innovation } = get();
-				if (!innovation) {
-					return;
-				}
 
 				await withLoadingAndErrorHandling(
 					upsertResearchInnovation({
-						id: innovation.id,
-						...get().innovation,
+						...innovation,
 						...values,
-					}),
+					} as NewResearchInnovation | ResearchInnovation),
 					(innovation) => {
 						set({ innovation });
 					},
+					cb,
 				);
 			},
-			updateResearchSignificance: async (values) => {
+			updateResearchSignificance: async (values, cb) => {
 				const { significance } = get();
-				if (!significance) {
-					return;
-				}
 
 				await withLoadingAndErrorHandling(
 					upsertResearchSignificance({
-						id: significance.id,
-						...get().significance,
+						...significance,
 						...values,
-					}),
+					} as NewResearchSignificance | ResearchSignificance),
 					(significance) => {
 						set({ significance });
 					},
+					cb,
 				);
 			},
-			updateResearchTask: async (taskId, values) => {
+			updateResearchTask: async (taskId, values, cb) => {
 				await withLoadingAndErrorHandling(
 					upsertResearchTask({
 						id: taskId,
+						...get().researchTasks.find((task) => task.id === taskId),
 						...values,
 					}),
 					(updatedTask) => {
@@ -172,6 +187,7 @@ function createWizardStore(
 							researchTasks: get().researchTasks.map((task) => (task.id === taskId ? updatedTask : task)),
 						});
 					},
+					cb,
 				);
 			},
 		};
