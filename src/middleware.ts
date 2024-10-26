@@ -13,12 +13,12 @@ export const middleware = auth(async (req) => {
 	const isRootPage = path === PagePath.ROOT.toString();
 	const isAPIRoute = path.startsWith("/api");
 
-	if (session && isSigninPage) {
-		return NextResponse.redirect(new URL(PagePath.ROOT, req.url));
-	}
-
 	if (!session && !(isRootPage || isSigninPage || isAPIRoute)) {
 		return NextResponse.redirect(new URL(PagePath.SIGNIN, req.url));
+	}
+
+	if (session && isSigninPage) {
+		return NextResponse.redirect(new URL(PagePath.WORKSPACES, req.url));
 	}
 });
 

@@ -1,5 +1,4 @@
 import { Button } from "gen/ui/button";
-import { SeparatorWithText } from "@/components/separator-with-text";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
 import Link from "next/link";
@@ -29,24 +28,27 @@ export default async function WorkspaceDetailPage(props: {
 		where: eq(grantApplications.workspaceId, workspace.id),
 	});
 
+	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspaceId);
+
 	return (
 		<div className="p-5">
 			<div className="py-4">
 				<h1 className="text-4xl font-bold">{workspace.name}</h1>
 				<h3 className="text-lg font-bold py-2">{workspace.description}</h3>
 			</div>
-			<div className="py-24 flex flex-col gap-2">
-				<div>
-					<SeparatorWithText text={"Grant Applications"} />
+			<div className="flex flex-col gap-2">
+				<div className="py-2">
 					<Button size="sm">
-						<Link href={`${PagePath.APPLICATIONS}?workspaceId=${workspace.id}`}>New Application</Link>
+						<Link href={createApplicationUrl}>New Application</Link>
 					</Button>
 				</div>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					{applications.map(({ id, title }) => (
-						<GrantApplicationCard key={id} id={id} title={title} />
-					))}
-				</div>
+				{applications.length ? (
+					<div className="border-1 rounded grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+						{applications.map((application) => (
+							<GrantApplicationCard key={application.id} {...application} />
+						))}
+					</div>
+				) : null}
 			</div>
 		</div>
 	);

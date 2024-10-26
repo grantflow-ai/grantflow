@@ -7,6 +7,7 @@ export default [
 		rules: {
 			"unicorn/no-nested-ternary": "off",
 			"unicorn/no-useless-promise-resolve-reject": "off",
+			"@typescript-eslint/ no-non-null-assertion": "off",
 		},
 	},
 	eslintConfigPrettier,
