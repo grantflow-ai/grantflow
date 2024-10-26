@@ -22,17 +22,19 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function SignificanceAndInnovationForm({
-	workspaceId,
+	applicationId,
 	onPressNext,
 	onPressPrevious,
+	workspaceId,
 }: {
-	workspaceId: string;
+	applicationId: string;
 	onPressNext: () => void;
 	onPressPrevious: () => void;
+	workspaceId: string;
 }) {
 	const [canSubmit, setCanSubmit] = useState(false);
-	const [innovationFiles, setInnovationFiles] = useState<Files[]>([]);
-	const [significanceFiles, setSignificanceFiles] = useState<Files[]>([]);
+	const [innovationFiles, setInnovationFiles] = useState<File[]>([]);
+	const [significanceFiles, setSignificanceFiles] = useState<File[]>([]);
 
 	const { significance, innovation, updateResearchInnovation, updateResearchSignificance, loading } = useWizardStore({
 		workspaceId,
@@ -68,15 +70,15 @@ export default function SignificanceAndInnovationForm({
 
 	const onSubmit = async (values: FormValues) => {
 		const [upsertedSignificance, upsertedInnovation] = await Promise.all([
-			updateResearchSignificance({ text: values.significance }),
-			updateResearchInnovation({ text: values.innovation }),
+			updateResearchSignificance({ text: values.significance, applicationId }),
+			updateResearchInnovation({ text: values.innovation, applicationId }),
 		]);
 
 		if (upsertedSignificance && significanceFiles.length > 0) {
 			const results = await uploadFiles({
 				workspaceId,
 				parentId: upsertedSignificance.id,
-				files: significanceFiles as File[],
+				files: significanceFiles,
 			});
 
 			await updateResearchSignificance({ files: results });
@@ -86,7 +88,7 @@ export default function SignificanceAndInnovationForm({
 			const results = await uploadFiles({
 				workspaceId,
 				parentId: upsertedInnovation.id,
-				files: innovationFiles as File[],
+				files: innovationFiles,
 			});
 
 			await updateResearchInnovation({ files: results });

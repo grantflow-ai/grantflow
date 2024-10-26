@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS "research_aims" (
 	"application_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" text NOT NULL,
-	"file_ids" text[],
+	"files" json,
 	"requires_clinical_trials" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
@@ -73,16 +73,14 @@ CREATE TABLE IF NOT EXISTS "research_innovation" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"application_id" uuid NOT NULL,
 	"text" text NOT NULL,
-	"file_ids" text[],
-	CONSTRAINT "research_innovation_application_id_unique" UNIQUE("application_id")
+	"files" json
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "research_significance" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"application_id" uuid NOT NULL,
 	"text" text NOT NULL,
-	"file_ids" text[],
-	CONSTRAINT "research_significance_application_id_unique" UNIQUE("application_id")
+	"files" json
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "research_tasks" (
@@ -90,7 +88,7 @@ CREATE TABLE IF NOT EXISTS "research_tasks" (
 	"aim_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" text NOT NULL,
-	"file_ids" text[]
+	"files" json
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "sessions" (

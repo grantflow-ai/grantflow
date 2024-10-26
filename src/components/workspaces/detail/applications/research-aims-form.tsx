@@ -9,8 +9,19 @@ import { FileUploadContainer } from "@/components/file-upload-container";
 import { useWizardStore } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 import { NewResearchAim, NewResearchTask } from "@/types/database-types";
+import { uploadFiles } from "@/actions/file";
 
-export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: string; applicationId: string }) {
+export function ResearchAimsForm({
+	workspaceId,
+	applicationId,
+	onPressPrevious,
+	onPressNext,
+}: {
+	workspaceId: string;
+	applicationId: string;
+	onPressNext: () => void;
+	onPressPrevious: () => void;
+}) {
 	const {
 		addResearchAim,
 		addResearchTask,
@@ -20,6 +31,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 		researchTasks,
 		updateResearchAim,
 		updateResearchTask,
+		loading,
 	} = useWizardStore({ workspaceId })(
 		useShallow((state) => ({
 			addResearchAim: state.addResearchAim,
@@ -30,6 +42,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 			researchTasks: state.researchTasks,
 			updateResearchAim: state.updateResearchAim,
 			updateResearchTask: state.updateResearchTask,
+			loading: state.loading,
 		})),
 	);
 
@@ -77,7 +90,12 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 						<div className="space-y-2">
 							<FileUploadContainer
 								setFileData={async (fileData) => {
-									await updateResearchAim(aim.id, { fileIds: fileData.map((file) => file.fileId) });
+									const files = await uploadFiles({
+										workspaceId,
+										parentId: aim.id,
+										files: fileData,
+									});
+									await updateResearchAim(aim.id, { files });
 								}}
 							/>
 						</div>
@@ -122,11 +140,15 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 												<Label htmlFor={`task-files-${task.id}`}>Upload Files</Label>
 												<div className="flex items-center space-x-2">
 													<FileUploadContainer
-														parentId={task.id}
-														workspaceId={workspaceId}
 														setFileData={async (fileData) => {
+															const files = await uploadFiles({
+																workspaceId,
+																parentId: task.id,
+																files: fileData,
+															});
+
 															await updateResearchTask(task.id, {
-																fileIds: fileData.map((file) => file.fileId),
+																files,
 															});
 														}}
 													/>
@@ -137,6 +159,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 													type="button"
 													variant="destructive"
 													size="sm"
+													disabled={loading}
 													onClick={async () => {
 														await removeResearchTask(task.id);
 													}}
@@ -151,12 +174,12 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 							<Button
 								type="button"
 								variant="outline"
+								disabled={loading}
 								onClick={async () => {
 									await addResearchTask({
 										aimId: aim.id,
 										title: "",
 										description: "",
-										fileIds: [],
 									} satisfies NewResearchTask);
 								}}
 							>
@@ -168,6 +191,7 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 							<Button
 								type="button"
 								variant="destructive"
+								disabled={loading}
 								onClick={async () => {
 									await removeResearchAim(aim.id);
 								}}
@@ -183,18 +207,32 @@ export function ResearchAimsForm({ workspaceId, applicationId }: { workspaceId: 
 				<Button
 					type="button"
 					variant="outline"
+					disabled={loading}
 					onClick={async () => {
 						await addResearchAim({
 							applicationId,
 							title: "",
 							description: "",
 							requiresClinicalTrials: false,
-							fileIds: [],
 						} satisfies NewResearchAim);
 					}}
 				>
 					<Plus className="w-4 h-4 mr-2" />
 					Add Research Aim
+				</Button>
+			</div>
+			<div className="pt-10 flex justify-between">
+				<Button onClick={onPressPrevious} aria-label="Go Back">
+					Go Back
+				</Button>
+				<Button
+					onClick={onPressNext}
+					disabled={loading}
+					data-testid="significance-innovation-form-submit"
+					aria-disabled={loading}
+					aria-label={loading ? "Saving changes..." : "Save changes"}
+				>
+					Continue
 				</Button>
 			</div>
 		</div>
