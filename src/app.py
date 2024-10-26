@@ -1,5 +1,6 @@
 import logging
 import sys
+from json import dumps
 from typing import Final, cast
 
 from azure.functions import Blueprint, InputStream
@@ -60,6 +61,8 @@ async def blob_trigger_handler(blob: InputStream) -> None:
     try:
         extracted_data, mime_type = await parse_blob_data(blob_data=blob.read(), filename=filename)
         chunks = chunk_text(extracted_data=extracted_data, mime_type=mime_type)
+        logger.info("Extracted text from response: %s", dumps(chunks))
+
         if embeddings := await create_embeddings(
             chunks=chunks,
             filename=filename,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from json import dumps
 from typing import Final
 
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
@@ -36,8 +35,6 @@ def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chu
             )
             for chunk in chunker.chunks(extracted_data.decode())
         ]
-
-    logger.info("Extracting text from response: %s", dumps(extracted_data))
 
     if pages := extracted_data.get("pages"):
         paged_chunks: list[Chunk] = []
