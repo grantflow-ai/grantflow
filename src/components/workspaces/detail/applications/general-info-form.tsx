@@ -342,7 +342,13 @@ export function GeneralInfoForm({
 					/>
 					<div className="pt-10 flex justify-end">
 						{application && !canSubmit ? (
-							<Button onClick={onPressNext}>Continue</Button>
+							<Button
+								onClick={onPressNext}
+								data-testid="grant-application-continue-button"
+								aria-label="Continue to the next step"
+							>
+								Continue
+							</Button>
 						) : (
 							<SubmitButton
 								disabled={!canSubmit}

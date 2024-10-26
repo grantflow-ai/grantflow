@@ -1,16 +1,18 @@
 import { getDatabaseClient } from "db/connection";
 import { inArray } from "drizzle-orm";
 import { grantCfps } from "db/schema";
-import { WizardFormPage } from "@/components/applications/wizard";
+import { WizardFormPage } from "@/components/workspaces/detail/applications/wizard";
 
-export default async function ApplicationCreateView(props: {
-	searchParams: Promise<{
+export default async function ApplicationCreatePage(props: {
+	params: Promise<{
 		workspaceId: string;
 	}>;
 }) {
-	const searchParams = await props.searchParams;
+	const { workspaceId } = await props.params;
 
-	const { workspaceId } = searchParams;
+	if (!workspaceId) {
+		return null;
+	}
 
 	const db = getDatabaseClient();
 	const cfps = await db.query.grantCfps.findMany({

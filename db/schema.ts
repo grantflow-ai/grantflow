@@ -210,7 +210,6 @@ export const researchSignificance = pgTable(
 		id: uuid("id").primaryKey().defaultRandom(),
 		applicationId: uuid("application_id")
 			.notNull()
-			.unique()
 			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		text: text("text").notNull(),
 		files: json().$type<Record<string, string>>(),
@@ -226,7 +225,6 @@ export const researchInnovation = pgTable(
 		id: uuid("id").primaryKey().defaultRandom(),
 		applicationId: uuid("application_id")
 			.notNull()
-			.unique()
 			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		text: text("text").notNull(),
 		files: json().$type<Record<string, string>>(),

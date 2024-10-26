@@ -1,16 +1,23 @@
-import { Card, CardHeader, CardTitle } from "gen/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
 import Link from "next/link";
 import { PagePath } from "@/enums";
 import { FileText } from "lucide-react";
+import { GrantApplication } from "@/types/database-types";
 
-export function GrantApplicationCard({ id, title }: { id: string; title: string }) {
+export function GrantApplicationCard({
+	id: applicationId,
+	title,
+	workspaceId,
+	cfpId,
+	isResubmission,
+}: GrantApplication) {
+	const url = PagePath.APPLICATION_DETAIL.toString()
+		.replace(":workspaceId", workspaceId)
+		.replace(":applicationId", applicationId);
+
 	return (
 		<Card className="overflow-hidden">
-			<Link
-				href={`${PagePath.APPLICATIONS}/${id}`}
-				className="absolute inset-0 z-10"
-				data-testid={`application-draft-link-${id}`}
-			>
+			<Link href={url} className="absolute inset-0 z-10" data-testid={`application-draft-link-${applicationId}`}>
 				<span className="sr-only">Navigate to the {title} grant application</span>
 			</Link>
 			<CardHeader className="space-y-1">
@@ -18,6 +25,11 @@ export function GrantApplicationCard({ id, title }: { id: string; title: string 
 					<FileText className="h-6 w-6 text-primary" />
 					<span>{title}</span>
 				</CardTitle>
+				<CardContent>
+					<p className="text-sm text-gray-500">
+						{isResubmission ? "Resubmission" : "New"} Application for Call for Proposal {cfpId}
+					</p>
+				</CardContent>
 			</CardHeader>
 		</Card>
 	);
