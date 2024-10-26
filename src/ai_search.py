@@ -30,43 +30,51 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-EMBEDDING_DIMENSIONS: Final[int] = 1536
-FIELD_NAME_CHUNK_ID: Final[str] = "chunk_id"
-FIELD_NAME_CONTENT: Final[str] = "content"
-FIELD_NAME_CONTENT_HASH: Final[str] = "content_hash"
-FIELD_NAME_CONTENT_VECTOR: Final[str] = "content_vector"
-FIELD_NAME_FILENAME: Final[str] = "filename"
-FIELD_NAME_ID: Final[str] = "id"
-FIELD_NAME_PAGE_NUMBER: Final[str] = "page_number"
-FIELD_NAME_PARENT_ID: Final[str] = "parent_id"
-FIELD_NAME_WORKSPACE_ID: Final[str] = "workspace_id"
+
+# Constants for HNSW (Hierarchical Navigable Small World) algorithm
 HNSW_EF_CONSTRUCTION: Final[int] = 400
 HNSW_EF_SEARCH: Final[int] = 500
 HNSW_M: Final[int] = 4
-HNSW_METRIC: Final[str] = "cosine"
 HNSW_NAME: Final[str] = "default"
 HNSW_PROFILE_NAME: Final[str] = "myHnswProfile"
+
+# Analyzer constants
 ANALYZER_STANDARD_LUCENE: Final[str] = "standard.lucene"
-ANALYZER_EN_MICROSOFT: Final[str] = "'en.microsoft"
+ANALYZER_EN_MICROSOFT: Final[str] = "en.microsoft"
+
+# Field name constants
+FIELD_NAME_ID: Final[str] = "id"
+FIELD_NAME_FILENAME: Final[str] = "filename"
+FIELD_NAME_WORKSPACE_ID: Final[str] = "workspace_id"
+FIELD_NAME_PARENT_ID: Final[str] = "parent_id"
+FIELD_NAME_CHUNK_ID: Final[str] = "chunk_id"
+FIELD_NAME_CONTENT: Final[str] = "content"
+FIELD_NAME_CONTENT_VECTOR: Final[str] = "content_vector"
+FIELD_NAME_PAGE_NUMBER: Final[str] = "page_number"
+FIELD_NAME_CONTENT_HASH: Final[str] = "content_hash"
+
+# Embedding model and dimensions
+EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
+EMBEDDING_DIMENSIONS: Final[int] = 3072  # max value for text-embedding-3-large
 
 
 def create_search_index(index_name: str) -> SearchIndex:
-    """Create a search index.
+    """Create a search index optimized for scientific documents using text-embedding-3-large.
 
     Args:
         index_name: The name of the search index.
 
     Returns:
-        SearchIndex: The search index.
+        SearchIndex: The configured search index.
     """
     fields = [
         SimpleField(
             name=FIELD_NAME_ID,
             type=SearchFieldDataType.String,
             key=True,
-            filterable=True,
+            searchable=False,
             retrievable=True,
-            analyzer_name=ANALYZER_STANDARD_LUCENE,
+            filterable=True,
         ),
         SearchableField(
             name=FIELD_NAME_FILENAME,
@@ -74,7 +82,7 @@ def create_search_index(index_name: str) -> SearchIndex:
             searchable=True,
             retrievable=True,
             filterable=True,
-            stored=True,
+            sortable=True,
             analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
         SearchableField(
@@ -82,38 +90,43 @@ def create_search_index(index_name: str) -> SearchIndex:
             type=SearchFieldDataType.String,
             searchable=False,
             retrievable=True,
-            sortable=True,
             filterable=True,
-            analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
         SearchableField(
             name=FIELD_NAME_PARENT_ID,
             type=SearchFieldDataType.String,
             searchable=False,
             retrievable=True,
+            filterable=True,
+        ),
+        SearchableField(
+            name=FIELD_NAME_CHUNK_ID,
+            type=SearchFieldDataType.String,
+            searchable=False,
+            retrievable=True,
             sortable=True,
             filterable=True,
-            analyzer_name=ANALYZER_STANDARD_LUCENE,
         ),
-        SearchableField(name=FIELD_NAME_CHUNK_ID, type=SearchFieldDataType.String, retrievable=True),
         SearchableField(
             name=FIELD_NAME_CONTENT,
             type=SearchFieldDataType.String,
             searchable=True,
             retrievable=True,
-            analyzer_name=ANALYZER_STANDARD_LUCENE,
+            filterable=True,
+            analyzer_name=ANALYZER_EN_MICROSOFT,
         ),
         SearchField(
             name=FIELD_NAME_CONTENT_VECTOR,
             type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
             vector_search_dimensions=EMBEDDING_DIMENSIONS,
-            searchable=True,
-            retrievable=True,
             vector_search_profile_name=HNSW_PROFILE_NAME,
         ),
         SimpleField(
             name=FIELD_NAME_PAGE_NUMBER,
             type=SearchFieldDataType.Int32,
+            filterable=True,
+            sortable=True,
+            retrievable=True,
         ),
         SearchableField(
             name=FIELD_NAME_CONTENT_HASH,
@@ -161,10 +174,10 @@ async def ensure_index_exists() -> None:
     """
     from azure.search.documents.indexes.aio import SearchIndexClient
 
-    index_name = get_env("AZURE_SEARCH_INDEX")
+    index_name = get_env("AZURE_AI_SEARCH_INDEX_NAME")
 
     index_client = SearchIndexClient(
-        endpoint=get_env("AZURE_SEARCH_ENDPOINT"), credential=AzureKeyCredential(get_env("AZURE_SEARCH_KEY"))
+        endpoint=get_env("AZURE_AI_SEARCH_ENDPOINT"), credential=AzureKeyCredential(get_env("AZURE_AI_SEARCH_KEY"))
     )
     logger.info("Checking if Search Index %s exists.", index_name)
 
@@ -178,6 +191,8 @@ async def ensure_index_exists() -> None:
         )
         await index_client.create_index(create_search_index(index_name))
         logger.info("Search Index %s created successfully.", index_name)
+    finally:
+        await index_client.close()
 
 
 @exponential_backoff_retry(RequestFailureError)
@@ -193,12 +208,12 @@ async def upload_to_ai_search(data: list[SearchSchema]) -> None:
     Returns:
         None
     """
+    client = SearchClient(
+        endpoint=get_env("AZURE_AI_SEARCH_ENDPOINT"),
+        index_name=get_env("AZURE_AI_SEARCH_INDEX_NAME"),
+        credential=AzureKeyCredential(get_env("AZURE_AI_SEARCH_KEY")),
+    )
     try:
-        client = SearchClient(
-            endpoint=get_env("AZURE_SEARCH_ENDPOINT"),
-            index_name=get_env("AZURE_SEARCH_INDEX"),
-            credential=AzureKeyCredential(get_env("AZURE_SEARCH_KEY")),
-        )
         logger.info("Uploading %d documents to Azure Search.", len(data))
         await client.upload_documents(documents=cast(list[dict[str, Any]], data))
         logger.info("Uploaded chunks to Azure Search")
@@ -208,3 +223,5 @@ async def upload_to_ai_search(data: list[SearchSchema]) -> None:
             status_code=e.status_code if e.status_code else 0,
             context=str(e),
         ) from e
+    finally:
+        await client.close()
