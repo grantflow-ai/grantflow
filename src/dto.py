@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class SearchSchema(TypedDict):
@@ -40,11 +40,33 @@ class Chunk(TypedDict):
     """The page number of the document."""
 
 
+class Span(TypedDict):
+    """DTO for a span of text."""
+
+    offset: int
+    """The offset of the span."""
+    length: int
+    """The length of the span."""
+
+
 class Line(TypedDict):
     """DTO for a line of text."""
 
     content: str
     """The content of the line."""
+    spans: list[Span]
+    """The spans of the line."""
+
+
+class Word(TypedDict):
+    """DTO for a word of text."""
+
+    content: str
+    """The content of the word."""
+    confidence: float
+    """The confidence of the word."""
+    span: Span
+    """The span of the word."""
 
 
 class Page(TypedDict):
@@ -52,8 +74,19 @@ class Page(TypedDict):
 
     pageNumber: int
     """The page number. The camel case is what the Azure Document Intelligence API outputs."""
-    lines: list[Line]
+    lines: NotRequired[list[Line]]
     """The lines of the page."""
+    words: list[Word]
+    """The words of the page."""
+
+
+class Paragraph(TypedDict):
+    """DTO for a paragraph of text."""
+
+    spans: list[Span]
+    """The spans of the paragraph."""
+    content: str
+    """The content of the paragraph."""
 
 
 class OCROutput(TypedDict):
@@ -61,5 +94,7 @@ class OCROutput(TypedDict):
 
     content: str
     """The content of the document."""
-    pages: list[Page]
+    pages: NotRequired[list[Page]]
     """The pages of the document."""
+    paragraphs: NotRequired[list[Paragraph]]
+    """The paragraphs of the document."""

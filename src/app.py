@@ -1,5 +1,6 @@
 import logging
-from typing import Final
+import sys
+from typing import Final, cast
 
 from azure.functions import Blueprint, InputStream
 
@@ -9,9 +10,40 @@ from src.embeddings import create_embeddings
 from src.exceptions import RequestFailureError, ValidationError
 from src.extraction import parse_blob_data
 
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 CHUNKS_BATCH_SIZE: Final[int] = 30
+CONTAINER_NAME: Final[str] = "grant-application-files/"
+
+
+def parse_blob_name(blob_name: str | None) -> tuple[str, str, str]:
+    """Parse the name of the blob to its components.
+
+    Expected format: {container_name}/{workspace_id}/{parent_id}/{filename}
+
+    Args:
+        blob_name: The name string.
+
+    Raises:
+        ValidationError: If the blob name is not provided or is of invalid format.
+
+    Returns:
+        A tuple of workspace_id, parent_id, filename
+    """
+    if blob_name is None:
+        logger.error("Blob name is None")
+        raise ValidationError("Blob name is required")
+
+    namespace = blob_name.replace(CONTAINER_NAME, "").removeprefix("/")
+    logger.info("Extracting text from blob: %s", namespace)
+
+    components = namespace.split("/")
+    if len(components) != 3 or any(not x for x in components):
+        logger.error("Invalid blob name format: %s", namespace)
+        raise ValidationError("Invalid blob name format")
+
+    return cast(tuple[str, str, str], tuple(components))
 
 
 async def blob_trigger_handler(blob: InputStream) -> None:
@@ -20,18 +52,10 @@ async def blob_trigger_handler(blob: InputStream) -> None:
     Args:
         blob: The input blob to be parsed.
 
-    Raises:
-        ValidationError: If the blob name is not provided.
-
     Returns:
         None
     """
-    logger.info("Extracting text from blob: %s", blob.name)
-
-    if blob.name is None:
-        raise ValidationError("Blob name is required")
-
-    workspace_id, parent_id, filename = blob.name.split("/")
+    workspace_id, parent_id, filename = parse_blob_name(blob.name)
 
     try:
         extracted_data, mime_type = await parse_blob_data(blob_data=blob.read(), filename=filename)

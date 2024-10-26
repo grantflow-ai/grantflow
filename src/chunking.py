@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from json import dumps
 from typing import Final
 
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
@@ -36,16 +37,38 @@ def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chu
             for chunk in chunker.chunks(extracted_data.decode())
         ]
 
-    paged_chunks: list[Chunk] = []
+    logger.info("Extracting text from response: %s", dumps(extracted_data))
 
-    for page in extracted_data["pages"]:
-        line_contents = "\n".join([line["content"] for line in page["lines"]])
-        paged_chunks.extend(
-            Chunk(
-                content=chunk,
-                page_number=page["pageNumber"],
+    if pages := extracted_data.get("pages"):
+        paged_chunks: list[Chunk] = []
+
+        for page in pages:
+            if lines := page.get("lines"):
+                contents = "\n".join([line["content"] for line in lines])
+
+            else:
+                words_with_breaks = []
+                previous_offset = None
+
+                for word in page["words"]:
+                    span = word["span"]
+                    if previous_offset is not None and span["offset"] > previous_offset:
+                        # Add a line break if there's a gap between spans
+                        words_with_breaks.append("\n")
+
+                    words_with_breaks.append(word["content"])
+                    previous_offset = span["offset"] + span["length"]
+
+                contents = " ".join(words_with_breaks).replace(" \n ", "\n")
+
+            paged_chunks.extend(
+                Chunk(
+                    content=chunk,
+                    page_number=page["pageNumber"],
+                )
+                for chunk in chunker.chunks(contents)
             )
-            for chunk in chunker.chunks(line_contents)
-        )
 
-    return paged_chunks
+        return paged_chunks
+
+    return [Chunk(content=chunk, page_number=0) for chunk in chunker.chunks(extracted_data["content"])]

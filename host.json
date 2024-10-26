@@ -1,6 +1,13 @@
 {
   "version": "2.0",
   "logging": {
+    "fileLoggingMode": "debugOnly",
+    "logLevel": {
+      "Azure": "Error",
+      "default": "Information",
+      "Function": "Information",
+      "System.Net.Http.HttpClient": "Warning"
+    },
     "applicationInsights": {
       "samplingSettings": {
         "isEnabled": true,
