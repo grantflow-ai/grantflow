@@ -41,6 +41,7 @@ export const GrantApplicationFactory = new Factory<GrantApplication>((factory) =
 	fileIds: factory.helpers.arrayElement([null, [factory.string.uuid()]]),
 	updatedAt: new Date(),
 	workspaceId: factory.string.uuid(),
+	status: factory.helpers.arrayElement(["draft", "completed"]),
 }));
 
 export const GrantCFPFactory = new Factory<GrantCFP>((factory) => ({

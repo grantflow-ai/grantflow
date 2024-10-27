@@ -233,7 +233,7 @@ export function GeneralInfoForm({
 											data-testid="grant-application-form-title-tooltip"
 											role="tooltip"
 										>
-											Enter a descriptive title for your grant application (25-255 characters)
+											Enter a descriptive title for your grant application
 										</TooltipContent>
 									</Tooltip>
 								</div>
@@ -264,7 +264,7 @@ export function GeneralInfoForm({
 										aria-live="polite"
 									>
 										{field.value.length}/255 characters
-										{field.value.length < 25 ? ` (${25 - field.value.length} more required)` : ""}
+										{field.value.length < 10 ? ` (${10 - field.value.length} more required)` : ""}
 									</p>
 								)}
 								{form.formState.errors.title?.message && (
