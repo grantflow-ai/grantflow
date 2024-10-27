@@ -5,10 +5,10 @@ import { Step, Stepper } from "@/components/stepper";
 import { GrantCFP } from "@/types/database-types";
 import { GeneralInfoForm } from "@/components/workspaces/detail/applications/general-info-form";
 import SignificanceAndInnovationForm from "@/components/workspaces/detail/applications/significance-and-innovation-form";
-import { ResearchAimsForm } from "@/components/workspaces/detail/applications/research-aims-form";
 import { useWizardStore, WizardStoreInit } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 import { ReviewApplicationForm } from "@/components/workspaces/detail/applications/review-application-form";
+import { ResearchPlanForm } from "@/components/workspaces/detail/applications/research-aims-form";
 
 const steps: Step[] = [
 	{ index: 1, name: "General Information" },
@@ -92,7 +92,7 @@ export function WizardFormPage({
 					/>
 				)}
 				{hasSignificanceAndInnovation && applicationId && currentStep === 3 && (
-					<ResearchAimsForm
+					<ResearchPlanForm
 						workspaceId={workspaceId}
 						applicationId={applicationId}
 						onPressNext={handleNext}

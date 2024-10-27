@@ -25,7 +25,6 @@ import { isString } from "@tool-belt/type-predicates";
 import { toast } from "sonner";
 
 type UpsertAction<T> = (values: Partial<T>, cb?: () => void) => Promise<T | null>;
-type UpsertActionWithId<T> = (id: string, values: Partial<T>, cb?: () => void) => Promise<T | null>;
 
 export interface WizardStoreInit {
 	application: GrantApplication | null;
@@ -38,15 +37,13 @@ export interface WizardStoreInit {
 }
 
 export interface WizardStoreMethods {
-	addResearchAim: (aim: NewResearchAim, cb?: () => void) => Promise<ResearchAim | null>;
-	addResearchTask: (task: NewResearchTask, cb?: () => void) => Promise<ResearchTask | null>;
-	removeResearchAim: (aimId: string, cb?: () => void) => Promise<string | null>;
-	removeResearchTask: (taskId: string, cb?: () => void) => Promise<string | null>;
+	deleteResearchAim: (aimId: string, cb?: () => void) => Promise<string | null>;
+	deleteResearchTask: (taskId: string, cb?: () => void) => Promise<string | null>;
 	updateApplication: UpsertAction<GrantApplication>;
-	updateResearchAim: UpsertActionWithId<ResearchAim>;
+	updateResearchAim: UpsertAction<ResearchAim>;
 	updateResearchInnovation: UpsertAction<ResearchInnovation>;
 	updateResearchSignificance: UpsertAction<ResearchSignificance>;
-	updateResearchTask: UpsertActionWithId<ResearchTask>;
+	updateResearchTask: UpsertAction<ResearchTask>;
 }
 
 export type WizardStore = WizardStoreInit & WizardStoreMethods;
@@ -87,25 +84,7 @@ function createWizardStore(
 		return {
 			...initialValue,
 			...values,
-			addResearchAim: async (values, cb) => {
-				return await withLoadingAndErrorHandling(
-					upsertResearchAim(values),
-					(aim) => {
-						set({ researchAims: [...get().researchAims, aim] });
-					},
-					cb,
-				);
-			},
-			addResearchTask: async (values, cb) => {
-				return await withLoadingAndErrorHandling(
-					upsertResearchTask(values),
-					(values) => {
-						set({ researchTasks: [...get().researchTasks, values] });
-					},
-					cb,
-				);
-			},
-			removeResearchAim: async (aimId, cb) => {
+			deleteResearchAim: async (aimId, cb) => {
 				return await withLoadingAndErrorHandling(
 					deleteResearchAim(aimId),
 					() => {
@@ -114,7 +93,7 @@ function createWizardStore(
 					cb,
 				);
 			},
-			removeResearchTask: async (taskId, cb) => {
+			deleteResearchTask: async (taskId, cb) => {
 				return await withLoadingAndErrorHandling(
 					deleteResearchTask(taskId),
 					() => {
@@ -136,16 +115,20 @@ function createWizardStore(
 					cb,
 				);
 			},
-			updateResearchAim: async (aimId, values, cb) => {
+			updateResearchAim: async (values, cb) => {
+				const existingResearchAim = values.id
+					? get().researchAims.find((aim) => aim.id === values.id)
+					: undefined;
 				return await withLoadingAndErrorHandling(
 					upsertResearchAim({
-						id: aimId,
-						...get().researchAims.find((aim) => aim.id === aimId),
+						...existingResearchAim,
 						...values,
-					}),
+					} as NewResearchAim | ResearchAim),
 					(updatedAim) => {
 						set({
-							researchAims: get().researchAims.map((aim) => (aim.id === aimId ? updatedAim : aim)),
+							researchAims: get().researchAims.map((aim) =>
+								aim.id === updatedAim.id ? updatedAim : aim,
+							),
 						});
 					},
 					cb,
@@ -179,16 +162,20 @@ function createWizardStore(
 					cb,
 				);
 			},
-			updateResearchTask: async (taskId, values, cb) => {
+			updateResearchTask: async (values, cb) => {
+				const existingResearchTask = values.id
+					? get().researchTasks.find((task) => task.id === values.id)
+					: undefined;
 				return await withLoadingAndErrorHandling(
 					upsertResearchTask({
-						id: taskId,
-						...get().researchTasks.find((task) => task.id === taskId),
+						...existingResearchTask,
 						...values,
-					}),
+					} as NewResearchTask | ResearchTask),
 					(updatedTask) => {
 						set({
-							researchTasks: get().researchTasks.map((task) => (task.id === taskId ? updatedTask : task)),
+							researchTasks: get().researchTasks.map((task) =>
+								task.id === updatedTask.id ? updatedTask : task,
+							),
 						});
 					},
 					cb,
