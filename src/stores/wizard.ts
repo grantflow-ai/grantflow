@@ -206,7 +206,6 @@ export const useWizardStore = (values: Pick<WizardStoreInit, "workspaceId"> & Pa
 		store = create(
 			devtools(
 				persist((set, get) => createWizardStore(values)(set, get), {
-					// TODO: revisit this
 					name: `wizard-stores-${values.workspaceId}`,
 					storage: createJSONStorage(() => localStorage),
 				}),
