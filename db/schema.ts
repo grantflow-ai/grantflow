@@ -13,8 +13,10 @@ import {
 	json,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
+import { relations } from "drizzle-orm";
 
 export const userRoleEnum = pgEnum("user_role", ["owner", "admin", "member"]);
+export const applicationStatus = pgEnum("application_status", ["draft", "completed"]);
 
 export const mailingList = pgTable(
 	"mailing_list",
@@ -64,23 +66,16 @@ export const accounts = pgTable(
 		compoundKey: primaryKey({
 			columns: [account.provider, account.providerAccountId],
 		}),
-		userIdIdx: index("idx_accounts_user_id").on(account.userId),
 	}),
 );
 
-export const sessions = pgTable(
-	"sessions",
-	{
-		sessionToken: text("sessionToken").primaryKey(),
-		userId: uuid("userId")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		expires: timestamp("expires", { mode: "date" }).notNull(),
-	},
-	(table) => ({
-		userIdIdx: index("idx_sessions_user_id").on(table.userId),
-	}),
-);
+export const sessions = pgTable("sessions", {
+	sessionToken: text("sessionToken").primaryKey(),
+	userId: uuid("userId")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	expires: timestamp("expires", { mode: "date" }).notNull(),
+});
 
 export const verificationTokens = pgTable(
 	"verification_tokens",
@@ -115,7 +110,6 @@ export const authenticators = pgTable(
 		compositePK: primaryKey({
 			columns: [authenticator.userId, authenticator.credentialID],
 		}),
-		userIdIdx: index("idx_authenticators_user_id").on(authenticator.userId),
 	}),
 );
 
@@ -146,9 +140,6 @@ export const workspaceUsers = pgTable(
 	(table) => ({
 		pk: primaryKey({ columns: [table.workspaceId, table.userId] }),
 		uniqueWorkspaceUser: unique("unique_workspace_user").on(table.workspaceId, table.userId),
-		roleIdx: index("idx_workspace_users_role").on(table.role),
-		workspaceIdIdx: index("idx_workspace_users_workspace_id").on(table.workspaceId),
-		userIdIdx: index("idx_workspace_users_user_id").on(table.userId),
 	}),
 );
 
@@ -181,88 +172,76 @@ export const grantCfps = pgTable(
 	},
 	(table) => ({
 		codeIdx: index("idx_grant_cfps_identifier").on(table.code),
-		fundingOrganizationIdIdx: index("idx_grant_cfps_funding_organization_id").on(table.fundingOrganizationId),
 	}),
 );
 
-export const grantApplications = pgTable(
-	"grant_applications",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		workspaceId: uuid("workspace_id")
-			.notNull()
-			.references(() => workspaces.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		cfpId: uuid("cfp_id")
-			.notNull()
-			.references(() => grantCfps.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		title: varchar("title", { length: 255 }).notNull(),
-		isResubmission: boolean("is_resubmission").notNull().default(false),
-	},
-	(table) => ({
-		workspaceIdIdx: index("idx_grant_application_workspace_id").on(table.workspaceId),
-		cfpIdIdx: index("idx_grant_application_grant_cfp_id").on(table.cfpId),
-	}),
-);
+export const grantApplications = pgTable("grant_applications", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	workspaceId: uuid("workspace_id")
+		.notNull()
+		.references(() => workspaces.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	cfpId: uuid("cfp_id")
+		.notNull()
+		.references(() => grantCfps.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	title: varchar("title", { length: 255 }).notNull(),
+	isResubmission: boolean("is_resubmission").notNull().default(false),
+	status: applicationStatus("status").notNull().default("draft"),
+});
 
-export const researchSignificance = pgTable(
-	"research_significance",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		applicationId: uuid("application_id")
-			.notNull()
-			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		text: text("text").notNull(),
-		files: json().$type<Record<string, string>>(),
-	},
-	(table) => ({
-		applicationIdIdx: index("idx_research_significance_application_id").on(table.applicationId),
-	}),
-);
+export const grantApplicationRelations = relations(grantApplications, ({ one }) => ({
+	significance: one(researchSignificance),
+	innovation: one(researchInnovation),
+}));
 
-export const researchInnovation = pgTable(
-	"research_innovation",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		applicationId: uuid("application_id")
-			.notNull()
-			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		text: text("text").notNull(),
-		files: json().$type<Record<string, string>>(),
-	},
-	(table) => ({
-		applicationIdIdx: index("idx_research_innovation_application_id").on(table.applicationId),
-	}),
-);
+export const researchSignificance = pgTable("research_significance", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	applicationId: uuid("application_id")
+		.notNull()
+		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	text: text("text").notNull(),
+	files: json().$type<Record<string, string>>(),
+});
 
-export const researchAims = pgTable(
-	"research_aims",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		applicationId: uuid("application_id")
-			.notNull()
-			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		title: varchar("title", { length: 255 }).notNull(),
-		description: text("description").notNull(),
-		files: json().$type<Record<string, string>>(),
-		requiresClinicalTrials: boolean("requires_clinical_trials").notNull().default(false),
-	},
-	(table) => ({
-		applicationIdIdx: index("idx_research_aims_application_id").on(table.applicationId),
+export const researchSignificanceRelations = relations(researchSignificance, ({ one }) => ({
+	application: one(grantApplications, {
+		fields: [researchSignificance.applicationId],
+		references: [grantApplications.id],
 	}),
-);
+}));
 
-export const researchTasks = pgTable(
-	"research_tasks",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		aimId: uuid("aim_id")
-			.notNull()
-			.references(() => researchAims.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		title: varchar("title", { length: 255 }).notNull(),
-		description: text("description").notNull(),
-		files: json().$type<Record<string, string>>(),
-	},
-	(table) => ({
-		aimIdIdx: index("idx_tasks_aim_id").on(table.aimId),
+export const researchInnovation = pgTable("research_innovation", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	applicationId: uuid("application_id")
+		.notNull()
+		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	text: text("text").notNull(),
+	files: json().$type<Record<string, string>>(),
+});
+
+export const researchInnovationRelations = relations(researchInnovation, ({ one }) => ({
+	application: one(grantApplications, {
+		fields: [researchInnovation.applicationId],
+		references: [grantApplications.id],
 	}),
-);
+}));
+
+export const researchAims = pgTable("research_aims", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	applicationId: uuid("application_id")
+		.notNull()
+		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	title: varchar("title", { length: 255 }).notNull(),
+	description: text("description").notNull(),
+	files: json().$type<Record<string, string>>(),
+	requiresClinicalTrials: boolean("requires_clinical_trials").notNull().default(false),
+});
+
+export const researchTasks = pgTable("research_tasks", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	aimId: uuid("aim_id")
+		.notNull()
+		.references(() => researchAims.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	title: varchar("title", { length: 255 }).notNull(),
+	description: text("description").notNull(),
+	files: json().$type<Record<string, string>>(),
+});

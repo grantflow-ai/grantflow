@@ -222,7 +222,7 @@ export function ResearchAimsForm({
 				</Button>
 			</div>
 			<div className="pt-10 flex justify-between">
-				<Button onClick={onPressPrevious} aria-label="Go Back">
+				<Button disabled={loading} onClick={onPressPrevious} aria-label="Go Back">
 					Go Back
 				</Button>
 				<Button

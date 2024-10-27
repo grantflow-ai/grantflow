@@ -71,6 +71,8 @@ export function WizardFormPage({
 		return true;
 	}, [researchAims, researchTasks]);
 
+	console.log("reload");
+
 	return (
 		<div className="container">
 			<section className="">
