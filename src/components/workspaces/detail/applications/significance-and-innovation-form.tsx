@@ -11,12 +11,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { cn } from "gen/cn";
-import { FileUploadContainer } from "@/components/file-upload-container";
 import { uploadFiles } from "@/actions/file";
+import { FileUploader } from "@/components/file-uploader";
+import { FilesDisplay } from "@/components/files-display";
 
 const formSchema = z.object({
-	significance: z.string().min(50, "Significance description must be at least 50 characters"),
-	innovation: z.string().min(50, "Innovation description must be at least 50 characters"),
+	significance: z.object({
+		text: z.string().min(50, "Significance description must be at least 50 characters"),
+		files: z.array(z.custom<File>()),
+	}),
+	innovation: z.object({
+		text: z.string().min(50, "Innovation description must be at least 50 characters"),
+		files: z.array(z.custom<File>()),
+	}),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,8 +40,6 @@ export default function SignificanceAndInnovationForm({
 	workspaceId: string;
 }) {
 	const [canSubmit, setCanSubmit] = useState(false);
-	const [innovationFiles, setInnovationFiles] = useState<File[]>([]);
-	const [significanceFiles, setSignificanceFiles] = useState<File[]>([]);
 
 	const { significance, innovation, updateResearchInnovation, updateResearchSignificance, loading } = useWizardStore({
 		workspaceId,
@@ -51,8 +56,8 @@ export default function SignificanceAndInnovationForm({
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			significance: significance?.text ?? "",
-			innovation: innovation?.text ?? "",
+			significance: { text: significance?.text ?? "", files: [] },
+			innovation: { text: innovation?.text ?? "", files: [] },
 		},
 	});
 
@@ -64,31 +69,31 @@ export default function SignificanceAndInnovationForm({
 
 		setCanSubmit(
 			form.formState.isValid &&
-				(significance.text !== values.significance || innovation.text !== values.innovation),
+				(significance.text !== values.significance?.text || innovation.text !== values.innovation?.text),
 		);
 	});
 
 	const onSubmit = async (values: FormValues) => {
 		const [upsertedSignificance, upsertedInnovation] = await Promise.all([
-			updateResearchSignificance({ text: values.significance, applicationId }),
-			updateResearchInnovation({ text: values.innovation, applicationId }),
+			updateResearchSignificance({ text: values.significance.text, applicationId }),
+			updateResearchInnovation({ text: values.innovation.text, applicationId }),
 		]);
 
-		if (upsertedSignificance && significanceFiles.length > 0) {
+		if (upsertedSignificance && values.significance.files.length) {
 			const results = await uploadFiles({
 				workspaceId,
 				parentId: upsertedSignificance.id,
-				files: significanceFiles,
+				files: values.significance.files,
 			});
 
 			await updateResearchSignificance({ files: results });
 		}
 
-		if (upsertedInnovation && innovationFiles.length > 0) {
+		if (upsertedInnovation && values.innovation.files.length) {
 			const results = await uploadFiles({
 				workspaceId,
 				parentId: upsertedInnovation.id,
-				files: innovationFiles,
+				files: values.innovation.files,
 			});
 
 			await updateResearchInnovation({ files: results });
@@ -109,12 +114,12 @@ export default function SignificanceAndInnovationForm({
 				>
 					<FormField
 						control={form.control}
-						name="significance"
+						name="significance.text"
 						render={({ field }) => (
 							<FormItem>
 								<div className="flex items-center gap-2">
 									<FormLabel
-										htmlFor="significance"
+										htmlFor="significance.text"
 										className="flex items-center gap-2"
 										data-testid="significance-innovation-form-significance-label"
 									>
@@ -143,7 +148,7 @@ export default function SignificanceAndInnovationForm({
 								<FormControl>
 									<Textarea
 										{...field}
-										id="significance"
+										id="significance.text"
 										disabled={loading}
 										placeholder="Describe the significance of your research"
 										className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
@@ -182,19 +187,43 @@ export default function SignificanceAndInnovationForm({
 										{form.formState.errors.significance.message}
 									</FormMessage>
 								)}
-								<FileUploadContainer setFileData={setSignificanceFiles} />
 							</FormItem>
 						)}
 					/>
 
 					<FormField
 						control={form.control}
-						name="innovation"
+						name="significance.files"
+						render={({ field }) => (
+							<FormItem>
+								<FilesDisplay
+									files={field.value}
+									onFileRemoved={(file) => {
+										field.onChange(field.value.filter((f) => f !== file));
+									}}
+								/>
+								<FormControl>
+									<FileUploader
+										currentFileCount={field.value.length}
+										onFilesAdded={(newFiles) => {
+											field.onChange([...field.value, ...newFiles]);
+										}}
+										data-testid="significance-files-input"
+										fieldName={field.name}
+									/>
+								</FormControl>
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
+						name="innovation.text"
 						render={({ field }) => (
 							<FormItem>
 								<div className="flex items-center gap-2">
 									<FormLabel
-										htmlFor="innovation"
+										htmlFor="innovation.text"
 										className="flex items-center gap-2"
 										data-testid="significance-innovation-form-innovation-label"
 									>
@@ -224,7 +253,7 @@ export default function SignificanceAndInnovationForm({
 								<FormControl>
 									<Textarea
 										{...field}
-										id="innovation"
+										id="innovation.text"
 										disabled={loading}
 										placeholder="Describe the innovation of your research"
 										className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
@@ -263,7 +292,31 @@ export default function SignificanceAndInnovationForm({
 										{form.formState.errors.innovation.message}
 									</FormMessage>
 								)}
-								<FileUploadContainer setFileData={setInnovationFiles} />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
+						name="innovation.files"
+						render={({ field }) => (
+							<FormItem>
+								<FilesDisplay
+									files={field.value}
+									onFileRemoved={(file) => {
+										field.onChange(field.value.filter((f) => f !== file));
+									}}
+								/>
+								<FormControl>
+									<FileUploader
+										currentFileCount={field.value.length}
+										onFilesAdded={(newFiles) => {
+											field.onChange([...field.value, ...newFiles]);
+										}}
+										data-testid="innovation-files-input"
+										fieldName={field.name}
+									/>
+								</FormControl>
 							</FormItem>
 						)}
 					/>
