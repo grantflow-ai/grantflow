@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown, HelpCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -56,10 +56,14 @@ export function GeneralInfoForm({
 		},
 	});
 
+	const setCfpTitle = (cfpId: string) => {
+		const cfp = cfps.find((cfp) => cfp.id === cfpId);
+		setTitle(cfp ? `${cfp.code} - ${cfp.title}` : "Select an NIH Activity Code");
+	};
+
 	form.watch(({ cfpId }) => {
 		if (cfpId) {
-			const cfp = cfps.find((cfp) => cfp.id === cfpId);
-			setTitle(cfp ? `${cfp.code} - ${cfp.title}` : "Select an NIH Activity Code");
+			setCfpTitle(cfpId);
 		}
 	});
 
@@ -83,6 +87,12 @@ export function GeneralInfoForm({
 			onPressNext();
 		});
 	};
+
+	useEffect(() => {
+		if (application) {
+			setCfpTitle(application.cfpId);
+		}
+	}, [application]);
 
 	return (
 		<TooltipProvider>
