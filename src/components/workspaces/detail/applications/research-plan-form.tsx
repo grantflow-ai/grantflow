@@ -11,20 +11,21 @@ import { SubmitButton } from "@/components/submit-button";
 import { useWizardStore } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 import { Textarea } from "gen/ui/textarea";
-import { FileUploadContainer } from "@/components/file-upload-container";
 import { uploadFiles } from "@/actions/file";
+import { FileUploader } from "@/components/file-uploader";
+import { FilesDisplay } from "@/components/files-display";
 
 const researchTaskSchema = z.object({
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().min(20, "Description must be at least 20 characters"),
-	files: z.array(z.custom<File>()).optional(),
+	files: z.array(z.custom<File>()),
 });
 
 const researchAimSchema = z.object({
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().min(20, "Description must be at least 20 characters"),
 	requiresClinicalTrials: z.boolean().optional(),
-	files: z.array(z.custom<File>()).optional(),
+	files: z.array(z.custom<File>()),
 	tasks: z.array(researchTaskSchema).min(1, "At least one research task is required"),
 });
 
@@ -141,12 +142,20 @@ function ResearchTaskForm({
 				render={({ field }) => (
 					<FormItem>
 						<FormLabel data-testid={`task-files-label-${aimIndex}-${taskIndex}`}>Task Files</FormLabel>
+						<FilesDisplay
+							files={field.value}
+							onFileRemoved={(files) => {
+								field.onChange(files);
+							}}
+						/>
 						<FormControl>
-							<FileUploadContainer
-								setFileData={(files) => {
+							<FileUploader
+								currentFileCount={field.value.length}
+								onFilesAdded={(files) => {
 									field.onChange(files);
 								}}
 								data-testid={`task-files-input-${aimIndex}-${taskIndex}`}
+								fieldName={field.name}
 							/>
 						</FormControl>
 					</FormItem>
@@ -346,12 +355,20 @@ function ResearchAimForm({
 				render={({ field }) => (
 					<FormItem>
 						<FormLabel data-testid={`research-aim-form-files-label-${index}`}>Research Aim Files</FormLabel>
+						<FilesDisplay
+							files={field.value}
+							onFileRemoved={(files) => {
+								field.onChange(files);
+							}}
+						/>
 						<FormControl>
-							<FileUploadContainer
-								setFileData={(files) => {
+							<FileUploader
+								currentFileCount={field.value.length}
+								onFilesAdded={(files) => {
 									field.onChange(files);
 								}}
 								data-testid={`research-aim-form-files-input-${index}`}
+								fieldName={field.name}
 							/>
 						</FormControl>
 					</FormItem>
@@ -364,7 +381,7 @@ function ResearchAimForm({
 					<Button
 						type="button"
 						onClick={() => {
-							append({ title: "", description: "", files: undefined });
+							append({ title: "", description: "", files: [] });
 						}}
 						data-testid={`add-task-button-${index}`}
 					>
@@ -440,7 +457,7 @@ export function ResearchPlanForm({
 			});
 
 			if (upsertedAim) {
-				if (aimFiles) {
+				if (aimFiles.length) {
 					const fileMapping = await uploadFiles({
 						workspaceId,
 						parentId: upsertedAim.id,
@@ -455,7 +472,7 @@ export function ResearchPlanForm({
 						aimId: upsertedAim.id,
 					});
 
-					if (upsertedTask && taskFiles) {
+					if (upsertedTask && taskFiles.length) {
 						const fileMapping = await uploadFiles({
 							workspaceId,
 							parentId: upsertedTask.id,

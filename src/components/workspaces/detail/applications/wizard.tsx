@@ -8,7 +8,7 @@ import SignificanceAndInnovationForm from "@/components/workspaces/detail/applic
 import { useWizardStore, WizardStoreInit } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 import { ReviewApplicationForm } from "@/components/workspaces/detail/applications/review-application-form";
-import { ResearchPlanForm } from "@/components/workspaces/detail/applications/research-aims-form";
+import { ResearchPlanForm } from "@/components/workspaces/detail/applications/research-plan-form";
 
 const steps: Step[] = [
 	{ index: 1, name: "General Information" },
@@ -70,8 +70,6 @@ export function WizardFormPage({
 		}
 		return true;
 	}, [researchAims, researchTasks]);
-
-	console.log("reload");
 
 	return (
 		<div className="container">

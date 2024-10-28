@@ -65,7 +65,7 @@
 	},
 	"devDependencies": {
 		"@commitlint/config-conventional": "^19.5.0",
-		"@faker-js/faker": "^9.0.3",
+		"@faker-js/faker": "^9.1.0",
 		"@tailwindcss/forms": "^0.5.9",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^6.6.2",
