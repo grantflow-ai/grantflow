@@ -1,7 +1,10 @@
 import { getDatabaseClient } from "db/connection";
-import { and, eq, inArray } from "drizzle-orm";
-import { grantApplications, grantCfps } from "db/schema";
-import { WizardFormPage } from "@/components/workspaces/detail/applications/wizard";
+import { inArray } from "drizzle-orm";
+import { grantCfps } from "db/schema";
+import { GrantApplicationWizard } from "@/components/workspaces/detail/applications/grant-application-wizard";
+import { redirect } from "next/navigation";
+import { PagePath } from "@/enums";
+import { Navbar } from "@/components/navbar";
 
 export default async function ApplicationCreatePage(props: {
 	params: Promise<{
@@ -11,6 +14,7 @@ export default async function ApplicationCreatePage(props: {
 	const { workspaceId } = await props.params;
 
 	if (!workspaceId) {
+		redirect(PagePath.WORKSPACES);
 		return null;
 	}
 
@@ -35,18 +39,21 @@ export default async function ApplicationCreatePage(props: {
 		]),
 	});
 
-	const application = await db.query.grantApplications.findFirst({
-		where: and(eq(grantApplications.workspaceId, workspaceId), eq(grantApplications.status, "draft")),
-	});
-
 	return (
-		<div className="container">
-			<section className="py-5">
-				<h1 className="text-2xl bold">Grant Application Wizard</h1>
-			</section>
-			<section>
-				<WizardFormPage cfps={cfps} workspaceId={workspaceId} application={application} />
-			</section>
+		<div className="flex flex-col flex-1 ml-14">
+			<Navbar>
+				<span className="px-2 text-sm">Create New Grant Application</span>
+			</Navbar>
+			<div className="mt-14 p-4">
+				<div className="container">
+					<section className="py-5">
+						<h1 className="text-2xl bold">Grant Application Wizard</h1>
+					</section>
+					<section>
+						<GrantApplicationWizard cfps={cfps} workspaceId={workspaceId} />
+					</section>
+				</div>
+			</div>
 		</div>
 	);
 }

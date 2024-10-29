@@ -30,10 +30,12 @@ export function GeneralInfoForm({
 	cfps,
 	workspaceId,
 	onPressNext,
+	onPressPrevious,
 }: {
 	cfps: GrantCFP[];
 	workspaceId: string;
 	onPressNext: () => void;
+	onPressPrevious: () => void;
 }) {
 	const [open, setOpen] = useState(false);
 	const [title, setTitle] = useState("Select an NIH Activity Code");
@@ -351,6 +353,9 @@ export function GeneralInfoForm({
 						)}
 					/>
 					<div className="pt-10 flex justify-end">
+						<Button onClick={onPressPrevious} aria-label="Go Back">
+							Go Back
+						</Button>
 						{application && !canSubmit ? (
 							<Button
 								onClick={onPressNext}
