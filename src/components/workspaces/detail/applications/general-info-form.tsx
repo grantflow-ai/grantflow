@@ -82,7 +82,7 @@ export function GeneralInfoForm({
 	});
 
 	const onSubmit = async (values: FormValues) => {
-		await updateApplication(values, () => {
+		await updateApplication({ ...values, status: application?.status ?? "draft" }, () => {
 			setCanSubmit(false);
 			onPressNext();
 		});

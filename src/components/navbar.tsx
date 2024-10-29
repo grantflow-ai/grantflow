@@ -2,11 +2,8 @@
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "gen/cn";
-import { usePathname } from "next/navigation";
-import { titleize } from "inflection";
-
-export function Navbar() {
-	const pathname = usePathname();
+import { ReactNode } from "react";
+export function Navbar({ children }: { children: ReactNode }) {
 	return (
 		<nav
 			className={cn(
@@ -19,7 +16,7 @@ export function Navbar() {
 			data-testid="navbar"
 		>
 			<div className="flex justify-between items-center h-full w-full p-2" data-testid="navbar-actions">
-				<span className="text-sm p-2">{titleize(pathname.split("/").at(-1) ?? "")}</span>
+				<div className="flex items-center gap-1">{children}</div>
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>
 		</nav>

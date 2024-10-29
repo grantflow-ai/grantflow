@@ -1,6 +1,6 @@
 import { getDatabaseClient } from "db/connection";
-import { inArray } from "drizzle-orm";
-import { grantCfps } from "db/schema";
+import { and, eq, inArray } from "drizzle-orm";
+import { grantApplications, grantCfps } from "db/schema";
 import { WizardFormPage } from "@/components/workspaces/detail/applications/wizard";
 
 export default async function ApplicationCreatePage(props: {
@@ -35,9 +35,18 @@ export default async function ApplicationCreatePage(props: {
 		]),
 	});
 
+	const application = await db.query.grantApplications.findFirst({
+		where: and(eq(grantApplications.workspaceId, workspaceId), eq(grantApplications.status, "draft")),
+	});
+
 	return (
-		<div className="container mx-auto p-4">
-			<WizardFormPage cfps={cfps} workspaceId={workspaceId} />
+		<div className="container">
+			<section className="py-5">
+				<h1 className="text-2xl bold">Grant Application Wizard</h1>
+			</section>
+			<section>
+				<WizardFormPage cfps={cfps} workspaceId={workspaceId} application={application} />
+			</section>
 		</div>
 	);
 }
