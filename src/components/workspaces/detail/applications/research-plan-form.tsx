@@ -14,6 +14,7 @@ import { Textarea } from "gen/ui/textarea";
 import { uploadFiles } from "@/actions/file";
 import { FileUploader } from "@/components/file-uploader";
 import { FilesDisplay } from "@/components/files-display";
+import { cn } from "gen/cn";
 
 const researchTaskSchema = z.object({
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
@@ -94,6 +95,23 @@ function ResearchTaskForm({
 								data-testid={`task-title-input-${aimIndex}-${taskIndex}`}
 							/>
 						</FormControl>
+						{field.value && (
+							<p
+								id={`task-title-counter-${aimIndex}-${taskIndex}`}
+								data-testid={`task-title-char-count-${aimIndex}-${taskIndex}`}
+								aria-live="polite"
+								className={cn(
+									"text-xs text-muted-foreground transition-colors duration-200",
+									field.value.length < 5 && "text-red-500",
+									field.value.length >= 5 && field.value.length <= 255 && "text-green-500",
+									field.value.length > 255 && "text-red-500",
+								)}
+							>
+								{field.value.length} characters
+								{field.value.length < 5 && ` (${5 - field.value.length} more required)`}
+								{field.value.length > 255 && ` (${field.value.length - 255} over limit)`}
+							</p>
+						)}
 						<FormMessage />
 					</FormItem>
 				)}
@@ -132,6 +150,21 @@ function ResearchTaskForm({
 								data-testid={`task-description-input-${aimIndex}-${taskIndex}`}
 							/>
 						</FormControl>
+						{field.value && (
+							<p
+								id={`task-description-counter-${aimIndex}-${taskIndex}`}
+								data-testid={`task-description-char-count-${aimIndex}-${taskIndex}`}
+								aria-live="polite"
+								className={cn(
+									"text-xs text-muted-foreground transition-colors duration-200",
+									field.value.length < 20 && "text-red-500",
+									field.value.length >= 20 && "text-green-500",
+								)}
+							>
+								{field.value.length} characters
+								{field.value.length < 20 && ` (${20 - field.value.length} more required)`}
+							</p>
+						)}
 						<FormMessage />
 					</FormItem>
 				)}
@@ -243,6 +276,23 @@ function ResearchAimForm({
 								aria-invalid={!!form.formState.errors.researchAims?.[index]?.title}
 							/>
 						</FormControl>
+						{field.value && (
+							<p
+								id={`research-aim-title-counter-${index}`}
+								data-testid={`research-aim-title-char-count-${index}`}
+								aria-live="polite"
+								className={cn(
+									"text-xs text-muted-foreground transition-colors duration-200",
+									field.value.length < 5 && "text-red-500",
+									field.value.length >= 5 && field.value.length <= 255 && "text-green-500",
+									field.value.length > 255 && "text-red-500",
+								)}
+							>
+								{field.value.length} characters
+								{field.value.length < 5 && ` (${5 - field.value.length} more required)`}
+								{field.value.length > 255 && ` (${field.value.length - 255} over limit)`}
+							</p>
+						)}
 						<FormMessage />
 					</FormItem>
 				)}
@@ -293,6 +343,21 @@ function ResearchAimForm({
 								aria-invalid={!!form.formState.errors.researchAims?.[index]?.description}
 							/>
 						</FormControl>
+						{field.value && (
+							<p
+								id={`research-aim-description-counter-${index}`}
+								data-testid={`research-aim-description-char-count-${index}`}
+								aria-live="polite"
+								className={cn(
+									"text-xs text-muted-foreground transition-colors duration-200",
+									field.value.length < 20 && "text-red-500",
+									field.value.length >= 20 && "text-green-500",
+								)}
+							>
+								{field.value.length} characters
+								{field.value.length < 20 && ` (${20 - field.value.length} more required)`}
+							</p>
+						)}
 						<FormMessage />
 					</FormItem>
 				)}
@@ -421,8 +486,6 @@ export function ResearchPlanForm({
 		workspaceId,
 	})(
 		useShallow((state) => ({
-			deleteResearchAim: state.deleteResearchAim,
-			deleteResearchTask: state.deleteResearchTask,
 			updateResearchAim: state.updateResearchAim,
 			updateResearchTask: state.updateResearchTask,
 			loading: state.loading,
