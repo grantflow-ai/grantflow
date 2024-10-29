@@ -325,15 +325,25 @@ export default function SignificanceAndInnovationForm({
 						<Button onClick={onPressPrevious} aria-label="Go Back">
 							Go Back
 						</Button>
-						<SubmitButton
-							disabled={!canSubmit}
-							isLoading={loading}
-							data-testid="significance-innovation-form-submit"
-							aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
-							aria-label={form.formState.isSubmitting ? "Saving changes..." : "Save changes"}
-						>
-							Save and Continue
-						</SubmitButton>
+						{significance && innovation && !canSubmit ? (
+							<Button
+								onClick={onPressNext}
+								data-testid="significance-innovation-form-continue-button"
+								aria-label="Continue to the next step"
+							>
+								Continue
+							</Button>
+						) : (
+							<SubmitButton
+								disabled={!canSubmit}
+								isLoading={loading}
+								data-testid="significance-innovation-form-submit"
+								aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
+								aria-label={form.formState.isSubmitting ? "Saving changes..." : "Save changes"}
+							>
+								Save and Continue
+							</SubmitButton>
+						)}
 					</div>
 				</form>
 			</Form>
