@@ -17,7 +17,7 @@ const steps: Step[] = [
 	{ index: 4, name: "Review" },
 ];
 
-export function WizardFormPage({
+export function GrantApplicationWizard({
 	cfps,
 	...storeInit
 }: {
@@ -52,6 +52,9 @@ export function WizardFormPage({
 	const handlePrevious = useCallback(() => {
 		if (currentStep > 1) {
 			setCurrentStep((prevStep) => prevStep - 1);
+		} else {
+			// TODO: Show cancel alert here
+			return;
 		}
 	}, [currentStep]);
 
@@ -74,7 +77,14 @@ export function WizardFormPage({
 	return (
 		<div className="flex flex-col gap-4 py-5">
 			<Stepper steps={steps} currentStep={currentStep} onStepClick={handleStepClick} />
-			{currentStep === 1 && <GeneralInfoForm cfps={cfps} workspaceId={workspaceId} onPressNext={handleNext} />}
+			{currentStep === 1 && (
+				<GeneralInfoForm
+					cfps={cfps}
+					workspaceId={workspaceId}
+					onPressNext={handleNext}
+					onPressPrevious={handlePrevious}
+				/>
+			)}
 			{applicationId && currentStep === 2 && (
 				<SignificanceAndInnovationForm
 					workspaceId={workspaceId}
