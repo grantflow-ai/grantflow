@@ -1,7 +1,6 @@
 {
 	"recommendations": [
 		"austenc.tailwind-docs",
-		"biomejs.biome",
 		"bradlc.vscode-tailwindcss",
 		"davidanson.vscode-markdownlint",
 		"dbaeumer.vscode-eslint",

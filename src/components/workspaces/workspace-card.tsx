@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "gen/ui/avatar";
 import { Badge } from "gen/ui/badge";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
+import { PagePath } from "@/enums";
 
 export function WorkspaceCard({
 	description,
@@ -24,13 +25,11 @@ export function WorkspaceCard({
 		member: "bg-accent/50 text-accent-foreground",
 	};
 
+	const url = PagePath.WORKSPACE_DETAIL.toString().replace(":workspaceId", workspaceId);
+
 	return (
 		<Card className="group relative h-[200px] overflow-hidden transition-all duration-300 hover:shadow-md hover:bg-muted/50">
-			<Link
-				href={`/workspaces/${workspaceId}`}
-				className="absolute inset-0 z-10"
-				data-testid={`workspace-link-${workspaceId}`}
-			>
+			<Link href={url} className="absolute inset-0 z-10" data-testid={`workspace-link-${workspaceId}`}>
 				<span className="sr-only">Navigate to {name} workspace</span>
 			</Link>
 			<CardHeader className="pb-2">

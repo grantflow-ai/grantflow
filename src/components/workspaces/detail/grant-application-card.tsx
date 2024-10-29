@@ -3,13 +3,14 @@ import Link from "next/link";
 import { PagePath } from "@/enums";
 import { FileText } from "lucide-react";
 import { GrantApplication } from "@/types/database-types";
+import { Badge } from "gen/ui/badge";
 
 export function GrantApplicationCard({
 	id: applicationId,
 	title,
 	workspaceId,
-	cfpId,
 	isResubmission,
+	status,
 }: GrantApplication) {
 	const url = PagePath.APPLICATION_DETAIL.toString()
 		.replace(":workspaceId", workspaceId)
@@ -26,9 +27,22 @@ export function GrantApplicationCard({
 					<span>{title}</span>
 				</CardTitle>
 				<CardContent>
-					<p className="text-sm text-gray-500">
-						{isResubmission ? "Resubmission" : "New"} Application for Call for Proposal {cfpId}
-					</p>
+					<div className="pt-4 flex gap-2">
+						<Badge
+							variant="secondary"
+							className={`${status === "completed" ? "bg-primary/20 text-primary" : "bg-secondary/50 text-secondary-foreground"} px-2 py-0.5 text-xs font-medium uppercase`}
+						>
+							{status}
+						</Badge>
+						{isResubmission && (
+							<Badge
+								variant="secondary"
+								className="bg-accent/50 text-accent-foreground px-2 py-0.5 text-xs font-medium uppercase"
+							>
+								Resubmission
+							</Badge>
+						)}
+					</div>
 				</CardContent>
 			</CardHeader>
 		</Card>

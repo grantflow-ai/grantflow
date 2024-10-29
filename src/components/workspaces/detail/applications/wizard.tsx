@@ -72,33 +72,26 @@ export function WizardFormPage({
 	}, [researchAims, researchTasks]);
 
 	return (
-		<div className="container">
-			<section className="">
-				<h1 className="pt-5 text-2xl bold">Grant Application Wizard</h1>
-			</section>
-			<div className="flex flex-col gap-4 py-5">
-				<Stepper steps={steps} currentStep={currentStep} onStepClick={handleStepClick} />
-				{currentStep === 1 && (
-					<GeneralInfoForm cfps={cfps} workspaceId={workspaceId} onPressNext={handleNext} />
-				)}
-				{applicationId && currentStep === 2 && (
-					<SignificanceAndInnovationForm
-						workspaceId={workspaceId}
-						applicationId={applicationId}
-						onPressNext={handleNext}
-						onPressPrevious={handlePrevious}
-					/>
-				)}
-				{hasSignificanceAndInnovation && applicationId && currentStep === 3 && (
-					<ResearchPlanForm
-						workspaceId={workspaceId}
-						applicationId={applicationId}
-						onPressNext={handleNext}
-						onPressPrevious={handlePrevious}
-					/>
-				)}
-				{hasSignificanceAndInnovation && hasResearchPlan && currentStep === 4 && <ReviewApplicationForm />}
-			</div>
+		<div className="flex flex-col gap-4 py-5">
+			<Stepper steps={steps} currentStep={currentStep} onStepClick={handleStepClick} />
+			{currentStep === 1 && <GeneralInfoForm cfps={cfps} workspaceId={workspaceId} onPressNext={handleNext} />}
+			{applicationId && currentStep === 2 && (
+				<SignificanceAndInnovationForm
+					workspaceId={workspaceId}
+					applicationId={applicationId}
+					onPressNext={handleNext}
+					onPressPrevious={handlePrevious}
+				/>
+			)}
+			{hasSignificanceAndInnovation && applicationId && currentStep === 3 && (
+				<ResearchPlanForm
+					workspaceId={workspaceId}
+					applicationId={applicationId}
+					onPressNext={handleNext}
+					onPressPrevious={handlePrevious}
+				/>
+			)}
+			{hasSignificanceAndInnovation && hasResearchPlan && currentStep === 4 && <ReviewApplicationForm />}
 		</div>
 	);
 }
