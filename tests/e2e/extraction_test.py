@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.extraction import parse_blob_data
+from src.indexer.extraction import parse_blob_data
 from tests.e2e.utils import load_settings_and_set_env
 
 

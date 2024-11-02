@@ -20,12 +20,12 @@ from azure.search.documents.indexes.models import (
     VectorSearchProfile,
 )
 
-from src.env import get_env
-from src.exceptions import RequestFailureError
-from src.retry import exponential_backoff_retry
+from src.utils.env import get_env
+from src.utils.exceptions import RequestFailureError
+from src.utils.retry import exponential_backoff_retry
 
 if TYPE_CHECKING:
-    from src.dto import SearchSchema
+    from src.indexer.dto import SearchSchema
 
 
 logger = logging.getLogger(__name__)

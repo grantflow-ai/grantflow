@@ -6,7 +6,7 @@ materials (PDF, docx, images etc.) uploaded by users.
 The service uses the following Azure cloud services:
 
 - Azure Functions. This service is used to deploy and orchestrate the service.
-- Azure Blob Storage, the [entry point to the service](./src/app.py) is triggered whenever a new blob is written to a specific
+- Azure Blob Storage, the [entry point to the service](src/indexer/handler.py) is triggered whenever a new blob is written to a specific
   blob container.
 - Azure Document Intelligence. This service is used to extract text from images and PDFs, using OCR and other techniques.
 - Azure OpenAI. This service is used to generate embeddings for the extracted texts.

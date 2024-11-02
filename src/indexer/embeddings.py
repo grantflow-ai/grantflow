@@ -7,10 +7,10 @@ from uuid import uuid4
 from openai import OpenAIError
 from openai.lib.azure import AsyncAzureOpenAI
 
-from src.dto import Chunk, SearchSchema
-from src.env import get_env
-from src.exceptions import OpenAIFailureError
-from src.retry import exponential_backoff_retry
+from src.indexer.dto import Chunk, SearchSchema
+from src.utils.env import get_env
+from src.utils.exceptions import OpenAIFailureError
+from src.utils.retry import exponential_backoff_retry
 
 logger = logging.getLogger(__name__)
 
