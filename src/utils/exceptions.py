@@ -49,3 +49,7 @@ class ValidationError(BackendError):
 
 class OpenAIFailureError(OperationError):
     """Raised when an error occurs during an OpenAI API request."""
+
+
+class DeserializationError(OperationError):
+    """Raised when an error occurs during deserialization."""

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from src.exceptions import MissingEnvVariableError
+from src.utils.exceptions import MissingEnvVariableError
 
 
 def get_env(key: str, fallback: str | None = None) -> str:

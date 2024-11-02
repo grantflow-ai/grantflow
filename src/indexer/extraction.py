@@ -10,9 +10,9 @@ from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, Content
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 
-from src.dto import OCROutput
-from src.env import get_env
-from src.exceptions import RequestFailureError, ValidationError
+from src.indexer.dto import OCROutput
+from src.utils.env import get_env
+from src.utils.exceptions import RequestFailureError, ValidationError
 
 logger = logging.getLogger(__name__)
 

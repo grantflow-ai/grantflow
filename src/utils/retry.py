@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from typing import Final, ParamSpec, TypeAlias, TypeVar, cast
+from typing import Final, ParamSpec, TypeVar, cast
 
 from tenacity import (
     before_log,
@@ -24,7 +24,7 @@ JITTER_VALUE: Final[int] = 30
 
 logger = logging.getLogger(__name__)
 
-DecoratorType: TypeAlias = Callable[[Callable[P, R]], Callable[P, R]]
+DecoratorType = Callable[[Callable[P, R]], Callable[P, R]]
 
 
 def exponential_backoff_retry(

@@ -4,8 +4,8 @@ from typing import cast
 
 import pytest
 
-from src.chunking import chunk_text
-from src.dto import OCROutput
+from src.indexer.chunking import chunk_text
+from src.indexer.dto import OCROutput
 
 
 def test_chunking_ocr_output() -> None:

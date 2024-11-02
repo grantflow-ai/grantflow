@@ -5,7 +5,7 @@ from typing import Final
 
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
-from src.dto import Chunk, OCROutput
+from src.indexer.dto import Chunk, OCROutput
 
 logger = logging.getLogger(__name__)
 
