@@ -6,8 +6,7 @@ from typing import Final, cast
 from azure.functions import InputStream
 
 from src.indexer.ai_search import ensure_index_exists, upload_to_ai_search
-from src.indexer.chunking import chunk_text
-from src.indexer.embeddings import create_embeddings
+from src.indexer.chunking import chunk_text, create_embeddings
 from src.indexer.extraction import parse_blob_data
 from src.utils.exceptions import RequestFailureError, ValidationError
 
@@ -63,12 +62,14 @@ async def blob_trigger_handler(blob: InputStream) -> None:
         chunks = chunk_text(extracted_data=extracted_data, mime_type=mime_type)
         logger.info("Extracted text from response: %s", dumps(chunks))
 
-        if embeddings := await create_embeddings(
+        embeddings_matrix = await create_embeddings(
             chunks=chunks,
             filename=filename,
             parent_id=parent_id,
             workspace_id=workspace_id,
-        ):
+        )
+
+        if embeddings := embeddings_matrix[0]:
             await ensure_index_exists()
             await upload_to_ai_search(embeddings)
             logger.info(
