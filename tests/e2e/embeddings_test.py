@@ -6,9 +6,8 @@ from typing import cast
 
 import pytest
 
-from src.indexer.chunking import chunk_text
+from src.indexer.chunking import chunk_text, create_embeddings
 from src.indexer.dto import OCROutput
-from src.indexer.embeddings import create_embeddings
 from tests.e2e.utils import load_settings_and_set_env
 
 

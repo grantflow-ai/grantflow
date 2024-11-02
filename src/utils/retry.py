@@ -27,14 +27,12 @@ logger = logging.getLogger(__name__)
 DecoratorType = Callable[[Callable[P, R]], Callable[P, R]]
 
 
-def exponential_backoff_retry(
-    exception_type: type[Exception] | None = None,
-) -> DecoratorType:  # type: ignore[type-arg]
+def exponential_backoff_retry(*exc: type[Exception]) -> DecoratorType:  # type: ignore[type-arg]
     """Retry decorator for retrying a function multiple times with exponential backoff.
 
 
     Args:
-        exception_type: An optional Exception type to retry on.
+        *exc: The exception types to retry on.
 
     Returns:
         A decorator that retries the function multiple times with exponential backoff.
@@ -42,7 +40,7 @@ def exponential_backoff_retry(
     return cast(
         DecoratorType,  # type: ignore[type-arg]
         retry(
-            retry=retry_if_exception_type(exception_type) if exception_type else retry,  # type: ignore
+            retry=retry_if_exception_type(exc) if exc else retry,  # type: ignore
             wait=wait_exponential_jitter(
                 initial=INITIAL_WAIT_JITTER, max=MAX_WAIT_JITTER, exp_base=EXP_BASE_JITTER, jitter=JITTER_VALUE
             ),

@@ -20,6 +20,17 @@ from azure.search.documents.indexes.models import (
     VectorSearchProfile,
 )
 
+from src.constants import (
+    FIELD_NAME_CHUNK_ID,
+    FIELD_NAME_CONTENT,
+    FIELD_NAME_CONTENT_HASH,
+    FIELD_NAME_CONTENT_VECTOR,
+    FIELD_NAME_FILENAME,
+    FIELD_NAME_ID,
+    FIELD_NAME_PAGE_NUMBER,
+    FIELD_NAME_PARENT_ID,
+    FIELD_NAME_WORKSPACE_ID,
+)
 from src.utils.env import get_env
 from src.utils.exceptions import RequestFailureError
 from src.utils.retry import exponential_backoff_retry
@@ -41,17 +52,6 @@ HNSW_PROFILE_NAME: Final[str] = "myHnswProfile"
 # Analyzer constants
 ANALYZER_STANDARD_LUCENE: Final[str] = "standard.lucene"
 ANALYZER_EN_MICROSOFT: Final[str] = "en.microsoft"
-
-# Field name constants
-FIELD_NAME_ID: Final[str] = "id"
-FIELD_NAME_FILENAME: Final[str] = "filename"
-FIELD_NAME_WORKSPACE_ID: Final[str] = "workspace_id"
-FIELD_NAME_PARENT_ID: Final[str] = "parent_id"
-FIELD_NAME_CHUNK_ID: Final[str] = "chunk_id"
-FIELD_NAME_CONTENT: Final[str] = "content"
-FIELD_NAME_CONTENT_VECTOR: Final[str] = "content_vector"
-FIELD_NAME_PAGE_NUMBER: Final[str] = "page_number"
-FIELD_NAME_CONTENT_HASH: Final[str] = "content_hash"
 
 # Embedding model and dimensions
 EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
