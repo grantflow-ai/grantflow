@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from src.indexer.extraction import parse_blob_data
-from tests.e2e.utils import load_settings_and_set_env
+from tests.indexer.e2e.utils import load_settings_and_set_env
 
 
 @pytest.mark.skipif(

@@ -1,4 +1,5 @@
 import logging
+from itertools import chain
 from typing import Final
 
 from openai import OpenAIError
@@ -13,7 +14,7 @@ EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
 
 
 @exponential_backoff_retry(OpenAIFailureError)
-async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
+async def generate_embeddings(inputs: str | list[str]) -> list[float]:
     """Generate embeddings for the given text using the specified model.
 
     Args:
@@ -29,7 +30,7 @@ async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
 
     try:
         response = await client.embeddings.create(input=inputs, model=EMBEDDING_MODEL)
-        return [datum.embedding for datum in response.data]
+        return list(chain(*[datum.embedding for datum in response.data]))
     except OpenAIError as e:
         logger.error("Failed to get embeddings due to an API error: %s", e)
         raise OpenAIFailureError(message="Failed to get embeddings", context=str(e)) from e

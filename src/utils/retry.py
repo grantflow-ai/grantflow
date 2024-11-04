@@ -12,6 +12,8 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
+logger = logging.getLogger(__name__)
+
 P = ParamSpec("P")
 R = TypeVar("R")
 
@@ -22,14 +24,8 @@ EXP_BASE_JITTER: Final[int] = 2
 JITTER_VALUE: Final[int] = 30
 
 
-logger = logging.getLogger(__name__)
-
-DecoratorType = Callable[[Callable[P, R]], Callable[P, R]]
-
-
-def exponential_backoff_retry(*exc: type[Exception]) -> DecoratorType:  # type: ignore[type-arg]
+def exponential_backoff_retry(*exc: type[Exception]) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Retry decorator for retrying a function multiple times with exponential backoff.
-
 
     Args:
         *exc: The exception types to retry on.
@@ -38,7 +34,7 @@ def exponential_backoff_retry(*exc: type[Exception]) -> DecoratorType:  # type: 
         A decorator that retries the function multiple times with exponential backoff.
     """
     return cast(
-        DecoratorType,  # type: ignore[type-arg]
+        Callable[[Callable[P, R]], Callable[P, R]],
         retry(
             retry=retry_if_exception_type(exc) if exc else retry,  # type: ignore
             wait=wait_exponential_jitter(

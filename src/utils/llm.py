@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, Final
+from typing import Final
+
+from openai.lib.azure import AsyncAzureOpenAI
 
 from src.utils.env import get_env
 from src.utils.ref import Ref
-
-if TYPE_CHECKING:
-    from openai.lib.azure import AsyncAzureOpenAI
 
 AZURE_API_VERSION: Final[str] = "2024-06-01"
 
