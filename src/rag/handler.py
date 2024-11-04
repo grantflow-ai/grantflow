@@ -1,14 +1,14 @@
 import logging
 from http import HTTPStatus
-from typing import Literal
 
 from azure.functions import HttpRequest, HttpResponse
 
 from src.constants import CONTENT_TYPE_JSON, FIELD_NAME_FILENAME, FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
-from src.rag.ai_search import retrieve
+from src.rag.ai_search import retrieve_documents
 from src.rag.dto import APIError, RagRequest, RagResponse
-from src.rag.prompts import create_search_queries
+from src.rag.prompts.create_search_queries import create_search_queries
+from src.rag.prompts.section_generation import SectionName, generate_section_part
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 
@@ -31,7 +31,7 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
 
         logger.info("Successfully generated a RAG response")
         return HttpResponse(
-            body=serialize(RagResponse(data="")),
+            body=serialize(RagResponse(section_name=request_body["section_name"], text="")),
             status_code=HTTPStatus.CREATED,
             mimetype=CONTENT_TYPE_JSON,
         )
@@ -75,10 +75,9 @@ async def generate_section(
     *,
     workspace_id: str,
     parent_id: str,
-    section_name: Literal["significance", "innovation", "research-plan", "summary"],
+    section_name: SectionName,
     section_text: str,
     section_files: list[str] | None,
-    previous_version: str | None = None,
 ) -> str:
     """Generate a section of the RAG response.
 
@@ -88,7 +87,6 @@ async def generate_section(
         section_name: The name of the section.
         section_text: The text for the section.
         section_files: The files for the section.
-        previous_version: Additional context for the section.
 
     Returns:
         str: The generated section.
@@ -103,9 +101,36 @@ async def generate_section(
     embeddings = await generate_embeddings(search_queries)
     search_text = " | ".join([f'"{query}"' for query in search_queries])
 
-    search_result = await retrieve(
+    search_result = await retrieve_documents(
         embeddings=embeddings,
         filter_query=filter_query,
         search_text=search_text,
         session_id=workspace_id,
     )
+    section_text = ""
+
+    api_call_num = 1
+    is_complete = False
+    last_generation_result: str | None = None
+
+    logger.info("Generating section: %s", section_name)
+    while (
+        not is_complete and api_call_num < 20
+    ):  # arbitrary limit, ensuring that the function does not run indefinitely
+        logger.debug("Section %s generation API call number: %d", section_name, api_call_num)
+        result = await generate_section_part(
+            section_name=section_name,
+            last_generation_result=last_generation_result,
+            user_input=section_text,
+            retrieval_results=search_result,
+        )
+
+        api_call_num += 1
+        section_text += result.text
+
+        last_generation_result = result.text
+        is_complete = result.is_complete
+
+    logger.info("Generated section: %s, completed: %s", section_name, is_complete)
+
+    return section_text

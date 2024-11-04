@@ -1,26 +1,23 @@
-from typing import Final
-
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 from azure.search.documents._generated.models import VectorizedQuery
 from azure.search.documents.aio import SearchClient
 
-from src.constants import FIELD_NAME_CONTENT_VECTOR
+from src.constants import FIELD_NAME_CONTENT, FIELD_NAME_CONTENT_VECTOR, FIELD_NAME_FILENAME, FIELD_NAME_PAGE_NUMBER
+from src.rag.dto import DocumentDTO
 from src.utils.env import get_env
 from src.utils.exceptions import RequestFailureError
 from src.utils.retry import exponential_backoff_retry
 
-NUM_DOCUMENTS_TO_RETRIEVE: Final[int] = 10
-
 
 @exponential_backoff_retry(RequestFailureError)
-async def retrieve(
+async def retrieve_documents(
     *,
-    embeddings: list[list[float]],
+    embeddings: list[float],
     filter_query: str,
     search_text: str,
     session_id: str,
-) -> list[dict[str, str]]:
+) -> list[DocumentDTO]:
     """Retrieve documents from Azure Search using the given query vectors.
 
     Args:
@@ -40,24 +37,34 @@ async def retrieve(
         index_name=get_env("AZURE_AI_SEARCH_INDEX_NAME"),
         credential=AzureKeyCredential(get_env("AZURE_AI_SEARCH_KEY")),
     )
-    # FIXME: semantic ranker is not available in EU region. It gives better results overall. add once it is available.
-    # FIXME: search_score is random and not usable as a cut-off threshold, fix it by a custom threshold mechanism.
+
     try:
-        results = await client.search(
+        search_results = await client.search(
             search_text=search_text,
             filter=filter_query,
-            top=NUM_DOCUMENTS_TO_RETRIEVE,
             vector_queries=[
                 VectorizedQuery(
-                    vector=vector,
+                    vector=embeddings,
                     fields=FIELD_NAME_CONTENT_VECTOR,
                     k_nearest_neighbors=10,
                 )
-                for vector in embeddings
             ],
             session_id=session_id,
         )
-        return [result async for result in results]
+
+        output: list[DocumentDTO] = []
+
+        async for search_result in search_results:
+            doc = DocumentDTO(
+                filename=search_result[FIELD_NAME_FILENAME],
+                content=search_result[FIELD_NAME_CONTENT],
+            )
+            if page_number := search_result.get(FIELD_NAME_PAGE_NUMBER):
+                doc["page_number"] = page_number
+
+            output.append(doc)
+
+        return output
     except HttpResponseError as e:
         raise RequestFailureError(
             message="Failed to upload documents to Azure Search",

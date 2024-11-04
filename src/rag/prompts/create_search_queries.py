@@ -2,9 +2,10 @@ import logging
 from typing import Final
 
 from openai import OpenAIError
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
+from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
-from src.utils.exceptions import DeserializationError
+from src.utils.exceptions import DeserializationError, OperationError
 from src.utils.llm import get_azure_openai
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
@@ -19,20 +20,20 @@ json_schema = {
             "items": {"type": "string"},
         },
     },
-    "required": ["properties"],
+    "required": ["queries"],
     "additionalProperties": False,
 }
 
 tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "response_handler",
-            "description": "Generate an optimized search query for retrieval.",
-            "parameters": json_schema,
-        },
-    }
+    ChatCompletionToolParam(
+        type="function",
+        function=FunctionDefinition(
+            name="response_handler",
+            parameters=json_schema,
+        ),
+    )
 ]
+
 
 REWRITE_MODEL: Final[str] = "gpt-4o"
 
@@ -40,19 +41,22 @@ SYSTEM_PROMPT: Final[str] = """This request is part of a RAG pipeline.
 You are a helpful assistant specializing in finding the most relevant documents in an Azure AI Search index.
 Your task is to rewrite the given input into effective search queries.
 These queries should be specific and varied to ensure comprehensive retrieval of relevant information.
-Use the provided to tools and respond using JSON only according to the tool definition.
+Use the provided tools to respond to the user with a valid JSON object.
 """
 
 
-@exponential_backoff_retry(OpenAIError, DeserializationError)
+@exponential_backoff_retry(OpenAIError, DeserializationError, OperationError)
 async def create_search_queries(
-    *,
     input_query: str,
 ) -> list[str]:
     """Generate an optimized search query for retrieval.
 
     Args:
         input_query: The input query to use for generating the search query.
+
+
+    Raises:
+        OperationError: If the response does not contain the expected tool call.
 
     Returns:
         list[str]: The generated search queries.
@@ -61,14 +65,16 @@ async def create_search_queries(
 
     response = await client.chat.completions.create(
         model=REWRITE_MODEL,
-        response_format={"type": "json_object"},
+        response_format=ResponseFormatJSONObject(type="json_object"),
         messages=[
-            ChatCompletionSystemMessageParam(role="system", content=SYSTEM_PROMPT),
-            ChatCompletionUserMessageParam(role="user", content=f"Input: {input_query}"),
+            ChatCompletionSystemMessageParam(role="system", content=SYSTEM_PROMPT.strip()),
+            ChatCompletionUserMessageParam(role="user", content=f"Input: {input_query}".strip()),
         ],
         temperature=0.0,
         tools=tools,
     )
-    if content := response.choices[0].message.tool_calls[0].function.arguments:
+    if response.choices[0].message.tool_calls and (
+        content := response.choices[0].message.tool_calls[0].function.arguments
+    ):
         return deserialize(content, list[str]) or [input_query]
-    return [input_query]
+    raise OperationError(message="OpenAI response does not contain the expected tool call")

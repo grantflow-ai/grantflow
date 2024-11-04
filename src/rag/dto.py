@@ -1,4 +1,6 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
+
+from src.rag.prompts.section_generation import SectionName
 
 
 class APIError(TypedDict):
@@ -17,8 +19,6 @@ class ResearchTaskDTO(TypedDict):
     """The title of the research task."""
     description: str
     """The description of the research task."""
-    files: dict[str, str] | None
-    """Mapping of file names to file URLs that the user uploaded for the research task."""
 
 
 class ResearchAimDTO(TypedDict):
@@ -30,35 +30,49 @@ class ResearchAimDTO(TypedDict):
     """The description of the research aim."""
     requires_clinical_trials: bool
     """Whether the research aim requires clinical trials."""
-    files: dict[str, str] | None
-    """Mapping of file names to file URLs that the user uploaded for the research aim."""
     tasks: list[ResearchTaskDTO]
     """The tasks associated with the research aim."""
 
 
 class RagRequest(TypedDict):
-    """DTO for a RAG request."""
+    """DTO for a RAG request for the research-plan section."""
 
-    funding_organization_name: str
-    """The name of the funding organization."""
-    cfp_action_code: str
-    """The call for proposals action code."""
-    application_title: str
-    """The title of the application."""
-    significance_text: str
-    """The input the user gave for application significance."""
-    significance_files: dict[str, str] | None
-    """Mapping of file names to file URLs that the user uploaded for application significance."""
-    innovation_text: str
-    """The input the user gave for application innovation."""
-    innovation_files: dict[str, str] | None
-    """Mapping of file names to file URLs that the user uploaded for application innovation."""
-    research_aims: list[ResearchAimDTO]
-    """The research aims associated with the application."""
+    workspace_id: str
+    """The workspace ID"""
+    parent_id: str
+    """The parent ID"""
+    section_name: SectionName
+    """The name of the section to generate"""
+    inputs: str | list[ResearchAimDTO]
+    """The user inputs"""
+    file_names: list[str] | None
+    """The file names for the section"""
 
 
 class RagResponse(TypedDict):
     """DTO for an API response."""
 
-    data: str
-    """The data of the response."""
+    section_name: SectionName
+    """The name of the section that was generated."""
+    text: str
+    """Markdown text of the section."""
+
+
+class DocumentDTO(TypedDict):
+    """A DTO for a document."""
+
+    filename: str
+    """The filename of the document"""
+    content: str
+    """The text extracted from the document"""
+    page_number: NotRequired[int]
+    """Optional page number"""
+
+
+class SectionGenerationResult(TypedDict):
+    """DTO for a section generation result."""
+
+    text: str
+    """The generated text."""
+    is_complete: bool
+    """Whether the section text is complete or not."""

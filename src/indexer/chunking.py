@@ -110,14 +110,13 @@ async def process_chunk(
         SearchSchema | None
 
     """
-    content_hash = compute_hash(chunk=chunk, workspace_id=workspace_id, filename=filename)
-
     logger.debug(
         "Preparing chunk for indexing with filename: %s and chunk_id: %s",
     )
-    embeddings = await generate_embeddings(
-        text=chunk["content"],
-    )
+
+    content_hash = compute_hash(chunk=chunk, workspace_id=workspace_id, filename=filename)
+    embeddings = await generate_embeddings(chunk["content"])
+
     return SearchSchema(
         id=str(uuid4()),
         content=chunk["content"],
@@ -130,7 +129,7 @@ async def process_chunk(
     )
 
 
-async def create_embeddings(
+async def index_documents(
     *, chunks: list[Chunk], filename: str, parent_id: str, workspace_id: str
 ) -> list[SearchSchema]:
     """Create embeddings for the given chunks.
