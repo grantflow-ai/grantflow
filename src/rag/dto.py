@@ -1,6 +1,6 @@
 from typing import NotRequired, TypedDict
 
-from src.rag.prompts.section_generation import SectionName
+from src.rag.constants import SectionName
 
 
 class APIError(TypedDict):
@@ -15,7 +15,9 @@ class APIError(TypedDict):
 class ResearchTaskDTO(TypedDict):
     """DTO for a research task."""
 
-    task_title: str
+    id: str
+    """The ID of the research task."""
+    title: str
     """The title of the research task."""
     description: str
     """The description of the research task."""
@@ -24,7 +26,9 @@ class ResearchTaskDTO(TypedDict):
 class ResearchAimDTO(TypedDict):
     """DTO for a research aim."""
 
-    aim_title: str
+    id: str
+    """The ID of the research aim."""
+    title: str
     """The title of the research aim."""
     description: str
     """The description of the research aim."""
@@ -32,6 +36,15 @@ class ResearchAimDTO(TypedDict):
     """Whether the research aim requires clinical trials."""
     tasks: list[ResearchTaskDTO]
     """The tasks associated with the research aim."""
+
+
+class SignificanceAndInnovationDTO(TypedDict):
+    """DTO for the significance and innovation section."""
+
+    significance_user_input: str
+    """The user input describing the significance of the research."""
+    innovation_user_input: str
+    """The user input describing the innovation of the research."""
 
 
 class RagRequest(TypedDict):
@@ -43,10 +56,14 @@ class RagRequest(TypedDict):
     """The parent ID"""
     section_name: SectionName
     """The name of the section to generate"""
-    inputs: str | list[ResearchAimDTO]
+    application_title: str
+    """The title of the grant application"""
+    grant_code_name: str
+    """The grant action code with its full title"""
+    grant_funding_organization: str
+    """The funding organization for the grant"""
+    inputs: str | SignificanceAndInnovationDTO | list[ResearchAimDTO]
     """The user inputs"""
-    file_names: list[str] | None
-    """The file names for the section"""
 
 
 class RagResponse(TypedDict):
