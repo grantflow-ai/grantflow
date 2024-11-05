@@ -1,12 +1,13 @@
 import logging
 from json import dumps
 from textwrap import dedent
-from typing import Final, Literal
+from typing import Final
 
 from openai import OpenAIError
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
+from src.rag.constants import SectionName
 from src.rag.dto import DocumentDTO, SectionGenerationResult
 from src.utils.exceptions import OperationError
 from src.utils.llm import get_azure_openai
@@ -15,7 +16,6 @@ from src.utils.serialization import deserialize
 
 logger = logging.getLogger(__name__)
 
-SectionName = Literal["executive-summary", "significance", "innovation", "research-plan"]
 
 json_schema = {
     "type": "object",
@@ -60,10 +60,45 @@ You are an expert grant application writer specializing in STEM research.
 - Use page numbers in references when page numbers are provided as inputs for a source.
 """
 
+SIGNIFICANCE_PROMPT = """
+explain the importance of the problem or critical barrier that the project addresses, and how it impacts human lives.
+"""
+
+INNOVATION_PROMPT = """
+describe the novel aspects of the research project and how it challenges or shifts current research, practices or paradigms.
+"""
+
+RESEARCH_AIM_PROMPT = """
+Define the specific objectives of the research project, outlining the aims that are planned to test the hypothesis and
+the tasks that constitute each aim.
+
+Add a section called "Preliminary Results" if any preliminary data is provided. If such data is provided, describe
+any preliminary studies that have already been done to substantiate and support the feasibility of the aims.
+
+For each research aim:
+- Add a section called "Risks and Alternative Approaches" which identifies any potential risks and outline
+    alternative strategies to achieve it case of unexpected challenges.
+- Add a section
+For each research task, provide the following details:
+- What is the goal of this task?
+- What is the experimental design that will be used in this task?
+- What methods will you use to collect data?
+- How will the data be analyzed?
+- How will the results will be interpreted?
+- If the task is dependent on outputs of previous tasks, explain the dependency.
+- If the task includes randomized groups or interventions, describe the sample size, method of analysis, and how these the plans for the task.
+- If the task includes the study of vertebrate animals or humans, describe how it will factor all relevant biological variables — especially the sex of the subjects/tested animals — into your study design.
+- If the task includes any procedures, situations, or materials that may be hazardous to personnel, describe them and the measures and precautions that are planned.
+- If the task includes the use of Human Embryonic Stem Cells (hESCs) not included in the NIH hESC Registry, describe why the use of such hESCs is necessary.
+- If the task includes the use of Human Fetal Tissue (HFT), explain why the research goals cannot be accomplished using an alternative to HFT and what methods were used (e.g., literature review, preliminary data) to determine that alternatives could not be used.
+"""
+
 USER_PROMPT: Final[str] = """
 ## Task
 
-Your task is to write {part_number_description} of the {section_name} section of the grant application.
+Your task is to write a part of the {section_name} section of the grant application.
+
+{section_guidelines}
 
 Use the provided tools to respond to the user with a valid JSON object.
 The JSON object should contain the generated text and a boolean value indicating whether the section text is complete or not.
@@ -132,7 +167,7 @@ async def generate_section_part(
         user_input=user_input,
         rag_inputs=rag_inputs,
         part_number_description=FIRST_PART_DESCRIPTION if last_generation_result else LATER_PART_DESCRIPTION,
-        section_name=section_name,
+        section_name=section_name.value,
         part_generation_instructions=PART_GENERATION_INSTRUCTIONS.format(
             last_generation_result=last_generation_result
         ).strip()

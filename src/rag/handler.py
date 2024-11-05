@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from azure.functions import HttpRequest, HttpResponse
 
-from src.constants import CONTENT_TYPE_JSON, FIELD_NAME_FILENAME, FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
+from src.constants import CONTENT_TYPE_JSON, FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
 from src.rag.ai_search import retrieve_documents
 from src.rag.dto import APIError, RagRequest, RagResponse
@@ -29,6 +29,9 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
     try:
         request_body = deserialize(req.get_body(), RagRequest)
 
+        if request_body["section_name"] == "significance-and-innovation":
+            section_text = request_body["inputs"]["significance_user_input"]
+
         logger.info("Successfully generated a RAG response")
         return HttpResponse(
             body=serialize(RagResponse(section_name=request_body["section_name"], text="")),
@@ -53,22 +56,17 @@ def create_filter(
     *,
     workspace_id: str,
     parent_id: str,
-    section_files: list[str] | None,
 ) -> str:
     """Create a filter query for the RAG response.
 
     Args:
         workspace_id: The id of the workspace
         parent_id: The id of the parent
-        section_files: The files for the section.
 
     Returns:
         The filter query.
     """
-    filters = [f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}'", f"{FIELD_NAME_PARENT_ID} eq '{parent_id}'"]
-    if section_files:
-        filters.append(f"search.ismatch('{"|".join(section_files)}', '{FIELD_NAME_FILENAME}', 'full', 'all')")
-    return " and ".join(filters)
+    return f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and {FIELD_NAME_PARENT_ID} eq '{parent_id}'"
 
 
 async def generate_section(
@@ -76,7 +74,7 @@ async def generate_section(
     workspace_id: str,
     parent_id: str,
     section_name: SectionName,
-    section_text: str,
+    section_text: str | list[str],
     section_files: list[str] | None,
 ) -> str:
     """Generate a section of the RAG response.

@@ -1,4 +1,5 @@
 import logging
+from textwrap import dedent
 from typing import Final
 
 from openai import OpenAIError
@@ -37,11 +38,12 @@ tools = [
 
 REWRITE_MODEL: Final[str] = "gpt-4o"
 
-SYSTEM_PROMPT: Final[str] = """This request is part of a RAG pipeline.
+SYSTEM_PROMPT: Final[str] = """
+This request is part of a RAG pipeline.
 You are a helpful assistant specializing in finding the most relevant documents in an Azure AI Search index.
-Your task is to rewrite the given input into effective search queries.
+Your task is to translate the given input into effective search queries.
 These queries should be specific and varied to ensure comprehensive retrieval of relevant information.
-Use the provided tools to respond to the user with a valid JSON object.
+Use the provided tools to respond with a valid JSON object.
 """
 
 
@@ -67,14 +69,20 @@ async def create_search_queries(
         model=REWRITE_MODEL,
         response_format=ResponseFormatJSONObject(type="json_object"),
         messages=[
-            ChatCompletionSystemMessageParam(role="system", content=SYSTEM_PROMPT.strip()),
+            ChatCompletionSystemMessageParam(role="system", content=dedent(SYSTEM_PROMPT.strip())),
             ChatCompletionUserMessageParam(role="user", content=f"Input: {input_query}".strip()),
         ],
         temperature=0.0,
         tools=tools,
     )
-    if response.choices[0].message.tool_calls and (
-        content := response.choices[0].message.tool_calls[0].function.arguments
-    ):
-        return deserialize(content, list[str]) or [input_query]
-    raise OperationError(message="OpenAI response does not contain the expected tool call")
+
+    tool_calls = response.choices[0].message.tool_calls
+    if not tool_calls:
+        raise OperationError(message="OpenAI response does not contain the expected tool call")
+
+    content = deserialize(tool_calls[0].function.arguments, list[str])
+
+    if not content:
+        raise OperationError(message="OpenAI response is empty")
+
+    return content
