@@ -98,6 +98,9 @@ async def handle_tool_call_request(
         system_prompt: The system prompt.
         user_prompt: The user prompt.
 
+    Raises:
+        OperationError: If the response content is empty.
+
     Returns:
         The generated text.
     """
