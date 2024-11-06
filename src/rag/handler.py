@@ -7,8 +7,8 @@ from src.constants import CONTENT_TYPE_JSON, FIELD_NAME_PARENT_ID, FIELD_NAME_WO
 from src.embeddings import generate_embeddings
 from src.rag.ai_search import retrieve_documents
 from src.rag.dto import APIError, RagRequest, RagResponse
-from src.rag.prompts.create_search_queries import create_search_queries
-from src.rag.prompts.section_generation import SectionName, generate_section_part
+from src.rag.search_queries import create_search_queries
+from src.rag.section_generation import SectionName, generate_section_part
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 

@@ -86,8 +86,8 @@ class DocumentDTO(TypedDict):
     """Optional page number"""
 
 
-class SectionGenerationResult(TypedDict):
-    """DTO for a section generation result."""
+class GenerationResult(TypedDict):
+    """DTO for a text generation result."""
 
     text: str
     """The generated text."""
