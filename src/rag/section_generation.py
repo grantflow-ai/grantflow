@@ -8,7 +8,7 @@ from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionTo
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
 from src.rag.constants import SectionName
-from src.rag.dto import DocumentDTO, SectionGenerationResult
+from src.rag.dto import DocumentDTO, GenerationResult
 from src.utils.exceptions import OperationError
 from src.utils.llm import get_azure_openai
 from src.utils.retry import exponential_backoff_retry
@@ -134,7 +134,7 @@ async def generate_section_part(
     last_generation_result: str | None,
     user_input: str,
     retrieval_results: list[DocumentDTO],
-) -> SectionGenerationResult:
+) -> GenerationResult:
     """Generate a section of the grant application.
 
     Args:
@@ -188,6 +188,6 @@ async def generate_section_part(
     if response.choices[0].message.tool_calls and (
         content := response.choices[0].message.tool_calls[0].function.arguments
     ):
-        return deserialize(content, SectionGenerationResult)
+        return deserialize(content, GenerationResult)
 
     raise OperationError(message="Response content is empty", context=response.model_dump_json())

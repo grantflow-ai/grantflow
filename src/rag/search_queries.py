@@ -1,5 +1,4 @@
 import logging
-from textwrap import dedent
 from typing import Final
 
 from openai import OpenAIError
@@ -39,22 +38,61 @@ tools = [
 REWRITE_MODEL: Final[str] = "gpt-4o"
 
 SYSTEM_PROMPT: Final[str] = """
-This request is part of a RAG pipeline.
-You are a helpful assistant specializing in finding the most relevant documents in an Azure AI Search index.
-Your task is to translate the given input into effective search queries.
-These queries should be specific and varied to ensure comprehensive retrieval of relevant information.
-Use the provided tools to respond with a valid JSON object.
+You are a specialized query generation component within a RAG pipeline designed to assist in writing grant
+application sections. Your function is to generate search queries that will retrieve relevant content from
+an Azure AI Search index containing user-uploaded research materials.
+
+## Your Task:
+You will receive a description of the next task in the RAG pipeline and any user provided inputs that will be used as
+sources.
+
+1. Analyze these and identify:
+   - The specific grant section being addressed
+   - Scientific domain and methodologies
+   - Key research problems or gaps
+   - Technical approaches and innovations
+2. Generate 3-5 distinct search queries that:
+   - Target relevant scientific precedents and methodologies
+   - Identify similar research problems and solutions
+   - Find supporting evidence for significance claims
+   - Locate methodological innovations in the field
+
+## Response Format:
+Return a JSON object strictly adhering to the following structure:
+
+```json
+{
+    "queries": [
+        "...",
+    ]
+}
+```
+
+## Guidelines:
+- Include technical terminology specific to the research domain
+- Target evidence supporting significance claims
+- Focus on methodological innovations when relevant
+- Include queries for competing or alternative approaches
+- Consider interdisciplinary connections
+
+## Important Considerations:
+- Queries should balance specificity with breadth to capture relevant materials
+- Consider both theoretical foundations and practical applications
+- Include searches for potential criticisms or limitations
+- Target evidence of research impact and significance
+- Look for methodological innovations and technical advances
+- Consider cross-disciplinary implications and applications
 """
 
 
 @exponential_backoff_retry(OpenAIError, DeserializationError, OperationError)
 async def create_search_queries(
-    input_query: str,
+    user_prompt: str,
 ) -> list[str]:
     """Generate an optimized search query for retrieval.
 
     Args:
-        input_query: The input query to use for generating the search query.
+        user_prompt: The user prompt to generate the search queries.
 
 
     Raises:
@@ -69,8 +107,8 @@ async def create_search_queries(
         model=REWRITE_MODEL,
         response_format=ResponseFormatJSONObject(type="json_object"),
         messages=[
-            ChatCompletionSystemMessageParam(role="system", content=dedent(SYSTEM_PROMPT.strip())),
-            ChatCompletionUserMessageParam(role="user", content=f"Input: {input_query}".strip()),
+            ChatCompletionSystemMessageParam(role="system", content=SYSTEM_PROMPT.strip()),
+            ChatCompletionUserMessageParam(role="user", content=user_prompt.strip()),
         ],
         temperature=0.0,
         tools=tools,
