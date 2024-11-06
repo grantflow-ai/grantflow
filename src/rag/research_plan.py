@@ -2,7 +2,6 @@ import logging
 from asyncio import gather
 from functools import partial
 from json import dumps
-from typing import Final
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
@@ -20,8 +19,6 @@ from src.rag.search_queries import create_search_queries
 from src.rag.utils import handle_segmented_text_generation, handle_tool_call_request
 
 logger = logging.getLogger(__name__)
-
-TEXT_GENERATION_MODEL: Final[str] = "gpt-4o"
 
 
 async def generate_research_aim_text(
@@ -117,7 +114,7 @@ async def handle_research_aim_text_generation(
     handler = partial(
         generate_research_aim_text,
         research_aim=research_aim,
-        search_result=search_result,
+        retrieval_results=search_result,
     )
 
     return await handle_segmented_text_generation(
@@ -140,7 +137,7 @@ async def handle_research_plan_text_generation(application_title: str, research_
     handler = partial(
         generate_research_plan_text,
         application_title=application_title,
-        research_aim_texts=research_aim_texts,
+        research_aims_texts=research_aim_texts,
     )
 
     return await handle_segmented_text_generation(

@@ -1,7 +1,5 @@
 from typing import NotRequired, TypedDict
 
-from src.rag.constants import SectionName
-
 
 class APIError(TypedDict):
     """DTO for an API error."""
@@ -39,11 +37,15 @@ class ResearchAimDTO(TypedDict):
 
 
 class SignificanceAndInnovationDTO(TypedDict):
-    """DTO for the significance and innovation section."""
+    """DTO for the significance and innovation sections."""
 
-    significance_user_input: str
+    significance_id: str
+    """The ID of the research significance."""
+    innovation_id: str
+    """The ID of the research innovation."""
+    significance_description: str
     """The user input describing the significance of the research."""
-    innovation_user_input: str
+    innovation_description: str
     """The user input describing the innovation of the research."""
 
 
@@ -52,25 +54,19 @@ class RagRequest(TypedDict):
 
     workspace_id: str
     """The workspace ID"""
-    parent_id: str
-    """The parent ID"""
-    section_name: SectionName
-    """The name of the section to generate"""
     application_title: str
     """The title of the grant application"""
-    grant_code_name: str
-    """The grant action code with its full title"""
+    cfp_title: str
+    """The CFP action code and title"""
     grant_funding_organization: str
     """The funding organization for the grant"""
-    inputs: str | SignificanceAndInnovationDTO | list[ResearchAimDTO]
+    data: str | SignificanceAndInnovationDTO | list[ResearchAimDTO]
     """The user inputs"""
 
 
 class RagResponse(TypedDict):
     """DTO for an API response."""
 
-    section_name: SectionName
-    """The name of the section that was generated."""
     text: str
     """Markdown text of the section."""
 

@@ -1,14 +1,14 @@
 import logging
 from http import HTTPStatus
+from typing import cast
 
 from azure.functions import HttpRequest, HttpResponse
 
-from src.constants import CONTENT_TYPE_JSON, FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
-from src.embeddings import generate_embeddings
-from src.rag.ai_search import retrieve_documents
-from src.rag.dto import APIError, RagRequest, RagResponse
-from src.rag.search_queries import create_search_queries
-from src.rag.section_generation import SectionName, generate_section_part
+from src.constants import CONTENT_TYPE_JSON
+from src.rag.dto import APIError, RagRequest, RagResponse, ResearchAimDTO
+from src.rag.executive_summary import generate_executive_summary
+from src.rag.research_plan import generate_research_plan
+from src.rag.significance_and_innovation import generate_significance_and_innovation
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 
@@ -28,18 +28,38 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
 
     try:
         request_body = deserialize(req.get_body(), RagRequest)
+        data = request_body["data"]
 
-        if request_body["section_name"] == "significance-and-innovation":
-            section_text = request_body["inputs"]["significance_user_input"]
-
+        if isinstance(data, dict):
+            result = await generate_significance_and_innovation(
+                significance_description=data["significance_description"],
+                significance_id=data["significance_id"],
+                innovation_description=data["innovation_description"],
+                innovation_id=data["innovation_id"],
+                workspace_id=request_body["workspace_id"],
+            )
+        elif isinstance(data, list):
+            result = await generate_research_plan(
+                research_aims=cast(list[ResearchAimDTO], data),
+                application_title=request_body["application_title"],
+                workspace_id=request_body["workspace_id"],
+            )
+        else:
+            result = await generate_executive_summary(
+                application_title=request_body["application_title"],
+                cfp_title=request_body["cfp_title"],
+                grant_funding_organization=request_body["grant_funding_organization"],
+                application_text=data,
+                workspace_id=request_body["workspace_id"],
+            )
         logger.info("Successfully generated a RAG response")
         return HttpResponse(
-            body=serialize(RagResponse(section_name=request_body["section_name"], text="")),
+            body=serialize(RagResponse(text=result)),
             status_code=HTTPStatus.CREATED,
             mimetype=CONTENT_TYPE_JSON,
         )
     except DeserializationError as e:
-        logger.error("Failed to deserialize the request body due to an exception: %s", e)
+        logger.error("Failed to deserialize the request body: %s", e)
         return HttpResponse(
             status_code=HTTPStatus.BAD_REQUEST,
             body=serialize(
@@ -50,85 +70,3 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
             ),
             mimetype=CONTENT_TYPE_JSON,
         )
-
-
-def create_filter(
-    *,
-    workspace_id: str,
-    parent_id: str,
-) -> str:
-    """Create a filter query for the RAG response.
-
-    Args:
-        workspace_id: The id of the workspace
-        parent_id: The id of the parent
-
-    Returns:
-        The filter query.
-    """
-    return f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and {FIELD_NAME_PARENT_ID} eq '{parent_id}'"
-
-
-async def generate_section(
-    *,
-    workspace_id: str,
-    parent_id: str,
-    section_name: SectionName,
-    section_text: str | list[str],
-    section_files: list[str] | None,
-) -> str:
-    """Generate a section of the RAG response.
-
-    Args:
-        workspace_id: The id of the workspace
-        parent_id: The id of the parent
-        section_name: The name of the section.
-        section_text: The text for the section.
-        section_files: The files for the section.
-
-    Returns:
-        str: The generated section.
-    """
-    filter_query = create_filter(
-        workspace_id=workspace_id,
-        parent_id=parent_id,
-        section_files=section_files,
-    )
-
-    search_queries = await create_search_queries(section_text)
-    embeddings = await generate_embeddings(search_queries)
-    search_text = " | ".join([f'"{query}"' for query in search_queries])
-
-    search_result = await retrieve_documents(
-        embeddings=embeddings,
-        filter_query=filter_query,
-        search_text=search_text,
-        session_id=workspace_id,
-    )
-    section_text = ""
-
-    api_call_num = 1
-    is_complete = False
-    last_generation_result: str | None = None
-
-    logger.info("Generating section: %s", section_name)
-    while (
-        not is_complete and api_call_num < 20
-    ):  # arbitrary limit, ensuring that the function does not run indefinitely
-        logger.debug("Section %s generation API call number: %d", section_name, api_call_num)
-        result = await generate_section_part(
-            section_name=section_name,
-            last_generation_result=last_generation_result,
-            user_input=section_text,
-            retrieval_results=search_result,
-        )
-
-        api_call_num += 1
-        section_text += result.text
-
-        last_generation_result = result.text
-        is_complete = result.is_complete
-
-    logger.info("Generated section: %s, completed: %s", section_name, is_complete)
-
-    return section_text
