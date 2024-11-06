@@ -9,6 +9,7 @@ from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObj
 from src.rag.dto import GenerationResult
 from src.utils.exceptions import OperationError
 from src.utils.llm import get_azure_openai
+from src.utils.nlp import get_spacy_model
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 
@@ -84,7 +85,7 @@ async def handle_segmented_text_generation(
         api_call_num,
     )
 
-    return " ".join(results)
+    return concatenate_segments_with_spacy_coherence(results)
 
 
 @exponential_backoff_retry(OpenAIError, OperationError)
@@ -122,3 +123,38 @@ async def handle_tool_call_request(
         return deserialize(content, GenerationResult)
 
     raise OperationError(message="Response content is empty", context=response.model_dump_json())
+
+
+def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:
+    """Concatenate segmented text responses with coherence check using spaCy.
+
+    Args:
+        segments: A list of text segments.
+        max_overlap_sentences: Maximum number of overlapping sentences to check for coherence.
+
+    Returns:
+        The concatenated and coherent text.
+    """
+    nlp = get_spacy_model()
+
+    concatenated_text: list[str] = []
+    context_buffer: list[str] = []
+
+    for segment in segments:
+        doc = nlp(segment)
+        sentences = [sent.text for sent in doc.sents]
+
+        overlap_index = 0
+        if context_buffer and sentences:
+            for overlap_count in range(1, min(len(context_buffer), max_overlap_sentences) + 1):
+                if sentences[:overlap_count] == context_buffer[-overlap_count:]:
+                    overlap_index = overlap_count
+                    break
+
+            sentences = sentences[overlap_index:]
+
+        concatenated_text.append(" ".join(sentences))
+
+        context_buffer = sentences[-max_overlap_sentences:]
+
+    return " ".join(concatenated_text)
