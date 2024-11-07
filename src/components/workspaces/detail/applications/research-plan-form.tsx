@@ -386,7 +386,7 @@ function ResearchAimForm({
 								className="text-sm font-medium cursor-pointer"
 								data-testid={`research-aim-form-clinical-trials-label-${index}`}
 							>
-								This is a Re-Submission
+								Requires Clinical Trials
 							</FormLabel>
 							<Tooltip>
 								<TooltipTrigger asChild>
@@ -395,7 +395,7 @@ function ResearchAimForm({
 										variant="ghost"
 										className="p-0 h-4 w-4"
 										data-testid={`research-aim-form-clinical-trials-help-${index}`}
-										aria-label="Resubmission information"
+										aria-label="Clinical Trials information"
 									>
 										<HelpCircle className="h-4 w-4" />
 									</Button>
@@ -405,7 +405,7 @@ function ResearchAimForm({
 									role="tooltip"
 									data-testid={`research-aim-form-clinical-trials-tooltip-${index}`}
 								>
-									Check this box if you are resubmitting a previously submitted grant application
+									Check this box if your research aim requires clinical trials.
 								</TooltipContent>
 							</Tooltip>
 						</div>

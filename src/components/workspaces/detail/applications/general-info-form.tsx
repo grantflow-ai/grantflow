@@ -352,7 +352,7 @@ export function GeneralInfoForm({
 							</FormItem>
 						)}
 					/>
-					<div className="pt-10 flex justify-end">
+					<div className="pt-10 flex justify-between">
 						<Button onClick={onPressPrevious} aria-label="Go Back">
 							Go Back
 						</Button>
