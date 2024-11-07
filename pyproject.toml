@@ -3,7 +3,7 @@ name = "parser-indexer"
 version = "0.1.0"
 description = "Azure Function to parse and index blobs"
 authors = [{ name = "Na'aman Hirschfeld", email = "nhirschfeld@gmail.com" }]
-requires-python = ">=3.12"
+requires-python = "==3.11.*"
 readme = "README.md"
 license = { text = "UNLICENSED" }
 packages = ["src", "functions", "tests"]
@@ -20,6 +20,7 @@ dependencies = [
     "msgspec>=0.18.6",
     "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
     "spacy>=3.8.2",
+    "aiohttp>=3.10.10",
 ]
 
 [tool.pdm]
@@ -56,7 +57,7 @@ coverage.env = { "PYTHONPATH" = "." }
 # linters configuration below
 [tool.ruff]
 line-length = 120
-target-version = "py312"
+target-version = "py311"
 lint.select = ["ALL"]
 lint.ignore = [
     "ANN401",  # dynamically typed ANY
@@ -95,7 +96,7 @@ max-returns = 10
 
 [tool.mypy]
 packages = ["src", "tests"]
-python_version = "3.12"
+python_version = "3.11"
 plugins = ["pydantic.mypy"]
 disable_error_code = 'import-untyped'
 implicit_reexport = false

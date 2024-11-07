@@ -51,5 +51,9 @@ class OpenAIFailureError(OperationError):
     """Raised when an error occurs during an OpenAI API request."""
 
 
+class SerializationError(OperationError):
+    """Raised when an error occurs during serialization."""
+
+
 class DeserializationError(OperationError):
     """Raised when an error occurs during deserialization."""

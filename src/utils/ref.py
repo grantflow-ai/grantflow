@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from typing import Generic, TypeVar
 
-class Ref[T]:
+T = TypeVar("T")
+
+
+class Ref(Generic[T]):
     """A reference to a value that can be mutated."""
 
     value: T | None = None

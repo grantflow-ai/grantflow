@@ -6,8 +6,11 @@ from enum import Enum
 from inspect import isclass
 from typing import TYPE_CHECKING, Any, TypeVar
 
+from msgspec import MsgspecError
 from msgspec.json import decode, encode
 from pydantic import BaseModel
+
+from src.utils.exceptions import DeserializationError, SerializationError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -62,10 +65,16 @@ def deserialize(value: str | bytes, target_type: type[T]) -> T:
         value: Value to decode.
         target_type: A type to decode the data into.
 
+    Raises:
+        DeserializationError: If the value cannot be deserialized.
+
     Returns:
         An instance of ``target_type``.
     """
-    return decode(value, type=target_type, dec_hook=decode_hook)
+    try:
+        return decode(value, type=target_type, dec_hook=decode_hook)
+    except MsgspecError as e:
+        raise DeserializationError(str(e)) from e
 
 
 def serialize(
@@ -80,10 +89,16 @@ def serialize(
         encoder: A custom encoder to use.
         **kwargs: Additional arguments to pass to the encoder.
 
+    Raises:
+        SerializationError: If the value cannot be serialized.
+
     Returns:
         A JSON string.
     """
     if isinstance(value, dict) and kwargs:
         value = value | kwargs
 
-    return encode(value, order="sorted", enc_hook=encoder if encoder else encode_hook)
+    try:
+        return encode(value, enc_hook=encoder if encoder else encode_hook)
+    except MsgspecError as e:
+        raise SerializationError(str(e)) from e

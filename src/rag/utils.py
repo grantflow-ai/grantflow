@@ -8,7 +8,7 @@ from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObj
 
 from src.rag.dto import GenerationResult
 from src.utils.exceptions import OperationError
-from src.utils.llm import get_azure_openai
+from src.utils.llm import get_generation_model
 from src.utils.nlp import get_spacy_model
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
@@ -105,7 +105,7 @@ async def handle_tool_call_request(
     Returns:
         The generated text.
     """
-    client = get_azure_openai()
+    client = get_generation_model()
 
     response = await client.chat.completions.create(
         model=TEXT_GENERATION_MODEL,

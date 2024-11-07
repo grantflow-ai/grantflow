@@ -1,0 +1,16 @@
+### Significance and Innovation Sections
+POST  http://localhost:7071/api/generate-section-text
+Content-Type: application/json
+
+{
+    "workspace_id": "65cb7d1e-57f8-4090-8b84-209412ece1b8",
+    "application_title": "Development of a novel class of immunotherapeutic molecules: Myeloid-targeted immunocytokine and NK-T cell enhancers",
+    "cfp_title": "R01 - To support a discrete, specified, circumscribed project to be performed by the named investigator(s) in an area representing his or her specific interest and competencies.",
+    "grant_funding_organization": "NIH",
+    "data": {
+        "significance_id": "73f82b19-7897-4180-ac1b-8abb8740616e",
+        "significance_description": "Use the following document and extract from it elements discussing the importance and potential of immunotherapies in cancer treatment. Use it also to discuss specifically the potential and the limitations of currently available 1) myeloid targeting immunotherapies and 2) cytokines. Summarize with a description of how our project aims to overcome those limitations with the construction of a dual molecule – targeting both the myeloid compartment via the TREM2 pathway and also T and NK cells with cytokines and how this new molecule could help patients suffering from tumors resistant to currently available immunotherapies. This grant is less business oriented so you don't need to touch the business side and plans or the economic impact.",
+        "innovation_id": "f89be409-9c6c-43d5-8e67-5b1d6376bfdd",
+        "innovation_description": "Use the following document to discuss the innovative technologies we will be using in the project. Elaborate about our different single cell technologies and our data-driven approach to drug design. Describe the novelty of our planned construct in activating both the myeloid compartment and NK and T cells and our innovative approach of designing the cytokines with the masking enabling their activation only in the tumor microenvironment (TME)."
+    }
+}
