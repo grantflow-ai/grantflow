@@ -6,7 +6,7 @@ from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionTo
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
 from src.utils.exceptions import DeserializationError, OperationError
-from src.utils.llm import get_azure_openai
+from src.utils.llm import get_generation_model
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 
@@ -101,7 +101,7 @@ async def create_search_queries(
     Returns:
         list[str]: The generated search queries.
     """
-    client = get_azure_openai()
+    client = get_generation_model()
 
     response = await client.chat.completions.create(
         model=REWRITE_MODEL,

@@ -5,7 +5,7 @@ from typing import Final
 from openai import OpenAIError
 
 from src.utils.exceptions import OpenAIFailureError
-from src.utils.llm import get_azure_openai
+from src.utils.llm import get_embeddings_model
 from src.utils.retry import exponential_backoff_retry
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ async def generate_embeddings(inputs: str | list[str]) -> list[float]:
     Returns:
         The embeddings for the given text or None if an error occurred.
     """
-    client = get_azure_openai()
+    client = get_embeddings_model()
 
     try:
         response = await client.embeddings.create(input=inputs, model=EMBEDDING_MODEL)
