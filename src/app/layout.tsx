@@ -26,7 +26,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en" className="dark" style={{ colorScheme: "dark" }}>
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<link rel="stylesheet" href="https://use.typekit.net/get1yhn.css" />
 				<link rel="icon" href="/favicon.ico" sizes="any" />
