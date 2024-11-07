@@ -2,16 +2,9 @@
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { Button } from "gen/ui/button";
 import { useTheme } from "next-themes";
-import { useEffect } from "react";
 
 export function ThemeToggle() {
 	const { setTheme, theme } = useTheme();
-
-	useEffect(() => {
-		const isDarkTheme = globalThis.matchMedia("(prefers-color-scheme: dark)").matches;
-
-		setTheme(isDarkTheme ? "dark" : "light");
-	}, []);
 
 	return (
 		<Button
