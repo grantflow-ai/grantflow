@@ -2,6 +2,7 @@ import logging
 from asyncio import gather
 from functools import partial
 from json import dumps
+from string import Template
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
@@ -36,15 +37,23 @@ async def generate_research_aim_text(
     Returns:
         GenerationResult: The generated text for the research aim.
     """
-    system_prompt = RESEARCH_AIM_GENERATION_SYSTEM_PROMPT.format(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-    ).strip()
+    system_prompt = (
+        Template(RESEARCH_AIM_GENERATION_SYSTEM_PROMPT)
+        .substitute(
+            part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
+        )
+        .strip()
+    )
 
-    user_prompt = RESEARCH_AIM_GENERATION_USER_PROMPT.format(
-        research_aim=dumps(research_aim),
-        rag_results=dumps(retrieval_results),
-        previous_part_text=previous_part_text,
-    ).strip()
+    user_prompt = (
+        Template(RESEARCH_AIM_GENERATION_USER_PROMPT)
+        .substitute(
+            research_aim=dumps(research_aim),
+            rag_results=dumps(retrieval_results),
+            previous_part_text=previous_part_text,
+        )
+        .strip()
+    )
 
     return await handle_tool_call_request(
         system_prompt=system_prompt,
@@ -67,15 +76,23 @@ async def generate_research_plan_text(
     Returns:
         GenerationResult: The generated text for the research plan.
     """
-    system_prompt = RESEARCH_PLAN_SYSTEM_PROMPT.format(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-    ).strip()
+    system_prompt = (
+        Template(RESEARCH_PLAN_SYSTEM_PROMPT)
+        .substitute(
+            part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
+        )
+        .strip()
+    )
 
-    user_prompt = RESEARCH_PLAN_USER_PROMPT.format(
-        application_title=application_title,
-        research_aims_texts=dumps(research_aims_texts),
-        previous_part_text=previous_part_text,
-    ).strip()
+    user_prompt = (
+        Template(RESEARCH_PLAN_USER_PROMPT)
+        .substitute(
+            application_title=application_title,
+            research_aims_texts=dumps(research_aims_texts),
+            previous_part_text=previous_part_text,
+        )
+        .strip()
+    )
 
     return await handle_tool_call_request(
         system_prompt=system_prompt,
@@ -97,7 +114,7 @@ async def handle_research_aim_text_generation(
         The generated text for the research aim.
     """
     search_queries = await create_search_queries(
-        RESEARCH_AIM_QUERIES_PROMPT.format(research_aim=dumps(research_aim)),
+        Template(RESEARCH_AIM_QUERIES_PROMPT).substitute(research_aim=dumps(research_aim)),
     )
     parent_ids = [research_aim["id"], *(task["id"] for task in research_aim["tasks"])]
     search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and {FIELD_NAME_PARENT_ID} in '({parent_ids})'"
@@ -105,7 +122,7 @@ async def handle_research_aim_text_generation(
     search_text = " | ".join([f'"{query}"' for query in search_queries])
 
     search_result = await retrieve_documents(
-        embeddings=query_embeddings,
+        embeddings_matrix=query_embeddings,
         filter_query=search_filter,
         search_text=search_text,
         session_id=workspace_id,

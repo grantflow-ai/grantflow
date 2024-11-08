@@ -1,4 +1,5 @@
 import logging
+import sys
 from http import HTTPStatus
 from typing import cast
 
@@ -12,6 +13,7 @@ from src.rag.significance_and_innovation import generate_significance_and_innova
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 
@@ -24,13 +26,14 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
     Returns:
         An Azure Function HttpResponse object.
     """
-    logger.info("Handling RAG request")
+    logger.info("Beginning RAG pipeline")
 
     try:
         request_body = deserialize(req.get_body(), RagRequest)
         data = request_body["data"]
 
         if isinstance(data, dict):
+            logger.info("Generating significance and innovation text")
             result = await generate_significance_and_innovation(
                 significance_description=data["significance_description"],
                 significance_id=data["significance_id"],
@@ -39,12 +42,14 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
                 workspace_id=request_body["workspace_id"],
             )
         elif isinstance(data, list):
+            logger.info("Generating a research plan")
             result = await generate_research_plan(
                 research_aims=cast(list[ResearchAimDTO], data),
                 application_title=request_body["application_title"],
                 workspace_id=request_body["workspace_id"],
             )
         else:
+            logger.info("Generating an executive summary")
             result = await generate_executive_summary(
                 application_title=request_body["application_title"],
                 cfp_title=request_body["cfp_title"],
@@ -52,7 +57,7 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
                 application_text=data,
                 workspace_id=request_body["workspace_id"],
             )
-        logger.info("Successfully generated a RAG response")
+        logger.info("RAG pipeline completed successfully")
         return HttpResponse(
             body=serialize(RagResponse(text=result)),
             status_code=HTTPStatus.CREATED,

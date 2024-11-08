@@ -1,6 +1,7 @@
 import logging
 from functools import partial
 from json import dumps
+from string import Template
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
@@ -34,15 +35,23 @@ async def generate_significance_text(
     Returns:
         GenerationResult: The generated text for the significance section.
     """
-    system_prompt = SIGNIFICANCE_GENERATION_SYSTEM_PROMPT.format(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-    ).strip()
+    system_prompt = (
+        Template(SIGNIFICANCE_GENERATION_SYSTEM_PROMPT)
+        .substitute(
+            part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
+        )
+        .strip()
+    )
 
-    user_prompt = SIGNIFICANCE_GENERATION_USER_PROMPT.format(
-        significance_description=significance_description,
-        rag_results=dumps(retrieval_results),
-        previous_part_text=previous_part_text,
-    ).strip()
+    user_prompt = (
+        Template(SIGNIFICANCE_GENERATION_USER_PROMPT)
+        .substitute(
+            significance_description=significance_description,
+            rag_results=dumps(retrieval_results),
+            previous_part_text=previous_part_text,
+        )
+        .strip()
+    )
 
     return await handle_tool_call_request(
         system_prompt=system_prompt,
@@ -67,16 +76,24 @@ async def generate_innovation_text(
     Returns:
         GenerationResult: The generated text for the innovation section.
     """
-    system_prompt = INNOVATION_GENERATION_SYSTEM_PROMPT.format(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-    ).strip()
+    system_prompt = (
+        Template(INNOVATION_GENERATION_SYSTEM_PROMPT)
+        .substitute(
+            part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
+        )
+        .strip()
+    )
 
-    user_prompt = INNOVATION_GENERATION_USER_PROMPT.format(
-        innovation_description=innovation_description,
-        significance_text=significance_text,
-        rag_results=dumps(retrieval_results),
-        previous_part_text=previous_part_text,
-    ).strip()
+    user_prompt = (
+        Template(INNOVATION_GENERATION_USER_PROMPT)
+        .substitute(
+            innovation_description=innovation_description,
+            significance_text=significance_text,
+            rag_results=dumps(retrieval_results),
+            previous_part_text=previous_part_text,
+        )
+        .strip()
+    )
 
     return await handle_tool_call_request(
         system_prompt=system_prompt,
@@ -103,12 +120,10 @@ async def handle_significance_text_generation(
     query_embeddings = await generate_embeddings(search_queries)
     search_text = " | ".join([f'"{query}"' for query in search_queries])
 
-    search_filter = (
-        f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and " f"{FIELD_NAME_PARENT_ID} eq '{significance_id}'"
-    )
+    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and {FIELD_NAME_PARENT_ID} eq '{significance_id}'"
 
     search_result = await retrieve_documents(
-        embeddings=query_embeddings,
+        embeddings_matrix=query_embeddings,
         filter_query=search_filter,
         search_text=search_text,
         session_id=workspace_id,
@@ -148,10 +163,10 @@ async def handle_innovation_text_generation(
     query_embeddings = await generate_embeddings(search_queries)
     search_text = " | ".join([f'"{query}"' for query in search_queries])
 
-    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and " f"{FIELD_NAME_PARENT_ID} eq '{innovation_id}'"
+    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and {FIELD_NAME_PARENT_ID} eq '{innovation_id}'"
 
     search_result = await retrieve_documents(
-        embeddings=query_embeddings,
+        embeddings_matrix=query_embeddings,
         filter_query=search_filter,
         search_text=search_text,
         session_id=workspace_id,
@@ -196,7 +211,7 @@ async def generate_significance_and_innovation(
         significance_id=significance_id,
         workspace_id=workspace_id,
     )
-    logger.info("Generated significance section")
+    logger.info("Generated significance section: %s", significance_text)
 
     innovation_text = await handle_innovation_text_generation(
         innovation_description=innovation_description,
@@ -204,6 +219,6 @@ async def generate_significance_and_innovation(
         significance_text=significance_text,
         workspace_id=workspace_id,
     )
-    logger.info("Generated innovation section")
+    logger.info("Generated innovation section: %s", innovation_text)
 
     return f"{significance_text}\n\n{innovation_text}"
