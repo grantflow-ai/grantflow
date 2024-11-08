@@ -1,11 +1,11 @@
 import logging
-from typing import Final
+from typing import Final, TypedDict
 
 from openai import OpenAIError
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
-from src.utils.exceptions import DeserializationError, OperationError
+from src.utils.exceptions import OperationError
 from src.utils.llm import get_generation_model
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
@@ -33,6 +33,13 @@ tools = [
         ),
     )
 ]
+
+
+class ToolResponse(TypedDict):
+    """The response from the tool call."""
+
+    queries: list[str]
+    """The generated search queries."""
 
 
 REWRITE_MODEL: Final[str] = "gpt-4o"
@@ -85,7 +92,7 @@ Return a JSON object strictly adhering to the following structure:
 """
 
 
-@exponential_backoff_retry(OpenAIError, DeserializationError, OperationError)
+@exponential_backoff_retry(OpenAIError, OperationError)
 async def create_search_queries(
     user_prompt: str,
 ) -> list[str]:
@@ -103,6 +110,7 @@ async def create_search_queries(
     """
     client = get_generation_model()
 
+    logger.debug("Generating search queries for user prompt: %s", user_prompt)
     response = await client.chat.completions.create(
         model=REWRITE_MODEL,
         response_format=ResponseFormatJSONObject(type="json_object"),
@@ -113,14 +121,17 @@ async def create_search_queries(
         temperature=0.0,
         tools=tools,
     )
+    logger.debug("Received response from OpenAI: %s", response.model_dump_json())
 
     tool_calls = response.choices[0].message.tool_calls
     if not tool_calls:
+        logger.warning("OpenAI response does not contain the expected tool call, raising OperationError")
         raise OperationError(message="OpenAI response does not contain the expected tool call")
 
-    content = deserialize(tool_calls[0].function.arguments, list[str])
-
-    if not content:
+    content = deserialize(tool_calls[0].function.arguments, ToolResponse)
+    if not content or not content.get("queries"):
+        logger.warning("OpenAI response is empty, raising OperationError")
         raise OperationError(message="OpenAI response is empty")
 
-    return content
+    logger.debug("Generated search queries: %s", ",".join(content))
+    return content["queries"]

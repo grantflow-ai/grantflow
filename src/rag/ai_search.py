@@ -1,3 +1,5 @@
+import logging
+
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 from azure.search.documents._generated.models import VectorizedQuery
@@ -9,11 +11,13 @@ from src.utils.env import get_env
 from src.utils.exceptions import RequestFailureError
 from src.utils.retry import exponential_backoff_retry
 
+logger = logging.getLogger(__name__)
+
 
 @exponential_backoff_retry(RequestFailureError)
 async def retrieve_documents(
     *,
-    embeddings: list[float],
+    embeddings_matrix: list[list[float]],
     filter_query: str,
     search_text: str,
     session_id: str,
@@ -21,7 +25,7 @@ async def retrieve_documents(
     """Retrieve documents from Azure Search using the given query vectors.
 
     Args:
-        embeddings: The embeddings for the search text.
+        embeddings_matrix: The embeddings for the search text.
         filter_query: The filter query.
         search_text: The search text.
         session_id: The session ID.
@@ -48,6 +52,7 @@ async def retrieve_documents(
                     fields=FIELD_NAME_CONTENT_VECTOR,
                     k_nearest_neighbors=10,
                 )
+                for embeddings in embeddings_matrix
             ],
             session_id=session_id,
         )
@@ -64,8 +69,10 @@ async def retrieve_documents(
 
             output.append(doc)
 
+        logger.info("Successfully retrieved documents from Azure Search")
         return output
     except HttpResponseError as e:
+        logger.warning("Failed to retrieve documents from Azure Search: %s", e)
         raise RequestFailureError(
             message="Failed to upload documents to Azure Search",
             status_code=e.status_code if e.status_code else 0,

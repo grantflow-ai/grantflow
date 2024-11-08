@@ -120,8 +120,10 @@ async def handle_tool_call_request(
     if response.choices[0].message.tool_calls and (
         content := response.choices[0].message.tool_calls[0].function.arguments
     ):
+        logger.info("Successfully generated text segment")
         return deserialize(content, GenerationResult)
 
+    logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
     raise OperationError(message="Response content is empty", context=response.model_dump_json())
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from asyncio import gather
 from hashlib import sha256
+from itertools import chain
 from typing import Final
 from uuid import uuid4
 
@@ -121,7 +122,7 @@ async def process_chunk(
         id=str(uuid4()),
         content=chunk["content"],
         content_hash=content_hash,
-        content_vector=embeddings,
+        content_vector=list(chain(*embeddings)),
         filename=filename,
         page_number=chunk["page_number"],
         parent_id=parent_id,
