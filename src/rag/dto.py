@@ -64,11 +64,27 @@ class RagRequest(TypedDict):
     """The user inputs"""
 
 
-class RagResponse(TypedDict):
-    """DTO for an API response."""
+class InnovationAndSignificanceGenerationResult(TypedDict):
+    """DTO for the result of generating the innovation and significance sections."""
 
-    text: str
-    """Markdown text of the section."""
+    innovation_text: str
+    """The generated text for the innovation section."""
+    significance_text: str
+    """The generated text for the significance section."""
+
+
+class ResearchPlanGenerationResult(TypedDict):
+    """DTO for the result of generating the research plan."""
+
+    research_plan_text: str
+    """The generated text for the research plan."""
+
+
+class ExecutiveSummaryGenerationResult(TypedDict):
+    """DTO for the result of generating the executive summary."""
+
+    executive_summary_text: str
+    """The generated text for the executive summary."""
 
 
 class DocumentDTO(TypedDict):

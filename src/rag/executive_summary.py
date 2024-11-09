@@ -1,8 +1,7 @@
 import logging
 from functools import partial
-from string import Template
 
-from src.rag.dto import GenerationResult
+from src.rag.dto import ExecutiveSummaryGenerationResult, GenerationResult
 from src.rag.prompts import (
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
     EXECUTIVE_SUMMARY_SYSTEM_PROMPT,
@@ -32,25 +31,17 @@ async def generate_executive_summary_text(
     Returns:
         GenerationResult: The generated text for the executive summary section.
     """
-    system_prompt = (
-        Template(EXECUTIVE_SUMMARY_SYSTEM_PROMPT)
-        .substitute(
-            part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-        )
-        .strip()
-    )
+    system_prompt = EXECUTIVE_SUMMARY_SYSTEM_PROMPT.substitute(
+        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
+    ).strip()
 
-    user_prompt = (
-        Template(EXECUTIVE_SUMMARY_USER_PROMPT)
-        .substitute(
-            application_title=application_title,
-            grant_funding_organization=grant_funding_organization,
-            cfp_title=cfp_title,
-            application_text=application_text,
-            previous_part_text=previous_part_text,
-        )
-        .strip()
-    )
+    user_prompt = EXECUTIVE_SUMMARY_USER_PROMPT.substitute(
+        application_title=application_title,
+        grant_funding_organization=grant_funding_organization,
+        cfp_title=cfp_title,
+        application_text=application_text,
+        previous_part_text=previous_part_text,
+    ).strip()
 
     return await handle_tool_call_request(
         system_prompt=system_prompt,
@@ -65,7 +56,7 @@ async def generate_executive_summary(
     cfp_title: str,
     application_text: str,
     workspace_id: str,
-) -> str:
+) -> ExecutiveSummaryGenerationResult:
     """Generate the executive summary for a grant application.
 
     Args:
@@ -93,4 +84,4 @@ async def generate_executive_summary(
     )
     logger.info("Generated executive summary")
 
-    return executive_summary
+    return ExecutiveSummaryGenerationResult(executive_summary_text=executive_summary)

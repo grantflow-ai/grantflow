@@ -1,12 +1,11 @@
 import logging
 from functools import partial
 from json import dumps
-from string import Template
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
 from src.rag.ai_search import retrieve_documents
-from src.rag.dto import DocumentDTO, GenerationResult
+from src.rag.dto import DocumentDTO, GenerationResult, InnovationAndSignificanceGenerationResult
 from src.rag.prompts import (
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
     INNOVATION_GENERATION_SYSTEM_PROMPT,
@@ -35,23 +34,15 @@ async def generate_significance_text(
     Returns:
         GenerationResult: The generated text for the significance section.
     """
-    system_prompt = (
-        Template(SIGNIFICANCE_GENERATION_SYSTEM_PROMPT)
-        .substitute(
-            part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-        )
-        .strip()
-    )
+    system_prompt = SIGNIFICANCE_GENERATION_SYSTEM_PROMPT.substitute(
+        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
+    ).strip()
 
-    user_prompt = (
-        Template(SIGNIFICANCE_GENERATION_USER_PROMPT)
-        .substitute(
-            significance_description=significance_description,
-            rag_results=dumps(retrieval_results),
-            previous_part_text=previous_part_text,
-        )
-        .strip()
-    )
+    user_prompt = SIGNIFICANCE_GENERATION_USER_PROMPT.substitute(
+        significance_description=significance_description,
+        rag_results=dumps(retrieval_results),
+        previous_part_text=previous_part_text,
+    ).strip()
 
     return await handle_tool_call_request(
         system_prompt=system_prompt,
@@ -76,24 +67,16 @@ async def generate_innovation_text(
     Returns:
         GenerationResult: The generated text for the innovation section.
     """
-    system_prompt = (
-        Template(INNOVATION_GENERATION_SYSTEM_PROMPT)
-        .substitute(
-            part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-        )
-        .strip()
-    )
+    system_prompt = INNOVATION_GENERATION_SYSTEM_PROMPT.substitute(
+        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
+    ).strip()
 
-    user_prompt = (
-        Template(INNOVATION_GENERATION_USER_PROMPT)
-        .substitute(
-            innovation_description=innovation_description,
-            significance_text=significance_text,
-            rag_results=dumps(retrieval_results),
-            previous_part_text=previous_part_text,
-        )
-        .strip()
-    )
+    user_prompt = INNOVATION_GENERATION_USER_PROMPT.substitute(
+        innovation_description=innovation_description,
+        significance_text=significance_text,
+        rag_results=dumps(retrieval_results),
+        previous_part_text=previous_part_text,
+    ).strip()
 
     return await handle_tool_call_request(
         system_prompt=system_prompt,
@@ -193,7 +176,7 @@ async def generate_significance_and_innovation(
     significance_id: str,
     innovation_id: str,
     workspace_id: str,
-) -> str:
+) -> InnovationAndSignificanceGenerationResult:
     """Generate the significance and innovation sections for a grant application.
 
     Args:
@@ -221,4 +204,6 @@ async def generate_significance_and_innovation(
     )
     logger.info("Generated innovation section: %s", innovation_text)
 
-    return f"{significance_text}\n\n{innovation_text}"
+    return InnovationAndSignificanceGenerationResult(
+        innovation_text=innovation_text, significance_text=significance_text
+    )

@@ -6,7 +6,14 @@ from typing import cast
 from azure.functions import HttpRequest, HttpResponse
 
 from src.constants import CONTENT_TYPE_JSON
-from src.rag.dto import APIError, RagRequest, RagResponse, ResearchAimDTO
+from src.rag.dto import (
+    APIError,
+    ExecutiveSummaryGenerationResult,
+    InnovationAndSignificanceGenerationResult,
+    RagRequest,
+    ResearchAimDTO,
+    ResearchPlanGenerationResult,
+)
 from src.rag.executive_summary import generate_executive_summary
 from src.rag.research_plan import generate_research_plan
 from src.rag.significance_and_innovation import generate_significance_and_innovation
@@ -15,6 +22,10 @@ from src.utils.serialization import deserialize, serialize
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
+
+GenerationResult = (
+    InnovationAndSignificanceGenerationResult | ResearchPlanGenerationResult | ExecutiveSummaryGenerationResult
+)
 
 
 async def handle_rag_request(req: HttpRequest) -> HttpResponse:
@@ -34,7 +45,7 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
 
         if isinstance(data, dict):
             logger.info("Generating significance and innovation text")
-            result = await generate_significance_and_innovation(
+            result: GenerationResult = await generate_significance_and_innovation(
                 significance_description=data["significance_description"],
                 significance_id=data["significance_id"],
                 innovation_description=data["innovation_description"],
@@ -59,7 +70,7 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
             )
         logger.info("RAG pipeline completed successfully")
         return HttpResponse(
-            body=serialize(RagResponse(text=result)),
+            body=serialize(result),
             status_code=HTTPStatus.CREATED,
             mimetype=CONTENT_TYPE_JSON,
         )
