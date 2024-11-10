@@ -25,9 +25,7 @@ export const mailingList = pgTable(
 		email: text("email").notNull().unique(),
 		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 	},
-	(table) => ({
-		emailIdx: index("idx_mailing_list_email").on(table.email),
-	}),
+	(table) => [index("idx_mailing_list_email").on(table.email)],
 );
 
 export const users = pgTable(
@@ -40,9 +38,7 @@ export const users = pgTable(
 		image: text("image"),
 		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 	},
-	(table) => ({
-		emailIdx: index("idx_users_email").on(table.email),
-	}),
+	(table) => [index("idx_users_email").on(table.email)],
 );
 
 export const accounts = pgTable(
@@ -62,11 +58,11 @@ export const accounts = pgTable(
 		id_token: text("id_token"),
 		session_state: text("session_state"),
 	},
-	(account) => ({
-		compoundKey: primaryKey({
+	(account) => [
+		primaryKey({
 			columns: [account.provider, account.providerAccountId],
 		}),
-	}),
+	],
 );
 
 export const sessions = pgTable("sessions", {
@@ -84,12 +80,12 @@ export const verificationTokens = pgTable(
 		token: text("token").notNull(),
 		expires: timestamp("expires", { mode: "date" }).notNull(),
 	},
-	(verificationToken) => ({
-		compositePk: primaryKey({
+	(verificationToken) => [
+		primaryKey({
 			columns: [verificationToken.identifier, verificationToken.token],
 		}),
-		tokenIdx: index("idx_verification_tokens_token").on(verificationToken.token),
-	}),
+		index("idx_verification_tokens_token").on(verificationToken.token),
+	],
 );
 
 export const authenticators = pgTable(
@@ -106,11 +102,11 @@ export const authenticators = pgTable(
 		credentialBackedUp: boolean("credentialBackedUp").notNull(),
 		transports: text("transports"),
 	},
-	(authenticator) => ({
-		compositePK: primaryKey({
+	(authenticator) => [
+		primaryKey({
 			columns: [authenticator.userId, authenticator.credentialID],
 		}),
-	}),
+	],
 );
 
 export const workspaces = pgTable(
@@ -121,9 +117,7 @@ export const workspaces = pgTable(
 		logoUrl: text("logo_url"),
 		description: text("description"),
 	},
-	(table) => ({
-		nameIdx: index("idx_workspaces_name").on(table.name),
-	}),
+	(table) => [index("idx_workspaces_name").on(table.name)],
 );
 
 export const workspaceUsers = pgTable(
@@ -137,10 +131,10 @@ export const workspaceUsers = pgTable(
 			.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		role: userRoleEnum("role").notNull(),
 	},
-	(table) => ({
-		pk: primaryKey({ columns: [table.workspaceId, table.userId] }),
-		uniqueWorkspaceUser: unique("unique_workspace_user").on(table.workspaceId, table.userId),
-	}),
+	(table) => [
+		primaryKey({ columns: [table.workspaceId, table.userId] }),
+		unique("unique_workspace_user").on(table.workspaceId, table.userId),
+	],
 );
 
 export const fundingOrganizations = pgTable(
@@ -150,9 +144,7 @@ export const fundingOrganizations = pgTable(
 		name: varchar("name", { length: 255 }).notNull(),
 		logoUrl: text("logo_url"),
 	},
-	(table) => ({
-		nameIdx: index("idx_funding_organization_name").on(table.name),
-	}),
+	(table) => [index("idx_funding_organization_name").on(table.name)],
 );
 
 export const grantCfps = pgTable(
@@ -170,9 +162,7 @@ export const grantCfps = pgTable(
 		title: varchar("title", { length: 255 }).notNull(),
 		url: text("url"),
 	},
-	(table) => ({
-		codeIdx: index("idx_grant_cfps_identifier").on(table.code),
-	}),
+	(table) => [index("idx_grant_cfps_identifier").on(table.code)],
 );
 
 export const grantApplications = pgTable("grant_applications", {
