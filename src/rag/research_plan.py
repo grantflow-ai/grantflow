@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 async def generate_research_aim_text(
     previous_part_text: str | None,
+    *,
     research_aim: ResearchAimDTO,
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResult:
@@ -53,8 +54,9 @@ async def generate_research_aim_text(
 
 
 async def generate_research_plan_text(
-    application_title: str,
     previous_part_text: str | None,
+    *,
+    application_title: str,
     research_aims_texts: list[str],
 ) -> GenerationResult:
     """Generate a part of the research plan text.
@@ -99,8 +101,14 @@ async def handle_research_aim_text_generation(
     search_queries = await create_search_queries(
         RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=dumps(research_aim)),
     )
-    parent_ids = [research_aim["id"], *(task["id"] for task in research_aim["tasks"])]
-    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and {FIELD_NAME_PARENT_ID} in '({parent_ids})'"
+    parent_id_filter = " or ".join(
+        [
+            f"{FIELD_NAME_PARENT_ID} eq '{value}'"
+            for value in [research_aim["id"], *(task["id"] for task in research_aim["tasks"])]
+        ]
+    )
+    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({parent_id_filter})"
+
     query_embeddings = await generate_embeddings(search_queries)
     search_text = " | ".join([f'"{query}"' for query in search_queries])
 

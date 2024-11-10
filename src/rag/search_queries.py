@@ -64,17 +64,6 @@ sources.
    - Find supporting evidence for significance claims
    - Locate methodological innovations in the field
 
-## Response Format:
-Return a JSON object strictly adhering to the following structure:
-
-```json
-{
-    "queries": [
-        "...",
-    ]
-}
-```
-
 ## Guidelines:
 - Include technical terminology specific to the research domain
 - Target evidence supporting significance claims
@@ -121,16 +110,18 @@ async def create_search_queries(
         temperature=0.0,
         tools=tools,
     )
-    logger.debug("Received response from OpenAI: %s", response.model_dump_json())
 
     tool_calls = response.choices[0].message.tool_calls
     if not tool_calls:
-        logger.warning("OpenAI response does not contain the expected tool call, raising OperationError")
+        logger.warning(
+            "OpenAI response does not contain the expected tool call, raising OperationError. Response: %s",
+            response.model_dump_json(),
+        )
         raise OperationError(message="OpenAI response does not contain the expected tool call")
 
     content = deserialize(tool_calls[0].function.arguments, ToolResponse)
     if not content or not content.get("queries"):
-        logger.warning("OpenAI response is empty, raising OperationError")
+        logger.warning("OpenAI response is empty, raising OperationError. Response: %s", response.model_dump_json())
         raise OperationError(message="OpenAI response is empty")
 
     logger.debug("Generated search queries: %s", ",".join(content))

@@ -9,10 +9,11 @@ from src.constants import CONTENT_TYPE_JSON
 from src.rag.dto import (
     APIError,
     ExecutiveSummaryGenerationResult,
+    FormPrefillRequest,
     InnovationAndSignificanceGenerationResult,
-    RagRequest,
     ResearchAimDTO,
     ResearchPlanGenerationResult,
+    SectionGenerationRequest,
 )
 from src.rag.executive_summary import generate_executive_summary
 from src.rag.research_plan import generate_research_plan
@@ -28,8 +29,8 @@ GenerationResult = (
 )
 
 
-async def handle_rag_request(req: HttpRequest) -> HttpResponse:
-    """Handle a request to the RAG API.
+async def handle_section_generation_request(req: HttpRequest) -> HttpResponse:
+    """Handle a request to generate a section of a grant application.
 
     Args:
         req: An Azure Function HttpRequest object.
@@ -40,7 +41,7 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
     logger.info("Beginning RAG pipeline")
 
     try:
-        request_body = deserialize(req.get_body(), RagRequest)
+        request_body = deserialize(req.get_body(), SectionGenerationRequest)
         data = request_body["data"]
 
         if isinstance(data, dict):
@@ -71,6 +72,42 @@ async def handle_rag_request(req: HttpRequest) -> HttpResponse:
         logger.info("RAG pipeline completed successfully")
         return HttpResponse(
             body=serialize(result),
+            status_code=HTTPStatus.CREATED,
+            mimetype=CONTENT_TYPE_JSON,
+        )
+    except DeserializationError as e:
+        logger.error("Failed to deserialize the request body: %s", e)
+        return HttpResponse(
+            status_code=HTTPStatus.BAD_REQUEST,
+            body=serialize(
+                APIError(
+                    message="Failed to deserialize the request body",
+                    details=str(e),
+                )
+            ),
+            mimetype=CONTENT_TYPE_JSON,
+        )
+
+
+async def handle_application_form_prefill(req: HttpRequest) -> HttpResponse:
+    """Handle a request to prefill an application form.
+
+    Args:
+        req: An Azure Function HttpRequest object.
+
+    Returns:
+        An Azure Function HttpResponse object.
+    """
+    logger.info("Beginning application form prefill")
+
+    try:
+        request_body = deserialize(req.get_body(), FormPrefillRequest)
+        workspace_d = request_body["workspace_id"]
+        application_id = request_body["application_id"]
+        logger.info("Prefilling form for workspace %s and application %s", workspace_d, application_id)
+
+        return HttpResponse(
+            body=serialize(None),
             status_code=HTTPStatus.CREATED,
             mimetype=CONTENT_TYPE_JSON,
         )
