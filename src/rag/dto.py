@@ -49,7 +49,7 @@ class SignificanceAndInnovationDTO(TypedDict):
     """The user input describing the innovation of the research."""
 
 
-class RagRequest(TypedDict):
+class SectionGenerationRequest(TypedDict):
     """DTO for a RAG request for the research-plan section."""
 
     workspace_id: str
@@ -62,6 +62,15 @@ class RagRequest(TypedDict):
     """The funding organization for the grant"""
     data: str | SignificanceAndInnovationDTO | list[ResearchAimDTO]
     """The user inputs"""
+
+
+class FormPrefillRequest(TypedDict):
+    """DTO for a form prefill request."""
+
+    workspace_id: str
+    """The workspace ID."""
+    application_id: str
+    """The application ID."""
 
 
 class InnovationAndSignificanceGenerationResult(TypedDict):

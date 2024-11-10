@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="http_requests | Research Plan Section" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" nameIsGenerated="true" path="$PROJECT_DIR$/tests/rag/http_requests.http" index="2" requestIdentifier="Research Plan Section" runType="Run single request">
+    <method v="2" />
+  </configuration>
+</component>
