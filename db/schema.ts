@@ -15,6 +15,16 @@ import {
 import type { AdapterAccountType } from "next-auth/adapters";
 import { relations } from "drizzle-orm";
 
+export type FileMapping = Record<
+	string, // the remote URL/identifier in storage
+	{
+		// file attributes, to be displayed in the frontend
+		name: string;
+		type: string;
+		size: number;
+	}
+>;
+
 export const userRoleEnum = pgEnum("user_role", ["owner", "admin", "member"]);
 export const applicationStatus = pgEnum("application_status", ["draft", "completed"]);
 
@@ -179,38 +189,38 @@ export const grantApplications = pgTable("grant_applications", {
 });
 
 export const grantApplicationRelations = relations(grantApplications, ({ one }) => ({
-	significance: one(researchSignificance),
-	innovation: one(researchInnovation),
+	significance: one(researchSignificances),
+	innovation: one(researchInnovations),
 }));
 
-export const researchSignificance = pgTable("research_significance", {
+export const researchSignificances = pgTable("research_significances", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	applicationId: uuid("application_id")
 		.notNull()
 		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	text: text("text").notNull(),
-	files: json().$type<Record<string, string>>(),
+	files: json().$type<FileMapping>(),
 });
 
-export const researchSignificanceRelations = relations(researchSignificance, ({ one }) => ({
+export const researchSignificancesRelations = relations(researchSignificances, ({ one }) => ({
 	application: one(grantApplications, {
-		fields: [researchSignificance.applicationId],
+		fields: [researchSignificances.applicationId],
 		references: [grantApplications.id],
 	}),
 }));
 
-export const researchInnovation = pgTable("research_innovation", {
+export const researchInnovations = pgTable("research_innovations", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	applicationId: uuid("application_id")
 		.notNull()
 		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	text: text("text").notNull(),
-	files: json().$type<Record<string, string>>(),
+	files: json().$type<FileMapping>(),
 });
 
-export const researchInnovationRelations = relations(researchInnovation, ({ one }) => ({
+export const researchInnovationRelations = relations(researchInnovations, ({ one }) => ({
 	application: one(grantApplications, {
-		fields: [researchInnovation.applicationId],
+		fields: [researchInnovations.applicationId],
 		references: [grantApplications.id],
 	}),
 }));
@@ -222,7 +232,7 @@ export const researchAims = pgTable("research_aims", {
 		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	title: varchar("title", { length: 255 }).notNull(),
 	description: text("description").notNull(),
-	files: json().$type<Record<string, string>>(),
+	files: json().$type<FileMapping>(),
 	requiresClinicalTrials: boolean("requires_clinical_trials").notNull().default(false),
 });
 
@@ -233,5 +243,5 @@ export const researchTasks = pgTable("research_tasks", {
 		.references(() => researchAims.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	title: varchar("title", { length: 255 }).notNull(),
 	description: text("description").notNull(),
-	files: json().$type<Record<string, string>>(),
+	files: json().$type<FileMapping>(),
 });

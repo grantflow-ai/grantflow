@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { formatBytes } from "@/utils/format";
-import { Paperclip, Upload, X } from "lucide-react";
+import { Paperclip, Upload } from "lucide-react";
 
 const DEFAULT_FILE_ACCEPTS = {
 	"application/pdf": [".pdf"],
@@ -35,8 +35,6 @@ export function FileUploader({
 	fieldName: string;
 	isDropZone?: boolean;
 }) {
-	const [files, setFiles] = useState<File[]>([]);
-
 	const validateFileUploads = useCallback(
 		(newFileUploads: File[]) => {
 			const totalFiles = currentFileCount + newFileUploads.length;
@@ -60,7 +58,6 @@ export function FileUploader({
 	const handleFilesAdded = useCallback(
 		(newFiles: File[]) => {
 			if (validateFileUploads(newFiles)) {
-				setFiles((prevFiles) => [...prevFiles, ...newFiles]);
 				onFilesAdded(newFiles);
 			}
 		},
@@ -81,26 +78,21 @@ export function FileUploader({
 		disabled: currentFileCount >= maxFileCount,
 	});
 
-	const removeFile = (fileToRemove: File) => {
-		setFiles(files.filter((file) => file !== fileToRemove));
-	};
-
-	const renderDropZone = () => (
-		<div
-			{...getRootProps()}
-			className={`p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
-				isDragActive ? "border-primary bg-primary/10" : "border-gray-300 hover:border-primary"
-			}`}
-		>
-			<input {...getInputProps()} />
-			<Upload className="mx-auto h-12 w-12 text-gray-400" />
-			<p className="mt-2 text-sm text-gray-600">
-				Drag &#39;n&#39; drop some files here, or click to select files
-			</p>
-		</div>
-	);
-
-	const renderFileInput = () => (
+	if (isDropZone) {
+		return (
+			<div
+				{...getRootProps()}
+				className={`p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
+					isDragActive ? "border-primary bg-primary/10" : "border-gray-300 hover:border-primary"
+				}`}
+			>
+				<input {...getInputProps()} />
+				<Upload className="mx-auto h-12 w-12 text-gray-400" />
+				<p className="mt-2 text-sm text-gray-600">Drag &#39;n&#39; drop files here, or click to select files</p>
+			</div>
+		);
+	}
+	return (
 		<div className="relative">
 			<input
 				type="file"
@@ -124,30 +116,6 @@ export function FileUploader({
 				<Paperclip className="mr-2 h-4 w-4" />
 				<span className="text-sm">Upload Files</span>
 			</label>
-		</div>
-	);
-
-	return (
-		<div className="w-full max-w-md mx-auto">
-			{isDropZone ? renderDropZone() : renderFileInput()}
-			{files.length > 0 && (
-				<ul className="mt-4 space-y-2">
-					{files.map((file, index) => (
-						<li key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded">
-							<span className="text-sm truncate">{file.name}</span>
-							<button
-								onClick={() => {
-									removeFile(file);
-								}}
-								className="p-1 text-gray-500 hover:text-red-500"
-								aria-label={`Remove ${file.name}`}
-							>
-								<X className="h-4 w-4" />
-							</button>
-						</li>
-					))}
-				</ul>
-			)}
 		</div>
 	);
 }
