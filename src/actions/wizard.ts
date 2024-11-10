@@ -2,7 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { getDatabaseClient } from "db/connection";
-import { grantApplications, researchAims, researchInnovation, researchSignificance, researchTasks } from "db/schema";
+import { grantApplications, researchAims, researchInnovations, researchSignificances, researchTasks } from "db/schema";
 import {
 	GrantApplication,
 	NewGrantApplication,
@@ -99,10 +99,10 @@ export async function upsertResearchInnovation(
 		const db = getDatabaseClient();
 
 		const [innovation] = await db
-			.insert(researchInnovation)
+			.insert(researchInnovations)
 			.values(values as NewResearchInnovation)
 			.onConflictDoUpdate({
-				target: researchInnovation.id,
+				target: researchInnovations.id,
 				set: dropId(values as ResearchInnovation),
 			})
 			.returning();
@@ -131,10 +131,10 @@ export async function upsertResearchSignificance(
 		const db = getDatabaseClient();
 
 		const [significance] = await db
-			.insert(researchSignificance)
+			.insert(researchSignificances)
 			.values(values as NewResearchSignificance)
 			.onConflictDoUpdate({
-				target: researchSignificance.id,
+				target: researchSignificances.id,
 				set: dropId(values as ResearchSignificance),
 			})
 			.returning();

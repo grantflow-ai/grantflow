@@ -1,6 +1,7 @@
 "use server";
 
 import { getBlobClient } from "@/utils/blob-storage";
+import { FileMapping } from "db/schema";
 
 /**
  * Upload files to Azure Blob Storage.
@@ -29,10 +30,17 @@ export async function uploadFiles({
 			blobHTTPHeaders: { blobContentType: file.type },
 		});
 
-		return [file.name, client.url];
+		return [
+			client.url,
+			{
+				name: file.name,
+				size: file.size,
+				type: file.type,
+			},
+		];
 	});
 
 	const results = await Promise.all(promises);
 
-	return Object.fromEntries(results as [string, string][]);
+	return Object.fromEntries(results) as FileMapping;
 }

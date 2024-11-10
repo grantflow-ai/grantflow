@@ -13,20 +13,20 @@ import { useShallow } from "zustand/react/shallow";
 import { Textarea } from "gen/ui/textarea";
 import { uploadFiles } from "@/actions/file";
 import { FileUploader } from "@/components/file-uploader";
-import { FilesDisplay } from "@/components/files-display";
+import { FileAttributes, FilesDisplay } from "@/components/files-display";
 import { cn } from "gen/cn";
 
 const researchTaskSchema = z.object({
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().min(20, "Description must be at least 20 characters"),
-	files: z.array(z.custom<File>()),
+	files: z.array(z.custom<FileAttributes>()),
 });
 
 const researchAimSchema = z.object({
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().min(20, "Description must be at least 20 characters"),
 	requiresClinicalTrials: z.boolean().optional(),
-	files: z.array(z.custom<File>()),
+	files: z.array(z.custom<FileAttributes>()),
 	tasks: z.array(researchTaskSchema).min(1, "At least one research task is required"),
 });
 
@@ -145,6 +145,12 @@ function ResearchTaskForm({
 						<FormControl>
 							<Textarea
 								{...field}
+								ref={(textarea) => {
+									if (textarea) {
+										textarea.style.height = "0px";
+										textarea.style.height = `${textarea.scrollHeight}px`;
+									}
+								}}
 								disabled={loading}
 								placeholder="Enter the task description"
 								data-testid={`task-description-input-${aimIndex}-${taskIndex}`}
@@ -334,6 +340,12 @@ function ResearchAimForm({
 						<FormControl>
 							<Textarea
 								{...field}
+								ref={(textarea) => {
+									if (textarea) {
+										textarea.style.height = "0px";
+										textarea.style.height = `${textarea.scrollHeight}px`;
+									}
+								}}
 								id={`researchAims.${index}.description`}
 								disabled={loading}
 								placeholder="Enter the Research Aim Description"
@@ -482,12 +494,14 @@ export function ResearchPlanForm({
 	onPressNext: () => void;
 	onPressPrevious: () => void;
 }) {
-	const { updateResearchAim, updateResearchTask, loading } = useWizardStore({
+	const { updateResearchAim, updateResearchTask, loading, researchAims, researchTasks } = useWizardStore({
 		workspaceId,
 	})(
 		useShallow((state) => ({
 			updateResearchAim: state.updateResearchAim,
 			updateResearchTask: state.updateResearchTask,
+			researchAims: state.researchAims,
+			researchTasks: state.researchTasks,
 			loading: state.loading,
 		})),
 	);
@@ -495,15 +509,29 @@ export function ResearchPlanForm({
 	const form = useForm<ResearchPlanFormValues>({
 		resolver: zodResolver(researchPlanFormSchema),
 		defaultValues: {
-			researchAims: [
-				{
-					title: "",
-					description: "",
-					requiresClinicalTrials: false,
-					files: [],
-					tasks: [{ title: "", description: "", files: [] }],
-				},
-			],
+			researchAims: researchAims.length
+				? researchAims.map(({ title, description, requiresClinicalTrials, files: aimFiles, id }) => ({
+						title,
+						description,
+						requiresClinicalTrials,
+						files: aimFiles ? Object.values(aimFiles) : [],
+						tasks: researchTasks
+							.filter((task) => task.aimId === id)
+							.map(({ title, description, files: taskFiles }) => ({
+								title,
+								description,
+								files: taskFiles ? Object.values(taskFiles) : [],
+							})),
+					}))
+				: [
+						{
+							title: "",
+							description: "",
+							requiresClinicalTrials: false,
+							files: [],
+							tasks: [{ title: "", description: "", files: [] }],
+						},
+					],
 		},
 	});
 
@@ -521,12 +549,17 @@ export function ResearchPlanForm({
 
 			if (upsertedAim) {
 				if (aimFiles.length) {
+					const newFiles = aimFiles.filter((file) => !(file instanceof File)) as File[];
+					const newFileNames = new Set(newFiles.map((file) => file.name));
 					const fileMapping = await uploadFiles({
 						workspaceId,
 						parentId: upsertedAim.id,
-						files: aimFiles,
+						files: newFiles,
 					});
-					await updateResearchAim({ ...upsertedAim, files: fileMapping });
+					const filteredFiles = Object.fromEntries(
+						Object.entries(upsertedAim.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
+					);
+					await updateResearchAim({ ...upsertedAim, files: { ...filteredFiles, ...fileMapping } });
 				}
 
 				const taskPromises = aim.tasks.map(async ({ files: taskFiles, ...task }) => {
@@ -536,13 +569,24 @@ export function ResearchPlanForm({
 					});
 
 					if (upsertedTask && taskFiles.length) {
+						const newFiles = taskFiles.filter((file) => file instanceof File);
+						const newFileNames = new Set(newFiles.map((file) => file.name));
 						const fileMapping = await uploadFiles({
 							workspaceId,
 							parentId: upsertedTask.id,
-							files: taskFiles,
+							files: newFiles,
 						});
+						const filteredFiles = Object.fromEntries(
+							Object.entries(upsertedTask.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
+						);
 
-						await updateResearchTask({ ...upsertedTask, files: fileMapping });
+						await updateResearchTask({
+							...upsertedTask,
+							files: {
+								...filteredFiles,
+								...fileMapping,
+							},
+						});
 					}
 				});
 

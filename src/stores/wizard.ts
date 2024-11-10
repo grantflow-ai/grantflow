@@ -1,5 +1,4 @@
 import { create, type StoreApi, UseBoundStore } from "zustand";
-import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import {
 	GrantApplication,
 	NewGrantApplication,
@@ -190,14 +189,7 @@ const stores = new Map<string, UseBoundStore<StoreApi<WizardStore>>>();
 export const useWizardStore = (values: Pick<WizardStoreInit, "workspaceId"> & Partial<WizardStoreInit>) => {
 	let store = stores.get(values.workspaceId);
 	if (!store) {
-		store = create(
-			devtools(
-				persist((set, get) => createWizardStore(values)(set, get), {
-					name: `wizard-stores-${values.workspaceId}`,
-					storage: createJSONStorage(() => localStorage),
-				}),
-			),
-		);
+		store = create((set, get) => createWizardStore(values)(set, get));
 		stores.set(values.workspaceId, store);
 	}
 	return store;

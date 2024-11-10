@@ -71,14 +71,14 @@ CREATE TABLE IF NOT EXISTS "research_aims" (
 	"requires_clinical_trials" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "research_innovation" (
+CREATE TABLE IF NOT EXISTS "research_innovations" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"application_id" uuid NOT NULL,
 	"text" text NOT NULL,
 	"files" json
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "research_significance" (
+CREATE TABLE IF NOT EXISTS "research_significances" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"application_id" uuid NOT NULL,
 	"text" text NOT NULL,
@@ -168,13 +168,13 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "research_innovation" ADD CONSTRAINT "research_innovation_application_id_grant_applications_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."grant_applications"("id") ON DELETE cascade ON UPDATE cascade;
+ ALTER TABLE "research_innovations" ADD CONSTRAINT "research_innovations_application_id_grant_applications_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."grant_applications"("id") ON DELETE cascade ON UPDATE cascade;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "research_significance" ADD CONSTRAINT "research_significance_application_id_grant_applications_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."grant_applications"("id") ON DELETE cascade ON UPDATE cascade;
+ ALTER TABLE "research_significances" ADD CONSTRAINT "research_significances_application_id_grant_applications_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."grant_applications"("id") ON DELETE cascade ON UPDATE cascade;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

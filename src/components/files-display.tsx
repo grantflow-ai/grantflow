@@ -3,7 +3,9 @@ import { FileTextIcon, X } from "lucide-react";
 import { formatBytes } from "@/utils/format";
 import { Button } from "gen/ui/button";
 
-export function FilePreview({ file, previewUrl }: { file: File; previewUrl?: string }) {
+export type FileAttributes = Pick<File, "name" | "type" | "size">;
+
+export function FilePreview({ file, previewUrl }: { file: FileAttributes; previewUrl?: string }) {
 	if (previewUrl) {
 		return (
 			<Image
@@ -29,7 +31,7 @@ export function FileCard({
 	handleRemoveFile,
 	previewUrl,
 }: {
-	file: File;
+	file: FileAttributes;
 	handleRemoveFile: () => void;
 	previewUrl?: string;
 }) {
@@ -62,11 +64,18 @@ export function FileCard({
 	);
 }
 
-export function FilesDisplay({ files, onFileRemoved }: { files: File[]; onFileRemoved: (file: File) => void }) {
+export function FilesDisplay({
+	files,
+	onFileRemoved,
+}: {
+	files: (FileAttributes | File)[];
+	onFileRemoved: (file: FileAttributes) => void;
+}) {
 	return files.length ? (
 		<div className="space-y-2 flex flex-col gap-1" data-testid="files-display">
 			{files.map((file, index) => {
-				const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
+				const previewUrl =
+					file.type.startsWith("image/") && file instanceof Blob ? URL.createObjectURL(file) : undefined;
 				return (
 					<FileCard
 						key={file.name + index.toString()}
