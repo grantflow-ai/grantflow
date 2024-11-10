@@ -1,6 +1,13 @@
 import { getDatabaseClient } from "db/connection";
 import { eq, inArray } from "drizzle-orm";
-import { grantApplications, grantCfps } from "db/schema";
+import {
+	grantApplications,
+	grantCfps,
+	researchAims,
+	researchInnovations,
+	researchSignificances,
+	researchTasks,
+} from "db/schema";
 import { redirect } from "next/navigation";
 import { PagePath } from "@/enums";
 import { GrantApplicationWizard } from "@/components/workspaces/detail/applications/grant-application-wizard";
@@ -16,12 +23,30 @@ export default async function ApplicationDetailPage(props: {
 
 	if (!workspaceId || !applicationId) {
 		redirect(PagePath.WORKSPACES);
-		return null;
 	}
 
 	const db = getDatabaseClient();
 	const application = await db.query.grantApplications.findFirst({
 		where: eq(grantApplications.id, applicationId),
+	});
+
+	const signficance = await db.query.researchSignificances.findFirst({
+		where: eq(researchSignificances.applicationId, applicationId),
+	});
+
+	const innovation = await db.query.researchInnovations.findFirst({
+		where: eq(researchInnovations.applicationId, applicationId),
+	});
+
+	const aims = await db.query.researchAims.findMany({
+		where: eq(researchAims.applicationId, applicationId),
+	});
+
+	const tasks = await db.query.researchTasks.findMany({
+		where: inArray(
+			researchTasks.aimId,
+			aims.map((aim) => aim.id),
+		),
 	});
 
 	if (!application) {
@@ -61,7 +86,15 @@ export default async function ApplicationDetailPage(props: {
 							<h1 className="text-2xl bold">Grant Application Wizard</h1>
 						</section>
 						<section>
-							<GrantApplicationWizard cfps={cfps} workspaceId={workspaceId} application={application} />
+							<GrantApplicationWizard
+								cfps={cfps}
+								workspaceId={workspaceId}
+								application={application}
+								innovation={innovation}
+								significance={signficance}
+								researchAims={aims}
+								researchTasks={tasks}
+							/>
 						</section>
 					</div>
 				</div>

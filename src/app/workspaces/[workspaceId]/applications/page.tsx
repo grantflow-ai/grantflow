@@ -15,7 +15,6 @@ export default async function ApplicationCreatePage(props: {
 
 	if (!workspaceId) {
 		redirect(PagePath.WORKSPACES);
-		return null;
 	}
 
 	const db = getDatabaseClient();
