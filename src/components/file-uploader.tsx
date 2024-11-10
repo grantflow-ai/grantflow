@@ -1,18 +1,19 @@
-import { type ChangeEvent, useCallback } from "react";
+import React, { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { formatBytes } from "@/utils/format";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Upload, X } from "lucide-react";
 
-const DEFAULT_FILE_ACCEPTS = [
-	"application/pdf",
-	"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-	"application/vnd.openxmlformats-officedocument.presentationml.presentation",
-	"image/jpeg",
-	"image/png",
-	"text/csv",
-	"text/plain",
-];
+const DEFAULT_FILE_ACCEPTS = {
+	"application/pdf": [".pdf"],
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".doc", ".docx"],
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xls", ".xlsx"],
+	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".ppt", ".pptx"],
+	"image/jpeg": [".jpeg", ".jpg"],
+	"image/png": [".png"],
+	"text/csv": [".csv"],
+	"text/plain": [".txt"],
+};
 
 const DEFAULT_MAX_SIZE = 20 * 1024 * 1024;
 const DEFAULT_MAX_FILES = Infinity;
@@ -21,18 +22,20 @@ export function FileUploader({
 	accept = DEFAULT_FILE_ACCEPTS,
 	maxSize = DEFAULT_MAX_SIZE,
 	maxFileCount = DEFAULT_MAX_FILES,
-	currentFileCount,
+	currentFileCount = 0,
 	onFilesAdded,
 	fieldName,
+	isDropZone = false,
 }: {
-	accept?: string[];
+	accept?: Record<string, string[]>;
 	maxSize?: number;
 	maxFileCount?: number;
-	currentFileCount: number;
+	currentFileCount?: number;
 	onFilesAdded: (files: File[]) => void;
 	fieldName: string;
+	isDropZone?: boolean;
 }) {
-	const isDisabled = currentFileCount >= maxFileCount;
+	const [files, setFiles] = useState<File[]>([]);
 
 	const validateFileUploads = useCallback(
 		(newFileUploads: File[]) => {
@@ -54,32 +57,63 @@ export function FileUploader({
 		[currentFileCount, maxFileCount, maxSize],
 	);
 
-	const handleFileChange = useCallback(
-		(event: ChangeEvent<HTMLInputElement>) => {
-			if (!event.target.files) {
-				return;
-			}
-
-			const newFiles = [...event.target.files];
-
+	const handleFilesAdded = useCallback(
+		(newFiles: File[]) => {
 			if (validateFileUploads(newFiles)) {
+				setFiles((prevFiles) => [...prevFiles, ...newFiles]);
 				onFilesAdded(newFiles);
 			}
-
-			event.target.value = "";
 		},
-		[onFilesAdded, validateFileUploads],
+		[validateFileUploads, onFilesAdded],
 	);
 
-	return (
+	const onDrop = useCallback(
+		(acceptedFiles: File[]) => {
+			handleFilesAdded(acceptedFiles);
+		},
+		[handleFilesAdded],
+	);
+
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+		onDrop,
+		accept,
+		maxSize,
+		disabled: currentFileCount >= maxFileCount,
+	});
+
+	const removeFile = (fileToRemove: File) => {
+		setFiles(files.filter((file) => file !== fileToRemove));
+	};
+
+	const renderDropZone = () => (
+		<div
+			{...getRootProps()}
+			className={`p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
+				isDragActive ? "border-primary bg-primary/10" : "border-gray-300 hover:border-primary"
+			}`}
+		>
+			<input {...getInputProps()} />
+			<Upload className="mx-auto h-12 w-12 text-gray-400" />
+			<p className="mt-2 text-sm text-gray-600">
+				Drag &#39;n&#39; drop some files here, or click to select files
+			</p>
+		</div>
+	);
+
+	const renderFileInput = () => (
 		<div className="relative">
 			<input
 				type="file"
 				id={`file-upload-${fieldName}`}
 				data-testid="file-input"
-				accept={accept.join(", ")}
-				disabled={isDisabled}
-				onChange={handleFileChange}
+				accept={Object.keys(accept).join(", ")}
+				disabled={currentFileCount >= maxFileCount}
+				onChange={(e) => {
+					if (e.target.files) {
+						handleFilesAdded([...e.target.files]);
+					}
+					e.target.value = "";
+				}}
 				multiple={true}
 				className="sr-only"
 			/>
@@ -90,6 +124,30 @@ export function FileUploader({
 				<Paperclip className="mr-2 h-4 w-4" />
 				<span className="text-sm">Upload Files</span>
 			</label>
+		</div>
+	);
+
+	return (
+		<div className="w-full max-w-md mx-auto">
+			{isDropZone ? renderDropZone() : renderFileInput()}
+			{files.length > 0 && (
+				<ul className="mt-4 space-y-2">
+					{files.map((file, index) => (
+						<li key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded">
+							<span className="text-sm truncate">{file.name}</span>
+							<button
+								onClick={() => {
+									removeFile(file);
+								}}
+								className="p-1 text-gray-500 hover:text-red-500"
+								aria-label={`Remove ${file.name}`}
+							>
+								<X className="h-4 w-4" />
+							</button>
+						</li>
+					))}
+				</ul>
+			)}
 		</div>
 	);
 }
