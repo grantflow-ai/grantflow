@@ -15,18 +15,19 @@ import { uploadFiles } from "@/actions/file";
 import { FileUploader } from "@/components/file-uploader";
 import { FileAttributes, FilesDisplay } from "@/components/files-display";
 import { cn } from "gen/cn";
+import { filterFiles } from "@/utils/file";
 
 const researchTaskSchema = z.object({
 	id: z.string().optional(),
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
-	description: z.string().min(20, "Description must be at least 20 characters"),
+	description: z.string().optional(),
 	files: z.array(z.custom<FileAttributes>()),
 });
 
 const researchAimSchema = z.object({
 	id: z.string().optional(),
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
-	description: z.string().min(20, "Description must be at least 20 characters"),
+	description: z.string().optional(),
 	requiresClinicalTrials: z.boolean().optional(),
 	files: z.array(z.custom<FileAttributes>()),
 	tasks: z.array(researchTaskSchema).min(1, "At least one research task is required"),
@@ -73,7 +74,9 @@ function ResearchTaskForm({
 				render={({ field }) => (
 					<FormItem>
 						<div className="flex items-center gap-2">
-							<FormLabel data-testid={`task-title-label-${aimIndex}-${taskIndex}`}>Task Title</FormLabel>
+							<FormLabel className="text-xl" data-testid={`task-title-label-${aimIndex}-${taskIndex}`}>
+								Task Title
+							</FormLabel>
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Button
@@ -124,7 +127,10 @@ function ResearchTaskForm({
 				render={({ field }) => (
 					<FormItem>
 						<div className="flex items-center gap-2">
-							<FormLabel data-testid={`task-description-label-${aimIndex}-${taskIndex}`}>
+							<FormLabel
+								className="text-xl"
+								data-testid={`task-description-label-${aimIndex}-${taskIndex}`}
+							>
 								Task Description
 							</FormLabel>
 							<Tooltip>
@@ -165,12 +171,10 @@ function ResearchTaskForm({
 								aria-live="polite"
 								className={cn(
 									"text-xs text-muted-foreground transition-colors duration-200",
-									field.value.length < 20 && "text-red-500",
-									field.value.length >= 20 && "text-green-500",
+									"text-green-500",
 								)}
 							>
 								{field.value.length} characters
-								{field.value.length < 20 && ` (${20 - field.value.length} more required)`}
 							</p>
 						)}
 						<FormMessage />
@@ -182,7 +186,9 @@ function ResearchTaskForm({
 				name={`researchAims.${aimIndex}.tasks.${taskIndex}.files`}
 				render={({ field }) => (
 					<FormItem>
-						<FormLabel data-testid={`task-files-label-${aimIndex}-${taskIndex}`}>Task Files</FormLabel>
+						<FormLabel className="text-xl" data-testid={`task-files-label-${aimIndex}-${taskIndex}`}>
+							Task Files
+						</FormLabel>
 						<FilesDisplay
 							files={field.value}
 							onFileRemoved={(files) => {
@@ -250,7 +256,7 @@ function ResearchAimForm({
 						<div className="flex items-center gap-2">
 							<FormLabel
 								htmlFor={`researchAims.${index}.title`}
-								className="flex items-center gap-2"
+								className="text-xl"
 								data-testid={`research-aim-form-title-label-${index}`}
 							>
 								Research Aim Title
@@ -314,7 +320,7 @@ function ResearchAimForm({
 						<div className="flex items-center gap-2">
 							<FormLabel
 								htmlFor={`researchAims.${index}.description`}
-								className="flex items-center gap-2"
+								className="text-xl"
 								data-testid={`research-aim-form-description-label-${index}`}
 							>
 								Research Aim Description
@@ -364,12 +370,10 @@ function ResearchAimForm({
 								aria-live="polite"
 								className={cn(
 									"text-xs text-muted-foreground transition-colors duration-200",
-									field.value.length < 20 && "text-red-500",
-									field.value.length >= 20 && "text-green-500",
+									"text-green-500",
 								)}
 							>
 								{field.value.length} characters
-								{field.value.length < 20 && ` (${20 - field.value.length} more required)`}
 							</p>
 						)}
 						<FormMessage />
@@ -433,7 +437,9 @@ function ResearchAimForm({
 				name={`researchAims.${index}.files`}
 				render={({ field }) => (
 					<FormItem>
-						<FormLabel data-testid={`research-aim-form-files-label-${index}`}>Research Aim Files</FormLabel>
+						<FormLabel className="text-xl" data-testid={`research-aim-form-files-label-${index}`}>
+							Research Aim Files
+						</FormLabel>
 						<FilesDisplay
 							files={field.value}
 							onFileRemoved={(files) => {
@@ -541,63 +547,62 @@ export function ResearchPlanForm({
 	});
 
 	const onSubmit = async (values: ResearchPlanFormValues) => {
-		const promises = values.researchAims.map(async ({ files: aimFiles, tasks, ...aim }) => {
-			const upsertedAim = await updateResearchAim({
-				...aim,
-				applicationId,
-			});
+		const promises = values.researchAims.map(
+			async ({ files: aimFiles, tasks, title: aimTitle, description: aimDescription, ...aim }) => {
+				const upsertedAim = await updateResearchAim({
+					...aim,
+					title: aimTitle.trim(),
+					description: aimDescription?.trim() ?? "",
+					applicationId,
+				});
 
-			if (upsertedAim) {
-				if (aimFiles.length) {
-					const newFiles = aimFiles.filter((file) => file instanceof File);
-					const newFileNames = new Set(newFiles.map((file) => file.name));
-					const fileMapping = newFiles.length
-						? await uploadFiles({
-								workspaceId,
-								parentId: upsertedAim.id,
-								files: newFiles,
-							})
-						: {};
-					const filteredFiles = Object.fromEntries(
-						Object.entries(upsertedAim.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
-					);
-					await updateResearchAim({ ...upsertedAim, files: { ...filteredFiles, ...fileMapping } });
-				}
-
-				const taskPromises = tasks.map(async ({ files: taskFiles, id: taskId, ...task }) => {
-					const upsertedTask = await updateResearchTask({
-						...task,
-						id: taskId, // Use the existing ID if available
-						aimId: upsertedAim.id,
-					});
-
-					if (upsertedTask && taskFiles.length) {
-						const newFiles = taskFiles.filter((file) => file instanceof File);
-						const newFileNames = new Set(newFiles.map((file) => file.name));
+				if (upsertedAim) {
+					if (aimFiles.length) {
+						const { filteredFiles, newFiles } = filterFiles(aimFiles, upsertedAim.files);
 						const fileMapping = newFiles.length
 							? await uploadFiles({
 									workspaceId,
-									parentId: upsertedTask.id,
+									parentId: upsertedAim.id,
 									files: newFiles,
 								})
 							: {};
-						const filteredFiles = Object.fromEntries(
-							Object.entries(upsertedTask.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
-						);
-
-						await updateResearchTask({
-							...upsertedTask,
-							files: {
-								...filteredFiles,
-								...fileMapping,
-							},
-						});
+						await updateResearchAim({ ...upsertedAim, files: { ...filteredFiles, ...fileMapping } });
 					}
-				});
 
-				await Promise.all(taskPromises);
-			}
-		});
+					const taskPromises = tasks.map(
+						async ({ files: taskFiles, id: taskId, title: taskTitle, description: taskDescription }) => {
+							const upsertedTask = await updateResearchTask({
+								id: taskId,
+								aimId: upsertedAim.id,
+								title: taskTitle.trim(),
+								description: taskDescription?.trim() ?? "",
+							});
+
+							if (upsertedTask && taskFiles.length) {
+								const { filteredFiles, newFiles } = filterFiles(taskFiles, upsertedTask.files);
+								const fileMapping = newFiles.length
+									? await uploadFiles({
+											workspaceId,
+											parentId: upsertedTask.id,
+											files: newFiles,
+										})
+									: {};
+
+								await updateResearchTask({
+									...upsertedTask,
+									files: {
+										...filteredFiles,
+										...fileMapping,
+									},
+								});
+							}
+						},
+					);
+
+					await Promise.all(taskPromises);
+				}
+			},
+		);
 
 		await Promise.all(promises);
 		onPressNext();

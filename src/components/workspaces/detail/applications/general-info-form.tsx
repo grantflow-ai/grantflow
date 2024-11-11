@@ -70,24 +70,31 @@ export function GeneralInfoForm({
 	});
 
 	form.watch((values) => {
+		if (!values.title?.trim() || !values.cfpId) {
+			setCanSubmit(false);
+			return;
+		}
+
 		if (!application) {
-			setCanSubmit(form.formState.isValid);
+			setCanSubmit(Boolean(values.cfpId && values.title && values.title.trim().length >= 10));
 			return;
 		}
 
 		setCanSubmit(
-			form.formState.isValid &&
-				(application.cfpId !== values.cfpId ||
-					application.title !== values.title ||
-					application.isResubmission !== values.isResubmission),
+			application.cfpId !== values.cfpId ||
+				application.title !== values.title ||
+				application.isResubmission !== values.isResubmission,
 		);
 	});
 
-	const onSubmit = async (values: FormValues) => {
-		await updateApplication({ ...values, status: application?.status ?? "draft" }, () => {
-			setCanSubmit(false);
-			onPressNext();
-		});
+	const onSubmit = async ({ title, ...rest }: FormValues) => {
+		await updateApplication(
+			{ ...application, ...rest, title: title.trim(), status: application?.status ?? "draft" },
+			() => {
+				setCanSubmit(false);
+				onPressNext();
+			},
+		);
 	};
 
 	useEffect(() => {
@@ -366,7 +373,7 @@ export function GeneralInfoForm({
 							</Button>
 						) : (
 							<SubmitButton
-								disabled={!canSubmit}
+								disabled={!form.formState.isValid || !canSubmit}
 								isLoading={loading}
 								data-testid="grant-application-form-submit"
 								aria-disabled={!form.formState.isValid || form.formState.isSubmitting}

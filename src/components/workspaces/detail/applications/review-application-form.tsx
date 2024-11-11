@@ -7,7 +7,7 @@ import { Separator } from "gen/ui/separator";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { FilesDisplay } from "@/components/files-display";
 import { generateSection } from "@/actions/text-generation";
-import { generateFileDownload } from "@/utils/file-download";
+import { generateFileDownload } from "@/utils/file";
 import { combineTexts } from "@/utils/format";
 
 export function ReviewApplicationForm({
