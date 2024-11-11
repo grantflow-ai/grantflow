@@ -14,14 +14,15 @@ import { cn } from "gen/cn";
 import { uploadFiles } from "@/actions/file";
 import { FileUploader } from "@/components/file-uploader";
 import { FileAttributes, FilesDisplay } from "@/components/files-display";
+import { filterFiles } from "@/utils/file";
 
 const formSchema = z.object({
 	significance: z.object({
-		text: z.string().min(50, "Significance description must be at least 50 characters"),
+		text: z.string().optional(),
 		files: z.array(z.custom<FileAttributes>()),
 	}),
 	innovation: z.object({
-		text: z.string().min(50, "Innovation description must be at least 50 characters"),
+		text: z.string().optional(),
 		files: z.array(z.custom<FileAttributes>()),
 	}),
 });
@@ -62,26 +63,51 @@ export default function SignificanceAndInnovationForm({
 	});
 
 	form.watch((values) => {
-		if (!significance || !innovation) {
-			setCanSubmit(form.formState.isValid);
+		const significanceText = values.significance?.text?.trim() ?? "";
+		const innovationText = values.innovation?.text?.trim() ?? "";
+		const significanceFiles = values.significance?.files ?? [];
+		const innovationFiles = values.innovation?.files ?? [];
+
+		const hasRequiredData =
+			(significanceText || significanceFiles.length) && (innovationText || innovationFiles.length);
+
+		if (!hasRequiredData) {
+			setCanSubmit(false);
 			return;
 		}
 
-		setCanSubmit(
-			form.formState.isValid &&
-				(significance.text !== values.significance?.text || innovation.text !== values.innovation?.text),
-		);
+		if (significance && innovation) {
+			const textDifferent = significanceText !== significance.text || innovationText !== innovation.text;
+
+			const existingSignificanceFiles = Object.values(significance.files ?? {});
+			const existingInnovationFiles = Object.values(innovation.files ?? {});
+
+			const filesChanged =
+				significanceFiles.length !== existingSignificanceFiles.length ||
+				innovationFiles.length !== existingInnovationFiles.length ||
+				significanceFiles.some(
+					(file) => file && !existingSignificanceFiles.some((f) => f.name === file.name),
+				) ||
+				innovationFiles.some((file) => file && !existingInnovationFiles.some((f) => f.name === file.name));
+			setCanSubmit(textDifferent || filesChanged);
+			return;
+		}
+
+		setCanSubmit(false);
 	});
 
 	const onSubmit = async (values: FormValues) => {
 		const [upsertedSignificance, upsertedInnovation] = await Promise.all([
-			updateResearchSignificance({ ...significance, text: values.significance.text, applicationId }),
-			updateResearchInnovation({ ...innovation, text: values.innovation.text, applicationId }),
+			updateResearchSignificance({
+				...significance,
+				text: values.significance.text?.trim() ?? "",
+				applicationId,
+			}),
+			updateResearchInnovation({ ...innovation, text: values.innovation.text?.trim() ?? "", applicationId }),
 		]);
 
 		if (upsertedSignificance && values.significance.files.length) {
-			const newFiles = values.significance.files.filter((file) => !(file instanceof File)) as File[];
-			const newFileNames = new Set(newFiles.map((file) => file.name));
+			const { filteredFiles, newFiles } = filterFiles(values.significance.files, upsertedSignificance.files);
 			const fileMapping = newFiles.length
 				? await uploadFiles({
 						workspaceId,
@@ -89,24 +115,17 @@ export default function SignificanceAndInnovationForm({
 						files: newFiles,
 					})
 				: {};
-			const filteredFiles = Object.fromEntries(
-				Object.entries(upsertedSignificance.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
-			);
 
 			await updateResearchSignificance({ ...upsertedSignificance, files: { ...filteredFiles, ...fileMapping } });
 		}
 
 		if (upsertedInnovation && values.innovation.files.length) {
-			const newFiles = values.innovation.files.filter((file) => !(file instanceof File)) as File[];
-			const newFileNames = new Set(newFiles.map((file) => file.name));
+			const { filteredFiles, newFiles } = filterFiles(values.innovation.files, upsertedInnovation.files);
 			const results = await uploadFiles({
 				workspaceId,
 				parentId: upsertedInnovation.id,
 				files: newFiles,
 			});
-			const filteredFiles = Object.fromEntries(
-				Object.entries(upsertedInnovation.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
-			);
 
 			await updateResearchInnovation({ ...upsertedInnovation, files: { ...filteredFiles, ...results } });
 		}
@@ -132,7 +151,7 @@ export default function SignificanceAndInnovationForm({
 								<div className="flex items-center gap-2">
 									<FormLabel
 										htmlFor="significance.text"
-										className="flex items-center gap-2"
+										className="text-xl"
 										data-testid="significance-innovation-form-significance-label"
 									>
 										Research Significance
@@ -153,13 +172,20 @@ export default function SignificanceAndInnovationForm({
 											data-testid="significance-innovation-form-significance-tooltip"
 											role="tooltip"
 										>
-											Describe the importance and potential impact of your research in the field
+											Explain the importance of the problem or critical barrier that your project
+											addresses, and how it impacts human lives.
 										</TooltipContent>
 									</Tooltip>
 								</div>
 								<FormControl>
 									<Textarea
 										{...field}
+										ref={(textarea) => {
+											if (textarea) {
+												textarea.style.height = "0px";
+												textarea.style.height = `${textarea.scrollHeight}px`;
+											}
+										}}
 										id="significance.text"
 										disabled={loading}
 										placeholder="Describe the significance of your research"
@@ -181,12 +207,10 @@ export default function SignificanceAndInnovationForm({
 										aria-live="polite"
 										className={cn(
 											"text-xs text-muted-foreground transition-colors duration-200",
-											field.value.length < 50 && "text-red-500",
-											field.value.length >= 50 && "text-green-500",
+											"text-green-500",
 										)}
 									>
 										{field.value.length} characters
-										{field.value.length < 50 ? ` (${50 - field.value.length} more required)` : ""}
 									</p>
 								)}
 								{form.formState.errors.significance?.message && (
@@ -236,7 +260,7 @@ export default function SignificanceAndInnovationForm({
 								<div className="flex items-center gap-2">
 									<FormLabel
 										htmlFor="innovation.text"
-										className="flex items-center gap-2"
+										className="text-xl"
 										data-testid="significance-innovation-form-innovation-label"
 									>
 										Research Innovation
@@ -257,14 +281,20 @@ export default function SignificanceAndInnovationForm({
 											data-testid="significance-innovation-form-innovation-tooltip"
 											role="tooltip"
 										>
-											Explain how your research introduces new ideas, methods, or approaches to
-											the field
+											Describe the novel aspects of your project and how it challenges or shifts
+											current research or clinical practice paradigms.
 										</TooltipContent>
 									</Tooltip>
 								</div>
 								<FormControl>
 									<Textarea
 										{...field}
+										ref={(textarea) => {
+											if (textarea) {
+												textarea.style.height = "0px";
+												textarea.style.height = `${textarea.scrollHeight}px`;
+											}
+										}}
 										id="innovation.text"
 										disabled={loading}
 										placeholder="Describe the innovation of your research"
@@ -286,12 +316,10 @@ export default function SignificanceAndInnovationForm({
 										aria-live="polite"
 										className={cn(
 											"text-xs text-muted-foreground transition-colors duration-200",
-											field.value.length < 50 && "text-red-500",
-											field.value.length >= 50 && "text-green-500",
+											"text-green-500",
 										)}
 									>
 										{field.value.length} characters
-										{field.value.length < 50 ? ` (${50 - field.value.length} more required)` : ""}
 									</p>
 								)}
 								{form.formState.errors.innovation?.message && (
@@ -347,7 +375,7 @@ export default function SignificanceAndInnovationForm({
 							</Button>
 						) : (
 							<SubmitButton
-								disabled={!canSubmit}
+								disabled={!form.formState.isValid || !canSubmit}
 								isLoading={loading}
 								data-testid="significance-innovation-form-submit"
 								aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
