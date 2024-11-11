@@ -19,7 +19,7 @@ import {
 	upsertResearchInnovation,
 	upsertResearchSignificance,
 	upsertResearchTask,
-} from "@/actions/wizard";
+} from "@/actions/db";
 import { isString } from "@tool-belt/type-predicates";
 import { toast } from "sonner";
 

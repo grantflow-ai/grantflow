@@ -13,16 +13,16 @@ import { SubmitButton } from "@/components/submit-button";
 import { cn } from "gen/cn";
 import { uploadFiles } from "@/actions/file";
 import { FileUploader } from "@/components/file-uploader";
-import { FilesDisplay } from "@/components/files-display";
+import { FileAttributes, FilesDisplay } from "@/components/files-display";
 
 const formSchema = z.object({
 	significance: z.object({
 		text: z.string().min(50, "Significance description must be at least 50 characters"),
-		files: z.array(z.custom<File>()),
+		files: z.array(z.custom<FileAttributes>()),
 	}),
 	innovation: z.object({
 		text: z.string().min(50, "Innovation description must be at least 50 characters"),
-		files: z.array(z.custom<File>()),
+		files: z.array(z.custom<FileAttributes>()),
 	}),
 });
 
@@ -75,28 +75,40 @@ export default function SignificanceAndInnovationForm({
 
 	const onSubmit = async (values: FormValues) => {
 		const [upsertedSignificance, upsertedInnovation] = await Promise.all([
-			updateResearchSignificance({ text: values.significance.text, applicationId }),
-			updateResearchInnovation({ text: values.innovation.text, applicationId }),
+			updateResearchSignificance({ ...significance, text: values.significance.text, applicationId }),
+			updateResearchInnovation({ ...innovation, text: values.innovation.text, applicationId }),
 		]);
 
 		if (upsertedSignificance && values.significance.files.length) {
-			const results = await uploadFiles({
-				workspaceId,
-				parentId: upsertedSignificance.id,
-				files: values.significance.files,
-			});
+			const newFiles = values.significance.files.filter((file) => !(file instanceof File)) as File[];
+			const newFileNames = new Set(newFiles.map((file) => file.name));
+			const fileMapping = newFiles.length
+				? await uploadFiles({
+						workspaceId,
+						parentId: upsertedSignificance.id,
+						files: newFiles,
+					})
+				: {};
+			const filteredFiles = Object.fromEntries(
+				Object.entries(upsertedSignificance.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
+			);
 
-			await updateResearchSignificance({ files: results });
+			await updateResearchSignificance({ ...upsertedSignificance, files: { ...filteredFiles, ...fileMapping } });
 		}
 
 		if (upsertedInnovation && values.innovation.files.length) {
+			const newFiles = values.innovation.files.filter((file) => !(file instanceof File)) as File[];
+			const newFileNames = new Set(newFiles.map((file) => file.name));
 			const results = await uploadFiles({
 				workspaceId,
 				parentId: upsertedInnovation.id,
-				files: values.innovation.files,
+				files: newFiles,
 			});
+			const filteredFiles = Object.fromEntries(
+				Object.entries(upsertedInnovation.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
+			);
 
-			await updateResearchInnovation({ files: results });
+			await updateResearchInnovation({ ...upsertedInnovation, files: { ...filteredFiles, ...results } });
 		}
 
 		setCanSubmit(false);

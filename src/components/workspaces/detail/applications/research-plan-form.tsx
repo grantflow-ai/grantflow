@@ -17,12 +17,14 @@ import { FileAttributes, FilesDisplay } from "@/components/files-display";
 import { cn } from "gen/cn";
 
 const researchTaskSchema = z.object({
+	id: z.string().optional(),
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().min(20, "Description must be at least 20 characters"),
 	files: z.array(z.custom<FileAttributes>()),
 });
 
 const researchAimSchema = z.object({
+	id: z.string().optional(),
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().min(20, "Description must be at least 20 characters"),
 	requiresClinicalTrials: z.boolean().optional(),
@@ -510,17 +512,15 @@ export function ResearchPlanForm({
 		resolver: zodResolver(researchPlanFormSchema),
 		defaultValues: {
 			researchAims: researchAims.length
-				? researchAims.map(({ title, description, requiresClinicalTrials, files: aimFiles, id }) => ({
-						title,
-						description,
-						requiresClinicalTrials,
+				? researchAims.map(({ files: aimFiles, id, ...aim }) => ({
+						...aim,
+						id,
 						files: aimFiles ? Object.values(aimFiles) : [],
 						tasks: researchTasks
 							.filter((task) => task.aimId === id)
-							.map(({ title, description, files: taskFiles }) => ({
-								title,
-								description,
+							.map(({ files: taskFiles, ...task }) => ({
 								files: taskFiles ? Object.values(taskFiles) : [],
+								...task,
 							})),
 					}))
 				: [
@@ -541,7 +541,7 @@ export function ResearchPlanForm({
 	});
 
 	const onSubmit = async (values: ResearchPlanFormValues) => {
-		const promises = values.researchAims.map(async ({ files: aimFiles, ...aim }) => {
+		const promises = values.researchAims.map(async ({ files: aimFiles, tasks, ...aim }) => {
 			const upsertedAim = await updateResearchAim({
 				...aim,
 				applicationId,
@@ -549,33 +549,38 @@ export function ResearchPlanForm({
 
 			if (upsertedAim) {
 				if (aimFiles.length) {
-					const newFiles = aimFiles.filter((file) => !(file instanceof File)) as File[];
+					const newFiles = aimFiles.filter((file) => file instanceof File);
 					const newFileNames = new Set(newFiles.map((file) => file.name));
-					const fileMapping = await uploadFiles({
-						workspaceId,
-						parentId: upsertedAim.id,
-						files: newFiles,
-					});
+					const fileMapping = newFiles.length
+						? await uploadFiles({
+								workspaceId,
+								parentId: upsertedAim.id,
+								files: newFiles,
+							})
+						: {};
 					const filteredFiles = Object.fromEntries(
 						Object.entries(upsertedAim.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
 					);
 					await updateResearchAim({ ...upsertedAim, files: { ...filteredFiles, ...fileMapping } });
 				}
 
-				const taskPromises = aim.tasks.map(async ({ files: taskFiles, ...task }) => {
+				const taskPromises = tasks.map(async ({ files: taskFiles, id: taskId, ...task }) => {
 					const upsertedTask = await updateResearchTask({
 						...task,
+						id: taskId, // Use the existing ID if available
 						aimId: upsertedAim.id,
 					});
 
 					if (upsertedTask && taskFiles.length) {
 						const newFiles = taskFiles.filter((file) => file instanceof File);
 						const newFileNames = new Set(newFiles.map((file) => file.name));
-						const fileMapping = await uploadFiles({
-							workspaceId,
-							parentId: upsertedTask.id,
-							files: newFiles,
-						});
+						const fileMapping = newFiles.length
+							? await uploadFiles({
+									workspaceId,
+									parentId: upsertedTask.id,
+									files: newFiles,
+								})
+							: {};
 						const filteredFiles = Object.fromEntries(
 							Object.entries(upsertedTask.files ?? {}).filter(([_, { name }]) => !newFileNames.has(name)),
 						);
@@ -650,6 +655,31 @@ export function ResearchPlanForm({
 							Save and Continue
 						</SubmitButton>
 					</div>
+					{form
+						.getValues()
+						.researchAims.filter((aim) => !!aim.id)
+						.map((aim, aimIndex) => (
+							<>
+								<input
+									key={aim.id}
+									type="hidden"
+									value={aim.id}
+									{...form.register(`researchAims.${aimIndex}.id`)}
+								/>
+								<>
+									{aim.tasks
+										.filter((task) => !!task.id)
+										.map((task, taskIndex) => (
+											<input
+												key={task.id}
+												type="hidden"
+												value={task.id}
+												{...form.register(`researchAims.${aimIndex}.tasks.${taskIndex}.id`)}
+											/>
+										))}
+								</>
+							</>
+						))}
 				</form>
 			</Form>
 		</TooltipProvider>
