@@ -32,7 +32,7 @@ export function FileCard({
 	previewUrl,
 }: {
 	file: FileAttributes;
-	handleRemoveFile: () => void;
+	handleRemoveFile?: () => void;
 	previewUrl?: string;
 }) {
 	return (
@@ -49,17 +49,19 @@ export function FileCard({
 					{formatBytes(file.size)}
 				</p>
 			</div>
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon"
-				className="absolute top-1 right-1"
-				onClick={handleRemoveFile}
-				data-testid="remove-file-button"
-			>
-				<X className="h-4 w-4" />
-				<span className="sr-only">Remove file</span>
-			</Button>
+			{handleRemoveFile && (
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					className="absolute top-1 right-1"
+					onClick={handleRemoveFile}
+					data-testid="remove-file-button"
+				>
+					<X className="h-4 w-4" />
+					<span className="sr-only">Remove file</span>
+				</Button>
+			)}
 		</div>
 	);
 }
@@ -69,7 +71,7 @@ export function FilesDisplay({
 	onFileRemoved,
 }: {
 	files: (FileAttributes | File)[];
-	onFileRemoved: (file: FileAttributes) => void;
+	onFileRemoved?: (file: FileAttributes) => void;
 }) {
 	return files.length ? (
 		<div className="space-y-2 flex flex-col gap-1" data-testid="files-display">
@@ -81,12 +83,16 @@ export function FilesDisplay({
 						key={file.name + index.toString()}
 						previewUrl={previewUrl}
 						file={file}
-						handleRemoveFile={() => {
-							onFileRemoved(file);
-							if (previewUrl) {
-								URL.revokeObjectURL(previewUrl);
-							}
-						}}
+						handleRemoveFile={
+							onFileRemoved
+								? () => {
+										onFileRemoved(file);
+										if (previewUrl) {
+											URL.revokeObjectURL(previewUrl);
+										}
+									}
+								: undefined
+						}
 					/>
 				);
 			})}

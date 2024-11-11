@@ -9,6 +9,7 @@ import {
 	researchAims,
 	researchTasks,
 	workspaceUsers,
+	generationResults,
 } from "db/schema";
 
 export type UserRole = "owner" | "admin" | "member";
@@ -23,6 +24,7 @@ export type ResearchSignificance = typeof researchSignificances.$inferSelect;
 export type ResearchInnovation = typeof researchInnovations.$inferSelect;
 export type ResearchAim = typeof researchAims.$inferSelect;
 export type ResearchTask = typeof researchTasks.$inferSelect;
+export type GenerationResult = typeof generationResults.$inferSelect;
 
 export type NewUser = typeof users.$inferInsert;
 export type NewWorkspace = typeof workspaces.$inferInsert;
@@ -34,3 +36,4 @@ export type NewResearchSignificance = typeof researchSignificances.$inferInsert;
 export type NewResearchInnovation = typeof researchInnovations.$inferInsert;
 export type NewResearchAim = typeof researchAims.$inferInsert;
 export type NewResearchTask = typeof researchTasks.$inferInsert;
+export type NewGenerationResult = typeof generationResults.$inferInsert;

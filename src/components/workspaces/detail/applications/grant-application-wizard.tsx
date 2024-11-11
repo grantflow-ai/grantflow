@@ -9,6 +9,8 @@ import { useWizardStore, WizardStoreInit } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 import { ReviewApplicationForm } from "@/components/workspaces/detail/applications/review-application-form";
 import { ResearchPlanForm } from "@/components/workspaces/detail/applications/research-plan-form";
+import { useRouter } from "next/navigation";
+import { PagePath } from "@/enums";
 
 const steps: Step[] = [
 	{ index: 1, name: "General Information" },
@@ -24,6 +26,7 @@ export function GrantApplicationWizard({
 	cfps: GrantCFP[];
 } & Pick<WizardStoreInit, "workspaceId"> &
 	Partial<WizardStoreInit>) {
+	const router = useRouter();
 	const { application, significance, innovation, workspaceId, researchAims, researchTasks } = useWizardStore(
 		storeInit,
 	)(
@@ -53,8 +56,7 @@ export function GrantApplicationWizard({
 		if (currentStep > 1) {
 			setCurrentStep((prevStep) => prevStep - 1);
 		} else {
-			// TODO: Show cancel alert here
-			return;
+			router.push(PagePath.WORKSPACE_DETAIL.replace(":workspaceId", workspaceId));
 		}
 	}, [currentStep]);
 
@@ -101,7 +103,13 @@ export function GrantApplicationWizard({
 					onPressPrevious={handlePrevious}
 				/>
 			)}
-			{hasSignificanceAndInnovation && hasResearchPlan && currentStep === 4 && <ReviewApplicationForm />}
+			{hasSignificanceAndInnovation && applicationId && hasResearchPlan && currentStep === 4 && (
+				<ReviewApplicationForm
+					workspaceId={workspaceId}
+					applicationId={applicationId}
+					onPressPrevious={handlePrevious}
+				/>
+			)}
 		</div>
 	);
 }

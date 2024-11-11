@@ -1,4 +1,5 @@
 CREATE TYPE "public"."application_status" AS ENUM('draft', 'completed');--> statement-breakpoint
+CREATE TYPE "public"."generation_result_type" AS ENUM('significance-and-innovation', 'research-plan', 'executive-summary');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "accounts" (
 	"userId" uuid NOT NULL,
@@ -32,6 +33,15 @@ CREATE TABLE IF NOT EXISTS "funding_organizations" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"logo_url" text
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "generation_results" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"application_id" uuid NOT NULL,
+	"version" smallint DEFAULT 1 NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"type" "generation_result_type" NOT NULL,
+	"data" json
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "grant_applications" (
@@ -144,6 +154,12 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
+ ALTER TABLE "generation_results" ADD CONSTRAINT "generation_results_application_id_grant_applications_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."grant_applications"("id") ON DELETE cascade ON UPDATE cascade;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "grant_applications" ADD CONSTRAINT "grant_applications_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE cascade;
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -204,6 +220,8 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_funding_organization_name" ON "funding_organizations" USING btree ("name");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_generation_results_section_type" ON "generation_results" USING btree ("type");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_generation_results_application_type_version" ON "generation_results" USING btree ("application_id","type","version");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_grant_cfps_identifier" ON "grant_cfps" USING btree ("code");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_mailing_list_email" ON "mailing_list" USING btree ("email");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_users_email" ON "users" USING btree ("email");--> statement-breakpoint

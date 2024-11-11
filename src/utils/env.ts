@@ -21,6 +21,7 @@ export function getEnv(): Env {
 				DATABASE_CONNECTION_STRING: z.string(),
 				AUTH_SECRET: z.string(),
 				AUTH_RESEND_KEY: z.string(),
+				BACKEND_API_URL: z.string().url("Please enter a valid URL"),
 			},
 			client: {
 				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
