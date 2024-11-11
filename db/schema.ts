@@ -1,19 +1,26 @@
 import {
-	pgTable,
-	uuid,
-	text,
-	timestamp,
-	pgEnum,
 	boolean,
-	varchar,
 	index,
-	unique,
-	primaryKey,
 	integer,
 	json,
+	pgEnum,
+	pgTable,
+	primaryKey,
+	smallint,
+	text,
+	timestamp,
+	unique,
+	uniqueIndex,
+	uuid,
+	varchar,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 import { relations } from "drizzle-orm";
+import {
+	ExecutiveSummaryGenerationResponse,
+	InnovationAndSignificanceGenerationResponse,
+	ResearchPlanGenerationResponse,
+} from "@/types/api-types";
 
 export type FileMapping = Record<
 	string, // the remote URL/identifier in storage
@@ -27,6 +34,11 @@ export type FileMapping = Record<
 
 export const userRoleEnum = pgEnum("user_role", ["owner", "admin", "member"]);
 export const applicationStatus = pgEnum("application_status", ["draft", "completed"]);
+export const generationResultType = pgEnum("generation_result_type", [
+	"significance-and-innovation",
+	"research-plan",
+	"executive-summary",
+]);
 
 export const mailingList = pgTable(
 	"mailing_list",
@@ -245,3 +257,29 @@ export const researchTasks = pgTable("research_tasks", {
 	description: text("description").notNull(),
 	files: json().$type<FileMapping>(),
 });
+
+export const generationResults = pgTable(
+	"generation_results",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		applicationId: uuid("application_id")
+			.notNull()
+			.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+		version: smallint("version").notNull().default(1),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+		type: generationResultType("type").notNull(),
+		data: json().$type<
+			| InnovationAndSignificanceGenerationResponse
+			| ResearchPlanGenerationResponse
+			| ExecutiveSummaryGenerationResponse
+		>(),
+	},
+	(table) => [
+		index("idx_generation_results_section_type").on(table.type),
+		uniqueIndex("idx_generation_results_application_type_version").on(
+			table.applicationId,
+			table.type,
+			table.version,
+		),
+	],
+);
