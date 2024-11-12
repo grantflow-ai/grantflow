@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable, Coroutine
-from typing import Any, Final
+from typing import Any, Final, TypeVar
 
 from openai import OpenAIError
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
@@ -11,7 +11,9 @@ from src.utils.exceptions import OperationError
 from src.utils.llm import get_generation_model
 from src.utils.nlp import get_spacy_model
 from src.utils.retry import exponential_backoff_retry
-from src.utils.serialization import deserialize
+from src.utils.serialization import deserialize, serialize
+
+T = TypeVar("T", bound=dict[str, Any])
 
 SEGMENTED_GENERATION_JSON_SCHEMA = {
     "type": "object",
@@ -88,16 +90,20 @@ async def handle_segmented_text_generation(
     return concatenate_segments_with_spacy_coherence(results)
 
 
-@exponential_backoff_retry(OpenAIError, OperationError)
+@exponential_backoff_retry(OperationError)
 async def handle_tool_call_request(
     system_prompt: str,
     user_prompt: str,
-) -> GenerationResult:
+    tools: list[ChatCompletionToolParam] | None = None,
+    response_type: type[T] = GenerationResult,  # type: ignore[assignment]
+) -> T:
     """Handle a tool call request for segmented text generation.
 
     Args:
         system_prompt: The system prompt.
         user_prompt: The user prompt.
+        tools: The tools to use for the generation.
+        response_type: The response type.
 
     Raises:
         OperationError: If the response content is empty.
@@ -107,24 +113,29 @@ async def handle_tool_call_request(
     """
     client = get_generation_model()
 
-    response = await client.chat.completions.create(
-        model=TEXT_GENERATION_MODEL,
-        response_format=ResponseFormatJSONObject(type="json_object"),
-        messages=[
-            ChatCompletionSystemMessageParam(role="system", content=system_prompt),
-            ChatCompletionUserMessageParam(role="user", content=user_prompt),
-        ],
-        temperature=0.0,
-        tools=SEGMENTED_GENERATION_TOOLS,
-    )
-    if response.choices[0].message.tool_calls and (
-        content := response.choices[0].message.tool_calls[0].function.arguments
-    ):
-        logger.info("Successfully generated text segment")
-        return deserialize(content, GenerationResult)
+    try:
+        response = await client.chat.completions.create(
+            model=TEXT_GENERATION_MODEL,
+            response_format=ResponseFormatJSONObject(type="json_object"),
+            messages=[
+                ChatCompletionSystemMessageParam(role="system", content=system_prompt),
+                ChatCompletionUserMessageParam(role="user", content=user_prompt),
+            ],
+            temperature=0.0,
+            tools=tools or SEGMENTED_GENERATION_TOOLS,
+        )
+        if response.choices[0].message.tool_calls and (
+            content := response.choices[0].message.tool_calls[0].function.arguments
+        ):
+            logger.info("Successfully generated text segment")
+            return deserialize(content, response_type)
 
-    logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
-    raise OperationError(message="Response content is empty", context=response.model_dump_json())
+        logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
+        raise OperationError(message="Response content is empty", context=response.model_dump_json())
+    except OpenAIError as e:
+        body = serialize(getattr(e, "body", {})) if isinstance(getattr(e, "body", None), dict) else ""
+        logger.warning("Received an API error from OpenAI: %s, %s", e, body)
+        raise OperationError(message="Received an API error from OpenAI", context=str(body)) from e
 
 
 def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:

@@ -145,17 +145,6 @@ The data is provided as a JSON object:
 ```json
 ${research_aim}
 ```
-
-## Response Format:
-Respond using the provided tools using a JSON object strictly adhering to the following structure:
-
-```json
-{
-    "queries": [
-        "...",
-    ]
-}
-```
 """)
 
 RESEARCH_PLAN_SYSTEM_PROMPT: Final[Template] = Template(
@@ -304,3 +293,54 @@ ${previous_part_text}
 """
     + OUTPUT_GENERATION_GUIDELINES
 )
+
+SEARCH_QUERIES_SYSTEM_PROMPT: Final[str] = """
+You are a specialized query generation component within a RAG pipeline designed to assist in writing grant
+application sections. Your function is to generate search queries that will retrieve relevant content from
+an Azure AI Search index containing user-uploaded research materials.
+
+## Your Task:
+You will receive a description of the next task in the RAG pipeline and any user provided inputs that will be used as
+sources.
+
+1. Analyze these and identify:
+   - The specific grant section being addressed
+   - Scientific domain and methodologies
+   - Key research problems or gaps
+   - Technical approaches and innovations
+2. Generate 3-5 distinct search queries that:
+   - Target relevant scientific precedents and methodologies
+   - Identify similar research problems and solutions
+   - Find supporting evidence for significance claims
+   - Locate methodological innovations in the field
+
+## Guidelines:
+- Include technical terminology specific to the research domain
+- Target evidence supporting significance claims
+- Focus on methodological innovations when relevant
+- Include queries for competing or alternative approaches
+- Consider interdisciplinary connections
+
+## Important Considerations:
+- Queries should balance specificity with breadth to capture relevant materials
+- Consider both theoretical foundations and practical applications
+- Include searches for potential criticisms or limitations
+- Target evidence of research impact and significance
+- Look for methodological innovations and technical advances
+- Consider cross-disciplinary implications and applications
+"""
+
+SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
+{prompt}
+
+## Response Format:
+Respond using the provided tools using a JSON object strictly adhering to the following structure:
+
+```json
+{
+    "queries": [
+        "...",
+    ]
+}
+```
+""")
