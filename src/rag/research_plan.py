@@ -6,7 +6,7 @@ from json import dumps
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
 from src.rag.ai_search import retrieve_documents
-from src.rag.dto import DocumentDTO, GenerationResult, ResearchAimDTO, ResearchPlanGenerationResult
+from src.rag.dto import DocumentDTO, GenerationResult, ResearchAimDTO, ResearchPlanGenerationResponse
 from src.rag.prompts import (
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
     RESEARCH_AIM_GENERATION_SYSTEM_PROMPT,
@@ -62,8 +62,8 @@ async def generate_research_plan_text(
     """Generate a part of the research plan text.
 
     Args:
-        application_title: The title of the grant application
         previous_part_text: The previous part of the research plan text, if any.
+        application_title: The title of the grant application
         research_aims_texts: The research aims texts to generate the research plan text for.
 
     Returns:
@@ -160,7 +160,7 @@ async def generate_research_plan(
     application_title: str,
     research_aims: list[ResearchAimDTO],
     workspace_id: str,
-) -> ResearchPlanGenerationResult:
+) -> ResearchPlanGenerationResponse:
     """Generate a research plan for a grant application.
 
     Args:
@@ -180,6 +180,6 @@ async def generate_research_plan(
         application_title=application_title,
         research_aim_texts=research_aim_texts,
     )
-    return ResearchPlanGenerationResult(
+    return ResearchPlanGenerationResponse(
         research_plan_text=result,
     )

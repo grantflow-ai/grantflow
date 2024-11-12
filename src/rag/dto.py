@@ -73,7 +73,7 @@ class FormPrefillRequest(TypedDict):
     """The application ID."""
 
 
-class InnovationAndSignificanceGenerationResult(TypedDict):
+class InnovationAndSignificanceGenerationResponse(TypedDict):
     """DTO for the result of generating the innovation and significance sections."""
 
     innovation_text: str
@@ -82,14 +82,14 @@ class InnovationAndSignificanceGenerationResult(TypedDict):
     """The generated text for the significance section."""
 
 
-class ResearchPlanGenerationResult(TypedDict):
+class ResearchPlanGenerationResponse(TypedDict):
     """DTO for the result of generating the research plan."""
 
     research_plan_text: str
     """The generated text for the research plan."""
 
 
-class ExecutiveSummaryGenerationResult(TypedDict):
+class ExecutiveSummaryGenerationResponse(TypedDict):
     """DTO for the result of generating the executive summary."""
 
     executive_summary_text: str
