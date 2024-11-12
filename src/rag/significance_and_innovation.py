@@ -5,7 +5,7 @@ from json import dumps
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
 from src.rag.ai_search import retrieve_documents
-from src.rag.dto import DocumentDTO, GenerationResult, InnovationAndSignificanceGenerationResult
+from src.rag.dto import DocumentDTO, GenerationResult, InnovationAndSignificanceGenerationResponse
 from src.rag.prompts import (
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
     INNOVATION_GENERATION_SYSTEM_PROMPT,
@@ -176,7 +176,7 @@ async def generate_significance_and_innovation(
     significance_id: str,
     innovation_id: str,
     workspace_id: str,
-) -> InnovationAndSignificanceGenerationResult:
+) -> InnovationAndSignificanceGenerationResponse:
     """Generate the significance and innovation sections for a grant application.
 
     Args:
@@ -204,6 +204,6 @@ async def generate_significance_and_innovation(
     )
     logger.info("Generated innovation section: %s", innovation_text)
 
-    return InnovationAndSignificanceGenerationResult(
+    return InnovationAndSignificanceGenerationResponse(
         innovation_text=innovation_text, significance_text=significance_text
     )

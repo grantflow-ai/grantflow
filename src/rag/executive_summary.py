@@ -1,7 +1,7 @@
 import logging
 from functools import partial
 
-from src.rag.dto import ExecutiveSummaryGenerationResult, GenerationResult
+from src.rag.dto import ExecutiveSummaryGenerationResponse, GenerationResult
 from src.rag.prompts import (
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
     EXECUTIVE_SUMMARY_SYSTEM_PROMPT,
@@ -56,7 +56,7 @@ async def generate_executive_summary(
     cfp_title: str,
     application_text: str,
     workspace_id: str,
-) -> ExecutiveSummaryGenerationResult:
+) -> ExecutiveSummaryGenerationResponse:
     """Generate the executive summary for a grant application.
 
     Args:
@@ -84,4 +84,4 @@ async def generate_executive_summary(
     )
     logger.info("Generated executive summary")
 
-    return ExecutiveSummaryGenerationResult(executive_summary_text=executive_summary)
+    return ExecutiveSummaryGenerationResponse(executive_summary_text=executive_summary)

@@ -22,7 +22,7 @@ def get_embeddings_model() -> AsyncAzureOpenAI:
         embeddings_ref.value = AsyncAzureOpenAI(
             api_key=get_env("AZURE_OPENAI_KEY"),
             api_version=AZURE_EMBEDDINGS_API_VERSION,
-            azure_endpoint=get_env("AZURE_OPENAI_EMBEDDINGS_ENDPOINT"),
+            azure_endpoint=get_env("AZURE_OPENAI_ENDPOINT"),
         )
 
     return embeddings_ref.value
@@ -38,7 +38,7 @@ def get_generation_model() -> AsyncAzureOpenAI:
         generation_ref.value = AsyncAzureOpenAI(
             api_key=get_env("AZURE_OPENAI_KEY"),
             api_version=AZURE_GENERATION_API_VERSION,
-            azure_endpoint=get_env("AZURE_OPENAI_GENERATION_ENDPOINT"),
+            azure_endpoint=get_env("AZURE_OPENAI_ENDPOINT"),
         )
 
     return generation_ref.value

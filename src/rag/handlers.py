@@ -8,11 +8,11 @@ from azure.functions import HttpRequest, HttpResponse
 from src.constants import CONTENT_TYPE_JSON
 from src.rag.dto import (
     APIError,
-    ExecutiveSummaryGenerationResult,
+    ExecutiveSummaryGenerationResponse,
     FormPrefillRequest,
-    InnovationAndSignificanceGenerationResult,
+    InnovationAndSignificanceGenerationResponse,
     ResearchAimDTO,
-    ResearchPlanGenerationResult,
+    ResearchPlanGenerationResponse,
     SectionGenerationRequest,
 )
 from src.rag.executive_summary import generate_executive_summary
@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 GenerationResult = (
-    InnovationAndSignificanceGenerationResult | ResearchPlanGenerationResult | ExecutiveSummaryGenerationResult
+    InnovationAndSignificanceGenerationResponse | ResearchPlanGenerationResponse | ExecutiveSummaryGenerationResponse
 )
 
 
