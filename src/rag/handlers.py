@@ -57,7 +57,6 @@ async def handle_section_generation_request(req: HttpRequest) -> HttpResponse:
             logger.info("Generating a research plan")
             result = await generate_research_plan(
                 research_aims=cast(list[ResearchAimDTO], data),
-                application_title=request_body["application_title"],
                 workspace_id=request_body["workspace_id"],
             )
         else:

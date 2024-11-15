@@ -15,7 +15,9 @@ Content-Type: application/json
     }
 }
 
+
 ### Research Plan Section
+# @timeout 600
 POST  http://localhost:7071/api/generate-section-text
 Content-Type: application/json
 
