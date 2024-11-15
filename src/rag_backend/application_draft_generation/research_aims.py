@@ -2,7 +2,6 @@ import logging
 from functools import partial
 from json import dumps
 from string import Template
-from textwrap import dedent
 from typing import Final, TypedDict
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
@@ -216,57 +215,3 @@ async def handle_research_aim_text_generation(
         aim_number=aim_number,
         title=research_aim["title"],
     ), research_tasks
-
-
-async def generate_research_plan(
-    *,
-    application_id: str,
-    research_aims: list[ResearchAimDTO],
-    workspace_id: str,
-) -> str:
-    """Generate a research plan for a grant application.
-
-    Args:
-        application_id: The application ID.
-        research_aims: A list of research aims to include in the research plan.
-        workspace_id: The workspace ID.
-
-    Returns:
-        The generated research plan.
-    """
-    generation_output: list[
-        tuple[
-            AimGenerationResponse,
-            list[TaskGenerationResponse],
-        ]
-    ] = []
-
-    for index, research_aim in enumerate(research_aims):
-        generation_output.append(
-            await handle_research_aim_text_generation(
-                aim_number=index + 1,
-                application_id=application_id,
-                previous_aims=[aim for aim, _ in generation_output],
-                previous_tasks=[task for _, tasks in generation_output for task in tasks],
-                research_aim=research_aim,
-                workspace_id=workspace_id,
-            )
-        )
-
-    research_plan_section_text = dedent("""
-    ## Research Plan
-    ### Research Aims
-    """)
-
-    for aim, tasks in generation_output:
-        research_plan_section_text += f"""
-        #### Aim {aim["aim_number"]}: {aim["title"]}
-        {aim["text"]}
-        """
-        for task in tasks:
-            research_plan_section_text += f"""
-            ##### Task {task["task_number"]}: {task["title"]}
-            {task["text"]}
-            """
-
-    return research_plan_section_text

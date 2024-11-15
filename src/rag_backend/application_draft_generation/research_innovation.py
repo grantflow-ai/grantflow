@@ -2,7 +2,6 @@ import logging
 from functools import partial
 from json import dumps
 from string import Template
-from textwrap import dedent
 from typing import Final
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
@@ -11,7 +10,6 @@ from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.prompts import (
     BASE_SYSTEM_PROMPT,
 )
-from src.rag_backend.application_draft_generation.research_significance import handle_significance_text_generation
 from src.rag_backend.dto import DocumentDTO, GenerationResult
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
@@ -145,60 +143,3 @@ async def handle_innovation_text_generation(
         entity_identifier=innovation_id,
         prompt_handler=handler,
     )
-
-
-async def generate_significance_and_innovation(
-    *,
-    application_id: str,
-    application_title: str,
-    cfp_title: str,
-    grant_funding_organization: str,
-    innovation_description: str,
-    innovation_id: str,
-    significance_description: str,
-    significance_id: str,
-    workspace_id: str,
-) -> str:
-    """Generate the significance and innovation sections for a grant application.
-
-    Args:
-        application_id: The ID of the grant application.
-        application_title: The title of the grant application.
-        cfp_title: The CFP action code and title.
-        grant_funding_organization: The funding organization for the grant.
-        innovation_description: The description of the research innovation.
-        innovation_id: The ID of the innovation section.
-        significance_description: The description of the research significance.
-        significance_id: The ID of the significance section.
-        workspace_id: The workspace ID.
-
-    Returns:
-        A tuple containing the generated significance and innovation texts.
-    """
-    significance_text = await handle_significance_text_generation(
-        application_id=application_id,
-        application_title=application_title,
-        cfp_title=cfp_title,
-        grant_funding_organization=grant_funding_organization,
-        significance_description=significance_description,
-        significance_id=significance_id,
-        workspace_id=workspace_id,
-    )
-    logger.info("Generated significance section: %s", significance_text)
-
-    innovation_text = await handle_innovation_text_generation(
-        innovation_description=innovation_description,
-        innovation_id=innovation_id,
-        significance_text=significance_text,
-        workspace_id=workspace_id,
-        application_id=application_id,
-    )
-    logger.info("Generated innovation section: %s", innovation_text)
-
-    return dedent(f"""
-        ## Significance
-        {significance_text}
-
-        ## Innovation
-        {innovation_text}
-    """).strip()
