@@ -1,66 +1,68 @@
 import logging
 from functools import partial
 from json import dumps
+from string import Template
 from textwrap import dedent
+from typing import Final
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
 from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.prompts import (
-    CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
-    INNOVATION_GENERATION_SYSTEM_PROMPT,
-    INNOVATION_GENERATION_USER_PROMPT,
-    RESEARCH_INNOVATION_QUERIES_PROMPT,
-    RESEARCH_SIGNIFICANCE_QUERIES_PROMPT,
-    SIGNIFICANCE_GENERATION_SYSTEM_PROMPT,
-    SIGNIFICANCE_GENERATION_USER_PROMPT,
+    BASE_SYSTEM_PROMPT,
 )
+from src.rag_backend.application_draft_generation.research_significance import handle_significance_text_generation
 from src.rag_backend.dto import DocumentDTO, GenerationResult
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
 
 logger = logging.getLogger(__name__)
 
+INNOVATION_GENERATION_USER_PROMPT: Final[Template] = Template("""
+Your task is to write the innovation section for a research grant application.
+${previous_part_text}
 
-async def generate_significance_text(
-    previous_part_text: str | None,
-    *,
-    application_title: str,
-    cfp_title: str,
-    grant_funding_organization: str,
-    retrieval_results: list[DocumentDTO],
-    significance_description: str,
-) -> GenerationResult:
-    """Generate a part of the significance text.
+Use the following sources to write the text:
 
-    Args:
-        previous_part_text: The previous part of the significance text, if any.
-        application_title: The title of the grant application.
-        cfp_title: The CFP action code and title.
-        grant_funding_organization: The funding organization for the grant.
-        retrieval_results: The results of the RAG retrieval.
-        significance_description: The description of the research significance.
+1. Research Innovation Description:
+    <innovation_description>
+    ${innovation_description}
+    </innovation_description>
 
-    Returns:
-        GenerationResult: The generated text for the significance section.
-    """
-    system_prompt = SIGNIFICANCE_GENERATION_SYSTEM_PROMPT.substitute(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-    ).strip()
+2. Previously generated significance section:
+    <significance_text>
+    ${significance_text}
+    </significance_text>
 
-    user_prompt = SIGNIFICANCE_GENERATION_USER_PROMPT.substitute(
-        application_title=application_title,
-        cfp_title=cfp_title,
-        grant_funding_organization=grant_funding_organization,
-        previous_part_text=previous_part_text,
-        rag_results=dumps(retrieval_results),
-        significance_description=significance_description,
-    ).strip()
+3. RAG Retrieval Results for additional context:
+    <rag_results>
+    ${rag_results}
+    </rag_results>
 
-    return await handle_tool_call_request(
-        system_prompt=system_prompt,
-        user_prompt=user_prompt,
-    )
+The innovation section should highlight the novel aspects of the proposed project.
+It should address the following implicit questions:
+
+1. What makes this project unique compared to previous research?
+2. What state-of-the-art technologies will be used in the project?
+3. How is the use of these technologies innovative in this research context?
+4. If the project aims to develop new tools, how do they differ from existing ones, and how will they benefit the project and the field in general?
+5. How does the project challenges or shifts current research or clinical practice paradigms?
+
+Ensure that the text builds upon the significance section and maintains consistency in style, tone, and terminology.
+
+Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~400-500 words).
+""")
+
+RESEARCH_INNOVATION_QUERIES_PROMPT: Final[Template] = Template("""
+The next task in the RAG pipeline is to write the research innovation. This section should answer the following (implicit) questions:
+
+- What makes the project unique compared to what has been done before?
+- What state-of-the-art technologies are being planned to use?
+- How is the use of these technologies in the research context innovative?
+- If the project aims to develop new tools, explain what makes the development different from what already exists in the field and how will t new tools be significant as part of the project and for the field in general?
+
+This is the description of the research innovation provided by the user ${innovation_description}
+""")
 
 
 async def generate_innovation_text(
@@ -81,10 +83,6 @@ async def generate_innovation_text(
     Returns:
         GenerationResult: The generated text for the innovation section.
     """
-    system_prompt = INNOVATION_GENERATION_SYSTEM_PROMPT.substitute(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-    ).strip()
-
     user_prompt = INNOVATION_GENERATION_USER_PROMPT.substitute(
         innovation_description=innovation_description,
         significance_text=significance_text,
@@ -93,65 +91,8 @@ async def generate_innovation_text(
     ).strip()
 
     return await handle_tool_call_request(
-        system_prompt=system_prompt,
+        system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
-    )
-
-
-async def handle_significance_text_generation(
-    *,
-    application_id: str,
-    application_title: str,
-    cfp_title: str,
-    grant_funding_organization: str,
-    significance_description: str,
-    significance_id: str,
-    workspace_id: str,
-) -> str:
-    """Generate the text for the significance section.
-
-    Args:
-        application_id: The ID of the grant application.
-        application_title: The title of the grant application.
-        cfp_title: The CFP action code and title.
-        grant_funding_organization: The funding organization for the grant.
-        significance_description: The description of the research significance.
-        significance_id: The ID of the significance section.
-        workspace_id: The workspace ID.
-
-    Returns:
-        The generated text for the significance section.
-    """
-    search_queries = await create_search_queries(
-        RESEARCH_SIGNIFICANCE_QUERIES_PROMPT.substitute(
-            significance_description=significance_description,
-        ).strip()
-    )
-    query_embeddings = await generate_embeddings(search_queries)
-    search_text = " | ".join([f'"{query}"' for query in search_queries])
-
-    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_PARENT_ID} eq '{significance_id}' or {FIELD_NAME_PARENT_ID} eq '{application_id}')"
-
-    search_result = await retrieve_documents(
-        embeddings_matrix=query_embeddings,
-        filter_query=search_filter,
-        search_text=search_text,
-        session_id=workspace_id,
-    )
-
-    handler = partial(
-        generate_significance_text,
-        application_title=application_title,
-        cfp_title=cfp_title,
-        grant_funding_organization=grant_funding_organization,
-        retrieval_results=search_result,
-        significance_description=significance_description,
-    )
-
-    return await handle_segmented_text_generation(
-        entity_type="significance",
-        entity_identifier=significance_id,
-        prompt_handler=handler,
     )
 
 

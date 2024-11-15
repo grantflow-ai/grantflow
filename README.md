@@ -1,9 +1,10 @@
-# Parser-Indexer Function
+# Backend Services
 
-This repository includes the GrantFlow.AI parser-indexer service. This service is responsible for parsing and indexing
-materials (PDF, docx, images etc.) uploaded by users.
+This repository includes Azure cloud functions that form a backend RAG system.
 
-The service uses the following Azure cloud services:
+## Azure Services
+
+The following Azure services are used in this repository:
 
 - Azure Functions. This service is used to deploy and orchestrate the service.
 - Azure Blob Storage, the [entry point to the service](src/indexer/handler.py) is triggered whenever a new blob is written to a specific
@@ -19,14 +20,14 @@ committed to GitHub.
 
 ## Installation
 
-Make sure to be running a Python 3.11 shell.
+Make sure to be running a Python 3.12 shell.
 
 1. It's recommended to use [pyenv](https://github.com/pyenv/pyenv) to manage python versions. For example:
 
    ```shell
    brew install pyenv
-   pyenv install 3.11
-   pyenv local 3.11
+   pyenv install 3.12
+   pyenv local 3.12
    ```
 
 2. Install PDM globally - you can either install it via brew (recommended) or pipx:
@@ -40,6 +41,7 @@ Make sure to be running a Python 3.11 shell.
    ```shell
    brew install go-task
    ```
+
 4. Inside the repository, execute the setup command:
 
    ```shell
@@ -48,16 +50,6 @@ Make sure to be running a Python 3.11 shell.
 
    This command will install the necessary dependencies on the machine and use PDM to create a virtual environment under
    the `.venv` folder, which is git ignored, and install the dependencies inside it.
-
-### Setup
-
-1. Clone the repository
-2. Inside the repository, execute the setup command:
-   ```shell
-   pdm run setup
-   ```
-   This command will install the necessary dependencies on the machine and use PDM to create a virtual environment under
-   the `.venv` folder, which is git ignored, and install the dependencies inside it. It will also setup pre-commit.
 
 ### PDM Scripts
 
