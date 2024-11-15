@@ -3,7 +3,7 @@ name = "parser-indexer"
 version = "0.1.0"
 description = "Azure Function to parse and index blobs"
 authors = [{ name = "Na'aman Hirschfeld", email = "nhirschfeld@gmail.com" }]
-requires-python = "==3.11.*"
+requires-python = "==3.12.*"
 readme = "README.md"
 license = { text = "UNLICENSED" }
 packages = ["src", "functions", "tests"]
@@ -57,7 +57,7 @@ coverage.env = { "PYTHONPATH" = "." }
 # linters configuration below
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 lint.select = ["ALL"]
 lint.ignore = [
     "ANN401",  # Dynamically typed ANY
@@ -97,7 +97,7 @@ max-returns = 10
 
 [tool.mypy]
 packages = ["src", "tests"]
-python_version = "3.11"
+python_version = "3.12"
 plugins = ["pydantic.mypy"]
 disable_error_code = 'import-untyped'
 implicit_reexport = false
