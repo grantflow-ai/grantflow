@@ -60,20 +60,21 @@ line-length = 120
 target-version = "py311"
 lint.select = ["ALL"]
 lint.ignore = [
-    "ANN401",  # dynamically typed ANY
-    "D100",    # # pydocstyle - missing docstring in public module
-    "D104",    # pydocstyle - missing docstring in public package
-    "D107",    # pydocstyle - missing docstring in __init__
-    "D205",    # pydocstyle - 1 blank line required between summary line and description
-    "E501",    # pycodestyle line too long, handled by ruff format
-    "EM",      # Exception messages,
-    "FIX",     # we allow todo and fixme comments
-    "PLR2004", # Magic variables, we allow them
-    "TD",      # we allow todo and fixme comments
-    "TRY",     # Try except block, rules are too strict
+    "ANN401",  # Dynamically typed ANY
     "COM812",  # Conflicts with formatter
+    "D100",    # Missing docstring in public module
+    "D104",    # Missing docstring in public package
+    "D107",    # Missing docstring in __init__
+    "D205",    # 1 blank line required between summary line and description
+    "E501",    # Line too long, handled by ruff format
+    "EM",      # Exception messages,
+    "FBT001",  # Boolean-typed positional argument in function definition
+    "FIX",     # We allow todo and fixme comments
     "ISC001",  # Conflicts with formatter
-    "PGH003",  # required specific mypy ignores
+    "PGH003",  # Required specific mypy ignores
+    "PLR2004", # Magic variables, we allow them
+    "TD",      # We allow todo and fixme comments
+    "TRY",     # Try except block, rules are too strict
 ]
 src = ["src", "tests"]
 

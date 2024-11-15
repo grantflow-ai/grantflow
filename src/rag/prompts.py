@@ -3,7 +3,7 @@ from typing import Final
 
 BASE_SYSTEM_PROMPT: Final[str] = """
 You are a part of a RAG pipeline that generates sections of a STEM research grant application. You are an expert
-in grant writing.
+in grant writing. You write highly information packed and highly technical texts.
 """
 
 CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[str] = """
@@ -13,14 +13,14 @@ and scientific vocabulary.
 """
 
 RAG_RETRIEVAL_INPUT_EXAMPLE: Final[str] = """
-Additionally, you will receive any results from the RAG retrieval as a JSON array of documents with the following format:
+You will also be given any results returned using RAG as a JSON array of objects with the following format:
 
 ```jsonc
 [
     {
         "filename": "some-file.pdf",
         "text": "The text content of the document",
-        "page_number": 5 // The page number of the document, this key will be omitted if the page number is not available.
+        "page_number": 5 // optional key-value
     }
 ]
 ```
@@ -29,13 +29,12 @@ Additionally, you will receive any results from the RAG retrieval as a JSON arra
 OUTPUT_GENERATION_GUIDELINES: Final[str] = """
 When generating output strictly follow these guidelines:
 
-- Use markdown, including headings, bullet points, lists and styling (e.g. bold, italic etc.).
-- Do not use unnecessary superlatives and overstatements.
-- Be precise and concise.
-- Be consistent in tone and style.
+- Use markdown.
 - Be detailed - assume the readership is composed of experts in the field, and the information density should be high.
+- Do not use unnecessary superlatives and overstatements.
+- Be precise, concise and consistent in tone and style.
 - Include detailed description of the scientific methods and techniques relevant to the proposal.
-- Define acronyms when they are first used.
+- Do not define acronyms - assume that the readers are familiar with the terminology.
 - Follow the scientific terminology provided in the inputs.
 - Cite facts and findings as required.
 - Include precise references to sources when citing and quoting.
@@ -52,26 +51,82 @@ whether the research aim text is complete or not. Example:
 ```
 """
 
+RESEARCH_TASK_GENERATION_SYSTEM_PROMPT: Final[Template] = Template(
+    BASE_SYSTEM_PROMPT
+    + """
+
+You will be given a JSON object that contains the title and (optional) description of a research task.
+"""
+    + RAG_RETRIEVAL_INPUT_EXAMPLE
+    + """
+${part_generation_instructions}
+"""
+    + """
+
+## Your Task:
+Generate a detailed research task description that is between 200-400 words long. The description should cover the following aspects:
+
+- ask goal and objectives
+- Experimental design methodology
+- Data collection methods
+- Results analysis and interpretation framework
+- If the task dependent on previous tasks, explain this relation. If methods of experimental design repeats details from previous task, refer to it instead of repeating the details and explain differences if there are any
+{clinical_trial_questions}
+
+Example:
+
+```markdown
+
+##### Task Title
+
+Description of task, its goals and objectives.
+
+###### Experimental Design
+
+Description of the experimental design methodology. What methods and models will be used.
+
+###### Data Collection
+
+Description of the data collection methods. What data will be collected and how
+
+###### Analysis and Interpretation
+
+Description of the results analysis and interpretation framework. How will the data be analyzed.
+Significance of the results: how the results impact the working hypothesis of the research aim.
+```
+"""
+)
+
+RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS: Final[str] = """
+If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
+If the task involves vertebrate animals/humans, what are the pertinent biological variables (e.g. subject sex, age etc.)?
+If the task involves hazardous elements, what are the detailed hazard descriptions and planned safety measures and precautions?
+If the task uses Human Embryonic Stem Cells (hESCs) not in the NIH Registry, what is the justification for non-registered hESC usage?
+If the task uses Human Fetal Tissue (HFT), what is the necessity of HFT, documentation of alternative evaluation methods, and evidence of alternatives consideration?x
+"""
+
 RESEARCH_AIM_GENERATION_SYSTEM_PROMPT: Final[Template] = Template(
     BASE_SYSTEM_PROMPT
     + """
 
-You will be given a user prompt that outlines a specific research aim. This input will be provided as a JSON object
-with the following structure:
+You will be given a JSON object that contains the title and (optional) description of a research aim.
 
-```jsonc
+
+```json
 {
     "title": "The title of the research aim",
-    "description": "The description of the research aim",
-    "requires_clinical_trials": false, // Whether the research aim requires clinical trials,
-    "tasks": [
-        {
-            "title": "The title of the research task",
-            "description": "The description of the research task"
-        }
-        // ... can contain more tasks
-    ]
+    "description": "The description of the research aim"
 }
+```
+
+You will also receive an array of texts, each representing a research task that is part of the research aim.
+
+```json
+[
+    "Research task 1 text...",
+    "Research task 2 text...",
+    "etc."
+]
 ```
 
 """
@@ -82,39 +137,34 @@ ${part_generation_instructions}
     + """
 
 ## Your Task:
-Generate a detailed research aim description that includes:
+Write a detailed research aim description. A research aim or research objective is an overarching goal that the research aims to achieve. It should be specific, measurable, achievable, relevant, and time-bound (SMART). Write the aim in first person plural ("we will research…", "Our hypothesis is…")
+The description should have the following structure:
 
-- A "Risks and Alternative Approaches" section that:
- - Identifies potential risks
- - Outlines alternative strategies for achieving research aims if challenges arise
+- An exposition explaining the working hypothesis and general goals of the aim
+- An optional sub-section (only if a similar methodology is used in all research tasks) presenting the methodology
+- A sub-section explaining the expected results
+- A sub-section detailing what research tasks are included in this aim
 
-For each research task, provide:
-- Task goal and objectives
-- Experimental design methodology
-- Data collection methods
-- Data analysis approach
-- Results interpretation framework
-- If task dependent on previous outputs, explain the relation
+Example:
 
-For tasks with randomized groups/interventions, include:
-- Sample size
-- Group or interventions information
-- Method of sample analysis
+```markdown
 
-For tasks involving vertebrate animals/humans, include:
-- Description of pertinent biological variables (e.g. subject/animal sex)
+### Title of the Research Aim
 
-For tasks with hazardous elements, include:
-- Detailed hazard descriptions
-- Planned safety measures and precautions
+2-3 paragraphs explaining the working hypothesis and general goals of the research aim.
 
-For tasks using Human Embryonic Stem Cells (hESCs) not in NIH Registry, include:
-- Justification for non-registered hESC usage
+e.g. "This research aim will be to investigate the role of...", "We aim to develop a novel method for...", "This research aim will focus on..."
 
-For tasks using Human Fetal Tissue (HFT), include:
-- Explanation of HFT necessity
-- Documentation of alternative evaluation methods
-- Evidence of alternatives consideration
+### Methodology: (optional)
+2-3 paragraphs detailing the methods used in all/most research tasks
+
+#### Expected Results
+
+2-3 paragraphs explaining the expected results of the research aim.
+
+#### Research Tasks
+1-2 concise paragraphs giving an overview of the research tasks included in this aim. Use language such as "The research aim includes three research tasks..."
+```
 """
 )
 
@@ -124,6 +174,12 @@ Here is the research aim data as JSON:
 
 ```json
 ${research_aim}
+```
+
+This is a full text of the research tasks included in this Aim
+
+```json
+${research_tasks}
 ```
 
 These are the results of the RAG retrieval provided as a JSON array:
@@ -137,8 +193,28 @@ ${previous_part_text}
     + OUTPUT_GENERATION_GUIDELINES
 )
 
+RESEARCH_TASK_GENERATION_USER_PROMPT: Final[Template] = Template(
+    """
+Here is the research task data as JSON:
+
+```json
+${research_task}
+```
+
+These are the results of the RAG retrieval provided as a JSON array:
+
+```json
+${rag_results}
+```
+${previous_part_text}
+
+"""
+    + OUTPUT_GENERATION_GUIDELINES
+)
+
+
 RESEARCH_AIM_QUERIES_PROMPT: Final[Template] = Template("""
-The next task in the RAG pipeline is to write a description for the research aim.
+The next task in the RAG pipeline is to write a description for a research aim.
 
 The data is provided as a JSON object:
 
@@ -147,37 +223,16 @@ ${research_aim}
 ```
 """)
 
-RESEARCH_PLAN_SYSTEM_PROMPT: Final[Template] = Template(
-    BASE_SYSTEM_PROMPT
-    + """
+RESEARCH_TASK_QUERIES_PROMPT: Final[Template] = Template("""
+The next task in the RAG pipeline is to write a description for a research task.
 
-You will be provided the texts of the grant applications research aims and the title of the grant application.
-The texts are the results of previous steps in the generation pipeline.
-${part_generation_instructions}
-
-## Your Task:
-- Write the exposition to the research plan section and give a concise overview of the research aims.
-- Incorporate the provided texts of the research aims into the research plan.
-- Adjust the provided inputs as required to ensure consistency and coherence in the generated text, but do not remove or modify
-    references to sources or citations.
-"""
-)
-
-RESEARCH_PLAN_USER_PROMPT: Final[Template] = Template(
-    """
-The grant application title is: {application_title}
-
-Here are the texts of the research aims as a JSON array of strings:
+The data is provided as a JSON object:
 
 ```json
-${research_aims_texts}
+${research_task}
 ```
+""")
 
-${previous_part_text}
-
-"""
-    + OUTPUT_GENERATION_GUIDELINES
-)
 
 SIGNIFICANCE_GENERATION_SYSTEM_PROMPT: Final[Template] = Template(
     BASE_SYSTEM_PROMPT
@@ -303,38 +358,11 @@ an Azure AI Search index containing user-uploaded research materials.
 You will receive a description of the next task in the RAG pipeline and any user provided inputs that will be used as
 sources.
 
-1. Analyze these and identify:
-   - The specific grant section being addressed
-   - Scientific domain and methodologies
-   - Key research problems or gaps
-   - Technical approaches and innovations
-2. Generate 3-5 distinct search queries that:
-   - Target relevant scientific precedents and methodologies
-   - Identify similar research problems and solutions
-   - Find supporting evidence for significance claims
-   - Locate methodological innovations in the field
+Analyze these and generate at least 3 distinct search queries that balance specificity with breadth to capture relevant materials.
 
-## Guidelines:
-- Include technical terminology specific to the research domain
-- Target evidence supporting significance claims
-- Focus on methodological innovations when relevant
-- Include queries for competing or alternative approaches
-- Consider interdisciplinary connections
-
-## Important Considerations:
-- Queries should balance specificity with breadth to capture relevant materials
-- Consider both theoretical foundations and practical applications
-- Include searches for potential criticisms or limitations
-- Target evidence of research impact and significance
-- Look for methodological innovations and technical advances
-- Consider cross-disciplinary implications and applications
-"""
-
-SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
-{prompt}
 
 ## Response Format:
-Respond using the provided tools using a JSON object strictly adhering to the following structure:
+Respond using the provided tools with a JSON object strictly adhering to the following structure:
 
 ```json
 {
@@ -343,4 +371,10 @@ Respond using the provided tools using a JSON object strictly adhering to the fo
     ]
 }
 ```
+"""
+
+SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
+This is the prompt you should create the queries for:
+
+{prompt}
 """)
