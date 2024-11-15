@@ -6,7 +6,7 @@ from azure.search.documents._generated.models import VectorizedQuery
 from azure.search.documents.aio import SearchClient
 
 from src.constants import FIELD_NAME_CONTENT, FIELD_NAME_CONTENT_VECTOR, FIELD_NAME_FILENAME, FIELD_NAME_PAGE_NUMBER
-from src.rag.dto import DocumentDTO
+from src.rag_backend.dto import DocumentDTO
 from src.utils.env import get_env
 from src.utils.exceptions import RequestFailureError
 from src.utils.retry import exponential_backoff_retry

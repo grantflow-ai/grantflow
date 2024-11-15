@@ -36,32 +36,29 @@ class ResearchAimDTO(TypedDict):
     """The tasks associated with the research aim."""
 
 
-class SignificanceAndInnovationDTO(TypedDict):
-    """DTO for the significance and innovation sections."""
-
-    significance_id: str
-    """The ID of the research significance."""
-    innovation_id: str
-    """The ID of the research innovation."""
-    significance_description: str
-    """The user input describing the significance of the research."""
-    innovation_description: str
-    """The user input describing the innovation of the research."""
-
-
-class SectionGenerationRequest(TypedDict):
+class DraftGenerationRequest(TypedDict):
     """DTO for a RAG request for the research-plan section."""
 
     workspace_id: str
     """The workspace ID"""
+    application_id: str
+    """The application ID"""
     application_title: str
     """The title of the grant application"""
     cfp_title: str
     """The CFP action code and title"""
     grant_funding_organization: str
     """The funding organization for the grant"""
-    data: str | SignificanceAndInnovationDTO | list[ResearchAimDTO]
-    """The user inputs"""
+    significance_description: str
+    """The description of the research significance"""
+    significance_id: str
+    """The ID of the research significance"""
+    innovation_description: str
+    """The description of the research innovation"""
+    innovation_id: str
+    """The ID of the research innovation"""
+    research_aims: list[ResearchAimDTO]
+    """The research aims for the grant application"""
 
 
 class FormPrefillRequest(TypedDict):
@@ -71,29 +68,6 @@ class FormPrefillRequest(TypedDict):
     """The workspace ID."""
     application_id: str
     """The application ID."""
-
-
-class InnovationAndSignificanceGenerationResponse(TypedDict):
-    """DTO for the result of generating the innovation and significance sections."""
-
-    innovation_text: str
-    """The generated text for the innovation section."""
-    significance_text: str
-    """The generated text for the significance section."""
-
-
-class ResearchPlanGenerationResponse(TypedDict):
-    """DTO for the result of generating the research plan."""
-
-    research_plan_text: str
-    """The generated text for the research plan."""
-
-
-class ExecutiveSummaryGenerationResponse(TypedDict):
-    """DTO for the result of generating the executive summary."""
-
-    executive_summary_text: str
-    """The generated text for the executive summary."""
 
 
 class DocumentDTO(TypedDict):

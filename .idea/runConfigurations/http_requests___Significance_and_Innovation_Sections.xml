@@ -1,5 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="http_requests | Significance and Innovation Sections" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" nameIsGenerated="true" path="$PROJECT_DIR$/tests/rag/http_requests.http" requestIdentifier="Significance and Innovation Sections" runType="Run single request">
-    <method v="2" />
-  </configuration>
-</component>
