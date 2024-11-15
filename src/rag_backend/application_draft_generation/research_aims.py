@@ -11,7 +11,6 @@ from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
-    RAG_RETRIEVAL_INPUT_EXAMPLE,
 )
 from src.rag_backend.application_draft_generation.research_tasks import (
     TaskGenerationResponse,
@@ -27,129 +26,64 @@ from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_
 
 logger = logging.getLogger(__name__)
 
-INPUTS_DESCRIPTION = """
-## Inputs
-You will be given a JSON object that contains the aim number, its title and (optional) description of a research aim. Example:
+RESEARCH_AIM_GENERATION_USER_PROMPT: Final[Template] = Template("""
+Your task is to write a research aim description.
+${previous_part_text}
 
-```json
-{
-    "aim_number": 1, // an integer representing the research aim number
-    "title": "The title of the research aim",
-    "description": "The description of the research aim"
-}
-```
+Use the following sources to write the text:
 
-You will also receive an array of objects containing the aim number and text of the research aims preceding the current research aim, if any. Example:
+1. Research Aim Data as a JSON object:
+    <research_aim>
+    ${research_aim}
+    </research_aim>
 
-```jsonc
-[
-    {
-        "aim_number": 1,
-        "text": "The text content of the first research aim"
-    }
-]
-```
+2. Previously generated research aims as a JSON array:
+    <previous_aims>
+    ${previous_aims}
+    </previous_aims>
 
-You will also receive an array of objects containing the task number and text of the research tasks that are part of this research aim. Example:
+3. Research Tasks included in this Aim as a JSON array:
+    <research_tasks>
+    ${research_tasks}
+    </research_tasks>
 
-```jsonc
-[
-    {
-        "task_number": "1.1", // A string in the format x.y where x is the aim number and y is the task number.
-        "text": "The text of the first research task in this research aim"
-    },
-    {
-        "task_number": "1.2",
-        "text": "The text of the second research task in this research aim"
-    }
-    // ... can have more tasks
-]
-```
-"""
+4. RAG Retrieval Results for additional context:
+    <rag_results>
+    ${rag_results}
+    </rag_results>
 
-RESEARCH_AIM_WRITING_INSTRUCTIONS: Final[str] = """
-Your task is to write a detailed research aim description that is between 200-400 words long.
-${part_generation_instructions}
 A research aim or research objective is an overarching goal that the research aims to achieve.
-The description should be specific, measurable, achievable, relevant, and time-bound (SMART). It should cover the following aspects:
+The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
+It should address the following implicit questions:
 
-- The working hypothesis and general goals of the aim
-- The methodology
-- The expected results
+1. What is the working hypothesis?
+2. What are the general goals of the aim?
+3. What is the methodology employed?
+4. What are the expected results?
 
 __NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
 
 **IMPORTANT**: If there are any relations between the aim and other aims, mention this explicitly.
 E.g. "Building upon the first aim...", "Depending on the results of aim 1...", "Based on the candidates identified in the previous aim..."
 
-Example:
-
-```markdown
-
-### Title of the Research Aim
-
-2-3 paragraphs explaining the working hypothesis and general goals of the research aim.
-
-e.g. "This research aim will be to investigate the role of...", "We aim to develop a novel method for...", "This research aim will focus on..."
-
-### Methodology: (optional)
-2-3 paragraphs detailing the methods used in all/most research tasks
-
-#### Expected Results
-
-2-3 paragraphs explaining the expected results of the research aim.
-```
-"""
-
-RESEARCH_AIM_GENERATION_SYSTEM_PROMPT: Final[Template] = Template(
-    dedent(f"""
-    {BASE_SYSTEM_PROMPT}
-    {INPUTS_DESCRIPTION}
-    {RAG_RETRIEVAL_INPUT_EXAMPLE}
-    {RESEARCH_AIM_WRITING_INSTRUCTIONS}
-""").strip()
-)
-
-RESEARCH_AIM_GENERATION_USER_PROMPT: Final[Template] = Template("""
-Here is the research aim data as JSON:
-
-```json
-${research_aim}
-```
-
-This is a full text of the research aims that have been generated so far as a JSON array:
-```json
-${previous_aims}
-```
-
-This is a full text of the research tasks included in this Aim as a JSON array:
-
-```json
-${research_tasks}
-```
-
-These are the results of the RAG retrieval provided as a JSON array:
-
-```json
-${rag_results}
-```
-${previous_part_text}
+Ensure that the text is continuous in style, tone and terminology with previous tasks.
+Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
 RESEARCH_AIM_QUERIES_PROMPT: Final[Template] = Template("""
 The next task in the RAG pipeline is to write a description for a research aim.
 A research aim or research objective is an overarching goal that the research seeks to achieve.
-The description should cover the following aspects:
+The description should address the following implicit questions:
 
-- The working hypothesis and general goals of the aim
-- The methodology
-- The expected results
+1. What is the working hypothesis?
+2. What are the general goals of the aim?
+3. What is the methodology employed?
+4. What are the expected results?
 
-The aim data is provided as a JSON object:
-
-```json
-${research_aim}
-```
+Here is the research task data as a JSON object:
+    <research_aim>
+    ${research_aim}
+    </research_aim>
 """)
 
 
@@ -186,10 +120,6 @@ async def generate_research_aim_text(
     Returns:
         GenerationResult: The generated text for the research aim.
     """
-    system_prompt = RESEARCH_AIM_GENERATION_SYSTEM_PROMPT.substitute(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-    ).strip()
-
     user_prompt = RESEARCH_AIM_GENERATION_USER_PROMPT.substitute(
         research_aim=dumps(
             {
@@ -200,12 +130,16 @@ async def generate_research_aim_text(
         ),
         previous_aims=dumps(previous_aims),
         rag_results=dumps(retrieval_results),
-        previous_part_text=previous_part_text,
+        previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
+            previous_part_text=previous_part_text,
+        )
+        if previous_part_text
+        else "",
         research_tasks=dumps(research_tasks),
     ).strip()
 
     return await handle_tool_call_request(
-        system_prompt=system_prompt,
+        system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
     )
 

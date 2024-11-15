@@ -2,7 +2,6 @@ import logging
 from functools import partial
 from json import dumps
 from string import Template
-from textwrap import dedent
 from typing import Final, TypedDict
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
@@ -11,7 +10,6 @@ from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
-    RAG_RETRIEVAL_INPUT_EXAMPLE,
 )
 from src.rag_backend.dto import (
     DocumentDTO,
@@ -23,103 +21,69 @@ from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_
 
 logger = logging.getLogger(__name__)
 
-INPUTS_DESCRIPTION = """
-## Inputs
-You will be given a JSON object that contains the task number, title and (optional) description of a research task. Example:
 
-```jsonc
-{
-    "task_number": "1.2" // a string always following the format 'x.y' where x is the research aim number, y is the task number.
-    "title": "The title of the research task",
-    "description": "The description of the research task"
-}
-```
+RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS: Final[str] = """
+5. If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
+6. If the task involves vertebrate animals/humans, what are the pertinent biological variables (e.g. subject sex, age etc.)?
+7. If the task involves hazardous elements, what are the detailed hazard descriptions and planned safety measures and precautions?
+8. If the task uses Human Embryonic Stem Cells (hESCs) not in the NIH Registry, what is the justification for non-registered hESC usage?
+9. If the task uses Human Fetal Tissue (HFT), what is the necessity of HFT, documentation of alternative evaluation methods, and evidence of alternatives consideration?x
 
-You will also receive an array of objects containing the task number and text of the research tasks preceding the current research task, if any. Example:
-
-```jsonc
-[
-    {
-        "task_number": "1.2",
-        "text": "The text content of the research task"
-    }
-]
-```
+Note that these sections should be added only if they apply to the given research task.
 """
 
-RESEARCH_TASK_WRITING_INSTRUCTIONS: Final[str] = """
-## Instructions
+RESEARCH_TASK_GENERATION_USER_PROMPT: Final[Template] = Template("""
+Your task is to write a research task description.
+${previous_part_text}
 
-Your task is to write a detailed research task description that is between 200-400 words long.
-${part_generation_instructions}
-A research task is a specific research task within a larger research aim.
-The description should be specific, measurable, achievable, relevant, and time-bound (SMART). It should cover the following aspects:
+Use the following sources to write the text:
 
-- Task goal and objectives
-- Experimental design methodology
-- Data collection methods
-- Results analysis and interpretation framework
+1. Research Task Data as a JSON object:
+    <research_task>
+    ${research_task}
+    </research_task>
+
+2. Previously generated research tasks:
+    <previous_tasks>
+    ${previous_tasks}
+    </previous_tasks>
+
+3. RAG Retrieval Results for additional context:
+    <rag_results>
+    ${rag_results}
+    </rag_results>
+
+A research task is a specific task within a larger research aim.
+The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
+It should address the following implicit questions:
+
+1. What is task goal or objectives?
+2. What is the experimental design methodology used?
+3. What are the data collection methods?
+4. What is the results analysis and interpretation framework?
 ${clinical_trial_questions}
 
 **IMPORTANT**: If there are any relations between the task and other tasks, mention this explicitly.
 E.g. "As was previously seen in task 1.1", "Depending on the result of task 2.3", "Based on the candidates identified in Task 1.2, in task 1.3 we will..."
 
-The generated text should not contain any headings. It should be a continuous text without bullet points, lists or tables.
-"""
-
-RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS: Final[str] = """
-If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
-If the task involves vertebrate animals/humans, what are the pertinent biological variables (e.g. subject sex, age etc.)?
-If the task involves hazardous elements, what are the detailed hazard descriptions and planned safety measures and precautions?
-If the task uses Human Embryonic Stem Cells (hESCs) not in the NIH Registry, what is the justification for non-registered hESC usage?
-If the task uses Human Fetal Tissue (HFT), what is the necessity of HFT, documentation of alternative evaluation methods, and evidence of alternatives consideration?x
-
-Note that these sections should be added only if they apply to the given research task.
-"""
-
-RESEARCH_TASK_GENERATION_SYSTEM_PROMPT: Final[Template] = Template(
-    dedent(f"""
-    {BASE_SYSTEM_PROMPT}
-    {INPUTS_DESCRIPTION}
-    {RAG_RETRIEVAL_INPUT_EXAMPLE}
-    {RESEARCH_TASK_WRITING_INSTRUCTIONS}
-    """).strip()
-)
-
-RESEARCH_TASK_GENERATION_USER_PROMPT: Final[Template] = Template("""
-Here is the research task data as JSON:
-
-```json
-${research_task}
-```
-
-This is a full text of the research tasks that have been generated so far as a JSON array:
-```json
-${previous_tasks}
-```
-
-These are the results of the RAG retrieval provided as a JSON array:
-
-```json
-${rag_results}
-```
-${previous_part_text}
+Ensure that the text is continuous in style, tone and terminology with previous tasks.
+Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
 RESEARCH_TASK_QUERIES_PROMPT: Final[Template] = Template("""
-The next task in the RAG pipeline is to write a description for a research task.
-This description should cover the following aspects:
+A research task is a specific task within a larger research aim. The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
+The description should address the following implicit questions:
 
-- Task goal and objectives
-- Experimental design methodology
-- Data collection methods
-- Results analysis and interpretation framework
+1. What is task goal or objectives?
+2. What is the experimental design methodology used?
+3. What are the data collection methods?
+4. What is the results analysis and interpretation framework?
+${clinical_trial_questions}
 
-The task data is provided as a JSON object:
-
-```json
-${research_task}
-```
+Here is the research task data as a JSON object:
+    <research_task>
+    ${research_task}
+    </research_task>
 """)
 
 
@@ -156,11 +120,6 @@ async def generate_research_task_text(
     Returns:
         GenerationResult: The generated text for the research aim.
     """
-    system_prompt = RESEARCH_TASK_GENERATION_SYSTEM_PROMPT.substitute(
-        part_generation_instructions=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS if previous_part_text else "",
-        clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS if requires_clinical_trials else "",
-    ).strip()
-
     user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute(
         research_task=dumps(
             {
@@ -171,11 +130,16 @@ async def generate_research_task_text(
         ),
         rag_results=dumps(retrieval_results),
         previous_tasks=dumps(previous_tasks),
-        previous_part_text=previous_part_text,
+        clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS if requires_clinical_trials else "",
+        previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
+            previous_part_text=previous_part_text,
+        )
+        if previous_part_text
+        else "",
     ).strip()
 
     return await handle_tool_call_request(
-        system_prompt=system_prompt,
+        system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
     )
 
@@ -212,7 +176,10 @@ async def handle_research_task_text_generation(
                     "title": research_task["title"],
                     "description": research_task["description"],
                 }
-            )
+            ),
+            clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
+            if requires_clinical_trials
+            else "",
         ),
     )
     search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_PARENT_ID} eq '{research_task['id']}' or {FIELD_NAME_PARENT_ID} eq '{research_aim_id}' or {FIELD_NAME_PARENT_ID} eq '{application_id}')"

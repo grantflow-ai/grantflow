@@ -8,7 +8,7 @@ from azure.functions import HttpRequest, HttpResponse
 
 from src.constants import CONTENT_TYPE_JSON
 from src.rag_backend.application_draft_generation.research_aims import generate_research_plan
-from src.rag_backend.application_draft_generation.significance_and_innovation import (
+from src.rag_backend.application_draft_generation.research_innovation import (
     generate_significance_and_innovation,
 )
 from src.rag_backend.dto import (
