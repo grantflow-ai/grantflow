@@ -6,7 +6,7 @@ This file is the entry point for the Azure Function App.
 from azure.functions import FunctionApp
 
 from src.indexer import blueprint as indexer_blueprint
-from src.rag import blueprint as rag_blueprint
+from src.rag_backend import blueprint as rag_blueprint
 
 app = FunctionApp()
 

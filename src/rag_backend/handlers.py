@@ -1,32 +1,26 @@
 import logging
 import sys
+from asyncio import gather
 from http import HTTPStatus
-from typing import cast
+from textwrap import dedent
 
 from azure.functions import HttpRequest, HttpResponse
 
 from src.constants import CONTENT_TYPE_JSON
-from src.rag.dto import (
-    APIError,
-    ExecutiveSummaryGenerationResponse,
-    FormPrefillRequest,
-    InnovationAndSignificanceGenerationResponse,
-    ResearchAimDTO,
-    ResearchPlanGenerationResponse,
-    SectionGenerationRequest,
+from src.rag_backend.application_draft_generation.research_aims import generate_research_plan
+from src.rag_backend.application_draft_generation.significance_and_innovation import (
+    generate_significance_and_innovation,
 )
-from src.rag.executive_summary import generate_executive_summary
-from src.rag.research_plan import generate_research_plan
-from src.rag.significance_and_innovation import generate_significance_and_innovation
+from src.rag_backend.dto import (
+    APIError,
+    DraftGenerationRequest,
+    FormPrefillRequest,
+)
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
-
-GenerationResult = (
-    InnovationAndSignificanceGenerationResponse | ResearchPlanGenerationResponse | ExecutiveSummaryGenerationResponse
-)
 
 
 async def handle_section_generation_request(req: HttpRequest) -> HttpResponse:
@@ -41,36 +35,39 @@ async def handle_section_generation_request(req: HttpRequest) -> HttpResponse:
     logger.info("Beginning RAG pipeline")
 
     try:
-        request_body = deserialize(req.get_body(), SectionGenerationRequest)
-        data = request_body["data"]
+        request_body = deserialize(req.get_body(), DraftGenerationRequest)
 
-        if isinstance(data, dict):
-            logger.info("Generating significance and innovation text")
-            result: GenerationResult = await generate_significance_and_innovation(
-                significance_description=data["significance_description"],
-                significance_id=data["significance_id"],
-                innovation_description=data["innovation_description"],
-                innovation_id=data["innovation_id"],
-                workspace_id=request_body["workspace_id"],
-            )
-        elif isinstance(data, list):
-            logger.info("Generating a research plan")
-            result = await generate_research_plan(
-                research_aims=cast(list[ResearchAimDTO], data),
-                workspace_id=request_body["workspace_id"],
-            )
-        else:
-            logger.info("Generating an executive summary")
-            result = await generate_executive_summary(
-                application_title=request_body["application_title"],
-                cfp_title=request_body["cfp_title"],
-                grant_funding_organization=request_body["grant_funding_organization"],
-                application_text=data,
-                workspace_id=request_body["workspace_id"],
-            )
+        significance_and_innovation_section, research_plan_section = await gather(
+            *[
+                generate_significance_and_innovation(
+                    application_id=request_body["application_id"],
+                    application_title=request_body["application_title"],
+                    cfp_title=request_body["cfp_title"],
+                    grant_funding_organization=request_body["grant_funding_organization"],
+                    innovation_description=request_body["innovation_description"],
+                    innovation_id=request_body["innovation_id"],
+                    significance_description=request_body["significance_description"],
+                    significance_id=request_body["significance_id"],
+                    workspace_id=request_body["workspace_id"],
+                ),
+                generate_research_plan(
+                    application_id=request_body["application_id"],
+                    workspace_id=request_body["workspace_id"],
+                    research_aims=request_body["research_aims"],
+                ),
+            ]
+        )
         logger.info("RAG pipeline completed successfully")
         return HttpResponse(
-            body=serialize(result),
+            body=serialize(
+                {
+                    "result": dedent(f"""
+            {significance_and_innovation_section}
+
+            {research_plan_section}
+            """).strip()
+                }
+            ),
             status_code=HTTPStatus.CREATED,
             mimetype=CONTENT_TYPE_JSON,
         )

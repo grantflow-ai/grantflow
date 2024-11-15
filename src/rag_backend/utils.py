@@ -6,8 +6,9 @@ from openai import OpenAIError
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
-from src.rag.dto import GenerationResult
-from src.utils.exceptions import OperationError
+from src.rag_backend.application_draft_generation.prompts import SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS
+from src.rag_backend.dto import GenerationResult
+from src.utils.exceptions import DeserializationError, OperationError
 from src.utils.llm import get_generation_model
 from src.utils.nlp import get_spacy_model
 from src.utils.retry import exponential_backoff_retry
@@ -92,18 +93,21 @@ async def handle_segmented_text_generation(
 
 @exponential_backoff_retry(OperationError)
 async def handle_tool_call_request(
-    system_prompt: str,
-    user_prompt: str,
-    tools: list[ChatCompletionToolParam] | None = None,
+    *,
+    output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
     response_type: type[T] = GenerationResult,  # type: ignore[assignment]
+    system_prompt: str,
+    tools: list[ChatCompletionToolParam] | None = None,
+    user_prompt: str,
 ) -> T:
     """Handle a tool call request for segmented text generation.
 
     Args:
-        system_prompt: The system prompt.
-        user_prompt: The user prompt.
-        tools: The tools to use for the generation.
+        output_instructions: The output instructions.
         response_type: The response type.
+        system_prompt: The system prompt.
+        tools: The tools to use for the generation.
+        user_prompt: The user prompt.
 
     Raises:
         OperationError: If the response content is empty.
@@ -120,22 +124,25 @@ async def handle_tool_call_request(
             messages=[
                 ChatCompletionSystemMessageParam(role="system", content=system_prompt),
                 ChatCompletionUserMessageParam(role="user", content=user_prompt),
+                ChatCompletionSystemMessageParam(role="system", content=output_instructions),
             ],
             temperature=0.0,
             tools=tools or SEGMENTED_GENERATION_TOOLS,
         )
-        if response.choices[0].message.tool_calls and (
-            content := response.choices[0].message.tool_calls[0].function.arguments
-        ):
+        if response.choices[0].message.tool_calls:
+            result = deserialize(response.choices[0].message.tool_calls[0].function.arguments, response_type)
             logger.info("Successfully generated text segment")
-            return deserialize(content, response_type)
+            return result
 
         logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
         raise OperationError(message="Response content is empty", context=response.model_dump_json())
-    except OpenAIError as e:
+    except (DeserializationError, OpenAIError) as e:
         body = serialize(getattr(e, "body", {})) if isinstance(getattr(e, "body", None), dict) else ""
-        logger.warning("Received an API error from OpenAI: %s, %s", e, body)
-        raise OperationError(message="Received an API error from OpenAI", context=str(body)) from e
+        if body:
+            logger.warning("Received an API error from OpenAI: %s, %s", e, body)
+            raise OperationError(message="Received an API error from OpenAI", context=str(body)) from e
+        logger.warning("Unexpected error occurred: %s", e)
+        raise OperationError(message="Unexpected error occurred", context=str(e)) from e
 
 
 def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:
