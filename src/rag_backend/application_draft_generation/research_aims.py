@@ -166,13 +166,14 @@ async def handle_research_aim_text_generation(
         The generated text for the research aim.
     """
     research_tasks: list[TaskGenerationResponse] = []
+    research_aim_id = research_aim["id"]
     for index, research_task in enumerate(research_aim["tasks"]):
         research_tasks.append(
             await handle_research_task_text_generation(
                 application_id=application_id,
                 previous_tasks=[*previous_tasks, *research_tasks],
                 requires_clinical_trials=research_aim["requires_clinical_trials"],
-                research_aim_id=research_aim["id"],
+                research_aim_id=research_aim_id,
                 research_task=research_task,
                 research_task_number=f"{aim_number}.{index + 1}",
                 workspace_id=workspace_id,
@@ -182,7 +183,7 @@ async def handle_research_aim_text_generation(
     search_queries = await create_search_queries(
         RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=dumps(research_aim)),
     )
-    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_PARENT_ID} eq '{research_aim["id"]}' or {FIELD_NAME_PARENT_ID} eq '{application_id}')"
+    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_PARENT_ID} eq '{research_aim_id}' or {FIELD_NAME_PARENT_ID} eq '{application_id}')"
 
     query_embeddings = await generate_embeddings(search_queries)
     search_text = " | ".join([f'"{query}"' for query in search_queries])
