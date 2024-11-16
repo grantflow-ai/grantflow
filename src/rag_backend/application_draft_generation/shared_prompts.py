@@ -23,17 +23,3 @@ Here is the last segment that was generated. Continue the generation the point i
 ${previous_part_text}
 Make sure to continue the text seamlessly.
 """)
-
-SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
-## Output
-
-Respond using the provided tools with a valid JSON object containing the generated text and a boolean value indicating
-whether the research aim text is complete or not. Example:
-
-```jsonc
-{
-    "text": "The generated text",
-    "is_complete": true // false if the text is not complete and requires further generation
-}
-```
-"""
