@@ -20,3 +20,4 @@ __queuestorage__
 coverage.xml
 local.settings.*
 requirements.txt
+**/http-client.private.env.json

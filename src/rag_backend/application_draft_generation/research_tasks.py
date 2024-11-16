@@ -209,7 +209,7 @@ async def handle_research_task_text_generation(
         prompt_handler=handler,
     )
 
-    logger.info("Generated research task %s", result)
+    logger.debug("Generated research task %s", result)
     return TaskGenerationResponse(
         title=research_task["title"],
         text=result,

@@ -20,14 +20,14 @@ committed to GitHub.
 
 ## Installation
 
-Make sure to be running a Python 3.12 shell.
+Make sure to be running a Python 3.11 shell.
 
 1. It's recommended to use [pyenv](https://github.com/pyenv/pyenv) to manage python versions. For example:
 
    ```shell
    brew install pyenv
-   pyenv install 3.12
-   pyenv local 3.12
+   pyenv install 3.11
+   pyenv local 3.11
    ```
 
 2. Install PDM globally - you can either install it via brew (recommended) or pipx:

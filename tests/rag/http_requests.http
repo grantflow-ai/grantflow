@@ -1,6 +1,6 @@
 ### Generate Grant Application Draft
 # @timeout 600
-POST  http://localhost:7071/api/generate-section-text
+POST  {{request_url}}
 Content-Type: application/json
 
 {

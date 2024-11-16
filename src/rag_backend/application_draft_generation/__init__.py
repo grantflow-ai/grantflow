@@ -130,7 +130,7 @@ async def _generate_significance_and_innovation(
         significance_id=significance_id,
         workspace_id=workspace_id,
     )
-    logger.info("Generated significance section: %s", significance_text)
+    logger.debug("Generated significance section: %s", significance_text)
 
     innovation_text = await handle_innovation_text_generation(
         innovation_description=innovation_description,
@@ -139,7 +139,7 @@ async def _generate_significance_and_innovation(
         workspace_id=workspace_id,
         application_id=application_id,
     )
-    logger.info("Generated innovation section: %s", innovation_text)
+    logger.debug("Generated innovation section: %s", innovation_text)
 
     return significance_text, innovation_text
 
