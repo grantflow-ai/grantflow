@@ -60,7 +60,7 @@ async def blob_trigger_handler(blob: InputStream) -> None:
     try:
         extracted_data, mime_type = await parse_blob_data(blob_data=blob.read(), filename=filename)
         chunks = chunk_text(extracted_data=extracted_data, mime_type=mime_type)
-        logger.info("Extracted text from response: %s", dumps(chunks))
+        logger.debug("Extracted text from response: %s", dumps(chunks))
 
         if search_schemas := await index_documents(
             chunks=chunks,

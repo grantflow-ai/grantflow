@@ -209,7 +209,7 @@ async def handle_research_aim_text_generation(
         entity_identifier=research_aim["id"],
         prompt_handler=handler,
     )
-    logger.info("Generated research aim %s", result)
+    logger.debug("Generated research aim %s", result)
 
     return AimGenerationResponse(
         text=result,
