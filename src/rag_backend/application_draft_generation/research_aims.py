@@ -7,13 +7,13 @@ from typing import Final, TypedDict
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
 from src.rag_backend.ai_search import retrieve_documents
-from src.rag_backend.application_draft_generation.prompts import (
-    BASE_SYSTEM_PROMPT,
-    CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
-)
 from src.rag_backend.application_draft_generation.research_tasks import (
     TaskGenerationResponse,
     handle_research_task_text_generation,
+)
+from src.rag_backend.application_draft_generation.shared_prompts import (
+    BASE_SYSTEM_PROMPT,
+    CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
 from src.rag_backend.dto import (
     DocumentDTO,

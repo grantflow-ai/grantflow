@@ -6,7 +6,6 @@ from openai import OpenAIError
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
-from src.rag_backend.application_draft_generation.prompts import SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS
 from src.rag_backend.dto import GenerationResult
 from src.utils.exceptions import DeserializationError, OperationError
 from src.utils.llm import get_generation_model
@@ -41,6 +40,21 @@ SEGMENTED_GENERATION_TOOLS = [
         ),
     )
 ]
+
+
+SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
+## Output
+
+Respond using the provided tools with a valid JSON object containing the generated text and a boolean value indicating
+whether the research aim text is complete or not. Example:
+
+```jsonc
+{
+    "text": "The generated text",
+    "is_complete": true // false if the text is not complete and requires further generation
+}
+```
+"""
 
 TEXT_GENERATION_MODEL: Final[str] = "gpt-4o"
 
