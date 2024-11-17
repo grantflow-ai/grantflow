@@ -2,13 +2,10 @@ import { useWizardStore } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "gen/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
-import { Badge } from "gen/ui/badge";
-import { Separator } from "gen/ui/separator";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { FilesDisplay } from "@/components/files-display";
-import { generateSection } from "@/actions/text-generation";
-import { generateFileDownload } from "@/utils/file";
-import { combineTexts } from "@/utils/format";
+import { Copy, Download, Loader2 } from "lucide-react";
+import { generateApplicationDraft } from "@/actions/text-generation";
+import { useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 export function ReviewApplicationForm({
 	onPressPrevious,
@@ -19,7 +16,10 @@ export function ReviewApplicationForm({
 	workspaceId: string;
 	applicationId: string;
 }) {
-	const { application, significance, innovation, researchAims, researchTasks } = useWizardStore({
+	const [isLoading, setIsLoading] = useState(false);
+	const [applicationDraftText, setApplicationDraftText] = useState<string | null>(null);
+	const markdownRef = useRef<HTMLDivElement>(null);
+	const { application, significance, innovation, researchAims, researchTasks, grantCFP } = useWizardStore({
 		workspaceId,
 	})(
 		useShallow((state) => ({
@@ -28,6 +28,7 @@ export function ReviewApplicationForm({
 			innovation: state.innovation,
 			researchAims: state.researchAims,
 			researchTasks: state.researchTasks,
+			grantCFP: state.cfp,
 		})),
 	);
 
@@ -36,31 +37,19 @@ export function ReviewApplicationForm({
 	}
 
 	const handleGenerateDraft = async () => {
-		const significanceAndInnovationResponse = await generateSection(
-			applicationId,
-			{
+		setIsLoading(true);
+		try {
+			const applicationDraftText = await generateApplicationDraft({
 				workspace_id: workspaceId,
-				cfp_title: application.cfpId,
+				application_id: applicationId,
+				cfp_title: `${grantCFP!.code} - ${grantCFP!.title}`,
 				application_title: application.title,
 				grant_funding_organization: "NIH",
-				data: {
-					significance_description: significance.text,
-					innovation_description: innovation.text,
-					significance_id: significance.id,
-					innovation_id: innovation.id,
-				},
-			},
-			"significance-and-innovation",
-		);
-
-		const researchPlanResponse = await generateSection(
-			applicationId,
-			{
-				workspace_id: workspaceId,
-				cfp_title: application.cfpId,
-				application_title: application.title,
-				grant_funding_organization: "NIH",
-				data: researchAims.map((aim) => ({
+				significance_description: significance.text,
+				innovation_description: innovation.text,
+				significance_id: significance.id,
+				innovation_id: innovation.id,
+				research_aims: researchAims.map((aim) => ({
 					id: aim.id,
 					title: aim.title,
 					description: aim.description,
@@ -73,156 +62,73 @@ export function ReviewApplicationForm({
 							description: task.description,
 						})),
 				})),
-			},
-			"research-plan",
-		);
+			});
+			setApplicationDraftText(applicationDraftText);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
-		const executiveSummaryResponse = await generateSection(
-			applicationId,
-			{
-				workspace_id: workspaceId,
-				cfp_title: application.cfpId,
-				application_title: application.title,
-				grant_funding_organization: "NIH",
-				data: combineTexts([
-					significanceAndInnovationResponse.significance_text,
-					significanceAndInnovationResponse.innovation_text,
-					researchPlanResponse.research_plan_text,
-				]),
-			},
-			"executive-summary",
-		);
+	const handleCopyMarkdown = () => {
+		if (applicationDraftText) {
+			navigator.clipboard.writeText(applicationDraftText);
+		}
+	};
 
-		generateFileDownload({
-			filename: `${application.title.toLowerCase().replaceAll(/[^a-z0-9]/, "-")}.md`,
-			content: combineTexts([
-				executiveSummaryResponse.executive_summary_text,
-				significanceAndInnovationResponse.significance_text,
-				significanceAndInnovationResponse.innovation_text,
-				researchPlanResponse.research_plan_text,
-			]),
-			type: "text/markdown",
-		});
+	const handleDownloadMarkdown = () => {
+		if (applicationDraftText) {
+			const blob = new Blob([applicationDraftText], { type: "text/markdown" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = "application_draft.md";
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		}
 	};
 
 	return (
 		<div className="space-y-6">
-			<Card>
-				<CardHeader>
-					<CardTitle>General Information</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-2">
-					<div>
-						<span className="font-semibold">NIH Activity Code:</span> {application.cfpId}
-					</div>
-					<div>
-						<span className="font-semibold">Title:</span> {application.title}
-					</div>
-					<div>
-						<span className="font-semibold">Resubmission:</span>{" "}
-						{application.isResubmission ? (
-							<Badge variant="default">Yes</Badge>
-						) : (
-							<Badge variant="secondary">No</Badge>
-						)}
-					</div>
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Significance and Innovation</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div>
-						<h3 className="font-semibold mb-2">Significance</h3>
-						<p>{significance.text}</p>
-						{significance.files && (
-							<div className="mt-2">
-								<span className="font-semibold">Attached Files:</span>
-								<FilesDisplay files={Object.values(significance.files)} />
-							</div>
-						)}
-					</div>
-					<Separator />
-					<div>
-						<h3 className="font-semibold mb-2">Innovation</h3>
-						<p>{innovation.text}</p>
-						{innovation.files && (
-							<div className="mt-2">
-								<span className="font-semibold">Attached Files:</span>
-								<FilesDisplay files={Object.values(innovation.files)} />
-							</div>
-						)}
-					</div>
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Research Plan</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-6">
-					{researchAims.map((aim, aimIndex) => (
-						<div key={aim.id} className="space-y-4">
-							<h3 className="font-semibold text-lg">Research Aim {aimIndex + 1}</h3>
-							<div>
-								<span className="font-semibold">Title:</span> {aim.title}
-							</div>
-							<div>
-								<span className="font-semibold">Description:</span> {aim.description}
-							</div>
-							<div className="flex items-center">
-								<span className="font-semibold mr-2">Requires Clinical Trials:</span>
-								{aim.requiresClinicalTrials ? (
-									<CheckCircle2 className="h-5 w-5 text-green-500" />
-								) : (
-									<XCircle className="h-5 w-5 text-red-500" />
-								)}
-							</div>
-							{aim.files && (
-								<div>
-									<span className="font-semibold">Attached Files:</span>
-									<FilesDisplay files={Object.values(aim.files)} />
-								</div>
-							)}
-							<div className="pl-4 space-y-4">
-								<h4 className="font-semibold">Research Tasks</h4>
-								{researchTasks
-									.filter((task) => task.aimId === aim.id)
-									.map((task, taskIndex) => (
-										<Card key={task.id}>
-											<CardContent className="pt-4 space-y-2">
-												<div>
-													<span className="font-semibold">Task {taskIndex + 1}:</span>{" "}
-													{task.title}
-												</div>
-												<div>
-													<span className="font-semibold">Description:</span>{" "}
-													{task.description}
-												</div>
-												{task.files && (
-													<div>
-														<span className="font-semibold">Attached Files:</span>
-														<FilesDisplay files={Object.values(task.files)} />
-													</div>
-												)}
-											</CardContent>
-										</Card>
-									))}
-							</div>
-							{aimIndex < researchAims.length - 1 && <Separator />}
+			{!applicationDraftText ? (
+				<Card>
+					<CardHeader>
+						<CardTitle>General Information</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-2">
+						<div>
+							<span className="font-semibold">NIH Activity Code:</span> {application.cfpId}
 						</div>
-					))}
-				</CardContent>
-			</Card>
+						<div>
+							<span className="font-semibold">Title:</span> {application.title}
+						</div>
+					</CardContent>
+				</Card>
+			) : (
+				<div className="space-y-4">
+					<div className="flex justify-end space-x-2">
+						<Button onClick={handleCopyMarkdown} variant="outline">
+							<Copy className="mr-2 h-4 w-4" />
+							Copy
+						</Button>
+						<Button onClick={handleDownloadMarkdown} variant="outline">
+							<Download className="mr-2 h-4 w-4" />
+							Download
+						</Button>
+					</div>
+					<div ref={markdownRef} className="max-h-[60vh] overflow-y-auto border rounded-md p-4">
+						<ReactMarkdown>{applicationDraftText}</ReactMarkdown>
+					</div>
+				</div>
+			)}
 
 			<div className="pt-10 flex justify-between">
-				<Button onClick={onPressPrevious} variant="outline">
+				<Button onClick={onPressPrevious} disabled={isLoading} variant="outline">
 					Go Back
 				</Button>
-				<Button onClick={handleGenerateDraft} data-testid="review-application-form-submit">
-					Generate Draft
+				<Button onClick={handleGenerateDraft} disabled={isLoading} data-testid="review-application-form-submit">
+					{isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Generate Draft"}
 				</Button>
 			</div>
 		</div>

@@ -26,13 +26,3 @@ export function formatBytes(bytes: number): string {
 	const value = bytes / base ** i;
 	return `${value.toFixed(0)} ${size}`;
 }
-
-/**
- * Combine texts into a single text
- *
- * @param texts - The texts to combine
- * @returns The combined sections as a string
- */
-export function combineTexts(texts: string[]): string {
-	return texts.join("\n\n");
-}

@@ -1,6 +1,7 @@
 export interface Env {
 	// Server only
-	BACKEND_API_URL: string;
+	BACKEND_API_BASE_URL: string;
+	BACKEND_API_TOKEN: string;
 	AZURE_STORAGE_ACCOUNT_KEY: string;
 	AZURE_STORAGE_ACCOUNT_NAME: string;
 	AZURE_STORAGE_CONTAINER_NAME: string;

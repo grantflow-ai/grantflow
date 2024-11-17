@@ -64,6 +64,8 @@ export const mockEnv = {
 	AZURE_STORAGE_ACCOUNT_NAME: "account_name",
 	AZURE_STORAGE_CONTAINER_NAME: "container_name",
 	DATABASE_CONNECTION_STRING: "connection_string",
+	BACKEND_API_BASE_URL: "http://localhost:3000",
+	BACKEND_API_TOKEN: "token",
 	NEXT_PUBLIC_DEBUG: true,
 	NEXT_PUBLIC_SITE_URL: "https://example.com",
 } satisfies Env;

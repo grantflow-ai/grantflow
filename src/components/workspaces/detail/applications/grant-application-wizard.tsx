@@ -27,16 +27,10 @@ export function GrantApplicationWizard({
 } & Pick<WizardStoreInit, "workspaceId"> &
 	Partial<WizardStoreInit>) {
 	const router = useRouter();
-	const { application, significance, innovation, workspaceId, researchAims, researchTasks } = useWizardStore(
-		storeInit,
-	)(
+	const { application, workspaceId } = useWizardStore(storeInit)(
 		useShallow((store) => ({
 			application: store.application,
-			significance: store.significance,
-			innovation: store.innovation,
 			workspaceId: store.workspaceId,
-			researchAims: store.researchAims,
-			researchTasks: store.researchTasks,
 		})),
 	);
 
@@ -61,20 +55,6 @@ export function GrantApplicationWizard({
 	}, [currentStep]);
 
 	const applicationId = useMemo(() => application?.id, [application]);
-	const hasSignificanceAndInnovation = useMemo(() => !!significance && !!innovation, [significance, innovation]);
-
-	const hasResearchPlan = useMemo(() => {
-		if (!researchAims.length || researchTasks.length) {
-			return false;
-		}
-		for (const researchAim of researchAims) {
-			const tasks = researchTasks.filter((task) => task.aimId === researchAim.id);
-			if (!tasks.length) {
-				return false;
-			}
-		}
-		return true;
-	}, [researchAims, researchTasks]);
 
 	return (
 		<div className="flex flex-col gap-4 py-5">
@@ -95,7 +75,7 @@ export function GrantApplicationWizard({
 					onPressPrevious={handlePrevious}
 				/>
 			)}
-			{hasSignificanceAndInnovation && applicationId && currentStep === 3 && (
+			{applicationId && currentStep === 3 && (
 				<ResearchPlanForm
 					workspaceId={workspaceId}
 					applicationId={applicationId}
@@ -103,7 +83,7 @@ export function GrantApplicationWizard({
 					onPressPrevious={handlePrevious}
 				/>
 			)}
-			{hasSignificanceAndInnovation && applicationId && hasResearchPlan && currentStep === 4 && (
+			{applicationId && currentStep === 4 && (
 				<ReviewApplicationForm
 					workspaceId={workspaceId}
 					applicationId={applicationId}

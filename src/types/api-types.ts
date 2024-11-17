@@ -17,30 +17,15 @@ export interface ResearchAimDTO {
 	tasks: ResearchTaskDTO[];
 }
 
-export interface SignificanceAndInnovationDTO {
-	significance_id: string;
-	innovation_id: string;
-	significance_description: string;
-	innovation_description: string;
-}
-
-export interface SectionGenerationRequest {
+export interface DraftGenerationRequest {
 	workspace_id: string;
+	application_id: string;
 	application_title: string;
 	cfp_title: string;
 	grant_funding_organization: string;
-	data: string | SignificanceAndInnovationDTO | ResearchAimDTO[];
-}
-
-export interface InnovationAndSignificanceGenerationResponse {
-	innovation_text: string;
-	significance_text: string;
-}
-
-export interface ResearchPlanGenerationResponse {
-	research_plan_text: string;
-}
-
-export interface ExecutiveSummaryGenerationResponse {
-	executive_summary_text: string;
+	significance_description: string;
+	significance_id: string;
+	innovation_description: string;
+	innovation_id: string;
+	research_aims: ResearchAimDTO[];
 }

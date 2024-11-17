@@ -1,22 +1,17 @@
 "use server";
 import { getDatabaseClient } from "db/connection";
 import { getEnv } from "@/utils/env";
-import {
-	ExecutiveSummaryGenerationResponse,
-	InnovationAndSignificanceGenerationResponse,
-	ResearchPlanGenerationResponse,
-	SectionGenerationRequest,
-} from "@/types/api-types";
 import { generationResults } from "db/schema";
 import { NewGenerationResult } from "@/types/database-types";
-import { and, asc, eq } from "drizzle-orm";
+import { DraftGenerationRequest } from "@/types/api-types";
 
-const API_ROUTE = "/generate-section-text";
+const API_ROUTE = "generate-draft";
 
-async function makeAPIRequest<T>(body: SectionGenerationRequest): Promise<T> {
-	const url = new URL(API_ROUTE, getEnv().BACKEND_API_URL);
+async function makeAPIRequest(body: DraftGenerationRequest): Promise<string> {
+	const url = new URL(API_ROUTE, getEnv().BACKEND_API_BASE_URL);
+	url.searchParams.append("code", getEnv().BACKEND_API_TOKEN);
 
-	const response = await fetch(url, {
+	const response = await fetch(url.toString(), {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -28,54 +23,26 @@ async function makeAPIRequest<T>(body: SectionGenerationRequest): Promise<T> {
 		throw new Error(`Http request failed: ${response.statusText}`);
 	}
 
-	return (await response.json()) as T;
+	const { result } = (await response.json()) as { result: string };
+	return result;
 }
 
 /**
  * Generate the significance and innovation text for an application.
  *
- * @param applicationId - The id of the application.
- * @param data - The request data.
- * @param sectionType - The type of section to generate.
+ * @param requestData - The request requestData.
  *
  * @returns an object containing the significance and innovation text.
  */
-export async function generateSection<K extends "significance-and-innovation" | "research-plan" | "executive-summary">(
-	applicationId: string,
-	data: SectionGenerationRequest,
-	sectionType: K,
-): Promise<
-	K extends "significance-and-innovation"
-		? InnovationAndSignificanceGenerationResponse
-		: K extends "research-plan"
-			? ResearchPlanGenerationResponse
-			: ExecutiveSummaryGenerationResponse
-> {
+export async function generateApplicationDraft(requestData: DraftGenerationRequest): Promise<string> {
 	const db = getDatabaseClient();
 
-	const response =
-		await makeAPIRequest<
-			K extends "significance-and-innovation"
-				? InnovationAndSignificanceGenerationResponse
-				: K extends "research-plan"
-					? ResearchPlanGenerationResponse
-					: ExecutiveSummaryGenerationResponse
-		>(data);
-
-	const results = await db
-		.select({ version: generationResults.version })
-		.from(generationResults)
-		.orderBy(asc(generationResults.version))
-		.where(and(eq(generationResults.applicationId, applicationId), eq(generationResults.type, sectionType)));
-
-	const lastResult = results.at(-1);
+	const text = await makeAPIRequest(requestData);
 
 	await db.insert(generationResults).values({
-		applicationId,
-		type: sectionType,
-		data: response,
-		version: lastResult ? lastResult.version + 1 : 1,
+		applicationId: requestData.application_id,
+		text,
 	} satisfies NewGenerationResult);
 
-	return response;
+	return text;
 }
