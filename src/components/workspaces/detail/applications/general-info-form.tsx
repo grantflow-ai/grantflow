@@ -41,11 +41,12 @@ export function GeneralInfoForm({
 	const [title, setTitle] = useState("Select an NIH Activity Code");
 	const [canSubmit, setCanSubmit] = useState(false);
 
-	const { updateApplication, application, loading } = useWizardStore({ workspaceId })(
+	const { updateApplication, application, loading, setGrantCFP } = useWizardStore({ workspaceId })(
 		useShallow((store) => ({
 			loading: store.loading,
 			application: store.application,
 			updateApplication: store.updateApplication,
+			setGrantCFP: store.setGrantCFP,
 		})),
 	);
 
@@ -66,6 +67,7 @@ export function GeneralInfoForm({
 	form.watch(({ cfpId }) => {
 		if (cfpId) {
 			setCfpTitle(cfpId);
+			setGrantCFP(cfps.find((cfp) => cfp.id === cfpId)!);
 		}
 	});
 
@@ -87,11 +89,12 @@ export function GeneralInfoForm({
 		);
 	});
 
-	const onSubmit = async ({ title, ...rest }: FormValues) => {
+	const onSubmit = async ({ title, cfpId, ...rest }: FormValues) => {
 		await updateApplication(
-			{ ...application, ...rest, title: title.trim(), status: application?.status ?? "draft" },
+			{ ...application, cfpId, ...rest, title: title.trim(), status: application?.status ?? "draft" },
 			() => {
 				setCanSubmit(false);
+				setGrantCFP(cfps.find((cfp) => cfp.id === cfpId)!);
 				onPressNext();
 			},
 		);

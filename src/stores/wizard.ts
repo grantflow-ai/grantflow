@@ -1,6 +1,7 @@
 import { create, type StoreApi, UseBoundStore } from "zustand";
 import {
 	GrantApplication,
+	GrantCFP,
 	NewGrantApplication,
 	NewResearchAim,
 	NewResearchInnovation,
@@ -31,6 +32,7 @@ export interface WizardStoreInit {
 	researchAims: ResearchAim[];
 	researchTasks: ResearchTask[];
 	significance: ResearchSignificance | null;
+	cfp: GrantCFP | null;
 	workspaceId: string;
 	loading: boolean;
 }
@@ -43,14 +45,16 @@ export interface WizardStoreMethods {
 	updateResearchInnovation: UpsertAction<ResearchInnovation>;
 	updateResearchSignificance: UpsertAction<ResearchSignificance>;
 	updateResearchTask: UpsertAction<ResearchTask>;
+	setGrantCFP: (cfp: GrantCFP) => void;
 }
 
 export type WizardStore = WizardStoreInit & WizardStoreMethods;
 
 const initialValue: Omit<WizardStoreInit, "workspaceId"> = {
-	loading: false,
 	application: null,
+	cfp: null,
 	innovation: null,
+	loading: false,
 	researchAims: [],
 	researchTasks: [],
 	significance: null,
@@ -179,6 +183,9 @@ function createWizardStore(
 					},
 					cb,
 				);
+			},
+			setGrantCFP: (cfp) => {
+				set({ cfp });
 			},
 		};
 	};
