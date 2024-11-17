@@ -103,6 +103,7 @@ export function GeneralInfoForm({
 	useEffect(() => {
 		if (application) {
 			setCfpTitle(application.cfpId);
+			setGrantCFP(cfps.find((cfp) => cfp.id === application.cfpId)!);
 		}
 	}, [application]);
 

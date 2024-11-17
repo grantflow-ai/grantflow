@@ -1,8 +1,8 @@
 [
 	{
 		"id": "9e4cf818-a3f6-4f3e-9cc2-6e8a3fcf3a05",
-		"workspace_id": "3d8f40f3-5053-4b55-b431-ede2a167201c",
-		"cfp_id": "5413ae6f-def3-42c7-8471-b850dfaab63e",
+		"workspaceId": "3d8f40f3-5053-4b55-b431-ede2a167201c",
+		"cfpId": "5413ae6f-def3-42c7-8471-b850dfaab63e",
 		"title": "Development of a novel class of immunotherapeutic molecules: Myeloid-targeted immunocytokine and NK-T cell enhancers",
 		"is_resubmission": false,
 		"status": "draft"

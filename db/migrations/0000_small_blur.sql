@@ -1,5 +1,4 @@
 CREATE TYPE "public"."application_status" AS ENUM('draft', 'completed');--> statement-breakpoint
-CREATE TYPE "public"."generation_result_type" AS ENUM('significance-and-innovation', 'research-plan', 'executive-summary');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "accounts" (
 	"userId" uuid NOT NULL,
@@ -38,10 +37,8 @@ CREATE TABLE IF NOT EXISTS "funding_organizations" (
 CREATE TABLE IF NOT EXISTS "generation_results" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"application_id" uuid NOT NULL,
-	"version" smallint DEFAULT 1 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"type" "generation_result_type" NOT NULL,
-	"data" json
+	"text" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "grant_applications" (
@@ -220,8 +217,6 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_funding_organization_name" ON "funding_organizations" USING btree ("name");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "idx_generation_results_section_type" ON "generation_results" USING btree ("type");--> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_generation_results_application_type_version" ON "generation_results" USING btree ("application_id","type","version");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_grant_cfps_identifier" ON "grant_cfps" USING btree ("code");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_mailing_list_email" ON "mailing_list" USING btree ("email");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_users_email" ON "users" USING btree ("email");--> statement-breakpoint
