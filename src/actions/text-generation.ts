@@ -5,11 +5,13 @@ import { generationResults } from "db/schema";
 import { NewGenerationResult } from "@/types/database-types";
 import { DraftGenerationRequest } from "@/types/api-types";
 
-const API_ROUTE = "generate-draft";
+const API_ROUTE = "api/generate-draft";
+const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
 
 async function makeAPIRequest(body: DraftGenerationRequest): Promise<string> {
 	const url = new URL(API_ROUTE, getEnv().BACKEND_API_BASE_URL);
 	url.searchParams.append("code", getEnv().BACKEND_API_TOKEN);
+	console.log(url.toString());
 
 	const response = await fetch(url.toString(), {
 		method: "POST",
@@ -17,9 +19,11 @@ async function makeAPIRequest(body: DraftGenerationRequest): Promise<string> {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify(body),
+		signal: AbortSignal.timeout(TEN_MINUTES_IN_MS),
 	});
 
 	if (!response.ok) {
+		console.log(`Request failed. Status ${response.status}, Body: ${await response.text()}`);
 		throw new Error(`Http request failed: ${response.statusText}`);
 	}
 
