@@ -61,15 +61,6 @@ class DraftGenerationRequest(TypedDict):
     """The research aims for the grant application"""
 
 
-class FormPrefillRequest(TypedDict):
-    """DTO for a form prefill request."""
-
-    workspace_id: str
-    """The workspace ID."""
-    application_id: str
-    """The application ID."""
-
-
 class DocumentDTO(TypedDict):
     """A DTO for a document."""
 

@@ -9,7 +9,6 @@ from src.rag_backend.application_draft_generation import generate_application_dr
 from src.rag_backend.dto import (
     APIError,
     DraftGenerationRequest,
-    FormPrefillRequest,
 )
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
@@ -46,42 +45,6 @@ async def handle_section_generation_request(req: HttpRequest) -> HttpResponse:
         logger.info("RAG pipeline completed successfully")
         return HttpResponse(
             body=serialize({"grant_application_draft": result}),
-            status_code=HTTPStatus.CREATED,
-            mimetype=CONTENT_TYPE_JSON,
-        )
-    except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-        return HttpResponse(
-            status_code=HTTPStatus.BAD_REQUEST,
-            body=serialize(
-                APIError(
-                    message="Failed to deserialize the request body",
-                    details=str(e),
-                )
-            ),
-            mimetype=CONTENT_TYPE_JSON,
-        )
-
-
-async def handle_application_form_prefill(req: HttpRequest) -> HttpResponse:
-    """Handle a request to prefill an application form.
-
-    Args:
-        req: An Azure Function HttpRequest object.
-
-    Returns:
-        An Azure Function HttpResponse object.
-    """
-    logger.info("Beginning application form prefill")
-
-    try:
-        request_body = deserialize(req.get_body(), FormPrefillRequest)
-        workspace_d = request_body["workspace_id"]
-        application_id = request_body["application_id"]
-        logger.info("Prefilling form for workspace %s and application %s", workspace_d, application_id)
-
-        return HttpResponse(
-            body=serialize(None),
             status_code=HTTPStatus.CREATED,
             mimetype=CONTENT_TYPE_JSON,
         )
