@@ -22,6 +22,8 @@ dependencies = [
     "spacy>=3.8.2",
     "aiohttp>=3.10.10",
     "inflection>=0.5.1",
+    "sqlalchemy>=2.0.36",
+    "azure-servicebus>=7.13.0",
 ]
 
 [tool.pdm]
