@@ -32,7 +32,8 @@ Instructions:
 E.g. "Building upon the first aim...", "Depending on the results of aim 1...", "Based on the candidates identified in the previous aim..."
 2. Consider any relations between a research task and the aim. If there is a relation, e.g. the task continues, builds, or depends upon a previous task, mention this explicitly.
 E.g. "As was previously seen in task 1.1", "Depending on the result of task 2.3", "Based on the candidates identified in Task 1.2, in task 1.3 we will..."
-3. Do not remove content from the existing texts at all. You can modify the language to ensure better consistency and coherence between the different sections, but do not omit any information, referenced, citations etc.
+3. Do not remove information from the existing texts. You can modify the language to ensure better consistency and coherence between the different sections, but do not omit any information, referenced, citations etc.
+4. Each research aim description text and each research task description task should be 300-400 words long.
 
 Example Output:
 
@@ -54,7 +55,6 @@ Aim Text Here...
 ###### Task 2.1: Task 2.1 Title
 Task 2.1 Text Here...
 ```
-
 """)
 
 
@@ -81,10 +81,7 @@ async def generate_research_plan_text(
         research_aims_and_tasks=dumps(research_aims_and_tasks), previous_part_text=previous_part_text
     ).strip()
 
-    return await handle_tool_call_request(
-        system_prompt=BASE_SYSTEM_PROMPT,
-        user_prompt=user_prompt,
-    )
+    return await handle_tool_call_request(system_prompt=BASE_SYSTEM_PROMPT, user_prompt=user_prompt, model="gpt-4o")
 
 
 async def generate_research_plan(
