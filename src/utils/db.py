@@ -16,7 +16,7 @@ def get_async_engine() -> AsyncEngine:
         An async engine.
     """
     if engine_ref.value is None:
-        engine_ref.value = create_async_engine(get_env("DATABASE_URL"))
+        engine_ref.value = create_async_engine(get_env("DATABASE_CONNECTION_STRING"))
     return engine_ref.value
 
 
