@@ -4,7 +4,6 @@ from src.utils.env import get_env
 from src.utils.ref import Ref
 
 ref = Ref[ServiceBusClient]()
-sender_ref = Ref[ServiceBusSender]()
 
 
 def get_service_bus_client() -> ServiceBusClient:
@@ -27,6 +26,4 @@ def get_queue_sender(queue_name: str) -> ServiceBusSender:
     Returns:
         A sender for the queue.
     """
-    if sender_ref.value is None:
-        sender_ref.value = get_service_bus_client().get_queue_sender(queue_name)
-    return sender_ref.value
+    return get_service_bus_client().get_queue_sender(queue_name)
