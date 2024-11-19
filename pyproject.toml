@@ -24,6 +24,8 @@ dependencies = [
     "inflection>=0.5.1",
     "sqlalchemy>=2.0.36",
     "azure-servicebus>=7.13.0",
+    "asyncpg>=0.30.0",
+    "greenlet>=3.1.1",
 ]
 
 [tool.pdm]

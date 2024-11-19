@@ -103,11 +103,12 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
     Args:
         msg: An Azure Function ServiceBusMessage object.
     """
+    body = msg.get_body()
     logger.info("Received Generation Enqueue Message")
 
     sender = get_queue_sender(GENERATION_RESULTS_QUEUE_NAME)
     try:
-        generation_message = deserialize(msg.get_body(), GenerationMessageBody)
+        generation_message = deserialize(body, GenerationMessageBody)
         request_body = generation_message["request"]
         ticket_id = generation_message["ticket_id"]
         logger.info("Beginning RAG pipeline for ticket ID: %s", ticket_id)
@@ -152,10 +153,11 @@ async def handle_generation_result_msg(msg: ServiceBusMessage) -> None:
     Returns:
         None
     """
+    body = msg.get_body()
     logger.info("Received Generation Result Message")
 
     try:
-        generation_result = deserialize(msg.get_body(), GenerationResultMessage)
+        generation_result = deserialize(body, GenerationResultMessage)
         await insert_generation_result(
             generation_result=generation_result["content"],
             application_id=generation_result["application_id"],
