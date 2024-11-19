@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from azure.functions import HttpRequest, HttpResponse, ServiceBusMessage
 from azure.servicebus._common.message import ServiceBusMessage as SenderServiceBusMessage
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.constants import CONTENT_TYPE_JSON
 from src.rag_backend.application_draft_generation import generate_application_draft
@@ -38,8 +39,6 @@ class GenerationResultMessage(TypedDict):
     """The ID of the grant application."""
     content: str
     """The generated content."""
-    result_id: str
-    """The ID of the generation result."""
     ticket_id: str
     """The ticket ID."""
 
@@ -104,7 +103,7 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
     Args:
         msg: An Azure Function ServiceBusMessage object.
     """
-    logger.info("Received Service Bus Request")
+    logger.info("Received Generation Enqueue Message")
 
     sender = get_queue_sender(GENERATION_RESULTS_QUEUE_NAME)
     try:
@@ -125,18 +124,12 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
             workspace_id=request_body["workspace_id"],
         )
         logger.info("RAG pipeline completed successfully for ticket ID: %s", ticket_id)
-        db_result = await insert_generation_result(
-            generation_result=result,
-            application_id=request_body["application_id"],
-        )
-        logger.info("Generation result inserted into the database")
         await sender.send_messages(
             SenderServiceBusMessage(
                 body=serialize(
                     GenerationResultMessage(
                         application_id=request_body["application_id"],
-                        content=db_result["text"],
-                        result_id=db_result["id"],
+                        content=result,
                         ticket_id=ticket_id,
                     )
                 )
@@ -145,3 +138,31 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
 
     except DeserializationError as e:
         logger.error("Failed to deserialize the request body: %s", e)
+
+
+async def handle_generation_result_msg(msg: ServiceBusMessage) -> None:
+    """Handle a message from the Service Bus queue containing the result of generating a grant application draft.
+
+    Args:
+        msg: An Azure Function ServiceBusMessage object.
+
+    Raises:
+        SQLAlchemyError: If the generation result cannot be inserted into the database.
+
+    Returns:
+        None
+    """
+    logger.info("Received Generation Result Message")
+
+    try:
+        generation_result = deserialize(msg.get_body(), GenerationResultMessage)
+        await insert_generation_result(
+            generation_result=generation_result["content"],
+            application_id=generation_result["application_id"],
+        )
+        logger.info("Generation result for ticket ID %s insert into database", generation_result["ticket_id"])
+    except DeserializationError as e:
+        logger.error("Failed to deserialize the request body: %s", e)
+    except SQLAlchemyError as e:
+        logger.error("Failed to insert generation result into database: %s", e)
+        raise
