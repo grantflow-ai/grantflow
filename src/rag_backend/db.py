@@ -1,4 +1,3 @@
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import MetaData, Table, insert
@@ -18,7 +17,7 @@ async def get_table() -> Table:
     if table_ref.value is None:
         async with get_async_engine().begin() as connection:
             table_ref.value = await connection.run_sync(
-                lambda conn: Table("generation_results", MetaData(), autoload_with=conn, autoload=True, schema="public")
+                lambda conn: Table("generation_results", MetaData(), autoload_with=conn, schema="public")
             )
 
     return table_ref.value
@@ -28,7 +27,7 @@ async def insert_generation_result(
     *,
     generation_result: str,
     application_id: str,
-) -> dict[str, Any]:
+) -> None:
     """Insert a generation result into the database.
 
     Args:
@@ -41,16 +40,10 @@ async def insert_generation_result(
     generation_results = await get_table()
     session_maker = get_session_maker()
     async with session_maker() as session, session.begin():
-        insert_statement = (
-            insert(generation_results)
-            .values(
-                {
-                    "application_id": UUID(application_id),
-                    "text": generation_result,
-                }
-            )
-            .returning(*generation_results.c)
+        insert_statement = insert(generation_results).values(
+            {
+                "application_id": UUID(application_id),
+                "text": generation_result,
+            }
         )
-        result = await session.execute(insert_statement)
-        new_row = result.fetchone()
-        return dict(new_row)
+        await session.execute(insert_statement)
