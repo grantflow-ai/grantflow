@@ -161,6 +161,7 @@ async def handle_generation_result_msg(msg: ServiceBusMessage) -> None:
         await insert_generation_result(
             generation_result=generation_result["content"],
             application_id=generation_result["application_id"],
+            ticket_id=generation_result["ticket_id"],
         )
         logger.info("Generation result for ticket ID %s insert into database", generation_result["ticket_id"])
     except DeserializationError as e:
