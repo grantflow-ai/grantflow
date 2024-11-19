@@ -58,7 +58,6 @@ It should address the following implicit questions:
 
 __NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
 
-Ensure that the text is continuous in style, tone and terminology with previous tasks.
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
@@ -94,7 +93,6 @@ async def generate_research_aim_text(
     previous_part_text: str | None,
     *,
     aim_number: int,
-    previous_aims: list[AimGenerationResponse],
     research_aim: ResearchAimDTO,
     research_tasks: list[TaskGenerationResponse],
     retrieval_results: list[DocumentDTO],
@@ -104,7 +102,6 @@ async def generate_research_aim_text(
     Args:
         previous_part_text: The previous part of the research aim text, if any.
         aim_number: The number of the research aim.
-        previous_aims: The previous research aims.
         research_aim: The research aim to generate text for.
         research_tasks: The generated research
         retrieval_results: The results of the RAG retrieval.
@@ -120,7 +117,6 @@ async def generate_research_aim_text(
                 "description": research_aim["description"],
             }
         ),
-        previous_aims=dumps(previous_aims),
         rag_results=dumps(retrieval_results),
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,

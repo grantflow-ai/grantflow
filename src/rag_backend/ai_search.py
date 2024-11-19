@@ -46,7 +46,7 @@ async def retrieve_documents(
         search_results = await client.search(
             search_text=search_text,
             filter=filter_query,
-            k=10,
+            top=10,
             vector_queries=[
                 VectorizedQuery(
                     vector=embeddings,

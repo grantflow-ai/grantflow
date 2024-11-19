@@ -6,7 +6,6 @@ from uuid import uuid4
 
 from azure.functions import HttpRequest, HttpResponse, ServiceBusMessage
 from azure.servicebus._common.message import ServiceBusMessage as SenderServiceBusMessage
-from sqlalchemy.exc import SQLAlchemyError
 
 from src.constants import CONTENT_TYPE_JSON
 from src.rag_backend.application_draft_generation import generate_application_draft
@@ -43,7 +42,6 @@ class GenerationResultMessage(TypedDict):
     """The ticket ID."""
 
 
-GENERATION_RESULTS_QUEUE_NAME: Final[str] = "generation-results"
 GENERATION_REQUESTS_QUEUE_NAME: Final[str] = "generation-requests"
 
 
@@ -106,7 +104,6 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
     body = msg.get_body()
     logger.info("Received Generation Enqueue Message")
 
-    sender = get_queue_sender(GENERATION_RESULTS_QUEUE_NAME)
     try:
         generation_message = deserialize(body, GenerationMessageBody)
         request_body = generation_message["request"]
@@ -125,47 +122,11 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
             workspace_id=request_body["workspace_id"],
         )
         logger.info("RAG pipeline completed successfully for ticket ID: %s", ticket_id)
-        await sender.send_messages(
-            SenderServiceBusMessage(
-                body=serialize(
-                    GenerationResultMessage(
-                        application_id=request_body["application_id"],
-                        content=result,
-                        ticket_id=ticket_id,
-                    )
-                )
-            )
-        )
-
-    except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-
-
-async def handle_generation_result_msg(msg: ServiceBusMessage) -> None:
-    """Handle a message from the Service Bus queue containing the result of generating a grant application draft.
-
-    Args:
-        msg: An Azure Function ServiceBusMessage object.
-
-    Raises:
-        SQLAlchemyError: If the generation result cannot be inserted into the database.
-
-    Returns:
-        None
-    """
-    body = msg.get_body()
-    logger.info("Received Generation Result Message")
-
-    try:
-        generation_result = deserialize(body, GenerationResultMessage)
         await insert_generation_result(
-            generation_result=generation_result["content"],
-            application_id=generation_result["application_id"],
-            ticket_id=generation_result["ticket_id"],
+            generation_result=result,
+            application_id=request_body["application_id"],
+            ticket_id=ticket_id,
         )
-        logger.info("Generation result for ticket ID %s insert into database", generation_result["ticket_id"])
+
     except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-    except SQLAlchemyError as e:
-        logger.error("Failed to insert generation result into database: %s", e)
-        raise
+        logger.error("Failed to deserialize the request body for ticket ID %s: %s, %s", ticket_id, e, body)

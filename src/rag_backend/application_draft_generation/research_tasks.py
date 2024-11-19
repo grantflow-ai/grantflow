@@ -57,6 +57,8 @@ It should address the following implicit questions:
 3. What are the data collection methods?
 4. What is the results analysis and interpretation framework?
 ${clinical_trial_questions}
+
+Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
 RESEARCH_TASK_QUERIES_PROMPT: Final[Template] = Template("""
