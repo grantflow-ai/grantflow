@@ -56,7 +56,7 @@ whether the research aim text is complete or not. Example:
 ```
 """
 
-TEXT_GENERATION_MODEL: Final[str] = "gpt-4o"
+TEXT_GENERATION_MODEL: Final[str] = "gpt-4o-mini"
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +108,7 @@ async def handle_segmented_text_generation(
 @exponential_backoff_retry(OperationError)
 async def handle_tool_call_request(
     *,
+    model: str = TEXT_GENERATION_MODEL,
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
     response_type: type[T] = GenerationResult,  # type: ignore[assignment]
     system_prompt: str,
@@ -117,6 +118,7 @@ async def handle_tool_call_request(
     """Handle a tool call request for segmented text generation.
 
     Args:
+        model: The model to use for the generation.
         output_instructions: The output instructions.
         response_type: The response type.
         system_prompt: The system prompt.
@@ -133,7 +135,7 @@ async def handle_tool_call_request(
 
     try:
         response = await client.chat.completions.create(
-            model=TEXT_GENERATION_MODEL,
+            model=model,
             response_format=ResponseFormatJSONObject(type="json_object"),
             messages=[
                 ChatCompletionSystemMessageParam(role="system", content=system_prompt),

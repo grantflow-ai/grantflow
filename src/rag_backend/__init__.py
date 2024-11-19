@@ -4,10 +4,8 @@ from azure.functions import Blueprint
 
 from src.rag_backend.handlers import (
     GENERATION_REQUESTS_QUEUE_NAME,
-    GENERATION_RESULTS_QUEUE_NAME,
     handle_generation_init,
     handle_generation_queue_msg,
-    handle_generation_result_msg,
 )
 
 blueprint = Blueprint(name="rag-api")  # type: ignore[no-untyped-call]
@@ -24,12 +22,4 @@ blueprint.function_name(name=handle_generation_queue_msg.__name__)(
         queue_name=GENERATION_REQUESTS_QUEUE_NAME,
         connection="AZURE_SERVICE_BUS_CONNECTION_STRING",
     )(handle_generation_queue_msg),
-)
-
-blueprint.function_name(name=handle_generation_result_msg.__name__)(
-    blueprint.service_bus_queue_trigger(
-        arg_name="msg",
-        queue_name=GENERATION_RESULTS_QUEUE_NAME,
-        connection="AZURE_SERVICE_BUS_CONNECTION_STRING",
-    )(handle_generation_result_msg),
 )
