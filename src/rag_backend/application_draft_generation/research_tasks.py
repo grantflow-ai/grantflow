@@ -43,12 +43,7 @@ Use the following sources to write the text:
     ${research_task}
     </research_task>
 
-2. Previously generated research tasks:
-    <previous_tasks>
-    ${previous_tasks}
-    </previous_tasks>
-
-3. RAG Retrieval Results for additional context:
+2. RAG Retrieval Results for additional context:
     <rag_results>
     ${rag_results}
     </rag_results>
@@ -62,12 +57,6 @@ It should address the following implicit questions:
 3. What are the data collection methods?
 4. What is the results analysis and interpretation framework?
 ${clinical_trial_questions}
-
-**IMPORTANT**: If there are any relations between the task and other tasks, mention this explicitly.
-E.g. "As was previously seen in task 1.1", "Depending on the result of task 2.3", "Based on the candidates identified in Task 1.2, in task 1.3 we will..."
-
-Ensure that the text is continuous in style, tone and terminology with previous tasks.
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
 RESEARCH_TASK_QUERIES_PROMPT: Final[Template] = Template("""
@@ -101,7 +90,6 @@ class TaskGenerationResponse(TypedDict):
 async def generate_research_task_text(
     previous_part_text: str | None,
     *,
-    previous_tasks: list[TaskGenerationResponse],
     requires_clinical_trials: bool,
     research_task: ResearchTaskDTO,
     research_task_number: str,
@@ -111,7 +99,6 @@ async def generate_research_task_text(
 
     Args:
         previous_part_text: The previous part of the research task text, if any.
-        previous_tasks: The previous research tasks.
         requires_clinical_trials: Whether the research task includes clinical trials.
         research_task: The research task to generate text for.
         research_task_number: A string representing the research task number in format 1.2, 2.3, etc.
@@ -129,7 +116,6 @@ async def generate_research_task_text(
             }
         ),
         rag_results=dumps(retrieval_results),
-        previous_tasks=dumps(previous_tasks),
         clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS if requires_clinical_trials else "",
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
@@ -147,7 +133,6 @@ async def generate_research_task_text(
 async def handle_research_task_text_generation(
     *,
     application_id: str,
-    previous_tasks: list[TaskGenerationResponse],
     requires_clinical_trials: bool,
     research_aim_id: str,
     research_task: ResearchTaskDTO,
@@ -158,7 +143,6 @@ async def handle_research_task_text_generation(
 
     Args:
         application_id: The application ID.
-        previous_tasks: The previous research tasks.
         requires_clinical_trials: Whether the research task includes clinical trials.
         research_aim_id: The ID of the research aim.
         research_task: The research task to generate text for.
@@ -196,7 +180,6 @@ async def handle_research_task_text_generation(
 
     handler = partial(
         generate_research_task_text,
-        previous_tasks=previous_tasks,
         requires_clinical_trials=requires_clinical_trials,
         research_task=research_task,
         research_task_number=research_task_number,

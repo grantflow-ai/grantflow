@@ -1,4 +1,5 @@
 import logging
+from asyncio import gather
 from functools import partial
 from json import dumps
 from string import Template
@@ -36,17 +37,12 @@ Use the following sources to write the text:
     ${research_aim}
     </research_aim>
 
-2. Previously generated research aims as a JSON array:
-    <previous_aims>
-    ${previous_aims}
-    </previous_aims>
-
-3. Research Tasks included in this Aim as a JSON array:
+2. Research Tasks included in this Aim as a JSON array:
     <research_tasks>
     ${research_tasks}
     </research_tasks>
 
-4. RAG Retrieval Results for additional context:
+3. RAG Retrieval Results for additional context:
     <rag_results>
     ${rag_results}
     </rag_results>
@@ -61,9 +57,6 @@ It should address the following implicit questions:
 4. What are the expected results?
 
 __NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
-
-**IMPORTANT**: If there are any relations between the aim and other aims, mention this explicitly.
-E.g. "Building upon the first aim...", "Depending on the results of aim 1...", "Based on the candidates identified in the previous aim..."
 
 Ensure that the text is continuous in style, tone and terminology with previous tasks.
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
@@ -147,8 +140,6 @@ async def handle_research_aim_text_generation(
     *,
     aim_number: int,
     application_id: str,
-    previous_aims: list[AimGenerationResponse],
-    previous_tasks: list[TaskGenerationResponse],
     research_aim: ResearchAimDTO,
     workspace_id: str,
 ) -> tuple[AimGenerationResponse, list[TaskGenerationResponse]]:
@@ -157,28 +148,26 @@ async def handle_research_aim_text_generation(
     Args:
         aim_number: The number of the research aim.
         application_id: The application ID.
-        previous_aims: The previous research aims.
-        previous_tasks: The previous research tasks.
         research_aim: The research aim to generate text for.
         workspace_id: The workspace ID.
 
     Returns:
         The generated text for the research aim.
     """
-    research_tasks: list[TaskGenerationResponse] = []
     research_aim_id = research_aim["id"]
-    for index, research_task in enumerate(research_aim["tasks"]):
-        research_tasks.append(
-            await handle_research_task_text_generation(
+    research_tasks = await gather(
+        *[
+            handle_research_task_text_generation(
                 application_id=application_id,
-                previous_tasks=[*previous_tasks, *research_tasks],
                 requires_clinical_trials=research_aim["requires_clinical_trials"],
                 research_aim_id=research_aim_id,
                 research_task=research_task,
                 research_task_number=f"{aim_number}.{index + 1}",
                 workspace_id=workspace_id,
             )
-        )
+            for index, research_task in enumerate(research_aim["tasks"])
+        ]
+    )
 
     search_queries = await create_search_queries(
         RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=dumps(research_aim)),
@@ -198,7 +187,6 @@ async def handle_research_aim_text_generation(
     handler = partial(
         generate_research_aim_text,
         aim_number=aim_number,
-        previous_aims=previous_aims,
         research_aim=research_aim,
         retrieval_results=search_result,
         research_tasks=research_tasks,
