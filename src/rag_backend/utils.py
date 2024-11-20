@@ -7,7 +7,7 @@ from openai.types import ChatModel
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
-from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL
+from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL, TWO_SECONDS
 from src.rag_backend.dto import GenerationResult
 from src.utils.exceptions import DeserializationError, OpenAIFailureError
 from src.utils.llm import get_generation_model
@@ -18,33 +18,29 @@ from src.utils.sleep import sleep_with_message
 
 T = TypeVar("T", bound=dict[str, Any])
 
-SEGMENTED_GENERATION_JSON_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "text": {
-            "type": "string",
-            "description": "The output text that was generated",
-        },
-        "is_complete": {
-            "type": "boolean",
-            "description": "Whether the text is complete or requires further prompts for generation",
-        },
-    },
-    "required": ["text", "is_complete"],
-    "additionalProperties": False,
-}
-
 SEGMENTED_GENERATION_TOOLS = [
     ChatCompletionToolParam(
         type="function",
         function=FunctionDefinition(
             name="response_handler",
-            parameters=SEGMENTED_GENERATION_JSON_SCHEMA,
+            parameters={
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The output text that was generated",
+                    },
+                    "is_complete": {
+                        "type": "boolean",
+                        "description": "Whether the text is complete or requires further prompts for generation",
+                    },
+                },
+                "required": ["text", "is_complete"],
+                "additionalProperties": False,
+            },
         ),
     )
 ]
-
-TWO_SECONDS: Final[int] = 2
 
 SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
 ## Output
@@ -81,26 +77,29 @@ async def handle_segmented_text_generation(
     """
     results: list[str] = []
     api_call_num = 1
-    is_complete = False
-    last_generation_result: str | None = None
 
     logger.info("Generating %s: %s", entity_type, entity_identifier)
-    while not is_complete and api_call_num < 20:
+    while api_call_num < 20:
+        if api_call_num > 1:
+            await sleep_with_message(api_call_num + TWO_SECONDS, "Segment generation buffer")
+
         logger.debug("%s generation API call number: %d", entity_identifier, api_call_num)
+        last_generation_result = results[-1] if results else None
+
         result = await prompt_handler(
             last_generation_result,
         )
 
-        api_call_num += 1
         results.append(result["text"])
-        last_generation_result = result["text"]
-        is_complete = result["is_complete"]
+
+        api_call_num += 1
+        if result["is_complete"]:
+            break
 
     logger.info(
-        "Generated %s: %s, completed: %s, number of API calls: %d",
+        "Generated %s: %s, number of API calls: %d",
         entity_type,
         entity_identifier,
-        str(is_complete),
         api_call_num,
     )
 
@@ -192,8 +191,7 @@ def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_s
     context_buffer: list[str] = []
 
     for segment in segments:
-        normalized_segment = "\n".join([fragment.strip() for fragment in segment.split("\n")]).strip()
-        doc = nlp(normalized_segment)
+        doc = nlp(segment)
         sentences = [sent.text for sent in doc.sents]
 
         overlap_index = 0
@@ -209,4 +207,4 @@ def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_s
 
         context_buffer = sentences[-max_overlap_sentences:]
 
-    return " ".join([v.strip() for v in concatenated_text])
+    return " ".join(concatenated_text)

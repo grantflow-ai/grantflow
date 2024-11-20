@@ -9,6 +9,7 @@ from src.rag_backend.application_draft_generation.research_innovation import han
 from src.rag_backend.application_draft_generation.research_plan import handle_research_plan_text_generation
 from src.rag_backend.application_draft_generation.research_significance import handle_significance_text_generation
 from src.rag_backend.dto import ResearchAimDTO
+from src.utils.text import strip_lines
 
 logger = logging.getLogger(__name__)
 
@@ -82,11 +83,13 @@ async def generate_application_draft(
         ]
     )
 
-    return DRAFT_APPLICATION_TEMPLATE.substitute(
-        application_title=titleize(application_title),
-        significance_text=significance_text,
-        innovation_text=innovation_text,
-        research_aims_text=research_aims_text,
+    return strip_lines(
+        DRAFT_APPLICATION_TEMPLATE.substitute(
+            application_title=titleize(application_title),
+            significance_text=significance_text,
+            innovation_text=innovation_text,
+            research_aims_text=research_aims_text,
+        )
     )
 
 
