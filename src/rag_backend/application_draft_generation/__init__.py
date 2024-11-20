@@ -1,5 +1,4 @@
 import logging
-from asyncio import gather
 from string import Template
 from typing import Final
 
@@ -24,11 +23,7 @@ ${significance_text}
 
 ${innovation_text}
 
-## Research Plan
-
-### Research Aims
-
-${research_aims_text}
+${research_plan_text}
 """)
 
 
@@ -62,49 +57,13 @@ async def generate_application_draft(
     Returns:
         str: The generated draft of the grant application
     """
-    (significance_text, innovation_text), research_aims_text = await gather(
-        *[
-            _generate_significance_and_innovation(
-                application_id=application_id,
-                application_title=application_title,
-                cfp_title=cfp_title,
-                grant_funding_organization=grant_funding_organization,
-                significance_description=significance_description,
-                significance_id=significance_id,
-                workspace_id=workspace_id,
-                innovation_description=innovation_description,
-                innovation_id=innovation_id,
-            ),
-            handle_research_plan_text_generation(
-                application_id=application_id,
-                research_aims=research_aims,
-                workspace_id=workspace_id,
-            ),
-        ]
+    research_plan_text = await handle_research_plan_text_generation(
+        application_id=application_id,
+        research_aims=research_aims,
+        workspace_id=workspace_id,
     )
+    logger.debug("Generated research plan section: %s", research_plan_text)
 
-    return strip_lines(
-        DRAFT_APPLICATION_TEMPLATE.substitute(
-            application_title=titleize(application_title),
-            significance_text=significance_text,
-            innovation_text=innovation_text,
-            research_aims_text=research_aims_text,
-        )
-    )
-
-
-async def _generate_significance_and_innovation(
-    *,
-    application_id: str,
-    application_title: str,
-    cfp_title: str,
-    grant_funding_organization: str,
-    innovation_description: str,
-    innovation_id: str,
-    significance_description: str,
-    significance_id: str,
-    workspace_id: str,
-) -> tuple[str, str]:
     significance_text = await handle_significance_text_generation(
         application_id=application_id,
         application_title=application_title,
@@ -113,16 +72,25 @@ async def _generate_significance_and_innovation(
         significance_description=significance_description,
         significance_id=significance_id,
         workspace_id=workspace_id,
+        research_plan_text=research_plan_text,
     )
     logger.debug("Generated significance section: %s", significance_text)
 
     innovation_text = await handle_innovation_text_generation(
         innovation_description=innovation_description,
         innovation_id=innovation_id,
-        significance_text=significance_text.strip(),
+        significance_text=significance_text,
         workspace_id=workspace_id,
         application_id=application_id,
+        research_plan_text=research_plan_text,
     )
     logger.debug("Generated innovation section: %s", innovation_text)
 
-    return significance_text, innovation_text
+    return strip_lines(
+        DRAFT_APPLICATION_TEMPLATE.substitute(
+            application_title=titleize(application_title),
+            significance_text=significance_text,
+            innovation_text=innovation_text,
+            research_plan_text=research_plan_text,
+        )
+    )

@@ -1,9 +1,9 @@
 import logging
+from asyncio import gather
 from functools import partial
 from json import dumps
 from string import Template
-from textwrap import dedent
-from typing import Final
+from typing import Final, cast
 
 from src.rag_backend.application_draft_generation.research_aims import (
     AimGenerationResponse,
@@ -17,9 +17,11 @@ from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
+from src.rag_backend.constants import TWO_SECONDS
 from src.rag_backend.dto import GenerationResult, ResearchAimDTO
 from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
-from src.utils.sync import gather_with_delay
+from src.utils.sync import delayed_async
+from src.utils.text import strip_lines
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +77,14 @@ Full task text here.
 
 ...
 ```
+""")
+
+DRAFT_APPLICATION_TEMPLATE: Final[Template] = Template("""
+## Research Plan
+
+### Research Aims
+
+${research_aims_text}
 """)
 
 
@@ -136,30 +146,37 @@ async def handle_research_plan_text_generation(
 
     for index, research_aim in enumerate(research_aims):
         aim_number = index + 1
-        aim_response = await handle_research_aim_text_generation(
-            aim_number=aim_number,
-            application_id=application_id,
-            research_aim=research_aim,
-            workspace_id=workspace_id,
-        )
-        research_tasks = await gather_with_delay(
+        aim_response, research_tasks = await gather(
             *[
-                handle_research_task_text_generation(
+                handle_research_aim_text_generation(
+                    aim_number=aim_number,
                     application_id=application_id,
-                    requires_clinical_trials=research_aim["requires_clinical_trials"],
-                    research_aim_id=research_aim["id"],
-                    research_task=research_task,
-                    research_task_number=f"{aim_number}.{index + 1}",
+                    research_aim=research_aim,
                     workspace_id=workspace_id,
-                )
-                for index, research_task in enumerate(research_aim["tasks"])
+                ),
+                gather(
+                    *[
+                        delayed_async(
+                            handle_research_task_text_generation(
+                                application_id=application_id,
+                                requires_clinical_trials=research_aim["requires_clinical_trials"],
+                                research_aim_id=research_aim["id"],
+                                research_task=research_task,
+                                research_task_number=f"{aim_number}.{index + 1}",
+                                workspace_id=workspace_id,
+                            ),
+                            index * TWO_SECONDS,
+                        )
+                        for index, research_task in enumerate(research_aim["tasks"])
+                    ]
+                ),
             ]
         )
 
         prompt_handler = partial(
             generate_research_plan_text,
-            research_aim_data=aim_response,
-            research_tasks_data=research_tasks,
+            research_aim_data=cast(AimGenerationResponse, aim_response),
+            research_tasks_data=cast(list[TaskGenerationResponse], research_tasks),
             previous_aims_texts=research_aim_texts,
             research_aim_number=aim_number,
             research_aim_title=research_aim["title"],
@@ -173,4 +190,4 @@ async def handle_research_plan_text_generation(
             )
         )
 
-    return dedent("\n\n".join(research_aim_texts))
+    return DRAFT_APPLICATION_TEMPLATE.substitute(research_aims_text=strip_lines("\n\n".join(research_aim_texts)))
