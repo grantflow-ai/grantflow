@@ -2,14 +2,16 @@ from asyncio import gather
 from collections.abc import Coroutine
 from typing import Any, TypeVar, cast
 
-from src.rag_backend.utils import TWO_SECONDS
+from src.rag_backend.constants import TWO_SECONDS
 from src.utils.sleep import sleep_with_message
 
 T = TypeVar("T")
 
 
 async def _coroutine_wrapper(coroutine: Coroutine[Any, Any, T], index: int) -> T:
-    await sleep_with_message(index + TWO_SECONDS, "Coroutine fanout delay")
+    if delay := index * TWO_SECONDS:
+        await sleep_with_message(delay, "Coroutine fanout delay")
+
     return await coroutine
 
 
