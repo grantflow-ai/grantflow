@@ -39,6 +39,7 @@ def get_generation_model() -> AsyncAzureOpenAI:
             api_key=get_env("AZURE_OPENAI_KEY"),
             api_version=AZURE_GENERATION_API_VERSION,
             azure_endpoint=get_env("AZURE_OPENAI_ENDPOINT"),
+            max_retries=0,
         )
 
     return generation_ref.value

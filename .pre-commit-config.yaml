@@ -28,6 +28,7 @@ repos:
     rev: v2.3.0
     hooks:
       - id: codespell
+        exclude: ^tests/rag/http_requests.http|^tests/rag/conftest.py
         additional_dependencies:
           - tomli
   - repo: https://github.com/jsh9/pydoclint

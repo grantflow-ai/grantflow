@@ -15,11 +15,18 @@ When generating text, strictly follow these guidelines:
    - Include in-line citations where relevant
    - Provide precise references to sources when citing and quoting
    - Use page numbers in references when page numbers are provided
+
+### Handling Missing Information
+
+If you encounter a situation where you are missing information that is required for generating the text do not invent any information.
+Instead, add a bold text placeholder in the format `**MISSING INFORMATION: <description>**` where `<description>` is a brief description of the missing information.
 """
 
 CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[Template] = Template("""
 **Important**: Since the text being generated in the RAG pipeline is long, the generation is done in segments.
-Here is the last segment that was generated. Continue the generation the point it left off.
+Here is the last segment that was generated. Continue the generation from the point this text ends and do not include any of the previous text in the output.
+
+<previous_part_text>
 ${previous_part_text}
-Make sure to continue the text seamlessly.
+</previous_part_text>
 """)

@@ -2,16 +2,19 @@ import logging
 from collections.abc import Callable, Coroutine
 from typing import Any, Final, TypeVar
 
-from openai import OpenAIError
+from openai import OpenAIError, RateLimitError
+from openai.types import ChatModel
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
+from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag_backend.dto import GenerationResult
-from src.utils.exceptions import DeserializationError, OperationError
+from src.utils.exceptions import DeserializationError, OpenAIFailureError
 from src.utils.llm import get_generation_model
 from src.utils.nlp import get_spacy_model
 from src.utils.retry import exponential_backoff_retry
-from src.utils.serialization import deserialize, serialize
+from src.utils.serialization import deserialize
+from src.utils.sleep import sleep_with_message
 
 T = TypeVar("T", bound=dict[str, Any])
 
@@ -41,6 +44,7 @@ SEGMENTED_GENERATION_TOOLS = [
     )
 ]
 
+TWO_SECONDS: Final[int] = 2
 
 SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
 ## Output
@@ -55,8 +59,6 @@ whether the research aim text is complete or not. Example:
 }
 ```
 """
-
-TEXT_GENERATION_MODEL: Final[str] = "gpt-4o-mini"
 
 logger = logging.getLogger(__name__)
 
@@ -105,10 +107,10 @@ async def handle_segmented_text_generation(
     return concatenate_segments_with_spacy_coherence(results)
 
 
-@exponential_backoff_retry(OperationError)
+@exponential_backoff_retry(DeserializationError)
 async def handle_tool_call_request(
     *,
-    model: str = TEXT_GENERATION_MODEL,
+    model: ChatModel = FAST_TEXT_GENERATION_MODEL,
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
     response_type: type[T] = GenerationResult,  # type: ignore[assignment]
     system_prompt: str,
@@ -126,7 +128,8 @@ async def handle_tool_call_request(
         user_prompt: The user prompt.
 
     Raises:
-        OperationError: If the response content is empty.
+        OpenAIFailureError: If an error occurs during the tool call request.
+        DeserializationError: If an error occurs during deserialization.
 
     Returns:
         The generated text.
@@ -151,14 +154,26 @@ async def handle_tool_call_request(
             return result
 
         logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
-        raise OperationError(message="Response content is empty", context=response.model_dump_json())
-    except (DeserializationError, OpenAIError) as e:
-        body = serialize(getattr(e, "body", {})) if isinstance(getattr(e, "body", None), dict) else ""
-        if body:
-            logger.warning("Received an API error from OpenAI: %s, %s", e, body)
-            raise OperationError(message="Received an API error from OpenAI", context=str(body)) from e
-        logger.warning("Unexpected error occurred: %s", e)
-        raise OperationError(message="Unexpected error occurred", context=str(e)) from e
+        raise OpenAIFailureError(message="Response content is empty", context=response.model_dump_json())
+    except OpenAIError as e:
+        logger.info("Received an error from OpenAI: %s, %s", type(e).__name__, getattr(e, "body", ""))
+        if isinstance(e, RateLimitError):
+            retry_time = int(e.response.headers.get("Retry-After", TWO_SECONDS))
+            logger.warning("Received a rate limit error from OpenAI. Waiting for %d seconds", retry_time)
+            await sleep_with_message(int(retry_time), "Waiting for rate limit to reset")
+            return await handle_tool_call_request(
+                model=model,
+                output_instructions=output_instructions,
+                response_type=response_type,
+                system_prompt=system_prompt,
+                tools=tools,
+                user_prompt=user_prompt,
+            )
+        logger.warning("Received an error from Azure OpenAI: %s", e)
+        raise OpenAIFailureError(message="Received an error from Azure OpenAI", context=str(e)) from e
+    except DeserializationError as e:
+        logger.warning("Unexpected response from model: %s", e)
+        raise
 
 
 def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:
@@ -177,7 +192,8 @@ def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_s
     context_buffer: list[str] = []
 
     for segment in segments:
-        doc = nlp(segment)
+        normalized_segment = "\n".join([fragment.strip() for fragment in segment.split("\n")]).strip()
+        doc = nlp(normalized_segment)
         sentences = [sent.text for sent in doc.sents]
 
         overlap_index = 0
@@ -193,4 +209,4 @@ def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_s
 
         context_buffer = sentences[-max_overlap_sentences:]
 
-    return " ".join(concatenated_text)
+    return " ".join([v.strip() for v in concatenated_text])

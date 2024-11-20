@@ -10,6 +10,7 @@ from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
 )
+from src.rag_backend.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.dto import DocumentDTO, GenerationResult
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
@@ -91,6 +92,7 @@ async def generate_innovation_text(
     return await handle_tool_call_request(
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
+        model=PREMIUM_TEXT_GENERATION_MODEL,
     )
 
 

@@ -5,6 +5,7 @@ from typing import Final, TypedDict
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.shared_params import FunctionDefinition
 
+from src.rag_backend.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.utils import handle_tool_call_request
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,7 @@ async def create_search_queries(prompt: str) -> list[str]:
             )
         ],
         response_type=ToolResponse,  # type: ignore[type-var]
+        model=PREMIUM_TEXT_GENERATION_MODEL,
     )
 
     queries = result["queries"]

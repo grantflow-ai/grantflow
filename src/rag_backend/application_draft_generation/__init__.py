@@ -6,7 +6,7 @@ from typing import Final
 from inflection import titleize
 
 from src.rag_backend.application_draft_generation.research_innovation import handle_innovation_text_generation
-from src.rag_backend.application_draft_generation.research_plan import generate_research_plan
+from src.rag_backend.application_draft_generation.research_plan import handle_research_plan_text_generation
 from src.rag_backend.application_draft_generation.research_significance import handle_significance_text_generation
 from src.rag_backend.dto import ResearchAimDTO
 
@@ -74,7 +74,7 @@ async def generate_application_draft(
                 innovation_description=innovation_description,
                 innovation_id=innovation_id,
             ),
-            generate_research_plan(
+            handle_research_plan_text_generation(
                 application_id=application_id,
                 research_aims=research_aims,
                 workspace_id=workspace_id,
