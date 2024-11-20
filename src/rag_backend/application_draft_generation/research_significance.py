@@ -26,22 +26,27 @@ Use the following sources to write the text:
     ${significance_description}
     </significance_description>
 
-2. RAG Retrieval Results for additional context:
+2. The full text of the research plan section:
+    <research_plan_text>
+    ${research_plan_text}
+    </research_plan_text>
+
+3. RAG Retrieval Results for additional context:
     <rag_results>
     ${rag_results}
     </rag_results>
 
-3. Grant Funding Organization:
+4. Grant Funding Organization:
     <grant_funding_organization>
     ${grant_funding_organization}
     </grant_funding_organization>
 
-4. CFP Code and Title:
+5. CFP Code and Title:
     <cfp_title>
     ${cfp_title}
     </cfp_title>
 
-5. Grant Application Title:
+6. Grant Application Title:
     <application_title>
     ${application_title}
     </application_title>
@@ -92,6 +97,7 @@ async def generate_significance_text(
     grant_funding_organization: str,
     retrieval_results: list[DocumentDTO],
     significance_description: str,
+    research_plan_text: str,
 ) -> GenerationResult:
     """Generate a part of the significance text.
 
@@ -102,6 +108,7 @@ async def generate_significance_text(
         grant_funding_organization: The funding organization for the grant.
         retrieval_results: The results of the RAG retrieval.
         significance_description: The description of the research significance.
+        research_plan_text: The text of the research plan section.
 
     Returns:
         GenerationResult: The generated text for the significance section.
@@ -117,6 +124,7 @@ async def generate_significance_text(
         else "",
         rag_results=dumps(retrieval_results),
         significance_description=significance_description,
+        research_plan_text=research_plan_text,
     ).strip()
 
     return await handle_tool_call_request(
@@ -132,6 +140,7 @@ async def handle_significance_text_generation(
     application_title: str,
     cfp_title: str,
     grant_funding_organization: str,
+    research_plan_text: str,
     significance_description: str,
     significance_id: str,
     workspace_id: str,
@@ -143,6 +152,7 @@ async def handle_significance_text_generation(
         application_title: The title of the grant application.
         cfp_title: The CFP action code and title.
         grant_funding_organization: The funding organization for the grant.
+        research_plan_text: The text of the research plan section.
         significance_description: The description of the research significance.
         significance_id: The ID of the significance section.
         workspace_id: The workspace ID.
@@ -157,9 +167,7 @@ async def handle_significance_text_generation(
     )
     query_embeddings = await generate_embeddings(search_queries)
     search_text = " | ".join([f'"{query}"' for query in search_queries])
-
     search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_PARENT_ID} eq '{significance_id}' or {FIELD_NAME_PARENT_ID} eq '{application_id}')"
-
     search_result = await retrieve_documents(
         embeddings_matrix=query_embeddings,
         filter_query=search_filter,
@@ -172,6 +180,7 @@ async def handle_significance_text_generation(
         application_title=application_title,
         cfp_title=cfp_title,
         grant_funding_organization=grant_funding_organization,
+        research_plan_text=research_plan_text,
         retrieval_results=search_result,
         significance_description=significance_description,
     )
