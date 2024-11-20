@@ -33,7 +33,12 @@ Use the following sources to write the text:
     ${significance_text}
     </significance_text>
 
-3. RAG Retrieval Results for additional context:
+3. The full text of the research plan section:
+    <research_plan_text>
+    ${research_plan_text}
+    </research_plan_text>
+
+4. RAG Retrieval Results for additional context:
     <rag_results>
     ${rag_results}
     </rag_results>
@@ -68,6 +73,7 @@ async def generate_innovation_text(
     previous_part_text: str | None,
     *,
     innovation_description: str,
+    research_plan_text: str,
     retrieval_results: list[DocumentDTO],
     significance_text: str,
 ) -> GenerationResult:
@@ -76,6 +82,7 @@ async def generate_innovation_text(
     Args:
         previous_part_text: The previous part of the innovation text, if any.
         innovation_description: The description of the research innovation.
+        research_plan_text: The full text of the research plan section.
         retrieval_results: The results of the RAG retrieval.
         significance_text: The generated significance text.
 
@@ -87,6 +94,7 @@ async def generate_innovation_text(
         significance_text=significance_text,
         rag_results=dumps(retrieval_results),
         previous_part_text=previous_part_text,
+        research_plan_text=research_plan_text,
     ).strip()
 
     return await handle_tool_call_request(
@@ -101,6 +109,7 @@ async def handle_innovation_text_generation(
     application_id: str,
     innovation_description: str,
     innovation_id: str,
+    research_plan_text: str,
     significance_text: str,
     workspace_id: str,
 ) -> str:
@@ -110,6 +119,7 @@ async def handle_innovation_text_generation(
         application_id: The ID of the grant application.
         innovation_description: The description of the research innovation.
         innovation_id: The ID of the innovation section.
+        research_plan_text: The text of the research plan section.
         significance_text: The generated significance text.
         workspace_id: The workspace ID.
 
@@ -136,8 +146,9 @@ async def handle_innovation_text_generation(
     handler = partial(
         generate_innovation_text,
         innovation_description=innovation_description,
-        significance_text=significance_text,
+        research_plan_text=research_plan_text,
         retrieval_results=search_result,
+        significance_text=significance_text,
     )
 
     return await handle_segmented_text_generation(

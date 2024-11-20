@@ -1,22 +1,25 @@
 import logging
 from collections.abc import Callable, Coroutine
-from typing import Any, Final, TypeVar
+from json import dumps
+from string import Template
+from typing import Any, Final, TypedDict, TypeVar
 
 from openai import OpenAIError, RateLimitError
 from openai.types import ChatModel
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
-from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL, TWO_SECONDS
+from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL, PREMIUM_TEXT_GENERATION_MODEL, TWO_SECONDS
 from src.rag_backend.dto import GenerationResult
 from src.utils.exceptions import DeserializationError, OpenAIFailureError
 from src.utils.llm import get_generation_model
-from src.utils.nlp import get_spacy_model
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 from src.utils.sleep import sleep_with_message
+from src.utils.text import concatenate_segments_with_spacy_coherence
 
 T = TypeVar("T", bound=dict[str, Any])
+logger = logging.getLogger(__name__)
 
 SEGMENTED_GENERATION_TOOLS = [
     ChatCompletionToolParam(
@@ -56,7 +59,56 @@ whether the research aim text is complete or not. Example:
 ```
 """
 
-logger = logging.getLogger(__name__)
+EvaluationTools = [
+    ChatCompletionToolParam(
+        type="function",
+        function=FunctionDefinition(
+            name="response_handler",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "choice": {
+                        "type": "number",
+                        "description": "The chosen option id",
+                    },
+                },
+                "required": ["choice"],
+                "additionalProperties": False,
+            },
+        ),
+    )
+]
+
+
+EVALUATION_PROMPT: Final[Template] = Template("""
+You are a critical evaluator tasked with selecting the best output among given options.
+Here are the options as a JSON object where the keys are numerical ids (1,2,3 etc...) and the values are the choice contents:
+
+<choices>
+${choices}
+</choices>
+
+Choose the best content:
+- **Information Density:** The response should contain relevant and concise information.
+- **Correctness:** The response should be factually accurate.
+- **Coherence:** The response should flow logically.
+- **Quality:** The response should exhibit clarity and depth.
+- **Style:** The response should maintain a professional and engaging tone.
+
+Respond with a JSON object containing the chosen option's id. Example:
+
+```jsonc
+{
+    "choice": 2
+}
+""")
+
+
+class ChoiceResult(TypedDict):
+    """The response returned by the evaluation logic."""
+
+    choice: int
+    """The chosen option id."""
 
 
 async def handle_segmented_text_generation(
@@ -109,12 +161,13 @@ async def handle_segmented_text_generation(
 @exponential_backoff_retry(DeserializationError)
 async def handle_tool_call_request(
     *,
-    model: ChatModel = FAST_TEXT_GENERATION_MODEL,
+    model: ChatModel = PREMIUM_TEXT_GENERATION_MODEL,
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
     response_type: type[T] = GenerationResult,  # type: ignore[assignment]
     system_prompt: str,
     tools: list[ChatCompletionToolParam] | None = None,
     user_prompt: str,
+    num_choices: int = 2,  # Generate multiple choices
 ) -> T:
     """Handle a tool call request for segmented text generation.
 
@@ -125,6 +178,7 @@ async def handle_tool_call_request(
         system_prompt: The system prompt.
         tools: The tools to use for the generation.
         user_prompt: The user prompt.
+        num_choices: The number of choices to generate.
 
     Raises:
         OpenAIFailureError: If an error occurs during the tool call request.
@@ -144,13 +198,23 @@ async def handle_tool_call_request(
                 ChatCompletionUserMessageParam(role="user", content=user_prompt),
                 ChatCompletionSystemMessageParam(role="system", content=output_instructions),
             ],
-            temperature=0.0,
             tools=tools or SEGMENTED_GENERATION_TOOLS,
+            temperature=0.7,  # Encourage diversity
+            n=num_choices,  # Generate multiple completions
         )
-        if response.choices[0].message.tool_calls:
-            result = deserialize(response.choices[0].message.tool_calls[0].function.arguments, response_type)
+
+        results: list[T] = []
+
+        for choices in response.choices:
+            if tool_calls := choices.message.tool_calls:
+                results.extend([deserialize(tool_call.function.arguments, response_type) for tool_call in tool_calls])
+
+        if results:
             logger.info("Successfully generated text segment")
-            return result
+            if num_choices > 1:
+                return await evaluate_and_choose_best_choice(choices=results)
+
+            return results[0]
 
         logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
         raise OpenAIFailureError(message="Response content is empty", context=response.model_dump_json())
@@ -175,36 +239,45 @@ async def handle_tool_call_request(
         raise
 
 
-def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:
-    """Concatenate segmented text responses with coherence check using spaCy.
+async def evaluate_and_choose_best_choice(
+    choices: list[T],
+) -> T:
+    """Evaluate and choose the best choice among the given options.
 
     Args:
-        segments: A list of text segments.
-        max_overlap_sentences: Maximum number of overlapping sentences to check for coherence.
+        choices: The list of choices to evaluate.
+
+    Raises:
+        OpenAIFailureError: If an error occurs during the evaluation.
 
     Returns:
-        The concatenated and coherent text.
+        The chosen option.
     """
-    nlp = get_spacy_model()
+    client = get_generation_model()
+    mapped_choices = dict[int, T](enumerate(choices, start=1))
+    try:
+        prompt = EVALUATION_PROMPT.substitute(
+            choices=dumps(mapped_choices),
+        )
 
-    concatenated_text: list[str] = []
-    context_buffer: list[str] = []
+        response = await client.chat.completions.create(
+            model=FAST_TEXT_GENERATION_MODEL,
+            response_format=ResponseFormatJSONObject(type="json_object"),
+            messages=[ChatCompletionUserMessageParam(role="user", content=prompt)],
+            tools=EvaluationTools,
+            temperature=0.0,
+        )
 
-    for segment in segments:
-        doc = nlp(segment)
-        sentences = [sent.text for sent in doc.sents]
+        if response.choices[0].message.tool_calls:
+            result = deserialize(response.choices[0].message.tool_calls[0].function.arguments, ChoiceResult)
+            logger.info("Successfully generated text segment")
+            return mapped_choices[result["choice"]]
 
-        overlap_index = 0
-        if context_buffer and sentences:
-            for overlap_count in range(1, min(len(context_buffer), max_overlap_sentences) + 1):
-                if sentences[:overlap_count] == context_buffer[-overlap_count:]:
-                    overlap_index = overlap_count
-                    break
-
-            sentences = sentences[overlap_index:]
-
-        concatenated_text.append(" ".join(sentences))
-
-        context_buffer = sentences[-max_overlap_sentences:]
-
-    return " ".join(concatenated_text)
+        logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
+        raise OpenAIFailureError(message="Response content is empty", context=response.model_dump_json())
+    except OpenAIError as e:
+        logger.warning("Received non-existing index from model: %s, choices: %s", e, dumps(list(mapped_choices.keys())))
+        raise OpenAIFailureError(message="Error during evaluation", context=str(e)) from e
+    except IndexError as e:
+        logger.warning("Received non-existing index from model: %s, choices: %s", e, dumps(list(mapped_choices.keys())))
+        raise OpenAIFailureError(message="Error during evaluation", context=str(e)) from e
