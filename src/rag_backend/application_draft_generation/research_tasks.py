@@ -2,7 +2,7 @@ import logging
 from functools import partial
 from json import dumps
 from string import Template
-from typing import Final, TypedDict
+from typing import Final
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
@@ -13,8 +13,8 @@ from src.rag_backend.application_draft_generation.shared_prompts import (
 )
 from src.rag_backend.dto import (
     DocumentDTO,
+    EnrichedResearchTaskDTO,
     GenerationResult,
-    ResearchTaskDTO,
 )
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
@@ -58,6 +58,9 @@ It should address the following implicit questions:
 4. What is the results analysis and interpretation framework?
 ${clinical_trial_questions}
 
+**Important**: The research task JSON object includes an array of relations with other research aims. If the array is not empty, make sure to include
+a detailed description of these relations in the text.
+
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
@@ -78,23 +81,11 @@ Here is the research task data as a JSON object:
 """)
 
 
-class TaskGenerationResponse(TypedDict):
-    """The response returned by the prompt logic."""
-
-    title: str
-    """The title of the research task."""
-    text: str
-    """The generated text."""
-    task_number: str
-    """The task number."""
-
-
 async def generate_research_task_text(
     previous_part_text: str | None,
     *,
     requires_clinical_trials: bool,
-    research_task: ResearchTaskDTO,
-    research_task_number: str,
+    research_task: EnrichedResearchTaskDTO,
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResult:
     """Generate a part of the research task text.
@@ -103,20 +94,13 @@ async def generate_research_task_text(
         previous_part_text: The previous part of the research task text, if any.
         requires_clinical_trials: Whether the research task includes clinical trials.
         research_task: The research task to generate text for.
-        research_task_number: A string representing the research task number in format 1.2, 2.3, etc.
         retrieval_results: The results of the RAG retrieval.
 
     Returns:
         GenerationResult: The generated text for the research aim.
     """
     user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute(
-        research_task=dumps(
-            {
-                "task_number": research_task_number,
-                "title": research_task["title"],
-                "description": research_task["description"],
-            }
-        ),
+        research_task=dumps(research_task),
         rag_results=dumps(retrieval_results),
         clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS if requires_clinical_trials else "",
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
@@ -137,10 +121,9 @@ async def handle_research_task_text_generation(
     application_id: str,
     requires_clinical_trials: bool,
     research_aim_id: str,
-    research_task: ResearchTaskDTO,
-    research_task_number: str,
+    research_task: EnrichedResearchTaskDTO,
     workspace_id: str,
-) -> TaskGenerationResponse:
+) -> str:
     """Generate the text for a research task.
 
     Args:
@@ -148,7 +131,6 @@ async def handle_research_task_text_generation(
         requires_clinical_trials: Whether the research task includes clinical trials.
         research_aim_id: The ID of the research aim.
         research_task: The research task to generate text for.
-        research_task_number: A string representing the research task number in format 1.2, 2.3, etc.
         workspace_id: The workspace ID.
 
     Returns:
@@ -156,13 +138,7 @@ async def handle_research_task_text_generation(
     """
     search_queries = await create_search_queries(
         RESEARCH_TASK_QUERIES_PROMPT.substitute(
-            research_task=dumps(
-                {
-                    "task_number": research_task_number,
-                    "title": research_task["title"],
-                    "description": research_task["description"],
-                }
-            ),
+            research_task=dumps(research_task),
             clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
             if requires_clinical_trials
             else "",
@@ -184,7 +160,6 @@ async def handle_research_task_text_generation(
         generate_research_task_text,
         requires_clinical_trials=requires_clinical_trials,
         research_task=research_task,
-        research_task_number=research_task_number,
         retrieval_results=search_result,
     )
 
@@ -195,8 +170,4 @@ async def handle_research_task_text_generation(
     )
 
     logger.debug("Generated research task %s", result)
-    return TaskGenerationResponse(
-        title=research_task["title"],
-        text=result,
-        task_number=research_task_number,
-    )
+    return result

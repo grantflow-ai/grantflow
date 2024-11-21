@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from src.rag_backend.application_draft_generation.research_tasks import handle_research_task_text_generation
-from src.rag_backend.dto import DraftGenerationRequest
+from src.rag_backend.dto import DraftGenerationRequest, EnrichedResearchTaskDTO
 from tests.indexer.e2e.utils import load_settings_and_set_env
 
 
@@ -26,8 +26,9 @@ async def test_research_task_text_generation(
         application_id=generation_request["application_id"],
         workspace_id=generation_request["workspace_id"],
         research_aim_id=generation_request["research_aims"][0]["id"],
-        research_task=generation_request["research_aims"][0]["tasks"][0],
-        research_task_number="1.1",
+        research_task=EnrichedResearchTaskDTO(
+            **generation_request["research_aims"][0]["tasks"][0], relations=[], task_number="1.1"
+        ),
         requires_clinical_trials=generation_request["research_aims"][0]["requires_clinical_trials"],
     )
     logger.info("Generated research task text: %s", result)

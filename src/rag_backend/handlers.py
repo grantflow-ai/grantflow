@@ -1,6 +1,7 @@
 import logging
 import sys
 from http import HTTPStatus
+from time import time
 from typing import Final, TypedDict
 from uuid import uuid4
 
@@ -102,6 +103,7 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
         msg: An Azure Function ServiceBusMessage object.
     """
     body = msg.get_body()
+    start_time = time()
     logger.info("Received Generation Enqueue Message")
 
     try:
@@ -121,7 +123,11 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
             significance_id=request_body["significance_id"],
             workspace_id=request_body["workspace_id"],
         )
-        logger.info("RAG pipeline completed successfully for ticket ID: %s", ticket_id)
+        logger.info(
+            "RAG pipeline completed successfully for ticket ID: %s, total duration in seconds: %d",
+            ticket_id,
+            int(time() - start_time),
+        )
         await insert_generation_result(
             generation_result=result,
             application_id=request_body["application_id"],
