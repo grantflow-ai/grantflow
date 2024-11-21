@@ -5,26 +5,48 @@ from typing import Final, TypedDict
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.shared_params import FunctionDefinition
 
-from src.rag_backend.constants import PREMIUM_TEXT_GENERATION_MODEL
+from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag_backend.utils import handle_tool_call_request
 
 logger = logging.getLogger(__name__)
 
 SEARCH_QUERIES_SYSTEM_PROMPT: Final[str] = """
-You are a specialized query generation component within a RAG pipeline designed to assist in writing grant
-application sections. Your function is to generate search queries that will retrieve relevant content from
-an Azure AI Search index containing user-uploaded research materials.
-
-You will receive a description of the next task in the RAG pipeline and any user provided inputs that will be used as
-sources.
-
-Your task is to analyze this description and generate at least 3 distinct search queries that balance specificity with breadth to capture relevant materials.
+You are a specialized query generation component within a RAG pipeline designed to assist in writing grant application sections.
+Your function is to generate search queries that will retrieve relevant content from an Azure AI Search index containing user-uploaded research materials.
 """
 
 SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
-```markdown
-${prompt}
-```
+Here is the description of the next task in the RAG pipeline, along with any user-provided inputs that will be used as sources:
+
+<description>
+{{description}}
+</description>
+
+Your task is to analyze this description and generate between 3 and 10 distinct search queries that balance specificity with breadth to capture relevant materials. Follow these steps:
+
+1. Carefully read and analyze the provided description.
+2. Identify key topics, concepts, and potential areas of focus within the description.
+3. Generate a list of potential search queries based on your analysis.
+4. Refine and prioritize your queries to ensure they are distinct and cover a range of relevant aspects.
+5. Ensure you have at least 3 queries but no more than 10.
+6. Format your final list of queries as a JSON object according to the specified structure.
+
+Before formulating your final response, wrap your analysis and query generation process in <query_generation_process> tags:
+
+1. List key topics and concepts from the description.
+2. For each key topic/concept, brainstorm 2-3 potential search queries.
+3. Evaluate each query for relevance and specificity.
+4. Select the best queries, ensuring a balance of specificity and breadth.
+
+This will help ensure thorough consideration of the description and creation of effective queries.
+
+Remember:
+- Generate at least 3 and at most 10 distinct queries.
+- Ensure queries are relevant to the provided description.
+- Balance specificity and breadth in your queries to capture a range of relevant materials.
+- Provide only the JSON object as your final output, without any additional text or explanation.
+
+Begin your response with your query generation process, followed by the JSON output.
 """)
 
 OUTPUT_INSTRUCTIONS: Final[str] = """
@@ -35,7 +57,9 @@ Respond using the provided tools with a JSON object strictly adhering to the fol
 ```json
 {
     "queries": [
-        "...",
+        "Example query 1",
+        "Example query 2",
+        "Example query 3"
     ]
 }
 ```
@@ -83,9 +107,9 @@ async def create_search_queries(prompt: str) -> list[str]:
             )
         ],
         response_type=ToolResponse,  # type: ignore[type-var]
-        model=PREMIUM_TEXT_GENERATION_MODEL,
+        model=FAST_TEXT_GENERATION_MODEL,
     )
 
     queries = result["queries"]
     logger.debug("Generated search queries: %s", ",".join(queries))
-    return queries
+    return queries[:10]
