@@ -79,3 +79,35 @@ class GenerationResult(TypedDict):
     """The generated text."""
     is_complete: bool
     """Whether the section text is complete or not."""
+
+
+class NumberedResearchTaskDTO(ResearchTaskDTO):
+    """DTO for a research task that includes the task number."""
+
+    task_number: str
+    """The number of the research task."""
+
+
+class NumberedResearchAimDTO(ResearchAimDTO):
+    """DTO for a research aim that includes the aim number."""
+
+    aim_number: str
+    """The research aim number."""
+    tasks: list[NumberedResearchTaskDTO]  # type: ignore[misc]
+    """The tasks associated with the research aim."""
+
+
+class EnrichedResearchTaskDTO(NumberedResearchTaskDTO):
+    """DTO for an enriched research task that includes relations."""
+
+    relations: list[str]
+    """The relations of the research task."""
+
+
+class EnrichedResearchAimDTO(NumberedResearchAimDTO):
+    """DTO for an enriched research aim that includes relations."""
+
+    relations: list[str]
+    """The relations of the research aim."""
+    tasks: list[EnrichedResearchTaskDTO]  # type: ignore[misc]
+    """The tasks associated with the research aim."""

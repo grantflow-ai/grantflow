@@ -12,9 +12,6 @@ When generating text, strictly follow these guidelines:
    - Do not define acronyms; assume the reader is familiar with all terminology
    - Follow the scientific terminology provided in the inputs
    - Maintain a formal and data-driven tone, emphasizing succinctness and specificity
-   - Include in-line citations where relevant
-   - Provide precise references to sources when citing and quoting
-   - Use page numbers in references when page numbers are provided
 
 ### Handling Missing Information
 
@@ -23,10 +20,15 @@ Instead, add a bold text placeholder in the format `**MISSING INFORMATION: <desc
 """
 
 CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[Template] = Template("""
-**Important**: Since the text being generated in the RAG pipeline is long, the generation is done in segments.
-Here is the last segment that was generated. Continue the generation from the point this text ends and do not include any of the previous text in the output.
+Here is the last segment of text that was generated:
 
 <previous_part_text>
 ${previous_part_text}
 </previous_part_text>
+
+Instructions:
+1. Analyze the end point of the provided text segment.
+2. Continue the generation from exactly where this text ends.
+3. Do not repeat any content from the previous segment unnecessarily.
+4. Maintain the style, tone, and context of the original text.
 """)

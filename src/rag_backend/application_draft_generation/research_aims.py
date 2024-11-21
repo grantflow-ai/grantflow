@@ -2,7 +2,7 @@ import logging
 from functools import partial
 from json import dumps
 from string import Template
-from typing import Final, TypedDict
+from typing import Final
 
 from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
@@ -14,8 +14,8 @@ from src.rag_backend.application_draft_generation.shared_prompts import (
 from src.rag_backend.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.dto import (
     DocumentDTO,
+    EnrichedResearchAimDTO,
     GenerationResult,
-    ResearchAimDTO,
 )
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
@@ -54,6 +54,9 @@ It should address the following implicit questions:
 
 __NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
 
+**Important**: The research aim JSON object includes an array of relations with other research aims. If the array is not empty, make sure to include
+a detailed description of these relations in the text.
+
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
@@ -74,22 +77,10 @@ Here is the research task data as a JSON object:
 """)
 
 
-class AimGenerationResponse(TypedDict):
-    """The response returned by the prompt logic."""
-
-    title: str
-    """The title of the research aim."""
-    text: str
-    """The generated text."""
-    aim_number: int
-    """The aim number."""
-
-
 async def generate_research_aim_text(
     previous_part_text: str | None,
     *,
-    aim_number: int,
-    research_aim: ResearchAimDTO,
+    research_aim: EnrichedResearchAimDTO,
     research_task_titles: list[str],
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResult:
@@ -97,7 +88,6 @@ async def generate_research_aim_text(
 
     Args:
         previous_part_text: The previous part of the research aim text, if any.
-        aim_number: The number of the research aim.
         research_aim: The research aim to generate text for.
         research_task_titles: The titles of the research tasks that are included in this aim.
         retrieval_results: The results of the RAG retrieval.
@@ -106,13 +96,7 @@ async def generate_research_aim_text(
         GenerationResult: The generated text for the research aim.
     """
     user_prompt = RESEARCH_AIM_GENERATION_USER_PROMPT.substitute(
-        research_aim=dumps(
-            {
-                "aim_number": aim_number,
-                "title": research_aim["title"],
-                "description": research_aim["description"],
-            }
-        ),
+        research_aim=dumps(research_aim),
         rag_results=dumps(retrieval_results),
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
@@ -131,15 +115,13 @@ async def generate_research_aim_text(
 
 async def handle_research_aim_text_generation(
     *,
-    aim_number: int,
     application_id: str,
-    research_aim: ResearchAimDTO,
+    research_aim: EnrichedResearchAimDTO,
     workspace_id: str,
-) -> AimGenerationResponse:
+) -> str:
     """Generate the text for a research aim.
 
     Args:
-        aim_number: The number of the research aim.
         application_id: The application ID.
         research_aim: The research aim to generate text for.
         workspace_id: The workspace ID.
@@ -151,14 +133,7 @@ async def handle_research_aim_text_generation(
     research_task_titles = [research_task["title"] for research_task in research_aim["tasks"]]
 
     search_queries = await create_search_queries(
-        RESEARCH_AIM_QUERIES_PROMPT.substitute(
-            research_aim=dumps(
-                {
-                    "title": research_aim["title"],
-                    "description": research_aim["description"],
-                }
-            )
-        ),
+        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=dumps(research_aim)),
     )
     search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_PARENT_ID} eq '{research_aim_id}' or {FIELD_NAME_PARENT_ID} eq '{application_id}')"
     query_embeddings = await generate_embeddings(search_queries)
@@ -173,7 +148,6 @@ async def handle_research_aim_text_generation(
 
     handler = partial(
         generate_research_aim_text,
-        aim_number=aim_number,
         research_aim=research_aim,
         retrieval_results=search_result,
         research_task_titles=research_task_titles,
@@ -186,8 +160,4 @@ async def handle_research_aim_text_generation(
     )
     logger.debug("Generated research aim %s", result)
 
-    return AimGenerationResponse(
-        text=result,
-        aim_number=aim_number,
-        title=research_aim["title"],
-    )
+    return result

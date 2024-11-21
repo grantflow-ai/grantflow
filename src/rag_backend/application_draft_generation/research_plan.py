@@ -1,83 +1,75 @@
 import logging
 from asyncio import gather
-from functools import partial
 from json import dumps
 from string import Template
-from typing import Final, cast
+from typing import Final, TypedDict
+
+from openai.types.chat import ChatCompletionToolParam
+from openai.types.shared_params import FunctionDefinition
 
 from src.rag_backend.application_draft_generation.research_aims import (
-    AimGenerationResponse,
     handle_research_aim_text_generation,
 )
 from src.rag_backend.application_draft_generation.research_tasks import (
-    TaskGenerationResponse,
     handle_research_task_text_generation,
 )
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
-    CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
-from src.rag_backend.constants import TWO_SECONDS
-from src.rag_backend.dto import GenerationResult, ResearchAimDTO
-from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
+from src.rag_backend.constants import SLEEP_INCREMENT
+from src.rag_backend.dto import (
+    EnrichedResearchAimDTO,
+    EnrichedResearchTaskDTO,
+    NumberedResearchAimDTO,
+    NumberedResearchTaskDTO,
+    ResearchAimDTO,
+)
+from src.rag_backend.utils import handle_tool_call_request
 from src.utils.sync import delayed_async
 from src.utils.text import strip_lines
 
 logger = logging.getLogger(__name__)
 
-RESEARCH_AIM_SECTION_GENERATION_USER_PROMPT: Final[Template] = Template("""
-You task is to write the research aim number ${research_aim_number} section of the grant application.
+PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_SYSTEM_PROMPT: Final[str] = """
+You are an expert grant application writer integrated into a RAG system.
+Your sole task is to analyze and enrich research aims and tasks with their relationships using the provided tool.
 
-The title of this research aim is: ${research_aim_title}
+Always respond by calling the specified function with the exact JSON format detailed in the instructions.
+"""
 
-Your task is the write a continuous, cohesive text that describes the research aim and the research tasks that are part of this aim.
-${previous_part_text}
 
-Use the following sources to write the text:
+PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT: Final[Template] = Template("""
+Your task is to analyze research aims and tasks for a grant application, identifying and describing any relations between them.
 
-1. The research aim data as JSON:
-    <research_aim_data>
-    ${research_aim_data}
-    </research_aim_data>
+Here is the data you will work with:
 
-2. The research tasks that are part of this aim as a JSON array:
-    <research_tasks_data>
-    ${research_tasks_data}
-    </research_tasks_data>
+<numbered_aims_with_tasks>
+${numbered_aims_with_tasks}
+</numbered_aims_with_tasks>
 
-3. The text of previous research aims and their tasks (if any) texts:
-    <previous_aims_texts>
-    ${previous_aims_texts}
-    </previous_aims_texts>
+Your objective is to identify and describe relations between research aims and research tasks:
+
+1. Relations between research aims: Determine if an aim builds upon, depends on, or continues from a previous aim.
+2. Relations between tasks within aims: Determine if a task builds upon, depends on, or continues from a previous task either in the same research aim or a preceding research aim.
+""")
+
+PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS = """
+You must respond exclusively by invoking the provided function.
+Return a JSON object adhering to the following schema:
+
+```json
+{
+    "relations": {
+        "2": ["Relation description to aim 1", "..."],
+        "2.2": ["Relation description to task 1.1", "Another relation description to a different e.g. 1.1", "..."]
+    }
+}
+```
 
 **Important**:
-
-The aim and tasks texts that are part of 1 and 2 above are already full texts that include all the required information.
-Adjust these texts only if necessary to ensure better consistency and coherence between the different sections.
-The texts though are missing some information that you need to add, if they apply in your judgement:
-
-1. Consider any relations between a research aim and preceding aims. If there is a relation, e.g. the aim continues, builds, or depends upon a previous aim, mention this explicitly.
-E.g. "Building upon the first aim...", "Depending on the results of aim 1...", "Based on the candidates identified in the previous aim..."
-2. Consider any relations between a research task and the aim. If there is a relation, e.g. the task continues, builds, or depends upon a previous task, mention this explicitly.
-E.g. "As was previously seen in task 1.1", "Depending on the result of task 2.3", "Based on the candidates identified in Task 1.2, in task 1.3 we will..."
-
-Example Output:
-
-```markdown
-#### Aim <aim number>: <aim title>
-Full aim text here.
-
-##### Research Tasks
-
-###### Task <task number>: <task title>
-Full task text here.
-
-###### Task <task number>: <task title>
-Full task text here.
-
-...
-```
-""")
+- Only include aims and tasks that have identified relations. I.e. omit those that do not have any relations to other aims or tasks from the response object.
+- relation description should be detailed and specific. Make sure to always include the aim or task number. Use phrases such as "Building upon the first aim...", "Depending on the results of aim 1...", or "Based on the candidates identified in Task 1.2, in task 1.3 we will...".
+"""
 
 DRAFT_APPLICATION_TEMPLATE: Final[Template] = Template("""
 ## Research Plan
@@ -87,43 +79,115 @@ DRAFT_APPLICATION_TEMPLATE: Final[Template] = Template("""
 ${research_aims_text}
 """)
 
+RESEARCH_AIM_TEMPLATE: Final[Template] = Template("""
+#### Aim ${aim_number}: ${title}
 
-async def generate_research_plan_text(
-    previous_part_text: str | None,
-    *,
-    previous_aims_texts: list[str],
-    research_aim_data: AimGenerationResponse,
-    research_aim_number: int,
-    research_aim_title: str,
-    research_tasks_data: list[TaskGenerationResponse],
-) -> GenerationResult:
-    """Generate the text for the research plan.
+${aim_text}
+
+
+##### Research Tasks
+
+${tasks_text}
+""")
+
+RESEARCH_TASK_TEMPLATE: Final[Template] = Template("""
+##### Task ${task_number}: ${title}
+
+${task_text}
+""")
+
+
+class ToolResponse(TypedDict):
+    """The response from the tool call."""
+
+    relations: dict[str, list[str]]
+    """The relations between research aims and tasks."""
+
+
+async def enrich_research_aims_and_tasks_with_relationship_information(
+    research_aims: list[ResearchAimDTO],
+) -> list[EnrichedResearchAimDTO]:
+    """Enrich the research aims and tasks with relationship information.
 
     Args:
-        previous_part_text: The previous part of the research plan text, if any.
-        previous_aims_texts: The texts of the previous research aims.
-        research_aim_data: The data for the research aim.
-        research_aim_number: The number of the research aim.
-        research_aim_title: The title of the research aim.
-        research_tasks_data: The data for the research tasks.
+        research_aims: The research aims to enrich.
 
     Returns:
-        The generated text for the research plan.
+        list[EnrichedResearchAimDTO]: The enriched research aims.
     """
-    user_prompt = RESEARCH_AIM_SECTION_GENERATION_USER_PROMPT.substitute(
-        previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
-            previous_part_text=previous_part_text,
+    numbered_aims_with_tasks: list[NumberedResearchAimDTO] = []
+    for aims_index, research_aim in enumerate(research_aims):
+        aim_number = aims_index + 1
+        tasks = [
+            NumberedResearchTaskDTO(
+                **research_task,
+                task_number=f"{aim_number}.{tasks_index + 1}",
+            )
+            for tasks_index, research_task in enumerate(research_aim["tasks"])
+        ]
+        numbered_aims_with_tasks.append(
+            NumberedResearchAimDTO(
+                id=research_aim["id"],
+                title=research_aim["title"],
+                description=research_aim["description"],
+                requires_clinical_trials=research_aim["requires_clinical_trials"],
+                aim_number=str(aim_number),
+                tasks=tasks,
+            )
         )
-        if previous_part_text
-        else "",
-        research_aim_number=research_aim_number,
-        research_aim_data=dumps(research_aim_data),
-        research_tasks_data=dumps(research_tasks_data),
-        previous_aims_texts=",".join(previous_aims_texts),
-        research_aim_title=research_aim_title,
-    ).strip()
 
-    return await handle_tool_call_request(system_prompt=BASE_SYSTEM_PROMPT, user_prompt=user_prompt)
+    results = await handle_tool_call_request(
+        system_prompt=BASE_SYSTEM_PROMPT,
+        user_prompt=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT.substitute(
+            numbered_aims_with_tasks=dumps(numbered_aims_with_tasks)
+        ),
+        response_type=ToolResponse,  # type: ignore[type-var]
+        output_instructions=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS,
+        tools=[
+            ChatCompletionToolParam(
+                type="function",
+                function=FunctionDefinition(
+                    name="response_handler",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "relations": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                            },
+                        },
+                        "required": ["relations"],
+                        "additionalProperties": False,
+                    },
+                ),
+            )
+        ],
+    )
+    logger.info("Generated relations for research aims: %s", dumps(results))
+
+    relations = results["relations"]
+
+    return [
+        EnrichedResearchAimDTO(
+            aim_number=research_aim["aim_number"],
+            description=research_aim["description"],
+            id=research_aim["id"],
+            relations=relations.get(research_aim["aim_number"], []),
+            requires_clinical_trials=research_aim["requires_clinical_trials"],
+            title=research_aim["title"],
+            tasks=[
+                EnrichedResearchTaskDTO(
+                    **research_task,
+                    relations=relations.get(research_task["task_number"], []),
+                )
+                for research_task in research_aim["tasks"]
+            ],
+        )
+        for research_aim in numbered_aims_with_tasks
+    ]
 
 
 async def handle_research_plan_text_generation(
@@ -142,14 +206,13 @@ async def handle_research_plan_text_generation(
     Returns:
         The generated text for the research plan.
     """
+    enriched_research_aims = await enrich_research_aims_and_tasks_with_relationship_information(research_aims)
     research_aim_texts: list[str] = []
 
-    for index, research_aim in enumerate(research_aims):
-        aim_number = index + 1
-        aim_response, research_tasks = await gather(
+    for research_aim in enriched_research_aims:
+        research_aim_text, research_tasks_texts = await gather(
             *[
                 handle_research_aim_text_generation(
-                    aim_number=aim_number,
                     application_id=application_id,
                     research_aim=research_aim,
                     workspace_id=workspace_id,
@@ -162,31 +225,30 @@ async def handle_research_plan_text_generation(
                                 requires_clinical_trials=research_aim["requires_clinical_trials"],
                                 research_aim_id=research_aim["id"],
                                 research_task=research_task,
-                                research_task_number=f"{aim_number}.{index + 1}",
                                 workspace_id=workspace_id,
                             ),
-                            index * TWO_SECONDS,
+                            index * SLEEP_INCREMENT,
                         )
                         for index, research_task in enumerate(research_aim["tasks"])
                     ]
                 ),
             ]
         )
-
-        prompt_handler = partial(
-            generate_research_plan_text,
-            research_aim_data=cast(AimGenerationResponse, aim_response),
-            research_tasks_data=cast(list[TaskGenerationResponse], research_tasks),
-            previous_aims_texts=research_aim_texts,
-            research_aim_number=aim_number,
-            research_aim_title=research_aim["title"],
-        )
-
         research_aim_texts.append(
-            await handle_segmented_text_generation(
-                entity_type="research plan",
-                entity_identifier=application_id,
-                prompt_handler=prompt_handler,
+            RESEARCH_AIM_TEMPLATE.substitute(
+                aim_number=research_aim["aim_number"],
+                title=research_aim["title"],
+                aim_text=research_aim_text,
+                tasks_text="\n\n".join(
+                    RESEARCH_TASK_TEMPLATE.substitute(
+                        task_number=research_task["task_number"],
+                        title=research_task["title"],
+                        task_text=research_task_text,
+                    )
+                    for research_task, research_task_text in zip(
+                        research_aim["tasks"], research_tasks_texts, strict=False
+                    )
+                ),
             )
         )
 
