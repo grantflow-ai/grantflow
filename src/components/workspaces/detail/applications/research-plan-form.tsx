@@ -16,7 +16,7 @@ import { FileUploader } from "@/components/file-uploader";
 import { FileAttributes, FilesDisplay } from "@/components/files-display";
 import { cn } from "gen/cn";
 import { filterFiles } from "@/utils/file";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ResearchAim, ResearchTask } from "@/types/database-types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "gen/ui/accordion";
 
@@ -768,14 +768,14 @@ export function ResearchPlanForm({
 						.getValues()
 						.researchAims.filter((aim) => !!aim.id)
 						.map((aim, aimIndex) => (
-							<>
+							<Fragment key={`aim-fragment-${aim.id}`}>
 								<input
 									key={aim.id}
 									type="hidden"
 									value={aim.id}
 									{...form.register(`researchAims.${aimIndex}.id`)}
 								/>
-								<>
+								<Fragment key={`task-fragment-${aim.id}`}>
 									{aim.tasks
 										.filter((task) => !!task.id)
 										.map((task, taskIndex) => (
@@ -786,8 +786,8 @@ export function ResearchPlanForm({
 												{...form.register(`researchAims.${aimIndex}.tasks.${taskIndex}.id`)}
 											/>
 										))}
-								</>
-							</>
+								</Fragment>
+							</Fragment>
 						))}
 				</form>
 			</Form>

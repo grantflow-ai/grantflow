@@ -2,8 +2,16 @@
 
 import { eq } from "drizzle-orm";
 import { getDatabaseClient } from "db/connection";
-import { grantApplications, researchAims, researchInnovations, researchSignificances, researchTasks } from "db/schema";
 import {
+	generationResults,
+	grantApplications,
+	researchAims,
+	researchInnovations,
+	researchSignificances,
+	researchTasks,
+} from "db/schema";
+import {
+	GenerationResult,
 	GrantApplication,
 	NewGrantApplication,
 	NewResearchAim,
@@ -214,6 +222,28 @@ export async function deleteResearchTask(taskId: ResearchTask["id"]): Promise<st
 		return handleServerError(error as Error, {
 			message: "Failed to delete research task",
 			returnValue: "Unable to delete research task",
+		});
+	}
+}
+
+/**
+ * Retrieve a generation result by ticket ID.
+ *
+ * @param ticketId - The ticket ID of the generation result to retrieve.
+ * @returns The generation result or null.
+ */
+export async function retrieveGenerationResultByTicketID(ticketId: string): Promise<GenerationResult | null> {
+	try {
+		const db = getDatabaseClient();
+		return (
+			(await db.query.generationResults.findFirst({
+				where: eq(generationResults.ticketId, ticketId),
+			})) ?? null
+		);
+	} catch (error) {
+		return handleServerError(error as Error, {
+			message: "Failed to retrieve generation result",
+			returnValue: null,
 		});
 	}
 }
