@@ -6,6 +6,8 @@ import { Copy, Download, Loader2 } from "lucide-react";
 import { generateApplicationDraft } from "@/actions/text-generation";
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { FIVE_SECONDS, TEN_MINUTES } from "@/constants";
+import { retrieveGenerationResultByTicketID } from "@/actions/db";
 
 export function ReviewApplicationForm({
 	onPressPrevious,
@@ -39,7 +41,7 @@ export function ReviewApplicationForm({
 	const handleGenerateDraft = async () => {
 		setIsLoading(true);
 		try {
-			const applicationDraftText = await generateApplicationDraft({
+			const ticketId = await generateApplicationDraft({
 				workspace_id: workspaceId,
 				application_id: applicationId,
 				cfp_title: `${grantCFP!.code} - ${grantCFP!.title}`,
@@ -63,7 +65,18 @@ export function ReviewApplicationForm({
 						})),
 				})),
 			});
-			setApplicationDraftText(applicationDraftText);
+
+			const startTime = Date.now();
+			while (Date.now() - startTime < TEN_MINUTES) {
+				const result = await retrieveGenerationResultByTicketID(ticketId);
+				if (result) {
+					setApplicationDraftText(result.text);
+					return;
+				}
+				await new Promise((resolve) => setTimeout(resolve, FIVE_SECONDS));
+			}
+
+			throw new Error(`Polling timeout exceeded for ticket ${ticketId}`);
 		} finally {
 			setIsLoading(false);
 		}
@@ -71,7 +84,7 @@ export function ReviewApplicationForm({
 
 	const handleCopyMarkdown = () => {
 		if (applicationDraftText) {
-			navigator.clipboard.writeText(applicationDraftText);
+			void navigator.clipboard.writeText(applicationDraftText);
 		}
 	};
 
@@ -82,30 +95,16 @@ export function ReviewApplicationForm({
 			const a = document.createElement("a");
 			a.href = url;
 			a.download = "application_draft.md";
-			document.body.appendChild(a);
+			document.body.append(a);
 			a.click();
-			document.body.removeChild(a);
+			a.remove();
 			URL.revokeObjectURL(url);
 		}
 	};
 
 	return (
 		<div className="space-y-6">
-			{!applicationDraftText ? (
-				<Card>
-					<CardHeader>
-						<CardTitle>General Information</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-2">
-						<div>
-							<span className="font-semibold">NIH Activity Code:</span> {application.cfpId}
-						</div>
-						<div>
-							<span className="font-semibold">Title:</span> {application.title}
-						</div>
-					</CardContent>
-				</Card>
-			) : (
+			{applicationDraftText ? (
 				<div className="space-y-4">
 					<div className="flex justify-end space-x-2">
 						<Button onClick={handleCopyMarkdown} variant="outline">
@@ -121,6 +120,20 @@ export function ReviewApplicationForm({
 						<ReactMarkdown>{applicationDraftText}</ReactMarkdown>
 					</div>
 				</div>
+			) : (
+				<Card>
+					<CardHeader>
+						<CardTitle>General Information</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-2">
+						<div>
+							<span className="font-semibold">NIH Activity Code:</span> {application.cfpId}
+						</div>
+						<div>
+							<span className="font-semibold">Title:</span> {application.title}
+						</div>
+					</CardContent>
+				</Card>
 			)}
 
 			<div className="pt-10 flex justify-between">

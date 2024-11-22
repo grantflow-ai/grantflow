@@ -251,6 +251,8 @@ export const generationResults = pgTable("generation_results", {
 	applicationId: uuid("application_id")
 		.notNull()
 		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	ticketId: uuid("ticket_id").notNull(),
+	duration: integer(),
 	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 	text: text("text").notNull(),
 });
