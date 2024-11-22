@@ -38,6 +38,7 @@ export function filterFiles(files: FileAttributes[], databaseFiles: Record<strin
 
 	const filteredFiles = Object.fromEntries(
 		Object.entries(databaseFiles ?? {}).filter(
+			// eslint-disable-next-line no-unused-vars
 			([_, { name, size, type }]) => !distinctFileIdentifiers.has(name + size.toString() + type),
 		),
 	);

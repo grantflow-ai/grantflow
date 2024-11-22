@@ -1,6 +1,6 @@
 {
-	"id": "c318f986-97ae-42de-9892-62dc0ad1f8cf",
-	"prevId": "00000000-0000-0000-0000-000000000000",
+	"id": "8414c13e-c9e2-4bbe-8688-e1b4ccac95bd",
+	"prevId": "a5855604-e767-4105-9b0b-d10b0512853f",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
@@ -244,6 +244,18 @@
 					"type": "uuid",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"ticket_id": {
+					"name": "ticket_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"duration": {
+					"name": "duration",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
 				},
 				"created_at": {
 					"name": "created_at",
