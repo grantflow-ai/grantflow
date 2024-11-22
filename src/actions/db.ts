@@ -3,6 +3,7 @@
 import { eq } from "drizzle-orm";
 import { getDatabaseClient } from "db/connection";
 import {
+	applicationFiles,
 	generationResults,
 	grantApplications,
 	researchAims,
@@ -11,8 +12,10 @@ import {
 	researchTasks,
 } from "db/schema";
 import {
+	ApplicationFile,
 	GenerationResult,
 	GrantApplication,
+	NewApplicationFile,
 	NewGrantApplication,
 	NewResearchAim,
 	NewResearchInnovation,
@@ -56,6 +59,36 @@ export async function upsertGrantApplication(
 		return handleServerError(error as Error, {
 			message: "Failed to upsert grant application",
 			returnValue: "Unable to save grant application",
+		});
+	}
+}
+
+/**
+ * Upsert an application file.
+ *
+ * @note If passed in values include an id, the db file will be updated, otherwise it will be inserted.
+ *
+ * @param values - The values to upsert.
+ * @returns The upserted application file(s) or string error message or null.
+ */
+export async function upsertApplicationFiles(
+	values: ApplicationFile | NewApplicationFile | (ApplicationFile | NewApplicationFile)[],
+): Promise<ApplicationFile[] | string | null> {
+	try {
+		const db = getDatabaseClient();
+
+		return await db
+			.insert(applicationFiles)
+			.values(values as (ApplicationFile | NewApplicationFile)[])
+			.onConflictDoUpdate({
+				target: applicationFiles.id,
+				set: dropId(values as ApplicationFile),
+			})
+			.returning();
+	} catch (error) {
+		return handleServerError(error as Error, {
+			message: "Failed to upsert application file(s)",
+			returnValue: "Unable to save application file(s)",
 		});
 	}
 }

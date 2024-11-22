@@ -1,5 +1,3 @@
-import { FileAttributes } from "@/components/files-display";
-
 /**
  * Generate a file download
  *
@@ -22,26 +20,4 @@ export function generateFileDownload({ filename, content, type }: { filename: st
 
 	link.remove();
 	URL.revokeObjectURL(url);
-}
-
-/**
- * Upload files to the server
- *
- * @param files - The files to upload
- * @param databaseFiles - The files already in the database
- *
- * @returns an object containing the new files and the filtered files
- */
-export function filterFiles(files: FileAttributes[], databaseFiles: Record<string, FileAttributes> | null) {
-	const newFiles = files.filter((file) => file instanceof File);
-	const distinctFileIdentifiers = new Set(newFiles.map((file) => file.name + file.size.toString() + file.type));
-
-	const filteredFiles = Object.fromEntries(
-		Object.entries(databaseFiles ?? {}).filter(
-			// eslint-disable-next-line no-unused-vars
-			([_, { name, size, type }]) => !distinctFileIdentifiers.has(name + size.toString() + type),
-		),
-	);
-
-	return { newFiles, filteredFiles };
 }

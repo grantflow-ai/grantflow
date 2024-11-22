@@ -1,6 +1,7 @@
 import { getDatabaseClient } from "db/connection";
 import { eq, inArray } from "drizzle-orm";
 import {
+	applicationFiles,
 	grantApplications,
 	grantCfps,
 	researchAims,
@@ -49,6 +50,10 @@ export default async function ApplicationDetailPage(props: {
 		),
 	});
 
+	const files = await db.query.applicationFiles.findMany({
+		where: eq(applicationFiles.applicationId, applicationId),
+	});
+
 	if (!application) {
 		// TODO: redirect to 404 page
 		return null;
@@ -94,6 +99,7 @@ export default async function ApplicationDetailPage(props: {
 								significance={signficance}
 								researchAims={aims}
 								researchTasks={tasks}
+								files={files}
 							/>
 						</section>
 					</div>

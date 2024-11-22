@@ -11,20 +11,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { cn } from "gen/cn";
-import { uploadFiles } from "@/actions/file";
 import { FileUploader } from "@/components/file-uploader";
 import { FileAttributes, FilesDisplay } from "@/components/files-display";
-import { filterFiles } from "@/utils/file";
+import { uploadFiles } from "@/actions/file";
 
 const formSchema = z.object({
-	significance: z.object({
-		text: z.string().optional(),
-		files: z.array(z.custom<FileAttributes>()),
-	}),
-	innovation: z.object({
-		text: z.string().optional(),
-		files: z.array(z.custom<FileAttributes>()),
-	}),
+	files: z.array(z.custom<FileAttributes>()),
+	significanceDescription: z.string().optional(),
+	innovationDescription: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -42,93 +36,93 @@ export default function SignificanceAndInnovationForm({
 }) {
 	const [canSubmit, setCanSubmit] = useState(false);
 
-	const { significance, innovation, updateResearchInnovation, updateResearchSignificance, loading } = useWizardStore({
+	const {
+		applicationFiles,
+		innovation,
+		loading,
+		significance,
+		updateFiles,
+		updateResearchInnovation,
+		updateResearchSignificance,
+	} = useWizardStore({
 		workspaceId,
 	})(
 		useShallow((state) => ({
-			significance: state.significance,
+			applicationFiles: state.files,
 			innovation: state.innovation,
+			loading: state.loading,
+			significance: state.significance,
+			updateFiles: state.updateFiles,
 			updateResearchInnovation: state.updateResearchInnovation,
 			updateResearchSignificance: state.updateResearchSignificance,
-			loading: state.loading,
 		})),
 	);
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			significance: { text: significance?.text ?? "", files: [] },
-			innovation: { text: innovation?.text ?? "", files: [] },
+			files: applicationFiles
+				.filter((file) => file.section === "significance-and-innovation")
+				.map(({ name, size, type }) => ({
+					name,
+					size,
+					type,
+				})),
+			significanceDescription: significance?.text ?? "",
+			innovationDescription: innovation?.text ?? "",
 		},
 	});
-
 	form.watch((values) => {
-		const significanceText = values.significance?.text?.trim() ?? "";
-		const innovationText = values.innovation?.text?.trim() ?? "";
-		const significanceFiles = values.significance?.files ?? [];
-		const innovationFiles = values.innovation?.files ?? [];
+		const significanceText = values.significanceDescription?.trim() ?? "";
+		const innovationText = values.innovationDescription?.trim() ?? "";
+		const files = values.files ?? [];
 
-		const hasRequiredData =
-			(significanceText || significanceFiles.length) && (innovationText || innovationFiles.length);
+		const hasRequiredData = (significanceText.length > 0 && innovationText.length > 0) || files.length > 0;
 
 		if (!hasRequiredData) {
 			setCanSubmit(false);
 			return;
 		}
 
-		if (significance && innovation) {
-			const textDifferent = significanceText !== significance.text || innovationText !== innovation.text;
+		const sectionFiles = applicationFiles.filter((file) => file.section === "significance-and-innovation");
+		const hasDifferentText = significanceText !== significance?.text || innovationText !== innovation?.text;
+		const hasDifferentFiles =
+			files.length !== sectionFiles.length ||
+			files.some(
+				(file) =>
+					file &&
+					!sectionFiles.some((f) => f.name === file.name && f.size === file.size && f.type === file.type),
+			);
 
-			const existingSignificanceFiles = Object.values(significance.files ?? {});
-			const existingInnovationFiles = Object.values(innovation.files ?? {});
-
-			const filesChanged =
-				significanceFiles.length !== existingSignificanceFiles.length ||
-				innovationFiles.length !== existingInnovationFiles.length ||
-				significanceFiles.some(
-					(file) => file && !existingSignificanceFiles.some((f) => f.name === file.name),
-				) ||
-				innovationFiles.some((file) => file && !existingInnovationFiles.some((f) => f.name === file.name));
-			setCanSubmit(textDifferent || filesChanged);
-			return;
-		}
-
-		setCanSubmit(false);
+		setCanSubmit(hasDifferentText || hasDifferentFiles);
 	});
 
 	const onSubmit = async (values: FormValues) => {
-		const [upsertedSignificance, upsertedInnovation] = await Promise.all([
+		const promises: Promise<unknown>[] = [
 			updateResearchSignificance({
 				...significance,
-				text: values.significance.text?.trim() ?? "",
+				text: values.significanceDescription?.trim() ?? "",
 				applicationId,
 			}),
-			updateResearchInnovation({ ...innovation, text: values.innovation.text?.trim() ?? "", applicationId }),
-		]);
+			updateResearchInnovation({
+				...innovation,
+				text: values.innovationDescription?.trim() ?? "",
+				applicationId,
+			}),
+		];
 
-		if (upsertedSignificance && values.significance.files.length) {
-			const { filteredFiles, newFiles } = filterFiles(values.significance.files, upsertedSignificance.files);
-			const fileMapping = newFiles.length
-				? await uploadFiles({
-						workspaceId,
-						parentId: upsertedSignificance.id,
-						files: newFiles,
-					})
-				: {};
-
-			await updateResearchSignificance({ ...upsertedSignificance, files: { ...filteredFiles, ...fileMapping } });
-		}
-
-		if (upsertedInnovation && values.innovation.files.length) {
-			const { filteredFiles, newFiles } = filterFiles(values.innovation.files, upsertedInnovation.files);
-			const results = await uploadFiles({
+		const filesToUpload = values.files.filter((file) => file instanceof File);
+		if (filesToUpload.length) {
+			const uploadedFilesData = await uploadFiles({
+				applicationId,
 				workspaceId,
-				parentId: upsertedInnovation.id,
-				files: newFiles,
+				sectionName: "significance-and-innovation",
+				files: filesToUpload,
 			});
-
-			await updateResearchInnovation({ ...upsertedInnovation, files: { ...filteredFiles, ...results } });
+			promises.push(updateFiles(uploadedFilesData));
 		}
+
+		await Promise.all(promises);
 
 		setCanSubmit(false);
 		onPressNext();
@@ -145,12 +139,38 @@ export default function SignificanceAndInnovationForm({
 				>
 					<FormField
 						control={form.control}
-						name="significance.text"
+						name="files"
+						render={({ field }) => (
+							<FormItem>
+								<FilesDisplay
+									files={field.value}
+									onFileRemoved={(file) => {
+										field.onChange(field.value.filter((f) => f !== file));
+									}}
+								/>
+								<FormControl>
+									<FileUploader
+										currentFileCount={field.value.length}
+										onFilesAdded={(newFiles) => {
+											field.onChange([...field.value, ...newFiles]);
+										}}
+										data-testid="significance-and-innovation-files-input"
+										fieldName={field.name}
+										isDropZone={true}
+									/>
+								</FormControl>
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
+						name="significanceDescription"
 						render={({ field }) => (
 							<FormItem>
 								<div className="flex items-center gap-2">
 									<FormLabel
-										htmlFor="significance.text"
+										htmlFor="significanceDescription"
 										className="text-xl"
 										data-testid="significance-innovation-form-significance-label"
 									>
@@ -192,9 +212,9 @@ export default function SignificanceAndInnovationForm({
 										className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
 										data-testid="significance-innovation-form-significance-input"
 										aria-required="true"
-										aria-invalid={!!form.formState.errors.significance}
+										aria-invalid={!!form.formState.errors.significanceDescription}
 										aria-describedby={
-											form.formState.errors.significance
+											form.formState.errors.significanceDescription
 												? "significance-error significance-counter"
 												: "significance-counter"
 										}
@@ -213,14 +233,14 @@ export default function SignificanceAndInnovationForm({
 										{field.value.length} characters
 									</p>
 								)}
-								{form.formState.errors.significance?.message && (
+								{form.formState.errors.significanceDescription?.message && (
 									<FormMessage
 										id="significance-error"
 										data-testid="significance-innovation-form-significance-error"
 										className="text-destructive"
 										role="alert"
 									>
-										{form.formState.errors.significance.message}
+										{form.formState.errors.significanceDescription.message}
 									</FormMessage>
 								)}
 							</FormItem>
@@ -229,37 +249,12 @@ export default function SignificanceAndInnovationForm({
 
 					<FormField
 						control={form.control}
-						name="significance.files"
-						render={({ field }) => (
-							<FormItem>
-								<FilesDisplay
-									files={field.value}
-									onFileRemoved={(file) => {
-										field.onChange(field.value.filter((f) => f !== file));
-									}}
-								/>
-								<FormControl>
-									<FileUploader
-										currentFileCount={field.value.length}
-										onFilesAdded={(newFiles) => {
-											field.onChange([...field.value, ...newFiles]);
-										}}
-										data-testid="significance-files-input"
-										fieldName={field.name}
-									/>
-								</FormControl>
-							</FormItem>
-						)}
-					/>
-
-					<FormField
-						control={form.control}
-						name="innovation.text"
+						name="innovationDescription"
 						render={({ field }) => (
 							<FormItem>
 								<div className="flex items-center gap-2">
 									<FormLabel
-										htmlFor="innovation.text"
+										htmlFor="innovationDescription"
 										className="text-xl"
 										data-testid="significance-innovation-form-innovation-label"
 									>
@@ -301,9 +296,9 @@ export default function SignificanceAndInnovationForm({
 										className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
 										data-testid="significance-innovation-form-innovation-input"
 										aria-required="true"
-										aria-invalid={!!form.formState.errors.innovation}
+										aria-invalid={!!form.formState.errors.innovationDescription}
 										aria-describedby={
-											form.formState.errors.innovation
+											form.formState.errors.innovationDescription
 												? "innovation-error innovation-counter"
 												: "innovation-counter"
 										}
@@ -322,41 +317,16 @@ export default function SignificanceAndInnovationForm({
 										{field.value.length} characters
 									</p>
 								)}
-								{form.formState.errors.innovation?.message && (
+								{form.formState.errors.innovationDescription?.message && (
 									<FormMessage
 										id="innovation-error"
 										data-testid="significance-innovation-form-innovation-error"
 										className="text-destructive"
 										role="alert"
 									>
-										{form.formState.errors.innovation.message}
+										{form.formState.errors.innovationDescription.message}
 									</FormMessage>
 								)}
-							</FormItem>
-						)}
-					/>
-
-					<FormField
-						control={form.control}
-						name="innovation.files"
-						render={({ field }) => (
-							<FormItem>
-								<FilesDisplay
-									files={field.value}
-									onFileRemoved={(file) => {
-										field.onChange(field.value.filter((f) => f !== file));
-									}}
-								/>
-								<FormControl>
-									<FileUploader
-										currentFileCount={field.value.length}
-										onFilesAdded={(newFiles) => {
-											field.onChange([...field.value, ...newFiles]);
-										}}
-										data-testid="innovation-files-input"
-										fieldName={field.name}
-									/>
-								</FormControl>
 							</FormItem>
 						)}
 					/>

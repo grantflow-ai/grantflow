@@ -11,20 +11,18 @@ import { SubmitButton } from "@/components/submit-button";
 import { useWizardStore } from "@/stores/wizard";
 import { useShallow } from "zustand/react/shallow";
 import { Textarea } from "gen/ui/textarea";
-import { uploadFiles } from "@/actions/file";
 import { FileUploader } from "@/components/file-uploader";
 import { FileAttributes, FilesDisplay } from "@/components/files-display";
 import { cn } from "gen/cn";
-import { filterFiles } from "@/utils/file";
 import { Fragment, useMemo, useState } from "react";
 import { ResearchAim, ResearchTask } from "@/types/database-types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "gen/ui/accordion";
+import { uploadFiles } from "@/actions/file";
 
 const researchTaskSchema = z.object({
 	id: z.string().optional(),
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().optional(),
-	files: z.array(z.custom<FileAttributes>()),
 });
 
 const researchAimSchema = z.object({
@@ -32,11 +30,11 @@ const researchAimSchema = z.object({
 	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
 	description: z.string().optional(),
 	requiresClinicalTrials: z.boolean().optional(),
-	files: z.array(z.custom<FileAttributes>()),
 	tasks: z.array(researchTaskSchema).min(1, "At least one research task is required"),
 });
 
 const researchPlanFormSchema = z.object({
+	files: z.array(z.custom<FileAttributes>()),
 	researchAims: z.array(researchAimSchema).min(1, "At least one research aim is required"),
 });
 
@@ -189,36 +187,6 @@ function ResearchTaskForm({
 									</p>
 								)}
 								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name={`researchAims.${aimIndex}.tasks.${taskIndex}.files`}
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel
-									className="text-xl"
-									data-testid={`task-files-label-${aimIndex}-${taskIndex}`}
-								>
-									Task Files
-								</FormLabel>
-								<FilesDisplay
-									files={field.value}
-									onFileRemoved={(files) => {
-										field.onChange(files);
-									}}
-								/>
-								<FormControl>
-									<FileUploader
-										currentFileCount={field.value.length}
-										onFilesAdded={(files) => {
-											field.onChange(files);
-										}}
-										data-testid={`task-files-input-${aimIndex}-${taskIndex}`}
-										fieldName={field.name}
-									/>
-								</FormControl>
 							</FormItem>
 						)}
 					/>
@@ -454,41 +422,13 @@ function ResearchAimForm({
 						)}
 					/>
 
-					<FormField
-						control={form.control}
-						name={`researchAims.${index}.files`}
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel className="text-xl" data-testid={`research-aim-form-files-label-${index}`}>
-									Research Aim Files
-								</FormLabel>
-								<FilesDisplay
-									files={field.value}
-									onFileRemoved={(files) => {
-										field.onChange(files);
-									}}
-								/>
-								<FormControl>
-									<FileUploader
-										currentFileCount={field.value.length}
-										onFilesAdded={(files) => {
-											field.onChange(files);
-										}}
-										data-testid={`research-aim-form-files-input-${index}`}
-										fieldName={field.name}
-									/>
-								</FormControl>
-							</FormItem>
-						)}
-					/>
-
 					<div className="space-y-4">
 						<div className="flex justify-between items-center">
 							<h4 className="text-lg font-semibold">Research Tasks</h4>
 							<Button
 								type="button"
 								onClick={() => {
-									append({ title: "", description: "", files: [] });
+									append({ title: "", description: "" });
 								}}
 								data-testid={`add-task-button-${index}`}
 							>
@@ -530,7 +470,15 @@ export function ResearchPlanForm({
 }) {
 	const [canSubmit, setCanSubmit] = useState(false);
 	const [canContinue, setCanContinue] = useState(false);
-	const { updateResearchAim, updateResearchTask, loading, researchAims, researchTasks } = useWizardStore({
+	const {
+		updateResearchAim,
+		updateResearchTask,
+		loading,
+		researchAims,
+		researchTasks,
+		applicationFiles,
+		updateFiles,
+	} = useWizardStore({
 		workspaceId,
 	})(
 		useShallow((state) => ({
@@ -539,6 +487,8 @@ export function ResearchPlanForm({
 			researchAims: state.researchAims,
 			researchTasks: state.researchTasks,
 			loading: state.loading,
+			applicationFiles: state.files,
+			updateFiles: state.updateFiles,
 		})),
 	);
 
@@ -563,25 +513,25 @@ export function ResearchPlanForm({
 	const form = useForm<ResearchPlanFormValues>({
 		resolver: zodResolver(researchPlanFormSchema),
 		defaultValues: {
+			files: applicationFiles
+				.filter((file) => file.section === "research-plan")
+				.map(({ name, size, type }) => ({
+					name,
+					size,
+					type,
+				})),
 			researchAims: researchAims.length
-				? researchAims.map(({ files: aimFiles, id, ...aim }) => ({
+				? researchAims.map(({ id, ...aim }) => ({
 						...aim,
 						id,
-						files: aimFiles ? Object.values(aimFiles) : [],
-						tasks: researchTasks
-							.filter((task) => task.aimId === id)
-							.map(({ files: taskFiles, ...task }) => ({
-								files: taskFiles ? Object.values(taskFiles) : [],
-								...task,
-							})),
+						tasks: researchTasks.filter((task) => task.aimId === id),
 					}))
 				: [
 						{
 							title: "",
 							description: "",
 							requiresClinicalTrials: false,
-							files: [],
-							tasks: [{ title: "", description: "", files: [] }],
+							tasks: [{ title: "", description: "" }],
 						},
 					],
 		},
@@ -593,8 +543,8 @@ export function ResearchPlanForm({
 	});
 
 	const onSubmit = async (values: ResearchPlanFormValues) => {
-		const promises = values.researchAims.map(
-			async ({ files: aimFiles, tasks, title: aimTitle, description: aimDescription, ...aim }) => {
+		const promises: Promise<unknown>[] = values.researchAims.map(
+			async ({ tasks, title: aimTitle, description: aimDescription, ...aim }) => {
 				const upsertedAim = await updateResearchAim({
 					...aim,
 					title: aimTitle.trim(),
@@ -603,45 +553,14 @@ export function ResearchPlanForm({
 				});
 
 				if (upsertedAim) {
-					if (aimFiles.length) {
-						const { filteredFiles, newFiles } = filterFiles(aimFiles, upsertedAim.files);
-						const fileMapping = newFiles.length
-							? await uploadFiles({
-									workspaceId,
-									parentId: upsertedAim.id,
-									files: newFiles,
-								})
-							: {};
-						await updateResearchAim({ ...upsertedAim, files: { ...filteredFiles, ...fileMapping } });
-					}
-
 					const taskPromises = tasks.map(
-						async ({ files: taskFiles, id: taskId, title: taskTitle, description: taskDescription }) => {
-							const upsertedTask = await updateResearchTask({
+						async ({ id: taskId, title: taskTitle, description: taskDescription }) => {
+							await updateResearchTask({
 								id: taskId,
 								aimId: upsertedAim.id,
 								title: taskTitle.trim(),
 								description: taskDescription?.trim() ?? "",
 							});
-
-							if (upsertedTask && taskFiles.length) {
-								const { filteredFiles, newFiles } = filterFiles(taskFiles, upsertedTask.files);
-								const fileMapping = newFiles.length
-									? await uploadFiles({
-											workspaceId,
-											parentId: upsertedTask.id,
-											files: newFiles,
-										})
-									: {};
-
-								await updateResearchTask({
-									...upsertedTask,
-									files: {
-										...filteredFiles,
-										...fileMapping,
-									},
-								});
-							}
 						},
 					);
 
@@ -649,6 +568,16 @@ export function ResearchPlanForm({
 				}
 			},
 		);
+		const filesToUpload = values.files.filter((file) => file instanceof File);
+		if (filesToUpload.length) {
+			const uploadedFilesData = await uploadFiles({
+				applicationId,
+				workspaceId,
+				sectionName: "research-plan",
+				files: filesToUpload,
+			});
+			promises.push(updateFiles(uploadedFilesData));
+		}
 
 		await Promise.all(promises);
 		onPressNext();
@@ -656,6 +585,7 @@ export function ResearchPlanForm({
 
 	form.watch((values) => {
 		const researchAimValues = (values.researchAims?.filter(Boolean) ?? []) as z.infer<typeof researchAimSchema>[];
+		const files = values.files ?? [];
 		const hasFullAims =
 			researchAimValues.length > 0 &&
 			researchAimValues.every(
@@ -675,30 +605,38 @@ export function ResearchPlanForm({
 		setCanContinue(true);
 
 		const researchAimsWithID = researchAimValues.filter((aim) => !!aim.id);
-
-		setCanSubmit(
+		const hasChangedAimsOrTasks =
 			researchAimsWithID.length === 0 ||
-				researchAimsWithID.some((aim) => {
-					const dbAim = researchAimsIdMap[aim.id!] as ResearchAim | undefined;
-					if (dbAim) {
-						const valueChanged =
-							aim.title !== dbAim.title ||
-							aim.description !== dbAim.description ||
-							aim.requiresClinicalTrials !== dbAim.requiresClinicalTrials;
+			researchAimsWithID.some((aim) => {
+				const dbAim = researchAimsIdMap[aim.id!] as ResearchAim | undefined;
+				if (dbAim) {
+					const valueChanged =
+						aim.title !== dbAim.title ||
+						aim.description !== dbAim.description ||
+						aim.requiresClinicalTrials !== dbAim.requiresClinicalTrials;
 
-						const tasksChanged = aim.tasks
-							.filter((task) => task.id)
-							.some((task) => {
-								const dbTask = researchTasksIdMap[task.id!] as ResearchTask | undefined;
-								if (dbTask) {
-									return task.title !== dbTask.title || task.description !== dbTask.description;
-								}
-								return true;
-							});
-						return valueChanged || tasksChanged;
-					}
-				}),
-		);
+					const tasksChanged = aim.tasks
+						.filter((task) => task.id)
+						.some((task) => {
+							const dbTask = researchTasksIdMap[task.id!] as ResearchTask | undefined;
+							if (dbTask) {
+								return task.title !== dbTask.title || task.description !== dbTask.description;
+							}
+							return true;
+						});
+					return valueChanged || tasksChanged;
+				}
+			});
+		const sectionFiles = applicationFiles.filter((file) => file.section === "research-plan");
+		const hasDifferentFiles =
+			files.length !== sectionFiles.length ||
+			files.some(
+				(file) =>
+					file &&
+					!sectionFiles.some((f) => f.name === file.name && f.size === file.size && f.type === file.type),
+			);
+
+		setCanSubmit(hasChangedAimsOrTasks || hasDifferentFiles);
 	});
 
 	return (
@@ -710,6 +648,31 @@ export function ResearchPlanForm({
 					aria-label="Research Plan Form"
 					onSubmit={form.handleSubmit(onSubmit)}
 				>
+					<FormField
+						control={form.control}
+						name="files"
+						render={({ field }) => (
+							<FormItem>
+								<FilesDisplay
+									files={field.value}
+									onFileRemoved={(file) => {
+										field.onChange(field.value.filter((f) => f !== file));
+									}}
+								/>
+								<FormControl>
+									<FileUploader
+										currentFileCount={field.value.length}
+										onFilesAdded={(newFiles) => {
+											field.onChange([...field.value, ...newFiles]);
+										}}
+										data-testid="research-plan-files-input"
+										fieldName={field.name}
+										isDropZone={true}
+									/>
+								</FormControl>
+							</FormItem>
+						)}
+					/>
 					<Accordion type="single" collapsible className="w-full">
 						{fields.map((field, index) => (
 							<ResearchAimForm
@@ -730,8 +693,7 @@ export function ResearchPlanForm({
 								title: "",
 								description: "",
 								requiresClinicalTrials: false,
-								files: [],
-								tasks: [{ title: "", description: "", files: [] }],
+								tasks: [{ title: "", description: "" }],
 							});
 						}}
 						data-testid="add-research-aim-button"
