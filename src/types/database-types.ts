@@ -10,9 +10,11 @@ import {
 	researchTasks,
 	workspaceUsers,
 	generationResults,
+	applicationFiles,
 } from "db/schema";
 
 export type UserRole = "owner" | "admin" | "member";
+export type ApplicationSection = "research-plan" | "significance-and-innovation";
 
 export type User = typeof users.$inferSelect;
 export type Workspace = typeof workspaces.$inferSelect;
@@ -25,6 +27,7 @@ export type ResearchInnovation = typeof researchInnovations.$inferSelect;
 export type ResearchAim = typeof researchAims.$inferSelect;
 export type ResearchTask = typeof researchTasks.$inferSelect;
 export type GenerationResult = typeof generationResults.$inferSelect;
+export type ApplicationFile = typeof applicationFiles.$inferSelect;
 
 export type NewUser = typeof users.$inferInsert;
 export type NewWorkspace = typeof workspaces.$inferInsert;
@@ -37,3 +40,4 @@ export type NewResearchInnovation = typeof researchInnovations.$inferInsert;
 export type NewResearchAim = typeof researchAims.$inferInsert;
 export type NewResearchTask = typeof researchTasks.$inferInsert;
 export type NewGenerationResult = typeof generationResults.$inferInsert;
+export type NewApplicationFile = typeof applicationFiles.$inferInsert;

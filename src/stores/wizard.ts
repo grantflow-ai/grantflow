@@ -1,7 +1,9 @@
 import { create, type StoreApi, UseBoundStore } from "zustand";
 import {
+	ApplicationFile,
 	GrantApplication,
 	GrantCFP,
+	NewApplicationFile,
 	NewGrantApplication,
 	NewResearchAim,
 	NewResearchInnovation,
@@ -15,6 +17,7 @@ import {
 import {
 	deleteResearchAim,
 	deleteResearchTask,
+	upsertApplicationFiles,
 	upsertGrantApplication,
 	upsertResearchAim,
 	upsertResearchInnovation,
@@ -24,7 +27,7 @@ import {
 import { isString } from "@tool-belt/type-predicates";
 import { toast } from "sonner";
 
-type UpsertAction<T> = (values: Partial<T>, cb?: () => void) => Promise<T | null>;
+type UpsertAction<V, T> = (values: V, cb?: () => void) => Promise<T | null>;
 
 export interface WizardStoreInit {
 	application: GrantApplication | null;
@@ -32,6 +35,7 @@ export interface WizardStoreInit {
 	researchAims: ResearchAim[];
 	researchTasks: ResearchTask[];
 	significance: ResearchSignificance | null;
+	files: ApplicationFile[];
 	cfp: GrantCFP | null;
 	workspaceId: string;
 	loading: boolean;
@@ -40,11 +44,12 @@ export interface WizardStoreInit {
 export interface WizardStoreMethods {
 	deleteResearchAim: (aimId: string, cb?: () => void) => Promise<string | null>;
 	deleteResearchTask: (taskId: string, cb?: () => void) => Promise<string | null>;
-	updateApplication: UpsertAction<GrantApplication>;
-	updateResearchAim: UpsertAction<ResearchAim>;
-	updateResearchInnovation: UpsertAction<ResearchInnovation>;
-	updateResearchSignificance: UpsertAction<ResearchSignificance>;
-	updateResearchTask: UpsertAction<ResearchTask>;
+	updateApplication: UpsertAction<NewGrantApplication | GrantApplication, GrantApplication>;
+	updateResearchAim: UpsertAction<NewResearchAim | ResearchAim, ResearchAim>;
+	updateResearchInnovation: UpsertAction<NewResearchInnovation | ResearchInnovation, ResearchInnovation>;
+	updateResearchSignificance: UpsertAction<NewResearchSignificance | ResearchSignificance, ResearchSignificance>;
+	updateResearchTask: UpsertAction<NewResearchTask | ResearchTask, ResearchTask>;
+	updateFiles: UpsertAction<(NewApplicationFile | ApplicationFile)[], ApplicationFile[]>;
 	setGrantCFP: (cfp: GrantCFP) => void;
 }
 
@@ -58,6 +63,7 @@ const initialValue: Omit<WizardStoreInit, "workspaceId"> = {
 	researchAims: [],
 	researchTasks: [],
 	significance: null,
+	files: [],
 };
 
 function createWizardStore(
@@ -180,6 +186,23 @@ function createWizardStore(
 								task.id === updatedTask.id ? updatedTask : task,
 							),
 						});
+					},
+					cb,
+				);
+			},
+			updateFiles: async (values, cb) => {
+				const sectionName = values.length ? values[0].section : "";
+				if (!sectionName) {
+					return null;
+				}
+
+				const existingFiles = get().files.filter(
+					(file) => file.section === sectionName && !values.some((value) => value.id === file.id),
+				);
+				return await withLoadingAndErrorHandling(
+					upsertApplicationFiles([...values, ...existingFiles] as (NewApplicationFile | ApplicationFile)[]),
+					(files) => {
+						set({ files });
 					},
 					cb,
 				);

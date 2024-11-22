@@ -2,8 +2,9 @@ import Image from "next/image";
 import { FileTextIcon, X } from "lucide-react";
 import { formatBytes } from "@/utils/format";
 import { Button } from "gen/ui/button";
+import { ApplicationFile } from "@/types/database-types";
 
-export type FileAttributes = Pick<File, "name" | "type" | "size">;
+export type FileAttributes = Pick<ApplicationFile, "name" | "type" | "size">;
 
 export function FilePreview({ file, previewUrl }: { file: FileAttributes; previewUrl?: string }) {
 	if (previewUrl) {

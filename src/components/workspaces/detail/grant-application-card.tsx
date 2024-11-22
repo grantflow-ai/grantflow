@@ -5,13 +5,7 @@ import { FileText } from "lucide-react";
 import { GrantApplication } from "@/types/database-types";
 import { Badge } from "gen/ui/badge";
 
-export function GrantApplicationCard({
-	id: applicationId,
-	title,
-	workspaceId,
-	isResubmission,
-	status,
-}: GrantApplication) {
+export function GrantApplicationCard({ id: applicationId, title, workspaceId, status }: GrantApplication) {
 	const url = PagePath.APPLICATION_DETAIL.toString()
 		.replace(":workspaceId", workspaceId)
 		.replace(":applicationId", applicationId);
@@ -32,14 +26,6 @@ export function GrantApplicationCard({
 							>
 								{status}
 							</Badge>
-							{isResubmission && (
-								<Badge
-									variant="secondary"
-									className="bg-accent/50 text-accent-foreground px-2 py-0.5 text-xs font-medium uppercase"
-								>
-									Resubmission
-								</Badge>
-							)}
 						</div>
 					</CardContent>
 				</CardHeader>
