@@ -1,28 +1,31 @@
 "use server";
 
 import { getBlobClient } from "@/utils/blob-storage";
-import { FileMapping } from "db/schema";
+import { ApplicationSection, NewApplicationFile } from "@/types/database-types";
 
 /**
  * Upload files to Azure Blob Storage.
  *
+ * @param applicationId - The id of the application the files are associated with.
  * @param files - The files to upload.
- * @param parentId - The parent ID.
- * @param workspaceId - The workspace ID.
+ * @param sectionName - The name of the section the files are associated with.
+ * @param workspaceId - The id of the workspace the application is associated with.
  *
  * @returns A record mapping file names to blob urls.
  */
 export async function uploadFiles({
+	applicationId,
 	files,
-	parentId,
+	sectionName,
 	workspaceId,
 }: {
+	applicationId: string;
 	files: File[];
-	parentId: string;
+	sectionName: ApplicationSection;
 	workspaceId: string;
-}) {
+}): Promise<NewApplicationFile[]> {
 	const promises = files.map(async (file) => {
-		const blobName = `${workspaceId}/${parentId}/${file.name}`;
+		const blobName = `${workspaceId}/${applicationId}/${sectionName}/${file.name}`;
 		const client = getBlobClient(blobName);
 		const arrayBuffer = await file.arrayBuffer();
 
@@ -30,17 +33,15 @@ export async function uploadFiles({
 			blobHTTPHeaders: { blobContentType: file.type },
 		});
 
-		return [
-			client.url,
-			{
-				name: file.name,
-				size: file.size,
-				type: file.type,
-			},
-		];
+		return {
+			name: file.name,
+			size: file.size,
+			type: file.type,
+			blobUrl: client.url,
+			applicationId,
+			section: sectionName,
+		} satisfies NewApplicationFile;
 	});
 
-	const results = await Promise.all(promises);
-
-	return Object.fromEntries(results) as FileMapping;
+	return await Promise.all(promises);
 }

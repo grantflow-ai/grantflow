@@ -9,7 +9,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "gen/ui/popover";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
-import { Checkbox } from "gen/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import { GrantCFP } from "@/types/database-types";
 import { useWizardStore } from "@/stores/wizard";
@@ -21,7 +20,6 @@ const formSchema = z.object({
 		required_error: "Please select an NIH Activity Code",
 	}),
 	title: z.string().min(10, "Title must be at least 10 characters").max(255, "Title must not exceed 255 characters"),
-	isResubmission: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,7 +53,6 @@ export function GeneralInfoForm({
 		defaultValues: {
 			cfpId: application?.cfpId ?? "",
 			title: application?.title ?? "",
-			isResubmission: application?.isResubmission ?? false,
 		},
 	});
 
@@ -82,16 +79,19 @@ export function GeneralInfoForm({
 			return;
 		}
 
-		setCanSubmit(
-			application.cfpId !== values.cfpId ||
-				application.title !== values.title ||
-				application.isResubmission !== values.isResubmission,
-		);
+		setCanSubmit(application.cfpId !== values.cfpId || application.title !== values.title);
 	});
 
 	const onSubmit = async ({ title, cfpId, ...rest }: FormValues) => {
 		await updateApplication(
-			{ ...application, cfpId, ...rest, title: title.trim(), status: application?.status ?? "draft" },
+			{
+				...application,
+				...rest,
+				cfpId,
+				title: title.trim(),
+				status: application?.status ?? "draft",
+				workspaceId,
+			},
 			() => {
 				setCanSubmit(false);
 				setGrantCFP(cfps.find((cfp) => cfp.id === cfpId)!);
@@ -304,65 +304,6 @@ export function GeneralInfoForm({
 						)}
 					/>
 
-					<FormField
-						control={form.control}
-						name="isResubmission"
-						render={({ field }) => (
-							<FormItem className="flex flex-row items-center space-x-2">
-								<FormControl>
-									<Checkbox
-										id="isResubmission"
-										disabled={loading}
-										checked={field.value}
-										onCheckedChange={field.onChange}
-										className="h-5 w-5 transition-all duration-200 focus:ring-2 focus:ring-primary"
-										data-testid="grant-application-form-resubmission-checkbox"
-										aria-describedby="resubmission-label resubmission-tooltip"
-									/>
-								</FormControl>
-								<div className="flex items-center space-x-2">
-									<FormLabel
-										id="resubmission-label"
-										htmlFor="isResubmission"
-										className="text-sm font-medium cursor-pointer"
-										data-testid="grant-application-form-resubmission-label"
-									>
-										This is a Re-Submission
-									</FormLabel>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button
-												type="button"
-												variant="ghost"
-												className="p-0 h-4 w-4"
-												data-testid="grant-application-form-resubmission-help"
-												aria-label="Resubmission information"
-											>
-												<HelpCircle className="h-4 w-4" />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent
-											id="resubmission-tooltip"
-											data-testid="grant-application-form-resubmission-tooltip"
-											role="tooltip"
-										>
-											Check this box if you are resubmitting a previously submitted grant
-											application
-										</TooltipContent>
-									</Tooltip>
-								</div>
-								{form.formState.errors.isResubmission?.message && (
-									<FormMessage
-										data-testid="grant-application-form-resubmission-error"
-										className="text-destructive"
-										role="alert"
-									>
-										{form.formState.errors.isResubmission.message}
-									</FormMessage>
-								)}
-							</FormItem>
-						)}
-					/>
 					<div className="pt-10 flex justify-between">
 						<Button onClick={onPressPrevious} aria-label="Go Back">
 							Go Back

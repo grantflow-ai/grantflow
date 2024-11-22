@@ -2,7 +2,6 @@ import {
 	boolean,
 	index,
 	integer,
-	json,
 	pgEnum,
 	pgTable,
 	primaryKey,
@@ -12,112 +11,14 @@ import {
 	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
-import type { AdapterAccountType } from "next-auth/adapters";
 import { relations } from "drizzle-orm";
-
-export type FileMapping = Record<
-	string, // the remote URL/identifier in storage
-	{
-		// file attributes, to be displayed in the frontend
-		name: string;
-		type: string;
-		size: number;
-	}
->;
+import { users } from "./auth-schema";
+// we re-export the schema from the next-auth-schema file
+export * from "./auth-schema";
 
 export const userRoleEnum = pgEnum("user_role", ["owner", "admin", "member"]);
 export const applicationStatus = pgEnum("application_status", ["draft", "completed"]);
-
-export const mailingList = pgTable(
-	"mailing_list",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		email: text("email").notNull().unique(),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-	},
-	(table) => [index("idx_mailing_list_email").on(table.email)],
-);
-
-export const users = pgTable(
-	"users",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		name: text("name"),
-		email: text("email").unique(),
-		emailVerified: timestamp("emailVerified", { mode: "date" }),
-		image: text("image"),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-	},
-	(table) => [index("idx_users_email").on(table.email)],
-);
-
-export const accounts = pgTable(
-	"accounts",
-	{
-		userId: uuid("userId")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		type: text("type").$type<AdapterAccountType>().notNull(),
-		provider: text("provider").notNull(),
-		providerAccountId: text("providerAccountId").notNull(),
-		refresh_token: text("refresh_token"),
-		access_token: text("access_token"),
-		expires_at: integer("expires_at"),
-		token_type: text("token_type"),
-		scope: text("scope"),
-		id_token: text("id_token"),
-		session_state: text("session_state"),
-	},
-	(account) => [
-		primaryKey({
-			columns: [account.provider, account.providerAccountId],
-		}),
-	],
-);
-
-export const sessions = pgTable("sessions", {
-	sessionToken: text("sessionToken").primaryKey(),
-	userId: uuid("userId")
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
-	expires: timestamp("expires", { mode: "date" }).notNull(),
-});
-
-export const verificationTokens = pgTable(
-	"verification_tokens",
-	{
-		identifier: text("identifier").notNull(),
-		token: text("token").notNull(),
-		expires: timestamp("expires", { mode: "date" }).notNull(),
-	},
-	(verificationToken) => [
-		primaryKey({
-			columns: [verificationToken.identifier, verificationToken.token],
-		}),
-		index("idx_verification_tokens_token").on(verificationToken.token),
-	],
-);
-
-export const authenticators = pgTable(
-	"authenticators",
-	{
-		credentialID: text("credentialID").notNull().unique(),
-		userId: uuid("userId")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		providerAccountId: text("providerAccountId").notNull(),
-		credentialPublicKey: text("credentialPublicKey").notNull(),
-		counter: integer("counter").notNull(),
-		credentialDeviceType: text("credentialDeviceType").notNull(),
-		credentialBackedUp: boolean("credentialBackedUp").notNull(),
-		transports: text("transports"),
-	},
-	(authenticator) => [
-		primaryKey({
-			columns: [authenticator.userId, authenticator.credentialID],
-		}),
-	],
-);
+export const applicationSections = pgEnum("application_section", ["significance-and-innovation", "research-plan"]);
 
 export const workspaces = pgTable(
 	"workspaces",
@@ -184,7 +85,6 @@ export const grantApplications = pgTable("grant_applications", {
 		.notNull()
 		.references(() => grantCfps.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	title: varchar("title", { length: 255 }).notNull(),
-	isResubmission: boolean("is_resubmission").notNull().default(false),
 	status: applicationStatus("status").notNull().default("draft"),
 });
 
@@ -193,13 +93,24 @@ export const grantApplicationRelations = relations(grantApplications, ({ one }) 
 	innovation: one(researchInnovations),
 }));
 
+export const applicationFiles = pgTable("application_files", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	applicationId: uuid("application_id")
+		.notNull()
+		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	section: applicationSections("section").notNull(),
+	blobUrl: text("blob_url").notNull(),
+	name: varchar("filename", { length: 255 }).notNull(),
+	type: varchar("type", { length: 255 }).notNull(),
+	size: integer("size").notNull(),
+});
+
 export const researchSignificances = pgTable("research_significances", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	applicationId: uuid("application_id")
 		.notNull()
 		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	text: text("text").notNull(),
-	files: json().$type<FileMapping>(),
 });
 
 export const researchSignificancesRelations = relations(researchSignificances, ({ one }) => ({
@@ -215,7 +126,6 @@ export const researchInnovations = pgTable("research_innovations", {
 		.notNull()
 		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	text: text("text").notNull(),
-	files: json().$type<FileMapping>(),
 });
 
 export const researchInnovationRelations = relations(researchInnovations, ({ one }) => ({
@@ -232,7 +142,6 @@ export const researchAims = pgTable("research_aims", {
 		.references(() => grantApplications.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	title: varchar("title", { length: 255 }).notNull(),
 	description: text("description").notNull(),
-	files: json().$type<FileMapping>(),
 	requiresClinicalTrials: boolean("requires_clinical_trials").notNull().default(false),
 });
 
@@ -243,7 +152,6 @@ export const researchTasks = pgTable("research_tasks", {
 		.references(() => researchAims.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	title: varchar("title", { length: 255 }).notNull(),
 	description: text("description").notNull(),
-	files: json().$type<FileMapping>(),
 });
 
 export const generationResults = pgTable("generation_results", {
