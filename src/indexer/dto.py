@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NamedTuple, TypedDict
+from typing import Literal, NamedTuple, TypedDict
 
 from src.data_types import SectionName
 
@@ -39,6 +39,8 @@ class Chunk(TypedDict):
     """The content of the chunk."""
     page_number: int | None
     """The page number of the document."""
+    element_type: Literal["page" | "paragraph" | "table", None]
+    """The type of element the chunk belongs to."""
 
 
 class BlobFileMetadata(NamedTuple):
