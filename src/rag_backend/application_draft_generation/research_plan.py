@@ -221,7 +221,6 @@ async def handle_research_plan_text_generation(
                             handle_research_task_text_generation(
                                 application_id=application_id,
                                 requires_clinical_trials=research_aim["requires_clinical_trials"],
-                                research_aim_id=research_aim["id"],
                                 research_task=research_task,
                                 workspace_id=workspace_id,
                             ),

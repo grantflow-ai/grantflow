@@ -25,7 +25,6 @@ async def test_research_task_text_generation(
     result = await handle_research_task_text_generation(
         application_id=generation_request["application_id"],
         workspace_id=generation_request["workspace_id"],
-        research_aim_id=generation_request["research_aims"][0]["id"],
         research_task=EnrichedResearchTaskDTO(
             **generation_request["research_aims"][0]["tasks"][0], relations=[], task_number="1.1"
         ),

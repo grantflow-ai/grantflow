@@ -4,8 +4,6 @@ from json import dumps
 from string import Template
 from typing import Final
 
-from src.constants import FIELD_NAME_APPLICATION_ID, FIELD_NAME_WORKSPACE_ID
-from src.embeddings import generate_embeddings
 from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
@@ -129,21 +127,18 @@ async def handle_research_aim_text_generation(
     Returns:
         The generated text for the research aim.
     """
-    research_aim_id = research_aim["id"]
     research_task_titles = [research_task["title"] for research_task in research_aim["tasks"]]
 
     search_queries = await create_search_queries(
         RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=dumps(research_aim)),
     )
-    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_APPLICATION_ID} eq '{research_aim_id}' or {FIELD_NAME_APPLICATION_ID} eq '{application_id}')"
-    query_embeddings = await generate_embeddings(search_queries)
-    search_text = " | ".join([f'"{query}"' for query in search_queries])
 
     search_result = await retrieve_documents(
-        embeddings_matrix=query_embeddings,
-        filter_query=search_filter,
-        search_text=search_text,
+        application_id=application_id,
+        search_queries=search_queries,
+        section_name="research-plan",
         session_id=workspace_id,
+        workspace_id=workspace_id,
     )
 
     handler = partial(
