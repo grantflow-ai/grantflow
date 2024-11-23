@@ -1,10 +1,11 @@
 import logging
 import sys
 from json import dumps
-from typing import Final
+from typing import Final, cast
 
 from azure.functions import InputStream
 
+from src.data_types import SectionName
 from src.indexer.ai_search import ensure_index_exists, upload_to_ai_search
 from src.indexer.chunking import chunk_text
 from src.indexer.dto import BlobFileMetadata
@@ -45,7 +46,12 @@ def parse_blob_name(blob_name: str | None) -> BlobFileMetadata:
         logger.error("Invalid blob name format: %s", namespace)
         raise ValidationError("Invalid blob name format")
 
-    return BlobFileMetadata(*components)
+    return BlobFileMetadata(
+        workspace_id=components[0],
+        application_id=components[1],
+        section_name=cast(SectionName, components[2]),
+        filename=components[3],
+    )
 
 
 async def blob_trigger_handler(blob: InputStream) -> None:

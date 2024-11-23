@@ -5,7 +5,7 @@ from typing import cast
 import pytest
 
 from src.indexer.chunking import chunk_text
-from src.indexer.dto import OCROutput
+from src.indexer.extraction import OCROutput
 
 
 def test_chunking_ocr_output() -> None:

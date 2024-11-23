@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from http import HTTPStatus
 from mimetypes import guess_type
-from typing import NotRequired, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, ContentFormat
@@ -34,16 +34,22 @@ PLAIN_TEXT_MIMETYPES: set[str] = {
 
 
 class Span(TypedDict, total=False):
+    """A span of text in a document."""
+
     offset: NotRequired[int]
     length: NotRequired[int]
 
 
 class BoundingRegion(TypedDict, total=False):
+    """A bounding region in a document."""
+
     pageNumber: NotRequired[int]
     polygon: NotRequired[list[float]]
 
 
 class Word(TypedDict, total=False):
+    """A word in a document."""
+
     content: str
     confidence: NotRequired[float]
     span: NotRequired[Span]
@@ -51,6 +57,8 @@ class Word(TypedDict, total=False):
 
 
 class SelectionMark(TypedDict, total=False):
+    """A selection mark in a document."""
+
     state: str
     confidence: NotRequired[float]
     polygon: NotRequired[list[float]]
@@ -58,12 +66,16 @@ class SelectionMark(TypedDict, total=False):
 
 
 class Line(TypedDict, total=False):
+    """A line in a document."""
+
     content: str
     polygon: NotRequired[list[float]]
     spans: NotRequired[list[Span]]
 
 
 class Page(TypedDict, total=False):
+    """A page in a document."""
+
     pageNumber: NotRequired[int]
     words: NotRequired[list[Word]]
     spans: NotRequired[list[Span]]
@@ -76,6 +88,8 @@ class Page(TypedDict, total=False):
 
 
 class TableCell(TypedDict, total=False):
+    """A table cell in a document."""
+
     rowIndex: NotRequired[int]
     columnIndex: NotRequired[int]
     content: str
@@ -88,6 +102,8 @@ class TableCell(TypedDict, total=False):
 
 
 class Table(TypedDict, total=False):
+    """A table in a document."""
+
     rowCount: NotRequired[int]
     columnCount: NotRequired[int]
     cells: NotRequired[list[TableCell]]
@@ -96,6 +112,8 @@ class Table(TypedDict, total=False):
 
 
 class Paragraph(TypedDict, total=False):
+    """A paragraph in a document."""
+
     spans: NotRequired[list[Span]]
     boundingRegions: NotRequired[list[BoundingRegion]]
     content: str
@@ -103,17 +121,23 @@ class Paragraph(TypedDict, total=False):
 
 
 class Style(TypedDict, total=False):
+    """A style in a document."""
+
     confidence: NotRequired[float]
     spans: NotRequired[list[Span]]
     isHandwritten: NotRequired[bool]
 
 
 class Section(TypedDict, total=False):
+    """A section in a document."""
+
     spans: NotRequired[list[Span]]
     elements: NotRequired[list[str]]
 
 
 class FigureCaption(TypedDict, total=False):
+    """A figure caption in a document."""
+
     content: str
     boundingRegions: NotRequired[list[BoundingRegion]]
     spans: NotRequired[list[Span]]
@@ -121,6 +145,8 @@ class FigureCaption(TypedDict, total=False):
 
 
 class Figure(TypedDict, total=False):
+    """A figure in a document."""
+
     id: str
     boundingRegions: NotRequired[list[BoundingRegion]]
     spans: NotRequired[list[Span]]
@@ -129,7 +155,7 @@ class Figure(TypedDict, total=False):
 
 
 class OCROutput(TypedDict, total=False):
-    """This is the raw output from the Azure Document Intelligence prebuilt-layout model api."""
+    """The raw output from the Azure Document Intelligence prebuilt-layout model api."""
 
     apiVersion: str
     modelId: str
@@ -142,7 +168,7 @@ class OCROutput(TypedDict, total=False):
     contentFormat: NotRequired[str]
     sections: NotRequired[list[Section]]
     figures: NotRequired[list[Figure]]
-    additionalItems: NotRequired[list[str | dict]]
+    additionalItems: NotRequired[list[str | dict[str, Any]]]
 
 
 async def parse_blob_data(

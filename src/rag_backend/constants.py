@@ -1,5 +1,5 @@
-from typing import Final, Literal
+from typing import Final
 
-FAST_TEXT_GENERATION_MODEL: Final[Literal["gpt-4o-mini"]] = "gpt-4o-mini"
-PREMIUM_TEXT_GENERATION_MODEL: Final[Literal["gpt-4o"]] = "gpt-4o"
+FAST_TEXT_GENERATION_MODEL: Final = "gpt-4o-mini"
+PREMIUM_TEXT_GENERATION_MODEL: Final = "gpt-4o"
 SLEEP_INCREMENT: Final[int] = 3

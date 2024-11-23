@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Literal, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, Literal, NamedTuple, TypedDict
 
-from src.data_types import SectionName
+if TYPE_CHECKING:
+    from src.data_types import SectionName
 
 
 class SearchSchema(TypedDict):
@@ -30,6 +31,8 @@ class SearchSchema(TypedDict):
     """The keywords extracted from the content."""
     labels: list[str]
     """The labels extracted from the content."""
+    element_type: Literal["page" | "paragraph" | "table", None]
+    """The type of element the content belongs to."""
 
 
 class Chunk(TypedDict):
@@ -47,6 +50,10 @@ class BlobFileMetadata(NamedTuple):
     """A named tuple to represent the components of a blob name."""
 
     workspace_id: str
+    """The workspace id to which the document belongs."""
     application_id: str
+    """The application id to which the document belongs."""
     section_name: SectionName
+    """The section name to which the document belongs."""
     filename: str
+    """The name of the file from which the content was extracted."""

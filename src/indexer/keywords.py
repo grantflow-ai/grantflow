@@ -2,7 +2,7 @@ from keybert import KeyBERT
 
 from src.utils.ref import Ref
 
-ref = Ref[KeyBERT]
+ref = Ref[KeyBERT]()
 
 
 def get_keybert_model() -> KeyBERT:
