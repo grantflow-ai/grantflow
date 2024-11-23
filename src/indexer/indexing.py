@@ -7,7 +7,7 @@ from uuid import uuid4
 from src.embeddings import generate_embeddings
 from src.indexer.chunking import CHUNKS_BATCH_SIZE, logger
 from src.indexer.dto import BlobFileMetadata, Chunk, SearchSchema
-from src.indexer.keywords import extract_keywords
+from src.utils.keywords import extract_keywords
 from src.utils.nlp import extract_labels
 
 
