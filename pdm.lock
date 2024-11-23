@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:91d02ff3f99785c1f966561f2b5ee7ff3ff28c22de2d2956ae4bbb982613c75a"
+content_hash = "sha256:94120707da81d1cd32afa854a0dc36ab4285011e758703f87a02ec968f304cd3"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -829,6 +829,22 @@ dependencies = [
     "rich>=10.4.0",
     "scikit-learn>=0.22.2",
     "sentence-transformers>=0.3.8",
+]
+files = [
+    {file = "keybert-0.8.5-py3-none-any.whl", hash = "sha256:005e0eab30c8e85c249ccc6eaad7741357e692591b3eaebe64c40f12614c2ca9"},
+    {file = "keybert-0.8.5.tar.gz", hash = "sha256:4b8e4b4d129b319b6266c77b9c8ed34e94e5db42a977c977c8ae58f57343995f"},
+]
+
+[[package]]
+name = "keybert"
+version = "0.8.5"
+extras = ["spacy"]
+requires_python = ">=3.8"
+summary = "KeyBERT performs keyword extraction with state-of-the-art transformer models."
+groups = ["default"]
+dependencies = [
+    "keybert==0.8.5",
+    "spacy>=3.0.1",
 ]
 files = [
     {file = "keybert-0.8.5-py3-none-any.whl", hash = "sha256:005e0eab30c8e85c249ccc6eaad7741357e692591b3eaebe64c40f12614c2ca9"},
