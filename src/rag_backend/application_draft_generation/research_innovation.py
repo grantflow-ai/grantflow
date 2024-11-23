@@ -4,7 +4,7 @@ from json import dumps
 from string import Template
 from typing import Final
 
-from src.constants import FIELD_NAME_PARENT_ID, FIELD_NAME_WORKSPACE_ID
+from src.constants import FIELD_NAME_APPLICATION_ID, FIELD_NAME_WORKSPACE_ID
 from src.embeddings import generate_embeddings
 from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.shared_prompts import (
@@ -134,7 +134,7 @@ async def handle_innovation_text_generation(
     query_embeddings = await generate_embeddings(search_queries)
     search_text = " | ".join([f'"{query}"' for query in search_queries])
 
-    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_PARENT_ID} eq '{innovation_id}' or {FIELD_NAME_PARENT_ID} eq '{application_id}')"
+    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and ({FIELD_NAME_APPLICATION_ID} eq '{innovation_id}' or {FIELD_NAME_APPLICATION_ID} eq '{application_id}')"
 
     search_result = await retrieve_documents(
         embeddings_matrix=query_embeddings,
