@@ -6,8 +6,9 @@ from typing import cast
 
 import pytest
 
-from src.indexer.chunking import chunk_text, index_documents
+from src.indexer.chunking import chunk_text
 from src.indexer.dto import OCROutput
+from src.indexer.indexing import index_documents
 from tests.indexer.e2e.utils import load_settings_and_set_env
 
 

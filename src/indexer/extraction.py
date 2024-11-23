@@ -3,14 +3,13 @@ from __future__ import annotations
 import logging
 from http import HTTPStatus
 from mimetypes import guess_type
-from typing import cast
+from typing import NotRequired, TypedDict, cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, ContentFormat
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 
-from src.indexer.dto import OCROutput
 from src.utils.env import get_env
 from src.utils.exceptions import RequestFailureError, ValidationError
 
@@ -32,6 +31,118 @@ PLAIN_TEXT_MIMETYPES: set[str] = {
     "text/markdown",
     "text/plain",
 }
+
+
+class Span(TypedDict, total=False):
+    offset: NotRequired[int]
+    length: NotRequired[int]
+
+
+class BoundingRegion(TypedDict, total=False):
+    pageNumber: NotRequired[int]
+    polygon: NotRequired[list[float]]
+
+
+class Word(TypedDict, total=False):
+    content: str
+    confidence: NotRequired[float]
+    span: NotRequired[Span]
+    polygon: NotRequired[list[float]]
+
+
+class SelectionMark(TypedDict, total=False):
+    state: str
+    confidence: NotRequired[float]
+    polygon: NotRequired[list[float]]
+    span: NotRequired[Span]
+
+
+class Line(TypedDict, total=False):
+    content: str
+    polygon: NotRequired[list[float]]
+    spans: NotRequired[list[Span]]
+
+
+class Page(TypedDict, total=False):
+    pageNumber: NotRequired[int]
+    words: NotRequired[list[Word]]
+    spans: NotRequired[list[Span]]
+    angle: NotRequired[float]
+    width: NotRequired[float]
+    height: NotRequired[float]
+    unit: NotRequired[str]
+    selectionMarks: NotRequired[list[SelectionMark]]
+    lines: NotRequired[list[Line]]
+
+
+class TableCell(TypedDict, total=False):
+    rowIndex: NotRequired[int]
+    columnIndex: NotRequired[int]
+    content: str
+    boundingRegions: NotRequired[list[BoundingRegion]]
+    spans: NotRequired[list[Span]]
+    elements: NotRequired[list[str]]
+    columnSpan: NotRequired[int]
+    rowSpan: NotRequired[int]
+    kind: NotRequired[str]
+
+
+class Table(TypedDict, total=False):
+    rowCount: NotRequired[int]
+    columnCount: NotRequired[int]
+    cells: NotRequired[list[TableCell]]
+    boundingRegions: NotRequired[list[BoundingRegion]]
+    spans: NotRequired[list[Span]]
+
+
+class Paragraph(TypedDict, total=False):
+    spans: NotRequired[list[Span]]
+    boundingRegions: NotRequired[list[BoundingRegion]]
+    content: str
+    role: NotRequired[str]
+
+
+class Style(TypedDict, total=False):
+    confidence: NotRequired[float]
+    spans: NotRequired[list[Span]]
+    isHandwritten: NotRequired[bool]
+
+
+class Section(TypedDict, total=False):
+    spans: NotRequired[list[Span]]
+    elements: NotRequired[list[str]]
+
+
+class FigureCaption(TypedDict, total=False):
+    content: str
+    boundingRegions: NotRequired[list[BoundingRegion]]
+    spans: NotRequired[list[Span]]
+    elements: NotRequired[list[str]]
+
+
+class Figure(TypedDict, total=False):
+    id: str
+    boundingRegions: NotRequired[list[BoundingRegion]]
+    spans: NotRequired[list[Span]]
+    elements: NotRequired[list[str]]
+    caption: NotRequired[FigureCaption]
+
+
+class OCROutput(TypedDict, total=False):
+    """This is the raw output from the Azure Document Intelligence prebuilt-layout model api."""
+
+    apiVersion: str
+    modelId: str
+    stringIndexType: str
+    content: str
+    pages: NotRequired[list[Page]]
+    tables: NotRequired[list[Table]]
+    paragraphs: NotRequired[list[Paragraph]]
+    styles: NotRequired[list[Style]]
+    contentFormat: NotRequired[str]
+    sections: NotRequired[list[Section]]
+    figures: NotRequired[list[Figure]]
+    additionalItems: NotRequired[list[str | dict]]
 
 
 async def parse_blob_data(
@@ -82,7 +193,7 @@ async def extract_document(file_content: bytes, filename: str) -> OCROutput:
             credential=AzureKeyCredential(get_env("AZURE_DOCUMENT_INTELLIGENCE_KEY")),
         )
         poller = await client.begin_analyze_document(
-            model_id="prebuilt-read",
+            model_id="prebuilt-layout",
             analyze_request=AnalyzeDocumentRequest(bytes_source=file_content),
             output_content_format=ContentFormat.MARKDOWN,
         )
