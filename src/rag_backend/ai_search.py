@@ -1,34 +1,52 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 from azure.search.documents._generated.models import VectorizedQuery
 from azure.search.documents.aio import SearchClient
 
-from src.constants import FIELD_NAME_CONTENT, FIELD_NAME_CONTENT_VECTOR, FIELD_NAME_FILENAME, FIELD_NAME_PAGE_NUMBER
+from src.constants import (
+    FIELD_NAME_APPLICATION_ID,
+    FIELD_NAME_CONTENT,
+    FIELD_NAME_CONTENT_VECTOR,
+    FIELD_NAME_FILENAME,
+    FIELD_NAME_PAGE_NUMBER,
+    FIELD_NAME_SECTION_NAME,
+    FIELD_NAME_WORKSPACE_ID,
+)
+from src.embeddings import generate_embeddings
 from src.rag_backend.dto import DocumentDTO
 from src.utils.env import get_env
-from src.utils.exceptions import RequestFailureError
+from src.utils.exceptions import OpenAIFailureError, RequestFailureError
 from src.utils.retry import exponential_backoff_retry
+
+if TYPE_CHECKING:
+    from src.data_types import SectionName
+
 
 logger = logging.getLogger(__name__)
 
 
-@exponential_backoff_retry(RequestFailureError)
+@exponential_backoff_retry(RequestFailureError, OpenAIFailureError)
 async def retrieve_documents(
     *,
-    embeddings_matrix: list[list[float]],
-    filter_query: str,
-    search_text: str,
+    application_id: str,
+    search_queries: list[str],
+    section_name: SectionName,
     session_id: str,
+    workspace_id: str,
 ) -> list[DocumentDTO]:
     """Retrieve documents from Azure Search using the given query vectors.
 
     Args:
-        embeddings_matrix: The embeddings for the search text.
-        filter_query: The filter query.
-        search_text: The search text.
+        application_id: The application ID.
+        search_queries: The search queries.
+        section_name: The section name.
         session_id: The session ID.
+        workspace_id: The workspace ID.
 
     Raises:
         RequestFailureError: If the request fails.
@@ -42,18 +60,21 @@ async def retrieve_documents(
         credential=AzureKeyCredential(get_env("AZURE_AI_SEARCH_KEY")),
     )
 
+    search_filter = f"{FIELD_NAME_WORKSPACE_ID} eq '{workspace_id}' and {FIELD_NAME_APPLICATION_ID} eq '{application_id}' and {FIELD_NAME_SECTION_NAME} eq '{section_name}'"
+
     try:
+        query_embeddings = await generate_embeddings(search_queries)
+        search_text = " | ".join([f'"{query}"' for query in search_queries])
+
         search_results = await client.search(
             search_text=search_text,
-            filter=filter_query,
-            top=10,
+            filter=search_filter,
             vector_queries=[
                 VectorizedQuery(
                     vector=embeddings,
                     fields=FIELD_NAME_CONTENT_VECTOR,
-                    k_nearest_neighbors=10,
                 )
-                for embeddings in embeddings_matrix
+                for embeddings in query_embeddings
             ],
             session_id=session_id,
         )
