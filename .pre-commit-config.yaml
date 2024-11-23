@@ -19,7 +19,7 @@ repos:
       - id: check-yaml
       - id: check-toml
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.4
+    rev: v0.8.0
     hooks:
       - id: ruff
         args: [--fix]
@@ -28,7 +28,7 @@ repos:
     rev: v2.3.0
     hooks:
       - id: codespell
-        exclude: ^tests/rag/http_requests.http|^tests/rag/conftest.py
+        exclude: ^tests
         additional_dependencies:
           - tomli
   - repo: https://github.com/jsh9/pydoclint

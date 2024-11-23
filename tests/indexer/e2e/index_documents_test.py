@@ -7,7 +7,8 @@ from typing import cast
 import pytest
 
 from src.indexer.chunking import chunk_text
-from src.indexer.dto import OCROutput
+from src.indexer.dto import BlobFileMetadata
+from src.indexer.extraction import OCROutput
 from src.indexer.indexing import index_documents
 from tests.indexer.e2e.utils import load_settings_and_set_env
 
@@ -16,16 +17,24 @@ from tests.indexer.e2e.utils import load_settings_and_set_env
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-async def test_index_documents(logger: logging.Logger) -> None:
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "nih-project-summary-template.docx",
+        "r01ai181321-01-liu-application.pdf",
+        "r01ai181321-01-liu-summary-statement.pdf",
+    ],
+)
+async def test_index_documents(logger: logging.Logger, filename: str) -> None:
     load_settings_and_set_env(logger)
 
     logger.info("Running end-to-end test for creating embeddings")
 
-    existing_results = Path(__file__).parent / "results" / "parse_blob_data_test_result.json"
+    extraction_results = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.json"
 
-    assert existing_results.exists(), f"Expected file {existing_results} to exist"
+    assert extraction_results.exists(), f"Expected file {extraction_results} to exist"
 
-    data = loads(existing_results.read_text())
+    data = loads(extraction_results.read_text())
     assert len(data) == 2
 
     ocr_results = cast(OCROutput, data[0])
@@ -38,15 +47,18 @@ async def test_index_documents(logger: logging.Logger) -> None:
 
     results = await index_documents(
         chunks=chunks,
-        filename="ocr-sample.pdf",
-        parent_id="parent_id",
-        workspace_id="workspace_id",
+        metadata=BlobFileMetadata(
+            workspace_id="workspace_id",
+            application_id="application_id",
+            filename=filename,
+            section_name="research-plan",
+        ),
     )
 
     assert results
 
     result_data = dumps(results)
-    existing_results = Path(__file__).parent / "results" / "create_embeddings_test_result.json"
+    existing_results = Path(__file__).parent / "results" / f"create_embeddings_{filename}_test_result.json"
 
     assert existing_results.exists(), f"Expected file {existing_results} to exist"
     assert result_data == existing_results.read_text()
