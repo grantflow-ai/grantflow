@@ -76,6 +76,7 @@ async def retrieve_documents(
                 )
                 for embeddings in query_embeddings
             ],
+            facets=["keywords", "labels"],
             session_id=session_id,
         )
 
@@ -90,6 +91,9 @@ async def retrieve_documents(
                 doc["page_number"] = page_number
 
             output.append(doc)
+
+        if hasattr(search_results, "get_facets"):
+            facet_data = search_results.get_facets()
 
         logger.info("Successfully retrieved documents from Azure Search")
         return output
