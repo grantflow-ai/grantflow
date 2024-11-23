@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
 from src.indexer.dto import Chunk
-from src.indexer.extraction import OCROutput
+
+if TYPE_CHECKING:
+    from src.indexer.extraction import BoundingRegion, OCROutput
 
 logger = logging.getLogger(__name__)
 
@@ -15,25 +17,30 @@ CHUNK_TOKENS: Final[int] = 700
 OVERLAP_TOKENS: Final[int] = 100
 
 
-def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chunk]:
-    """Chunk the text into smaller pieces.
+def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
+    """Get the splitter based on the MIME type.
+
+    Args:
+        mime_type: The MIME type of the text.
+
+    Returns:
+        MarkdownSplitter | TextSplitter: The splitter to use.
+    """
+    if mime_type == "text/markdown":
+        return MarkdownSplitter.from_tiktoken_model(model="gpt-4o", capacity=CHUNK_TOKENS, overlap=OVERLAP_TOKENS)
+    return TextSplitter.from_tiktoken_model(model="gpt-4o", capacity=CHUNK_TOKENS, overlap=OVERLAP_TOKENS)
+
+
+def chunk_ocr_output(extracted_data: OCROutput, splitter: MarkdownSplitter | TextSplitter) -> list[Chunk]:
+    """Parse the OCR output and chunk the text into smaller pieces.
 
     Args:
         extracted_data: The extracted data from the file.
-        mime_type: The MIME type of the text.
+        splitter: The splitter to use for chunking the text.
 
     Returns:
         list[Chunk]: The list of chunks.
     """
-    if mime_type == "text/markdown":
-        splitter = MarkdownSplitter.from_tiktoken_model(model="gpt-4o", capacity=CHUNK_TOKENS, overlap=OVERLAP_TOKENS)
-    else:
-        splitter = TextSplitter.from_tiktoken_model(model="gpt-4o", capacity=CHUNK_TOKENS, overlap=OVERLAP_TOKENS)
-
-    if isinstance(extracted_data, bytes):
-        text = extracted_data.decode()
-        return [Chunk(content=chunk, page_number=None) for chunk in splitter.chunks(text)]
-
     chunks: list[Chunk] = []
     for page in extracted_data.get("pages", []):
         page_number = page.get("pageNumber", None)
@@ -59,11 +66,11 @@ def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chu
         )
 
     for table in extracted_data.get("tables", []):
-        bounding_regions = table.get("boundingRegions", {})
-        if isinstance(bounding_regions, list):
-            bounding_regions = bounding_regions[0]
-
-        page_number = bounding_regions.get("pageNumber", None) if bounding_regions else None
+        bounding_regions: list[BoundingRegion] = table.get("boundingRegions", [])
+        page_numbers = list(
+            filter(lambda x: x is not None, [region.get("pageNumber", None) for region in bounding_regions])
+        )
+        page_number = page_numbers[0] if page_numbers else None
         cells = table.get("cells", [])
         content_matrix: list[list[str]] = []
 
@@ -87,3 +94,22 @@ def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chu
         )
 
     return chunks or [Chunk(content=extracted_data["content"], page_number=None, element_type=None)]
+
+
+def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chunk]:
+    """Chunk the text into smaller pieces.
+
+    Args:
+        extracted_data: The extracted data from the file.
+        mime_type: The MIME type of the text.
+
+    Returns:
+        list[Chunk]: The list of chunks.
+    """
+    splitter = get_splitter(mime_type)
+
+    if isinstance(extracted_data, bytes):
+        text = extracted_data.decode()
+        return [Chunk(content=chunk, page_number=None, element_type=None) for chunk in splitter.chunks(text)]
+
+    return chunk_ocr_output(extracted_data=extracted_data, splitter=splitter)
