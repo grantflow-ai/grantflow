@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError

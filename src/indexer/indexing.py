@@ -36,13 +36,18 @@ async def process_chunk(
     labels = extract_labels(chunk["content"])
 
     return SearchSchema(
-        id=str(uuid4()),
+        application_id=metadata.application_id,
         content=chunk["content"],
         content_hash=content_hash,
         content_vector=list(chain(*embeddings)),
-        page_number=chunk["page_number"],
+        element_type=chunk["element_type"],
+        filename=metadata.filename,
+        id=str(uuid4()),
         keywords=keywords,
         labels=labels,
+        page_number=chunk["page_number"],
+        section_name=metadata.section_name,
+        workspace_id=metadata.workspace_id,
     )
 
 
