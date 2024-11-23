@@ -7,6 +7,7 @@ from inflection import titleize
 from src.rag_backend.application_draft_generation.research_innovation import handle_innovation_text_generation
 from src.rag_backend.application_draft_generation.research_plan import handle_research_plan_text_generation
 from src.rag_backend.application_draft_generation.research_significance import handle_significance_text_generation
+from src.rag_backend.application_draft_generation.specific_aims import handle_specific_aims_text_generation
 from src.rag_backend.dto import ResearchAimDTO
 from src.utils.text import strip_lines
 
@@ -22,6 +23,9 @@ ${significance_text}
 ## Research Innovation
 
 ${innovation_text}
+## Specific Aims
+
+${specific_aims_text}
 
 ${research_plan_text}
 """)
@@ -86,11 +90,21 @@ async def generate_application_draft(
     )
     logger.debug("Generated innovation section: %s", innovation_text)
 
+    specific_aims_text = await handle_specific_aims_text_generation(
+        innovation_text=innovation_text,
+        research_plan_text=research_plan_text,
+        significance_text=significance_text,
+        workspace_id=workspace_id,
+        application_id=application_id,
+    )
+    logger.debug("Generated specific aims section: %s", specific_aims_text)
+
     return strip_lines(
         DRAFT_APPLICATION_TEMPLATE.substitute(
             application_title=titleize(application_title),
             significance_text=significance_text,
             innovation_text=innovation_text,
             research_plan_text=research_plan_text,
+            specific_aims_text=specific_aims_text,
         )
     )

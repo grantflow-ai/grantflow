@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Final
 
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
@@ -21,14 +21,17 @@ from azure.search.documents.indexes.models import (
 )
 
 from src.constants import (
+    FIELD_NAME_APPLICATION_ID,
     FIELD_NAME_CHUNK_ID,
     FIELD_NAME_CONTENT,
     FIELD_NAME_CONTENT_HASH,
     FIELD_NAME_CONTENT_VECTOR,
     FIELD_NAME_FILENAME,
     FIELD_NAME_ID,
+    FIELD_NAME_KEYWORDS,
+    FIELD_NAME_LABELS,
     FIELD_NAME_PAGE_NUMBER,
-    FIELD_NAME_PARENT_ID,
+    FIELD_NAME_SECTION_NAME,
     FIELD_NAME_WORKSPACE_ID,
 )
 from src.utils.env import get_env
@@ -41,10 +44,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-
 # Constants for HNSW (Hierarchical Navigable Small World) algorithm
 HNSW_EF_CONSTRUCTION: Final[int] = 400
-HNSW_EF_SEARCH: Final[int] = 500
+HNSW_EF_SEARCH: Final[int] = 200
 HNSW_M: Final[int] = 4
 HNSW_NAME: Final[str] = "default"
 HNSW_PROFILE_NAME: Final[str] = "myHnswProfile"
@@ -55,7 +57,7 @@ ANALYZER_EN_MICROSOFT: Final[str] = "en.microsoft"
 
 # Embedding model and dimensions
 EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
-EMBEDDING_DIMENSIONS: Final[int] = 3072  # max value for text-embedding-3-large
+EMBEDDING_DIMENSIONS: Final[int] = 3072
 
 
 def create_search_index(index_name: str) -> SearchIndex:
@@ -93,7 +95,14 @@ def create_search_index(index_name: str) -> SearchIndex:
             filterable=True,
         ),
         SearchableField(
-            name=FIELD_NAME_PARENT_ID,
+            name=FIELD_NAME_APPLICATION_ID,
+            type=SearchFieldDataType.String,
+            searchable=False,
+            retrievable=True,
+            filterable=True,
+        ),
+        SearchableField(
+            name=FIELD_NAME_SECTION_NAME,
             type=SearchFieldDataType.String,
             searchable=False,
             retrievable=True,
@@ -130,11 +139,27 @@ def create_search_index(index_name: str) -> SearchIndex:
         ),
         SearchableField(
             name=FIELD_NAME_CONTENT_HASH,
-            type=SearchFieldDataType.String,
+            type=SearchFieldDataType.Int32,
             searchable=True,
             filterable=True,
             facetable=False,
             sortable=False,
+        ),
+        SearchableField(
+            name=FIELD_NAME_KEYWORDS,
+            type=SearchFieldDataType.Collection(SearchFieldDataType.String),
+            searchable=True,
+            retrievable=True,
+            filterable=True,
+            facetable=True,
+        ),
+        SearchableField(
+            name=FIELD_NAME_LABELS,
+            type=SearchFieldDataType.Collection(SearchFieldDataType.String),
+            searchable=True,
+            retrievable=True,
+            filterable=True,
+            facetable=True,
         ),
     ]
 

@@ -37,7 +37,6 @@ Your sole task is to analyze and enrich research aims and tasks with their relat
 Always respond by calling the specified function with the exact JSON format detailed in the instructions.
 """
 
-
 PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT: Final[Template] = Template("""
 Your task is to analyze research aims and tasks for a grant application, identifying and describing any relations between them.
 
@@ -71,7 +70,7 @@ Return a JSON object adhering to the following schema:
 - relation description should be detailed and specific. Make sure to always include the aim or task number. Use phrases such as "Building upon the first aim...", "Depending on the results of aim 1...", or "Based on the candidates identified in Task 1.2, in task 1.3 we will...".
 """
 
-DRAFT_APPLICATION_TEMPLATE: Final[Template] = Template("""
+RESEARCH_PLAN_SECTION_TEMPLATE: Final[Template] = Template("""
 ## Research Plan
 
 ### Research Aims
@@ -83,7 +82,6 @@ RESEARCH_AIM_TEMPLATE: Final[Template] = Template("""
 #### Aim ${aim_number}: ${title}
 
 ${aim_text}
-
 
 ##### Research Tasks
 
@@ -252,4 +250,4 @@ async def handle_research_plan_text_generation(
             )
         )
 
-    return DRAFT_APPLICATION_TEMPLATE.substitute(research_aims_text=strip_lines("\n\n".join(research_aim_texts)))
+    return RESEARCH_PLAN_SECTION_TEMPLATE.substitute(research_aims_text=strip_lines("\n\n".join(research_aim_texts)))
