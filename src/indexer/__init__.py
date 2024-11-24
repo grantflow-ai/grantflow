@@ -13,7 +13,7 @@ blueprint = Blueprint(name="parser-indexer")  # type: ignore[no-untyped-call]
 blueprint.function_name(name=indexer.__name__)(
     blueprint.blob_trigger(
         arg_name="blob",
-        path="grant-application-files/{workspace_id}/{parent_id}/{filename}",
+        path="grant-application-files/{workspace_id}/{application_id}/{section_name}/{filename}",
         connection="AzureWebJobsStorage",
     )(indexer)
 )
