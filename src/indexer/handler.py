@@ -54,7 +54,7 @@ def parse_blob_name(blob_name: str | None) -> BlobFileMetadata:
     )
 
 
-async def blob_trigger_handler(blob: InputStream) -> None:
+async def indexer(blob: InputStream) -> None:
     """Azure Function to parse a file and index its contents.
 
     Args:
