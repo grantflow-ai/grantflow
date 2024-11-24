@@ -1,6 +1,6 @@
 from azure.functions import Blueprint
 
-from .handler import blob_trigger_handler
+from .handler import indexer
 
 """
 - see the documentation on Azure Blob trigger name patterns:
@@ -10,10 +10,10 @@ from .handler import blob_trigger_handler
 """
 blueprint = Blueprint(name="parser-indexer")  # type: ignore[no-untyped-call]
 
-blueprint.function_name(name=blob_trigger_handler.__name__)(
+blueprint.function_name(name=indexer.__name__)(
     blueprint.blob_trigger(
         arg_name="blob",
         path="grant-application-files/{workspace_id}/{parent_id}/{filename}",
         connection="AzureWebJobsStorage",
-    )(blob_trigger_handler)
+    )(indexer)
 )
