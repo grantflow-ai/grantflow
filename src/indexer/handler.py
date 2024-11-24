@@ -23,7 +23,7 @@ CONTAINER_NAME: Final[str] = "grant-application-files/"
 def parse_blob_name(blob_name: str | None) -> BlobFileMetadata:
     """Parse the name of the blob to its components.
 
-    Expected format: {container_name}/{workspace_id}/{parent_id}/{filename}
+    Expected format: {container_name}/{workspace_id}/{application_id}/{section_name}/{filename}
 
     Args:
         blob_name: The name string.
