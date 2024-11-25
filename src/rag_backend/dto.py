@@ -13,8 +13,6 @@ class APIError(TypedDict):
 class ResearchTaskDTO(TypedDict):
     """DTO for a research task."""
 
-    id: str
-    """The ID of the research task."""
     title: str
     """The title of the research task."""
     description: str
@@ -24,8 +22,6 @@ class ResearchTaskDTO(TypedDict):
 class ResearchAimDTO(TypedDict):
     """DTO for a research aim."""
 
-    id: str
-    """The ID of the research aim."""
     title: str
     """The title of the research aim."""
     description: str
@@ -51,12 +47,8 @@ class DraftGenerationRequest(TypedDict):
     """The funding organization for the grant"""
     significance_description: str
     """The description of the research significance"""
-    significance_id: str
-    """The ID of the research significance"""
     innovation_description: str
     """The description of the research innovation"""
-    innovation_id: str
-    """The ID of the research innovation"""
     research_aims: list[ResearchAimDTO]
     """The research aims for the grant application"""
 

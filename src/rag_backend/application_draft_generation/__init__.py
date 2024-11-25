@@ -38,10 +38,8 @@ async def generate_application_draft(
     cfp_title: str,
     grant_funding_organization: str,
     innovation_description: str,
-    innovation_id: str,
     research_aims: list[ResearchAimDTO],
     significance_description: str,
-    significance_id: str,
     ticket_id: str,
     workspace_id: str,
 ) -> str:
@@ -53,10 +51,8 @@ async def generate_application_draft(
         cfp_title: The CFP action code and title.
         grant_funding_organization: The funding organization for the grant.
         innovation_description: The description of the research innovation.
-        innovation_id: The ID of the research innovation.
         research_aims: The research aims for the grant application.
         significance_description: The description of the research significance.
-        significance_id: The ID of the research significance.
         ticket_id: The ticket ID.
         workspace_id: The workspace ID.
 
@@ -78,7 +74,6 @@ async def generate_application_draft(
         grant_funding_organization=grant_funding_organization,
         research_plan_text=research_plan_text,
         significance_description=significance_description,
-        significance_id=significance_id,
         ticket_id=ticket_id,
         workspace_id=workspace_id,
     )
@@ -87,7 +82,6 @@ async def generate_application_draft(
     innovation_text = await handle_innovation_text_generation(
         application_id=application_id,
         innovation_description=innovation_description,
-        innovation_id=innovation_id,
         research_plan_text=research_plan_text,
         significance_text=significance_text,
         ticket_id=ticket_id,
