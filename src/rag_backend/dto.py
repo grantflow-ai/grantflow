@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 
 class APIError(TypedDict):
@@ -70,6 +70,12 @@ class DocumentDTO(TypedDict):
     """The text extracted from the document"""
     page_number: NotRequired[int]
     """Optional page number"""
+    keywords: NotRequired[list[str]]
+    """The keywords extracted from the content."""
+    labels: NotRequired[list[str]]
+    """The labels extracted from the content."""
+    element_type: NotRequired[Literal["page", "paragraph", "table", None]]
+    """The type of element the content belongs to."""
 
 
 class GenerationResult(TypedDict):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from json import dumps
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from azure.core.credentials import AzureKeyCredential
@@ -22,10 +23,9 @@ from azure.search.documents.indexes.models import (
 
 from src.constants import (
     FIELD_NAME_APPLICATION_ID,
-    FIELD_NAME_CHUNK_ID,
     FIELD_NAME_CONTENT,
-    FIELD_NAME_CONTENT_HASH,
     FIELD_NAME_CONTENT_VECTOR,
+    FIELD_NAME_ELEMENT_TYPE,
     FIELD_NAME_FILENAME,
     FIELD_NAME_ID,
     FIELD_NAME_KEYWORDS,
@@ -52,7 +52,6 @@ HNSW_NAME: Final[str] = "default"
 HNSW_PROFILE_NAME: Final[str] = "myHnswProfile"
 
 # Analyzer constants
-ANALYZER_STANDARD_LUCENE: Final[str] = "standard.lucene"
 ANALYZER_EN_MICROSOFT: Final[str] = "en.microsoft"
 
 # Embedding model and dimensions
@@ -66,101 +65,46 @@ def create_search_index(index_name: str) -> SearchIndex:
     Args:
         index_name: The name of the search index.
 
+    Notes:
+        - see: https://learn.microsoft.com/en-us/azure/search/search-what-is-an-index for reference
+
     Returns:
         SearchIndex: The configured search index.
     """
     fields = [
-        SimpleField(
-            name=FIELD_NAME_ID,
-            type=SearchFieldDataType.String,
-            key=True,
-            searchable=False,
-            retrievable=True,
-            filterable=True,
-        ),
-        SearchableField(
-            name=FIELD_NAME_FILENAME,
-            type=SearchFieldDataType.String,
-            searchable=True,
-            retrievable=True,
-            filterable=True,
-            sortable=True,
-            analyzer_name=ANALYZER_STANDARD_LUCENE,
-        ),
-        SearchableField(
-            name=FIELD_NAME_WORKSPACE_ID,
-            type=SearchFieldDataType.String,
-            searchable=False,
-            retrievable=True,
-            filterable=True,
-        ),
-        SearchableField(
-            name=FIELD_NAME_APPLICATION_ID,
-            type=SearchFieldDataType.String,
-            searchable=False,
-            retrievable=True,
-            filterable=True,
-        ),
-        SearchableField(
-            name=FIELD_NAME_SECTION_NAME,
-            type=SearchFieldDataType.String,
-            searchable=False,
-            retrievable=True,
-            filterable=True,
-        ),
-        SearchableField(
-            name=FIELD_NAME_CHUNK_ID,
-            type=SearchFieldDataType.String,
-            searchable=False,
-            retrievable=True,
-            sortable=True,
-            filterable=True,
-        ),
-        SearchableField(
-            name=FIELD_NAME_CONTENT,
-            type=SearchFieldDataType.String,
-            searchable=True,
-            retrievable=True,
-            filterable=True,
-            analyzer_name=ANALYZER_EN_MICROSOFT,
-        ),
         SearchField(
             name=FIELD_NAME_CONTENT_VECTOR,
             type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
             vector_search_dimensions=EMBEDDING_DIMENSIONS,
             vector_search_profile_name=HNSW_PROFILE_NAME,
         ),
-        SimpleField(
-            name=FIELD_NAME_PAGE_NUMBER,
-            type=SearchFieldDataType.Int32,
-            filterable=True,
-            sortable=True,
+        SearchableField(
+            name=FIELD_NAME_CONTENT,
+            type=SearchFieldDataType.String,
             retrievable=True,
+            analyzer_name=ANALYZER_EN_MICROSOFT,
         ),
         SearchableField(
-            name=FIELD_NAME_CONTENT_HASH,
-            type=SearchFieldDataType.Int32,
-            searchable=True,
-            filterable=True,
-            facetable=False,
-            sortable=False,
-        ),
-        SearchableField(
+            collection=True,
             name=FIELD_NAME_KEYWORDS,
             type=SearchFieldDataType.Collection(SearchFieldDataType.String),
-            searchable=True,
             retrievable=True,
-            filterable=True,
             facetable=True,
         ),
         SearchableField(
+            collection=True,
             name=FIELD_NAME_LABELS,
             type=SearchFieldDataType.Collection(SearchFieldDataType.String),
-            searchable=True,
             retrievable=True,
-            filterable=True,
             facetable=True,
         ),
+        SimpleField(name=FIELD_NAME_APPLICATION_ID, type=SearchFieldDataType.String, filterable=True),
+        SimpleField(name=FIELD_NAME_ELEMENT_TYPE, type=SearchFieldDataType.String, retrievable=True),
+        SimpleField(name=FIELD_NAME_FILENAME, type=SearchFieldDataType.String, retrievable=True),
+        SimpleField(name=FIELD_NAME_ID, type=SearchFieldDataType.String, key=True, retrievable=True),
+        SimpleField(name=FIELD_NAME_PAGE_NUMBER, type=SearchFieldDataType.Int32, retrievable=True),
+        SimpleField(name=FIELD_NAME_SECTION_NAME, type=SearchFieldDataType.String, filterable=True),
+        SimpleField(name=FIELD_NAME_WORKSPACE_ID, type=SearchFieldDataType.String, filterable=True),
     ]
 
     vector_search = VectorSearch(
@@ -240,9 +184,14 @@ async def upload_to_ai_search(data: list[SearchSchema]) -> None:
     )
     try:
         logger.info("Uploading %d documents to Azure Search.", len(data))
+        logger.info("Uploading documents to Azure Search: %s", dumps(data))
         await client.upload_documents(documents=cast(list[dict[str, Any]], data))
         logger.info("Uploaded chunks to Azure Search")
     except HttpResponseError as e:
+        logger.error(
+            "Failed to upload documents to Azure Search. Error: %s",
+            e,
+        )
         raise RequestFailureError(
             message="Failed to upload documents to Azure Search",
             status_code=e.status_code if e.status_code else 0,

@@ -29,7 +29,6 @@ async def process_chunk(
         "Preparing chunk for indexing with filename: %s and chunk_id: %s",
     )
 
-    content_hash = hash(chunk["content"]) + hash(metadata)
     embeddings = await generate_embeddings(chunk["content"])
     keywords = extract_keywords(chunk["content"])
     labels = extract_labels(chunk["content"])
@@ -37,7 +36,6 @@ async def process_chunk(
     return SearchSchema(
         application_id=metadata.application_id,
         content=chunk["content"],
-        content_hash=content_hash,
         content_vector=list(chain(*embeddings)),
         element_type=chunk["element_type"],
         filename=metadata.filename,

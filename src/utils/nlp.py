@@ -33,7 +33,7 @@ def extract_labels(text: str) -> list[str]:
     doc = model(text)
     labels = [ent.text for ent in doc.ents]
 
-    logger.debug("Extracted labels: %s", ",".join(labels))
+    logger.info("Extracted labels: %s", ",".join(labels))
     return labels
 
 
@@ -50,13 +50,14 @@ def extract_keywords(text: str, top_n: int = 5) -> list[str]:
     model = get_spacy_model()
     doc = model(text)
     pos_tags = {"NOUN", "PROPN", "ADJ"}
+    keyword_freq = Counter(
+        [
+            token.text.lower()
+            for token in doc
+            if token.pos_ in pos_tags and token.text.lower() not in model.Defaults.stop_words
+        ]
+    )
+    keywords = [v for v, _ in keyword_freq.most_common(top_n)]
 
-    keywords = [
-        token.text.lower()
-        for token in doc
-        if token.pos_ in pos_tags and token.text.lower() not in model.Defaults.stop_words
-    ]
-
-    keyword_freq = Counter(keywords)
-
-    return [v for v, _ in keyword_freq.most_common(top_n)]
+    logger.info("Extracted keywords: %s", ",".join(keywords))
+    return keywords

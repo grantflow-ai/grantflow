@@ -26,6 +26,7 @@ async def test_research_aim_text_generation(
         application_id=generation_request["application_id"],
         research_aim=EnrichedResearchAimDTO(**generation_request["research_aims"][0], relations=[], aim_number=1),  # type: ignore[typeddict-item]
         workspace_id=generation_request["workspace_id"],
+        ticket_id="test_ticket_id",
     )
     logger.info("Generated research aim text: %s", result)
     result_file_path = (
