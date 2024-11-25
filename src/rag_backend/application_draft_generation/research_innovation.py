@@ -106,7 +106,6 @@ async def handle_innovation_text_generation(
     *,
     application_id: str,
     innovation_description: str,
-    innovation_id: str,
     research_plan_text: str,
     significance_text: str,
     ticket_id: str,
@@ -117,7 +116,6 @@ async def handle_innovation_text_generation(
     Args:
         application_id: The ID of the grant application.
         innovation_description: The description of the research innovation.
-        innovation_id: The ID of the innovation section.
         research_plan_text: The text of the research plan section.
         significance_text: The generated significance text.
         ticket_id: The ticket ID.
@@ -150,6 +148,6 @@ async def handle_innovation_text_generation(
 
     return await handle_segmented_text_generation(
         entity_type="innovation",
-        entity_identifier=innovation_id,
+        entity_identifier="innovation",
         prompt_handler=handler,
     )
