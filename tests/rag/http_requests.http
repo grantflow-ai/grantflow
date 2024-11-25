@@ -9,39 +9,31 @@ Content-Type: application/json
     "cfp_title": "R01 - To support a discrete, specified, circumscribed project to be performed by the named investigator(s) in an area representing his or her specific interest and competencies.",
     "grant_funding_organization": "NIH",
     "innovation_description": "Use the following document to discuss the innovative technologies we will be using in the project. Elaborate about our different single cell technologies and our data-driven approach to drug design. Describe the novelty of our planned construct in activating both the myeloid compartment and NK and T cells and our innovative approach of designing the cytokines with the masking enabling their activation only in the tumor microenvironment (TME).",
-    "innovation_id": "f89be409-9c6c-43d5-8e67-5b1d6376bfdd",
     "significance_description": "Use the following document and extract from it elements discussing the importance and potential of immunotherapies in cancer treatment. Use it also to discuss specifically the potential and the limitations of currently available 1) myeloid targeting immunotherapies and 2) cytokines. Summarize with a description of how our project aims to overcome those limitations with the construction of a dual molecule - targeting both the myeloid compartment via the TREM2 pathway and also T and NK cells with cytokines and how this new molecule could help patients suffering from tumors resistant to currently available immunotherapies. This grant is less business oriented so you don't need to touch the business side and plans or the economic impact.",
-    "significance_id": "73f82b19-7897-4180-ac1b-8abb8740616e",
     "workspace_id": "65cb7d1e-57f8-4090-8b84-209412ece1b8",
     "research_aims": [
         {
-            "id": "88b8b271-d12c-45d9-96af-f322e0a03ad0",
             "title": "Discovery campaign of cytokine candidates with optimal synergistic effects with anti-TREM2 antibody",
             "description": "we will l screen the effects of ~30 different cytokines in combination with the E3C7 mAb. The cytokines screened will be from this list: CCL3, CSCL7, CCL26, TGFBRII, IL-1, IL-2, IL-6, IL-7, IL-12, IL-15, IL-18, IL-21, IFNa, IFNb, IFNg, CCL1, CCL2, CCL3, CCL5, CCL7, CCL8/MCP-2, CCL11, CCL13/MCP-4, CCL14/HCC-1, CCL17/CTAC, CCL19, CCL22, CCL23, CCL24, CCL26, CCL27, lymphotactin/XCL1, Eotaxin, CXCL6/GCP-2, CXCL7/NAP-2, CXCL8, CXCL10, CXCL11/ITAC, CXCL12, CXCL13, CXCL15",
             "requires_clinical_trials": false,
             "tasks": [
                 {
-                    "id": "354cd7d2-1725-4a83-8a79-c99cf977aebe",
                     "title": "Measure cytokine and anti-TREM2 effects on myeloid, NK and T cell activity",
                     "description": "We will evaluate the impact of the cytokines in combination with the E3C7 mAb on inducing immune cell activity by performing in-vitro assays of co-cultured huMDMs, NK,or T cells. As control, we will conduct the same assays without the anti-TREM2 mAb or without adding cytokines. NK and T cell activity in each assay will be measured by quantifying the proliferative potential using flow cytometry, and cytokine secretion using ELISA and qPCRs."
                 },
                 {
-                    "id": "d5d2fc04-2d95-4c2a-beef-6f1405103f12",
                     "title": "Killing assays.",
                     "description": "We will assess the ability of different cytokines in combination with the E3C7 mAb to induce cytotoxic T and NK cell activity. This will entail treating assays of co-cultured huMDMs, NK or T cells and tumor cells with the various cytokines and E3C7 mAb combinations. As control, the same experiments will be conducted with only the tested cytokines or E3C7 mAb. NK and T cell activity and cytotoxicity levels will be measured by quantifying the amount of tumor cell death using FACS (pre-staining the tumor cells)."
                 },
                 {
-                    "id": "b129c405-f086-410a-bb0a-cabf8f4c034e",
                     "title": "Select the most effective cytokines.",
                     "description": "We will combine and evaluate the data collected in Tasks 1.1-1.2 to identify 8-10 anti-TREM2 mAb and cytokine combinations with the best performance in terms of down-regulating myeloid cell suppressive activity and enhancing myeloid and T cell inflammatory activity."
                 },
                 {
-                    "id": "c2aa415c-71db-4b3f-82bb-af7d4254f715",
                     "title": "Single-cell analysis using an in-vitro functional screening system.",
                     "description": "We developed an in-vitro system for bone-marrow-derived monocyte diversification toward the M2 suppressor macrophage state and incorporated in the system a control culture of monocytes derived from TREM2-/- mice that do not differentiate toward the M2 macrophage state under the cytokine-induced conditions. On the backbone of this system, we will co-culture myeloid and NK-T cells, and apply scRNA-seq analysis to obtain an in-depth understanding of the effects of the perturbation created by treatment with the 8-10 cytokines selected in Task 1.3 in combination with our E3C7 mAb and compare them to the effects of the co-cultured T cells and TREM2-/- myeloid cells."
                 },
                 {
-                    "id": "ec66e326-5491-4f7b-b217-402fefbbd143",
                     "title": "Single-cell analysis of in vivo screening system.",
                     "description": "We developed a platform to over-express cytokines in an inducible fashion by barcoded (Pro-Code) tumor cell lines. The 5-8 most promising cytokines selected from task 1.4 will be cloned into our vectors and screened in combination with our anti-TREM2 mAbs in vivo. We will apply our in depth scRNA-seq analysis pipeline to make a data-driven selection of the 3-5 cytokines with the most promising modulatory function in combination with our anti-TREM2 mAb"
                 }
@@ -56,110 +48,90 @@ POST  {{request_url}}
 Content-Type: application/json
 
 {
-  "workspace_id": "3d8f40f3-5053-4b55-b431-ede2a167201c",
   "application_id": "9e4cf818-a3f6-4f3e-9cc2-6e8a3fcf3a05",
-  "cfp_title": "R01 - Research Project",
   "application_title": "Development of a novel class of immunotherapeutic molecules: Myeloid-targeted immunocytokine and NK-T cell enhancers",
+  "cfp_title": "R01 - Research Project",
   "grant_funding_organization": "NIH",
-  "significance_description": "Use the following document and extract from it elements discussing the importance and potential of immunotherapies in cancer treatment. Use it also to discuss specifically the potential and the limitations of currently available 1) myeloid targeting immunotherapies and 2) cytokines. Summarize with a description of how our project aims to overcome those limitations with the construction of a dual molecule - targeting both the myeloid compartment via the TREM2 pathway and also T and NK cells with cytokines and how this new molecule could help patients suffering from tumors resistant to currently available immunotherapies. This grant is less business oriented so you don't need to touch the business side and plans or the economic impact.",
   "innovation_description": "Use the following document to discuss the innovative technologies we will be using in the project. Elaborate about our different single cell technologies and our data-driven approach to drug design. Describe the novelty of our planned construct in activating both the myeloid compartment and NK and T cells and our innovative approach of designing the cytokines with the masking enabling their activation only in the tumor microenvironment (TME).",
-  "significance_id": "d1c0a336-7399-4575-9272-8cbc0f91386b",
-  "innovation_id": "51ec78b0-68a9-4a03-886f-4b764d953cf2",
+  "significance_description": "Use the following document and extract from it elements discussing the importance and potential of immunotherapies in cancer treatment. Use it also to discuss specifically the potential and the limitations of currently available 1) myeloid targeting immunotherapies and 2) cytokines. Summarize with a description of how our project aims to overcome those limitations with the construction of a dual molecule - targeting both the myeloid compartment via the TREM2 pathway and also T and NK cells with cytokines and how this new molecule could help patients suffering from tumors resistant to currently available immunotherapies. This grant is less business oriented so you don't need to touch the business side and plans or the economic impact.",
+  "workspace_id": "3d8f40f3-5053-4b55-b431-ede2a167201c",
   "research_aims": [
     {
-      "id": "79e6a6f5-1321-4b5a-b994-fa40f0192146",
       "title": "Discovery campaign of cytokine candidates with optimal synergistic effects with anti-TREM2 antibody",
       "description": "In aim 1, we will l screen the effects of ~30 different cytokines in combination with the E3C7 mAb. The cytokines screened will be from this list: CCL3, CSCL7, CCL26, TGFBRII, IL-1, IL-2, IL-6, IL-7, IL-12, IL-15, IL-18, IL-21, IFNa, IFNb, IFNg, CCL1, CCL2, CCL3, CCL5, CCL7, CCL8/MCP-2, CCL11, CCL13/MCP-4, CCL14/HCC-1, CCL17/CTAC, CCL19, CCL22, CCL23, CCL24, CCL26, CCL27, lymphotactin/XCL1, Eotaxin, CXCL6/GCP-2, CXCL7/NAP-2, CXCL8, CXCL10, CXCL11/ITAC, CXCL12, CXCL13, CXCL15. This aim has 5 tasks.",
       "requires_clinical_trials": false,
       "tasks": [
         {
-          "id": "2154682e-a96d-4624-be7d-ff4a218cbb67",
           "title": "Measure cytokine and anti-TREM2 effects on myeloid, NK and T cell activity",
           "description": "We will evaluate the impact of the cytokines in combination with the E3C7 mAb on inducing immune cell activity by performing in-vitro assays of co-cultured huMDMs, NK,or T cells. As control, we will conduct the same assays without the anti-TREM2 mAb or without adding cytokines. NK and T cell activity in each assay will be measured by quantifying the proliferative potential using flow cytometry, and cytokine secretion using ELISA and qPCRs."
         },
         {
-          "id": "a2bf0960-cea7-49a2-85e8-07c95cc3853f",
           "title": "Killing assays.",
           "description": "We will assess the ability of different cytokines in combination with the E3C7 mAb to induce cytotoxic T and NK cell activity. This will entail treating assays of co-cultured huMDMs, NK or T cells and tumor cells with the various cytokines and E3C7 mAb combinations. As control, the same experiments will be conducted with only the tested cytokines or E3C7 mAb. NK and T cell activity and cytotoxicity levels will be measured by quantifying the amount of tumor cell death using FACS (pre-staining the tumor cells)."
         },
         {
-          "id": "578eb549-1cfc-486d-a4c0-498d63b0f70d",
           "title": "Select the most effective cytokines.",
           "description": "We will combine and evaluate the data collected in Tasks 1.1-1.2 to identify 8-10 anti-TREM2 mAb and cytokine combinations with the best performance in terms of down-regulating myeloid cell suppressive activity and enhancing myeloid and T cell inflammatory activity."
         },
         {
-          "id": "56293540-78df-4a97-9a20-656ae1859fbd",
           "title": "Single-cell analysis using an in-vitro functional screening system.",
           "description": "We developed an in-vitro system for bone-marrow-derived monocyte diversification toward the M2 suppressor macrophage state and incorporated in the system a control culture of monocytes derived from TREM2-/- mice that do not differentiate toward the M2 macrophage state under the cytokine-induced conditions. On the backbone of this system, we will co-culture myeloid and NK-T cells, and apply scRNA-seq analysis to obtain an in-depth understanding of the effects of the perturbation created by treatment with the 8-10 cytokines selected in Task 1.3 in combination with our E3C7 mAb and compare them to the effects of the co-cultured T cells and TREM2-/- myeloid cells."
         },
         {
-          "id": "75ae2387-1913-4336-9fbe-439d65d26bcc",
           "title": "Single-cell analysis of in vivo screening system.",
           "description": "We developed a platform to over-express cytokines in an inducible fashion by barcoded (Pro-Code) tumor cell lines. The 5-8 most promising cytokines selected from task 1.4 will be cloned into our vectors and screened in combination with our anti-TREM2 mAbs in vivo. We will apply our in depth scRNA-seq analysis pipeline to make a data-driven selection of the 3-5 cytokines with the most promising modulatory function in combination with our anti-TREM2 mAb"
         }
       ]
     },
     {
-      "id": "384a5f1a-f1a5-4331-bfde-a1d79a874cd6",
       "title": "Design, development and production of novel mAb-cytokine fusion molecules",
       "description": "In this aim, we will focus on the design, development and production of novel mAb-cytokine fusion molecules and the validation of their pro-inflammatory and antineoplastic activity.",
       "requires_clinical_trials": false,
       "tasks": [
         {
-          "id": "2cc342d3-2906-422e-8c16-51c9b1d64d0e",
           "title": "Design fusion proteins and cleavage sites.",
           "description": "We will develop the optimal structures for the fusion proteins of the top 3-5 mAb-cytokine combinations identified in WP1, using advanced techniques in protein design. The design process will include the selection of the most suitable peptide linkers, blocking moieties, TAM-specific cleavage sites and the computational optimization of protein structure and stability."
         },
         {
-          "id": "37e4b67e-9b6b-4a47-8ccf-907934275f89",
           "title": "Produce fusion proteins.",
           "description": "Building on the designs developed in Task 2.1, we will manufacture the 3-5 mAb-cytokine fusion proteins. The protein synthesis will be done by a contract research organization (CRO) selected based on our experience with leading CROs based on quality and punctual production. The production will include the selection of stable molecules with high protein expression and no aggregation."
         },
         {
-          "id": "e4827f19-a662-4adc-9818-fa6dc42f06aa",
           "title": "Validate proteins in silico and in vitro.",
           "description": "We will confirm the binding via SPR, ELISA, cell-based binding and reporter assays."
         },
         {
-          "id": "ae817603-ccbf-4b05-a96a-49cfa8033864",
           "title": "Validate MiTE’s effects on myeloid, NK, and T cell activity.",
           "description": "We will validate MiTEs’ impact on interactions between myeloid and lymphoid cell activity using in-vitro assays of co-cultured huMDMs, NK or T cells. The data from Task 1.1 will be used as control. Cell activity will be measured as in Task 1.1."
         },
         {
-          "id": "5799653c-35bf-4513-a91b-e4a99599534f",
           "title": "Validate MiTE activity in NK and T cell killing assays.",
           "description": "To assess the efficacy of the fusion proteins in inducing cytotoxic NK and T cell activity, assays of co-cultured huMDMs, NK, or T cells and tumor cells will be treated with the various mAb-cytokine chimeras. The data collected in Task 1.2 will be used as control. NK and T cell activity and cytotoxicity levels will be measured as in Task 1.2."
         }
       ]
     },
     {
-      "id": "1a40a1f6-5841-43d6-a6ac-83a3a1bfc6ba",
       "title": "In depth investigation of our molecules’ in vivo activity and efficacy.",
       "description": "This aim will include a thorough investigatoin of the efficacy of potential anti-cancer therapeutics requires in-vivo testing of the molecules with different dosing levels and treatment regimens against several tumor models. scRNA-seq analysis will aid us in reaching an in-depth understanding of the effects of different molecules. Comparative single-cell analysis will enable the selection of the most relevant animal tumor models that incorporate the desired features of the TME seen in patients. Longitudinal time-course single-cell profiling of tumors from treated murine models will assist in the characterization of cell types and pathways directly targeted by the MiTE molecules and tested in this aim as well as secondary responses of the on-target cell populations; this would enable an evaluation of the various therapeutic molecules and treatment courses. Despite their many benefits, murine models often do not recapitulate carcinogenic processes in humans, and the histological complexity and genetic heterogeneity of human cancers are typically not reflected in genetically engineered animal models. This limitation will be addressed by using complex ex-vivo tumor models. The ex-vivo human tumor fragment platform provides a final layer of preclinical validation and efficacy study for the selection of the most promising MiTE molecules to proceed to future clinical trials. This aim has 8 tasks. Task 3.1: Test MiTE molecules’ efficacy on different cancer types using in-vivo models. Task 3.2: MoA analysis of TME reprogramming. Task 3.3: In-vivo validation of MiTEs’ TME specificity and toxicity. Task 3.4: In-vivo calibration of dosing levels. Task 3.5: Temporal analysis of treatment regimens. Task 3.6: Spatial transcriptomics. Task 3.7: Select the highest-performing molecules. Task 3.8: Quantify the efficacy of therapeutic molecules on human tumor fragment models",
       "requires_clinical_trials": false,
       "tasks": [
         {
-          "id": "7c35b08e-d14d-43c2-b23e-70c7b533c929",
           "title": "Test MiTE molecules’ efficacy on different cancer types using in-vivo models.",
           "description": "To validate the anti-tumor in-vivo activity of the 3-5 MiTE molecules, we will employ transgenic human TREM2 mice models harboring relevant tumors. Validation will be done by quantifying tumor volumes and survival."
         },
         {
-          "id": "d02a9d11-e549-4042-95f0-c2f4958238ad",
           "title": "MoA analysis of TME reprogramming.",
           "description": "To complement the efficacy testing in Task 3.1 and inform on the optimal selection of molecules, we will conduct an in-depth in-vivo MoA validation of the effects of our selected molecules on TME reprogramming. Tumor mouse models highlighted in Task 3.1 will be treated with relevant dosages of the MiTE molecules selected in previous WPs. The MoA analysis will be done using FACS sorting of the immune compartment to quantify the activity and states of different immune cells. Cytokine secretion in the TME will be measured using ELISA. An in-depth understanding of each molecule’s MoA will be acquired using our advanced single-cell multi-omics."
         },
         {
-          "id": "6234178f-62a8-4b9e-8d35-06eabb5c0407",
           "title": "In-vivo validation of MiTEs’ TME specificity and toxicity.",
           "description": "Using cytokine release syndrome (CRS) models and assays, we will demonstrate the specificity of our conditionally activated immunocytokine constructs in vivo. This includes IFNG, IL-6 and TNFa in serum, weight loss in mice, and ALT/ALS enzyme levels."
         },
         {
-          "id": "dbfa73ae-fed6-4cc7-aca7-6cb3f0ec3959",
           "title": "In-vivo calibration of dosing levels.",
           "description": "Different doses of the best performing MiTE molecules selected in WPs 1 and 2 will be tested on tumor murine models highlighted in Task 3.1. Efficacy levels will be estimated by measuring tumor volumes and survival times."
         },
         {
-          "id": "fcf54221-bd3b-49ac-adb1-f27fc4baa1c4",
           "title": "Temporal analysis of treatment regimens.",
           "description": "We will test the various treatment regimens and determine the timing of treatment and sampling in murine models, which will enable a high-resolution temporal analysis of the tumor TME and its periphery. Efficacy of the molecules and different treatment schedules will be estimated by quantifying the survival time of murine models and tumor volumes. In-depth single-cell profiling of the tumor and TME will serve to determine the effects of each molecule and highlight its potential MoA."
         }

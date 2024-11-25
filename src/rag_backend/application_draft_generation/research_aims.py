@@ -152,7 +152,7 @@ async def handle_research_aim_text_generation(
 
     result = await handle_segmented_text_generation(
         entity_type="research_aim",
-        entity_identifier=research_aim["id"],
+        entity_identifier=f"research_aim: {research_aim['aim_number']}",
         prompt_handler=handler,
     )
     logger.debug("Generated research aim %s", result)

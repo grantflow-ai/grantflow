@@ -140,7 +140,6 @@ async def handle_significance_text_generation(
     grant_funding_organization: str,
     research_plan_text: str,
     significance_description: str,
-    significance_id: str,
     ticket_id: str,
     workspace_id: str,
 ) -> str:
@@ -153,7 +152,6 @@ async def handle_significance_text_generation(
         grant_funding_organization: The funding organization for the grant.
         research_plan_text: The text of the research plan section.
         significance_description: The description of the research significance.
-        significance_id: The ID of the significance section.
         ticket_id: The ticket ID.
         workspace_id: The workspace ID.
 
@@ -185,6 +183,6 @@ async def handle_significance_text_generation(
 
     return await handle_segmented_text_generation(
         entity_type="significance",
-        entity_identifier=significance_id,
+        entity_identifier="significance",
         prompt_handler=handler,
     )

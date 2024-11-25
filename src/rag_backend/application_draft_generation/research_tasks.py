@@ -159,7 +159,7 @@ async def handle_research_task_text_generation(
 
     result = await handle_segmented_text_generation(
         entity_type="research_task",
-        entity_identifier=research_task["id"],
+        entity_identifier=f"research_task: {research_task['task_number']}",
         prompt_handler=handler,
     )
 

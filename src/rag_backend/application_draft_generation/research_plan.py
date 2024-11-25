@@ -125,7 +125,6 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
         ]
         numbered_aims_with_tasks.append(
             NumberedResearchAimDTO(
-                id=research_aim["id"],
                 title=research_aim["title"],
                 description=research_aim["description"],
                 requires_clinical_trials=research_aim["requires_clinical_trials"],
@@ -172,7 +171,6 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
         EnrichedResearchAimDTO(
             aim_number=research_aim["aim_number"],
             description=research_aim["description"],
-            id=research_aim["id"],
             relations=relations.get(research_aim["aim_number"], []),
             requires_clinical_trials=research_aim["requires_clinical_trials"],
             title=research_aim["title"],
