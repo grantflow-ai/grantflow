@@ -42,6 +42,7 @@ async def generate_application_draft(
     research_aims: list[ResearchAimDTO],
     significance_description: str,
     significance_id: str,
+    ticket_id: str,
     workspace_id: str,
 ) -> str:
     """Generate a draft of the grant application.
@@ -56,6 +57,7 @@ async def generate_application_draft(
         research_aims: The research aims for the grant application.
         significance_description: The description of the research significance.
         significance_id: The ID of the research significance.
+        ticket_id: The ticket ID.
         workspace_id: The workspace ID.
 
     Returns:
@@ -64,6 +66,7 @@ async def generate_application_draft(
     research_plan_text = await handle_research_plan_text_generation(
         application_id=application_id,
         research_aims=research_aims,
+        ticket_id=ticket_id,
         workspace_id=workspace_id,
     )
     logger.debug("Generated research plan section: %s", research_plan_text)
@@ -73,29 +76,32 @@ async def generate_application_draft(
         application_title=application_title,
         cfp_title=cfp_title,
         grant_funding_organization=grant_funding_organization,
+        research_plan_text=research_plan_text,
         significance_description=significance_description,
         significance_id=significance_id,
+        ticket_id=ticket_id,
         workspace_id=workspace_id,
-        research_plan_text=research_plan_text,
     )
     logger.debug("Generated significance section: %s", significance_text)
 
     innovation_text = await handle_innovation_text_generation(
+        application_id=application_id,
         innovation_description=innovation_description,
         innovation_id=innovation_id,
-        significance_text=significance_text,
-        workspace_id=workspace_id,
-        application_id=application_id,
         research_plan_text=research_plan_text,
+        significance_text=significance_text,
+        ticket_id=ticket_id,
+        workspace_id=workspace_id,
     )
     logger.debug("Generated innovation section: %s", innovation_text)
 
     specific_aims_text = await handle_specific_aims_text_generation(
+        application_id=application_id,
         innovation_text=innovation_text,
         research_plan_text=research_plan_text,
         significance_text=significance_text,
+        ticket_id=ticket_id,
         workspace_id=workspace_id,
-        application_id=application_id,
     )
     logger.debug("Generated specific aims section: %s", specific_aims_text)
 

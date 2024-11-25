@@ -36,7 +36,7 @@ jobs:
         uses: Azure/functions-action@v1
         id: deploy-to-function
         with:
-          app-name: 'backend-functions'
+          app-name: 'grantflow-backend-functions'
           package: '.'
           respect-funcignore: true
           slot-name: 'Production'

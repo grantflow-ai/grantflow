@@ -213,11 +213,11 @@ async def extract_document(file_content: bytes, filename: str) -> OCROutput:
     Returns:
         The extracted text from the document.
     """
+    client = DocumentIntelligenceClient(
+        endpoint=get_env("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"),
+        credential=AzureKeyCredential(get_env("AZURE_DOCUMENT_INTELLIGENCE_KEY")),
+    )
     try:
-        client = DocumentIntelligenceClient(
-            endpoint=get_env("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"),
-            credential=AzureKeyCredential(get_env("AZURE_DOCUMENT_INTELLIGENCE_KEY")),
-        )
         poller = await client.begin_analyze_document(
             model_id="prebuilt-layout",
             analyze_request=AnalyzeDocumentRequest(bytes_source=file_content),
@@ -234,3 +234,5 @@ async def extract_document(file_content: bytes, filename: str) -> OCROutput:
                 "reason": str(e),
             },
         ) from e
+    finally:
+        await client.close()

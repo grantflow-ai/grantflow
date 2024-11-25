@@ -12,7 +12,10 @@ from src.constants import (
     FIELD_NAME_APPLICATION_ID,
     FIELD_NAME_CONTENT,
     FIELD_NAME_CONTENT_VECTOR,
+    FIELD_NAME_ELEMENT_TYPE,
     FIELD_NAME_FILENAME,
+    FIELD_NAME_KEYWORDS,
+    FIELD_NAME_LABELS,
     FIELD_NAME_PAGE_NUMBER,
     FIELD_NAME_SECTION_NAME,
     FIELD_NAME_WORKSPACE_ID,
@@ -36,7 +39,7 @@ async def retrieve_documents(
     application_id: str,
     search_queries: list[str],
     section_name: SectionName,
-    session_id: str,
+    ticket_id: str,
     workspace_id: str,
 ) -> list[DocumentDTO]:
     """Retrieve documents from Azure Search using the given query vectors.
@@ -45,7 +48,7 @@ async def retrieve_documents(
         application_id: The application ID.
         search_queries: The search queries.
         section_name: The section name.
-        session_id: The session ID.
+        ticket_id: The ticket ID.
         workspace_id: The workspace ID.
 
     Raises:
@@ -77,7 +80,7 @@ async def retrieve_documents(
                 for embeddings in query_embeddings
             ],
             facets=["keywords", "labels"],
-            session_id=session_id,
+            session_id=ticket_id,
         )
 
         output: list[DocumentDTO] = []
@@ -87,13 +90,14 @@ async def retrieve_documents(
                 filename=search_result[FIELD_NAME_FILENAME],
                 content=search_result[FIELD_NAME_CONTENT],
             )
-            if page_number := search_result.get(FIELD_NAME_PAGE_NUMBER):
-                doc["page_number"] = page_number
-
+            for key in [FIELD_NAME_KEYWORDS, FIELD_NAME_LABELS, FIELD_NAME_ELEMENT_TYPE, FIELD_NAME_PAGE_NUMBER]:
+                if value := search_result.get(key):
+                    doc[key] = value  # type: ignore[literal-required]
             output.append(doc)
 
         if hasattr(search_results, "get_facets"):
             facet_data = search_results.get_facets()
+            logger.info("Facets: %s", facet_data)
 
         logger.info("Successfully retrieved documents from Azure Search")
         return output

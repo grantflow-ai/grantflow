@@ -6,9 +6,8 @@ CONTENT_TYPE_JSON: Final[str] = "application/json"
 
 # Field name constants
 FIELD_NAME_APPLICATION_ID: Final[str] = "application_id"
-FIELD_NAME_CHUNK_ID: Final[str] = "chunk_id"
 FIELD_NAME_CONTENT: Final[str] = "content"
-FIELD_NAME_CONTENT_HASH: Final[str] = "content_hash"
+FIELD_NAME_ELEMENT_TYPE: Final[str] = "element_type"
 FIELD_NAME_CONTENT_VECTOR: Final[str] = "content_vector"
 FIELD_NAME_FILENAME: Final[str] = "filename"
 FIELD_NAME_ID: Final[str] = "id"

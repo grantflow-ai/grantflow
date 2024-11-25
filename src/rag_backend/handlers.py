@@ -122,6 +122,7 @@ async def handle_generation_queue_msg(msg: ServiceBusMessage) -> None:
             significance_description=request_body["significance_description"],
             significance_id=request_body["significance_id"],
             workspace_id=request_body["workspace_id"],
+            ticket_id=ticket_id,
         )
         logger.info(
             "RAG pipeline completed successfully for ticket ID: %s, total duration in seconds: %d",

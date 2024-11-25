@@ -25,13 +25,11 @@ class SearchSchema(TypedDict):
     """The vector representation of the document's content."""
     page_number: int | None
     """The page number of the document."""
-    content_hash: int
-    """The hash of the content."""
     keywords: list[str]
     """The keywords extracted from the content."""
     labels: list[str]
     """The labels extracted from the content."""
-    element_type: Literal["page" | "paragraph" | "table", None]
+    element_type: Literal["page", "paragraph", "table", None]
     """The type of element the content belongs to."""
 
 
@@ -42,7 +40,7 @@ class Chunk(TypedDict):
     """The content of the chunk."""
     page_number: int | None
     """The page number of the document."""
-    element_type: Literal["page" | "paragraph" | "table", None]
+    element_type: Literal["page", "paragraph", "table", None]
     """The type of element the chunk belongs to."""
 
 
