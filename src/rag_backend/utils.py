@@ -8,7 +8,7 @@ from openai.types import ChatModel
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
 from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
 
-from src.rag_backend.constants import PREMIUM_TEXT_GENERATION_MODEL, SLEEP_INCREMENT
+from src.rag_backend.constants import ONE_MINUTE_SECONDS, PREMIUM_TEXT_GENERATION_MODEL, SLEEP_INCREMENT
 from src.rag_backend.dto import GenerationResult
 from src.utils.exceptions import DeserializationError, OpenAIFailureError
 from src.utils.llm import get_generation_model
@@ -107,6 +107,26 @@ async def handle_segmented_text_generation(
     return concatenate_segments_with_spacy_coherence(results)
 
 
+def get_retry_time(headers: dict[str, Any]) -> int:
+    """Get the retry time from the response.
+
+    Args:
+        headers: The response headers.
+
+    Returns:
+        The retry time.
+    """
+    retry_time = int(headers.get("Retry-After", SLEEP_INCREMENT))
+
+    if retry_time > ONE_MINUTE_SECONDS:
+        logger.warning("Received a retry time greater than 1 minute: %d seconds", retry_time)
+        retry_time = ONE_MINUTE_SECONDS
+    elif retry_time < SLEEP_INCREMENT:
+        retry_time = SLEEP_INCREMENT
+
+    return retry_time
+
+
 @exponential_backoff_retry(DeserializationError)
 async def handle_tool_call_request(
     *,
@@ -167,7 +187,7 @@ async def handle_tool_call_request(
     except OpenAIError as e:
         logger.info("Received an error from OpenAI: %s, %s", type(e).__name__, getattr(e, "body", ""))
         if isinstance(e, RateLimitError):
-            retry_time = int(e.response.headers.get("Retry-After", SLEEP_INCREMENT))
+            retry_time = get_retry_time(e.response.headers)
             logger.warning("Received a rate limit error from OpenAI. Waiting for %d seconds", retry_time)
             await sleep_with_message(int(retry_time), "Waiting for rate limit to reset")
             return await handle_tool_call_request(

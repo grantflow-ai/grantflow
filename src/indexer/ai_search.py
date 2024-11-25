@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from json import dumps
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from azure.core.credentials import AzureKeyCredential
@@ -89,14 +88,12 @@ def create_search_index(index_name: str) -> SearchIndex:
             name=FIELD_NAME_KEYWORDS,
             type=SearchFieldDataType.Collection(SearchFieldDataType.String),
             retrievable=True,
-            facetable=True,
         ),
         SearchableField(
             collection=True,
             name=FIELD_NAME_LABELS,
             type=SearchFieldDataType.Collection(SearchFieldDataType.String),
             retrievable=True,
-            facetable=True,
         ),
         SimpleField(name=FIELD_NAME_APPLICATION_ID, type=SearchFieldDataType.String, filterable=True),
         SimpleField(name=FIELD_NAME_ELEMENT_TYPE, type=SearchFieldDataType.String, retrievable=True),
@@ -184,7 +181,6 @@ async def upload_to_ai_search(data: list[SearchSchema]) -> None:
     )
     try:
         logger.info("Uploading %d documents to Azure Search.", len(data))
-        logger.info("Uploading documents to Azure Search: %s", dumps(data))
         await client.upload_documents(documents=cast(list[dict[str, Any]], data))
         logger.info("Uploaded chunks to Azure Search")
     except HttpResponseError as e:
