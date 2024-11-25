@@ -97,8 +97,8 @@ convention = "google"
 known-first-party = ["src", "tests"]
 
 [tool.ruff.lint.pylint]
-max-args = 10
-max-returns = 10
+max-args = 12
+max-returns= 10
 
 [tool.mypy]
 packages = ["src", "tests"]

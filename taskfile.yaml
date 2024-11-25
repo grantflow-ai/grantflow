@@ -27,9 +27,9 @@ tasks:
     desc: Publish the Azure Function app
     cmds:
       - pdm export --production --without-hashes >> requirements.txt
-      - func azure functionapp publish backend-functions --publish-local-settings || true
+      - func azure functionapp publish grantflow-backend-functions --publish-local-settings || true
       - rm requirements.txt
   sync-settings:
     desc: Sync the local.settings.json file to the Azure Function app
     cmds:
-      - func azure functionapp publish backend-functions --publish-settings-only || true
+      - func azure functionapp publish grantflow-backend-functions --publish-settings-only || true

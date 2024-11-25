@@ -119,6 +119,7 @@ async def handle_research_task_text_generation(
     application_id: str,
     requires_clinical_trials: bool,
     research_task: EnrichedResearchTaskDTO,
+    ticket_id: str,
     workspace_id: str,
 ) -> str:
     """Generate the text for a research task.
@@ -127,6 +128,7 @@ async def handle_research_task_text_generation(
         application_id: The application ID.
         requires_clinical_trials: Whether the research task includes clinical trials.
         research_task: The research task to generate text for.
+        ticket_id: The ticket ID.
         workspace_id: The workspace ID.
 
     Returns:
@@ -144,7 +146,7 @@ async def handle_research_task_text_generation(
         application_id=application_id,
         search_queries=search_queries,
         section_name="research-plan",
-        session_id=workspace_id,
+        ticket_id=ticket_id,
         workspace_id=workspace_id,
     )
 

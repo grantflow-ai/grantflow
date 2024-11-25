@@ -29,6 +29,7 @@ async def test_research_task_text_generation(
             **generation_request["research_aims"][0]["tasks"][0], relations=[], task_number="1.1"
         ),
         requires_clinical_trials=generation_request["research_aims"][0]["requires_clinical_trials"],
+        ticket_id="test_ticket_id",
     )
     logger.info("Generated research task text: %s", result)
     result_file_path = (
