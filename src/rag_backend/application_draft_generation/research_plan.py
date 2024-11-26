@@ -1,11 +1,11 @@
 import logging
 from asyncio import gather
+from collections import defaultdict
 from json import dumps
 from string import Template
-from typing import Final, TypedDict
+from typing import Final
 
-from openai.types.chat import ChatCompletionToolParam
-from openai.types.shared_params import FunctionDefinition
+from typing_extensions import TypedDict
 
 from src.rag_backend.application_draft_generation.research_aims import (
     handle_research_aim_text_generation,
@@ -16,7 +16,6 @@ from src.rag_backend.application_draft_generation.research_tasks import (
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
 )
-from src.rag_backend.constants import SLEEP_INCREMENT
 from src.rag_backend.dto import (
     EnrichedResearchAimDTO,
     EnrichedResearchTaskDTO,
@@ -25,7 +24,6 @@ from src.rag_backend.dto import (
     ResearchAimDTO,
 )
 from src.rag_backend.utils import handle_tool_call_request
-from src.utils.sync import delayed_async
 from src.utils.text import strip_lines
 
 logger = logging.getLogger(__name__)
@@ -54,16 +52,18 @@ Your objective is to identify and describe relations between research aims and r
 
 PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS = """
 You must respond exclusively by invoking the provided function.
-Return a JSON object adhering to the following schema:
+Return a JSON object adhering to the following format:
 
 ```json
 {
-    "relations": {
-        "2": ["Relation description to aim 1", "..."],
-        "2.2": ["Relation description to task 1.1", "Another relation description to a different e.g. 1.1", "..."]
-    }
+    "relations": [["2", "Building upon the first aim..."], ["2.2", "Based on the candidates identified in Task 1.2, in task 1.3 we will..."]]
 }
 ```
+
+**Relations**:
+- The relations array is a matrix, where each sub-array has two elements.
+- The first element is the aim or task number.
+- The second element is a detailed description of the relation between the aim or task and its predecessor.
 
 **Important**:
 - Only include aims and tasks that have identified relations. I.e. omit those that do not have any relations to other aims or tasks from the response object.
@@ -98,8 +98,23 @@ ${task_text}
 class ToolResponse(TypedDict):
     """The response from the tool call."""
 
-    relations: dict[str, list[str]]
+    relations: list[tuple[str, str]]
     """The relations between research aims and tasks."""
+
+
+response_schema = {
+    "type": "object",
+    "properties": {
+        "relations": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+        },
+    },
+    "required": [],
+}
 
 
 async def enrich_research_aims_and_tasks_with_relationship_information(
@@ -134,38 +149,20 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
         )
 
     results = await handle_tool_call_request(
+        prompt_identifier="identify_relations",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT.substitute(
             numbered_aims_with_tasks=dumps(numbered_aims_with_tasks)
         ),
         response_type=ToolResponse,  # type: ignore[type-var]
         output_instructions=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS,
-        tools=[
-            ChatCompletionToolParam(
-                type="function",
-                function=FunctionDefinition(
-                    name="response_handler",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "relations": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "type": "array",
-                                    "items": {"type": "string"},
-                                },
-                            },
-                        },
-                        "required": ["relations"],
-                        "additionalProperties": False,
-                    },
-                ),
-            )
-        ],
+        response_schema=response_schema,
     )
     logger.info("Generated relations for research aims: %s", dumps(results))
 
-    relations = results["relations"]
+    relations = defaultdict(list)
+    for relation in results["relations"]:
+        relations[relation[0]].append(relation[1])
 
     return [
         EnrichedResearchAimDTO(
@@ -218,15 +215,12 @@ async def handle_research_plan_text_generation(
                 ),
                 gather(
                     *[
-                        delayed_async(
-                            handle_research_task_text_generation(
-                                application_id=application_id,
-                                requires_clinical_trials=research_aim["requires_clinical_trials"],
-                                research_task=research_task,
-                                ticket_id=ticket_id,
-                                workspace_id=workspace_id,
-                            ),
-                            index * SLEEP_INCREMENT,
+                        handle_research_task_text_generation(
+                            application_id=application_id,
+                            requires_clinical_trials=research_aim["requires_clinical_trials"],
+                            research_task=research_task,
+                            ticket_id=ticket_id,
+                            workspace_id=workspace_id,
                         )
                         for index, research_task in enumerate(research_aim["tasks"])
                     ]

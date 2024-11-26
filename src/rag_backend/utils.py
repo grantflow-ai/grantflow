@@ -1,17 +1,24 @@
 import logging
 from collections.abc import Callable, Coroutine
-from json import dumps
+from json import loads
 from typing import Any, Final, TypeVar
 
-from openai import OpenAIError, RateLimitError
-from openai.types import ChatModel
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionToolParam, ChatCompletionUserMessageParam
-from openai.types.shared_params import FunctionDefinition, ResponseFormatJSONObject
+from google.api_core.exceptions import TooManyRequests
+from google.oauth2.service_account import Credentials
+from vertexai import init  # type: ignore[import-untyped]
+from vertexai.generative_models import (  # type: ignore[import-untyped]
+    Content,
+    GenerationConfig,
+    GenerativeModel,
+    Part,
+)
 
-from src.rag_backend.constants import ONE_MINUTE_SECONDS, PREMIUM_TEXT_GENERATION_MODEL, SLEEP_INCREMENT
+from src.constants import CONTENT_TYPE_JSON
+from src.rag_backend.constants import ONE_MINUTE_SECONDS, PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.dto import GenerationResult
-from src.utils.exceptions import DeserializationError, OpenAIFailureError
-from src.utils.llm import get_generation_model
+from src.utils.env import get_env
+from src.utils.exceptions import DeserializationError, ValidationError
+from src.utils.ref import Ref
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 from src.utils.sleep import sleep_with_message
@@ -20,30 +27,6 @@ from src.utils.text import concatenate_segments_with_spacy_coherence
 T = TypeVar("T", bound=dict[str, Any])
 
 logger = logging.getLogger(__name__)
-
-SEGMENTED_GENERATION_TOOLS = [
-    ChatCompletionToolParam(
-        type="function",
-        function=FunctionDefinition(
-            name="response_handler",
-            parameters={
-                "type": "object",
-                "properties": {
-                    "text": {
-                        "type": "string",
-                        "description": "The output text that was generated",
-                    },
-                    "is_complete": {
-                        "type": "boolean",
-                        "description": "Whether the text is complete or requires further prompts for generation",
-                    },
-                },
-                "required": ["text", "is_complete"],
-                "additionalProperties": False,
-            },
-        ),
-    )
-]
 
 SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
 ## Output
@@ -81,9 +64,6 @@ async def handle_segmented_text_generation(
 
     logger.info("Generating %s: %s", entity_type, entity_identifier)
     while api_call_num < 20:
-        if api_call_num > 1:
-            await sleep_with_message(SLEEP_INCREMENT, "Segment generation buffer")
-
         logger.debug("%s generation API call number: %d", entity_identifier, api_call_num)
         last_generation_result = results[-1] if results else None
 
@@ -107,34 +87,60 @@ async def handle_segmented_text_generation(
     return concatenate_segments_with_spacy_coherence(results)
 
 
-def get_retry_time(headers: dict[str, Any]) -> int:
-    """Get the retry time from the response.
+SEGMENTED_GENERATION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "text": {
+            "type": "string",
+            "description": "The output text that was generated",
+        },
+        "is_complete": {
+            "type": "boolean",
+            "description": "Whether the text is complete or requires further prompts for generation",
+        },
+    },
+    "required": ["text", "is_complete"],
+}
+
+init_ref = Ref[bool]()
+clients: dict[str, GenerativeModel] = {}
+
+
+def get_client(*, prompt_identifier: str, system_instructions: str, model: str) -> GenerativeModel:
+    """Get the GenerativeModel client for the given prompt identifier.
 
     Args:
-        headers: The response headers.
+        prompt_identifier: The prompt identifier.
+        system_instructions: The system instructions.
+        model: The model to use for the generation.
 
     Returns:
-        The retry time.
+        The GenerativeModel client.
     """
-    retry_time = int(headers.get("Retry-After", SLEEP_INCREMENT))
+    if not init_ref.value:
+        credentials = loads(get_env("GCP_CREDENTIALS"))
+        init(
+            project=get_env("GCP_PROJECT_ID"),
+            location=get_env("GCP_REGION"),
+            credentials=Credentials.from_service_account_info(credentials),  # type: ignore[no-untyped-call]
+        )
+        init_ref.value = True
 
-    if retry_time > ONE_MINUTE_SECONDS:
-        logger.warning("Received a retry time greater than 1 minute: %d seconds", retry_time)
-        retry_time = ONE_MINUTE_SECONDS
-    elif retry_time < SLEEP_INCREMENT:
-        retry_time = SLEEP_INCREMENT
+    if prompt_identifier not in clients:
+        clients[prompt_identifier] = GenerativeModel(model, system_instruction=system_instructions)
 
-    return retry_time
+    return clients[prompt_identifier]
 
 
-@exponential_backoff_retry(DeserializationError)
+@exponential_backoff_retry(ValidationError)
 async def handle_tool_call_request(
     *,
-    model: ChatModel = PREMIUM_TEXT_GENERATION_MODEL,
+    model: str = PREMIUM_TEXT_GENERATION_MODEL,
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
+    prompt_identifier: str,
     response_type: type[T] = GenerationResult,  # type: ignore[assignment]
     system_prompt: str,
-    tools: list[ChatCompletionToolParam] | None = None,
+    response_schema: dict[str, Any] | None = None,
     user_prompt: str,
 ) -> T:
     """Handle a tool call request for segmented text generation.
@@ -142,64 +148,46 @@ async def handle_tool_call_request(
     Args:
         model: The model to use for the generation.
         output_instructions: The output instructions.
+        prompt_identifier: The identifier of the prompt.
         response_type: The response type.
         system_prompt: The system prompt.
-        tools: The tools to use for the generation.
+        response_schema: The response schema.
         user_prompt: The user prompt.
 
     Raises:
-        OpenAIFailureError: If an error occurs during the tool call request.
-        DeserializationError: If an error occurs during deserialization.
+        ValidationError: If the response received from the model is invalid.
 
     Returns:
         The generated text.
     """
-    client = get_generation_model()
+    client = get_client(prompt_identifier=prompt_identifier, system_instructions=system_prompt, model=model)
 
     try:
-        response = await client.chat.completions.create(
-            model=model,
-            response_format=ResponseFormatJSONObject(type="json_object"),
-            messages=[
-                ChatCompletionSystemMessageParam(role="system", content=system_prompt),
-                ChatCompletionUserMessageParam(role="user", content=user_prompt),
-                ChatCompletionSystemMessageParam(role="system", content=output_instructions),
+        response = await client.generate_content_async(
+            contents=[
+                Content(
+                    role="user",
+                    parts=[Part.from_text(user_prompt), Part.from_text(output_instructions)],
+                ),
             ],
-            tools=tools or SEGMENTED_GENERATION_TOOLS,
-            temperature=0.0,
+            generation_config=GenerationConfig(
+                response_mime_type=CONTENT_TYPE_JSON, response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA
+            ),
         )
-
-        results: list[T] = []
-
-        for choices in response.choices:
-            if tool_calls := choices.message.tool_calls:
-                logger.debug(
-                    "Received tool calls: %s", dumps([tool_call.model_dump_json() for tool_call in tool_calls])
-                )
-                results.extend([deserialize(tool_call.function.arguments, response_type) for tool_call in tool_calls])
-
-        if results:
-            logger.info("Successfully generated text segment")
-            return results[0]
-
-        logger.warning("Response content is empty, raising OperationError: %s", response.model_dump_json())
-        raise OpenAIFailureError(message="Response content is empty", context=response.model_dump_json())
-    except OpenAIError as e:
-        logger.info("Received an error from OpenAI: %s, %s", type(e).__name__, getattr(e, "body", ""))
-        if isinstance(e, RateLimitError):
-            retry_time = get_retry_time(e.response.headers)
-            logger.warning("Received a rate limit error from OpenAI. Waiting for %d seconds", retry_time)
-            await sleep_with_message(int(retry_time), "Waiting for rate limit to reset")
-            return await handle_tool_call_request(
-                model=model,
-                output_instructions=output_instructions,
-                response_type=response_type,
-                system_prompt=system_prompt,
-                tools=tools,
-                user_prompt=user_prompt,
-            )
-        logger.warning("Received an error from Azure OpenAI: %s", e)
-        raise OpenAIFailureError(message="Received an error from Azure OpenAI", context=str(e)) from e
+        logger.info("Received response from model: %s", response.text)
+        return deserialize(response.text, response_type)
     except DeserializationError as e:
         logger.warning("Unexpected response from model: %s", e)
-        raise
+        raise ValidationError("Unexpected response from model") from e
+    except TooManyRequests as e:
+        logger.warning("Received rate limit error: %s", e)
+        await sleep_with_message(ONE_MINUTE_SECONDS, "Received rate limit error, sleeping...")
+        return await handle_tool_call_request(
+            model=model,
+            output_instructions=output_instructions,
+            prompt_identifier=prompt_identifier,
+            response_type=response_type,
+            system_prompt=system_prompt,
+            response_schema=response_schema,
+            user_prompt=user_prompt,
+        )

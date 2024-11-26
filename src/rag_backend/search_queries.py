@@ -1,9 +1,8 @@
 import logging
 from string import Template
-from typing import Final, TypedDict
+from typing import Final
 
-from openai.types.chat import ChatCompletionToolParam
-from openai.types.shared_params import FunctionDefinition
+from typing_extensions import TypedDict
 
 from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag_backend.utils import handle_tool_call_request
@@ -52,7 +51,7 @@ Begin your response with your query generation process, followed by the JSON out
 OUTPUT_INSTRUCTIONS: Final[str] = """
 ## Output
 
-Respond using the provided tools with a JSON object strictly adhering to the following structure:
+Respond using the provided tool with a JSON object strictly adhering to the following structure:
 
 ```json
 {
@@ -73,6 +72,15 @@ class ToolResponse(TypedDict):
     """The generated search queries."""
 
 
+response_schema = {
+    "type": "object",
+    "properties": {
+        "queries": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["queries"],
+}
+
+
 async def create_search_queries(prompt: str) -> list[str]:
     """Generate an optimized search query for retrieval.
 
@@ -85,27 +93,13 @@ async def create_search_queries(prompt: str) -> list[str]:
     """
     logger.debug("Generating search queries for prompt: %s", prompt)
     result = await handle_tool_call_request(
+        prompt_identifier="search_queries",
         system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
         user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
             prompt=prompt,
         ),
         output_instructions=OUTPUT_INSTRUCTIONS,
-        tools=[
-            ChatCompletionToolParam(
-                type="function",
-                function=FunctionDefinition(
-                    name="response_handler",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "queries": {"type": "array", "items": {"type": "string"}},
-                        },
-                        "required": ["queries"],
-                        "additionalProperties": False,
-                    },
-                ),
-            )
-        ],
+        response_schema=response_schema,
         response_type=ToolResponse,  # type: ignore[type-var]
         model=FAST_TEXT_GENERATION_MODEL,
     )
