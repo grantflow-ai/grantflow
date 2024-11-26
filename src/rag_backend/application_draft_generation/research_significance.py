@@ -126,6 +126,7 @@ async def generate_significance_text(
     ).strip()
 
     return await handle_tool_call_request(
+        prompt_identifier="significance",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
         model=PREMIUM_TEXT_GENERATION_MODEL,
