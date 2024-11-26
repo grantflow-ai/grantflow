@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from json import dumps
+from typing import TYPE_CHECKING, Final
 
+import tiktoken
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 from azure.search.documents._generated.models import VectorizedQuery
@@ -31,6 +33,9 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+cl100k_base = tiktoken.get_encoding("cl100k_base")
+MAX_RESULTS: Final[int] = 7
 
 
 @exponential_backoff_retry(RequestFailureError, OpenAIFailureError)
@@ -72,6 +77,7 @@ async def retrieve_documents(
         search_results = await client.search(
             search_text=search_text,
             filter=search_filter,
+            top=MAX_RESULTS,
             vector_queries=[
                 VectorizedQuery(
                     vector=embeddings,
@@ -95,6 +101,9 @@ async def retrieve_documents(
             output.append(doc)
 
         logger.info("Successfully retrieved documents from Azure Search")
+        logger.info(
+            "Retrieved Documents from storage. Total number of tokens: %d", len(cl100k_base.encode(dumps(output)))
+        )
         return output
     except HttpResponseError as e:
         logger.warning("Failed to retrieve documents from Azure Search: %s", e)

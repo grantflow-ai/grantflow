@@ -108,6 +108,7 @@ async def generate_specific_aims_text(
     ).strip()
 
     return await handle_tool_call_request(
+        prompt_identifier="research_aims",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
         model=PREMIUM_TEXT_GENERATION_MODEL,

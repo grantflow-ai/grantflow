@@ -3,12 +3,13 @@ from __future__ import annotations
 import logging
 from http import HTTPStatus
 from mimetypes import guess_type
-from typing import Any, NotRequired, TypedDict, cast
+from typing import Any, NotRequired, cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, ContentFormat
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
+from typing_extensions import TypedDict
 
 from src.utils.env import get_env
 from src.utils.exceptions import RequestFailureError, ValidationError

@@ -4,7 +4,7 @@ from asyncio import sleep
 logger = logging.getLogger(__name__)
 
 
-async def sleep_with_message(duration: int, identifier: str) -> None:
+async def sleep_with_message(duration: float, identifier: str) -> None:
     """Sleep for a duration and log messages.
 
     Args:
@@ -15,9 +15,5 @@ async def sleep_with_message(duration: int, identifier: str) -> None:
         None
     """
     logger.info("Beginning sleep for %d seconds: %s", duration, identifier)
-    while duration:
-        await sleep(1)
-        logger.info("Sleeping for %d seconds: %s", duration, identifier)
-        duration -= 1
-
+    await sleep(int(duration))
     logger.info("Finished sleeping: %s", identifier)

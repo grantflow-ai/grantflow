@@ -109,6 +109,7 @@ async def generate_research_task_text(
     ).strip()
 
     return await handle_tool_call_request(
+        prompt_identifier="research_tasks",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
     )
