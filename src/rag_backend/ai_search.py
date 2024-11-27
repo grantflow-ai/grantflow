@@ -22,8 +22,8 @@ from src.constants import (
     FIELD_NAME_SECTION_NAME,
     FIELD_NAME_WORKSPACE_ID,
 )
-from src.embeddings import generate_embeddings
 from src.rag_backend.dto import DocumentDTO
+from src.utils.embeddings import generate_embeddings
 from src.utils.env import get_env
 from src.utils.exceptions import OpenAIFailureError, RequestFailureError
 from src.utils.retry import exponential_backoff_retry

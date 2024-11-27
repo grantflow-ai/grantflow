@@ -44,7 +44,7 @@ class Chunk(TypedDict):
     """The type of element the chunk belongs to."""
 
 
-class BlobFileMetadata(NamedTuple):
+class FileMetadata(NamedTuple):
     """A named tuple to represent the components of a blob name."""
 
     workspace_id: str

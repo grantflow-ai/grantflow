@@ -15,7 +15,7 @@ from src.rag_backend.dto import (
     GenerationResult,
 )
 from src.rag_backend.search_queries import create_search_queries
-from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
+from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ async def generate_research_task_text(
         else "",
     ).strip()
 
-    return await handle_tool_call_request(
+    return await handle_completions_request(
         prompt_identifier="research_tasks",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
