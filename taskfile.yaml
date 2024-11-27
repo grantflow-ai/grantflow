@@ -9,7 +9,7 @@ tasks:
     cmds:
       - task: update-brew
       - brew tap azure/functions
-      - brew install pre-commit azure-functions-core-tools@4 pdm azure-cli
+      - brew install pre-commit azure-functions-core-tools@4 pdm azure-cli ariga/tap/atlas
       - pdm setup
   start:
     desc: Start the Azure Functions

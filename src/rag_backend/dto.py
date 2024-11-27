@@ -3,15 +3,6 @@ from typing import Literal, NotRequired
 from typing_extensions import TypedDict
 
 
-class APIError(TypedDict):
-    """DTO for an API error."""
-
-    message: str
-    """The error message."""
-    details: str
-    """The error details."""
-
-
 class ResearchTaskDTO(TypedDict):
     """DTO for a research task."""
 

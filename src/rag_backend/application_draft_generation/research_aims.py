@@ -4,19 +4,19 @@ from json import dumps
 from string import Template
 from typing import Final
 
+from src.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
-from src.rag_backend.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.dto import (
     DocumentDTO,
     EnrichedResearchAimDTO,
     GenerationResult,
 )
 from src.rag_backend.search_queries import create_search_queries
-from src.rag_backend.utils import handle_segmented_text_generation, handle_tool_call_request
+from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ async def generate_research_aim_text(
         research_task_titles=",".join(research_task_titles),
     ).strip()
 
-    return await handle_tool_call_request(
+    return await handle_completions_request(
         prompt_identifier="research_aims",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,

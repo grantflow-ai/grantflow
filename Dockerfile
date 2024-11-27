@@ -15,11 +15,11 @@ RUN pdm install --check --prod --no-editable
 FROM base AS app
 WORKDIR /app/
 COPY --from=install /app/.venv/ /app/.venv
-COPY echo_veritas echo_veritas
+COPY src src
 ENV PATH="/app/.venv/bin:$PATH"
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser && \
     chown -R appuser:appuser /app && \
     chmod -R u+x /app/.venv && \
-    chmod -R u+x /app/echo_veritas
+    chmod -R u+x /app/src
 USER appuser
-CMD ["uvicorn", "echo_veritas.main:app", "--host", "0.0.0.0", "--log-level", "info"]
+CMD ["sanic", "src.main:app"]

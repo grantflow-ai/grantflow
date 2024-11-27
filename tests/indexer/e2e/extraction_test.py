@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.indexer.extraction import parse_blob_data
+from src.indexer.extraction import parse_file_data
 from tests.indexer.e2e.utils import load_settings_and_set_env
 
 
@@ -27,7 +27,7 @@ async def test_parse_blob_data(logger: logging.Logger, filename: str) -> None:
     logger.info("Running end-to-end test for extracting text from a document")
 
     file = Path(__file__).parent / "data" / filename
-    results = await parse_blob_data(blob_data=file.read_bytes(), filename=filename)
+    results = await parse_file_data(file_data=file.read_bytes(), filename=filename)
 
     result_data = dumps(results)
     existing_results = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.json"
