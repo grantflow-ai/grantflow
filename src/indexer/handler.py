@@ -1,85 +1,61 @@
 import logging
 import sys
+from http import HTTPStatus
 from json import dumps
-from typing import Final, cast
+from uuid import UUID
 
-from azure.functions import InputStream
+from sanic import HTTPResponse, Request
+from sanic.request import File
 
 from src.data_types import SectionName
-from src.indexer.ai_search import ensure_index_exists, upload_to_ai_search
+from src.dto import APIError
 from src.indexer.chunking import chunk_text
-from src.indexer.dto import BlobFileMetadata
-from src.indexer.extraction import parse_blob_data
-from src.indexer.indexing import index_documents
+from src.indexer.dto import FileMetadata
+from src.indexer.extraction import parse_file_data
 from src.utils.exceptions import RequestFailureError, ValidationError
+from src.utils.serialization import serialize
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
-CHUNKS_BATCH_SIZE: Final[int] = 30
-CONTAINER_NAME: Final[str] = "grant-application-files/"
 
-
-def parse_blob_name(blob_name: str | None) -> BlobFileMetadata:
-    """Parse the name of the blob to its components.
-
-    Expected format: {container_name}/{workspace_id}/{application_id}/{section_name}/{filename}
-
-    Args:
-        blob_name: The name string.
-
-    Raises:
-        ValidationError: If the blob name is not provided or is of invalid format.
-
-    Returns:
-        A tuple of workspace_id, parent_id, filename
-    """
-    if blob_name is None:
-        logger.error("Blob name is None")
-        raise ValidationError("Blob name is required")
-
-    namespace = blob_name.replace(CONTAINER_NAME, "").removeprefix("/")
-    logger.info("Extracting text from blob: %s", namespace)
-
-    components = namespace.split("/")
-    if len(components) != 4 or any(not x for x in components):
-        logger.error("Invalid blob name format: %s", namespace)
-        raise ValidationError("Invalid blob name format")
-
-    return BlobFileMetadata(
-        workspace_id=components[0],
-        application_id=components[1],
-        section_name=cast(SectionName, components[2]),
-        filename=components[3],
-    )
-
-
-async def indexer(blob: InputStream) -> None:
-    """Azure Function to parse a file and index its contents.
+async def handle_files_upload(
+    request: Request,
+    workspace_id: UUID,
+    application_id: UUID,
+    section_name: SectionName,
+) -> HTTPResponse:
+    """Route handler for uploading files to the indexer.
 
     Args:
-        blob: The input blob to be parsed.
+        request: The request object.
+        workspace_id: The workspace ID.
+        application_id: The application ID.
+        section_name: The section name.
 
     Returns:
-        None
+        The response object.
     """
-    metadata = parse_blob_name(blob.name)
+    files_list: list[File] = request.files.get("files")
 
+    if not files_list:
+        logger.error("No files provided")
+        return HTTPResponse(status=HTTPStatus.BAD_REQUEST, body=serialize(APIError(message="No files provided")))
+
+    for file in files_list:
+        file_metadata = FileMetadata(
+            workspace_id=str(workspace_id),
+            application_id=str(application_id),
+            section_name=section_name,
+            filename=file.name,
+        )
+        await extract_file_data(file_data=file.body, file_metadata=file_metadata)
+
+
+async def extract_file_data(*, file_data: bytes, file_metadata: FileMetadata) -> None:
     try:
-        extracted_data, mime_type = await parse_blob_data(blob_data=blob.read(), filename=metadata.filename)
+        extracted_data, mime_type = await parse_file_data(file_data=file_data, filename=file_metadata.filename)
         chunks = chunk_text(extracted_data=extracted_data, mime_type=mime_type)
-        logger.debug("Extracted text from response: %s", dumps(chunks))
-
-        if search_schemas := await index_documents(chunks=chunks, metadata=metadata):
-            await ensure_index_exists()
-            await upload_to_ai_search(search_schemas)
-            logger.info(
-                "Data extraction and indexing Completed for blob: %s, uploaded %d embeddings",
-                blob.name,
-                len(search_schemas),
-            )
-        else:
-            logger.warning("No embeddings to index for blob: %s", blob.name)
-
+        logger.info("Extracted text from file: %s", dumps(chunks))
     except (RequestFailureError, ValidationError) as e:
-        logger.error("Failed to parse blob: %s, Error: %s", blob.name, e)
+        logger.error("Failed to parse file: %s, Error: %s", file_metadata.filename, e)

@@ -4,16 +4,16 @@ from asyncio import gather
 from itertools import chain
 from uuid import uuid4
 
-from src.embeddings import generate_embeddings
 from src.indexer.chunking import CHUNKS_BATCH_SIZE, logger
-from src.indexer.dto import BlobFileMetadata, Chunk, SearchSchema
+from src.indexer.dto import Chunk, FileMetadata, SearchSchema
+from src.utils.embeddings import generate_embeddings
 from src.utils.nlp import extract_keywords, extract_labels
 
 
 async def process_chunk(
     *,
     chunk: Chunk,
-    metadata: BlobFileMetadata,
+    metadata: FileMetadata,
 ) -> SearchSchema:
     """Process a single chunked element.
 
@@ -48,7 +48,7 @@ async def process_chunk(
     )
 
 
-async def index_documents(*, chunks: list[Chunk], metadata: BlobFileMetadata) -> list[SearchSchema]:
+async def index_documents(*, chunks: list[Chunk], metadata: FileMetadata) -> list[SearchSchema]:
     """Create embeddings for the given chunks.
 
     Args:

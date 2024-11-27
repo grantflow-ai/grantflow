@@ -1,24 +1,18 @@
 import logging
 from collections.abc import Callable, Coroutine
-from json import loads
 from typing import Any, Final, TypeVar
 
 from google.api_core.exceptions import TooManyRequests
-from google.oauth2.service_account import Credentials
-from vertexai import init  # type: ignore[import-untyped]
 from vertexai.generative_models import (  # type: ignore[import-untyped]
     Content,
     GenerationConfig,
-    GenerativeModel,
     Part,
 )
 
-from src.constants import CONTENT_TYPE_JSON
-from src.rag_backend.constants import ONE_MINUTE_SECONDS, PREMIUM_TEXT_GENERATION_MODEL
+from src.constants import CONTENT_TYPE_JSON, ONE_MINUTE_SECONDS, PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.dto import GenerationResult
-from src.utils.env import get_env
+from src.utils.ai import get_google_ai_client
 from src.utils.exceptions import DeserializationError, ValidationError
-from src.utils.ref import Ref
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 from src.utils.sleep import sleep_with_message
@@ -102,38 +96,9 @@ SEGMENTED_GENERATION_SCHEMA = {
     "required": ["text", "is_complete"],
 }
 
-init_ref = Ref[bool]()
-clients: dict[str, GenerativeModel] = {}
-
-
-def get_client(*, prompt_identifier: str, system_instructions: str, model: str) -> GenerativeModel:
-    """Get the GenerativeModel client for the given prompt identifier.
-
-    Args:
-        prompt_identifier: The prompt identifier.
-        system_instructions: The system instructions.
-        model: The model to use for the generation.
-
-    Returns:
-        The GenerativeModel client.
-    """
-    if not init_ref.value:
-        credentials = loads(get_env("GCP_CREDENTIALS"))
-        init(
-            project=get_env("GCP_PROJECT_ID"),
-            location=get_env("GCP_REGION"),
-            credentials=Credentials.from_service_account_info(credentials),  # type: ignore[no-untyped-call]
-        )
-        init_ref.value = True
-
-    if prompt_identifier not in clients:
-        clients[prompt_identifier] = GenerativeModel(model, system_instruction=system_instructions)
-
-    return clients[prompt_identifier]
-
 
 @exponential_backoff_retry(ValidationError)
-async def handle_tool_call_request(
+async def handle_completions_request(
     *,
     model: str = PREMIUM_TEXT_GENERATION_MODEL,
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
@@ -143,7 +108,7 @@ async def handle_tool_call_request(
     response_schema: dict[str, Any] | None = None,
     user_prompt: str,
 ) -> T:
-    """Handle a tool call request for segmented text generation.
+    """Handle a completions request to the model.
 
     Args:
         model: The model to use for the generation.
@@ -160,7 +125,7 @@ async def handle_tool_call_request(
     Returns:
         The generated text.
     """
-    client = get_client(prompt_identifier=prompt_identifier, system_instructions=system_prompt, model=model)
+    client = get_google_ai_client(prompt_identifier=prompt_identifier, system_instructions=system_prompt, model=model)
 
     try:
         response = await client.generate_content_async(
@@ -182,7 +147,7 @@ async def handle_tool_call_request(
     except TooManyRequests as e:
         logger.warning("Received rate limit error: %s", e)
         await sleep_with_message(ONE_MINUTE_SECONDS, "Received rate limit error, sleeping...")
-        return await handle_tool_call_request(
+        return await handle_completions_request(
             model=model,
             output_instructions=output_instructions,
             prompt_identifier=prompt_identifier,

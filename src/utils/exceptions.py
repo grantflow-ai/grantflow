@@ -47,10 +47,6 @@ class ValidationError(BackendError):
     """Raised when a validation error occurs."""
 
 
-class OpenAIFailureError(OperationError):
-    """Raised when an error occurs during an OpenAI API request."""
-
-
 class SerializationError(OperationError):
     """Raised when an error occurs during serialization."""
 

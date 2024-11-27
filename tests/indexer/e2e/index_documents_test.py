@@ -7,7 +7,7 @@ from typing import cast
 import pytest
 
 from src.indexer.chunking import chunk_text
-from src.indexer.dto import BlobFileMetadata
+from src.indexer.dto import FileMetadata
 from src.indexer.extraction import OCROutput
 from src.indexer.indexing import index_documents
 from tests.indexer.e2e.utils import load_settings_and_set_env
@@ -47,7 +47,7 @@ async def test_index_documents(logger: logging.Logger, filename: str) -> None:
 
     results = await index_documents(
         chunks=chunks,
-        metadata=BlobFileMetadata(
+        metadata=FileMetadata(
             workspace_id="workspace_id",
             application_id="application_id",
             filename=filename,

@@ -23,7 +23,7 @@ from src.rag_backend.dto import (
     NumberedResearchTaskDTO,
     ResearchAimDTO,
 )
-from src.rag_backend.utils import handle_tool_call_request
+from src.rag_backend.utils import handle_completions_request
 from src.utils.text import strip_lines
 
 logger = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
             )
         )
 
-    results = await handle_tool_call_request(
+    results = await handle_completions_request(
         prompt_identifier="identify_relations",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT.substitute(

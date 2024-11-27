@@ -4,8 +4,8 @@ from typing import Final
 
 from typing_extensions import TypedDict
 
-from src.rag_backend.constants import FAST_TEXT_GENERATION_MODEL
-from src.rag_backend.utils import handle_tool_call_request
+from src.constants import FAST_TEXT_GENERATION_MODEL
+from src.rag_backend.utils import handle_completions_request
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ async def create_search_queries(prompt: str) -> list[str]:
         list[str]: The generated search queries.
     """
     logger.debug("Generating search queries for prompt: %s", prompt)
-    result = await handle_tool_call_request(
+    result = await handle_completions_request(
         prompt_identifier="search_queries",
         system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
         user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
