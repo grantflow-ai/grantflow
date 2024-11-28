@@ -8,7 +8,6 @@ import pytest
 
 from src.rag_backend.application_draft_generation.research_aims import handle_research_aim_text_generation
 from src.rag_backend.dto import DraftGenerationRequest, EnrichedResearchAimDTO
-from tests.indexer.e2e.utils import load_settings_and_set_env
 
 
 @pytest.mark.skipif(
@@ -19,8 +18,6 @@ async def test_research_aim_text_generation(
     logger: logging.Logger,
     generation_request: DraftGenerationRequest,
 ) -> None:
-    load_settings_and_set_env(logger)
-
     logger.info("Running end-to-end test for research aim text generation")
     result = await handle_research_aim_text_generation(
         application_id=generation_request["application_id"],

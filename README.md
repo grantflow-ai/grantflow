@@ -1,33 +1,20 @@
 # Backend Services
 
-This repository includes Azure cloud functions that form a backend RAG system.
-
-## Azure Services
-
-The following Azure services are used in this repository:
-
-- Azure Functions. This service is used to deploy and orchestrate the service.
-- Azure Blob Storage, the [entry point to the service](src/indexer/handler.py) is triggered whenever a new blob is written to a specific
-  blob container.
-- Azure Document Intelligence. This service is used to extract text from images and PDFs, using OCR and other techniques.
-- Azure OpenAI. This service is used to generate embeddings for the extracted texts.
-- Azure AI search. This service is used to index the extracted text and metadata from the documents and store it for use in RAG.
-
 ## Prerequisites
 
-You need a copy of `local.settings.json` file in the root of the repository. This file is git ignored and should not be
+You need a copy of `.env` file in the root of the repository. This file is git ignored and should not be
 committed to GitHub.
 
 ## Installation
 
-Make sure to be running a Python 3.11 shell.
+Make sure to be running a Python 3.12 shell.
 
 1. It's recommended to use [pyenv](https://github.com/pyenv/pyenv) to manage python versions. For example:
 
    ```shell
    brew install pyenv
-   pyenv install 3.11
-   pyenv local 3.11
+   pyenv install 3.12
+   pyenv local 3.12
    ```
 
 2. Install PDM globally - you can either install it via brew (recommended) or pipx:
@@ -36,13 +23,7 @@ Make sure to be running a Python 3.11 shell.
    brew install pdm
    ```
 
-3. Install [taskfile](https://taskfile.dev/) with
-
-   ```shell
-   brew install go-task
-   ```
-
-4. Inside the repository, execute the setup command:
+2. Inside the repository, execute the setup command:
 
    ```shell
    task setup
@@ -85,19 +66,3 @@ pdm run lint
 ```
 
 Which will run [pre-commit](https://pre-commit.com)
-
-## Deployment
-
-Deployment is automated using github CI/CD - merging to main will deploy to production.
-
-You can manually deploy by executing:
-
-```shell
-task publish
-```
-
-You can also just sync the local.settings.json file by executing:
-
-```shell
-task sync-settings
-```

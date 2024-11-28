@@ -10,7 +10,6 @@ from src.indexer.chunking import chunk_text
 from src.indexer.dto import FileMetadata
 from src.indexer.extraction import OCROutput
 from src.indexer.indexing import index_documents
-from tests.indexer.e2e.utils import load_settings_and_set_env
 
 
 @pytest.mark.skipif(
@@ -26,8 +25,6 @@ from tests.indexer.e2e.utils import load_settings_and_set_env
     ],
 )
 async def test_index_documents(logger: logging.Logger, filename: str) -> None:
-    load_settings_and_set_env(logger)
-
     logger.info("Running end-to-end test for creating embeddings")
 
     extraction_results = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.json"

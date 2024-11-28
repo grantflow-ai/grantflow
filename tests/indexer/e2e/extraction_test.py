@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 from src.indexer.extraction import parse_file_data
-from tests.indexer.e2e.utils import load_settings_and_set_env
 
 
 @pytest.mark.skipif(
@@ -22,8 +21,6 @@ from tests.indexer.e2e.utils import load_settings_and_set_env
     ],
 )
 async def test_parse_blob_data(logger: logging.Logger, filename: str) -> None:
-    load_settings_and_set_env(logger)
-
     logger.info("Running end-to-end test for extracting text from a document")
 
     file = Path(__file__).parent / "data" / filename

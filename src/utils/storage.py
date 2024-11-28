@@ -20,7 +20,7 @@ def get_client() -> Client:
     if not ref.value:
         ref.value = Client(
             project=get_env("GCP_PROJECT_ID"),
-            credentials=Credentials.from_service_account_info(get_env("GCP_CREDENTIALS")),
+            credentials=Credentials.from_service_account_info(get_env("GCP_CREDENTIALS")),  # type: ignore[no-untyped-call]
         )
     return ref.value
 
@@ -45,7 +45,7 @@ async def upload_to_bucket(
     bucket_name: str,
     filename: str,
     data: str,
-):
+) -> None:
     """Uploads a number of files in parallel to the bucket."
 
     Args:
