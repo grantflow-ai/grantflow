@@ -4,9 +4,8 @@ from google.cloud.aiplatform import MatchingEngineIndex, init
 from google.oauth2.service_account import Credentials
 from vertexai.generative_models import GenerativeModel
 from vertexai.language_models import TextEmbeddingModel
-from vertexai.resources.preview import DistanceMeasureType
 
-from src.constants import EMBEDDING_DIMENSIONS, EMBEDDINGS_MODEL
+from src.constants import EMBEDDINGS_MODEL
 from src.utils.env import get_env
 from src.utils.ref import Ref
 
@@ -56,19 +55,3 @@ def get_google_ai_client(*, prompt_identifier: str, system_instructions: str, mo
         _ensure_init()
         clients[prompt_identifier] = GenerativeModel(model, system_instruction=system_instructions)
     return clients[prompt_identifier]
-
-
-async def get_or_create_search_index(index_name: str, bucket_url: str) -> MatchingEngineIndex:
-    if index_name not in indexes:
-        _ensure_init()
-        if index_name not in MatchingEngineIndex.deployed_indexes:
-            indexes[index_name] = MatchingEngineIndex.create_tree_ah_index(
-                index_name,
-                dimensions=EMBEDDING_DIMENSIONS,
-                contents_delta_uri=bucket_url,
-                distance_measure_type=DistanceMeasureType.COSINE_DISTANCE,
-                approximate_neighbors_count=10,
-            )
-        else:
-            indexes[index_name] = MatchingEngineIndex(index_name).update_embeddings(contents_delta_uri=bucket_url)
-    return indexes[index_name]

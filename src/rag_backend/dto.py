@@ -1,4 +1,4 @@
-from typing import Literal, NotRequired
+from typing import NotRequired
 
 from typing_extensions import TypedDict
 
@@ -49,17 +49,13 @@ class DraftGenerationRequest(TypedDict):
 class DocumentDTO(TypedDict):
     """A DTO for a document."""
 
-    filename: str
-    """The filename of the document"""
+    source: str
+    """The name of the source document."""
     content: str
     """The text extracted from the document"""
     page_number: NotRequired[int]
     """Optional page number"""
-    keywords: NotRequired[list[str]]
-    """The keywords extracted from the content."""
-    labels: NotRequired[list[str]]
-    """The labels extracted from the content."""
-    element_type: NotRequired[Literal["page", "paragraph", "table", None]]
+    element_type: NotRequired[str | None]
     """The type of element the content belongs to."""
 
 

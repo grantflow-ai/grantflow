@@ -3,7 +3,7 @@ name = "backend-functions"
 version = "0.1.0"
 description = "Azure Functions"
 authors = [{ name = "Na'aman Hirschfeld", email = "nhirschfeld@gmail.com" }]
-requires-python = "==3.11.*"
+requires-python = "==3.12.*"
 readme = "README.md"
 license = { text = "UNLICENSED" }
 
@@ -19,9 +19,8 @@ dependencies = [
     "spacy>=3.8.2",
     "sqlalchemy>=2.0.36",
     "tenacity>=8.3.0",
-    "tiktoken>=0.8.0",
     "google-cloud-aiplatform>=1.73.0",
-    "pypandoc-binary>=1.14",
+    "pypandoc>=1.14",
     "google-cloud-documentai>=3.0.1",
     "sanic>=24.6.0",
     "google-cloud-storage>=2.18.2",
@@ -34,6 +33,7 @@ distribution = false
 
 [tool.pdm.scripts]
 setup = { composite = [
+    "brew install ariga/tap/atlas pandoc pre-commit",
     "pre-commit install --install-hooks",
     "pre-commit install --hook-type commit-msg",
     "pdm install",
@@ -44,11 +44,15 @@ test.cmd = "pytest"
 test.env = { "PYTHONPATH" = "." }
 coverage.cmd = "pytest --disable-warnings --cov --cov-report xml"
 coverage.env = { "PYTHONPATH" = "." }
+migrate.cmd = "atlas migrate apply --env sqlalchemy"
+migrate.env =  { "PYTHONPATH" = "." }
+create-migration.cmd = "atlas migrate diff --env sqlalchemy"
+create-migration.env = { "PYTHONPATH" = "." }
 
 # linters configuration below
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 lint.select = ["ALL"]
 lint.ignore = [
     "ANN401",  # Dynamically typed ANY
@@ -88,8 +92,8 @@ max-returns= 10
 
 [tool.mypy]
 packages = ["src", "tests"]
-python_version = "3.11"
-plugins = ["pydantic.mypy"]
+python_version = "3.12"
+plugins = []
 disable_error_code = 'import-untyped'
 implicit_reexport = false
 show_error_codes = true
@@ -114,11 +118,11 @@ dev = [
     "faker>=24.11.0",
     "mypy>=1.10.0",
     "polyfactory>=2.16.2",
-    "pre-commit>=3.7.0",
     "pytest-asyncio>=0.23.6",
     "pytest-cov>=5.0.0",
     "pytest-logger>=1.1.1",
     "pytest-mock>=3.14.0",
     "pytest>=8.1.1",
-    "ruff>=0.4.0"
+    "ruff>=0.4.0",
+    "sqlalchemy2-stubs>=0.0.2a38",
 ]

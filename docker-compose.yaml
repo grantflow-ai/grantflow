@@ -1,6 +1,6 @@
 services:
     db:
-        image: postgres:latest
+        image: pgvector/pgvector:pg17
         restart: always
         environment:
             POSTGRES_DB: grantflow
@@ -10,6 +10,18 @@ services:
             - "5432:5432"
         volumes:
             - postgres_data:/var/lib/postgresql/data
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        env_file:
+            - .env
+        ports:
+            - "8000:8000"
+        volumes:
+            - ./src:/app/src:cached
+        command: [ "sanic", "src.main:app" ]
+        restart: unless-stopped
 
 volumes:
     postgres_data:
