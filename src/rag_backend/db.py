@@ -1,32 +1,12 @@
 import logging
-from typing import Final
-from uuid import UUID
 
-from sqlalchemy import MetaData, Table, insert
+from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.db.connection import get_async_engine, get_session_maker
-from src.utils.ref import Ref
+from src.db.connection import get_session_maker
+from src.db.tables import GenerationResult
 
 logger = logging.getLogger(__name__)
-
-TABLE_NAME: Final[str] = "generation_results"
-table_ref = Ref[Table]()
-
-
-async def get_table() -> Table:
-    """Get the generation_results table.
-
-    Returns:
-        The generation_results table.
-    """
-    if table_ref.value is None:
-        async with get_async_engine().begin() as connection:
-            table_ref.value = await connection.run_sync(
-                lambda conn: Table(TABLE_NAME, MetaData(), autoload_with=conn, schema="public")
-            )
-
-    return table_ref.value
 
 
 async def insert_generation_result(
@@ -45,15 +25,14 @@ async def insert_generation_result(
     Returns:
         The ID of the inserted generation
     """
-    generation_results = await get_table()
     session_maker = get_session_maker()
     async with session_maker() as session, session.begin():
         try:
-            insert_statement = insert(generation_results).values(
+            insert_statement = insert(GenerationResult).values(
                 {
-                    "application_id": UUID(application_id),
+                    "application_id": application_id,
                     "text": generation_result,
-                    "ticket_id": UUID(ticket_id),
+                    "ticket_id": ticket_id,
                 }
             )
             await session.execute(insert_statement)

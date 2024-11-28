@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from http import HTTPStatus
 from mimetypes import guess_type
 from typing import Final, cast
 
@@ -13,7 +12,7 @@ from pypandoc import convert_text
 from typing_extensions import TypedDict
 
 from src.utils.env import get_env
-from src.utils.exceptions import RequestFailureError, ValidationError
+from src.utils.exceptions import ExternalOperationError, ValidationError
 from src.utils.ref import Ref
 
 logger = logging.getLogger(__name__)
@@ -62,13 +61,13 @@ def get_client() -> DocumentProcessorServiceClient:
     """
     if not ref.value:
         ref.value = DocumentProcessorServiceClient(
-            credentials=Credentials.from_service_account_info(get_env("GCP_CREDENTIALS"))
+            credentials=Credentials.from_service_account_info(get_env("GCP_CREDENTIALS"))  # type: ignore[no-untyped-call]
         )
     return ref.value
 
 
 def extract_docx(file_data: bytes) -> bytes:
-    return convert_text(file_data.decode(), "md", format="docx").encode()
+    return cast(str, convert_text(file_data.decode(), "md", format="docx")).encode()
 
 
 async def parse_file_data(
@@ -125,8 +124,7 @@ async def extract_document(file_content: bytes, filename: str) -> OCROutput:
         return cast(OCROutput, response.document.to_dict())
     except (GoogleAPICallError, RetryError) as e:
         logger.error("Error extracting text from file: %s, Error: %s", filename, e)
-        raise RequestFailureError(
+        raise ExternalOperationError(
             f"Error extracting text from file: {filename}",
-            status_code=getattr(e, "code", HTTPStatus.INTERNAL_SERVER_ERROR),
             context={"reason": str(e)},
         ) from e

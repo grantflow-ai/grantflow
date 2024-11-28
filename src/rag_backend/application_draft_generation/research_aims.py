@@ -5,7 +5,6 @@ from string import Template
 from typing import Final
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
-from src.rag_backend.ai_search import retrieve_documents
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
@@ -15,6 +14,7 @@ from src.rag_backend.dto import (
     EnrichedResearchAimDTO,
     GenerationResult,
 )
+from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
 

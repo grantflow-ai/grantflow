@@ -1,5 +1,4 @@
 import logging
-import sys
 from http import HTTPStatus
 from time import time
 from typing import Final, TypedDict
@@ -17,7 +16,6 @@ from src.rag_backend.dto import (
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 

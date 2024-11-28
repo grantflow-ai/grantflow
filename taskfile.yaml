@@ -8,28 +8,5 @@ tasks:
     desc: Setup the project
     cmds:
       - task: update-brew
-      - brew tap azure/functions
-      - brew install pre-commit azure-functions-core-tools@4 pdm azure-cli ariga/tap/atlas
+      - brew install pre-commit ariga/tap/atlas
       - pdm setup
-  start:
-    desc: Start the Azure Functions
-    cmds:
-      - source .venv/bin/activate
-      - func start --verbose
-      - deactivate
-  start:log-to-file:
-    desc: Start the Azure Functions and log the output to file
-    cmds:
-      - source .venv/bin/activate
-      - func start --verbose > func.log 2>&1
-      - deactivate
-  publish:
-    desc: Publish the Azure Function app
-    cmds:
-      - pdm export --production --without-hashes >> requirements.txt
-      - func azure functionapp publish grantflow-backend-functions --publish-local-settings || true
-      - rm requirements.txt
-  sync-settings:
-    desc: Sync the local.settings.json file to the Azure Function app
-    cmds:
-      - func azure functionapp publish grantflow-backend-functions --publish-settings-only || true
