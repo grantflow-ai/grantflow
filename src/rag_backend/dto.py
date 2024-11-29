@@ -59,7 +59,7 @@ class DocumentDTO(TypedDict):
     """The type of element the content belongs to."""
 
 
-class GenerationResult(TypedDict):
+class GenerationResultDTO(TypedDict):
     """DTO for a text generation result."""
 
     text: str

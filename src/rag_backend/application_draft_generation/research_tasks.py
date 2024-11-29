@@ -11,7 +11,7 @@ from src.rag_backend.application_draft_generation.shared_prompts import (
 from src.rag_backend.dto import (
     DocumentDTO,
     EnrichedResearchTaskDTO,
-    GenerationResult,
+    GenerationResultDTO,
 )
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
@@ -85,7 +85,7 @@ async def generate_research_task_text(
     requires_clinical_trials: bool,
     research_task: EnrichedResearchTaskDTO,
     retrieval_results: list[DocumentDTO],
-) -> GenerationResult:
+) -> GenerationResultDTO:
     """Generate a part of the research task text.
 
     Args:
@@ -95,7 +95,7 @@ async def generate_research_task_text(
         retrieval_results: The results of the RAG retrieval.
 
     Returns:
-        GenerationResult: The generated text for the research aim.
+        GenerationResultDTO: The generated text for the research aim.
     """
     user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute(
         research_task=dumps(research_task),

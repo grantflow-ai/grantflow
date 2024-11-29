@@ -26,7 +26,7 @@ def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
         MarkdownSplitter | TextSplitter: The splitter to use.
     """
     if mime_type == "text/markdown":
-        return MarkdownSplitter((MAX_CHARACTERS, OVERLAP_CHARACTERS))
+        return MarkdownSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
     return TextSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
 
 

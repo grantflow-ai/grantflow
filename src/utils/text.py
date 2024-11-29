@@ -10,7 +10,7 @@ def strip_lines(text: str) -> str:
     Returns:
         The stripped text.
     """
-    return "\n".join([line.strip() or "" for line in text.splitlines()])
+    return "\n".join([line.strip() for line in text.splitlines() if line.strip()]).strip()
 
 
 def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:
@@ -41,8 +41,8 @@ def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_s
 
             sentences = sentences[overlap_index:]
 
-        concatenated_text.append(" ".join(sentences))
+        concatenated_text.append(" ".join(sentences).strip())
 
         context_buffer = sentences[-max_overlap_sentences:]
 
-    return " ".join(concatenated_text)
+    return " ".join(concatenated_text).strip()
