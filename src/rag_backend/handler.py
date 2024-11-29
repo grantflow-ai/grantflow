@@ -2,7 +2,6 @@ import logging
 from http import HTTPStatus
 from time import time
 from typing import Final, TypedDict
-from uuid import uuid4
 
 from sanic import HTTPResponse, Request
 
@@ -26,8 +25,6 @@ class GenerationResultMessage(TypedDict):
     """The ID of the grant application."""
     content: str
     """The generated content."""
-    ticket_id: str
-    """The ticket ID."""
 
 
 GENERATION_REQUESTS_QUEUE_NAME: Final[str] = "generation-requests"
@@ -42,12 +39,10 @@ async def handle_generate_draft_request(request: Request) -> HTTPResponse:
     Returns:
         The response object.
     """
-    ticket_id = str(uuid4())
     start_time = time()
-    logger.info("Beginning RAG pipeline, ticket ID: %s", ticket_id)
+    logger.info("Beginning RAG pipeline")
     try:
         request_body = deserialize(request.body, DraftGenerationRequest)
-        logger.info("Beginning RAG pipeline for ticket ID: %s", ticket_id)
         result = await generate_application_draft(
             application_id=request_body["application_id"],
             application_title=request_body["application_title"],
@@ -56,18 +51,14 @@ async def handle_generate_draft_request(request: Request) -> HTTPResponse:
             innovation_description=request_body["innovation_description"],
             research_aims=request_body["research_aims"],
             significance_description=request_body["significance_description"],
-            ticket_id=ticket_id,
-            workspace_id=request_body["workspace_id"],
         )
         logger.info(
-            "RAG pipeline completed successfully for ticket ID: %s, total duration in seconds: %d",
-            ticket_id,
+            "RAG pipeline completed successfully. Total duration in seconds: %d",
             int(time() - start_time),
         )
         await insert_generation_result(
             generation_result=result,
             application_id=request_body["application_id"],
-            ticket_id=ticket_id,
         )
         return HTTPResponse(
             status=HTTPStatus.CREATED,
@@ -75,7 +66,6 @@ async def handle_generate_draft_request(request: Request) -> HTTPResponse:
                 GenerationResultMessage(
                     application_id=request_body["application_id"],
                     content=result,
-                    ticket_id=ticket_id,
                 )
             ),
             content_type=CONTENT_TYPE_JSON,

@@ -31,9 +31,6 @@ async def retrieve_documents(
         search_queries: The search queries.
         section_name: The section name.
 
-    Raises:
-        RequestFailureError: If the request fails.
-
     Returns:
         list[dict[str, str]]: The retrieved documents.
     """

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import uuid4
 
@@ -5,7 +6,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (  # type: ignore[attr-defined]
-    DeclarativeBase,  # type: ignore[attr-defined]
+    DeclarativeBase,
     Mapped,
     mapped_column,
 )
@@ -177,6 +178,8 @@ class ResearchAim(Base):
 
 
 class ResearchTask(Base):
+    """Research task table."""
+
     __tablename__ = "research_tasks"
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
@@ -196,9 +199,8 @@ class GenerationResult(Base):
     application_id: Mapped[UUID] = mapped_column(
         UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
     )
-    ticket_id: Mapped[UUID] = mapped_column(UUID(), nullable=False)
     duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.now(tz=UTC))
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
 
