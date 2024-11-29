@@ -1,6 +1,7 @@
 import logging
 import sys
 from http import HTTPStatus
+from typing import cast
 from uuid import UUID
 
 from sanic import HTTPResponse, Request
@@ -30,7 +31,7 @@ async def handle_files_upload(application_id: UUID, request: Request, section_na
     Returns:
         The response object.
     """
-    files_list: list[File] = request.files.get("files")
+    files_list: list[File] = cast(list[File], request.files.get("files") if request.files else [])
 
     if not files_list:
         logger.error("No files provided")
@@ -39,6 +40,8 @@ async def handle_files_upload(application_id: UUID, request: Request, section_na
     for file in files_list:
         await parse_and_index_file(file=file, application_id=str(application_id), section_name=section_name)
 
+    return HTTPResponse(status=HTTPStatus.OK)
+
 
 async def parse_and_index_file(
     *,
@@ -46,6 +49,17 @@ async def parse_and_index_file(
     application_id: str,
     section_name: SectionName,
 ) -> None:
+    """Parse and index the given file.
+
+    Args:
+        file: The file to parse and index.
+        application_id: The application ID.
+        section_name: The section name
+
+
+    Returns:
+        None
+    """
     try:
         extracted_data, mime_type = await parse_file_data(file_data=file.body, filename=file.name)
         logger.info("Extracted text from file: %s", file.name)

@@ -20,9 +20,7 @@ async def test_research_plan_text_generation(
     logger.info("Running end-to-end test for research plan text generation")
     result = await handle_research_plan_text_generation(
         application_id=generation_request["application_id"],
-        workspace_id=generation_request["workspace_id"],
         research_aims=generation_request["research_aims"],
-        ticket_id="test_ticket_id",
     )
     logger.info("Generated research plan text: %s", result)
     result_file_path = (

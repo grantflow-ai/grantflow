@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 from asyncio import gather
 from typing import Final
 
 from src.data_types import SectionName
+from src.db.tables import ApplicationVector
 from src.indexer.chunking import logger
 from src.indexer.db import upsert_application_vectors
 from src.indexer.dto import Chunk, VectorDTO
@@ -52,7 +51,7 @@ async def index_documents(
     file_id: str,
     application_id: str,
     section_name: SectionName,
-) -> None:
+) -> list[ApplicationVector]:
     """Create embeddings for the given chunks.
 
     Args:
@@ -78,5 +77,6 @@ async def index_documents(
         )
         data.extend([result for result in results if result is not None])
 
-    await upsert_application_vectors(vectors=data, application_id=application_id)
-    logger.ingo("Successfully indexed file_id: %s", file_id)
+    vectors = await upsert_application_vectors(vectors=data, application_id=application_id)
+    logger.info("Successfully indexed file_id: %s", file_id)
+    return vectors

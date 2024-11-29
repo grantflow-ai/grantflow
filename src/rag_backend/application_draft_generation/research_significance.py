@@ -141,8 +141,6 @@ async def handle_significance_text_generation(
     grant_funding_organization: str,
     research_plan_text: str,
     significance_description: str,
-    ticket_id: str,
-    workspace_id: str,
 ) -> str:
     """Generate the text for the significance section.
 
@@ -153,8 +151,6 @@ async def handle_significance_text_generation(
         grant_funding_organization: The funding organization for the grant.
         research_plan_text: The text of the research plan section.
         significance_description: The description of the research significance.
-        ticket_id: The ticket ID.
-        workspace_id: The workspace ID.
 
     Returns:
         The generated text for the significance section.
@@ -168,8 +164,6 @@ async def handle_significance_text_generation(
         application_id=application_id,
         search_queries=search_queries,
         section_name="significance-and-innovation",
-        ticket_id=ticket_id,
-        workspace_id=workspace_id,
     )
 
     handler = partial(

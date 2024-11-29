@@ -66,6 +66,7 @@ lint.ignore = [
     "FBT001",  # Boolean-typed positional argument in function definition
     "FIX",     # We allow todo and fixme comments
     "ISC001",  # Conflicts with formatter
+    "PD011",   # Creates false positives
     "PGH003",  # Required specific mypy ignores
     "PLR2004", # Magic variables, we allow them
     "TD",      # We allow todo and fixme comments
