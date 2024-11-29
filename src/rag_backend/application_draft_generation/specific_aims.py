@@ -9,7 +9,7 @@ from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
-from src.rag_backend.dto import DocumentDTO, GenerationResult
+from src.rag_backend.dto import DocumentDTO, GenerationResultDTO
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
@@ -82,7 +82,7 @@ async def generate_specific_aims_text(
     research_plan_text: str,
     significance_text: str,
     retrieval_results: list[DocumentDTO],
-) -> GenerationResult:
+) -> GenerationResultDTO:
     """Generate the text for the Specific Aims section of a research grant application.
 
     Args:
@@ -93,7 +93,7 @@ async def generate_specific_aims_text(
         retrieval_results: The RAG retrieval results for additional context.
 
     Returns:
-        GenerationResult: The generated text for the research aim.
+        GenerationResultDTO: The generated text for the research aim.
     """
     user_prompt = SPECIFIC_AIMS_USER_PROMPT.substitute(
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(

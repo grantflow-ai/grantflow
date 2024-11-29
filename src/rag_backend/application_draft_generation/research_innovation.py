@@ -8,7 +8,7 @@ from src.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
 )
-from src.rag_backend.dto import DocumentDTO, GenerationResult
+from src.rag_backend.dto import DocumentDTO, GenerationResultDTO
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
@@ -74,7 +74,7 @@ async def generate_innovation_text(
     research_plan_text: str,
     retrieval_results: list[DocumentDTO],
     significance_text: str,
-) -> GenerationResult:
+) -> GenerationResultDTO:
     """Generate a part of the innovation text.
 
     Args:
@@ -85,7 +85,7 @@ async def generate_innovation_text(
         significance_text: The generated significance text.
 
     Returns:
-        GenerationResult: The generated text for the innovation section.
+        GenerationResultDTO: The generated text for the innovation section.
     """
     user_prompt = INNOVATION_GENERATION_USER_PROMPT.substitute(
         innovation_description=innovation_description,

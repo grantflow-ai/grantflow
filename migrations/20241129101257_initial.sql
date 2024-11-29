@@ -67,13 +67,11 @@ CREATE TABLE "application_vectors" (
   "application_id" uuid NOT NULL,
   "chunk_index" integer NOT NULL,
   "content" text NOT NULL,
-  "element_type" character varying(50) NOT NULL,
+  "element_type" character varying(50) NULL,
   "embedding" vector(256) NOT NULL,
   "file_id" uuid NOT NULL,
-  "keywords" text NULL,
-  "labels" text NULL,
   "page_number" integer NULL,
-  "section_name" character varying(255) NULL,
+  "section_name" character varying(255) NOT NULL,
   PRIMARY KEY ("application_id", "chunk_index", "file_id"),
   CONSTRAINT "application_vectors_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "grant_applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "application_vectors_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "application_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
@@ -84,7 +82,6 @@ CREATE INDEX "ix_application_vectors_embedding_hnsw" ON "application_vectors" US
 CREATE TABLE "generation_results" (
   "id" uuid NOT NULL,
   "application_id" uuid NOT NULL,
-  "ticket_id" uuid NOT NULL,
   "duration" integer NULL,
   "created_at" timestamptz NOT NULL,
   "text" text NOT NULL,
