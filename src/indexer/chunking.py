@@ -30,23 +30,6 @@ def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
     return TextSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
 
 
-def chunk_ocr_output(extracted_data: OCROutput, splitter: MarkdownSplitter | TextSplitter) -> list[Chunk]:
-    """Parse the OCR output and chunk the text into smaller pieces.
-
-    Args:
-        extracted_data: The extracted data from the file.
-        splitter: The splitter to use for chunking the text.
-
-    Returns:
-        list[Chunk]: The list of chunks.
-    """
-    chunks: list[Chunk] = []
-
-    # TODO: Implement this function
-
-    return chunks
-
-
 def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chunk]:
     """Chunk the text into smaller pieces.
 
@@ -58,12 +41,8 @@ def chunk_text(*, extracted_data: bytes | OCROutput, mime_type: str) -> list[Chu
         list[Chunk]: The list of chunks.
     """
     splitter = get_splitter(mime_type)
-
-    if isinstance(extracted_data, bytes):
-        text = extracted_data.decode()
-        return [
-            Chunk(content=chunk, page_number=None, element_type=None, index=index)
-            for index, chunk in enumerate(splitter.chunks(text))
-        ]
-
-    return chunk_ocr_output(extracted_data=extracted_data, splitter=splitter)
+    text = extracted_data.decode() if isinstance(extracted_data, bytes) else extracted_data["text"]
+    return [
+        Chunk(content=chunk, page_number=None, element_type=None, index=index)
+        for index, chunk in enumerate(splitter.chunks(text))
+    ]
