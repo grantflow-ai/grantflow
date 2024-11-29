@@ -10,7 +10,7 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
 )
 
 from src.constants import CONTENT_TYPE_JSON, ONE_MINUTE_SECONDS, PREMIUM_TEXT_GENERATION_MODEL
-from src.rag_backend.dto import GenerationResult
+from src.rag_backend.dto import GenerationResultDTO
 from src.utils.ai import get_google_ai_client
 from src.utils.exceptions import DeserializationError, ValidationError
 from src.utils.retry import exponential_backoff_retry
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
 ## Output
 
-Respond using the provided tools with a valid JSON object containing the generated text and a boolean value indicating
+Respond with a valid JSON object containing the generated text and a boolean value indicating
 whether the research aim text is complete or not. Example:
 
 ```jsonc
@@ -41,7 +41,7 @@ async def handle_segmented_text_generation(
     *,
     entity_type: str,
     entity_identifier: str,
-    prompt_handler: Callable[[str | None], Coroutine[Any, Any, GenerationResult]],
+    prompt_handler: Callable[[str | None], Coroutine[Any, Any, GenerationResultDTO]],
 ) -> str:
     """Handle the generation of segmented text.
 
@@ -103,7 +103,7 @@ async def handle_completions_request(
     model: str = PREMIUM_TEXT_GENERATION_MODEL,
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
     prompt_identifier: str,
-    response_type: type[T] = GenerationResult,  # type: ignore[assignment]
+    response_type: type[T] = GenerationResultDTO,  # type: ignore[assignment]
     system_prompt: str,
     response_schema: dict[str, Any] | None = None,
     user_prompt: str,
@@ -139,7 +139,7 @@ async def handle_completions_request(
                 response_mime_type=CONTENT_TYPE_JSON, response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA
             ),
         )
-        logger.info("Received response from model: %s", response.text)
+        logger.debug("Received response from model: %s", response.text)
         return deserialize(response.text, response_type)
     except DeserializationError as e:
         logger.warning("Unexpected response from model: %s", e)

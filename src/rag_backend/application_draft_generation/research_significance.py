@@ -8,7 +8,7 @@ from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
-from src.rag_backend.dto import DocumentDTO, GenerationResult
+from src.rag_backend.dto import DocumentDTO, GenerationResultDTO
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
@@ -96,7 +96,7 @@ async def generate_significance_text(
     retrieval_results: list[DocumentDTO],
     significance_description: str,
     research_plan_text: str,
-) -> GenerationResult:
+) -> GenerationResultDTO:
     """Generate a part of the significance text.
 
     Args:
@@ -109,7 +109,7 @@ async def generate_significance_text(
         research_plan_text: The text of the research plan section.
 
     Returns:
-        GenerationResult: The generated text for the significance section.
+        GenerationResultDTO: The generated text for the significance section.
     """
     user_prompt = SIGNIFICANCE_GENERATION_USER_PROMPT.substitute(
         application_title=application_title,

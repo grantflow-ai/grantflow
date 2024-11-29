@@ -75,7 +75,7 @@ lint.ignore = [
 src = ["src", "tests"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.*" = ["S", "D", "PT006", "PT007", "PT013"]
+"tests/**/*.*" = ["S", "D", "PT006", "PT007", "PT013", "ARG001", "RUF012"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -111,7 +111,7 @@ fail_under = 100
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "session"
 
 [dependency-groups]
 dev = [
@@ -126,4 +126,6 @@ dev = [
     "pytest>=8.1.1",
     "ruff>=0.4.0",
     "sqlalchemy2-stubs>=0.0.2a38",
+    "testcontainers>=4.8.2",
+    "atlas-provider-sqlalchemy>=0.2.3",
 ]
