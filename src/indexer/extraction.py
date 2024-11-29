@@ -25,39 +25,10 @@ PLAIN_TEXT_MIMETYPES: set[str] = {
 }
 
 
-class PageSpan(TypedDict):
-    """Page span of the block."""
-
-    pageStart: int
-    pageEnd: int
-
-
-class TextBlock(TypedDict):
-    """Text block with metadata."""
-
-    text: str
-    type: str
-    blocks: list[Block] | None
-
-
-class Block(TypedDict):
-    """Document text block."""
-
-    blockId: str
-    textBlock: TextBlock
-    pageSpan: PageSpan
-
-
-class DocumentLayout(TypedDict):
-    """Document layout."""
-
-    blocks: list[Block]
-
-
 class OCROutput(TypedDict):
     """OCR output."""
 
-    documentLayout: DocumentLayout
+    text: str
 
 
 ref = Ref[DocumentProcessorServiceClient]()
@@ -113,7 +84,7 @@ async def parse_file_data(
             return extract_docx(file_data), "text/markdown"
 
         if mime_type == PDF_MIMETYPE:
-            return await extract_document(file_data, filename), "text/markdown"
+            return await extract_document(file_data, filename), "text/plain"
 
     raise ValidationError(f"Unsupported mime type for file extraction: {mime_type}")
 

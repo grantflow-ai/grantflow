@@ -1,30 +1,12 @@
-from json import loads
-from pathlib import Path
-from typing import cast
-
 import pytest
 
 from src.indexer.chunking import chunk_text
-from src.indexer.extraction import OCROutput
+from src.indexer.extraction import PDF_MIMETYPE, OCROutput
 
 
-def test_chunking_ocr_output() -> None:
-    existing_results = Path(__file__).parent / "e2e/results" / "parse_blob_data_test_result.json"
-
-    assert existing_results.exists(), f"Expected file {existing_results} to exist"
-
-    data = loads(existing_results.read_text())
-    assert len(data) == 2
-
-    ocr_results = cast(OCROutput, data[0])
-    mime_type = cast(str, data[1])
-
-    assert isinstance(ocr_results, dict)
-    assert isinstance(mime_type, str)
-
-    chunks = chunk_text(extracted_data=ocr_results, mime_type=mime_type)
-
-    assert len(chunks) == 1
+def test_chunking_ocr_output(ocr_output: OCROutput) -> None:
+    chunks = chunk_text(extracted_data=ocr_output, mime_type=PDF_MIMETYPE)
+    assert len(chunks) == 4
 
 
 @pytest.mark.parametrize("mime_type", ("text/markdown", "text/plain"))
