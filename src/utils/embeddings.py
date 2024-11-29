@@ -1,6 +1,5 @@
 import logging
 from enum import StrEnum
-from typing import Final
 
 from vertexai.language_models import TextEmbeddingInput
 
@@ -11,10 +10,10 @@ from src.utils.retry import exponential_backoff_retry
 
 logger = logging.getLogger(__name__)
 
-EMBEDDING_MODEL: Final[str] = "text-embedding-3-large"
-
 
 class TaskType(StrEnum):
+    """The type of task for which embeddings are to be generated."""
+
     RetrievalDocument = "RETRIEVAL_DOCUMENT"
     RetrievalQuery = "RETRIEVAL_QUERY"
 
@@ -28,7 +27,7 @@ async def generate_embeddings(inputs: str | list[str], task: TaskType) -> list[l
         task: The task for which the embeddings are to be created.
 
     Raises:
-        OpenAIFailureError: If an error occurs while generating embeddings.
+        ExternalOperationError: If an error occurs during the operation.
 
     Returns:
         The embeddings for the given text or None if an error occurred.

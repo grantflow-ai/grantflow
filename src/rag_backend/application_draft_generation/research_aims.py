@@ -116,16 +116,12 @@ async def handle_research_aim_text_generation(
     *,
     application_id: str,
     research_aim: EnrichedResearchAimDTO,
-    ticket_id: str,
-    workspace_id: str,
 ) -> str:
     """Generate the text for a research aim.
 
     Args:
         application_id: The application ID.
         research_aim: The research aim to generate text for.
-        ticket_id: The ticket ID.
-        workspace_id: The workspace ID.
 
     Returns:
         The generated text for the research aim.
@@ -140,8 +136,6 @@ async def handle_research_aim_text_generation(
         application_id=application_id,
         search_queries=search_queries,
         section_name="research-plan",
-        ticket_id=ticket_id,
-        workspace_id=workspace_id,
     )
 
     handler = partial(

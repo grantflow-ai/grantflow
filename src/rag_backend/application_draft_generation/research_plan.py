@@ -187,16 +187,12 @@ async def handle_research_plan_text_generation(
     *,
     application_id: str,
     research_aims: list[ResearchAimDTO],
-    ticket_id: str,
-    workspace_id: str,
 ) -> str:
     """Generate the text for the research plan.
 
     Args:
         application_id: The application ID.
         research_aims: The research aims to generate text for.
-        ticket_id: The ticket ID.
-        workspace_id: The workspace ID.
 
     Returns:
         The generated text for the research plan.
@@ -210,8 +206,6 @@ async def handle_research_plan_text_generation(
                 handle_research_aim_text_generation(
                     application_id=application_id,
                     research_aim=research_aim,
-                    ticket_id=ticket_id,
-                    workspace_id=workspace_id,
                 ),
                 gather(
                     *[
@@ -219,8 +213,6 @@ async def handle_research_plan_text_generation(
                             application_id=application_id,
                             requires_clinical_trials=research_aim["requires_clinical_trials"],
                             research_task=research_task,
-                            ticket_id=ticket_id,
-                            workspace_id=workspace_id,
                         )
                         for index, research_task in enumerate(research_aim["tasks"])
                     ]

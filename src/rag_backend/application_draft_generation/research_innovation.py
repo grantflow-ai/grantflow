@@ -109,8 +109,6 @@ async def handle_innovation_text_generation(
     innovation_description: str,
     research_plan_text: str,
     significance_text: str,
-    ticket_id: str,
-    workspace_id: str,
 ) -> str:
     """Generate the text for the innovation section.
 
@@ -119,8 +117,6 @@ async def handle_innovation_text_generation(
         innovation_description: The description of the research innovation.
         research_plan_text: The text of the research plan section.
         significance_text: The generated significance text.
-        ticket_id: The ticket ID.
-        workspace_id: The workspace ID.
 
     Returns:
         The generated text for the innovation section.
@@ -135,8 +131,6 @@ async def handle_innovation_text_generation(
         application_id=application_id,
         search_queries=search_queries,
         section_name="significance-and-innovation",
-        ticket_id=ticket_id,
-        workspace_id=workspace_id,
     )
 
     handler = partial(

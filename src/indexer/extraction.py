@@ -26,27 +26,37 @@ PLAIN_TEXT_MIMETYPES: set[str] = {
 
 
 class PageSpan(TypedDict):
+    """Page span of the block."""
+
     pageStart: int
     pageEnd: int
 
 
 class TextBlock(TypedDict):
+    """Text block with metadata."""
+
     text: str
     type: str
     blocks: list[Block] | None
 
 
 class Block(TypedDict):
+    """Document text block."""
+
     blockId: str
     textBlock: TextBlock
     pageSpan: PageSpan
 
 
 class DocumentLayout(TypedDict):
+    """Document layout."""
+
     blocks: list[Block]
 
 
 class OCROutput(TypedDict):
+    """OCR output."""
+
     documentLayout: DocumentLayout
 
 
@@ -67,6 +77,14 @@ def get_client() -> DocumentProcessorServiceClient:
 
 
 def extract_docx(file_data: bytes) -> bytes:
+    """Extract text from a docx file.
+
+    Args:
+        file_data: The content of the docx file.
+
+    Returns:
+        The extracted text.
+    """
     return cast(str, convert_text(file_data.decode(), "md", format="docx")).encode()
 
 
@@ -91,7 +109,7 @@ async def parse_file_data(
         if mime_type in PLAIN_TEXT_MIMETYPES or any(mime_type.startswith(value) for value in PLAIN_TEXT_MIMETYPES):
             return file_data, mime_type
 
-        if mime_type == DOCX_MIMETYPE:  # TODO: addd support for other pandoc supported formats
+        if mime_type == DOCX_MIMETYPE:  # TODO: add support for other pandoc supported formats
             return extract_docx(file_data), "text/markdown"
 
         if mime_type == PDF_MIMETYPE:
@@ -108,7 +126,7 @@ async def extract_document(file_content: bytes, filename: str) -> OCROutput:
         filename: The name of the document.
 
     Raises:
-        RequestFailureError: If the extraction fails.
+        ExternalOperationError: If an error occurs during the text extraction.
 
     Returns:
         The extracted text from the document.

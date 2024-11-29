@@ -121,8 +121,6 @@ async def handle_specific_aims_text_generation(
     innovation_text: str,
     research_plan_text: str,
     significance_text: str,
-    ticket_id: str,
-    workspace_id: str,
 ) -> str:
     """Generate the text for a research aim.
 
@@ -131,8 +129,6 @@ async def handle_specific_aims_text_generation(
         innovation_text: The text of the Innovation section of the grant application.
         research_plan_text: The full text of the research plan, detailing all the research aims and tasks in the application.
         significance_text: The Significance section of the grant application.
-        ticket_id: The ticket ID.
-        workspace_id: The workspace ID.
 
     Returns:
         The generated text for the research aim.
@@ -143,8 +139,6 @@ async def handle_specific_aims_text_generation(
         application_id=application_id,
         search_queries=search_queries,
         section_name="research-plan",
-        ticket_id=ticket_id,
-        workspace_id=workspace_id,
     )
 
     handler = partial(

@@ -31,7 +31,7 @@ class FileMetadata(NamedTuple):
 
 
 class VectorDTO(TypedDict):
-    """DTO for embeddings and metadata"""
+    """DTO for embeddings and metadata."""
 
     chunk_index: int
     """The index of the chunk."""

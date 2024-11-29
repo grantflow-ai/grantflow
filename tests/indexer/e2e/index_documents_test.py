@@ -7,7 +7,6 @@ from typing import cast
 import pytest
 
 from src.indexer.chunking import chunk_text
-from src.indexer.dto import FileMetadata
 from src.indexer.extraction import OCROutput
 from src.indexer.indexing import index_documents
 
@@ -44,12 +43,9 @@ async def test_index_documents(logger: logging.Logger, filename: str) -> None:
 
     results = await index_documents(
         chunks=chunks,
-        metadata=FileMetadata(
-            workspace_id="workspace_id",
-            application_id="application_id",
-            filename=filename,
-            section_name="research-plan",
-        ),
+        file_id=filename,
+        application_id="test_application_id",
+        section_name="research-plan",
     )
 
     assert results

@@ -46,7 +46,7 @@ async def upload_to_bucket(
     filename: str,
     data: str,
 ) -> None:
-    """Uploads a number of files in parallel to the bucket."
+    """Uploads a number of files in parallel to the bucket.
 
     Args:
         bucket_name: The name of the bucket to upload to.
