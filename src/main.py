@@ -8,7 +8,7 @@ from src.rag_backend.handler import handle_generate_draft_request
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
-app = Sanic("GrantFlow Backend API")
+app = Sanic("grantflow")
 
 app.add_route(handle_files_upload, "/<application_id:uuid>/<section_name:str>/index-files", methods=["POST"])
 app.add_route(handle_generate_draft_request, "/generate-draft", methods=["POST"])
