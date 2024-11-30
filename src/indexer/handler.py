@@ -61,14 +61,14 @@ async def parse_and_index_file(
         None
     """
     try:
-        extracted_data, mime_type = await parse_file_data(file_data=file.body, filename=file.name)
+        extracted_text, mime_type = await parse_file_data(file_data=file.body, filename=file.name)
         logger.info("Extracted text from file: %s", file.name)
         file_id = await upsert_application_file(
             application_id=application_id,
             mime_type=mime_type,
             file=file,
         )
-        chunks = chunk_text(extracted_data=extracted_data, mime_type=mime_type)
+        chunks = chunk_text(text=extracted_text, mime_type=mime_type)
         await index_documents(
             chunks=chunks,
             file_id=file_id,

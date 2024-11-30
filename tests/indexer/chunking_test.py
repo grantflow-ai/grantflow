@@ -1,12 +1,6 @@
 import pytest
 
 from src.indexer.chunking import chunk_text
-from src.indexer.extraction import PDF_MIMETYPE, OCROutput
-
-
-def test_chunking_ocr_output(ocr_output: OCROutput) -> None:
-    chunks = chunk_text(extracted_data=ocr_output, mime_type=PDF_MIMETYPE)
-    assert len(chunks) == 4
 
 
 @pytest.mark.parametrize("mime_type", ("text/markdown", "text/plain"))
@@ -21,6 +15,5 @@ def test_chunking_text(mime_type: str) -> None:
     revolutionize our understanding of plant intelligence.
     """
 
-    chunks = chunk_text(extracted_data=text.encode(), mime_type=mime_type)
-
+    chunks = chunk_text(text=text, mime_type=mime_type)
     assert len(chunks) == 1

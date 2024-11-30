@@ -1,13 +1,11 @@
 import logging
-from json import dumps, loads
+from json import dumps
 from os import environ
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from src.indexer.chunking import chunk_text
-from src.indexer.extraction import OCROutput
 from src.indexer.indexing import index_documents
 
 
@@ -26,20 +24,11 @@ from src.indexer.indexing import index_documents
 async def test_index_documents(logger: logging.Logger, filename: str) -> None:
     logger.info("Running end-to-end test for creating embeddings")
 
-    extraction_results = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.json"
+    extraction_result = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.md"
 
-    assert extraction_results.exists(), f"Expected file {extraction_results} to exist"
+    assert extraction_result.exists(), f"Expected file {extraction_result} to exist"
 
-    data = loads(extraction_results.read_text())
-    assert len(data) == 2
-
-    ocr_results = cast(OCROutput, data[0])
-    mime_type = cast(str, data[1])
-
-    assert isinstance(ocr_results, dict)
-    assert isinstance(mime_type, str)
-
-    chunks = chunk_text(extracted_data=ocr_results, mime_type=mime_type)
+    chunks = chunk_text(text=extraction_result.read_text(), mime_type="text/markdown")
 
     results = await index_documents(
         chunks=chunks,
