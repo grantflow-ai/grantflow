@@ -39,8 +39,9 @@ async def test_index_documents(logger: logging.Logger, filename: str) -> None:
 
     assert results
 
-    result_data = dumps(results)
     existing_results = Path(__file__).parent / "results" / f"create_embeddings_{filename}_test_result.json"
+    existing_results.parent.mkdir(parents=True, exist_ok=True)
+    existing_results.write_text(dumps(results))
 
     assert existing_results.exists(), f"Expected file {existing_results} to exist"
-    assert result_data == existing_results.read_text()
+    assert dumps(results) == existing_results.read_text()

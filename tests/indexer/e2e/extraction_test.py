@@ -26,8 +26,6 @@ async def test_parse_blob_data(logger: logging.Logger, filename: str) -> None:
     result, _ = await parse_file_data(file_data=file.read_bytes(), filename=filename)
 
     existing_results = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.md"
-    existing_results.parent.mkdir(parents=True, exist_ok=True)
-    existing_results.write_text(result)
 
     assert existing_results.exists(), f"Expected file {existing_results} to exist"
     assert result == existing_results.read_text()
