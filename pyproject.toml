@@ -20,14 +20,14 @@ dependencies = [
     "sqlalchemy>=2.0.36",
     "tenacity>=8.3.0",
     "google-cloud-aiplatform>=1.73.0",
-    "pypandoc>=1.14",
     "google-cloud-documentai>=3.0.1",
     "sanic>=24.6.0",
     "google-cloud-storage>=2.18.2",
     "pgvector>=0.3.6",
     "python-dotenv>=1.0.1",
-    "pymupdf4llm>=0.0.17",
     "charset-normalizer>=3.4.0",
+    "azure-ai-documentintelligence>=1.0.0b4",
+    "pypandoc>=1.14",
 ]
 
 [tool.pdm]
