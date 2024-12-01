@@ -25,7 +25,7 @@ async def handle_files_upload(request: Request, application_id: UUID) -> HTTPRes
         The response object.
     """
     files: list[FileDTO] = [
-        FileDTO(filename=filename, content=files_list[0].body)
+        FileDTO.from_file(filename=filename, file=files_list)
         for filename, files_list in dict(request.files).items()  # type: ignore[arg-type]
         if files_list
     ]
@@ -41,7 +41,7 @@ async def handle_files_upload(request: Request, application_id: UUID) -> HTTPRes
                 application_id=str(application_id),
                 app=request.app,
             ),
-            name=file_dto["filename"],
+            name=file_dto.filename,
         )
 
     return HTTPResponse(status=HTTPStatus.OK)

@@ -32,7 +32,7 @@ async def parse_and_index_file(
     """
     try:
         extracted_text, mime_type = await parse_file_data(file)
-        logger.info("Extracted text from file: %s", file["filename"])
+        logger.info("Extracted text from file: %s", file.filename)
         file_id = await insert_application_file(
             application_id=application_id,
             mime_type="any",
@@ -45,9 +45,9 @@ async def parse_and_index_file(
             file_id=file_id,
             application_id=application_id,
         )
-        logger.info("Successfully indexed file: %s", file["filename"])
+        logger.info("Successfully indexed file: %s", file.filename)
     except (FileParsingError, ExternalOperationError, ValidationError) as e:
-        await app.cancel_task(file["filename"])
-        logger.error("Failed to parse file: %s, Error: %s", file["filename"], e)
+        await app.cancel_task(file.filename)
+        logger.error("Failed to parse file: %s, Error: %s", file.filename, e)
     finally:
-        logger.info("Task %s completed", file["filename"])
+        logger.info("Task %s completed", file.filename)

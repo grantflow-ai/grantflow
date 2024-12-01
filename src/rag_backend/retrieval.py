@@ -4,7 +4,7 @@ from typing import Final
 from sqlalchemy import select
 
 from src.db.connection import get_session_maker
-from src.db.tables import ApplicationVector
+from src.db.tables import ApplicationFile, ApplicationVector
 from src.rag_backend.dto import DocumentDTO
 from src.utils.embeddings import TaskType, generate_embeddings
 
@@ -27,19 +27,13 @@ async def retrieve_documents(
     Returns:
         list[dict[str, str]]: The retrieved documents.
     """
-    query_embeddings = await generate_embeddings(search_queries, TaskType.RetrievalQuery)
+    query_embeddings = await generate_embeddings(",".join(search_queries), TaskType.RetrievalQuery)
 
     session_maker = get_session_maker()
     async with session_maker() as session, session.begin():
         stmt = (
-            select(
-                [
-                    ApplicationVector.content,
-                    ApplicationVector.element_type,
-                    ApplicationVector.file_id,
-                    ApplicationVector.page_number,
-                ]
-            )
+            select(ApplicationVector, ApplicationFile)
+            .join(ApplicationFile, ApplicationVector.file_id == ApplicationFile.id)
             .order_by(ApplicationVector.embedding.cosine_distance(query_embeddings))
             .filter_by(application_id=application_id)
             .limit(MAX_RESULTS)
