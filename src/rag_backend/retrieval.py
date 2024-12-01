@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import logging
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 from sqlalchemy import select
 
@@ -9,9 +7,6 @@ from src.db.connection import get_session_maker
 from src.db.tables import ApplicationVector
 from src.rag_backend.dto import DocumentDTO
 from src.utils.embeddings import TaskType, generate_embeddings
-
-if TYPE_CHECKING:
-    from src.data_types import SectionName
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +17,12 @@ async def retrieve_documents(
     *,
     application_id: str,
     search_queries: list[str],
-    section_name: SectionName,
 ) -> list[DocumentDTO]:
     """Retrieve documents from Azure Search using the given query vectors.
 
     Args:
         application_id: The application ID.
         search_queries: The search queries.
-        section_name: The section name.
 
     Returns:
         list[dict[str, str]]: The retrieved documents.
@@ -48,7 +41,7 @@ async def retrieve_documents(
                 ]
             )
             .order_by(ApplicationVector.embedding.cosine_distance(query_embeddings))
-            .filter_by(application_id=application_id, section_name=section_name)
+            .filter_by(application_id=application_id)
             .limit(MAX_RESULTS)
         )
 

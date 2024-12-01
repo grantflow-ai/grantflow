@@ -27,6 +27,5 @@ async def test_generate_embeddings(
 
     assert isinstance(embeddings, list)
     assert all(isinstance(embedding, list) for embedding in embeddings)
-    assert all(isinstance(value, float) for embedding in embeddings for value in embedding)
-    assert all(len(embedding) == EMBEDDING_DIMENSIONS for embedding in embeddings)
-    assert len(embeddings)
+    assert all(isinstance(value, float) for value in embeddings)
+    assert len(embeddings) == EMBEDDING_DIMENSIONS

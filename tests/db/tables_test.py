@@ -155,5 +155,4 @@ async def test_create_application_vector(
         assert result.element_type == vector_data.element_type
         assert result.file_id == vector_data.file_id
         assert result.page_number == vector_data.page_number
-        assert result.section_name == vector_data.section_name
         assert result.embedding is not None

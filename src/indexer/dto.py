@@ -1,11 +1,13 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, NamedTuple
-
 from typing_extensions import TypedDict
 
-if TYPE_CHECKING:
-    from src.data_types import SectionName
+
+class FileDTO(TypedDict):
+    """DTO for a file."""
+
+    content: bytes
+    """The content of the file."""
+    filename: str
+    """The name of the file."""
 
 
 class Chunk(TypedDict):
@@ -19,15 +21,6 @@ class Chunk(TypedDict):
     """The page number of the document."""
     element_type: str | None
     """The type of element the chunk belongs to."""
-
-
-class FileMetadata(NamedTuple):
-    """A named tuple to represent the components of a blob name."""
-
-    section_name: SectionName
-    """The section name to which the document belongs."""
-    filename: str
-    """The name of the file from which the content was extracted."""
 
 
 class VectorDTO(TypedDict):
@@ -45,5 +38,3 @@ class VectorDTO(TypedDict):
     """The ID of the file from which the content is derived."""
     page_number: int | None
     """The page number of the document."""
-    section_name: SectionName
-    """The section name to which the document belongs."""

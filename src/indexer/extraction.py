@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from mimetypes import guess_type
 from typing import Any, Final, NotRequired, TypedDict, cast
@@ -11,6 +9,7 @@ from azure.core.exceptions import HttpResponseError
 from charset_normalizer import detect
 from pypandoc import convert_text
 
+from src.indexer.dto import FileDTO
 from src.utils.env import get_env
 from src.utils.exceptions import FileParsingError, ValidationError
 from src.utils.sync import as_async_callable
@@ -271,16 +270,11 @@ async def extract_with_azure_document_intelligence(file_content: bytes) -> OCROu
         await client.close()
 
 
-async def parse_file_data(
-    *,
-    file_data: bytes,
-    filename: str,
-) -> tuple[str | OCROutput, str]:
+async def parse_file_data(file_data: FileDTO) -> tuple[str | OCROutput, str]:
     """Extract the contents of a file.
 
     Args:
-        file_data: The contents of the file.
-        filename: The name of the file.
+        file_data: The file data.
 
     Raises:
         ValidationError: If the mime type is not supported.
@@ -288,16 +282,16 @@ async def parse_file_data(
     Returns:
         A tuple composed of the extracted text and mime_type.
     """
-    if mime_type := guess_type(filename)[0]:
+    if mime_type := guess_type(file_data["filename"])[0]:
         if mime_type in PLAIN_TEXT_MIME_TYPES or any(mime_type.startswith(value) for value in PLAIN_TEXT_MIME_TYPES):
-            return file_data.decode(), mime_type
+            return file_data["content"].decode(), mime_type
 
         if mime_type in PANDOC_MIME_TYPES or any(mime_type.startswith(value) for value in PANDOC_MIME_TYPES):
-            return await extract_with_pandoc(file_data, mime_type), MARKDOWN_MIME_TYPE
+            return await extract_with_pandoc(file_data["content"], mime_type), MARKDOWN_MIME_TYPE
 
         if mime_type in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES or any(
             mime_type.startswith(value) for value in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES
         ):
-            return await extract_with_azure_document_intelligence(file_data), MARKDOWN_MIME_TYPE
+            return await extract_with_azure_document_intelligence(file_data["content"]), MARKDOWN_MIME_TYPE
 
     raise ValidationError(f"Unsupported mime type for file extraction: {mime_type}")

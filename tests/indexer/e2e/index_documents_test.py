@@ -2,16 +2,19 @@ import logging
 from json import loads
 from os import environ
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
 from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
 from src.indexer.chunking import chunk_text
-from src.indexer.extraction import OCROutput
 from src.indexer.indexing import index_documents
+from tests.indexer.e2e.conftest import TEST_FILES
+
+if TYPE_CHECKING:
+    from src.indexer.extraction import OCROutput
 
 
 @pytest.mark.skipif(
@@ -20,11 +23,7 @@ from src.indexer.indexing import index_documents
 )
 @pytest.mark.parametrize(
     "filename",
-    [
-        "nih-project-summary-template.docx",
-        "r01ai181321-01-liu-application.pdf",
-        "r01ai181321-01-liu-summary-statement.pdf",
-    ],
+    TEST_FILES,
 )
 async def test_index_documents(
     logger: logging.Logger,
@@ -47,7 +46,6 @@ async def test_index_documents(
         chunks=chunks,
         file_id=str(application_file.id),
         application_id=str(application.id),
-        section_name="research-plan",
     )
 
     async with async_session_maker() as session, session.begin():
