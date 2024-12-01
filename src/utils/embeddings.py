@@ -1,5 +1,6 @@
 import logging
 from enum import StrEnum
+from itertools import chain
 
 from vertexai.language_models import TextEmbeddingInput
 
@@ -19,12 +20,15 @@ class TaskType(StrEnum):
 
 
 @exponential_backoff_retry(ExternalOperationError)
-async def generate_embeddings(inputs: str | list[str], task: TaskType) -> list[list[float]]:
+async def generate_embeddings(
+    inputs: str | list[str], task: TaskType, output_dimensionality: int = EMBEDDING_DIMENSIONS
+) -> list[float]:
     """Generate embeddings for the given text using the specified model.
 
     Args:
         inputs: The text for which embeddings are to be created or a list thereof.
         task: The task for which the embeddings are to be created.
+        output_dimensionality: The dimensionality of the output embeddings.
 
     Raises:
         ExternalOperationError: If an error occurs during the operation.
@@ -40,10 +44,10 @@ async def generate_embeddings(inputs: str | list[str], task: TaskType) -> list[l
     try:
         embeddings = await client.get_embeddings_async(
             [TextEmbeddingInput(text, task.value) for text in inputs],
-            output_dimensionality=EMBEDDING_DIMENSIONS,
+            output_dimensionality=output_dimensionality,
         )
         logger.info("Successfully generated embeddings")
-        return [embedding.values for embedding in embeddings]
+        return list(chain(*[embedding.values for embedding in embeddings]))
     except ValueError as e:
         logger.error("Failed to get embeddings due to an API error: %s", e)
         raise ExternalOperationError(message="Failed to get embeddings", context=str(e)) from e
