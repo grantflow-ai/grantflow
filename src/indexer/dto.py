@@ -1,13 +1,42 @@
+from dataclasses import dataclass
+from mimetypes import guess_type
+
+from pathvalidate import sanitize_filename
+from sanic.request import File
 from typing_extensions import TypedDict
 
 
-class FileDTO(TypedDict):
+@dataclass
+class FileDTO:
     """DTO for a file."""
 
     content: bytes
     """The content of the file."""
     filename: str
     """The name of the file."""
+    mime_type: str
+
+    @classmethod
+    def from_file(cls, file: File | list[File], filename: str) -> "FileDTO":
+        """Create a FileDTO from a Sanic File object.
+
+        Args:
+            file: The Sanic File object.
+            filename: The name of the file.
+
+        Raises:
+            ValueError: If the mime type of the file cannot be determined.
+
+        Returns:
+            The FileDTO object.
+        """
+        file = file[0] if isinstance(file, list) else file
+
+        if mime_type := guess_type(filename)[0]:
+            filename = sanitize_filename(filename)
+            return cls(content=file.body, filename=filename, mime_type=mime_type)
+
+        raise ValueError("Could not determine the mime type of the file")
 
 
 class Chunk(TypedDict):

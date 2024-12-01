@@ -28,6 +28,7 @@ dependencies = [
     "charset-normalizer>=3.4.0",
     "azure-ai-documentintelligence>=1.0.0b4",
     "pypandoc>=1.14",
+    "pathvalidate>=3.2.1",
 ]
 
 [tool.pdm]

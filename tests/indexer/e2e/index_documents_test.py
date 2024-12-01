@@ -1,5 +1,5 @@
 import logging
-from json import loads
+from json import dumps, loads
 from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -49,7 +49,25 @@ async def test_index_documents(
     )
 
     async with async_session_maker() as session, session.begin():
-        stmt = select(ApplicationVector.file_id).where(ApplicationVector.file_id == application_file.id)
-        db_vectors = await session.execute(stmt)
+        stmt = select(ApplicationVector).where(ApplicationVector.file_id == application_file.id)
+        db_vectors = list(await session.scalars(stmt))
 
-    assert len(list(db_vectors)) == len(chunks)
+    assert len(db_vectors) == len(chunks)
+
+    existing_results = Path(__file__).parent / "results" / f"parse_{filename}_vectors_list.json"
+    assert existing_results.exists(), f"Expected file {existing_results} to exist"
+    assert (
+        dumps(
+            [
+                {
+                    "embedding": vector.embedding.tolist(),
+                    "content": vector.content,
+                    "chunk_index": vector.chunk_index,
+                    "element_type": vector.element_type,
+                    "page_number": vector.page_number,
+                }
+                for vector in db_vectors
+            ]
+        )
+        == existing_results.read_text()
+    )
