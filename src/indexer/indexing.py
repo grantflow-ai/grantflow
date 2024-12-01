@@ -1,7 +1,6 @@
 from asyncio import gather
 from typing import Final
 
-from src.data_types import SectionName
 from src.indexer.chunking import logger
 from src.indexer.db import upsert_application_vectors
 from src.indexer.dto import Chunk, VectorDTO
@@ -14,14 +13,12 @@ async def create_vector_dto(
     *,
     chunk: Chunk,
     file_id: str,
-    section_name: SectionName,
 ) -> VectorDTO:
     """Process a single chunked element.
 
     Args:
         chunk: The chunked element.
         file_id: The ID of the file from which the chunk is derived.
-        section_name: The section name to which the chunk belongs.
 
     Returns:
         VectorDTO
@@ -40,7 +37,6 @@ async def create_vector_dto(
         embedding=embedding,
         file_id=file_id,
         page_number=chunk["page_number"],
-        section_name=section_name,
     )
 
 
@@ -49,7 +45,6 @@ async def index_documents(
     chunks: list[Chunk],
     file_id: str,
     application_id: str,
-    section_name: SectionName,
 ) -> None:
     """Create embeddings for the given chunks.
 
@@ -57,7 +52,6 @@ async def index_documents(
         chunks: The list of chunks to index.
         file_id: The ID of the file from which the chunks are derived.
         application_id: The ID of the application the chunks belong to.
-        section_name: The section name to which the document belongs.
 
     Returns:
         The list of documents to index.
@@ -69,7 +63,6 @@ async def index_documents(
                 create_vector_dto(
                     chunk=chunk,
                     file_id=file_id,
-                    section_name=section_name,
                 )
                 for chunk in chunks[i : i + CHUNKS_BATCH_SIZE]
             ]

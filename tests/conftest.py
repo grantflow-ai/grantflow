@@ -7,14 +7,15 @@ from typing import Any
 import pytest
 from anyio import Path
 from asyncpg import connect
+from dotenv import load_dotenv
 from pytest_asyncio import is_async_test
+from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 from testcontainers.postgres import PostgresContainer
 
-from src.db.connection import get_session_maker
+from src.db.connection import engine_ref, get_session_maker
 from src.db.tables import (
     ApplicationFile,
-    ApplicationSectionEnum,
     FundingOrganization,
     GrantApplication,
     GrantCfp,
@@ -29,6 +30,8 @@ from tests.factories import (
     ResearchAimFactory,
     WorkspaceFactory,
 )
+
+load_dotenv()
 
 
 def pytest_collection_modifyitems(items: list[Any]) -> None:
@@ -81,9 +84,10 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
 
 @pytest.fixture(scope="session")
 async def async_session_maker(db_connection_string: str) -> async_sessionmaker[Any]:
-    os.environ.setdefault(
-        "DATABASE_CONNECTION_STRING", db_connection_string.replace("postgresql://", "postgresql+asyncpg://")
+    os.environ.update(
+        {"DATABASE_CONNECTION_STRING": db_connection_string.replace("postgresql://", "postgresql+asyncpg://")}
     )
+    engine_ref.value = None
     return get_session_maker()
 
 
@@ -129,9 +133,7 @@ async def application(
 async def application_file(
     async_session_maker: async_sessionmaker[Any], application: GrantApplication
 ) -> ApplicationFile:
-    file_data = ApplicationFileFactory.build(
-        application_id=application.id, section=ApplicationSectionEnum.RESEARCH_PLAN
-    )
+    file_data = ApplicationFileFactory.build(application_id=application.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -145,3 +147,10 @@ async def research_aim(async_session_maker: async_sessionmaker[Any], application
         session.add(aim_data)
         await session.commit()
     return aim_data
+
+
+@pytest.fixture(scope="session")
+def asgi_client() -> SanicASGITestClient:
+    from src.main import app
+
+    return app.asgi_client

@@ -1,7 +1,5 @@
 -- Create enum type "applicationstatusenum"
 CREATE TYPE "applicationstatusenum" AS ENUM ('DRAFT', 'COMPLETED');
--- Create enum type "applicationsectionenum"
-CREATE TYPE "applicationsectionenum" AS ENUM ('SIGNIFICANCE_AND_INNOVATION', 'RESEARCH_PLAN');
 -- Create enum type "userroleenum"
 CREATE TYPE "userroleenum" AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 -- Create "funding_organizations" table
@@ -54,8 +52,6 @@ CREATE TABLE "grant_applications" (
 CREATE TABLE "application_files" (
   "id" uuid NOT NULL,
   "application_id" uuid NOT NULL,
-  "section" "applicationsectionenum" NOT NULL,
-  "blob_url" text NOT NULL,
   "name" character varying(255) NOT NULL,
   "type" character varying(255) NOT NULL,
   "size" integer NOT NULL,
@@ -71,7 +67,6 @@ CREATE TABLE "application_vectors" (
   "element_type" character varying(50) NULL,
   "embedding" vector(256) NOT NULL,
   "page_number" integer NULL,
-  "section_name" character varying(255) NOT NULL,
   PRIMARY KEY ("application_id", "file_id", "chunk_index"),
   CONSTRAINT "application_vectors_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "grant_applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "application_vectors_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "application_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE

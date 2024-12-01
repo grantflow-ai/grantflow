@@ -138,7 +138,6 @@ async def handle_specific_aims_text_generation(
     search_result = await retrieve_documents(
         application_id=application_id,
         search_queries=search_queries,
-        section_name="research-plan",
     )
 
     handler = partial(

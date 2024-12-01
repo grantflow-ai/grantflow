@@ -163,7 +163,6 @@ async def handle_significance_text_generation(
     search_result = await retrieve_documents(
         application_id=application_id,
         search_queries=search_queries,
-        section_name="significance-and-innovation",
     )
 
     handler = partial(

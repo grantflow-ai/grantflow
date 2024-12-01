@@ -130,4 +130,6 @@ dev = [
     "sqlalchemy2-stubs>=0.0.2a38",
     "testcontainers>=4.8.2",
     "atlas-provider-sqlalchemy>=0.2.3",
+    "sanic-testing>=24.6.0",
+    "pytest-timeout>=2.3.1",
 ]
