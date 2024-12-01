@@ -1,4 +1,5 @@
 import logging
+from json import dumps
 from os import environ
 from pathlib import Path
 
@@ -24,8 +25,10 @@ async def test_parse_blob_data(logger: logging.Logger, filename: str) -> None:
 
     file = Path(__file__).parent / "data" / filename
     result, _ = await parse_file_data(file_data=file.read_bytes(), filename=filename)
+    ext = "json" if isinstance(result, dict) else "md"
+    content = dumps(result) if isinstance(result, dict) else result
 
-    existing_results = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.md"
+    existing_results = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.{ext}"
 
     assert existing_results.exists(), f"Expected file {existing_results} to exist"
-    assert result == existing_results.read_text()
+    assert content == existing_results.read_text()

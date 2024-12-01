@@ -2,7 +2,7 @@ from collections.abc import Callable, Coroutine
 from functools import partial
 from typing import Any
 
-from anyio.to_thread import run_sync
+from anyio.to_thread import run_sync  # use anyio to simplify asyncio and ensure multi loop compat
 
 
 def as_async_callable[**P, T](sync_fn: Callable[P, T]) -> Callable[P, Coroutine[Any, Any, T]]:

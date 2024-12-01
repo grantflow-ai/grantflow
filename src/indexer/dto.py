@@ -39,7 +39,7 @@ class VectorDTO(TypedDict):
     """The text content of the document."""
     element_type: str | None
     """The type of element the content belongs to."""
-    embeddings: list[list[float]]
+    embedding: list[float]
     """The embeddings of the content."""
     file_id: str
     """The ID of the file from which the content is derived."""

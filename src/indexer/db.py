@@ -1,6 +1,5 @@
 import logging
 
-from pgvector.asyncpg import register_vector
 from sanic.request import File
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,7 +16,7 @@ async def upsert_application_vectors(
     *,
     vectors: list[VectorDTO],
     application_id: str,
-) -> list[ApplicationVector]:
+) -> None:
     """Insert or update application vectors in the database.
 
     Args:
@@ -32,43 +31,39 @@ async def upsert_application_vectors(
     """
     session_maker = get_session_maker()
 
-    async with session_maker() as session:
-        await register_vector(session)
+    async with session_maker() as session, session.begin():
         try:
-            async with session.begin():
-                insert_stmt = insert(ApplicationVector).values(
-                    [
-                        {
-                            "application_id": application_id,
-                            "file_id": vector["file_id"],
-                            "chunk_index": vector["chunk_index"],
-                            "content": vector["content"],
-                            "element_type": vector["element_type"],
-                            "embeddings": vector["embeddings"],
-                            "page_number": vector["page_number"],
-                            "section_name": vector["section_name"],
-                        }
-                        for vector in vectors
-                    ]
-                )
+            insert_stmt = insert(ApplicationVector).values(
+                [
+                    {
+                        "application_id": application_id,
+                        "file_id": vector["file_id"],
+                        "chunk_index": vector["chunk_index"],
+                        "content": vector["content"],
+                        "element_type": vector["element_type"],
+                        "embedding": vector["embedding"],
+                        "page_number": vector["page_number"],
+                        "section_name": vector["section_name"],
+                    }
+                    for vector in vectors
+                ]
+            )
 
-                upsert_stmt = insert_stmt.on_conflict_do_update(
-                    index_elements=["application_id", "file_id", "chunk_index"],
-                    set_={
-                        "content": insert_stmt.excluded.content,
-                        "element_type": insert_stmt.excluded.element_type,
-                        "embeddings": insert_stmt.excluded.embeddings,
-                        "page_number": insert_stmt.excluded.page_number,
-                        "section_name": insert_stmt.excluded.section_name,
-                    },
-                )
+            upsert_stmt = insert_stmt.on_conflict_do_update(
+                index_elements=["application_id", "file_id", "chunk_index"],
+                set_={
+                    "content": insert_stmt.excluded.content,
+                    "element_type": insert_stmt.excluded.element_type,
+                    "embedding": insert_stmt.excluded.embedding,
+                    "page_number": insert_stmt.excluded.page_number,
+                    "section_name": insert_stmt.excluded.section_name,
+                },
+            )
 
-                upsert_stmt.returning(ApplicationVector)
-
-                result = await session.execute(upsert_stmt)
-                await session.commit()
-                logger.info("Successfully inserted application vectors for application_id: %s", application_id)
-                return list(result.scalars().all())
+            upsert_stmt.returning(ApplicationVector)
+            await session.execute(upsert_stmt)
+            await session.commit()
+            logger.info("Successfully inserted application vectors for application_id: %s", application_id)
         except SQLAlchemyError as e:
             logger.error("Error upserting application vectors: %s", e)
             await session.rollback()
