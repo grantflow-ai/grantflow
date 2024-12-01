@@ -1,8 +1,9 @@
 import os
 from collections.abc import AsyncGenerator
 from logging import Logger, getLogger
+from mimetypes import guess_type
 from textwrap import dedent
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from anyio import Path
@@ -22,6 +23,7 @@ from src.db.tables import (
     ResearchAim,
     Workspace,
 )
+from src.indexer.dto import FileDTO
 from tests.factories import (
     ApplicationFileFactory,
     FundingOrganizationFactory,
@@ -154,3 +156,12 @@ def asgi_client() -> SanicASGITestClient:
     from src.main import app
 
     return app.asgi_client
+
+
+@pytest.fixture(scope="session")
+async def test_data_file() -> AsyncGenerator[FileDTO]:
+    data_files_path = Path(__file__).parent / "test_data" / "sources"
+    async for file in data_files_path.glob("*"):
+        filename = "_".join(file.name.split(" ")).lower()
+        mime_type = cast(str, guess_type(file.name)[0])
+        yield FileDTO(content=await file.read_bytes(), filename=filename, mime_type=mime_type)

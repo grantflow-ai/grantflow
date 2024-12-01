@@ -86,9 +86,9 @@ async def insert_application_file(*, file: FileDTO, mime_type: str, application_
         .values(
             {
                 "application_id": application_id,
-                "name": file["filename"],
+                "name": file.filename,
                 "type": mime_type,
-                "size": file["content"].__sizeof__(),
+                "size": file.content.__sizeof__(),
             }
         )
         .returning(ApplicationFile.id)
