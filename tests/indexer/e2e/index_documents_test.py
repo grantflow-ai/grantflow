@@ -1,11 +1,16 @@
 import logging
-from json import dumps
+from json import loads
 from os import environ
 from pathlib import Path
+from typing import Any
 
 import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
 from src.indexer.chunking import chunk_text
+from src.indexer.extraction import OCROutput
 from src.indexer.indexing import index_documents
 
 
@@ -21,27 +26,32 @@ from src.indexer.indexing import index_documents
         "r01ai181321-01-liu-summary-statement.pdf",
     ],
 )
-async def test_index_documents(logger: logging.Logger, filename: str) -> None:
+async def test_index_documents(
+    logger: logging.Logger,
+    filename: str,
+    async_session_maker: async_sessionmaker[Any],
+    application: GrantApplication,
+    application_file: ApplicationFile,
+) -> None:
     logger.info("Running end-to-end test for creating embeddings")
 
-    extraction_result = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.md"
+    ext = "json" if filename.endswith(".pdf") else "md"
 
+    extraction_result = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.{ext}"
     assert extraction_result.exists(), f"Expected file {extraction_result} to exist"
 
-    chunks = chunk_text(text=extraction_result.read_text(), mime_type="text/markdown")
+    content: str | OCROutput = extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
+    chunks = chunk_text(text=content, mime_type="text/markdown")
 
-    results = await index_documents(
+    await index_documents(
         chunks=chunks,
-        file_id=filename,
-        application_id="test_application_id",
+        file_id=str(application_file.id),
+        application_id=str(application.id),
         section_name="research-plan",
     )
 
-    assert results
+    async with async_session_maker() as session, session.begin():
+        stmt = select(ApplicationVector.file_id).where(ApplicationVector.file_id == application_file.id)
+        db_vectors = await session.execute(stmt)
 
-    existing_results = Path(__file__).parent / "results" / f"create_embeddings_{filename}_test_result.json"
-    existing_results.parent.mkdir(parents=True, exist_ok=True)
-    existing_results.write_text(dumps(results))
-
-    assert existing_results.exists(), f"Expected file {existing_results} to exist"
-    assert dumps(results) == existing_results.read_text()
+    assert len(list(db_vectors)) == len(chunks)

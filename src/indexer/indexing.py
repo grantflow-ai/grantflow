@@ -2,7 +2,6 @@ from asyncio import gather
 from typing import Final
 
 from src.data_types import SectionName
-from src.db.tables import ApplicationVector
 from src.indexer.chunking import logger
 from src.indexer.db import upsert_application_vectors
 from src.indexer.dto import Chunk, VectorDTO
@@ -32,13 +31,13 @@ async def create_vector_dto(
         "Preparing chunk for indexing with filename: %s and chunk_id: %s",
     )
 
-    embeddings = await generate_embeddings([chunk["content"]], task=TaskType.RetrievalDocument)
+    embedding = await generate_embeddings([chunk["content"]], task=TaskType.RetrievalDocument)
 
     return VectorDTO(
         chunk_index=chunk["index"],
         content=chunk["content"],
         element_type=chunk["element_type"],
-        embeddings=embeddings,
+        embedding=embedding,
         file_id=file_id,
         page_number=chunk["page_number"],
         section_name=section_name,
@@ -51,7 +50,7 @@ async def index_documents(
     file_id: str,
     application_id: str,
     section_name: SectionName,
-) -> list[ApplicationVector]:
+) -> None:
     """Create embeddings for the given chunks.
 
     Args:
@@ -77,6 +76,5 @@ async def index_documents(
         )
         data.extend([result for result in results if result is not None])
 
-    vectors = await upsert_application_vectors(vectors=data, application_id=application_id)
+    await upsert_application_vectors(vectors=data, application_id=application_id)
     logger.info("Successfully indexed file_id: %s", file_id)
-    return vectors

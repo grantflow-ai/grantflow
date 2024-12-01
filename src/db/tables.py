@@ -208,17 +208,16 @@ class ApplicationVector(Base):
     """Application vector table."""
 
     __tablename__ = "application_vectors"
-
     application_id: Mapped[UUID] = mapped_column(
         UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True
+    )
+    file_id: Mapped[UUID] = mapped_column(
+        UUID(), ForeignKey("application_files.id", ondelete="CASCADE"), primary_key=True
     )
     chunk_index: Mapped[int] = mapped_column(Integer, primary_key=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     element_type: Mapped[str] = mapped_column(String(50), nullable=True)
     embedding: Mapped[list[list[float]]] = mapped_column(Vector(EMBEDDING_DIMENSIONS), nullable=False)
-    file_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("application_files.id", ondelete="CASCADE"), primary_key=True
-    )
     page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     section_name: Mapped[str | None] = mapped_column(String(255), nullable=False)
 

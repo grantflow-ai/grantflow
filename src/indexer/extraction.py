@@ -79,8 +79,6 @@ MIME_TYPE_EXT_MAP = {
     "text/x-tsv": "tsv",
 }
 
-pandoc_handler = as_async_callable(convert_text)
-
 
 class Span(TypedDict, total=False):
     """A span of text in a document."""
@@ -218,6 +216,9 @@ class OCROutput(TypedDict, total=False):
     sections: NotRequired[list[Section]]
     figures: NotRequired[list[Figure]]
     additionalItems: NotRequired[list[str | dict[str, Any]]]
+
+
+pandoc_handler = as_async_callable(convert_text)
 
 
 async def extract_with_pandoc(file_data: bytes, mime_type: str) -> str:
