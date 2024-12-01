@@ -1,12 +1,11 @@
 import logging
 
-from sanic.request import File
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
 from src.db.tables import ApplicationFile, ApplicationVector
-from src.indexer.dto import VectorDTO
+from src.indexer.dto import FileDTO, VectorDTO
 from src.utils.exceptions import DatabaseError
 
 logger = logging.getLogger(__name__)
@@ -43,7 +42,6 @@ async def upsert_application_vectors(
                         "element_type": vector["element_type"],
                         "embedding": vector["embedding"],
                         "page_number": vector["page_number"],
-                        "section_name": vector["section_name"],
                     }
                     for vector in vectors
                 ]
@@ -56,7 +54,6 @@ async def upsert_application_vectors(
                     "element_type": insert_stmt.excluded.element_type,
                     "embedding": insert_stmt.excluded.embedding,
                     "page_number": insert_stmt.excluded.page_number,
-                    "section_name": insert_stmt.excluded.section_name,
                 },
             )
 
@@ -70,8 +67,8 @@ async def upsert_application_vectors(
             raise DatabaseError("Error upserting application vectors", context=str(e)) from e
 
 
-async def upsert_application_file(*, file: File, mime_type: str, application_id: str) -> str:
-    """Insert or update application files in the database.
+async def insert_application_file(*, file: FileDTO, mime_type: str, application_id: str) -> str:
+    """Insert an application files in the database.
 
     Args:
         file: The file object.
@@ -84,30 +81,24 @@ async def upsert_application_file(*, file: File, mime_type: str, application_id:
     Returns:
         The ID of the inserted file
     """
-    insert_stmt = insert(ApplicationFile).values(
-        {
-            "application_id": application_id,
-            "filename": file.name,
-            "type": mime_type,
-            "size": file.body.__sizeof__(),
-        }
+    insert_stmt = (
+        insert(ApplicationFile)
+        .values(
+            {
+                "application_id": application_id,
+                "name": file["filename"],
+                "type": mime_type,
+                "size": file["content"].__sizeof__(),
+            }
+        )
+        .returning(ApplicationFile.id)
     )
-
-    upsert_stmt = insert_stmt.on_conflict_do_update(
-        index_elements=["application_id", "filename"],
-        set_={
-            "type": insert_stmt.excluded.type,
-            "size": insert_stmt.excluded.size,
-        },
-    )
-
-    upsert_stmt.returning(ApplicationFile.c.id)
 
     session_maker = get_session_maker()
 
     async with session_maker() as session, session.begin():
         try:
-            result = await session.execute(upsert_stmt)
+            result = await session.execute(insert_stmt)
             await session.commit()
             return str(result.scalar())
         except SQLAlchemyError as e:

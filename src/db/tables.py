@@ -33,13 +33,6 @@ class ApplicationStatusEnum(StrEnum):
     COMPLETED = "completed"
 
 
-class ApplicationSectionEnum(StrEnum):
-    """Enumeration of application sections."""
-
-    SIGNIFICANCE_AND_INNOVATION = "significance-and-innovation"
-    RESEARCH_PLAN = "research-plan"
-
-
 class User(Base):
     """User table."""
 
@@ -47,9 +40,9 @@ class User(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True)
     photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum), nullable=False, default=UserRoleEnum.MEMBER)
+    role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum), default=UserRoleEnum.MEMBER)
 
 
 class Workspace(Base):
@@ -58,7 +51,7 @@ class Workspace(Base):
     __tablename__ = "workspaces"
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
-    name: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(Text, index=True)
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -74,7 +67,7 @@ class WorkspaceUser(Base):
     user_id: Mapped[UUID] = mapped_column(
         UUID(), ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True
     )
-    role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum), nullable=False)
+    role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum))
 
 
 class FundingOrganization(Base):
@@ -83,7 +76,7 @@ class FundingOrganization(Base):
     __tablename__ = "funding_organizations"
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
-    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), index=True)
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
@@ -94,14 +87,14 @@ class GrantCfp(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     funding_organization_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
+        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    allow_clinical_trials: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    allow_resubmissions: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    allow_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=True)
+    allow_resubmissions: Mapped[bool] = mapped_column(Boolean, default=True)
     category: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    code: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(255), index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    title: Mapped[str] = mapped_column(String(255))
     url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
@@ -112,14 +105,12 @@ class GrantApplication(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     workspace_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
+        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    cfp_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
-    )
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    cfp_id: Mapped[UUID] = mapped_column(UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"))
+    title: Mapped[str] = mapped_column(String(255))
     status: Mapped[ApplicationStatusEnum] = mapped_column(
-        Enum(ApplicationStatusEnum), nullable=False, default=ApplicationStatusEnum.DRAFT
+        Enum(ApplicationStatusEnum), default=ApplicationStatusEnum.DRAFT
     )
 
 
@@ -130,13 +121,11 @@ class ApplicationFile(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     application_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    section: Mapped[ApplicationSectionEnum] = mapped_column(Enum(ApplicationSectionEnum), nullable=False)
-    blob_url: Mapped[str] = mapped_column(Text, nullable=False)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
-    type: Mapped[str] = mapped_column(String(255), nullable=False)
-    size: Mapped[int] = mapped_column(Integer, nullable=False)
+    name: Mapped[str] = mapped_column(String(255))
+    type: Mapped[str] = mapped_column(String(255))
+    size: Mapped[int] = mapped_column(Integer)
 
 
 class ResearchSignificance(Base):
@@ -146,9 +135,9 @@ class ResearchSignificance(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     application_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    text: Mapped[str] = mapped_column(Text, nullable=False)
+    text: Mapped[str] = mapped_column(Text)
 
 
 class ResearchInnovation(Base):
@@ -158,9 +147,9 @@ class ResearchInnovation(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     application_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    text: Mapped[str] = mapped_column(Text, nullable=False)
+    text: Mapped[str] = mapped_column(Text)
 
 
 class ResearchAim(Base):
@@ -170,11 +159,11 @@ class ResearchAim(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     application_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False)
-    requires_clinical_trials: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    title: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text)
+    requires_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class ResearchTask(Base):
@@ -183,11 +172,9 @@ class ResearchTask(Base):
     __tablename__ = "research_tasks"
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
-    aim_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("research_aims.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
-    )
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False)
+    aim_id: Mapped[UUID] = mapped_column(UUID(), ForeignKey("research_aims.id", ondelete="CASCADE", onupdate="CASCADE"))
+    title: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text)
 
 
 class GenerationResult(Base):
@@ -197,11 +184,11 @@ class GenerationResult(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid4)
     application_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE")
     )
     duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.now(tz=UTC))
-    text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), default=datetime.now(tz=UTC))
+    text: Mapped[str] = mapped_column(Text)
 
 
 class ApplicationVector(Base):
@@ -215,11 +202,10 @@ class ApplicationVector(Base):
         UUID(), ForeignKey("application_files.id", ondelete="CASCADE"), primary_key=True
     )
     chunk_index: Mapped[int] = mapped_column(Integer, primary_key=True)
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str] = mapped_column(Text)
     element_type: Mapped[str] = mapped_column(String(50), nullable=True)
-    embedding: Mapped[list[list[float]]] = mapped_column(Vector(EMBEDDING_DIMENSIONS), nullable=False)
+    embedding: Mapped[list[list[float]]] = mapped_column(Vector(EMBEDDING_DIMENSIONS))
     page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    section_name: Mapped[str | None] = mapped_column(String(255), nullable=False)
 
     __table_args__ = (
         Index(

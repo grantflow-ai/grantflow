@@ -5,7 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from src.indexer.dto import FileDTO
 from src.indexer.extraction import parse_file_data
+from tests.indexer.e2e.conftest import TEST_FILES
 
 
 @pytest.mark.skipif(
@@ -14,17 +16,13 @@ from src.indexer.extraction import parse_file_data
 )
 @pytest.mark.parametrize(
     "filename",
-    [
-        "nih-project-summary-template.docx",
-        "r01ai181321-01-liu-application.pdf",
-        "r01ai181321-01-liu-summary-statement.pdf",
-    ],
+    TEST_FILES,
 )
 async def test_parse_blob_data(logger: logging.Logger, filename: str) -> None:
     logger.info("Running end-to-end test for extracting text from a document")
 
     file = Path(__file__).parent / "data" / filename
-    result, _ = await parse_file_data(file_data=file.read_bytes(), filename=filename)
+    result, _ = await parse_file_data(file_data=FileDTO(content=file.read_bytes(), filename=filename))
     ext = "json" if isinstance(result, dict) else "md"
     content = dumps(result) if isinstance(result, dict) else result
 
