@@ -1,24 +1,32 @@
 import logging
 from json import dumps
+from mimetypes import guess_type
 from os import environ
+from pathlib import Path
+from typing import cast
 
 import pytest
-from anyio import Path
 
 from src.indexer.dto import FileDTO
 from src.indexer.extraction import parse_file_data
+from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-async def test_parse_blob_data(logger: logging.Logger, test_data_file: FileDTO) -> None:
+@pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
+async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
     logger.info("Running end-to-end test for extracting text from a document")
-    result, _ = await parse_file_data(test_data_file)
+    mime_type = cast(str, guess_type(data_file.name)[0])
+    file_dto = FileDTO(content=data_file.read_bytes(), filename=data_file.name, mime_type=mime_type)
+    result, _ = await parse_file_data(file_dto)
     ext = "json" if isinstance(result, dict) else "md"
     content = dumps(result) if isinstance(result, dict) else result
-    existing_results = Path(__file__).parent / "results" / f"parse_{test_data_file.filename}_data_test_result.{ext}"
-    await existing_results.write_text(content)
-    assert existing_results.exists(), f"Expected file {existing_results} to exist"
-    assert content == await existing_results.read_text()
+
+    existing_results = RESULTS_FOLDER / f"parse_{file_dto.filename}_data_test_result.{ext}"
+    if not existing_results.exists():
+        existing_results.write_text(content)
+    else:
+        assert content == existing_results.read_text()

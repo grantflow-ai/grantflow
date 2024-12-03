@@ -1,12 +1,12 @@
 import logging
 from asyncio import gather
 from collections import defaultdict
-from json import dumps
 from string import Template
 from typing import Final
 
 from typing_extensions import TypedDict
 
+from src.db.tables import ResearchAim
 from src.rag_backend.application_draft_generation.research_aims import (
     handle_research_aim_text_generation,
 )
@@ -16,14 +16,8 @@ from src.rag_backend.application_draft_generation.research_tasks import (
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
 )
-from src.rag_backend.dto import (
-    EnrichedResearchAimDTO,
-    EnrichedResearchTaskDTO,
-    NumberedResearchAimDTO,
-    NumberedResearchTaskDTO,
-    ResearchAimDTO,
-)
 from src.rag_backend.utils import handle_completions_request
+from src.utils.serialization import serialize
 from src.utils.text import strip_lines
 
 logger = logging.getLogger(__name__)
@@ -40,9 +34,9 @@ Your task is to analyze research aims and tasks for a grant application, identif
 
 Here is the data you will work with:
 
-<numbered_aims_with_tasks>
-${numbered_aims_with_tasks}
-</numbered_aims_with_tasks>
+<aims>
+${aims}
+</aims>
 
 Your objective is to identify and describe relations between research aims and research tasks:
 
@@ -118,75 +112,61 @@ response_schema = {
 
 
 async def enrich_research_aims_and_tasks_with_relationship_information(
-    research_aims: list[ResearchAimDTO],
-) -> list[EnrichedResearchAimDTO]:
+    research_aims: list[ResearchAim],
+) -> list[ResearchAim]:
     """Enrich the research aims and tasks with relationship information.
 
     Args:
         research_aims: The research aims to enrich.
 
     Returns:
-        list[EnrichedResearchAimDTO]: The enriched research aims.
+        list[EnrichedResearchAim]: The enriched research aims.
     """
-    numbered_aims_with_tasks: list[NumberedResearchAimDTO] = []
-    for aims_index, research_aim in enumerate(research_aims):
-        aim_number = aims_index + 1
-        tasks = [
-            NumberedResearchTaskDTO(
-                **research_task,
-                task_number=f"{aim_number}.{tasks_index + 1}",
-            )
-            for tasks_index, research_task in enumerate(research_aim["tasks"])
-        ]
-        numbered_aims_with_tasks.append(
-            NumberedResearchAimDTO(
-                title=research_aim["title"],
-                description=research_aim["description"],
-                requires_clinical_trials=research_aim["requires_clinical_trials"],
-                aim_number=str(aim_number),
-                tasks=tasks,
-            )
-        )
-
     results = await handle_completions_request(
         prompt_identifier="identify_relations",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT.substitute(
-            numbered_aims_with_tasks=dumps(numbered_aims_with_tasks)
+            aims=serialize(
+                [
+                    {
+                        "title": research_aim.title,
+                        "description": research_aim.description,
+                        "aim_number": research_aim.aim_number,
+                        "tasks": [
+                            {
+                                "title": research_task.title,
+                                "description": research_task.description,
+                                "task_number": research_task.task_number,
+                            }
+                            for research_task in research_aim.research_tasks
+                        ],
+                    }
+                    for research_aim in research_aims
+                ]
+            )
         ),
         response_type=ToolResponse,  # type: ignore[type-var]
         output_instructions=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS,
         response_schema=response_schema,
     )
-    logger.info("Generated relations for research aims: %s", dumps(results))
+    logger.info("Generated relations for research aims: %s", serialize(results))
 
-    relations = defaultdict(list)
+    relations = defaultdict[str, list[str]](list)
     for relation in results["relations"]:
         relations[relation[0]].append(relation[1])
 
-    return [
-        EnrichedResearchAimDTO(
-            aim_number=research_aim["aim_number"],
-            description=research_aim["description"],
-            relations=relations.get(research_aim["aim_number"], []),
-            requires_clinical_trials=research_aim["requires_clinical_trials"],
-            title=research_aim["title"],
-            tasks=[
-                EnrichedResearchTaskDTO(
-                    **research_task,
-                    relations=relations.get(research_task["task_number"], []),
-                )
-                for research_task in research_aim["tasks"]
-            ],
-        )
-        for research_aim in numbered_aims_with_tasks
-    ]
+    for aim in research_aims:
+        aim.relations = relations.get(str(aim.aim_number), [])
+        for task in aim.research_tasks:
+            task.relations = relations.get(task.task_number, [])
+
+    return research_aims
 
 
 async def handle_research_plan_text_generation(
     *,
     application_id: str,
-    research_aims: list[ResearchAimDTO],
+    research_aims: list[ResearchAim],
 ) -> str:
     """Generate the text for the research plan.
 
@@ -211,27 +191,27 @@ async def handle_research_plan_text_generation(
                     *[
                         handle_research_task_text_generation(
                             application_id=application_id,
-                            requires_clinical_trials=research_aim["requires_clinical_trials"],
+                            requires_clinical_trials=research_aim.requires_clinical_trials,
                             research_task=research_task,
                         )
-                        for index, research_task in enumerate(research_aim["tasks"])
+                        for index, research_task in enumerate(research_aim.research_tasks)
                     ]
                 ),
             ]
         )
         research_aim_texts.append(
             RESEARCH_AIM_TEMPLATE.substitute(
-                aim_number=research_aim["aim_number"],
-                title=research_aim["title"],
+                aim_number=research_aim.aim_number,
+                title=research_aim.title,
                 aim_text=research_aim_text,
                 tasks_text="\n\n".join(
                     RESEARCH_TASK_TEMPLATE.substitute(
-                        task_number=research_task["task_number"],
-                        title=research_task["title"],
+                        task_number=research_task.task_number,
+                        title=research_task.title,
                         task_text=research_task_text,
                     )
                     for research_task, research_task_text in zip(
-                        research_aim["tasks"], research_tasks_texts, strict=False
+                        research_aim.research_tasks, research_tasks_texts, strict=False
                     )
                 ),
             )

@@ -8,15 +8,13 @@ from sqlalchemy import Column
 
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.tables import (
+    ApplicationDraft,
     ApplicationFile,
     ApplicationVector,
     FundingOrganization,
-    GenerationResult,
     GrantApplication,
     GrantCfp,
     ResearchAim,
-    ResearchInnovation,
-    ResearchSignificance,
     ResearchTask,
     User,
     Workspace,
@@ -54,14 +52,6 @@ class ApplicationFileFactory(SQLAlchemyFactory[ApplicationFile]):
     __model__ = ApplicationFile
 
 
-class ResearchSignificanceFactory(SQLAlchemyFactory[ResearchSignificance]):
-    __model__ = ResearchSignificance
-
-
-class ResearchInnovationFactory(SQLAlchemyFactory[ResearchInnovation]):
-    __model__ = ResearchInnovation
-
-
 class ResearchAimFactory(SQLAlchemyFactory[ResearchAim]):
     __model__ = ResearchAim
 
@@ -70,8 +60,8 @@ class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
     __model__ = ResearchTask
 
 
-class GenerationResultFactory(SQLAlchemyFactory[GenerationResult]):
-    __model__ = GenerationResult
+class GenerationResultFactory(SQLAlchemyFactory[ApplicationDraft]):
+    __model__ = ApplicationDraft
 
 
 class ApplicationVectorFactory(SQLAlchemyFactory[ApplicationVector]):

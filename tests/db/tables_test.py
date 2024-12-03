@@ -3,13 +3,11 @@ from typing import Any
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
 from src.db.tables import (
+    ApplicationDraft,
     ApplicationFile,
     ApplicationVector,
-    GenerationResult,
     GrantApplication,
     ResearchAim,
-    ResearchInnovation,
-    ResearchSignificance,
     ResearchTask,
     User,
     Workspace,
@@ -18,8 +16,6 @@ from src.db.tables import (
 from tests.factories import (
     ApplicationVectorFactory,
     GenerationResultFactory,
-    ResearchInnovationFactory,
-    ResearchSignificanceFactory,
     ResearchTaskFactory,
     UserFactory,
     WorkspaceUserFactory,
@@ -59,40 +55,6 @@ async def test_create_workspace_user(async_session_maker: async_sessionmaker[Any
         assert result.role == workspace_user_data.role
 
 
-async def test_create_research_significance(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication
-) -> None:
-    significance_data = ResearchSignificanceFactory.build(application_id=application.id)
-
-    async with async_session_maker() as session, session.begin():
-        session.add(significance_data)
-        await session.commit()
-
-    async with async_session_maker() as session, session.begin():
-        result = await session.get(ResearchSignificance, significance_data.id)
-        assert result is not None
-        assert result.id == significance_data.id
-        assert result.application_id == significance_data.application_id
-        assert result.text == significance_data.text
-
-
-async def test_create_research_innovation(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication
-) -> None:
-    innovation_data = ResearchInnovationFactory.build(application_id=application.id)
-
-    async with async_session_maker() as session, session.begin():
-        session.add(innovation_data)
-        await session.commit()
-
-    async with async_session_maker() as session, session.begin():
-        result = await session.get(ResearchInnovation, innovation_data.id)
-        assert result is not None
-        assert result.id == innovation_data.id
-        assert result.application_id == innovation_data.application_id
-        assert result.text == innovation_data.text
-
-
 async def test_create_research_task(async_session_maker: async_sessionmaker[Any], research_aim: ResearchAim) -> None:
     task_data = ResearchTaskFactory.build(aim_id=research_aim.id)
 
@@ -119,7 +81,7 @@ async def test_create_generation_result(
         await session.commit()
 
     async with async_session_maker() as session, session.begin():
-        result = await session.get(GenerationResult, result_data.id)
+        result = await session.get(ApplicationDraft, result_data.id)
         assert result is not None
         assert result.id == result_data.id
         assert result.application_id == result_data.application_id

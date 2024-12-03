@@ -1,7 +1,6 @@
 import logging
 from asyncio import sleep
 from os import environ
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -10,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defin
 from sqlalchemy.future import select
 
 from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
-from tests.indexer.e2e.conftest import TEST_FILES
+from tests.conftest import TEST_DATA_SOURCES
 
 
 @pytest.mark.timeout(180)
@@ -26,7 +25,7 @@ async def test_files_upload(
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings")
 
-    files = {filename: (Path(__file__).parent / "data" / filename).read_bytes() for filename in TEST_FILES}
+    files = {file_path.name: file_path.read_bytes() for file_path in TEST_DATA_SOURCES}
     await asgi_client.post(f"/{application.id}/index-files", files=files)
 
     db_files: list[ApplicationFile] = []
