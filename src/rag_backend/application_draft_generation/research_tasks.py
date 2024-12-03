@@ -56,8 +56,13 @@ It should address the following implicit questions:
 4. What is the results analysis and interpretation framework?
 ${clinical_trial_questions}
 
-**Important**: The research task JSON object includes an array of relations with other research aims. If the array is not empty, make sure to include
+**Important Guidelines**:
+- The research task JSON object includes an array of relations with other research tasks. If the array is not empty, make sure to include
 a detailed description of these relations in the text.
+- Do not use the title of the research task in the text - the title will be provided to the user above the text.
+- Begin the description with a sentence such as 'The experimental design of task <task_number>...', 'Task <task_number> will build on the results of <other_task_number> by...' etc.
+- Make sure to describe the specific research steps planned in the task in detail.
+- Make sure to include concrete facts where applicable.
 
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
