@@ -1,18 +1,6 @@
 from src.utils.nlp import get_spacy_model
 
 
-def strip_lines(text: str) -> str:
-    """Strip lines of text.
-
-    Args:
-        text: The text to strip.
-
-    Returns:
-        The stripped text.
-    """
-    return "\n".join([line.strip() for line in text.splitlines() if line.strip()]).strip()
-
-
 def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:
     """Concatenate segmented text responses with coherence check using spaCy.
 
@@ -46,3 +34,17 @@ def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_s
         context_buffer = sentences[-max_overlap_sentences:]
 
     return " ".join(concatenated_text).strip()
+
+
+def normalize_markdown(markdown_string: str) -> str:
+    """Normalize the markdown string by removing extra whitespaces and empty lines.
+
+    Args:
+        markdown_string: The markdown string to normalize.
+
+    Returns:
+        The normalized markdown string.
+    """
+    normalized_whitespaces = " ".join([word for word in markdown_string.split(" ") if word.strip()])
+    normalized_lines = [line for line in normalized_whitespaces.splitlines() if line.strip()]
+    return "\n\n".join(normalized_lines)

@@ -18,7 +18,6 @@ from src.rag_backend.application_draft_generation.shared_prompts import (
 )
 from src.rag_backend.utils import handle_completions_request
 from src.utils.serialization import serialize
-from src.utils.text import strip_lines
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +82,7 @@ ${tasks_text}
 """)
 
 RESEARCH_TASK_TEMPLATE: Final[Template] = Template("""
-##### Task ${task_number}: ${title}
+###### Task ${task_number}: ${title}
 
 ${task_text}
 """)
@@ -217,4 +216,4 @@ async def handle_research_plan_text_generation(
             )
         )
 
-    return RESEARCH_PLAN_SECTION_TEMPLATE.substitute(research_aims_text=strip_lines("\n\n".join(research_aim_texts)))
+    return RESEARCH_PLAN_SECTION_TEMPLATE.substitute(research_aims_text="\n\n".join(research_aim_texts))
