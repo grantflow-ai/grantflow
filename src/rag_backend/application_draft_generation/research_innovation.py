@@ -1,6 +1,5 @@
 import logging
 from functools import partial
-from json import dumps
 from string import Template
 from typing import Final
 
@@ -12,6 +11,7 @@ from src.rag_backend.dto import DocumentDTO, GenerationResultDTO
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
+from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ This is the description of the research innovation provided by the user ${innova
 async def generate_innovation_text(
     previous_part_text: str | None,
     *,
-    innovation_description: str,
+    innovation_description: str | None,
     research_plan_text: str,
     retrieval_results: list[DocumentDTO],
     significance_text: str,
@@ -88,9 +88,9 @@ async def generate_innovation_text(
         GenerationResultDTO: The generated text for the innovation section.
     """
     user_prompt = INNOVATION_GENERATION_USER_PROMPT.substitute(
-        innovation_description=innovation_description,
+        innovation_description=innovation_description or "No description provided.",
         significance_text=significance_text,
-        rag_results=dumps(retrieval_results),
+        rag_results=serialize(retrieval_results),
         previous_part_text=previous_part_text,
         research_plan_text=research_plan_text,
     ).strip()
@@ -106,7 +106,7 @@ async def generate_innovation_text(
 async def handle_innovation_text_generation(
     *,
     application_id: str,
-    innovation_description: str,
+    innovation_description: str | None,
     research_plan_text: str,
     significance_text: str,
 ) -> str:
@@ -123,7 +123,7 @@ async def handle_innovation_text_generation(
     """
     search_queries = await create_search_queries(
         RESEARCH_INNOVATION_QUERIES_PROMPT.substitute(
-            innovation_description=innovation_description,
+            innovation_description=innovation_description or "No description provided.",
         ).strip()
     )
 

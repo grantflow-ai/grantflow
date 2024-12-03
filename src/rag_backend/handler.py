@@ -2,18 +2,20 @@ import logging
 from http import HTTPStatus
 from time import time
 from typing import Final, TypedDict
+from uuid import UUID
 
 from sanic import HTTPResponse, Request
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from src.constants import CONTENT_TYPE_JSON
+from src.db.connection import get_session_maker
+from src.db.tables import GrantApplication, GrantCfp, ResearchAim
 from src.dto import APIError
 from src.rag_backend.application_draft_generation import generate_application_draft
 from src.rag_backend.db import insert_generation_result
-from src.rag_backend.dto import (
-    DraftGenerationRequest,
-)
 from src.utils.exceptions import DeserializationError
-from src.utils.serialization import deserialize, serialize
+from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +32,11 @@ class GenerationResultMessage(TypedDict):
 GENERATION_REQUESTS_QUEUE_NAME: Final[str] = "generation-requests"
 
 
-async def handle_generate_draft_request(request: Request) -> HTTPResponse:
+async def handle_generate_draft_request(_: Request, application_id: UUID) -> HTTPResponse:
     """Route handler for generating a grant application draft.
 
     Args:
-        request: The request object.
+        application_id: The application ID.
 
     Returns:
         The response object.
@@ -42,29 +44,34 @@ async def handle_generate_draft_request(request: Request) -> HTTPResponse:
     start_time = time()
     logger.info("Beginning RAG pipeline")
     try:
-        request_body = deserialize(request.body, DraftGenerationRequest)
-        result = await generate_application_draft(
-            application_id=request_body["application_id"],
-            application_title=request_body["application_title"],
-            cfp_title=request_body["cfp_title"],
-            grant_funding_organization=request_body["grant_funding_organization"],
-            innovation_description=request_body["innovation_description"],
-            research_aims=request_body["research_aims"],
-            significance_description=request_body["significance_description"],
-        )
+        session_maker = get_session_maker()
+        async with session_maker() as session, session.begin():
+            stmt = (
+                select(GrantApplication)
+                .options(
+                    selectinload(GrantApplication.cfp).selectinload(GrantCfp.funding_organization),
+                    selectinload(GrantApplication.application_files),
+                    selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
+                )
+                .where(GrantApplication.id == application_id)
+            )
+
+            grant_application: GrantApplication = (await session.execute(stmt)).scalar_one()
+
+        result = await generate_application_draft(grant_application=grant_application)
         logger.info(
             "RAG pipeline completed successfully. Total duration in seconds: %d",
             int(time() - start_time),
         )
         await insert_generation_result(
             generation_result=result,
-            application_id=request_body["application_id"],
+            application_id=str(application_id),
         )
         return HTTPResponse(
             status=HTTPStatus.CREATED,
             body=serialize(
                 GenerationResultMessage(
-                    application_id=request_body["application_id"],
+                    application_id=str(application_id),
                     content=result,
                 )
             ),

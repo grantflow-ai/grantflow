@@ -1,29 +1,34 @@
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
+from json import loads
 from logging import Logger, getLogger
 from mimetypes import guess_type
+from pathlib import Path
 from textwrap import dedent
-from typing import Any, cast
+from typing import Any, Final
+from uuid import UUID, uuid4
 
 import pytest
-from anyio import Path
+from anyio import Path as AsyncPath
 from asyncpg import connect
 from dotenv import load_dotenv
 from pytest_asyncio import is_async_test
 from sanic_testing.testing import SanicASGITestClient
+from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 from testcontainers.postgres import PostgresContainer
 
 from src.db.connection import engine_ref, get_session_maker
 from src.db.tables import (
     ApplicationFile,
+    ApplicationVector,
     FundingOrganization,
     GrantApplication,
     GrantCfp,
     ResearchAim,
+    ResearchTask,
     Workspace,
 )
-from src.indexer.dto import FileDTO
 from tests.factories import (
     ApplicationFileFactory,
     FundingOrganizationFactory,
@@ -35,28 +40,45 @@ from tests.factories import (
 
 load_dotenv()
 
+SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
+RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
+TEST_DATA_SOURCES: Generator[Path, Any, Any] = SOURCES_FOLDER.glob("*")
+TEST_DATA_RESULTS: Generator[Path, Any, Any] = RESULTS_FOLDER.glob("*")
+
 
 def pytest_collection_modifyitems(items: list[Any]) -> None:
+    """Ensure that all async tests are marked with the asyncio marker.
+
+    Args:
+        items: List of test
+
+    Returns:
+        None
+    """
     pytest_asyncio_tests = (item for item in items if is_async_test(item))
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
         async_test.add_marker(session_scope_marker, append=False)
 
 
-INPUT_TEXT = """
-# BREAKING: Scientists Discover Talking Plant in Amazon Rainforest
-
-In a startling development, researchers from the University of Brazil have reportedly discovered a species of plant
-capable of human speech. The plant, found deep in the Amazon rainforest, was observed engaging in conversations with
-local wildlife.Dr. Maria Silva, lead botanist on the expedition, claims the plant asked about the weather and expressed
-concerns about deforestation. Experts worldwide are scrambling to verify this unprecedented finding, which could
-revolutionize our understanding of plant intelligence.
-"""
-
-
 def pytest_logger_config(logger_config: Any) -> None:
+    """Configure the logger for the tests.
+
+    Args:
+        logger_config: Logger configuration
+
+    Returns:
+        None
+    """
     logger_config.add_loggers(["e2e"], stdout_level="info")
     logger_config.set_log_option_default("e2e")
+
+
+@pytest.fixture(scope="session")
+def asgi_client() -> SanicASGITestClient:
+    from src.main import app
+
+    return app.asgi_client
 
 
 @pytest.fixture(scope="session")
@@ -76,7 +98,7 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
         CREATE EXTENSION IF NOT EXISTS vector;
     """)
     )
-    async for file in (Path(__file__).parent.parent / "migrations").glob("*.sql"):
+    async for file in (AsyncPath(__file__).parent.parent / "migrations").glob("*.sql"):
         sql = await file.read_text()
         await connection.execute(sql)
     await connection.close()
@@ -113,7 +135,7 @@ async def org(async_session_maker: async_sessionmaker[Any]) -> FundingOrganizati
 
 @pytest.fixture
 async def cfp(async_session_maker: async_sessionmaker[Any], org: FundingOrganization) -> GrantCfp:
-    cfp_data = GrantCfpFactory.build(funding_organization_id=org.id)
+    cfp_data = GrantCfpFactory.build(funding_organization=org, funding_organization_id=org.id)
     async with async_session_maker() as session, session.begin():
         session.add(cfp_data)
         await session.commit()
@@ -151,17 +173,163 @@ async def research_aim(async_session_maker: async_sessionmaker[Any], application
     return aim_data
 
 
-@pytest.fixture(scope="session")
-def asgi_client() -> SanicASGITestClient:
-    from src.main import app
+@pytest.fixture
+async def full_grant_application_id(
+    workspace: Workspace, async_session_maker: async_sessionmaker[Any], cfp: GrantCfp
+) -> UUID:
+    application_id = uuid4()
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(GrantApplication).values(
+                {
+                    "id": application_id,
+                    "workspace_id": workspace.id,
+                    "cfp_id": cfp.id,
+                    "title": "Developing AI tailored immunocytokines to target melanoma brain metastases",
+                    "significance": None,
+                    "innovation": None,
+                }
+            )
+        )
+        await session.commit()
 
-    return app.asgi_client
+    research_aims = [
+        {
+            "id": uuid4(),
+            "aim_number": 1,
+            "application_id": application_id,
+            "title": "Developing BM TME models with holistic, multimodal AI-driven analysis",
+            "description": "The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
+        },
+        {
+            "id": uuid4(),
+            "aim_number": 2,
+            "application_id": application_id,
+            "title": "Preclinical screening of cytokines in orthotopic immunocompetent BM models",
+            "description": "The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
+        },
+        {
+            "id": uuid4(),
+            "aim_number": 3,
+            "application_id": application_id,
+            "title": "Design of tumor-targeting immunocytokines",
+            "description": "The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
+        },
+    ]
 
+    async with async_session_maker() as session, session.begin():
+        await session.execute(insert(ResearchAim).values(research_aims))
+        await session.commit()
 
-@pytest.fixture(scope="session")
-async def test_data_file() -> AsyncGenerator[FileDTO]:
-    data_files_path = Path(__file__).parent / "test_data" / "sources"
-    async for file in data_files_path.glob("*"):
-        filename = "_".join(file.name.split(" ")).lower()
-        mime_type = cast(str, guess_type(file.name)[0])
-        yield FileDTO(content=await file.read_bytes(), filename=filename, mime_type=mime_type)
+    research_tasks = [
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[0]["id"],
+            "task_number": "1.1",
+            "title": "Temporal understanding of immune activity in BM TME",
+            "description": "Research immune temporal changes using Zman-seq in the BM TME using our previous research adapting it from glioma to BM.",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[0]["id"],
+            "task_number": "1.2",
+            "title": "Immune cell-cell interaction in the BM TME",
+            "description": "Use PIC-seq to measure immune cell interaction in the BM TME.",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[0]["id"],
+            "task_number": "1.3",
+            "title": "immune spatial distribution in the BM TME",
+            "description": "Use stereo-seq to study spatial distribution of immune cells in the BM TME.",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[1]["id"],
+            "task_number": "2.1",
+            "title": "Screening of cytokines in BM TME",
+            "description": "Use our in-house cytokine library to screen for cytokines that modulate immune activity in the BM TME.",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[1]["id"],
+            "task_number": "2.2",
+            "title": "In-vitro validation of cytokines",
+            "description": "Use in-vitro models to validate the cytokines identified in task 1.",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[1]["id"],
+            "task_number": "2.3",
+            "title": "In-vivo validation of cytokines",
+            "description": "Single-cell analysis using in-vitro and in vivo functional screening system on myeloid, NK and T cell activity for trans-acting MiTEsUse",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[2]["id"],
+            "task_number": "3.1",
+            "title": "Design fusion proteins and cleavage site",
+            "description": "We will develop the optimal structures for the fusion proteins of the top 3-5 mAb-cytokine combinations identified in Aim 2, using advanced techniques in protein design. The design process will include the selection of the most suitable peptide linkers, blocking moieties, TAM-specific cleavage sites and the computational optimization of protein structure and stability.",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[2]["id"],
+            "task_number": "3.2",
+            "title": "Produce fusion proteins",
+            "description": "We will manufacture the 3-5 mAb-cytokine fusion proteins. The protein synthesis will be done by a contract research organization (CRO) selected based on our experience with leading CROs based on quality and punctual production. The production will include the selection of stable molecules with high protein expression and no aggregation.",
+        },
+        {
+            "id": uuid4(),
+            "aim_id": research_aims[2]["id"],
+            "task_number": "3.3",
+            "title": "In-vitro validation of immunocytokines",
+            "description": "We will confirm the binding via SPR, ELISA, cell-based binding and reporter assays.We will validate immunocytokines' impact on interactions between myeloid and lymphoid cell activity using in-vitro assays of co-cultured huMDMs, NK or T cells. To assess the efficacy of the fusion proteins in inducing cytotoxic NK and T cell activity, assays of co-cultured huMDMs, NK, or T cells and tumor cells will be treated with the various mAb-cytokine chimeras. ",
+        },
+    ]
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(insert(ResearchTask).values(research_tasks))
+
+    file_data = [
+        {
+            "id": uuid4(),
+            "application_id": application_id,
+            "name": file_path.name,
+            "type": guess_type(file_path)[0] or "application/octet-stream",
+            "size": file_path.read_bytes().__sizeof__(),
+        }
+        for file_path in TEST_DATA_SOURCES
+    ]
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(insert(ApplicationFile).values(file_data))
+        await session.commit()
+
+    async with async_session_maker() as session, session.begin():
+        vector_sources = {
+            test_result.name: loads(test_result.read_text())
+            for test_result in TEST_DATA_RESULTS
+            if test_result.name.endswith("_indexed_documents.json")
+        }
+        for file in file_data:
+            vectors = vector_sources[f"parse_{file['name']}_indexed_documents.json"]
+            assert vectors
+            await session.execute(
+                insert(ApplicationVector).values(
+                    [
+                        {
+                            "application_id": application_id,
+                            "file_id": file["id"],
+                            "chunk_index": vector["chunk_index"],
+                            "content": vector["content"],
+                            "element_type": vector["element_type"],
+                            "embedding": vector["embedding"],
+                            "page_number": vector["page_number"],
+                        }
+                        for vector in vectors
+                    ]
+                )
+            )
+        await session.commit()
+
+    return application_id
