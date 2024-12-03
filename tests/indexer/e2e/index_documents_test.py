@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defin
 from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
 from src.indexer.chunking import chunk_text
 from src.indexer.indexing import index_documents
-from tests.indexer.e2e.conftest import TEST_FILES
+from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:
     from src.indexer.extraction import OCROutput
@@ -21,22 +21,19 @@ if TYPE_CHECKING:
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-@pytest.mark.parametrize(
-    "filename",
-    TEST_FILES,
-)
+@pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_index_documents(
     logger: logging.Logger,
-    filename: str,
+    data_file: Path,
     async_session_maker: async_sessionmaker[Any],
     application: GrantApplication,
     application_file: ApplicationFile,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings")
 
-    ext = "json" if filename.endswith(".pdf") else "md"
+    ext = "json" if data_file.name.endswith(".pdf") else "md"
 
-    extraction_result = Path(__file__).parent / "results" / f"parse_{filename}_data_test_result.{ext}"
+    extraction_result = RESULTS_FOLDER / f"parse_{data_file.name}_data_test_result.{ext}"
     assert extraction_result.exists(), f"Expected file {extraction_result} to exist"
 
     content: str | OCROutput = extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
@@ -54,20 +51,20 @@ async def test_index_documents(
 
     assert len(db_vectors) == len(chunks)
 
-    existing_results = Path(__file__).parent / "results" / f"parse_{filename}_vectors_list.json"
-    assert existing_results.exists(), f"Expected file {existing_results} to exist"
-    assert (
-        dumps(
-            [
-                {
-                    "embedding": vector.embedding.tolist(),
-                    "content": vector.content,
-                    "chunk_index": vector.chunk_index,
-                    "element_type": vector.element_type,
-                    "page_number": vector.page_number,
-                }
-                for vector in db_vectors
-            ]
-        )
-        == existing_results.read_text()
+    index_results = RESULTS_FOLDER / f"parse_{data_file.name}_indexed_documents.json"
+    content = dumps(
+        [
+            {
+                "embedding": vector.embedding.tolist(),
+                "content": vector.content,
+                "chunk_index": vector.chunk_index,
+                "element_type": vector.element_type,
+                "page_number": vector.page_number,
+            }
+            for vector in db_vectors
+        ]
     )
+    if not index_results.exists():
+        index_results.write_text(content)
+    else:
+        assert content == index_results.read_text()

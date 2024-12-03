@@ -1,21 +1,21 @@
 import logging
 from functools import partial
-from json import dumps
 from string import Template
 from typing import Final
 
+from src.db.tables import ResearchTask
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
 from src.rag_backend.dto import (
     DocumentDTO,
-    EnrichedResearchTaskDTO,
     GenerationResultDTO,
 )
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
+from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ async def generate_research_task_text(
     previous_part_text: str | None,
     *,
     requires_clinical_trials: bool,
-    research_task: EnrichedResearchTaskDTO,
+    research_task: ResearchTask,
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResultDTO:
     """Generate a part of the research task text.
@@ -98,8 +98,8 @@ async def generate_research_task_text(
         GenerationResultDTO: The generated text for the research aim.
     """
     user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute(
-        research_task=dumps(research_task),
-        rag_results=dumps(retrieval_results),
+        research_task=serialize(research_task),
+        rag_results=serialize(retrieval_results),
         clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS if requires_clinical_trials else "",
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
@@ -119,7 +119,7 @@ async def handle_research_task_text_generation(
     *,
     application_id: str,
     requires_clinical_trials: bool,
-    research_task: EnrichedResearchTaskDTO,
+    research_task: ResearchTask,
 ) -> str:
     """Generate the text for a research task.
 
@@ -133,7 +133,7 @@ async def handle_research_task_text_generation(
     """
     search_queries = await create_search_queries(
         RESEARCH_TASK_QUERIES_PROMPT.substitute(
-            research_task=dumps(research_task),
+            research_task=serialize(research_task),
             clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
             if requires_clinical_trials
             else "",
@@ -153,7 +153,7 @@ async def handle_research_task_text_generation(
 
     result = await handle_segmented_text_generation(
         entity_type="research_task",
-        entity_identifier=f"research_task: {research_task['task_number']}",
+        entity_identifier=f"research_task: {research_task.task_number}",
         prompt_handler=handler,
     )
 

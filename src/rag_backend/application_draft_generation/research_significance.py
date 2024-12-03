@@ -1,5 +1,4 @@
 from functools import partial
-from json import dumps
 from string import Template
 from typing import Final
 
@@ -12,6 +11,7 @@ from src.rag_backend.dto import DocumentDTO, GenerationResultDTO
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
+from src.utils.serialization import serialize
 
 SIGNIFICANCE_GENERATION_USER_PROMPT: Final[Template] = Template("""
 Your task is to create the significance section for a grant application.
@@ -94,7 +94,7 @@ async def generate_significance_text(
     cfp_title: str,
     grant_funding_organization: str,
     retrieval_results: list[DocumentDTO],
-    significance_description: str,
+    significance_description: str | None,
     research_plan_text: str,
 ) -> GenerationResultDTO:
     """Generate a part of the significance text.
@@ -120,8 +120,8 @@ async def generate_significance_text(
         )
         if previous_part_text
         else "",
-        rag_results=dumps(retrieval_results),
-        significance_description=significance_description,
+        rag_results=serialize(retrieval_results),
+        significance_description=significance_description or "No description provided.",
         research_plan_text=research_plan_text,
     ).strip()
 
@@ -140,7 +140,7 @@ async def handle_significance_text_generation(
     cfp_title: str,
     grant_funding_organization: str,
     research_plan_text: str,
-    significance_description: str,
+    significance_description: str | None,
 ) -> str:
     """Generate the text for the significance section.
 
@@ -157,7 +157,7 @@ async def handle_significance_text_generation(
     """
     search_queries = await create_search_queries(
         RESEARCH_SIGNIFICANCE_QUERIES_PROMPT.substitute(
-            significance_description=significance_description,
+            significance_description=significance_description or "No description provided.",
         ).strip()
     )
     search_result = await retrieve_documents(

@@ -1,6 +1,5 @@
 import logging
 from functools import partial
-from json import dumps
 from string import Template
 from typing import Final
 
@@ -13,6 +12,7 @@ from src.rag_backend.dto import DocumentDTO, GenerationResultDTO
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
+from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ async def generate_specific_aims_text(
         research_plan_text=research_plan_text,
         significance_text=significance_text,
         innovation_text=innovation_text,
-        rag_results=dumps(retrieval_results),
+        rag_results=serialize(retrieval_results),
     ).strip()
 
     return await handle_completions_request(

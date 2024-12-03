@@ -1,22 +1,22 @@
 import logging
 from functools import partial
-from json import dumps
 from string import Template
 from typing import Final
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
+from src.db.tables import ResearchAim
 from src.rag_backend.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
 from src.rag_backend.dto import (
     DocumentDTO,
-    EnrichedResearchAimDTO,
     GenerationResultDTO,
 )
 from src.rag_backend.retrieval import retrieve_documents
 from src.rag_backend.search_queries import create_search_queries
 from src.rag_backend.utils import handle_completions_request, handle_segmented_text_generation
+from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ Here is the research task data as a JSON object:
 async def generate_research_aim_text(
     previous_part_text: str | None,
     *,
-    research_aim: EnrichedResearchAimDTO,
+    research_aim: ResearchAim,
     research_task_titles: list[str],
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResultDTO:
@@ -94,8 +94,8 @@ async def generate_research_aim_text(
         GenerationResultDTO: The generated text for the research aim.
     """
     user_prompt = RESEARCH_AIM_GENERATION_USER_PROMPT.substitute(
-        research_aim=dumps(research_aim),
-        rag_results=dumps(retrieval_results),
+        research_aim=serialize(research_aim),
+        rag_results=serialize(retrieval_results),
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
         )
@@ -115,7 +115,7 @@ async def generate_research_aim_text(
 async def handle_research_aim_text_generation(
     *,
     application_id: str,
-    research_aim: EnrichedResearchAimDTO,
+    research_aim: ResearchAim,
 ) -> str:
     """Generate the text for a research aim.
 
@@ -126,10 +126,10 @@ async def handle_research_aim_text_generation(
     Returns:
         The generated text for the research aim.
     """
-    research_task_titles = [research_task["title"] for research_task in research_aim["tasks"]]
+    research_task_titles = [research_task.title for research_task in research_aim.research_tasks]
 
     search_queries = await create_search_queries(
-        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=dumps(research_aim)),
+        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim)),
     )
 
     search_result = await retrieve_documents(
@@ -146,7 +146,7 @@ async def handle_research_aim_text_generation(
 
     result = await handle_segmented_text_generation(
         entity_type="research_aim",
-        entity_identifier=f"research_aim: {research_aim['aim_number']}",
+        entity_identifier=f"research_aim: {research_aim.aim_number}",
         prompt_handler=handler,
     )
     logger.debug("Generated research aim %s", result)

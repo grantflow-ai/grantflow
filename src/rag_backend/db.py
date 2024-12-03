@@ -4,7 +4,7 @@ from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
-from src.db.tables import GenerationResult
+from src.db.tables import ApplicationDraft
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ async def insert_generation_result(
     session_maker = get_session_maker()
     async with session_maker() as session, session.begin():
         try:
-            insert_statement = insert(GenerationResult).values(
+            insert_statement = insert(ApplicationDraft).values(
                 {
                     "application_id": application_id,
                     "text": generation_result,
