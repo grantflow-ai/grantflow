@@ -28,7 +28,7 @@ repos:
     rev: v2.3.0
     hooks:
       - id: codespell
-        exclude: ^tests
+        exclude: ^tests|^scripts
         additional_dependencies:
           - tomli
   - repo: https://github.com/jsh9/pydoclint
