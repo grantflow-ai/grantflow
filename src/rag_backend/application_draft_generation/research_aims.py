@@ -52,8 +52,11 @@ It should address the following implicit questions:
 
 __NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
 
-**Important**: The research aim JSON object includes an array of relations with other research aims. If the array is not empty, make sure to include
+**Important Guidelines**:
+- The research aim JSON object includes an array of relations with other research aims. If the array is not empty, make sure to include
 a detailed description of these relations in the text.
+- Do not use the title of the research aim in the text - the title will be provided to the user above the text.
+- Make sure to include concrete facts where applicable.
 
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)

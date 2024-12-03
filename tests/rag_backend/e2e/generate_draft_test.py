@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 from os import environ
 from uuid import UUID
 
@@ -19,5 +20,5 @@ async def test_generate_application_draft(
 ) -> None:
     logger.info("Running end-to-end test for documents retrieval")
     _, response = await asgi_client.post(f"/{full_grant_application_id}/generate-draft", data={})
-    result_file = RESULTS_FOLDER / f"generate_draft_{full_grant_application_id}.json"
+    result_file = RESULTS_FOLDER / f"generate_draft_{full_grant_application_id}_{datetime.now(tz=UTC).isoformat()}.json"
     result_file.write_text(response.text)
