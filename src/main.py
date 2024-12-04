@@ -5,6 +5,7 @@ from sanic import Sanic
 
 from src.api.application_drafts import handle_create_application_draft
 from src.api.application_files import handle_upload_application_files
+from src.api.cfps import handle_retrieve_cfps
 from src.api.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
@@ -15,6 +16,9 @@ from src.api.workspaces import (
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 app = Sanic("grantflow")
+
+# CFPs
+app.add_route(handle_retrieve_cfps, "/cfps", methods=["GET"])
 
 # Workspaces CRUD
 app.add_route(handle_create_workspace, "/<user_id:uuid>/workspaces", methods=["POST"])
