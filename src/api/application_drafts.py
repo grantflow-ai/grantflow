@@ -1,38 +1,26 @@
 import logging
 from http import HTTPStatus
 from time import time
-from typing import Final, TypedDict
 from uuid import UUID
 
 from sanic import HTTPResponse, Request
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from src.api.api_types import ApplicationDraftGenerationResponse
 from src.constants import CONTENT_TYPE_JSON
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplication, GrantCfp, ResearchAim
 from src.dto import APIError
 from src.rag.application_draft_generation import generate_application_draft
-from src.rag.db import insert_generation_result
+from src.rag.db import insert_application_draft
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
 
-class GenerationResultMessage(TypedDict):
-    """The body of a message containing the result of generating a grant application draft."""
-
-    application_id: str
-    """The ID of the grant application."""
-    content: str
-    """The generated content."""
-
-
-GENERATION_REQUESTS_QUEUE_NAME: Final[str] = "generation-requests"
-
-
-async def handle_generate_draft_request(_: Request, application_id: UUID) -> HTTPResponse:
+async def handle_create_application_draft(_: Request, application_id: UUID) -> HTTPResponse:
     """Route handler for generating a grant application draft.
 
     Args:
@@ -59,22 +47,19 @@ async def handle_generate_draft_request(_: Request, application_id: UUID) -> HTT
             grant_application: GrantApplication = (await session.execute(stmt)).scalar_one()
 
         result = await generate_application_draft(grant_application=grant_application)
+        duration = int(time() - start_time)
         logger.info(
             "RAG pipeline completed successfully. Total duration in seconds: %d",
-            int(time() - start_time),
+            duration,
         )
-        await insert_generation_result(
-            generation_result=result,
+        await insert_application_draft(
+            content=result,
+            duration=duration,
             application_id=str(application_id),
         )
         return HTTPResponse(
             status=HTTPStatus.CREATED,
-            body=serialize(
-                GenerationResultMessage(
-                    application_id=str(application_id),
-                    content=result,
-                )
-            ),
+            body=serialize(ApplicationDraftGenerationResponse(content=result, duration=duration)),
             content_type=CONTENT_TYPE_JSON,
         )
     except DeserializationError as e:

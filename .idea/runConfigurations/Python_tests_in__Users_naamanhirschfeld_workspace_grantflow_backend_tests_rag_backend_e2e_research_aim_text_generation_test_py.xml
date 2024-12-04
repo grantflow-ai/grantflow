@@ -8,7 +8,7 @@
       <env name="E2E_TESTS" value="true" />
     </envs>
     <option name="SDK_HOME" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/rag_backend/e2e" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/rag/e2e" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />

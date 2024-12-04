@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 
-async def handle_files_upload(request: Request, application_id: UUID) -> HTTPResponse:
+async def handle_upload_application_files(request: Request, application_id: UUID) -> HTTPResponse:
     """Route handler for uploading files to the indexer.
 
     Args:
