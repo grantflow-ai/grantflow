@@ -6,6 +6,7 @@ from mimetypes import guess_type
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Final
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID, uuid4
 
 import pytest
@@ -17,6 +18,8 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 from testcontainers.postgres import PostgresContainer
+from vertexai.generative_models import GenerativeModel
+from vertexai.language_models import TextEmbedding
 
 from src.db.connection import engine_ref, get_session_maker
 from src.db.tables import (
@@ -27,14 +30,17 @@ from src.db.tables import (
     GrantCfp,
     ResearchAim,
     ResearchTask,
+    User,
     Workspace,
 )
+from src.utils.ai import embeddings_model, init_ref
 from tests.factories import (
     ApplicationFileFactory,
     FundingOrganizationFactory,
     GrantApplicationFactory,
     GrantCfpFactory,
     ResearchAimFactory,
+    UserFactory,
     WorkspaceFactory,
 )
 
@@ -72,6 +78,26 @@ def pytest_logger_config(logger_config: Any) -> None:
     """
     logger_config.add_loggers(["e2e"], stdout_level="info")
     logger_config.set_log_option_default("e2e")
+
+
+@pytest.fixture
+def mock_generative_model() -> Generator[Mock, Any, None]:
+    init_ref.value = True
+    with patch("vertexai.generative_models.GenerativeModel") as mock:
+        mock_instance = Mock(spec=GenerativeModel)
+        mock.return_value = mock_instance
+        yield mock
+
+
+@pytest.fixture
+def mock_text_embedding_model() -> Generator[Mock, Any, None]:
+    init_ref.value = True
+    embeddings_model.value = None
+    with patch("src.utils.ai.TextEmbeddingModel") as mock:
+        mock.from_pretrained = Mock(
+            return_value=Mock(get_embeddings_async=AsyncMock(return_value=[TextEmbedding(values=[1.0, 2.0, 3.0])]))
+        )
+        yield mock
 
 
 @pytest.fixture(scope="session")
@@ -116,6 +142,15 @@ async def async_session_maker(db_connection_string: str) -> async_sessionmaker[A
 
 
 @pytest.fixture
+async def user(async_session_maker: async_sessionmaker[Any]) -> User:
+    user_data = UserFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(user_data)
+        await session.commit()
+    return user_data
+
+
+@pytest.fixture
 async def workspace(async_session_maker: async_sessionmaker[Any]) -> Workspace:
     workspace_data = WorkspaceFactory.build()
     async with async_session_maker() as session, session.begin():
@@ -146,7 +181,9 @@ async def cfp(async_session_maker: async_sessionmaker[Any], org: FundingOrganiza
 async def application(
     async_session_maker: async_sessionmaker[Any], workspace: Workspace, cfp: GrantCfp
 ) -> GrantApplication:
-    application_data = GrantApplicationFactory.build(workspace_id=workspace.id, cfp_id=cfp.id)
+    application_data = GrantApplicationFactory.build(
+        workspace_id=workspace.id, cfp_id=cfp.id, cfp=cfp, application_files=[], research_aims=[], drafts=[]
+    )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)
         await session.commit()
@@ -157,7 +194,7 @@ async def application(
 async def application_file(
     async_session_maker: async_sessionmaker[Any], application: GrantApplication
 ) -> ApplicationFile:
-    file_data = ApplicationFileFactory.build(application_id=application.id)
+    file_data = ApplicationFileFactory.build(application_id=application.id, grant_application=application)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -166,7 +203,7 @@ async def application_file(
 
 @pytest.fixture
 async def research_aim(async_session_maker: async_sessionmaker[Any], application: GrantApplication) -> ResearchAim:
-    aim_data = ResearchAimFactory.build(application_id=application.id)
+    aim_data = ResearchAimFactory.build(application_id=application.id, grant_application=application, research_tasks=[])
     async with async_session_maker() as session, session.begin():
         session.add(aim_data)
         await session.commit()

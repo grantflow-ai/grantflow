@@ -60,7 +60,7 @@ class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
     __model__ = ResearchTask
 
 
-class GenerationResultFactory(SQLAlchemyFactory[ApplicationDraft]):
+class ApplicationDraftFactory(SQLAlchemyFactory[ApplicationDraft]):
     __model__ = ApplicationDraft
 
 

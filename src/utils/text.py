@@ -1,12 +1,15 @@
 from src.utils.nlp import get_spacy_model
 
 
-def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_sentences: int = 2) -> str:
+def concatenate_segments_with_spacy_coherence(
+    segments: list[str], max_overlap_sentences: int = 2, separator: str = " "
+) -> str:
     """Concatenate segmented text responses with coherence check using spaCy.
 
     Args:
         segments: A list of text segments.
         max_overlap_sentences: Maximum number of overlapping sentences to check for coherence.
+        separator: The separator to use between concatenated segments.
 
     Returns:
         The concatenated and coherent text.
@@ -29,11 +32,11 @@ def concatenate_segments_with_spacy_coherence(segments: list[str], max_overlap_s
 
             sentences = sentences[overlap_index:]
 
-        concatenated_text.append(" ".join(sentences).strip())
+        concatenated_text.append(separator.join(sentences).strip())
 
         context_buffer = sentences[-max_overlap_sentences:]
 
-    return " ".join(concatenated_text).strip()
+    return separator.join(concatenated_text).strip()
 
 
 def normalize_markdown(markdown_string: str) -> str:

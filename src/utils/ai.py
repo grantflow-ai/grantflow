@@ -1,6 +1,6 @@
 from json import loads
 
-from google.cloud.aiplatform import MatchingEngineIndex, init
+from google.cloud.aiplatform import init
 from google.oauth2.service_account import Credentials
 from vertexai.generative_models import GenerativeModel
 from vertexai.language_models import TextEmbeddingModel
@@ -12,7 +12,6 @@ from src.utils.ref import Ref
 init_ref = Ref[bool]()
 embeddings_model = Ref[TextEmbeddingModel]()
 clients: dict[str, GenerativeModel] = {}
-indexes: dict[str, MatchingEngineIndex] = {}
 
 
 def _ensure_init() -> None:
