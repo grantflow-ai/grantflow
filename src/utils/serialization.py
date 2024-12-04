@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from enum import Enum
 from inspect import isclass
 from typing import Any, TypeVar
@@ -86,15 +85,11 @@ def deserialize(value: str | bytes, target_type: type[T]) -> T:
 
 def serialize(
     value: Any,
-    encoder: Callable[[Any], Any] | None = None,
-    **kwargs: Any,
 ) -> bytes:
     """Encode an object into a JSON string.
 
     Args:
         value: Value to serialize to JSON.
-        encoder: A custom encoder to use.
-        **kwargs: Additional arguments to pass to the encoder.
 
     Raises:
         SerializationError: If the value cannot be serialized.
@@ -102,10 +97,7 @@ def serialize(
     Returns:
         A JSON string.
     """
-    if isinstance(value, dict) and kwargs:
-        value = value | kwargs
-
     try:
-        return encode(value, enc_hook=encoder if encoder else encode_hook)
+        return encode(value, enc_hook=encode_hook)
     except MsgspecError as e:
         raise SerializationError(str(e)) from e

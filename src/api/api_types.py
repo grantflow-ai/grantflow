@@ -1,5 +1,4 @@
 from typing import NotRequired, TypedDict
-from uuid import UUID
 
 
 class ApplicationDraftGenerationResponse(TypedDict):
@@ -25,14 +24,14 @@ class CreateWorkspaceRequestBody(TypedDict):
 class CreateWorkspaceResponse(TypedDict):
     """The response body for creating a workspace."""
 
-    workspace_id: UUID
+    workspace_id: str
     """The ID of the created workspace."""
 
 
 class RetrieveWorkspaceBaseResponse(TypedDict):
     """The response body for retrieving a workspace."""
 
-    id: UUID
+    id: str
     """The ID of the workspace."""
     name: str
     """The name of the workspace."""
@@ -56,7 +55,7 @@ class UpdateWorkspaceRequestBody(TypedDict):
 class RetrieveCfpResponse(TypedDict):
     """Response schema for retrieving a CFP."""
 
-    id: UUID
+    id: str
     """The ID of the CFP."""
     allow_clinical_trials: bool
     """Whether clinical trials are allowed."""
@@ -72,7 +71,7 @@ class RetrieveCfpResponse(TypedDict):
     """The title of the CFP."""
     url: str | None
     """The URL of the CFP."""
-    funding_organization_id: UUID
+    funding_organization_id: str
     """The ID of the funding organization."""
     funding_organization_name: str
     """The name of the funding organization."""

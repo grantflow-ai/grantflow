@@ -73,7 +73,7 @@ ${previous_part_text}
 ${error_message_fragment}
 """)
 
-SKIP_FILES = {"__init__.py", "dto.py", "constants.py", "data_types.py", "main.py", "application_files.py"}
+SKIP_FILES = {"__init__.py", "dto.py", "constants.py", "data_types.py", "main.py", "files.py"}
 
 
 async def get_test_coverage(test_file: Path) -> tuple[float, str]:
