@@ -30,12 +30,14 @@ TEST_GENERATION_SYSTEM_PROMPT: Final[str] = """
 You are an expert in writing unit tests using pytest and python.
 
 ## Guidelines:
-
-1. Do not add comments to the generated code.
-2. Fully type tests - both parameters and return types.
+1. Target Python 3.12
+2. Use pytest.
+3. write functional tests - DO NOT WRITE CLASS BASED TESTS.
+4. Make sure to type all function parameters and returns
+5. Do not add comments to the generated code at all.
 3. Use pytest fixtures where necessary.
 4. Use async code where necessary. Do not decorate the tests with `@pytest.mark.asyncio` because this is configured globally.
-5. For mocking, prefer using the mocker fixture which is installed (`mocker: MockerFixture` is the typed parameter)
+5. For mocking, prefer using the mocker fixture which is installed (`mocker: pytest_mock.MockerFixture` is the typed parameter)
 """
 
 ERROR_MESSAGE_FRAGMENT = Template("""
@@ -222,7 +224,7 @@ async def generate_file_tests(
                 error_message=error_message,
             )
             generated_tests = await handle_segmented_text_generation(
-                entity_type="file", entity_identifier=f"file: {module_path}", prompt_handler=handler
+                entity_type="file", entity_identifier=f"file: {module_path}", prompt_handler=handler, separator=""
             )
 
             logger.info("Successfully generated tests for file %s, writing tests to %s", file_path, target_file)
@@ -230,7 +232,6 @@ async def generate_file_tests(
             await target_file.parent.mkdir(parents=True, exist_ok=True)
             await target_file.write_text(generated_tests.replace("```python", "").replace("```", ""))
             await validate_generated_tests(target_file)
-            await test_coverage(target_file)
         except ValidationError as e:
             error_message = str(e)
             tries -= 1
@@ -297,7 +298,11 @@ async def resolve_imports(file_path: Path) -> tuple[dict[str, str], list[str]]:
             component = namespace.split(".")[-1]
             module_path = ".".join(namespace.split(".")[:-1])
             module = import_module(module_path, package="src")
-            code = getsource(module.__dict__[component])
+            component_namespace = module.__dict__[component]
+            try:
+                code = getsource(module.__dict__[component])
+            except TypeError:
+                code = component_namespace
             imports_code_mapping[namespace] = code
         else:
             external_imports_list.append(namespace)

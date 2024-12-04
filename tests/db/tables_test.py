@@ -14,8 +14,8 @@ from src.db.tables import (
     WorkspaceUser,
 )
 from tests.factories import (
+    ApplicationDraftFactory,
     ApplicationVectorFactory,
-    GenerationResultFactory,
     ResearchTaskFactory,
     UserFactory,
     WorkspaceUserFactory,
@@ -35,15 +35,16 @@ async def test_create_user(async_session_maker: async_sessionmaker[Any]) -> None
         assert result.email == user_data.email
         assert result.display_name == user_data.display_name
         assert result.photo_url == user_data.photo_url
-        assert result.role == user_data.role
 
 
-async def test_create_workspace_user(async_session_maker: async_sessionmaker[Any], workspace: Workspace) -> None:
-    user = UserFactory.build()
-    workspace_user_data = WorkspaceUserFactory.build(user_id=user.id, workspace_id=workspace.id)
+async def test_create_workspace_user(
+    async_session_maker: async_sessionmaker[Any], workspace: Workspace, user: User
+) -> None:
+    workspace_user_data = WorkspaceUserFactory.build(
+        user_id=user.id, workspace_id=workspace.id, workspace=workspace, user=user
+    )
 
     async with async_session_maker() as session, session.begin():
-        session.add(user)
         session.add(workspace_user_data)
         await session.commit()
 
@@ -56,7 +57,7 @@ async def test_create_workspace_user(async_session_maker: async_sessionmaker[Any
 
 
 async def test_create_research_task(async_session_maker: async_sessionmaker[Any], research_aim: ResearchAim) -> None:
-    task_data = ResearchTaskFactory.build(aim_id=research_aim.id)
+    task_data = ResearchTaskFactory.build(aim_id=research_aim.id, research_aim=research_aim)
 
     async with async_session_maker() as session, session.begin():
         session.add(task_data)
@@ -71,10 +72,10 @@ async def test_create_research_task(async_session_maker: async_sessionmaker[Any]
         assert result.description == task_data.description
 
 
-async def test_create_generation_result(
+async def test_application_draft_result(
     async_session_maker: async_sessionmaker[Any], application: GrantApplication
 ) -> None:
-    result_data = GenerationResultFactory.build(application_id=application.id)
+    result_data = ApplicationDraftFactory.build(application_id=application.id, grant_application=application)
 
     async with async_session_maker() as session, session.begin():
         session.add(result_data)

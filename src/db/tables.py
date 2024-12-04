@@ -217,7 +217,7 @@ class ResearchTask(Base):
 class ApplicationDraft(Base):
     """Generation result table."""
 
-    __tablename__ = "generation_results"
+    __tablename__ = "application_drafts"
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
