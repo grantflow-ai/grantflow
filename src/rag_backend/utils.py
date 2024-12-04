@@ -42,6 +42,7 @@ async def handle_segmented_text_generation(
     entity_type: str,
     entity_identifier: str,
     prompt_handler: Callable[[str | None], Coroutine[Any, Any, GenerationResultDTO]],
+    separator: str = " ",
 ) -> str:
     """Handle the generation of segmented text.
 
@@ -49,6 +50,7 @@ async def handle_segmented_text_generation(
         entity_type: The type of entity to generate text for.
         entity_identifier: The identifier of the entity to generate text for.
         prompt_handler: The handler for the prompt.
+        separator: The separator to use for concatenating the segments.
 
     Returns:
         The generated text.
@@ -78,7 +80,7 @@ async def handle_segmented_text_generation(
         api_call_num,
     )
 
-    return concatenate_segments_with_spacy_coherence(results)
+    return concatenate_segments_with_spacy_coherence(results, separator=separator)
 
 
 SEGMENTED_GENERATION_SCHEMA = {
