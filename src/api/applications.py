@@ -1,9 +1,8 @@
 import logging
 from http import HTTPStatus
-from typing import NotRequired
+from typing import NotRequired, TypedDict
 from uuid import UUID
 
-from mypy.build import TypedDict
 from sanic import HTTPResponse, Request
 from sqlalchemy import insert, select
 
@@ -106,17 +105,48 @@ async def handle_create_application(request: Request, user_id: UUID, workspace_i
         return handle_deserialization_error(e)
 
 
-async def handle_retrieve_applications(request: Request, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
+async def handle_retrieve_applications(_: Request, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
     """Route handler for creating an application.
 
     Args:
-        request: The request object.
         user_id: The user ID.
         workspace_id: The workspace ID.
 
     Returns:
         The response object.
     """
+    logger.info("Retrieving applications for workspace %s", workspace_id)
+    session_maker = get_session_maker()
+    async with session_maker() as session, session.begin():
+        workspace_user = await session.scalar(
+            select(WorkspaceUser)
+            .where(WorkspaceUser.user_id == user_id)
+            .where(WorkspaceUser.workspace_id == workspace_id)
+        )
+
+    if workspace_user is None:
+        return HTTPResponse(status=HTTPStatus.UNAUTHORIZED)
+
+    async with session_maker() as session, session.begin():
+        applications = await session.scalars(
+            select(GrantApplication).where(GrantApplication.workspace_id == workspace_id)
+        )
+
+    return HTTPResponse(
+        status=HTTPStatus.OK,
+        body=serialize(
+            [
+                RetrieveApplicationBaseResponseBody(
+                    title=application.title,
+                    cfp_id=application.cfp_id,
+                    significance=application.significance,
+                    innovation=application.innovation,
+                )
+                for application in applications
+            ]
+        ),
+        content_type=CONTENT_TYPE_JSON,
+    )
 
 
 async def handle_update_application(request: Request, user_id: UUID, application_id: UUID) -> HTTPResponse:
