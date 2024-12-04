@@ -3,7 +3,7 @@ import sys
 
 from sanic import Sanic
 
-from src.api.applications import handle_create_application
+from src.api.applications import handle_create_application, handle_retrieve_applications
 from src.api.cfps import handle_retrieve_cfps
 from src.api.drafts import handle_create_application_draft
 from src.api.files import handle_upload_application_files
@@ -30,6 +30,9 @@ app.add_route(handle_delete_workspace, "/<user_id:uuid>/workspaces/<workspace_id
 # Applications CRUD
 app.add_route(
     handle_create_application, "/<user_id:uuid>/workspaces/<workspace_id:uuid>/applications", methods=["POST"]
+)
+app.add_route(
+    handle_retrieve_applications, "/<user_id:uuid>/workspaces/<workspace_id:uuid>/applications", methods=["GET"]
 )
 
 # Indexing
