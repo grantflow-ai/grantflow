@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from src.db.connection import get_session_maker
 from src.db.tables import ApplicationFile, ApplicationVector
-from src.rag_backend.dto import DocumentDTO
+from src.rag.dto import DocumentDTO
 from src.utils.embeddings import TaskType, generate_embeddings
 
 logger = logging.getLogger(__name__)

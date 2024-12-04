@@ -12,8 +12,8 @@ from src.constants import CONTENT_TYPE_JSON
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplication, GrantCfp, ResearchAim
 from src.dto import APIError
-from src.rag_backend.application_draft_generation import generate_application_draft
-from src.rag_backend.db import insert_generation_result
+from src.rag.application_draft_generation import generate_application_draft
+from src.rag.db import insert_generation_result
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import serialize
 
