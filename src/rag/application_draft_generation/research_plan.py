@@ -7,16 +7,16 @@ from typing import Final
 from typing_extensions import TypedDict
 
 from src.db.tables import ResearchAim
-from src.rag_backend.application_draft_generation.research_aims import (
+from src.rag.application_draft_generation.research_aims import (
     handle_research_aim_text_generation,
 )
-from src.rag_backend.application_draft_generation.research_tasks import (
+from src.rag.application_draft_generation.research_tasks import (
     handle_research_task_text_generation,
 )
-from src.rag_backend.application_draft_generation.shared_prompts import (
+from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
 )
-from src.rag_backend.utils import handle_completions_request
+from src.rag.utils import handle_completions_request
 from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)

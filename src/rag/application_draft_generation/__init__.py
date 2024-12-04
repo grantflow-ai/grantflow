@@ -5,10 +5,10 @@ from typing import Final
 from inflection import titleize
 
 from src.db.tables import GrantApplication
-from src.rag_backend.application_draft_generation.research_innovation import handle_innovation_text_generation
-from src.rag_backend.application_draft_generation.research_plan import handle_research_plan_text_generation
-from src.rag_backend.application_draft_generation.research_significance import handle_significance_text_generation
-from src.rag_backend.application_draft_generation.specific_aims import handle_specific_aims_text_generation
+from src.rag.application_draft_generation.research_innovation import handle_innovation_text_generation
+from src.rag.application_draft_generation.research_plan import handle_research_plan_text_generation
+from src.rag.application_draft_generation.research_significance import handle_significance_text_generation
+from src.rag.application_draft_generation.specific_aims import handle_specific_aims_text_generation
 from src.utils.text import normalize_markdown
 
 logger = logging.getLogger(__name__)

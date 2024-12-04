@@ -5,7 +5,7 @@ from typing import Final
 from typing_extensions import TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
-from src.rag_backend.utils import handle_completions_request
+from src.rag.utils import handle_completions_request
 
 logger = logging.getLogger(__name__)
 

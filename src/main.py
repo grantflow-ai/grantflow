@@ -4,7 +4,7 @@ import sys
 from sanic import Sanic
 
 from src.indexer.handler import handle_files_upload
-from src.rag_backend.handler import handle_generate_draft_request
+from src.rag.handler import handle_generate_draft_request
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
