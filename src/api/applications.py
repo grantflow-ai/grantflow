@@ -3,12 +3,12 @@ from http import HTTPStatus
 from typing import NotRequired, TypedDict
 from uuid import UUID
 
-from sanic import HTTPResponse, Request
+from sanic import HTTPResponse
 from sqlalchemy import insert, select
 
+from src.api.api_types import APIRequest
 from src.api.utils import handle_deserialization_error
 from src.constants import CONTENT_TYPE_JSON
-from src.db.connection import get_session_maker
 from src.db.tables import GrantApplication, WorkspaceUser
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
@@ -62,7 +62,7 @@ class RetrieveApplicationBaseResponseBody(TypedDict):
     """The innovation."""
 
 
-async def handle_create_application(request: Request, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
+async def handle_create_application(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
     """Route handler for creating an application.
 
     Args:
@@ -74,8 +74,7 @@ async def handle_create_application(request: Request, user_id: UUID, workspace_i
         The response object.
     """
     logger.info("Creating application for workspace %s", workspace_id)
-    session_maker = get_session_maker()
-    async with session_maker() as session, session.begin():
+    async with request.ctx.session_maker() as session, session.begin():
         workspace_user = await session.scalar(
             select(WorkspaceUser)
             .where(WorkspaceUser.user_id == user_id)
@@ -87,8 +86,7 @@ async def handle_create_application(request: Request, user_id: UUID, workspace_i
 
     try:
         request_body = deserialize(request.body, CreateApplicationRequestBody)
-
-        async with session_maker() as session, session.begin():
+        async with request.ctx.session_maker() as session, session.begin():
             application_id = await session.scalar(
                 insert(GrantApplication)
                 .values({"workspace_id": workspace_id, **request_body})
@@ -105,10 +103,11 @@ async def handle_create_application(request: Request, user_id: UUID, workspace_i
         return handle_deserialization_error(e)
 
 
-async def handle_retrieve_applications(_: Request, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
+async def handle_retrieve_applications(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
     """Route handler for creating an application.
 
     Args:
+        request: The request object
         user_id: The user ID.
         workspace_id: The workspace ID.
 
@@ -116,8 +115,7 @@ async def handle_retrieve_applications(_: Request, user_id: UUID, workspace_id: 
         The response object.
     """
     logger.info("Retrieving applications for workspace %s", workspace_id)
-    session_maker = get_session_maker()
-    async with session_maker() as session, session.begin():
+    async with request.ctx.session_maker() as session, session.begin():
         workspace_user = await session.scalar(
             select(WorkspaceUser)
             .where(WorkspaceUser.user_id == user_id)
@@ -127,7 +125,7 @@ async def handle_retrieve_applications(_: Request, user_id: UUID, workspace_id: 
     if workspace_user is None:
         return HTTPResponse(status=HTTPStatus.UNAUTHORIZED)
 
-    async with session_maker() as session, session.begin():
+    async with request.ctx.session_maker() as session, session.begin():
         applications = await session.scalars(
             select(GrantApplication).where(GrantApplication.workspace_id == workspace_id)
         )
@@ -149,7 +147,7 @@ async def handle_retrieve_applications(_: Request, user_id: UUID, workspace_id: 
     )
 
 
-async def handle_update_application(request: Request, user_id: UUID, application_id: UUID) -> HTTPResponse:
+async def handle_update_application(request: APIRequest, user_id: UUID, application_id: UUID) -> HTTPResponse:
     """Route handler for updating an application.
 
     Args:
@@ -162,7 +160,7 @@ async def handle_update_application(request: Request, user_id: UUID, application
     """
 
 
-async def handle_delete_application(request: Request, user_id: UUID, application_id: UUID) -> HTTPResponse:
+async def handle_delete_application(request: APIRequest, user_id: UUID, application_id: UUID) -> HTTPResponse:
     """Route handler for deleting an application.
 
     Args:

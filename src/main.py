@@ -1,8 +1,10 @@
 import logging
 import sys
+from typing import Any
 
-from sanic import Sanic
+from sanic import Request, Sanic
 
+from src.api.api_types import RequestContext
 from src.api.applications import handle_create_application, handle_retrieve_applications
 from src.api.cfps import handle_retrieve_cfps
 from src.api.drafts import handle_create_application_draft
@@ -13,10 +15,23 @@ from src.api.workspaces import (
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
+from src.db.connection import get_session_maker
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
-app = Sanic("grantflow")
+app = Sanic[Any, RequestContext]("grantflow")
+
+
+def create_request_context(request: Request) -> None:
+    """Middleware to create a session maker for each request.
+
+    Args:
+        request: The request object.
+    """
+    request.ctx.session_maker = get_session_maker()
+
+
+app.register_middleware(create_request_context, "request")
 
 # CFPs
 app.add_route(handle_retrieve_cfps, "/cfps", methods=["GET"])
