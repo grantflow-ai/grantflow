@@ -3,8 +3,9 @@ import sys
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse, Request
+from sanic import HTTPResponse
 
+from src.api.api_types import APIRequest
 from src.dto import APIError
 from src.indexer.dto import FileDTO
 from src.indexer.tasks import parse_and_index_file
@@ -14,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 
-async def handle_upload_application_files(request: Request, application_id: UUID) -> HTTPResponse:
+async def handle_upload_application_files(request: APIRequest, application_id: UUID) -> HTTPResponse:
     """Route handler for uploading files to the indexer.
 
     Args:

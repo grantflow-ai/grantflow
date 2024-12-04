@@ -100,14 +100,14 @@ async def test_retrieve_workspaces_api_request(
 
     for workspace in workspaces_with_user_access:
         assert any(
-            value["id"] == workspace.id
+            value["id"] == str(workspace.id)
             and value["name"] == workspace.name
             and value["description"] == workspace.description
             and value["logo_url"] == workspace.logo_url
             for value in values
         )
 
-    assert all(value["id"] != workspace_without_user_access.id for value in values)
+    assert all(value["id"] != str(workspace_without_user_access.id) for value in values)
 
 
 @pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN))

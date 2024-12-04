@@ -2,10 +2,11 @@ import logging
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse, Request
+from sanic import HTTPResponse
 from sqlalchemy import delete, insert, select, update
 
 from src.api.api_types import (
+    APIRequest,
     CreateWorkspaceRequestBody,
     CreateWorkspaceResponse,
     RetrieveWorkspaceBaseResponse,
@@ -13,7 +14,6 @@ from src.api.api_types import (
 )
 from src.api.utils import handle_deserialization_error
 from src.constants import CONTENT_TYPE_JSON
-from src.db.connection import get_session_maker
 from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
@@ -21,7 +21,7 @@ from src.utils.serialization import deserialize, serialize
 logger = logging.getLogger(__name__)
 
 
-async def handle_create_workspace(request: Request, user_id: UUID) -> HTTPResponse:
+async def handle_create_workspace(request: APIRequest, user_id: UUID) -> HTTPResponse:
     """Route handler for creating a workspace.
 
     Args:
@@ -32,10 +32,9 @@ async def handle_create_workspace(request: Request, user_id: UUID) -> HTTPRespon
         The response object.
     """
     logger.info("Creating workspace by user: %s", user_id)
-    session_maker = get_session_maker()
     try:
         request_body = deserialize(request.body, CreateWorkspaceRequestBody)
-        async with session_maker() as session, session.begin():
+        async with request.ctx.session_maker() as session, session.begin():
             workspace_id = (
                 await session.execute(insert(Workspace).values(request_body).returning(Workspace.id))
             ).scalar_one()
@@ -57,19 +56,19 @@ async def handle_create_workspace(request: Request, user_id: UUID) -> HTTPRespon
         return handle_deserialization_error(e)
 
 
-async def handle_retrieve_workspaces(_: Request, user_id: UUID) -> HTTPResponse:
+async def handle_retrieve_workspaces(request: APIRequest, user_id: UUID) -> HTTPResponse:
     """Route handler for retrieving workspaces for a user.
 
     Args:
+        request: The request object
         user_id: The ID of the user making the request
 
     Returns:
         The response object.
     """
     logger.info("Retrieving workspaces for user: %s", user_id)
-    session_maker = get_session_maker()
 
-    async with session_maker() as session, session.begin():
+    async with request.ctx.session_maker() as session, session.begin():
         workspaces = list(
             await session.scalars(select(Workspace).join(WorkspaceUser).where(WorkspaceUser.user_id == user_id))
         )
@@ -88,7 +87,7 @@ async def handle_retrieve_workspaces(_: Request, user_id: UUID) -> HTTPResponse:
     )
 
 
-async def handle_update_workspace(request: Request, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
+async def handle_update_workspace(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
     """Route handler for updating a workspace.
 
     Args:
@@ -100,10 +99,9 @@ async def handle_update_workspace(request: Request, user_id: UUID, workspace_id:
         The response object.
     """
     logger.info("Updating workspace: %s", workspace_id)
-    session_maker = get_session_maker()
     try:
         request_body = deserialize(request.body, UpdateWorkspaceRequestBody)
-        async with session_maker() as session, session.begin():
+        async with request.ctx.session_maker() as session, session.begin():
             workspace = await session.scalar(
                 select(Workspace)
                 .join(WorkspaceUser)
@@ -130,10 +128,11 @@ async def handle_update_workspace(request: Request, user_id: UUID, workspace_id:
         return handle_deserialization_error(e)
 
 
-async def handle_delete_workspace(_: Request, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
+async def handle_delete_workspace(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
     """Route handler for deleting a workspace.
 
     Args:
+        request: The request object
         user_id: The ID of the user making the request
         workspace_id: The ID of the workspace to delete
 
@@ -141,8 +140,7 @@ async def handle_delete_workspace(_: Request, user_id: UUID, workspace_id: UUID)
         The response object.
     """
     logger.info("Deleting workspace: %s", workspace_id)
-    session_maker = get_session_maker()
-    async with session_maker() as session, session.begin():
+    async with request.ctx.session_maker() as session, session.begin():
         workspace = await session.scalar(
             select(Workspace)
             .join(WorkspaceUser)
