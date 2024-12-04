@@ -1,29 +1,30 @@
 import logging
 from http import HTTPStatus
 
-from sanic import HTTPResponse, Request
+from sanic import HTTPResponse
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import RetrieveCfpResponse
+from src.api.api_types import APIRequest, RetrieveCfpResponse
 from src.constants import CONTENT_TYPE_JSON
-from src.db.connection import get_session_maker
 from src.db.tables import GrantCfp
 from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
 
-async def handle_retrieve_cfps(_: Request) -> HTTPResponse:
+async def handle_retrieve_cfps(request: APIRequest) -> HTTPResponse:
     """Route handler for retrieving CFPS for a user.
+
+    Args:
+        request: The request object.
 
     Returns:
         The response object.
     """
     logger.info("Retrieving CFPS")
-    session_maker = get_session_maker()
 
-    async with session_maker() as session, session.begin():
+    async with request.ctx.session_maker() as session, session.begin():
         cfps = list(await session.scalars(select(GrantCfp).options(selectinload(GrantCfp.funding_organization))))
 
     return HTTPResponse(

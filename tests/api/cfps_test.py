@@ -63,5 +63,5 @@ async def test_retrieve_cfps_api_request(
         assert cfp["allow_clinical_trials"] is not None
         assert cfp["allow_resubmissions"] is not None
         assert cfp["code"]
-        assert cfp["funding_organization_id"] in [funding_organizations[0].id, funding_organizations[1].id]
+        assert cfp["funding_organization_id"] in [str(funding_organizations[0].id), str(funding_organizations[1].id)]
         assert cfp["funding_organization_name"] in [funding_organizations[0].name, funding_organizations[1].name]

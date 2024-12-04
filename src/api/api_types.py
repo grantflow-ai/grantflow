@@ -1,4 +1,18 @@
-from typing import NotRequired, TypedDict
+from types import SimpleNamespace
+from typing import Any, NotRequired, TypedDict
+
+from sanic import Request, Sanic
+from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
+
+
+class RequestContext(SimpleNamespace):
+    """The context of an API request."""
+
+    session_maker: async_sessionmaker[Any]
+    """The session maker."""
+
+
+APIRequest = Request[Sanic[Any, RequestContext], RequestContext]
 
 
 class ApplicationDraftGenerationResponse(TypedDict):

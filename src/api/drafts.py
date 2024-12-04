@@ -3,13 +3,12 @@ from http import HTTPStatus
 from time import time
 from uuid import UUID
 
-from sanic import HTTPResponse, Request
+from sanic import HTTPResponse
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import ApplicationDraftGenerationResponse
+from src.api.api_types import APIRequest, ApplicationDraftGenerationResponse
 from src.constants import CONTENT_TYPE_JSON
-from src.db.connection import get_session_maker
 from src.db.tables import GrantApplication, GrantCfp, ResearchAim
 from src.dto import APIError
 from src.rag.application_draft_generation import generate_application_draft
@@ -20,10 +19,11 @@ from src.utils.serialization import serialize
 logger = logging.getLogger(__name__)
 
 
-async def handle_create_application_draft(_: Request, application_id: UUID) -> HTTPResponse:
+async def handle_create_application_draft(request: APIRequest, application_id: UUID) -> HTTPResponse:
     """Route handler for generating a grant application draft.
 
     Args:
+        request: The request object.
         application_id: The application ID.
 
     Returns:
@@ -32,8 +32,7 @@ async def handle_create_application_draft(_: Request, application_id: UUID) -> H
     start_time = time()
     logger.info("Beginning RAG pipeline")
     try:
-        session_maker = get_session_maker()
-        async with session_maker() as session, session.begin():
+        async with request.ctx.session_maker() as session, session.begin():
             stmt = (
                 select(GrantApplication)
                 .options(

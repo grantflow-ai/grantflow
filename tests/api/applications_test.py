@@ -3,7 +3,7 @@ from typing import Any
 
 from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
 from src.api.applications import (
     CreateApplicationRequestBody,
@@ -100,7 +100,7 @@ async def test_create_application_api_request_failure_bad_request(
 
     _, response = await asgi_client.post(
         f"/{user.id}/workspaces/{workspace.id}/applications",
-        json=CreateApplicationRequestBody( # type: ignore[typeddict-item]
+        json=CreateApplicationRequestBody(  # type: ignore[typeddict-item]
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
             innovation=application_data.innovation,
