@@ -16,16 +16,11 @@ from src.db.tables import (
     GrantCfp,
     ResearchAim,
     ResearchTask,
-    User,
     Workspace,
     WorkspaceUser,
 )
 
 faker = Faker()
-
-
-class UserFactory(SQLAlchemyFactory[User]):
-    __model__ = User
 
 
 class WorkspaceFactory(SQLAlchemyFactory[Workspace]):

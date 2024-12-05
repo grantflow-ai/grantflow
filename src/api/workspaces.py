@@ -12,7 +12,7 @@ from src.api.api_types import (
     RetrieveWorkspaceBaseResponse,
     UpdateWorkspaceRequestBody,
 )
-from src.api.utils import handle_deserialization_error
+from src.api.utils import handle_deserialization_error, verify_workspace_access
 from src.constants import CONTENT_TYPE_JSON
 from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.exceptions import DeserializationError
@@ -21,17 +21,16 @@ from src.utils.serialization import deserialize, serialize
 logger = logging.getLogger(__name__)
 
 
-async def handle_create_workspace(request: APIRequest, user_id: UUID) -> HTTPResponse:
-    """Route handler for creating a workspace.
+async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
+    """Route handler for creating a Workspace.
 
     Args:
         request: The sanic request object
-        user_id: The ID of the user making the request
 
     Returns:
         The response object.
     """
-    logger.info("Creating workspace by user: %s", user_id)
+    logger.info("Creating workspace by user: %s", request.ctx.firebase_uid)
     try:
         request_body = deserialize(request.body, CreateWorkspaceRequestBody)
         async with request.ctx.session_maker() as session, session.begin():
@@ -41,7 +40,11 @@ async def handle_create_workspace(request: APIRequest, user_id: UUID) -> HTTPRes
 
             await session.execute(
                 insert(WorkspaceUser).values(
-                    {"workspace_id": workspace_id, "user_id": user_id, "role": UserRoleEnum.OWNER.value}
+                    {
+                        "workspace_id": workspace_id,
+                        "firebase_uid": request.ctx.firebase_uid,
+                        "role": UserRoleEnum.OWNER.value,
+                    }
                 )
             )
             await session.commit()
@@ -56,21 +59,22 @@ async def handle_create_workspace(request: APIRequest, user_id: UUID) -> HTTPRes
         return handle_deserialization_error(e)
 
 
-async def handle_retrieve_workspaces(request: APIRequest, user_id: UUID) -> HTTPResponse:
-    """Route handler for retrieving workspaces for a user.
+async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
+    """Route handler for retrieving Workspaces the user can access.
 
     Args:
         request: The request object
-        user_id: The ID of the user making the request
 
     Returns:
         The response object.
     """
-    logger.info("Retrieving workspaces for user: %s", user_id)
+    logger.info("Retrieving workspaces for user: %s", request.ctx.firebase_uid)
 
     async with request.ctx.session_maker() as session, session.begin():
         workspaces = list(
-            await session.scalars(select(Workspace).join(WorkspaceUser).where(WorkspaceUser.user_id == user_id))
+            await session.scalars(
+                select(Workspace).join(WorkspaceUser).where(WorkspaceUser.firebase_uid == request.ctx.firebase_uid)
+            )
         )
 
     return HTTPResponse(
@@ -87,71 +91,48 @@ async def handle_retrieve_workspaces(request: APIRequest, user_id: UUID) -> HTTP
     )
 
 
-async def handle_update_workspace(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
-    """Route handler for updating a workspace.
+async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+    """Route handler for updating a Workspace.
 
     Args:
         request: The sanic request object
-        user_id: The ID of the user making the request
         workspace_id: The ID of the workspace to update
 
     Returns:
         The response object.
     """
+    await verify_workspace_access(
+        request=request, workspace_id=workspace_id, allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN]
+    )
+
     logger.info("Updating workspace: %s", workspace_id)
     try:
         request_body = deserialize(request.body, UpdateWorkspaceRequestBody)
         async with request.ctx.session_maker() as session, session.begin():
-            workspace = await session.scalar(
-                select(Workspace)
-                .join(WorkspaceUser)
-                .where(Workspace.id == workspace_id)
-                .where(WorkspaceUser.user_id == user_id)
-                .where(WorkspaceUser.role.in_([UserRoleEnum.OWNER, UserRoleEnum.ADMIN]))
-            )
-
-        if workspace is None:
-            return HTTPResponse(status=HTTPStatus.UNAUTHORIZED)
-
-        if (
-            ("name" in request_body and request_body["name"] != workspace.name)
-            or ("description" in request_body and request_body["description"] != workspace.description)
-            or ("logo_url" in request_body and request_body["logo_url"] != workspace.logo_url)
-        ):
-            await session.execute(update(Workspace).where(Workspace.id == workspace.id).values(request_body))
+            await session.execute(update(Workspace).where(Workspace.id == workspace_id).values(request_body))
             await session.commit()
-            return HTTPResponse(status=HTTPStatus.OK)
 
-        return HTTPResponse(status=HTTPStatus.BAD_REQUEST, body="The request body does not include changed values")
+        return HTTPResponse(status=HTTPStatus.OK)
     except DeserializationError as e:
         logger.error("Failed to deserialize the request body: %s", e)
         return handle_deserialization_error(e)
 
 
-async def handle_delete_workspace(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
-    """Route handler for deleting a workspace.
+async def handle_delete_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+    """Route handler for deleting a Workspace.
 
     Args:
         request: The request object
-        user_id: The ID of the user making the request
         workspace_id: The ID of the workspace to delete
 
     Returns:
         The response object.
     """
+    await verify_workspace_access(request=request, workspace_id=workspace_id, allowed_roles=[UserRoleEnum.OWNER])
+
     logger.info("Deleting workspace: %s", workspace_id)
     async with request.ctx.session_maker() as session, session.begin():
-        workspace = await session.scalar(
-            select(Workspace)
-            .join(WorkspaceUser)
-            .where(Workspace.id == workspace_id)
-            .where(WorkspaceUser.user_id == user_id)
-            .where(WorkspaceUser.role == UserRoleEnum.OWNER)
-        )
+        await session.execute(delete(Workspace).where(Workspace.id == workspace_id))
+        await session.commit()
 
-    if workspace is None:
-        return HTTPResponse(status=HTTPStatus.UNAUTHORIZED)
-
-    await session.execute(delete(Workspace).where(Workspace.id == workspace.id))
-    await session.commit()
     return HTTPResponse(status=HTTPStatus.NO_CONTENT)

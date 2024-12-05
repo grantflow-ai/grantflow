@@ -87,7 +87,6 @@ CREATE TABLE "research_aims" (
   "id" uuid NOT NULL,
   "aim_number" integer NOT NULL,
   "description" text NOT NULL,
-  "relations" text[] NOT NULL,
   "requires_clinical_trials" boolean NOT NULL,
   "title" character varying(255) NOT NULL,
   "application_id" uuid NOT NULL,
@@ -98,28 +97,17 @@ CREATE TABLE "research_aims" (
 CREATE TABLE "research_tasks" (
   "id" uuid NOT NULL,
   "description" text NOT NULL,
-  "relations" text[] NOT NULL,
   "task_number" character varying(4) NOT NULL,
   "title" character varying(255) NOT NULL,
   "aim_id" uuid NOT NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "research_tasks_aim_id_fkey" FOREIGN KEY ("aim_id") REFERENCES "research_aims" ("id") ON UPDATE CASCADE ON DELETE CASCADE
 );
--- Create "users" table
-CREATE TABLE "users" (
-  "id" uuid NOT NULL,
-  "display_name" character varying(255) NULL,
-  "email" character varying(255) NOT NULL,
-  "photo_url" text NULL,
-  PRIMARY KEY ("id"),
-  CONSTRAINT "users_email_key" UNIQUE ("email")
-);
 -- Create "workspace_users" table
 CREATE TABLE "workspace_users" (
   "role" "userroleenum" NOT NULL,
+  "firebase_uid" character varying(128) NOT NULL,
   "workspace_id" uuid NOT NULL,
-  "user_id" uuid NOT NULL,
-  PRIMARY KEY ("workspace_id", "user_id"),
-  CONSTRAINT "workspace_users_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE CASCADE ON DELETE CASCADE,
+  PRIMARY KEY ("firebase_uid", "workspace_id"),
   CONSTRAINT "workspace_users_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces" ("id") ON UPDATE CASCADE ON DELETE CASCADE
 );

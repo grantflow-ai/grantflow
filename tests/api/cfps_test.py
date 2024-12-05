@@ -52,7 +52,10 @@ async def test_retrieve_cfps_api_request(
         )
         await session.commit()
 
-    _, response = await asgi_client.get("/cfps")
+    _, response = await asgi_client.get(
+        "/cfps",
+        headers={"Authorization": "Bearer some_token"},
+    )
     assert response.status_code == 200
 
     response_body = deserialize(response.body, list[RetrieveCfpResponse])
