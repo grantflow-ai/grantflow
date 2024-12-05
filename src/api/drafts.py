@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from src.api.api_types import APIRequest, ApplicationDraftGenerationResponse
+from src.api.utils import verify_workspace_access
 from src.constants import CONTENT_TYPE_JSON
 from src.db.tables import GrantApplication, GrantCfp, ResearchAim
 from src.dto import APIError
@@ -19,16 +20,21 @@ from src.utils.serialization import serialize
 logger = logging.getLogger(__name__)
 
 
-async def handle_create_application_draft(request: APIRequest, application_id: UUID) -> HTTPResponse:
-    """Route handler for generating a grant application draft.
+async def handle_create_application_draft(
+    request: APIRequest, workspace_id: UUID, application_id: UUID
+) -> HTTPResponse:
+    """Route handler for generating a Grant Application Draft.
 
     Args:
         request: The request object.
+        workspace_id: The workspace ID.
         application_id: The application ID.
 
     Returns:
         The response object.
     """
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
     start_time = time()
     logger.info("Beginning RAG pipeline")
     try:

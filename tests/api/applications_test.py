@@ -5,12 +5,12 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
-from src.api.applications import (
+from src.api.api_types import (
     CreateApplicationRequestBody,
     CreateApplicationResponse,
     RetrieveApplicationBaseResponseBody,
 )
-from src.db.tables import GrantApplication, GrantCfp, User, UserRoleEnum, Workspace, WorkspaceUser
+from src.db.tables import GrantApplication, GrantCfp, UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
 from tests.factories import GrantApplicationFactory
 
@@ -18,14 +18,14 @@ from tests.factories import GrantApplicationFactory
 async def test_create_application_api_request_success(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
-    user: User,
+    firebase_uid: str,
     workspace: Workspace,
     cfp: GrantCfp,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "user_id": user.id, "role": UserRoleEnum.MEMBER.value}
+                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
             )
         )
 
@@ -34,13 +34,14 @@ async def test_create_application_api_request_success(
     )
 
     _, response = await asgi_client.post(
-        f"/{user.id}/workspaces/{workspace.id}/applications",
+        f"/workspaces/{workspace.id}/applications",
         json=CreateApplicationRequestBody(
             title=application_data.title,
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
             innovation=application_data.innovation,
         ),
+        headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.CREATED
 
@@ -61,7 +62,6 @@ async def test_create_application_api_request_success(
 async def test_create_application_api_request_failure_unauthorized(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
-    user: User,
     workspace: Workspace,
     cfp: GrantCfp,
 ) -> None:
@@ -70,13 +70,14 @@ async def test_create_application_api_request_failure_unauthorized(
     )
 
     _, response = await asgi_client.post(
-        f"/{user.id}/workspaces/{workspace.id}/applications",
+        f"/workspaces/{workspace.id}/applications",
         json=CreateApplicationRequestBody(
             title=application_data.title,
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
             innovation=application_data.innovation,
         ),
+        headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -84,14 +85,14 @@ async def test_create_application_api_request_failure_unauthorized(
 async def test_create_application_api_request_failure_bad_request(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
-    user: User,
+    firebase_uid: str,
     workspace: Workspace,
     cfp: GrantCfp,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "user_id": user.id, "role": UserRoleEnum.MEMBER.value}
+                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
             )
         )
     application_data = GrantApplicationFactory.build(
@@ -99,12 +100,13 @@ async def test_create_application_api_request_failure_bad_request(
     )
 
     _, response = await asgi_client.post(
-        f"/{user.id}/workspaces/{workspace.id}/applications",
+        f"/workspaces/{workspace.id}/applications",
         json=CreateApplicationRequestBody(  # type: ignore[typeddict-item]
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
             innovation=application_data.innovation,
         ),
+        headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -112,17 +114,19 @@ async def test_create_application_api_request_failure_bad_request(
 async def test_retrieve_applications_api_request_success(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
-    user: User,
+    firebase_uid: str,
     workspace: Workspace,
     application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "user_id": user.id, "role": UserRoleEnum.MEMBER.value}
+                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
             )
         )
-    _, response = await asgi_client.get(f"/{user.id}/workspaces/{workspace.id}/applications")
+    _, response = await asgi_client.get(
+        f"/workspaces/{workspace.id}/applications", headers={"Authorization": "Bearer some_token"}
+    )
     assert response.status_code == HTTPStatus.OK
 
     response_body = deserialize(response.body, list[RetrieveApplicationBaseResponseBody])
@@ -137,9 +141,10 @@ async def test_retrieve_applications_api_request_success(
 async def test_retrieve_applications_api_request_failure_unauthorized(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
-    user: User,
     workspace: Workspace,
     application: GrantApplication,
 ) -> None:
-    _, response = await asgi_client.get(f"/{user.id}/workspaces/{workspace.id}/applications")
+    _, response = await asgi_client.get(
+        f"/workspaces/{workspace.id}/applications", headers={"Authorization": "Bearer some_token"}
+    )
     assert response.status_code == HTTPStatus.UNAUTHORIZED

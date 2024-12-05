@@ -29,6 +29,7 @@ dependencies = [
     "azure-ai-documentintelligence>=1.0.0b4",
     "pypandoc>=1.14",
     "pathvalidate>=3.2.1",
+    "firebase-admin>=6.6.0",
 ]
 
 [tool.pdm]

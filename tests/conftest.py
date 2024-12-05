@@ -14,6 +14,7 @@ from anyio import Path as AsyncPath
 from asyncpg import connect
 from dotenv import load_dotenv
 from pytest_asyncio import is_async_test
+from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
@@ -30,7 +31,6 @@ from src.db.tables import (
     GrantCfp,
     ResearchAim,
     ResearchTask,
-    User,
     Workspace,
 )
 from src.utils.ai import embeddings_model, init_ref
@@ -40,7 +40,6 @@ from tests.factories import (
     GrantApplicationFactory,
     GrantCfpFactory,
     ResearchAimFactory,
-    UserFactory,
     WorkspaceFactory,
 )
 
@@ -78,6 +77,17 @@ def pytest_logger_config(logger_config: Any) -> None:
     """
     logger_config.add_loggers(["e2e"], stdout_level="info")
     logger_config.set_log_option_default("e2e")
+
+
+@pytest.fixture
+def firebase_uid() -> str:
+    return "a" * 128
+
+
+@pytest.fixture(autouse=True)
+def patch_firebase_auth(firebase_uid: str, mocker: MockerFixture) -> None:
+    mocker.patch("firebase_admin.initialize_app")
+    mocker.patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid})
 
 
 @pytest.fixture
@@ -139,15 +149,6 @@ async def async_session_maker(db_connection_string: str) -> async_sessionmaker[A
     )
     engine_ref.value = None
     return get_session_maker()
-
-
-@pytest.fixture
-async def user(async_session_maker: async_sessionmaker[Any]) -> User:
-    user_data = UserFactory.build()
-    async with async_session_maker() as session, session.begin():
-        session.add(user_data)
-        await session.commit()
-    return user_data
 
 
 @pytest.fixture

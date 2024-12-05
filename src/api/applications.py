@@ -1,88 +1,38 @@
 import logging
 from http import HTTPStatus
-from typing import NotRequired, TypedDict
 from uuid import UUID
 
 from sanic import HTTPResponse
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select, update
 
-from src.api.api_types import APIRequest
-from src.api.utils import handle_deserialization_error
+from src.api.api_types import (
+    APIRequest,
+    CreateApplicationRequestBody,
+    CreateApplicationResponse,
+    RetrieveApplicationBaseResponseBody,
+    UpdateApplicationRequestBody,
+)
+from src.api.utils import handle_deserialization_error, verify_workspace_access
 from src.constants import CONTENT_TYPE_JSON
-from src.db.tables import GrantApplication, WorkspaceUser
+from src.db.tables import GrantApplication
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 
 logger = logging.getLogger(__name__)
 
 
-class CreateApplicationRequestBody(TypedDict):
-    """The request body for creating an application."""
-
-    title: str
-    """The title of the application."""
-    cfp_id: str
-    """The ID of the CFP."""
-    significance: NotRequired[str | None]
-    """The significance of the innovation."""
-    innovation: NotRequired[str | None]
-    """The innovation."""
-
-
-class CreateApplicationResponse(TypedDict):
-    """The response body for creating an application."""
-
-    application_id: str
-    """The ID of the application."""
-
-
-class UpdateApplicationRequestBody(TypedDict):
-    """The request body for updating an application."""
-
-    title: NotRequired[str]
-    """The title of the application."""
-    cfp_id: NotRequired[str]
-    """The ID of the CFP."""
-    significance: NotRequired[str | None]
-    """The significance of the innovation."""
-    innovation: NotRequired[str | None]
-    """The innovation."""
-
-
-class RetrieveApplicationBaseResponseBody(TypedDict):
-    """The base response body for retrieving an application."""
-
-    title: str
-    """The title of the application."""
-    cfp_id: str
-    """The ID of the CFP."""
-    significance: str | None
-    """The significance of the innovation."""
-    innovation: str | None
-    """The innovation."""
-
-
-async def handle_create_application(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
-    """Route handler for creating an application.
+async def handle_create_application(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+    """Route handler for creating an Application.
 
     Args:
         request: The request object.
-        user_id: The user ID.
         workspace_id: The workspace ID.
 
     Returns:
         The response object.
     """
     logger.info("Creating application for workspace %s", workspace_id)
-    async with request.ctx.session_maker() as session, session.begin():
-        workspace_user = await session.scalar(
-            select(WorkspaceUser)
-            .where(WorkspaceUser.user_id == user_id)
-            .where(WorkspaceUser.workspace_id == workspace_id)
-        )
-
-    if workspace_user is None:
-        return HTTPResponse(status=HTTPStatus.UNAUTHORIZED)
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     try:
         request_body = deserialize(request.body, CreateApplicationRequestBody)
@@ -103,27 +53,18 @@ async def handle_create_application(request: APIRequest, user_id: UUID, workspac
         return handle_deserialization_error(e)
 
 
-async def handle_retrieve_applications(request: APIRequest, user_id: UUID, workspace_id: UUID) -> HTTPResponse:
-    """Route handler for creating an application.
+async def handle_retrieve_applications(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+    """Route handler for creating an Application.
 
     Args:
         request: The request object
-        user_id: The user ID.
         workspace_id: The workspace ID.
 
     Returns:
         The response object.
     """
     logger.info("Retrieving applications for workspace %s", workspace_id)
-    async with request.ctx.session_maker() as session, session.begin():
-        workspace_user = await session.scalar(
-            select(WorkspaceUser)
-            .where(WorkspaceUser.user_id == user_id)
-            .where(WorkspaceUser.workspace_id == workspace_id)
-        )
-
-    if workspace_user is None:
-        return HTTPResponse(status=HTTPStatus.UNAUTHORIZED)
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     async with request.ctx.session_maker() as session, session.begin():
         applications = await session.scalars(
@@ -147,27 +88,50 @@ async def handle_retrieve_applications(request: APIRequest, user_id: UUID, works
     )
 
 
-async def handle_update_application(request: APIRequest, user_id: UUID, application_id: UUID) -> HTTPResponse:
-    """Route handler for updating an application.
+async def handle_update_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+    """Route handler for updating an Application.
 
     Args:
         request: The request object.
-        user_id: The user ID.
+        workspace_id: The workspace ID.
         application_id: The application ID.
 
     Returns:
         The response object
     """
+    logger.info("Updating application %s", application_id)
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    try:
+        request_body = deserialize(request.body, UpdateApplicationRequestBody)
+        async with request.ctx.session_maker() as session, session.begin():
+            await session.execute(
+                update(GrantApplication).where(GrantApplication.id == application_id).values(request_body)
+            )
+            await session.commit()
+
+        return HTTPResponse(status=HTTPStatus.OK)
+    except DeserializationError as e:
+        logger.error("Failed to deserialize the request body: %s", e)
+        return handle_deserialization_error(e)
 
 
-async def handle_delete_application(request: APIRequest, user_id: UUID, application_id: UUID) -> HTTPResponse:
-    """Route handler for deleting an application.
+async def handle_delete_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+    """Route handler for deleting an Application.
 
     Args:
         request: The request object.
-        user_id: The user ID.
+        workspace_id: The workspace ID.
         application_id: The application ID.
 
     Returns:
         The response object.
     """
+    logger.info("Deleting application %s", application_id)
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    async with request.ctx.session_maker() as session, session.begin():
+        await session.execute(delete(GrantApplication).where(GrantApplication.id == application_id))
+        await session.commit()
+
+    return HTTPResponse(status=HTTPStatus.NO_CONTENT)

@@ -6,6 +6,7 @@ from uuid import UUID
 from sanic import HTTPResponse
 
 from src.api.api_types import APIRequest
+from src.api.utils import verify_workspace_access
 from src.dto import APIError
 from src.indexer.dto import FileDTO
 from src.indexer.tasks import parse_and_index_file
@@ -15,16 +16,21 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 
-async def handle_upload_application_files(request: APIRequest, application_id: UUID) -> HTTPResponse:
+async def handle_upload_application_files(
+    request: APIRequest, workspace_id: UUID, application_id: UUID
+) -> HTTPResponse:
     """Route handler for uploading files to the indexer.
 
     Args:
         request: The request object.
+        workspace_id: The workspace ID.
         application_id: The application ID.
 
     Returns:
         The response object.
     """
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
     files: list[FileDTO] = [
         FileDTO.from_file(filename=filename, file=files_list)
         for filename, files_list in dict(request.files).items()  # type: ignore[arg-type]
