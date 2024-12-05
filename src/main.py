@@ -2,56 +2,83 @@ import logging
 import sys
 from typing import Any
 
-from sanic import Request, Sanic
+from sanic import Sanic
 
 from src.api.api_types import RequestContext
 from src.api.applications import handle_create_application, handle_retrieve_applications
 from src.api.cfps import handle_retrieve_cfps
 from src.api.drafts import handle_create_application_draft
 from src.api.files import handle_upload_application_files
+from src.api.research_aims import (
+    handle_create_research_aims,
+    handle_delete_research_aim,
+    handle_retrieve_research_aims,
+    handle_update_research_aim,
+    handle_update_research_task,
+)
 from src.api.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
-from src.db.connection import get_session_maker
+from src.middleware import authenticate_user, set_session_maker
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 app = Sanic[Any, RequestContext]("grantflow")
 
-
-def create_request_context(request: Request) -> None:
-    """Middleware to create a session maker for each request.
-
-    Args:
-        request: The request object.
-    """
-    request.ctx.session_maker = get_session_maker()
-
-
-app.register_middleware(create_request_context, "request")
+app.register_middleware(authenticate_user, "request")
+app.register_middleware(set_session_maker, "request")
 
 # CFPs
 app.add_route(handle_retrieve_cfps, "/cfps", methods=["GET"])
 
 # Workspaces CRUD
-app.add_route(handle_create_workspace, "/<user_id:uuid>/workspaces", methods=["POST"])
-app.add_route(handle_retrieve_workspaces, "/<user_id:uuid>/workspaces", methods=["GET"])
-app.add_route(handle_update_workspace, "/<user_id:uuid>/workspaces/<workspace_id:uuid>", methods=["PATCH"])
-app.add_route(handle_delete_workspace, "/<user_id:uuid>/workspaces/<workspace_id:uuid>", methods=["DELETE"])
+app.add_route(handle_create_workspace, "workspaces", methods=["POST"])
+app.add_route(handle_retrieve_workspaces, "workspaces", methods=["GET"])
+app.add_route(handle_update_workspace, "workspaces/<workspace_id:uuid>", methods=["PATCH"])
+app.add_route(handle_delete_workspace, "workspaces/<workspace_id:uuid>", methods=["DELETE"])
 
 # Applications CRUD
+app.add_route(handle_create_application, "workspaces/<workspace_id:uuid>/applications", methods=["POST"])
+app.add_route(handle_retrieve_applications, "workspaces/<workspace_id:uuid>/applications", methods=["GET"])
+
+# Research Aims CRUD
 app.add_route(
-    handle_create_application, "/<user_id:uuid>/workspaces/<workspace_id:uuid>/applications", methods=["POST"]
+    handle_create_research_aims,
+    "workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/research-aims",
+    methods=["POST"],
 )
 app.add_route(
-    handle_retrieve_applications, "/<user_id:uuid>/workspaces/<workspace_id:uuid>/applications", methods=["GET"]
+    handle_retrieve_research_aims,
+    "workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/research-aims",
+    methods=["GET"],
+)
+app.add_route(
+    handle_update_research_aim, "workspaces/<workspace_id:uuid>/research-aims/<research_aim_id:uuid>", methods=["PATCH"]
+)
+app.add_route(
+    handle_update_research_task,
+    "workspaces/<workspace_id:uuid>/research-tasks/<research_task_id:uuid>",
+    methods=["PATCH"],
+)
+app.add_route(
+    handle_delete_research_aim,
+    "workspaces/<workspace_id:uuid>/research-aims/<research_aim_id:uuid>",
+    methods=["DELETE"],
 )
 
 # Indexing
-app.add_route(handle_upload_application_files, "/<application_id:uuid>/index-files", methods=["POST"])
+app.add_route(
+    handle_upload_application_files,
+    "workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/index-files",
+    methods=["POST"],
+)
 
 # RAG
-app.add_route(handle_create_application_draft, "/<application_id:uuid>/generate-draft", methods=["POST"])
+app.add_route(
+    handle_create_application_draft,
+    "workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/generate-draft",
+    methods=["POST"],
+)

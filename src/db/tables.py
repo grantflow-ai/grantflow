@@ -3,7 +3,7 @@ from enum import StrEnum
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ARRAY, Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (  # type: ignore[attr-defined]
     DeclarativeBase,
@@ -29,18 +29,6 @@ class UserRoleEnum(StrEnum):
     MEMBER = "member"
 
 
-class User(Base):
-    """User table."""
-
-    __tablename__ = "users"
-
-    id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
-
-    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
-    email: Mapped[str] = mapped_column(String(255), unique=True, default=None)
-    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
-
-
 class Workspace(Base):
     """Workspace table."""
 
@@ -64,17 +52,13 @@ class WorkspaceUser(Base):
     __tablename__ = "workspace_users"
 
     role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum), default=None)
+    firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True, default=None)
 
     # Relationships
     workspace_id: Mapped[UUID] = mapped_column(
         UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True, default=None
     )
     workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="users", default=None)  # type: ignore[call-arg]
-
-    user_id: Mapped[UUID] = mapped_column(
-        UUID(), ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True, default=None
-    )
-    user: Relationship["User"] = relationship("User", default=None)  # type: ignore[call-arg]
 
 
 class FundingOrganization(Base):
@@ -177,7 +161,6 @@ class ResearchAim(Base):
 
     aim_number: Mapped[int] = mapped_column(Integer, default=None)
     description: Mapped[str] = mapped_column(Text, default=None)
-    relations: Mapped[list[str]] = mapped_column(ARRAY(Text), insert_default=list, default=None)
     requires_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=False)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
@@ -201,8 +184,7 @@ class ResearchTask(Base):
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
     description: Mapped[str] = mapped_column(Text, default=None)
-    relations: Mapped[list[str]] = mapped_column(ARRAY(Text), insert_default=list, default=None)
-    task_number: Mapped[str] = mapped_column(String(4), default=None)
+    task_number: Mapped[int] = mapped_column(String(4), default=None)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
     # Relationships
