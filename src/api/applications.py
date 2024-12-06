@@ -4,16 +4,22 @@ from uuid import UUID
 
 from sanic import HTTPResponse
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.orm import selectinload
 
 from src.api.api_types import (
     APIRequest,
+    ApplicationFileResponse,
+    CfpResponse,
     CreateGrantApplicationRequestBody,
+    GrantApplicationDetailResponse,
     GrantApplicationResponse,
+    ResearchAimResponse,
+    ResearchTaskResponse,
     UpdateApplicationRequestBody,
 )
 from src.api.utils import handle_deserialization_error, verify_workspace_access
 from src.constants import CONTENT_TYPE_JSON
-from src.db.tables import GrantApplication
+from src.db.tables import GrantApplication, GrantCfp, ResearchAim
 from src.utils.exceptions import DeserializationError
 from src.utils.serialization import deserialize, serialize
 
@@ -91,6 +97,89 @@ async def handle_retrieve_applications(request: APIRequest, workspace_id: UUID) 
                 )
                 for application in applications
             ]
+        ),
+        content_type=CONTENT_TYPE_JSON,
+    )
+
+
+async def handle_retrieve_application_detail(
+    request: APIRequest, workspace_id: UUID, application_id: UUID
+) -> HTTPResponse:
+    """Route handler for creating an Application.
+
+    Args:
+        request: The request object
+        workspace_id: The workspace ID.
+        application_id: The application ID.
+
+    Returns:
+        The response object.
+    """
+    logger.info("Retrieving applications for workspace %s", workspace_id)
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    async with request.ctx.session_maker() as session, session.begin():
+        stmt = (
+            select(GrantApplication)
+            .options(
+                selectinload(GrantApplication.cfp).selectinload(GrantCfp.funding_organization),
+                selectinload(GrantApplication.application_files),
+                selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
+            )
+            .where(GrantApplication.id == application_id)
+        )
+
+        grant_application: GrantApplication = (await session.execute(stmt)).scalar_one()
+
+    return HTTPResponse(
+        status=HTTPStatus.OK,
+        body=serialize(
+            GrantApplicationDetailResponse(
+                id=str(grant_application.id),
+                title=grant_application.title,
+                significance=grant_application.significance,
+                innovation=grant_application.innovation,
+                cfp=CfpResponse(
+                    id=str(grant_application.cfp.id),
+                    allow_clinical_trials=grant_application.cfp.allow_clinical_trials,
+                    allow_resubmissions=grant_application.cfp.allow_resubmissions,
+                    category=grant_application.cfp.category,
+                    code=grant_application.cfp.code,
+                    description=grant_application.cfp.description,
+                    title=grant_application.cfp.title,
+                    url=grant_application.cfp.url,
+                    funding_organization_id=str(grant_application.cfp.funding_organization_id),
+                    funding_organization_name=grant_application.cfp.funding_organization.name,
+                ),
+                research_aims=[
+                    ResearchAimResponse(
+                        id=str(research_aim.id),
+                        aim_number=research_aim.aim_number,
+                        title=research_aim.title,
+                        description=research_aim.description,
+                        requires_clinical_trials=research_aim.requires_clinical_trials,
+                        research_tasks=[
+                            ResearchTaskResponse(
+                                id=str(research_task.id),
+                                task_number=research_task.task_number,
+                                title=research_task.title,
+                                description=research_task.description,
+                            )
+                            for research_task in research_aim.research_tasks
+                        ],
+                    )
+                    for research_aim in grant_application.research_aims
+                ],
+                application_files=[
+                    ApplicationFileResponse(
+                        id=str(application_file.id),
+                        name=application_file.name,
+                        type=application_file.type,
+                        size=application_file.size,
+                    )
+                    for application_file in grant_application.application_files
+                ],
+            )
         ),
         content_type=CONTENT_TYPE_JSON,
     )
