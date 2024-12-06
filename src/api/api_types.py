@@ -17,6 +17,8 @@ class RequestContext(SimpleNamespace):
 
 APIRequest = Request[Sanic[Any, RequestContext], RequestContext]
 
+# Drafts API Types
+
 
 class ApplicationDraftGenerationResponse(TypedDict):
     """The body of a message containing the result of generating a grant application draft."""
@@ -25,6 +27,22 @@ class ApplicationDraftGenerationResponse(TypedDict):
     """The generated content."""
     duration: int
     """The total duration of the generation process."""
+
+
+# ApplicationFiles API Types
+
+
+class ApplicationFileResponse(TypedDict):
+    """The response schema for retrieving an application file."""
+
+    id: str
+    """The ID of the file."""
+    name: str
+    """The name of the file."""
+    type: str
+    """The type of the file."""
+    size: int
+    """The size of the file."""
 
 
 # CFP API Types
@@ -135,6 +153,25 @@ class GrantApplicationResponse(TypedDict):
     """The significance of the innovation."""
     innovation: str | None
     """The innovation."""
+
+
+class GrantApplicationDetailResponse(TypedDict):
+    """The response body for retrieving an application."""
+
+    id: str
+    """The ID of the application."""
+    title: str
+    """The title of the application."""
+    significance: str | None
+    """The significance of the innovation."""
+    innovation: str | None
+    """The innovation."""
+    cfp: CfpResponse
+    """The CFP of the application."""
+    research_aims: list["ResearchAimResponse"]
+    """The research aims of the application."""
+    application_files: list[ApplicationFileResponse]
+    """The application files of the application."""
 
 
 # Research Aims API Types
