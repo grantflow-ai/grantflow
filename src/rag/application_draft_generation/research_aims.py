@@ -4,7 +4,6 @@ from string import Template
 from typing import Final
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
-from src.db.tables import ResearchAim
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
@@ -12,6 +11,7 @@ from src.rag.application_draft_generation.shared_prompts import (
 from src.rag.dto import (
     DocumentDTO,
     GenerationResultDTO,
+    ResearchAimDTO,
 )
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
@@ -81,7 +81,7 @@ Here is the research task data as a JSON object:
 async def generate_research_aim_text(
     previous_part_text: str | None,
     *,
-    research_aim: ResearchAim,
+    research_aim: ResearchAimDTO,
     research_task_titles: list[str],
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResultDTO:
@@ -118,7 +118,7 @@ async def generate_research_aim_text(
 async def handle_research_aim_text_generation(
     *,
     application_id: str,
-    research_aim: ResearchAim,
+    research_aim: ResearchAimDTO,
 ) -> str:
     """Generate the text for a research aim.
 
