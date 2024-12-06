@@ -26,6 +26,7 @@ from src.db.connection import engine_ref, get_session_maker
 from src.db.tables import (
     ApplicationFile,
     ApplicationVector,
+    Base,
     FundingOrganization,
     GrantApplication,
     GrantCfp,
@@ -40,6 +41,7 @@ from tests.factories import (
     GrantApplicationFactory,
     GrantCfpFactory,
     ResearchAimFactory,
+    ResearchTaskFactory,
     WorkspaceFactory,
 )
 
@@ -151,6 +153,14 @@ async def async_session_maker(db_connection_string: str) -> async_sessionmaker[A
     return get_session_maker()
 
 
+@pytest.fixture(autouse=True)
+async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
+    async with async_session_maker() as session:
+        for table in reversed(Base.metadata.sorted_tables):
+            await session.execute(table.delete())
+        await session.commit()
+
+
 @pytest.fixture
 async def workspace(async_session_maker: async_sessionmaker[Any]) -> Workspace:
     workspace_data = WorkspaceFactory.build()
@@ -205,6 +215,15 @@ async def application_file(
 @pytest.fixture
 async def research_aim(async_session_maker: async_sessionmaker[Any], application: GrantApplication) -> ResearchAim:
     aim_data = ResearchAimFactory.build(application_id=application.id, grant_application=application, research_tasks=[])
+    async with async_session_maker() as session, session.begin():
+        session.add(aim_data)
+        await session.commit()
+    return aim_data
+
+
+@pytest.fixture
+async def research_task(async_session_maker: async_sessionmaker[Any], research_aim: ResearchAim) -> ResearchTask:
+    aim_data = ResearchTaskFactory.build(research_aim=research_aim, aim_id=research_aim.id)
     async with async_session_maker() as session, session.begin():
         session.add(aim_data)
         await session.commit()
