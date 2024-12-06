@@ -60,12 +60,14 @@ async def handle_create_research_aims(request: APIRequest, workspace_id: UUID, a
                     .values(
                         [
                             {
-                                "research_aim_id": research_aim.id,
+                                "aim_id": research_aim.id,
                                 "task_number": research_task["task_number"],
                                 "title": research_task["title"],
                                 "description": research_task.get("description"),
                             }
-                            for research_task in sorted(research_aim["research_tasks"], key=lambda x: x["task_number"])
+                            for research_task in sorted(
+                                research_aim_data["research_tasks"], key=lambda x: x["task_number"]
+                            )
                         ]
                     )
                     .returning(ResearchTask)

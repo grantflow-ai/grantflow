@@ -97,7 +97,7 @@ CREATE TABLE "research_aims" (
 CREATE TABLE "research_tasks" (
   "id" uuid NOT NULL,
   "description" text NOT NULL,
-  "task_number" character varying(4) NOT NULL,
+  "task_number" integer NOT NULL,
   "title" character varying(255) NOT NULL,
   "aim_id" uuid NOT NULL,
   PRIMARY KEY ("id"),

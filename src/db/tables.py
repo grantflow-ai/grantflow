@@ -184,7 +184,7 @@ class ResearchTask(Base):
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
     description: Mapped[str] = mapped_column(Text, default=None)
-    task_number: Mapped[int] = mapped_column(String(4), default=None)
+    task_number: Mapped[int] = mapped_column(Integer, default=None)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
     # Relationships
