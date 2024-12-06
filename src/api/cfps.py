@@ -5,7 +5,7 @@ from sanic import HTTPResponse
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import APIRequest, RetrieveCfpResponse
+from src.api.api_types import APIRequest, CfpResponse
 from src.constants import CONTENT_TYPE_JSON
 from src.db.tables import GrantCfp
 from src.utils.serialization import serialize
@@ -31,7 +31,7 @@ async def handle_retrieve_cfps(request: APIRequest) -> HTTPResponse:
         status=HTTPStatus.OK,
         body=serialize(
             [
-                RetrieveCfpResponse(
+                CfpResponse(
                     id=cfp.id,
                     allow_clinical_trials=cfp.allow_clinical_trials,
                     allow_resubmissions=cfp.allow_resubmissions,

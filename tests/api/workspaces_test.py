@@ -9,9 +9,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defin
 
 from src.api.api_types import (
     CreateWorkspaceRequestBody,
-    CreateWorkspaceResponse,
-    RetrieveWorkspaceBaseResponse,
     UpdateWorkspaceRequestBody,
+    WorkspaceResponse,
 )
 from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
@@ -32,15 +31,15 @@ async def test_create_workspace_api_request_success(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.CREATED
-    response_body = deserialize(response.text, CreateWorkspaceResponse)
-    assert response_body["workspace_id"]
+    response_body = deserialize(response.text, WorkspaceResponse)
+    assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
-        workspace = await session.scalar(select(Workspace).where(Workspace.id == response_body["workspace_id"]))
+        workspace = await session.scalar(select(Workspace).where(Workspace.id == response_body["id"]))
 
-        assert workspace.name == request_body["name"]
-        assert workspace.description == request_body["description"]
-        assert workspace.logo_url == request_body["logo_url"]
+        assert workspace.name == response_body["name"]
+        assert workspace.description == response_body["description"]
+        assert workspace.logo_url == response_body["logo_url"]
 
 
 async def test_create_workspace_api_request_failure(
@@ -106,7 +105,7 @@ async def test_retrieve_workspaces_api_request(
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
-    values = deserialize(response.text, list[RetrieveWorkspaceBaseResponse])
+    values = deserialize(response.text, list[WorkspaceResponse])
     assert len(values) == 3
 
     for workspace in workspaces_with_user_access:
