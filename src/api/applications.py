@@ -7,9 +7,8 @@ from sqlalchemy import delete, insert, select, update
 
 from src.api.api_types import (
     APIRequest,
-    CreateApplicationRequestBody,
-    CreateApplicationResponse,
-    RetrieveApplicationBaseResponseBody,
+    CreateGrantApplicationRequestBody,
+    GrantApplicationResponse,
     UpdateApplicationRequestBody,
 )
 from src.api.utils import handle_deserialization_error, verify_workspace_access
@@ -35,17 +34,25 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     try:
-        request_body = deserialize(request.body, CreateApplicationRequestBody)
+        request_body = deserialize(request.body, CreateGrantApplicationRequestBody)
         async with request.ctx.session_maker() as session, session.begin():
-            application_id = await session.scalar(
+            application = await session.scalar(
                 insert(GrantApplication)
                 .values({"workspace_id": workspace_id, **request_body})
-                .returning(GrantApplication.id)
+                .returning(GrantApplication)
             )
 
         return HTTPResponse(
             status=HTTPStatus.CREATED,
-            body=serialize(CreateApplicationResponse(application_id=application_id)),
+            body=serialize(
+                GrantApplicationResponse(
+                    id=application.id,
+                    title=application.title,
+                    cfp_id=application.cfp_id,
+                    significance=application.significance,
+                    innovation=application.innovation,
+                )
+            ),
             content_type=CONTENT_TYPE_JSON,
         )
     except DeserializationError as e:
@@ -75,7 +82,8 @@ async def handle_retrieve_applications(request: APIRequest, workspace_id: UUID) 
         status=HTTPStatus.OK,
         body=serialize(
             [
-                RetrieveApplicationBaseResponseBody(
+                GrantApplicationResponse(
+                    id=application.id,
                     title=application.title,
                     cfp_id=application.cfp_id,
                     significance=application.significance,
@@ -105,12 +113,27 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
     try:
         request_body = deserialize(request.body, UpdateApplicationRequestBody)
         async with request.ctx.session_maker() as session, session.begin():
-            await session.execute(
-                update(GrantApplication).where(GrantApplication.id == application_id).values(request_body)
+            application = await session.scalar(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .values(request_body)
+                .returning(GrantApplication)
             )
             await session.commit()
 
-        return HTTPResponse(status=HTTPStatus.OK)
+        return HTTPResponse(
+            status=HTTPStatus.OK,
+            body=serialize(
+                GrantApplicationResponse(
+                    id=application.id,
+                    title=application.title,
+                    cfp_id=application.cfp_id,
+                    significance=application.significance,
+                    innovation=application.innovation,
+                )
+            ),
+            content_type=CONTENT_TYPE_JSON,
+        )
     except DeserializationError as e:
         logger.error("Failed to deserialize the request body: %s", e)
         return handle_deserialization_error(e)

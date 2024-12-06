@@ -170,9 +170,33 @@ async def handle_update_research_aim(request: APIRequest, workspace_id: UUID, re
             research_aim = await session.scalar(
                 update(ResearchAim).where(ResearchAim.id == research_aim_id).values(request_body).returning(ResearchAim)
             )
+            research_tasks = await session.scalars(
+                select(ResearchTask).where(ResearchTask.aim_id == research_aim_id).order_by(ResearchTask.task_number)
+            )
             await session.commit()
 
-        return HTTPResponse(status=HTTPStatus.OK, body=serialize(research_aim), content_type=CONTENT_TYPE_JSON)
+        return HTTPResponse(
+            status=HTTPStatus.OK,
+            body=serialize(
+                ResearchAimResponse(
+                    id=research_aim.id,
+                    aim_number=research_aim.aim_number,
+                    title=research_aim.title,
+                    description=research_aim.description,
+                    requires_clinical_trials=research_aim.requires_clinical_trials,
+                    research_tasks=[
+                        ResearchTaskResponse(
+                            id=research_task.id,
+                            task_number=research_task.task_number,
+                            title=research_task.title,
+                            description=research_task.description,
+                        )
+                        for research_task in research_tasks
+                    ],
+                )
+            ),
+            content_type=CONTENT_TYPE_JSON,
+        )
     except DeserializationError as e:
         logger.error("Failed to deserialize the request body: %s", e)
         return handle_deserialization_error(e)
@@ -203,7 +227,18 @@ async def handle_update_research_task(request: APIRequest, workspace_id: UUID, r
             )
             await session.commit()
 
-        return HTTPResponse(status=HTTPStatus.OK, body=serialize(research_task), content_type=CONTENT_TYPE_JSON)
+        return HTTPResponse(
+            status=HTTPStatus.OK,
+            body=serialize(
+                ResearchTaskResponse(
+                    id=research_task.id,
+                    task_number=research_task.task_number,
+                    title=research_task.title,
+                    description=research_task.description,
+                )
+            ),
+            content_type=CONTENT_TYPE_JSON,
+        )
     except DeserializationError as e:
         logger.error("Failed to deserialize the request body: %s", e)
         return handle_deserialization_error(e)

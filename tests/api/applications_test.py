@@ -6,9 +6,8 @@ from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
 from src.api.api_types import (
-    CreateApplicationRequestBody,
-    CreateApplicationResponse,
-    RetrieveApplicationBaseResponseBody,
+    CreateGrantApplicationRequestBody,
+    GrantApplicationResponse,
 )
 from src.db.tables import GrantApplication, GrantCfp, UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
@@ -35,7 +34,7 @@ async def test_create_application_api_request_success(
 
     _, response = await asgi_client.post(
         f"/workspaces/{workspace.id}/applications",
-        json=CreateApplicationRequestBody(
+        json=CreateGrantApplicationRequestBody(
             title=application_data.title,
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
@@ -45,18 +44,16 @@ async def test_create_application_api_request_success(
     )
     assert response.status_code == HTTPStatus.CREATED
 
-    response_body = deserialize(response.body, CreateApplicationResponse)
-    assert response_body["application_id"]
+    response_body = deserialize(response.body, GrantApplicationResponse)
+    assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
-        application = await session.scalar(
-            select(GrantApplication).where(GrantApplication.id == response_body["application_id"])
-        )
+        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == response_body["id"]))
 
-        assert application.title == application_data.title
-        assert application.cfp_id == application_data.cfp_id
-        assert application.significance == application_data.significance
-        assert application.innovation == application_data.innovation
+        assert application.title == response_body["title"]
+        assert str(application.cfp_id) == response_body["cfp_id"]
+        assert application.significance == response_body["significance"]
+        assert application.innovation == response_body["innovation"]
 
 
 async def test_create_application_api_request_failure_unauthorized(
@@ -71,7 +68,7 @@ async def test_create_application_api_request_failure_unauthorized(
 
     _, response = await asgi_client.post(
         f"/workspaces/{workspace.id}/applications",
-        json=CreateApplicationRequestBody(
+        json=CreateGrantApplicationRequestBody(
             title=application_data.title,
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
@@ -101,10 +98,10 @@ async def test_create_application_api_request_failure_bad_request(
 
     _, response = await asgi_client.post(
         f"/workspaces/{workspace.id}/applications",
-        json=CreateApplicationRequestBody(  # type: ignore[typeddict-item]
-            cfp_id=str(application_data.cfp_id),
+        json=CreateGrantApplicationRequestBody(  # type: ignore[typeddict-item]
             significance=application_data.significance,
             innovation=application_data.innovation,
+            title=application_data.title,
         ),
         headers={"Authorization": "Bearer some_token"},
     )
@@ -129,7 +126,7 @@ async def test_retrieve_applications_api_request_success(
     )
     assert response.status_code == HTTPStatus.OK
 
-    response_body = deserialize(response.body, list[RetrieveApplicationBaseResponseBody])
+    response_body = deserialize(response.body, list[GrantApplicationResponse])
 
     assert len(response_body) == 1
     assert response_body[0]["title"] == application.title
