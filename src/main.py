@@ -5,7 +5,11 @@ from typing import Any
 from sanic import Sanic
 
 from src.api.api_types import RequestContext
-from src.api.applications import handle_create_application, handle_retrieve_applications
+from src.api.applications import (
+    handle_create_application,
+    handle_retrieve_application_detail,
+    handle_retrieve_applications,
+)
 from src.api.cfps import handle_retrieve_cfps
 from src.api.drafts import handle_create_application_draft
 from src.api.files import handle_upload_application_files
@@ -43,6 +47,11 @@ app.add_route(handle_delete_workspace, "workspaces/<workspace_id:uuid>", methods
 # Applications CRUD
 app.add_route(handle_create_application, "workspaces/<workspace_id:uuid>/applications", methods=["POST"])
 app.add_route(handle_retrieve_applications, "workspaces/<workspace_id:uuid>/applications", methods=["GET"])
+app.add_route(
+    handle_retrieve_application_detail,
+    "workspaces/<workspace_id:uuid>/applications/<application_id:uuid>",
+    methods=["GET"],
+)
 
 # Research Aims CRUD
 app.add_route(

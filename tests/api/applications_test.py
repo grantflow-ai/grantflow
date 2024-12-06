@@ -7,9 +7,19 @@ from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defin
 
 from src.api.api_types import (
     CreateGrantApplicationRequestBody,
+    GrantApplicationDetailResponse,
     GrantApplicationResponse,
 )
-from src.db.tables import GrantApplication, GrantCfp, UserRoleEnum, Workspace, WorkspaceUser
+from src.db.tables import (
+    ApplicationFile,
+    GrantApplication,
+    GrantCfp,
+    ResearchAim,
+    ResearchTask,
+    UserRoleEnum,
+    Workspace,
+    WorkspaceUser,
+)
 from src.utils.serialization import deserialize
 from tests.factories import GrantApplicationFactory
 
@@ -143,5 +153,49 @@ async def test_retrieve_applications_api_request_failure_unauthorized(
 ) -> None:
     _, response = await asgi_client.get(
         f"/workspaces/{workspace.id}/applications", headers={"Authorization": "Bearer some_token"}
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_retrieve_application_detail_api_request_success(
+    asgi_client: SanicASGITestClient,
+    async_session_maker: async_sessionmaker[Any],
+    firebase_uid: str,
+    workspace: Workspace,
+    application: GrantApplication,
+    research_aim: ResearchAim,
+    research_task: ResearchTask,
+    application_file: ApplicationFile,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
+            )
+        )
+    _, response = await asgi_client.get(
+        f"/workspaces/{workspace.id}/applications/{application.id}", headers={"Authorization": "Bearer some_token"}
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    response_body = deserialize(response.body, GrantApplicationDetailResponse)
+
+    assert response_body["title"] == application.title
+    assert response_body["cfp"]["id"] == str(application.cfp_id)
+    assert response_body["significance"] == application.significance
+    assert response_body["innovation"] == application.innovation
+    assert response_body["research_aims"][0]["title"] == research_aim.title
+    assert response_body["research_aims"][0]["research_tasks"][0]["title"] == research_task.title
+    assert response_body["application_files"][0]["name"] == application_file.name
+
+
+async def test_retrieve_application_detail_api_request_unauthorized(
+    asgi_client: SanicASGITestClient,
+    async_session_maker: async_sessionmaker[Any],
+    workspace: Workspace,
+    application: GrantApplication,
+) -> None:
+    _, response = await asgi_client.get(
+        f"/workspaces/{workspace.id}/applications/{application.id}", headers={"Authorization": "Bearer some_token"}
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
