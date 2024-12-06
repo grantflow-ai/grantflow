@@ -13,14 +13,14 @@ from src.api.api_types import (
     UpdateResearchAimRequestBody,
     UpdateResearchTaskRequestBody,
 )
-from src.db.tables import ResearchAim, ResearchTask, UserRoleEnum, WorkspaceUser
+from src.db.tables import ResearchAim, ResearchTask, UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
 
 
 async def test_create_research_aims_success(
     asgi_client: SanicASGITestClient,
     firebase_uid: str,
-    workspace: Any,
+    workspace: Workspace,
     application: Any,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -64,7 +64,7 @@ async def test_create_research_aims_success(
 
 async def test_create_research_aims_unauthorized(
     asgi_client: SanicASGITestClient,
-    workspace: Any,
+    workspace: Workspace,
     application: Any,
 ) -> None:
     request_body = [
@@ -88,7 +88,7 @@ async def test_create_research_aims_unauthorized(
 async def test_retrieve_research_aims_success(
     asgi_client: SanicASGITestClient,
     firebase_uid: str,
-    workspace: Any,
+    workspace: Workspace,
     application: Any,
     research_aim: ResearchAim,
     async_session_maker: async_sessionmaker[Any],
@@ -114,7 +114,7 @@ async def test_retrieve_research_aims_success(
 
 async def test_retrieve_research_aims_unauthorized(
     asgi_client: SanicASGITestClient,
-    workspace: Any,
+    workspace: Workspace,
     application: Any,
 ) -> None:
     _, response = await asgi_client.get(
@@ -127,7 +127,7 @@ async def test_retrieve_research_aims_unauthorized(
 async def test_update_research_aim_success(
     asgi_client: SanicASGITestClient,
     firebase_uid: str,
-    workspace: Any,
+    workspace: Workspace,
     research_aim: ResearchAim,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -158,7 +158,7 @@ async def test_update_research_aim_success(
 
 async def test_update_research_aim_unauthorized(
     asgi_client: SanicASGITestClient,
-    workspace: Any,
+    workspace: Workspace,
     research_aim: ResearchAim,
 ) -> None:
     request_body = UpdateResearchAimRequestBody(title="Updated Title")
@@ -173,25 +173,15 @@ async def test_update_research_aim_unauthorized(
 async def test_update_research_task_success(
     asgi_client: SanicASGITestClient,
     firebase_uid: str,
-    workspace: Any,
+    workspace: Workspace,
     async_session_maker: async_sessionmaker[Any],
+    research_task: ResearchTask,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(WorkspaceUser).values(
                 {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
             )
-        )
-        task = await session.scalar(
-            insert(ResearchTask)
-            .values(
-                {
-                    "research_aim_id": UUID("00000000-0000-0000-0000-000000000000"),
-                    "title": "Original Title",
-                    "description": "Original Description",
-                }
-            )
-            .returning(ResearchTask)
         )
 
     request_body = UpdateResearchTaskRequestBody(
@@ -200,21 +190,21 @@ async def test_update_research_task_success(
     )
 
     _, response = await asgi_client.patch(
-        f"/workspaces/{workspace.id}/research-tasks/{task.id}",
+        f"/workspaces/{workspace.id}/research-tasks/{research_task.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.OK
 
     async with async_session_maker() as session:
-        updated_task = await session.scalar(select(ResearchTask).where(ResearchTask.id == task.id))
+        updated_task = await session.scalar(select(ResearchTask).where(ResearchTask.id == research_task.id))
         assert updated_task.title == request_body["title"]
         assert updated_task.description == request_body["description"]
 
 
 async def test_update_research_task_unauthorized(
     asgi_client: SanicASGITestClient,
-    workspace: Any,
+    workspace: Workspace,
 ) -> None:
     task_id = UUID("00000000-0000-0000-0000-000000000000")
     request_body = UpdateResearchTaskRequestBody(title="Updated Title")
@@ -229,8 +219,7 @@ async def test_update_research_task_unauthorized(
 async def test_delete_research_aim_success(
     asgi_client: SanicASGITestClient,
     firebase_uid: str,
-    workspace: Any,
-    application: Any,
+    workspace: Workspace,
     research_aim: ResearchAim,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -242,7 +231,7 @@ async def test_delete_research_aim_success(
         )
 
     _, response = await asgi_client.delete(
-        f"/workspaces/{workspace.id}/applications/{application.id}/research-aims/{research_aim.id}",
+        f"/workspaces/{workspace.id}/research-aims/{research_aim.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
@@ -254,12 +243,11 @@ async def test_delete_research_aim_success(
 
 async def test_delete_research_aim_unauthorized(
     asgi_client: SanicASGITestClient,
-    workspace: Any,
-    application: Any,
+    workspace: Workspace,
     research_aim: ResearchAim,
 ) -> None:
     _, response = await asgi_client.delete(
-        f"/workspaces/{workspace.id}/applications/{application.id}/research-aims/{research_aim.id}",
+        f"/workspaces/{workspace.id}/research-aims/{research_aim.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED

@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 from sanic_testing.testing import SanicASGITestClient
-from sqlalchemy import delete, insert, select
+from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
@@ -61,9 +61,6 @@ async def test_retrieve_workspaces_api_request(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(delete(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
-
     workspaces_data = WorkspaceFactory.batch(4)
     async with async_session_maker() as session, session.begin():
         await session.execute(
