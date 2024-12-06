@@ -1,6 +1,5 @@
 from types import SimpleNamespace
 from typing import Any, NotRequired, TypedDict
-from uuid import UUID
 
 from sanic import Request, Sanic
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
@@ -28,49 +27,10 @@ class ApplicationDraftGenerationResponse(TypedDict):
     """The total duration of the generation process."""
 
 
-class CreateWorkspaceRequestBody(TypedDict):
-    """The request body for creating a workspace."""
-
-    name: str
-    """The name of the workspace."""
-    description: NotRequired[str | None]
-    """The description of the workspace."""
-    logo_url: NotRequired[str | None]
-    """The URL of the workspace logo."""
+# CFP API Types
 
 
-class CreateWorkspaceResponse(TypedDict):
-    """The response body for creating a workspace."""
-
-    workspace_id: str
-    """The ID of the created workspace."""
-
-
-class RetrieveWorkspaceBaseResponse(TypedDict):
-    """The response body for retrieving a workspace."""
-
-    id: str
-    """The ID of the workspace."""
-    name: str
-    """The name of the workspace."""
-    description: NotRequired[str | None]
-    """The description of the workspace."""
-    logo_url: NotRequired[str | None]
-    """The URL of the workspace logo."""
-
-
-class UpdateWorkspaceRequestBody(TypedDict):
-    """The request body for creating a workspace."""
-
-    name: NotRequired[str]
-    """The name of the workspace."""
-    description: NotRequired[str | None]
-    """The description of the workspace."""
-    logo_url: NotRequired[str | None]
-    """The URL of the workspace logo."""
-
-
-class RetrieveCfpResponse(TypedDict):
+class CfpResponse(TypedDict):
     """Response schema for retrieving a CFP."""
 
     id: str
@@ -95,7 +55,48 @@ class RetrieveCfpResponse(TypedDict):
     """The name of the funding organization."""
 
 
-class CreateApplicationRequestBody(TypedDict):
+# Workspace API Types
+
+
+class CreateWorkspaceRequestBody(TypedDict):
+    """The request body for creating a workspace."""
+
+    name: str
+    """The name of the workspace."""
+    description: NotRequired[str | None]
+    """The description of the workspace."""
+    logo_url: NotRequired[str | None]
+    """The URL of the workspace logo."""
+
+
+class UpdateWorkspaceRequestBody(TypedDict):
+    """The request body for creating a workspace."""
+
+    name: NotRequired[str]
+    """The name of the workspace."""
+    description: NotRequired[str | None]
+    """The description of the workspace."""
+    logo_url: NotRequired[str | None]
+    """The URL of the workspace logo."""
+
+
+class WorkspaceResponse(TypedDict):
+    """The response body for creating a workspace."""
+
+    id: str
+    """The ID of the created workspace."""
+    name: str
+    """The name of the workspace."""
+    description: str | None
+    """The description of the workspace."""
+    logo_url: str | None
+    """The URL of the workspace logo."""
+
+
+# Application API Types
+
+
+class CreateGrantApplicationRequestBody(TypedDict):
     """The request body for creating an application."""
 
     title: str
@@ -106,13 +107,6 @@ class CreateApplicationRequestBody(TypedDict):
     """The significance of the innovation."""
     innovation: NotRequired[str | None]
     """The innovation."""
-
-
-class CreateApplicationResponse(TypedDict):
-    """The response body for creating an application."""
-
-    application_id: str
-    """The ID of the application."""
 
 
 class UpdateApplicationRequestBody(TypedDict):
@@ -128,9 +122,11 @@ class UpdateApplicationRequestBody(TypedDict):
     """The innovation."""
 
 
-class RetrieveApplicationBaseResponseBody(TypedDict):
-    """The base response body for retrieving an application."""
+class GrantApplicationResponse(TypedDict):
+    """The response body for creating an application."""
 
+    id: str
+    """The ID of the application."""
     title: str
     """The title of the application."""
     cfp_id: str
@@ -139,6 +135,9 @@ class RetrieveApplicationBaseResponseBody(TypedDict):
     """The significance of the innovation."""
     innovation: str | None
     """The innovation."""
+
+
+# Research Aims API Types
 
 
 class CreateResearchTaskRequestBody(TypedDict):
@@ -167,21 +166,6 @@ class CreateResearchAimRequestBody(TypedDict):
     """The title of the aim."""
 
 
-class ResearchTaskResponse(CreateResearchTaskRequestBody):
-    """The response body for creating a research_task."""
-
-    id: UUID
-    """The ID of the research_task."""
-
-
-class ResearchAimResponse(CreateResearchAimRequestBody):
-    """The response body for creating a research_aim."""
-
-    id: UUID
-    """The ID of the research_aim."""
-    research_tasks: list[ResearchTaskResponse]  # type: ignore[misc]
-
-
 class UpdateResearchTaskRequestBody(TypedDict):
     """The request body for updating a research_task."""
 
@@ -204,3 +188,33 @@ class UpdateResearchAimRequestBody(TypedDict):
     """Whether the aim requires clinical trials."""
     title: NotRequired[str]
     """The title of the aim."""
+
+
+class ResearchTaskResponse(TypedDict):
+    """The response body for creating a research_task."""
+
+    id: str
+    """The ID of the research_task."""
+    task_number: int
+    """The number of the task."""
+    description: str
+    """The description of the task."""
+    title: str
+    """The title of the task."""
+
+
+class ResearchAimResponse(TypedDict):
+    """The response body for creating a research_aim."""
+
+    id: str
+    """The ID of the research_aim."""
+    aim_number: int
+    """The number of the aim."""
+    description: str
+    """The description of the aim."""
+    requires_clinical_trials: bool
+    """Whether the aim requires clinical trials."""
+    title: str
+    """The title of the aim."""
+    research_tasks: list[ResearchTaskResponse]
+    """The research tasks of the aim."""

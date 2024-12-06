@@ -4,7 +4,7 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
-from src.api.api_types import RetrieveCfpResponse
+from src.api.api_types import CfpResponse
 from src.db.tables import FundingOrganization, GrantCfp
 from src.utils.serialization import deserialize
 from tests.factories import FundingOrganizationFactory, GrantCfpFactory
@@ -58,13 +58,13 @@ async def test_retrieve_cfps_api_request(
     )
     assert response.status_code == 200
 
-    response_body = deserialize(response.body, list[RetrieveCfpResponse])
+    response_body = deserialize(response.body, list[CfpResponse])
     assert len(response_body) == 8
 
     for cfp in response_body:
         assert cfp["id"]
         assert cfp["allow_clinical_trials"] is not None
         assert cfp["allow_resubmissions"] is not None
-        assert cfp["code"]
+        assert cfp["code"] is not None
         assert cfp["funding_organization_id"] in [str(funding_organizations[0].id), str(funding_organizations[1].id)]
         assert cfp["funding_organization_name"] in [funding_organizations[0].name, funding_organizations[1].name]

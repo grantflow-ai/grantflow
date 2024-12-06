@@ -8,9 +8,8 @@ from sqlalchemy import delete, insert, select, update
 from src.api.api_types import (
     APIRequest,
     CreateWorkspaceRequestBody,
-    CreateWorkspaceResponse,
-    RetrieveWorkspaceBaseResponse,
     UpdateWorkspaceRequestBody,
+    WorkspaceResponse,
 )
 from src.api.utils import handle_deserialization_error, verify_workspace_access
 from src.constants import CONTENT_TYPE_JSON
@@ -34,14 +33,12 @@ async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
     try:
         request_body = deserialize(request.body, CreateWorkspaceRequestBody)
         async with request.ctx.session_maker() as session, session.begin():
-            workspace_id = (
-                await session.execute(insert(Workspace).values(request_body).returning(Workspace.id))
-            ).scalar_one()
+            workspace = await session.scalar(insert(Workspace).values(request_body).returning(Workspace))
 
             await session.execute(
                 insert(WorkspaceUser).values(
                     {
-                        "workspace_id": workspace_id,
+                        "workspace_id": workspace.id,
                         "firebase_uid": request.ctx.firebase_uid,
                         "role": UserRoleEnum.OWNER.value,
                     }
@@ -51,7 +48,14 @@ async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
 
         return HTTPResponse(
             status=HTTPStatus.CREATED,
-            body=serialize(CreateWorkspaceResponse(workspace_id=workspace_id)),
+            body=serialize(
+                WorkspaceResponse(
+                    id=workspace.id,
+                    name=workspace.name,
+                    description=workspace.description,
+                    logo_url=workspace.logo_url,
+                )
+            ),
             content_type=CONTENT_TYPE_JSON,
         )
     except DeserializationError as e:
@@ -81,7 +85,7 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
         status=HTTPStatus.OK,
         body=serialize(
             [
-                RetrieveWorkspaceBaseResponse(
+                WorkspaceResponse(
                     id=workspace.id, name=workspace.name, description=workspace.description, logo_url=workspace.logo_url
                 )
                 for workspace in workspaces
@@ -109,10 +113,20 @@ async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HT
     try:
         request_body = deserialize(request.body, UpdateWorkspaceRequestBody)
         async with request.ctx.session_maker() as session, session.begin():
-            await session.execute(update(Workspace).where(Workspace.id == workspace_id).values(request_body))
+            workspace = await session.scalar(
+                update(Workspace).where(Workspace.id == workspace_id).values(request_body).returning(Workspace)
+            )
             await session.commit()
 
-        return HTTPResponse(status=HTTPStatus.OK)
+        return HTTPResponse(
+            status=HTTPStatus.OK,
+            body=serialize(
+                WorkspaceResponse(
+                    id=workspace.id, name=workspace.name, description=workspace.description, logo_url=workspace.logo_url
+                )
+            ),
+            content_type=CONTENT_TYPE_JSON,
+        )
     except DeserializationError as e:
         logger.error("Failed to deserialize the request body: %s", e)
         return handle_deserialization_error(e)
