@@ -13,19 +13,20 @@ export function getEnv(): Env {
 	if (envRef.value === null) {
 		envRef.value = createEnv({
 			server: {
-				AZURE_STORAGE_ACCOUNT_NAME: z.string(),
-				AZURE_STORAGE_ACCOUNT_KEY: z.string(),
-				AZURE_STORAGE_CONTAINER_NAME: z.string(),
-				AUTH_GOOGLE_ID: z.string(),
-				AUTH_GOOGLE_SECRET: z.string(),
-				DATABASE_CONNECTION_STRING: z.string(),
-				AUTH_SECRET: z.string(),
-				AUTH_RESEND_KEY: z.string(),
 				BACKEND_API_BASE_URL: z.string().url("Please enter a valid URL"),
 				BACKEND_API_TOKEN: z.string(),
+				GOOGLE_APPLICATION_CREDENTIALS: z.string(),
 			},
 			client: {
 				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
+				NEXT_PUBLIC_FIREBASE_API_KEY: z.string(),
+				NEXT_PUBLIC_FIREBASE_APP_ID: z.string(),
+				NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string(),
+				NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string(),
+				NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: z.string(),
+				NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: z.string(),
+				NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string(),
+				NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string(),
 			},
 			shared: {
 				NEXT_PUBLIC_DEBUG: z
@@ -40,13 +41,22 @@ export function getEnv(): Env {
 						}
 						return val;
 					}, z.boolean())
-					.optional(),
+					.optional()
+					.default(false),
 				NEXT_PUBLIC_IS_DEVELOPMENT: z.boolean().optional().default(false),
 			},
 			experimental__runtimeEnv: {
 				NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 				NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG,
 				NEXT_PUBLIC_IS_DEVELOPMENT: !!process.env.NEXT_PUBLIC_IS_DEVELOPMENT,
+				NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+				NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+				NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+				NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+				NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID,
+				NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: process.env.NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID,
+				NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+				NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 			},
 		});
 	}

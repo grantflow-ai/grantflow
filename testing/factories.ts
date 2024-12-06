@@ -1,55 +1,36 @@
 import { Factory } from "interface-forge";
-import {
-	GrantApplication,
-	GrantCFP,
-	FundingOrganization,
-	ResearchAim,
-	ResearchTask,
-	User,
-	Workspace,
-} from "@/types/database-types";
+import { UserInfo } from "@firebase/auth";
+import { GrantApplication, GrantCfp, ResearchAim, ResearchTask, Workspace } from "@/types/api-types";
 
-export const UserFactory = new Factory<User>((factory) => ({
-	image: factory.helpers.arrayElement([null, factory.image.avatar()]),
-	createdAt: new Date(),
+export const UserInfoFactory = new Factory<UserInfo>((factory) => ({
+	photoURL: factory.helpers.arrayElement([null, factory.image.avatar()]),
 	email: factory.internet.email(),
-	emailVerified: new Date(),
-	name: factory.person.fullName(),
-	id: factory.string.uuid(),
-	updatedAt: new Date(),
+	providerId: "google.com",
+	displayName: factory.person.fullName(),
+	phoneNumber: null,
+	uid: factory.string.uuid(),
 }));
 
 export const WorkspaceFactory = new Factory<Workspace>((factory) => ({
-	createdAt: new Date(),
-	deletedAt: null,
 	description: factory.helpers.arrayElement([null, factory.lorem.sentence()]),
 	id: factory.string.uuid(),
-	logoUrl: "https://via.placeholder.com/150?text=Logo+3",
+	logo_url: factory.helpers.arrayElement([null, factory.image.avatar()]),
 	name: factory.lorem.sentence(),
-	updatedAt: new Date(),
 }));
 
 export const GrantApplicationFactory = new Factory<GrantApplication>((factory) => ({
-	cfpId: factory.string.uuid(),
-	createdAt: new Date(),
-	deletedAt: null,
+	cfp_id: factory.string.uuid(),
 	id: factory.string.uuid(),
-	isResubmission: factory.datatype.boolean(),
 	title: factory.lorem.words(),
 	innovation: factory.lorem.paragraphs(),
 	significance: factory.lorem.paragraphs(),
-	fileIds: factory.helpers.arrayElement([null, [factory.string.uuid()]]),
-	updatedAt: new Date(),
-	workspaceId: factory.string.uuid(),
-	status: factory.helpers.arrayElement(["draft", "completed"]),
 }));
 
-export const GrantCFPFactory = new Factory<GrantCFP>((factory) => ({
-	allowClinicalTrials: factory.datatype.boolean(),
-	allowResubmissions: factory.datatype.boolean(),
-	createdAt: new Date(),
-	deletedAt: null,
-	fundingOrganizationId: factory.string.uuid(),
+export const GrantCFPFactory = new Factory<GrantCfp>((factory) => ({
+	allow_clinical_trials: factory.datatype.boolean(),
+	allow_resubmissions: factory.datatype.boolean(),
+	funding_organization_id: factory.string.uuid(),
+	funding_organization_name: "NIH",
 	code: factory.helpers.arrayElement([
 		"R01",
 		"R03",
@@ -71,39 +52,21 @@ export const GrantCFPFactory = new Factory<GrantCFP>((factory) => ({
 	description: factory.lorem.sentence(),
 	category: factory.lorem.words(),
 	id: factory.string.uuid(),
-	updatedAt: new Date(),
 	url: factory.helpers.arrayElement([null, factory.internet.url()]),
 }));
 
-export const FundingOrganizationFactory = new Factory<FundingOrganization>((factory) => ({
-	createdAt: new Date(),
-	deletedAt: null,
+export const ResearchAimFactory = new Factory<ResearchAim>((factory, i) => ({
+	description: factory.lorem.sentence(),
+	aim_number: i + 1,
 	id: factory.string.uuid(),
-	logoUrl: "https://via.placeholder.com/150?text=Logo+3",
-	name: factory.company.name(),
-	updatedAt: new Date(),
+	requires_clinical_trials: factory.datatype.boolean(),
+	title: factory.lorem.words(),
+	research_tasks: ResearchTaskFactory.batch(3),
 }));
 
-export const ResearchAimFactory = new Factory<ResearchAim>((factory) => ({
-	createdAt: new Date(),
-	deletedAt: null,
+export const ResearchTaskFactory = new Factory<ResearchTask>((factory, i) => ({
 	description: factory.lorem.sentence(),
-	draftId: factory.string.uuid(),
-	files: {},
+	task_number: i + 1,
 	id: factory.string.uuid(),
-	requiresClinicalTrials: factory.datatype.boolean(),
-	applicationId: factory.string.uuid(),
 	title: factory.lorem.words(),
-	updatedAt: new Date(),
-}));
-
-export const ResearchTaskFactory = new Factory<ResearchTask>((factory) => ({
-	createdAt: new Date(),
-	deletedAt: null,
-	description: factory.lorem.sentence(),
-	files: {},
-	id: factory.string.uuid(),
-	aimId: factory.string.uuid(),
-	title: factory.lorem.words(),
-	updatedAt: new Date(),
 }));

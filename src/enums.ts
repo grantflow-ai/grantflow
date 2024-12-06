@@ -1,6 +1,7 @@
 export enum PagePath {
 	ROOT = "/",
-	SIGNIN = "/signin",
+	SIGNIN = "/sign-in",
+	FINISH_EMAIL_SIGNIN = "/sign-in/email",
 	WORKSPACES = "/workspaces",
 	WORKSPACE_DETAIL = "/workspaces/:workspaceId",
 	APPLICATIONS = "/workspaces/:workspaceId/applications",

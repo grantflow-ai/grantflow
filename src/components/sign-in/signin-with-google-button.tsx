@@ -2,9 +2,8 @@
 
 import { Button } from "gen/ui/button";
 import { SiGoogle } from "@icons-pack/react-simple-icons";
-import { signInWithGoogle } from "@/actions/signin-with-google";
 
-export function SigninWithGoogleButton() {
+export function SigninWithGoogleButton({ onClick }: { onClick: () => Promise<void> }) {
 	return (
 		<section data-testid="oauth-signin-form" className="flex flex-col gap-2">
 			<Button
@@ -12,7 +11,7 @@ export function SigninWithGoogleButton() {
 				className="w-full p-1 border rounded"
 				data-testid="oauth-signin-form-google-button"
 				onClick={async () => {
-					await signInWithGoogle();
+					await onClick();
 				}}
 			>
 				<p className="flex justify-center items-center gap-3">

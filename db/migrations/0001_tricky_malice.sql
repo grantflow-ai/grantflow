@@ -1,1 +1,0 @@
-ALTER TABLE "generation_results" ADD COLUMN "ticket_id" uuid NOT NULL;
