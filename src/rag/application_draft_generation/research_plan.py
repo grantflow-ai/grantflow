@@ -16,6 +16,7 @@ from src.rag.application_draft_generation.research_tasks import (
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
 )
+from src.rag.dto import ResearchAimDTO, ResearchTaskDTO
 from src.rag.utils import handle_completions_request
 from src.utils.serialization import serialize
 
@@ -112,7 +113,7 @@ response_schema = {
 
 async def enrich_research_aims_and_tasks_with_relationship_information(
     research_aims: list[ResearchAim],
-) -> list[ResearchAim]:
+) -> list[ResearchAimDTO]:
     """Enrich the research aims and tasks with relationship information.
 
     Args:
@@ -135,7 +136,7 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
                             {
                                 "title": research_task.title,
                                 "description": research_task.description,
-                                "task_number": research_task.task_number,
+                                "task_number": f"{research_aim.aim_number}.{research_task.task_number}",
                             }
                             for research_task in research_aim.research_tasks
                         ],
@@ -154,12 +155,24 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
     for relation in results["relations"]:
         relations[relation[0]].append(relation[1])
 
-    for aim in research_aims:
-        aim.relations = relations.get(str(aim.aim_number), [])
-        for task in aim.research_tasks:
-            task.relations = relations.get(task.task_number, [])
-
-    return research_aims
+    return [
+        ResearchAimDTO(
+            aim_number=aim.aim_number,
+            title=aim.title,
+            description=aim.description,
+            requires_clinical_trials=aim.requires_clinical_trials,
+            research_tasks=[
+                ResearchTaskDTO(
+                    task_number=f"{aim.aim_number}.{task.task_number}",
+                    title=task.title,
+                    description=task.description,
+                    relations=relations.get(f"{aim.aim_number}.{task.task_number}", []),
+                )
+                for task in aim.research_tasks
+            ],
+        )
+        for aim in research_aims
+    ]
 
 
 async def handle_research_plan_text_generation(
@@ -176,7 +189,9 @@ async def handle_research_plan_text_generation(
     Returns:
         The generated text for the research plan.
     """
-    enriched_research_aims = await enrich_research_aims_and_tasks_with_relationship_information(research_aims)
+    enriched_research_aims = await enrich_research_aims_and_tasks_with_relationship_information(
+        sorted(research_aims, key=lambda x: x.aim_number)
+    )
     research_aim_texts: list[str] = []
 
     for research_aim in enriched_research_aims:

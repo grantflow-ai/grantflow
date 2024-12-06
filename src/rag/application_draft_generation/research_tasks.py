@@ -3,7 +3,6 @@ from functools import partial
 from string import Template
 from typing import Final
 
-from src.db.tables import ResearchTask
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
@@ -11,6 +10,7 @@ from src.rag.application_draft_generation.shared_prompts import (
 from src.rag.dto import (
     DocumentDTO,
     GenerationResultDTO,
+    ResearchTaskDTO,
 )
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
@@ -88,7 +88,7 @@ async def generate_research_task_text(
     previous_part_text: str | None,
     *,
     requires_clinical_trials: bool,
-    research_task: ResearchTask,
+    research_task: ResearchTaskDTO,
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResultDTO:
     """Generate a part of the research task text.
@@ -124,7 +124,7 @@ async def handle_research_task_text_generation(
     *,
     application_id: str,
     requires_clinical_trials: bool,
-    research_task: ResearchTask,
+    research_task: ResearchTaskDTO,
 ) -> str:
     """Generate the text for a research task.
 

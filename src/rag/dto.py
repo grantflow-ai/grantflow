@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import NotRequired
 
 from typing_extensions import TypedDict
@@ -23,3 +24,32 @@ class GenerationResultDTO(TypedDict):
     """The generated text."""
     is_complete: bool
     """Whether the section text is complete or not."""
+
+
+@dataclass
+class ResearchTaskDTO:
+    """DTO for a research task data."""
+
+    task_number: str
+    """The task number."""
+    title: str
+    """The title of the task."""
+    description: str
+    """The description of the task."""
+    relations: list[str]
+
+
+@dataclass
+class ResearchAimDTO:
+    """DTO for a research aim data."""
+
+    aim_number: int
+    """The aim number."""
+    title: str
+    """The title of the aim."""
+    description: str
+    """The description of the aim."""
+    requires_clinical_trials: bool
+    """Whether the aim requires clinical trials."""
+    research_tasks: list[ResearchTaskDTO]
+    """The research tasks for the aim."""
