@@ -7,7 +7,6 @@ import { z } from "zod";
 import { SubmitButton } from "@/components/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
-import { signInWithResend } from "@/actions/signin-with-resend";
 
 const emailSchema = z.object({
 	email: z.string().email({ message: "Invalid email address" }),
@@ -15,11 +14,7 @@ const emailSchema = z.object({
 
 export type EmailFormValues = z.infer<typeof emailSchema>;
 
-const onSubmit: SubmitHandler<EmailFormValues> = async (values) => {
-	await signInWithResend(values.email);
-};
-
-export function EmailSigninForm() {
+export function EmailSigninForm({ onSubmit }: { onSubmit: SubmitHandler<EmailFormValues> }) {
 	const form = useForm<EmailFormValues>({
 		resolver: zodResolver(emailSchema),
 		defaultValues: { email: "" },
