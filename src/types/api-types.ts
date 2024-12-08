@@ -1,3 +1,5 @@
+import { UserRole } from "@/constants";
+
 export interface APIError {
 	message: string;
 	details: string;
@@ -8,9 +10,10 @@ export interface Workspace {
 	name: string;
 	description?: string | null;
 	logo_url?: string | null;
+	role: UserRole;
 }
 
-export type CreateWorkspaceRequestBody = Omit<Workspace, "id">;
+export type CreateWorkspaceRequestBody = Omit<Workspace, "id" | "role">;
 export type UpdateWorkspaceRequestBody = Partial<CreateWorkspaceRequestBody>;
 
 export interface GrantApplication {
@@ -21,6 +24,23 @@ export interface GrantApplication {
 	innovation?: string | null;
 }
 
+export interface GrantApplicationDetail {
+	id: string;
+	title: string;
+	innovation: string | null;
+	significance: string | null;
+	cfp: GrantCfp;
+	research_aims: ResearchAim[];
+	application_files: ApplicationFile[];
+}
+
+export interface ApplicationFile {
+	id: string;
+	name: string;
+	type: string;
+	size: number;
+}
+
 export type CreateGrantApplicationRequestBody = Omit<GrantApplication, "id">;
 export type UpdateApplicationRequestBody = Partial<CreateGrantApplicationRequestBody>;
 
@@ -28,7 +48,7 @@ export interface ResearchTask {
 	id: string;
 	task_number: number;
 	title: string;
-	description: string;
+	description?: string | null;
 }
 
 export type CreateResearchTaskRequestBody = Omit<ResearchTask, "id">;
@@ -37,7 +57,7 @@ export type UpdateResearchTaskRequestBody = Partial<CreateResearchTaskRequestBod
 export interface ResearchAim {
 	id: string;
 	title: string;
-	description: string;
+	description?: string | null;
 	requires_clinical_trials: boolean;
 	research_tasks: ResearchTask[];
 }

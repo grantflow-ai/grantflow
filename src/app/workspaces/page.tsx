@@ -1,33 +1,12 @@
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
-import { getDatabaseClient } from "db/connection";
-import { auth } from "@/auth";
-import { eq } from "drizzle-orm";
-import { workspaces, workspaceUsers } from "db/schema";
-import { handleServerError } from "@/utils/server-side";
-import { PagePath } from "@/enums";
 import { Navbar } from "@/components/navbar";
+import { useApiClient } from "@/utils/hooks";
 
 export default async function WorkspacesListPage() {
-	const session = await auth();
+	const apiClient = useApiClient();
 
-	if (!session?.user) {
-		return handleServerError(new Error("User not authenticated"), { redirect: PagePath.SIGNIN });
-	}
-
-	const db = getDatabaseClient();
-
-	const userWorkspaces = await db
-		.select({
-			description: workspaces.description,
-			logoUrl: workspaces.logoUrl,
-			name: workspaces.name,
-			role: workspaceUsers.role,
-			workspaceId: workspaceUsers.workspaceId,
-		})
-		.from(workspaceUsers)
-		.leftJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
-		.where(eq(workspaceUsers.userId, session.user.id));
+	const workspaces = await apiClient.getWorkspaces();
 
 	return (
 		<div className="flex flex-col flex-1 ml-14">
@@ -41,8 +20,8 @@ export default async function WorkspacesListPage() {
 					</div>
 					<div className="my-6 space-y-8">
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-							{userWorkspaces.map((data) => (
-								<WorkspaceCard key={data.workspaceId} {...data} />
+							{workspaces.map((workspace) => (
+								<WorkspaceCard key={workspace.id} workspace={workspace} />
 							))}
 						</div>
 					</div>

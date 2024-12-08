@@ -1,4 +1,3 @@
-import { createWorkspace } from "@/actions/workspace";
 import { SubmitButton } from "@/components/submit-button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "gen/ui/form";
@@ -9,6 +8,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Card, CardContent } from "gen/ui/card";
 
+import { useApiClient } from "@/utils/hooks";
+
 const workspaceSchema = z.object({
 	name: z.string().min(3, { message: "Workspace name must be at least 3 characters long" }),
 	description: z.string(),
@@ -17,19 +18,22 @@ const workspaceSchema = z.object({
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
 
 export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) {
+	const apiClient = useApiClient();
+
 	const form = useForm<WorkspaceFormValues>({
 		resolver: zodResolver(workspaceSchema),
 		defaultValues: { name: "", description: "" },
 	});
 
 	const onSubmit = async (values: WorkspaceFormValues) => {
-		const error = await createWorkspace(values);
-		if (error) {
+		try {
+			await apiClient.createWorkspace(values);
+		} catch (error) {
+			console.error("An error occurred creating workspace", error);
 			toast.error("An error occurred while creating the workspace.");
-		} else {
-			toast.success("Workspace created successfully.");
+		} finally {
+			closeModal();
 		}
-		closeModal();
 	};
 
 	return (

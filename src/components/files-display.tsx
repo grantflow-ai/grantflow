@@ -2,11 +2,9 @@ import Image from "next/image";
 import { FileTextIcon, X } from "lucide-react";
 import { formatBytes } from "@/utils/format";
 import { Button } from "gen/ui/button";
-import { ApplicationFile } from "@/types/database-types";
+import { FormFile } from "@/types/app-types";
 
-export type FileAttributes = Pick<ApplicationFile, "name" | "type" | "size">;
-
-export function FilePreview({ file, previewUrl }: { file: FileAttributes; previewUrl?: string }) {
+export function FilePreview({ file, previewUrl }: { file: FormFile; previewUrl?: string }) {
 	if (previewUrl) {
 		return (
 			<Image
@@ -32,7 +30,7 @@ export function FileCard({
 	handleRemoveFile,
 	previewUrl,
 }: {
-	file: FileAttributes;
+	file: FormFile;
 	handleRemoveFile?: () => void;
 	previewUrl?: string;
 }) {
@@ -71,8 +69,8 @@ export function FilesDisplay({
 	files,
 	onFileRemoved,
 }: {
-	files: (FileAttributes | File)[];
-	onFileRemoved?: (file: FileAttributes) => void;
+	files: (FormFile | File)[];
+	onFileRemoved?: (file: FormFile) => void;
 }) {
 	return files.length ? (
 		<div className="space-y-2 flex flex-col gap-1" data-testid="files-display">
