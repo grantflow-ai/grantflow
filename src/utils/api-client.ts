@@ -1,27 +1,31 @@
-import ky, { KyInstance } from "ky";
+import ky, { BeforeRequestHook, KyInstance } from "ky";
 import {
 	ApplicationDraft,
+	ApplicationFile,
 	CreateGrantApplicationRequestBody,
 	CreateResearchAimRequestBody,
 	CreateWorkspaceRequestBody,
 	GrantApplication,
+	GrantApplicationDetail,
 	GrantCfp,
 	ResearchAim,
 	ResearchTask,
+	UpdateApplicationRequestBody,
 	UpdateResearchAimRequestBody,
 	UpdateResearchTaskRequestBody,
 	UpdateWorkspaceRequestBody,
 	Workspace,
 } from "@/types/api-types";
+import { getEnv } from "@/utils/env";
 
 export class ApiClient {
 	private readonly client: KyInstance;
 
-	constructor(firebaseIdToken: string) {
+	constructor(hook: BeforeRequestHook) {
 		this.client = ky.create({
-			prefixUrl: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL,
-			headers: {
-				Authorization: `Bearer ${firebaseIdToken}`,
+			prefixUrl: getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
+			hooks: {
+				beforeRequest: [hook],
 			},
 		});
 	}
@@ -38,6 +42,10 @@ export class ApiClient {
 		return this.client.get("workspaces").json<Workspace[]>();
 	}
 
+	async getWorkspace(workspaceId: string) {
+		return this.client.get(`workspaces/${workspaceId}`).json<Workspace>();
+	}
+
 	async updateWorkspace(workspaceId: string, data: UpdateWorkspaceRequestBody) {
 		return this.client.patch(`workspaces/${workspaceId}`, { json: data }).json<Workspace>();
 	}
@@ -50,8 +58,20 @@ export class ApiClient {
 		return this.client.post(`workspaces/${workspaceId}/applications`, { json: data }).json<GrantApplication>();
 	}
 
+	async updateApplication(workspaceId: string, applicationId: string, data: UpdateApplicationRequestBody) {
+		return this.client
+			.patch(`workspaces/${workspaceId}/applications/${applicationId}`, { json: data })
+			.json<GrantApplication>();
+	}
+
 	async getApplications(workspaceId: string) {
 		return this.client.get(`workspaces/${workspaceId}/applications`).json<GrantApplication[]>();
+	}
+
+	async getApplicationDetail(workspaceId: string, applicationId: string) {
+		return this.client
+			.get(`workspaces/${workspaceId}/applications/${applicationId}`)
+			.json<GrantApplicationDetail>();
 	}
 
 	async createResearchAims(workspaceId: string, applicationId: string, data: CreateResearchAimRequestBody[]) {
@@ -82,10 +102,22 @@ export class ApiClient {
 		await this.client.delete(`workspaces/${workspaceId}/research-aims/${researchAimId}`);
 	}
 
-	async uploadApplicationFiles(workspaceId: string, applicationId: string, files: FormData): Promise<void> {
-		await this.client
-			.post(`workspaces/${workspaceId}/applications/${applicationId}/index-files`, { body: files })
-			.json();
+	async deleteResearchTask(workspaceId: string, researchTaskId: string): Promise<void> {
+		await this.client.delete(`workspaces/${workspaceId}/research-tasks/${researchTaskId}`);
+	}
+
+	async uploadApplicationFiles(workspaceId: string, applicationId: string, files: File[]) {
+		const formData = new FormData();
+		for (const file of files) {
+			formData.append("files", file);
+		}
+		return await this.client
+			.post(`workspaces/${workspaceId}/applications/${applicationId}/index-files`, { body: formData })
+			.json<ApplicationFile[]>();
+	}
+
+	async deleteApplicationFile(workspaceId: string, applicationId: string, fileId: string): Promise<void> {
+		await this.client.delete(`workspaces/${workspaceId}/applications/${applicationId}/files/${fileId}`);
 	}
 
 	async generateApplicationDraft(workspaceId: string, applicationId: string) {
