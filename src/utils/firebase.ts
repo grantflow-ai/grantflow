@@ -45,3 +45,17 @@ export function getFirebaseAuth(): Auth {
 
 	return instanceRef.auth;
 }
+
+/**
+ * Get the Firebase ID token.
+ *
+ * @returns - The Firebase ID token.
+ * @throws - If the user is not logged in.
+ */
+export async function getFirebaseIdToken(): Promise<string> {
+	const auth = getFirebaseAuth();
+	if (!auth.currentUser) {
+		throw new Error("User is not logged in.");
+	}
+	return await auth.currentUser.getIdToken();
+}

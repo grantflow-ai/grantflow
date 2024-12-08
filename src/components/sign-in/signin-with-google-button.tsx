@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "gen/ui/button";
 import { SiGoogle } from "@icons-pack/react-simple-icons";
 

@@ -18,6 +18,7 @@ export function getEnv(): Env {
 				GOOGLE_APPLICATION_CREDENTIALS: z.string(),
 			},
 			client: {
+				NEXT_PUBLIC_BACKEND_API_BASE_URL: z.string().url("Please enter a valid URL"),
 				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
 				NEXT_PUBLIC_FIREBASE_API_KEY: z.string(),
 				NEXT_PUBLIC_FIREBASE_APP_ID: z.string(),
@@ -46,6 +47,7 @@ export function getEnv(): Env {
 				NEXT_PUBLIC_IS_DEVELOPMENT: z.boolean().optional().default(false),
 			},
 			experimental__runtimeEnv: {
+				NEXT_PUBLIC_BACKEND_API_BASE_URL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL,
 				NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 				NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG,
 				NEXT_PUBLIC_IS_DEVELOPMENT: !!process.env.NEXT_PUBLIC_IS_DEVELOPMENT,

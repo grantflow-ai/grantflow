@@ -1,10 +1,8 @@
-import { getDatabaseClient } from "db/connection";
-import { inArray } from "drizzle-orm";
-import { grantCfps } from "db/schema";
-import { GrantApplicationWizard } from "@/components/workspaces/detail/applications/grant-application-wizard";
+import { GrantApplicationForm } from "@/components/workspaces/detail/applications/grant-application-form";
 import { redirect } from "next/navigation";
 import { PagePath } from "@/enums";
 import { Navbar } from "@/components/navbar";
+import { serverSideAPIClient } from "@/utils/server-side";
 
 export default async function ApplicationCreatePage(props: {
 	params: Promise<{
@@ -17,26 +15,7 @@ export default async function ApplicationCreatePage(props: {
 		redirect(PagePath.WORKSPACES);
 	}
 
-	const db = getDatabaseClient();
-	const cfps = await db.query.grantCfps.findMany({
-		where: inArray(grantCfps.code, [
-			"R01",
-			"R03",
-			"R18",
-			"R21",
-			"R24",
-			"R25",
-			"R33",
-			"R34",
-			"R35",
-			"R41",
-			"R42",
-			"R43",
-			"R44",
-			"R50",
-			"R61",
-		]),
-	});
+	const cfps = await serverSideAPIClient.getCfps();
 
 	return (
 		<div className="flex flex-col flex-1 ml-14">
@@ -49,7 +28,7 @@ export default async function ApplicationCreatePage(props: {
 						<h1 className="text-2xl bold">Grant Application Wizard</h1>
 					</section>
 					<section>
-						<GrantApplicationWizard cfps={cfps} workspaceId={workspaceId} />
+						<GrantApplicationForm cfps={cfps} workspaceId={workspaceId} />
 					</section>
 				</div>
 			</div>

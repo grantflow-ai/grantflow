@@ -4,37 +4,73 @@ import { isSignInWithEmailLink, signInWithEmailLink } from "@firebase/auth";
 import { useRouter } from "next/navigation";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { PagePath } from "@/enums";
-import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { useEffect } from "react";
+import { FIREBASE_COOKIE_NAME, FIREBASE_LOCAL_STORAGE_KEY, ONE_HOUR_IN_SECONDS } from "@/constants";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useCookies } from "react-cookie";
 
+/**
+ * Handles the email sign-in completion flow after user clicks the email link.
+ * Validates the email link, completes the sign-in process, and redirects the user.
+ */
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
 	const auth = getFirebaseAuth();
+	const [{ [FIREBASE_COOKIE_NAME]: cookie }, setCookies] = useCookies([FIREBASE_COOKIE_NAME]);
+	const [isProcessing, setIsProcessing] = useState(true);
 
 	useEffect(() => {
-		const email = globalThis.localStorage.getItem(FIREBASE_LOCAL_STORAGE_KEY);
+		const finalizeSignIn = async () => {
+			const email = globalThis.localStorage.getItem(FIREBASE_LOCAL_STORAGE_KEY);
 
-		if (email && isSignInWithEmailLink(auth, globalThis.location.href)) {
-			(async () => {
-				try {
-					await signInWithEmailLink(auth, email, globalThis.location.href);
-					globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);
-					router.replace(PagePath.WORKSPACES);
-				} catch (e) {
-					console.error("signin error occurred:", e);
-					toast.error("Failed to sign in with email link");
-				}
-			})();
+			if (!email || !isSignInWithEmailLink(auth, globalThis.location.href)) {
+				toast.error("Invalid or expired sign-in link");
+				router.replace(PagePath.SIGNIN);
+				return;
+			}
+
+			try {
+				const cred = await signInWithEmailLink(auth, email, globalThis.location.href);
+				const idToken = await cred.user.getIdToken();
+
+				setCookies(FIREBASE_COOKIE_NAME, idToken, {
+					maxAge: ONE_HOUR_IN_SECONDS * 24,
+					secure: true,
+					sameSite: "strict",
+				});
+
+				globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);
+				router.replace(PagePath.WORKSPACES);
+			} catch (error) {
+				console.error("Sign-in error:", error);
+				toast.error(error instanceof Error ? error.message : "Failed to sign in with email link");
+				router.replace(PagePath.SIGNIN);
+			} finally {
+				setIsProcessing(false);
+			}
+		};
+
+		if (cookie) {
+			router.replace(PagePath.WORKSPACES);
 		} else {
-			router.replace(PagePath.SIGNIN);
+			void finalizeSignIn();
 		}
-	}, [auth, globalThis.location.href]);
+	}, [auth, cookie, router, setCookies]);
+
+	if (!isProcessing) {
+		return null;
+	}
 
 	return (
-		<div data-testid="finish-email-signin-container" className="flex bg-base-100 h-full">
-			<Loader2 className="grow animate-spin" />
+		<div
+			className="flex items-center justify-center min-h-screen bg-background"
+			data-testid="finish-email-signin-container"
+		>
+			<div className="text-center space-y-4">
+				<Loader2 className="w-8 h-8 animate-spin mx-auto" />
+				<p className="text-sm text-muted-foreground">Completing sign in...</p>
+			</div>
 		</div>
 	);
 }

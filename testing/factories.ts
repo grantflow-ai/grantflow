@@ -1,6 +1,7 @@
 import { Factory } from "interface-forge";
 import { UserInfo } from "@firebase/auth";
 import { GrantApplication, GrantCfp, ResearchAim, ResearchTask, Workspace } from "@/types/api-types";
+import { UserRole } from "@/constants";
 
 export const UserInfoFactory = new Factory<UserInfo>((factory) => ({
 	photoURL: factory.helpers.arrayElement([null, factory.image.avatar()]),
@@ -16,6 +17,7 @@ export const WorkspaceFactory = new Factory<Workspace>((factory) => ({
 	id: factory.string.uuid(),
 	logo_url: factory.helpers.arrayElement([null, factory.image.avatar()]),
 	name: factory.lorem.sentence(),
+	role: UserRole.Member,
 }));
 
 export const GrantApplicationFactory = new Factory<GrantApplication>((factory) => ({
