@@ -30,6 +30,8 @@ dependencies = [
     "pypandoc>=1.14",
     "pathvalidate>=3.2.1",
     "firebase-admin>=6.6.0",
+    "sanic-ext>=23.12.0",
+    "pyjwt>=2.10.1",
 ]
 
 [tool.pdm]
@@ -42,7 +44,7 @@ setup = { composite = [
     "pre-commit install --hook-type commit-msg",
     "pdm install",
 ] }
-start.cmd = "func start"
+start.cmd = "sanic src.main:app --dev"
 lint.cmd = "pre-commit run --all-files"
 test.cmd = "pytest"
 test.env = { "PYTHONPATH" = "." }
@@ -52,6 +54,8 @@ migrate.cmd = "atlas migrate apply --env sqlalchemy"
 migrate.env =  { "PYTHONPATH" = "." }
 create-migration.cmd = "atlas migrate diff --env sqlalchemy"
 create-migration.env = { "PYTHONPATH" = "." }
+seed.cmd = "pdm run python -m scripts.seed_db"
+seed.env = { "PYTHONPATH" = "." }
 
 # linters configuration below
 [tool.ruff]
@@ -75,6 +79,7 @@ lint.ignore = [
     "PLR2004", # Magic variables, we allow them
     "TD",      # We allow todo and fixme comments
     "TRY",     # Try except block, rules are too strict
+    "S104",    # Disallows using '0.0.0.0' as a host
 ]
 src = ["src", "tests"]
 
