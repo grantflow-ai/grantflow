@@ -1,10 +1,5 @@
 export interface Env {
-	// Server only
-	BACKEND_API_BASE_URL: string;
-	BACKEND_API_TOKEN: string;
-	GOOGLE_APPLICATION_CREDENTIALS: string;
-
-	// Client only
+	// client only
 	NEXT_PUBLIC_SITE_URL: string;
 	NEXT_PUBLIC_FIREBASE_API_KEY: string;
 	NEXT_PUBLIC_FIREBASE_APP_ID: string;
@@ -14,8 +9,8 @@ export interface Env {
 	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: string;
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: string;
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: string;
-	NEXT_PUBLIC_BACKEND_API_BASE_URL: string;
 
 	// shared
+	NEXT_PUBLIC_BACKEND_API_BASE_URL: string;
 	NEXT_PUBLIC_DEBUG?: boolean;
 }

@@ -9,8 +9,6 @@ import { Toaster } from "gen/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 import { ToastListener } from "@/components/toast-listener";
-import { AuthProvider } from "@/auth";
-import { getFirebaseAuth } from "@/utils/firebase";
 
 export const metadata = {
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
@@ -26,8 +24,6 @@ export const metadata = {
 } satisfies Metadata;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-	const user = getFirebaseAuth();
-
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
@@ -36,16 +32,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			</head>
 			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-					<AuthProvider user={user.currentUser}>
-						<main
-							className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"
-							data-testid="main-container"
-						>
-							{children}
-						</main>
-						<Toaster />
-						<ToastListener />
-					</AuthProvider>
+					<main
+						className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"
+						data-testid="main-container"
+					>
+						{children}
+					</main>
+					<Toaster />
+					<ToastListener />
 				</ThemeProvider>
 			</body>
 		</html>

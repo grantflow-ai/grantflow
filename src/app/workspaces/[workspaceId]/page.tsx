@@ -1,24 +1,37 @@
+"use client";
 import { Button } from "gen/ui/button";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
 import Link from "next/link";
 
 import { Navbar } from "@/components/navbar";
+import { getApiClient } from "@/utils/api-client";
+import { useParams, useRouter } from "next/navigation";
+import { useStore } from "@/store";
+import { useEffect } from "react";
 
-import { useApiClient } from "@/utils/hooks";
-
-export default async function WorkspaceDetailPage(props: {
-	params: Promise<{
+export default function WorkspaceDetailPage() {
+	const router = useRouter();
+	const { workspaceId } = useParams<{
 		workspaceId: string;
-	}>;
-}) {
-	const apiClient = useApiClient();
+	}>();
+	const { workspaces, applications, setApplications } = useStore();
 
-	const { workspaceId } = await props.params;
-	const workspace = await apiClient.getWorkspace(workspaceId);
-	const applications = await apiClient.getApplications(workspace.id);
+	const workspace = workspaces.find((workspace) => workspace.id === workspaceId);
 
-	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspace.id);
+	if (!workspace) {
+		router.replace(PagePath.WORKSPACES);
+		return null;
+	}
+
+	useEffect(() => {
+		(async () => {
+			const applications = await getApiClient().getApplications(workspaceId);
+			setApplications(applications);
+		})();
+	}, [workspaceId]);
+
+	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspaceId);
 
 	return (
 		<div className="flex flex-col flex-1 ml-14">

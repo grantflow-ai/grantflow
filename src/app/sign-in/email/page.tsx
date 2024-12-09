@@ -4,11 +4,11 @@ import { isSignInWithEmailLink, signInWithEmailLink } from "@firebase/auth";
 import { useRouter } from "next/navigation";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { PagePath } from "@/enums";
-import { FIREBASE_COOKIE_NAME, FIREBASE_LOCAL_STORAGE_KEY, ONE_HOUR_IN_SECONDS } from "@/constants";
-import { useEffect, useState } from "react";
+import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useCookies } from "react-cookie";
+import { useStore } from "@/store";
 
 /**
  * Handles the email sign-in completion flow after user clicks the email link.
@@ -17,8 +17,7 @@ import { useCookies } from "react-cookie";
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
 	const auth = getFirebaseAuth();
-	const [{ [FIREBASE_COOKIE_NAME]: cookie }, setCookies] = useCookies([FIREBASE_COOKIE_NAME]);
-	const [isProcessing, setIsProcessing] = useState(true);
+	const { setUser } = useStore();
 
 	useEffect(() => {
 		const finalizeSignIn = async () => {
@@ -31,36 +30,20 @@ export default function FinalizeEmailLogin() {
 			}
 
 			try {
-				const cred = await signInWithEmailLink(auth, email, globalThis.location.href);
-				const idToken = await cred.user.getIdToken();
-
-				setCookies(FIREBASE_COOKIE_NAME, idToken, {
-					maxAge: ONE_HOUR_IN_SECONDS * 24,
-					secure: true,
-					sameSite: "strict",
-				});
-
-				globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);
+				await signInWithEmailLink(auth, email, globalThis.location.href);
+				setUser(auth.currentUser);
 				router.replace(PagePath.WORKSPACES);
 			} catch (error) {
 				console.error("Sign-in error:", error);
 				toast.error(error instanceof Error ? error.message : "Failed to sign in with email link");
 				router.replace(PagePath.SIGNIN);
 			} finally {
-				setIsProcessing(false);
+				globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);
 			}
 		};
 
-		if (cookie) {
-			router.replace(PagePath.WORKSPACES);
-		} else {
-			void finalizeSignIn();
-		}
-	}, [auth, cookie, router, setCookies]);
-
-	if (!isProcessing) {
-		return null;
-	}
+		void finalizeSignIn();
+	}, [auth.currentUser, router]);
 
 	return (
 		<div

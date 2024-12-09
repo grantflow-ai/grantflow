@@ -84,3 +84,11 @@ export interface ApplicationDraft {
 	content: string;
 	duration: number;
 }
+
+export interface LoginRequestBody {
+	id_token: string;
+}
+
+export interface LoginResponse {
+	jwt_token: string;
+}

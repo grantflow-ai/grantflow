@@ -1,21 +1,30 @@
+"use client";
 import { GrantApplicationForm } from "@/components/workspaces/detail/applications/grant-application-form";
-import { redirect } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { PagePath } from "@/enums";
 import { Navbar } from "@/components/navbar";
-import { serverSideAPIClient } from "@/utils/server-side";
+import { getApiClient } from "@/utils/api-client";
+import { useStore } from "@/store";
+import { useEffect } from "react";
 
-export default async function ApplicationCreatePage(props: {
-	params: Promise<{
+export default function ApplicationCreatePage() {
+	const router = useRouter();
+	const { workspaceId } = useParams<{
 		workspaceId: string;
-	}>;
-}) {
-	const { workspaceId } = await props.params;
+	}>();
+	const { grantCfps, setGrantCfps } = useStore();
 
 	if (!workspaceId) {
-		redirect(PagePath.WORKSPACES);
+		router.replace(PagePath.WORKSPACES);
+		return null;
 	}
 
-	const cfps = await serverSideAPIClient.getCfps();
+	useEffect(() => {
+		(async () => {
+			const cfps = await getApiClient().getCfps();
+			setGrantCfps(cfps);
+		})();
+	}, []);
 
 	return (
 		<div className="flex flex-col flex-1 ml-14">
@@ -28,7 +37,7 @@ export default async function ApplicationCreatePage(props: {
 						<h1 className="text-2xl bold">Grant Application Wizard</h1>
 					</section>
 					<section>
-						<GrantApplicationForm cfps={cfps} workspaceId={workspaceId} />
+						<GrantApplicationForm cfps={grantCfps} workspaceId={workspaceId} />
 					</section>
 				</div>
 			</div>

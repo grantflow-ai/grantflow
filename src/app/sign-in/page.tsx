@@ -7,17 +7,21 @@ import { FirebaseLogin } from "@/components/sign-in/firebase-login";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { PagePath } from "@/enums";
 import { Loader2 } from "lucide-react";
+import { useStore } from "@/store";
 
 export default function SignIn() {
 	const router = useRouter();
+
+	const { setUser } = useStore();
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
 		if (auth.currentUser) {
+			setUser(auth.currentUser);
 			router.replace(PagePath.WORKSPACES);
 		}
-	}, [auth]);
+	}, [auth.currentUser]);
 
 	return (
 		<div data-testid="login-container" className="flex bg-base-100 h-full">
