@@ -1,15 +1,23 @@
+"use client";
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
 import { Navbar } from "@/components/navbar";
-import { useApiClient } from "@/utils/hooks";
+import { getApiClient } from "@/utils/api-client";
+import { useStore } from "@/store";
+import { useEffect } from "react";
 
-export default async function WorkspacesListPage() {
-	const apiClient = useApiClient();
+export default function WorkspacesListPage() {
+	const { workspaces, setWorkspaces } = useStore();
 
-	const workspaces = await apiClient.getWorkspaces();
+	useEffect(() => {
+		(async () => {
+			const workspaces = await getApiClient().getWorkspaces();
+			setWorkspaces(workspaces);
+		})();
+	}, []);
 
 	return (
-		<div className="flex flex-col flex-1 ml-14">
+		<div className="flex flex-col flex-1">
 			<Navbar>
 				<span className="px-2 text-sm">Workspaces</span>
 			</Navbar>

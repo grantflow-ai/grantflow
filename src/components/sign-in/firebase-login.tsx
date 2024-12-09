@@ -1,14 +1,11 @@
 import { Auth, GoogleAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "@firebase/auth";
-import { useRouter } from "next/navigation";
 import { PagePath } from "@/enums";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
 import { EmailSigninForm } from "@/components/sign-in/email-signin-form";
 import { SeparatorWithText } from "@/components/separator-with-text";
 import { SigninWithGoogleButton } from "@/components/sign-in/signin-with-google-button";
 import { getEnv } from "@/utils/env";
-import { FIREBASE_COOKIE_NAME, FIREBASE_LOCAL_STORAGE_KEY, ONE_HOUR_IN_SECONDS } from "@/constants";
-import { useCookies } from "react-cookie";
-import { useEffect, useState } from "react";
+import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { toast } from "sonner";
 
 const googleProvider = new GoogleAuthProvider();
@@ -21,30 +18,6 @@ const googleProvider = new GoogleAuthProvider();
  * @param auth - Firebase Auth instance
  */
 export function FirebaseLogin({ setLoading, auth }: { setLoading: (value: boolean) => void; auth: Auth }) {
-	const router = useRouter();
-	const [idToken, setIdToken] = useState<string | null>(null);
-	const [{ [FIREBASE_COOKIE_NAME]: cookie }, setCookies] = useCookies([FIREBASE_COOKIE_NAME]);
-	const [isInitializing, setIsInitializing] = useState(true);
-
-	useEffect(() => {
-		if (cookie) {
-			router.replace(PagePath.WORKSPACES);
-			return;
-		}
-		setIsInitializing(false);
-	}, [cookie, router]);
-
-	useEffect(() => {
-		if (!cookie && idToken) {
-			setCookies(FIREBASE_COOKIE_NAME, idToken, {
-				maxAge: ONE_HOUR_IN_SECONDS * 24,
-				secure: true,
-				sameSite: "strict",
-				httpOnly: true, // this is important!
-			});
-		}
-	}, [cookie, idToken, setCookies]);
-
 	/**
 	 * Handles Google sign-in authentication flow
 	 * Opens a popup for Google auth and manages the resulting token
@@ -53,11 +26,10 @@ export function FirebaseLogin({ setLoading, auth }: { setLoading: (value: boolea
 		setLoading(true);
 
 		try {
-			const cred = await signInWithPopup(auth, googleProvider);
-			const idToken = await cred.user.getIdToken();
-			setIdToken(idToken);
+			await signInWithPopup(auth, googleProvider);
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Failed to sign in with Google");
+			console.error("Sign-in error:", error);
+			toast.error("Sign-in failed due to an error");
 		} finally {
 			setLoading(false);
 		}
@@ -80,20 +52,13 @@ export function FirebaseLogin({ setLoading, auth }: { setLoading: (value: boolea
 				handleCodeInApp: true,
 			});
 			globalThis.localStorage.setItem(FIREBASE_LOCAL_STORAGE_KEY, email);
+			toast.success("An email has been sent to your mailbox with a sign-in link.\n\nPlease check your inbox.");
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to send sign-in email");
 		} finally {
 			setLoading(false);
 		}
 	};
-
-	if (isInitializing) {
-		return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
-	}
-
-	if (cookie) {
-		return null;
-	}
 
 	return (
 		<div className="container mx-auto px-4 py-8 md:py-16" data-testid="firebase-login-container">

@@ -12,14 +12,7 @@ const envRef: { value: null | Readonly<Env> } = { value: null };
 export function getEnv(): Env {
 	if (envRef.value === null) {
 		envRef.value = createEnv({
-			server: {
-				BACKEND_API_BASE_URL: z.string().url("Please enter a valid URL"),
-				BACKEND_API_TOKEN: z.string(),
-				GOOGLE_APPLICATION_CREDENTIALS: z.string(),
-			},
 			client: {
-				NEXT_PUBLIC_BACKEND_API_BASE_URL: z.string().url("Please enter a valid URL"),
-				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
 				NEXT_PUBLIC_FIREBASE_API_KEY: z.string(),
 				NEXT_PUBLIC_FIREBASE_APP_ID: z.string(),
 				NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string(),
@@ -28,6 +21,7 @@ export function getEnv(): Env {
 				NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: z.string(),
 				NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string(),
 				NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string(),
+				NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
 			},
 			shared: {
 				NEXT_PUBLIC_DEBUG: z
@@ -44,13 +38,11 @@ export function getEnv(): Env {
 					}, z.boolean())
 					.optional()
 					.default(false),
-				NEXT_PUBLIC_IS_DEVELOPMENT: z.boolean().optional().default(false),
+				NEXT_PUBLIC_BACKEND_API_BASE_URL: z.string().url("Please enter a valid URL"),
 			},
 			experimental__runtimeEnv: {
 				NEXT_PUBLIC_BACKEND_API_BASE_URL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL,
-				NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 				NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG,
-				NEXT_PUBLIC_IS_DEVELOPMENT: !!process.env.NEXT_PUBLIC_IS_DEVELOPMENT,
 				NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
 				NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 				NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -59,6 +51,7 @@ export function getEnv(): Env {
 				NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: process.env.NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID,
 				NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
 				NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+				NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 			},
 		});
 	}

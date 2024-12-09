@@ -1,6 +1,6 @@
 "use client";
 
-import { Auth, browserLocalPersistence, getAuth } from "firebase/auth";
+import { Auth, getAuth } from "firebase/auth";
 import { FirebaseApp, initializeApp } from "firebase/app";
 import { getEnv } from "@/utils/env";
 
@@ -38,7 +38,6 @@ export function getFirebaseAuth(): Auth {
 	if (!instanceRef.auth) {
 		const app = getFirebaseApp();
 		const auth = getAuth(app);
-		void auth.setPersistence(browserLocalPersistence);
 
 		instanceRef.auth = auth;
 	}
