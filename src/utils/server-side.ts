@@ -1,10 +1,6 @@
 import type { PagePath } from "@/enums";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ApiClient } from "@/utils/api-client";
-import { cookies } from "next/headers";
-import { FIREBASE_COOKIE_NAME } from "@/constants";
-import { KyRequest } from "ky";
 
 /**
  * Handle an error occurring server side.
@@ -58,15 +54,3 @@ export function redirectWithToastParams({
 
 	return redirect(path);
 }
-
-async function beforeRequestAuthHook(request: KyRequest) {
-	const requestCookies = await cookies();
-	const cookie = requestCookies.get(FIREBASE_COOKIE_NAME);
-	if (!cookie?.value) {
-		return new Response("User is not authenticated", { status: 401 });
-	}
-	request.headers.set("Authorization", `Bearer ${cookie.value}`);
-	return request;
-}
-
-export const serverSideAPIClient = new ApiClient(beforeRequestAuthHook);

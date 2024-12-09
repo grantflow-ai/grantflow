@@ -1,20 +1,34 @@
-import { redirect } from "next/navigation";
+"use client";
+import { useParams, useRouter } from "next/navigation";
 import { PagePath } from "@/enums";
 import { Navbar } from "@/components/navbar";
-import { serverSideAPIClient } from "@/utils/server-side";
+import { getApiClient } from "@/utils/api-client";
+import { GrantApplicationDetail } from "@/types/api-types";
+import { useEffect, useState } from "react";
 
-export default async function ApplicationDetailPage(props: {
-	params: Promise<{
+export default function ApplicationDetailPage() {
+	const router = useRouter();
+	const { workspaceId, applicationId } = useParams<{
 		workspaceId: string;
 		applicationId: string;
-	}>;
-}) {
-	const { workspaceId, applicationId } = await props.params;
+	}>();
 
-	const application = await serverSideAPIClient.getApplicationDetail(workspaceId, applicationId);
+	const [application, setApplication] = useState<GrantApplicationDetail | null>(null);
 
 	if (!workspaceId || !applicationId) {
-		redirect(PagePath.WORKSPACES);
+		router.replace(PagePath.WORKSPACES);
+		return null;
+	}
+
+	useEffect(() => {
+		(async () => {
+			const applicationDetail = await getApiClient().getApplicationDetail(workspaceId, applicationId);
+			setApplication(applicationDetail);
+		})();
+	}, []);
+
+	if (!application) {
+		return <div>Loading...</div>;
 	}
 
 	return (

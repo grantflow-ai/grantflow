@@ -27,9 +27,8 @@ import {
 	UpdateResearchTaskRequestBody,
 } from "@/types/api-types";
 import { Checkbox } from "gen/ui/checkbox";
-import { useApiClient } from "@/utils/hooks";
 import { FormFile, OmitId } from "@/types/app-types";
-import { ApiClient } from "@/utils/api-client";
+import { ApiClient, getApiClient } from "@/utils/api-client";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -286,7 +285,7 @@ export function GrantApplicationForm({
 	application?: GrantApplicationDetail;
 	workspaceId: string;
 }) {
-	const apiClient = useApiClient();
+	const apiClient = getApiClient();
 	const [open, setOpen] = useState(false);
 	const [canSubmit, setCanSubmit] = useState(false);
 	const [loading, setLoading] = useState(false);

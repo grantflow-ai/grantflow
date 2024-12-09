@@ -54,9 +54,6 @@ export const mockClose = vi.fn();
 export const mockFetch = vi.fn();
 
 export const mockEnv = {
-	BACKEND_API_BASE_URL: "https://api.dev.acmetech.io",
-	BACKEND_API_TOKEN: "bkt_8f4a9c2e7d6b5f3a1c8d9e0f2b5a7c4d",
-	GOOGLE_APPLICATION_CREDENTIALS: "config/gcp-service-account-dev.json",
 	NEXT_PUBLIC_SITE_URL: "https://app.acmetech.io",
 	NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
 	NEXT_PUBLIC_FIREBASE_APP_ID: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
