@@ -1,0 +1,6 @@
+.vscode/
+.idea/
+.github/
+tests/
+scripts/
+migrations/

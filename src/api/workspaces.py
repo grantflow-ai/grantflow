@@ -74,7 +74,7 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
     """
     logger.info("Retrieving workspaces for user: %s", request.ctx.firebase_uid)
 
-    async with request.ctx.session_maker() as session, session.begin():
+    async with request.ctx.session_maker() as session:
         workspaces = list(
             await session.scalars(
                 select(Workspace).join(WorkspaceUser).where(WorkspaceUser.firebase_uid == request.ctx.firebase_uid)

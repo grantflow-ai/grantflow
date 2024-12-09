@@ -255,3 +255,17 @@ class ResearchAimResponse(TypedDict):
     """The title of the aim."""
     research_tasks: list[ResearchTaskResponse]
     """The research tasks of the aim."""
+
+
+class LoginRequestBody(TypedDict):
+    """The request body for the login endpoint."""
+
+    id_token: str
+    """The ID token from Firebase."""
+
+
+class LoginResponse(TypedDict):
+    """The request body for the login endpoint."""
+
+    jwt_token: str
+    """The JWT token identifying the user."""

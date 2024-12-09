@@ -90,6 +90,7 @@ def firebase_uid() -> str:
 def patch_firebase_auth(firebase_uid: str, mocker: MockerFixture) -> None:
     mocker.patch("firebase_admin.initialize_app")
     mocker.patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid})
+    mocker.patch("jwt.decode", return_value={"sub": firebase_uid})
 
 
 @pytest.fixture
