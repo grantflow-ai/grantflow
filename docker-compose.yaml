@@ -14,14 +14,20 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
+        environment:
+            DATABASE_CONNECTION_STRING: postgresql+asyncpg://grantflow:grantflow@db:5432/grantflow
         env_file:
             - .env
         ports:
             - "8000:8000"
         volumes:
             - ./src:/app/src:cached
-        command: [ "sanic", "src.main:app" ]
-        restart: unless-stopped
-
+        develop:
+            watch:
+                - action: sync
+                  path: ./src
+                  target: /app/src
+                  ignore:
+                      - node_modules/
 volumes:
     postgres_data:

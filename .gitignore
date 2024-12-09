@@ -9,15 +9,10 @@
 .DS_store
 .env
 .pdm-python
-.python_packages
 .venv
 .mypy_cache
 .ruff_cache
-__azurite_db*__.json
-__blobstorage__
 __pycache__/
-__queuestorage__
 coverage.xml
-local.settings.*
 requirements.txt
 **/http-client.private.env.json
