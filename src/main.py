@@ -13,6 +13,7 @@ from src.api.applications import (
     handle_retrieve_applications,
 )
 from src.api.cfps import handle_retrieve_cfps
+from src.api.chat import application_ws_handler
 from src.api.drafts import handle_create_application_draft
 from src.api.files import handle_upload_application_files
 from src.api.login import handle_login
@@ -62,6 +63,11 @@ app.add_route(handle_retrieve_applications, "/workspaces/<workspace_id:uuid>/app
 app.add_route(
     handle_retrieve_application_detail,
     "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>",
+    methods=["GET"],
+)
+app.add_route(
+    application_ws_handler,
+    "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/chat-room",
     methods=["GET"],
 )
 
