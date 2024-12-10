@@ -14,7 +14,7 @@ export function Navbar({ children }: { children: ReactNode }) {
 			)}
 			data-testid="navbar"
 		>
-			<div className="flex justify-between items-center h-full w-full p-2" data-testid="navbar-actions">
+			<div className="flex justify-between items-center h-full w-full container" data-testid="navbar-actions">
 				<div className="flex items-center gap-1">{children}</div>
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>

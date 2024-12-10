@@ -34,18 +34,16 @@ export default function WorkspaceDetailPage() {
 	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspaceId);
 
 	return (
-		<div className="flex flex-col flex-1 ml-14">
+		<div className="flex flex-col flex-1">
 			<Navbar>
 				<span className="px-2 text-sm">{`${workspace.name} workspace`}</span>
 			</Navbar>
 			<div className="mt-14 p-4">
-				<div className="w-full h-full">
-					<div className="py-4">
-						<Button size="sm">
-							<Link href={createApplicationUrl}>New Application</Link>
-						</Button>
-					</div>
-					<div className="my-6 space-y-8">
+				<div className="w-full h-full container">
+					<Button size="sm">
+						<Link href={createApplicationUrl}>New Application</Link>
+					</Button>
+					<div className="pace-y-8">
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
 							{applications.map((application) => (
 								<GrantApplicationCard
