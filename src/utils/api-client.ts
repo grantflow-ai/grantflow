@@ -21,6 +21,7 @@ import {
 import { getEnv } from "@/utils/env";
 import { Ref } from "@/utils/state";
 import { getFirebaseAuth } from "@/utils/firebase";
+import { NotAuthenticatedError } from "@/exceptions";
 
 export class ApiClient {
 	private readonly client: KyInstance;
@@ -37,7 +38,7 @@ export class ApiClient {
 		if (!this.jwtToken) {
 			const idToken = await getFirebaseAuth().currentUser?.getIdToken();
 			if (!idToken) {
-				throw new Error("User is not authenticated");
+				throw new NotAuthenticatedError("User is not authenticated");
 			}
 			const { jwt_token } = await this.client
 				.post("login", {

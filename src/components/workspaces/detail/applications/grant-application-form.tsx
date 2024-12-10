@@ -410,13 +410,14 @@ export function GrantApplicationForm({
 		<TooltipProvider>
 			<Form {...form}>
 				<form
-					className="space-y-6"
+					className="space-y-8 max-w-3xl mx-auto"
 					data-testid="grant-application-form"
 					aria-label="Grant Application Form"
 					onSubmit={form.handleSubmit(onSubmit)}
 				>
-					<div className="flex flex-col">
-						<section>
+					<div className="space-y-6">
+						<section className="space-y-4">
+							<h2 className="text-2xl font-bold">Knowledge Base</h2>
 							<FormField
 								control={form.control}
 								name="application_files"
@@ -443,12 +444,13 @@ export function GrantApplicationForm({
 								)}
 							/>
 						</section>
-						<section>
+						<section className="space-y-4">
+							<h2 className="text-2xl font-bold">Grant Details</h2>
 							<FormField
 								control={form.control}
 								name="cfp_id"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="space-y-2">
 										<div className="flex items-center gap-2">
 											<FormLabel
 												htmlFor="cfp_id"
@@ -562,7 +564,7 @@ export function GrantApplicationForm({
 								control={form.control}
 								name="title"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="space-y-2">
 										<div className="flex items-center gap-2">
 											<FormLabel
 												htmlFor="title"
@@ -640,11 +642,14 @@ export function GrantApplicationForm({
 									</FormItem>
 								)}
 							/>
+						</section>
+						<section className="space-y-4">
+							<h2 className="text-2xl font-bold">Research Overview</h2>
 							<FormField
 								control={form.control}
 								name="significance"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="space-y-2">
 										<div className="flex items-center gap-2">
 											<FormLabel
 												htmlFor="significance"
@@ -728,7 +733,7 @@ export function GrantApplicationForm({
 								control={form.control}
 								name="innovation"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="space-y-2">
 										<div className="flex items-center gap-2">
 											<FormLabel
 												htmlFor="innovation"
@@ -807,79 +812,98 @@ export function GrantApplicationForm({
 									</FormItem>
 								)}
 							/>
-							<div>
-								<Accordion type="single" collapsible className="w-full">
-									{fields.map((field, index) => (
-										<ResearchAimForm
-											key={index.toString() + field.id}
-											form={form}
-											index={index}
-											remove={() => {
-												remove(index);
-											}}
-											loading={loading}
+						</section>
+						<section className="space-y-4">
+							<h2 className="text-2xl font-bold">Research Aims</h2>
+							<Accordion type="single" collapsible className="w-full">
+								{fields.map((field, index) => (
+									<ResearchAimForm
+										key={index.toString() + field.id}
+										form={form}
+										index={index}
+										remove={() => {
+											remove(index);
+										}}
+										loading={loading}
+									/>
+								))}
+							</Accordion>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => {
+									append({
+										title: "",
+										aim_number: form.getValues().research_aims.length + 1,
+										description: "",
+										requires_clinical_trials: false,
+										research_tasks: [
+											{
+												title: "",
+												description: "",
+												task_number: 1,
+											},
+										],
+									});
+								}}
+								className="w-full"
+								data-testid="add-research-aim-button"
+							>
+								<Plus className="h-4 w-4 mr-2" />
+								Add Research Aim
+							</Button>
+							{form.getValues().research_aims.map((aim, aimIndex) => (
+								<Fragment key={`aim-fragment-${aim.id ?? aim.aim_number}`}>
+									{aim.id && (
+										<input
+											key={aim.id}
+											type="hidden"
+											value={aim.id}
+											{...form.register(`research_aims.${aimIndex}.id`)}
 										/>
-									))}
-								</Accordion>
-								<Button
-									type="button"
-									onClick={() => {
-										append({
-											title: "",
-											aim_number: form.getValues().research_aims.length + 1,
-											description: "",
-											requires_clinical_trials: false,
-											research_tasks: [
-												{
-													title: "",
-													description: "",
-													task_number: 1,
-												},
-											],
-										});
-									}}
-									data-testid="add-research-aim-button"
-								>
-									<Plus className="h-4 w-4 mr-2" />
-									Add Research Aim
-								</Button>
-								{form
-									.getValues()
-									.research_aims.filter((aim) => !!aim.id)
-									.map((aim, aimIndex) => (
-										<Fragment key={`aim-fragment-${aim.id}`}>
-											<input
-												key={aim.id}
-												type="hidden"
-												value={aim.id}
-												{...form.register(`research_aims.${aimIndex}.id`)}
-											/>
-											<Fragment key={`task-fragment-${aim.id}`}>
-												{aim.research_tasks
-													.filter((task) => !!task.id)
-													.map((task, taskIndex) => (
-														<input
-															key={task.id}
-															type="hidden"
-															value={task.id}
-															{...form.register(
-																`research_aims.${aimIndex}.research_tasks.${taskIndex}.id`,
-															)}
-														/>
-													))}
+									)}
+									<input
+										key={aim.aim_number}
+										type="hidden"
+										value={aim.aim_number}
+										{...form.register(`research_aims.${aimIndex}.aim_number`)}
+									/>
+									<Fragment key={`tasks-fragment-${aim.id ?? aim.aim_number}`}>
+										{aim.research_tasks.map((task, taskIndex) => (
+											<Fragment key={`task-fragment-${task.id ?? task.task_number}`}>
+												{task.id && (
+													<input
+														key={task.id}
+														type="hidden"
+														value={task.id}
+														{...form.register(
+															`research_aims.${aimIndex}.research_tasks.${taskIndex}.id`,
+														)}
+													/>
+												)}
+												<input
+													key={`${aim.aim_number}.${task.task_number}`}
+													type="hidden"
+													value={task.task_number}
+													{...form.register(
+														`research_aims.${aimIndex}.research_tasks.${taskIndex}.task_number`,
+													)}
+												/>
 											</Fragment>
-										</Fragment>
-									))}
-							</div>
+										))}
+									</Fragment>
+								</Fragment>
+							))}
 						</section>
 					</div>
-					<div className="pt-10 flex justify-between">
+					<div className="pt-6 border-t flex justify-end">
 						<SubmitButton
 							disabled={!form.formState.isValid || !canSubmit}
 							isLoading={loading}
 							data-testid="grant-application-form-submit"
 							aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
 							aria-label={form.formState.isSubmitting ? "Saving changes..." : "Save changes"}
+							className="w-full sm:w-auto"
 						>
 							Save and Continue
 						</SubmitButton>
@@ -904,15 +928,17 @@ function ResearchTaskForm({
 	loading: boolean;
 }) {
 	return (
-		<AccordionItem value={`task-${taskIndex}`}>
-			<AccordionTrigger className="text-lg font-semibold">Research Task {taskIndex + 1}</AccordionTrigger>
+		<AccordionItem value={`task-${taskIndex}`} className="border rounded-lg mb-4">
+			<AccordionTrigger className="px-4 py-2 hover:bg-muted/50">
+				<span className="text-lg font-semibold">Research Task {taskIndex + 1}</span>
+			</AccordionTrigger>
 			<AccordionContent>
-				<div className="space-y-4 p-4 border rounded-md">
+				<div className="space-y-4 p-4">
 					<div className="flex justify-between items-center">
 						<h4 className="text-lg font-semibold">Research Task {taskIndex + 1}</h4>
 						<Button
 							type="button"
-							variant="destructive"
+							variant="outline"
 							size="sm"
 							onClick={remove}
 							disabled={
@@ -928,7 +954,7 @@ function ResearchTaskForm({
 						control={form.control}
 						name={`research_aims.${aimIndex}.research_tasks.${taskIndex}.title`}
 						render={({ field }) => (
-							<FormItem>
+							<FormItem className="space-y-2">
 								<div className="flex items-center gap-2">
 									<FormLabel
 										className="text-xl"
@@ -986,7 +1012,7 @@ function ResearchTaskForm({
 						control={form.control}
 						name={`research_aims.${aimIndex}.research_tasks.${taskIndex}.description`}
 						render={({ field }) => (
-							<FormItem>
+							<FormItem className="space-y-2">
 								<div className="flex items-center gap-2">
 									<FormLabel
 										className="text-xl"
@@ -1069,15 +1095,17 @@ function ResearchAimForm({
 	});
 
 	return (
-		<AccordionItem value={`aim-${index}`}>
-			<AccordionTrigger className="text-xl font-semibold">Research Aim {index + 1}</AccordionTrigger>
+		<AccordionItem value={`aim-${index}`} className="border rounded-lg mb-4">
+			<AccordionTrigger className="px-4 py-2 hover:bg-muted/50">
+				<span className="text-xl font-semibold">Research Aim {index + 1}</span>
+			</AccordionTrigger>
 			<AccordionContent>
-				<div className="space-y-6 p-6 border rounded-lg">
+				<div className="space-y-6 p-4">
 					<div className="flex justify-between items-center">
 						<h3 className="text-xl font-semibold">Research Aim {index + 1}</h3>
 						<Button
 							type="button"
-							variant="destructive"
+							variant="outline"
 							size="sm"
 							onClick={remove}
 							disabled={index === 0 && form.getValues().research_aims.length === 1}
@@ -1091,7 +1119,7 @@ function ResearchAimForm({
 						control={form.control}
 						name={`research_aims.${index}.title`}
 						render={({ field }) => (
-							<FormItem>
+							<FormItem className="space-y-2">
 								<div className="flex items-center gap-2">
 									<FormLabel
 										htmlFor={`research_aims.${index}.title`}
@@ -1158,7 +1186,7 @@ function ResearchAimForm({
 						control={form.control}
 						name={`research_aims.${index}.description`}
 						render={({ field }) => (
-							<FormItem>
+							<FormItem className="space-y-2">
 								<div className="flex items-center gap-2">
 									<FormLabel
 										htmlFor={`research_aims.${index}.description`}
@@ -1227,7 +1255,7 @@ function ResearchAimForm({
 						control={form.control}
 						name={`research_aims.${index}.requires_clinical_trials`}
 						render={({ field }) => (
-							<FormItem className="flex flex-row items-center space-x-2">
+							<FormItem className="space-y-2 flex flex-row items-center space-x-2">
 								<FormControl>
 									<Checkbox
 										id={`research_aims.${index}.requires_clinical_trials`}
@@ -1279,9 +1307,11 @@ function ResearchAimForm({
 							<h4 className="text-lg font-semibold">Research Tasks</h4>
 							<Button
 								type="button"
+								variant="outline"
 								onClick={() => {
 									append({ title: "", description: "", task_number: fields.length + 1 });
 								}}
+								className="w-full mt-2"
 								data-testid={`add-task-button-${index}`}
 							>
 								<Plus className="h-4 w-4 mr-2" />

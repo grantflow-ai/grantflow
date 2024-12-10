@@ -3,16 +3,39 @@ import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { formatBytes } from "@/utils/format";
 import { Paperclip, Upload } from "lucide-react";
+import { cn } from "gen/cn";
+import { Button } from "gen/ui/button";
 
 const DEFAULT_FILE_ACCEPTS = {
+	"application/csv": [".csv"],
+	"application/latex": [".latex"],
 	"application/pdf": [".pdf"],
-	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".doc", ".docx"],
-	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xls", ".xlsx"],
+	"application/rtf": [".rtf"],
+	"application/vnd.oasis.opendocument.text": [".odt"],
 	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".ppt", ".pptx"],
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xls", ".xlsx"],
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".doc", ".docx"],
+	"application/x-csv": [".csv"],
+	"application/x-latex": [".latex"],
+	"application/x-rtf": [".rtf"],
+	"application/x-vnd.oasis.opendocument.text": [".odt"],
+	"image/bmp": [".bmp"],
+	"image/gif": [".gif"],
+	"image/heif": [".heif"],
 	"image/jpeg": [".jpeg", ".jpg"],
 	"image/png": [".png"],
+	"image/tiff": [".tiff"],
 	"text/csv": [".csv"],
+	"text/latex": [".latex"],
+	"text/markdown": [".md"],
 	"text/plain": [".txt"],
+	"text/rst": [".rst"],
+	"text/rtf": [".rtf"],
+	"text/tab-separated-values": [".tsv"],
+	"text/x-csv": [".csv"],
+	"text/x-latex": [".latex"],
+	"text/x-rst": [".rst"],
+	"text/x-tsv": [".tsv"],
 };
 
 const DEFAULT_MAX_SIZE = 20 * 1024 * 1024;
@@ -82,16 +105,24 @@ export function FileUploader({
 		return (
 			<div
 				{...getRootProps()}
-				className={`p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
-					isDragActive ? "border-primary bg-primary/10" : "border-gray-300 hover:border-primary"
-				}`}
+				className={cn(
+					"p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors",
+					isDragActive ? "border-primary bg-primary/10" : "border-input hover:border-primary",
+					currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed",
+				)}
 			>
 				<input {...getInputProps()} />
-				<Upload className="mx-auto h-12 w-12 text-gray-400" />
-				<p className="mt-2 text-sm text-gray-600">Drag &#39;n&#39; drop files here, or click to select files</p>
+				<Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+				<p className="mt-2 text-sm text-muted-foreground">Drag 'n' drop files here, or click to select files</p>
+				{maxFileCount !== Infinity && (
+					<p className="mt-2 text-xs text-muted-foreground">
+						{currentFileCount} / {maxFileCount} files uploaded
+					</p>
+				)}
 			</div>
 		);
 	}
+
 	return (
 		<div className="relative">
 			<input
@@ -109,13 +140,22 @@ export function FileUploader({
 				multiple={true}
 				className="sr-only"
 			/>
-			<label
-				htmlFor={`file-upload-${fieldName}`}
-				className="inline-flex items-center justify-center border border-input rounded p-2 bg-background hover:bg-accent hover:text-accent-foreground"
+			<Button
+				asChild
+				variant="outline"
+				size="sm"
+				className={cn("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
 			>
-				<Paperclip className="mr-2 h-4 w-4" />
-				<span className="text-sm">Upload Files</span>
-			</label>
+				<label htmlFor={`file-upload-${fieldName}`}>
+					<Paperclip className="mr-2 h-4 w-4" />
+					Upload Files
+				</label>
+			</Button>
+			{maxFileCount !== Infinity && (
+				<p className="mt-2 text-xs text-muted-foreground">
+					{currentFileCount} / {maxFileCount} files uploaded
+				</p>
+			)}
 		</div>
 	);
 }
