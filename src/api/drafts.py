@@ -1,20 +1,12 @@
 import logging
 from http import HTTPStatus
-from time import time
 from uuid import UUID
 
 from sanic import HTTPResponse
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
-from src.api.api_types import APIRequest, ApplicationDraftGenerationResponse
-from src.api.utils import verify_workspace_access
+from src.api.api_types import APIRequest
+from src.api.utils import create_application_draft, verify_workspace_access
 from src.constants import CONTENT_TYPE_JSON
-from src.db.tables import GrantApplication, GrantCfp, ResearchAim
-from src.dto import APIError
-from src.rag.application_draft_generation import generate_application_draft
-from src.rag.db import insert_application_draft
-from src.utils.exceptions import DeserializationError
 from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
@@ -34,48 +26,9 @@ async def handle_create_application_draft(
         The response object.
     """
     await verify_workspace_access(request=request, workspace_id=workspace_id)
-
-    start_time = time()
-    logger.info("Beginning RAG pipeline")
-    try:
-        async with request.ctx.session_maker() as session, session.begin():
-            stmt = (
-                select(GrantApplication)
-                .options(
-                    selectinload(GrantApplication.cfp).selectinload(GrantCfp.funding_organization),
-                    selectinload(GrantApplication.application_files),
-                    selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
-                )
-                .where(GrantApplication.id == application_id)
-            )
-
-            grant_application: GrantApplication = (await session.execute(stmt)).scalar_one()
-
-        result = await generate_application_draft(grant_application=grant_application)
-        duration = int(time() - start_time)
-        logger.info(
-            "RAG pipeline completed successfully. Total duration in seconds: %d",
-            duration,
-        )
-        await insert_application_draft(
-            content=result,
-            duration=duration,
-            application_id=str(application_id),
-        )
-        return HTTPResponse(
-            status=HTTPStatus.CREATED,
-            body=serialize(ApplicationDraftGenerationResponse(content=result, duration=duration)),
-            content_type=CONTENT_TYPE_JSON,
-        )
-    except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-        return HTTPResponse(
-            status=HTTPStatus.BAD_REQUEST,
-            body=serialize(
-                APIError(
-                    message="Failed to deserialize the request body",
-                    details=str(e),
-                )
-            ),
-            content_type=CONTENT_TYPE_JSON,
-        )
+    result = await create_application_draft(request=request, application_id=application_id)
+    return HTTPResponse(
+        status=HTTPStatus.CREATED,
+        body=serialize(result),
+        content_type=CONTENT_TYPE_JSON,
+    )
