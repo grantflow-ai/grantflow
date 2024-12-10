@@ -1,20 +1,30 @@
-# Next.js SaaS Template with Supabase Auth
+# GrantFlow.AI Frontend
 
-This repository contains a modern, scalable SaaS (Software as a Service) template built with Next.js,
-TypeScript, and Supabase.
+This repository contains the frontend code for the GrantFlow.AI platform. The frontend is built using NextJS 15.
 
-## Features
+## Prerequisites
 
-- Next.js with SSR
-- Strict TypeScript
-- Authentication flow using Supabase Auth, including:
-    - Email (Magic Link) Sign In
-    - OAuth Sign In (supporting multiple providers)
-- Customizable UI components using Tailwind CSS and Radix UI
-- Form handling with React Hook Form and Zod
-- Comprehensive testing setup with Vitest and React Testing Library
-- Linting and formatting with ESLint and Biome
-- Logging with Pino
-- Internationalization (i18n)
+You should have node >=20 on your system. Verify with `node --version`.
 
-**Unlike other templates, this template has full unit tests and is meant for real production usage.**
+**Add a `.env` file in the repository root. You should receive one from the team.**
+
+* Its recommended to use [nvm](https://github.com/nvm-sh/nvm) to manage node versions. Follow the instructions in the
+  link.
+
+## Getting Started
+
+1. Install `pnpm` globally, e.g.
+    ```shell
+    brew install pnpm
+    ```
+
+2. Install the dependencies with:
+    ```shell
+    pnpm install
+    ```
+
+Assuming you have the .env file in place, you can now run the development server with:
+
+```shell
+pnpm run dev
+```
