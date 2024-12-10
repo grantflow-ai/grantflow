@@ -92,3 +92,20 @@ export interface LoginRequestBody {
 export interface LoginResponse {
 	jwt_token: string;
 }
+
+export interface ChatNotification {
+	type: "notification";
+	text: string;
+}
+
+export interface ChatErrorNotification {
+	type: "error";
+	text: string;
+}
+
+export interface ChatGenerationResultMessage {
+	type: "content";
+	data: ApplicationDraft;
+}
+
+export type ChatMessage = ChatNotification | ChatErrorNotification | ChatGenerationResultMessage;
