@@ -32,7 +32,7 @@ export default function ApplicationDetailPage() {
 	}
 
 	return (
-		<div className="flex flex-col flex-1 ml-14">
+		<div className="flex flex-col flex-1">
 			<Navbar>
 				<span className="px-2 text-sm">{`${application.title} workspace`}</span>
 			</Navbar>

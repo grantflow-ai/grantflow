@@ -27,19 +27,14 @@ export default function ApplicationCreatePage() {
 	}, []);
 
 	return (
-		<div className="flex flex-col flex-1 ml-14">
+		<div className="flex flex-col flex-1">
 			<Navbar>
-				<span className="px-2 text-sm">Create New Grant Application</span>
+				<span className="px-2 text-sm">New Grant Application</span>
 			</Navbar>
-			<div className="mt-14 p-4">
-				<div className="container">
-					<section className="py-5">
-						<h1 className="text-2xl bold">Grant Application Wizard</h1>
-					</section>
-					<section>
-						<GrantApplicationForm cfps={grantCfps} workspaceId={workspaceId} />
-					</section>
-				</div>
+			<div className="mt-14 p-4 container">
+				<section>
+					<GrantApplicationForm cfps={grantCfps} workspaceId={workspaceId} />
+				</section>
 			</div>
 		</div>
 	);
