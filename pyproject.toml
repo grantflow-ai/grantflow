@@ -8,30 +8,25 @@ readme = "README.md"
 license = { text = "UNLICENSED" }
 
 dependencies = [
-    "aiohttp>=3.10.10",
     "anyio>=4.6.2.post1",
     "asyncpg>=0.30.0",
+    "azure-ai-documentintelligence>=1.0.0b4",
     "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+    "firebase-admin>=6.6.0",
+    "google-cloud-aiplatform>=1.73.0",
     "greenlet>=3.1.1",
     "inflection>=0.5.1",
     "msgspec>=0.18.6",
+    "pathvalidate>=3.2.1",
+    "pgvector>=0.3.6",
+    "pyjwt>=2.10.1",
+    "pypandoc>=1.14",
+    "sanic-ext>=23.12.0",
+    "sanic>=24.6.0",
     "semantic-text-splitter>=0.18.0",
     "spacy>=3.8.2",
     "sqlalchemy>=2.0.36",
     "tenacity>=8.3.0",
-    "google-cloud-aiplatform>=1.73.0",
-    "google-cloud-documentai>=3.0.1",
-    "sanic>=24.6.0",
-    "google-cloud-storage>=2.18.2",
-    "pgvector>=0.3.6",
-    "python-dotenv>=1.0.1",
-    "charset-normalizer>=3.4.0",
-    "azure-ai-documentintelligence>=1.0.0b4",
-    "pypandoc>=1.14",
-    "pathvalidate>=3.2.1",
-    "firebase-admin>=6.6.0",
-    "sanic-ext>=23.12.0",
-    "pyjwt>=2.10.1",
 ]
 
 [tool.pdm]
@@ -124,6 +119,7 @@ asyncio_default_fixture_loop_scope = "session"
 
 [dependency-groups]
 dev = [
+    "atlas-provider-sqlalchemy>=0.2.3",
     "covdefaults>=2.3.0",
     "faker>=24.11.0",
     "mypy>=1.10.0",
@@ -132,11 +128,10 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-logger>=1.1.1",
     "pytest-mock>=3.14.0",
-    "pytest>=8.1.1",
-    "ruff>=0.4.0",
-    "sqlalchemy2-stubs>=0.0.2a38",
-    "testcontainers>=4.8.2",
-    "atlas-provider-sqlalchemy>=0.2.3",
-    "sanic-testing>=24.6.0",
     "pytest-timeout>=2.3.1",
+    "pytest>=8.1.1",
+    "python-dotenv>=1.0.1",
+    "ruff>=0.4.0",
+    "sanic-testing>=24.6.0",
+    "testcontainers>=4.8.2",
 ]
