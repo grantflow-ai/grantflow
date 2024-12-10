@@ -1,5 +1,3 @@
-"use client";
-
 import { Fragment, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
@@ -16,35 +14,36 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "ge
 import * as z from "zod";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-	ApplicationFile,
-	CreateGrantApplicationRequestBody,
-	GrantApplicationDetail,
-	GrantCfp,
-	ResearchAim,
-	UpdateApplicationRequestBody,
-	UpdateResearchAimRequestBody,
-	UpdateResearchTaskRequestBody,
-} from "@/types/api-types";
+import { CreateGrantApplicationRequestBody, GrantApplicationDetail, GrantCfp, ResearchAim } from "@/types/api-types";
 import { Checkbox } from "gen/ui/checkbox";
 import { FormFile, OmitId } from "@/types/app-types";
-import { ApiClient, getApiClient } from "@/utils/api-client";
+import { getApiClient } from "@/utils/api-client";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
+import { useRouter } from "next/navigation";
+import { PagePath } from "@/enums";
+
+const MIN_TITLE_LENGTH = 10;
 
 const researchTaskSchema = z.object({
 	id: z.string().optional(),
 	task_number: z.number(),
-	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
+	title: z
+		.string()
+		.min(MIN_TITLE_LENGTH, `Title must be at least ${MIN_TITLE_LENGTH} characters`)
+		.max(255, "Title must not exceed 255 characters"),
 	description: z.string().optional(),
 });
 
 const researchAimSchema = z.object({
 	id: z.string().optional(),
 	aim_number: z.number(),
-	title: z.string().min(5, "Title must be at least 5 characters").max(255, "Title must not exceed 255 characters"),
+	title: z
+		.string()
+		.min(MIN_TITLE_LENGTH, `Title must be at least ${MIN_TITLE_LENGTH} characters`)
+		.max(255, "Title must not exceed 255 characters"),
 	description: z.string().optional(),
-	requires_clinical_trials: z.boolean(),
+	requires_clinical_trials: z.boolean().default(false),
 	research_tasks: z.array(researchTaskSchema).min(1, "At least one research task is required"),
 });
 
@@ -53,7 +52,10 @@ const formSchema = z.object({
 	cfp_id: z.string({
 		required_error: "Please select an NIH Activity Code",
 	}),
-	title: z.string().min(10, "Title must be at least 10 characters").max(255, "Title must not exceed 255 characters"),
+	title: z
+		.string()
+		.min(MIN_TITLE_LENGTH, `Title must be at least ${MIN_TITLE_LENGTH} characters`)
+		.max(255, "Title must not exceed 255 characters"),
 	significance: z.string().optional(),
 	innovation: z.string().optional(),
 	research_aims: z.array(researchAimSchema).min(1, "At least one research aim is required"),
@@ -61,207 +63,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-async function handleUpdateApplicationDetails({
-	apiClient,
-	application,
-	cfpId,
-	innovation,
-	significance,
-	title,
-	workspaceId,
-}: {
-	apiClient: ApiClient;
-	application: GrantApplicationDetail;
-	cfpId: string;
-	innovation?: string;
-	significance?: string;
-	title: string;
-	workspaceId: string;
-}) {
-	const requestBody: UpdateApplicationRequestBody = {};
-
-	if (title !== application.title) {
-		requestBody.title = title;
-	}
-	if (cfpId !== application.cfp.id) {
-		requestBody.cfp_id = cfpId;
-	}
-	if (significance !== application.significance) {
-		requestBody.significance = significance;
-	}
-	if (innovation !== application.innovation) {
-		requestBody.innovation = innovation;
-	}
-
-	if (Object.keys(requestBody).length) {
-		await apiClient.updateApplication(workspaceId, application.id, requestBody);
-	}
-}
-
-async function handleUpdateResearchAims({
-	apiClient,
-	application,
-	researchAims,
-	workspaceId,
-}: {
-	apiClient: ApiClient;
-	application: GrantApplicationDetail;
-	researchAims: ResearchAim[];
-	workspaceId: string;
-}) {
-	const newResearchAims = researchAims.filter((aim) => !Reflect.get(aim, "id"));
-	const existingResearchAims = researchAims.filter((aim) => !!Reflect.get(aim, "id"));
-
-	if (newResearchAims.length) {
-		await apiClient.createResearchAims(workspaceId, application.id, newResearchAims);
-	}
-
-	const researchAimUpdateRequestBodies = [] as [string, UpdateResearchAimRequestBody][];
-	const researchAimIdsToDelete = [] as string[];
-
-	const researchTaskUpdateRequestBodies = [] as [string, UpdateResearchTaskRequestBody][];
-	const researchTaskIdsToDelete = [] as string[];
-
-	for (const researchAim of existingResearchAims) {
-		const currentAim = application.research_aims.find((a) => a.id === researchAim.id);
-		if (!currentAim) {
-			researchAimIdsToDelete.push(researchAim.id);
-			continue;
-		}
-
-		const aimUpdateRequestBody: UpdateResearchAimRequestBody = {};
-
-		if (researchAim.title !== currentAim.title) {
-			aimUpdateRequestBody.title = researchAim.title;
-		}
-
-		if (researchAim.description !== currentAim.description) {
-			aimUpdateRequestBody.description = researchAim.description;
-		}
-
-		if (researchAim.requires_clinical_trials !== currentAim.requires_clinical_trials) {
-			aimUpdateRequestBody.requires_clinical_trials = researchAim.requires_clinical_trials;
-		}
-
-		if (Object.keys(aimUpdateRequestBody).length) {
-			researchAimUpdateRequestBodies.push([researchAim.id, aimUpdateRequestBody]);
-		}
-
-		for (const task of researchAim.research_tasks) {
-			const currentTask = currentAim.research_tasks.find((t) => t.id === task.id);
-			if (!currentTask) {
-				researchTaskIdsToDelete.push(task.id);
-				continue;
-			}
-
-			const taskUpdateRequestBody: UpdateResearchAimRequestBody = {};
-
-			if (task.title !== currentTask.title) {
-				taskUpdateRequestBody.title = task.title;
-			}
-
-			if (task.description !== currentTask.description) {
-				taskUpdateRequestBody.description = task.description;
-			}
-
-			if (Object.keys(taskUpdateRequestBody).length) {
-				researchTaskUpdateRequestBodies.push([task.id, taskUpdateRequestBody]);
-			}
-		}
-	}
-
-	const promises = [
-		...researchAimUpdateRequestBodies.map(([aimId, requestBody]) =>
-			apiClient.updateResearchAim(workspaceId, aimId, requestBody),
-		),
-		...researchTaskUpdateRequestBodies.map(([taskId, requestBody]) =>
-			apiClient.updateResearchAim(workspaceId, taskId, requestBody),
-		),
-		...researchAimIdsToDelete.map((id) => apiClient.deleteResearchAim(workspaceId, id)),
-		...researchTaskIdsToDelete.map((id) => apiClient.deleteResearchTask(workspaceId, id)),
-	];
-
-	if (promises.length) {
-		await Promise.all(promises);
-	}
-}
-
-async function handleUpdateFiles({
-	apiClient,
-	application,
-	files,
-	workspaceId,
-}: {
-	apiClient: ApiClient;
-	application: GrantApplicationDetail;
-	files: FormFile[];
-	workspaceId: string;
-}) {
-	const filesToUpload = files.filter((f) => f instanceof File);
-
-	const existingFiles = files.filter((f) => !(f instanceof File)) as ApplicationFile[];
-	const applicationFileIds = application.application_files.map(({ id }) => id);
-	const existingFileIds = new Set(existingFiles.map(({ id }) => id));
-
-	const fileIdsToDelete = applicationFileIds.filter((id) => !existingFileIds.has(id));
-	// the order of operations below is important.
-	// Its conceivable that the user will remove a file and upload a new file with the same name.
-	// Thus we must first delete to ensure the vectors are removed correctly before uploading the new file
-	if (fileIdsToDelete.length) {
-		await Promise.all(
-			fileIdsToDelete.map((id) => apiClient.deleteApplicationFile(workspaceId, application.id, id)),
-		);
-	}
-	if (filesToUpload.length) {
-		await apiClient.uploadApplicationFiles(workspaceId, application.id, filesToUpload);
-	}
-}
-
-async function updateApplication({
-	apiClient,
-	application,
-	formData,
-	workspaceId,
-}: {
-	apiClient: ApiClient;
-	application: GrantApplicationDetail;
-	formData: FormValues;
-	workspaceId: string;
-}) {
-	await Promise.all([
-		handleUpdateApplicationDetails({
-			apiClient,
-			application,
-			title: formData.title,
-			cfpId: formData.cfp_id,
-			innovation: formData.innovation,
-			significance: formData.significance,
-			workspaceId,
-		}),
-		handleUpdateResearchAims({
-			apiClient,
-			application,
-			researchAims: formData.research_aims as ResearchAim[],
-			workspaceId,
-		}),
-		handleUpdateFiles({
-			apiClient,
-			application,
-			files: formData.application_files,
-			workspaceId,
-		}),
-	]);
-}
-
-async function handleCreateApplication({
-	apiClient,
-	workspaceId,
-	formData,
-}: {
-	apiClient: ApiClient;
-	workspaceId: string;
-	formData: FormValues;
-}) {
+async function handleCreateApplication({ workspaceId, formData }: { workspaceId: string; formData: FormValues }) {
+	const apiClient = getApiClient();
 	const { id } = await apiClient.createApplication(workspaceId, {
 		title: formData.title,
 		cfp_id: formData.cfp_id,
@@ -274,38 +77,36 @@ async function handleCreateApplication({
 	if (formData.application_files.length) {
 		await apiClient.uploadApplicationFiles(workspaceId, id, formData.application_files as File[]);
 	}
+
+	return id;
 }
 
 export function GrantApplicationForm({
 	cfps,
-	application,
 	workspaceId,
 }: {
 	cfps: GrantCfp[];
 	application?: GrantApplicationDetail;
 	workspaceId: string;
 }) {
-	const apiClient = getApiClient();
+	const router = useRouter();
 	const [open, setOpen] = useState(false);
-	const [canSubmit, setCanSubmit] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [title, setTitle] = useState("Select an NIH Activity Code");
 
 	const onSubmit = async (values: FormValues) => {
 		setLoading(true);
 		try {
-			await (application
-				? updateApplication({
-						apiClient,
-						workspaceId,
-						application,
-						formData: values,
-					})
-				: handleCreateApplication({
-						apiClient,
-						workspaceId,
-						formData: values,
-					}));
+			const applicationId = await handleCreateApplication({
+				workspaceId,
+				formData: values,
+			});
+			router.push(
+				PagePath.APPLICATION_DETAIL.replace(":workspaceId", workspaceId).replace(
+					":applicationId",
+					applicationId,
+				),
+			);
 		} catch {
 			toast.error("An error occurred.");
 		} finally {
@@ -316,20 +117,10 @@ export function GrantApplicationForm({
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			application_files: application?.application_files ?? [],
-			cfp_id: application?.cfp.id ?? "",
-			title: application?.title ?? "",
-			significance: application?.significance ?? undefined,
-			innovation: application?.innovation ?? undefined,
-			research_aims:
-				application?.research_aims.map(({ description: aimDescription, research_tasks, ...aim }) => ({
-					...aim,
-					description: aimDescription ?? undefined,
-					research_tasks: research_tasks.map(({ description: taskDescription, ...task }) => ({
-						...task,
-						description: taskDescription ?? undefined,
-					})),
-				})) ?? [],
+			application_files: [],
+			cfp_id: "",
+			title: "",
+			research_aims: [],
 		},
 	});
 
@@ -351,61 +142,6 @@ export function GrantApplicationForm({
 		}
 	});
 
-	form.watch((values) => {
-		const isNewApplication = !application;
-		const titleOk = !!values.title?.trim() && (isNewApplication || values.title !== application.title);
-		const cfpIdOk = !!values.cfp_id && (isNewApplication || values.cfp_id !== application.cfp.id);
-		const significanceOk =
-			!!values.significance?.trim() && (isNewApplication || values.significance !== application.significance);
-		const innovationOk =
-			!!values.innovation?.trim() && (isNewApplication || values.innovation !== application.innovation);
-
-		const researchAimValues = (values.research_aims?.filter(Boolean) ?? []) as z.infer<typeof researchAimSchema>[];
-		const aimsAndTasksOk =
-			researchAimValues.length > 0 &&
-			researchAimValues.every(
-				(aim) =>
-					aim.title &&
-					aim.title.length >= 5 &&
-					aim.research_tasks.length &&
-					aim.research_tasks.every((task) => task.title && task.title.length >= 5),
-			);
-
-		const criteria = [titleOk, cfpIdOk, significanceOk, innovationOk, aimsAndTasksOk];
-
-		if (application) {
-			const researchAimsWithID = researchAimValues.filter((aim) => !!aim.id);
-			const hasChangedAimsOrTasks =
-				researchAimsWithID.length === 0 ||
-				researchAimsWithID.some((aim) => {
-					const existingAim = application.research_aims.find((a) => a.id === aim.id);
-					if (existingAim) {
-						const valueChanged =
-							aim.title !== existingAim.title ||
-							aim.description !== existingAim.description ||
-							aim.requires_clinical_trials !== existingAim.requires_clinical_trials;
-
-						const tasksChanged = aim.research_tasks
-							.filter((task) => task.id)
-							.some((task) => {
-								const existingTask = existingAim.research_tasks.find((t) => t.id === task.id);
-								if (existingTask) {
-									return (
-										task.title !== existingTask.title ||
-										task.description !== existingTask.description
-									);
-								}
-								return true;
-							});
-						return valueChanged || tasksChanged;
-					}
-				});
-			criteria.push(hasChangedAimsOrTasks);
-		}
-
-		setCanSubmit(criteria.every(Boolean));
-	});
-
 	return (
 		<TooltipProvider>
 			<Form {...form}>
@@ -423,12 +159,6 @@ export function GrantApplicationForm({
 								name="application_files"
 								render={({ field }) => (
 									<FormItem>
-										<FilesDisplay
-											files={field.value}
-											onFileRemoved={(file) => {
-												field.onChange(field.value.filter((f) => f !== file));
-											}}
-										/>
 										<FormControl>
 											<FileUploader
 												currentFileCount={field.value.length}
@@ -440,6 +170,12 @@ export function GrantApplicationForm({
 												isDropZone={true}
 											/>
 										</FormControl>
+										<FilesDisplay
+											files={field.value}
+											onFileRemoved={(file) => {
+												field.onChange(field.value.filter((f) => f !== file));
+											}}
+										/>
 									</FormItem>
 								)}
 							/>
@@ -452,12 +188,8 @@ export function GrantApplicationForm({
 								render={({ field }) => (
 									<FormItem className="space-y-2">
 										<div className="flex items-center gap-2">
-											<FormLabel
-												htmlFor="cfp_id"
-												className="flex items-center gap-2"
-												data-testid="grant-application-form-cfp-label"
-											>
-												NIH Activity Code
+											<FormLabel htmlFor="cfp_id" data-testid="grant-application-form-cfp-label">
+												NIH Activity Code <span className="text-red-300 p-0">*</span>
 											</FormLabel>
 											<Tooltip>
 												<TooltipTrigger asChild>
@@ -566,12 +298,8 @@ export function GrantApplicationForm({
 								render={({ field }) => (
 									<FormItem className="space-y-2">
 										<div className="flex items-center gap-2">
-											<FormLabel
-												htmlFor="title"
-												className="flex items-center gap-2"
-												data-testid="grant-application-form-title-label"
-											>
-												Grant Application Title
+											<FormLabel htmlFor="title" data-testid="grant-application-form-title-label">
+												Grant Application Title <span className="text-red-300 p-0">*</span>
 											</FormLabel>
 											<Tooltip>
 												<TooltipTrigger asChild>
@@ -653,7 +381,6 @@ export function GrantApplicationForm({
 										<div className="flex items-center gap-2">
 											<FormLabel
 												htmlFor="significance"
-												className="text-xl"
 												data-testid="significance-innovation-form-significance-label"
 											>
 												Research Significance
@@ -737,7 +464,6 @@ export function GrantApplicationForm({
 										<div className="flex items-center gap-2">
 											<FormLabel
 												htmlFor="innovation"
-												className="text-xl"
 												data-testid="significance-innovation-form-innovation-label"
 											>
 												Research Innovation
@@ -815,13 +541,13 @@ export function GrantApplicationForm({
 						</section>
 						<section className="space-y-4">
 							<h2 className="text-2xl font-bold">Research Aims</h2>
-							<Accordion type="single" collapsible className="w-full">
+							<Accordion type="single" collapsible className="w-full" defaultValue="aim-0">
 								{fields.map((field, index) => (
 									<ResearchAimForm
 										key={index.toString() + field.id}
 										form={form}
 										index={index}
-										remove={() => {
+										onClickRemove={() => {
 											remove(index);
 										}}
 										loading={loading}
@@ -898,7 +624,7 @@ export function GrantApplicationForm({
 					</div>
 					<div className="pt-6 border-t flex justify-end">
 						<SubmitButton
-							disabled={!form.formState.isValid || !canSubmit}
+							disabled={!form.formState.isValid || loading}
 							isLoading={loading}
 							data-testid="grant-application-form-submit"
 							aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
@@ -914,175 +640,15 @@ export function GrantApplicationForm({
 	);
 }
 
-function ResearchTaskForm({
-	form,
-	aimIndex,
-	taskIndex,
-	remove,
-	loading,
-}: {
-	form: UseFormReturn<FormValues>;
-	aimIndex: number;
-	taskIndex: number;
-	remove: () => void;
-	loading: boolean;
-}) {
-	return (
-		<AccordionItem value={`task-${taskIndex}`} className="border rounded-lg mb-4">
-			<AccordionTrigger className="px-4 py-2 hover:bg-muted/50">
-				<span className="text-lg font-semibold">Research Task {taskIndex + 1}</span>
-			</AccordionTrigger>
-			<AccordionContent>
-				<div className="space-y-4 p-4">
-					<div className="flex justify-between items-center">
-						<h4 className="text-lg font-semibold">Research Task {taskIndex + 1}</h4>
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							onClick={remove}
-							disabled={
-								taskIndex === 0 && form.getValues().research_aims[aimIndex].research_tasks.length === 1
-							}
-							data-testid={`remove-task-button-${aimIndex}-${taskIndex}`}
-						>
-							<Trash2 className="h-4 w-4 mr-2" />
-							Remove Task
-						</Button>
-					</div>
-					<FormField
-						control={form.control}
-						name={`research_aims.${aimIndex}.research_tasks.${taskIndex}.title`}
-						render={({ field }) => (
-							<FormItem className="space-y-2">
-								<div className="flex items-center gap-2">
-									<FormLabel
-										className="text-xl"
-										data-testid={`task-title-label-${aimIndex}-${taskIndex}`}
-									>
-										Task Title
-									</FormLabel>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button
-												type="button"
-												variant="ghost"
-												className="p-0 h-4 w-4"
-												data-testid={`task-title-help-${aimIndex}-${taskIndex}`}
-												aria-label="Task title information"
-											>
-												<HelpCircle className="h-4 w-4" />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent role="tooltip">
-											Enter the title of the research task.
-										</TooltipContent>
-									</Tooltip>
-								</div>
-								<FormControl>
-									<Input
-										{...field}
-										disabled={loading}
-										placeholder="Enter the task title"
-										data-testid={`task-title-input-${aimIndex}-${taskIndex}`}
-									/>
-								</FormControl>
-								{field.value && (
-									<p
-										id={`task-title-counter-${aimIndex}-${taskIndex}`}
-										data-testid={`task-title-char-count-${aimIndex}-${taskIndex}`}
-										aria-live="polite"
-										className={cn(
-											"text-xs text-muted-foreground transition-colors duration-200",
-											field.value.length < 5 && "text-red-500",
-											field.value.length >= 5 && field.value.length <= 255 && "text-green-500",
-											field.value.length > 255 && "text-red-500",
-										)}
-									>
-										{field.value.length} characters
-										{field.value.length < 5 && ` (${5 - field.value.length} more required)`}
-										{field.value.length > 255 && ` (${field.value.length - 255} over limit)`}
-									</p>
-								)}
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name={`research_aims.${aimIndex}.research_tasks.${taskIndex}.description`}
-						render={({ field }) => (
-							<FormItem className="space-y-2">
-								<div className="flex items-center gap-2">
-									<FormLabel
-										className="text-xl"
-										data-testid={`task-description-label-${aimIndex}-${taskIndex}`}
-									>
-										Task Description
-									</FormLabel>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button
-												type="button"
-												variant="ghost"
-												className="p-0 h-4 w-4"
-												data-testid={`task-description-help-${aimIndex}-${taskIndex}`}
-												aria-label="Task description information"
-											>
-												<HelpCircle className="h-4 w-4" />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent role="tooltip">
-											Enter a description for your research task.
-										</TooltipContent>
-									</Tooltip>
-								</div>
-								<FormControl>
-									<Textarea
-										{...field}
-										ref={(textarea) => {
-											if (textarea) {
-												textarea.style.height = "0px";
-												textarea.style.height = `${textarea.scrollHeight}px`;
-											}
-										}}
-										disabled={loading}
-										placeholder="Enter the task description"
-										data-testid={`task-description-input-${aimIndex}-${taskIndex}`}
-									/>
-								</FormControl>
-								{field.value && (
-									<p
-										id={`task-description-counter-${aimIndex}-${taskIndex}`}
-										data-testid={`task-description-char-count-${aimIndex}-${taskIndex}`}
-										aria-live="polite"
-										className={cn(
-											"text-xs text-muted-foreground transition-colors duration-200",
-											"text-green-500",
-										)}
-									>
-										{field.value.length} characters
-									</p>
-								)}
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
-			</AccordionContent>
-		</AccordionItem>
-	);
-}
-
-function ResearchAimForm({
+export function ResearchAimForm({
 	form,
 	index,
-	remove,
+	onClickRemove,
 	loading,
 }: {
 	form: UseFormReturn<FormValues>;
 	index: number;
-	remove: () => void;
+	onClickRemove: () => void;
 	loading: boolean;
 }) {
 	const {
@@ -1101,20 +667,6 @@ function ResearchAimForm({
 			</AccordionTrigger>
 			<AccordionContent>
 				<div className="space-y-6 p-4">
-					<div className="flex justify-between items-center">
-						<h3 className="text-xl font-semibold">Research Aim {index + 1}</h3>
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							onClick={remove}
-							disabled={index === 0 && form.getValues().research_aims.length === 1}
-							data-testid={`remove-aim-button-${index}`}
-						>
-							<Trash2 className="h-4 w-4 mr-2" />
-							Remove Aim
-						</Button>
-					</div>
 					<FormField
 						control={form.control}
 						name={`research_aims.${index}.title`}
@@ -1123,10 +675,9 @@ function ResearchAimForm({
 								<div className="flex items-center gap-2">
 									<FormLabel
 										htmlFor={`research_aims.${index}.title`}
-										className="text-xl"
 										data-testid={`research-aim-form-title-label-${index}`}
 									>
-										Research Aim Title
+										Research Aim Title <span className="text-red-300 p-0">*</span>
 									</FormLabel>
 									<Tooltip>
 										<TooltipTrigger asChild>
@@ -1190,7 +741,6 @@ function ResearchAimForm({
 								<div className="flex items-center gap-2">
 									<FormLabel
 										htmlFor={`research_aims.${index}.description`}
-										className="text-xl"
 										data-testid={`research-aim-form-description-label-${index}`}
 									>
 										Research Aim Description
@@ -1303,35 +853,197 @@ function ResearchAimForm({
 					/>
 
 					<div className="space-y-4">
-						<div className="flex justify-between items-center">
-							<h4 className="text-lg font-semibold">Research Tasks</h4>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									append({ title: "", description: "", task_number: fields.length + 1 });
-								}}
-								className="w-full mt-2"
-								data-testid={`add-task-button-${index}`}
-							>
-								<Plus className="h-4 w-4 mr-2" />
-								Add Task
-							</Button>
-						</div>
-						<Accordion type="single" collapsible className="w-full">
+						<h4 className="text-lg font-semibold">Research Tasks</h4>
+						<Accordion type="single" collapsible className="w-full" defaultValue="task-0">
 							{fields.map((field, taskIndex) => (
 								<ResearchTaskForm
 									key={taskIndex.toString() + field.id}
 									form={form}
 									aimIndex={index}
 									taskIndex={taskIndex}
-									remove={() => {
+									onClickRemove={() => {
 										removeTask(taskIndex);
 									}}
 									loading={loading}
 								/>
 							))}
 						</Accordion>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => {
+								append({ title: "", description: "", task_number: fields.length + 1 });
+							}}
+							className="w-full mt-2"
+							data-testid={`add-task-button-${index}`}
+						>
+							<Plus className="h-4 w-4 mr-2" />
+							Add Task
+						</Button>
+					</div>
+					<div className="flex justify-end">
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={onClickRemove}
+							data-testid={`remove-aim-button-${index}`}
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Remove Aim
+						</Button>
+					</div>
+				</div>
+			</AccordionContent>
+		</AccordionItem>
+	);
+}
+
+export function ResearchTaskForm({
+	form,
+	aimIndex,
+	taskIndex,
+	onClickRemove,
+	loading,
+}: {
+	form: UseFormReturn<FormValues>;
+	aimIndex: number;
+	taskIndex: number;
+	onClickRemove: () => void;
+	loading: boolean;
+}) {
+	return (
+		<AccordionItem value={`task-${taskIndex}`} className="border rounded-lg mb-4">
+			<AccordionTrigger className="px-4 py-2 hover:bg-muted/50">
+				<span className="text-lg font-semibold">
+					Research Task {aimIndex + 1}.{taskIndex + 1}
+				</span>
+			</AccordionTrigger>
+			<AccordionContent>
+				<div className="space-y-4 p-4">
+					<FormField
+						control={form.control}
+						name={`research_aims.${aimIndex}.research_tasks.${taskIndex}.title`}
+						render={({ field }) => (
+							<FormItem className="space-y-2">
+								<div className="flex items-center gap-2">
+									<FormLabel data-testid={`task-title-label-${aimIndex}-${taskIndex}`}>
+										Task Title <span className="text-red-300 p-0">*</span>
+									</FormLabel>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												type="button"
+												variant="ghost"
+												className="p-0 h-4 w-4"
+												data-testid={`task-title-help-${aimIndex}-${taskIndex}`}
+												aria-label="Task title information"
+											>
+												<HelpCircle className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent role="tooltip">
+											Enter the title of the research task.
+										</TooltipContent>
+									</Tooltip>
+								</div>
+								<FormControl>
+									<Input
+										{...field}
+										disabled={loading}
+										placeholder="Enter the task title"
+										data-testid={`task-title-input-${aimIndex}-${taskIndex}`}
+									/>
+								</FormControl>
+								{field.value && (
+									<p
+										id={`task-title-counter-${aimIndex}-${taskIndex}`}
+										data-testid={`task-title-char-count-${aimIndex}-${taskIndex}`}
+										aria-live="polite"
+										className={cn(
+											"text-xs text-muted-foreground transition-colors duration-200",
+											field.value.length < 5 && "text-red-500",
+											field.value.length >= 5 && field.value.length <= 255 && "text-green-500",
+											field.value.length > 255 && "text-red-500",
+										)}
+									>
+										{field.value.length} characters
+										{field.value.length < 5 && ` (${5 - field.value.length} more required)`}
+										{field.value.length > 255 && ` (${field.value.length - 255} over limit)`}
+									</p>
+								)}
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<FormField
+						control={form.control}
+						name={`research_aims.${aimIndex}.research_tasks.${taskIndex}.description`}
+						render={({ field }) => (
+							<FormItem className="space-y-2">
+								<div className="flex items-center gap-2">
+									<FormLabel data-testid={`task-description-label-${aimIndex}-${taskIndex}`}>
+										Task Description
+									</FormLabel>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												type="button"
+												variant="ghost"
+												className="p-0 h-4 w-4"
+												data-testid={`task-description-help-${aimIndex}-${taskIndex}`}
+												aria-label="Task description information"
+											>
+												<HelpCircle className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent role="tooltip">
+											Enter a description for your research task.
+										</TooltipContent>
+									</Tooltip>
+								</div>
+								<FormControl>
+									<Textarea
+										{...field}
+										ref={(textarea) => {
+											if (textarea) {
+												textarea.style.height = "0px";
+												textarea.style.height = `${textarea.scrollHeight}px`;
+											}
+										}}
+										disabled={loading}
+										placeholder="Enter the task description"
+										data-testid={`task-description-input-${aimIndex}-${taskIndex}`}
+									/>
+								</FormControl>
+								{field.value && (
+									<p
+										id={`task-description-counter-${aimIndex}-${taskIndex}`}
+										data-testid={`task-description-char-count-${aimIndex}-${taskIndex}`}
+										aria-live="polite"
+										className={cn(
+											"text-xs text-muted-foreground transition-colors duration-200",
+											"text-green-500",
+										)}
+									>
+										{field.value.length} characters
+									</p>
+								)}
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<div className="flex justify-end">
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={onClickRemove}
+							data-testid={`remove-task-button-${aimIndex}-${taskIndex}`}
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Remove Task
+						</Button>
 					</div>
 				</div>
 			</AccordionContent>
