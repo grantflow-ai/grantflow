@@ -5,6 +5,8 @@ from pathvalidate import sanitize_filename
 from sanic.request import File
 from typing_extensions import TypedDict
 
+from src.constants import SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP
+
 
 @dataclass
 class FileDTO:
@@ -31,8 +33,9 @@ class FileDTO:
             The FileDTO object.
         """
         file = file[0] if isinstance(file, list) else file
+        ext = filename.split(".")[-1]
 
-        if mime_type := guess_type(filename)[0]:
+        if mime_type := (guess_type(filename)[0] or SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP.get(ext)):
             filename = sanitize_filename(filename)
             return cls(content=file.body, filename=filename, mime_type=mime_type)
 
