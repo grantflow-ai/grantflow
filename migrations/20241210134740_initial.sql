@@ -1,5 +1,7 @@
 -- Create enum type "userroleenum"
 CREATE TYPE "userroleenum" AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
+-- Create enum type "fileindexingstatusenum"
+CREATE TYPE "fileindexingstatusenum" AS ENUM ('INDEXING', 'FINISHED', 'FAILED');
 -- Create "funding_organizations" table
 CREATE TABLE "funding_organizations" (
   "id" uuid NOT NULL,
@@ -63,6 +65,7 @@ CREATE TABLE "application_files" (
   "name" character varying(255) NOT NULL,
   "type" character varying(255) NOT NULL,
   "size" integer NOT NULL,
+  "status" "fileindexingstatusenum" NOT NULL,
   "application_id" uuid NOT NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "application_files_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "grant_applications" ("id") ON UPDATE CASCADE ON DELETE CASCADE
