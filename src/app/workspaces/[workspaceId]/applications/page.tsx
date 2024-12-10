@@ -26,6 +26,10 @@ export default function ApplicationCreatePage() {
 		})();
 	}, []);
 
+	if (!grantCfps.length) {
+		return <div>Loading...</div>;
+	}
+
 	return (
 		<div className="flex flex-col flex-1">
 			<Navbar>
@@ -33,7 +37,14 @@ export default function ApplicationCreatePage() {
 			</Navbar>
 			<div className="mt-14 p-4 container">
 				<section>
-					<GrantApplicationForm cfps={grantCfps} workspaceId={workspaceId} />
+					<GrantApplicationForm
+						cfps={grantCfps.filter(
+							(cfp) =>
+								// TODO: this is temporary, will remove this.
+								cfp.code.startsWith("R") && !Number.isNaN(Number.parseInt(cfp.code.replace("R", ""))),
+						)}
+						workspaceId={workspaceId}
+					/>
 				</section>
 			</div>
 		</div>

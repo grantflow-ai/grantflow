@@ -21,14 +21,14 @@ import {
 import { getEnv } from "@/utils/env";
 import { Ref } from "@/utils/state";
 import { getFirebaseAuth } from "@/utils/firebase";
-import { NotAuthenticatedError } from "@/exceptions";
+import { PagePath } from "@/enums";
 
 export class ApiClient {
 	private readonly client: KyInstance;
 	private jwtToken: string | null;
 
 	constructor() {
-		this.jwtToken = null;
+		this.jwtToken = globalThis.localStorage.getItem("jwt_token");
 		this.client = ky.create({
 			prefixUrl: getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
 		});
@@ -38,13 +38,16 @@ export class ApiClient {
 		if (!this.jwtToken) {
 			const idToken = await getFirebaseAuth().currentUser?.getIdToken();
 			if (!idToken) {
-				throw new NotAuthenticatedError("User is not authenticated");
+				globalThis.location.replace(new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL));
+				return;
 			}
 			const { jwt_token } = await this.client
 				.post("login", {
 					json: { id_token: idToken } satisfies LoginRequestBody,
 				})
 				.json<LoginResponse>();
+
+			globalThis.localStorage.setItem("jwt_token", jwt_token);
 
 			this.jwtToken = jwt_token;
 		}
@@ -175,7 +178,7 @@ export class ApiClient {
 	async uploadApplicationFiles(workspaceId: string, applicationId: string, files: File[]) {
 		const formData = new FormData();
 		for (const file of files) {
-			formData.append("files", file);
+			formData.append(file.name, file);
 		}
 		return await this.client
 			.post(`workspaces/${workspaceId}/applications/${applicationId}/index-files`, {

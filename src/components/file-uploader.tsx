@@ -113,7 +113,9 @@ export function FileUploader({
 			>
 				<input {...getInputProps()} />
 				<Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-				<p className="mt-2 text-sm text-muted-foreground">Drag 'n' drop files here, or click to select files</p>
+				<p className="mt-2 text-sm text-muted-foreground">
+					Drag &#39;n&#39; drop files here, or click to select files
+				</p>
 				{maxFileCount !== Infinity && (
 					<p className="mt-2 text-xs text-muted-foreground">
 						{currentFileCount} / {maxFileCount} files uploaded
