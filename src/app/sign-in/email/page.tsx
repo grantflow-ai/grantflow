@@ -22,19 +22,18 @@ export default function FinalizeEmailLogin() {
 	useEffect(() => {
 		const finalizeSignIn = async () => {
 			const email = globalThis.localStorage.getItem(FIREBASE_LOCAL_STORAGE_KEY);
-
-			if (!email || !isSignInWithEmailLink(auth, globalThis.location.href)) {
+			const isEmailLink = isSignInWithEmailLink(auth, globalThis.location.href);
+			if (!email || !isEmailLink) {
 				toast.error("Invalid or expired sign-in link");
 				router.replace(PagePath.SIGNIN);
 				return;
 			}
 
 			try {
-				await signInWithEmailLink(auth, email, globalThis.location.href);
-				setUser(auth.currentUser);
+				const { user } = await signInWithEmailLink(auth, email, globalThis.location.href);
+				setUser(user);
 				router.replace(PagePath.WORKSPACES);
 			} catch (error) {
-				console.error("Sign-in error:", error);
 				toast.error(error instanceof Error ? error.message : "Failed to sign in with email link");
 				router.replace(PagePath.SIGNIN);
 			} finally {
@@ -43,7 +42,7 @@ export default function FinalizeEmailLogin() {
 		};
 
 		void finalizeSignIn();
-	}, [auth.currentUser, router]);
+	}, [router]);
 
 	return (
 		<div
