@@ -9,21 +9,41 @@ import { Input } from "gen/ui/input";
 import { ScrollArea } from "gen/ui/scroll-area";
 import { Badge } from "gen/ui/badge";
 import { ChatMessage } from "@/types/api-types";
+import { getApiClient } from "@/utils/api-client";
 
 const connectionStatusMap = {
-	[ReadyState.CONNECTING]: "Connecting",
-	[ReadyState.OPEN]: "Open",
-	[ReadyState.CLOSING]: "Closing",
-	[ReadyState.CLOSED]: "Closed",
-	[ReadyState.UNINSTANTIATED]: "Uninstantiated",
+	[ReadyState.CONNECTING]: "connecting",
+	[ReadyState.OPEN]: "connected",
+	[ReadyState.CLOSING]: "closing",
+	[ReadyState.CLOSED]: "closed",
+	[ReadyState.UNINSTANTIATED]: "connecting",
 };
 
-const connectionStatusColorMap = {
-	[ReadyState.CONNECTING]: "bg-yellow-500",
-	[ReadyState.OPEN]: "bg-green-500",
-	[ReadyState.CLOSING]: "bg-orange-500",
-	[ReadyState.CLOSED]: "bg-red-500",
-	[ReadyState.UNINSTANTIATED]: "bg-gray-500",
+const isChatMessage = (value: unknown): value is ChatMessage => {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+
+	return Reflect.has(value, "type") && (Reflect.has(value, "text") || Reflect.has(value, "data"));
+};
+
+const createWebsocketUrl = async (workspaceId: string, applicationId: string) => {
+	const { otp } = await getApiClient().getOtp();
+
+	return new URL(
+		`workspaces/${workspaceId}/applications/${applicationId}/chat-room?otp=${otp}`,
+		getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL.replace("http", "ws"),
+	).toString();
+};
+
+const downloadMarkdown = (content: string) => {
+	const element = document.createElement("a");
+	const file = new Blob([content], { type: "text/markdown" });
+	element.href = URL.createObjectURL(file);
+	element.download = "application_draft.md";
+	document.body.append(element);
+	element.click();
+	element.remove();
 };
 
 export default function ApplicationChatRoomPage() {
@@ -31,20 +51,43 @@ export default function ApplicationChatRoomPage() {
 		workspaceId: string;
 		applicationId: string;
 	}>();
+	const [url, setUrl] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (workspaceId && applicationId) {
+			(async () => {
+				const websocketUrl = await createWebsocketUrl(workspaceId, applicationId);
+				setUrl(websocketUrl);
+			})();
+		}
+	}, []);
+
+	return url ? <ChatRoom url={url} /> : <div>Loading...</div>;
+}
+
+function ChatRoom({ url }: { url: string }) {
 	const [messageHistory, setMessageHistory] = useState<ChatMessage[]>([]);
 	const [inputMessage, setInputMessage] = useState("");
 
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 
-	const { sendMessage, lastJsonMessage, readyState } = useWebSocket<ChatMessage>(
-		new URL(
-			`workspaces/${workspaceId}/applications/${applicationId}/chat-room`,
-			getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
-		).toString(),
-	);
+	const { sendMessage, lastJsonMessage, readyState } = useWebSocket(url, {
+		onOpen: () => {
+			console.log("opened");
+		},
+		shouldReconnect: (closeEvent) => {
+			console.log("close event", closeEvent);
+			return true;
+		},
+	});
 
 	useEffect(() => {
-		setMessageHistory((prev) => [...prev, lastJsonMessage]);
+		if (isChatMessage(lastJsonMessage)) {
+			console.log("Received message:", JSON.stringify(lastJsonMessage));
+			setMessageHistory((prev) => [...prev, lastJsonMessage]);
+		} else {
+			console.log("Received unknown message:", JSON.stringify(lastJsonMessage));
+		}
 	}, [lastJsonMessage]);
 
 	useEffect(() => {
@@ -61,28 +104,12 @@ export default function ApplicationChatRoomPage() {
 	}, [inputMessage, sendMessage]);
 
 	const connectionStatus = connectionStatusMap[readyState];
-	const connectionStatusColor = connectionStatusColorMap[readyState];
-
-	const downloadMarkdown = (content: string) => {
-		const element = document.createElement("a");
-		const file = new Blob([content], { type: "text/markdown" });
-		element.href = URL.createObjectURL(file);
-		element.download = "application_draft.md";
-		document.body.append(element);
-		element.click();
-		element.remove();
-	};
-
 	return (
 		<div className="flex flex-col h-screen max-h-screen" data-testid="chat-room">
-			<div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
-				<h1 className="text-2xl font-bold">WebSocket Chat</h1>
-				<Badge
-					variant="outline"
-					className={`${connectionStatusColor} text-white`}
-					data-testid="connection-status"
-				>
-					{connectionStatus}
+			<div className="p-4 flex justify-between items-center">
+				<h1 className="text-2xl font-bold">Application </h1>
+				<Badge variant="outline" className={`text-white`} data-testid="connection-status">
+					status: {connectionStatus}
 				</Badge>
 			</div>
 			<ScrollArea className="flex-grow p-4" data-testid="chat-messages">

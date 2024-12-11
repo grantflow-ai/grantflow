@@ -12,7 +12,13 @@ const emailSchema = z.object({
 
 export type EmailFormValues = z.infer<typeof emailSchema>;
 
-export function EmailSigninForm({ onSubmit }: { onSubmit: SubmitHandler<EmailFormValues> }) {
+export function EmailSigninForm({
+	onSubmit,
+	isLoading,
+}: {
+	onSubmit: SubmitHandler<EmailFormValues>;
+	isLoading: boolean;
+}) {
 	const form = useForm<EmailFormValues>({
 		resolver: zodResolver(emailSchema),
 		defaultValues: { email: "" },
@@ -52,7 +58,7 @@ export function EmailSigninForm({ onSubmit }: { onSubmit: SubmitHandler<EmailFor
 					/>
 					<SubmitButton
 						className="mt-4 mb-2 w-full"
-						isLoading={form.formState.isSubmitting}
+						isLoading={isLoading}
 						disabled={!form.formState.isValid}
 						data-testid="email-signin-form-submit-button"
 					>

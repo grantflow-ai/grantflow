@@ -109,3 +109,7 @@ export interface ChatGenerationResultMessage {
 }
 
 export type ChatMessage = ChatNotification | ChatErrorNotification | ChatGenerationResultMessage;
+
+export interface OTPResponse {
+	otp: string;
+}
