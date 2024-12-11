@@ -8,12 +8,5 @@
       <jdbc-url>jdbc:postgresql://0.0.0.0:5432/grantflow</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="azure" uuid="ef97e042-32b4-4de5-b43b-7dd8e791956f">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://grantflowdev.postgres.database.azure.com:5432/grantflow</jdbc-url>
-      <working-dir>$ProjectFileDir$</working-dir>
-    </data-source>
   </component>
 </project>

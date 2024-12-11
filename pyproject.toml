@@ -134,4 +134,5 @@ dev = [
     "ruff>=0.4.0",
     "sanic-testing>=24.6.0",
     "testcontainers>=4.8.2",
+    "pre-commit>=4.0.1",
 ]
