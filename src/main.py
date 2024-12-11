@@ -28,12 +28,18 @@ from src.api.research_aims import (
 from src.api.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
+    handle_retrieve_workspace,
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
 from src.middleware import authenticate_user, set_session_maker
 
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+logging.basicConfig(
+    level=logging.DEBUG,
+    stream=sys.stdout,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
 app = Sanic[Any, RequestContext]("grantflow")
 
 app.config.CORS_ORIGINS = "*"
@@ -59,6 +65,7 @@ app.add_route(handle_retrieve_cfps, "/cfps", methods=["GET"])
 app.add_route(handle_create_workspace, "/workspaces", methods=["POST"])
 app.add_route(handle_retrieve_workspaces, "/workspaces", methods=["GET"])
 app.add_route(handle_update_workspace, "/workspaces/<workspace_id:uuid>", methods=["PATCH"])
+app.add_route(handle_retrieve_workspace, "/workspaces/<workspace_id:uuid>", methods=["GET"])
 app.add_route(handle_delete_workspace, "/workspaces/<workspace_id:uuid>", methods=["DELETE"])
 
 # Applications CRUD
