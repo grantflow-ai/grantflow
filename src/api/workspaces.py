@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sanic import HTTPResponse
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.orm import selectinload
 
 from src.api.api_types import (
     APIRequest,
@@ -54,6 +55,7 @@ async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
                     name=workspace.name,
                     description=workspace.description,
                     logo_url=workspace.logo_url,
+                    role=UserRoleEnum.OWNER,
                 )
             ),
             content_type=CONTENT_TYPE_JSON,
@@ -77,7 +79,10 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
     async with request.ctx.session_maker() as session:
         workspaces = list(
             await session.scalars(
-                select(Workspace).join(WorkspaceUser).where(WorkspaceUser.firebase_uid == request.ctx.firebase_uid)
+                select(Workspace)
+                .options(selectinload(Workspace.users))
+                .join(WorkspaceUser)
+                .where(WorkspaceUser.firebase_uid == request.ctx.firebase_uid)
             )
         )
 
@@ -86,7 +91,11 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
         body=serialize(
             [
                 WorkspaceResponse(
-                    id=workspace.id, name=workspace.name, description=workspace.description, logo_url=workspace.logo_url
+                    id=workspace.id,
+                    name=workspace.name,
+                    description=workspace.description,
+                    logo_url=workspace.logo_url,
+                    role=workspace.users[0].role,
                 )
                 for workspace in workspaces
             ]
@@ -105,7 +114,7 @@ async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HT
     Returns:
         The response object.
     """
-    await verify_workspace_access(
+    user_role = await verify_workspace_access(
         request=request, workspace_id=workspace_id, allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN]
     )
 
@@ -122,7 +131,11 @@ async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HT
             status=HTTPStatus.OK,
             body=serialize(
                 WorkspaceResponse(
-                    id=workspace.id, name=workspace.name, description=workspace.description, logo_url=workspace.logo_url
+                    id=workspace.id,
+                    name=workspace.name,
+                    description=workspace.description,
+                    logo_url=workspace.logo_url,
+                    role=user_role,
                 )
             ),
             content_type=CONTENT_TYPE_JSON,

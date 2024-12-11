@@ -4,6 +4,8 @@ from typing import Any, NotRequired, TypedDict
 from sanic import Request, Sanic
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
+from src.db.tables import UserRoleEnum
+
 
 class RequestContext(SimpleNamespace):
     """The context of an API request."""
@@ -109,6 +111,8 @@ class WorkspaceResponse(TypedDict):
     """The description of the workspace."""
     logo_url: str | None
     """The URL of the workspace logo."""
+    role: UserRoleEnum
+    """The role of the user in the workspace."""
 
 
 # Application API Types
@@ -269,3 +273,10 @@ class LoginResponse(TypedDict):
 
     jwt_token: str
     """The JWT token identifying the user."""
+
+
+class OTPResponse(TypedDict):
+    """The request body for the login endpoint."""
+
+    otp: str
+    """The otp identifying the user."""

@@ -4,7 +4,7 @@ from typing import Literal, TypedDict
 from uuid import UUID
 
 from sanic import Websocket
-from sqlalchemy import select
+from sqlalchemy import exists, select
 
 from src.api.api_types import APIRequest, ApplicationDraftGenerationResponse
 from src.api.utils import create_application_draft, verify_workspace_access
@@ -52,17 +52,21 @@ async def application_ws_handler(request: APIRequest, ws: Websocket, workspace_i
         workspace_id: The workspace ID.
         application_id: The application
     """
+    logger.info("Web socket request with ID %s", application_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     try:
-        with request.ctx.session_maker() as session:
+        async with request.ctx.session_maker() as session:
             is_processing_files = True
             while is_processing_files:
-                if is_processing_files := await session.execute(
-                    select(ApplicationFile)
-                    .where(ApplicationFile.application_id == application_id)
-                    .where(ApplicationFile.status == FileIndexingStatusEnum.INDEXING)
-                    .exists()
+                if is_processing_files := await session.scalar(
+                    select(
+                        exists(
+                            select(ApplicationFile)
+                            .where(ApplicationFile.application_id == application_id)
+                            .where(ApplicationFile.status == FileIndexingStatusEnum.INDEXING)
+                        )
+                    )
                 ):
                     await ws.send(
                         serialize(
@@ -105,5 +109,6 @@ async def application_ws_handler(request: APIRequest, ws: Websocket, workspace_i
                 )
             )
         )
-    finally:
-        await ws.close()
+
+    async for msg in ws:
+        logger.info("Received message: %s", msg)
