@@ -1,3 +1,4 @@
+"use client";
 import { Card, CardContent } from "gen/ui/card";
 import Link from "next/link";
 import { PagePath } from "@/enums";

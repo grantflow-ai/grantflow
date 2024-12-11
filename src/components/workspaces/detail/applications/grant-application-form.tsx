@@ -1,3 +1,4 @@
+"use client";
 import { Fragment, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "gen/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
@@ -17,11 +18,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateGrantApplicationRequestBody, GrantApplicationDetail, GrantCfp, ResearchAim } from "@/types/api-types";
 import { Checkbox } from "gen/ui/checkbox";
 import { FormFile, OmitId } from "@/types/app-types";
-import { getApiClient } from "@/utils/api-client";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { useRouter } from "next/navigation";
 import { PagePath } from "@/enums";
+import { createApplication, createResearchAims, uploadApplicationFiles } from "@/app/actions/api";
 
 const MIN_TITLE_LENGTH = 10;
 
@@ -64,18 +65,17 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 async function handleCreateApplication({ workspaceId, formData }: { workspaceId: string; formData: FormValues }) {
-	const apiClient = getApiClient();
-	const { id } = await apiClient.createApplication(workspaceId, {
+	const { id } = await createApplication(workspaceId, {
 		title: formData.title,
 		cfp_id: formData.cfp_id,
 		significance: formData.significance,
 		innovation: formData.innovation,
 	} satisfies CreateGrantApplicationRequestBody);
 
-	await apiClient.createResearchAims(workspaceId, id, formData.research_aims as OmitId<ResearchAim>[]);
+	await createResearchAims(workspaceId, id, formData.research_aims as OmitId<ResearchAim>[]);
 
 	if (formData.application_files.length) {
-		await apiClient.uploadApplicationFiles(workspaceId, id, formData.application_files as File[]);
+		await uploadApplicationFiles(workspaceId, id, formData.application_files as File[]);
 	}
 
 	return id;

@@ -1,31 +1,10 @@
-"use client";
+"use server";
 import { GrantApplicationForm } from "@/components/workspaces/detail/applications/grant-application-form";
-import { useParams, useRouter } from "next/navigation";
-import { PagePath } from "@/enums";
-import { getApiClient } from "@/utils/api-client";
-import { useStore } from "@/store";
-import { useEffect } from "react";
+import { getCfps } from "@/app/actions/api";
 
-export default function ApplicationCreatePage() {
-	const router = useRouter();
-	const { workspaceId } = useParams<{
-		workspaceId: string;
-	}>();
-	const { grantCfps, setGrantCfps } = useStore();
-
-	if (!workspaceId) {
-		router.replace(PagePath.WORKSPACES);
-		return null;
-	}
-
-	useEffect(() => {
-		if (!grantCfps.length) {
-			(async () => {
-				const cfps = await getApiClient().getCfps();
-				setGrantCfps(cfps);
-			})();
-		}
-	}, [grantCfps]);
+export default async function ApplicationCreatePage({ params }: { params: Promise<{ workspaceId: string }> }) {
+	const { workspaceId } = await params;
+	const grantCfps = await getCfps();
 
 	if (!grantCfps.length) {
 		return <div>Loading...</div>;

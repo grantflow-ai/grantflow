@@ -9,7 +9,7 @@ import { z } from "zod";
 import { Card, CardContent } from "gen/ui/card";
 
 import { useStore } from "@/store";
-import { getApiClient } from "@/utils/api-client";
+import { createWorkspace } from "@/app/actions/api";
 
 const workspaceSchema = z.object({
 	name: z.string().min(3, { message: "Workspace name must be at least 3 characters long" }),
@@ -19,7 +19,6 @@ const workspaceSchema = z.object({
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
 
 export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) {
-	const apiClient = getApiClient();
 	const { setWorkspaces } = useStore();
 
 	const form = useForm<WorkspaceFormValues>({
@@ -29,7 +28,7 @@ export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) 
 
 	const onSubmit = async (values: WorkspaceFormValues) => {
 		try {
-			const workspace = await apiClient.createWorkspace(values);
+			const workspace = await createWorkspace(values);
 			setWorkspaces([workspace]);
 		} catch (error) {
 			console.error("An error occurred creating workspace", error);

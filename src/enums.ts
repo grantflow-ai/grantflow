@@ -9,5 +9,5 @@ export enum PagePath {
 }
 
 export enum ApiPath {
-	LOGOUT = "/logout",
+	LOGIN = "/api/login",
 }
