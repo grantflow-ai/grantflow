@@ -7,7 +7,7 @@ import { fontSans } from "@/utils/fonts";
 import { cn } from "gen/cn";
 import { Toaster } from "gen/ui/sonner";
 import { ThemeProvider } from "next-themes";
-import type { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import { ToastListener } from "@/components/toast-listener";
 
 export const metadata = {
@@ -39,7 +39,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 						{children}
 					</main>
 					<Toaster />
-					<ToastListener />
+					<Suspense>
+						<ToastListener />
+					</Suspense>
 				</ThemeProvider>
 			</body>
 		</html>
