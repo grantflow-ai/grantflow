@@ -1,4 +1,6 @@
 import logging
+from datetime import UTC, datetime, timedelta
+from secrets import token_hex
 from typing import Any, cast
 
 from firebase_admin import App
@@ -72,7 +74,7 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
         raise Unauthorized("Invalid ID token") from e
 
 
-async def create_jwt(id_token: str) -> str:
+async def create_jwt_for_id_token(id_token: str) -> str:
     """Create a session cookie from an ID token.
 
     Args:
@@ -81,11 +83,32 @@ async def create_jwt(id_token: str) -> str:
     Returns:
         The session cookie.
     """
+    decoded_token = await verify_id_token(id_token)
+    return create_jwt(decoded_token["uid"])
+
+
+def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
+    """Create a session cookie from an ID token.
+
+    Args:
+        firebase_uid: The firebase user ID.
+        ttl: The time to live for the token.
+
+    Returns:
+        The session cookie.
+    """
     from jwt import encode
 
-    decoded_token = await verify_id_token(id_token)
+    payload = {
+        "sub": firebase_uid,
+        "iat": int(datetime.now(UTC).timestamp()),
+        "jti": token_hex(16),
+    }
+    if ttl is not None:
+        payload["exp"] = int((datetime.now(tz=UTC) + ttl).timestamp())
+
     return encode(
-        payload={"sub": decoded_token["uid"]},
+        payload=payload,
         key=get_env("JWT_SECRET"),
         algorithm="HS256",
     )

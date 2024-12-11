@@ -47,14 +47,16 @@ async def handle_upload_application_files(
         insert_stmt = (
             insert(ApplicationFile)
             .values(
-                {
-                    "application_id": application_id,
-                    "name": file_dto.filename,
-                    "type": file_dto.mime_type,
-                    "size": file_dto.content.__sizeof__(),
-                    "status": FileIndexingStatusEnum.INDEXING,
-                }
-                for file_dto in file_dtos
+                [
+                    {
+                        "application_id": application_id,
+                        "name": file_dto.filename,
+                        "type": file_dto.mime_type,
+                        "size": file_dto.content.__sizeof__(),
+                        "status": FileIndexingStatusEnum.INDEXING,
+                    }
+                    for file_dto in file_dtos
+                ]
             )
             .returning(ApplicationFile.id)
         )

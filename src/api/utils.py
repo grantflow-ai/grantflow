@@ -1,6 +1,7 @@
 import logging
 from http import HTTPStatus
 from time import time
+from typing import cast
 from uuid import UUID
 
 from sanic import HTTPResponse, Unauthorized
@@ -42,7 +43,7 @@ def handle_deserialization_error(e: DeserializationError) -> HTTPResponse:
 
 async def verify_workspace_access(
     *, request: APIRequest, workspace_id: str | UUID, allowed_roles: list[UserRoleEnum] | None = None
-) -> None:
+) -> UserRoleEnum:
     """Verify that the user has access to the workspace.
 
     Args:
@@ -54,7 +55,7 @@ async def verify_workspace_access(
         Unauthorized: If the user does not have access to the workspace
 
     Returns:
-        None
+        The role of the user in the workspace.
     """
     async with request.ctx.session_maker() as session, session.begin():
         stmt = (
@@ -69,6 +70,8 @@ async def verify_workspace_access(
 
     if workspace_user is None:
         raise Unauthorized("Unauthorized workspace access.")
+
+    return cast(UserRoleEnum, workspace_user.role)
 
 
 async def create_application_draft(request: APIRequest, application_id: UUID) -> ApplicationDraftGenerationResponse:
