@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:5ce526c1f6b4b9089d0d91cbe344dfa91e93de0433fbad3305fb0289658350f1"
+content_hash = "sha256:5567b08fdc5c97392244424965a4d19e32b3dba9e89c10eb0887f718cd7c34be"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -850,7 +850,7 @@ name = "h11"
 version = "0.14.0"
 requires_python = ">=3.7"
 summary = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
-groups = ["dev"]
+groups = ["default", "dev"]
 dependencies = [
     "typing-extensions; python_version < \"3.8\"",
 ]
@@ -2160,6 +2160,22 @@ groups = ["default", "dev"]
 files = [
     {file = "urllib3-2.2.3-py3-none-any.whl", hash = "sha256:ca899ca043dcb1bafa3e262d73aa25c465bfb49e0bd9dd5d59f1d0acba2f8fac"},
     {file = "urllib3-2.2.3.tar.gz", hash = "sha256:e7d814a81dad81e6caf2ec9fdedb284ecc9c73076b62654547cc64ccdcae26e9"},
+]
+
+[[package]]
+name = "uvicorn"
+version = "0.32.1"
+requires_python = ">=3.8"
+summary = "The lightning-fast ASGI server."
+groups = ["default"]
+dependencies = [
+    "click>=7.0",
+    "h11>=0.8",
+    "typing-extensions>=4.0; python_version < \"3.11\"",
+]
+files = [
+    {file = "uvicorn-0.32.1-py3-none-any.whl", hash = "sha256:82ad92fd58da0d12af7482ecdb5f2470a04c9c9a53ced65b9bbb4a205377602e"},
+    {file = "uvicorn-0.32.1.tar.gz", hash = "sha256:ee9519c246a72b1c084cea8d3b44ed6026e78a4a309cbedae9c37e4cb9fbb175"},
 ]
 
 [[package]]
