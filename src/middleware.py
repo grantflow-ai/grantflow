@@ -3,7 +3,7 @@ import logging
 from sanic import Request, Unauthorized
 
 from src.db.connection import get_session_maker
-from src.utils.firebase import verify_jwt_token
+from src.utils.jwt import verify_jwt_token
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,64 @@
+import logging
+from datetime import UTC, datetime, timedelta
+from secrets import token_hex
+from typing import cast
+
+from jwt import DecodeError
+from sanic import Unauthorized
+
+from src.utils.env import get_env
+
+logger = logging.getLogger(__name__)
+
+
+def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
+    """Create a session jwt token from a firebase user ID.
+
+    Args:
+        firebase_uid: The firebase user ID.
+        ttl: The time to live for the token.
+
+    Returns:
+        The session cookie.
+    """
+    from jwt import encode
+
+    payload = {
+        "sub": firebase_uid,
+        "iat": int(datetime.now(UTC).timestamp()),
+        "jti": token_hex(16),
+    }
+    if ttl is not None:
+        payload["exp"] = int((datetime.now(tz=UTC) + ttl).timestamp())
+
+    return encode(
+        payload=payload,
+        key=get_env("JWT_SECRET"),
+        algorithm="HS256",
+    )
+
+
+def verify_jwt_token(token: str) -> str:
+    """Verify a JWT token.
+
+    Args:
+        token: The token to verify.
+
+    Raises:
+        Unauthorized: If the cookie is invalid
+
+    Returns:
+        The user ID.
+    """
+    from jwt import decode
+
+    try:
+        decoded_token = decode(jwt=token, key=get_env("JWT_SECRET"), algorithms=["HS256"])
+        return cast(str, decoded_token["sub"])
+    except (
+        ValueError,
+        KeyError,
+        DecodeError,
+    ) as e:
+        logger.warning("Error verifying jwt: %s", e)
+        raise Unauthorized("Invalid jwt") from e
