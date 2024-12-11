@@ -7,6 +7,8 @@ from src.utils.jwt import verify_jwt_token
 
 logger = logging.getLogger(__name__)
 
+PUBLIC_PATHS = {"login", "health"}
+
 
 def set_session_maker(request: Request) -> None:
     """Middleware to create a session maker for each request.
@@ -26,7 +28,7 @@ async def authenticate_user(request: Request) -> None:
     Args:
         request: The request object.
     """
-    if request.method == "OPTIONS" or request.path == "/login":
+    if request.method == "OPTIONS" or any(request.path == f"/{path}" for path in PUBLIC_PATHS):
         return
 
     jwt_token = request.headers.get("Authorization", "").removeprefix("Bearer ") or request.args.get("otp")
