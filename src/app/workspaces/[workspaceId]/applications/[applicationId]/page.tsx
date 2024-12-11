@@ -9,7 +9,7 @@ import { Input } from "gen/ui/input";
 import { ScrollArea } from "gen/ui/scroll-area";
 import { Badge } from "gen/ui/badge";
 import { ChatMessage } from "@/types/api-types";
-import { getApiClient } from "@/utils/api-client";
+import { getOtp } from "@/app/actions/api";
 
 const connectionStatusMap = {
 	[ReadyState.CONNECTING]: "connecting",
@@ -28,7 +28,7 @@ const isChatMessage = (value: unknown): value is ChatMessage => {
 };
 
 const createWebsocketUrl = async (workspaceId: string, applicationId: string) => {
-	const { otp } = await getApiClient().getOtp();
+	const { otp } = await getOtp();
 
 	return new URL(
 		`workspaces/${workspaceId}/applications/${applicationId}/chat-room?otp=${otp}`,

@@ -1,23 +1,10 @@
-"use client";
-
+"use server";
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
-import { getApiClient } from "@/utils/api-client";
-import { useStore } from "@/store";
-import { useEffect } from "react";
+import { getWorkspaces } from "@/app/actions/api";
 
-export default function WorkspacesListPage() {
-	const { workspaces, setWorkspaces, setGrantCfps } = useStore();
-
-	useEffect(() => {
-		(async () => {
-			const workspaces = await getApiClient().getWorkspaces();
-			setWorkspaces(workspaces);
-
-			const cfps = await getApiClient().getCfps();
-			setGrantCfps(cfps);
-		})();
-	}, []);
+export default async function WorkspacesListPage() {
+	const workspaces = await getWorkspaces();
 
 	return (
 		<div className="mx-auto px-4 py-8">
