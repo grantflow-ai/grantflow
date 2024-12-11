@@ -10,6 +10,7 @@ import {
 	GrantCfp,
 	LoginRequestBody,
 	LoginResponse,
+	OTPResponse,
 	ResearchAim,
 	ResearchTask,
 	UpdateApplicationRequestBody,
@@ -36,25 +37,42 @@ export class ApiClient {
 
 	private async createAuthHeader() {
 		if (!this.jwtToken) {
+			globalThis.location.replace(new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL));
+
 			const idToken = await getFirebaseAuth().currentUser?.getIdToken();
+
 			if (!idToken) {
 				globalThis.location.replace(new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL));
 				return;
 			}
-			const { jwt_token } = await this.client
-				.post("login", {
-					json: { id_token: idToken } satisfies LoginRequestBody,
-				})
-				.json<LoginResponse>();
+			console.log("id token", idToken);
+			try {
+				const { jwt_token } = await this.client
+					.post("login", {
+						json: { id_token: idToken } satisfies LoginRequestBody,
+					})
+					.json<LoginResponse>();
+				console.log("got jwt", jwt_token);
 
-			globalThis.localStorage.setItem("jwt_token", jwt_token);
+				globalThis.localStorage.setItem("jwt_token", jwt_token);
 
-			this.jwtToken = jwt_token;
+				this.jwtToken = jwt_token;
+			} catch {
+				globalThis.location.replace(new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL));
+			}
 		}
 
 		return {
 			Authorization: `Bearer ${this.jwtToken}`,
 		};
+	}
+
+	async getOtp() {
+		return this.client
+			.get("otp", {
+				headers: await this.createAuthHeader(),
+			})
+			.json<OTPResponse>();
 	}
 
 	async getCfps() {
