@@ -2,7 +2,6 @@ import logging
 import sys
 from typing import Any
 
-from dotenv import load_dotenv
 from sanic import Sanic
 from sanic_ext import Extend
 
@@ -123,5 +122,4 @@ app.add_route(
 )
 
 if __name__ == "__main__":
-    load_dotenv()
     app.run(host="0.0.0.0", port=8000)
