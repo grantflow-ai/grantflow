@@ -1,16 +1,8 @@
 import logging
-from datetime import UTC, datetime, timedelta
-from secrets import token_hex
 from typing import Any, cast
 
 from firebase_admin import App
-from firebase_admin.auth import (
-    ExpiredIdTokenError,
-    InvalidIdTokenError,
-    RevokedIdTokenError,
-    UserDisabledError,
-)
-from google.auth.exceptions import RefreshError
+from firebase_admin.exceptions import FirebaseError
 from google.oauth2.service_account import Credentials
 from sanic import Unauthorized
 
@@ -64,76 +56,7 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
         return cast(dict[str, Any], decoded_token)
     except (
         ValueError,
-        InvalidIdTokenError,
-        ExpiredIdTokenError,
-        RevokedIdTokenError,
-        UserDisabledError,
-        RefreshError,
+        FirebaseError,
     ) as e:
         logger.warning("Error verifying token: %s", e)
         raise Unauthorized("Invalid ID token") from e
-
-
-async def create_jwt_for_id_token(id_token: str) -> str:
-    """Create a session cookie from an ID token.
-
-    Args:
-        id_token: The ID token.
-
-    Returns:
-        The session cookie.
-    """
-    decoded_token = await verify_id_token(id_token)
-    return create_jwt(decoded_token["uid"])
-
-
-def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
-    """Create a session cookie from an ID token.
-
-    Args:
-        firebase_uid: The firebase user ID.
-        ttl: The time to live for the token.
-
-    Returns:
-        The session cookie.
-    """
-    from jwt import encode
-
-    payload = {
-        "sub": firebase_uid,
-        "iat": int(datetime.now(UTC).timestamp()),
-        "jti": token_hex(16),
-    }
-    if ttl is not None:
-        payload["exp"] = int((datetime.now(tz=UTC) + ttl).timestamp())
-
-    return encode(
-        payload=payload,
-        key=get_env("JWT_SECRET"),
-        algorithm="HS256",
-    )
-
-
-def verify_jwt_token(token: str) -> str:
-    """Verify a session cookie.
-
-    Args:
-        token: The token to verify.
-
-    Raises:
-        Unauthorized: If the cookie is invalid
-
-    Returns:
-        The user ID.
-    """
-    from jwt import decode
-
-    try:
-        decoded_token = decode(jwt=token, key=get_env("JWT_SECRET"), algorithms=["HS256"])
-        return cast(str, decoded_token["sub"])
-    except (
-        ValueError,
-        KeyError,
-    ) as e:
-        logger.warning("Error verifying session cookie: %s", e)
-        raise Unauthorized("Invalid session cookie") from e

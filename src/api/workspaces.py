@@ -145,6 +145,37 @@ async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HT
         return handle_deserialization_error(e)
 
 
+async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+    """Route handler for retrieving a Workspace.
+
+    Args:
+        request: The sanic request object
+        workspace_id: The ID of the workspace to update
+
+    Returns:
+        The response object.
+    """
+    user_role = await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    logger.info("Retrieving workspace: %s", workspace_id)
+    async with request.ctx.session_maker() as session, session.begin():
+        workspace = await session.scalar(select(Workspace).where(Workspace.id == workspace_id))
+
+    return HTTPResponse(
+        status=HTTPStatus.OK,
+        body=serialize(
+            WorkspaceResponse(
+                id=workspace.id,
+                name=workspace.name,
+                description=workspace.description,
+                logo_url=workspace.logo_url,
+                role=user_role,
+            )
+        ),
+        content_type=CONTENT_TYPE_JSON,
+    )
+
+
 async def handle_delete_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
     """Route handler for deleting a Workspace.
 
