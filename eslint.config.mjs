@@ -5,6 +5,9 @@ export default [
 	...eslintConfigTrumpet,
 	eslintConfigPrettier,
 	{
+		rules: {
+			"no-console": "off",
+		},
 		ignores: ["next.config.mjs"],
 	},
 ];
