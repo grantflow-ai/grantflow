@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { UserInfo } from "@firebase/auth";
+import { UserInfo } from "firebase/auth";
 import { GrantApplication, GrantCfp, Workspace } from "@/types/api-types";
 
 export interface UserStore {

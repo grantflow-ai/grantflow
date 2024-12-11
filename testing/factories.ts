@@ -1,5 +1,5 @@
 import { Factory } from "interface-forge";
-import { UserInfo } from "@firebase/auth";
+import { UserInfo } from "firebase/auth";
 import { GrantApplication, GrantCfp, ResearchAim, ResearchTask, Workspace } from "@/types/api-types";
 import { UserRole } from "@/constants";
 
