@@ -49,7 +49,7 @@ class Workspace(Base):
     name: Mapped[str] = mapped_column(Text, index=True, default=None)
 
     # Relationships
-    users: Relationship[Relationship["WorkspaceUser"]] = relationship(  # type: ignore[call-arg]
+    users: Relationship[list["WorkspaceUser"]] = relationship(  # type: ignore[call-arg]
         "WorkspaceUser", back_populates="workspace", default=None
     )
 

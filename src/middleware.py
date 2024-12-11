@@ -29,8 +29,8 @@ async def authenticate_user(request: Request) -> None:
     if request.method == "OPTIONS" or request.path == "/login":
         return
 
-    authorization_header = request.headers.get("Authorization", "")
-    if not authorization_header:
+    jwt_token = request.headers.get("Authorization", "").removeprefix("Bearer ") or request.args.get("otp")
+    if not jwt_token:
         raise Unauthorized
 
-    request.ctx.firebase_uid = verify_jwt_token(authorization_header.removeprefix("Bearer "))
+    request.ctx.firebase_uid = verify_jwt_token(jwt_token)

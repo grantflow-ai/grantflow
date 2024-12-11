@@ -17,6 +17,7 @@ from src.api.chat import application_ws_handler
 from src.api.drafts import handle_create_application_draft
 from src.api.files import handle_upload_application_files
 from src.api.login import handle_login
+from src.api.otp import handle_create_otp
 from src.api.research_aims import (
     handle_create_research_aims,
     handle_delete_research_aim,
@@ -46,7 +47,10 @@ Extend(app)
 app.register_middleware(authenticate_user, "request")
 app.register_middleware(set_session_maker, "request")
 
+# Auth
+
 app.add_route(handle_login, "/login", methods=["POST"])
+app.add_route(handle_create_otp, "/otp", methods=["GET"])
 
 # CFPs
 app.add_route(handle_retrieve_cfps, "/cfps", methods=["GET"])
@@ -65,10 +69,9 @@ app.add_route(
     "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>",
     methods=["GET"],
 )
-app.add_route(
+app.add_websocket_route(
     application_ws_handler,
     "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/chat-room",
-    methods=["GET"],
 )
 
 # Research Aims CRUD

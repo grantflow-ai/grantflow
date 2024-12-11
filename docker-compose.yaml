@@ -22,12 +22,5 @@ services:
             - "8000:8000"
         volumes:
             - ./src:/app/src:cached
-        develop:
-            watch:
-                - action: sync
-                  path: ./src
-                  target: /app/src
-                  ignore:
-                      - node_modules/
 volumes:
     postgres_data:
