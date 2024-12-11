@@ -9,6 +9,8 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useStore } from "@/store";
+import { login } from "@/app/actions/api";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
  * Handles the email sign-in completion flow after user clicks the email link.
@@ -30,12 +32,15 @@ export default function FinalizeEmailLogin() {
 			}
 
 			try {
-				const { user } = await signInWithEmailLink(auth, email, globalThis.location.href);
-				setUser(user);
-				router.replace(PagePath.WORKSPACES);
+				const cred = await signInWithEmailLink(auth, email, globalThis.location.href);
+				setUser(cred.user);
+				const idToken = await cred.user.getIdToken();
+				await login(idToken);
 			} catch (error) {
-				toast.error(error instanceof Error ? error.message : "Failed to sign in with email link");
-				router.replace(PagePath.SIGNIN);
+				if (!isRedirectError(error)) {
+					toast.error(error instanceof Error ? error.message : "Failed to sign in with email link");
+					router.replace(PagePath.SIGNIN);
+				}
 			} finally {
 				globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);
 			}

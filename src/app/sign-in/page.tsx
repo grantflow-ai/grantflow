@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { PagePath } from "@/enums";
@@ -13,12 +12,12 @@ import { SigninWithGoogleButton } from "@/components/sign-in/signin-with-google-
 import { getEnv } from "@/utils/env";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { toast } from "sonner";
+import { login } from "@/app/actions/api";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 const googleProvider = new GoogleAuthProvider();
 
 export default function SignIn() {
-	const router = useRouter();
-
 	const { setUser } = useStore();
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
@@ -27,12 +26,15 @@ export default function SignIn() {
 		setIsLoading(true);
 
 		try {
-			const { user } = await signInWithPopup(auth, googleProvider);
-			setUser(user);
-			router.replace(PagePath.WORKSPACES);
+			const cred = await signInWithPopup(auth, googleProvider);
+			setUser(cred.user);
+			const idToken = await cred.user.getIdToken();
+			await login(idToken);
 		} catch (error) {
-			console.error("Sign-in error:", error);
-			toast.error("Sign-in failed due to an error");
+			if (!isRedirectError(error)) {
+				console.error("Sign-in error:", error);
+				toast.error("Sign-in failed due to an error");
+			}
 		} finally {
 			setIsLoading(false);
 		}

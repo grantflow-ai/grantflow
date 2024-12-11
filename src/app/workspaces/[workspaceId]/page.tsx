@@ -1,40 +1,15 @@
-"use client";
+"use server";
 
 import { Button } from "gen/ui/button";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
 import Link from "next/link";
-import { getApiClient } from "@/utils/api-client";
-import { useParams, useRouter } from "next/navigation";
-import { useStore } from "@/store";
-import { useEffect, useMemo } from "react";
+import { getApplications, getWorkspace } from "@/app/actions/api";
 
-export default function WorkspaceDetailPage() {
-	const router = useRouter();
-	const { workspaceId } = useParams<{
-		workspaceId: string;
-	}>();
-	const { workspaces, applications, setApplications } = useStore();
-
-	const workspace = useMemo(
-		() => workspaces.find((workspace) => workspace.id === workspaceId),
-		[workspaces, workspaceId],
-	);
-
-	useEffect(() => {
-		if (workspace) {
-			(async () => {
-				const applications = await getApiClient().getApplications(workspaceId);
-				setApplications(applications);
-			})();
-		} else {
-			router.replace(PagePath.WORKSPACES);
-		}
-	}, [workspaceId, workspace, router]);
-
-	if (!workspace) {
-		return null;
-	}
+export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {
+	const { workspaceId } = await params;
+	const workspace = await getWorkspace(workspaceId);
+	const applications = await getApplications(workspaceId);
 
 	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspaceId);
 
