@@ -4,7 +4,7 @@ import { useState } from "react";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { PagePath } from "@/enums";
 import { useStore } from "@/store";
-import { GoogleAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "@firebase/auth";
+import { GoogleAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
 import { EmailSigninForm } from "@/components/sign-in/email-signin-form";
 import { SeparatorWithText } from "@/components/separator-with-text";
@@ -13,7 +13,7 @@ import { getEnv } from "@/utils/env";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { toast } from "sonner";
 import { login } from "@/app/actions/api";
-import { isRedirectError } from "next/dist/client/components/redirect";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 const googleProvider = new GoogleAuthProvider();
 
