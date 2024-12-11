@@ -23,4 +23,4 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuse
     chmod -R u+x /app/.venv && \
     chmod -R u+x /app/src
 USER appuser
-CMD ["python", "-m", "src.main"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--log-level", "info"]

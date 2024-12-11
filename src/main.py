@@ -122,4 +122,5 @@ app.add_route(
 )
 
 if __name__ == "__main__":
+    # this code path allows us to run in debug mode
     app.run(host="0.0.0.0", port=8000)
