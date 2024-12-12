@@ -17,10 +17,10 @@ clients: dict[str, GenerativeModel] = {}
 def _ensure_init() -> None:
     """Handle the initialization of the clients."""
     if not init_ref.value:
-        credentials = loads(get_env("GCP_CREDENTIALS"))
+        credentials = loads(get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"))
         init(
-            project=get_env("GCP_PROJECT_ID"),
-            location=get_env("GCP_REGION"),
+            project=get_env("GOOGLE_CLOUD_PROJECT"),
+            location=get_env("GOOGLE_CLOUD_REGION"),
             credentials=Credentials.from_service_account_info(credentials),  # type: ignore[no-untyped-call]
         )
         init_ref.value = True
