@@ -3,7 +3,7 @@ import sys
 
 import uvicorn
 from sanic import Sanic
-from sanic_ext import Config
+from sanic_ext import Config, Extend
 
 from src.api.api_types import RequestContext
 from src.api.applications import (
@@ -56,6 +56,8 @@ app = Sanic[Config, RequestContext](
         CORS_AUTOMATIC_OPTIONS=True,
     ),
 )
+
+Extend(app)
 
 app.error_handler.add(BackendError, handle_backend_error)
 
