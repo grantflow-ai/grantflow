@@ -39,7 +39,7 @@ from src.utils.serialization import decoder, encoder
 from src.utils.server import handle_backend_error
 
 logging.basicConfig(
-    level=logging.DEBUG if get_env("DEBUG", None) else logging.INFO,
+    level=logging.DEBUG if get_env("DEBUG", "") == "true" else logging.INFO,
     stream=sys.stdout,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
