@@ -1,5 +1,5 @@
 import logging
-from json import loads
+from json import dumps, loads
 from typing import Any, cast
 
 from firebase_admin import App
@@ -27,6 +27,7 @@ def get_firebase_app() -> App:
 
         logger.debug("Initializing Firebase app")
         service_account_dict = loads(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"))
+        logger.debug("Firebase service account: %s", dumps(service_account_dict))
         firebase_app_ref.value = initialize_app(
             credential=Credentials.from_service_account_info(service_account_dict),  # type: ignore[no-untyped-call]
         )
@@ -48,7 +49,7 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
     from firebase_admin.auth import verify_id_token as firebase_verify_id_token
 
     handler = as_async_callable(firebase_verify_id_token)
-    logging.debug("Verifying ID token: %s", id_token[:10])
+    logging.debug("Verifying ID token: %s", f"<id_token>{id_token}</id_token>")
     try:
         decoded_token = await handler(id_token, app=get_firebase_app())
         return cast(dict[str, Any], decoded_token)
