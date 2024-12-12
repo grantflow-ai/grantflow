@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from anyio import Path
 from sqlalchemy import insert
-from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import ApplicationFile, ApplicationVector
 from src.rag.retrieval import retrieve_documents

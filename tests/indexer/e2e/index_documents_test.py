@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
 from src.indexer.chunking import chunk_text
