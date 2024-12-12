@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 from sanic_testing.testing import SanicASGITestClient
-from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.future import select
 
 from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
