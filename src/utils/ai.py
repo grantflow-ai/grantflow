@@ -14,7 +14,7 @@ embeddings_model = Ref[TextEmbeddingModel]()
 clients: dict[str, GenerativeModel] = {}
 
 
-def _ensure_init() -> None:
+def init_llm_connection() -> None:
     """Handle the initialization of the clients."""
     if not init_ref.value:
         credentials = loads(get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"))
@@ -33,7 +33,7 @@ def get_embeddings_client() -> TextEmbeddingModel:
         The TextEmbeddingModel client.
     """
     if not embeddings_model.value:
-        _ensure_init()
+        init_llm_connection()
         embeddings_model.value = TextEmbeddingModel.from_pretrained(EMBEDDINGS_MODEL)
 
     return embeddings_model.value
@@ -51,6 +51,6 @@ def get_google_ai_client(*, prompt_identifier: str, system_instructions: str, mo
         The GenerativeModel client.
     """
     if prompt_identifier not in clients:
-        _ensure_init()
+        init_llm_connection()
         clients[prompt_identifier] = GenerativeModel(model, system_instruction=system_instructions)
     return clients[prompt_identifier]

@@ -35,6 +35,7 @@ from src.api.workspaces import (
 from src.db.connection import get_async_engine
 from src.exceptions import BackendError
 from src.middleware import authenticate_user, set_session_maker
+from src.utils.ai import init_llm_connection
 from src.utils.firebase import get_firebase_app
 from src.utils.server import handle_backend_error
 
@@ -136,6 +137,7 @@ async def before_server_start_hook(_: Sanic[Any, RequestContext]) -> None:
     """Hook to run before the server starts."""
     get_async_engine()
     get_firebase_app()
+    init_llm_connection()
 
 
 if __name__ == "__main__":  # pragma: no cover
