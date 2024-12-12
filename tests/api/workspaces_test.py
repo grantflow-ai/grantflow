@@ -5,7 +5,7 @@ import pytest
 from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api.api_types import (
     CreateWorkspaceRequestBody,

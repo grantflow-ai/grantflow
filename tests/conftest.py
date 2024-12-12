@@ -17,7 +17,7 @@ from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert
-from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from testcontainers.postgres import PostgresContainer
 from vertexai.generative_models import GenerativeModel
 from vertexai.language_models import TextEmbedding

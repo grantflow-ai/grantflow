@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import (
     ApplicationDraft,
