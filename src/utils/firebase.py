@@ -25,13 +25,9 @@ def get_firebase_app() -> App:
     if firebase_app_ref.value is None:
         from firebase_admin import initialize_app
 
-        service_account_dict = deserialize(get_env("FIREBASE_SERVICE_ACCOUNT"), dict[str, Any])
+        service_account_dict = deserialize(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
         firebase_app_ref.value = initialize_app(
             credential=Credentials.from_service_account_info(service_account_dict),  # type: ignore[no-untyped-call]
-            options={
-                "authDomain": "grantflow-9e8f3.firebaseapp.com",
-                "projectId": "grantflow-9e8f3",
-            },
         )
     return firebase_app_ref.value
 
