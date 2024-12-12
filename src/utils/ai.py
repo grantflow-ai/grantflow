@@ -1,4 +1,4 @@
-from json import loads
+from typing import Any
 
 from google.cloud.aiplatform import init
 from google.oauth2.service_account import Credentials
@@ -8,6 +8,7 @@ from vertexai.language_models import TextEmbeddingModel
 from src.constants import EMBEDDINGS_MODEL
 from src.utils.env import get_env
 from src.utils.ref import Ref
+from src.utils.serialization import deserialize
 
 init_ref = Ref[bool]()
 embeddings_model = Ref[TextEmbeddingModel]()
@@ -17,7 +18,7 @@ clients: dict[str, GenerativeModel] = {}
 def init_llm_connection() -> None:
     """Handle the initialization of the clients."""
     if not init_ref.value:
-        credentials = loads(get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"))
+        credentials = deserialize(get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
         init(
             project=get_env("GOOGLE_CLOUD_PROJECT"),
             location=get_env("GOOGLE_CLOUD_REGION"),
