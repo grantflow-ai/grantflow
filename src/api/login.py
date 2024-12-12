@@ -18,8 +18,8 @@ async def handle_login(request: APIRequest) -> HTTPResponse:
     Returns:
         The response object.
     """
-    logger.debug("Logging in user, received request body: %s", request.body)
     request_body = request.json
+    logger.debug("Logging in user: %s", request_body["id_token"])
     decoded_token = await verify_id_token(request_body["id_token"])
     jwt = create_jwt(decoded_token["uid"])
     return json(LoginResponse(jwt_token=jwt))
