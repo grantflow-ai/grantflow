@@ -1,4 +1,5 @@
 import logging
+from json import loads
 from typing import Any, cast
 
 from firebase_admin import App
@@ -8,7 +9,6 @@ from sanic import Unauthorized
 
 from src.utils.env import get_env
 from src.utils.ref import Ref
-from src.utils.serialization import deserialize
 from src.utils.sync import as_async_callable
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,8 @@ def get_firebase_app() -> App:
     if firebase_app_ref.value is None:
         from firebase_admin import initialize_app
 
-        service_account_dict = deserialize(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
+        logger.debug("Initializing Firebase app")
+        service_account_dict = loads(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"))
         firebase_app_ref.value = initialize_app(
             credential=Credentials.from_service_account_info(service_account_dict),  # type: ignore[no-untyped-call]
         )
@@ -47,6 +48,7 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
     from firebase_admin.auth import verify_id_token as firebase_verify_id_token
 
     handler = as_async_callable(firebase_verify_id_token)
+    logging.debug("Verifying ID token: %s", id_token[:10])
     try:
         decoded_token = await handler(id_token, app=get_firebase_app())
         return cast(dict[str, Any], decoded_token)
