@@ -2,7 +2,7 @@ import logging
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse, json
+from sanic import HTTPResponse, empty, json
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import selectinload
 
@@ -230,7 +230,7 @@ async def handle_delete_research_aim(request: APIRequest, workspace_id: UUID, re
         await session.execute(delete(ResearchAim).where(ResearchAim.id == research_aim_id))
         await session.commit()
 
-    return HTTPResponse(status=HTTPStatus.NO_CONTENT)
+    return empty()
 
 
 async def handle_delete_research_task(request: APIRequest, workspace_id: UUID, research_task_id: UUID) -> HTTPResponse:
@@ -251,4 +251,4 @@ async def handle_delete_research_task(request: APIRequest, workspace_id: UUID, r
         await session.execute(delete(ResearchTask).where(ResearchTask.id == research_task_id))
         await session.commit()
 
-    return HTTPResponse(status=HTTPStatus.NO_CONTENT)
+    return empty()
