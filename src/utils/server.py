@@ -20,12 +20,18 @@ def handle_backend_error(request: APIRequest, exception: BackendError) -> HTTPRe
     Returns:
         The HTTP response.
     """
-    logger.error("Failed to deserialize the request body: %s, error: %s", request.body, exception)
+    if isinstance(exception, DeserializationError):
+        logger.error("Failed to deserialize the request body: %s, error: %s", request.body, exception)
+        message = "Failed to deserialize the request body"
+        status = HTTPStatus.BAD_REQUEST
+    else:
+        logger.error("An unexpected backend error occurred: %s", exception)
+        message = "An unexpected backend error occurred"
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
 
-    status = HTTPStatus.BAD_REQUEST if isinstance(exception, DeserializationError) else HTTPStatus.INTERNAL_SERVER_ERROR
     return json(
         APIError(
-            message="Failed to deserialize the request body",
+            message=message,
             details=str(exception),
         ),
         status=status,

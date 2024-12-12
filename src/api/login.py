@@ -2,10 +2,9 @@ import logging
 
 from sanic import HTTPResponse, json
 
-from src.api.api_types import APIRequest, LoginRequestBody, LoginResponse
+from src.api.api_types import APIRequest, LoginResponse
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
-from src.utils.serialization import deserialize
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ async def handle_login(request: APIRequest) -> HTTPResponse:
         The response object.
     """
     logger.debug("Logging in user, received request body: %s", request.body)
-    request_body = deserialize(request.body, LoginRequestBody)
+    request_body = request.json
     decoded_token = await verify_id_token(request_body["id_token"])
     jwt = create_jwt(decoded_token["uid"])
     return json(LoginResponse(jwt_token=jwt))
