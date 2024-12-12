@@ -6,11 +6,11 @@ from sqlalchemy import update
 
 from src.db.connection import get_session_maker
 from src.db.tables import ApplicationFile, FileIndexingStatusEnum
+from src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from src.indexer.chunking import chunk_text
 from src.indexer.dto import FileDTO
 from src.indexer.extraction import parse_file_data
 from src.indexer.indexing import index_documents
-from src.utils.exceptions import ExternalOperationError, FileParsingError, ValidationError
 
 logger = logging.getLogger(__name__)
 

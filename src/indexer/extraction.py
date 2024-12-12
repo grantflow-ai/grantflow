@@ -8,9 +8,9 @@ from azure.core.exceptions import HttpResponseError
 from charset_normalizer import detect
 from pypandoc import convert_text
 
+from src.exceptions import FileParsingError, ValidationError
 from src.indexer.dto import FileDTO
 from src.utils.env import get_env
-from src.utils.exceptions import FileParsingError, ValidationError
 from src.utils.sync import as_async_callable
 
 logger = logging.getLogger(__name__)

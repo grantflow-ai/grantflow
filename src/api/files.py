@@ -74,4 +74,4 @@ async def handle_upload_application_files(
             name=file_dto.filename,
         )
 
-    return HTTPResponse(status=HTTPStatus.OK)
+    return HTTPResponse(status=HTTPStatus.NO_CONTENT)

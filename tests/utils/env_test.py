@@ -2,8 +2,8 @@ from collections.abc import Generator
 
 import pytest
 
+from src.exceptions import MissingEnvVariableError
 from src.utils.env import get_env
-from src.utils.exceptions import MissingEnvVariableError
 
 
 @pytest.fixture

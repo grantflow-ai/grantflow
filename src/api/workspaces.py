@@ -2,7 +2,7 @@ import logging
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse
+from sanic import HTTPResponse, json
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import selectinload
 
@@ -12,11 +12,9 @@ from src.api.api_types import (
     UpdateWorkspaceRequestBody,
     WorkspaceResponse,
 )
-from src.api.utils import handle_deserialization_error, verify_workspace_access
-from src.constants import CONTENT_TYPE_JSON
+from src.api.utils import verify_workspace_access
 from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
-from src.utils.exceptions import DeserializationError
-from src.utils.serialization import deserialize, serialize
+from src.utils.serialization import deserialize
 
 logger = logging.getLogger(__name__)
 
@@ -31,38 +29,31 @@ async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
         The response object.
     """
     logger.info("Creating workspace by user: %s", request.ctx.firebase_uid)
-    try:
-        request_body = deserialize(request.body, CreateWorkspaceRequestBody)
-        async with request.ctx.session_maker() as session, session.begin():
-            workspace = await session.scalar(insert(Workspace).values(request_body).returning(Workspace))
+    request_body = deserialize(request.body, CreateWorkspaceRequestBody)
+    async with request.ctx.session_maker() as session, session.begin():
+        workspace = await session.scalar(insert(Workspace).values(request_body).returning(Workspace))
 
-            await session.execute(
-                insert(WorkspaceUser).values(
-                    {
-                        "workspace_id": workspace.id,
-                        "firebase_uid": request.ctx.firebase_uid,
-                        "role": UserRoleEnum.OWNER.value,
-                    }
-                )
+        await session.execute(
+            insert(WorkspaceUser).values(
+                {
+                    "workspace_id": workspace.id,
+                    "firebase_uid": request.ctx.firebase_uid,
+                    "role": UserRoleEnum.OWNER.value,
+                }
             )
-            await session.commit()
-
-        return HTTPResponse(
-            status=HTTPStatus.CREATED,
-            body=serialize(
-                WorkspaceResponse(
-                    id=workspace.id,
-                    name=workspace.name,
-                    description=workspace.description,
-                    logo_url=workspace.logo_url,
-                    role=UserRoleEnum.OWNER,
-                )
-            ),
-            content_type=CONTENT_TYPE_JSON,
         )
-    except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-        return handle_deserialization_error(e)
+        await session.commit()
+
+    return json(
+        WorkspaceResponse(
+            id=workspace.id,
+            name=workspace.name,
+            description=workspace.description,
+            logo_url=workspace.logo_url,
+            role=UserRoleEnum.OWNER,
+        ),
+        status=HTTPStatus.CREATED,
+    )
 
 
 async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
@@ -86,21 +77,17 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
             )
         )
 
-    return HTTPResponse(
-        status=HTTPStatus.OK,
-        body=serialize(
-            [
-                WorkspaceResponse(
-                    id=workspace.id,
-                    name=workspace.name,
-                    description=workspace.description,
-                    logo_url=workspace.logo_url,
-                    role=workspace.users[0].role,
-                )
-                for workspace in workspaces
-            ]
-        ),
-        content_type=CONTENT_TYPE_JSON,
+    return json(
+        [
+            WorkspaceResponse(
+                id=workspace.id,
+                name=workspace.name,
+                description=workspace.description,
+                logo_url=workspace.logo_url,
+                role=workspace.users[0].role,
+            )
+            for workspace in workspaces
+        ]
     )
 
 
@@ -119,30 +106,22 @@ async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HT
     )
 
     logger.info("Updating workspace: %s", workspace_id)
-    try:
-        request_body = deserialize(request.body, UpdateWorkspaceRequestBody)
-        async with request.ctx.session_maker() as session, session.begin():
-            workspace = await session.scalar(
-                update(Workspace).where(Workspace.id == workspace_id).values(request_body).returning(Workspace)
-            )
-            await session.commit()
-
-        return HTTPResponse(
-            status=HTTPStatus.OK,
-            body=serialize(
-                WorkspaceResponse(
-                    id=workspace.id,
-                    name=workspace.name,
-                    description=workspace.description,
-                    logo_url=workspace.logo_url,
-                    role=user_role,
-                )
-            ),
-            content_type=CONTENT_TYPE_JSON,
+    request_body = deserialize(request.body, UpdateWorkspaceRequestBody)
+    async with request.ctx.session_maker() as session, session.begin():
+        workspace = await session.scalar(
+            update(Workspace).where(Workspace.id == workspace_id).values(request_body).returning(Workspace)
         )
-    except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-        return handle_deserialization_error(e)
+        await session.commit()
+
+    return json(
+        WorkspaceResponse(
+            id=workspace.id,
+            name=workspace.name,
+            description=workspace.description,
+            logo_url=workspace.logo_url,
+            role=user_role,
+        )
+    )
 
 
 async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
@@ -161,18 +140,14 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
     async with request.ctx.session_maker() as session, session.begin():
         workspace = await session.scalar(select(Workspace).where(Workspace.id == workspace_id))
 
-    return HTTPResponse(
-        status=HTTPStatus.OK,
-        body=serialize(
-            WorkspaceResponse(
-                id=workspace.id,
-                name=workspace.name,
-                description=workspace.description,
-                logo_url=workspace.logo_url,
-                role=user_role,
-            )
-        ),
-        content_type=CONTENT_TYPE_JSON,
+    return json(
+        WorkspaceResponse(
+            id=workspace.id,
+            name=workspace.name,
+            description=workspace.description,
+            logo_url=workspace.logo_url,
+            role=user_role,
+        )
     )
 
 

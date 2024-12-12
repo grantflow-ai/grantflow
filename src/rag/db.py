@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
 from src.db.tables import ApplicationDraft
-from src.utils.exceptions import DatabaseError
+from src.exceptions import DatabaseError
 
 logger = logging.getLogger(__name__)
 

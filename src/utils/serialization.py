@@ -1,4 +1,5 @@
 from enum import Enum
+from functools import partial
 from inspect import isclass
 from typing import Any, TypeVar
 
@@ -7,7 +8,7 @@ from msgspec.json import decode, encode
 from pydantic import BaseModel
 
 from src.db.tables import Base
-from src.utils.exceptions import DeserializationError, SerializationError
+from src.exceptions import DeserializationError, SerializationError
 
 T = TypeVar("T")
 
@@ -101,3 +102,7 @@ def serialize(
         return encode(value, enc_hook=encode_hook)
     except MsgspecError as e:
         raise SerializationError(str(e)) from e
+
+
+decoder = partial(decode, dec_hook=decode_hook)
+encoder = partial(encode, enc_hook=encode_hook)

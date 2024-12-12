@@ -10,9 +10,9 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
 )
 
 from src.constants import CONTENT_TYPE_JSON, ONE_MINUTE_SECONDS, PREMIUM_TEXT_GENERATION_MODEL
+from src.exceptions import DeserializationError, ValidationError
 from src.rag.dto import GenerationResultDTO
 from src.utils.ai import get_google_ai_client
-from src.utils.exceptions import DeserializationError, ValidationError
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 from src.utils.sleep import sleep_with_message

@@ -1,44 +1,18 @@
 import logging
-from http import HTTPStatus
 from time import time
 from typing import cast
 from uuid import UUID
 
-from sanic import HTTPResponse, Unauthorized
+from sanic import Unauthorized
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from src.api.api_types import APIRequest, ApplicationDraftGenerationResponse
-from src.constants import CONTENT_TYPE_JSON
 from src.db.tables import GrantApplication, GrantCfp, ResearchAim, UserRoleEnum, WorkspaceUser
-from src.dto import APIError
 from src.rag.application_draft_generation import generate_application_draft
 from src.rag.db import insert_application_draft
-from src.utils.exceptions import DeserializationError
-from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
-
-
-def handle_deserialization_error(e: DeserializationError) -> HTTPResponse:
-    """Handle a deserialization error.
-
-    Args:
-        e: The deserialization error.
-
-    Returns:
-        The HTTP response.
-    """
-    return HTTPResponse(
-        status=HTTPStatus.BAD_REQUEST,
-        body=serialize(
-            APIError(
-                message="Failed to deserialize the request body",
-                details=str(e),
-            )
-        ),
-        content_type=CONTENT_TYPE_JSON,
-    )
 
 
 async def verify_workspace_access(

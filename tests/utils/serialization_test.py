@@ -2,7 +2,7 @@ import pytest
 from msgspec import DecodeError
 from pytest_mock import MockFixture
 
-from src.utils.exceptions import DeserializationError
+from src.exceptions import DeserializationError
 from src.utils.serialization import deserialize
 
 
