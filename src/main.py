@@ -1,9 +1,9 @@
 import logging
 import sys
+from typing import Any
 
 import uvicorn
 from sanic import Sanic
-from sanic_ext import Config, Extend
 
 from src.api.api_types import RequestContext
 from src.api.applications import (
@@ -34,30 +34,22 @@ from src.api.workspaces import (
 )
 from src.exceptions import BackendError
 from src.middleware import authenticate_user, set_session_maker
-from src.utils.env import get_env
 from src.utils.serialization import decoder, encoder
 from src.utils.server import handle_backend_error
 
 logging.basicConfig(
-    level=logging.DEBUG if get_env("DEBUG", "") == "true" else logging.INFO,
+    level=logging.DEBUG,
     stream=sys.stdout,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-app = Sanic[Config, RequestContext](
-    "grantflow",
-    dumps=encoder,
-    loads=decoder,
-    config=Config(
-        CORS_ORIGINS="*",
-        CORS_ALLOW_HEADERS="*",
-        CORS_METHODS=["OPTIONS", "GET", "POST", "PATCH", "DELETE"],
-        CORS_MAX_AGE=86400,
-        CORS_AUTOMATIC_OPTIONS=True,
-    ),
-)
+app = Sanic[Any, RequestContext]("grantflow", dumps=encoder, loads=decoder)
 
-Extend(app)
+app.config.CORS_ORIGINS = "*"
+app.config.CORS_ALLOW_HEADERS = "*"
+app.config.CORS_METHODS = ["OPTIONS", "GET", "POST", "PATCH", "DELETE"]
+app.config.CORS_MAX_AGE = 86400
+app.config.CORS_AUTOMATIC_OPTIONS = True
 
 app.error_handler.add(BackendError, handle_backend_error)
 
