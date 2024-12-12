@@ -60,7 +60,7 @@ async def test_retrieve_workspaces_api_request(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    workspaces_data = WorkspaceFactory.batch(4)
+    workspaces_data = WorkspaceFactory.batch(4, users=[])
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(Workspace).values(

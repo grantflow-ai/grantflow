@@ -5,8 +5,8 @@ from itertools import chain
 from vertexai.language_models import TextEmbeddingInput
 
 from src.constants import EMBEDDING_DIMENSIONS
+from src.exceptions import ExternalOperationError
 from src.utils.ai import get_embeddings_client
-from src.utils.exceptions import ExternalOperationError
 from src.utils.retry import exponential_backoff_retry
 
 logger = logging.getLogger(__name__)
