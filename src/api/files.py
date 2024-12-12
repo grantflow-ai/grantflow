@@ -3,7 +3,7 @@ import sys
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse
+from sanic import HTTPResponse, empty
 from sqlalchemy import insert
 
 from src.api.api_types import APIRequest
@@ -74,4 +74,4 @@ async def handle_upload_application_files(
             name=file_dto.filename,
         )
 
-    return HTTPResponse(status=HTTPStatus.NO_CONTENT)
+    return empty()

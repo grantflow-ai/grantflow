@@ -2,7 +2,7 @@ import logging
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse, json
+from sanic import HTTPResponse, empty, json
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import selectinload
 
@@ -219,4 +219,4 @@ async def handle_delete_application(request: APIRequest, workspace_id: UUID, app
         await session.execute(delete(GrantApplication).where(GrantApplication.id == application_id))
         await session.commit()
 
-    return HTTPResponse(status=HTTPStatus.NO_CONTENT)
+    return empty()
