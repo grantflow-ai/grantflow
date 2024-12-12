@@ -11,6 +11,7 @@ WORKDIR /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir pdm
 COPY pyproject.toml pdm.lock ./
+ENV SANIC_NO_UJSON=true
 RUN pdm install --check --prod --no-editable
 
 FROM base AS app

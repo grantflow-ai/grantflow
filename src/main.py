@@ -34,6 +34,7 @@ from src.api.workspaces import (
 )
 from src.exceptions import BackendError
 from src.middleware import authenticate_user, set_session_maker
+from src.utils.serialization import decoder, encoder
 from src.utils.server import before_server_start_hook, handle_backend_error
 
 logging.basicConfig(
@@ -42,7 +43,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-app = Sanic[Any, RequestContext]("grantflow")
+app = Sanic[Any, RequestContext]("grantflow", dumps=encoder, loads=decoder)
 
 app.config.CORS_ORIGINS = "*"
 app.config.CORS_ALLOW_HEADERS = "*"
