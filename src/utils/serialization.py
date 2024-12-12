@@ -81,7 +81,7 @@ def deserialize(value: str | bytes, target_type: type[T]) -> T:
         An instance of ``target_type``.
     """
     try:
-        return decode(value, type=target_type, dec_hook=decode_hook)
+        return decode(value, type=target_type, dec_hook=decode_hook, strict=False)
     except MsgspecError as e:
         logger.error("failed to decode value of type %s", type(value).__name__)
         raise DeserializationError(str(e)) from e
