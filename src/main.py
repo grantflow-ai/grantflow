@@ -32,8 +32,10 @@ from src.api.workspaces import (
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
+from src.db.connection import get_async_engine
 from src.exceptions import BackendError
 from src.middleware import authenticate_user, set_session_maker
+from src.utils.firebase import get_firebase_app
 from src.utils.server import handle_backend_error
 
 logging.basicConfig(
@@ -41,6 +43,7 @@ logging.basicConfig(
     stream=sys.stdout,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+
 
 app = Sanic[Any, RequestContext]("grantflow")
 
@@ -126,6 +129,14 @@ app.add_route(
     "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/generate-draft",
     methods=["POST"],
 )
+
+
+@app.listener("before_server_start")
+async def before_server_start_hook(_: Sanic[Any, RequestContext]) -> None:
+    """Hook to run before the server starts."""
+    get_async_engine()
+    get_firebase_app()
+
 
 if __name__ == "__main__":  # pragma: no cover
     uvicorn.run(host="0.0.0.0", port=8000, log_level="debug", app="src.main:app")
