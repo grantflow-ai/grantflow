@@ -164,7 +164,7 @@ async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None
 
 @pytest.fixture
 async def workspace(async_session_maker: async_sessionmaker[Any]) -> Workspace:
-    workspace_data = WorkspaceFactory.build()
+    workspace_data = WorkspaceFactory.build(users=[])
     async with async_session_maker() as session, session.begin():
         session.add(workspace_data)
         await session.commit()

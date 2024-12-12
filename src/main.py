@@ -33,7 +33,9 @@ from src.api.workspaces import (
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
+from src.exceptions import BackendError, handle_backend_error
 from src.middleware import authenticate_user, set_session_maker
+from src.utils.serialization import decoder, encoder
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -41,7 +43,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-app = Sanic[Any, RequestContext]("grantflow")
+app = Sanic[Any, RequestContext]("grantflow", dumps=encoder, loads=decoder)
 
 app.config.CORS_ORIGINS = "*"
 app.config.CORS_ALLOW_HEADERS = "*"
@@ -50,6 +52,8 @@ app.config.CORS_MAX_AGE = 86400
 app.config.CORS_AUTOMATIC_OPTIONS = True
 
 Extend(app)
+
+app.error_handler.add(BackendError, handle_backend_error)
 
 app.register_middleware(authenticate_user, "request")
 app.register_middleware(set_session_maker, "request")

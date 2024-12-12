@@ -2,7 +2,7 @@ import logging
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse
+from sanic import HTTPResponse, json
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import selectinload
 
@@ -17,11 +17,9 @@ from src.api.api_types import (
     ResearchTaskResponse,
     UpdateApplicationRequestBody,
 )
-from src.api.utils import handle_deserialization_error, verify_workspace_access
-from src.constants import CONTENT_TYPE_JSON
+from src.api.utils import verify_workspace_access
 from src.db.tables import GrantApplication, GrantCfp, ResearchAim
-from src.utils.exceptions import DeserializationError
-from src.utils.serialization import deserialize, serialize
+from src.utils.serialization import deserialize
 
 logger = logging.getLogger(__name__)
 
@@ -39,31 +37,22 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
     logger.info("Creating application for workspace %s", workspace_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    try:
-        request_body = deserialize(request.body, CreateGrantApplicationRequestBody)
-        async with request.ctx.session_maker() as session, session.begin():
-            application = await session.scalar(
-                insert(GrantApplication)
-                .values({"workspace_id": workspace_id, **request_body})
-                .returning(GrantApplication)
-            )
-
-        return HTTPResponse(
-            status=HTTPStatus.CREATED,
-            body=serialize(
-                GrantApplicationResponse(
-                    id=application.id,
-                    title=application.title,
-                    cfp_id=application.cfp_id,
-                    significance=application.significance,
-                    innovation=application.innovation,
-                )
-            ),
-            content_type=CONTENT_TYPE_JSON,
+    request_body = deserialize(request.body, CreateGrantApplicationRequestBody)
+    async with request.ctx.session_maker() as session, session.begin():
+        application = await session.scalar(
+            insert(GrantApplication).values({"workspace_id": workspace_id, **request_body}).returning(GrantApplication)
         )
-    except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-        return handle_deserialization_error(e)
+
+    return json(
+        GrantApplicationResponse(
+            id=application.id,
+            title=application.title,
+            cfp_id=application.cfp_id,
+            significance=application.significance,
+            innovation=application.innovation,
+        ),
+        status=HTTPStatus.CREATED,
+    )
 
 
 async def handle_retrieve_applications(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
@@ -84,21 +73,17 @@ async def handle_retrieve_applications(request: APIRequest, workspace_id: UUID) 
             select(GrantApplication).where(GrantApplication.workspace_id == workspace_id)
         )
 
-    return HTTPResponse(
-        status=HTTPStatus.OK,
-        body=serialize(
-            [
-                GrantApplicationResponse(
-                    id=application.id,
-                    title=application.title,
-                    cfp_id=application.cfp_id,
-                    significance=application.significance,
-                    innovation=application.innovation,
-                )
-                for application in applications
-            ]
-        ),
-        content_type=CONTENT_TYPE_JSON,
+    return json(
+        [
+            GrantApplicationResponse(
+                id=application.id,
+                title=application.title,
+                cfp_id=application.cfp_id,
+                significance=application.significance,
+                innovation=application.innovation,
+            )
+            for application in applications
+        ]
     )
 
 
@@ -131,57 +116,53 @@ async def handle_retrieve_application_detail(
 
         grant_application: GrantApplication = (await session.execute(stmt)).scalar_one()
 
-    return HTTPResponse(
-        status=HTTPStatus.OK,
-        body=serialize(
-            GrantApplicationDetailResponse(
-                id=str(grant_application.id),
-                title=grant_application.title,
-                significance=grant_application.significance,
-                innovation=grant_application.innovation,
-                cfp=CfpResponse(
-                    id=str(grant_application.cfp.id),
-                    allow_clinical_trials=grant_application.cfp.allow_clinical_trials,
-                    allow_resubmissions=grant_application.cfp.allow_resubmissions,
-                    category=grant_application.cfp.category,
-                    code=grant_application.cfp.code,
-                    description=grant_application.cfp.description,
-                    title=grant_application.cfp.title,
-                    url=grant_application.cfp.url,
-                    funding_organization_id=str(grant_application.cfp.funding_organization_id),
-                    funding_organization_name=grant_application.cfp.funding_organization.name,
-                ),
-                research_aims=[
-                    ResearchAimResponse(
-                        id=str(research_aim.id),
-                        aim_number=research_aim.aim_number,
-                        title=research_aim.title,
-                        description=research_aim.description,
-                        requires_clinical_trials=research_aim.requires_clinical_trials,
-                        research_tasks=[
-                            ResearchTaskResponse(
-                                id=str(research_task.id),
-                                task_number=research_task.task_number,
-                                title=research_task.title,
-                                description=research_task.description,
-                            )
-                            for research_task in research_aim.research_tasks
-                        ],
-                    )
-                    for research_aim in grant_application.research_aims
-                ],
-                application_files=[
-                    ApplicationFileResponse(
-                        id=str(application_file.id),
-                        name=application_file.name,
-                        type=application_file.type,
-                        size=application_file.size,
-                    )
-                    for application_file in grant_application.application_files
-                ],
-            )
-        ),
-        content_type=CONTENT_TYPE_JSON,
+    return json(
+        GrantApplicationDetailResponse(
+            id=str(grant_application.id),
+            title=grant_application.title,
+            significance=grant_application.significance,
+            innovation=grant_application.innovation,
+            cfp=CfpResponse(
+                id=str(grant_application.cfp.id),
+                allow_clinical_trials=grant_application.cfp.allow_clinical_trials,
+                allow_resubmissions=grant_application.cfp.allow_resubmissions,
+                category=grant_application.cfp.category,
+                code=grant_application.cfp.code,
+                description=grant_application.cfp.description,
+                title=grant_application.cfp.title,
+                url=grant_application.cfp.url,
+                funding_organization_id=str(grant_application.cfp.funding_organization_id),
+                funding_organization_name=grant_application.cfp.funding_organization.name,
+            ),
+            research_aims=[
+                ResearchAimResponse(
+                    id=str(research_aim.id),
+                    aim_number=research_aim.aim_number,
+                    title=research_aim.title,
+                    description=research_aim.description,
+                    requires_clinical_trials=research_aim.requires_clinical_trials,
+                    research_tasks=[
+                        ResearchTaskResponse(
+                            id=str(research_task.id),
+                            task_number=research_task.task_number,
+                            title=research_task.title,
+                            description=research_task.description,
+                        )
+                        for research_task in research_aim.research_tasks
+                    ],
+                )
+                for research_aim in grant_application.research_aims
+            ],
+            application_files=[
+                ApplicationFileResponse(
+                    id=str(application_file.id),
+                    name=application_file.name,
+                    type=application_file.type,
+                    size=application_file.size,
+                )
+                for application_file in grant_application.application_files
+            ],
+        )
     )
 
 
@@ -199,33 +180,25 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
     logger.info("Updating application %s", application_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    try:
-        request_body = deserialize(request.body, UpdateApplicationRequestBody)
-        async with request.ctx.session_maker() as session, session.begin():
-            application = await session.scalar(
-                update(GrantApplication)
-                .where(GrantApplication.id == application_id)
-                .values(request_body)
-                .returning(GrantApplication)
-            )
-            await session.commit()
-
-        return HTTPResponse(
-            status=HTTPStatus.OK,
-            body=serialize(
-                GrantApplicationResponse(
-                    id=application.id,
-                    title=application.title,
-                    cfp_id=application.cfp_id,
-                    significance=application.significance,
-                    innovation=application.innovation,
-                )
-            ),
-            content_type=CONTENT_TYPE_JSON,
+    request_body = deserialize(request.body, UpdateApplicationRequestBody)
+    async with request.ctx.session_maker() as session, session.begin():
+        application = await session.scalar(
+            update(GrantApplication)
+            .where(GrantApplication.id == application_id)
+            .values(request_body)
+            .returning(GrantApplication)
         )
-    except DeserializationError as e:
-        logger.error("Failed to deserialize the request body: %s", e)
-        return handle_deserialization_error(e)
+        await session.commit()
+
+    return json(
+        GrantApplicationResponse(
+            id=application.id,
+            title=application.title,
+            cfp_id=application.cfp_id,
+            significance=application.significance,
+            innovation=application.innovation,
+        )
+    )
 
 
 async def handle_delete_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:

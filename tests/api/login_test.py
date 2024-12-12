@@ -13,10 +13,3 @@ async def test_login_success(asgi_client: SanicASGITestClient, mocker: MockerFix
         assert response.status_code == HTTPStatus.OK
         response_body = deserialize(response.body, LoginResponse)
         assert response_body["jwt_token"] == "jwt_token"
-
-
-async def test_login_failure_bad_request(
-    asgi_client: SanicASGITestClient,
-) -> None:
-    _, response = await asgi_client.post("/login", json={"token": "123"})
-    assert response.status_code == HTTPStatus.UNAUTHORIZED

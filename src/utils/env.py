@@ -1,6 +1,6 @@
 import os
 
-from src.utils.exceptions import MissingEnvVariableError
+from src.exceptions import MissingEnvVariableError
 
 
 def get_env(key: str, fallback: str | None = None) -> str:

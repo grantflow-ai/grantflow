@@ -5,8 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
 from src.db.tables import ApplicationVector
+from src.exceptions import DatabaseError
 from src.indexer.dto import VectorDTO
-from src.utils.exceptions import DatabaseError
 
 logger = logging.getLogger(__name__)
 

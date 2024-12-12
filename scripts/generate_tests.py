@@ -16,9 +16,9 @@ from coverage import Coverage
 from dotenv import load_dotenv
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
+from src.exceptions import FileParsingError, ValidationError
 from src.rag.dto import GenerationResultDTO
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
-from src.utils.exceptions import FileParsingError, ValidationError
 from src.utils.serialization import serialize
 
 if TYPE_CHECKING:

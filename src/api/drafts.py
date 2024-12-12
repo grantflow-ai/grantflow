@@ -2,12 +2,10 @@ import logging
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse
+from sanic import HTTPResponse, json
 
 from src.api.api_types import APIRequest
 from src.api.utils import create_application_draft, verify_workspace_access
-from src.constants import CONTENT_TYPE_JSON
-from src.utils.serialization import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +25,7 @@ async def handle_create_application_draft(
     """
     await verify_workspace_access(request=request, workspace_id=workspace_id)
     result = await create_application_draft(request=request, application_id=application_id)
-    return HTTPResponse(
+    return json(
+        result,
         status=HTTPStatus.CREATED,
-        body=serialize(result),
-        content_type=CONTENT_TYPE_JSON,
     )
