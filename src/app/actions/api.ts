@@ -40,6 +40,7 @@ export async function login(idToken: string) {
 	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
 	const requestBody = { id_token: idToken } satisfies LoginRequestBody;
 
+	console.log(`sending loging request to ${loginUrl} with ${JSON.stringify(requestBody)}`);
 	const { jwt_token } = await getClient().post(loginUrl, { json: requestBody }).json<LoginResponse>();
 
 	const cookieStore = await cookies();
