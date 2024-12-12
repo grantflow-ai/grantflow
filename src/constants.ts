@@ -42,6 +42,7 @@ export enum Dimensions {
 	Eighty = 320, // 20rem
 	NinetySix = 384, // 24rem
 }
+export const ONE_MINUTE_IN_MS = 60 * 1000;
 export const FIVE_SECONDS = 5 * 1000;
 export const TEN_MINUTES = 10 * 60 * 1000;
 export const ONE_HOUR_IN_SECONDS = 60 * 60;
