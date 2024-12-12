@@ -1,11 +1,17 @@
 import logging
+import sys
 from http import HTTPStatus
+from typing import Any
 
-from sanic import HTTPResponse, json
+from sanic import HTTPResponse, Sanic, json
+from sqlalchemy import text
 
-from src.api.api_types import APIRequest
+from src.api.api_types import APIRequest, RequestContext
+from src.db.connection import get_session_maker
 from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError
+from src.utils.ai import init_llm_connection
+from src.utils.firebase import get_firebase_app
 
 logger = logging.getLogger(__name__)
 
@@ -36,3 +42,19 @@ def handle_backend_error(request: APIRequest, exception: BackendError) -> HTTPRe
         ),
         status=status,
     )
+
+
+async def before_server_start_hook(_: Sanic[Any, RequestContext]) -> None:
+    """Hook to run before the server starts."""
+    get_firebase_app()
+    init_llm_connection()
+
+    session_maker = get_session_maker()
+    try:
+        async with session_maker() as session:
+            await session.execute(text("SELECT 1"))
+
+        logger.info("DB connection established.")
+    except Exception as e:  # noqa: BLE001
+        logging.error("Failed to connect to the database: %s.", e)
+        sys.exit(1)
