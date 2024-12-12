@@ -2,6 +2,7 @@ import ky, { KyInstance } from "ky";
 
 import { getEnv } from "@/utils/env";
 import { Ref } from "@/utils/state";
+import { ONE_MINUTE_IN_MS } from "@/constants";
 
 const clientRef = new Ref<KyInstance>();
 
@@ -14,7 +15,7 @@ export function getClient(): KyInstance {
 	if (!clientRef.value) {
 		clientRef.value = ky.create({
 			prefixUrl: getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
-			headers: { "Content-Type": "application/json" },
+			timeout: ONE_MINUTE_IN_MS,
 		});
 	}
 	return clientRef.value;
