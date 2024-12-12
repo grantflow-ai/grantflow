@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from typing import Any, NotRequired, TypedDict
 
 from sanic import Request, Sanic
+from sanic_ext import Config
 from sqlalchemy.ext.asyncio import async_sessionmaker  # type: ignore[attr-defined]
 
 from src.db.tables import UserRoleEnum
@@ -17,7 +18,7 @@ class RequestContext(SimpleNamespace):
     """The session maker."""
 
 
-APIRequest = Request[Sanic[Any, RequestContext], RequestContext]
+APIRequest = Request[Sanic[Config, RequestContext], RequestContext]
 
 # Drafts API Types
 
