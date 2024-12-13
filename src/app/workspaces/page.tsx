@@ -2,19 +2,9 @@
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
 import { getWorkspaces } from "@/app/actions/api";
-import { withErrorToast } from "@/utils/server-side";
-import { PagePath } from "@/enums";
-
-const getWorkspacesWithToast = () =>
-	withErrorToast({
-		value: getWorkspaces(),
-		identifier: "getWorkspaces",
-		path: PagePath.WORKSPACES,
-		message: "Failed to load workspaces",
-	});
 
 export default async function WorkspacesListPage() {
-	const workspaces = await getWorkspacesWithToast();
+	const workspaces = await getWorkspaces();
 
 	return (
 		<div className="mx-auto px-4 py-8">
