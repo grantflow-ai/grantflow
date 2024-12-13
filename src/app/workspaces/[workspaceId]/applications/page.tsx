@@ -1,19 +1,12 @@
 "use server";
 import { GrantApplicationForm } from "@/components/workspaces/detail/applications/grant-application-form";
 import { getCfps } from "@/app/actions/api";
-import { withErrorToast } from "@/utils/server-side";
-import { PagePath } from "@/enums";
 import { Loader } from "@/components/loader";
 
 export default async function ApplicationCreatePage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;
 
-	const grantCfps = await withErrorToast({
-		value: getCfps(),
-		identifier: "getCfps",
-		path: PagePath.APPLICATIONS.replace(":workspaceId", workspaceId),
-		message: "Failed to load grant calls",
-	});
+	const grantCfps = await getCfps();
 
 	if (!grantCfps.length) {
 		return <Loader />;

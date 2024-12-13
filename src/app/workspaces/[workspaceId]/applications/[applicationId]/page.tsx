@@ -58,29 +58,18 @@ export default function ApplicationChatRoomPage() {
 		workspaceId: string;
 		applicationId: string;
 	}>();
-	const [url, setUrl] = useState<string | null>(null);
 
-	useEffect(() => {
-		if (workspaceId && applicationId) {
-			(async () => {
-				const websocketUrl = await createWebsocketUrl(workspaceId, applicationId);
-				if (websocketUrl) {
-					setUrl(websocketUrl);
-				}
-			})();
-		}
-	}, []);
-
-	return url ? <ChatRoom url={url} /> : <div>Loading...</div>;
-}
-
-function ChatRoom({ url }: { url: string }) {
 	const [messageHistory, setMessageHistory] = useState<ChatMessage[]>([]);
 	const [inputMessage, setInputMessage] = useState("");
 
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 
-	const { sendMessage, lastJsonMessage, readyState } = useWebSocket(url, {
+	const getUrl = useCallback(
+		async () => (await createWebsocketUrl(workspaceId, applicationId)) ?? "",
+		[workspaceId, applicationId],
+	);
+
+	const { sendMessage, lastJsonMessage, readyState } = useWebSocket(getUrl, {
 		onOpen: () => {
 			console.log("opened");
 		},
