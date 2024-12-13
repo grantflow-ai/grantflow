@@ -23,6 +23,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { useRouter } from "next/navigation";
 import { PagePath } from "@/enums";
 import { createApplication, createResearchAims, uploadApplicationFiles } from "@/app/actions/api";
+import { logError } from "@/utils/logging";
 
 const MIN_TITLE_LENGTH = 10;
 
@@ -107,8 +108,9 @@ export function GrantApplicationForm({
 					applicationId,
 				),
 			);
-		} catch {
-			toast.error("An error occurred.");
+		} catch (error) {
+			logError({ error, identifier: "handleCreateApplication" });
+			toast.error("An error occurred creating the grant application.");
 		} finally {
 			setLoading(false);
 		}

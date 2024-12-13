@@ -27,6 +27,15 @@ import { getClient } from "@/utils/api-client";
 import { redirect } from "next/navigation";
 import { PagePath } from "@/enums";
 
+const createAuthHeaders = async () => {
+	const cookieStore = await cookies();
+	const cookie = cookieStore.get(SESSION_COOKIE);
+	if (!cookie?.value) {
+		redirect(PagePath.SIGNIN);
+	}
+	return { Authorization: `Bearer ${cookie.value}` };
+};
+
 /**
  * 	Handle the login process.
  *
@@ -56,15 +65,6 @@ export async function login(idToken: string) {
 
 	redirect(PagePath.WORKSPACES);
 }
-
-const createAuthHeaders = async () => {
-	const cookieStore = await cookies();
-	const cookie = cookieStore.get(SESSION_COOKIE);
-	if (!cookie?.value) {
-		redirect(PagePath.SIGNIN);
-	}
-	return { Authorization: `Bearer ${cookie.value}` };
-};
 
 /**
  * Get a one-time password (OTP) for websocket authentication.

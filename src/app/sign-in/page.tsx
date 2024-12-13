@@ -14,6 +14,7 @@ import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { toast } from "sonner";
 import { login } from "@/app/actions/api";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { logError } from "@/utils/logging";
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -32,7 +33,7 @@ export default function SignIn() {
 			await login(idToken);
 		} catch (error) {
 			if (!isRedirectError(error)) {
-				console.error("Sign-in error:", error);
+				logError({ error, identifier: "handleGoogleSignin" });
 				toast.error("Sign-in failed due to an error");
 			}
 		} finally {
