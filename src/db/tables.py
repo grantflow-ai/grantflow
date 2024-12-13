@@ -29,6 +29,14 @@ class UserRoleEnum(StrEnum):
     MEMBER = "MEMBER"
 
 
+class FileIndexingStatusEnum(StrEnum):
+    """Enumeration of file indexing statuses."""
+
+    INDEXING = "INDEXING"
+    FINISHED = "FINISHED"
+    FAILED = "FAILED"
+
+
 class Workspace(Base):
     """Workspace table."""
 
@@ -140,6 +148,7 @@ class ApplicationFile(Base):
     name: Mapped[str] = mapped_column(String(255), default=None)
     type: Mapped[str] = mapped_column(String(255), default=None)
     size: Mapped[int] = mapped_column(Integer, default=None)
+    status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum), default=None)
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
