@@ -10,6 +10,8 @@ import { ScrollArea } from "gen/ui/scroll-area";
 import { Badge } from "gen/ui/badge";
 import { ChatMessage } from "@/types/api-types";
 import { getOtp } from "@/app/actions/api";
+import { toast } from "sonner";
+import { logError } from "@/utils/logging";
 
 const connectionStatusMap = {
 	[ReadyState.CONNECTING]: "connecting",
@@ -28,12 +30,17 @@ const isChatMessage = (value: unknown): value is ChatMessage => {
 };
 
 const createWebsocketUrl = async (workspaceId: string, applicationId: string) => {
-	const { otp } = await getOtp();
+	try {
+		const { otp } = await getOtp();
 
-	return new URL(
-		`workspaces/${workspaceId}/applications/${applicationId}/chat-room?otp=${otp}`,
-		getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL.replace("http", "ws"),
-	).toString();
+		return new URL(
+			`workspaces/${workspaceId}/applications/${applicationId}/chat-room?otp=${otp}`,
+			getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL.replace("http", "ws"),
+		).toString();
+	} catch (error) {
+		logError({ error, identifier: "getOtp" });
+		toast.error("Failed to authenticate websocket connection");
+	}
 };
 
 const downloadMarkdown = (content: string) => {
@@ -57,7 +64,9 @@ export default function ApplicationChatRoomPage() {
 		if (workspaceId && applicationId) {
 			(async () => {
 				const websocketUrl = await createWebsocketUrl(workspaceId, applicationId);
-				setUrl(websocketUrl);
+				if (websocketUrl) {
+					setUrl(websocketUrl);
+				}
 			})();
 		}
 	}, []);

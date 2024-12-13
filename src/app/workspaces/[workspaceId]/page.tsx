@@ -5,11 +5,22 @@ import { GrantApplicationCard } from "@/components/workspaces/detail/grant-appli
 import { PagePath } from "@/enums";
 import Link from "next/link";
 import { getApplications, getWorkspace } from "@/app/actions/api";
+import { withErrorToast } from "@/utils/server-side";
 
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;
-	const workspace = await getWorkspace(workspaceId);
-	const applications = await getApplications(workspaceId);
+	const workspace = await withErrorToast({
+		value: getWorkspace(workspaceId),
+		identifier: "getWorkspace",
+		path: PagePath.WORKSPACE_DETAIL.replace(":workspaceId", workspaceId),
+		message: "Failed to load workspace",
+	});
+	const applications = await withErrorToast({
+		value: getApplications(workspaceId),
+		identifier: "getApplications",
+		path: PagePath.WORKSPACE_DETAIL.replace(":workspaceId", workspaceId),
+		message: "Failed to load applications",
+	});
 
 	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspaceId);
 

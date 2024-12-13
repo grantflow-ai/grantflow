@@ -10,6 +10,7 @@ import { Card, CardContent } from "gen/ui/card";
 
 import { useStore } from "@/store";
 import { createWorkspace } from "@/app/actions/api";
+import { logError } from "@/utils/logging";
 
 const workspaceSchema = z.object({
 	name: z.string().min(3, { message: "Workspace name must be at least 3 characters long" }),
@@ -31,7 +32,7 @@ export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) 
 			const workspace = await createWorkspace(values);
 			setWorkspaces([workspace]);
 		} catch (error) {
-			console.error("An error occurred creating workspace", error);
+			logError({ error, identifier: "createWorkspace" });
 			toast.error("An error occurred while creating the workspace.");
 		} finally {
 			closeModal();
