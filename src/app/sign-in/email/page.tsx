@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { useStore } from "@/store";
 import { login } from "@/app/actions/api";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { logError } from "@/utils/logging";
 
 /**
  * Handles the email sign-in completion flow after user clicks the email link.
@@ -38,7 +39,8 @@ export default function FinalizeEmailLogin() {
 				await login(idToken);
 			} catch (error) {
 				if (!isRedirectError(error)) {
-					toast.error(error instanceof Error ? error.message : "Failed to sign in with email link");
+					logError({ error, identifier: "finalizeSignIn" });
+					toast.error("Failed to sign in with email link");
 					router.replace(PagePath.SIGNIN);
 				}
 			} finally {
