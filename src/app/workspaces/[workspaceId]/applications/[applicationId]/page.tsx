@@ -94,8 +94,6 @@ function ChatRoom({ url }: { url: string }) {
 		if (isChatMessage(lastJsonMessage)) {
 			console.log("Received message:", JSON.stringify(lastJsonMessage));
 			setMessageHistory((prev) => [...prev, lastJsonMessage]);
-		} else {
-			console.log("Received unknown message:", JSON.stringify(lastJsonMessage));
 		}
 	}, [lastJsonMessage]);
 
@@ -117,7 +115,7 @@ function ChatRoom({ url }: { url: string }) {
 		<div className="flex flex-col h-screen max-h-screen" data-testid="chat-room">
 			<div className="p-4 flex justify-between items-center">
 				<h1 className="text-2xl font-bold">Application </h1>
-				<Badge variant="outline" className={`text-white`} data-testid="connection-status">
+				<Badge variant="outline" data-testid="connection-status">
 					status: {connectionStatus}
 				</Badge>
 			</div>
