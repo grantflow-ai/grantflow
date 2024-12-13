@@ -1,19 +1,18 @@
 import logging
 import sys
-from asyncio import gather
-from http import HTTPStatus
-from typing import cast
+from typing import Any
 from uuid import UUID
 
-from sanic import BadRequest, HTTPResponse, json
+from sanic import BadRequest, HTTPResponse, Sanic, empty
 from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api.utils import verify_workspace_access
 from src.api_types import APIRequest
 from src.db.tables import ApplicationFile, ApplicationVector
 from src.dto import FileDTO, VectorDTO
-from src.exceptions import DatabaseError, ExternalOperationError, FileParsingError, ValidationError
+from src.exceptions import BackendError, DatabaseError
 from src.indexer import parse_and_index_file
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
@@ -21,21 +20,22 @@ logger = logging.getLogger(__name__)
 
 
 async def insert_file_data(
-    *, request: APIRequest, application_id: UUID, vectors_and_files: list[tuple[list[VectorDTO], FileDTO]]
+    *, session_maker: async_sessionmaker[Any], application_id: UUID, vectors_lists: list[VectorDTO], file_dto: FileDTO
 ) -> None:
     """Insert the file data into the database.
 
     Args:
-        request: The request object.
+        session_maker: The session maker.
         application_id: The application ID.
-        vectors_and_files: The file data to insert.
+        vectors_lists: The vectors to insert.
+        file_dto: The file DTO.
 
     Raises:
         DatabaseError: If there is an error inserting the data.
     """
-    async with request.ctx.session_maker() as session:
+    async with session_maker() as session:
         try:
-            result = await session.execute(
+            application = await session.scalar(
                 insert(ApplicationFile)
                 .values(
                     [
@@ -45,27 +45,24 @@ async def insert_file_data(
                             "type": file_dto.mime_type,
                             "size": len(file_dto.content),
                         }
-                        for _, file_dto in vectors_and_files
                     ]
                 )
-                .returning(ApplicationFile.id)
+                .returning(ApplicationFile)
             )
 
-            file_ids = result.scalars().all()
             await session.execute(
                 insert(ApplicationVector).values(
                     [
                         {
                             "application_id": application_id,
-                            "file_id": file_id,
+                            "file_id": application.id,
                             "chunk_index": vector_dto.chunk_index,
                             "content": vector_dto.content,
                             "element_type": vector_dto.element_type,
                             "embedding": vector_dto.embedding,
                             "page_number": vector_dto.page_number,
                         }
-                        for (vector_dto_list, _), file_id in zip(vectors_and_files, file_ids, strict=False)
-                        for vector_dto in vector_dto_list
+                        for vector_dto in vectors_lists
                     ]
                 )
             )
@@ -75,14 +72,16 @@ async def insert_file_data(
             raise DatabaseError("Error inserting application files data") from e
 
 
-async def handle_upload_application_files(
-    request: APIRequest, workspace_id: UUID, application_id: UUID
-) -> HTTPResponse:
-    """Handle the upload of application files.
+async def handle_upload_application_file(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+    """Handle the upload of a files.
 
-    request: APIRequest: The request object.
-    workspace_id: UUID: The workspace ID.
-    application_id: UUID: The application ID.
+    Args:
+        request: APIRequest: The request object.
+        workspace_id: UUID: The workspace ID.
+        application_id: UUID: The application ID.
+
+    Raises:
+        BadRequest: If no files are provided or more than 1 file is provided.
 
     Returns:
         The response object.
@@ -99,31 +98,41 @@ async def handle_upload_application_files(
         logger.error("No files provided")
         raise BadRequest("No files provided")
 
-    results: list[list[VectorDTO] | ValidationError | FileParsingError | ExternalOperationError] = await gather(
-        *[
-            parse_and_index_file(
-                file_dto,
-            )
-            for file_dto in file_dtos
-        ]
+    if len(file_dtos) > 1:
+        logger.error("Only one file should be provided")
+        raise BadRequest("Only one file should be provided")
+
+    request.app.add_task(
+        file_parsing_task(
+            app=request.app,
+            file_dto=file_dtos[0],
+            application_id=application_id,
+            session_maker=request.ctx.session_maker,
+        ),
+        name=f"file_parsing_task-{application_id}-{file_dtos[0].filename}",
     )
+    return empty()
 
-    results_and_files = list(zip(results, file_dtos, strict=True))
 
-    if vectors_and_files := cast(
-        list[tuple[list[VectorDTO], FileDTO]], [result for result in results_and_files if isinstance(result[0], list)]
-    ):
-        await insert_file_data(request=request, application_id=application_id, vectors_and_files=vectors_and_files)
+async def file_parsing_task(
+    app: Sanic[Any, Any], file_dto: FileDTO, application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> None:
+    """Parse and index the given file.
 
-    data = {}
-    if error_results := cast(
-        list[tuple[ValidationError | FileParsingError | ExternalOperationError, FileDTO]],
-        [
-            result
-            for result in results_and_files
-            if isinstance(result[0], (ValidationError | FileParsingError | ExternalOperationError))
-        ],
-    ):
-        data["errors"] = {file_dto.filename: str(error) for error, file_dto in error_results}
+    Args:
+        app: The application object.
+        file_dto: The file to parse and index.
+        application_id: The application ID.
+        session_maker: The session maker.
 
-    return json(data, status=HTTPStatus.OK)
+    Returns:
+        The list of vectors.
+    """
+    try:
+        vectors_lists = await parse_and_index_file(file=file_dto)
+        await insert_file_data(
+            application_id=application_id, vectors_lists=vectors_lists, file_dto=file_dto, session_maker=session_maker
+        )
+    except BackendError as e:
+        logger.error("Error parsing and indexing file: %s", e)
+        await app.cancel_task(f"file_parsing_task-{application_id}-{file_dto.filename}")

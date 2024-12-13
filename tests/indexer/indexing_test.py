@@ -6,12 +6,12 @@ from src.indexer.indexing import create_vector_dto
 
 
 async def test_create_vector_dto(mock_text_embedding_model: Mock) -> None:
-    chunk: Chunk = {
-        "content": "test content",
-        "index": 0,
-        "page_number": 1,
-        "element_type": "paragraph",
-    }
+    chunk = Chunk(
+        content="test content",
+        index=0,
+        page_number=1,
+        element_type="paragraph",
+    )
 
     vector_dto = await create_vector_dto(chunk=chunk)
 
