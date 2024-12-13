@@ -1,7 +1,6 @@
 import logging
 
-from sanic import ServerError, Websocket
-from sanic.exceptions import WebsocketClosed
+from sanic import Websocket
 
 from src.api_types import ChatNotification
 from src.utils.env import get_env
@@ -27,17 +26,14 @@ class NotificationSender:
             message: The message to send.
         """
         logger.debug("Sending notification: %s", message)
-        try:
-            await self.ws.send(
-                serialize(
-                    ChatNotification(
-                        type="notification",
-                        text=message,
-                    )
-                ).decode()
-            )
-        except (WebsocketClosed, ServerError) as e:
-            logger.error("Failed to send notification to do connectivity issue. Error type %s", type(e).__name__)
+        await self.ws.send(
+            serialize(
+                ChatNotification(
+                    type="notification",
+                    text=message,
+                )
+            ).decode()
+        )
 
     async def debug(self, message: str) -> None:
         """Send a debug message to the frontend.
