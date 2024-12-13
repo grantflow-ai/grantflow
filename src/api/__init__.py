@@ -9,7 +9,7 @@ from src.api.applications import (
 )
 from src.api.cfps import handle_retrieve_cfps
 from src.api.chat import chat_room_ws_handler
-from src.api.files import handle_upload_application_files
+from src.api.files import handle_upload_application_file
 from src.api.health import health_check
 from src.api.login import handle_login
 from src.api.otp import handle_create_otp
@@ -92,7 +92,7 @@ def register_routes(app: Sanic[Any, Any]) -> None:
 
     # Indexing
     app.add_route(
-        handle_upload_application_files,
+        handle_upload_application_file,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/index-files",
         methods=["POST"],
     )
