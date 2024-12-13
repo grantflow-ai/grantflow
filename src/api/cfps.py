@@ -4,7 +4,7 @@ from sanic import HTTPResponse, json
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import APIRequest, CfpResponse
+from src.api_types import APIRequest, CfpResponse
 from src.db.tables import GrantCfp
 
 logger = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ from http import HTTPStatus
 from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 
-from src.api.api_types import LoginRequestBody, LoginResponse
+from src.api_types import LoginRequestBody, LoginResponse
 from src.utils.serialization import deserialize
 
 

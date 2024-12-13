@@ -6,8 +6,8 @@ from uuid import UUID
 from sanic import HTTPResponse, empty
 from sqlalchemy import insert
 
-from src.api.api_types import APIRequest
 from src.api.utils import verify_workspace_access
+from src.api_types import APIRequest
 from src.db.tables import ApplicationFile, FileIndexingStatusEnum
 from src.dto import APIError
 from src.indexer.dto import FileDTO

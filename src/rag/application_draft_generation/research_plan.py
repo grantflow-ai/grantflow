@@ -19,6 +19,7 @@ from src.rag.application_draft_generation.shared_prompts import (
 from src.rag.dto import ResearchAimDTO, ResearchTaskDTO
 from src.rag.utils import handle_completions_request
 from src.utils.serialization import serialize
+from src.utils.ws import NotificationSender
 
 logger = logging.getLogger(__name__)
 
@@ -176,15 +177,14 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
 
 
 async def handle_research_plan_text_generation(
-    *,
-    application_id: str,
-    research_aims: list[ResearchAim],
+    *, application_id: str, research_aims: list[ResearchAim], notification_sender: NotificationSender
 ) -> str:
     """Generate the text for the research plan.
 
     Args:
         application_id: The application ID.
         research_aims: The research aims to generate text for.
+        notification_sender: The notification sender.
 
     Returns:
         The generated text for the research plan.
@@ -200,12 +200,15 @@ async def handle_research_plan_text_generation(
                 handle_research_aim_text_generation(
                     application_id=application_id,
                     research_aim=research_aim,
+                    notification_sender=notification_sender,
                 ),
                 gather(
                     *[
                         handle_research_task_text_generation(
                             application_id=application_id,
+                            notification_sender=notification_sender,
                             requires_clinical_trials=research_aim.requires_clinical_trials,
+                            research_aim_number=research_aim.aim_number,
                             research_task=research_task,
                         )
                         for index, research_task in enumerate(research_aim.research_tasks)

@@ -6,7 +6,7 @@ from typing import Any
 from sanic import HTTPResponse, Sanic, json
 from sqlalchemy import text
 
-from src.api.api_types import APIRequest, RequestContext
+from src.api_types import APIRequest, RequestContext
 from src.db.connection import get_session_maker
 from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError

@@ -6,13 +6,13 @@ from sanic import HTTPResponse, empty, json
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import (
+from src.api.utils import verify_workspace_access
+from src.api_types import (
     APIRequest,
     CreateWorkspaceRequestBody,
     UpdateWorkspaceRequestBody,
     WorkspaceResponse,
 )
-from src.api.utils import verify_workspace_access
 from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
 
