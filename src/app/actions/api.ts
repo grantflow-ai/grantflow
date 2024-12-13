@@ -26,6 +26,7 @@ import { SESSION_COOKIE } from "@/constants";
 import { getClient } from "@/utils/api-client";
 import { redirect } from "next/navigation";
 import { PagePath } from "@/enums";
+import { HTTPError } from "ky";
 
 const createAuthHeaders = async () => {
 	const cookieStore = await cookies();
@@ -66,14 +67,27 @@ export async function login(idToken: string) {
 	redirect(PagePath.WORKSPACES);
 }
 
+const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
+	try {
+		return await promise;
+	} catch (error) {
+		if (error instanceof HTTPError && error.response.status === 401) {
+			redirect(PagePath.SIGNIN);
+		}
+		throw error;
+	}
+};
+
 /**
  * Get a one-time password (OTP) for websocket authentication.
  * @returns Promise containing the OTP response
  */
 export async function getOtp() {
-	return getClient()
-		.get("otp", { headers: await createAuthHeaders() })
-		.json<OTPResponse>();
+	return withAuthRedirect(
+		getClient()
+			.get("otp", { headers: await createAuthHeaders() })
+			.json<OTPResponse>(),
+	);
 }
 
 /**
@@ -81,9 +95,11 @@ export async function getOtp() {
  * @returns Promise containing an array of grant CFPs
  */
 export async function getCfps() {
-	return getClient()
-		.get("cfps", { headers: await createAuthHeaders() })
-		.json<GrantCfp[]>();
+	return withAuthRedirect(
+		getClient()
+			.get("cfps", { headers: await createAuthHeaders() })
+			.json<GrantCfp[]>(),
+	);
 }
 
 /**
@@ -92,9 +108,11 @@ export async function getCfps() {
  * @returns Promise containing the created workspace
  */
 export async function createWorkspace(data: CreateWorkspaceRequestBody) {
-	return getClient()
-		.post("workspaces", { json: data, headers: await createAuthHeaders() })
-		.json<Workspace>();
+	return withAuthRedirect(
+		getClient()
+			.post("workspaces", { json: data, headers: await createAuthHeaders() })
+			.json<Workspace>(),
+	);
 }
 
 /**
@@ -102,9 +120,11 @@ export async function createWorkspace(data: CreateWorkspaceRequestBody) {
  * @returns Promise containing an array of workspaces
  */
 export async function getWorkspaces() {
-	return getClient()
-		.get("workspaces", { headers: await createAuthHeaders() })
-		.json<Workspace[]>();
+	return withAuthRedirect(
+		getClient()
+			.get("workspaces", { headers: await createAuthHeaders() })
+			.json<Workspace[]>(),
+	);
 }
 
 /**
@@ -113,9 +133,11 @@ export async function getWorkspaces() {
  * @returns Promise containing the workspace details
  */
 export async function getWorkspace(workspaceId: string) {
-	return getClient()
-		.get(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() })
-		.json<Workspace>();
+	return withAuthRedirect(
+		getClient()
+			.get(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() })
+			.json<Workspace>(),
+	);
 }
 
 /**
@@ -125,9 +147,11 @@ export async function getWorkspace(workspaceId: string) {
  * @returns Promise containing the updated workspace
  */
 export async function updateWorkspace(workspaceId: string, data: UpdateWorkspaceRequestBody) {
-	return getClient()
-		.patch(`workspaces/${workspaceId}`, { json: data, headers: await createAuthHeaders() })
-		.json<Workspace>();
+	return withAuthRedirect(
+		getClient()
+			.patch(`workspaces/${workspaceId}`, { json: data, headers: await createAuthHeaders() })
+			.json<Workspace>(),
+	);
 }
 
 /**
@@ -136,7 +160,7 @@ export async function updateWorkspace(workspaceId: string, data: UpdateWorkspace
  * @returns Promise that resolves when deletion is complete
  */
 export async function deleteWorkspace(workspaceId: string): Promise<void> {
-	await getClient().delete(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() });
+	await withAuthRedirect(getClient().delete(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() }));
 }
 
 /**
@@ -146,9 +170,11 @@ export async function deleteWorkspace(workspaceId: string): Promise<void> {
  * @returns Promise containing the created grant application
  */
 export async function createApplication(workspaceId: string, data: CreateGrantApplicationRequestBody) {
-	return getClient()
-		.post(`workspaces/${workspaceId}/applications`, { json: data, headers: await createAuthHeaders() })
-		.json<GrantApplication>();
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications`, { json: data, headers: await createAuthHeaders() })
+			.json<GrantApplication>(),
+	);
 }
 
 /**
@@ -163,12 +189,14 @@ export async function updateApplication(
 	applicationId: string,
 	data: UpdateApplicationRequestBody,
 ) {
-	return getClient()
-		.patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
-			json: data,
-			headers: await createAuthHeaders(),
-		})
-		.json<GrantApplication>();
+	return withAuthRedirect(
+		getClient()
+			.patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
+				json: data,
+				headers: await createAuthHeaders(),
+			})
+			.json<GrantApplication>(),
+	);
 }
 
 /**
@@ -177,9 +205,11 @@ export async function updateApplication(
  * @returns Promise containing an array of grant applications
  */
 export async function getApplications(workspaceId: string) {
-	return getClient()
-		.get(`workspaces/${workspaceId}/applications`, { headers: await createAuthHeaders() })
-		.json<GrantApplication[]>();
+	return withAuthRedirect(
+		getClient()
+			.get(`workspaces/${workspaceId}/applications`, { headers: await createAuthHeaders() })
+			.json<GrantApplication[]>(),
+	);
 }
 
 /**
@@ -189,9 +219,11 @@ export async function getApplications(workspaceId: string) {
  * @returns Promise containing detailed grant application information
  */
 export async function getApplicationDetail(workspaceId: string, applicationId: string) {
-	return getClient()
-		.get(`workspaces/${workspaceId}/applications/${applicationId}`, { headers: await createAuthHeaders() })
-		.json<GrantApplicationDetail>();
+	return withAuthRedirect(
+		getClient()
+			.get(`workspaces/${workspaceId}/applications/${applicationId}`, { headers: await createAuthHeaders() })
+			.json<GrantApplicationDetail>(),
+	);
 }
 
 /**
@@ -206,12 +238,14 @@ export async function createResearchAims(
 	applicationId: string,
 	data: CreateResearchAimRequestBody[],
 ) {
-	return getClient()
-		.post(`workspaces/${workspaceId}/applications/${applicationId}/research-aims`, {
-			json: data,
-			headers: await createAuthHeaders(),
-		})
-		.json<ResearchAim[]>();
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications/${applicationId}/research-aims`, {
+				json: data,
+				headers: await createAuthHeaders(),
+			})
+			.json<ResearchAim[]>(),
+	);
 }
 
 /**
@@ -221,11 +255,13 @@ export async function createResearchAims(
  * @returns Promise containing an array of research aims
  */
 export async function getResearchAims(workspaceId: string, applicationId: string) {
-	return getClient()
-		.get(`workspaces/${workspaceId}/applications/${applicationId}/research-aims`, {
-			headers: await createAuthHeaders(),
-		})
-		.json<ResearchAim[]>();
+	return withAuthRedirect(
+		getClient()
+			.get(`workspaces/${workspaceId}/applications/${applicationId}/research-aims`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<ResearchAim[]>(),
+	);
 }
 
 /**
@@ -240,12 +276,14 @@ export async function updateResearchAim(
 	researchAimId: string,
 	data: UpdateResearchAimRequestBody,
 ) {
-	return getClient()
-		.patch(`workspaces/${workspaceId}/research-aims/${researchAimId}`, {
-			json: data,
-			headers: await createAuthHeaders(),
-		})
-		.json<Omit<ResearchAim, "research_tasks">>();
+	return withAuthRedirect(
+		getClient()
+			.patch(`workspaces/${workspaceId}/research-aims/${researchAimId}`, {
+				json: data,
+				headers: await createAuthHeaders(),
+			})
+			.json<Omit<ResearchAim, "research_tasks">>(),
+	);
 }
 
 /**
@@ -260,12 +298,14 @@ export async function updateResearchTask(
 	researchTaskId: string,
 	data: UpdateResearchTaskRequestBody,
 ) {
-	return getClient()
-		.patch(`workspaces/${workspaceId}/research-tasks/${researchTaskId}`, {
-			json: data,
-			headers: await createAuthHeaders(),
-		})
-		.json<ResearchTask>();
+	return withAuthRedirect(
+		getClient()
+			.patch(`workspaces/${workspaceId}/research-tasks/${researchTaskId}`, {
+				json: data,
+				headers: await createAuthHeaders(),
+			})
+			.json<ResearchTask>(),
+	);
 }
 
 /**
@@ -275,9 +315,11 @@ export async function updateResearchTask(
  * @returns Promise that resolves when deletion is complete
  */
 export async function deleteResearchAim(workspaceId: string, researchAimId: string): Promise<void> {
-	await getClient().delete(`workspaces/${workspaceId}/research-aims/${researchAimId}`, {
-		headers: await createAuthHeaders(),
-	});
+	await withAuthRedirect(
+		getClient().delete(`workspaces/${workspaceId}/research-aims/${researchAimId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
 }
 
 /**
@@ -287,9 +329,11 @@ export async function deleteResearchAim(workspaceId: string, researchAimId: stri
  * @returns Promise that resolves when deletion is complete
  */
 export async function deleteResearchTask(workspaceId: string, researchTaskId: string): Promise<void> {
-	await getClient().delete(`workspaces/${workspaceId}/research-tasks/${researchTaskId}`, {
-		headers: await createAuthHeaders(),
-	});
+	await withAuthRedirect(
+		getClient().delete(`workspaces/${workspaceId}/research-tasks/${researchTaskId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
 }
 
 /**
@@ -304,12 +348,14 @@ export async function uploadApplicationFiles(workspaceId: string, applicationId:
 	for (const file of files) {
 		formData.append(file.name, file);
 	}
-	return await getClient()
-		.post(`workspaces/${workspaceId}/applications/${applicationId}/index-files`, {
-			body: formData,
-			headers: await createAuthHeaders(),
-		})
-		.json<ApplicationFile[]>();
+	return await withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications/${applicationId}/index-files`, {
+				body: formData,
+				headers: await createAuthHeaders(),
+			})
+			.json<ApplicationFile[]>(),
+	);
 }
 
 /**
@@ -320,9 +366,11 @@ export async function uploadApplicationFiles(workspaceId: string, applicationId:
  * @returns Promise that resolves when deletion is complete
  */
 export async function deleteApplicationFile(workspaceId: string, applicationId: string, fileId: string): Promise<void> {
-	await getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}/files/${fileId}`, {
-		headers: await createAuthHeaders(),
-	});
+	await withAuthRedirect(
+		getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}/files/${fileId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
 }
 
 /**
@@ -332,9 +380,11 @@ export async function deleteApplicationFile(workspaceId: string, applicationId: 
  * @returns Promise containing the generated application draft
  */
 export async function generateApplicationDraft(workspaceId: string, applicationId: string) {
-	return getClient()
-		.post(`workspaces/${workspaceId}/applications/${applicationId}/generate-draft`, {
-			headers: await createAuthHeaders(),
-		})
-		.json<ApplicationDraft>();
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications/${applicationId}/generate-draft`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<ApplicationDraft>(),
+	);
 }
