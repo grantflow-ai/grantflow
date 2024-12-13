@@ -4,7 +4,7 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import CfpResponse
+from src.api_types import CfpResponse
 from src.db.tables import FundingOrganization, GrantCfp
 from src.utils.serialization import deserialize
 from tests.factories import FundingOrganizationFactory, GrantCfpFactory

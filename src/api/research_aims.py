@@ -6,7 +6,8 @@ from sanic import HTTPResponse, empty, json
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import (
+from src.api.utils import verify_workspace_access
+from src.api_types import (
     APIRequest,
     CreateResearchAimRequestBody,
     ResearchAimResponse,
@@ -14,7 +15,6 @@ from src.api.api_types import (
     UpdateResearchAimRequestBody,
     UpdateResearchTaskRequestBody,
 )
-from src.api.utils import verify_workspace_access
 from src.db.tables import ResearchAim, ResearchTask
 from src.utils.serialization import deserialize
 

@@ -2,7 +2,7 @@ import logging
 
 from sanic import HTTPResponse, json
 
-from src.api.api_types import APIRequest, LoginRequestBody, LoginResponse
+from src.api_types import APIRequest, LoginRequestBody, LoginResponse
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
 from src.utils.serialization import deserialize

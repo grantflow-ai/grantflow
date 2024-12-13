@@ -1,6 +1,6 @@
 from sanic import HTTPResponse, text
 
-from src.api.api_types import APIRequest
+from src.api_types import APIRequest
 
 
 async def health_check(_: APIRequest) -> HTTPResponse:

@@ -341,7 +341,7 @@ async def full_grant_application_id(
             "aim_id": research_aims[2]["id"],
             "task_number": "3.3",
             "title": "In-vitro validation of immunocytokines",
-            "description": "We will confirm the binding via SPR, ELISA, cell-based binding and reporter assays.We will validate immunocytokines' impact on interactions between myeloid and lymphoid cell activity using in-vitro assays of co-cultured huMDMs, NK or T cells. To assess the efficacy of the fusion proteins in inducing cytotoxic NK and T cell activity, assays of co-cultured huMDMs, NK, or T cells and tumor cells will be treated with the various mAb-cytokine chimeras. ",
+            "description": "We will confirm the binding via SPR, ELISA, cell-based binding and reporter assays.We will validate immunocytokines' impact on interactions between myeloid and lymphoid cell activity using in-vitro assays of co-cultured huMDMs, NK or T cells. To assess the efficacy of the fusion proteins in inducing cytotoxic NK and T cell activity, assays of co-cultured huMDMs, NK, or T cells and tumor cells will be treated with the various mAb-cytokine chimeras.",
         },
     ]
 

@@ -7,7 +7,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import (
+from src.api_types import (
     CreateWorkspaceRequestBody,
     UpdateWorkspaceRequestBody,
     WorkspaceResponse,
