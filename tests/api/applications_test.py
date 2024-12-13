@@ -5,7 +5,7 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import (
+from src.api_types import (
     CreateGrantApplicationRequestBody,
     GrantApplicationDetailResponse,
     GrantApplicationResponse,

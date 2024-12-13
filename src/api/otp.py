@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from sanic import HTTPResponse, json
 
-from src.api.api_types import APIRequest, OTPResponse
+from src.api_types import APIRequest, OTPResponse
 from src.utils.jwt import create_jwt
 
 

@@ -1,49 +1,39 @@
 import logging
 from asyncio import sleep
-from typing import Literal, TypedDict
+from time import time
 from uuid import UUID
 
 from sanic import Websocket
-from sqlalchemy import exists, select
+from sqlalchemy import exists, insert, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import selectinload
 
-from src.api.api_types import APIRequest, ApplicationDraftGenerationResponse
-from src.api.utils import create_application_draft, verify_workspace_access
-from src.db.tables import ApplicationFile, FileIndexingStatusEnum
+from src.api.utils import verify_workspace_access
+from src.api_types import (
+    APIRequest,
+    ApplicationDraftGenerationResponse,
+    ChatErrorNotification,
+    ChatGenerationResultMessage,
+    ChatNotification,
+)
+from src.db.tables import (
+    ApplicationDraft,
+    ApplicationFile,
+    FileIndexingStatusEnum,
+    GrantApplication,
+    GrantCfp,
+    ResearchAim,
+)
+from src.rag.application_draft_generation import generate_application_draft
 from src.utils.serialization import serialize
+from src.utils.ws import NotificationSender
 
 logger = logging.getLogger(__name__)
 
-PROCESSING_SLEEP_INTERVAL = 3
+PROCESSING_SLEEP_INTERVAL = 30  # seconds
 
 
-class ChatNotification(TypedDict):
-    """Application chat room message type."""
-
-    type: Literal["notification"]
-    """The message type."""
-    text: str
-    """The message text."""
-
-
-class ChatErrorNotification(TypedDict):
-    """Application chat room message type."""
-
-    type: Literal["error"]
-    """The message type."""
-    text: str
-    """The message text."""
-
-
-class ChatGenerationResultMessage(TypedDict):
-    """Application chat room message type."""
-
-    type: Literal["content"]
-    """The message type."""
-    data: ApplicationDraftGenerationResponse
-    """The message text."""
-
-
-async def application_ws_handler(request: APIRequest, ws: Websocket, workspace_id: UUID, application_id: UUID) -> None:
+async def chat_room_ws_handler(request: APIRequest, ws: Websocket, workspace_id: UUID, application_id: UUID) -> None:
     """Route handler for the application chat room websocket.
 
     Args:
@@ -54,6 +44,8 @@ async def application_ws_handler(request: APIRequest, ws: Websocket, workspace_i
     """
     logger.info("Web socket request with ID %s", application_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    notification_sender = NotificationSender(ws)
 
     try:
         async with request.ctx.session_maker() as session:
@@ -68,34 +60,61 @@ async def application_ws_handler(request: APIRequest, ws: Websocket, workspace_i
                         )
                     )
                 ):
-                    await ws.send(
-                        serialize(
-                            ChatNotification(
-                                type="notification",
-                                text="Indexing files...",
-                            )
-                        )
-                    )
+                    await notification_sender.info("Indexing files...")
                     await sleep(PROCESSING_SLEEP_INTERVAL)
 
-        await ws.send(
-            serialize(
-                ChatNotification(
-                    type="notification",
-                    text="Generating Text...",
+        async with request.ctx.session_maker() as session:
+            application = await session.scalar(
+                select(GrantApplication)
+                .options(
+                    selectinload(GrantApplication.cfp).selectinload(GrantCfp.funding_organization),
+                    selectinload(GrantApplication.application_files),
+                    selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
                 )
+                .where(GrantApplication.id == application_id)
             )
-        )
 
-        result = await create_application_draft(request=request, application_id=application_id)
+        start_time = time()
+        await notification_sender.info("Beginning Text Generation")
+
+        result = await generate_application_draft(application=application, notification_sender=notification_sender)
+        duration = int(time() - start_time)
+
+        async with request.ctx.session_maker() as session, session.begin():
+            try:
+                insert_statement = insert(ApplicationDraft).values(
+                    {"application_id": application_id, "text": result, "duration": duration}
+                )
+                await session.execute(insert_statement)
+                await session.commit()
+            except SQLAlchemyError as e:
+                logging.error("Error inserting generation result: %s", e)
+                await session.rollback()
+                await ws.send(
+                    serialize(
+                        ChatErrorNotification(
+                            type="error",
+                            text="An error occurred while processing the application.",
+                        )
+                    ).decode()
+                )
+                return
+
+        await notification_sender.info("Text Generation Completed.")
+        await notification_sender.debug(f"Text Generation took {duration} seconds.")
+
         await ws.send(
             serialize(
                 ChatGenerationResultMessage(
                     type="content",
-                    data=result,
+                    data=ApplicationDraftGenerationResponse(content=result, duration=duration),
                 )
-            )
+            ).decode()
         )
+
+        async for msg in ws:
+            logger.info("Received message: %s", msg)
+            await ws.send(serialize(ChatNotification(type="notification", text="Received message: " + msg)).decode())
 
     except Exception as e:  # noqa: BLE001
         logger.error(
@@ -107,8 +126,5 @@ async def application_ws_handler(request: APIRequest, ws: Websocket, workspace_i
                     type="error",
                     text="An error occurred while processing the application.",
                 )
-            )
+            ).decode()
         )
-
-    async for msg in ws:
-        logger.info("Received message: %s", msg)

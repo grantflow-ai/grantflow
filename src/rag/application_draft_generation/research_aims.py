@@ -17,6 +17,7 @@ from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.serialization import serialize
+from src.utils.ws import NotificationSender
 
 logger = logging.getLogger(__name__)
 
@@ -116,15 +117,14 @@ async def generate_research_aim_text(
 
 
 async def handle_research_aim_text_generation(
-    *,
-    application_id: str,
-    research_aim: ResearchAimDTO,
+    *, application_id: str, research_aim: ResearchAimDTO, notification_sender: NotificationSender
 ) -> str:
     """Generate the text for a research aim.
 
     Args:
         application_id: The application ID.
         research_aim: The research aim to generate text for.
+        notification_sender: The notification sender.
 
     Returns:
         The generated text for the research aim.
@@ -152,6 +152,6 @@ async def handle_research_aim_text_generation(
         entity_identifier=f"research_aim: {research_aim.aim_number}",
         prompt_handler=handler,
     )
-    logger.debug("Generated research aim %s", result)
+    await notification_sender.info(f"Generated research aim {research_aim.aim_number}: {research_aim.title} text.")
 
     return result
