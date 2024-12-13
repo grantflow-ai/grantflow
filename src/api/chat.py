@@ -1,10 +1,9 @@
 import logging
-from asyncio import sleep
 from time import time
 from uuid import UUID
 
 from sanic import Websocket
-from sqlalchemy import exists, insert, select
+from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
@@ -18,8 +17,6 @@ from src.api_types import (
 )
 from src.db.tables import (
     ApplicationDraft,
-    ApplicationFile,
-    FileIndexingStatusEnum,
     GrantApplication,
     GrantCfp,
     ResearchAim,
@@ -48,21 +45,6 @@ async def chat_room_ws_handler(request: APIRequest, ws: Websocket, workspace_id:
     notification_sender = NotificationSender(ws)
 
     try:
-        async with request.ctx.session_maker() as session:
-            is_processing_files = True
-            while is_processing_files:
-                if is_processing_files := await session.scalar(
-                    select(
-                        exists(
-                            select(ApplicationFile)
-                            .where(ApplicationFile.application_id == application_id)
-                            .where(ApplicationFile.status == FileIndexingStatusEnum.INDEXING)
-                        )
-                    )
-                ):
-                    await notification_sender.info("Indexing files...")
-                    await sleep(PROCESSING_SLEEP_INTERVAL)
-
         async with request.ctx.session_maker() as session:
             application = await session.scalar(
                 select(GrantApplication)
