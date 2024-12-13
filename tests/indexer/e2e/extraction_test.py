@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-from src.dto import FileDTO
+from src.indexer.dto import FileDTO
 from src.indexer.extraction import parse_file_data
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 

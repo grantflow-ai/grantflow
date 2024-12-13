@@ -16,7 +16,7 @@ When generating text, strictly follow these guidelines:
 ### Handling Missing Information
 
 If you encounter a situation where you are missing information that is required for generating the text do not invent any information.
-Instead, add a bold text placeholder in the format `**MISSING INFORMATION: <reason>**`. Make sure to include a short reason instead of the placeholder..
+Instead, add a bold text placeholder in the format `**MISSING INFORMATION: <description>**` where `<description>` is a brief description of the missing information.
 """
 
 CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[Template] = Template("""
