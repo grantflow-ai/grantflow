@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"build": "next build",
+		"build": "NODE_NO_WARNINGS=1 next build",
 		"dev": "NODE_NO_WARNINGS=1 next dev --turbopack",
 		"format": "prettier --write .",
 		"lint:check": "eslint .",
