@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { PagePath } from "@/enums";
-import { useStore } from "@/store";
 import { GoogleAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
 import { EmailSigninForm } from "@/components/sign-in/email-signin-form";
@@ -19,7 +18,6 @@ import { logError } from "@/utils/logging";
 const googleProvider = new GoogleAuthProvider();
 
 export default function SignIn() {
-	const { setUser } = useStore();
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -28,7 +26,6 @@ export default function SignIn() {
 
 		try {
 			const cred = await signInWithPopup(auth, googleProvider);
-			setUser(cred.user);
 			const idToken = await cred.user.getIdToken();
 			await login(idToken);
 		} catch (error) {

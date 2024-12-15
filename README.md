@@ -8,12 +8,13 @@ You should have node >=20 on your system. Verify with `node --version`.
 
 **Add a `.env` file in the repository root. You should receive one from the team.**
 
-* Its recommended to use [nvm](https://github.com/nvm-sh/nvm) to manage node versions. Follow the instructions in the
+- Its recommended to use [nvm](https://github.com/nvm-sh/nvm) to manage node versions. Follow the instructions in the
   link.
 
 ## Getting Started
 
 1. Install `pnpm` globally, e.g.
+
     ```shell
     brew install pnpm
     ```
