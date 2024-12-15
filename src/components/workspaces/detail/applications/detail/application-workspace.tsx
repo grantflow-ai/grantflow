@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import ChatContainer from "@/components/workspaces/detail/applications/detail/chat-container";
 import { ApplicationDraft } from "@/types/api-types";
 import { Card } from "gen/ui/card";
+import { PlateEditor } from "gen/components/editor/plate-editor";
 
 const createWebsocketUrl = async (workspaceId: string, applicationId: string) => {
 	try {
@@ -40,8 +41,8 @@ export function ApplicationWorkspace({ workspaceId, applicationId }: { workspace
 						<h2 className="text-2xl font-bold">Code Editor</h2>
 					</div>
 					<div className="p-4" data-testid="code-editor-placeholder">
-						{/* Code editor placeholder */}
-						<p>Code editor will be implemented here</p>
+						{applicationDraft?.content}
+						<PlateEditor />
 					</div>
 				</Card>
 			</div>
