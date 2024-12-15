@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Card, CardContent } from "gen/ui/card";
 
-import { useStore } from "@/store";
 import { createWorkspace } from "@/app/actions/api";
 import { logError } from "@/utils/logging";
 
@@ -20,8 +19,6 @@ const workspaceSchema = z.object({
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
 
 export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) {
-	const { setWorkspaces } = useStore();
-
 	const form = useForm<WorkspaceFormValues>({
 		resolver: zodResolver(workspaceSchema),
 		defaultValues: { name: "", description: "" },
@@ -29,8 +26,7 @@ export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) 
 
 	const onSubmit = async (values: WorkspaceFormValues) => {
 		try {
-			const workspace = await createWorkspace(values);
-			setWorkspaces([workspace]);
+			await createWorkspace(values);
 		} catch (error) {
 			logError({ error, identifier: "createWorkspace" });
 			toast.error("An error occurred while creating the workspace.");

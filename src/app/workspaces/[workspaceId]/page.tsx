@@ -4,12 +4,13 @@ import { Button } from "gen/ui/button";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
 import Link from "next/link";
-import { getApplications, getWorkspace } from "@/app/actions/api";
+import { getApplications, getCfps, getWorkspace } from "@/app/actions/api";
 
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;
 	const workspace = await getWorkspace(workspaceId);
 	const applications = await getApplications(workspaceId);
+	const grantCfps = await getCfps();
 
 	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspaceId);
 
@@ -29,6 +30,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 								key={application.id}
 								application={application}
 								workspaceId={workspaceId}
+								cfps={grantCfps}
 							/>
 						))}
 					</div>
