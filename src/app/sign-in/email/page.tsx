@@ -8,7 +8,6 @@ import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useStore } from "@/store";
 import { login } from "@/app/actions/api";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { logError } from "@/utils/logging";
@@ -20,7 +19,6 @@ import { logError } from "@/utils/logging";
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
 	const auth = getFirebaseAuth();
-	const { setUser } = useStore();
 
 	useEffect(() => {
 		const finalizeSignIn = async () => {
@@ -34,7 +32,6 @@ export default function FinalizeEmailLogin() {
 
 			try {
 				const cred = await signInWithEmailLink(auth, email, globalThis.location.href);
-				setUser(cred.user);
 				const idToken = await cred.user.getIdToken();
 				await login(idToken);
 			} catch (error) {

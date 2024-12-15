@@ -4,24 +4,23 @@ import Link from "next/link";
 import { PagePath } from "@/enums";
 import { ChevronRight, FileText } from "lucide-react";
 import { Badge } from "gen/ui/badge";
-import { GrantApplication } from "@/types/api-types";
-import { useStore } from "@/store";
+import { GrantApplication, GrantCfp } from "@/types/api-types";
 import { useMemo } from "react";
 
 export function GrantApplicationCard({
 	application,
 	workspaceId,
+	cfps,
 }: {
 	application: GrantApplication;
 	workspaceId: string;
+	cfps: GrantCfp[];
 }) {
-	const { grantCfps } = useStore();
-
 	const url = PagePath.APPLICATION_DETAIL.toString()
 		.replace(":workspaceId", workspaceId)
 		.replace(":applicationId", application.id);
 
-	const cfp = useMemo(() => grantCfps.find((cfp) => cfp.id === application.cfp_id), [grantCfps, application.cfp_id]);
+	const cfp = useMemo(() => cfps.find((cfp) => cfp.id === application.cfp_id), [cfps, application.cfp_id]);
 
 	return (
 		<Link href={url} className="block" data-testid={`application-draft-link-${application.id}`}>
