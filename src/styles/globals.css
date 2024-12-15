@@ -26,7 +26,14 @@
 		--ring: 266 85% 58%;
 		--secondary-foreground: 234 16% 35%;
 		--secondary: 231 97% 72%;
+		--chart-1: 12 76% 61%;
+		--chart-2: 173 58% 39%;
+		--chart-3: 197 37% 24%;
+		--chart-4: 43 74% 66%;
+		--chart-5: 27 87% 67%;
+		--brand: 217.2 91.2% 59.8%;
 	}
+
 	.dark {
 		--accent-foreground: 227 68% 88%;
 		--accent: 267 83% 80% / 0.2;
@@ -49,6 +56,12 @@
 		--ring: 267 83% 80%;
 		--secondary-foreground: 227 68% 88%;
 		--secondary: 234 82% 85%;
+		--chart-1: 220 70% 50%;
+		--chart-2: 160 60% 45%;
+		--chart-3: 30 80% 55%;
+		--chart-4: 280 65% 60%;
+		--chart-5: 340 75% 55%;
+		--brand: 213.3 93.9% 67.8%;
 	}
 
 	* {
