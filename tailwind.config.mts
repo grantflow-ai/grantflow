@@ -50,6 +50,21 @@ const config = {
 					DEFAULT: "hsl(var(--card))",
 					foreground: "hsl(var(--card-foreground))",
 				},
+				chart: {
+					"1": "hsl(var(--chart-1))",
+					"2": "hsl(var(--chart-2))",
+					"3": "hsl(var(--chart-3))",
+					"4": "hsl(var(--chart-4))",
+					"5": "hsl(var(--chart-5))",
+				},
+				brand: {
+					DEFAULT: "hsl(var(--brand))",
+					foreground: "hsl(var(--brand-foreground))",
+				},
+				highlight: {
+					DEFAULT: "hsl(var(--highlight))",
+					foreground: "hsl(var(--highlight-foreground))",
+				},
 			},
 			borderRadius: {
 				lg: "var(--radius)",
@@ -78,9 +93,14 @@ const config = {
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
 			},
+			screens: {
+				"main-hover": {
+					raw: "(hover: hover)",
+				},
+			},
 		},
 	},
-	plugins: [],
+	plugins: [require("tailwindcss-animate"), require("tailwind-scrollbar-hide")],
 } satisfies Config;
 
 export default config;
