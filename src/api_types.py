@@ -30,6 +30,15 @@ class ApplicationDraftCreateResponse(TypedDict):
     """The ID of the grant application draft."""
 
 
+class ApplicationDraftResponse(TypedDict):
+    """The response schema for creating an application draft."""
+
+    id: str
+    """The ID of the grant application draft."""
+    text: str
+    """The content of the grant application draft."""
+
+
 # ApplicationFiles API Types
 
 

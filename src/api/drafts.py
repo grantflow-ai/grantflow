@@ -3,11 +3,11 @@ from http import HTTPStatus
 from uuid import UUID
 
 from sanic import HTTPResponse, json
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.utils import verify_workspace_access
-from src.api_types import APIRequest, ApplicationDraftCreateResponse
+from src.api_types import APIRequest, ApplicationDraftCreateResponse, ApplicationDraftResponse
 from src.db.tables import ApplicationDraft
 from src.exceptions import DatabaseError
 from src.rag.generate_draft import generate_application_draft
@@ -56,5 +56,33 @@ async def handle_create_application_draft(
 
     return json(
         ApplicationDraftCreateResponse(id=str(application_draft_id)),
+        status=HTTPStatus.CREATED,
+    )
+
+
+async def handle_retrieve_application_draft(
+    request: APIRequest, workspace_id: UUID, application_draft_id: UUID
+) -> HTTPResponse:
+    """Route handler for creating an Application.
+
+    Args:
+        request: The request object.
+        workspace_id: The workspace ID.
+        application_draft_id: The application draft ID.
+
+    Returns:
+        The response object.
+    """
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    logger.info("Retrieving application draft with id %s", application_draft_id)
+
+    async with request.ctx.session_maker() as session:
+        application_draft = await session.scalar(
+            select(ApplicationDraft).where(ApplicationDraft.id == application_draft_id)
+        )
+
+    return json(
+        ApplicationDraftResponse(id=str(application_draft_id), text=application_draft.text or ""),
         status=HTTPStatus.CREATED,
     )
