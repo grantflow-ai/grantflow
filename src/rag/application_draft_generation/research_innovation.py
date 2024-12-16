@@ -1,9 +1,15 @@
 import logging
 from functools import partial
 from string import Template
-from typing import Final
+from typing import Any, Final, cast
+
+from sqlalchemy import insert, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
+from src.db.tables import GrantApplication, TextGenerationResult
+from src.exceptions import DatabaseError
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
 )
@@ -70,7 +76,7 @@ This is the description of the research innovation provided by the user ${innova
 async def generate_innovation_text(
     previous_part_text: str | None,
     *,
-    innovation_description: str | None,
+    application: GrantApplication,
     research_plan_text: str,
     retrieval_results: list[DocumentDTO],
     significance_text: str,
@@ -79,7 +85,7 @@ async def generate_innovation_text(
 
     Args:
         previous_part_text: The previous part of the innovation text, if any.
-        innovation_description: The description of the research innovation.
+        application: The grant application.
         research_plan_text: The full text of the research plan section.
         retrieval_results: The results of the RAG retrieval.
         significance_text: The generated significance text.
@@ -88,7 +94,7 @@ async def generate_innovation_text(
         GenerationResultDTO: The generated text for the innovation section.
     """
     user_prompt = INNOVATION_GENERATION_USER_PROMPT.substitute(
-        innovation_description=innovation_description or "No description provided.",
+        innovation_description=application.innovation or "No description provided.",
         significance_text=significance_text,
         rag_results=serialize(retrieval_results),
         previous_part_text=previous_part_text,
@@ -105,43 +111,81 @@ async def generate_innovation_text(
 
 async def handle_innovation_text_generation(
     *,
-    application_id: str,
-    innovation_description: str | None,
+    application: GrantApplication,
+    application_draft_id: str,
     research_plan_text: str,
     significance_text: str,
+    session_maker: async_sessionmaker[Any],
 ) -> str:
     """Generate the text for the innovation section.
 
     Args:
-        application_id: The ID of the grant application.
-        innovation_description: The description of the research innovation.
+        application: The grant application.
+        application_draft_id: The ID of the grant application
         research_plan_text: The text of the research plan section.
         significance_text: The generated significance text.
+        session_maker: The session maker.
+
+    Raises:
+        DatabaseError: If there was an issue updating the application draft in the database.
 
     Returns:
-        The generated text for the innovation section.
+        The generated section text.
     """
+    async with session_maker() as session:
+        if result := await session.scalar(
+            select(
+                TextGenerationResult.content,
+            )
+            .where(
+                TextGenerationResult.section_type == "innovation",
+            )
+            .where(
+                TextGenerationResult.application_draft_id == application_draft_id,
+            )
+        ):
+            return cast(str, result)
+
     search_queries = await create_search_queries(
         RESEARCH_INNOVATION_QUERIES_PROMPT.substitute(
-            innovation_description=innovation_description or "No description provided.",
+            innovation_description=application.innovation or "No description provided.",
         ).strip()
     )
 
     search_result = await retrieve_documents(
-        application_id=application_id,
+        application_id=str(application.id),
         search_queries=search_queries,
     )
 
     handler = partial(
         generate_innovation_text,
-        innovation_description=innovation_description,
+        application=application,
         research_plan_text=research_plan_text,
         retrieval_results=search_result,
         significance_text=significance_text,
     )
 
-    return await handle_segmented_text_generation(
+    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
         entity_type="innovation",
         entity_identifier="innovation",
         prompt_handler=handler,
     )
+
+    async with session_maker() as session, session.begin():
+        try:
+            await session.scalar(
+                insert(TextGenerationResult).values(
+                    {
+                        "content": content,
+                        "number_of_api_calls": number_of_api_calls,
+                        "section_type": "innovation",
+                        "generation_duration": generation_duration,
+                    }
+                )
+            )
+            await session.commit()
+            return content
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error while saving generated sections: %s", e)
+            raise DatabaseError("Error while saving generated sections") from e

@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from sanic import Request, Sanic
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -281,30 +281,3 @@ class OTPResponse(TypedDict):
 
     otp: str
     """The otp identifying the user."""
-
-
-class ChatNotification(TypedDict):
-    """Application chat room message type."""
-
-    type: Literal["notification"]
-    """The message type."""
-    text: str
-    """The message text."""
-
-
-class ChatErrorNotification(TypedDict):
-    """Application chat room message type."""
-
-    type: Literal["error"]
-    """The message type."""
-    text: str
-    """The message text."""
-
-
-class ChatGenerationResultMessage(TypedDict):
-    """Application chat room message type."""
-
-    type: Literal["content"]
-    """The message type."""
-    data: ApplicationDraftGenerationResponse
-    """The message text."""

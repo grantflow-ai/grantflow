@@ -69,7 +69,6 @@ async def test_application_draft_result(
         assert result is not None
         assert result.id == result_data.id
         assert result.application_id == result_data.application_id
-        assert result.duration == result_data.duration
         assert result.text == result_data.text
 
 
