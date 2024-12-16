@@ -57,9 +57,12 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
     """
     session_maker = get_session_maker()
 
+    logger.info("Starting RAG pipeline for application draft %s", application_draft_id)
     while await check_exists_files_being_indexed(session_maker=session_maker, application_id=application_id):
+        logger.info("Waiting for files to finish indexing")
         await sleep(2)
 
+    logger.info("Files finished indexing, beginning text generation")
     async with session_maker() as session:
         application = await session.scalar(
             select(GrantApplication)
@@ -72,16 +75,19 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
         )
 
     if any(research_aim.relations is None for research_aim in application.research_aims):
+        logger.info("Enriching research aims and tasks with relationship information")
         await enrich_research_aims_and_tasks_with_relationship_information(
             session_maker=session_maker,
             research_aims=application.research_aims,
         )
+        logger.info("Enriched research aims and tasks with relationship information")
 
     research_plan_text = await handle_research_plan_text_generation(
         application=application,
         application_draft_id=str(application_draft_id),
         session_maker=session_maker,
     )
+    logger.info("Generated research plan section")
 
     significance_text = await handle_significance_text_generation(
         application=application,
@@ -89,8 +95,7 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
         research_plan_text=research_plan_text,
         session_maker=session_maker,
     )
-
-    logger.debug("Generated significance section: %s", significance_text)
+    logger.info("Generated significance section")
 
     innovation_text = await handle_innovation_text_generation(
         application=application,
@@ -99,8 +104,7 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
         session_maker=session_maker,
         significance_text=significance_text,
     )
-
-    logger.debug("Generated innovation section: %s", innovation_text)
+    logger.info("Generated innovation section")
 
     specific_aims_text = await handle_specific_aims_text_generation(
         application=application,
@@ -110,7 +114,7 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
         session_maker=session_maker,
         significance_text=significance_text,
     )
-    logger.debug("Generated specific aims section: %s", specific_aims_text)
+    logger.info("Generated specific aims section")
 
     result = normalize_markdown(
         DRAFT_APPLICATION_TEMPLATE.substitute(
@@ -130,9 +134,11 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
                 .where(ApplicationDraft.id == application_draft_id)
             )
             await session.commit()
+            logger.info("Draft generation result saved to database")
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Failed to update application draft: %s", e)
             raise DatabaseError("Failed to update application draft") from e
 
+    logger.info("Draft generation completed successfully for application draft %s", application_draft_id)
     return result
