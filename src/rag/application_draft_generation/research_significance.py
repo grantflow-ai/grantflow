@@ -133,6 +133,7 @@ async def generate_significance_text(
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
         model=PREMIUM_TEXT_GENERATION_MODEL,
+        response_type=GenerationResultDTO,
     )
 
 

@@ -1,6 +1,6 @@
 from collections.abc import Callable, Coroutine
 from time import time
-from typing import Any, Final, TypeVar
+from typing import Any, Final
 
 from google.api_core.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
@@ -18,8 +18,6 @@ from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 from src.utils.sleep import sleep_with_message
 from src.utils.text import concatenate_segments_with_spacy_coherence
-
-T = TypeVar("T", bound=dict[str, Any])
 
 logger = get_logger(__name__)
 
@@ -102,12 +100,12 @@ SEGMENTED_GENERATION_SCHEMA = {
 
 
 @exponential_backoff_retry(ValidationError)
-async def handle_completions_request(
+async def handle_completions_request[T](
     *,
     model: str = PREMIUM_TEXT_GENERATION_MODEL,
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
     prompt_identifier: str,
-    response_type: type[T] = GenerationResultDTO,  # type: ignore[assignment]
+    response_type: type[T],
     system_prompt: str,
     response_schema: dict[str, Any] | None = None,
     user_prompt: str,
