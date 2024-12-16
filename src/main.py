@@ -7,11 +7,10 @@ from sanic import Sanic
 
 from src.api import register_routes
 from src.api_types import RequestContext
-from src.exceptions import BackendError
 from src.middleware import authenticate_user, set_session_maker
 from src.rag.generate_draft import generate_application_draft
 from src.utils.serialization import decoder, encoder
-from src.utils.server import before_server_start_hook, handle_backend_error
+from src.utils.server import before_server_start_hook, handle_exception
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -29,7 +28,7 @@ app.config.CORS_METHODS = ["OPTIONS", "GET", "POST", "PATCH", "DELETE"]
 app.config.CORS_MAX_AGE = 86400
 app.config.CORS_AUTOMATIC_OPTIONS = True
 
-app.error_handler.add(BackendError, handle_backend_error)
+app.error_handler.add(Exception, handle_exception)
 
 app.register_middleware(authenticate_user, "request")
 app.register_middleware(set_session_maker, "request")

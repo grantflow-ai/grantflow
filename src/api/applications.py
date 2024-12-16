@@ -261,14 +261,24 @@ async def handle_retrieve_application_text(
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     logger.info("handling polling request for application: %s", application_id)
-    async with request.ctx.session_maker() as session:
-        application = await session.scalar(select(Application).where(Application.id == application_id))
+    try:
+        async with request.ctx.session_maker() as session:
+            result = await session.execute(
+                select(Application.text)
+                .where(Application.id == application_id)
+                .where(Application.completed_at.is_not(None))
+                .where(Application.text.isnot(None))
+            )
+            application_text = result.scalar_one_or_none()
 
-    if application.completed_at is not None and application.text:
-        return json(
-            ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application.text),
-            status=HTTPStatus.OK,
-        )
+        if application_text:
+            return json(
+                ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application_text),
+                status=HTTPStatus.OK,
+            )
+    except Exception as e:  # noqa: BLE001
+        logger.error("Error retrieving application text: %s", e)
+        # we are intentionally swallowing the exception here
 
     return json(
         ApplicationDraftProcessingResponse(id=str(application_id), status="generating"),
