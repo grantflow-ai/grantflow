@@ -7,18 +7,27 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.utils import verify_workspace_access
-from src.api_types import APIRequest, ApplicationDraftCreateResponse, ApplicationDraftResponse
-from src.db.tables import ApplicationDraft
+from src.api_types import (
+    APIRequest,
+    ApplicationDraftCompleteResponse,
+    ApplicationDraftCreateResponse,
+    ApplicationDraftProcessingResponse,
+)
+from src.db.tables import (
+    ApplicationDraft,
+)
 from src.exceptions import DatabaseError
 from src.rag.generate_draft import generate_application_draft
 
 logger = logging.getLogger(__name__)
 
+PROCESSING_SLEEP_INTERVAL = 15  # seconds
+
 
 async def handle_create_application_draft(
     request: APIRequest, workspace_id: UUID, application_id: UUID
 ) -> HTTPResponse:
-    """Route handler for creating an Application.
+    """Route handler for creating an Application Draft.
 
     Args:
         request: The request object.
@@ -63,7 +72,7 @@ async def handle_create_application_draft(
 async def handle_retrieve_application_draft(
     request: APIRequest, workspace_id: UUID, application_draft_id: UUID
 ) -> HTTPResponse:
-    """Route handler for creating an Application.
+    """Route handler for polling and retrieving an Application Draft.
 
     Args:
         request: The request object.
@@ -82,7 +91,15 @@ async def handle_retrieve_application_draft(
             select(ApplicationDraft).where(ApplicationDraft.id == application_draft_id)
         )
 
+    if application_draft.completed_at is not None and application_draft.text:
+        return json(
+            ApplicationDraftCompleteResponse(
+                id=str(application_draft_id), status="complete", text=application_draft.text
+            ),
+            status=HTTPStatus.OK,
+        )
+
     return json(
-        ApplicationDraftResponse(id=str(application_draft_id), text=application_draft.text or ""),
-        status=HTTPStatus.CREATED,
+        ApplicationDraftProcessingResponse(id=str(application_draft_id), status="generating"),
+        status=HTTPStatus.OK,
     )
