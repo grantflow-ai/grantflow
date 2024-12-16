@@ -1,9 +1,4 @@
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
-
-
-class Ref(Generic[T]):
+class Ref[T]:
     """A reference to a value that can be mutated."""
 
     value: T | None = None

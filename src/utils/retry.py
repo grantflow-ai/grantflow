@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Final, ParamSpec, TypeVar, cast
+from typing import Final, cast
 
 from tenacity import (
     retry,
@@ -8,9 +8,6 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
 RETRY_ATTEMPTS_WITH_JITTER: Final[int] = 3
 INITIAL_WAIT_JITTER: Final[int] = 10
 MAX_WAIT_JITTER: Final[int] = 60
@@ -18,7 +15,7 @@ EXP_BASE_JITTER: Final[int] = 2
 JITTER_VALUE: Final[int] = 30
 
 
-def exponential_backoff_retry(*exc: type[Exception]) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def exponential_backoff_retry[**P, R](*exc: type[Exception]) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Retry decorator for retrying a function multiple times with exponential backoff.
 
     Args:
