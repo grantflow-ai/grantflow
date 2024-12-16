@@ -5,6 +5,7 @@ from typing import Any
 
 from sanic import HTTPResponse, Sanic, json
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.api_types import APIRequest, RequestContext
 from src.db.connection import get_session_maker
@@ -16,8 +17,8 @@ from src.utils.firebase import get_firebase_app
 logger = logging.getLogger(__name__)
 
 
-def handle_backend_error(request: APIRequest, exception: BackendError) -> HTTPResponse:
-    """Handle a backend error.
+def handle_exception(request: APIRequest, exception: Exception) -> HTTPResponse:
+    """Handle a exception.
 
     Args:
         request: The request object.
@@ -30,9 +31,17 @@ def handle_backend_error(request: APIRequest, exception: BackendError) -> HTTPRe
         logger.error("Failed to deserialize the request body: %s, error: %s", request.body, exception)
         message = "Failed to deserialize the request body"
         status = HTTPStatus.BAD_REQUEST
-    else:
+    elif isinstance(exception, BackendError):
         logger.error("An unexpected backend error occurred: %s", exception)
         message = "An unexpected backend error occurred"
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+    elif isinstance(exception, SQLAlchemyError):
+        logger.error("An unexpected sqlalchemy error occurred: %s, %s", type(exception).__name__, exception)
+        message = "An unexpected database error occurred"
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+    else:
+        logger.error("An unexpected error occurred: %s, %s", type(exception).__name__, exception)
+        message = "An unexpected error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
 
     return json(
