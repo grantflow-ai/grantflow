@@ -9,6 +9,7 @@ from src.api.applications import (
 )
 from src.api.cfps import handle_retrieve_cfps
 from src.api.chat import application_generation_ws
+from src.api.drafts import handle_create_application_draft
 from src.api.files import handle_upload_application_files
 from src.api.health import health_check
 from src.api.login import handle_login
@@ -45,14 +46,14 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     # CFPs
     app.add_route(handle_retrieve_cfps, "/cfps", methods=["GET"])
 
-    # Workspaces CRUD
+    # Workspaces
     app.add_route(handle_create_workspace, "/workspaces", methods=["POST"])
     app.add_route(handle_retrieve_workspaces, "/workspaces", methods=["GET"])
     app.add_route(handle_update_workspace, "/workspaces/<workspace_id:uuid>", methods=["PATCH"])
     app.add_route(handle_retrieve_workspace, "/workspaces/<workspace_id:uuid>", methods=["GET"])
     app.add_route(handle_delete_workspace, "/workspaces/<workspace_id:uuid>", methods=["DELETE"])
 
-    # Applications CRUD
+    # Applications
     app.add_route(handle_create_application, "/workspaces/<workspace_id:uuid>/applications", methods=["POST"])
     app.add_route(handle_retrieve_applications, "/workspaces/<workspace_id:uuid>/applications", methods=["GET"])
     app.add_route(
@@ -61,7 +62,14 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         methods=["GET"],
     )
 
-    # Research Aims CRUD
+    # Application Drafts
+    app.add_route(
+        handle_create_application_draft,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/drafts",
+        methods=["POST"],
+    )
+
+    # Research Aims
     app.add_route(
         handle_create_research_aims,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/research-aims",
@@ -96,7 +104,6 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     )
 
     # Chat Websocket
-
     app.add_websocket_route(
         application_generation_ws,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/chat-room",
