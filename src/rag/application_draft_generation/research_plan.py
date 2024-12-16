@@ -1,7 +1,8 @@
 import logging
 from asyncio import gather
+from itertools import batched
 from string import Template
-from typing import Any, Final, cast
+from typing import Any, Final
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -88,7 +89,10 @@ async def handle_research_plan_text_generation(
         )
 
     logger.info("Generated research aims and tasks for application %s", application_id)
-    mapped_sections = dict(cast(list[tuple[str, str]], await gather(*promises)))
+    mapped_sections: dict[str, str] = {}
+    for batch in batched(promises, 3):
+        logger.info("Gathering batch of research aims and tasks generation tasks")
+        mapped_sections.update(await gather(*batch))
 
     return RESEARCH_PLAN_SECTION_TEMPLATE.substitute(
         research_aims_text="\n\n".join(
