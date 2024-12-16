@@ -30,13 +30,15 @@ class GenerationResultDTO(TypedDict):
 class ResearchTaskDTO:
     """DTO for a research task data."""
 
+    id: str
+    """The ID of the task."""
     task_number: str
     """The task number in the format of <aim_number>.<task_number>."""
     title: str
     """The title of the task."""
     description: str
     """The description of the task."""
-    relations: list[str]
+    relations: list[str] | None
     """The relations of the task."""
 
 
@@ -44,6 +46,8 @@ class ResearchTaskDTO:
 class ResearchAimDTO:
     """DTO for a research aim data."""
 
+    id: str
+    """The ID of the aim."""
     aim_number: int
     """The aim number."""
     title: str
@@ -54,5 +58,5 @@ class ResearchAimDTO:
     """Whether the aim requires clinical trials."""
     research_tasks: list[ResearchTaskDTO]
     """The research tasks for the aim."""
-    relations: list[str]
+    relations: list[str] | None
     """The relations of the aim."""

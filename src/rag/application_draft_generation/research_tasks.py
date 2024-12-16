@@ -206,8 +206,9 @@ async def handle_research_task_text_generation(
                 )
             )
             await session.commit()
-            return research_task_id, content
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error while saving generated sections: %s", e)
             raise DatabaseError("Error while saving generated sections") from e
+
+    return research_task_id, content

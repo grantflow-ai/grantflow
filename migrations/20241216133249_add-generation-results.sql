@@ -2,10 +2,6 @@
 ALTER TABLE "application_drafts" DROP COLUMN "created_at", DROP COLUMN "duration", ALTER COLUMN "text" DROP NOT NULL, ADD COLUMN "completed_at" timestamptz NULL;
 -- Create index "ix_application_drafts_completed_at" to table: "application_drafts"
 CREATE INDEX "ix_application_drafts_completed_at" ON "application_drafts" ("completed_at");
--- Modify "research_aims" table
-ALTER TABLE "research_aims" ADD COLUMN "relations" character varying[] NULL;
--- Modify "research_tasks" table
-ALTER TABLE "research_tasks" ADD COLUMN "relations" character varying[] NULL;
 -- Create "text_generation_results" table
 CREATE TABLE "text_generation_results" (
   "id" uuid NOT NULL,

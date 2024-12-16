@@ -17,7 +17,6 @@ from src.db.tables import (
     ApplicationDraft,
 )
 from src.exceptions import DatabaseError
-from src.rag.generate_draft import generate_application_draft
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +54,10 @@ async def handle_create_application_draft(
             logger.error("Error creating application draft: %s", e)
             raise DatabaseError("Error creating application draft") from e
 
-    request.app.add_task(
-        generate_application_draft(
-            application_id=application_id,
-            application_draft_id=application_draft_id,
-        ),
-        name=str(application_draft_id),
+    logger.info("Dispatching signal to generate application draft")
+    await request.app.dispatch(
+        "generate_application_draft",
+        context={"application_id": application_id, "application_draft_id": application_draft_id},
     )
 
     return json(
@@ -77,6 +74,7 @@ async def handle_retrieve_application_draft(
     Args:
         request: The request object.
         workspace_id: The workspace ID.
+        application_id: The application ID.
         application_draft_id: The application draft ID.
 
     Returns:
