@@ -123,7 +123,6 @@ async def generate_research_aim_text(
 
 async def handle_research_aim_text_generation(
     *,
-    application_draft_id: str,
     application_id: str,
     research_aim_dto: ResearchAimDTO,
     research_aim_id: str,
@@ -132,7 +131,6 @@ async def handle_research_aim_text_generation(
     """Generate the text for a research aim.
 
     Args:
-        application_draft_id: The ID of the grant application draft.
         application_id: The application ID.
         research_aim_dto: The research aim to generate text for.
         research_aim_id: The ID of the research aim.
@@ -150,7 +148,7 @@ async def handle_research_aim_text_generation(
                 TextGenerationResult.content,
             )
             .where(
-                TextGenerationResult.application_draft_id == application_draft_id,
+                TextGenerationResult.application_id == application_id,
             )
             .where(
                 TextGenerationResult.section_id == research_aim_id,
@@ -188,7 +186,7 @@ async def handle_research_aim_text_generation(
             await session.execute(
                 insert(TextGenerationResult).values(
                     {
-                        "application_draft_id": application_draft_id,
+                        "application_id": application_id,
                         "content": content,
                         "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,

@@ -44,7 +44,6 @@ ${task_text}
 
 async def handle_research_plan_text_generation(
     *,
-    application_draft_id: str,
     application_id: str,
     research_aims: list[ResearchAim],
     session_maker: async_sessionmaker[Any],
@@ -52,7 +51,6 @@ async def handle_research_plan_text_generation(
     """Generate the text for the research aims and tasks.
 
     Args:
-        application_draft_id: The ID of the grant application draft.
         application_id: GrantApplication,
         research_aims: The research aims to generate text for.
         session_maker: The session maker.
@@ -67,7 +65,6 @@ async def handle_research_plan_text_generation(
     for research_aim_dto in research_aim_dtos:
         promises.append(
             handle_research_aim_text_generation(
-                application_draft_id=application_draft_id,
                 application_id=application_id,
                 research_aim_id=research_aim_dto.id,
                 session_maker=session_maker,
@@ -77,7 +74,6 @@ async def handle_research_plan_text_generation(
         promises.extend(
             [
                 handle_research_task_text_generation(
-                    application_draft_id=application_draft_id,
                     session_maker=session_maker,
                     application_id=application_id,
                     requires_clinical_trials=research_aim_dto.requires_clinical_trials,

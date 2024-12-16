@@ -127,7 +127,6 @@ async def generate_research_task_text(
 
 async def handle_research_task_text_generation(
     *,
-    application_draft_id: str,
     application_id: str,
     requires_clinical_trials: bool,
     research_task_dto: ResearchTaskDTO,
@@ -137,7 +136,6 @@ async def handle_research_task_text_generation(
     """Generate the text for a research task.
 
     Args:
-        application_draft_id: The ID of the application draft.
         application_id: The application ID.
         requires_clinical_trials: Whether the research task includes clinical trials.
         research_task_dto: The research task to generate text for.
@@ -156,7 +154,7 @@ async def handle_research_task_text_generation(
                 TextGenerationResult.content,
             )
             .where(
-                TextGenerationResult.application_draft_id == application_draft_id,
+                TextGenerationResult.application_id == application_id,
             )
             .where(
                 TextGenerationResult.section_id == research_task_id,
@@ -197,7 +195,7 @@ async def handle_research_task_text_generation(
             await session.execute(
                 insert(TextGenerationResult).values(
                     {
-                        "application_draft_id": application_draft_id,
+                        "application_id": application_id,
                         "content": content,
                         "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,

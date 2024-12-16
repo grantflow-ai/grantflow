@@ -9,6 +9,8 @@ from sqlalchemy.orm import selectinload
 from src.api.utils import verify_workspace_access
 from src.api_types import (
     APIRequest,
+    ApplicationDraftCompleteResponse,
+    ApplicationDraftProcessingResponse,
     ApplicationFileResponse,
     CfpResponse,
     CreateGrantApplicationRequestBody,
@@ -18,10 +20,12 @@ from src.api_types import (
     ResearchTaskResponse,
     UpdateApplicationRequestBody,
 )
-from src.db.tables import GrantApplication, GrantCfp, ResearchAim
+from src.db.tables import Application, GrantCfp, ResearchAim
 from src.utils.serialization import deserialize
 
 logger = logging.getLogger(__name__)
+
+PROCESSING_SLEEP_INTERVAL = 15  # seconds
 
 
 async def handle_create_application(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
@@ -40,7 +44,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
     request_body = deserialize(request.body, CreateGrantApplicationRequestBody)
     async with request.ctx.session_maker() as session, session.begin():
         application = await session.scalar(
-            insert(GrantApplication).values({"workspace_id": workspace_id, **request_body}).returning(GrantApplication)
+            insert(Application).values({"workspace_id": workspace_id, **request_body}).returning(Application)
         )
 
     return json(
@@ -69,9 +73,7 @@ async def handle_retrieve_applications(request: APIRequest, workspace_id: UUID) 
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     async with request.ctx.session_maker() as session, session.begin():
-        applications = await session.scalars(
-            select(GrantApplication).where(GrantApplication.workspace_id == workspace_id)
-        )
+        applications = await session.scalars(select(Application).where(Application.workspace_id == workspace_id))
 
     return json(
         [
@@ -105,34 +107,34 @@ async def handle_retrieve_application_detail(
 
     async with request.ctx.session_maker() as session, session.begin():
         stmt = (
-            select(GrantApplication)
+            select(Application)
             .options(
-                selectinload(GrantApplication.cfp).selectinload(GrantCfp.funding_organization),
-                selectinload(GrantApplication.application_files),
-                selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
+                selectinload(Application.cfp).selectinload(GrantCfp.funding_organization),
+                selectinload(Application.files),
+                selectinload(Application.research_aims).selectinload(ResearchAim.research_tasks),
             )
-            .where(GrantApplication.id == application_id)
+            .where(Application.id == application_id)
         )
 
-        grant_application: GrantApplication = (await session.execute(stmt)).scalar_one()
+        application: Application = (await session.execute(stmt)).scalar_one()
 
     return json(
         GrantApplicationDetailResponse(
-            id=str(grant_application.id),
-            title=grant_application.title,
-            significance=grant_application.significance,
-            innovation=grant_application.innovation,
+            id=str(application.id),
+            title=application.title,
+            significance=application.significance,
+            innovation=application.innovation,
             cfp=CfpResponse(
-                id=str(grant_application.cfp.id),
-                allow_clinical_trials=grant_application.cfp.allow_clinical_trials,
-                allow_resubmissions=grant_application.cfp.allow_resubmissions,
-                category=grant_application.cfp.category,
-                code=grant_application.cfp.code,
-                description=grant_application.cfp.description,
-                title=grant_application.cfp.title,
-                url=grant_application.cfp.url,
-                funding_organization_id=str(grant_application.cfp.funding_organization_id),
-                funding_organization_name=grant_application.cfp.funding_organization.name,
+                id=str(application.cfp.id),
+                allow_clinical_trials=application.cfp.allow_clinical_trials,
+                allow_resubmissions=application.cfp.allow_resubmissions,
+                category=application.cfp.category,
+                code=application.cfp.code,
+                description=application.cfp.description,
+                title=application.cfp.title,
+                url=application.cfp.url,
+                funding_organization_id=str(application.cfp.funding_organization_id),
+                funding_organization_name=application.cfp.funding_organization.name,
             ),
             research_aims=[
                 ResearchAimResponse(
@@ -151,7 +153,7 @@ async def handle_retrieve_application_detail(
                         for research_task in research_aim.research_tasks
                     ],
                 )
-                for research_aim in grant_application.research_aims
+                for research_aim in application.research_aims
             ],
             application_files=[
                 ApplicationFileResponse(
@@ -160,7 +162,7 @@ async def handle_retrieve_application_detail(
                     type=application_file.type,
                     size=application_file.size,
                 )
-                for application_file in grant_application.application_files
+                for application_file in application.files
             ],
         )
     )
@@ -183,10 +185,7 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
     request_body = deserialize(request.body, UpdateApplicationRequestBody)
     async with request.ctx.session_maker() as session, session.begin():
         application = await session.scalar(
-            update(GrantApplication)
-            .where(GrantApplication.id == application_id)
-            .values(request_body)
-            .returning(GrantApplication)
+            update(Application).where(Application.id == application_id).values(request_body).returning(Application)
         )
         await session.commit()
 
@@ -216,7 +215,62 @@ async def handle_delete_application(request: APIRequest, workspace_id: UUID, app
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     async with request.ctx.session_maker() as session, session.begin():
-        await session.execute(delete(GrantApplication).where(GrantApplication.id == application_id))
+        await session.execute(delete(Application).where(Application.id == application_id))
         await session.commit()
 
     return empty()
+
+
+async def handle_start_rag_pipeline(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+    """Route handler for creating an Application Draft.
+
+    Args:
+        request: The request object.
+        workspace_id: The workspace ID.
+        application_id: The application ID.
+
+    Returns:
+        The response object.
+    """
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    logger.info("Creating application draft for application %s", application_id)
+
+    logger.info("Dispatching signal to generate application draft")
+    await request.app.dispatch(
+        "generate_application_draft",
+        context={"application_id": application_id},
+    )
+
+    return empty()
+
+
+async def handle_retrieve_application_text(
+    request: APIRequest, workspace_id: UUID, application_id: UUID
+) -> HTTPResponse:
+    """Route handler for polling for the result of the RAG pipeline.
+
+    Args:
+        request: The request object.
+        workspace_id: The workspace ID.
+        application_id: The application ID.
+
+    Returns:
+        The response object.
+    """
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    logger.info("handling polling request for application: %s", application_id)
+    async with request.ctx.session_maker() as session:
+        application = await session.scalar(select(Application).where(Application.id == application_id))
+
+    if application.completed_at is not None and application.text:
+        return json(
+            ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application.text),
+            status=HTTPStatus.OK,
+        )
+
+    return json(
+        ApplicationDraftProcessingResponse(id=str(application_id), status="generating"),
+        status=HTTPStatus.OK,
+    )
