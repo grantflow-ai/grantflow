@@ -13,7 +13,7 @@ import {
 } from "gen/ui/breadcrumb";
 import { Fragment } from "react";
 
-const namespaces = new Set(["applications", "workspaces", "sign-in"]);
+const namespaces = new Set(["applications", "workspaces", "sign-in", "new"]);
 
 function parsePathComponents(path: string) {
 	const components = path.split("/").filter(Boolean);
