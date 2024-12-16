@@ -9,7 +9,7 @@ from src.api.applications import (
 )
 from src.api.cfps import handle_retrieve_cfps
 from src.api.chat import application_generation_ws
-from src.api.drafts import handle_create_application_draft
+from src.api.drafts import handle_create_application_draft, handle_retrieve_application_draft
 from src.api.files import handle_upload_application_files
 from src.api.health import health_check
 from src.api.login import handle_login
@@ -67,6 +67,11 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         handle_create_application_draft,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/drafts",
         methods=["POST"],
+    )
+    app.add_route(
+        handle_retrieve_application_draft,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/drafts/<application_draft_id:uuid>",
+        methods=["GET"],
     )
 
     # Research Aims
