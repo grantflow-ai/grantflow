@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
-from src.db.tables import GrantApplication, TextGenerationResult
+from src.db.tables import Application, TextGenerationResult
 from src.exceptions import DatabaseError
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
@@ -123,8 +123,7 @@ async def generate_specific_aims_text(
 
 async def handle_specific_aims_text_generation(
     *,
-    application: GrantApplication,
-    application_draft_id: str,
+    application: Application,
     innovation_text: str,
     research_plan_text: str,
     session_maker: async_sessionmaker[Any],
@@ -134,7 +133,6 @@ async def handle_specific_aims_text_generation(
 
     Args:
         application: The grant application.
-        application_draft_id: The ID of the grant application draft.
         innovation_text: The text of the Innovation section of the grant application.
         research_plan_text: The text of the research plan section.
         session_maker: The session maker.
@@ -155,7 +153,7 @@ async def handle_specific_aims_text_generation(
                 TextGenerationResult.section_type == "specific-aims",
             )
             .where(
-                TextGenerationResult.application_draft_id == application_draft_id,
+                TextGenerationResult.application_id == application.id,
             )
         ):
             return cast(str, result)
@@ -186,7 +184,7 @@ async def handle_specific_aims_text_generation(
             await session.execute(
                 insert(TextGenerationResult).values(
                     {
-                        "application_draft_id": application_draft_id,
+                        "application_id": application.id,
                         "content": content,
                         "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,

@@ -37,28 +37,23 @@ CREATE TABLE "workspaces" (
 );
 -- Create index "ix_workspaces_name" to table: "workspaces"
 CREATE INDEX "ix_workspaces_name" ON "workspaces" ("name");
--- Create "grant_applications" table
-CREATE TABLE "grant_applications" (
+-- Create "applications" table
+CREATE TABLE "applications" (
   "id" uuid NOT NULL,
   "title" character varying(255) NOT NULL,
   "significance" text NULL,
   "innovation" text NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "completed_at" timestamptz NULL,
+  "text" text NULL,
   "workspace_id" uuid NOT NULL,
   "cfp_id" uuid NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "grant_applications_cfp_id_fkey" FOREIGN KEY ("cfp_id") REFERENCES "grant_cfps" ("id") ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT "grant_applications_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces" ("id") ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT "applications_cfp_id_fkey" FOREIGN KEY ("cfp_id") REFERENCES "grant_cfps" ("id") ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT "applications_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces" ("id") ON UPDATE CASCADE ON DELETE CASCADE
 );
--- Create "application_drafts" table
-CREATE TABLE "application_drafts" (
-  "id" uuid NOT NULL,
-  "created_at" timestamptz NOT NULL,
-  "duration" integer NULL,
-  "text" text NOT NULL,
-  "application_id" uuid NOT NULL,
-  PRIMARY KEY ("id"),
-  CONSTRAINT "application_drafts_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "grant_applications" ("id") ON UPDATE CASCADE ON DELETE CASCADE
-);
+-- Create index "ix_applications_completed_at" to table: "applications"
+CREATE INDEX "ix_applications_completed_at" ON "applications" ("completed_at");
 -- Create "application_files" table
 CREATE TABLE "application_files" (
   "id" uuid NOT NULL,
@@ -68,7 +63,7 @@ CREATE TABLE "application_files" (
   "status" "fileindexingstatusenum" NOT NULL,
   "application_id" uuid NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "application_files_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "grant_applications" ("id") ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT "application_files_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "applications" ("id") ON UPDATE CASCADE ON DELETE CASCADE
 );
 -- Create "application_vectors" table
 CREATE TABLE "application_vectors" (
@@ -80,7 +75,7 @@ CREATE TABLE "application_vectors" (
   "embedding" vector(256) NOT NULL,
   "page_number" integer NULL,
   PRIMARY KEY ("application_id", "file_id", "chunk_index"),
-  CONSTRAINT "application_vectors_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "grant_applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT "application_vectors_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "application_vectors_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "application_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 -- Create index "ix_application_vectors_embedding_hnsw" to table: "application_vectors"
@@ -94,7 +89,7 @@ CREATE TABLE "research_aims" (
   "title" character varying(255) NOT NULL,
   "application_id" uuid NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "research_aims_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "grant_applications" ("id") ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT "research_aims_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "applications" ("id") ON UPDATE CASCADE ON DELETE CASCADE
 );
 -- Create "research_tasks" table
 CREATE TABLE "research_tasks" (
@@ -105,6 +100,18 @@ CREATE TABLE "research_tasks" (
   "aim_id" uuid NOT NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "research_tasks_aim_id_fkey" FOREIGN KEY ("aim_id") REFERENCES "research_aims" ("id") ON UPDATE CASCADE ON DELETE CASCADE
+);
+-- Create "text_generation_results" table
+CREATE TABLE "text_generation_results" (
+  "id" uuid NOT NULL,
+  "content" text NOT NULL,
+  "generation_duration" integer NULL,
+  "number_of_api_calls" integer NOT NULL,
+  "section_id" character varying NULL,
+  "section_type" character varying NOT NULL,
+  "application_id" uuid NOT NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "text_generation_results_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "applications" ("id") ON UPDATE CASCADE ON DELETE CASCADE
 );
 -- Create "workspace_users" table
 CREATE TABLE "workspace_users" (

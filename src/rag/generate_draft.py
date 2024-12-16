@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
 from src.db.connection import get_session_maker
-from src.db.tables import ApplicationDraft, GrantApplication, GrantCfp, ResearchAim
+from src.db.tables import Application, GrantCfp, ResearchAim
 from src.exceptions import DatabaseError
 from src.rag.application_draft_generation.research_innovation import handle_innovation_text_generation
 from src.rag.application_draft_generation.research_plan import handle_research_plan_text_generation
@@ -38,12 +38,11 @@ ${research_plan_text}
 """)
 
 
-async def generate_application_draft(*, application_id: str, application_draft_id: str) -> str:
+async def generate_application_draft(*, application_id: str) -> str:
     """Generate a draft of the grant application.
 
     Args:
         application_id: The ID of the grant application.
-        application_draft_id: The ID of the grant application draft.
 
     Raises:
         DatabaseError: If there was an issue updating the application draft in the database.
@@ -53,7 +52,7 @@ async def generate_application_draft(*, application_id: str, application_draft_i
     """
     session_maker = get_session_maker()
 
-    logger.info("Starting RAG pipeline for application draft %s", application_draft_id)
+    logger.info("Starting RAG pipeline for application %s", application_id)
     while await check_exists_files_being_indexed(session_maker=session_maker, application_id=application_id):
         logger.info("Waiting for files to finish indexing")
         await sleep(2)
@@ -62,19 +61,18 @@ async def generate_application_draft(*, application_id: str, application_draft_i
 
     async with session_maker() as session:
         application = await session.scalar(
-            select(GrantApplication)
+            select(Application)
             .options(
-                selectinload(GrantApplication.cfp).selectinload(GrantCfp.funding_organization),
-                selectinload(GrantApplication.application_files),
-                selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
+                selectinload(Application.cfp).selectinload(GrantCfp.funding_organization),
+                selectinload(Application.files),
+                selectinload(Application.research_aims).selectinload(ResearchAim.research_tasks),
             )
-            .where(GrantApplication.id == application_id)
+            .where(Application.id == application_id)
         )
 
     logger.info("Starting research plan section generation")
     research_plan_text = await handle_research_plan_text_generation(
         application_id=str(application.id),
-        application_draft_id=str(application_draft_id),
         research_aims=application.research_aims,
         session_maker=session_maker,
     )
@@ -83,7 +81,6 @@ async def generate_application_draft(*, application_id: str, application_draft_i
     logger.info("Starting significance section generation")
     significance_text = await handle_significance_text_generation(
         application=application,
-        application_draft_id=str(application_draft_id),
         research_plan_text=research_plan_text,
         session_maker=session_maker,
     )
@@ -92,7 +89,6 @@ async def generate_application_draft(*, application_id: str, application_draft_i
     logger.info("Starting innovation section generation")
     innovation_text = await handle_innovation_text_generation(
         application=application,
-        application_draft_id=str(application_draft_id),
         research_plan_text=research_plan_text,
         session_maker=session_maker,
         significance_text=significance_text,
@@ -102,7 +98,6 @@ async def generate_application_draft(*, application_id: str, application_draft_i
     logger.info("Starting specific aims section generation")
     specific_aims_text = await handle_specific_aims_text_generation(
         application=application,
-        application_draft_id=str(application_draft_id),
         innovation_text=innovation_text,
         research_plan_text=research_plan_text,
         session_maker=session_maker,
@@ -124,9 +119,9 @@ async def generate_application_draft(*, application_id: str, application_draft_i
     async with session_maker() as session, session.begin():
         try:
             await session.execute(
-                update(ApplicationDraft)
+                update(Application)
                 .values({"text": result, "completed_at": datetime.now(tz=UTC)})
-                .where(ApplicationDraft.id == application_draft_id)
+                .where(Application.id == application_id)
             )
             await session.commit()
             logger.info("Draft generation result saved to database")
@@ -135,5 +130,5 @@ async def generate_application_draft(*, application_id: str, application_draft_i
             logger.error("Failed to update application draft: %s", e)
             raise DatabaseError("Failed to update application draft") from e
 
-    logger.info("Draft generation completed successfully for application draft %s", application_draft_id)
+    logger.info("RAG pipelinecompleted successfully for application %s", application_id)
     return result

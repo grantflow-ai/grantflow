@@ -12,6 +12,7 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
+from sqlalchemy.sql.functions import now
 
 from src.constants import EMBEDDING_DIMENSIONS
 
@@ -107,16 +108,22 @@ class GrantCfp(Base):
     )
 
 
-class GrantApplication(Base):
+class Application(Base):
     """Grant application table."""
 
-    __tablename__ = "grant_applications"
+    __tablename__ = "applications"
 
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
     title: Mapped[str] = mapped_column(String(255), default=None)
     significance: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     innovation: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), default=None, server_default=now())
+    completed_at: Mapped[DateTime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None, index=True
+    )
+    text: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
 
     # Relationships
     workspace_id: Mapped[UUID[str]] = mapped_column(
@@ -126,14 +133,14 @@ class GrantApplication(Base):
         UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )
     cfp: Relationship["GrantCfp"] = relationship("GrantCfp", default=None)
-    application_files: Relationship[list["ApplicationFile"]] = relationship(
-        "ApplicationFile", back_populates="grant_application", cascade="all, delete-orphan", default=None
+    files: Relationship[list["ApplicationFile"]] = relationship(
+        "ApplicationFile", back_populates="application", cascade="all, delete-orphan", default=None
     )
     research_aims: Relationship[list["ResearchAim"]] = relationship(
-        "ResearchAim", back_populates="grant_application", cascade="all, delete-orphan", default=None
+        "ResearchAim", back_populates="application", cascade="all, delete-orphan", default=None
     )
-    drafts: Relationship[list["ApplicationDraft"]] = relationship(
-        "ApplicationDraft", back_populates="grant_application", cascade="all, delete-orphan", default=None
+    generation_results: Relationship[list["TextGenerationResult"]] = relationship(
+        "TextGenerationResult", back_populates="application", cascade="all, delete-orphan", default=None
     )
 
 
@@ -151,11 +158,9 @@ class ApplicationFile(Base):
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )
-    grant_application: Relationship["GrantApplication"] = relationship(
-        "GrantApplication", back_populates="application_files", default=None
-    )
+    application: Relationship["Application"] = relationship("Application", back_populates="files", default=None)
 
 
 class ResearchAim(Base):
@@ -172,11 +177,9 @@ class ResearchAim(Base):
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )
-    grant_application: Relationship["GrantApplication"] = relationship(
-        "GrantApplication", back_populates="research_aims", default=None
-    )
+    application: Relationship["Application"] = relationship("Application", back_populates="research_aims", default=None)
     research_tasks: Relationship[list["ResearchTask"]] = relationship(
         "ResearchTask", back_populates="research_aim", cascade="all, delete-orphan", default=None
     )
@@ -202,30 +205,6 @@ class ResearchTask(Base):
     )
 
 
-class ApplicationDraft(Base):
-    """Generation result table."""
-
-    __tablename__ = "application_drafts"
-
-    id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
-
-    completed_at: Mapped[DateTime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=None, index=True
-    )
-    text: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
-
-    # Relationships
-    application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
-    )
-    grant_application: Relationship["GrantApplication"] = relationship(
-        "GrantApplication", back_populates="drafts", default=None
-    )
-    generation_results: Relationship[list["TextGenerationResult"]] = relationship(
-        "TextGenerationResult", back_populates="application_draft", cascade="all, delete-orphan", default=None
-    )
-
-
 class TextGenerationResult(Base):
     """Text generation result table."""
 
@@ -240,11 +219,11 @@ class TextGenerationResult(Base):
     section_type: Mapped[str] = mapped_column(String, default=None)
 
     # Relationships
-    application_draft_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("application_drafts.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+    application_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )
-    application_draft: Relationship["ApplicationDraft"] = relationship(
-        "ApplicationDraft", back_populates="generation_results", default=None
+    application: Relationship["Application"] = relationship(
+        "Application", back_populates="generation_results", default=None
     )
 
 
@@ -254,7 +233,7 @@ class ApplicationVector(Base):
     __tablename__ = "application_vectors"
 
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True, default=None
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), primary_key=True, default=None
     )
     file_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("application_files.id", ondelete="CASCADE"), primary_key=True, default=None

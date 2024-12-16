@@ -11,8 +11,8 @@ from src.api_types import (
     GrantApplicationResponse,
 )
 from src.db.tables import (
+    Application,
     ApplicationFile,
-    GrantApplication,
     GrantCfp,
     ResearchAim,
     ResearchTask,
@@ -58,7 +58,7 @@ async def test_create_application_api_request_success(
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
-        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == response_body["id"]))
+        application = await session.scalar(select(Application).where(Application.id == response_body["id"]))
 
         assert application.title == response_body["title"]
         assert str(application.cfp_id) == response_body["cfp_id"]
@@ -123,7 +123,7 @@ async def test_retrieve_applications_api_request_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: GrantApplication,
+    application: Application,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -149,7 +149,7 @@ async def test_retrieve_applications_api_request_failure_unauthorized(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
     workspace: Workspace,
-    application: GrantApplication,
+    application: Application,
 ) -> None:
     _, response = await asgi_client.get(
         f"/workspaces/{workspace.id}/applications", headers={"Authorization": "Bearer some_token"}
@@ -162,7 +162,7 @@ async def test_retrieve_application_detail_api_request_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: GrantApplication,
+    application: Application,
     research_aim: ResearchAim,
     research_task: ResearchTask,
     application_file: ApplicationFile,
@@ -193,7 +193,7 @@ async def test_retrieve_application_detail_api_request_unauthorized(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
     workspace: Workspace,
-    application: GrantApplication,
+    application: Application,
 ) -> None:
     _, response = await asgi_client.get(
         f"/workspaces/{workspace.id}/applications/{application.id}", headers={"Authorization": "Bearer some_token"}
