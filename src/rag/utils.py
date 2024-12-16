@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable, Coroutine
+from time import time
 from typing import Any, Final, TypeVar
 
 from google.api_core.exceptions import TooManyRequests
@@ -40,17 +41,15 @@ whether the research aim text is complete or not. Example:
 async def handle_segmented_text_generation(
     *,
     entity_type: str,
-    entity_identifier: str,
+    entity_identifier: str = "",
     prompt_handler: Callable[[str | None], Coroutine[Any, Any, GenerationResultDTO]],
-    separator: str = " ",
-) -> str:
+) -> tuple[str, int, int]:
     """Handle the generation of segmented text.
 
     Args:
         entity_type: The type of entity to generate text for.
         entity_identifier: The identifier of the entity to generate text for.
         prompt_handler: The handler for the prompt.
-        separator: The separator to use for concatenating the segments.
 
     Returns:
         The generated text.
@@ -59,6 +58,7 @@ async def handle_segmented_text_generation(
     api_call_num = 1
 
     logger.info("Generating %s: %s", entity_type, entity_identifier)
+    start_time = time()
     while api_call_num < 20:
         logger.debug("%s generation API call number: %d", entity_identifier, api_call_num)
         last_generation_result = results[-1] if results else None
@@ -80,7 +80,7 @@ async def handle_segmented_text_generation(
         api_call_num,
     )
 
-    return concatenate_segments_with_spacy_coherence(results, separator=separator)
+    return concatenate_segments_with_spacy_coherence(results), api_call_num, int(time() - start_time)
 
 
 SEGMENTED_GENERATION_SCHEMA = {

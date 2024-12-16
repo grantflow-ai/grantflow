@@ -1,8 +1,14 @@
 import logging
 from functools import partial
 from string import Template
-from typing import Final
+from typing import Any, Final, cast
 
+from sqlalchemy import insert, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from src.db.tables import TextGenerationResult
+from src.exceptions import DatabaseError
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
@@ -16,10 +22,8 @@ from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.serialization import serialize
-from src.utils.ws import NotificationSender
 
 logger = logging.getLogger(__name__)
-
 
 RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS: Final[str] = """
 5. If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
@@ -123,27 +127,46 @@ async def generate_research_task_text(
 
 async def handle_research_task_text_generation(
     *,
+    application_draft_id: str,
     application_id: str,
-    notification_sender: NotificationSender,
     requires_clinical_trials: bool,
-    research_aim_number: int,
-    research_task: ResearchTaskDTO,
-) -> str:
+    research_task_dto: ResearchTaskDTO,
+    research_task_id: str,
+    session_maker: async_sessionmaker[Any],
+) -> tuple[str, str]:
     """Generate the text for a research task.
 
     Args:
+        application_draft_id: The ID of the application draft.
         application_id: The application ID.
-        notification_sender: The notification sender.
         requires_clinical_trials: Whether the research task includes clinical trials.
-        research_aim_number: The number of the research aim the task belongs to.
-        research_task: The research task to generate text for.
+        research_task_dto: The research task to generate text for.
+        research_task_id: The ID of the research task.
+        session_maker: The session maker.
+
+    Raises:
+        DatabaseError: If there was an issue updating the application draft in the database.
 
     Returns:
-        The generated text for the research task.
+        The generated section text.
     """
+    async with session_maker() as session:
+        if result := await session.scalar(
+            select(
+                TextGenerationResult.content,
+            )
+            .where(
+                TextGenerationResult.application_draft_id == application_draft_id,
+            )
+            .where(
+                TextGenerationResult.section_id == research_task_id,
+            )
+        ):
+            return research_task_id, cast(str, result)
+
     search_queries = await create_search_queries(
         RESEARCH_TASK_QUERIES_PROMPT.substitute(
-            research_task=serialize(research_task),
+            research_task=serialize(research_task_dto),
             clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
             if requires_clinical_trials
             else "",
@@ -157,17 +180,34 @@ async def handle_research_task_text_generation(
     handler = partial(
         generate_research_task_text,
         requires_clinical_trials=requires_clinical_trials,
-        research_task=research_task,
+        research_task=research_task_dto,
         retrieval_results=search_result,
     )
 
-    result = await handle_segmented_text_generation(
-        entity_type="research_task",
-        entity_identifier=f"research_task: {research_task.task_number}",
+    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
+        entity_type="research-task",
+        entity_identifier=research_task_id,
         prompt_handler=handler,
     )
 
-    await notification_sender.info(
-        f"Generated research task {research_aim_number}.{research_task.task_number}: {research_task.title} text."
-    )
-    return result
+    logger.info("Generated research task %d.", research_task_dto.task_number)
+
+    async with session_maker() as session, session.begin():
+        try:
+            await session.scalar(
+                insert(TextGenerationResult).values(
+                    {
+                        "content": content,
+                        "number_of_api_calls": number_of_api_calls,
+                        "section_id": research_task_id,
+                        "section_type": "research-task",
+                        "generation_duration": generation_duration,
+                    }
+                )
+            )
+            await session.commit()
+            return research_task_id, content
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error while saving generated sections: %s", e)
+            raise DatabaseError("Error while saving generated sections") from e

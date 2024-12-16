@@ -59,24 +59,25 @@ line-length = 120
 target-version = "py312"
 lint.select = ["ALL"]
 lint.ignore = [
-    "ANN401",  # Dynamically typed ANY
-    "COM812",  # Conflicts with formatter
-    "D100",    # Missing docstring in public module
-    "D104",    # Missing docstring in public package
-    "D107",    # Missing docstring in __init__
-    "D205",    # 1 blank line required between summary line and description
-    "E501",    # Line too long, handled by ruff format
-    "EM",      # Exception messages,
-    "FBT001",  # Boolean-typed positional argument in function definition
-    "FIX",     # We allow todo and fixme comments
-    "ISC001",  # Conflicts with formatter
-    "PD011",   # Creates false positives
-    "PGH003",  # Required specific mypy ignores
-    "PLR2004", # Magic variables, we allow them
-    "TD",      # We allow todo and fixme comments
-    "TRY",     # Try except block, rules are too strict
-    "S104",    # Disallows using '0.0.0.0' as a host
-    "FBT003",  # Boolean-typed argument in function call
+    "ANN401",   # Dynamically typed ANY
+    "COM812",   # Conflicts with formatter
+    "D100",     # Missing docstring in public module
+    "D104",     # Missing docstring in public package
+    "D107",     # Missing docstring in __init__
+    "D205",     # 1 blank line required between summary line and description
+    "E501",     # Line too long, handled by ruff format
+    "EM",       # Exception messages,
+    "FBT001",   # Boolean-typed positional argument in function definition
+    "FIX",      # We allow todo and fixme comments
+    "ISC001",   # Conflicts with formatter
+    "PD011",    # Creates false positives
+    "PGH003",   # Required specific mypy ignores
+    "PLR2004",  # Magic variables, we allow them
+    "TD",       # We allow todo and fixme comments
+    "TRY",      # Try except block, rules are too strict
+    "S104",     # Disallows using '0.0.0.0' as a host
+    "FBT003",   # Boolean-typed argument in function call
+    "ASYNC110", # Use Event instead of sleep in async loop
 ]
 src = ["src", "tests"]
 

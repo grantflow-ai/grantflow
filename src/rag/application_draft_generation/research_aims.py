@@ -1,9 +1,15 @@
 import logging
 from functools import partial
 from string import Template
-from typing import Final
+from typing import Any, Final, cast
+
+from sqlalchemy import insert, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
+from src.db.tables import TextGenerationResult
+from src.exceptions import DatabaseError
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
@@ -17,7 +23,6 @@ from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.serialization import serialize
-from src.utils.ws import NotificationSender
 
 logger = logging.getLogger(__name__)
 
@@ -117,22 +122,46 @@ async def generate_research_aim_text(
 
 
 async def handle_research_aim_text_generation(
-    *, application_id: str, research_aim: ResearchAimDTO, notification_sender: NotificationSender
-) -> str:
+    *,
+    application_draft_id: str,
+    application_id: str,
+    research_aim_dto: ResearchAimDTO,
+    research_aim_id: str,
+    session_maker: async_sessionmaker[Any],
+) -> tuple[str, str]:
     """Generate the text for a research aim.
 
     Args:
+        application_draft_id: The ID of the grant application draft.
         application_id: The application ID.
-        research_aim: The research aim to generate text for.
-        notification_sender: The notification sender.
+        research_aim_dto: The research aim to generate text for.
+        research_aim_id: The ID of the research aim.
+        session_maker: The session maker.
+
+    Raises:
+        DatabaseError: If there was an issue updating the application draft in the database.
 
     Returns:
-        The generated text for the research aim.
+        The generated section text.
     """
-    research_task_titles = [research_task.title for research_task in research_aim.research_tasks]
+    async with session_maker() as session:
+        if result := await session.scalar(
+            select(
+                TextGenerationResult.content,
+            )
+            .where(
+                TextGenerationResult.application_draft_id == application_draft_id,
+            )
+            .where(
+                TextGenerationResult.section_id == research_aim_id,
+            )
+        ):
+            return research_aim_id, cast(str, result)
+
+    research_task_titles = [research_task.title for research_task in research_aim_dto.research_tasks]
 
     search_queries = await create_search_queries(
-        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim)),
+        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim_dto)),
     )
 
     search_result = await retrieve_documents(
@@ -142,16 +171,34 @@ async def handle_research_aim_text_generation(
 
     handler = partial(
         generate_research_aim_text,
-        research_aim=research_aim,
+        research_aim=research_aim_dto,
         retrieval_results=search_result,
         research_task_titles=research_task_titles,
     )
 
-    result = await handle_segmented_text_generation(
-        entity_type="research_aim",
-        entity_identifier=f"research_aim: {research_aim.aim_number}",
+    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
+        entity_type="research-aim",
+        entity_identifier=research_aim_id,
         prompt_handler=handler,
     )
-    await notification_sender.info(f"Generated research aim {research_aim.aim_number}: {research_aim.title} text.")
+    logger.info("Generated research aim %d.", research_aim_dto.aim_number)
 
-    return result
+    async with session_maker() as session, session.begin():
+        try:
+            await session.scalar(
+                insert(TextGenerationResult).values(
+                    {
+                        "content": content,
+                        "number_of_api_calls": number_of_api_calls,
+                        "section_id": research_aim_id,
+                        "section_type": "research-aim",
+                        "generation_duration": generation_duration,
+                    }
+                )
+            )
+            await session.commit()
+            return research_aim_id, content
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error while saving generated sections: %s", e)
+            raise DatabaseError("Error while saving generated sections") from e
