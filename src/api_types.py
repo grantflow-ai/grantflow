@@ -23,13 +23,11 @@ APIRequest = Request[Sanic[Any, RequestContext], RequestContext]
 # Drafts API Types
 
 
-class ApplicationDraftGenerationResponse(TypedDict):
-    """The body of a message containing the result of generating a grant application draft."""
+class ApplicationDraftCreateResponse(TypedDict):
+    """The response schema for creating an application draft."""
 
-    content: str
-    """The generated content."""
-    duration: int
-    """The total duration of the generation process."""
+    id: str
+    """The ID of the grant application draft."""
 
 
 # ApplicationFiles API Types
