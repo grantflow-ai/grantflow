@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from secrets import token_hex
 from typing import cast
 
-from jwt import DecodeError
+from jwt import InvalidTokenError
 from sanic import Unauthorized
 
 from src.utils.env import get_env
@@ -58,7 +58,7 @@ def verify_jwt_token(token: str) -> str:
     except (
         ValueError,
         KeyError,
-        DecodeError,
+        InvalidTokenError,
     ) as e:
         logger.warning("Error verifying jwt: %s", e)
         raise Unauthorized("Invalid jwt") from e

@@ -1,8 +1,15 @@
+import logging
 from functools import partial
 from string import Template
-from typing import Final
+from typing import Any, Final, cast
+
+from sqlalchemy import insert, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
+from src.db.tables import GrantApplication, TextGenerationResult
+from src.exceptions import DatabaseError
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
@@ -12,6 +19,8 @@ from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.serialization import serialize
+
+logger = logging.getLogger(__name__)
 
 SIGNIFICANCE_GENERATION_USER_PROMPT: Final[Template] = Template("""
 Your task is to create the significance section for a grant application.
@@ -90,38 +99,32 @@ This is the the description of the research significance provided by the user ${
 async def generate_significance_text(
     previous_part_text: str | None,
     *,
-    application_title: str,
-    cfp_title: str,
-    grant_funding_organization: str,
+    application: GrantApplication,
     retrieval_results: list[DocumentDTO],
-    significance_description: str | None,
     research_plan_text: str,
 ) -> GenerationResultDTO:
     """Generate a part of the significance text.
 
     Args:
         previous_part_text: The previous part of the significance text, if any.
-        application_title: The title of the grant application.
-        cfp_title: The CFP action code and title.
-        grant_funding_organization: The funding organization for the grant.
+        application: The grant application.
         retrieval_results: The results of the RAG retrieval.
-        significance_description: The description of the research significance.
         research_plan_text: The text of the research plan section.
 
     Returns:
         GenerationResultDTO: The generated text for the significance section.
     """
     user_prompt = SIGNIFICANCE_GENERATION_USER_PROMPT.substitute(
-        application_title=application_title,
-        cfp_title=cfp_title,
-        grant_funding_organization=grant_funding_organization,
+        application_title=application.title,
+        cfp_title=f"{application.cfp.code} - {application.cfp.title}",
+        grant_funding_organization=application.cfp.funding_organization.name,
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
         )
         if previous_part_text
         else "",
         rag_results=serialize(retrieval_results),
-        significance_description=significance_description or "No description provided.",
+        significance_description=application.significance or "No description provided.",
         research_plan_text=research_plan_text,
     ).strip()
 
@@ -135,48 +138,76 @@ async def generate_significance_text(
 
 async def handle_significance_text_generation(
     *,
-    application_id: str,
-    application_title: str,
-    cfp_title: str,
-    grant_funding_organization: str,
+    application: GrantApplication,
+    application_draft_id: str,
     research_plan_text: str,
-    significance_description: str | None,
+    session_maker: async_sessionmaker[Any],
 ) -> str:
     """Generate the text for the significance section.
 
     Args:
-        application_id: The ID of the grant application.
-        application_title: The title of the grant application.
-        cfp_title: The CFP action code and title.
-        grant_funding_organization: The funding organization for the grant.
+        application: The grant application.
+        application_draft_id: The ID of the grant application draft.
         research_plan_text: The text of the research plan section.
-        significance_description: The description of the research significance.
+        session_maker: The session maker.
+
+    Raises:
+        DatabaseError: If there was an issue updating the application draft in the database.
 
     Returns:
-        The generated text for the significance section.
+        The generated section text.
     """
+    async with session_maker() as session:
+        if result := await session.scalar(
+            select(
+                TextGenerationResult.content,
+            )
+            .where(
+                TextGenerationResult.section_type == "significance",
+            )
+            .where(
+                TextGenerationResult.application_draft_id == application_draft_id,
+            )
+        ):
+            return cast(str, result)
+
     search_queries = await create_search_queries(
         RESEARCH_SIGNIFICANCE_QUERIES_PROMPT.substitute(
-            significance_description=significance_description or "No description provided.",
+            significance_description=application.significance or "No description provided.",
         ).strip()
     )
     search_result = await retrieve_documents(
-        application_id=application_id,
+        application_id=str(application.id),
         search_queries=search_queries,
     )
 
     handler = partial(
         generate_significance_text,
-        application_title=application_title,
-        cfp_title=cfp_title,
-        grant_funding_organization=grant_funding_organization,
+        application=application,
         research_plan_text=research_plan_text,
         retrieval_results=search_result,
-        significance_description=significance_description,
     )
 
-    return await handle_segmented_text_generation(
+    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
         entity_type="significance",
-        entity_identifier="significance",
         prompt_handler=handler,
     )
+
+    async with session_maker() as session, session.begin():
+        try:
+            await session.scalar(
+                insert(TextGenerationResult).values(
+                    {
+                        "content": content,
+                        "number_of_api_calls": number_of_api_calls,
+                        "section_type": "significance",
+                        "generation_duration": generation_duration,
+                    }
+                )
+            )
+            await session.commit()
+            return content
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error while saving generated sections: %s", e)
+            raise DatabaseError("Error while saving generated sections") from e

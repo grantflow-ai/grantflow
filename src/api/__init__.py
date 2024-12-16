@@ -8,7 +8,7 @@ from src.api.applications import (
     handle_retrieve_applications,
 )
 from src.api.cfps import handle_retrieve_cfps
-from src.api.chat import chat_room_ws_handler
+from src.api.chat import application_generation_ws
 from src.api.files import handle_upload_application_files
 from src.api.health import health_check
 from src.api.login import handle_login
@@ -34,8 +34,6 @@ def register_routes(app: Sanic[Any, Any]) -> None:
 
     Args:
         app: The Sanic app instance
-
-
     """
     # Health check
     app.add_route(health_check, "/health", methods=["GET"])
@@ -100,6 +98,6 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     # Chat Websocket
 
     app.add_websocket_route(
-        chat_room_ws_handler,
+        application_generation_ws,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/chat-room",
     )

@@ -1,9 +1,8 @@
-from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import ARRAY, Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -168,6 +167,7 @@ class ResearchAim(Base):
 
     aim_number: Mapped[int] = mapped_column(Integer, default=None)
     description: Mapped[str] = mapped_column(Text, default=None)
+    relations: Mapped[list[str] | None] = mapped_column(ARRAY(String), default=None)
     requires_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=False)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
@@ -191,6 +191,7 @@ class ResearchTask(Base):
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
     description: Mapped[str] = mapped_column(Text, default=None)
+    relations: Mapped[list[str] | None] = mapped_column(ARRAY(String), default=None)
     task_number: Mapped[int] = mapped_column(Integer, default=None)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
@@ -210,9 +211,10 @@ class ApplicationDraft(Base):
 
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), default=datetime.now(tz=UTC))
-    duration: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
-    text: Mapped[str] = mapped_column(Text, default=None)
+    completed_at: Mapped[DateTime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None, index=True
+    )
+    text: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
@@ -220,6 +222,28 @@ class ApplicationDraft(Base):
     )
     grant_application: Relationship["GrantApplication"] = relationship(
         "GrantApplication", back_populates="drafts", default=None
+    )
+    generation_results: Relationship[list["TextGenerationResult"]] = relationship(
+        "TextGenerationResult", back_populates="application_draft", cascade="all, delete-orphan", default=None
+    )
+
+
+class TextGenerationResult(Base):
+    """Text generation result table."""
+
+    __tablename__ = "text_generation_results"
+
+    id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
+
+    content: Mapped[str] = mapped_column(Text, default=None)
+    generation_duration: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    number_of_api_calls: Mapped[int] = mapped_column(Integer, default=None)
+    section_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    section_type: Mapped[str] = mapped_column(String, default=None)
+
+    # Relationships
+    application_draft_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("application_drafts.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )
 
 

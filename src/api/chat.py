@@ -1,39 +1,133 @@
 import logging
 from asyncio import sleep
-from time import time
+from typing import Literal, cast
 from uuid import UUID
 
 from sanic import Websocket
-from sqlalchemy import exists, insert, select
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import selectinload
+from sanic.exceptions import ServerError, WebsocketClosed
+from sqlalchemy import exists, select
 
 from src.api.utils import verify_workspace_access
 from src.api_types import (
     APIRequest,
-    ApplicationDraftGenerationResponse,
-    ChatErrorNotification,
-    ChatGenerationResultMessage,
-    ChatNotification,
 )
 from src.db.tables import (
     ApplicationDraft,
     ApplicationFile,
     FileIndexingStatusEnum,
-    GrantApplication,
-    GrantCfp,
-    ResearchAim,
 )
-from src.rag.application_draft_generation import generate_application_draft
+from src.exceptions import DatabaseError
+from src.rag.generate_draft import generate_application_draft
+from src.utils.db import check_exists_files_being_indexed
 from src.utils.serialization import serialize
-from src.utils.ws import NotificationSender
 
 logger = logging.getLogger(__name__)
 
-PROCESSING_SLEEP_INTERVAL = 30  # seconds
+PROCESSING_SLEEP_INTERVAL = 15  # seconds
 
 
-async def chat_room_ws_handler(request: APIRequest, ws: Websocket, workspace_id: UUID, application_id: UUID) -> None:
+class _Sender:
+    """A class to send messages to the frontend via websocket.
+
+    Args:
+        ws: The websocket object.
+    """
+
+    def __init__(self, ws: Websocket) -> None:
+        self.ws = ws
+
+    async def __call__(
+        self,
+        text: str,
+        message_type: Literal["notification", "error", "finished"] = "notification",
+    ) -> None:
+        try:
+            # note: decode is important, otherwise a binary frame will be sent
+            await self.ws.send(
+                serialize(
+                    {
+                        "type": message_type,
+                        "text": text,
+                    }
+                ).decode()
+            )
+        except (ServerError, WebsocketClosed):
+            logger.error("Websocket connection closed while sending message")
+
+
+async def wait_for_file_processing_finish(request: APIRequest, application_id: UUID, sender: _Sender) -> None:
+    """Wait for the file processing to finish.
+
+    Args:
+        request: The request object.
+        application_id: The application ID.
+        sender: The sender object.
+
+    Returns:
+        None
+    """
+    while await check_exists_files_being_indexed(
+        session_maker=request.ctx.session_maker, application_id=application_id
+    ):
+        await sender(
+            message_type="notification",
+            text="Processing files...",
+        )
+        await sleep(PROCESSING_SLEEP_INTERVAL)
+
+
+async def report_file_failures(request: APIRequest, application_id: UUID, sender: _Sender) -> None:
+    """Report any files that failed to be indexed.
+
+    Args:
+        request: The request object.
+        application_id: The application ID.
+        sender: The sender object.
+
+    Returns:
+        None
+    """
+    async with request.ctx.session_maker() as session:
+        failed_files = await session.scalars(
+            select(ApplicationFile.name)
+            .where(ApplicationFile.application_id == application_id)
+            .where(ApplicationFile.status == FileIndexingStatusEnum.FAILED)
+        )
+        if failed_files:
+            await sender(
+                message_type="error",
+                text=", ".join([f"File {filename} could not be indexed." for filename in failed_files]),
+            )
+
+
+async def poll_for_draft_generation_finish(request: APIRequest, application_draft_id: UUID) -> bool:
+    """Poll the database to check if the application draft generation has finished.
+
+    Args:
+        request: The request object.
+        application_draft_id: The application draft ID.
+
+    Returns:
+        Whether the application draft generation has finished.
+    """
+    async with request.ctx.session_maker() as session:
+        return cast(
+            bool,
+            await session.scalar(
+                select(
+                    exists(
+                        select(ApplicationDraft)
+                        .where(ApplicationDraft.id == application_draft_id)
+                        .where(ApplicationDraft.completed_at.isnot(None))
+                    )
+                )
+            ),
+        )
+
+
+async def application_generation_ws(
+    request: APIRequest, ws: Websocket, workspace_id: UUID, application_id: UUID, application_draft_id: UUID
+) -> None:
     """Route handler for the application chat room websocket.
 
     Args:
@@ -41,90 +135,40 @@ async def chat_room_ws_handler(request: APIRequest, ws: Websocket, workspace_id:
         ws: The websocket object.
         workspace_id: The workspace ID.
         application_id: The application
+        application_draft_id: The application draft ID.
     """
     logger.info("Web socket request with ID %s", application_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    notification_sender = NotificationSender(ws)
+    task_name = f"generate-draft-{application_draft_id}"
 
+    if not request.app.get_task(name=task_name, raise_exception=False):
+        request.app.add_task(
+            generate_application_draft(
+                application_id=application_id,
+                application_draft_id=application_draft_id,
+            ),
+            name=task_name,
+        )
+
+    sender = _Sender(ws)
     try:
-        async with request.ctx.session_maker() as session:
-            is_processing_files = True
-            while is_processing_files:
-                if is_processing_files := await session.scalar(
-                    select(
-                        exists(
-                            select(ApplicationFile)
-                            .where(ApplicationFile.application_id == application_id)
-                            .where(ApplicationFile.status == FileIndexingStatusEnum.INDEXING)
-                        )
-                    )
-                ):
-                    await notification_sender.info("Indexing files...")
-                    await sleep(PROCESSING_SLEEP_INTERVAL)
-
-        async with request.ctx.session_maker() as session:
-            application = await session.scalar(
-                select(GrantApplication)
-                .options(
-                    selectinload(GrantApplication.cfp).selectinload(GrantCfp.funding_organization),
-                    selectinload(GrantApplication.application_files),
-                    selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
-                )
-                .where(GrantApplication.id == application_id)
+        await wait_for_file_processing_finish(request=request, application_id=application_id, sender=sender)
+        await report_file_failures(request=request, application_id=application_id, sender=sender)
+        while not await poll_for_draft_generation_finish(request=request, application_draft_id=application_draft_id):
+            await sender(
+                message_type="notification",
+                text="Generating application draft...",
             )
-
-        start_time = time()
-        await notification_sender.info("Beginning Text Generation")
-
-        result = await generate_application_draft(application=application, notification_sender=notification_sender)
-        duration = int(time() - start_time)
-
-        async with request.ctx.session_maker() as session, session.begin():
-            try:
-                insert_statement = insert(ApplicationDraft).values(
-                    {"application_id": application_id, "text": result, "duration": duration}
-                )
-                await session.execute(insert_statement)
-                await session.commit()
-            except SQLAlchemyError as e:
-                logging.error("Error inserting generation result: %s", e)
-                await session.rollback()
-                await ws.send(
-                    serialize(
-                        ChatErrorNotification(
-                            type="error",
-                            text="An error occurred while processing the application.",
-                        )
-                    ).decode()
-                )
-                return
-
-        await notification_sender.info("Text Generation Completed.")
-        await notification_sender.debug(f"Text Generation took {duration} seconds.")
-
-        await ws.send(
-            serialize(
-                ChatGenerationResultMessage(
-                    type="content",
-                    data=ApplicationDraftGenerationResponse(content=result, duration=duration),
-                )
-            ).decode()
+            await sleep(PROCESSING_SLEEP_INTERVAL)
+        await sender(
+            message_type="finished",
+            text="Application draft generation complete.",
         )
-
-        async for msg in ws:
-            logger.info("Received message: %s", msg)
-            await ws.send(serialize(ChatNotification(type="notification", text="Received message: " + msg)).decode())
-
-    except Exception as e:  # noqa: BLE001
-        logger.error(
-            "An error occurred while processing grant application with ID %s application: %s", application_id, e
+    except DatabaseError as e:
+        logger.error("Failed to poll database due to an error. %s", e)
+        await sender(
+            message_type="error",
+            text="An error occurred while processing the application.",
         )
-        await ws.send(
-            serialize(
-                ChatErrorNotification(
-                    type="error",
-                    text="An error occurred while processing the application.",
-                )
-            ).decode()
-        )
+        await request.app.cancel_task(name=task_name)

@@ -4,18 +4,16 @@ from src.utils.text import concatenate_segments_with_spacy_coherence, normalize_
 
 
 @pytest.mark.parametrize(
-    ("segments", "max_overlap_sentences", "expected"),
+    ("segments", "expected"),
     [
-        ([], 0, ""),
-        (["This is a test."], 0, "This is a test."),
-        (["This is a test. ", "This is another test. "], 0, "This is a test. This is another test."),
-        (["This is a test. ", "This is a test. This is another test."], 2, "This is a test. This is another test."),
+        ([], ""),
+        (["This is a test."], "This is a test."),
+        (["This is a test. ", "This is another test. "], "This is a test. This is another test."),
+        (["This is a test. ", "This is a test. This is another test."], "This is a test. This is another test."),
     ],
 )
-def test_concatenate_segments_with_spacy_coherence(
-    segments: list[str], max_overlap_sentences: int, expected: str
-) -> None:
-    result = concatenate_segments_with_spacy_coherence(segments, max_overlap_sentences)
+def test_concatenate_segments_with_spacy_coherence(segments: list[str], expected: str) -> None:
+    result = concatenate_segments_with_spacy_coherence(segments)
     assert result == expected
 
 

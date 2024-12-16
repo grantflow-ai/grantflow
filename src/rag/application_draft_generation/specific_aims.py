@@ -1,9 +1,15 @@
 import logging
 from functools import partial
 from string import Template
-from typing import Final
+from typing import Any, Final, cast
+
+from sqlalchemy import insert, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
+from src.db.tables import GrantApplication, TextGenerationResult
+from src.exceptions import DatabaseError
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
@@ -117,26 +123,47 @@ async def generate_specific_aims_text(
 
 async def handle_specific_aims_text_generation(
     *,
-    application_id: str,
+    application: GrantApplication,
+    application_draft_id: str,
     innovation_text: str,
     research_plan_text: str,
+    session_maker: async_sessionmaker[Any],
     significance_text: str,
 ) -> str:
     """Generate the text for a research aim.
 
     Args:
-        application_id: The ID of the grant application.
+        application: The grant application.
+        application_draft_id: The ID of the grant application draft.
         innovation_text: The text of the Innovation section of the grant application.
-        research_plan_text: The full text of the research plan, detailing all the research aims and tasks in the application.
+        research_plan_text: The text of the research plan section.
+        session_maker: The session maker.
         significance_text: The Significance section of the grant application.
 
+    Raises:
+        DatabaseError: If there was an issue updating the application draft in the database.
+
     Returns:
-        The generated text for the research aim.
+        The generated section text.
     """
+    async with session_maker() as session:
+        if result := await session.scalar(
+            select(
+                TextGenerationResult.content,
+            )
+            .where(
+                TextGenerationResult.section_type == "specific-aims",
+            )
+            .where(
+                TextGenerationResult.application_draft_id == application_draft_id,
+            )
+        ):
+            return cast(str, result)
+
     search_queries = await create_search_queries(SPECIFIC_AIMS_QUERIES_PROMPT)
 
     search_result = await retrieve_documents(
-        application_id=application_id,
+        application_id=str(application.id),
         search_queries=search_queries,
     )
 
@@ -148,11 +175,27 @@ async def handle_specific_aims_text_generation(
         retrieval_results=search_result,
     )
 
-    result = await handle_segmented_text_generation(
-        entity_type="specific_aims",
-        entity_identifier=application_id,
+    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
+        entity_type="specific-aims",
         prompt_handler=handler,
     )
-    logger.debug("Generated specific aims %s", result)
+    logger.debug("Generated specific aims")
 
-    return result
+    async with session_maker() as session, session.begin():
+        try:
+            await session.scalar(
+                insert(TextGenerationResult).values(
+                    {
+                        "content": content,
+                        "number_of_api_calls": number_of_api_calls,
+                        "section_type": "specific-aims",
+                        "generation_duration": generation_duration,
+                    }
+                )
+            )
+            await session.commit()
+            return content
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error while saving generated sections: %s", e)
+            raise DatabaseError("Error while saving generated sections") from e

@@ -31,12 +31,13 @@ class ResearchTaskDTO:
     """DTO for a research task data."""
 
     task_number: str
-    """The task number."""
+    """The task number in the format of <aim_number>.<task_number>."""
     title: str
     """The title of the task."""
     description: str
     """The description of the task."""
     relations: list[str]
+    """The relations of the task."""
 
 
 @dataclass
@@ -53,3 +54,5 @@ class ResearchAimDTO:
     """Whether the aim requires clinical trials."""
     research_tasks: list[ResearchTaskDTO]
     """The research tasks for the aim."""
+    relations: list[str]
+    """The relations of the aim."""
