@@ -34,6 +34,9 @@ whether the research aim text is complete or not. Example:
     "text": "The generated text",
     "is_complete": true // false if the text is not complete and requires further generation
 }
+
+**Important**:
+    - if the text is complete but information is missing, is_complete should be true.
 ```
 """
 

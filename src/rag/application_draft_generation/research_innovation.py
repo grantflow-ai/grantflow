@@ -173,13 +173,14 @@ async def handle_innovation_text_generation(
 
     async with session_maker() as session, session.begin():
         try:
-            await session.scalar(
+            await session.execute(
                 insert(TextGenerationResult).values(
                     {
+                        "application_draft_id": application_draft_id,
                         "content": content,
+                        "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,
                         "section_type": "innovation",
-                        "generation_duration": generation_duration,
                     }
                 )
             )

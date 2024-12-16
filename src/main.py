@@ -18,6 +18,8 @@ logging.basicConfig(
     stream=sys.stdout,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 
 app = Sanic[Any, RequestContext]("grantflow", dumps=encoder, loads=decoder)
 

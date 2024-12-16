@@ -14,9 +14,7 @@ When generating text, strictly follow these guidelines:
    - Maintain a formal and data-driven tone, emphasizing succinctness and specificity
 
 ### Handling Missing Information
-
-If you encounter a situation where you are missing information that is required for generating the text do not invent any information.
-Instead, add a bold text placeholder in the format `**MISSING INFORMATION: <description>**` where `<description>` is a brief description of the missing information.
+    - When information is missing or insufficient, do not invent facts or complete the missing information. Instead, write `**MISSING INFORMATION: <description>**` where `<description>` is a concise description of the missing information.
 """
 
 CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[Template] = Template("""
