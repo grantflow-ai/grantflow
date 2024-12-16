@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:c1149e84464a7c0775e4eaa7ad098812b991e3db3ff66b86262ac5be5e438d87"
+content_hash = "sha256:a90839bd80534f2a5f5f52cb761f5b7320f6264c23ea2366d4089ab36ef5964f"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -2143,6 +2143,17 @@ files = [
     {file = "srsly-2.5.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:767c902ccb16635af88fc98b10f998aa67180c343da41c34aa20679c6eb6618e"},
     {file = "srsly-2.5.0-cp312-cp312-win_amd64.whl", hash = "sha256:3fac84c8fbda019e3f3652854ab3c8bd439af5b57825745fa3c67a603a13a05d"},
     {file = "srsly-2.5.0.tar.gz", hash = "sha256:2776752cdb14275ca01e9a7b7a9c047ccf31db17f0076e73343cfcc9a8df6cbd"},
+]
+
+[[package]]
+name = "structlog"
+version = "24.4.0"
+requires_python = ">=3.8"
+summary = "Structured Logging for Python"
+groups = ["default"]
+files = [
+    {file = "structlog-24.4.0-py3-none-any.whl", hash = "sha256:597f61e80a91cc0749a9fd2a098ed76715a1c8a01f73e336b746504d1aad7610"},
+    {file = "structlog-24.4.0.tar.gz", hash = "sha256:b27bfecede327a6d2da5fbc96bd859f114ecc398a6389d664f62085ee7ae6fc4"},
 ]
 
 [[package]]

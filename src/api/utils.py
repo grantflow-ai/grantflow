@@ -1,4 +1,3 @@
-import logging
 from typing import cast
 from uuid import UUID
 
@@ -7,8 +6,9 @@ from sqlalchemy import select
 
 from src.api_types import APIRequest
 from src.db.tables import UserRoleEnum, WorkspaceUser
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def verify_workspace_access(

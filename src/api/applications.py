@@ -1,4 +1,3 @@
-import logging
 from http import HTTPStatus
 from uuid import UUID
 
@@ -21,9 +20,10 @@ from src.api_types import (
     UpdateApplicationRequestBody,
 )
 from src.db.tables import Application, GrantCfp, ResearchAim
+from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 PROCESSING_SLEEP_INTERVAL = 15  # seconds
 
@@ -277,7 +277,7 @@ async def handle_retrieve_application_text(
                 status=HTTPStatus.OK,
             )
     except Exception as e:  # noqa: BLE001
-        logger.error("Error retrieving application text: %s", e)
+        logger.error("Error retrieving application text.", exec_info=e)
         # we are intentionally swallowing the exception here
 
     return json(

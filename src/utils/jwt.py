@@ -1,4 +1,3 @@
-import logging
 from datetime import UTC, datetime, timedelta
 from secrets import token_hex
 from typing import cast
@@ -7,8 +6,9 @@ from jwt import InvalidTokenError
 from sanic import Unauthorized
 
 from src.utils.env import get_env
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
@@ -60,5 +60,5 @@ def verify_jwt_token(token: str) -> str:
         KeyError,
         InvalidTokenError,
     ) as e:
-        logger.warning("Error verifying jwt: %s", e)
+        logger.warning("Error verifying jwt.", exec_info=e)
         raise Unauthorized("Invalid jwt") from e

@@ -1,12 +1,12 @@
-import logging
 from typing import Final
 
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
 from src.indexer.dto import Chunk
 from src.indexer.extraction import BoundingRegion, OCROutput
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MAX_CHARACTERS: Final[int] = 2000
 OVERLAP_CHARACTERS: Final[int] = 200

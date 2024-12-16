@@ -1,4 +1,3 @@
-import logging
 from collections.abc import Callable, Coroutine
 from time import time
 from typing import Any, Final, TypeVar
@@ -14,6 +13,7 @@ from src.constants import CONTENT_TYPE_JSON, ONE_MINUTE_SECONDS, PREMIUM_TEXT_GE
 from src.exceptions import DeserializationError, ValidationError
 from src.rag.dto import GenerationResultDTO
 from src.utils.ai import get_google_ai_client
+from src.utils.logging import get_logger
 from src.utils.retry import exponential_backoff_retry
 from src.utils.serialization import deserialize
 from src.utils.sleep import sleep_with_message
@@ -21,7 +21,7 @@ from src.utils.text import concatenate_segments_with_spacy_coherence
 
 T = TypeVar("T", bound=dict[str, Any])
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
 ## Output
@@ -60,10 +60,9 @@ async def handle_segmented_text_generation(
     results: list[str] = []
     api_call_num = 1
 
-    logger.info("Generating %s: %s", entity_type, entity_identifier)
+    logger.info("Generating text", entity_identifier=entity_identifier, entity_type=entity_type)
     start_time = time()
     while api_call_num < 20:
-        logger.debug("%s generation API call number: %d", entity_identifier, api_call_num)
         last_generation_result = results[-1] if results else None
 
         result = await prompt_handler(
@@ -77,10 +76,10 @@ async def handle_segmented_text_generation(
             break
 
     logger.info(
-        "Generated %s: %s, number of API calls: %d",
-        entity_type,
-        entity_identifier,
-        api_call_num,
+        "Generated text",
+        entity_type=entity_type,
+        entity_identifier=entity_identifier,
+        api_call_num=entity_identifier,
     )
 
     return concatenate_segments_with_spacy_coherence(results), api_call_num, int(time() - start_time)
@@ -144,13 +143,13 @@ async def handle_completions_request(
                 response_mime_type=CONTENT_TYPE_JSON, response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA
             ),
         )
-        logger.debug("Received response from model: %s", response.text)
+        logger.debug("Received content from model.", text=response.text)
         return deserialize(response.text, response_type)
     except DeserializationError as e:
-        logger.warning("Unexpected response from model: %s", e)
+        logger.warning("Unexpected response from model.", exec_info=e)
         raise ValidationError("Unexpected response from model") from e
     except TooManyRequests as e:
-        logger.warning("Received rate limit error: %s", e)
+        logger.warning("Received rate limit error.", exec_info=e)
         await sleep_with_message(ONE_MINUTE_SECONDS, "Received rate limit error, sleeping...")
         return await handle_completions_request(
             model=model,

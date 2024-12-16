@@ -1,4 +1,3 @@
-import logging
 from asyncio import sleep
 from datetime import UTC, datetime
 from string import Template
@@ -17,9 +16,11 @@ from src.rag.application_draft_generation.research_plan import handle_research_p
 from src.rag.application_draft_generation.research_significance import handle_significance_text_generation
 from src.rag.application_draft_generation.specific_aims import handle_specific_aims_text_generation
 from src.utils.db import check_exists_files_being_indexed
+from src.utils.logging import get_logger
 from src.utils.text import normalize_markdown
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
 DRAFT_APPLICATION_TEMPLATE: Final[Template] = Template("""
 # ${application_title}
 
@@ -52,7 +53,7 @@ async def generate_application_draft(*, application_id: str) -> str:
     """
     session_maker = get_session_maker()
 
-    logger.info("Starting RAG pipeline for application %s", application_id)
+    logger.info("Starting RAG pipeline", application_id=application_id)
     while await check_exists_files_being_indexed(session_maker=session_maker, application_id=application_id):
         logger.info("Waiting for files to finish indexing")
         await sleep(2)
@@ -127,8 +128,8 @@ async def generate_application_draft(*, application_id: str) -> str:
             logger.info("Draft generation result saved to database")
         except SQLAlchemyError as e:
             await session.rollback()
-            logger.error("Failed to update application draft: %s", e)
+            logger.error("Failed to update application draft.", exec_info=e)
             raise DatabaseError("Failed to update application draft") from e
 
-    logger.info("RAG pipelinecompleted successfully for application %s", application_id)
+    logger.info("RAG pipelinecompleted successfully.", application_id=application_id)
     return result

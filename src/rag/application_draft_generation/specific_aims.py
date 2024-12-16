@@ -1,4 +1,3 @@
-import logging
 from functools import partial
 from string import Template
 from typing import Any, Final, cast
@@ -18,9 +17,10 @@ from src.rag.dto import DocumentDTO, GenerationResultDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
+from src.utils.logging import get_logger
 from src.utils.serialization import serialize
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 SPECIFIC_AIMS_USER_PROMPT: Final[Template] = Template("""
 Your task is to write the Specific Aims section for a research grant application.
@@ -195,7 +195,7 @@ async def handle_specific_aims_text_generation(
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
-            logger.error("Error while saving generated sections: %s", e)
+            logger.error("Error while saving generated sections.", exec_info=e)
             raise DatabaseError("Error while saving generated sections") from e
 
     return content

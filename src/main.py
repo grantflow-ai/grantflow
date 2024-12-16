@@ -1,5 +1,4 @@
 import logging
-import sys
 from typing import Any
 
 import uvicorn
@@ -12,11 +11,6 @@ from src.rag.generate_draft import generate_application_draft
 from src.utils.serialization import decoder, encoder
 from src.utils.server import before_server_start_hook, handle_exception
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    stream=sys.stdout,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 

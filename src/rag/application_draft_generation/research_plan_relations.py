@@ -1,4 +1,3 @@
-import logging
 from collections import defaultdict
 from string import Template
 from typing import Final, TypedDict
@@ -7,9 +6,10 @@ from src.db.tables import ResearchAim
 from src.rag.application_draft_generation.shared_prompts import BASE_SYSTEM_PROMPT
 from src.rag.dto import ResearchAimDTO, ResearchTaskDTO
 from src.rag.utils import handle_completions_request
+from src.utils.logging import get_logger
 from src.utils.serialization import serialize
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_SYSTEM_PROMPT: Final[str] = """
 You are an expert grant application writer integrated into a RAG system.
@@ -141,8 +141,6 @@ async def set_relation_data(research_aims: list[ResearchAim]) -> list[ResearchAi
     relations = defaultdict[str, list[str]](list)
     for identifier, relations_list in results["relations"]:
         relations[identifier].append(relations_list)
-
-    logger.debug("Enriched research aims and tasks with relationship information: %s", serialize(research_aims))
 
     return [
         ResearchAimDTO(

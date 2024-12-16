@@ -1,11 +1,10 @@
-import logging
-
 from sanic import Request, Unauthorized
 
 from src.db.connection import get_session_maker
 from src.utils.jwt import verify_jwt_token
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health"}
 
