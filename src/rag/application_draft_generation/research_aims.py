@@ -181,18 +181,19 @@ async def handle_research_aim_text_generation(
         entity_identifier=research_aim_id,
         prompt_handler=handler,
     )
-    logger.info("Generated research aim %d.", research_aim_dto.aim_number)
+    logger.info("Generated research aim %s", str(research_aim_dto.aim_number))
 
     async with session_maker() as session, session.begin():
         try:
-            await session.scalar(
+            await session.execute(
                 insert(TextGenerationResult).values(
                     {
+                        "application_draft_id": application_draft_id,
                         "content": content,
+                        "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,
                         "section_id": research_aim_id,
                         "section_type": "research-aim",
-                        "generation_duration": generation_duration,
                     }
                 )
             )
