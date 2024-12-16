@@ -2,7 +2,7 @@ from enum import StrEnum
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ARRAY, Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -167,7 +167,6 @@ class ResearchAim(Base):
 
     aim_number: Mapped[int] = mapped_column(Integer, default=None)
     description: Mapped[str] = mapped_column(Text, default=None)
-    relations: Mapped[list[str] | None] = mapped_column(ARRAY(String), default=None)
     requires_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=False)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
@@ -191,7 +190,6 @@ class ResearchTask(Base):
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
     description: Mapped[str] = mapped_column(Text, default=None)
-    relations: Mapped[list[str] | None] = mapped_column(ARRAY(String), default=None)
     task_number: Mapped[int] = mapped_column(Integer, default=None)
     title: Mapped[str] = mapped_column(String(255), default=None)
 

@@ -298,7 +298,7 @@ async def full_grant_application_id(
             "id": uuid4(),
             "aim_id": research_aims[0]["id"],
             "task_number": "1.3",
-            "title": "immune spatial distribution in the BM TME",
+            "title": "Immune spatial distribution in the BM TME",
             "description": "Use stereo-seq to study spatial distribution of immune cells in the BM TME.",
         },
         {

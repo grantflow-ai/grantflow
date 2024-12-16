@@ -184,8 +184,9 @@ async def handle_innovation_text_generation(
                 )
             )
             await session.commit()
-            return content
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error while saving generated sections: %s", e)
             raise DatabaseError("Error while saving generated sections") from e
+
+    return content

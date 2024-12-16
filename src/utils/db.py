@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.db.tables import ApplicationFile, FileIndexingStatusEnum
 
 
-async def check_exists_files_being_indexed(session_maker: async_sessionmaker[Any], application_id: UUID) -> bool:
+async def check_exists_files_being_indexed(session_maker: async_sessionmaker[Any], application_id: UUID | str) -> bool:
     """Check if there are files being indexed for the given application.
 
     Args:
