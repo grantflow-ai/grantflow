@@ -18,7 +18,7 @@ const workspaceSchema = z.object({
 
 type WorkspaceFormValues = z.infer<typeof workspaceSchema>;
 
-export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) {
+export function CreateWorkspaceForm({ closeModal }: { closeModal: (workspaceId?: string) => void }) {
 	const form = useForm<WorkspaceFormValues>({
 		resolver: zodResolver(workspaceSchema),
 		defaultValues: { name: "", description: "" },
@@ -26,11 +26,11 @@ export function CreateWorkspaceForm({ closeModal }: { closeModal: () => void }) 
 
 	const onSubmit = async (values: WorkspaceFormValues) => {
 		try {
-			await createWorkspace(values);
+			const { id: workspaceId } = await createWorkspace(values);
+			closeModal(workspaceId);
 		} catch (error) {
 			logError({ error, identifier: "createWorkspace" });
 			toast.error("An error occurred while creating the workspace.");
-		} finally {
 			closeModal();
 		}
 	};
