@@ -1,4 +1,3 @@
-import logging
 from asyncio import gather
 from itertools import batched
 from string import Template
@@ -14,8 +13,9 @@ from src.rag.application_draft_generation.research_plan_relations import set_rel
 from src.rag.application_draft_generation.research_tasks import (
     handle_research_task_text_generation,
 )
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 RESEARCH_PLAN_SECTION_TEMPLATE: Final[Template] = Template("""
 ## Research Plan
@@ -58,7 +58,7 @@ async def handle_research_plan_text_generation(
     Returns:
         The generated research plan text.
     """
-    logger.info("Entering research plan generation phase for %s", application_id)
+    logger.info("Entering research plan generation phase", application_id=application_id)
     promises = []
 
     research_aim_dtos = await set_relation_data(research_aims)
@@ -84,7 +84,7 @@ async def handle_research_plan_text_generation(
             ]
         )
 
-    logger.info("Generated research aims and tasks for application %s", application_id)
+    logger.info("Generated research aims and tasks", application_id=application_id)
     mapped_sections: dict[str, str] = {}
     for batch in batched(promises, 3):
         logger.info("Gathering batch of research aims and tasks generation tasks")

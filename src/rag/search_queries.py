@@ -1,4 +1,3 @@
-import logging
 from string import Template
 from typing import Final
 
@@ -6,8 +5,9 @@ from typing_extensions import TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 SEARCH_QUERIES_SYSTEM_PROMPT: Final[str] = """
 You are a specialized query generation component within a RAG pipeline designed to assist in writing grant application sections.
@@ -91,7 +91,6 @@ async def create_search_queries(prompt: str) -> list[str]:
     Returns:
         list[str]: The generated search queries.
     """
-    logger.debug("Generating search queries for prompt: %s", prompt)
     result = await handle_completions_request(
         prompt_identifier="search_queries",
         system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
@@ -105,5 +104,4 @@ async def create_search_queries(prompt: str) -> list[str]:
     )
 
     queries = result["queries"]
-    logger.debug("Generated search queries: %s", ",".join(queries))
     return queries[:10]

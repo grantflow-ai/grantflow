@@ -13,8 +13,9 @@ from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError
 from src.utils.ai import init_llm_connection
 from src.utils.firebase import get_firebase_app
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def handle_exception(request: APIRequest, exception: Exception) -> HTTPResponse:
@@ -28,19 +29,19 @@ def handle_exception(request: APIRequest, exception: Exception) -> HTTPResponse:
         The HTTP response.
     """
     if isinstance(exception, DeserializationError):
-        logger.error("Failed to deserialize the request body: %s, error: %s", request.body, exception)
+        logger.error("Failed to deserialize the request body: %s", request.body, exec_info=exception)
         message = "Failed to deserialize the request body"
         status = HTTPStatus.BAD_REQUEST
     elif isinstance(exception, BackendError):
-        logger.error("An unexpected backend error occurred: %s", exception)
+        logger.error("An unexpected backend error occurred.", exec_info=exception)
         message = "An unexpected backend error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
     elif isinstance(exception, SQLAlchemyError):
-        logger.error("An unexpected sqlalchemy error occurred: %s, %s", type(exception).__name__, exception)
+        logger.error("An unexpected sqlalchemy error occurred: %s", type(exception).__name__, exec_info=exception)
         message = "An unexpected database error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
     else:
-        logger.error("An unexpected error occurred: %s, %s", type(exception).__name__, exception)
+        logger.error("An unexpected error occurred: %s", type(exception).__name__, exec_info=exception)
         message = "An unexpected error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
 

@@ -1,13 +1,12 @@
-import logging
-
 from sanic import HTTPResponse, json
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from src.api_types import APIRequest, CfpResponse
 from src.db.tables import GrantCfp
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def handle_retrieve_cfps(request: APIRequest) -> HTTPResponse:

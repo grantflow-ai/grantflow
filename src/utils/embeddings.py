@@ -1,4 +1,3 @@
-import logging
 from enum import StrEnum
 from itertools import chain
 
@@ -7,9 +6,10 @@ from vertexai.language_models import TextEmbeddingInput
 from src.constants import EMBEDDING_DIMENSIONS
 from src.exceptions import ExternalOperationError
 from src.utils.ai import get_embeddings_client
+from src.utils.logging import get_logger
 from src.utils.retry import exponential_backoff_retry
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class TaskType(StrEnum):
@@ -49,5 +49,5 @@ async def generate_embeddings(
         logger.info("Successfully generated embeddings")
         return list(chain(*[embedding.values for embedding in embeddings]))
     except ValueError as e:
-        logger.error("Failed to get embeddings due to an API error: %s", e)
+        logger.error("Failed to get embeddings due to an API error.", exec_info=e)
         raise ExternalOperationError(message="Failed to get embeddings", context=str(e)) from e

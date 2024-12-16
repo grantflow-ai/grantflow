@@ -1,5 +1,3 @@
-import logging
-import sys
 from http import HTTPStatus
 from uuid import UUID
 
@@ -12,10 +10,10 @@ from src.db.tables import ApplicationFile, FileIndexingStatusEnum
 from src.dto import APIError
 from src.indexer.dto import FileDTO
 from src.indexer.tasks import parse_and_index_file
+from src.utils.logging import get_logger
 from src.utils.serialization import serialize
 
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def handle_upload_application_files(

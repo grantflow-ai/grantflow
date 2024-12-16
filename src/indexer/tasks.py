@@ -1,4 +1,3 @@
-import logging
 from typing import Any
 
 from sanic import Sanic
@@ -11,8 +10,9 @@ from src.indexer.chunking import chunk_text
 from src.indexer.dto import FileDTO
 from src.indexer.extraction import parse_file_data
 from src.indexer.indexing import index_documents
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def parse_and_index_file(
@@ -65,6 +65,6 @@ async def parse_and_index_file(
                 .values(status=FileIndexingStatusEnum.FAILED)
             )
             await session.commit()
-        logger.error("Failed to parse file: %s, Error: %s", file.filename, e)
+        logger.error("Failed to parse file: %s", file.filename, exec_info=e)
     finally:
         logger.info("Task %s completed", file.filename)

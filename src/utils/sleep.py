@@ -1,7 +1,8 @@
-import logging
 from asyncio import sleep
 
-logger = logging.getLogger(__name__)
+from src.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 async def sleep_with_message(duration: float, identifier: str) -> None:

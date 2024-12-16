@@ -1,12 +1,11 @@
-import logging
-
 from spacy.language import Language
 
+from src.utils.logging import get_logger
 from src.utils.ref import Ref
 
-nlp = Ref[Language]()
+logger = get_logger(__name__)
 
-logger = logging.getLogger(__name__)
+nlp = Ref[Language]()
 
 
 def get_spacy_model() -> Language:

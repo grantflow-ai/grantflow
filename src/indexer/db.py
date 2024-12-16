@@ -1,5 +1,3 @@
-import logging
-
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -7,8 +5,9 @@ from src.db.connection import get_session_maker
 from src.db.tables import ApplicationVector
 from src.exceptions import DatabaseError
 from src.indexer.dto import VectorDTO
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def upsert_application_vectors(
@@ -62,6 +61,6 @@ async def upsert_application_vectors(
             await session.commit()
             logger.info("Successfully inserted application vectors for application_id: %s", application_id)
         except SQLAlchemyError as e:
-            logger.error("Error upserting application vectors: %s", e)
+            logger.error("Error upserting application vectors.", exec_info=e)
             await session.rollback()
             raise DatabaseError("Error upserting application vectors", context=str(e)) from e
