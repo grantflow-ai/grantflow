@@ -3,17 +3,15 @@ from typing import Any
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import (
-    ApplicationDraft,
+    Application,
     ApplicationFile,
     ApplicationVector,
-    GrantApplication,
     ResearchAim,
     ResearchTask,
     Workspace,
     WorkspaceUser,
 )
 from tests.factories import (
-    ApplicationDraftFactory,
     ApplicationVectorFactory,
     ResearchTaskFactory,
     WorkspaceUserFactory,
@@ -55,25 +53,8 @@ async def test_create_research_task(async_session_maker: async_sessionmaker[Any]
         assert result.description == task_data.description
 
 
-async def test_application_draft_result(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication
-) -> None:
-    result_data = ApplicationDraftFactory.build(application_id=application.id, grant_application=application)
-
-    async with async_session_maker() as session, session.begin():
-        session.add(result_data)
-        await session.commit()
-
-    async with async_session_maker() as session, session.begin():
-        result = await session.get(ApplicationDraft, result_data.id)
-        assert result is not None
-        assert result.id == result_data.id
-        assert result.application_id == result_data.application_id
-        assert result.text == result_data.text
-
-
 async def test_create_application_vector(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication, application_file: ApplicationFile
+    async_session_maker: async_sessionmaker[Any], application: Application, application_file: ApplicationFile
 ) -> None:
     vector_data = ApplicationVectorFactory.build(
         application_id=application.id,

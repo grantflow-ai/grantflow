@@ -8,7 +8,7 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.future import select
 
-from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
+from src.db.tables import Application, ApplicationFile, ApplicationVector
 from tests.conftest import TEST_DATA_SOURCES
 
 
@@ -20,7 +20,7 @@ from tests.conftest import TEST_DATA_SOURCES
 async def test_files_upload(
     logger: logging.Logger,
     asgi_client: SanicASGITestClient,
-    application: GrantApplication,
+    application: Application,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings")

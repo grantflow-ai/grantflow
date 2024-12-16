@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import ApplicationFile, ApplicationVector, GrantApplication
+from src.db.tables import Application, ApplicationFile, ApplicationVector
 from src.indexer.chunking import chunk_text
 from src.indexer.indexing import index_documents
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
@@ -26,7 +26,7 @@ async def test_index_documents(
     logger: logging.Logger,
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
-    application: GrantApplication,
+    application: Application,
     application_file: ApplicationFile,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings")

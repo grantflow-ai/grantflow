@@ -5,10 +5,11 @@ from sanic import Sanic
 from src.api.applications import (
     handle_create_application,
     handle_retrieve_application_detail,
+    handle_retrieve_application_text,
     handle_retrieve_applications,
+    handle_start_rag_pipeline,
 )
 from src.api.cfps import handle_retrieve_cfps
-from src.api.drafts import handle_create_application_draft, handle_retrieve_application_draft
 from src.api.files import handle_upload_application_files
 from src.api.health import health_check
 from src.api.login import handle_login
@@ -63,13 +64,13 @@ def register_routes(app: Sanic[Any, Any]) -> None:
 
     # Application Drafts
     app.add_route(
-        handle_create_application_draft,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/drafts",
-        methods=["POST"],
+        handle_start_rag_pipeline,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/generate-text",
+        methods=["GET"],
     )
     app.add_route(
-        handle_retrieve_application_draft,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/drafts/<application_draft_id:uuid>",
+        handle_retrieve_application_text,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/content",
         methods=["GET"],
     )
 

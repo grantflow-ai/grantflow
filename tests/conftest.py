@@ -24,11 +24,11 @@ from vertexai.language_models import TextEmbedding
 
 from src.db.connection import engine_ref, get_session_maker
 from src.db.tables import (
+    Application,
     ApplicationFile,
     ApplicationVector,
     Base,
     FundingOrganization,
-    GrantApplication,
     GrantCfp,
     ResearchAim,
     ResearchTask,
@@ -190,9 +190,7 @@ async def cfp(async_session_maker: async_sessionmaker[Any], org: FundingOrganiza
 
 
 @pytest.fixture
-async def application(
-    async_session_maker: async_sessionmaker[Any], workspace: Workspace, cfp: GrantCfp
-) -> GrantApplication:
+async def application(async_session_maker: async_sessionmaker[Any], workspace: Workspace, cfp: GrantCfp) -> Application:
     application_data = GrantApplicationFactory.build(
         workspace_id=workspace.id, cfp_id=cfp.id, cfp=cfp, application_files=[], research_aims=[], drafts=[]
     )
@@ -203,10 +201,8 @@ async def application(
 
 
 @pytest.fixture
-async def application_file(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication
-) -> ApplicationFile:
-    file_data = ApplicationFileFactory.build(application_id=application.id, grant_application=application)
+async def application_file(async_session_maker: async_sessionmaker[Any], application: Application) -> ApplicationFile:
+    file_data = ApplicationFileFactory.build(application_id=application.id, application=application)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -214,8 +210,8 @@ async def application_file(
 
 
 @pytest.fixture
-async def research_aim(async_session_maker: async_sessionmaker[Any], application: GrantApplication) -> ResearchAim:
-    aim_data = ResearchAimFactory.build(application_id=application.id, grant_application=application, research_tasks=[])
+async def research_aim(async_session_maker: async_sessionmaker[Any], application: Application) -> ResearchAim:
+    aim_data = ResearchAimFactory.build(application_id=application.id, application=application, research_tasks=[])
     async with async_session_maker() as session, session.begin():
         session.add(aim_data)
         await session.commit()
@@ -232,13 +228,13 @@ async def research_task(async_session_maker: async_sessionmaker[Any], research_a
 
 
 @pytest.fixture
-async def full_grant_application_id(
+async def full_application_id(
     workspace: Workspace, async_session_maker: async_sessionmaker[Any], cfp: GrantCfp
 ) -> UUID:
     application_id = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(GrantApplication).values(
+            insert(Application).values(
                 {
                     "id": application_id,
                     "workspace_id": workspace.id,
