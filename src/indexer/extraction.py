@@ -1,4 +1,3 @@
-import logging
 from typing import Any, Final, NotRequired, TypedDict, cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
@@ -11,9 +10,10 @@ from pypandoc import convert_text
 from src.exceptions import FileParsingError, ValidationError
 from src.indexer.dto import FileDTO
 from src.utils.env import get_env
+from src.utils.logging import get_logger
 from src.utils.sync import as_async_callable
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MARKDOWN_MIME_TYPE: Final[str] = "text/markdown"
 
@@ -260,7 +260,7 @@ async def extract_with_azure_document_intelligence(file_content: bytes) -> OCROu
         result = await poller.result()
         return cast(OCROutput, result.as_dict())
     except HttpResponseError as e:
-        logger.error("Error extracting text from from file: %s", e)
+        logger.error("Error extracting text from from file.", exec_info=e)
         raise FileParsingError(
             "Error extracting text from file",
             context=str(e),

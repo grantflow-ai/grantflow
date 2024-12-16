@@ -1,23 +1,21 @@
 import os
 
-from src.exceptions import MissingEnvVariableError
 
-
-def get_env(key: str, fallback: str | None = None) -> str:
-    """Get an environment variable or raise an error if it is unset and a fallback has not been provided.
+def get_env(key: str, raise_on_missing: bool = True) -> str:
+    """Get the value of the given environment variable.
 
     Args:
-        key: Environment variable key.
-        fallback: An optional fallback value to use if the environment variable is unset.
-
-    Returns:
-        A string containing the value of the environment variable.
+        key: The name of the environment variable.
+        raise_on_missing: Whether to raise an exception if the environment variable is missing.
 
     Raises:
-        MissingEnvVariableError: If the environment variable is unset and a fallback has not been provided.
+        ValueError: If the environment variable is missing.
+
+    Returns:
+        str: The value of the environment variable.
     """
-    value = os.environ.get(key, fallback)
-    if value is None:
-        raise MissingEnvVariableError(f"Required ENV variable {key} is not set.")
+    value = os.environ.get(key, "")
+    if not value and raise_on_missing:
+        raise ValueError(f"Missing environment variable: {key}")
 
     return value

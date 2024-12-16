@@ -1,4 +1,3 @@
-import logging
 from typing import Final
 
 from sqlalchemy import select
@@ -7,8 +6,9 @@ from src.db.connection import get_session_maker
 from src.db.tables import ApplicationFile, ApplicationVector
 from src.rag.dto import DocumentDTO
 from src.utils.embeddings import TaskType, generate_embeddings
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MAX_RESULTS: Final[int] = 10
 

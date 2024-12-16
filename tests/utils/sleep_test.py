@@ -3,9 +3,10 @@ import logging
 import pytest
 from _pytest.logging import LogCaptureFixture
 
+from src.utils.logging import get_logger
 from src.utils.sleep import sleep_with_message
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @pytest.mark.parametrize("duration, identifier", [(1, "test1"), (2, "test2")])

@@ -1,13 +1,12 @@
-import logging
-
 from sanic import HTTPResponse, json
 
 from src.api_types import APIRequest, LoginRequestBody, LoginResponse
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
+from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def handle_login(request: APIRequest) -> HTTPResponse:

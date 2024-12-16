@@ -7,11 +7,12 @@ from google.oauth2.service_account import Credentials
 from sanic import Unauthorized
 
 from src.utils.env import get_env
+from src.utils.logging import get_logger
 from src.utils.ref import Ref
 from src.utils.serialization import deserialize
 from src.utils.sync import as_async_callable
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 firebase_app_ref = Ref[App]()
 
@@ -56,5 +57,5 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
         ValueError,
         FirebaseError,
     ) as e:
-        logger.warning("Error verifying token: %s", e)
+        logger.warning("Error verifying token.", exec_info=e)
         raise Unauthorized("Invalid ID token") from e

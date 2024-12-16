@@ -1,16 +1,12 @@
-import logging
 from collections.abc import Callable
 from typing import Final, ParamSpec, TypeVar, cast
 
 from tenacity import (
-    before_log,
     retry,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
 )
-
-logger = logging.getLogger(__name__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -39,6 +35,5 @@ def exponential_backoff_retry(*exc: type[Exception]) -> Callable[[Callable[P, R]
                 initial=INITIAL_WAIT_JITTER, max=MAX_WAIT_JITTER, exp_base=EXP_BASE_JITTER, jitter=JITTER_VALUE
             ),
             stop=stop_after_attempt(RETRY_ATTEMPTS_WITH_JITTER),
-            before=before_log(logger, logging.INFO),
         ),
     )

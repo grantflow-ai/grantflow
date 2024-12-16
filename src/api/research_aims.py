@@ -1,4 +1,3 @@
-import logging
 from http import HTTPStatus
 from uuid import UUID
 
@@ -16,9 +15,10 @@ from src.api_types import (
     UpdateResearchTaskRequestBody,
 )
 from src.db.tables import ResearchAim, ResearchTask
+from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def handle_create_research_aims(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:

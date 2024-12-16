@@ -1,4 +1,3 @@
-import logging
 from enum import Enum
 from functools import partial
 from inspect import isclass
@@ -10,8 +9,10 @@ from pydantic import BaseModel
 
 from src.db.tables import Base
 from src.exceptions import DeserializationError, SerializationError
+from src.utils.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
 T = TypeVar("T")
 
 
@@ -83,7 +84,7 @@ def deserialize(value: str | bytes, target_type: type[T]) -> T:
     try:
         return decode(value, type=target_type, dec_hook=decode_hook, strict=False)
     except MsgspecError as e:
-        logger.error("failed to decode value of type %s", type(value).__name__)
+        logger.error("failed to decode value of type %s", type(value).__name__, exc_info=e)
         raise DeserializationError(str(e)) from e
 
 
@@ -104,7 +105,7 @@ def serialize(
     try:
         return encode(value, enc_hook=encode_hook)
     except MsgspecError as e:
-        logger.error("failed to encode value of type %s", type(value).__name__)
+        logger.error("failed to encode value of type %s", type(value).__name__, exc_info=e)
         raise SerializationError(str(e)) from e
 
 
