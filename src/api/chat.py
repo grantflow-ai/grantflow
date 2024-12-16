@@ -16,8 +16,6 @@ from src.db.tables import (
     ApplicationFile,
     FileIndexingStatusEnum,
 )
-from src.exceptions import DatabaseError
-from src.rag.generate_draft import generate_application_draft
 from src.utils.db import check_exists_files_being_indexed
 from src.utils.serialization import serialize
 
@@ -140,35 +138,17 @@ async def application_generation_ws(
     logger.info("Web socket request with ID %s", application_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    task_name = f"generate-draft-{application_draft_id}"
-
-    if not request.app.get_task(name=task_name, raise_exception=False):
-        request.app.add_task(
-            generate_application_draft(
-                application_id=application_id,
-                application_draft_id=application_draft_id,
-            ),
-            name=task_name,
-        )
-
     sender = _Sender(ws)
-    try:
-        await wait_for_file_processing_finish(request=request, application_id=application_id, sender=sender)
-        await report_file_failures(request=request, application_id=application_id, sender=sender)
-        while not await poll_for_draft_generation_finish(request=request, application_draft_id=application_draft_id):
-            await sender(
-                message_type="notification",
-                text="Generating application draft...",
-            )
-            await sleep(PROCESSING_SLEEP_INTERVAL)
+
+    await wait_for_file_processing_finish(request=request, application_id=application_id, sender=sender)
+    await report_file_failures(request=request, application_id=application_id, sender=sender)
+    while not await poll_for_draft_generation_finish(request=request, application_draft_id=application_draft_id):
         await sender(
-            message_type="finished",
-            text="Application draft generation complete.",
+            message_type="notification",
+            text="Generating application draft...",
         )
-    except DatabaseError as e:
-        logger.error("Failed to poll database due to an error. %s", e)
-        await sender(
-            message_type="error",
-            text="An error occurred while processing the application.",
-        )
-        await request.app.cancel_task(name=task_name)
+        await sleep(PROCESSING_SLEEP_INTERVAL)
+    await sender(
+        message_type="finished",
+        text="Application draft generation complete.",
+    )
