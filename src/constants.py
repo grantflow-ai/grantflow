@@ -10,6 +10,7 @@ EMBEDDING_DIMENSIONS: Final[int] = 256
 FAST_TEXT_GENERATION_MODEL: Final[str] = "gemini-1.5-flash-002"
 PREMIUM_TEXT_GENERATION_MODEL: Final[str] = "gemini-1.5-pro-002"
 
+# File constants
 SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP = {
     "bmp": "image/bmp",
     "csv": "text/csv",

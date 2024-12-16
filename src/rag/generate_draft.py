@@ -3,7 +3,6 @@ from asyncio import sleep
 from datetime import UTC, datetime
 from string import Template
 from typing import Final
-from uuid import UUID
 
 from inflection import titleize
 from sqlalchemy import select, update
@@ -13,9 +12,6 @@ from sqlalchemy.orm import selectinload
 from src.db.connection import get_session_maker
 from src.db.tables import ApplicationDraft, GrantApplication, GrantCfp, ResearchAim
 from src.exceptions import DatabaseError
-from src.rag.application_draft_generation.enrich_aims_and_tasks_with_relationships import (
-    enrich_research_aims_and_tasks_with_relationship_information,
-)
 from src.rag.application_draft_generation.research_innovation import handle_innovation_text_generation
 from src.rag.application_draft_generation.research_plan import handle_research_plan_text_generation
 from src.rag.application_draft_generation.research_significance import handle_significance_text_generation
@@ -42,7 +38,7 @@ ${research_plan_text}
 """)
 
 
-async def generate_application_draft(*, application_id: UUID, application_draft_id: UUID) -> str:
+async def generate_application_draft(*, application_id: str, application_draft_id: str) -> str:
     """Generate a draft of the grant application.
 
     Args:
@@ -63,6 +59,7 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
         await sleep(2)
 
     logger.info("Files finished indexing, beginning text generation")
+
     async with session_maker() as session:
         application = await session.scalar(
             select(GrantApplication)
@@ -74,21 +71,16 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
             .where(GrantApplication.id == application_id)
         )
 
-    if any(research_aim.relations is None for research_aim in application.research_aims):
-        logger.info("Enriching research aims and tasks with relationship information")
-        await enrich_research_aims_and_tasks_with_relationship_information(
-            session_maker=session_maker,
-            research_aims=application.research_aims,
-        )
-        logger.info("Enriched research aims and tasks with relationship information")
-
+    logger.info("Starting research plan section generation")
     research_plan_text = await handle_research_plan_text_generation(
-        application=application,
+        application_id=str(application.id),
         application_draft_id=str(application_draft_id),
+        research_aims=application.research_aims,
         session_maker=session_maker,
     )
     logger.info("Generated research plan section")
 
+    logger.info("Starting significance section generation")
     significance_text = await handle_significance_text_generation(
         application=application,
         application_draft_id=str(application_draft_id),
@@ -97,6 +89,7 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
     )
     logger.info("Generated significance section")
 
+    logger.info("Starting innovation section generation")
     innovation_text = await handle_innovation_text_generation(
         application=application,
         application_draft_id=str(application_draft_id),
@@ -106,6 +99,7 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
     )
     logger.info("Generated innovation section")
 
+    logger.info("Starting specific aims section generation")
     specific_aims_text = await handle_specific_aims_text_generation(
         application=application,
         application_draft_id=str(application_draft_id),
@@ -116,6 +110,7 @@ async def generate_application_draft(*, application_id: UUID, application_draft_
     )
     logger.info("Generated specific aims section")
 
+    logger.info("Generating draft")
     result = normalize_markdown(
         DRAFT_APPLICATION_TEMPLATE.substitute(
             application_title=titleize(application.title),

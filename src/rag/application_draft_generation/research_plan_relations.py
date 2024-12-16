@@ -1,13 +1,11 @@
 import logging
 from collections import defaultdict
 from string import Template
-from typing import Any, Final, TypedDict
+from typing import Final, TypedDict
 
-from sqlalchemy import update
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from src.db.tables import ResearchAim, ResearchTask
+from src.db.tables import ResearchAim
 from src.rag.application_draft_generation.shared_prompts import BASE_SYSTEM_PROMPT
+from src.rag.dto import ResearchAimDTO, ResearchTaskDTO
 from src.rag.utils import handle_completions_request
 from src.utils.serialization import serialize
 
@@ -84,7 +82,7 @@ class ToolResponse(TypedDict):
     """The response from the tool call."""
 
     relations: list[tuple[str, str]]
-    """The relations between research aims and tasks."""
+    """The relations between research aims and tasks as a list of [identifier, description] pairs."""
 
 
 response_schema = {
@@ -98,21 +96,18 @@ response_schema = {
             },
         },
     },
-    "required": [],
+    "required": ["relations"],
 }
 
 
-async def enrich_research_aims_and_tasks_with_relationship_information(
-    session_maker: async_sessionmaker[Any], research_aims: list[ResearchAim]
-) -> None:
+async def set_relation_data(research_aims: list[ResearchAim]) -> list[ResearchAimDTO]:
     """Enrich the research aims and tasks with relationship information.
 
     Args:
-        session_maker: The session maker.
         research_aims: The research aims to enrich.
 
     Returns:
-        None
+        The enriched research aims and tasks.
     """
     results = await handle_completions_request(
         prompt_identifier="identify_relations",
@@ -138,42 +133,35 @@ async def enrich_research_aims_and_tasks_with_relationship_information(
             )
         ),
         response_type=ToolResponse,  # type: ignore[type-var]
-        output_instructions=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS,
         response_schema=response_schema,
+        output_instructions=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS,
     )
-    logger.info("Generated relations for research aims: %s", serialize(results))
+    logger.info("Generated relations for research aims and tasks")
 
     relations = defaultdict[str, list[str]](list)
-    for relation in results["relations"]:
-        relations[relation[0]].append(relation[1])
+    for identifier, relations_list in results["relations"]:
+        relations[identifier].append(relations_list)
 
-    for aim in research_aims:
-        aim.relations = relations.get(str(aim.aim_number), [])
-        for task in aim.research_tasks:
-            task.relations = relations.get(f"{aim.aim_number}.{task.task_number}", [])
+    logger.debug("Enriched research aims and tasks with relationship information: %s", serialize(research_aims))
 
-    async with session_maker() as session, session.begin():
-        await session.execute(
-            update(ResearchAim).values(
-                [
-                    {
-                        "id": research_aim.id,
-                        "relations": research_aim.relations,
-                    }
-                    for research_aim in research_aims
-                ]
-            )
+    return [
+        ResearchAimDTO(
+            id=str(research_aim.id),
+            aim_number=research_aim.aim_number,
+            title=research_aim.title,
+            description=research_aim.description,
+            requires_clinical_trials=research_aim.requires_clinical_trials,
+            relations=relations.get(str(research_aim.aim_number), []),
+            research_tasks=[
+                ResearchTaskDTO(
+                    id=str(research_task.id),
+                    task_number=f"{research_aim.aim_number}.{research_task.task_number}",
+                    title=research_task.title,
+                    description=research_task.description,
+                    relations=relations.get(f"{research_aim.aim_number}.{research_task.task_number}", []),
+                )
+                for research_task in research_aim.research_tasks
+            ],
         )
-        await session.execute(
-            update(ResearchTask).values(
-                [
-                    {
-                        "id": research_task.id,
-                        "relations": research_task.relations,
-                    }
-                    for research_aim in research_aims
-                    for research_task in research_aim.research_tasks
-                ]
-            )
-        )
-        await session.commit()
+        for research_aim in research_aims
+    ]
