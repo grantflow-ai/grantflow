@@ -1,5 +1,5 @@
 -- Modify "application_drafts" table
-ALTER TABLE "application_drafts" DROP COLUMN "created_at", DROP COLUMN "duration", DROP COLUMN "text", ADD COLUMN "completed_at" timestamptz NULL;
+ALTER TABLE "application_drafts" DROP COLUMN "created_at", DROP COLUMN "duration", ALTER COLUMN "text" DROP NOT NULL, ADD COLUMN "completed_at" timestamptz NULL;
 -- Create index "ix_application_drafts_completed_at" to table: "application_drafts"
 CREATE INDEX "ix_application_drafts_completed_at" ON "application_drafts" ("completed_at");
 -- Modify "research_aims" table

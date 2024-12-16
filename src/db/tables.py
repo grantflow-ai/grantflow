@@ -245,6 +245,9 @@ class TextGenerationResult(Base):
     application_draft_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("application_drafts.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )
+    application_draft: Relationship["ApplicationDraft"] = relationship(
+        "ApplicationDraft", back_populates="generation_results", default=None
+    )
 
 
 class ApplicationVector(Base):

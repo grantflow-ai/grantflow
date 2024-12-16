@@ -70,7 +70,7 @@ async def handle_create_application_draft(
 
 
 async def handle_retrieve_application_draft(
-    request: APIRequest, workspace_id: UUID, application_draft_id: UUID
+    request: APIRequest, workspace_id: UUID, application_id: UUID, application_draft_id: UUID
 ) -> HTTPResponse:
     """Route handler for polling and retrieving an Application Draft.
 
@@ -84,7 +84,7 @@ async def handle_retrieve_application_draft(
     """
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    logger.info("Retrieving application draft with id %s", application_draft_id)
+    logger.info("Retrieving application for application %s draft with id %s", application_id, application_draft_id)
 
     async with request.ctx.session_maker() as session:
         application_draft = await session.scalar(
