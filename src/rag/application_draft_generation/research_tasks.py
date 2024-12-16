@@ -122,6 +122,7 @@ async def generate_research_task_text(
         prompt_identifier="research_tasks",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
+        response_type=GenerationResultDTO,
     )
 
 

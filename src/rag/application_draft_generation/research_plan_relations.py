@@ -132,7 +132,7 @@ async def set_relation_data(research_aims: list[ResearchAim]) -> list[ResearchAi
                 ]
             )
         ),
-        response_type=ToolResponse,  # type: ignore[type-var]
+        response_type=ToolResponse,
         response_schema=response_schema,
         output_instructions=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS,
     )

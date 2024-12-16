@@ -1,7 +1,7 @@
 from enum import Enum
 from functools import partial
 from inspect import isclass
-from typing import Any, TypeVar
+from typing import Any
 
 from msgspec import MsgspecError
 from msgspec.json import decode, encode
@@ -9,11 +9,6 @@ from pydantic import BaseModel
 
 from src.db.tables import Base
 from src.exceptions import DeserializationError, SerializationError
-from src.utils.logging import get_logger
-
-logger = get_logger(__name__)
-
-T = TypeVar("T")
 
 
 def decode_hook(target: Any, value: dict[str, Any]) -> Any:
@@ -68,7 +63,7 @@ def encode_hook(obj: Any) -> Any:
     raise TypeError(f"Unsupported type: {type(obj)!r}")
 
 
-def deserialize(value: str | bytes, target_type: type[T]) -> T:
+def deserialize[T](value: str | bytes, target_type: type[T]) -> T:
     """Decode a JSON string/bytes into an object.
 
     Args:
@@ -84,7 +79,6 @@ def deserialize(value: str | bytes, target_type: type[T]) -> T:
     try:
         return decode(value, type=target_type, dec_hook=decode_hook, strict=False)
     except MsgspecError as e:
-        logger.error("failed to decode value of type %s", type(value).__name__, exc_info=e)
         raise DeserializationError(str(e)) from e
 
 
@@ -105,7 +99,6 @@ def serialize(
     try:
         return encode(value, enc_hook=encode_hook)
     except MsgspecError as e:
-        logger.error("failed to encode value of type %s", type(value).__name__, exc_info=e)
         raise SerializationError(str(e)) from e
 
 

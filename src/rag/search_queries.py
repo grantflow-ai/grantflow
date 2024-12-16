@@ -99,7 +99,7 @@ async def create_search_queries(prompt: str) -> list[str]:
         ),
         output_instructions=OUTPUT_INSTRUCTIONS,
         response_schema=response_schema,
-        response_type=ToolResponse,  # type: ignore[type-var]
+        response_type=ToolResponse,
         model=FAST_TEXT_GENERATION_MODEL,
     )
 
