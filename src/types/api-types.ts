@@ -80,10 +80,16 @@ export interface GrantCfp {
 	funding_organization_name: string;
 }
 
-export interface ApplicationDraft {
-	content: string;
-	duration: number;
-}
+export type ApplicationDraftResponse =
+	| {
+			id: string;
+			status: "generating";
+	  }
+	| {
+			id: string;
+			status: "complete";
+			text: string;
+	  };
 
 export interface LoginRequestBody {
 	id_token: string;
@@ -92,23 +98,6 @@ export interface LoginRequestBody {
 export interface LoginResponse {
 	jwt_token: string;
 }
-
-export interface ChatNotification {
-	type: "notification";
-	text: string;
-}
-
-export interface ChatErrorNotification {
-	type: "error";
-	text: string;
-}
-
-export interface ChatGenerationResultMessage {
-	type: "content";
-	data: ApplicationDraft;
-}
-
-export type ChatMessage = ChatNotification | ChatErrorNotification | ChatGenerationResultMessage;
 
 export interface OTPResponse {
 	otp: string;

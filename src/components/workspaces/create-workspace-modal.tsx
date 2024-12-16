@@ -6,6 +6,7 @@ import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { CreateWorkspaceForm } from "./create-workspace-form";
 import { useRouter } from "next/navigation";
+import { PagePath } from "@/enums";
 
 export function CreateWorkspaceModal() {
 	const router = useRouter();
@@ -25,9 +26,11 @@ export function CreateWorkspaceModal() {
 					<DialogTitle>New Workspace</DialogTitle>
 				</DialogHeader>
 				<CreateWorkspaceForm
-					closeModal={() => {
+					closeModal={(workspaceId) => {
 						setIsOpen(false);
-						router.refresh();
+						if (workspaceId) {
+							router.replace(PagePath.WORKSPACE_DETAIL.replace(":workspaceId", workspaceId));
+						}
 					}}
 				/>
 			</DialogContent>

@@ -34,7 +34,6 @@ import { SlashInputPlugin } from "@udecode/plate-slash-command/react";
 import { TableCellHeaderPlugin, TableCellPlugin, TablePlugin, TableRowPlugin } from "@udecode/plate-table/react";
 import { TogglePlugin } from "@udecode/plate-toggle/react";
 
-import { copilotPlugins } from "gen/components/editor/plugins/copilot-plugins";
 import { editorPlugins } from "gen/components/editor/plugins/editor-plugins";
 import { FixedToolbarPlugin } from "gen/components/editor/plugins/fixed-toolbar-plugin";
 import { FloatingToolbarPlugin } from "gen/components/editor/plugins/floating-toolbar-plugin";
@@ -71,8 +70,8 @@ import { TocElement } from "gen/components/plate-ui/toc-element";
 import { ToggleElement } from "gen/components/plate-ui/toggle-element";
 import { withDraggables } from "gen/components/plate-ui/with-draggables";
 
-export const useCreateEditor = () => {
-	return usePlateEditor({
+export const useEditor = ({ content }: { content: string }) => {
+	const editor = usePlateEditor({
 		override: {
 			components: withDraggables(
 				withPlaceholders({
@@ -121,22 +120,8 @@ export const useCreateEditor = () => {
 				}),
 			),
 		},
-		plugins: [...copilotPlugins, ...editorPlugins, FixedToolbarPlugin, FloatingToolbarPlugin],
-		value: [
-			{
-				children: [{ text: "Playground" }],
-				type: "h1",
-			},
-			{
-				children: [
-					{ text: "A rich-text editor with AI capabilities. Try the " },
-					{ bold: true, text: "AI commands" },
-					{ text: " or use " },
-					{ kbd: true, text: "Cmd+J" },
-					{ text: " to open the AI menu." },
-				],
-				type: ParagraphPlugin.key,
-			},
-		],
+		plugins: [...editorPlugins, FixedToolbarPlugin, FloatingToolbarPlugin],
 	});
+	editor.tf.setValue(editor.api.markdown.deserialize(content));
+	return editor;
 };

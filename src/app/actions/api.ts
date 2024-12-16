@@ -2,7 +2,6 @@
 
 import { getEnv } from "@/utils/env";
 import {
-	ApplicationDraft,
 	ApplicationFile,
 	CreateGrantApplicationRequestBody,
 	CreateResearchAimRequestBody,
@@ -20,6 +19,7 @@ import {
 	UpdateResearchTaskRequestBody,
 	UpdateWorkspaceRequestBody,
 	Workspace,
+	ApplicationDraftResponse,
 } from "@/types/api-types";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE } from "@/constants";
@@ -374,17 +374,32 @@ export async function deleteApplicationFile(workspaceId: string, applicationId: 
 }
 
 /**
- * Generate a draft for a grant application.
+ * Create a draft for a grant application. This starts the generation process.
  * @param workspaceId - The unique identifier of the workspace
  * @param applicationId - The unique identifier of the application
  * @returns Promise containing the generated application draft
  */
-export async function generateApplicationDraft(workspaceId: string, applicationId: string) {
+export async function startRagPipeline(workspaceId: string, applicationId: string) {
+	await withAuthRedirect(
+		getClient().get(`workspaces/${workspaceId}/applications/${applicationId}/generate-text`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
+}
+
+/**
+ * Retrieve a draft for a grant application.
+ * @param workspaceId - The unique identifier of the workspace
+ * @param applicationId - The unique identifier of the application
+ * @param draftId - The unique identifier of the draft
+ * @returns Promise containing the application draft
+ */
+export async function getApplicationText(workspaceId: string, applicationId: string) {
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/applications/${applicationId}/generate-draft`, {
+			.get(`workspaces/${workspaceId}/applications/${applicationId}/content`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<ApplicationDraft>(),
+			.json<ApplicationDraftResponse>(),
 	);
 }

@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { useRouter } from "next/navigation";
 import { PagePath } from "@/enums";
-import { createApplication, createResearchAims, uploadApplicationFiles } from "@/app/actions/api";
+import { createApplication, startRagPipeline, createResearchAims, uploadApplicationFiles } from "@/app/actions/api";
 import { logError } from "@/utils/logging";
 import {
 	grantApplicationFormSchema,
@@ -29,20 +29,20 @@ async function handleCreateApplication({
 	workspaceId: string;
 	formData: GrantApplicationFormValues;
 }) {
-	const { id } = await createApplication(workspaceId, {
+	const { id: applicationId } = await createApplication(workspaceId, {
 		title: formData.title,
 		cfp_id: formData.cfp_id,
 		significance: formData.significance,
 		innovation: formData.innovation,
 	} satisfies CreateGrantApplicationRequestBody);
 
-	await createResearchAims(workspaceId, id, formData.research_aims as OmitId<ResearchAim>[]);
+	await createResearchAims(workspaceId, applicationId, formData.research_aims as OmitId<ResearchAim>[]);
 
 	if (formData.application_files.length) {
-		await uploadApplicationFiles(workspaceId, id, formData.application_files as File[]);
+		await uploadApplicationFiles(workspaceId, applicationId, formData.application_files as File[]);
 	}
 
-	return id;
+	return applicationId;
 }
 
 export function GrantApplicationForm({
@@ -63,7 +63,9 @@ export function GrantApplicationForm({
 				workspaceId,
 				formData: values,
 			});
-			router.push(
+			await startRagPipeline(workspaceId, applicationId);
+			console.log("started application generation", applicationId);
+			router.replace(
 				PagePath.APPLICATION_DETAIL.replace(":workspaceId", workspaceId).replace(
 					":applicationId",
 					applicationId,

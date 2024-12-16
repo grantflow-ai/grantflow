@@ -12,7 +12,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 	const applications = await getApplications(workspaceId);
 	const grantCfps = await getCfps();
 
-	const createApplicationUrl = PagePath.APPLICATIONS.toString().replace(":workspaceId", workspaceId);
+	const createApplicationUrl = PagePath.NEW_APPLICATION.toString().replace(":workspaceId", workspaceId);
 
 	return (
 		<div className="mx-auto px-4 py-8">
