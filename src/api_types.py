@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from sanic import Request, Sanic
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -30,13 +30,23 @@ class ApplicationDraftCreateResponse(TypedDict):
     """The ID of the grant application draft."""
 
 
-class ApplicationDraftResponse(TypedDict):
+class ApplicationDraftProcessingResponse(TypedDict):
     """The response schema for creating an application draft."""
 
     id: str
     """The ID of the grant application draft."""
+    status: Literal["generating"]
+    """The status of the grant application draft."""
+
+
+class ApplicationDraftCompleteResponse(TypedDict):
+    """The response schema for creating an application draft."""
+
+    id: str
+    """The ID of the grant application draft."""
+    status: Literal["complete"]
+    """The status of the grant application draft."""
     text: str
-    """The content of the grant application draft."""
 
 
 # ApplicationFiles API Types

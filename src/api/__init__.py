@@ -8,7 +8,6 @@ from src.api.applications import (
     handle_retrieve_applications,
 )
 from src.api.cfps import handle_retrieve_cfps
-from src.api.chat import application_generation_ws
 from src.api.drafts import handle_create_application_draft, handle_retrieve_application_draft
 from src.api.files import handle_upload_application_files
 from src.api.health import health_check
@@ -106,10 +105,4 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         handle_upload_application_files,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/index-files",
         methods=["POST"],
-    )
-
-    # Chat Websocket
-    app.add_websocket_route(
-        application_generation_ws,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/chat-room",
     )
