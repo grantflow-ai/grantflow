@@ -8,7 +8,7 @@ import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { login } from "@/app/actions/api";
+import { login } from "@/actions/api";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { logError } from "@/utils/logging";
 

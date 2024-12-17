@@ -1,9 +1,9 @@
 import { FileTextIcon, X } from "lucide-react";
 import { formatBytes } from "@/utils/format";
 import { Button } from "gen/ui/button";
-import { FormFile } from "@/types/app-types";
+import { ApplicationFile } from "@/types/api-types";
 
-export function FileCard({ file, handleRemoveFile }: { file: FormFile; handleRemoveFile: () => void }) {
+export function FileCard({ file, handleRemoveFile }: { file: File | ApplicationFile; handleRemoveFile: () => void }) {
 	return (
 		<div
 			className="relative flex justify-between gap-4 rounded-lg border shadow-sm"
@@ -43,8 +43,8 @@ export function FilesDisplay({
 	files,
 	onFileRemoved,
 }: {
-	files: (FormFile | File)[];
-	onFileRemoved: (file: FormFile) => void;
+	files: (File | ApplicationFile)[];
+	onFileRemoved: (file: File | ApplicationFile) => void;
 }) {
 	return files.length ? (
 		<div className="space-y-2 flex flex-col gap-1" data-testid="files-display">

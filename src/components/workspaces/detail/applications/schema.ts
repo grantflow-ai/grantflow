@@ -1,5 +1,4 @@
 import * as z from "zod";
-import { FormFile } from "@/types/app-types";
 
 export const MIN_TITLE_LENGTH = 10;
 
@@ -26,7 +25,7 @@ export const researchAimSchema = z.object({
 });
 
 export const grantApplicationFormSchema = z.object({
-	application_files: z.array(z.custom<FormFile>()),
+	application_files: z.array(z.custom<File>()),
 	cfp_id: z.string().uuid(),
 	title: z
 		.string()

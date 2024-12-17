@@ -4,23 +4,18 @@ import Link from "next/link";
 import { PagePath } from "@/enums";
 import { ChevronRight, FileText } from "lucide-react";
 import { Badge } from "gen/ui/badge";
-import { GrantApplication, GrantCfp } from "@/types/api-types";
-import { useMemo } from "react";
+import { ApplicationBase } from "@/types/api-types";
 
 export function GrantApplicationCard({
 	application,
 	workspaceId,
-	cfps,
 }: {
-	application: GrantApplication;
+	application: ApplicationBase;
 	workspaceId: string;
-	cfps: GrantCfp[];
 }) {
 	const url = PagePath.APPLICATION_DETAIL.toString()
 		.replace(":workspaceId", workspaceId)
 		.replace(":applicationId", application.id);
-
-	const cfp = useMemo(() => cfps.find((cfp) => cfp.id === application.cfp_id), [cfps, application.cfp_id]);
 
 	return (
 		<Link href={url} className="block" data-testid={`application-draft-link-${application.id}`}>
@@ -37,7 +32,7 @@ export function GrantApplicationCard({
 							variant="secondary"
 							className="bg-secondary/50 text-secondary-foreground px-2 py-0.5 text-xs font-medium uppercase whitespace-nowrap"
 						>
-							{cfp?.code}
+							{application.cfp.code}
 						</Badge>
 					</div>
 					<div className="flex items-center justify-end mt-2">

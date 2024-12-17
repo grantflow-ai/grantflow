@@ -11,7 +11,7 @@ import { SigninWithGoogleButton } from "@/components/sign-in/signin-with-google-
 import { getEnv } from "@/utils/env";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { toast } from "sonner";
-import { login } from "@/app/actions/api";
+import { login } from "@/actions/api";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { logError } from "@/utils/logging";
 

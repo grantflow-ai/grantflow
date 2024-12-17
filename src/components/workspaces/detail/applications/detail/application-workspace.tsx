@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ApplicationDraftResponse } from "@/types/api-types";
 import { Editor } from "@/components/editor";
 import { Loader } from "@/components/loader";
-import { getApplicationText } from "@/app/actions/api";
+import { getApplicationText } from "@/actions/api";
 
 async function pollDraft(workspaceId: string, applicationId: string) {
 	let applicationDraftResponse: ApplicationDraftResponse | null = null;

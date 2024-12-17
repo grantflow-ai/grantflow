@@ -6,13 +6,11 @@ import { Button } from "gen/ui/button";
 import { Plus } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreateGrantApplicationRequestBody, GrantApplicationDetail, GrantCfp, ResearchAim } from "@/types/api-types";
-import { OmitId } from "@/types/app-types";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { useRouter } from "next/navigation";
 import { PagePath } from "@/enums";
-import { createApplication, startRagPipeline, createResearchAims, uploadApplicationFiles } from "@/app/actions/api";
+import { getOtp } from "@/actions/api";
 import { logError } from "@/utils/logging";
 import {
 	grantApplicationFormSchema,
@@ -21,38 +19,46 @@ import {
 import { ResearchAimForm } from "@/components/workspaces/detail/applications/research-tasks-form";
 import { KnowledgeBaseForm } from "@/components/workspaces/detail/applications/knowledge-base-form";
 import { ApplicationDetailsForm } from "@/components/workspaces/detail/applications/application-details-form";
+import { ApplicationId, CreateApplicationRequestBody, GrantCfp } from "@/types/api-types";
+import { getClient } from "@/utils/api-client";
 
 async function handleCreateApplication({
 	workspaceId,
-	formData,
+	formValues,
 }: {
 	workspaceId: string;
-	formData: GrantApplicationFormValues;
+	formValues: GrantApplicationFormValues;
 }) {
-	const { id: applicationId } = await createApplication(workspaceId, {
-		title: formData.title,
-		cfp_id: formData.cfp_id,
-		significance: formData.significance,
-		innovation: formData.innovation,
-	} satisfies CreateGrantApplicationRequestBody);
-
-	await createResearchAims(workspaceId, applicationId, formData.research_aims as OmitId<ResearchAim>[]);
-
-	if (formData.application_files.length) {
-		await uploadApplicationFiles(workspaceId, applicationId, formData.application_files as File[]);
+	const formData = new FormData();
+	for (const file of formValues.application_files) {
+		formData.append(file.name, file as Blob);
 	}
 
-	return applicationId;
+	const data = {
+		title: formValues.title,
+		significance: formValues.significance ?? null,
+		innovation: formValues.innovation ?? null,
+		cfp_id: formValues.cfp_id,
+		research_aims: formValues.research_aims.map(({ description: aimDescription, research_tasks, ...aim }) => ({
+			...aim,
+			description: aimDescription ?? null,
+			research_tasks: research_tasks.map(({ description: taskDescription, ...task }) => ({
+				...task,
+				description: taskDescription ?? null,
+			})),
+		})),
+	} satisfies CreateApplicationRequestBody;
+
+	formData.append("data", JSON.stringify(data));
+
+	const { otp } = await getOtp();
+	const { id } = await getClient()
+		.post(`workspaces/${workspaceId}/applications?otp=${otp}`, { body: formData })
+		.json<ApplicationId>();
+	return id;
 }
 
-export function GrantApplicationForm({
-	cfps,
-	workspaceId,
-}: {
-	cfps: GrantCfp[];
-	application?: GrantApplicationDetail;
-	workspaceId: string;
-}) {
+export function GrantApplicationForm({ cfps, workspaceId }: { cfps: GrantCfp[]; workspaceId: string }) {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
 
@@ -61,10 +67,8 @@ export function GrantApplicationForm({
 		try {
 			const applicationId = await handleCreateApplication({
 				workspaceId,
-				formData: values,
+				formValues: values,
 			});
-			await startRagPipeline(workspaceId, applicationId);
-			console.log("started application generation", applicationId);
 			router.replace(
 				PagePath.APPLICATION_DETAIL.replace(":workspaceId", workspaceId).replace(
 					":applicationId",
