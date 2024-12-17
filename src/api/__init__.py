@@ -4,8 +4,10 @@ from sanic import Sanic
 
 from src.api.applications import (
     handle_create_application,
+    handle_delete_application,
     handle_retrieve_application,
     handle_retrieve_application_text,
+    handle_update_application,
 )
 from src.api.cfps import handle_retrieve_cfps
 from src.api.health import health_check
@@ -49,6 +51,16 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         handle_retrieve_application,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>",
         methods=["GET"],
+    )
+    app.add_route(
+        handle_update_application,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>",
+        methods=["PATCH"],
+    )
+    app.add_route(
+        handle_delete_application,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>",
+        methods=["DELETE"],
     )
     app.add_route(
         handle_retrieve_application_text,

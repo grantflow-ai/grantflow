@@ -4,6 +4,7 @@ from http import HTTPStatus
 from typing import Any
 
 from sanic import HTTPResponse, Sanic, json
+from sanic.exceptions import HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -31,11 +32,15 @@ def handle_exception(request: APIRequest, exception: Exception) -> HTTPResponse:
     if isinstance(exception, DeserializationError):
         logger.error("Failed to deserialize the request body", body=request.body, exec_info=exception)
         message = "Failed to deserialize the request body"
-        status = HTTPStatus.BAD_REQUEST
+        status: HTTPStatus | int = HTTPStatus.BAD_REQUEST
     elif isinstance(exception, BackendError):
         logger.error("An unexpected backend error occurred.", exec_info=exception)
         message = "An unexpected backend error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
+    elif isinstance(exception, HTTPException):
+        # here we get the status code from the exception and we do not log. This is because the exception is expected.
+        message = exception.message
+        status = exception.status_code
     elif isinstance(exception, SQLAlchemyError):
         logger.error("An unexpected sqlalchemy error occurred", exc_name=type(exception).__name__, exec_info=exception)
         message = "An unexpected database error occurred"
