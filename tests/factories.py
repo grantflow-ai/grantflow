@@ -3,9 +3,35 @@ from typing import Any, cast
 
 from faker import Faker
 from pgvector.utils import Vector
+from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from sqlalchemy import Column
 
+from src.api_types import (
+    ApplicationBaseResponse,
+    ApplicationDraftCompleteResponse,
+    ApplicationDraftProcessingResponse,
+    ApplicationFileResponse,
+    ApplicationFullResponse,
+    ApplicationIdResponse,
+    CfpResponse,
+    CreateApplicationRequestBody,
+    CreateResearchAimRequestBody,
+    CreateResearchTaskRequestBody,
+    CreateWorkspaceRequestBody,
+    LoginRequestBody,
+    LoginResponse,
+    OTPResponse,
+    ResearchAimResponse,
+    ResearchTaskResponse,
+    UpdateApplicationRequestBody,
+    UpdateResearchAimRequestBody,
+    UpdateResearchTaskRequestBody,
+    UpdateWorkspaceRequestBody,
+    WorkspaceBaseResponse,
+    WorkspaceFullResponse,
+    WorkspaceIdResponse,
+)
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.tables import (
     Application,
@@ -38,7 +64,7 @@ class GrantCfpFactory(SQLAlchemyFactory[GrantCfp]):
     __model__ = GrantCfp
 
 
-class GrantApplicationFactory(SQLAlchemyFactory[Application]):
+class ApplicationFactory(SQLAlchemyFactory[Application]):
     __model__ = Application
 
 
@@ -64,3 +90,96 @@ class ApplicationVectorFactory(SQLAlchemyFactory[ApplicationVector]):
         if column.name == "embedding":
             return cast(type, Vector)
         return super().get_type_from_column(column)
+
+
+class CreateApplicationRequestBodyFactory(TypedDictFactory[CreateApplicationRequestBody]):
+    __model__ = CreateApplicationRequestBody
+
+
+class CreateWorkspaceRequestBodyFactory(TypedDictFactory[CreateWorkspaceRequestBody]):
+    __model__ = CreateWorkspaceRequestBody
+
+
+class UpdateWorkspaceRequestBodyFactory(TypedDictFactory[UpdateWorkspaceRequestBody]):
+    __model__ = UpdateWorkspaceRequestBody
+
+
+class CreateResearchTaskRequestBodyFactory(TypedDictFactory[CreateResearchTaskRequestBody]):
+    __model__ = CreateResearchTaskRequestBody
+
+
+class CreateResearchAimRequestBodyFactory(TypedDictFactory[CreateResearchAimRequestBody]):
+    __model__ = CreateResearchAimRequestBody
+
+
+class UpdateApplicationRequestBodyFactory(TypedDictFactory[UpdateApplicationRequestBody]):
+    __model__ = UpdateApplicationRequestBody
+
+
+class UpdateResearchTaskRequestBodyFactory(TypedDictFactory[UpdateResearchTaskRequestBody]):
+    __model__ = UpdateResearchTaskRequestBody
+
+
+class UpdateResearchAimRequestBodyFactory(TypedDictFactory[UpdateResearchAimRequestBody]):
+    __model__ = UpdateResearchAimRequestBody
+
+
+class LoginRequestBodyFactory(TypedDictFactory[LoginRequestBody]):
+    __model__ = LoginRequestBody
+
+
+# API Response Factories
+class WorkspaceIdResponseFactory(TypedDictFactory[WorkspaceIdResponse]):
+    __model__ = WorkspaceIdResponse
+
+
+class CfpResponseFactory(TypedDictFactory[CfpResponse]):
+    __model__ = CfpResponse
+
+
+class ResearchTaskResponseFactory(TypedDictFactory[ResearchTaskResponse]):
+    __model__ = ResearchTaskResponse
+
+
+class ResearchAimResponseFactory(TypedDictFactory[ResearchAimResponse]):
+    __model__ = ResearchAimResponse
+
+
+class ApplicationIdResponseFactory(TypedDictFactory[ApplicationIdResponse]):
+    __model__ = ApplicationIdResponse
+
+
+class ApplicationFileResponseFactory(TypedDictFactory[ApplicationFileResponse]):
+    __model__ = ApplicationFileResponse
+
+
+class ApplicationBaseResponseFactory(TypedDictFactory[ApplicationBaseResponse]):
+    __model__ = ApplicationBaseResponse
+
+
+class ApplicationFullResponseFactory(TypedDictFactory[ApplicationFullResponse]):
+    __model__ = ApplicationFullResponse
+
+
+class ApplicationDraftProcessingResponseFactory(TypedDictFactory[ApplicationDraftProcessingResponse]):
+    __model__ = ApplicationDraftProcessingResponse
+
+
+class ApplicationDraftCompleteResponseFactory(TypedDictFactory[ApplicationDraftCompleteResponse]):
+    __model__ = ApplicationDraftCompleteResponse
+
+
+class WorkspaceBaseResponseFactory(TypedDictFactory[WorkspaceBaseResponse]):
+    __model__ = WorkspaceBaseResponse
+
+
+class WorkspaceFullResponseFactory(TypedDictFactory[WorkspaceFullResponse]):
+    __model__ = WorkspaceFullResponse
+
+
+class OTPResponseFactory(TypedDictFactory[OTPResponse]):
+    __model__ = OTPResponse
+
+
+class LoginResponseFactory(TypedDictFactory[LoginResponse]):
+    __model__ = LoginResponse

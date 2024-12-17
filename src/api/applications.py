@@ -138,7 +138,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error creating application", exc_info=e)
-            raise DatabaseError("Error creating application") from e
+            raise DatabaseError("Error creating application", context=str(e)) from e
 
         logger.info("Dispatching signal to parse and index files")
         await gather(
@@ -279,7 +279,7 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error updating application", exc_info=e)
-            raise DatabaseError("Error updating application") from e
+            raise DatabaseError("Error updating application", context=str(e)) from e
 
     return empty()
 
@@ -308,7 +308,7 @@ async def handle_delete_application(request: APIRequest, workspace_id: UUID, app
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error deleting application", exc_info=e)
-            raise DatabaseError("Error deleting application") from e
+            raise DatabaseError("Error deleting application", context=str(e)) from e
 
     return empty()
 

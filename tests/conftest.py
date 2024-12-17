@@ -18,6 +18,8 @@ from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from structlog import configure
+from structlog.testing import LogCapture
 from testcontainers.postgres import PostgresContainer
 from vertexai.generative_models import GenerativeModel
 from vertexai.language_models import TextEmbedding
@@ -36,9 +38,9 @@ from src.db.tables import (
 )
 from src.utils.ai import embeddings_model, init_ref
 from tests.factories import (
+    ApplicationFactory,
     ApplicationFileFactory,
     FundingOrganizationFactory,
-    GrantApplicationFactory,
     GrantCfpFactory,
     ResearchAimFactory,
     ResearchTaskFactory,
@@ -79,6 +81,16 @@ def pytest_logger_config(logger_config: Any) -> None:
     """
     logger_config.add_loggers(["e2e"], stdout_level="info")
     logger_config.set_log_option_default("e2e")
+
+
+@pytest.fixture
+def log_output() -> LogCapture:
+    return LogCapture()
+
+
+@pytest.fixture(autouse=True)
+def configure_structlog(log_output: LogCapture) -> None:
+    configure(processors=[log_output])
 
 
 @pytest.fixture
@@ -164,7 +176,7 @@ async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None
 
 @pytest.fixture
 async def workspace(async_session_maker: async_sessionmaker[Any]) -> Workspace:
-    workspace_data = WorkspaceFactory.build(users=[])
+    workspace_data = WorkspaceFactory.build(users=[], applications=[])
     async with async_session_maker() as session, session.begin():
         session.add(workspace_data)
         await session.commit()
@@ -191,8 +203,14 @@ async def cfp(async_session_maker: async_sessionmaker[Any], org: FundingOrganiza
 
 @pytest.fixture
 async def application(async_session_maker: async_sessionmaker[Any], workspace: Workspace, cfp: GrantCfp) -> Application:
-    application_data = GrantApplicationFactory.build(
-        workspace_id=workspace.id, cfp_id=cfp.id, cfp=cfp, application_files=[], research_aims=[], drafts=[]
+    application_data = ApplicationFactory.build(
+        workspace_id=workspace.id,
+        cfp_id=cfp.id,
+        cfp=cfp,
+        workspace=workspace,
+        files=[],
+        research_aims=[],
+        generation_results=[],
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)

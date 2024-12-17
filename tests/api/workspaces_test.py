@@ -8,13 +8,13 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api_types import (
-    CreateWorkspaceRequestBody,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,
+    WorkspaceIdResponse,
 )
 from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
-from tests.factories import WorkspaceFactory
+from tests.factories import CreateWorkspaceRequestBodyFactory, WorkspaceFactory
 
 
 async def test_create_workspace_api_request_success(
@@ -22,24 +22,22 @@ async def test_create_workspace_api_request_success(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    request_body = CreateWorkspaceRequestBody(
-        name="test_workspace", description="test_description", logo_url="logo_url"
-    )
+    request_body = CreateWorkspaceRequestBodyFactory.build()
     _, response = await asgi_client.post(
         "/workspaces",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.CREATED
-    response_body = deserialize(response.text, WorkspaceBaseResponse)
+    response_body = deserialize(response.text, WorkspaceIdResponse)
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
         workspace = await session.scalar(select(Workspace).where(Workspace.id == response_body["id"]))
 
-        assert workspace.name == response_body["name"]
-        assert workspace.description == response_body["description"]
-        assert workspace.logo_url == response_body["logo_url"]
+        assert workspace.name == request_body["name"]
+        assert workspace.description == request_body["description"]
+        assert workspace.logo_url == request_body["logo_url"]
 
 
 async def test_create_workspace_api_request_failure(
@@ -60,7 +58,7 @@ async def test_retrieve_workspaces_api_request(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    workspaces_data = WorkspaceFactory.batch(4, users=[])
+    workspaces_data = WorkspaceFactory.batch(4, users=[], applications=[])
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(Workspace).values(
