@@ -4,9 +4,9 @@ import { Badge } from "gen/ui/badge";
 import { ChevronRight } from "lucide-react";
 import { PagePath } from "@/enums";
 import { UserRole } from "@/constants";
-import { Workspace } from "@/types/api-types";
+import { WorkspaceBase } from "@/types/api-types";
 
-export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
+export function WorkspaceCard({ workspace }: { workspace: WorkspaceBase }) {
 	const roleColors: Record<UserRole, string> = {
 		[UserRole.Owner]: "bg-primary/10 text-primary hover:bg-primary/20",
 		[UserRole.Admin]: "bg-secondary/20 text-secondary-foreground hover:bg-secondary/30",

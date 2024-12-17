@@ -4,13 +4,12 @@ import { Button } from "gen/ui/button";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
 import Link from "next/link";
-import { getApplications, getCfps, getWorkspace } from "@/app/actions/api";
+import { getWorkspace } from "@/actions/api";
 
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;
+
 	const workspace = await getWorkspace(workspaceId);
-	const applications = await getApplications(workspaceId);
-	const grantCfps = await getCfps();
 
 	const createApplicationUrl = PagePath.NEW_APPLICATION.toString().replace(":workspaceId", workspaceId);
 
@@ -23,14 +22,13 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 				</Button>
 			</div>
 			<div className="border rounded-lg p-6 bg-card">
-				{applications.length > 0 ? (
+				{workspace.applications.length > 0 ? (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-						{applications.map((application) => (
+						{workspace.applications.map((application) => (
 							<GrantApplicationCard
 								key={application.id}
 								application={application}
 								workspaceId={workspaceId}
-								cfps={grantCfps}
 							/>
 						))}
 					</div>

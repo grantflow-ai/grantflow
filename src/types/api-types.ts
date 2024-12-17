@@ -5,33 +5,63 @@ export interface APIError {
 	details: string;
 }
 
-export interface Workspace {
+export interface WorkspaceId {
 	id: string;
+}
+
+export interface WorkspaceBase extends WorkspaceId {
 	name: string;
-	description?: string | null;
-	logo_url?: string | null;
+	description: string | null;
+	logo_url: string | null;
 	role: UserRole;
 }
 
-export type CreateWorkspaceRequestBody = Omit<Workspace, "id" | "role">;
-export type UpdateWorkspaceRequestBody = Partial<CreateWorkspaceRequestBody>;
-
-export interface GrantApplication {
-	id: string;
-	title: string;
-	cfp_id: string;
-	significance?: string | null;
-	innovation?: string | null;
+export interface Workspace extends WorkspaceBase {
+	applications: ApplicationBase[];
 }
 
-export interface GrantApplicationDetail {
+export interface CreateWorkspaceRequestBody {
+	name: string;
+	description?: string | null;
+	logo_url?: string | null;
+}
+
+export interface UpdateWorkspaceRequestBody {
+	name?: string;
+	description?: string | null;
+	logo_url?: string | null;
+}
+
+export interface ApplicationId {
 	id: string;
+}
+
+export interface ApplicationBase extends ApplicationId {
 	title: string;
-	innovation: string | null;
-	significance: string | null;
 	cfp: GrantCfp;
+}
+
+export interface Application extends ApplicationBase {
+	significance: string | null;
+	innovation: string | null;
 	research_aims: ResearchAim[];
-	application_files: ApplicationFile[];
+	files: ApplicationFile[];
+}
+
+export interface CreateApplicationRequestBody {
+	title: string;
+	cfp_id: string;
+	significance: string | null;
+	innovation: string | null;
+	research_aims: CreateResearchAimRequestBody[];
+}
+
+export interface UpdateApplicationRequestBody {
+	title?: string;
+	cfp_id?: string;
+	significance?: string | null;
+	innovation?: string | null;
+	research_aims?: CreateResearchAimRequestBody[];
 }
 
 export interface ApplicationFile {
@@ -41,31 +71,48 @@ export interface ApplicationFile {
 	size: number;
 }
 
-export type CreateGrantApplicationRequestBody = Omit<GrantApplication, "id">;
-export type UpdateApplicationRequestBody = Partial<CreateGrantApplicationRequestBody>;
-
 export interface ResearchTask {
 	id: string;
 	task_number: number;
+	description: string | null;
 	title: string;
-	description?: string | null;
 }
 
-export type CreateResearchTaskRequestBody = Omit<ResearchTask, "id">;
-export type UpdateResearchTaskRequestBody = Partial<CreateResearchTaskRequestBody>;
+export interface CreateResearchTaskRequestBody {
+	description: string | null;
+	task_number: number;
+	title: string;
+}
+
+export interface UpdateResearchTaskRequestBody {
+	task_number?: number;
+	description?: string | null;
+	title?: string;
+}
 
 export interface ResearchAim {
 	id: string;
-	title: string;
-	description?: string | null;
+	aim_number: number;
+	description: string | null;
 	requires_clinical_trials: boolean;
+	title: string;
 	research_tasks: ResearchTask[];
 }
 
-export type CreateResearchAimRequestBody = Omit<ResearchAim, "id"> & {
+export interface CreateResearchAimRequestBody {
+	aim_number: number;
+	description: string | null;
+	requires_clinical_trials: boolean;
 	research_tasks: CreateResearchTaskRequestBody[];
-};
-export type UpdateResearchAimRequestBody = Partial<Omit<ResearchAim, "id" | "research_tasks">>;
+	title: string;
+}
+
+export interface UpdateResearchAimRequestBody {
+	aim_number?: number;
+	description?: string | null;
+	requires_clinical_trials?: boolean;
+	title?: string;
+}
 
 export interface GrantCfp {
 	id: string;
