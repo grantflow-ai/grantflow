@@ -50,6 +50,9 @@ class Workspace(Base):
 
     # Relationships
     users: Relationship[list["WorkspaceUser"]] = relationship("WorkspaceUser", back_populates="workspace", default=None)
+    applications: Relationship[list["Application"]] = relationship(
+        "Application", back_populates="workspace", cascade="all, delete-orphan", default=None
+    )
 
 
 class WorkspaceUser(Base):
@@ -129,6 +132,7 @@ class Application(Base):
     workspace_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )
+    workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="applications", default=None)
     cfp_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
     )

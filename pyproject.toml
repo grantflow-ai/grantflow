@@ -28,7 +28,6 @@ dependencies = [
     "sqlalchemy>=2.0.36",
     "tenacity>=8.3.0",
     "uvicorn>=0.32.1",
-    "google-cloud-storage>=2.19.0",
     "structlog>=24.4.0",
 ]
 

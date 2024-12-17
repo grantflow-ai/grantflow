@@ -29,7 +29,7 @@ def handle_exception(request: APIRequest, exception: Exception) -> HTTPResponse:
         The HTTP response.
     """
     if isinstance(exception, DeserializationError):
-        logger.error("Failed to deserialize the request body: %s", request.body, exec_info=exception)
+        logger.error("Failed to deserialize the request body", body=request.body, exec_info=exception)
         message = "Failed to deserialize the request body"
         status = HTTPStatus.BAD_REQUEST
     elif isinstance(exception, BackendError):
@@ -37,11 +37,11 @@ def handle_exception(request: APIRequest, exception: Exception) -> HTTPResponse:
         message = "An unexpected backend error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
     elif isinstance(exception, SQLAlchemyError):
-        logger.error("An unexpected sqlalchemy error occurred: %s", type(exception).__name__, exec_info=exception)
+        logger.error("An unexpected sqlalchemy error occurred", exc_name=type(exception).__name__, exec_info=exception)
         message = "An unexpected database error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
     else:
-        logger.error("An unexpected error occurred: %s", type(exception).__name__, exec_info=exception)
+        logger.error("An unexpected error occurred", exc_name=type(exception).__name__, exec_info=exception)
         message = "An unexpected error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -66,5 +66,5 @@ async def before_server_start_hook(_: Sanic[Any, RequestContext]) -> None:
 
         logger.info("DB connection established.")
     except Exception as e:  # noqa: BLE001
-        logging.error("Failed to connect to the database: %s.", e)
+        logging.error("Failed to connect to the database.", exc_info=e)
         sys.exit(1)

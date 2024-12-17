@@ -1,4 +1,3 @@
-import logging
 from typing import Any, cast
 
 from firebase_admin import App
@@ -49,7 +48,6 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
     from firebase_admin.auth import verify_id_token as firebase_verify_id_token
 
     handler = as_async_callable(firebase_verify_id_token)
-    logging.debug("Verifying ID token: %s", f"<id_token>{id_token}</id_token>")
     try:
         decoded_token = await handler(id_token, app=get_firebase_app())
         return cast(dict[str, Any], decoded_token)

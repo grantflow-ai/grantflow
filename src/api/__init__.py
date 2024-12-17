@@ -4,23 +4,13 @@ from sanic import Sanic
 
 from src.api.applications import (
     handle_create_application,
-    handle_retrieve_application_detail,
+    handle_retrieve_application,
     handle_retrieve_application_text,
-    handle_retrieve_applications,
-    handle_start_rag_pipeline,
 )
 from src.api.cfps import handle_retrieve_cfps
-from src.api.files import handle_create_upload_urls
 from src.api.health import health_check
 from src.api.login import handle_login
 from src.api.otp import handle_create_otp
-from src.api.research_aims import (
-    handle_create_research_aims,
-    handle_delete_research_aim,
-    handle_retrieve_research_aims,
-    handle_update_research_aim,
-    handle_update_research_task,
-)
 from src.api.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
@@ -55,55 +45,13 @@ def register_routes(app: Sanic[Any, Any]) -> None:
 
     # Applications
     app.add_route(handle_create_application, "/workspaces/<workspace_id:uuid>/applications", methods=["POST"])
-    app.add_route(handle_retrieve_applications, "/workspaces/<workspace_id:uuid>/applications", methods=["GET"])
     app.add_route(
-        handle_retrieve_application_detail,
+        handle_retrieve_application,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>",
-        methods=["GET"],
-    )
-
-    # Application Drafts
-    app.add_route(
-        handle_start_rag_pipeline,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/generate-text",
         methods=["GET"],
     )
     app.add_route(
         handle_retrieve_application_text,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/content",
         methods=["GET"],
-    )
-
-    # Research Aims
-    app.add_route(
-        handle_create_research_aims,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/research-aims",
-        methods=["POST"],
-    )
-    app.add_route(
-        handle_retrieve_research_aims,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/research-aims",
-        methods=["GET"],
-    )
-    app.add_route(
-        handle_update_research_aim,
-        "/workspaces/<workspace_id:uuid>/research-aims/<research_aim_id:uuid>",
-        methods=["PATCH"],
-    )
-    app.add_route(
-        handle_update_research_task,
-        "/workspaces/<workspace_id:uuid>/research-tasks/<research_task_id:uuid>",
-        methods=["PATCH"],
-    )
-    app.add_route(
-        handle_delete_research_aim,
-        "/workspaces/<workspace_id:uuid>/research-aims/<research_aim_id:uuid>",
-        methods=["DELETE"],
-    )
-
-    # Files
-    app.add_route(
-        handle_create_upload_urls,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/upload-urls",
-        methods=["POST"],
     )
