@@ -23,15 +23,8 @@ APIRequest = Request[Sanic[Any, RequestContext], RequestContext]
 # Drafts API Types
 
 
-class ApplicationDraftCreateResponse(TypedDict):
-    """The response schema for creating an application draft."""
-
-    id: str
-    """The ID of the grant application draft."""
-
-
 class ApplicationDraftProcessingResponse(TypedDict):
-    """The response schema for creating an application draft."""
+    """The response schema for an application draft in processing state."""
 
     id: str
     """The ID of the grant application draft."""
@@ -40,29 +33,13 @@ class ApplicationDraftProcessingResponse(TypedDict):
 
 
 class ApplicationDraftCompleteResponse(TypedDict):
-    """The response schema for creating an application draft."""
+    """The response schema for a completed application draft."""
 
     id: str
     """The ID of the grant application draft."""
     status: Literal["complete"]
     """The status of the grant application draft."""
     text: str
-
-
-# ApplicationFiles API Types
-
-
-class ApplicationFileResponse(TypedDict):
-    """The response schema for retrieving an application file."""
-
-    id: str
-    """The ID of the file."""
-    name: str
-    """The name of the file."""
-    type: str
-    """The type of the file."""
-    size: int
-    """The size of the file."""
 
 
 # CFP API Types
@@ -101,14 +78,14 @@ class CreateWorkspaceRequestBody(TypedDict):
 
     name: str
     """The name of the workspace."""
-    description: NotRequired[str | None]
+    description: str | None
     """The description of the workspace."""
-    logo_url: NotRequired[str | None]
+    logo_url: str | None
     """The URL of the workspace logo."""
 
 
 class UpdateWorkspaceRequestBody(TypedDict):
-    """The request body for creating a workspace."""
+    """The request body for updating a workspace."""
 
     name: NotRequired[str]
     """The name of the workspace."""
@@ -118,11 +95,16 @@ class UpdateWorkspaceRequestBody(TypedDict):
     """The URL of the workspace logo."""
 
 
-class WorkspaceResponse(TypedDict):
-    """The response body for creating a workspace."""
+class WorkspaceIdResponse(TypedDict):
+    """The response schema for retrieving a workspace ID."""
 
     id: str
-    """The ID of the created workspace."""
+    """The ID of the workspace."""
+
+
+class WorkspaceBaseResponse(WorkspaceIdResponse):
+    """Base response for retrieving workspaces."""
+
     name: str
     """The name of the workspace."""
     description: str | None
@@ -133,20 +115,26 @@ class WorkspaceResponse(TypedDict):
     """The role of the user in the workspace."""
 
 
+class WorkspaceFullResponse(WorkspaceBaseResponse):
+    """The response body for retrieving a workspace with applications."""
+
+    applications: list["ApplicationBaseResponse"]
+
+
 # Application API Types
-
-
-class CreateGrantApplicationRequestBody(TypedDict):
+class CreateApplicationRequestBody(TypedDict):
     """The request body for creating an application."""
 
     title: str
     """The title of the application."""
     cfp_id: str
     """The ID of the CFP."""
-    significance: NotRequired[str | None]
+    significance: str | None
     """The significance of the innovation."""
-    innovation: NotRequired[str | None]
+    innovation: str | None
     """The innovation."""
+    research_aims: list["CreateResearchAimRequestBody"]
+    """The research aims of the application."""
 
 
 class UpdateApplicationRequestBody(TypedDict):
@@ -160,49 +148,59 @@ class UpdateApplicationRequestBody(TypedDict):
     """The significance of the innovation."""
     innovation: NotRequired[str | None]
     """The innovation."""
+    research_aims: NotRequired[list["CreateResearchAimRequestBody"]]
+    """The research aims of the application."""
 
 
-class GrantApplicationResponse(TypedDict):
-    """The response body for creating an application."""
-
-    id: str
-    """The ID of the application."""
-    title: str
-    """The title of the application."""
-    cfp_id: str
-    """The ID of the CFP."""
-    significance: str | None
-    """The significance of the innovation."""
-    innovation: str | None
-    """The innovation."""
-
-
-class GrantApplicationDetailResponse(TypedDict):
-    """The response body for retrieving an application."""
+class ApplicationIdResponse(TypedDict):
+    """The base response containing only the application ID."""
 
     id: str
     """The ID of the application."""
+
+
+class ApplicationBaseResponse(ApplicationIdResponse):
+    """The base response body for application endpoints, extending ApplicationIdResponse with title and CFP details."""
+
     title: str
     """The title of the application."""
-    significance: str | None
-    """The significance of the innovation."""
-    innovation: str | None
-    """The innovation."""
     cfp: CfpResponse
     """The CFP of the application."""
+
+
+class ApplicationFullResponse(ApplicationBaseResponse):
+    """The detailed response body for retrieving a complete application."""
+
+    significance: str | None
+    """The significance of the innovation."""
+    innovation: str | None
+    """The innovation."""
     research_aims: list["ResearchAimResponse"]
     """The research aims of the application."""
-    application_files: list[ApplicationFileResponse]
+    files: list["ApplicationFileResponse"]
     """The application files of the application."""
 
 
-# Research Aims API Types
+class ApplicationFileResponse(TypedDict):
+    """The response schema for retrieving an application file."""
+
+    id: str
+    """The ID of the file."""
+    name: str
+    """The name of the file."""
+    type: str
+    """The type of the file."""
+    size: int
+    """The size of the file."""
+
+
+# Research Aims and Tasks API Types
 
 
 class CreateResearchTaskRequestBody(TypedDict):
-    """The request body for creating a research_task."""
+    """The request body for creating a research task."""
 
-    description: str
+    description: str | None
     """The description of the task."""
     task_number: int
     """The number of the task."""
@@ -211,11 +209,11 @@ class CreateResearchTaskRequestBody(TypedDict):
 
 
 class CreateResearchAimRequestBody(TypedDict):
-    """The request body for creating a research_aim."""
+    """The request body for creating a research aim."""
 
     aim_number: int
     """The number of the aim."""
-    description: str
+    description: str | None
     """The description of the aim."""
     requires_clinical_trials: bool
     """Whether the aim requires clinical trials."""
@@ -226,22 +224,22 @@ class CreateResearchAimRequestBody(TypedDict):
 
 
 class UpdateResearchTaskRequestBody(TypedDict):
-    """The request body for updating a research_task."""
+    """The request body for updating a research task."""
 
     task_number: NotRequired[int]
     """The number of the task."""
-    description: NotRequired[str]
+    description: NotRequired[str | None]
     """The description of the task."""
     title: NotRequired[str]
     """The title of the task."""
 
 
 class UpdateResearchAimRequestBody(TypedDict):
-    """The request body for updating a research_aim."""
+    """The request body for updating a research aim."""
 
     aim_number: NotRequired[int]
     """The number of the aim."""
-    description: NotRequired[str]
+    description: NotRequired[str | None]
     """The description of the aim."""
     requires_clinical_trials: NotRequired[bool]
     """Whether the aim requires clinical trials."""
@@ -250,10 +248,10 @@ class UpdateResearchAimRequestBody(TypedDict):
 
 
 class ResearchTaskResponse(TypedDict):
-    """The response body for creating a research_task."""
+    """The response body for retrieving a research task."""
 
     id: str
-    """The ID of the research_task."""
+    """The ID of the research task."""
     task_number: int
     """The number of the task."""
     description: str
@@ -263,10 +261,10 @@ class ResearchTaskResponse(TypedDict):
 
 
 class ResearchAimResponse(TypedDict):
-    """The response body for creating a research_aim."""
+    """The response body for retrieving a research aim."""
 
     id: str
-    """The ID of the research_aim."""
+    """The ID of the research aim."""
     aim_number: int
     """The number of the aim."""
     description: str
@@ -279,6 +277,14 @@ class ResearchAimResponse(TypedDict):
     """The research tasks of the aim."""
 
 
+# User API Types
+class OTPResponse(TypedDict):
+    """The response body for the OTP endpoint."""
+
+    otp: str
+    """The otp identifying the user."""
+
+
 class LoginRequestBody(TypedDict):
     """The request body for the login endpoint."""
 
@@ -287,30 +293,7 @@ class LoginRequestBody(TypedDict):
 
 
 class LoginResponse(TypedDict):
-    """The request body for the login endpoint."""
+    """The response body for the login endpoint."""
 
     jwt_token: str
     """The JWT token identifying the user."""
-
-
-class OTPResponse(TypedDict):
-    """The request body for the login endpoint."""
-
-    otp: str
-    """The otp identifying the user."""
-
-
-class CreateUploadUrlsRequestBody(TypedDict):
-    """The request body for creating upload URLs."""
-
-    file_names: list[str]
-    """The names of the files."""
-
-
-class FileUploadUrlResponse(TypedDict):
-    """The request body for creating upload URLs."""
-
-    file_name: str
-    """The name of the file."""
-    upload_url: str
-    """The upload URL of the file."""

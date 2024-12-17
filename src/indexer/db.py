@@ -59,7 +59,7 @@ async def upsert_application_vectors(
             upsert_stmt.returning(ApplicationVector)
             await session.execute(upsert_stmt)
             await session.commit()
-            logger.info("Successfully inserted application vectors for application_id: %s", application_id)
+            logger.info("Successfully inserted application vectors for application_id", application_id=application_id)
         except SQLAlchemyError as e:
             logger.error("Error upserting application vectors.", exec_info=e)
             await session.rollback()

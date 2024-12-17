@@ -15,6 +15,6 @@ async def sleep_with_message(duration: float, identifier: str) -> None:
     Returns:
         None
     """
-    logger.info("Beginning sleep for %d seconds: %s", duration, identifier)
+    logger.info("Beginning sleep", duration=duration, identifier=identifier)
     await sleep(int(duration))
-    logger.info("Finished sleeping: %s", identifier)
+    logger.info("Finished sleeping", identifier=identifier)
