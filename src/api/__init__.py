@@ -10,7 +10,7 @@ from src.api.applications import (
     handle_start_rag_pipeline,
 )
 from src.api.cfps import handle_retrieve_cfps
-from src.api.files import handle_upload_application_files
+from src.api.files import handle_create_upload_urls
 from src.api.health import health_check
 from src.api.login import handle_login
 from src.api.otp import handle_create_otp
@@ -101,9 +101,9 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         methods=["DELETE"],
     )
 
-    # Indexing
+    # Files
     app.add_route(
-        handle_upload_application_files,
-        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/index-files",
+        handle_create_upload_urls,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/upload-urls",
         methods=["POST"],
     )

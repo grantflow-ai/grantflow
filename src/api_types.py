@@ -298,3 +298,19 @@ class OTPResponse(TypedDict):
 
     otp: str
     """The otp identifying the user."""
+
+
+class CreateUploadUrlsRequestBody(TypedDict):
+    """The request body for creating upload URLs."""
+
+    file_names: list[str]
+    """The names of the files."""
+
+
+class FileUploadUrlResponse(TypedDict):
+    """The request body for creating upload URLs."""
+
+    file_name: str
+    """The name of the file."""
+    upload_url: str
+    """The upload URL of the file."""
