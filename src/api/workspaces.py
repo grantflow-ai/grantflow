@@ -162,9 +162,9 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
             workspace = await session.scalar(
                 select(Workspace)
                 .options(
-                    selectinload(Workspace.applications),
-                    selectinload(Application.cfp),
-                    selectinload(GrantCfp.funding_organization),
+                    selectinload(Workspace.applications)
+                    .selectinload(Application.cfp)
+                    .selectinload(GrantCfp.funding_organization)
                 )
                 .where(Workspace.id == workspace_id)
             )
