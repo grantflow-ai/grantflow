@@ -60,6 +60,9 @@ def encode_hook(obj: Any) -> Any:
     if callable(obj):
         return None
 
+    if isinstance(obj, Exception):
+        return {"message": str(obj), "type": type(obj).__name__}
+
     raise TypeError(f"Unsupported type: {type(obj)!r}")
 
 
@@ -82,13 +85,12 @@ def deserialize[T](value: str | bytes, target_type: type[T]) -> T:
         raise DeserializationError(str(e)) from e
 
 
-def serialize(
-    value: Any,
-) -> bytes:
+def serialize(value: Any, **kwargs: Any) -> bytes:
     """Encode an object into a JSON string.
 
     Args:
         value: Value to serialize to JSON.
+        **kwargs: Additional keyword arguments to include in the serialization.
 
     Raises:
         SerializationError: If the value cannot be serialized.
@@ -96,6 +98,10 @@ def serialize(
     Returns:
         A JSON string.
     """
+    if isinstance(value, dict) and kwargs:
+        # this guard is required for structlog
+        value = value | kwargs
+
     try:
         return encode(value, enc_hook=encode_hook)
     except MsgspecError as e:

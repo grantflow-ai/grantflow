@@ -1,3 +1,4 @@
+from asyncio import gather
 from http import HTTPStatus
 from typing import cast
 from uuid import UUID
@@ -139,15 +140,19 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
             logger.error("Error creating application", exc_info=e)
             raise DatabaseError("Error creating application") from e
 
-    for file_dto, file_id in zip(uploaded_files, file_ids, strict=False):
-        logger.info("Dispatching signal to parse and index file", file_id=file_id, file_name=file_dto.filename)
-        await request.app.dispatch(
-            "generate_application_draft",
-            context={
-                "application_id": application_id,
-                "file_id": file_id,
-                "file_dto": file_dto,
-            },
+        logger.info("Dispatching signal to parse and index files")
+        await gather(
+            *[
+                request.app.dispatch(
+                    "parse_and_index_file",
+                    context={
+                        "application_id": application_id,
+                        "file_id": file_id,
+                        "file_dto": file_dto,
+                    },
+                )
+                for file_dto, file_id in zip(uploaded_files, file_ids, strict=False)
+            ]
         )
 
     logger.info("Dispatching signal to generate application draft")
