@@ -55,7 +55,7 @@ async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error creating workspace", exc_info=e)
-            raise DatabaseError("Error creating workspace") from e
+            raise DatabaseError("Error creating workspace", context=str(e)) from e
 
     return json(
         WorkspaceIdResponse(
@@ -128,7 +128,7 @@ async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HT
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error updating workspace", exc_info=e)
-            raise DatabaseError("Error updating workspace") from e
+            raise DatabaseError("Error updating workspace", context=str(e)) from e
 
     return json(
         WorkspaceBaseResponse(
@@ -225,6 +225,6 @@ async def handle_delete_workspace(request: APIRequest, workspace_id: UUID) -> HT
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error deleting workspace", exc_info=e)
-            raise DatabaseError("Error deleting workspace") from e
+            raise DatabaseError("Error deleting workspace", context=str(e)) from e
 
     return empty()

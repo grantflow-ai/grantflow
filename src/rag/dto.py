@@ -36,7 +36,7 @@ class ResearchTaskDTO:
     """The task number in the format of <aim_number>.<task_number>."""
     title: str
     """The title of the task."""
-    description: str
+    description: str | None
     """The description of the task."""
     relations: list[str] | None
     """The relations of the task."""
@@ -52,7 +52,7 @@ class ResearchAimDTO:
     """The aim number."""
     title: str
     """The title of the aim."""
-    description: str
+    description: str | None
     """The description of the aim."""
     requires_clinical_trials: bool
     """Whether the aim requires clinical trials."""

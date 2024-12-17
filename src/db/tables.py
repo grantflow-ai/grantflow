@@ -103,7 +103,7 @@ class GrantCfp(Base):
 
     # Relationships
     funding_organization_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE", onupdate="CASCADE"), default=None, index=True
     )
 
     funding_organization: Relationship["FundingOrganization"] = relationship(
@@ -130,11 +130,11 @@ class Application(Base):
 
     # Relationships
     workspace_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE"), default=None, index=True
     )
     workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="applications", default=None)
     cfp_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"), default=None, index=True
     )
     cfp: Relationship["GrantCfp"] = relationship("GrantCfp", default=None)
     files: Relationship[list["ApplicationFile"]] = relationship(
@@ -162,7 +162,7 @@ class ApplicationFile(Base):
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None, index=True
     )
     application: Relationship["Application"] = relationship("Application", back_populates="files", default=None)
 
@@ -175,13 +175,13 @@ class ResearchAim(Base):
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
     aim_number: Mapped[int] = mapped_column(Integer, default=None)
-    description: Mapped[str] = mapped_column(Text, default=None)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     requires_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=False)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None, index=True
     )
     application: Relationship["Application"] = relationship("Application", back_populates="research_aims", default=None)
     research_tasks: Relationship[list["ResearchTask"]] = relationship(
@@ -196,13 +196,13 @@ class ResearchTask(Base):
 
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
-    description: Mapped[str] = mapped_column(Text, default=None)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     task_number: Mapped[int] = mapped_column(Integer, default=None)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
     # Relationships
     aim_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("research_aims.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("research_aims.id", ondelete="CASCADE", onupdate="CASCADE"), default=None, index=True
     )
     research_aim: Relationship["ResearchAim"] = relationship(
         "ResearchAim", back_populates="research_tasks", default=None
@@ -224,7 +224,7 @@ class TextGenerationResult(Base):
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), default=None, index=True
     )
     application: Relationship["Application"] = relationship(
         "Application", back_populates="generation_results", default=None

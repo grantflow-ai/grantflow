@@ -129,7 +129,7 @@ async def generate_application_draft(*, application_id: str) -> str:
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Failed to update application draft.", exec_info=e)
-            raise DatabaseError("Failed to update application draft") from e
+            raise DatabaseError("Failed to update application draft", context=str(e)) from e
 
     logger.info("RAG pipelinecompleted successfully.", application_id=application_id)
     return result
