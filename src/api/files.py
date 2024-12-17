@@ -1,19 +1,57 @@
+from asyncio import gather
 from http import HTTPStatus
 from uuid import UUID
 
-from sanic import HTTPResponse, empty
+from sanic import HTTPResponse, empty, json
 from sqlalchemy import insert
 
 from src.api.utils import verify_workspace_access
-from src.api_types import APIRequest
+from src.api_types import APIRequest, CreateUploadUrlsRequestBody, FileUploadUrlResponse
 from src.db.tables import ApplicationFile, FileIndexingStatusEnum
 from src.dto import APIError
 from src.indexer.dto import FileDTO
 from src.indexer.tasks import parse_and_index_file
+from src.utils.buckets import create_signed_upload_url
+from src.utils.env import get_env
 from src.utils.logging import get_logger
-from src.utils.serialization import serialize
+from src.utils.serialization import deserialize, serialize
 
 logger = get_logger(__name__)
+
+
+async def handle_create_upload_urls(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+    """Route handler for creating signed upload URLs for files.
+
+
+    Args:
+        request: The request object.
+        workspace_id: The workspace ID.
+        application_id: The application ID.
+
+    Returns:
+        The response object.
+    """
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
+
+    request_body = deserialize(request.body, CreateUploadUrlsRequestBody)
+
+    signed_urls = await gather(
+        *[
+            create_signed_upload_url(
+                bucket_name=get_env("DOCUMENTS_BUCKET_NAME"),
+                blob_name=f"{workspace_id}/{application_id}/{file_name}",
+            )
+            for file_name in request_body["file_names"]
+        ]
+    )
+
+    return json(
+        [
+            FileUploadUrlResponse(file_name=file_name, upload_url=signed_url)
+            for file_name, signed_url in zip(request_body["file_names"], signed_urls, strict=False)
+        ],
+        status=HTTPStatus.CREATED,
+    )
 
 
 async def handle_upload_application_files(
