@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.api_types import (
     CreateWorkspaceRequestBody,
     UpdateWorkspaceRequestBody,
-    WorkspaceResponse,
+    WorkspaceBaseResponse,
 )
 from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
@@ -31,7 +31,7 @@ async def test_create_workspace_api_request_success(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.CREATED
-    response_body = deserialize(response.text, WorkspaceResponse)
+    response_body = deserialize(response.text, WorkspaceBaseResponse)
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
@@ -105,7 +105,7 @@ async def test_retrieve_workspaces_api_request(
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
-    values = deserialize(response.text, list[WorkspaceResponse])
+    values = deserialize(response.text, list[WorkspaceBaseResponse])
     assert len(values) == 3
 
     for workspace in workspaces_with_user_access:

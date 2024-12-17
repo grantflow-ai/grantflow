@@ -1,8 +1,10 @@
 from http import HTTPStatus
+from typing import cast
 from uuid import UUID
 
-from sanic import HTTPResponse, empty, json
+from sanic import BadRequest, HTTPResponse, NotFound, empty, json
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
 from src.api.utils import verify_workspace_access
@@ -11,15 +13,17 @@ from src.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
     ApplicationFileResponse,
+    ApplicationFullResponse,
+    ApplicationIdResponse,
     CfpResponse,
-    CreateGrantApplicationRequestBody,
-    GrantApplicationDetailResponse,
-    GrantApplicationResponse,
+    CreateApplicationRequestBody,
     ResearchAimResponse,
     ResearchTaskResponse,
     UpdateApplicationRequestBody,
 )
-from src.db.tables import Application, GrantCfp, ResearchAim
+from src.db.tables import Application, ApplicationFile, FileIndexingStatusEnum, GrantCfp, ResearchAim, ResearchTask
+from src.exceptions import DatabaseError
+from src.indexer.dto import FileDTO
 from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
 
@@ -35,91 +39,166 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
         request: The request object.
         workspace_id: The workspace ID.
 
+    Raises:
+        DatabaseError: If there was an issue creating the application in the database.
+        BadRequest: If the request is not a multipart request.
+
     Returns:
         The response object.
     """
-    logger.info("Creating application for workspace %s", workspace_id)
+    logger.info("Creating application for workspace", workspace_id=workspace_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    request_body = deserialize(request.body, CreateGrantApplicationRequestBody)
+    data = cast(str | None, (request.form or {}).get("data"))  # type: ignore[call-overload]
+
+    if not data:
+        raise BadRequest("Application creation requires a multipart request")
+
+    request_body = deserialize(data, CreateApplicationRequestBody)
+
+    uploaded_files: list[FileDTO] = [
+        FileDTO.from_file(filename=filename, file=files_list)
+        for filename, files_list in dict(request.files or {}).items()
+        if files_list
+    ]
+
     async with request.ctx.session_maker() as session, session.begin():
-        application = await session.scalar(
-            insert(Application).values({"workspace_id": workspace_id, **request_body}).returning(Application)
+        try:
+            result = await session.execute(
+                insert(Application)
+                .values(
+                    {
+                        "workspace_id": workspace_id,
+                        "title": request_body["title"],
+                        "cfp_id": request_body["cfp_id"],
+                        "significance": request_body["significance"],
+                        "innovation": request_body["innovation"],
+                    }
+                )
+                .returning(Application.id)
+            )
+            application_id = result.scalar_one()
+
+            for research_aim_data in sorted(request_body["research_aims"], key=lambda x: x["aim_number"]):
+                result = await session.execute(
+                    insert(ResearchAim)
+                    .values(
+                        {
+                            "aim_number": research_aim_data["aim_number"],
+                            "application_id": application_id,
+                            "title": research_aim_data["title"],
+                            "description": research_aim_data.get("description", None),
+                            "requires_clinical_trials": research_aim_data.get("requires_clinical_trials", False),
+                        }
+                    )
+                    .returning(ResearchAim.id)
+                )
+                research_aim_id = result.scalar_one()
+
+                await session.execute(
+                    insert(ResearchTask).values(
+                        [
+                            {
+                                "aim_id": research_aim_id,
+                                "task_number": research_task["task_number"],
+                                "title": research_task["title"],
+                                "description": research_task.get("description"),
+                            }
+                            for research_task in sorted(
+                                research_aim_data["research_tasks"], key=lambda x: x["task_number"]
+                            )
+                        ]
+                    )
+                )
+            file_ids = (
+                (
+                    await session.scalars(
+                        insert(ApplicationFile)
+                        .values(
+                            [
+                                {
+                                    "application_id": application_id,
+                                    "name": file_dto.filename,
+                                    "type": file_dto.mime_type,
+                                    "size": file_dto.content.__sizeof__(),
+                                    "status": FileIndexingStatusEnum.INDEXING,
+                                }
+                                for file_dto in uploaded_files
+                            ]
+                        )
+                        .returning(ApplicationFile.id)
+                    )
+                )
+                if uploaded_files
+                else []
+            )
+
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error creating application", exc_info=e)
+            raise DatabaseError("Error creating application") from e
+
+    for file_dto, file_id in zip(uploaded_files, file_ids, strict=False):
+        logger.info("Dispatching signal to parse and index file", file_id=file_id, file_name=file_dto.filename)
+        await request.app.dispatch(
+            "generate_application_draft",
+            context={
+                "application_id": application_id,
+                "file_id": file_id,
+                "file_dto": file_dto,
+            },
         )
 
+    logger.info("Dispatching signal to generate application draft")
+    await request.app.dispatch(
+        "generate_application_draft",
+        context={"application_id": application_id},
+    )
+
     return json(
-        GrantApplicationResponse(
-            id=application.id,
-            title=application.title,
-            cfp_id=application.cfp_id,
-            significance=application.significance,
-            innovation=application.innovation,
+        ApplicationIdResponse(
+            id=str(application_id),
         ),
         status=HTTPStatus.CREATED,
     )
 
 
-async def handle_retrieve_applications(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
-    """Route handler for creating an Application.
-
-    Args:
-        request: The request object
-        workspace_id: The workspace ID.
-
-    Returns:
-        The response object.
-    """
-    logger.info("Retrieving applications for workspace %s", workspace_id)
-    await verify_workspace_access(request=request, workspace_id=workspace_id)
-
-    async with request.ctx.session_maker() as session, session.begin():
-        applications = await session.scalars(select(Application).where(Application.workspace_id == workspace_id))
-
-    return json(
-        [
-            GrantApplicationResponse(
-                id=application.id,
-                title=application.title,
-                cfp_id=application.cfp_id,
-                significance=application.significance,
-                innovation=application.innovation,
-            )
-            for application in applications
-        ]
-    )
-
-
-async def handle_retrieve_application_detail(
-    request: APIRequest, workspace_id: UUID, application_id: UUID
-) -> HTTPResponse:
-    """Route handler for creating an Application.
+async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+    """Route handler for retrieving an Application.
 
     Args:
         request: The request object
         workspace_id: The workspace ID.
         application_id: The application ID.
 
+    Raises:
+        NotFound: If the application was not found.
+
     Returns:
         The response object.
     """
-    logger.info("Retrieving applications for workspace %s", workspace_id)
+    logger.info("Retrieving applications for workspace", workspace_id=workspace_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    async with request.ctx.session_maker() as session, session.begin():
-        stmt = (
-            select(Application)
-            .options(
-                selectinload(Application.cfp).selectinload(GrantCfp.funding_organization),
-                selectinload(Application.files),
-                selectinload(Application.research_aims).selectinload(ResearchAim.research_tasks),
+    async with request.ctx.session_maker() as session:
+        try:
+            result = await session.execute(
+                select(Application)
+                .options(
+                    selectinload(Application.cfp).selectinload(GrantCfp.funding_organization),
+                    selectinload(Application.files),
+                    selectinload(Application.research_aims).selectinload(ResearchAim.research_tasks),
+                )
+                .where(Application.id == application_id)
             )
-            .where(Application.id == application_id)
-        )
-
-        application: Application = (await session.execute(stmt)).scalar_one()
+            application = result.scalar_one()
+        except SQLAlchemyError as e:
+            logger.error("Error retrieving application", exc_info=e)
+            raise NotFound from e
 
     return json(
-        GrantApplicationDetailResponse(
+        ApplicationFullResponse(
             id=str(application.id),
             title=application.title,
             significance=application.significance,
@@ -155,7 +234,7 @@ async def handle_retrieve_application_detail(
                 )
                 for research_aim in application.research_aims
             ],
-            application_files=[
+            files=[
                 ApplicationFileResponse(
                     id=str(application_file.id),
                     name=application_file.name,
@@ -176,28 +255,28 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
         workspace_id: The workspace ID.
         application_id: The application ID.
 
+    Raises:
+        DatabaseError: If there was an issue updating the application in the database.
+
     Returns:
         The response object
     """
-    logger.info("Updating application %s", application_id)
+    logger.info("Updating application", application_id=application_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     request_body = deserialize(request.body, UpdateApplicationRequestBody)
     async with request.ctx.session_maker() as session, session.begin():
-        application = await session.scalar(
-            update(Application).where(Application.id == application_id).values(request_body).returning(Application)
-        )
-        await session.commit()
+        try:
+            await session.execute(
+                update(Application).where(Application.id == application_id).values(request_body).returning(Application)
+            )
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error updating application", exc_info=e)
+            raise DatabaseError("Error updating application") from e
 
-    return json(
-        GrantApplicationResponse(
-            id=application.id,
-            title=application.title,
-            cfp_id=application.cfp_id,
-            significance=application.significance,
-            innovation=application.innovation,
-        )
-    )
+    return empty()
 
 
 async def handle_delete_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
@@ -208,39 +287,23 @@ async def handle_delete_application(request: APIRequest, workspace_id: UUID, app
         workspace_id: The workspace ID.
         application_id: The application ID.
 
+    Raises:
+        DatabaseError: If there was an issue deleting the application in the database.
+
     Returns:
         The response object.
     """
-    logger.info("Deleting application %s", application_id)
+    logger.info("Deleting application", application_id=application_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     async with request.ctx.session_maker() as session, session.begin():
-        await session.execute(delete(Application).where(Application.id == application_id))
-        await session.commit()
-
-    return empty()
-
-
-async def handle_start_rag_pipeline(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
-    """Route handler for creating an Application Draft.
-
-    Args:
-        request: The request object.
-        workspace_id: The workspace ID.
-        application_id: The application ID.
-
-    Returns:
-        The response object.
-    """
-    await verify_workspace_access(request=request, workspace_id=workspace_id)
-
-    logger.info("Creating application draft for application %s", application_id)
-
-    logger.info("Dispatching signal to generate application draft")
-    await request.app.dispatch(
-        "generate_application_draft",
-        context={"application_id": application_id},
-    )
+        try:
+            await session.execute(delete(Application).where(Application.id == application_id))
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error deleting application", exc_info=e)
+            raise DatabaseError("Error deleting application") from e
 
     return empty()
 
@@ -260,25 +323,21 @@ async def handle_retrieve_application_text(
     """
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    logger.info("handling polling request for application: %s", application_id)
-    try:
-        async with request.ctx.session_maker() as session:
-            result = await session.execute(
-                select(Application.text)
-                .where(Application.id == application_id)
-                .where(Application.completed_at.is_not(None))
-                .where(Application.text.isnot(None))
-            )
-            application_text = result.scalar_one_or_none()
+    logger.info("handling polling request for application", application_id=application_id)
+    async with request.ctx.session_maker() as session:
+        result = await session.execute(
+            select(Application.text)
+            .where(Application.id == application_id)
+            .where(Application.completed_at.is_not(None))
+            .where(Application.text.isnot(None))
+        )
+        application_text = result.scalar_one_or_none()
 
-        if application_text:
-            return json(
-                ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application_text),
-                status=HTTPStatus.OK,
-            )
-    except Exception as e:  # noqa: BLE001
-        logger.error("Error retrieving application text.", exec_info=e)
-        # we are intentionally swallowing the exception here
+    if application_text:
+        return json(
+            ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application_text),
+            status=HTTPStatus.OK,
+        )
 
     return json(
         ApplicationDraftProcessingResponse(id=str(application_id), status="generating"),

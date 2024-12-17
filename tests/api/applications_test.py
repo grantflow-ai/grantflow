@@ -6,9 +6,9 @@ from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api_types import (
-    CreateGrantApplicationRequestBody,
-    GrantApplicationDetailResponse,
-    GrantApplicationResponse,
+    ApplicationBaseResponse,
+    ApplicationFullResponse,
+    CreateApplicationRequestBody,
 )
 from src.db.tables import (
     Application,
@@ -44,7 +44,7 @@ async def test_create_application_api_request_success(
 
     _, response = await asgi_client.post(
         f"/workspaces/{workspace.id}/applications",
-        json=CreateGrantApplicationRequestBody(
+        json=CreateApplicationRequestBody(
             title=application_data.title,
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
@@ -54,7 +54,7 @@ async def test_create_application_api_request_success(
     )
     assert response.status_code == HTTPStatus.CREATED
 
-    response_body = deserialize(response.body, GrantApplicationResponse)
+    response_body = deserialize(response.body, ApplicationBaseResponse)
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
@@ -78,7 +78,7 @@ async def test_create_application_api_request_failure_unauthorized(
 
     _, response = await asgi_client.post(
         f"/workspaces/{workspace.id}/applications",
-        json=CreateGrantApplicationRequestBody(
+        json=CreateApplicationRequestBody(
             title=application_data.title,
             cfp_id=str(application_data.cfp_id),
             significance=application_data.significance,
@@ -108,7 +108,7 @@ async def test_create_application_api_request_failure_bad_request(
 
     _, response = await asgi_client.post(
         f"/workspaces/{workspace.id}/applications",
-        json=CreateGrantApplicationRequestBody(  # type: ignore[typeddict-item]
+        json=CreateApplicationRequestBody(  # type: ignore[typeddict-item]
             significance=application_data.significance,
             innovation=application_data.innovation,
             title=application_data.title,
@@ -136,7 +136,7 @@ async def test_retrieve_applications_api_request_success(
     )
     assert response.status_code == HTTPStatus.OK
 
-    response_body = deserialize(response.body, list[GrantApplicationResponse])
+    response_body = deserialize(response.body, list[ApplicationBaseResponse])
 
     assert len(response_body) == 1
     assert response_body[0]["title"] == application.title
@@ -178,7 +178,7 @@ async def test_retrieve_application_detail_api_request_success(
     )
     assert response.status_code == HTTPStatus.OK
 
-    response_body = deserialize(response.body, GrantApplicationDetailResponse)
+    response_body = deserialize(response.body, ApplicationFullResponse)
 
     assert response_body["title"] == application.title
     assert response_body["cfp"]["id"] == str(application.cfp_id)
