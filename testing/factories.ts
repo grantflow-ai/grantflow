@@ -1,6 +1,6 @@
 import { Factory } from "interface-forge";
 import { UserInfo } from "firebase/auth";
-import { GrantApplication, GrantCfp, ResearchAim, ResearchTask, Workspace } from "@/types/api-types";
+import { Application, GrantCfp, ResearchAim, ResearchTask, Workspace } from "@/types/api-types";
 import { UserRole } from "@/constants";
 
 export const UserInfoFactory = new Factory<UserInfo>((factory) => ({
@@ -18,14 +18,17 @@ export const WorkspaceFactory = new Factory<Workspace>((factory) => ({
 	logo_url: factory.helpers.arrayElement([null, factory.image.avatar()]),
 	name: factory.lorem.sentence(),
 	role: UserRole.Member,
+	applications: ApplicationFactory.batch(3),
 }));
 
-export const GrantApplicationFactory = new Factory<GrantApplication>((factory) => ({
-	cfp_id: factory.string.uuid(),
+export const ApplicationFactory = new Factory<Application>((factory) => ({
+	cfp: factory.use(GrantCFPFactory.build),
 	id: factory.string.uuid(),
 	title: factory.lorem.words(),
 	innovation: factory.lorem.paragraphs(),
 	significance: factory.lorem.paragraphs(),
+	research_aims: factory.use(ResearchAimFactory.batch, 3),
+	files: [],
 }));
 
 export const GrantCFPFactory = new Factory<GrantCfp>((factory) => ({

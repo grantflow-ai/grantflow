@@ -1,7 +1,7 @@
 "use server";
 
 import { ApplicationWorkspace } from "@/components/workspaces/detail/applications/detail/application-workspace";
-import { getApplicationText } from "@/app/actions/api";
+import { getApplicationText } from "@/actions/api";
 
 export default async function ApplicationDetailPage({
 	params,

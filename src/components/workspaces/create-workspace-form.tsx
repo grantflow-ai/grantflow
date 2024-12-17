@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Card, CardContent } from "gen/ui/card";
 
-import { createWorkspace } from "@/app/actions/api";
+import { createWorkspace } from "@/actions/api";
 import { logError } from "@/utils/logging";
 
 const workspaceSchema = z.object({
