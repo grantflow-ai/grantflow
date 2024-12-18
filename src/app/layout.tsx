@@ -9,6 +9,7 @@ import { Toaster } from "gen/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { ReactNode, Suspense } from "react";
 import { ToastListener } from "@/components/toast-listener";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 						<ToastListener />
 					</Suspense>
 				</ThemeProvider>
+				<Analytics />
 			</body>
 		</html>
 	);
