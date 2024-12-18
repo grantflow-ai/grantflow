@@ -215,8 +215,8 @@ importers:
                 specifier: ^11.1.0
                 version: 11.1.0
             ky:
-                specifier: ^1.7.3
-                version: 1.7.3
+                specifier: ^1.7.4
+                version: 1.7.4
             lucide-react:
                 specifier: ^0.468.0
                 version: 0.468.0(react@19.0.0)
@@ -5226,10 +5226,10 @@ packages:
             }
         engines: { node: ">=18" }
 
-    globals@15.13.0:
+    globals@15.14.0:
         resolution:
             {
-                integrity: sha512-49TewVEz0UxZjr1WYYsWpPrhyC/B/pA8Bq0fUmet2n+eR7yn0IvNzNaoBwnK6mdkzcN+se7Ez9zUgULTz2QH4g==,
+                integrity: sha512-OkToC372DtlQeje9/zHIo5CT8lRP/FUgEOKBEhU4e0abL7J7CD24fD9ohiLN5hagG/kWCYj4K5oaxxtj2Z0Dig==,
             }
         engines: { node: ">=18" }
 
@@ -5950,10 +5950,10 @@ packages:
                 integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==,
             }
 
-    ky@1.7.3:
+    ky@1.7.4:
         resolution:
             {
-                integrity: sha512-Sz49ZWR/BjNOq+2UK1k9ONZUVq8eyuCj30Zgc8VrRNtFlTBZduzuvehUd5kjQF6/Fms3Ir3EYqzJryw9tRvsSw==,
+                integrity: sha512-zYEr/gh7uLW2l4su11bmQ2M9xLgQLjyvx58UyNM/6nuqyWFHPX5ktMjvpev3F8QWdjSsHUpnWew4PBCswBNuMQ==,
             }
         engines: { node: ">=18" }
 
@@ -10082,7 +10082,7 @@ snapshots:
             eslint-plugin-unicorn: 56.0.1(eslint@9.17.0(jiti@2.4.2))
             eslint-plugin-unused-imports: 4.1.4(@typescript-eslint/eslint-plugin@8.18.1(@typescript-eslint/parser@8.18.1(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))
             eslint-plugin-vitest: 0.5.4(@typescript-eslint/eslint-plugin@8.18.1(@typescript-eslint/parser@8.18.1(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)(vitest@2.1.8(@types/node@22.10.2)(jsdom@25.0.1))
-            globals: 15.13.0
+            globals: 15.14.0
             next: 15.1.1(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
             react: 19.0.0
             typescript: 5.7.2
@@ -11673,7 +11673,7 @@ snapshots:
             eslint: 9.17.0(jiti@2.4.2)
             eslint-plugin-es-x: 7.8.0(eslint@9.17.0(jiti@2.4.2))
             get-tsconfig: 4.8.1
-            globals: 15.13.0
+            globals: 15.14.0
             ignore: 5.3.2
             minimatch: 9.0.5
             semver: 7.6.3
@@ -11718,7 +11718,7 @@ snapshots:
             core-js-compat: 3.39.0
             eslint: 9.17.0(jiti@2.4.2)
             esquery: 1.6.0
-            globals: 15.13.0
+            globals: 15.14.0
             indent-string: 4.0.0
             is-builtin-module: 3.2.1
             jsesc: 3.1.0
@@ -12020,7 +12020,7 @@ snapshots:
 
     globals@14.0.0: {}
 
-    globals@15.13.0: {}
+    globals@15.14.0: {}
 
     globalthis@1.0.4:
         dependencies:
@@ -12408,7 +12408,7 @@ snapshots:
         dependencies:
             json-buffer: 3.0.1
 
-    ky@1.7.3: {}
+    ky@1.7.4: {}
 
     levn@0.4.1:
         dependencies:
