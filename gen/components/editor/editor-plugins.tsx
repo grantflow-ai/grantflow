@@ -17,25 +17,26 @@ import { TrailingBlockPlugin } from "@udecode/plate-trailing-block";
 import { FixedToolbarPlugin } from "gen/components/editor/plugins/fixed-toolbar-plugin";
 import { FloatingToolbarPlugin } from "gen/components/editor/plugins/floating-toolbar-plugin";
 
-import { aiPlugins } from "./ai-plugins";
-import { alignPlugin } from "./align-plugin";
-import { autoformatPlugin } from "./autoformat-plugin";
-import { basicNodesPlugins } from "./basic-nodes-plugins";
-import { blockMenuPlugins } from "./block-menu-plugins";
-import { commentsPlugin } from "./comments-plugin";
-import { cursorOverlayPlugin } from "./cursor-overlay-plugin";
-import { deletePlugins } from "./delete-plugins";
-import { dndPlugins } from "./dnd-plugins";
-import { exitBreakPlugin } from "./exit-break-plugin";
-import { indentListPlugins } from "./indent-list-plugins";
-import { lineHeightPlugin } from "./line-height-plugin";
-import { linkPlugin } from "./link-plugin";
-import { mediaPlugins } from "./media-plugins";
-import { mentionPlugin } from "./mention-plugin";
-import { resetBlockTypePlugin } from "./reset-block-type-plugin";
-import { softBreakPlugin } from "./soft-break-plugin";
-import { tablePlugin } from "./table-plugin";
-import { tocPlugin } from "./toc-plugin";
+import { aiPlugins } from "./plugins/ai-plugins";
+import { alignPlugin } from "./plugins/align-plugin";
+import { autoformatPlugin } from "./plugins/autoformat-plugin";
+import { basicNodesPlugins } from "./plugins/basic-nodes-plugins";
+import { blockMenuPlugins } from "./plugins/block-menu-plugins";
+import { commentsPlugin } from "./plugins/comments-plugin";
+import { cursorOverlayPlugin } from "./plugins/cursor-overlay-plugin";
+import { deletePlugins } from "./plugins/delete-plugins";
+import { dndPlugins } from "./plugins/dnd-plugins";
+import { exitBreakPlugin } from "./plugins/exit-break-plugin";
+import { indentListPlugins } from "./plugins/indent-list-plugins";
+import { lineHeightPlugin } from "./plugins/line-height-plugin";
+import { linkPlugin } from "./plugins/link-plugin";
+import { mediaPlugins } from "./plugins/media-plugins";
+import { mentionPlugin } from "./plugins/mention-plugin";
+import { resetBlockTypePlugin } from "./plugins/reset-block-type-plugin";
+import { softBreakPlugin } from "./plugins/soft-break-plugin";
+import { tablePlugin } from "./plugins/table-plugin";
+import { tocPlugin } from "./plugins/toc-plugin";
+import { DocxPlugin } from "@udecode/plate-docx";
 
 export const viewPlugins = [
 	...basicNodesPlugins,
@@ -88,9 +89,14 @@ export const editorPlugins = [
 	TrailingBlockPlugin.configure({ options: { type: ParagraphPlugin.key } }),
 
 	// Deserialization
+	DocxPlugin,
 	MarkdownPlugin.configure({ options: { indentList: true } }),
 
 	// UI
+	FixedToolbarPlugin,
+	FloatingToolbarPlugin,
+
+	// Toolbars
 	FixedToolbarPlugin,
 	FloatingToolbarPlugin,
 ];

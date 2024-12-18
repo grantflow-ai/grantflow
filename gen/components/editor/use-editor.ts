@@ -34,9 +34,7 @@ import { SlashInputPlugin } from "@udecode/plate-slash-command/react";
 import { TableCellHeaderPlugin, TableCellPlugin, TablePlugin, TableRowPlugin } from "@udecode/plate-table/react";
 import { TogglePlugin } from "@udecode/plate-toggle/react";
 
-import { editorPlugins } from "gen/components/editor/plugins/editor-plugins";
-import { FixedToolbarPlugin } from "gen/components/editor/plugins/fixed-toolbar-plugin";
-import { FloatingToolbarPlugin } from "gen/components/editor/plugins/floating-toolbar-plugin";
+import { editorPlugins } from "gen/components/editor/editor-plugins";
 import { AILeaf } from "gen/components/plate-ui/ai-leaf";
 import { BlockquoteElement } from "gen/components/plate-ui/blockquote-element";
 import { CodeBlockElement } from "gen/components/plate-ui/code-block-element";
@@ -70,58 +68,60 @@ import { TocElement } from "gen/components/plate-ui/toc-element";
 import { ToggleElement } from "gen/components/plate-ui/toggle-element";
 import { withDraggables } from "gen/components/plate-ui/with-draggables";
 
+const editorArgs = {
+	override: {
+		components: withDraggables(
+			withPlaceholders({
+				[AIPlugin.key]: AILeaf,
+				[AudioPlugin.key]: MediaAudioElement,
+				[BlockquotePlugin.key]: BlockquoteElement,
+				[BoldPlugin.key]: withProps(PlateLeaf, { as: "strong" }),
+				[CodeBlockPlugin.key]: CodeBlockElement,
+				[CodeLinePlugin.key]: CodeLineElement,
+				[CodePlugin.key]: CodeLeaf,
+				[CodeSyntaxPlugin.key]: CodeSyntaxLeaf,
+				[ColumnItemPlugin.key]: ColumnElement,
+				[ColumnPlugin.key]: ColumnGroupElement,
+				[CommentsPlugin.key]: CommentLeaf,
+				[DatePlugin.key]: DateElement,
+				[FilePlugin.key]: MediaFileElement,
+				[HEADING_KEYS.h1]: withProps(HeadingElement, { variant: "h1" }),
+				[HEADING_KEYS.h2]: withProps(HeadingElement, { variant: "h2" }),
+				[HEADING_KEYS.h3]: withProps(HeadingElement, { variant: "h3" }),
+				[HEADING_KEYS.h4]: withProps(HeadingElement, { variant: "h4" }),
+				[HEADING_KEYS.h5]: withProps(HeadingElement, { variant: "h5" }),
+				[HEADING_KEYS.h6]: withProps(HeadingElement, { variant: "h6" }),
+				[HighlightPlugin.key]: HighlightLeaf,
+				[HorizontalRulePlugin.key]: HrElement,
+				[ImagePlugin.key]: ImageElement,
+				[ItalicPlugin.key]: withProps(PlateLeaf, { as: "em" }),
+				[KbdPlugin.key]: KbdLeaf,
+				[LinkPlugin.key]: LinkElement,
+				[MediaEmbedPlugin.key]: MediaEmbedElement,
+				[MentionInputPlugin.key]: MentionInputElement,
+				[MentionPlugin.key]: MentionElement,
+				[ParagraphPlugin.key]: ParagraphElement,
+				[PlaceholderPlugin.key]: MediaPlaceholderElement,
+				[SlashInputPlugin.key]: SlashInputElement,
+				[StrikethroughPlugin.key]: withProps(PlateLeaf, { as: "s" }),
+				[SubscriptPlugin.key]: withProps(PlateLeaf, { as: "sub" }),
+				[SuperscriptPlugin.key]: withProps(PlateLeaf, { as: "sup" }),
+				[TableCellHeaderPlugin.key]: TableCellHeaderElement,
+				[TableCellPlugin.key]: TableCellElement,
+				[TablePlugin.key]: TableElement,
+				[TableRowPlugin.key]: TableRowElement,
+				[TocPlugin.key]: TocElement,
+				[TogglePlugin.key]: ToggleElement,
+				[UnderlinePlugin.key]: withProps(PlateLeaf, { as: "u" }),
+				[VideoPlugin.key]: MediaVideoElement,
+			}),
+		),
+	},
+	plugins: editorPlugins,
+};
+
 export const useEditor = ({ content }: { content: string }) => {
-	const editor = usePlateEditor({
-		override: {
-			components: withDraggables(
-				withPlaceholders({
-					[AIPlugin.key]: AILeaf,
-					[AudioPlugin.key]: MediaAudioElement,
-					[BlockquotePlugin.key]: BlockquoteElement,
-					[BoldPlugin.key]: withProps(PlateLeaf, { as: "strong" }),
-					[CodeBlockPlugin.key]: CodeBlockElement,
-					[CodeLinePlugin.key]: CodeLineElement,
-					[CodePlugin.key]: CodeLeaf,
-					[CodeSyntaxPlugin.key]: CodeSyntaxLeaf,
-					[ColumnItemPlugin.key]: ColumnElement,
-					[ColumnPlugin.key]: ColumnGroupElement,
-					[CommentsPlugin.key]: CommentLeaf,
-					[DatePlugin.key]: DateElement,
-					[FilePlugin.key]: MediaFileElement,
-					[HEADING_KEYS.h1]: withProps(HeadingElement, { variant: "h1" }),
-					[HEADING_KEYS.h2]: withProps(HeadingElement, { variant: "h2" }),
-					[HEADING_KEYS.h3]: withProps(HeadingElement, { variant: "h3" }),
-					[HEADING_KEYS.h4]: withProps(HeadingElement, { variant: "h4" }),
-					[HEADING_KEYS.h5]: withProps(HeadingElement, { variant: "h5" }),
-					[HEADING_KEYS.h6]: withProps(HeadingElement, { variant: "h6" }),
-					[HighlightPlugin.key]: HighlightLeaf,
-					[HorizontalRulePlugin.key]: HrElement,
-					[ImagePlugin.key]: ImageElement,
-					[ItalicPlugin.key]: withProps(PlateLeaf, { as: "em" }),
-					[KbdPlugin.key]: KbdLeaf,
-					[LinkPlugin.key]: LinkElement,
-					[MediaEmbedPlugin.key]: MediaEmbedElement,
-					[MentionInputPlugin.key]: MentionInputElement,
-					[MentionPlugin.key]: MentionElement,
-					[ParagraphPlugin.key]: ParagraphElement,
-					[PlaceholderPlugin.key]: MediaPlaceholderElement,
-					[SlashInputPlugin.key]: SlashInputElement,
-					[StrikethroughPlugin.key]: withProps(PlateLeaf, { as: "s" }),
-					[SubscriptPlugin.key]: withProps(PlateLeaf, { as: "sub" }),
-					[SuperscriptPlugin.key]: withProps(PlateLeaf, { as: "sup" }),
-					[TableCellHeaderPlugin.key]: TableCellHeaderElement,
-					[TableCellPlugin.key]: TableCellElement,
-					[TablePlugin.key]: TableElement,
-					[TableRowPlugin.key]: TableRowElement,
-					[TocPlugin.key]: TocElement,
-					[TogglePlugin.key]: ToggleElement,
-					[UnderlinePlugin.key]: withProps(PlateLeaf, { as: "u" }),
-					[VideoPlugin.key]: MediaVideoElement,
-				}),
-			),
-		},
-		plugins: [...editorPlugins, FixedToolbarPlugin, FloatingToolbarPlugin],
-	});
+	const editor = usePlateEditor(editorArgs);
 	editor.tf.setValue(editor.api.markdown.deserialize(content));
 	return editor;
 };
