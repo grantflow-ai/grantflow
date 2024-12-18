@@ -80,7 +80,7 @@ class CreateWorkspaceRequestBody(TypedDict):
     """The name of the workspace."""
     description: str | None
     """The description of the workspace."""
-    logo_url: str | None
+    logo_url: NotRequired[str | None]
     """The URL of the workspace logo."""
 
 
