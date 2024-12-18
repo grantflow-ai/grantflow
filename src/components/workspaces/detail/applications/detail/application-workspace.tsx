@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ApplicationDraftResponse } from "@/types/api-types";
-import { Editor } from "@/components/editor";
+import { EditorContainer } from "@/components/workspaces/detail/applications/detail/editor-container";
 import { Loader } from "@/components/loader";
 import { getApplicationText } from "@/actions/api";
 
@@ -39,7 +39,7 @@ export function ApplicationWorkspace({
 	return (
 		<div className="flex gap-4" data-testid="application-workspace">
 			{draftText ? (
-				<Editor content={draftText} />
+				<EditorContainer content={draftText} />
 			) : (
 				<div className="flex flex-col justify-center w-full h-full gap-2">
 					<div className="space-y-2 flex justify-center text-lg font-semibold italic pt-10">
