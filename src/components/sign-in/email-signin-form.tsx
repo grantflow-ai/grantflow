@@ -6,8 +6,19 @@ import { SubmitButton } from "@/components/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
 import { Input } from "gen/ui/input";
 
+const WHITE_LISTED_EMAILS = new Set([
+	"allonwag@berkeley.edu",
+	"naftali.kaminski@yale.edu",
+	"mgrinstein@bwh.harvard.edu",
+]);
+
 const emailSchema = z.object({
-	email: z.string().email({ message: "Invalid email address" }),
+	email: z
+		.string()
+		.email({ message: "Invalid email address" })
+		.refine((email) => WHITE_LISTED_EMAILS.has(email), {
+			message: "This email address is not approved for our private beta. Please use another email address.",
+		}),
 });
 
 export type EmailFormValues = z.infer<typeof emailSchema>;
