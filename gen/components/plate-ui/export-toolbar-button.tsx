@@ -4,7 +4,7 @@ import React from "react";
 
 import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 
-import { toDOMNode, useEditorRef } from "@udecode/plate-common/react";
+import { useEditorRef } from "@udecode/plate-common/react";
 import { ArrowDownToLineIcon } from "lucide-react";
 
 import {
@@ -16,22 +16,15 @@ import {
 	useOpenState,
 } from "./dropdown-menu";
 import { ToolbarButton } from "./toolbar";
+import { TPlateEditor } from "@udecode/plate-core/react";
+import { MarkdownPlugin } from "@udecode/plate-markdown";
 
 export function ExportToolbarButton({ children, ...props }: DropdownMenuProps) {
-	const editor = useEditorRef();
+	const editor = useEditorRef<TPlateEditor<any, typeof MarkdownPlugin>>();
 	const openState = useOpenState();
 
-	const getCanvas = async () => {
-		const { default: html2canvas } = await import("html2canvas");
-
-		const style = document.createElement("style");
-		document.head.append(style);
-		style.sheet?.insertRule("body > div:last-child img { display: inline-block !important; }");
-
-		const canvas = await html2canvas(toDOMNode(editor, editor)!);
-		style.remove();
-
-		return canvas;
+	const getFileName = (extension: string) => {
+		return `grantflow-doc.${extension}`;
 	};
 
 	const downloadFile = (href: string, filename: string) => {
@@ -44,28 +37,13 @@ export function ExportToolbarButton({ children, ...props }: DropdownMenuProps) {
 		element.remove();
 	};
 
-	const exportToPdf = async () => {
-		const canvas = await getCanvas();
+	const exportToMarkdown = () => {
+		const markdown = editor.api.markdown.serialize();
+		const blob = new Blob([markdown], { type: "text/markdown" });
+		const url = URL.createObjectURL(blob);
 
-		const PDFLib = await import("pdf-lib");
-		const pdfDoc = await PDFLib.PDFDocument.create();
-		const page = pdfDoc.addPage([canvas.width, canvas.height]);
-		const imageEmbed = await pdfDoc.embedPng(canvas.toDataURL("PNG"));
-		const { height, width } = imageEmbed.scale(1);
-		page.drawImage(imageEmbed, {
-			height,
-			width,
-			x: 0,
-			y: 0,
-		});
-		const pdfBase64 = await pdfDoc.saveAsBase64({ dataUri: true });
-
-		downloadFile(pdfBase64, "plate.pdf");
-	};
-
-	const exportToImage = async () => {
-		const canvas = await getCanvas();
-		downloadFile(canvas.toDataURL("image/png"), "plate.png");
+		downloadFile(url, getFileName("md"));
+		URL.revokeObjectURL(url);
 	};
 
 	return (
@@ -78,8 +56,7 @@ export function ExportToolbarButton({ children, ...props }: DropdownMenuProps) {
 
 			<DropdownMenuContent align="start">
 				<DropdownMenuGroup>
-					<DropdownMenuItem onSelect={exportToPdf}>Export as PDF</DropdownMenuItem>
-					<DropdownMenuItem onSelect={exportToImage}>Export as Image</DropdownMenuItem>
+					<DropdownMenuItem onSelect={exportToMarkdown}>Export as Markdown</DropdownMenuItem>
 				</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>
