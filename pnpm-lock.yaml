@@ -196,6 +196,9 @@ importers:
             "@udecode/plate-trailing-block":
                 specifier: ^40.0.0
                 version: 40.0.0(@udecode/plate-common@40.3.1(@types/react@19.0.1)(immer@10.1.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(scheduler@0.25.0)(slate-dom@0.111.0(slate@0.112.0))(slate-history@0.110.3(slate@0.112.0))(slate-hyperscript@0.100.0(slate@0.112.0))(slate-react@0.112.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.111.0(slate@0.112.0))(slate@0.112.0))(slate@0.112.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.111.0(slate@0.112.0))(slate-history@0.110.3(slate@0.112.0))(slate-hyperscript@0.100.0(slate@0.112.0))(slate-react@0.112.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.111.0(slate@0.112.0))(slate@0.112.0))(slate@0.112.0)
+            "@vercel/analytics":
+                specifier: ^1.4.1
+                version: 1.4.1(next@15.1.1(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
             ai:
                 specifier: ^4.0.20
                 version: 4.0.20(react@19.0.0)(zod@3.24.1)
@@ -3679,6 +3682,35 @@ packages:
             {
                 integrity: sha512-30ixi2pznIXyIqpFocX+X5Sj38js+wZ0RLY14eZv1C1zwWo5BxSuJfzpGQTvGcLPJnij019tEpmGH61QdDxtrQ==,
             }
+
+    "@vercel/analytics@1.4.1":
+        resolution:
+            {
+                integrity: sha512-ekpL4ReX2TH3LnrRZTUKjHHNpNy9S1I7QmS+g/RQXoSUQ8ienzosuX7T9djZ/s8zPhBx1mpHP/Rw5875N+zQIQ==,
+            }
+        peerDependencies:
+            "@remix-run/react": ^2
+            "@sveltejs/kit": ^1 || ^2
+            next: ">= 13"
+            react: ^18 || ^19 || ^19.0.0-rc
+            svelte: ">= 4"
+            vue: ^3
+            vue-router: ^4
+        peerDependenciesMeta:
+            "@remix-run/react":
+                optional: true
+            "@sveltejs/kit":
+                optional: true
+            next:
+                optional: true
+            react:
+                optional: true
+            svelte:
+                optional: true
+            vue:
+                optional: true
+            vue-router:
+                optional: true
 
     "@vitejs/plugin-react@4.3.4":
         resolution:
@@ -10929,6 +10961,11 @@ snapshots:
             slate-history: 0.110.3(slate@0.112.0)
 
     "@udecode/utils@37.0.0": {}
+
+    "@vercel/analytics@1.4.1(next@15.1.1(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)":
+        optionalDependencies:
+            next: 15.1.1(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+            react: 19.0.0
 
     "@vitejs/plugin-react@4.3.4(vite@5.4.11(@types/node@22.10.2))":
         dependencies:
