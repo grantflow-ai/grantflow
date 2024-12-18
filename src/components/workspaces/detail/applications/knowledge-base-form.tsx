@@ -21,7 +21,8 @@ export function KnowledgeBaseForm({ form }: { form: UseFormReturn<GrantApplicati
 		<div className="space-y-4">
 			<h2 className="text-xl font-semibold mb-4">Knowledge Base</h2>
 			<p className="text-sm px-3 space-y-6 italic">
-				Upload sources for text generation: previous applications, research notes, articles, presentations etc.
+				Upload sources for application generation: previous applications, research notes, articles,
+				presentations etc.
 			</p>
 			<FormField
 				control={form.control}
