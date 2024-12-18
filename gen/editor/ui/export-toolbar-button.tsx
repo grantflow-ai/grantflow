@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useContext } from "react";
 
 import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 
@@ -18,13 +18,18 @@ import {
 import { ToolbarButton } from "./toolbar";
 import { TPlateEditor } from "@udecode/plate-core/react";
 import { MarkdownPlugin } from "@udecode/plate-markdown";
+import { ApplicationContext } from "@/components/workspaces/detail/applications/detail/context";
 
 export function ExportToolbarButton({ children, ...props }: DropdownMenuProps) {
 	const editor = useEditorRef<TPlateEditor<any, typeof MarkdownPlugin>>();
 	const openState = useOpenState();
+	const application = useContext(ApplicationContext);
 
 	const getFileName = (extension: string) => {
-		return `grantflow-doc.${extension}`;
+		const title = application?.title ?? "grantflow-doc";
+		const sanitizedTitle = title.replace(/[^\w\s-]/g, "-").trim();
+
+		return `${sanitizedTitle}.${extension}`;
 	};
 
 	const downloadFile = (href: string, filename: string) => {

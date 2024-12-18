@@ -24,7 +24,7 @@ import {
 	SquareIcon,
 } from "lucide-react";
 
-import { getBlockType, setBlockType } from "gen/components/editor/transforms";
+import { getBlockType, setBlockType } from "gen/editor/transforms";
 
 import {
 	DropdownMenu,

@@ -14,8 +14,8 @@ import { SlashPlugin } from "@udecode/plate-slash-command/react";
 import { TogglePlugin } from "@udecode/plate-toggle/react";
 import { TrailingBlockPlugin } from "@udecode/plate-trailing-block";
 
-import { FixedToolbarPlugin } from "gen/components/editor/plugins/fixed-toolbar-plugin";
-import { FloatingToolbarPlugin } from "gen/components/editor/plugins/floating-toolbar-plugin";
+import { FixedToolbarPlugin } from "gen/editor/plugins/fixed-toolbar-plugin";
+import { FloatingToolbarPlugin } from "gen/editor/plugins/floating-toolbar-plugin";
 
 import { aiPlugins } from "./plugins/ai-plugins";
 import { alignPlugin } from "./plugins/align-plugin";

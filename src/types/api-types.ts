@@ -39,6 +39,7 @@ export interface ApplicationId {
 export interface ApplicationBase extends ApplicationId {
 	title: string;
 	cfp: GrantCfp;
+	text: string | null;
 }
 
 export interface Application extends ApplicationBase {
