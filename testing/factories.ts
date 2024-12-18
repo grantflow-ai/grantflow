@@ -23,6 +23,7 @@ export const WorkspaceFactory = new Factory<Workspace>((factory) => ({
 
 export const ApplicationFactory = new Factory<Application>((factory) => ({
 	cfp: factory.use(GrantCFPFactory.build),
+	text: factory.lorem.paragraphs(),
 	id: factory.string.uuid(),
 	title: factory.lorem.words(),
 	innovation: factory.lorem.paragraphs(),

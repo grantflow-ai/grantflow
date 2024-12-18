@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ApplicationDraftResponse } from "@/types/api-types";
+import { Application, ApplicationDraftResponse } from "@/types/api-types";
 import { EditorContainer } from "@/components/workspaces/detail/applications/detail/editor-container";
 import { Loader } from "@/components/loader";
 import { getApplicationText } from "@/actions/api";
@@ -16,30 +16,22 @@ async function pollDraft(workspaceId: string, applicationId: string) {
 	return applicationDraftResponse.text;
 }
 
-export function ApplicationWorkspace({
-	workspaceId,
-	applicationId,
-	content,
-}: {
-	workspaceId: string;
-	applicationId: string;
-	content: string | null;
-}) {
-	const [draftText, setDraftText] = useState(content);
+export function ApplicationWorkspace({ workspaceId, application }: { workspaceId: string; application: Application }) {
+	const [draftText, setDraftText] = useState(application.text);
 
 	useEffect(() => {
-		if (!content) {
+		if (!application.text) {
 			(async () => {
-				const draft = await pollDraft(workspaceId, applicationId);
+				const draft = await pollDraft(workspaceId, application.id);
 				setDraftText(draft);
 			})();
 		}
-	}, [content]);
+	}, [application.text]);
 
 	return (
 		<div className="flex gap-4" data-testid="application-workspace">
 			{draftText ? (
-				<EditorContainer content={draftText} />
+				<EditorContainer application={application} />
 			) : (
 				<div className="flex flex-col justify-center w-full h-full gap-2">
 					<div className="space-y-2 flex justify-center text-lg font-semibold italic pt-10">

@@ -8,8 +8,8 @@ import { IndentPlugin } from "@udecode/plate-indent/react";
 import { IndentListPlugin } from "@udecode/plate-indent-list/react";
 import { TogglePlugin } from "@udecode/plate-toggle/react";
 
-import { FireLiComponent, FireMarker } from "gen/components/plate-ui/indent-fire-marker";
-import { TodoLi, TodoMarker } from "gen/components/plate-ui/indent-todo-marker";
+import { FireLiComponent, FireMarker } from "gen/editor/ui/indent-fire-marker";
+import { TodoLi, TodoMarker } from "gen/editor/ui/indent-todo-marker";
 
 export const indentListPlugins = [
 	IndentPlugin.extend({
