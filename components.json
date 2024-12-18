@@ -12,16 +12,5 @@
 		"css": "src/styles/globals.css",
 		"cssVariables": true
 	},
-	"tsx": true,
-	"registries": {
-		"plate": {
-			"aliases": {
-				"ui": "gen/plate/ui",
-				"editor": "gen/plate/editor",
-				"hooks": "gen/plate/hooks",
-				"lib": "gen/plate/lib"
-			},
-			"url": "https://platejs.org/r"
-		}
-	}
+	"tsx": true
 }

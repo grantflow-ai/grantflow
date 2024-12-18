@@ -16,7 +16,7 @@ import { type PlateEditor, toDOMNode, useEditorPlugin, useHotkeys } from "@udeco
 import { BlockSelectionPlugin, useIsSelecting } from "@udecode/plate-selection/react";
 import { Loader2Icon } from "lucide-react";
 
-import { useChat } from "gen/components/editor/use-chat";
+import { useChat } from "gen/editor/use-chat";
 
 import { AIChatEditor } from "./ai-chat-editor";
 import { AIMenuItems } from "./ai-menu-items";

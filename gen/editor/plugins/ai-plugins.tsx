@@ -19,17 +19,17 @@ import { HorizontalRulePlugin } from "@udecode/plate-horizontal-rule/react";
 import { LinkPlugin } from "@udecode/plate-link/react";
 import { MarkdownPlugin } from "@udecode/plate-markdown";
 
-import { cursorOverlayPlugin } from "gen/components/editor/plugins/cursor-overlay-plugin";
-import { AIMenu } from "gen/components/plate-ui/ai-menu";
-import { BlockquoteElement } from "gen/components/plate-ui/blockquote-element";
-import { CodeBlockElement } from "gen/components/plate-ui/code-block-element";
-import { CodeLeaf } from "gen/components/plate-ui/code-leaf";
-import { CodeLineElement } from "gen/components/plate-ui/code-line-element";
-import { CodeSyntaxLeaf } from "gen/components/plate-ui/code-syntax-leaf";
-import { HeadingElement } from "gen/components/plate-ui/heading-element";
-import { HrElement } from "gen/components/plate-ui/hr-element";
-import { LinkElement } from "gen/components/plate-ui/link-element";
-import { ParagraphElement } from "gen/components/plate-ui/paragraph-element";
+import { cursorOverlayPlugin } from "gen/editor/plugins/cursor-overlay-plugin";
+import { AIMenu } from "gen/editor/ui/ai-menu";
+import { BlockquoteElement } from "gen/editor/ui/blockquote-element";
+import { CodeBlockElement } from "gen/editor/ui/code-block-element";
+import { CodeLeaf } from "gen/editor/ui/code-leaf";
+import { CodeLineElement } from "gen/editor/ui/code-line-element";
+import { CodeSyntaxLeaf } from "gen/editor/ui/code-syntax-leaf";
+import { HeadingElement } from "gen/editor/ui/heading-element";
+import { HrElement } from "gen/editor/ui/hr-element";
+import { LinkElement } from "gen/editor/ui/link-element";
+import { ParagraphElement } from "gen/editor/ui/paragraph-element";
 
 import { basicNodesPlugins } from "./basic-nodes-plugins";
 import { blockSelectionReadOnlyPlugin } from "./block-selection-plugins";

@@ -38,7 +38,7 @@ import {
 	TableOfContentsIcon,
 } from "lucide-react";
 
-import { insertBlock, insertInlineElement } from "gen/components/editor/transforms";
+import { insertBlock, insertInlineElement } from "gen/editor/transforms";
 
 import {
 	DropdownMenu,

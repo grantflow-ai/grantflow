@@ -27,7 +27,7 @@ import {
 	WandSparklesIcon,
 } from "lucide-react";
 
-import { MoreDropdownMenu } from "gen/components/plate-ui/more-dropdown-menu";
+import { MoreDropdownMenu } from "gen/editor/ui/more-dropdown-menu";
 
 import { AIToolbarButton } from "./ai-toolbar-button";
 import { AlignDropdownMenu } from "./align-dropdown-menu";
