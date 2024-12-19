@@ -183,6 +183,7 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
                 ApplicationBaseResponse(
                     id=str(application.id),
                     title=application.title,
+                    text=application.text,
                     cfp=CfpResponse(
                         id=str(application.cfp.id),
                         allow_clinical_trials=application.cfp.allow_clinical_trials,

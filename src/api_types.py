@@ -166,6 +166,7 @@ class ApplicationBaseResponse(ApplicationIdResponse):
     """The title of the application."""
     cfp: CfpResponse
     """The CFP of the application."""
+    text: str | None
 
 
 class ApplicationFullResponse(ApplicationBaseResponse):
