@@ -176,6 +176,8 @@ class ResearchAim(Base):
 
     aim_number: Mapped[int] = mapped_column(Integer, default=None)
     description: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    preliminary_results: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    risks_and_alternatives: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     requires_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=False)
     title: Mapped[str] = mapped_column(String(255), default=None)
 
