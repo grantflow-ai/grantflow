@@ -54,6 +54,10 @@ class ResearchAimDTO:
     """The title of the aim."""
     description: str | None
     """The description of the aim."""
+    preliminary_results: str | None
+    """The preliminary results of the aim."""
+    risks_and_alternatives: str | None
+    """The risks and alternatives of the aim."""
     requires_clinical_trials: bool
     """Whether the aim requires clinical trials."""
     research_tasks: list[ResearchTaskDTO]

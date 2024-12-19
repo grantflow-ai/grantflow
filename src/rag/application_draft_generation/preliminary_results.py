@@ -26,60 +26,40 @@ from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
-RESEARCH_AIM_GENERATION_USER_PROMPT: Final[Template] = Template("""
-Your task is to write a research aim description.
-${previous_part_text}
+PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[Template] = Template("""
+You task is to add the preliminary results sub-section to the following research aims text:
+    <research_aim_text>
+    ${research_aim_text}
+    </research_aim_text>
 
 Use the following sources to write the text:
 
-1. Research Aim Data as a JSON object with fields:
-    <research_aim>
-    ${research_aim}
-    </research_aim>
-
-2. The titles of the research tasks that are included in this Aim:
-    <research_tasks>
-    ${research_task_titles}
-    </research_tasks>
+1. User input on preliminary results:
+    <preliminary_results>
+    ${preliminary_results}
+    </preliminary_results>
 
 3. RAG Retrieval Results for additional context as a JSON array:
     <rag_results>
     ${rag_results}
     </rag_results>
 
-A research aim or research objective is an overarching goal that the research aims to achieve.
-The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
-It should address the following implicit questions:
+Preliminary results are detailed experimental findings and data analyses that demonstrate research feasibility.
+They should address the following implicit questions:
 
-1. What is the working hypothesis?
-2. What are the general goals of the aim?
-3. What is the methodology employed?
-4. What are the expected results?
-
-__NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
+1. What experiments/analyses have been conducted?
+2. What methods and techniques were used?
+3. How was the data analyzed and interpreted?
+4. How do these findings support the proposed research?
 
 **Important Guidelines**:
-- The research aim JSON object includes an array of relations with other research aims. If the array is not empty, make sure to include a detailed description of these relations in the text.
-- Do not use the title of the research aim in the text - the title will be provided to the user above the text.
+- Generate the text for the subsection preliminary results assuming it will come immediately after the research aim text provided.
+- Do not include the provided research aim text in the generated text.
+- Do not use the title of the research aim in the text.
 - Make sure to include concrete facts where applicable.
-
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RESEARCH_AIM_QUERIES_PROMPT: Final[Template] = Template("""
-The next task in the RAG pipeline is to write a description for a research aim.
-A research aim or research objective is an overarching goal that the research seeks to achieve.
-The description should address the following implicit questions:
-
-1. What is the working hypothesis?
-2. What are the general goals of the aim?
-3. What is the methodology employed?
-4. What are the expected results?
-
-Here is the research task data as a JSON object:
-    <research_aim>
-    ${research_aim}
-    </research_aim>
+PRELIMINARY_RESULTS_QUERIES_PROMPT: Final[Template] = Template("""
 """)
 
 
@@ -101,15 +81,8 @@ async def generate_research_aim_text(
     Returns:
         GenerationResultDTO: The generated text for the research aim.
     """
-    user_prompt = RESEARCH_AIM_GENERATION_USER_PROMPT.substitute(
-        research_aim=serialize(
-            {
-                "title": research_aim.title,
-                "aim_number": research_aim.aim_number,
-                "description": research_aim.description,
-                "relations": research_aim.relations,
-            }
-        ),
+    user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute(
+        research_aim=serialize(research_aim),
         rag_results=serialize(retrieval_results),
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
@@ -166,7 +139,7 @@ async def handle_research_aim_text_generation(
     research_task_titles = [research_task.title for research_task in research_aim_dto.research_tasks]
 
     search_queries = await create_search_queries(
-        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim_dto)),
+        PRELIMINARY_RESULTS_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim_dto)),
     )
 
     search_result = await retrieve_documents(
