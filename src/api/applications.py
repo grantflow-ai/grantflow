@@ -208,6 +208,7 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
             title=application.title,
             significance=application.significance,
             innovation=application.innovation,
+            text=application.text,
             cfp=CfpResponse(
                 id=str(application.cfp.id),
                 allow_clinical_trials=application.cfp.allow_clinical_trials,
