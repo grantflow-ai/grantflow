@@ -28,7 +28,7 @@ export const TocElement = withRef<typeof PlateElement>(({ children, className, .
 	const { headingList } = state;
 
 	return (
-		<PlateElement ref={ref} className={cn("relative mb-1 p-0", className)} {...props}>
+		<PlateElement ref={ref} className={cn(className, "relative mb-1 p-0")} {...props}>
 			<div contentEditable={false}>
 				{headingList.length > 0 ? (
 					headingList.map((item) => (

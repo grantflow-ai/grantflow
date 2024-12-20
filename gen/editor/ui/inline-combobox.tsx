@@ -33,7 +33,7 @@ import { cn, withCn } from "@udecode/cn";
 import { filterWords } from "@udecode/plate-combobox";
 import { type UseComboboxInputResult, useComboboxInput, useHTMLInputCursorState } from "@udecode/plate-combobox/react";
 import { type TElement, createPointRef, getPointBefore, insertText, moveSelection } from "@udecode/plate-common";
-import { findNodePath, useComposedRef, useEditorRef } from "@udecode/plate-common/react";
+import { findPath, useComposedRef, useEditorRef } from "@udecode/plate-common/react";
 import { cva } from "class-variance-authority";
 
 type FilterFn = (
@@ -106,7 +106,7 @@ const InlineCombobox = ({
 	const [insertPoint, setInsertPoint] = useState<PointRef | null>(null);
 
 	useEffect(() => {
-		const path = findNodePath(editor, element);
+		const path = findPath(editor, element);
 
 		if (!path) return;
 

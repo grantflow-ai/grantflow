@@ -14,7 +14,7 @@ export const ToggleElement = withRef<typeof PlateElement>(({ children, className
 	const { buttonProps, open } = useToggleButton(state);
 
 	return (
-		<PlateElement ref={ref} className={cn("relative pl-6", className)} {...props}>
+		<PlateElement ref={ref} className={cn(className, "relative pl-6")} {...props}>
 			<Button
 				size="icon"
 				variant="ghost"

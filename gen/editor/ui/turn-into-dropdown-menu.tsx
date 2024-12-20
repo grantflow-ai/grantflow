@@ -24,7 +24,7 @@ import {
 	SquareIcon,
 } from "lucide-react";
 
-import { getBlockType, setBlockType } from "gen/editor/transforms";
+import { STRUCTURAL_TYPES, getBlockType, setBlockType } from "gen/editor/transforms";
 
 import {
 	DropdownMenu,
@@ -111,6 +111,7 @@ export function TurnIntoDropdownMenu(props: DropdownMenuProps) {
 	const value = useSelectionFragmentProp({
 		defaultValue: ParagraphPlugin.key,
 		getProp: (node) => getBlockType(node as any),
+		structuralTypes: STRUCTURAL_TYPES,
 	});
 	const selectedItem = React.useMemo(
 		() => turnIntoItems.find((item) => item.value === (value ?? ParagraphPlugin.key)) ?? turnIntoItems[0],

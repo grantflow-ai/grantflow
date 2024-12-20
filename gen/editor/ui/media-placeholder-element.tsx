@@ -1,21 +1,21 @@
 "use client";
 
-import type { ReactNode } from "react";
 import React, { RefObject, useCallback, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import type { TPlaceholderElement } from "@udecode/plate-media";
 
 import { cn } from "@udecode/cn";
 import { insertNodes, removeNodes, withoutSavingHistory } from "@udecode/plate-common";
-import { findNodePath, useEditorPlugin, withHOC, withRef } from "@udecode/plate-common/react";
+import { findPath, useEditorPlugin, withHOC, withRef } from "@udecode/plate-common/react";
 import {
 	AudioPlugin,
 	FilePlugin,
 	ImagePlugin,
 	PlaceholderPlugin,
 	PlaceholderProvider,
-	updateUploadHistory,
 	VideoPlugin,
+	updateUploadHistory,
 } from "@udecode/plate-media/react";
 import { AudioLines, FileUp, Film, ImageIcon } from "lucide-react";
 import { useFilePicker } from "use-file-picker";
@@ -56,7 +56,8 @@ const CONTENT: Record<
 
 export const MediaPlaceholderElement = withHOC(
 	PlaceholderProvider,
-	withRef<typeof PlateElement>(({ children, className, editor, nodeProps, ...props }, ref) => {
+	withRef<typeof PlateElement>(({ children, className, nodeProps, ...props }, ref) => {
+		const editor = props.editor;
 		const element = props.element as TPlaceholderElement;
 
 		const { api } = useEditorPlugin(PlaceholderPlugin);
@@ -95,7 +96,7 @@ export const MediaPlaceholderElement = withHOC(
 		useEffect(() => {
 			if (!uploadedFile) return;
 
-			const path = findNodePath(editor, element);
+			const path = findPath(editor, element);
 
 			withoutSavingHistory(editor, () => {
 				removeNodes(editor, { at: path });
@@ -108,7 +109,7 @@ export const MediaPlaceholderElement = withHOC(
 					name: element.mediaType === FilePlugin.key ? uploadedFile.name : "",
 					placeholderId: element.id as string,
 					type: element.mediaType!,
-					url: Reflect.get(uploadedFile, "url"),
+					url: uploadedFile.url,
 				};
 
 				insertNodes(editor, node, { at: path });
@@ -138,7 +139,7 @@ export const MediaPlaceholderElement = withHOC(
 		}, [isReplaced]);
 
 		return (
-			<PlateElement ref={ref} className={cn("relative my-1", className)} editor={editor} {...props}>
+			<PlateElement ref={ref} className={cn(className, "relative my-1")} {...props}>
 				{(!loading || !isImage) && (
 					<div
 						className={cn(
@@ -170,7 +171,7 @@ export const MediaPlaceholderElement = withHOC(
 				{isImage && loading && (
 					<ImageProgress
 						file={uploadingFile}
-						imageRef={(imageRef ?? undefined) as RefObject<HTMLImageElement> | undefined}
+						imageRef={imageRef as RefObject<HTMLImageElement>}
 						progress={progress}
 					/>
 				)}

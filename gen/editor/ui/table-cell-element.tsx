@@ -45,6 +45,7 @@ export const TableCellElement = withRef<
 			ref={ref}
 			as={isHeader ? "th" : "td"}
 			className={cn(
+				className,
 				"relative h-full overflow-visible border-none bg-background p-0",
 				hideBorder && "before:border-none",
 				element.background ? "bg-[--cellBackground]" : "bg-background",
@@ -62,7 +63,6 @@ export const TableCellElement = withRef<
 								borders.top?.size && `before:border-t before:border-t-border`,
 							),
 					),
-				className,
 			)}
 			{...cellProps}
 			{...props}
@@ -74,7 +74,7 @@ export const TableCellElement = withRef<
 			}
 		>
 			<div
-				className="relative z-20 box-border h-full px-3 py-2"
+				className="relative z-20 box-border h-full px-4 py-2"
 				style={{
 					minHeight: rowSize,
 				}}

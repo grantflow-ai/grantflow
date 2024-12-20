@@ -68,6 +68,8 @@ export const ResearchAimFactory = new Factory<ResearchAim>((factory, i) => ({
 	requires_clinical_trials: factory.datatype.boolean(),
 	title: factory.lorem.words(),
 	research_tasks: ResearchTaskFactory.batch(3),
+	risks_and_alternatives: factory.lorem.sentences(3),
+	preliminary_results: factory.lorem.sentences(8),
 }));
 
 export const ResearchTaskFactory = new Factory<ResearchTask>((factory, i) => ({

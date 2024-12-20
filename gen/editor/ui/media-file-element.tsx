@@ -19,17 +19,16 @@ export const MediaFileElement = withHOC(
 
 		const { name, unsafeUrl } = useMediaState();
 
-		const onDownload = () => {
-			window.open(unsafeUrl);
-		};
-
 		return (
-			<PlateElement ref={ref} className={cn("relative my-px rounded-sm", className)} {...props}>
-				<div
+			<PlateElement ref={ref} className={cn(className, "relative my-px rounded-sm")} {...props}>
+				<a
 					className="group relative m-0 flex cursor-pointer items-center rounded px-0.5 py-[3px] hover:bg-muted"
-					onClick={onDownload}
 					contentEditable={false}
+					download={name}
+					href={unsafeUrl}
+					rel="noopener noreferrer"
 					role="button"
+					target="_blank"
 				>
 					<div className="flex items-center gap-1 p-1">
 						<FileUp className="size-5" />
@@ -43,7 +42,7 @@ export const MediaFileElement = withHOC(
 					<Caption align="left">
 						<CaptionTextarea className="text-left" readOnly={readOnly} placeholder="Write a caption..." />
 					</Caption>
-				</div>
+				</a>
 				{children}
 			</PlateElement>
 		);
