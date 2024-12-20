@@ -21,6 +21,8 @@ export const researchAimSchema = z.object({
 		.max(255, "Title must not exceed 255 characters"),
 	description: z.string().optional(),
 	requires_clinical_trials: z.boolean().default(false),
+	preliminary_results: z.string().optional(),
+	risks_and_alternatives: z.string().optional(),
 	research_tasks: z.array(researchTaskSchema).min(1, "At least one research task is required"),
 });
 
