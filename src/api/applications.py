@@ -228,6 +228,8 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
                     title=research_aim.title,
                     description=research_aim.description,
                     requires_clinical_trials=research_aim.requires_clinical_trials,
+                    preliminary_results=research_aim.preliminary_results,
+                    risks_and_alternatives=research_aim.risks_and_alternatives,
                     research_tasks=[
                         ResearchTaskResponse(
                             id=str(research_task.id),

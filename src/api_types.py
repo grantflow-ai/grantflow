@@ -216,10 +216,14 @@ class CreateResearchAimRequestBody(TypedDict):
     """The number of the aim."""
     description: str | None
     """The description of the aim."""
+    preliminary_results: str | None
+    """The preliminary results of the aim."""
     requires_clinical_trials: bool
     """Whether the aim requires clinical trials."""
     research_tasks: list[CreateResearchTaskRequestBody]
     """The research tasks of the aim."""
+    risks_and_alternatives: str | None
+    """The risks and alternatives of the aim."""
     title: str
     """The title of the aim."""
 
@@ -246,6 +250,10 @@ class UpdateResearchAimRequestBody(TypedDict):
     """Whether the aim requires clinical trials."""
     title: NotRequired[str]
     """The title of the aim."""
+    preliminary_results: NotRequired[str | None]
+    """The preliminary results of the aim."""
+    risks_and_alternatives: NotRequired[str | None]
+    """The risks and alternatives of the aim."""
 
 
 class ResearchTaskResponse(TypedDict):
@@ -264,18 +272,22 @@ class ResearchTaskResponse(TypedDict):
 class ResearchAimResponse(TypedDict):
     """The response body for retrieving a research aim."""
 
-    id: str
-    """The ID of the research aim."""
     aim_number: int
     """The number of the aim."""
-    description: str
+    description: str | None
     """The description of the aim."""
+    id: str
+    """The ID of the research aim."""
+    preliminary_results: str | None
+    """The preliminary results of the aim."""
     requires_clinical_trials: bool
     """Whether the aim requires clinical trials."""
-    title: str
-    """The title of the aim."""
     research_tasks: list[ResearchTaskResponse]
     """The research tasks of the aim."""
+    risks_and_alternatives: str | None
+    """The risks and alternatives of the aim."""
+    title: str
+    """The title of the aim."""
 
 
 # User API Types
