@@ -71,6 +71,7 @@ Format your response as a continuous text without headings, bullet points, lists
 """)
 
 RESEARCH_TASK_QUERIES_PROMPT: Final[Template] = Template("""
+The next task in the RAG pipeline is to write a description for a research task.
 A research task is a specific task within a larger research aim. The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
 The description should address the following implicit questions:
 
@@ -84,6 +85,12 @@ Here is the research task data as a JSON object:
     <research_task>
     ${research_task}
     </research_task>
+""")
+
+RESEARCH_TASK_TEMPLATE: Final[Template] = Template("""
+###### Task ${task_number}: ${title}
+
+${content}
 """)
 
 
@@ -131,7 +138,7 @@ async def handle_research_task_text_generation(
     research_task_dto: ResearchTaskDTO,
     research_task_id: str,
     session_maker: async_sessionmaker[Any],
-) -> tuple[str, str]:
+) -> str:
     """Generate the text for a research task.
 
     Args:
@@ -159,7 +166,7 @@ async def handle_research_task_text_generation(
                 TextGenerationResult.section_id == research_task_id,
             )
         ):
-            return research_task_id, cast(str, result)
+            return cast(str, result)
 
     search_queries = await create_search_queries(
         RESEARCH_TASK_QUERIES_PROMPT.substitute(
@@ -209,4 +216,6 @@ async def handle_research_task_text_generation(
             logger.error("Error while saving generated sections.", exec_info=e)
             raise DatabaseError("Error while saving generated sections", context=str(e)) from e
 
-    return research_task_id, content
+    return RESEARCH_TASK_TEMPLATE.substitute(
+        task_number=research_task_dto.task_number, title=research_task_dto.title, content=content
+    )
