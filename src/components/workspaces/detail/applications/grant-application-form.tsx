@@ -16,11 +16,11 @@ import {
 	grantApplicationFormSchema,
 	GrantApplicationFormValues,
 } from "@/components/workspaces/detail/applications/schema";
-import { ResearchAimForm } from "@/components/workspaces/detail/applications/research-tasks-form";
 import { KnowledgeBaseForm } from "@/components/workspaces/detail/applications/knowledge-base-form";
 import { ApplicationDetailsForm } from "@/components/workspaces/detail/applications/application-details-form";
 import { ApplicationId, CreateApplicationRequestBody, GrantCfp } from "@/types/api-types";
 import { getClient } from "@/utils/api-client";
+import { ResearchAimForm } from "@/components/workspaces/detail/applications/research-aim-form";
 
 async function handleCreateApplication({
 	workspaceId,
@@ -39,14 +39,18 @@ async function handleCreateApplication({
 		significance: formValues.significance ?? null,
 		innovation: formValues.innovation ?? null,
 		cfp_id: formValues.cfp_id,
-		research_aims: formValues.research_aims.map(({ description: aimDescription, research_tasks, ...aim }) => ({
-			...aim,
-			description: aimDescription ?? null,
-			research_tasks: research_tasks.map(({ description: taskDescription, ...task }) => ({
-				...task,
-				description: taskDescription ?? null,
-			})),
-		})),
+		research_aims: formValues.research_aims.map(
+			({ description: aimDescription, preliminary_results, risks_and_alternatives, research_tasks, ...aim }) => ({
+				...aim,
+				description: aimDescription ?? null,
+				preliminary_results: preliminary_results ?? null,
+				risks_and_alternatives: risks_and_alternatives ?? null,
+				research_tasks: research_tasks.map(({ description: taskDescription, ...task }) => ({
+					...task,
+					description: taskDescription ?? null,
+				})),
+			}),
+		),
 	} satisfies CreateApplicationRequestBody;
 
 	formData.append("data", JSON.stringify(data));

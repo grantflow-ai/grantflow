@@ -96,6 +96,8 @@ export interface ResearchAim {
 	aim_number: number;
 	description: string | null;
 	requires_clinical_trials: boolean;
+	preliminary_results: string | null;
+	risks_and_alternatives: string | null;
 	title: string;
 	research_tasks: ResearchTask[];
 }
@@ -104,6 +106,8 @@ export interface CreateResearchAimRequestBody {
 	aim_number: number;
 	description: string | null;
 	requires_clinical_trials: boolean;
+	preliminary_results: string | null;
+	risks_and_alternatives: string | null;
 	research_tasks: CreateResearchTaskRequestBody[];
 	title: string;
 }
@@ -111,6 +115,8 @@ export interface CreateResearchAimRequestBody {
 export interface UpdateResearchAimRequestBody {
 	aim_number?: number;
 	description?: string | null;
+	preliminary_results?: string | null;
+	risks_and_alternatives?: string | null;
 	requires_clinical_trials?: boolean;
 	title?: string;
 }
