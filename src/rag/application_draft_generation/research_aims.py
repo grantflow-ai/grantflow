@@ -83,7 +83,7 @@ Here is the research task data as a JSON object:
 """)
 
 
-async def generate_research_aim_text(
+async def generate_research_aim_description(
     previous_part_text: str | None,
     *,
     research_aim: ResearchAimDTO,
@@ -128,19 +128,17 @@ async def generate_research_aim_text(
     )
 
 
-async def handle_research_aim_text_generation(
+async def handle_research_aim_description_generation(
     *,
     application_id: str,
     research_aim_dto: ResearchAimDTO,
-    research_aim_id: str,
     session_maker: async_sessionmaker[Any],
-) -> tuple[str, str]:
-    """Generate the text for a research aim.
+) -> str:
+    """Generate the description for a research aim.
 
     Args:
         application_id: The application ID.
         research_aim_dto: The research aim to generate text for.
-        research_aim_id: The ID of the research aim.
         session_maker: The session maker.
 
     Raises:
@@ -158,10 +156,13 @@ async def handle_research_aim_text_generation(
                 TextGenerationResult.application_id == application_id,
             )
             .where(
-                TextGenerationResult.section_id == research_aim_id,
+                TextGenerationResult.section_id == research_aim_dto.id,
+            )
+            .where(
+                TextGenerationResult.section_type == "research-aim",
             )
         ):
-            return research_aim_id, cast(str, result)
+            return cast(str, result)
 
     research_task_titles = [research_task.title for research_task in research_aim_dto.research_tasks]
 
@@ -175,7 +176,7 @@ async def handle_research_aim_text_generation(
     )
 
     handler = partial(
-        generate_research_aim_text,
+        generate_research_aim_description,
         research_aim=research_aim_dto,
         retrieval_results=search_result,
         research_task_titles=research_task_titles,
@@ -183,7 +184,7 @@ async def handle_research_aim_text_generation(
 
     content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
         entity_type="research-aim",
-        entity_identifier=research_aim_id,
+        entity_identifier=research_aim_dto.id,
         prompt_handler=handler,
     )
     logger.info("Generated research aim", aim_number=str(research_aim_dto.aim_number))
@@ -197,7 +198,7 @@ async def handle_research_aim_text_generation(
                         "content": content,
                         "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,
-                        "section_id": research_aim_id,
+                        "section_id": research_aim_dto.id,
                         "section_type": "research-aim",
                     }
                 )
@@ -208,4 +209,4 @@ async def handle_research_aim_text_generation(
             logger.error("Error while saving generated sections.", exec_info=e)
             raise DatabaseError("Error while saving generated sections", context=str(e)) from e
 
-    return research_aim_id, content
+    return content
