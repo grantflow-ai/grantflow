@@ -1,7 +1,7 @@
 from typing import Any, Final, NotRequired, TypedDict, cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
-from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, ContentFormat
+from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 from charset_normalizer import detect
@@ -254,8 +254,8 @@ async def extract_with_azure_document_intelligence(file_content: bytes) -> OCROu
     try:
         poller = await client.begin_analyze_document(
             model_id="prebuilt-layout",
-            analyze_request=AnalyzeDocumentRequest(bytes_source=file_content),
-            output_content_format=ContentFormat.MARKDOWN,
+            body=AnalyzeDocumentRequest(bytes_source=file_content),
+            output_content_format=DocumentContentFormat.MARKDOWN,
         )
         result = await poller.result()
         return cast(OCROutput, result.as_dict())
