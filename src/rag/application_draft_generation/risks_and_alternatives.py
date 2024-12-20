@@ -48,8 +48,8 @@ Risks and Alternatives are potential challenges that may arise during the resear
 This section should address the following implicit questions:
 
 1. What are the specific risks involved in this research, and how would you describe their severity (High/Medium/Low)?
-2. What strategies can be implemented to mitigate each identified risk?
-3. What alternative approaches are available if these strategies fail?
+2. What strategies can be implemented to mitigate each identified risk (if applicable/possible)?
+3. What alternative approaches are available if these strategies fail (if any)?
 4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
 
 **Important Guidelines**:
