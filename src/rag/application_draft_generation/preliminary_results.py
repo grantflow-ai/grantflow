@@ -57,39 +57,59 @@ They should address the following implicit questions:
 - Do not include the provided research aim text in the generated text.
 - Do not use the title of the research aim in the text.
 - Make sure to include concrete facts where applicable.
+
+Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for a minimum of half a page, and a maximum of two pages in length (~200-800 words).
 """)
 
 PRELIMINARY_RESULTS_QUERIES_PROMPT: Final[Template] = Template("""
+The next task in the RAG pipeline is to write a description for the preliminary results section.
+Preliminary results are detailed experimental findings and data analyses that demonstrate research feasibility for a specific research aim or objective.
+The description should address the following implicit questions:
+
+1. What experiments/analyses have been conducted?
+2. What methods and techniques were used?
+3. How was the data analyzed and interpreted?
+4. How do these findings support the proposed research?
+
+Here is the user input for preliminary results:
+    <preliminary_results>
+    ${preliminary_results}
+    </preliminary_results>
+
+Here is the description of the research aim:
+    <research_aim_text>
+    ${research_aim_text}
+    </research_aim_text>
 """)
 
 
-async def generate_research_aim_text(
+async def generate_preliminary_results_text(
     previous_part_text: str | None,
     *,
-    research_aim: ResearchAimDTO,
-    research_task_titles: list[str],
+    research_aim_text: str,
+    preliminary_results: str | None,
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResultDTO:
-    """Generate a part of the research aim text.
+    """Generate the text for the preliminary results section of a research aim.
 
     Args:
         previous_part_text: The previous part of the research aim text, if any.
-        research_aim: The research aim to generate text for.
-        research_task_titles: The titles of the research tasks that are included in this aim.
+        research_aim_text: The research aim text.
+        preliminary_results: The user input for the preliminary results.
         retrieval_results: The results of the RAG retrieval.
 
     Returns:
         GenerationResultDTO: The generated text for the research aim.
     """
     user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute(
-        research_aim=serialize(research_aim),
+        research_aim_text=research_aim_text,
         rag_results=serialize(retrieval_results),
+        preliminary_results=preliminary_results,
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
         )
         if previous_part_text
         else "",
-        research_task_titles=",".join(research_task_titles),
     ).strip()
 
     return await handle_completions_request(
@@ -101,20 +121,20 @@ async def generate_research_aim_text(
     )
 
 
-async def handle_research_aim_text_generation(
+async def handle_preliminary_results_text_generation(
     *,
     application_id: str,
     research_aim_dto: ResearchAimDTO,
-    research_aim_id: str,
+    research_aim_description: str,
     session_maker: async_sessionmaker[Any],
 ) -> tuple[str, str]:
-    """Generate the text for a research aim.
+    """Generate the text for preliminary results of a research aim.
 
     Args:
-        application_id: The application ID.
-        research_aim_dto: The research aim to generate text for.
-        research_aim_id: The ID of the research aim.
-        session_maker: The session maker.
+        application_id: The ID of the application.
+        research_aim_dto: The research aim DTO.
+        research_aim_description: The text of the research aim.
+        session_maker: The session
 
     Raises:
         DatabaseError: If there was an issue updating the application draft in the database.
@@ -131,15 +151,18 @@ async def handle_research_aim_text_generation(
                 TextGenerationResult.application_id == application_id,
             )
             .where(
-                TextGenerationResult.section_id == research_aim_id,
+                TextGenerationResult.section_id == research_aim_dto.id,
+            )
+            .where(
+                TextGenerationResult.section_type == "preliminary-results",
             )
         ):
-            return research_aim_id, cast(str, result)
-
-    research_task_titles = [research_task.title for research_task in research_aim_dto.research_tasks]
+            return research_aim_dto.id, cast(str, result)
 
     search_queries = await create_search_queries(
-        PRELIMINARY_RESULTS_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim_dto)),
+        PRELIMINARY_RESULTS_QUERIES_PROMPT.substitute(
+            preliminary_results=research_aim_dto.preliminary_results, research_aim_text=research_aim_description
+        ),
     )
 
     search_result = await retrieve_documents(
@@ -148,15 +171,15 @@ async def handle_research_aim_text_generation(
     )
 
     handler = partial(
-        generate_research_aim_text,
-        research_aim=research_aim_dto,
+        generate_preliminary_results_text,
+        research_aim_text=research_aim_description,
         retrieval_results=search_result,
-        research_task_titles=research_task_titles,
+        preliminary_results=research_aim_dto.preliminary_results,
     )
 
     content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
-        entity_type="research-aim",
-        entity_identifier=research_aim_id,
+        entity_type="preliminary-results",
+        entity_identifier=research_aim_dto.id,
         prompt_handler=handler,
     )
     logger.info("Generated research aim", aim_number=str(research_aim_dto.aim_number))
@@ -170,8 +193,8 @@ async def handle_research_aim_text_generation(
                         "content": content,
                         "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,
-                        "section_id": research_aim_id,
-                        "section_type": "research-aim",
+                        "section_id": research_aim_dto.id,
+                        "section_type": "preliminary-results",
                     }
                 )
             )
@@ -181,4 +204,4 @@ async def handle_research_aim_text_generation(
             logger.error("Error while saving generated sections.", exec_info=e)
             raise DatabaseError("Error while saving generated sections", context=str(e)) from e
 
-    return research_aim_id, content
+    return research_aim_dto.id, content

@@ -53,30 +53,6 @@ Return a JSON object adhering to the following format:
 - relation description should be detailed and specific. Make sure to always include the aim or task number. Use phrases such as "Building upon the first aim...", "Depending on the results of aim 1...", or "Based on the candidates identified in Task 1.2, in task 1.3 we will...".
 """
 
-RESEARCH_PLAN_SECTION_TEMPLATE: Final[Template] = Template("""
-## Research Plan
-
-### Research Aims
-
-${research_aims_text}
-""")
-
-RESEARCH_AIM_TEMPLATE: Final[Template] = Template("""
-#### Aim ${aim_number}: ${title}
-
-${aim_text}
-
-##### Research Tasks
-
-${tasks_text}
-""")
-
-RESEARCH_TASK_TEMPLATE: Final[Template] = Template("""
-###### Task ${task_number}: ${title}
-
-${task_text}
-""")
-
 
 class ToolResponse(TypedDict):
     """The response from the tool call."""
@@ -128,7 +104,7 @@ async def set_relation_data(research_aims: list[ResearchAim]) -> list[ResearchAi
                             for research_task in research_aim.research_tasks
                         ],
                     }
-                    for research_aim in research_aims
+                    for research_aim in sorted(research_aims, key=lambda x: x.aim_number)
                 ]
             )
         ),
@@ -150,6 +126,8 @@ async def set_relation_data(research_aims: list[ResearchAim]) -> list[ResearchAi
             description=research_aim.description,
             requires_clinical_trials=research_aim.requires_clinical_trials,
             relations=relations.get(str(research_aim.aim_number), []),
+            preliminary_results=research_aim.preliminary_results,
+            risks_and_alternatives=research_aim.risks_and_alternatives,
             research_tasks=[
                 ResearchTaskDTO(
                     id=str(research_task.id),
