@@ -10,9 +10,9 @@ export const TableRowElement = withRef<
 	{
 		hideBorder?: boolean;
 	}
->(({ children, hideBorder, ...props }, ref) => {
+>(({ children, className, hideBorder, ...props }, ref) => {
 	return (
-		<PlateElement ref={ref} as="tr" className={cn("h-full", hideBorder && "border-none")} {...props}>
+		<PlateElement ref={ref} as="tr" className={cn(className, "h-full", hideBorder && "border-none")} {...props}>
 			{children}
 		</PlateElement>
 	);

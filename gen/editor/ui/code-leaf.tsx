@@ -9,11 +9,11 @@ export const CodeLeaf = withRef<typeof PlateLeaf>(({ children, className, ...pro
 	return (
 		<PlateLeaf
 			ref={ref}
-			asChild
-			className={cn("whitespace-pre-wrap rounded-md bg-muted px-[0.3em] py-[0.2em] font-mono text-sm", className)}
+			as="code"
+			className={cn(className, "whitespace-pre-wrap rounded-md bg-muted px-[0.3em] py-[0.2em] font-mono text-sm")}
 			{...props}
 		>
-			<code>{children}</code>
+			{children}
 		</PlateLeaf>
 	);
 });

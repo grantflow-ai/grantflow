@@ -25,6 +25,7 @@ import { TocPlugin } from "@udecode/plate-heading/react";
 import { INDENT_LIST_KEYS, ListStyleType } from "@udecode/plate-indent-list";
 import { IndentListPlugin } from "@udecode/plate-indent-list/react";
 import { insertColumnGroup, toggleColumnGroup } from "@udecode/plate-layout";
+import { ColumnItemPlugin, ColumnPlugin } from "@udecode/plate-layout/react";
 import { LinkPlugin, triggerFloatingLink } from "@udecode/plate-link/react";
 import { insertEquation, insertInlineEquation } from "@udecode/plate-math";
 import { EquationPlugin, InlineEquationPlugin } from "@udecode/plate-math/react";
@@ -35,8 +36,17 @@ import {
 	insertVideoPlaceholder,
 } from "@udecode/plate-media";
 import { AudioPlugin, FilePlugin, ImagePlugin, MediaEmbedPlugin, VideoPlugin } from "@udecode/plate-media/react";
-import { TablePlugin, insertTable } from "@udecode/plate-table/react";
+import { insertTable } from "@udecode/plate-table";
+import { TableCellPlugin, TablePlugin, TableRowPlugin } from "@udecode/plate-table/react";
 import { Path } from "slate";
+
+export const STRUCTURAL_TYPES: string[] = [
+	ColumnPlugin.key,
+	ColumnItemPlugin.key,
+	TablePlugin.key,
+	TableRowPlugin.key,
+	TableCellPlugin.key,
+];
 
 const ACTION_THREE_COLUMNS = "action_three_columns";
 
@@ -52,7 +62,7 @@ const insertList = (editor: PlateEditor, type: string) => {
 };
 
 const insertBlockMap: Record<string, (editor: PlateEditor, type: string) => void> = {
-	[ACTION_THREE_COLUMNS]: (editor) => insertColumnGroup(editor, { layout: 3, select: true }),
+	[ACTION_THREE_COLUMNS]: (editor) => insertColumnGroup(editor, { columns: 3, select: true }),
 	[AudioPlugin.key]: (editor) => insertAudioPlaceholder(editor, { select: true }),
 	[CalloutPlugin.key]: (editor) => insertCallout(editor, { select: true }),
 	[CodeBlockPlugin.key]: (editor) => insertCodeBlock(editor, { select: true }),
@@ -123,7 +133,7 @@ const setList = (editor: PlateEditor, type: string, entry: TNodeEntry<TElement>)
 };
 
 const setBlockMap: Record<string, (editor: PlateEditor, type: string, entry: TNodeEntry<TElement>) => void> = {
-	[ACTION_THREE_COLUMNS]: (editor) => toggleColumnGroup(editor, { layout: 3 }),
+	[ACTION_THREE_COLUMNS]: (editor) => toggleColumnGroup(editor, { columns: 3 }),
 	[INDENT_LIST_KEYS.todo]: setList,
 	[ListStyleType.Decimal]: setList,
 	[ListStyleType.Disc]: setList,
@@ -155,7 +165,7 @@ export const setBlockType = (editor: PlateEditor, type: string, { at }: { at?: P
 			}
 		}
 
-		const entries = getBlocks(editor);
+		const entries = getBlocks(editor, { mode: "lowest" });
 
 		entries.forEach((entry) => setEntry(entry));
 	});

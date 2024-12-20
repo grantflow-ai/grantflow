@@ -16,8 +16,8 @@ export const MediaAudioElement = withHOC(
 		const { align = "center", readOnly, unsafeUrl } = useMediaState();
 
 		return (
-			<PlateElement ref={ref} className={cn("relative mb-1", className)} {...props}>
-				<figure className="group relative" contentEditable={false}>
+			<PlateElement ref={ref} className={cn(className, "relative mb-1")} {...props}>
+				<figure className="group relative cursor-default" contentEditable={false}>
 					<div className="h-16">
 						<audio className="size-full" src={unsafeUrl} controls />
 					</div>

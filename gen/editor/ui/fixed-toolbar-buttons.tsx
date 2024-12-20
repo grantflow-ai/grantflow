@@ -27,8 +27,6 @@ import {
 	WandSparklesIcon,
 } from "lucide-react";
 
-import { MoreDropdownMenu } from "gen/editor/ui/more-dropdown-menu";
-
 import { AIToolbarButton } from "./ai-toolbar-button";
 import { AlignDropdownMenu } from "./align-dropdown-menu";
 import { ColorDropdownMenu } from "./color-dropdown-menu";
@@ -49,6 +47,7 @@ import { TableDropdownMenu } from "./table-dropdown-menu";
 import { ToggleToolbarButton } from "./toggle-toolbar-button";
 import { ToolbarGroup } from "./toolbar";
 import { TurnIntoDropdownMenu } from "./turn-into-dropdown-menu";
+import { MoreDropdownMenu } from "gen/editor/ui/more-dropdown-menu";
 
 export function FixedToolbarButtons() {
 	const readOnly = useEditorReadOnly();

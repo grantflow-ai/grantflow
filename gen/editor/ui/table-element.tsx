@@ -3,16 +3,14 @@
 import React from "react";
 
 import type * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import type { TTableElement } from "@udecode/plate-table";
 
 import { PopoverAnchor } from "@radix-ui/react-popover";
 import { cn, withRef } from "@udecode/cn";
 import { isSelectionExpanded } from "@udecode/plate-common";
 import { useEditorRef, useEditorSelector, useElement, useRemoveNodeButton, withHOC } from "@udecode/plate-common/react";
+import { type TTableElement, mergeTableCells, unmergeTableCells } from "@udecode/plate-table";
 import {
 	TableProvider,
-	mergeTableCells,
-	unmergeTableCells,
 	useTableBordersDropdownMenuContentState,
 	useTableElement,
 	useTableElementState,
@@ -165,7 +163,7 @@ export const TableElement = withHOC(
 		return (
 			<TableFloatingToolbar>
 				<PlateElement
-					className={cn("overflow-x-auto", className)}
+					className={cn(className, "overflow-x-auto")}
 					style={{ paddingLeft: marginLeft }}
 					{...props}
 				>

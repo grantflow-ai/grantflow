@@ -23,8 +23,8 @@ export const MediaEmbedElement = withHOC(
 
 		return (
 			<MediaPopover plugin={MediaEmbedPlugin}>
-				<PlateElement ref={ref} className={cn("relative py-2.5", className)} {...props}>
-					<figure className="group relative m-0 w-full" contentEditable={false}>
+				<PlateElement ref={ref} className={cn(className, "relative py-2.5")} {...props}>
+					<figure className="group relative m-0 w-full cursor-default" contentEditable={false}>
 						<Resizable
 							align={align}
 							options={{

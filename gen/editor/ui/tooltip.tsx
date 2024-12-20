@@ -26,7 +26,7 @@ export const TooltipContent = withCn(
 
 export function withTooltip<T extends React.ComponentType<any> | keyof HTMLElementTagNameMap>(Component: T) {
 	return React.forwardRef<
-		React.ElementRef<T>,
+		React.ElementRef<any>,
 		{
 			tooltipContentProps?: Omit<React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>, "children">;
 			tooltipProps?: Omit<React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>, "children">;
