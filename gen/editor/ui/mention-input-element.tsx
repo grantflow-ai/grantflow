@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-import { cn, withRef } from "@udecode/cn";
+import { withRef } from "@udecode/cn";
 import { getMentionOnSelectItem } from "@udecode/plate-mention";
 
 import {
@@ -22,14 +22,9 @@ export const MentionInputElement = withRef<typeof PlateElement>(({ className, ..
 	const [search, setSearch] = useState("");
 
 	return (
-		<PlateElement ref={ref} as="span" data-slate-value={element.value} {...props}>
+		<PlateElement ref={ref} as="span" className={className} data-slate-value={element.value} {...props}>
 			<InlineCombobox value={search} element={element} setValue={setSearch} showTrigger={false} trigger="@">
-				<span
-					className={cn(
-						"inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm ring-ring focus-within:ring-2",
-						className,
-					)}
-				>
+				<span className="inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm ring-ring focus-within:ring-2">
 					<InlineComboboxInput />
 				</span>
 

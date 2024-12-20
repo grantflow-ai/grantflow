@@ -194,7 +194,7 @@ export const SlashInputElement = withRef<typeof PlateElement>(({ className, ...p
 	const { children, editor, element } = props;
 
 	return (
-		<PlateElement ref={ref} as="span" data-slate-value={element.value} {...props}>
+		<PlateElement ref={ref} as="span" className={className} data-slate-value={element.value} {...props}>
 			<InlineCombobox element={element} trigger="/">
 				<InlineComboboxInput />
 

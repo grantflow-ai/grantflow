@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { AIChatPlugin, useEditorChat } from "@udecode/plate-ai/react";
 import {
+	type SlateEditor,
 	type TElement,
 	type TNodeEntry,
 	getAncestorNode,
@@ -12,7 +13,7 @@ import {
 	isHotkey,
 	isSelectionAtBlockEnd,
 } from "@udecode/plate-common";
-import { type PlateEditor, toDOMNode, useEditorPlugin, useHotkeys } from "@udecode/plate-common/react";
+import { toDOMNode, useEditorPlugin, useHotkeys } from "@udecode/plate-common/react";
 import { BlockSelectionPlugin, useIsSelecting } from "@udecode/plate-selection/react";
 import { Loader2Icon } from "lucide-react";
 
@@ -29,7 +30,7 @@ export function AIMenu() {
 	const mode = useOption("mode");
 	const isSelecting = useIsSelecting();
 
-	const aiEditorRef = React.useRef<PlateEditor | null>(null);
+	const aiEditorRef = React.useRef<SlateEditor | null>(null);
 	const [value, setValue] = React.useState("");
 
 	const chat = useChat();

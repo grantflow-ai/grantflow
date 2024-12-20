@@ -12,7 +12,7 @@ import { BlockSelection } from "./block-selection";
 export const PlateElement = React.forwardRef<HTMLDivElement, PlateElementProps>(
 	({ children, className, ...props }: PlateElementProps, ref) => {
 		return (
-			<PlateElementPrimitive ref={ref} className={cn("relative", className)} {...props}>
+			<PlateElementPrimitive ref={ref} className={cn(className, "relative")} {...props}>
 				{children}
 
 				{className?.includes("slate-selectable") && <BlockSelection />}
