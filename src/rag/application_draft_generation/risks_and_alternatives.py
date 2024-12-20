@@ -26,55 +26,54 @@ from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
-PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[Template] = Template("""
-You task is to write the Preliminary Results section which forms a sub-section for the following research aim text:
+RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[Template] = Template("""
+You task is to write the Risks and Alternatives which forms a for the following research aim text:
     <research_aim_text>
     ${research_aim_text}
     </research_aim_text>
 
 Use the following sources to write the text:
 
-1. User input on Preliminary Results:
-    <preliminary_results>
-    ${preliminary_results}
-    </preliminary_results>
+1. User input on Risks and Alternatives:
+    <risks_and_alternatives>
+    ${risks_and_alternatives}
+    </risks_and_alternatives>
 
 3. Retrieval Results for additional context as a JSON array:
     <rag_results>
     ${rag_results}
     </rag_results>
 
-Preliminary Results are detailed experimental findings and data analyses that demonstrate research feasibility.
-This sub-section should address the following implicit questions:
+Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
+This section should address the following implicit questions:
 
-1. What experiments/analyses have been conducted?
-2. What methods and techniques were used?
-3. How was the data analyzed and interpreted?
-4. How do these findings support the proposed research?
+1. What are the specific risks involved in this research, and how would you describe their severity (High/Medium/Low)?
+2. What strategies can be implemented to mitigate each identified risk?
+3. What alternative approaches are available if these strategies fail?
+4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
 
 **Important Guidelines**:
-- Generate the text for the subsection preliminary results assuming it will come immediately after the research aim text provided above.
 - Do not include the provided research aim text in the generated text.
 - Do not use the title of the research aim in the text and do not add a title.
 - Make sure to include concrete facts where applicable.
 
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for a minimum of half a page, and a maximum of two pages in length (~200-800 words).
+Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly two to three paragraphs with a maximum length of half a page (~150-300 words).
 """)
 
-PRELIMINARY_RESULTS_QUERIES_PROMPT: Final[Template] = Template("""
-The next task in the RAG pipeline is to write a description for the Preliminary Results section.
-Preliminary Results are detailed experimental findings and data analyses that demonstrate research feasibility for a specific research aim or objective.
+RISKS_AND_ALTERNATIVES_QUERIES_PROMPT: Final[Template] = Template("""
+The next task in the RAG pipeline is to write a description for the Risks and Alternatives section.
+Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
 The description should address the following implicit questions:
 
-1. What experiments/analyses have been conducted?
-2. What methods and techniques were used?
-3. How was the data analyzed and interpreted?
-4. How do these findings support the proposed research?
+1. What are the specific risks involved in this research, and how would you describe their severity (High/Medium/Low)?
+2. What strategies can be implemented to mitigate each identified risk?
+3. What alternative approaches are available if these strategies fail?
+4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
 
 Here is the user input for preliminary results:
-    <preliminary_results>
-    ${preliminary_results}
-    </preliminary_results>
+    <risks_and_alternatives>
+    ${risks_and_alternatives}
+    </risks_and_alternatives>
 
 Here is the description of the research aim:
     <research_aim_text>
@@ -83,11 +82,11 @@ Here is the description of the research aim:
 """)
 
 
-async def generate_preliminary_results_text(
+async def generate_risks_and_alternatives_text(
     previous_part_text: str | None,
     *,
     research_aim_text: str,
-    preliminary_results: str | None,
+    risks_and_alternatives: str | None,
     retrieval_results: list[DocumentDTO],
 ) -> GenerationResultDTO:
     """Generate the text for the preliminary results section of a research aim.
@@ -95,16 +94,16 @@ async def generate_preliminary_results_text(
     Args:
         previous_part_text: The previous part of the research aim text, if any.
         research_aim_text: The research aim text.
-        preliminary_results: The user input for the preliminary results.
+        risks_and_alternatives: The user input for the preliminary results.
         retrieval_results: The results of the RAG retrieval.
 
     Returns:
         GenerationResultDTO: The generated text for the research aim.
     """
-    user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute(
+    user_prompt = RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute(
         research_aim_text=research_aim_text,
         rag_results=serialize(retrieval_results),
-        preliminary_results=preliminary_results,
+        risks_and_alternatives=risks_and_alternatives,
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
         )
@@ -121,14 +120,14 @@ async def generate_preliminary_results_text(
     )
 
 
-async def handle_preliminary_results_text_generation(
+async def handle_risks_and_alternatives_text_generation(
     *,
     application_id: str,
     research_aim_dto: ResearchAimDTO,
     research_aim_description: str,
     session_maker: async_sessionmaker[Any],
 ) -> str:
-    """Generate the text for preliminary results of a research aim.
+    """Generate the text for risks and alternatives of a research aim.
 
     Args:
         application_id: The ID of the application.
@@ -141,6 +140,7 @@ async def handle_preliminary_results_text_generation(
 
     Returns:
         The generated section text.
+
     """
     async with session_maker() as session:
         if result := await session.scalar(
@@ -154,14 +154,14 @@ async def handle_preliminary_results_text_generation(
                 TextGenerationResult.section_id == research_aim_dto.id,
             )
             .where(
-                TextGenerationResult.section_type == "preliminary-results",
+                TextGenerationResult.section_type == "risks-and-alternatives",
             )
         ):
             return cast(str, result)
 
     search_queries = await create_search_queries(
-        PRELIMINARY_RESULTS_QUERIES_PROMPT.substitute(
-            preliminary_results=research_aim_dto.preliminary_results, research_aim_text=research_aim_description
+        RISKS_AND_ALTERNATIVES_QUERIES_PROMPT.substitute(
+            risks_and_alternatives=research_aim_dto.risks_and_alternatives, research_aim_text=research_aim_description
         ),
     )
 
@@ -171,14 +171,14 @@ async def handle_preliminary_results_text_generation(
     )
 
     handler = partial(
-        generate_preliminary_results_text,
+        generate_risks_and_alternatives_text,
         research_aim_text=research_aim_description,
         retrieval_results=search_result,
-        preliminary_results=research_aim_dto.preliminary_results,
+        risks_and_alternatives=research_aim_dto.risks_and_alternatives,
     )
 
     content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
-        entity_type="preliminary-results",
+        entity_type="risks-and-alternatives",
         entity_identifier=research_aim_dto.id,
         prompt_handler=handler,
     )
@@ -194,7 +194,7 @@ async def handle_preliminary_results_text_generation(
                         "generation_duration": generation_duration,
                         "number_of_api_calls": number_of_api_calls,
                         "section_id": research_aim_dto.id,
-                        "section_type": "preliminary-results",
+                        "section_type": "risks-and-alternatives",
                     }
                 )
             )
