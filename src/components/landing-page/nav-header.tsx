@@ -4,7 +4,7 @@ import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 
 export function NavHeader() {
-	const loginPageUrl = new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL);
+	const loginPageUrl = new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
 	return (
 		<div className="sticky top-0 z-50 w-full" data-testid="nav-header">
 			<div className="backdrop-blur-md bg-background/60 w-full">
