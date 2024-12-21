@@ -16,7 +16,7 @@ async def run_sync[**P, T](sync_fn: Callable[P, T], *args: P.args, **kwargs: P.k
     Returns:
         The result of the synchronous function.
     """
-    handler = partial(sync_fn, **kwargs)  # type: ignore[call-arg]
+    handler = partial(sync_fn, **kwargs)
     return await any_io_run_sync(handler, *args)
 
 

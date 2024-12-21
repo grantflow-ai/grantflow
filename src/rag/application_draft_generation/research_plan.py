@@ -103,6 +103,8 @@ async def handle_research_aim_components_generation(
     )
 
     return RESEARCH_AIM_TEMPLATE.substitute(
+        aim_number=research_aim_dto.aim_number,
+        title=research_aim_dto.title,
         research_aim_description_text=research_aim_description_text,
         preliminary_results_text=preliminary_results_text,
         research_tasks_texts="\n\n".join(research_tasks_texts),
