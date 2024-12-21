@@ -47,6 +47,7 @@ test.cmd = "pytest"
 test.env = { "PYTHONPATH" = "." }
 coverage.cmd = "pytest --disable-warnings --cov --cov-report xml"
 coverage.env = { "PYTHONPATH" = "." }
+local-db = "docker compose up db --detach"
 migrate.cmd = "atlas migrate apply --env sqlalchemy"
 migrate.env =  { "PYTHONPATH" = "." }
 create-migration.cmd = "atlas migrate diff --env sqlalchemy"

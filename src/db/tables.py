@@ -218,11 +218,13 @@ class TextGenerationResult(Base):
 
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4, default=None)
 
+    billable_characters_used: Mapped[int | None] = mapped_column(Integer, default=None, insert_default=0)
     content: Mapped[str] = mapped_column(Text, default=None)
     generation_duration: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     number_of_api_calls: Mapped[int] = mapped_column(Integer, default=None)
     section_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
     section_type: Mapped[str] = mapped_column(String, default=None)
+    tokens_used: Mapped[int | None] = mapped_column(Integer, default=None, insert_default=0)
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(

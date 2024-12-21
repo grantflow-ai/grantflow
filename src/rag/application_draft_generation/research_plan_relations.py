@@ -85,7 +85,7 @@ async def set_relation_data(research_aims: list[ResearchAim]) -> list[ResearchAi
     Returns:
         The enriched research aims and tasks.
     """
-    results = await handle_completions_request(
+    result = await handle_completions_request(
         prompt_identifier="identify_relations",
         system_prompt=BASE_SYSTEM_PROMPT,
         user_prompt=PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT.substitute(
@@ -115,7 +115,7 @@ async def set_relation_data(research_aims: list[ResearchAim]) -> list[ResearchAi
     logger.info("Generated relations for research aims and tasks")
 
     relations = defaultdict[str, list[str]](list)
-    for identifier, relations_list in results["relations"]:
+    for identifier, relations_list in result.response["relations"]:
         relations[identifier].append(relations_list)
 
     return [

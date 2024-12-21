@@ -20,7 +20,7 @@ from src.rag.dto import (
 )
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
-from src.rag.utils import handle_completions_request, handle_segmented_text_generation
+from src.rag.utils import CompletionsResult, handle_completions_request, handle_segmented_text_generation
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
 
@@ -89,7 +89,7 @@ async def generate_preliminary_results_text(
     research_aim_text: str,
     preliminary_results: str | None,
     retrieval_results: list[DocumentDTO],
-) -> GenerationResultDTO:
+) -> CompletionsResult[GenerationResultDTO]:
     """Generate the text for the preliminary results section of a research aim.
 
     Args:
@@ -99,7 +99,7 @@ async def generate_preliminary_results_text(
         retrieval_results: The results of the RAG retrieval.
 
     Returns:
-        GenerationResultDTO: The generated text for the research aim.
+        The generation result tuple.
     """
     user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute(
         research_aim_text=research_aim_text,
@@ -159,7 +159,7 @@ async def handle_preliminary_results_text_generation(
         ):
             return cast(str, result)
 
-    search_queries = await create_search_queries(
+    queries_result = await create_search_queries(
         PRELIMINARY_RESULTS_QUERIES_PROMPT.substitute(
             preliminary_results=research_aim_dto.preliminary_results, research_aim_text=research_aim_description
         ),
@@ -167,7 +167,7 @@ async def handle_preliminary_results_text_generation(
 
     search_result = await retrieve_documents(
         application_id=application_id,
-        search_queries=search_queries,
+        search_queries=queries_result.queries,
     )
 
     handler = partial(
@@ -177,7 +177,7 @@ async def handle_preliminary_results_text_generation(
         preliminary_results=research_aim_dto.preliminary_results,
     )
 
-    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
+    result = await handle_segmented_text_generation(
         entity_type="preliminary-results",
         entity_identifier=research_aim_dto.id,
         prompt_handler=handler,
@@ -190,11 +190,14 @@ async def handle_preliminary_results_text_generation(
                 insert(TextGenerationResult).values(
                     {
                         "application_id": application_id,
-                        "content": content,
-                        "generation_duration": generation_duration,
-                        "number_of_api_calls": number_of_api_calls,
+                        "content": result.content,
+                        "generation_duration": result.generation_duration,
+                        "number_of_api_calls": result.number_of_api_calls,
                         "section_id": research_aim_dto.id,
                         "section_type": "preliminary-results",
+                        "billable_characters_used": queries_result.billable_characters_used
+                        + result.billable_characters_used,
+                        "tokens_used": queries_result.tokens_used,
                     }
                 )
             )
@@ -204,4 +207,4 @@ async def handle_preliminary_results_text_generation(
             logger.error("Error while saving generated sections.", exec_info=e)
             raise DatabaseError("Error while saving generated sections", context=str(e)) from e
 
-    return content
+    return cast(str, result.content)

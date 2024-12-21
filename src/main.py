@@ -28,6 +28,7 @@ app.error_handler.add(Exception, handle_exception)
 app.register_middleware(authenticate_user, "request")
 app.register_middleware(set_session_maker, "request")
 app.register_listener(before_server_start_hook, "before_server_start")
+
 app.add_signal(generate_application_draft, "generate_application_draft")
 app.add_signal(parse_and_index_file, "parse_and_index_file")
 
