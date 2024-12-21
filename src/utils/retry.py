@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Final, cast
+from typing import cast
 
 from tenacity import (
     retry,
@@ -8,18 +8,22 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-RETRY_ATTEMPTS_WITH_JITTER: Final[int] = 3
-INITIAL_WAIT_JITTER: Final[int] = 10
-MAX_WAIT_JITTER: Final[int] = 60
-EXP_BASE_JITTER: Final[int] = 2
-JITTER_VALUE: Final[int] = 30
 
-
-def exponential_backoff_retry[**P, R](*exc: type[Exception]) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def with_exponential_backoff_retry[**P, R](
+    *exc: type[Exception],
+    max_retries: int = 5,
+    initial_wait: int = 5,
+    max_wait: int = 60,
+    jitter: int = 5,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Retry decorator for retrying a function multiple times with exponential backoff.
 
     Args:
         *exc: The exception types to retry on.
+        max_retries: The maximum number of retries.
+        initial_wait: The initial wait time in seconds.
+        max_wait: The maximum wait time in seconds.
+        jitter: The jitter to apply to the wait time.
 
     Returns:
         A decorator that retries the function multiple times with exponential backoff.
@@ -27,10 +31,8 @@ def exponential_backoff_retry[**P, R](*exc: type[Exception]) -> Callable[[Callab
     return cast(
         Callable[[Callable[P, R]], Callable[P, R]],
         retry(
-            retry=retry_if_exception_type(exc) if exc else retry,  # type: ignore
-            wait=wait_exponential_jitter(
-                initial=INITIAL_WAIT_JITTER, max=MAX_WAIT_JITTER, exp_base=EXP_BASE_JITTER, jitter=JITTER_VALUE
-            ),
-            stop=stop_after_attempt(RETRY_ATTEMPTS_WITH_JITTER),
+            retry=retry_if_exception_type(exc),
+            wait=wait_exponential_jitter(initial=initial_wait, max=max_wait, jitter=jitter),
+            stop=stop_after_attempt(max_retries),
         ),
     )

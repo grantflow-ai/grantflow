@@ -15,7 +15,7 @@ from src.rag.application_draft_generation.shared_prompts import (
 from src.rag.dto import DocumentDTO, GenerationResultDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
-from src.rag.utils import handle_completions_request, handle_segmented_text_generation
+from src.rag.utils import CompletionsResult, handle_completions_request, handle_segmented_text_generation
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
 
@@ -80,7 +80,7 @@ async def generate_innovation_text(
     research_plan_text: str,
     retrieval_results: list[DocumentDTO],
     significance_text: str,
-) -> GenerationResultDTO:
+) -> CompletionsResult[GenerationResultDTO]:
     """Generate a part of the innovation text.
 
     Args:
@@ -91,7 +91,7 @@ async def generate_innovation_text(
         significance_text: The generated significance text.
 
     Returns:
-        GenerationResultDTO: The generated text for the innovation section.
+        The generation result tuple.
     """
     user_prompt = INNOVATION_GENERATION_USER_PROMPT.substitute(
         innovation_description=application.innovation or "No description provided.",
@@ -145,7 +145,7 @@ async def handle_innovation_text_generation(
         ):
             return cast(str, result)
 
-    search_queries = await create_search_queries(
+    queries_result = await create_search_queries(
         RESEARCH_INNOVATION_QUERIES_PROMPT.substitute(
             innovation_description=application.innovation or "No description provided.",
         ).strip()
@@ -153,7 +153,7 @@ async def handle_innovation_text_generation(
 
     search_result = await retrieve_documents(
         application_id=str(application.id),
-        search_queries=search_queries,
+        search_queries=queries_result.queries,
     )
 
     handler = partial(
@@ -164,7 +164,7 @@ async def handle_innovation_text_generation(
         significance_text=significance_text,
     )
 
-    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
+    result = await handle_segmented_text_generation(
         entity_type="innovation",
         entity_identifier="innovation",
         prompt_handler=handler,
@@ -176,10 +176,13 @@ async def handle_innovation_text_generation(
                 insert(TextGenerationResult).values(
                     {
                         "application_id": application.id,
-                        "content": content,
-                        "generation_duration": generation_duration,
-                        "number_of_api_calls": number_of_api_calls,
+                        "billable_characters_used": queries_result.billable_characters_used
+                        + result.billable_characters_used,
+                        "content": result.content,
+                        "generation_duration": result.generation_duration,
+                        "number_of_api_calls": result.number_of_api_calls,
                         "section_type": "innovation",
+                        "tokens_used": queries_result.tokens_used,
                     }
                 )
             )
@@ -189,4 +192,4 @@ async def handle_innovation_text_generation(
             logger.error("Error while saving generated sections.", exec_info=e)
             raise DatabaseError("Error while saving generated sections", context=str(e)) from e
 
-    return content
+    return cast(str, result.content)
