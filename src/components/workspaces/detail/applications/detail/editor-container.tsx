@@ -19,13 +19,6 @@ export function EditorContainer({ application }: { application: Application }) {
 						</PlateEditorContainer>
 					</Plate>
 				</DndProvider>
-				<div className="space-y-4">
-					<h2 className="text-xl font-semibold mb-4">Knowledge Base</h2>
-					<p className="text-sm px-3 space-y-6 italic">
-						Upload sources for application generation: previous applications, research notes, articles,
-						presentations etc.
-					</p>
-				</div>
 			</ApplicationContext.Provider>
 		</div>
 	);

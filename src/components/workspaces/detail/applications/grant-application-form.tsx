@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TooltipProvider } from "gen/ui/tooltip";
 import { Form } from "gen/ui/form";
 import { Button } from "gen/ui/button";
 import { Plus } from "lucide-react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
@@ -21,6 +21,91 @@ import { ApplicationDetailsForm } from "@/components/workspaces/detail/applicati
 import { ApplicationId, CreateApplicationRequestBody, GrantCfp } from "@/types/api-types";
 import { getClient } from "@/utils/api-client";
 import { ResearchAimForm } from "@/components/workspaces/detail/applications/research-aim-form";
+
+const DEMO_TITLE = "Developing AI tailored immunocytokines to target melanoma brain metastases";
+
+function setDemoData(form: UseFormReturn<GrantApplicationFormValues>) {
+	form.setValue("research_aims", [
+		{
+			aim_number: 1,
+			title: "Developing BM TME models with holistic, multimodal AI-driven analysis",
+			description:
+				"The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
+			requires_clinical_trials: false,
+			research_tasks: [
+				{
+					task_number: 1,
+					title: "Temporal understanding of immune activity in BM TME",
+					description:
+						"Research immune temporal changes using Zman-seq in the BM TME using our previous research adapting it from glioma to BM.",
+				},
+				{
+					task_number: 2,
+					title: "Immune cell-cell interaction in the BM TME",
+					description: "Use PIC-seq to measure immune cell interaction in the BM TME.",
+				},
+				{
+					task_number: 3,
+					title: "Immune spatial distribution in the BM TME",
+					description: "Use stereo-seq to study spatial distribution of immune cells in the BM TME.",
+				},
+			],
+		},
+		{
+			aim_number: 2,
+			title: "Preclinical screening of cytokines in orthotopic immunocompetent BM models",
+			description:
+				"The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
+			requires_clinical_trials: false,
+			research_tasks: [
+				{
+					task_number: 1,
+					title: "Screening of cytokines in BM TME",
+					description:
+						"Use our in-house cytokine library to screen for cytokines that modulate immune activity in the BM TME.",
+				},
+				{
+					task_number: 2,
+					title: "In-vitro validation of cytokines",
+					description: "Use in-vitro models to validate the cytokines identified in task 1.",
+				},
+				{
+					task_number: 3,
+					title: "In-vivo validation of cytokines",
+					description:
+						"Single-cell analysis using in-vitro and in vivo functional screening system on myeloid, NK and T cell activity for trans-acting MiTEsUse",
+				},
+			],
+		},
+		{
+			aim_number: 3,
+			title: "Design of tumor-targeting immunocytokines",
+			description:
+				"The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
+			requires_clinical_trials: false,
+			research_tasks: [
+				{
+					task_number: 1,
+					title: "Design fusion proteins and cleavage site",
+					description:
+						"We will develop the optimal structures for the fusion proteins of the top 3-5 mAb-cytokine combinations identified in Aim 2, using advanced techniques in protein design. The design process will include the selection of the most suitable peptide linkers, blocking moieties, TAM-specific cleavage sites and the computational optimization of protein structure and stability.",
+				},
+				{
+					task_number: 2,
+					title: "Produce fusion proteins",
+					description:
+						"We will manufacture the 3-5 mAb-cytokine fusion proteins. The protein synthesis will be done by a contract research organization (CRO) selected based on our experience with leading CROs based on quality and punctual production. The production will include the selection of stable molecules with high protein expression and no aggregation.",
+				},
+				{
+					task_number: 3,
+					title: "In-vitro validation of immunocytokines",
+					description:
+						"We will confirm the binding via SPR, ELISA, cell-based binding and reporter assays.We will validate immunocytokines' impact on interactions between myeloid and lymphoid cell activity using in-vitro assays of co-cultured huMDMs, NK or T cells. To assess the efficacy of the fusion proteins in inducing cytotoxic NK and T cell activity, assays of co-cultured huMDMs, NK, or T cells and tumor cells will be treated with the various mAb-cytokine chimeras.",
+				},
+			],
+		},
+	]);
+}
 
 async function handleCreateApplication({
 	workspaceId,
@@ -101,6 +186,13 @@ export function GrantApplicationForm({ cfps, workspaceId }: { cfps: GrantCfp[]; 
 		control: form.control,
 		name: "research_aims",
 	});
+
+	const watchTitle = form.watch("title");
+	useEffect(() => {
+		if (watchTitle === DEMO_TITLE) {
+			setDemoData(form);
+		}
+	}, [watchTitle]);
 
 	return (
 		<TooltipProvider>
