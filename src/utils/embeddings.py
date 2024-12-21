@@ -7,7 +7,7 @@ from src.constants import EMBEDDING_DIMENSIONS
 from src.exceptions import ExternalOperationError
 from src.utils.ai import get_embeddings_client
 from src.utils.logging import get_logger
-from src.utils.retry import exponential_backoff_retry
+from src.utils.retry import with_exponential_backoff_retry
 
 logger = get_logger(__name__)
 
@@ -19,7 +19,7 @@ class TaskType(StrEnum):
     RetrievalQuery = "RETRIEVAL_QUERY"
 
 
-@exponential_backoff_retry(ExternalOperationError)
+@with_exponential_backoff_retry(ExternalOperationError)
 async def generate_embeddings(
     inputs: str | list[str], task: TaskType, output_dimensionality: int = EMBEDDING_DIMENSIONS
 ) -> list[float]:

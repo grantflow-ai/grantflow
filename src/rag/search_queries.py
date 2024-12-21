@@ -1,5 +1,5 @@
 from string import Template
-from typing import Final
+from typing import Final, NamedTuple
 
 from typing_extensions import TypedDict
 
@@ -81,7 +81,18 @@ response_schema = {
 }
 
 
-async def create_search_queries(prompt: str) -> list[str]:
+class SearchQueriesResponse(NamedTuple):
+    """The response from the search queries generation."""
+
+    queries: list[str]
+    """The generated search queries."""
+    tokens_used: int
+    """The total number of tokens used."""
+    billable_characters_used: int
+    """The total number of billable characters used."""
+
+
+async def create_search_queries(prompt: str) -> SearchQueriesResponse:
     """Generate an optimized search query for retrieval.
 
     Args:
@@ -89,9 +100,9 @@ async def create_search_queries(prompt: str) -> list[str]:
 
 
     Returns:
-        list[str]: The generated search queries.
+        The generated search queries, the total number of tokens, and the total billable characters.
     """
-    result = await handle_completions_request(
+    response, total_tokens, total_billable_characters = await handle_completions_request(
         prompt_identifier="search_queries",
         system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
         user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
@@ -103,5 +114,6 @@ async def create_search_queries(prompt: str) -> list[str]:
         model=FAST_TEXT_GENERATION_MODEL,
     )
 
-    queries = result["queries"]
-    return queries[:10]
+    return SearchQueriesResponse(
+        queries=response["queries"][:10], tokens_used=total_tokens, billable_characters_used=total_billable_characters
+    )

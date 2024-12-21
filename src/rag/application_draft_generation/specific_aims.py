@@ -16,7 +16,7 @@ from src.rag.application_draft_generation.shared_prompts import (
 from src.rag.dto import DocumentDTO, GenerationResultDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import create_search_queries
-from src.rag.utils import handle_completions_request, handle_segmented_text_generation
+from src.rag.utils import CompletionsResult, handle_completions_request, handle_segmented_text_generation
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
 
@@ -88,7 +88,7 @@ async def generate_specific_aims_text(
     research_plan_text: str,
     significance_text: str,
     retrieval_results: list[DocumentDTO],
-) -> GenerationResultDTO:
+) -> CompletionsResult[GenerationResultDTO]:
     """Generate the text for the Specific Aims section of a research grant application.
 
     Args:
@@ -99,7 +99,7 @@ async def generate_specific_aims_text(
         retrieval_results: The RAG retrieval results for additional context.
 
     Returns:
-        GenerationResultDTO: The generated text for the research aim.
+        The generation result tuple.
     """
     user_prompt = SPECIFIC_AIMS_USER_PROMPT.substitute(
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
@@ -159,11 +159,11 @@ async def handle_specific_aims_text_generation(
         ):
             return cast(str, result)
 
-    search_queries = await create_search_queries(SPECIFIC_AIMS_QUERIES_PROMPT)
+    queries_result = await create_search_queries(SPECIFIC_AIMS_QUERIES_PROMPT)
 
     search_result = await retrieve_documents(
         application_id=str(application.id),
-        search_queries=search_queries,
+        search_queries=queries_result.queries,
     )
 
     handler = partial(
@@ -174,7 +174,7 @@ async def handle_specific_aims_text_generation(
         retrieval_results=search_result,
     )
 
-    content, number_of_api_calls, generation_duration = await handle_segmented_text_generation(
+    result = await handle_segmented_text_generation(
         entity_type="specific-aims",
         prompt_handler=handler,
     )
@@ -186,10 +186,13 @@ async def handle_specific_aims_text_generation(
                 insert(TextGenerationResult).values(
                     {
                         "application_id": application.id,
-                        "content": content,
-                        "generation_duration": generation_duration,
-                        "number_of_api_calls": number_of_api_calls,
+                        "billable_characters_used": queries_result.billable_characters_used
+                        + result.billable_characters_used,
+                        "content": result.content,
+                        "generation_duration": result.generation_duration,
+                        "number_of_api_calls": result.number_of_api_calls,
                         "section_type": "specific-aims",
+                        "tokens_used": queries_result.tokens_used,
                     }
                 )
             )
@@ -199,4 +202,4 @@ async def handle_specific_aims_text_generation(
             logger.error("Error while saving generated sections.", exec_info=e)
             raise DatabaseError("Error while saving generated sections", context=str(e)) from e
 
-    return content
+    return cast(str, result.content)
