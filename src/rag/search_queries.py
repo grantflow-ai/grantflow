@@ -19,9 +19,9 @@ Your task is to analyze the description of the next stage in the RAG pipeline an
 Make sure to optimize the queries for retrieval of relevant content - balance specificity with breadth to capture a range of relevant materials.
 Here is the description of the next task in the RAG pipeline along with any inputs that will be used as sources in the generation:
 
-<description>
-{{description}}
-</description>
+<prompt>
+${prompt}
+</prompt>
 """)
 
 OUTPUT_INSTRUCTIONS: Final[str] = """
