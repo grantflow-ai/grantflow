@@ -10,7 +10,7 @@ from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-MAX_RESULTS: Final[int] = 10
+MAX_RESULTS: Final[int] = 25
 
 
 async def retrieve_documents(
