@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
+import Link from "next/link";
 
 export function NavHeader() {
 	const loginPageUrl = new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
@@ -17,8 +17,8 @@ export function NavHeader() {
 					<div className="flex items-center gap-4">
 						<p className="text-sm text-foreground hidden md:block">Have early access?</p>
 						<Link
-							href={loginPageUrl}
 							className="bg-primary/10 border border-primary/20 rounded-md shadow-sm px-4 py-2 text-sm text-foreground hover:bg-primary/20 transition-colors"
+							href={loginPageUrl}
 						>
 							Login
 						</Link>

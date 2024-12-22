@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
+
 import { fontSans } from "@/utils/fonts";
 import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+
 import RootLayout from "./layout";
 
 vi.mock("@/components/navbar", () => ({
@@ -28,17 +30,17 @@ vi.mock("next-themes", async (importOriginal) => {
 });
 
 Object.defineProperty(globalThis, "matchMedia", {
-	writable: true,
 	value: vi.fn().mockImplementation((query) => ({
+		addEventListener: vi.fn(),
+		addListener: vi.fn(),
+		dispatchEvent: vi.fn(),
 		matches: false,
 		media: query,
 		onchange: null,
-		addListener: vi.fn(),
-		removeListener: vi.fn(),
-		addEventListener: vi.fn(),
 		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn(),
+		removeListener: vi.fn(),
 	})),
+	writable: true,
 });
 
 vi.mock("dictionaries/i18n-config", () => ({

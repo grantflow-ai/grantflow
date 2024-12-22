@@ -1,7 +1,7 @@
 export class Ref<T> {
-	value: T | null;
+	value: null | T;
 
-	constructor(value: T | null = null) {
+	constructor(value: null | T = null) {
 		this.value = value;
 	}
 }

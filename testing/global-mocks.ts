@@ -1,10 +1,10 @@
-import process from "node:process";
+import type { Env } from "@/types/env-types";
 
 import { PagePath } from "@/enums";
-import type { Env } from "@/types/env-types";
+import process from "node:process";
 import { beforeEach, vi } from "vitest";
 
-const { mockUsePathname, mockRedirect, mockUseRouter, mockToast } = vi.hoisted(() => {
+const { mockRedirect, mockToast, mockUsePathname, mockUseRouter } = vi.hoisted(() => {
 	const mockToast = vi.fn();
 	Reflect.set(mockToast, "error", vi.fn());
 	Reflect.set(mockToast, "success", vi.fn());
@@ -12,15 +12,15 @@ const { mockUsePathname, mockRedirect, mockUseRouter, mockToast } = vi.hoisted((
 	Reflect.set(mockToast, "promise", vi.fn());
 
 	return {
-		mockUsePathname: vi.fn(),
 		mockRedirect: vi.fn(),
 		mockRefresh: vi.fn(),
+		mockToast,
+		mockUsePathname: vi.fn(),
 		mockUseRouter: vi.fn().mockImplementation(() => ({
-			refresh: vi.fn(),
 			push: vi.fn(),
+			refresh: vi.fn(),
 			replace: vi.fn(),
 		})),
-		mockToast,
 	};
 });
 
@@ -30,9 +30,9 @@ vi.mock("next/navigation", async (importOriginal) => {
 	return {
 		__esModule: true,
 		...(original as Record<string, unknown>),
-		useRouter: mockUseRouter,
-		usePathname: mockUsePathname,
 		redirect: mockRedirect,
+		usePathname: mockUsePathname,
+		useRouter: mockUseRouter,
 	};
 });
 
@@ -44,7 +44,7 @@ vi.mock("sonner", async (importOriginal) => {
 	};
 });
 
-export { mockUsePathname, mockRedirect, mockToast };
+export { mockRedirect, mockToast, mockUsePathname };
 
 // see: https://github.com/jsdom/jsdom/issues/3294
 export const mockShowModal = vi.fn();
@@ -54,7 +54,8 @@ export const mockClose = vi.fn();
 export const mockFetch = vi.fn();
 
 export const mockEnv = {
-	NEXT_PUBLIC_SITE_URL: "https://app.acmetech.io",
+	NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.dev.acmetech.io",
+	NEXT_PUBLIC_DEBUG: true,
 	NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
 	NEXT_PUBLIC_FIREBASE_APP_ID: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
 	NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "acmetech-dev.firebaseapp.com",
@@ -63,8 +64,7 @@ export const mockEnv = {
 	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: "72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
-	NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.dev.acmetech.io",
-	NEXT_PUBLIC_DEBUG: true,
+	NEXT_PUBLIC_SITE_URL: "https://app.acmetech.io",
 } satisfies Env;
 
 beforeAll(() => {

@@ -2,7 +2,6 @@
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "gen/cn";
-import { usePathname } from "next/navigation";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -11,30 +10,10 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "gen/ui/breadcrumb";
+import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 
-const namespaces = new Set(["applications", "workspaces", "sign-in", "new"]);
-
-function parsePathComponents(path: string) {
-	const components = path.split("/").filter(Boolean);
-	const breadcrumbs: { label: string; href: string }[] = [];
-
-	let currentPath = "";
-
-	for (const component of components) {
-		currentPath += `/${component}`;
-
-		if (namespaces.has(component)) {
-			breadcrumbs.push({ label: component.charAt(0).toUpperCase() + component.slice(1), href: currentPath });
-		} else if (breadcrumbs.at(-1)?.label === "Workspaces") {
-			breadcrumbs.push({ label: "Workspace Details", href: currentPath });
-		} else if (breadcrumbs.at(-1)?.label === "Applications") {
-			breadcrumbs.push({ label: "Application Details", href: currentPath });
-		}
-	}
-
-	return breadcrumbs;
-}
+const namespaces = new Set(["applications", "new", "sign-in", "workspaces"]);
 
 export function Breadcrumbs({ pathname }: { pathname: string }) {
 	const breadcrumbs = parsePathComponents(pathname);
@@ -78,4 +57,25 @@ export function Navbar() {
 			</div>
 		</nav>
 	);
+}
+
+function parsePathComponents(path: string) {
+	const components = path.split("/").filter(Boolean);
+	const breadcrumbs: { href: string; label: string }[] = [];
+
+	let currentPath = "";
+
+	for (const component of components) {
+		currentPath += `/${component}`;
+
+		if (namespaces.has(component)) {
+			breadcrumbs.push({ href: currentPath, label: component.charAt(0).toUpperCase() + component.slice(1) });
+		} else if (breadcrumbs.at(-1)?.label === "Workspaces") {
+			breadcrumbs.push({ href: currentPath, label: "Workspace Details" });
+		} else if (breadcrumbs.at(-1)?.label === "Applications") {
+			breadcrumbs.push({ href: currentPath, label: "Application Details" });
+		}
+	}
+
+	return breadcrumbs;
 }

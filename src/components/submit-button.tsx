@@ -2,16 +2,16 @@ import { cn } from "gen/cn";
 import { Button, type ButtonProps } from "gen/ui/button";
 import { Loader2 } from "lucide-react";
 
-export function SubmitButton({ children, isLoading, className = "", ...props }: ButtonProps & { isLoading?: boolean }) {
+export function SubmitButton({ children, className = "", isLoading, ...props }: { isLoading?: boolean } & ButtonProps) {
 	return (
 		<Button
+			aria-busy={isLoading}
 			className={cn(
 				className,
 				"disabled:text-muted-foreground-400 disabled:cursor-not-allowed invalid:text-destructive-400 invalid:cursor-not-allowed",
 			)}
-			type="submit"
-			aria-busy={isLoading}
 			data-testid="form-button"
+			type="submit"
 			{...props}
 		>
 			{isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : children}

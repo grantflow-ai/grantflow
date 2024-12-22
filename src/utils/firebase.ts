@@ -1,8 +1,8 @@
 "use client";
 
-import { Auth, browserSessionPersistence, getAuth, setPersistence } from "firebase/auth";
-import { FirebaseApp, initializeApp } from "firebase/app";
 import { getEnv } from "@/utils/env";
+import { FirebaseApp, initializeApp } from "firebase/app";
+import { Auth, browserSessionPersistence, getAuth, setPersistence } from "firebase/auth";
 
 const instanceRef: { app: FirebaseApp | null; auth: Auth | null } = {
 	app: null,

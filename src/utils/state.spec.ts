@@ -23,7 +23,7 @@ describe("Ref", () => {
 	});
 
 	it("should allow null as a valid value", () => {
-		const ref = new Ref<string | null>(null);
+		const ref = new Ref<null | string>(null);
 		expect(ref.value).toBeNull();
 	});
 

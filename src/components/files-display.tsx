@@ -1,9 +1,9 @@
-import { FileTextIcon, X } from "lucide-react";
+import { ApplicationFile } from "@/types/api-types";
 import { formatBytes } from "@/utils/format";
 import { Button } from "gen/ui/button";
-import { ApplicationFile } from "@/types/api-types";
+import { FileTextIcon, X } from "lucide-react";
 
-export function FileCard({ file, handleRemoveFile }: { file: File | ApplicationFile; handleRemoveFile: () => void }) {
+export function FileCard({ file, handleRemoveFile }: { file: ApplicationFile | File; handleRemoveFile: () => void }) {
 	return (
 		<div
 			className="relative flex justify-between gap-4 rounded-lg border shadow-sm"
@@ -11,8 +11,8 @@ export function FileCard({ file, handleRemoveFile }: { file: File | ApplicationF
 		>
 			<div className="flex p-2 items-center justify-center">
 				<FileTextIcon
-					className="h-4 w-4 text-accent-foreground"
 					aria-hidden="true"
+					className="h-4 w-4 text-accent-foreground"
 					data-testid="file-preview-icon"
 				/>
 			</div>
@@ -25,12 +25,12 @@ export function FileCard({ file, handleRemoveFile }: { file: File | ApplicationF
 				</span>
 			</div>
 			<Button
+				className="self-end"
+				data-testid="remove-file-button"
+				onClick={handleRemoveFile}
+				size="icon"
 				type="button"
 				variant="ghost"
-				size="icon"
-				className="self-end"
-				onClick={handleRemoveFile}
-				data-testid="remove-file-button"
 			>
 				<X className="h-4 w-4" />
 				<span className="sr-only">Remove file</span>
@@ -43,19 +43,19 @@ export function FilesDisplay({
 	files,
 	onFileRemoved,
 }: {
-	files: (File | ApplicationFile)[];
-	onFileRemoved: (file: File | ApplicationFile) => void;
+	files: (ApplicationFile | File)[];
+	onFileRemoved: (file: ApplicationFile | File) => void;
 }) {
 	return files.length ? (
 		<div className="space-y-2 flex flex-col gap-1" data-testid="files-display">
 			{files.map((file, index) => {
 				return (
 					<FileCard
-						key={file.name + index.toString()}
 						file={file}
 						handleRemoveFile={() => {
 							onFileRemoved(file);
 						}}
+						key={file.name + index.toString()}
 					/>
 				);
 			})}

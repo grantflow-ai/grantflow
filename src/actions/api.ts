@@ -1,9 +1,14 @@
 "use server";
 
-import { getEnv } from "@/utils/env";
+import { SESSION_COOKIE } from "@/constants";
+import { PagePath } from "@/enums";
 import {
-	ApplicationDraftResponse,
 	Application,
+	ApplicationBase,
+	ApplicationDraftResponse,
+	ApplicationId,
+	CreateApplicationRequestBody,
+	CreateWorkspaceRequestBody,
 	GrantCfp,
 	LoginRequestBody,
 	LoginResponse,
@@ -12,17 +17,12 @@ import {
 	UpdateWorkspaceRequestBody,
 	Workspace,
 	WorkspaceBase,
-	ApplicationId,
-	ApplicationBase,
-	CreateApplicationRequestBody,
-	CreateWorkspaceRequestBody,
 } from "@/types/api-types";
-import { cookies } from "next/headers";
-import { SESSION_COOKIE } from "@/constants";
 import { getClient } from "@/utils/api-client";
-import { redirect } from "next/navigation";
-import { PagePath } from "@/enums";
+import { getEnv } from "@/utils/env";
 import { HTTPError } from "ky";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const createAuthHeaders = async () => {
 	const cookieStore = await cookies();
@@ -52,12 +52,12 @@ export async function login(idToken: string) {
 	const cookieStore = await cookies();
 
 	cookieStore.set({
-		value: jwt_token,
-		name: SESSION_COOKIE,
-		secure: getEnv().NEXT_PUBLIC_SITE_URL.startsWith("https"),
 		httpOnly: true,
 		maxAge: 60 * 60 * 24 * 7,
+		name: SESSION_COOKIE,
 		sameSite: "strict",
+		secure: getEnv().NEXT_PUBLIC_SITE_URL.startsWith("https"),
+		value: jwt_token,
 	});
 
 	redirect(PagePath.WORKSPACES);
@@ -75,26 +75,16 @@ const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 };
 
 /**
- * Get a one-time password (OTP) for websocket authentication.
- * @returns Promise containing the OTP response
+ * Create a new grant application within a workspace.
+ * @param workspaceId - The unique identifier of the workspace
+ * @param data - The grant application creation request data
+ * @returns Promise containing the created grant application
  */
-export async function getOtp() {
+export async function createApplication(workspaceId: string, data: CreateApplicationRequestBody) {
 	return withAuthRedirect(
 		getClient()
-			.get("otp", { headers: await createAuthHeaders() })
-			.json<OTPResponse>(),
-	);
-}
-
-/**
- * Retrieve all available Call for Proposals (CFPs).
- * @returns Promise containing an array of grant CFPs
- */
-export async function getCfps() {
-	return withAuthRedirect(
-		getClient()
-			.get("cfps", { headers: await createAuthHeaders() })
-			.json<GrantCfp[]>(),
+			.post(`workspaces/${workspaceId}/applications`, { headers: await createAuthHeaders(), json: data })
+			.json<ApplicationId>(),
 	);
 }
 
@@ -106,47 +96,8 @@ export async function getCfps() {
 export async function createWorkspace(data: CreateWorkspaceRequestBody) {
 	return withAuthRedirect(
 		getClient()
-			.post("workspaces", { json: data, headers: await createAuthHeaders() })
+			.post("workspaces", { headers: await createAuthHeaders(), json: data })
 			.json<Workspace>(),
-	);
-}
-
-/**
- * Retrieve all workspaces for the authenticated user.
- * @returns Promise containing an array of workspaces
- */
-export async function getWorkspaces() {
-	return withAuthRedirect(
-		getClient()
-			.get("workspaces", { headers: await createAuthHeaders() })
-			.json<WorkspaceBase[]>(),
-	);
-}
-
-/**
- * Retrieve a specific workspace by ID.
- * @param workspaceId - The unique identifier of the workspace
- * @returns Promise containing the workspace details
- */
-export async function getWorkspace(workspaceId: string) {
-	return withAuthRedirect(
-		getClient()
-			.get(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() })
-			.json<Workspace>(),
-	);
-}
-
-/**
- * Update an existing workspace.
- * @param workspaceId - The unique identifier of the workspace to update
- * @param data - The workspace update request data
- * @returns Promise containing the updated workspace
- */
-export async function updateWorkspace(workspaceId: string, data: UpdateWorkspaceRequestBody) {
-	return withAuthRedirect(
-		getClient()
-			.patch(`workspaces/${workspaceId}`, { json: data, headers: await createAuthHeaders() })
-			.json<WorkspaceBase>(),
 	);
 }
 
@@ -157,42 +108,6 @@ export async function updateWorkspace(workspaceId: string, data: UpdateWorkspace
  */
 export async function deleteWorkspace(workspaceId: string): Promise<void> {
 	await withAuthRedirect(getClient().delete(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() }));
-}
-
-/**
- * Create a new grant application within a workspace.
- * @param workspaceId - The unique identifier of the workspace
- * @param data - The grant application creation request data
- * @returns Promise containing the created grant application
- */
-export async function createApplication(workspaceId: string, data: CreateApplicationRequestBody) {
-	return withAuthRedirect(
-		getClient()
-			.post(`workspaces/${workspaceId}/applications`, { json: data, headers: await createAuthHeaders() })
-			.json<ApplicationId>(),
-	);
-}
-
-/**
- * Update an existing grant application.
- * @param workspaceId - The unique identifier of the workspace
- * @param applicationId - The unique identifier of the application
- * @param data - The application update request data
- * @returns Promise containing the updated grant application
- */
-export async function updateApplication(
-	workspaceId: string,
-	applicationId: string,
-	data: UpdateApplicationRequestBody,
-) {
-	return withAuthRedirect(
-		getClient()
-			.patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
-				json: data,
-				headers: await createAuthHeaders(),
-			})
-			.json<ApplicationBase>(),
-	);
 }
 
 /**
@@ -222,5 +137,90 @@ export async function getApplicationText(workspaceId: string, applicationId: str
 				headers: await createAuthHeaders(),
 			})
 			.json<ApplicationDraftResponse>(),
+	);
+}
+
+/**
+ * Retrieve all available Call for Proposals (CFPs).
+ * @returns Promise containing an array of grant CFPs
+ */
+export async function getCfps() {
+	return withAuthRedirect(
+		getClient()
+			.get("cfps", { headers: await createAuthHeaders() })
+			.json<GrantCfp[]>(),
+	);
+}
+
+/**
+ * Get a one-time password (OTP) for websocket authentication.
+ * @returns Promise containing the OTP response
+ */
+export async function getOtp() {
+	return withAuthRedirect(
+		getClient()
+			.get("otp", { headers: await createAuthHeaders() })
+			.json<OTPResponse>(),
+	);
+}
+
+/**
+ * Retrieve a specific workspace by ID.
+ * @param workspaceId - The unique identifier of the workspace
+ * @returns Promise containing the workspace details
+ */
+export async function getWorkspace(workspaceId: string) {
+	return withAuthRedirect(
+		getClient()
+			.get(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() })
+			.json<Workspace>(),
+	);
+}
+
+/**
+ * Retrieve all workspaces for the authenticated user.
+ * @returns Promise containing an array of workspaces
+ */
+export async function getWorkspaces() {
+	return withAuthRedirect(
+		getClient()
+			.get("workspaces", { headers: await createAuthHeaders() })
+			.json<WorkspaceBase[]>(),
+	);
+}
+
+/**
+ * Update an existing grant application.
+ * @param workspaceId - The unique identifier of the workspace
+ * @param applicationId - The unique identifier of the application
+ * @param data - The application update request data
+ * @returns Promise containing the updated grant application
+ */
+export async function updateApplication(
+	workspaceId: string,
+	applicationId: string,
+	data: UpdateApplicationRequestBody,
+) {
+	return withAuthRedirect(
+		getClient()
+			.patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<ApplicationBase>(),
+	);
+}
+
+/**
+ * Update an existing workspace.
+ * @param workspaceId - The unique identifier of the workspace to update
+ * @param data - The workspace update request data
+ * @returns Promise containing the updated workspace
+ */
+export async function updateWorkspace(workspaceId: string, data: UpdateWorkspaceRequestBody) {
+	return withAuthRedirect(
+		getClient()
+			.patch(`workspaces/${workspaceId}`, { headers: await createAuthHeaders(), json: data })
+			.json<WorkspaceBase>(),
 	);
 }

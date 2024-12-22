@@ -1,22 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Application, ApplicationDraftResponse } from "@/types/api-types";
-import { EditorContainer } from "@/components/workspaces/detail/applications/detail/editor-container";
-import { Loader } from "@/components/loader";
 import { getApplicationText } from "@/actions/api";
+import { Loader } from "@/components/loader";
+import { EditorContainer } from "@/components/workspaces/detail/applications/detail/editor-container";
+import { Application, ApplicationDraftResponse } from "@/types/api-types";
+import { useEffect, useState } from "react";
 
-async function pollDraft(workspaceId: string, applicationId: string) {
-	let applicationDraftResponse: ApplicationDraftResponse | null = null;
-
-	while (applicationDraftResponse?.status !== "complete") {
-		await new Promise((resolve) => setTimeout(resolve, 1000 * 10));
-		applicationDraftResponse = await getApplicationText(workspaceId, applicationId);
-	}
-
-	return applicationDraftResponse.text;
-}
-
-export function ApplicationWorkspace({ workspaceId, application }: { workspaceId: string; application: Application }) {
+export function ApplicationWorkspace({ application, workspaceId }: { application: Application; workspaceId: string }) {
 	const [draftText, setDraftText] = useState(application.text);
 
 	useEffect(() => {
@@ -42,4 +31,15 @@ export function ApplicationWorkspace({ workspaceId, application }: { workspaceId
 			)}
 		</div>
 	);
+}
+
+async function pollDraft(workspaceId: string, applicationId: string) {
+	let applicationDraftResponse: ApplicationDraftResponse | null = null;
+
+	while (applicationDraftResponse?.status !== "complete") {
+		await new Promise((resolve) => setTimeout(resolve, 1000 * 10));
+		applicationDraftResponse = await getApplicationText(workspaceId, applicationId);
+	}
+
+	return applicationDraftResponse.text;
 }
