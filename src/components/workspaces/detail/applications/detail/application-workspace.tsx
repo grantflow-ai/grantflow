@@ -20,7 +20,7 @@ export function ApplicationWorkspace({ application, workspaceId }: { application
 	return (
 		<div className="flex gap-4" data-testid="application-workspace">
 			{draftText ? (
-				<EditorContainer application={application} />
+				<EditorContainer application={application} draftText={draftText} />
 			) : (
 				<div className="flex flex-col justify-center w-full h-full gap-2">
 					<div className="space-y-2 flex justify-center text-lg font-semibold italic pt-10">
