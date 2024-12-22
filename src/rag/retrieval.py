@@ -32,17 +32,17 @@ async def retrieve_documents(
     session_maker = get_session_maker()
     async with session_maker() as session, session.begin():
         stmt = (
-            select(ApplicationVector, ApplicationFile)
+            select(ApplicationVector, ApplicationFile.name)
             .join(ApplicationFile, ApplicationVector.file_id == ApplicationFile.id)
+            .where(ApplicationFile.application_id == application_id)
             .order_by(ApplicationVector.embedding.cosine_distance(query_embeddings))
-            .filter_by(application_id=application_id)
             .limit(MAX_RESULTS)
         )
 
         result = await session.scalars(stmt)
 
     output: list[DocumentDTO] = [
-        DocumentDTO(source=row.file_id, content=row.content, element_type=row.element_type, page_number=row.page_number)
+        DocumentDTO(source=row.name, content=row.content, element_type=row.element_type, page_number=row.page_number)
         for row in result
     ]
 

@@ -19,7 +19,7 @@ from src.rag.dto import (
     ResearchAimDTO,
 )
 from src.rag.retrieval import retrieve_documents
-from src.rag.search_queries import create_search_queries
+from src.rag.search_queries import handle_create_search_queries
 from src.rag.utils import CompletionsResult, handle_completions_request, handle_segmented_text_generation
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
@@ -159,7 +159,7 @@ async def handle_risks_and_alternatives_text_generation(
         ):
             return cast(str, result)
 
-    queries_result = await create_search_queries(
+    queries_result = await handle_create_search_queries(
         RISKS_AND_ALTERNATIVES_QUERIES_PROMPT.substitute(
             risks_and_alternatives=research_aim_dto.risks_and_alternatives, research_aim_text=research_aim_description
         ),
