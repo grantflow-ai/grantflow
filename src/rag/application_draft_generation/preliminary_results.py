@@ -19,7 +19,7 @@ from src.rag.dto import (
     ResearchAimDTO,
 )
 from src.rag.retrieval import retrieve_documents
-from src.rag.search_queries import create_search_queries
+from src.rag.search_queries import handle_create_search_queries
 from src.rag.utils import CompletionsResult, handle_completions_request, handle_segmented_text_generation
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
@@ -159,7 +159,7 @@ async def handle_preliminary_results_text_generation(
         ):
             return cast(str, result)
 
-    queries_result = await create_search_queries(
+    queries_result = await handle_create_search_queries(
         PRELIMINARY_RESULTS_QUERIES_PROMPT.substitute(
             preliminary_results=research_aim_dto.preliminary_results, research_aim_text=research_aim_description
         ),
