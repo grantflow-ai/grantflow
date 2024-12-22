@@ -86,7 +86,6 @@ async def handle_create_search_queries(prompt: str) -> SearchQueriesResponse:
     queries: list[str] = []
 
     while len(queries) < 3:
-        logger.info("Generating search queries for the next stage in the RAG pipeline")
         response, tokens_used, billable_characters_used = await handle_completions_request(
             prompt_identifier="search_queries",
             system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
@@ -102,6 +101,7 @@ async def handle_create_search_queries(prompt: str) -> SearchQueriesResponse:
         total_billable_characters += billable_characters_used
         queries.extend(response["queries"])
 
+    logger.info("Successfully generated search queries for the next stage in the RAG pipeline")
     return SearchQueriesResponse(
         queries=queries[:10], tokens_used=total_tokens, billable_characters_used=total_billable_characters
     )
