@@ -15,7 +15,7 @@ Your function is to generate search queries that will retrieve relevant content 
 """
 
 SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
-Your task is to analyze the description of the next stage in the RAG pipeline and generate at least 5 distinct search queries that will be executed against the vector store.
+Your task is to analyze the description of the next stage in the RAG pipeline and generate between 3-10 distinct search queries that will be executed against the vector store.
 Make sure to optimize the queries for retrieval of relevant content - balance specificity with breadth to capture a range of relevant materials.
 Here is the description of the next task in the RAG pipeline along with any inputs that will be used as sources in the generation:
 
@@ -83,8 +83,10 @@ async def handle_create_search_queries(prompt: str) -> SearchQueriesResponse:
     """
     total_tokens: int = 0
     total_billable_characters: int = 0
+    queries: list[str] = []
 
-    while True:
+    while len(queries) < 3:
+        logger.info("Generating search queries for the next stage in the RAG pipeline")
         response, tokens_used, billable_characters_used = await handle_completions_request(
             prompt_identifier="search_queries",
             system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
@@ -98,9 +100,8 @@ async def handle_create_search_queries(prompt: str) -> SearchQueriesResponse:
         )
         total_tokens += tokens_used
         total_billable_characters += billable_characters_used
-        if len(response["queries"]) >= 5:
-            return SearchQueriesResponse(
-                queries=response["queries"],
-                tokens_used=total_tokens,
-                billable_characters_used=total_billable_characters,
-            )
+        queries.extend(response["queries"])
+
+    return SearchQueriesResponse(
+        queries=queries[:10], tokens_used=total_tokens, billable_characters_used=total_billable_characters
+    )
