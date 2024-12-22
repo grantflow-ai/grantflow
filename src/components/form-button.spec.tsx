@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import { SubmitButton } from "./submit-button";
 
 describe("FormButton Component", () => {
@@ -50,7 +51,7 @@ describe("FormButton Component", () => {
 	it("does not call onClick handler when disabled", async () => {
 		const handleClick = vi.fn();
 		render(
-			<SubmitButton onClick={handleClick} disabled={true}>
+			<SubmitButton disabled={true} onClick={handleClick}>
 				Submit
 			</SubmitButton>,
 		);

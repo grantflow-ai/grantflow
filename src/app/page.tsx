@@ -1,20 +1,35 @@
 /* eslint-disable @typescript-eslint/require-await */
 "use server";
 
-import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
-import { FileText, Lock, Users } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { NavHeader } from "@/components/landing-page/nav-header";
+import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
+import { FileText, Lock, Users } from "lucide-react";
 
 const locales = {
+	featuresSection: {
+		card1: {
+			content:
+				"Your entire team can participate in the application process, ensuring everyone from administrators to researchers can contribute efficiently.",
+			title: "Collaborative Tools",
+		},
+		card2: {
+			content:
+				"Create proposals that meet the specific guidelines of major funding bodies like NIH, NSF, and ERC, with AI assistance fine-tuned for technical and cutting-edge research language.",
+			title: "Customizable Proposals",
+		},
+		card3: {
+			content: "Discover relevant grants, track progress, and ensure compliance, all within a single platform.",
+			title: "Grant Discovery & Tracking",
+		},
+		subtitle: "Tailored for the Complex Needs of Principal Investigators",
+		title: "Why GrantFlow.ai?",
+	},
 	headingSection: {
-		title: "GrantFlow.ai",
 		subtitle: "Supercharge your grant writing",
+		title: "GrantFlow.ai",
 	},
 	problemAndSolutionSection: {
-		title: "Simplify Grant Applications with a Collaborative Workspace",
-		subtitle:
-			"GrantFlow.ai transforms the complex grant application process into a streamlined, collaborative experience. Manage all aspects of grant writing with your team in one shared workspace.",
 		card1: {
 			content:
 				"As a PI, you need to balance running a lab, publishing research, and securing funding for future studies. The complex and time-consuming grant writing process can drain your focus from leading groundbreaking research. Collaborating with students, administrators, and other researchers adds another layer of complexity.",
@@ -22,8 +37,6 @@ const locales = {
 			title: "The Challenge for Principal Investigators",
 		},
 		card2: {
-			title: "Our Solution",
-			subtitle: "A Collaborative Platform Built for Researchers",
 			content:
 				"GrantFlow.ai provides a comprehensive platform designed to streamline the grant application writing process:",
 			list: {
@@ -31,25 +44,12 @@ const locales = {
 				item2: "AI-Driven Support: Leverage advanced AI to accelerate writing and refine proposals.",
 				item3: "Security & Compliance: Ensures data privacy and adheres to industry standards.",
 			},
+			subtitle: "A Collaborative Platform Built for Researchers",
+			title: "Our Solution",
 		},
-	},
-	featuresSection: {
-		title: "Why GrantFlow.ai?",
-		subtitle: "Tailored for the Complex Needs of Principal Investigators",
-		card1: {
-			title: "Collaborative Tools",
-			content:
-				"Your entire team can participate in the application process, ensuring everyone from administrators to researchers can contribute efficiently.",
-		},
-		card2: {
-			title: "Customizable Proposals",
-			content:
-				"Create proposals that meet the specific guidelines of major funding bodies like NIH, NSF, and ERC, with AI assistance fine-tuned for technical and cutting-edge research language.",
-		},
-		card3: {
-			title: "Grant Discovery & Tracking",
-			content: "Discover relevant grants, track progress, and ensure compliance, all within a single platform.",
-		},
+		subtitle:
+			"GrantFlow.ai transforms the complex grant application process into a streamlined, collaborative experience. Manage all aspects of grant writing with your team in one shared workspace.",
+		title: "Simplify Grant Applications with a Collaborative Workspace",
 	},
 };
 
@@ -72,7 +72,7 @@ export default async function LandingPage() {
 					</div>
 				</section>
 
-				<section id="features" className="py-16 md:py-24 bg-background" data-testid="problem-solution-section">
+				<section className="py-16 md:py-24 bg-background" data-testid="problem-solution-section" id="features">
 					<div className="container mx-auto px-4">
 						<h2
 							className="text-3xl md:text-4xl font-bold mb-8 text-center text-primary"
@@ -149,9 +149,9 @@ export default async function LandingPage() {
 								locales.featuresSection.card3,
 							].map((card, index) => (
 								<Card
-									key={index}
 									className="transition-all duration-300 hover:shadow-lg"
 									data-testid={`feature-card-${index + 1}`}
+									key={index}
 								>
 									<CardHeader>
 										<CardTitle className="text-primary">{card.title}</CardTitle>

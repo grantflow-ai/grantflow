@@ -1,8 +1,7 @@
-import ky, { KyInstance } from "ky";
-
+import { ONE_MINUTE_IN_MS } from "@/constants";
 import { getEnv } from "@/utils/env";
 import { Ref } from "@/utils/state";
-import { ONE_MINUTE_IN_MS } from "@/constants";
+import ky, { KyInstance } from "ky";
 
 const clientRef = new Ref<KyInstance>();
 

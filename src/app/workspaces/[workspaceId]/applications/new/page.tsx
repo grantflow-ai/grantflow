@@ -1,7 +1,7 @@
 "use server";
-import { GrantApplicationForm } from "@/components/workspaces/detail/applications/grant-application-form";
 import { getCfps } from "@/actions/api";
 import { Loader } from "@/components/loader";
+import { GrantApplicationForm } from "@/components/workspaces/detail/applications/grant-application-form";
 
 export default async function ApplicationCreatePage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;

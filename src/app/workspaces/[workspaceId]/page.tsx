@@ -1,10 +1,10 @@
 "use server";
 
-import { Button } from "gen/ui/button";
+import { getWorkspace } from "@/actions/api";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
+import { Button } from "gen/ui/button";
 import Link from "next/link";
-import { getWorkspace } from "@/actions/api";
 
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;
@@ -17,7 +17,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 		<div className="mx-auto px-4 py-8">
 			<div className="flex justify-between items-center mb-6">
 				<h1 className="text-2xl font-bold">{workspace.name}</h1>
-				<Button size="sm" asChild>
+				<Button asChild size="sm">
 					<Link href={createApplicationUrl}>New Application</Link>
 				</Button>
 			</div>
@@ -26,8 +26,8 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 						{workspace.applications.map((application) => (
 							<GrantApplicationCard
-								key={application.id}
 								application={application}
+								key={application.id}
 								workspaceId={workspaceId}
 							/>
 						))}
@@ -35,7 +35,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 				) : (
 					<div className="text-center py-12">
 						<p className="text-muted-foreground">This workspace doesn&#39;t have any applications yet.</p>
-						<Button size="sm" asChild className="mt-4">
+						<Button asChild className="mt-4" size="sm">
 							<Link href={createApplicationUrl}>Create New Application</Link>
 						</Button>
 					</div>

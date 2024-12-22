@@ -1,16 +1,15 @@
+import { SubmitButton } from "@/components/submit-button";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
+import { Input } from "gen/ui/input";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { SubmitButton } from "@/components/submit-button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
-import { Input } from "gen/ui/input";
-
 const WHITE_LISTED_EMAILS = new Set([
 	"allonwag@berkeley.edu",
-	"naftali.kaminski@yale.edu",
-	"mgrinstein@bwh.harvard.edu",
 	"dviraran@technion.ac.il",
+	"mgrinstein@bwh.harvard.edu",
+	"naftali.kaminski@yale.edu",
 ]);
 
 const emailSchema = z.object({
@@ -25,16 +24,16 @@ const emailSchema = z.object({
 export type EmailFormValues = z.infer<typeof emailSchema>;
 
 export function EmailSigninForm({
-	onSubmit,
 	isLoading,
+	onSubmit,
 }: {
-	onSubmit: SubmitHandler<EmailFormValues>;
 	isLoading: boolean;
+	onSubmit: SubmitHandler<EmailFormValues>;
 }) {
 	const form = useForm<EmailFormValues>({
-		resolver: zodResolver(emailSchema),
 		defaultValues: { email: "" },
 		delayError: 5,
+		resolver: zodResolver(emailSchema),
 	});
 
 	return (
@@ -42,26 +41,26 @@ export function EmailSigninForm({
 			<Form {...form}>
 				<form className="mb-4" data-testid="email-signin-form" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
-						name="email"
 						control={form.control}
+						name="email"
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel htmlFor="email">Email</FormLabel>
 								<FormControl>
 									<Input
-										id="email"
-										placeholder="name@example.com"
-										type="email"
 										autoCapitalize="none"
 										autoComplete="email"
 										autoCorrect="off"
 										className="form-input"
 										data-testid="email-signin-form-email-input"
+										id="email"
+										placeholder="name@example.com"
+										type="email"
 										{...field}
 									/>
 								</FormControl>
 								{form.formState.errors.email?.message && (
-									<FormMessage data-testid="email-input-error-message" className="text-destructive">
+									<FormMessage className="text-destructive" data-testid="email-input-error-message">
 										{form.formState.errors.email.message}
 									</FormMessage>
 								)}
@@ -70,9 +69,9 @@ export function EmailSigninForm({
 					/>
 					<SubmitButton
 						className="mt-4 mb-2 w-full"
-						isLoading={isLoading}
-						disabled={!form.formState.isValid}
 						data-testid="email-signin-form-submit-button"
+						disabled={!form.formState.isValid}
+						isLoading={isLoading}
 					>
 						Send Magic Link
 					</SubmitButton>

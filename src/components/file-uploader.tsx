@@ -1,10 +1,10 @@
+import { formatBytes } from "@/utils/format";
+import { cn } from "gen/cn";
+import { Button } from "gen/ui/button";
+import { Paperclip, Upload } from "lucide-react";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { formatBytes } from "@/utils/format";
-import { Paperclip, Upload } from "lucide-react";
-import { cn } from "gen/cn";
-import { Button } from "gen/ui/button";
 
 const DEFAULT_FILE_ACCEPTS = {
 	"application/csv": [".csv"],
@@ -43,20 +43,20 @@ const DEFAULT_MAX_FILES = Infinity;
 
 export function FileUploader({
 	accept = DEFAULT_FILE_ACCEPTS,
-	maxSize = DEFAULT_MAX_SIZE,
-	maxFileCount = DEFAULT_MAX_FILES,
 	currentFileCount = 0,
-	onFilesAdded,
 	fieldName,
 	isDropZone = false,
+	maxFileCount = DEFAULT_MAX_FILES,
+	maxSize = DEFAULT_MAX_SIZE,
+	onFilesAdded,
 }: {
 	accept?: Record<string, string[]>;
-	maxSize?: number;
-	maxFileCount?: number;
 	currentFileCount?: number;
-	onFilesAdded: (files: File[]) => void;
 	fieldName: string;
 	isDropZone?: boolean;
+	maxFileCount?: number;
+	maxSize?: number;
+	onFilesAdded: (files: File[]) => void;
 }) {
 	const validateFileUploads = useCallback(
 		(newFileUploads: File[]) => {
@@ -94,11 +94,11 @@ export function FileUploader({
 		[handleFilesAdded],
 	);
 
-	const { getRootProps, getInputProps, isDragActive } = useDropzone({
-		onDrop,
+	const { getInputProps, getRootProps, isDragActive } = useDropzone({
 		accept,
-		maxSize,
 		disabled: currentFileCount >= maxFileCount,
+		maxSize,
+		onDrop,
 	});
 
 	if (isDropZone) {
@@ -128,25 +128,25 @@ export function FileUploader({
 	return (
 		<div className="relative">
 			<input
-				type="file"
-				id={`file-upload-${fieldName}`}
-				data-testid="file-input"
 				accept={Object.keys(accept).join(", ")}
+				className="sr-only"
+				data-testid="file-input"
 				disabled={currentFileCount >= maxFileCount}
+				id={`file-upload-${fieldName}`}
+				multiple={true}
 				onChange={(e) => {
 					if (e.target.files) {
 						handleFilesAdded([...e.target.files]);
 					}
 					e.target.value = "";
 				}}
-				multiple={true}
-				className="sr-only"
+				type="file"
 			/>
 			<Button
 				asChild
-				variant="outline"
-				size="sm"
 				className={cn("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
+				size="sm"
+				variant="outline"
 			>
 				<label htmlFor={`file-upload-${fieldName}`}>
 					<Paperclip className="mr-2 h-4 w-4" />

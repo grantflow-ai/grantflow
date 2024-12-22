@@ -5,13 +5,12 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
 	plugins: [tsconfigPaths(), react()],
 	test: {
+		coverage: {
+			exclude: ["**/*.spec.*", "**/*.d.ts", "src/types/*"],
+			include: ["src"],
+		},
 		environment: "jsdom",
 		globals: true,
-		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts"],
-		coverage: {
-			include: ["src"],
-			exclude: ["**/*.spec.*", "**/*.d.ts", "src/types/*"],
-		},
 		onConsoleLog(log) {
 			// suppress errors and warning that spam the console during tests
 			if (log.includes("Error: Not implemented: HTMLFormElement.prototype.requestSubmit")) {
@@ -21,5 +20,6 @@ export default defineConfig({
 				return false;
 			}
 		},
+		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts"],
 	},
 });

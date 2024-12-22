@@ -1,149 +1,87 @@
 import { UserRole } from "@/constants";
 
 export interface APIError {
-	message: string;
 	details: string;
+	message: string;
 }
 
-export interface WorkspaceId {
+export interface Application extends ApplicationBase {
+	files: ApplicationFile[];
+	innovation: null | string;
+	research_aims: ResearchAim[];
+	significance: null | string;
+}
+
+export interface ApplicationBase extends ApplicationId {
+	cfp: GrantCfp;
+	text: null | string;
+	title: string;
+}
+
+export type ApplicationDraftResponse =
+	| {
+			id: string;
+			status: "complete";
+			text: string;
+	  }
+	| {
+			id: string;
+			status: "generating";
+	  };
+
+export interface ApplicationFile {
 	id: string;
-}
-
-export interface WorkspaceBase extends WorkspaceId {
 	name: string;
-	description: string | null;
-	logo_url: string | null;
-	role: UserRole;
-}
-
-export interface Workspace extends WorkspaceBase {
-	applications: ApplicationBase[];
-}
-
-export interface CreateWorkspaceRequestBody {
-	name: string;
-	description?: string | null;
-	logo_url?: string | null;
-}
-
-export interface UpdateWorkspaceRequestBody {
-	name?: string;
-	description?: string | null;
-	logo_url?: string | null;
+	size: number;
+	type: string;
 }
 
 export interface ApplicationId {
 	id: string;
 }
 
-export interface ApplicationBase extends ApplicationId {
-	title: string;
-	cfp: GrantCfp;
-	text: string | null;
-}
-
-export interface Application extends ApplicationBase {
-	significance: string | null;
-	innovation: string | null;
-	research_aims: ResearchAim[];
-	files: ApplicationFile[];
-}
-
 export interface CreateApplicationRequestBody {
-	title: string;
 	cfp_id: string;
-	significance: string | null;
-	innovation: string | null;
+	innovation: null | string;
 	research_aims: CreateResearchAimRequestBody[];
-}
-
-export interface UpdateApplicationRequestBody {
-	title?: string;
-	cfp_id?: string;
-	significance?: string | null;
-	innovation?: string | null;
-	research_aims?: CreateResearchAimRequestBody[];
-}
-
-export interface ApplicationFile {
-	id: string;
-	name: string;
-	type: string;
-	size: number;
-}
-
-export interface ResearchTask {
-	id: string;
-	task_number: number;
-	description: string | null;
+	significance: null | string;
 	title: string;
-}
-
-export interface CreateResearchTaskRequestBody {
-	description: string | null;
-	task_number: number;
-	title: string;
-}
-
-export interface UpdateResearchTaskRequestBody {
-	task_number?: number;
-	description?: string | null;
-	title?: string;
-}
-
-export interface ResearchAim {
-	id: string;
-	aim_number: number;
-	description: string | null;
-	requires_clinical_trials: boolean;
-	preliminary_results: string | null;
-	risks_and_alternatives: string | null;
-	title: string;
-	research_tasks: ResearchTask[];
 }
 
 export interface CreateResearchAimRequestBody {
 	aim_number: number;
-	description: string | null;
+	description: null | string;
+	preliminary_results: null | string;
 	requires_clinical_trials: boolean;
-	preliminary_results: string | null;
-	risks_and_alternatives: string | null;
 	research_tasks: CreateResearchTaskRequestBody[];
+	risks_and_alternatives: null | string;
 	title: string;
 }
 
-export interface UpdateResearchAimRequestBody {
-	aim_number?: number;
-	description?: string | null;
-	preliminary_results?: string | null;
-	risks_and_alternatives?: string | null;
-	requires_clinical_trials?: boolean;
-	title?: string;
+export interface CreateResearchTaskRequestBody {
+	description: null | string;
+	task_number: number;
+	title: string;
+}
+
+export interface CreateWorkspaceRequestBody {
+	description?: null | string;
+	logo_url?: null | string;
+	name: string;
 }
 
 export interface GrantCfp {
-	id: string;
 	allow_clinical_trials: boolean;
 	allow_resubmissions: boolean;
-	category: string | null;
+	category: null | string;
 	code: string;
-	description: string | null;
-	title: string;
-	url: string | null;
+	description: null | string;
 	funding_organization_id: string;
 	funding_organization_name: string;
+	id: string;
+	title: string;
+	url: null | string;
 }
-
-export type ApplicationDraftResponse =
-	| {
-			id: string;
-			status: "generating";
-	  }
-	| {
-			id: string;
-			status: "complete";
-			text: string;
-	  };
 
 export interface LoginRequestBody {
 	id_token: string;
@@ -155,4 +93,66 @@ export interface LoginResponse {
 
 export interface OTPResponse {
 	otp: string;
+}
+
+export interface ResearchAim {
+	aim_number: number;
+	description: null | string;
+	id: string;
+	preliminary_results: null | string;
+	requires_clinical_trials: boolean;
+	research_tasks: ResearchTask[];
+	risks_and_alternatives: null | string;
+	title: string;
+}
+
+export interface ResearchTask {
+	description: null | string;
+	id: string;
+	task_number: number;
+	title: string;
+}
+
+export interface UpdateApplicationRequestBody {
+	cfp_id?: string;
+	innovation?: null | string;
+	research_aims?: CreateResearchAimRequestBody[];
+	significance?: null | string;
+	title?: string;
+}
+
+export interface UpdateResearchAimRequestBody {
+	aim_number?: number;
+	description?: null | string;
+	preliminary_results?: null | string;
+	requires_clinical_trials?: boolean;
+	risks_and_alternatives?: null | string;
+	title?: string;
+}
+
+export interface UpdateResearchTaskRequestBody {
+	description?: null | string;
+	task_number?: number;
+	title?: string;
+}
+
+export interface UpdateWorkspaceRequestBody {
+	description?: null | string;
+	logo_url?: null | string;
+	name?: string;
+}
+
+export interface Workspace extends WorkspaceBase {
+	applications: ApplicationBase[];
+}
+
+export interface WorkspaceBase extends WorkspaceId {
+	description: null | string;
+	logo_url: null | string;
+	name: string;
+	role: UserRole;
+}
+
+export interface WorkspaceId {
+	id: string;
 }

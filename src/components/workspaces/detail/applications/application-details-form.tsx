@@ -1,24 +1,24 @@
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
-import { Tooltip, TooltipContent, TooltipTrigger } from "gen/ui/tooltip";
-import { Button } from "gen/ui/button";
-import { Check, ChevronsUpDown, HelpCircle } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "gen/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "gen/ui/command";
-import { cn } from "gen/cn";
-import { Input } from "gen/ui/input";
-import { Textarea } from "gen/ui/textarea";
-import { GrantCfp } from "@/types/api-types";
-import { UseFormReturn } from "react-hook-form";
 import { GrantApplicationFormValues } from "@/components/workspaces/detail/applications/schema";
+import { GrantCfp } from "@/types/api-types";
+import { cn } from "gen/cn";
+import { Button } from "gen/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "gen/ui/command";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
+import { Input } from "gen/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "gen/ui/popover";
+import { Textarea } from "gen/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "gen/ui/tooltip";
+import { Check, ChevronsUpDown, HelpCircle } from "lucide-react";
 import { useState } from "react";
+import { UseFormReturn } from "react-hook-form";
 
 export function ApplicationDetailsForm({
-	form,
 	cfps,
+	form,
 	loading,
 }: {
-	form: UseFormReturn<GrantApplicationFormValues>;
 	cfps: GrantCfp[];
+	form: UseFormReturn<GrantApplicationFormValues>;
 	loading: boolean;
 }) {
 	const [title, setTitle] = useState("Select an NIH Activity Code");
@@ -46,17 +46,17 @@ export function ApplicationDetailsForm({
 				render={({ field }) => (
 					<FormItem className="space-y-2">
 						<div className="flex items-center gap-2">
-							<FormLabel htmlFor="cfp_id" data-testid="grant-application-form-cfp-label">
+							<FormLabel data-testid="grant-application-form-cfp-label" htmlFor="cfp_id">
 								NIH Activity Code <span className="text-red-300 p-0">*</span>
 							</FormLabel>
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Button
-										type="button"
-										variant="ghost"
+										aria-label="NIH Activity Code information"
 										className="p-0 h-4 w-4"
 										data-testid="grant-application-form-cfp-help"
-										aria-label="NIH Activity Code information"
+										type="button"
+										variant="ghost"
 									>
 										<HelpCircle className="h-4 w-4" />
 									</Button>
@@ -67,19 +67,19 @@ export function ApplicationDetailsForm({
 							</Tooltip>
 						</div>
 						<FormControl>
-							<Popover open={open} onOpenChange={setOpen}>
+							<Popover onOpenChange={setOpen} open={open}>
 								<PopoverTrigger asChild>
 									<Button
-										id="cfp_id"
-										variant="outline"
-										role="combobox"
+										aria-controls="cfp-options"
 										aria-expanded={open}
 										aria-haspopup="listbox"
-										aria-controls="cfp-options"
 										aria-label="Select NIH Activity Code"
 										className="w-full justify-between"
-										type="button"
 										data-testid="grant-application-form-cfp-select"
+										id="cfp_id"
+										role="combobox"
+										type="button"
+										variant="outline"
 									>
 										{title}
 										<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -88,10 +88,10 @@ export function ApplicationDetailsForm({
 								<PopoverContent className="w-full max-w-md p-0">
 									<Command>
 										<CommandInput
+											aria-label="Search NIH Activity Codes"
+											data-testid="grant-application-form-cfp-search"
 											disabled={loading}
 											placeholder="Search NIH Activity Codes..."
-											data-testid="grant-application-form-cfp-search"
-											aria-label="Search NIH Activity Codes"
 										/>
 										<CommandEmpty data-testid="grant-application-form-cfp-empty" role="status">
 											No activity code found.
@@ -100,22 +100,22 @@ export function ApplicationDetailsForm({
 											<CommandList id="cfp-options" role="listbox">
 												{cfps.map((cfp) => (
 													<CommandItem
+														aria-selected={field.value === cfp.id}
+														data-testid={`grant-application-form-cfp-option-${cfp.code}`}
 														key={cfp.id}
-														value={cfp.id}
 														onSelect={(currentValue) => {
 															field.onChange(currentValue);
 															setOpen(false);
 														}}
 														role="option"
-														aria-selected={field.value === cfp.id}
-														data-testid={`grant-application-form-cfp-option-${cfp.code}`}
+														value={cfp.id}
 													>
 														<Check
+															aria-hidden="true"
 															className={cn(
 																"mr-2 h-4 w-4",
 																field.value === cfp.id ? "opacity-100" : "opacity-0",
 															)}
-															aria-hidden="true"
 														/>
 														<span className="font-medium">{cfp.code}</span>
 														<span className="ml-2 text-sm text-muted-foreground truncate">
@@ -131,8 +131,8 @@ export function ApplicationDetailsForm({
 						</FormControl>
 						{form.formState.errors.cfp_id?.message && (
 							<FormMessage
-								data-testid="grant-application-form-cfp-error"
 								className="text-destructive"
+								data-testid="grant-application-form-cfp-error"
 								role="alert"
 							>
 								{form.formState.errors.cfp_id.message}
@@ -148,17 +148,17 @@ export function ApplicationDetailsForm({
 				render={({ field }) => (
 					<FormItem className="space-y-2">
 						<div className="flex items-center gap-2">
-							<FormLabel htmlFor="title" data-testid="grant-application-form-title-label">
+							<FormLabel data-testid="grant-application-form-title-label" htmlFor="title">
 								Grant Application Title <span className="text-red-300 p-0">*</span>
 							</FormLabel>
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Button
-										type="button"
-										variant="ghost"
+										aria-label="Grant title information"
 										className="p-0 h-4 w-4"
 										data-testid="grant-application-form-title-help"
-										aria-label="Grant title information"
+										type="button"
+										variant="ghost"
 									>
 										<HelpCircle className="h-4 w-4" />
 									</Button>
@@ -171,25 +171,25 @@ export function ApplicationDetailsForm({
 						<FormControl>
 							<Input
 								{...field}
-								id="title"
-								disabled={loading}
-								placeholder="Enter the Grant Application Title"
+								aria-invalid={!!form.formState.errors.title}
+								aria-required="true"
 								className="transition-all duration-200 focus:ring-2 focus:ring-primary"
 								data-testid="grant-application-form-title-input"
-								aria-required="true"
-								aria-invalid={!!form.formState.errors.title}
+								disabled={loading}
+								id="title"
+								placeholder="Enter the Grant Application Title"
 							/>
 						</FormControl>
 						{field.value && (
 							<p
-								id="title-counter"
+								aria-live="polite"
 								className={cn(
 									"text-xs text-muted-foreground transition-colors duration-200",
 									field.value.length < 10 && "text-red-500",
 									field.value.length >= 10 && field.value.length <= 255 && "text-green-500",
 								)}
 								data-testid="grant-application-form-title-char-count"
-								aria-live="polite"
+								id="title-counter"
 							>
 								{field.value.length}/255 characters
 								{field.value.length < 10 ? ` (${10 - field.value.length} more required)` : ""}
@@ -197,9 +197,9 @@ export function ApplicationDetailsForm({
 						)}
 						{form.formState.errors.title?.message && (
 							<FormMessage
-								id="title-error"
-								data-testid="grant-application-form-title-error"
 								className="text-destructive"
+								data-testid="grant-application-form-title-error"
+								id="title-error"
 								role="alert"
 							>
 								{form.formState.errors.title.message}
@@ -216,19 +216,19 @@ export function ApplicationDetailsForm({
 					<FormItem className="space-y-2">
 						<div className="flex items-center gap-2">
 							<FormLabel
-								htmlFor="significance"
 								data-testid="significance-innovation-form-significance-label"
+								htmlFor="significance"
 							>
 								Research Significance
 							</FormLabel>
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Button
-										type="button"
-										variant="ghost"
+										aria-label="Research significance information"
 										className="p-0 h-4 w-4"
 										data-testid="significance-innovation-form-significance-help"
-										aria-label="Research significance information"
+										type="button"
+										variant="ghost"
 									>
 										<HelpCircle className="h-4 w-4" />
 									</Button>
@@ -245,39 +245,39 @@ export function ApplicationDetailsForm({
 						<FormControl>
 							<Textarea
 								{...field}
+								aria-invalid={!!form.formState.errors.significance}
+								aria-required="true"
+								className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
+								data-testid="significance-innovation-form-significance-input"
+								disabled={loading}
+								id="significance.text"
+								placeholder="Describe the significance of your research"
 								ref={(textarea) => {
 									if (textarea) {
 										textarea.style.height = "0px";
 										textarea.style.height = `${textarea.scrollHeight}px`;
 									}
 								}}
-								id="significance.text"
-								disabled={loading}
-								placeholder="Describe the significance of your research"
-								className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
-								data-testid="significance-innovation-form-significance-input"
-								aria-required="true"
-								aria-invalid={!!form.formState.errors.significance}
 							/>
 						</FormControl>
 						{field.value && (
 							<p
-								id="significance-counter"
-								data-testid="significance-innovation-form-significance-char-count"
 								aria-live="polite"
 								className={cn(
 									"text-xs text-muted-foreground transition-colors duration-200",
 									"text-green-500",
 								)}
+								data-testid="significance-innovation-form-significance-char-count"
+								id="significance-counter"
 							>
 								{field.value.length} characters
 							</p>
 						)}
 						{form.formState.errors.significance?.message && (
 							<FormMessage
-								id="significance-error"
-								data-testid="significance-innovation-form-significance-error"
 								className="text-destructive"
+								data-testid="significance-innovation-form-significance-error"
+								id="significance-error"
 								role="alert"
 							>
 								{form.formState.errors.significance.message}
@@ -293,17 +293,17 @@ export function ApplicationDetailsForm({
 				render={({ field }) => (
 					<FormItem className="space-y-2">
 						<div className="flex items-center gap-2">
-							<FormLabel htmlFor="innovation" data-testid="significance-innovation-form-innovation-label">
+							<FormLabel data-testid="significance-innovation-form-innovation-label" htmlFor="innovation">
 								Research Innovation
 							</FormLabel>
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Button
-										type="button"
-										variant="ghost"
+										aria-label="Research innovation information"
 										className="p-0 h-4 w-4"
 										data-testid="significance-innovation-form-innovation-help"
-										aria-label="Research innovation information"
+										type="button"
+										variant="ghost"
 									>
 										<HelpCircle className="h-4 w-4" />
 									</Button>
@@ -320,39 +320,39 @@ export function ApplicationDetailsForm({
 						<FormControl>
 							<Textarea
 								{...field}
+								aria-invalid={!!form.formState.errors.innovation}
+								aria-required="true"
+								className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
+								data-testid="significance-innovation-form-innovation-input"
+								disabled={loading}
+								id="innovation.text"
+								placeholder="Describe the innovation of your research"
 								ref={(textarea) => {
 									if (textarea) {
 										textarea.style.height = "0px";
 										textarea.style.height = `${textarea.scrollHeight}px`;
 									}
 								}}
-								id="innovation.text"
-								disabled={loading}
-								placeholder="Describe the innovation of your research"
-								className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
-								data-testid="significance-innovation-form-innovation-input"
-								aria-required="true"
-								aria-invalid={!!form.formState.errors.innovation}
 							/>
 						</FormControl>
 						{field.value && (
 							<p
-								id="innovation-counter"
-								data-testid="significance-innovation-form-innovation-char-count"
 								aria-live="polite"
 								className={cn(
 									"text-xs text-muted-foreground transition-colors duration-200",
 									"text-green-500",
 								)}
+								data-testid="significance-innovation-form-innovation-char-count"
+								id="innovation-counter"
 							>
 								{field.value.length} characters
 							</p>
 						)}
 						{form.formState.errors.innovation?.message && (
 							<FormMessage
-								id="innovation-error"
-								data-testid="significance-innovation-form-innovation-error"
 								className="text-destructive"
+								data-testid="significance-innovation-form-innovation-error"
+								id="innovation-error"
 								role="alert"
 							>
 								{form.formState.errors.innovation.message}

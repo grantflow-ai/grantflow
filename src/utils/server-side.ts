@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
 import { PagePath } from "@/enums";
 import { logError } from "@/utils/logging";
+import { redirect } from "next/navigation";
 
 /**
  * Redirect to a URL with toast parameters.
@@ -12,13 +12,13 @@ import { logError } from "@/utils/logging";
  * @throw A NextRedirect error
  */
 export function redirectWithToastParams({
+	message,
 	path,
 	type,
-	message,
 }: {
-	path: string | PagePath;
-	type: "error" | "success" | "info";
 	message: string;
+	path: PagePath | string;
+	type: "error" | "info" | "success";
 }) {
 	redirect(`${path}?toastType=${type}&toastContent=${message}`);
 }
@@ -34,21 +34,21 @@ export function redirectWithToastParams({
  * @returns The resolved value of the promise.
  */
 export async function withErrorToast<T>({
-	value,
-	path,
-	message,
 	identifier,
+	message,
+	path,
+	value,
 }: {
-	value: Promise<T>;
-	path: string | PagePath;
-	message: string;
 	identifier: string;
+	message: string;
+	path: PagePath | string;
+	value: Promise<T>;
 }): Promise<T> {
 	try {
 		return await value;
 	} catch (error) {
 		logError({ error, identifier });
-		redirectWithToastParams({ path, type: "error", message });
+		redirectWithToastParams({ message, path, type: "error" });
 		throw error; // this should never happen - the redirect should prevent the function from continuing by throwing
 	}
 }

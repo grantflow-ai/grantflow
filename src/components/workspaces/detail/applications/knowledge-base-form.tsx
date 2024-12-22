@@ -1,9 +1,9 @@
-import { FormControl, FormField, FormItem } from "gen/ui/form";
 import { FileUploader } from "@/components/file-uploader";
 import { FilesDisplay } from "@/components/files-display";
-import { UseFormReturn } from "react-hook-form";
 import { GrantApplicationFormValues } from "@/components/workspaces/detail/applications/schema";
+import { FormControl, FormField, FormItem } from "gen/ui/form";
 import { useCallback } from "react";
+import { UseFormReturn } from "react-hook-form";
 
 export function KnowledgeBaseForm({ form }: { form: UseFormReturn<GrantApplicationFormValues> }) {
 	const handleFileChange = useCallback(
@@ -32,10 +32,10 @@ export function KnowledgeBaseForm({ form }: { form: UseFormReturn<GrantApplicati
 						<FormControl>
 							<FileUploader
 								currentFileCount={field.value.length}
-								onFilesAdded={handleFileChange}
 								data-testid="files-input"
 								fieldName={field.name}
 								isDropZone={true}
+								onFilesAdded={handleFileChange}
 							/>
 						</FormControl>
 						<FilesDisplay

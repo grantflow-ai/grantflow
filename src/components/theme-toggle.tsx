@@ -8,16 +8,16 @@ export function ThemeToggle() {
 
 	return (
 		<Button
-			data-testid="theme-toggle-button"
-			variant="ghost"
 			className="dark:hover:bg-primary/20"
+			data-testid="theme-toggle-button"
 			onClick={() => {
 				setTheme(theme === "light" ? "dark" : "light");
 			}}
+			variant="ghost"
 		>
-			<SunIcon data-testid="theme-toggle-sun-icon" className="dark:hidden h-4 w-4" />
-			<MoonIcon data-testid="theme-toggle-moon-icon" className="hidden dark:block bg-inherit h-4 w-4" />
-			<span data-testid="theme-toggle-sr-text" className="sr-only">
+			<SunIcon className="dark:hidden h-4 w-4" data-testid="theme-toggle-sun-icon" />
+			<MoonIcon className="hidden dark:block bg-inherit h-4 w-4" data-testid="theme-toggle-moon-icon" />
+			<span className="sr-only" data-testid="theme-toggle-sr-text">
 				Toggle theme
 			</span>
 		</Button>
