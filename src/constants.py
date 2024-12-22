@@ -10,7 +10,7 @@ ONE_MINUTE_SECONDS: Final[int] = 60
 EMBEDDING_DIMENSIONS: Final[int] = 256
 EMBEDDINGS_MODEL: Final[str] = get_env("EMBEDDINGS_MODEL", fallback="text-embedding-005")
 FAST_TEXT_GENERATION_MODEL: Final[str] = get_env("FAST_TEXT_GENERATION_MODEL", fallback="gemini-2.0-flash-exp")
-PREMIUM_TEXT_GENERATION_MODEL: Final[str] = get_env("PREMIUM_TEXT_GENERATION_MODEL", fallback="gemini-1.5-pro-002")
+PREMIUM_TEXT_GENERATION_MODEL: Final[str] = get_env("PREMIUM_TEXT_GENERATION_MODEL", fallback="gemini-2.0-flash-exp")
 
 # File constants
 SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP = {

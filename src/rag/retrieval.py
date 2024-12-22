@@ -18,7 +18,7 @@ async def retrieve_documents(
     application_id: str,
     search_queries: list[str],
 ) -> list[DocumentDTO]:
-    """Retrieve documents from Azure Search using the given query vectors.
+    """Retrieve documents from the vector store.
 
     Args:
         application_id: The application ID.
@@ -32,7 +32,7 @@ async def retrieve_documents(
     session_maker = get_session_maker()
     async with session_maker() as session, session.begin():
         stmt = (
-            select(ApplicationVector, ApplicationFile.name)
+            select(ApplicationVector)
             .join(ApplicationFile, ApplicationVector.file_id == ApplicationFile.id)
             .where(ApplicationFile.application_id == application_id)
             .order_by(ApplicationVector.embedding.cosine_distance(query_embeddings))
@@ -42,9 +42,9 @@ async def retrieve_documents(
         result = await session.scalars(stmt)
 
     output: list[DocumentDTO] = [
-        DocumentDTO(source=row.name, content=row.content, element_type=row.element_type, page_number=row.page_number)
+        DocumentDTO(source=row.file_id, content=row.content, element_type=row.element_type, page_number=row.page_number)
         for row in result
     ]
 
-    logger.info("Successfully retrieved documents from Azure Search")
+    logger.info("Successfully retrieved documents from vector store")
     return output
