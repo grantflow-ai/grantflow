@@ -10,7 +10,7 @@ export function ToastListener() {
 	const pathname = usePathname();
 
 	useEffect(() => {
-		const toastType = searchParams.get("toastType") as "error" | "success" | "info" | null;
+		const toastType = searchParams.get("toastType") as "error" | "info" | "success" | null;
 		const content = searchParams.get("toastContent") ?? "";
 		if (toastType) {
 			toast[toastType](content);

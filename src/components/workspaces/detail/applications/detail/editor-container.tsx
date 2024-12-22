@@ -1,10 +1,10 @@
+import { ApplicationContext } from "@/components/workspaces/detail/applications/detail/context";
+import { Application } from "@/types/api-types";
+import { Plate } from "@udecode/plate-common/react";
+import { Editor as PlateEditor, EditorContainer as PlateEditorContainer } from "gen/editor/ui/editor";
 import { useEditor } from "gen/editor/use-editor";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { Plate } from "@udecode/plate-common/react";
-import { Editor as PlateEditor, EditorContainer as PlateEditorContainer } from "gen/editor/ui/editor";
-import { Application } from "@/types/api-types";
-import { ApplicationContext } from "@/components/workspaces/detail/applications/detail/context";
 
 export function EditorContainer({ application }: { application: Application }) {
 	const editor = useEditor({ content: application.text ?? "" });

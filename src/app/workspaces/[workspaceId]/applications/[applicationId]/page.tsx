@@ -1,16 +1,16 @@
 "use server";
 
-import { ApplicationWorkspace } from "@/components/workspaces/detail/applications/detail/application-workspace";
 import { getApplication } from "@/actions/api";
+import { ApplicationWorkspace } from "@/components/workspaces/detail/applications/detail/application-workspace";
 
 export default async function ApplicationDetailPage({
 	params,
 }: {
-	params: Promise<{ workspaceId: string; applicationId: string }>;
+	params: Promise<{ applicationId: string; workspaceId: string }>;
 }) {
-	const { workspaceId, applicationId } = await params;
+	const { applicationId, workspaceId } = await params;
 
 	const application = await getApplication(workspaceId, applicationId);
 
-	return <ApplicationWorkspace workspaceId={workspaceId} application={application} />;
+	return <ApplicationWorkspace application={application} workspaceId={workspaceId} />;
 }

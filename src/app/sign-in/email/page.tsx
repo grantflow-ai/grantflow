@@ -1,16 +1,16 @@
 "use client";
 
-import { isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { getFirebaseAuth } from "@/utils/firebase";
-import { PagePath } from "@/enums";
+import { login } from "@/actions/api";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
+import { PagePath } from "@/enums";
+import { getFirebaseAuth } from "@/utils/firebase";
+import { logError } from "@/utils/logging";
+import { isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
+import { Loader2 } from "lucide-react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { login } from "@/actions/api";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { logError } from "@/utils/logging";
 
 /**
  * Handles the email sign-in completion flow after user clicks the email link.

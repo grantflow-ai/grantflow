@@ -1,10 +1,10 @@
 "use client";
-import { Card, CardContent } from "gen/ui/card";
-import Link from "next/link";
 import { PagePath } from "@/enums";
-import { ChevronRight, FileText } from "lucide-react";
-import { Badge } from "gen/ui/badge";
 import { ApplicationBase } from "@/types/api-types";
+import { Badge } from "gen/ui/badge";
+import { Card, CardContent } from "gen/ui/card";
+import { ChevronRight, FileText } from "lucide-react";
+import Link from "next/link";
 
 export function GrantApplicationCard({
 	application,
@@ -18,7 +18,7 @@ export function GrantApplicationCard({
 		.replace(":applicationId", application.id);
 
 	return (
-		<Link href={url} className="block" data-testid={`application-draft-link-${application.id}`}>
+		<Link className="block" data-testid={`application-draft-link-${application.id}`} href={url}>
 			<Card className="group overflow-hidden transition-all duration-300 hover:shadow-md hover:bg-muted/50">
 				<CardContent className="p-4">
 					<div className="flex items-start justify-between gap-4">
@@ -29,8 +29,8 @@ export function GrantApplicationCard({
 							</h3>
 						</div>
 						<Badge
-							variant="secondary"
 							className="bg-secondary/50 text-secondary-foreground px-2 py-0.5 text-xs font-medium uppercase whitespace-nowrap"
+							variant="secondary"
 						>
 							{application.cfp.code}
 						</Badge>

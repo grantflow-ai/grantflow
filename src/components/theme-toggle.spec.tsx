@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useTheme } from "next-themes";
+
 import { ThemeToggle } from "./theme-toggle";
 
 // Mock the next-themes module
@@ -16,8 +17,8 @@ describe("ThemeToggle", () => {
 
 	it("renders the button with sun icon in light mode", () => {
 		vi.mocked(useTheme).mockReturnValue({
-			theme: "light",
 			setTheme: mockSetTheme,
+			theme: "light",
 		} as any);
 
 		render(<ThemeToggle />);
@@ -33,8 +34,8 @@ describe("ThemeToggle", () => {
 
 	it("renders the button with moon icon in dark mode", () => {
 		vi.mocked(useTheme).mockReturnValue({
-			theme: "dark",
 			setTheme: mockSetTheme,
+			theme: "dark",
 		} as any);
 
 		render(<ThemeToggle />);
@@ -48,8 +49,8 @@ describe("ThemeToggle", () => {
 
 	it("toggles theme from light to dark when clicked", () => {
 		vi.mocked(useTheme).mockReturnValue({
-			theme: "light",
 			setTheme: mockSetTheme,
+			theme: "light",
 		} as any);
 
 		render(<ThemeToggle />);
@@ -62,8 +63,8 @@ describe("ThemeToggle", () => {
 
 	it("toggles theme from dark to light when clicked", () => {
 		vi.mocked(useTheme).mockReturnValue({
-			theme: "dark",
 			setTheme: mockSetTheme,
+			theme: "dark",
 		} as any);
 
 		render(<ThemeToggle />);

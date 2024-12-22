@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { getFirebaseAuth } from "@/utils/firebase";
+import { login } from "@/actions/api";
+import { SeparatorWithText } from "@/components/separator-with-text";
+import { EmailSigninForm } from "@/components/sign-in/email-signin-form";
+import { SigninWithGoogleButton } from "@/components/sign-in/signin-with-google-button";
+import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
+import { getEnv } from "@/utils/env";
+import { getFirebaseAuth } from "@/utils/firebase";
+import { logError } from "@/utils/logging";
 import { GoogleAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
-import { EmailSigninForm } from "@/components/sign-in/email-signin-form";
-import { SeparatorWithText } from "@/components/separator-with-text";
-import { SigninWithGoogleButton } from "@/components/sign-in/signin-with-google-button";
-import { getEnv } from "@/utils/env";
-import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { toast } from "sonner";
-import { login } from "@/actions/api";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { logError } from "@/utils/logging";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -45,8 +45,8 @@ export default function SignIn() {
 
 		try {
 			await sendSignInLinkToEmail(auth, email, {
-				url,
 				handleCodeInApp: true,
+				url,
 			});
 			globalThis.localStorage.setItem(FIREBASE_LOCAL_STORAGE_KEY, email);
 			toast.success("An email has been sent to your mailbox with a sign-in link.\n\nPlease check your inbox.");
@@ -70,17 +70,17 @@ export default function SignIn() {
 				</CardHeader>
 				<CardContent className="space-y-6">
 					<EmailSigninForm
+						isLoading={isLoading}
 						onSubmit={async ({ email }) => {
 							await handleEmailSignin(email);
 						}}
-						isLoading={isLoading}
 					/>
 					<SeparatorWithText text={"Or sign in with"} />
 					<SigninWithGoogleButton
+						isLoading={isLoading}
 						onClick={async () => {
 							await handleGoogleSignin();
 						}}
-						isLoading={isLoading}
 					/>
 				</CardContent>
 			</Card>

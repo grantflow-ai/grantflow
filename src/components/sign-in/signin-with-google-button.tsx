@@ -1,20 +1,20 @@
-import { Button } from "gen/ui/button";
 import { SiGoogle } from "@icons-pack/react-simple-icons";
+import { Button } from "gen/ui/button";
 
-export function SigninWithGoogleButton({ onClick, isLoading }: { onClick: () => Promise<void>; isLoading: boolean }) {
+export function SigninWithGoogleButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => Promise<void> }) {
 	return (
-		<section data-testid="oauth-signin-form" className="flex flex-col gap-2">
+		<section className="flex flex-col gap-2" data-testid="oauth-signin-form">
 			<Button
-				variant="secondary"
-				disabled={isLoading}
 				className="w-full p-1 border rounded"
 				data-testid="oauth-signin-form-google-button"
+				disabled={isLoading}
 				onClick={async () => {
 					await onClick();
 				}}
+				variant="secondary"
 			>
 				<p className="flex justify-center items-center gap-3">
-					<span data-testid="oauth-signin-form-google-text" className="text-md bold">
+					<span className="text-md bold" data-testid="oauth-signin-form-google-text">
 						Sign in with Google
 					</span>
 					<span data-testid="oauth-signin-form-google-icon">

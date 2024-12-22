@@ -1,32 +1,32 @@
-import { UseFormReturn } from "react-hook-form";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
-import { Tooltip, TooltipContent, TooltipTrigger } from "gen/ui/tooltip";
-import { Button } from "gen/ui/button";
-import { ChevronDown, ChevronUp, HelpCircle, Trash2 } from "lucide-react";
-import { Input } from "gen/ui/input";
-import { cn } from "gen/cn";
-import { Textarea } from "gen/ui/textarea";
 import { GrantApplicationFormValues, MIN_TITLE_LENGTH } from "@/components/workspaces/detail/applications/schema";
+import { cn } from "gen/cn";
+import { Button } from "gen/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "gen/ui/collapsible";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
+import { Input } from "gen/ui/input";
+import { Textarea } from "gen/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "gen/ui/tooltip";
+import { ChevronDown, ChevronUp, HelpCircle, Trash2 } from "lucide-react";
 import React, { useState } from "react";
+import { UseFormReturn } from "react-hook-form";
 
 export function ResearchTaskForm({
-	form,
 	aimIndex,
-	taskIndex,
-	onClickRemove,
+	form,
 	loading,
+	onClickRemove,
+	taskIndex,
 }: {
-	form: UseFormReturn<GrantApplicationFormValues>;
 	aimIndex: number;
-	taskIndex: number;
-	onClickRemove: () => void;
+	form: UseFormReturn<GrantApplicationFormValues>;
 	loading: boolean;
+	onClickRemove: () => void;
+	taskIndex: number;
 }) {
 	const [isOpen, setIsOpen] = useState(true);
 
 	return (
-		<Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg mb-4">
+		<Collapsible className="border rounded-lg mb-4" onOpenChange={setIsOpen} open={isOpen}>
 			<CollapsibleTrigger className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center justify-between">
 				<span className="text-lg font-semibold">
 					Research Task {aimIndex + 1}.{taskIndex + 1}
@@ -51,11 +51,11 @@ export function ResearchTaskForm({
 									<Tooltip>
 										<TooltipTrigger asChild>
 											<Button
-												type="button"
-												variant="ghost"
+												aria-label="Task title information"
 												className="p-0 h-4 w-4"
 												data-testid={`task-title-help-${aimIndex}-${taskIndex}`}
-												aria-label="Task title information"
+												type="button"
+												variant="ghost"
 											>
 												<HelpCircle className="h-4 w-4" />
 											</Button>
@@ -68,15 +68,13 @@ export function ResearchTaskForm({
 								<FormControl>
 									<Input
 										{...field}
+										data-testid={`task-title-input-${aimIndex}-${taskIndex}`}
 										disabled={loading}
 										placeholder="Enter the task title"
-										data-testid={`task-title-input-${aimIndex}-${taskIndex}`}
 									/>
 								</FormControl>
 								{field.value && (
 									<p
-										id={`task-title-counter-${aimIndex}-${taskIndex}`}
-										data-testid={`task-title-char-count-${aimIndex}-${taskIndex}`}
 										aria-live="polite"
 										className={cn(
 											"text-xs text-muted-foreground transition-colors duration-200",
@@ -84,6 +82,8 @@ export function ResearchTaskForm({
 											field.value.length >= 5 && field.value.length <= 255 && "text-green-500",
 											field.value.length > 255 && "text-red-500",
 										)}
+										data-testid={`task-title-char-count-${aimIndex}-${taskIndex}`}
+										id={`task-title-counter-${aimIndex}-${taskIndex}`}
 									>
 										{field.value.length} characters
 										{field.value.length < MIN_TITLE_LENGTH &&
@@ -107,11 +107,11 @@ export function ResearchTaskForm({
 									<Tooltip>
 										<TooltipTrigger asChild>
 											<Button
-												type="button"
-												variant="ghost"
+												aria-label="Task description information"
 												className="p-0 h-4 w-4"
 												data-testid={`task-description-help-${aimIndex}-${taskIndex}`}
-												aria-label="Task description information"
+												type="button"
+												variant="ghost"
 											>
 												<HelpCircle className="h-4 w-4" />
 											</Button>
@@ -124,26 +124,26 @@ export function ResearchTaskForm({
 								<FormControl>
 									<Textarea
 										{...field}
+										data-testid={`task-description-input-${aimIndex}-${taskIndex}`}
+										disabled={loading}
+										placeholder="Enter the task description"
 										ref={(textarea) => {
 											if (textarea) {
 												textarea.style.height = "0px";
 												textarea.style.height = `${textarea.scrollHeight}px`;
 											}
 										}}
-										disabled={loading}
-										placeholder="Enter the task description"
-										data-testid={`task-description-input-${aimIndex}-${taskIndex}`}
 									/>
 								</FormControl>
 								{field.value && (
 									<p
-										id={`task-description-counter-${aimIndex}-${taskIndex}`}
-										data-testid={`task-description-char-count-${aimIndex}-${taskIndex}`}
 										aria-live="polite"
 										className={cn(
 											"text-xs text-muted-foreground transition-colors duration-200",
 											"text-green-500",
 										)}
+										data-testid={`task-description-char-count-${aimIndex}-${taskIndex}`}
+										id={`task-description-counter-${aimIndex}-${taskIndex}`}
 									>
 										{field.value.length} characters
 									</p>
@@ -154,12 +154,12 @@ export function ResearchTaskForm({
 					/>
 					<div className="flex justify-end">
 						<Button
+							className="w-full mt-2"
+							data-testid={`remove-task-button-${aimIndex}-${taskIndex}`}
+							onClick={onClickRemove}
+							size="sm"
 							type="button"
 							variant="outline"
-							size="sm"
-							onClick={onClickRemove}
-							data-testid={`remove-task-button-${aimIndex}-${taskIndex}`}
-							className="w-full mt-2"
 						>
 							<Trash2 className="h-4 w-4 mr-2" />
 							Remove Task

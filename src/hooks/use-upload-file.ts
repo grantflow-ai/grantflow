@@ -4,17 +4,17 @@
 export function useUploadFile(): {
 	isUploading: boolean;
 	progress: number;
-	uploadFile: (file: File & { url?: string }) => Promise<void>;
-	uploadedFile: (File & { url?: string }) | null;
-	uploadingFile?: (File & { url?: string }) | null;
+	uploadedFile: ({ url?: string } & File) | null;
+	uploadFile: (file: { url?: string } & File) => Promise<void>;
+	uploadingFile?: ({ url?: string } & File) | null;
 } {
 	return {
 		isUploading: false,
 		progress: 0,
+		uploadedFile: null,
 		// eslint-disable-next-line @typescript-eslint/require-await,no-unused-vars
-		uploadFile: async (_: File & { url?: string }) => {
+		uploadFile: async (_: { url?: string } & File) => {
 			return;
 		},
-		uploadedFile: null,
 	};
 }
