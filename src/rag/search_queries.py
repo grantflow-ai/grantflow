@@ -11,41 +11,17 @@ logger = get_logger(__name__)
 
 SEARCH_QUERIES_SYSTEM_PROMPT: Final[str] = """
 You are a specialized query generation component within a RAG pipeline designed to assist in writing grant application sections.
-Your function is to generate search queries that will retrieve relevant content from an Azure AI Search index containing user-uploaded research materials.
+Your function is to generate search queries that will retrieve relevant content from a vector store using cosine similarity.
 """
 
 SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
-Here is the description of the next task in the RAG pipeline, along with any user-provided inputs that will be used as sources:
+Your task is to analyze the description of the next stage in the RAG pipeline and generate at least 5 distinct search queries that will be executed against the vector store.
+Make sure to optimize the queries for retrieval of relevant content - balance specificity with breadth to capture a range of relevant materials.
+Here is the description of the next task in the RAG pipeline along with any inputs that will be used as sources in the generation:
 
 <description>
 {{description}}
 </description>
-
-Your task is to analyze this description and generate between 3 and 10 distinct search queries that balance specificity with breadth to capture relevant materials. Follow these steps:
-
-1. Carefully read and analyze the provided description.
-2. Identify key topics, concepts, and potential areas of focus within the description.
-3. Generate a list of potential search queries based on your analysis.
-4. Refine and prioritize your queries to ensure they are distinct and cover a range of relevant aspects.
-5. Ensure you have at least 3 queries but no more than 10.
-6. Format your final list of queries as a JSON object according to the specified structure.
-
-Before formulating your final response, wrap your analysis and query generation process in <query_generation_process> tags:
-
-1. List key topics and concepts from the description.
-2. For each key topic/concept, brainstorm 2-3 potential search queries.
-3. Evaluate each query for relevance and specificity.
-4. Select the best queries, ensuring a balance of specificity and breadth.
-
-This will help ensure thorough consideration of the description and creation of effective queries.
-
-Remember:
-- Generate at least 3 and at most 10 distinct queries.
-- Ensure queries are relevant to the provided description.
-- Balance specificity and breadth in your queries to capture a range of relevant materials.
-- Provide only the JSON object as your final output, without any additional text or explanation.
-
-Begin your response with your query generation process, followed by the JSON output.
 """)
 
 OUTPUT_INSTRUCTIONS: Final[str] = """
@@ -53,12 +29,15 @@ OUTPUT_INSTRUCTIONS: Final[str] = """
 
 Respond using the provided tool with a JSON object strictly adhering to the following structure:
 
-```json
+```jsonc
 {
     "queries": [
         "Example query 1",
         "Example query 2",
-        "Example query 3"
+        "Example query 3",
+        "Example query 4",
+        "Example query 5",
+        // ... and so on as required.
     ]
 }
 ```
@@ -92,7 +71,7 @@ class SearchQueriesResponse(NamedTuple):
     """The total number of billable characters used."""
 
 
-async def create_search_queries(prompt: str) -> SearchQueriesResponse:
+async def handle_create_search_queries(prompt: str) -> SearchQueriesResponse:
     """Generate an optimized search query for retrieval.
 
     Args:
@@ -102,18 +81,26 @@ async def create_search_queries(prompt: str) -> SearchQueriesResponse:
     Returns:
         The generated search queries, the total number of tokens, and the total billable characters.
     """
-    response, total_tokens, total_billable_characters = await handle_completions_request(
-        prompt_identifier="search_queries",
-        system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
-        user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
-            prompt=prompt,
-        ),
-        output_instructions=OUTPUT_INSTRUCTIONS,
-        response_schema=response_schema,
-        response_type=ToolResponse,
-        model=FAST_TEXT_GENERATION_MODEL,
-    )
+    total_tokens: int = 0
+    total_billable_characters: int = 0
 
-    return SearchQueriesResponse(
-        queries=response["queries"][:10], tokens_used=total_tokens, billable_characters_used=total_billable_characters
-    )
+    while True:
+        response, tokens_used, billable_characters_used = await handle_completions_request(
+            prompt_identifier="search_queries",
+            system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
+            user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
+                prompt=prompt,
+            ),
+            output_instructions=OUTPUT_INSTRUCTIONS,
+            response_schema=response_schema,
+            response_type=ToolResponse,
+            model=FAST_TEXT_GENERATION_MODEL,
+        )
+        total_tokens += tokens_used
+        total_billable_characters += billable_characters_used
+        if len(response["queries"]) >= 5:
+            return SearchQueriesResponse(
+                queries=response["queries"],
+                tokens_used=total_tokens,
+                billable_characters_used=total_billable_characters,
+            )

@@ -15,7 +15,7 @@ from src.rag.application_draft_generation.shared_prompts import (
 )
 from src.rag.dto import DocumentDTO, GenerationResultDTO
 from src.rag.retrieval import retrieve_documents
-from src.rag.search_queries import create_search_queries
+from src.rag.search_queries import handle_create_search_queries
 from src.rag.utils import CompletionsResult, handle_completions_request, handle_segmented_text_generation
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
@@ -159,7 +159,7 @@ async def handle_specific_aims_text_generation(
         ):
             return cast(str, result)
 
-    queries_result = await create_search_queries(SPECIFIC_AIMS_QUERIES_PROMPT)
+    queries_result = await handle_create_search_queries(SPECIFIC_AIMS_QUERIES_PROMPT)
 
     search_result = await retrieve_documents(
         application_id=str(application.id),
