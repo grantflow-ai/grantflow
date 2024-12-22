@@ -6,8 +6,8 @@ import { useEditor } from "gen/editor/use-editor";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
-export function EditorContainer({ application }: { application: Application }) {
-	const editor = useEditor({ content: application.text ?? "" });
+export function EditorContainer({ application, draftText }: { application: Application; draftText: string }) {
+	const editor = useEditor({ content: draftText });
 
 	return (
 		<div className="max-w-fit max-h-fit">
