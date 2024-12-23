@@ -35,12 +35,13 @@ export function GrantApplicationForm({ cfps, workspaceId }: { cfps: GrantCfp[]; 
 				formValues: values,
 				workspaceId,
 			});
-			router.replace(
-				PagePath.APPLICATION_DETAIL.replace(":workspaceId", workspaceId).replace(
-					":applicationId",
-					applicationId,
-				),
+			console.log("applicationId", applicationId);
+			const path = PagePath.APPLICATION_DETAIL.replace(":workspaceId", workspaceId).replace(
+				":applicationId",
+				applicationId,
 			);
+			console.log("path", path);
+			router.replace(path);
 		} catch (error) {
 			logError({ error, identifier: "handleCreateApplication" });
 			toast.error("An error occurred creating the grant application.");
@@ -186,9 +187,9 @@ async function handleCreateApplication({
 	const { id } = await getClient()
 		.post(`workspaces/${workspaceId}/applications?otp=${otp}`, {
 			body: formData,
-			mode: "no-cors",
 		})
 		.json<ApplicationId>();
+	console.log("created application", id);
 	return id;
 }
 
