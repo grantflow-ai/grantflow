@@ -69,23 +69,23 @@ export function GrantApplicationForm({ cfps, workspaceId }: { cfps: GrantCfp[]; 
 		if (watchTitle === DEMO_TITLE) {
 			setDemoData(form);
 		}
-	}, [watchTitle]);
+	}, [watchTitle, form]);
 
 	return (
 		<TooltipProvider>
 			<Form {...form}>
 				<form
 					aria-label="Grant Application Form"
-					className="w-full max-w-7xl mx-auto"
+					className="mx-auto w-full max-w-7xl"
 					data-testid="grant-application-form"
 					onSubmit={form.handleSubmit(onSubmit)}
 				>
-					<h1 className="text-3xl font-bold mb-8">Grant Application</h1>
-					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-						<div className="lg:col-span-2 space-y-8">
+					<h1 className="mb-8 text-3xl font-bold">Grant Application</h1>
+					<div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+						<div className="space-y-8 lg:col-span-2">
 							<ApplicationDetailsForm cfps={cfps} form={form} loading={loading} />
 							<section className="space-y-6">
-								<h2 className="text-xl font-semibold mb-4">Research Aims</h2>
+								<h2 className="mb-4 text-xl font-semibold">Research Aims</h2>
 								<div>
 									{fields.map((field, index) => (
 										<ResearchAimForm
@@ -120,7 +120,7 @@ export function GrantApplicationForm({ cfps, workspaceId }: { cfps: GrantCfp[]; 
 									type="button"
 									variant="outline"
 								>
-									<Plus className="h-4 w-4 mr-2" />
+									<Plus className="mr-2 h-4 w-4" />
 									Add Research Aim
 								</Button>
 							</section>
@@ -131,7 +131,7 @@ export function GrantApplicationForm({ cfps, workspaceId }: { cfps: GrantCfp[]; 
 							</div>
 						</div>
 					</div>
-					<div className="mt-8 pt-6 border-t flex justify-end">
+					<div className="mt-8 flex justify-end border-t pt-6">
 						<SubmitButton
 							aria-disabled={!form.formState.isValid || form.formState.isSubmitting}
 							aria-label={form.formState.isSubmitting ? "Saving changes..." : "Save changes"}
@@ -184,7 +184,10 @@ async function handleCreateApplication({
 
 	const { otp } = await getOtp();
 	const { id } = await getClient()
-		.post(`workspaces/${workspaceId}/applications?otp=${otp}`, { body: formData })
+		.post(`workspaces/${workspaceId}/applications?otp=${otp}`, {
+			body: formData,
+			mode: "no-cors",
+		})
 		.json<ApplicationId>();
 	return id;
 }
