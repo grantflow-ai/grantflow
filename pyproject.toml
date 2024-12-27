@@ -29,6 +29,7 @@ dependencies = [
     "tenacity>=8.3.0",
     "uvicorn>=0.32.1",
     "structlog>=24.4.0",
+    "jsonschema>=4.23.0",
 ]
 
 [tool.pdm]

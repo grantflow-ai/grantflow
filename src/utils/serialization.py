@@ -7,7 +7,6 @@ from msgspec import MsgspecError
 from msgspec.json import decode, encode
 from pydantic import BaseModel
 
-from src.db.tables import Base
 from src.exceptions import DeserializationError, SerializationError
 
 
@@ -42,18 +41,6 @@ def encode_hook(obj: Any) -> Any:
     Returns:
         A dictionary representation of ``obj``.
     """
-    if isinstance(obj, Base):
-        attrs = [attr for attr in dir(obj) if not attr.startswith("_") and attr not in ("metadata", "registry")]
-
-        res: dict[str, Any] = {}
-        for attr in attrs:
-            v = getattr(obj, attr)
-            if isinstance(v, str) and v.startswith("Traceback"):
-                continue
-            res[attr] = v if not isinstance(v, Enum) else v.value
-
-        return res
-
     if isinstance(obj, BaseModel):
         return {k: v if not isinstance(v, Enum) else v.value for (k, v) in obj.model_dump().items()}
 
