@@ -17,12 +17,14 @@ async def retrieve_documents(
     *,
     application_id: str,
     search_queries: list[str],
+    max_results: int = MAX_RESULTS,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
 
     Args:
         application_id: The application ID.
         search_queries: The search queries.
+        max_results: The maximum number of results to return.
 
     Returns:
         list[dict[str, str]]: The retrieved documents.
@@ -36,7 +38,7 @@ async def retrieve_documents(
             .join(ApplicationFile, ApplicationVector.file_id == ApplicationFile.id)
             .where(ApplicationFile.application_id == application_id)
             .order_by(ApplicationVector.embedding.cosine_distance(query_embeddings))
-            .limit(MAX_RESULTS)
+            .limit(max_results)
         )
 
         result = await session.scalars(stmt)
