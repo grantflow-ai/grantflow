@@ -2,7 +2,7 @@ from typing import Final
 
 from sqlalchemy.engine.default import DefaultExecutionContext
 
-from src.db.tables import ResearchAspectEnum
+from src.db.enums import ResearchAspectEnum
 
 RESEARCH_ASPECT_DEFAULTS_MAPPING: Final[dict[ResearchAspectEnum, list[str]]] = {
     ResearchAspectEnum.BACKGROUND_CONTEXT: [

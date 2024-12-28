@@ -13,10 +13,10 @@ from src.api_types import (
     ApplicationIdResponse,
     UpdateApplicationRequestBody,
 )
+from src.db.enums import UserRoleEnum
 from src.db.tables import (
     Application,
     GrantCfp,
-    UserRoleEnum,
     Workspace,
     WorkspaceUser,
 )

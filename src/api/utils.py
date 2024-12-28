@@ -5,7 +5,8 @@ from sanic import Unauthorized
 from sqlalchemy import select
 
 from src.api_types import APIRequest
-from src.db.tables import UserRoleEnum, WorkspaceUser
+from src.db.enums import UserRoleEnum
+from src.db.tables import WorkspaceUser
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)

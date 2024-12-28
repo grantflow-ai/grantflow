@@ -22,7 +22,8 @@ from src.api_types import (
     ResearchTaskResponse,
     UpdateApplicationRequestBody,
 )
-from src.db.tables import Application, ApplicationFile, FileIndexingStatusEnum, GrantCfp, ResearchAim, ResearchTask
+from src.db.enums import FileIndexingStatusEnum
+from src.db.tables import Application, ApplicationFile, GrantCfp, ResearchAim, ResearchTask
 from src.exceptions import DatabaseError
 from src.indexer.dto import FileDTO
 from src.utils.logging import get_logger

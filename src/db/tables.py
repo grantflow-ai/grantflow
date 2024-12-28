@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import StrEnum
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
@@ -16,50 +15,7 @@ from sqlalchemy.sql.functions import now
 
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.defaults import set_default_facets
-
-
-class UserRoleEnum(StrEnum):
-    """Enumeration of user roles."""
-
-    OWNER = "OWNER"
-    ADMIN = "ADMIN"
-    MEMBER = "MEMBER"
-
-
-class FileIndexingStatusEnum(StrEnum):
-    """Enumeration of file indexing statuses."""
-
-    INDEXING = "INDEXING"
-    FINISHED = "FINISHED"
-    FAILED = "FAILED"
-
-
-class GrantSectionEnum(StrEnum):
-    """Enumeration of grant sections."""
-
-    EXECUTIVE_SUMMARY = "EXECUTIVE_SUMMARY"
-    SIGNIFICANCE = "SIGNIFICANCE"
-    INNOVATION = "INNOVATION"
-    SPECIFIC_AIMS = "SPECIFIC_AIMS"
-    WORK_PLAN = "WORK_PLAN"
-    RESOURCES = "RESOURCES"
-    EXPECTED_OUTCOMES = "EXPECTED_OUTCOMES"
-
-
-class ResearchAspectEnum(StrEnum):
-    """Enumeration of research aspects."""
-
-    BACKGROUND_CONTEXT = "BACKGROUND_CONTEXT"
-    FEASIBILITY = "FEASIBILITY"
-    HYPOTHESIS = "HYPOTHESIS"
-    IMPACT = "IMPACT"
-    MILESTONES_AND_TIMELINE = "MILESTONES_AND_TIMELINE"
-    NOVELTY_AND_INNOVATION = "NOVELTY_AND_INNOVATION"
-    PRELIMINARY_DATA = "PRELIMINARY_DATA"
-    RATIONALE = "RATIONALE"
-    SCIENTIFIC_INFRASTRUCTURE = "SCIENTIFIC_INFRASTRUCTURE"
-    SPECIFIC_AIMS = "SPECIFIC_AIMS"
-    TEAM_EXCELLENCE = "TEAM_EXCELLENCE"
+from src.db.enums import FileIndexingStatusEnum, GrantSectionEnum, ResearchAspectEnum, UserRoleEnum
 
 
 class Base(DeclarativeBase):
@@ -101,48 +57,6 @@ class FileBase(BaseWithUUIDPK):
     status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum))
 
 
-class FundingOrganization(BaseWithUUIDPK):
-    """Funding organization table."""
-
-    __tablename__ = "funding_organizations"
-
-    name: Mapped[str] = mapped_column(String(255), unique=True)
-
-    # Relationships
-    cfps: Relationship["GrantCfp"] = relationship(
-        "GrantCfp", back_populates="funding_organization", cascade="all, delete-orphan"
-    )
-
-
-class GrantCfp(BaseWithUUIDPK):
-    """Grant call for proposals table."""
-
-    __tablename__ = "grant_cfps"
-
-    allow_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=True)
-    allow_resubmissions: Mapped[bool] = mapped_column(Boolean, default=True)
-    category: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    code: Mapped[str] = mapped_column(String(255))
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    title: Mapped[str] = mapped_column(String(255))
-    url: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-    # Relationships
-    funding_organization_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
-    )
-
-    funding_organization: Relationship["FundingOrganization"] = relationship(
-        "FundingOrganization", back_populates="cfps"
-    )
-
-    formats: Relationship["GrantFormat"] = relationship(
-        "GrantFormat", back_populates="cfp", cascade="all, delete-orphan"
-    )
-
-    __table_args__ = (Index("uq_cfp_code_funding_org", "code", "funding_organization_id", unique=True),)
-
-
 class GrantFormat(BaseWithUUIDPK):
     """Grant format table."""
 
@@ -153,13 +67,8 @@ class GrantFormat(BaseWithUUIDPK):
     version: Mapped[str] = mapped_column(String(50), default="1.0")
 
     # Relationships
-    cfp_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
-    )
-    cfp: Relationship["GrantCfp"] = relationship("GrantCfp", back_populates="formats")
-    sections: Relationship[list["GrantSection"]] = relationship(
-        "GrantSection", back_populates="guidelines", cascade="all, delete-orphan"
-    )
+    sections: Relationship[list["GrantSection"]] = relationship("GrantSection", back_populates="format")
+    cfps: Relationship[list["GrantCfp"]] = relationship("GrantCfp", back_populates="format")
 
 
 class GrantSection(BaseWithUUIDPK):
@@ -168,7 +77,7 @@ class GrantSection(BaseWithUUIDPK):
     __tablename__ = "grant_sections"
 
     content_guidelines: Mapped[str | None] = mapped_column(Text, nullable=True)
-    guiding_questions: Mapped[list[str]] = mapped_column(ARRAY(String))
+    guiding_questions: Mapped[list[str]] = mapped_column(ARRAY(String(255)))
     form_json_schema: Mapped[JSON] = mapped_column(JSON)
     is_required: Mapped[bool] = mapped_column(Boolean, default=True)
     section_type: Mapped[GrantSectionEnum] = mapped_column(Enum(GrantSectionEnum))
@@ -176,10 +85,8 @@ class GrantSection(BaseWithUUIDPK):
     max_words: Mapped[int] = mapped_column(Integer, nullable=True)
 
     # Relationships
-    format_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_formats.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
-    )
-    grant_format: Relationship["GrantFormat"] = relationship("GrantFormat", back_populates="sections")
+    format_id: Mapped[UUID[str]] = mapped_column(UUID(), ForeignKey("grant_formats.id", ondelete="CASCADE"), index=True)
+    format: Relationship["GrantFormat"] = relationship("GrantFormat", back_populates="sections")
 
 
 class SectionAspects(Base):
@@ -207,7 +114,7 @@ class ResearchAspects(BaseWithUUIDPK):
     type: Mapped[ResearchAspectEnum] = mapped_column(Enum(ResearchAspectEnum))
     summary_text: Mapped[str] = mapped_column(Text)
     base_weight: Mapped[float] = mapped_column(Float, default=1.0)
-    facets: Mapped[list[str]] = mapped_column(ARRAY(String), default=set_default_facets)
+    facets: Mapped[list[str]] = mapped_column(ARRAY(String(255)), default=set_default_facets)
 
 
 class GrantFormatVector(VectorBase):
@@ -230,6 +137,46 @@ class GrantFormatVector(VectorBase):
     )
 
 
+class FundingOrganization(BaseWithUUIDPK):
+    """Funding organization table."""
+
+    __tablename__ = "funding_organizations"
+
+    name: Mapped[str] = mapped_column(String(255), unique=True)
+
+    # Relationships
+    cfps: Relationship["GrantCfp"] = relationship("GrantCfp", back_populates="funding_organization")
+
+
+class GrantCfp(BaseWithUUIDPK):
+    """Grant call for proposals table."""
+
+    __tablename__ = "grant_cfps"
+
+    allow_clinical_trials: Mapped[bool] = mapped_column(Boolean, default=True)
+    allow_resubmissions: Mapped[bool] = mapped_column(Boolean, default=True)
+    category: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    code: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    title: Mapped[str] = mapped_column(String(255))
+    url: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Relationships
+    funding_organization_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), index=True
+    )
+
+    funding_organization: Relationship["FundingOrganization"] = relationship(
+        "FundingOrganization", back_populates="cfps"
+    )
+    format_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("grant_formats.id", ondelete="RESTRICT"), index=True
+    )
+    format: Relationship["GrantFormat"] = relationship("GrantFormat", back_populates="cfps")
+
+    __table_args__ = (Index("uq_cfp_code_funding_org", "code", "funding_organization_id", unique=True),)
+
+
 class Workspace(BaseWithUUIDPK):
     """Workspace table."""
 
@@ -241,9 +188,7 @@ class Workspace(BaseWithUUIDPK):
 
     # Relationships
     users: Relationship[list["WorkspaceUser"]] = relationship("WorkspaceUser", back_populates="workspace")
-    applications: Relationship[list["Application"]] = relationship(
-        "Application", back_populates="workspace", cascade="all, delete-orphan"
-    )
+    applications: Relationship[list["Application"]] = relationship("Application", back_populates="workspace")
 
 
 class WorkspaceUser(Base):
@@ -256,7 +201,7 @@ class WorkspaceUser(Base):
 
     # Relationships
     workspace_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True
+        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True
     )
     workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="users")
 
@@ -273,22 +218,18 @@ class Application(BaseWithUUIDPK):
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
-    workspace_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
-    )
+    workspace_id: Mapped[UUID[str]] = mapped_column(UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
     workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="applications")
-    cfp_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
-    )
+    cfp_id: Mapped[UUID[str]] = mapped_column(UUID(), ForeignKey("grant_cfps.id", ondelete="CASCADE"), index=True)
     cfp: Relationship["GrantCfp"] = relationship("GrantCfp")
     files: Relationship[list["ApplicationFile"]] = relationship(
-        "ApplicationFile", back_populates="application", cascade="all, delete-orphan", passive_deletes=True
+        "ApplicationFile", back_populates="application", passive_deletes=True
     )
     research_aims: Relationship[list["ResearchAim"]] = relationship(
-        "ResearchAim", back_populates="application", cascade="all, delete-orphan", passive_deletes=True
+        "ResearchAim", back_populates="application", passive_deletes=True
     )
     generation_results: Relationship[list["TextGenerationResult"]] = relationship(
-        "TextGenerationResult", back_populates="application", cascade="all, delete-orphan", passive_deletes=True
+        "TextGenerationResult", back_populates="application", passive_deletes=True
     )
 
 
@@ -299,7 +240,7 @@ class ApplicationFile(FileBase):
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), index=True
     )
     application: Relationship["Application"] = relationship("Application", back_populates="files")
 
@@ -318,12 +259,10 @@ class ResearchAim(BaseWithUUIDPK):
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), index=True
     )
     application: Relationship["Application"] = relationship("Application", back_populates="research_aims")
-    research_tasks: Relationship[list["ResearchTask"]] = relationship(
-        "ResearchTask", back_populates="research_aim", cascade="all, delete-orphan"
-    )
+    research_tasks: Relationship[list["ResearchTask"]] = relationship("ResearchTask", back_populates="research_aim")
 
 
 class ResearchTask(BaseWithUUIDPK):
@@ -336,9 +275,7 @@ class ResearchTask(BaseWithUUIDPK):
     title: Mapped[str] = mapped_column(String(255))
 
     # Relationships
-    aim_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("research_aims.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
-    )
+    aim_id: Mapped[UUID[str]] = mapped_column(UUID(), ForeignKey("research_aims.id", ondelete="CASCADE"), index=True)
     research_aim: Relationship["ResearchAim"] = relationship("ResearchAim", back_populates="research_tasks")
 
 
@@ -351,13 +288,13 @@ class TextGenerationResult(BaseWithUUIDPK):
     content: Mapped[str] = mapped_column(Text)
     generation_duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
     number_of_api_calls: Mapped[int] = mapped_column(Integer, default=0)
-    section_id: Mapped[str] = mapped_column(String, nullable=True)
-    section_type: Mapped[str] = mapped_column(String)
+    section_id: Mapped[str] = mapped_column(String(128), nullable=True)
+    section_type: Mapped[str] = mapped_column(String(128))
     tokens_used: Mapped[int | None] = mapped_column(Integer, default=0)
 
     # Relationships
     application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE", onupdate="CASCADE"), index=True
+        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), index=True
     )
     application: Relationship["Application"] = relationship("Application", back_populates="generation_results")
 
