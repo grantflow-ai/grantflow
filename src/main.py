@@ -6,7 +6,7 @@ from sanic import Sanic
 
 from src.api import register_routes
 from src.api_types import RequestContext
-from src.indexer.indexing import parse_and_index_file
+from src.indexer.files import parse_and_index_file
 from src.middleware import authenticate_user, set_session_maker
 from src.rag.application_draft_generation.generate_draft import generate_application_draft
 from src.utils.serialization import decoder, encoder
