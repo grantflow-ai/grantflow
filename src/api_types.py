@@ -4,7 +4,7 @@ from typing import Any, Literal, NotRequired, TypedDict
 from sanic import Request, Sanic
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import UserRoleEnum
+from src.db.enums import UserRoleEnum
 
 
 class RequestContext(SimpleNamespace):

@@ -1,0 +1,45 @@
+from enum import StrEnum
+
+
+class UserRoleEnum(StrEnum):
+    """Enumeration of user roles."""
+
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    MEMBER = "MEMBER"
+
+
+class FileIndexingStatusEnum(StrEnum):
+    """Enumeration of file indexing statuses."""
+
+    INDEXING = "INDEXING"
+    FINISHED = "FINISHED"
+    FAILED = "FAILED"
+
+
+class GrantSectionEnum(StrEnum):
+    """Enumeration of grant sections."""
+
+    EXECUTIVE_SUMMARY = "EXECUTIVE_SUMMARY"
+    SIGNIFICANCE = "SIGNIFICANCE"
+    INNOVATION = "INNOVATION"
+    SPECIFIC_AIMS = "SPECIFIC_AIMS"
+    WORK_PLAN = "WORK_PLAN"
+    RESOURCES = "RESOURCES"
+    EXPECTED_OUTCOMES = "EXPECTED_OUTCOMES"
+
+
+class ResearchAspectEnum(StrEnum):
+    """Enumeration of research aspects."""
+
+    BACKGROUND_CONTEXT = "BACKGROUND_CONTEXT"
+    FEASIBILITY = "FEASIBILITY"
+    HYPOTHESIS = "HYPOTHESIS"
+    IMPACT = "IMPACT"
+    MILESTONES_AND_TIMELINE = "MILESTONES_AND_TIMELINE"
+    NOVELTY_AND_INNOVATION = "NOVELTY_AND_INNOVATION"
+    PRELIMINARY_DATA = "PRELIMINARY_DATA"
+    RATIONALE = "RATIONALE"
+    SCIENTIFIC_INFRASTRUCTURE = "SCIENTIFIC_INFRASTRUCTURE"
+    SPECIFIC_AIMS = "SPECIFIC_AIMS"
+    TEAM_EXCELLENCE = "TEAM_EXCELLENCE"
