@@ -12,7 +12,8 @@ from src.api_types import (
     WorkspaceBaseResponse,
     WorkspaceIdResponse,
 )
-from src.db.tables import UserRoleEnum, Workspace, WorkspaceUser
+from src.db.enums import UserRoleEnum
+from src.db.tables import Workspace, WorkspaceUser
 from src.utils.serialization import deserialize
 from tests.factories import CreateWorkspaceRequestBodyFactory, WorkspaceFactory
 

@@ -4,7 +4,8 @@ from uuid import UUID
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import ApplicationFile, FileIndexingStatusEnum
+from src.db.enums import FileIndexingStatusEnum
+from src.db.tables import ApplicationFile
 
 
 async def check_exists_files_being_indexed(session_maker: async_sessionmaker[Any], application_id: UUID | str) -> bool:

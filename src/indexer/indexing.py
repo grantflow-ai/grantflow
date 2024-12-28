@@ -4,7 +4,8 @@ from typing import Final
 from sqlalchemy import update
 
 from src.db.connection import get_session_maker
-from src.db.tables import ApplicationFile, FileIndexingStatusEnum
+from src.db.enums import FileIndexingStatusEnum
+from src.db.tables import ApplicationFile
 from src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from src.indexer.chunking import chunk_text
 from src.indexer.db import upsert_application_vectors
