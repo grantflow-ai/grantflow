@@ -141,17 +141,22 @@ def logger() -> Logger:
 async def db_connection_string() -> AsyncGenerator[str, None]:
     container = PostgresContainer("pgvector/pgvector:pg17", driver=None)
     container.start()
+
     connection_string = container.get_connection_url()
     connection = await connect(connection_string)
+
     await connection.execute(
         dedent("""
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
         CREATE EXTENSION IF NOT EXISTS vector;
     """)
     )
-    async for file in (AsyncPath(__file__).parent.parent / "migrations").glob("*.sql"):
-        sql = await file.read_text()
+
+    sorted_files = sorted((Path(__file__).parent.parent / "migrations").glob("*.sql"))
+    for file in sorted_files:
+        sql = await AsyncPath(file).read_text()
         await connection.execute(sql)
+
     await connection.close()
     yield connection_string
     container.stop()
