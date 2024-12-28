@@ -42,7 +42,6 @@ async def test_index_documents(
     await index_documents(
         chunks=chunks,
         file_id=str(application_file.id),
-        application_id=str(application.id),
     )
 
     async with async_session_maker() as session, session.begin():
