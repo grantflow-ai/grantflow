@@ -37,9 +37,25 @@ ALTER TABLE "applications" DROP CONSTRAINT "applications_cfp_id_fkey", DROP CONS
 -- Modify "application_files" table
 ALTER TABLE "application_files" DROP CONSTRAINT "application_files_application_id_fkey", ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL, ADD
  CONSTRAINT "application_files_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE;
+-- Create "grant_format_files" table
+CREATE TABLE "grant_format_files" (
+  "format_id" uuid NOT NULL,
+  "name" character varying(255) NOT NULL,
+  "type" character varying(255) NOT NULL,
+  "size" integer NOT NULL,
+  "status" "fileindexingstatusenum" NOT NULL,
+  "id" uuid NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "grant_format_files_format_id_fkey" FOREIGN KEY ("format_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- Create index "ix_grant_format_files_format_id" to table: "grant_format_files"
+CREATE INDEX "ix_grant_format_files_format_id" ON "grant_format_files" ("format_id");
 -- Create "grant_format_vectors" table
 CREATE TABLE "grant_format_vectors" (
   "format_id" uuid NOT NULL,
+  "file_id" uuid NOT NULL,
   "chunk_index" integer NOT NULL,
   "content" text NOT NULL,
   "element_type" character varying(50) NULL,
@@ -47,7 +63,8 @@ CREATE TABLE "grant_format_vectors" (
   "page_number" integer NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("format_id", "chunk_index"),
+  PRIMARY KEY ("format_id", "file_id", "chunk_index"),
+  CONSTRAINT "grant_format_vectors_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "grant_format_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "grant_format_vectors_format_id_fkey" FOREIGN KEY ("format_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 -- Create index "ix_grant_format_vectors_embedding_hnsw" to table: "grant_format_vectors"
