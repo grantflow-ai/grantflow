@@ -9,12 +9,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.db.tables import Application, TextGenerationResult
 from src.exceptions import DatabaseError
+from src.rag.application_draft_generation.retrieval import retrieve_documents
 from src.rag.application_draft_generation.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
 from src.rag.dto import DocumentDTO, GenerationResultDTO
-from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import handle_create_search_queries
 from src.rag.utils import CompletionsResult, handle_completions_request, handle_segmented_text_generation
 from src.utils.logging import get_logger

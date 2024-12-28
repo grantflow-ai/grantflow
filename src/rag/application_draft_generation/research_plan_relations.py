@@ -3,8 +3,8 @@ from string import Template
 from typing import Final, TypedDict
 
 from src.db.tables import ResearchAim
+from src.rag.application_draft_generation.dto import ResearchAimDTO, ResearchTaskDTO
 from src.rag.application_draft_generation.shared_prompts import BASE_SYSTEM_PROMPT
-from src.rag.dto import ResearchAimDTO, ResearchTaskDTO
 from src.rag.utils import handle_completions_request
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
