@@ -69,6 +69,17 @@ class GrantFormat(BaseWithUUIDPK):
     # Relationships
     sections: Relationship[list["GrantSection"]] = relationship("GrantSection", back_populates="format")
     cfps: Relationship[list["GrantCfp"]] = relationship("GrantCfp", back_populates="format")
+    files: Relationship[list["GrantFormatFile"]] = relationship("GrantFormatFile", back_populates="format")
+
+
+class GrantFormatFile(FileBase):
+    """Grant format file table."""
+
+    __tablename__ = "grant_format_files"
+
+    # Relationships
+    format_id: Mapped[UUID[str]] = mapped_column(UUID(), ForeignKey("grant_formats.id", ondelete="CASCADE"), index=True)
+    format: Relationship["GrantFormat"] = relationship("GrantFormat", back_populates="files")
 
 
 class GrantSection(BaseWithUUIDPK):
@@ -124,6 +135,9 @@ class GrantFormatVector(VectorBase):
 
     format_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("grant_formats.id", ondelete="CASCADE"), primary_key=True
+    )
+    file_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("grant_format_files.id", ondelete="CASCADE"), primary_key=True
     )
 
     __table_args__ = (

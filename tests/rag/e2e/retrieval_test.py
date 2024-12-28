@@ -9,7 +9,7 @@ from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import ApplicationFile, ApplicationVector
-from src.rag.retrieval import retrieve_documents
+from src.rag.application_draft_generation.retrieval import retrieve_documents
 
 SEARCH_QUERIES = [
     "Staphylococcus aureus vaccine insights and antibody response mechanisms",
