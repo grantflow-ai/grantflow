@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import TextGenerationResult
 from src.exceptions import DatabaseError
-from src.rag.application_draft_generation.dto import ResearchTaskDTO
-from src.rag.application_draft_generation.shared_prompts import (
+from src.rag.application_draft.dto import ResearchTaskDTO
+from src.rag.application_draft.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )

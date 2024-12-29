@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.db.tables import TextGenerationResult
 from src.exceptions import DatabaseError
-from src.rag.application_draft_generation.dto import ResearchAimDTO
-from src.rag.application_draft_generation.shared_prompts import (
+from src.rag.application_draft.dto import ResearchAimDTO
+from src.rag.application_draft.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )
@@ -26,89 +26,97 @@ from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
-RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[Template] = Template("""
-You task is to write the Risks and Alternatives which forms a for the following research aim text:
-    <research_aim_text>
-    ${research_aim_text}
-    </research_aim_text>
+RESEARCH_AIM_GENERATION_USER_PROMPT: Final[Template] = Template("""
+Your task is to write a research aim description.
+${previous_part_text}
 
 Use the following sources to write the text:
 
-1. User input on Risks and Alternatives:
-    <risks_and_alternatives>
-    ${risks_and_alternatives}
-    </risks_and_alternatives>
+1. Research Aim Data as a JSON object with fields:
+    <research_aim>
+    ${research_aim}
+    </research_aim>
 
-3. Retrieval Results for additional context as a JSON array:
+2. The titles of the research tasks that are included in this Aim:
+    <research_tasks>
+    ${research_task_titles}
+    </research_tasks>
+
+3. RAG Retrieval Results for additional context as a JSON array:
     <rag_results>
     ${rag_results}
     </rag_results>
 
-Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
-This section should address the following implicit questions:
+A research aim or research objective is an overarching goal that the research aims to achieve.
+The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
+It should address the following implicit questions:
 
-1. What are the specific risks involved in this research, and how would you describe their severity (High/Medium/Low)?
-2. What strategies can be implemented to mitigate each identified risk (if applicable/possible)?
-3. What alternative approaches are available if these strategies fail (if any)?
-4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
+1. What is the working hypothesis?
+2. What are the general goals of the aim?
+3. What is the methodology employed?
+4. What are the expected results?
+
+__NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
 
 **Important Guidelines**:
-- Do not include the provided research aim text in the generated text.
-- Do not use the title of the research aim in the text and do not add a title.
+- The research aim JSON object includes an array of relations with other research aims. If the array is not empty, make sure to include a detailed description of these relations in the text.
+- Do not use the title of the research aim in the text - the title will be provided to the user above the text.
 - Make sure to include concrete facts where applicable.
 
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly two to three paragraphs with a maximum length of half a page (~150-300 words).
+Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RISKS_AND_ALTERNATIVES_QUERIES_PROMPT: Final[Template] = Template("""
-The next task in the RAG pipeline is to write a description for the Risks and Alternatives section.
-Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
+RESEARCH_AIM_QUERIES_PROMPT: Final[Template] = Template("""
+The next task in the RAG pipeline is to write a description for a research aim.
+A research aim or research objective is an overarching goal that the research seeks to achieve.
 The description should address the following implicit questions:
 
-1. What are the specific risks involved in this research, and how would you describe their severity (High/Medium/Low)?
-2. What strategies can be implemented to mitigate each identified risk?
-3. What alternative approaches are available if these strategies fail?
-4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
+1. What is the working hypothesis?
+2. What are the general goals of the aim?
+3. What is the methodology employed?
+4. What are the expected results?
 
-Here is the user input for preliminary results:
-    <risks_and_alternatives>
-    ${risks_and_alternatives}
-    </risks_and_alternatives>
-
-Here is the description of the research aim:
-    <research_aim_text>
-    ${research_aim_text}
-    </research_aim_text>
+Here is the research task data as a JSON object:
+    <research_aim>
+    ${research_aim}
+    </research_aim>
 """)
 
 
-async def generate_risks_and_alternatives_text(
+async def generate_research_aim_description(
     previous_part_text: str | None,
     *,
-    research_aim_text: str,
-    risks_and_alternatives: str | None,
+    research_aim: ResearchAimDTO,
+    research_task_titles: list[str],
     retrieval_results: list[DocumentDTO],
 ) -> CompletionsResult[GenerationResultDTO]:
-    """Generate the text for the preliminary results section of a research aim.
+    """Generate a part of the research aim text.
 
     Args:
         previous_part_text: The previous part of the research aim text, if any.
-        research_aim_text: The research aim text.
-        risks_and_alternatives: The user input for the preliminary results.
+        research_aim: The research aim to generate text for.
+        research_task_titles: The titles of the research tasks that are included in this aim.
         retrieval_results: The results of the RAG retrieval.
 
     Returns:
         The generation result tuple.
     """
-    user_prompt = RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute(
-        research_aim_text=research_aim_text,
+    user_prompt = RESEARCH_AIM_GENERATION_USER_PROMPT.substitute(
+        research_aim=serialize(
+            {
+                "title": research_aim.title,
+                "aim_number": research_aim.aim_number,
+                "description": research_aim.description,
+                "relations": research_aim.relations,
+            }
+        ),
         rag_results=serialize(retrieval_results),
-        risks_and_alternatives=risks_and_alternatives,
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
         )
         if previous_part_text
         else "",
+        research_task_titles=",".join(research_task_titles),
     ).strip()
 
     return await handle_completions_request(
@@ -120,27 +128,24 @@ async def generate_risks_and_alternatives_text(
     )
 
 
-async def handle_risks_and_alternatives_text_generation(
+async def handle_research_aim_description_generation(
     *,
     application_id: str,
     research_aim_dto: ResearchAimDTO,
-    research_aim_description: str,
     session_maker: async_sessionmaker[Any],
 ) -> str:
-    """Generate the text for risks and alternatives of a research aim.
+    """Generate the description for a research aim.
 
     Args:
-        application_id: The ID of the application.
-        research_aim_dto: The research aim DTO.
-        research_aim_description: The text of the research aim.
-        session_maker: The session maker instance.
+        application_id: The application ID.
+        research_aim_dto: The research aim to generate text for.
+        session_maker: The session maker.
 
     Raises:
         DatabaseError: If there was an issue updating the application draft in the database.
 
     Returns:
         The generated section text.
-
     """
     async with session_maker() as session:
         if result := await session.scalar(
@@ -154,15 +159,15 @@ async def handle_risks_and_alternatives_text_generation(
                 TextGenerationResult.section_id == research_aim_dto.id,
             )
             .where(
-                TextGenerationResult.section_type == "risks-and-alternatives",
+                TextGenerationResult.section_type == "research-aim",
             )
         ):
             return cast(str, result)
 
+    research_task_titles = [research_task.title for research_task in research_aim_dto.research_tasks]
+
     queries_result = await handle_create_search_queries(
-        RISKS_AND_ALTERNATIVES_QUERIES_PROMPT.substitute(
-            risks_and_alternatives=research_aim_dto.risks_and_alternatives, research_aim_text=research_aim_description
-        ),
+        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim_dto)),
     )
 
     search_result = await retrieve_documents(
@@ -171,14 +176,14 @@ async def handle_risks_and_alternatives_text_generation(
     )
 
     handler = partial(
-        generate_risks_and_alternatives_text,
-        research_aim_text=research_aim_description,
+        generate_research_aim_description,
+        research_aim=research_aim_dto,
         retrieval_results=search_result,
-        risks_and_alternatives=research_aim_dto.risks_and_alternatives,
+        research_task_titles=research_task_titles,
     )
 
     result = await handle_segmented_text_generation(
-        entity_type="risks-and-alternatives",
+        entity_type="research-aim",
         entity_identifier=research_aim_dto.id,
         prompt_handler=handler,
     )
@@ -196,7 +201,7 @@ async def handle_risks_and_alternatives_text_generation(
                         "generation_duration": result.generation_duration,
                         "number_of_api_calls": result.number_of_api_calls,
                         "section_id": research_aim_dto.id,
-                        "section_type": "risks-and-alternatives",
+                        "section_type": "research-aim",
                         "tokens_used": queries_result.tokens_used,
                     }
                 )

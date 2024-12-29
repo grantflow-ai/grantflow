@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
-    ApplicationIdResponse,
+    TableIdResponse,
     UpdateApplicationRequestBody,
 )
 from src.db.enums import UserRoleEnum
@@ -52,7 +52,7 @@ async def test_create_application_api_request_success(
     )
 
     assert response.status_code == HTTPStatus.CREATED
-    response_body = deserialize(response.body, ApplicationIdResponse)
+    response_body = deserialize(response.body, TableIdResponse)
 
     async with async_session_maker() as session:
         application = await session.scalar(select(Application).where(Application.id == response_body["id"]))

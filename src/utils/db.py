@@ -1,32 +1,66 @@
-from typing import Any, cast
+from typing import Any, cast, overload
 from uuid import UUID
 
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import ApplicationFile
+from src.db.tables import ApplicationFile, GrantFormatFile
 
 
-async def check_exists_files_being_indexed(session_maker: async_sessionmaker[Any], application_id: UUID | str) -> bool:
+@overload
+async def check_exists_files_being_indexed(
+    *,
+    application_id: UUID | str,
+    session_maker: async_sessionmaker[Any],
+) -> bool: ...
+
+
+@overload
+async def check_exists_files_being_indexed(
+    *,
+    format_id: UUID | str,
+    session_maker: async_sessionmaker[Any],
+) -> bool: ...
+
+
+async def check_exists_files_being_indexed(
+    *,
+    application_id: UUID | str | None = None,
+    format_id: UUID | str | None = None,
+    session_maker: async_sessionmaker[Any],
+) -> bool:
     """Check if there are files being indexed for the given application.
 
     Args:
+        application_id: The application ID, required if format_id is not provided.
+        format_id: The format ID, required if application_id is not provided.
         session_maker: The session maker.
-        application_id: The application ID.
+
+    Raises:
+        ValueError: If neither application_id nor format_id is provided.
 
     Returns:
         Whether there are files being indexed.
     """
+    if not application_id and not format_id:
+        raise ValueError("Either application_id or format_id must be provided.")
+
+    file_table_cls = ApplicationFile if application_id else GrantFormatFile
+
     async with session_maker() as session:
         return cast(
             bool,
             await session.scalar(
                 select(
                     exists(
-                        select(ApplicationFile)
-                        .where(ApplicationFile.application_id == application_id)
-                        .where(ApplicationFile.status == FileIndexingStatusEnum.INDEXING)
+                        select(file_table_cls)
+                        .where(
+                            file_table_cls.application_id == application_id
+                            if hasattr(file_table_cls, "application_id")
+                            else file_table_cls.format_id == format_id
+                        )
+                        .where(file_table_cls.status == FileIndexingStatusEnum.INDEXING)
                     )
                 )
             ),
