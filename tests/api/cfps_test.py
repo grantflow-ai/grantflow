@@ -5,7 +5,7 @@ from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api_types import CfpResponse
-from src.db.tables import FundingOrganization, GrantCfp
+from src.db.tables import FundingOrganization, GrantCfp, GrantFormat
 from src.utils.serialization import deserialize
 from tests.factories import FundingOrganizationFactory, GrantCfpFactory
 
@@ -13,6 +13,7 @@ from tests.factories import FundingOrganizationFactory, GrantCfpFactory
 async def test_retrieve_cfps_api_request(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
+    grant_format: GrantFormat,
 ) -> None:
     funding_organizations = FundingOrganizationFactory.batch(2)
     async with async_session_maker() as session, session.begin():
@@ -27,8 +28,8 @@ async def test_retrieve_cfps_api_request(
         await session.commit()
 
     cfps = [
-        *GrantCfpFactory.batch(4, funding_organization_id=funding_organizations[0].id),
-        *GrantCfpFactory.batch(4, funding_organization_id=funding_organizations[1].id),
+        *GrantCfpFactory.batch(4, funding_organization_id=funding_organizations[0].id, format_id=grant_format.id),
+        *GrantCfpFactory.batch(4, funding_organization_id=funding_organizations[1].id, format_id=grant_format.id),
     ]
 
     async with async_session_maker() as session, session.begin():
@@ -40,13 +41,14 @@ async def test_retrieve_cfps_api_request(
                         "allow_clinical_trials": cfp.allow_clinical_trials,
                         "allow_resubmissions": cfp.allow_resubmissions,
                         "category": cfp.category,
-                        "code": cfp.code,
+                        "code": cfp.code + str(index),
                         "description": cfp.description,
                         "title": cfp.title,
                         "url": cfp.url,
                         "funding_organization_id": cfp.funding_organization_id,
+                        "format_id": cfp.format_id,
                     }
-                    for cfp in cfps
+                    for index, cfp in enumerate(cfps)
                 ]
             )
         )
