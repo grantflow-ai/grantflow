@@ -11,10 +11,10 @@ from sqlalchemy.orm import selectinload
 from src.db.connection import get_session_maker
 from src.db.tables import Application, GrantCfp, ResearchAim
 from src.exceptions import DatabaseError
-from src.rag.application_draft_generation.research_innovation import handle_innovation_text_generation
-from src.rag.application_draft_generation.research_plan import handle_research_plan_text_generation
-from src.rag.application_draft_generation.research_significance import handle_significance_text_generation
-from src.rag.application_draft_generation.specific_aims import handle_specific_aims_text_generation
+from src.rag.application_draft.research_innovation import handle_innovation_text_generation
+from src.rag.application_draft.research_plan import handle_research_plan_text_generation
+from src.rag.application_draft.research_significance import handle_significance_text_generation
+from src.rag.application_draft.specific_aims import handle_specific_aims_text_generation
 from src.utils.db import check_exists_files_being_indexed
 from src.utils.logging import get_logger
 from src.utils.text import normalize_markdown
@@ -53,7 +53,7 @@ async def generate_application_draft(*, application_id: str) -> str:
     """
     session_maker = get_session_maker()
 
-    logger.info("Starting RAG pipeline", application_id=application_id)
+    logger.info("Starting draft generation pipeline", application_id=application_id)
     while await check_exists_files_being_indexed(session_maker=session_maker, application_id=application_id):
         logger.info("Waiting for files to finish indexing")
         await sleep(2)

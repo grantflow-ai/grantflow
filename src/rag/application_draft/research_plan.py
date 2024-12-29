@@ -5,16 +5,16 @@ from typing import Any, Final
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import ResearchAim
-from src.rag.application_draft_generation.dto import ResearchAimDTO
-from src.rag.application_draft_generation.preliminary_results import handle_preliminary_results_text_generation
-from src.rag.application_draft_generation.research_aims import (
+from src.rag.application_draft.dto import ResearchAimDTO
+from src.rag.application_draft.preliminary_results import handle_preliminary_results_text_generation
+from src.rag.application_draft.research_aims import (
     handle_research_aim_description_generation,
 )
-from src.rag.application_draft_generation.research_plan_relations import set_relation_data
-from src.rag.application_draft_generation.research_tasks import (
+from src.rag.application_draft.research_plan_relations import set_relation_data
+from src.rag.application_draft.research_tasks import (
     handle_research_task_text_generation,
 )
-from src.rag.application_draft_generation.risks_and_alternatives import handle_risks_and_alternatives_text_generation
+from src.rag.application_draft.risks_and_alternatives import handle_risks_and_alternatives_text_generation
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)

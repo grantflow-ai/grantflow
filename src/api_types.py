@@ -20,6 +20,13 @@ class RequestContext(SimpleNamespace):
 APIRequest = Request[Sanic[Any, RequestContext], RequestContext]
 
 
+class TableIdResponse(TypedDict):
+    """A base response containing only a row ID."""
+
+    id: str
+    """The ID of the application."""
+
+
 # Drafts API Types
 
 
@@ -152,14 +159,7 @@ class UpdateApplicationRequestBody(TypedDict):
     """The research aims of the application."""
 
 
-class ApplicationIdResponse(TypedDict):
-    """The base response containing only the application ID."""
-
-    id: str
-    """The ID of the application."""
-
-
-class ApplicationBaseResponse(ApplicationIdResponse):
+class ApplicationBaseResponse(TableIdResponse):
     """The base response body for application endpoints, extending ApplicationIdResponse with title and CFP details."""
 
     title: str
@@ -310,3 +310,11 @@ class LoginResponse(TypedDict):
 
     jwt_token: str
     """The JWT token identifying the user."""
+
+
+# Grant Format API Types
+class CreateGrantFormatRequestBody(TypedDict):
+    """The request body for creating an application."""
+
+    name: str
+    """The name of the grant format."""

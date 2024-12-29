@@ -39,7 +39,7 @@ from src.db.tables import (
     ResearchAim,
     ResearchAspects,
     ResearchTask,
-    SectionAspects,
+    SectionAspect,
     TextGenerationResult,
     Workspace,
     WorkspaceUser,
@@ -257,7 +257,7 @@ async def section_aspect(
     async_session_maker: async_sessionmaker[Any],
     grant_section: GrantSection,
     research_aspect: ResearchAspects,
-) -> SectionAspects:
+) -> SectionAspect:
     aspect_data = SectionAspectsFactory.build(section_id=grant_section.id, aspect_id=research_aspect.id)
     async with async_session_maker() as session, session.begin():
         session.add(aspect_data)

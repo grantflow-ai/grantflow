@@ -3,20 +3,14 @@ from string import Template
 from typing import Final, TypedDict
 
 from src.db.tables import ResearchAim
-from src.rag.application_draft_generation.dto import ResearchAimDTO, ResearchTaskDTO
-from src.rag.application_draft_generation.shared_prompts import BASE_SYSTEM_PROMPT
+from src.rag.application_draft.dto import ResearchAimDTO, ResearchTaskDTO
+from src.rag.application_draft.shared_prompts import BASE_SYSTEM_PROMPT
 from src.rag.utils import handle_completions_request
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
-PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_SYSTEM_PROMPT: Final[str] = """
-You are an expert grant application writer integrated into a RAG system.
-Your sole task is to analyze and enrich research aims and tasks with their relationships using the provided tool.
-
-Always respond by calling the specified function with the exact JSON format detailed in the instructions.
-"""
 
 PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_USER_PROMPT: Final[Template] = Template("""
 Your task is to analyze research aims and tasks for a grant application, identifying and describing any relations between them.

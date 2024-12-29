@@ -33,16 +33,16 @@ async def retrieve_documents(
     *,
     application_id: str | None = None,
     format_id: str | None = None,
-    search_queries: list[str],
     max_results: int = MAX_RESULTS,
+    search_queries: list[str],
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
 
     Args:
         application_id: The application ID, required if format_id is not provided.
         format_id: The format ID, required if application_id is not provided.
-        search_queries: The search queries.
         max_results: The maximum number of results to return.
+        search_queries: The search queries.
 
     Raises:
         ValueError: If neither application_id nor format_id is provided.
