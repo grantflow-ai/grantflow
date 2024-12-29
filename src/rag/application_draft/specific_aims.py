@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
 from src.db.tables import Application, TextGenerationResult
 from src.exceptions import DatabaseError
-from src.rag.application_draft_generation.shared_prompts import (
+from src.rag.application_draft.shared_prompts import (
     BASE_SYSTEM_PROMPT,
     CONSECUTIVE_PART_GENERATION_INSTRUCTIONS,
 )

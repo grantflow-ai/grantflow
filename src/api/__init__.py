@@ -10,6 +10,7 @@ from src.api.applications import (
     handle_update_application,
 )
 from src.api.cfps import handle_retrieve_cfps
+from src.api.format import handle_create_grant_format
 from src.api.health import health_check
 from src.api.login import handle_login
 from src.api.otp import handle_create_otp
@@ -67,3 +68,6 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/content",
         methods=["GET"],
     )
+
+    # Grant Formats
+    app.add_route(handle_create_grant_format, "/grant-formats", methods=["POST"])

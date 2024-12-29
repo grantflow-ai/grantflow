@@ -15,11 +15,11 @@ from src.api_types import (
     ApplicationDraftProcessingResponse,
     ApplicationFileResponse,
     ApplicationFullResponse,
-    ApplicationIdResponse,
     CfpResponse,
     CreateApplicationRequestBody,
     ResearchAimResponse,
     ResearchTaskResponse,
+    TableIdResponse,
     UpdateApplicationRequestBody,
 )
 from src.db.enums import FileIndexingStatusEnum
@@ -163,7 +163,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
     )
 
     return json(
-        ApplicationIdResponse(
+        TableIdResponse(
             id=str(application_id),
         ),
         status=HTTPStatus.CREATED,

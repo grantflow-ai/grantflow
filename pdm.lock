@@ -135,7 +135,7 @@ files = [
 
 [[package]]
 name = "atlas-provider-sqlalchemy"
-version = "0.2.3"
+version = "0.2.4"
 requires_python = "<4.0,>=3.9"
 summary = "Load sqlalchemy models into an Atlas project."
 groups = ["dev"]
@@ -143,8 +143,8 @@ dependencies = [
     "typer<=1.0.0,>0.9.0",
 ]
 files = [
-    {file = "atlas_provider_sqlalchemy-0.2.3-py3-none-any.whl", hash = "sha256:137f49f0fd1f8f22c07bc8e5fc8b50b251971c812528fa2570fcf7afbe5ebdbb"},
-    {file = "atlas_provider_sqlalchemy-0.2.3.tar.gz", hash = "sha256:64eb6a8488db61e1afeb501abb2545b620845fb633982b6157ceab60e7e1020b"},
+    {file = "atlas_provider_sqlalchemy-0.2.4-py3-none-any.whl", hash = "sha256:94d66a62645e6a1dc3b6020c7e0d4e150151dc30aacb49eb71c36d09a4afbc3b"},
+    {file = "atlas_provider_sqlalchemy-0.2.4.tar.gz", hash = "sha256:a7de4d0f2ccacc26c52c3a698a53dec81d756b9c58ba7311b573686b520c4d91"},
 ]
 
 [[package]]

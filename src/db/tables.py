@@ -62,9 +62,8 @@ class GrantFormat(BaseWithUUIDPK):
 
     __tablename__ = "grant_formats"
 
+    name: Mapped[str] = mapped_column(String(255))
     markdown_template: Mapped[str] = mapped_column(Text)
-    source_text: Mapped[str] = mapped_column(Text)
-    version: Mapped[str] = mapped_column(String(50), default="1.0")
 
     # Relationships
     sections: Relationship[list["GrantSection"]] = relationship("GrantSection", back_populates="format")
@@ -100,7 +99,7 @@ class GrantSection(BaseWithUUIDPK):
     format: Relationship["GrantFormat"] = relationship("GrantFormat", back_populates="sections")
 
 
-class SectionAspects(Base):
+class SectionAspect(Base):
     """Section Aspects through table."""
 
     __tablename__ = "section_aspects"

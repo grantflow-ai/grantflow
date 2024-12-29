@@ -8,7 +8,8 @@ from src.api import register_routes
 from src.api_types import RequestContext
 from src.indexer.files import parse_and_index_file
 from src.middleware import authenticate_user, set_session_maker
-from src.rag.application_draft_generation.generate_draft import generate_application_draft
+from src.rag.application_draft.generate_draft import generate_application_draft
+from src.rag.grant_format.generate_format import generate_grant_format
 from src.utils.serialization import decoder, encoder
 from src.utils.server import before_server_start_hook, handle_exception
 
@@ -29,8 +30,9 @@ app.register_middleware(authenticate_user, "request")
 app.register_middleware(set_session_maker, "request")
 app.register_listener(before_server_start_hook, "before_server_start")
 
-app.add_signal(generate_application_draft, "generate_application_draft")
-app.add_signal(parse_and_index_file, "parse_and_index_file")
+app.add_signal(generate_application_draft, generate_application_draft.__name__)
+app.add_signal(parse_and_index_file, parse_and_index_file.__name__)
+app.add_signal(generate_grant_format, generate_grant_format.__name__)
 
 register_routes(app)
 

@@ -13,7 +13,6 @@ from src.api_types import (
     ApplicationDraftProcessingResponse,
     ApplicationFileResponse,
     ApplicationFullResponse,
-    ApplicationIdResponse,
     CfpResponse,
     CreateApplicationRequestBody,
     CreateResearchAimRequestBody,
@@ -24,6 +23,7 @@ from src.api_types import (
     OTPResponse,
     ResearchAimResponse,
     ResearchTaskResponse,
+    TableIdResponse,
     UpdateApplicationRequestBody,
     UpdateResearchAimRequestBody,
     UpdateResearchTaskRequestBody,
@@ -46,7 +46,7 @@ from src.db.tables import (
     ResearchAim,
     ResearchAspects,
     ResearchTask,
-    SectionAspects,
+    SectionAspect,
     TextGenerationResult,
     Workspace,
     WorkspaceUser,
@@ -68,8 +68,8 @@ class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):
     __model__ = GrantSection
 
 
-class SectionAspectsFactory(SQLAlchemyFactory[SectionAspects]):
-    __model__ = SectionAspects
+class SectionAspectsFactory(SQLAlchemyFactory[SectionAspect]):
+    __model__ = SectionAspect
 
 
 class ResearchAspectsFactory(SQLAlchemyFactory[ResearchAspects]):
@@ -191,8 +191,8 @@ class ResearchAimResponseFactory(TypedDictFactory[ResearchAimResponse]):
     __model__ = ResearchAimResponse
 
 
-class ApplicationIdResponseFactory(TypedDictFactory[ApplicationIdResponse]):
-    __model__ = ApplicationIdResponse
+class ApplicationIdResponseFactory(TypedDictFactory[TableIdResponse]):
+    __model__ = TableIdResponse
 
 
 class ApplicationFileResponseFactory(TypedDictFactory[ApplicationFileResponse]):
