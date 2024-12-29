@@ -39,8 +39,15 @@ from src.db.tables import (
     ApplicationVector,
     FundingOrganization,
     GrantCfp,
+    GrantFormat,
+    GrantFormatFile,
+    GrantFormatVector,
+    GrantSection,
     ResearchAim,
+    ResearchAspects,
     ResearchTask,
+    SectionAspects,
+    TextGenerationResult,
     Workspace,
     WorkspaceUser,
 )
@@ -48,14 +55,39 @@ from src.db.tables import (
 faker = Faker()
 
 
-class WorkspaceFactory(SQLAlchemyFactory[Workspace]):
-    __model__ = Workspace
+# Grant Format Related Factories
+class GrantFormatFactory(SQLAlchemyFactory[GrantFormat]):
+    __model__ = GrantFormat
 
 
-class WorkspaceUserFactory(SQLAlchemyFactory[WorkspaceUser]):
-    __model__ = WorkspaceUser
+class GrantFormatFileFactory(SQLAlchemyFactory[GrantFormatFile]):
+    __model__ = GrantFormatFile
 
 
+class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):
+    __model__ = GrantSection
+
+
+class SectionAspectsFactory(SQLAlchemyFactory[SectionAspects]):
+    __model__ = SectionAspects
+
+
+class ResearchAspectsFactory(SQLAlchemyFactory[ResearchAspects]):
+    __model__ = ResearchAspects
+
+
+class GrantFormatVectorFactory(SQLAlchemyFactory[GrantFormatVector]):
+    __model__ = GrantFormatVector
+    embedding = [uniform(-1, 1) for _ in range(EMBEDDING_DIMENSIONS)]
+
+    @classmethod
+    def get_type_from_column(cls, column: Column[Any]) -> type:
+        if column.name == "embedding":
+            return cast(type, Vector)
+        return super().get_type_from_column(column)
+
+
+# Organization and CFP Factories
 class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
     __model__ = FundingOrganization
 
@@ -64,6 +96,16 @@ class GrantCfpFactory(SQLAlchemyFactory[GrantCfp]):
     __model__ = GrantCfp
 
 
+# Workspace Related Factories
+class WorkspaceFactory(SQLAlchemyFactory[Workspace]):
+    __model__ = Workspace
+
+
+class WorkspaceUserFactory(SQLAlchemyFactory[WorkspaceUser]):
+    __model__ = WorkspaceUser
+
+
+# Application Related Factories
 class ApplicationFactory(SQLAlchemyFactory[Application]):
     __model__ = Application
 
@@ -80,9 +122,12 @@ class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
     __model__ = ResearchTask
 
 
+class TextGenerationResultFactory(SQLAlchemyFactory[TextGenerationResult]):
+    __model__ = TextGenerationResult
+
+
 class ApplicationVectorFactory(SQLAlchemyFactory[ApplicationVector]):
     __model__ = ApplicationVector
-
     embedding = [uniform(-1, 1) for _ in range(EMBEDDING_DIMENSIONS)]
 
     @classmethod
@@ -92,6 +137,7 @@ class ApplicationVectorFactory(SQLAlchemyFactory[ApplicationVector]):
         return super().get_type_from_column(column)
 
 
+# Request Body Factories
 class CreateApplicationRequestBodyFactory(TypedDictFactory[CreateApplicationRequestBody]):
     __model__ = CreateApplicationRequestBody
 

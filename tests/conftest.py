@@ -32,19 +32,36 @@ from src.db.tables import (
     Base,
     FundingOrganization,
     GrantCfp,
+    GrantFormat,
+    GrantFormatFile,
+    GrantFormatVector,
+    GrantSection,
     ResearchAim,
+    ResearchAspects,
     ResearchTask,
+    SectionAspects,
+    TextGenerationResult,
     Workspace,
+    WorkspaceUser,
 )
 from src.utils.ai import embeddings_model, init_ref
 from tests.factories import (
     ApplicationFactory,
     ApplicationFileFactory,
+    ApplicationVectorFactory,
     FundingOrganizationFactory,
     GrantCfpFactory,
+    GrantFormatFactory,
+    GrantFormatFileFactory,
+    GrantFormatVectorFactory,
+    GrantSectionFactory,
     ResearchAimFactory,
+    ResearchAspectsFactory,
     ResearchTaskFactory,
+    SectionAspectsFactory,
+    TextGenerationResultFactory,
     WorkspaceFactory,
+    WorkspaceUserFactory,
 )
 
 load_dotenv()
@@ -179,15 +196,89 @@ async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None
         await session.commit()
 
 
+# Base Fixtures
 @pytest.fixture
 async def workspace(async_session_maker: async_sessionmaker[Any]) -> Workspace:
-    workspace_data = WorkspaceFactory.build(users=[], applications=[])
+    workspace_data = WorkspaceFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(workspace_data)
         await session.commit()
     return workspace_data
 
 
+@pytest.fixture
+async def workspace_user(async_session_maker: async_sessionmaker[Any], workspace: Workspace) -> WorkspaceUser:
+    user_data = WorkspaceUserFactory.build(workspace_id=workspace.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(user_data)
+        await session.commit()
+    return user_data
+
+
+# Grant Format Related Fixtures
+@pytest.fixture
+async def grant_format(async_session_maker: async_sessionmaker[Any]) -> GrantFormat:
+    format_data = GrantFormatFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(format_data)
+        await session.commit()
+    return format_data
+
+
+@pytest.fixture
+async def grant_format_file(async_session_maker: async_sessionmaker[Any], grant_format: GrantFormat) -> GrantFormatFile:
+    file_data = GrantFormatFileFactory.build(format_id=grant_format.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(file_data)
+        await session.commit()
+    return file_data
+
+
+@pytest.fixture
+async def grant_section(async_session_maker: async_sessionmaker[Any], grant_format: GrantFormat) -> GrantSection:
+    section_data = GrantSectionFactory.build(format_id=grant_format.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(section_data)
+        await session.commit()
+    return section_data
+
+
+@pytest.fixture
+async def research_aspect(async_session_maker: async_sessionmaker[Any]) -> ResearchAspects:
+    aspect_data = ResearchAspectsFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(aspect_data)
+        await session.commit()
+    return aspect_data
+
+
+@pytest.fixture
+async def section_aspect(
+    async_session_maker: async_sessionmaker[Any],
+    grant_section: GrantSection,
+    research_aspect: ResearchAspects,
+) -> SectionAspects:
+    aspect_data = SectionAspectsFactory.build(section_id=grant_section.id, aspect_id=research_aspect.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(aspect_data)
+        await session.commit()
+    return aspect_data
+
+
+@pytest.fixture
+async def grant_format_vector(
+    async_session_maker: async_sessionmaker[Any],
+    grant_format: GrantFormat,
+    grant_format_file: GrantFormatFile,
+) -> GrantFormatVector:
+    vector_data = GrantFormatVectorFactory.build(format_id=grant_format.id, file_id=grant_format_file.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(vector_data)
+        await session.commit()
+    return vector_data
+
+
+# Organization and CFP Fixtures
 @pytest.fixture
 async def org(async_session_maker: async_sessionmaker[Any]) -> FundingOrganization:
     org_data = FundingOrganizationFactory.build()
@@ -198,24 +289,24 @@ async def org(async_session_maker: async_sessionmaker[Any]) -> FundingOrganizati
 
 
 @pytest.fixture
-async def cfp(async_session_maker: async_sessionmaker[Any], org: FundingOrganization) -> GrantCfp:
-    cfp_data = GrantCfpFactory.build(funding_organization=org, funding_organization_id=org.id)
+async def cfp(
+    async_session_maker: async_sessionmaker[Any],
+    org: FundingOrganization,
+    grant_format: GrantFormat,
+) -> GrantCfp:
+    cfp_data = GrantCfpFactory.build(funding_organization_id=org.id, format_id=grant_format.id)
     async with async_session_maker() as session, session.begin():
         session.add(cfp_data)
         await session.commit()
     return cfp_data
 
 
+# Application Related Fixtures
 @pytest.fixture
 async def application(async_session_maker: async_sessionmaker[Any], workspace: Workspace, cfp: GrantCfp) -> Application:
     application_data = ApplicationFactory.build(
         workspace_id=workspace.id,
         cfp_id=cfp.id,
-        cfp=cfp,
-        workspace=workspace,
-        files=[],
-        research_aims=[],
-        generation_results=[],
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)
@@ -225,7 +316,7 @@ async def application(async_session_maker: async_sessionmaker[Any], workspace: W
 
 @pytest.fixture
 async def application_file(async_session_maker: async_sessionmaker[Any], application: Application) -> ApplicationFile:
-    file_data = ApplicationFileFactory.build(application_id=application.id, application=application)
+    file_data = ApplicationFileFactory.build(application_id=application.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -234,7 +325,7 @@ async def application_file(async_session_maker: async_sessionmaker[Any], applica
 
 @pytest.fixture
 async def research_aim(async_session_maker: async_sessionmaker[Any], application: Application) -> ResearchAim:
-    aim_data = ResearchAimFactory.build(application_id=application.id, application=application, research_tasks=[])
+    aim_data = ResearchAimFactory.build(application_id=application.id)
     async with async_session_maker() as session, session.begin():
         session.add(aim_data)
         await session.commit()
@@ -243,11 +334,35 @@ async def research_aim(async_session_maker: async_sessionmaker[Any], application
 
 @pytest.fixture
 async def research_task(async_session_maker: async_sessionmaker[Any], research_aim: ResearchAim) -> ResearchTask:
-    aim_data = ResearchTaskFactory.build(research_aim=research_aim, aim_id=research_aim.id)
+    task_data = ResearchTaskFactory.build(aim_id=research_aim.id)
     async with async_session_maker() as session, session.begin():
-        session.add(aim_data)
+        session.add(task_data)
         await session.commit()
-    return aim_data
+    return task_data
+
+
+@pytest.fixture
+async def text_generation_result(
+    async_session_maker: async_sessionmaker[Any], application: Application
+) -> TextGenerationResult:
+    result_data = TextGenerationResultFactory.build(application_id=application.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(result_data)
+        await session.commit()
+    return result_data
+
+
+@pytest.fixture
+async def application_vector(
+    async_session_maker: async_sessionmaker[Any],
+    application: Application,
+    application_file: ApplicationFile,
+) -> ApplicationVector:
+    vector_data = ApplicationVectorFactory.build(application_id=application.id, file_id=application_file.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(vector_data)
+        await session.commit()
+    return vector_data
 
 
 @pytest.fixture
