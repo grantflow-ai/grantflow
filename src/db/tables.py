@@ -2,20 +2,21 @@ from datetime import datetime
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy import ARRAY, Boolean, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Relationship,
     mapped_column,
     relationship,
+    validates,
 )
 from sqlalchemy.sql.functions import now
 
 from src.constants import EMBEDDING_DIMENSIONS
-from src.db.defaults import set_default_facets
 from src.db.enums import FileIndexingStatusEnum, GrantSectionEnum, ResearchAspectEnum, UserRoleEnum
+from src.db.utils import validate_markdown_template
 
 
 class Base(DeclarativeBase):
@@ -54,7 +55,22 @@ class FileBase(BaseWithUUIDPK):
     name: Mapped[str] = mapped_column(String(255))
     type: Mapped[str] = mapped_column(String(255))
     size: Mapped[int] = mapped_column(Integer)
+    text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum))
+
+
+class FundingOrganization(BaseWithUUIDPK):
+    """Funding organization table."""
+
+    __tablename__ = "funding_organizations"
+
+    name: Mapped[str] = mapped_column(String(255), unique=True)
+
+    # Relationships
+    grant_formats: Relationship[list["GrantFormat"]] = relationship(
+        "GrantFormat", back_populates="funding_organization"
+    )
+    cfps: Relationship["GrantCfp"] = relationship("GrantCfp", back_populates="funding_organization")
 
 
 class GrantFormat(BaseWithUUIDPK):
@@ -62,13 +78,35 @@ class GrantFormat(BaseWithUUIDPK):
 
     __tablename__ = "grant_formats"
 
-    name: Mapped[str] = mapped_column(String(255))
-    markdown_template: Mapped[str] = mapped_column(Text)
+    name: Mapped[str] = mapped_column(String(255), default=str)
+    template: Mapped[str] = mapped_column(Text, default=str)
 
     # Relationships
+    funding_organization_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), index=True
+    )
+    funding_organization: Relationship["FundingOrganization"] = relationship(
+        "FundingOrganization", back_populates="grant_formats"
+    )
+
     sections: Relationship[list["GrantSection"]] = relationship("GrantSection", back_populates="format")
     cfps: Relationship[list["GrantCfp"]] = relationship("GrantCfp", back_populates="format")
     files: Relationship[list["GrantFormatFile"]] = relationship("GrantFormatFile", back_populates="format")
+
+    __table_args__ = (Index("uq_format_name_funding_org", "name", "funding_organization_id", unique=True),)
+
+    @validates("template")
+    def validate_template(self, _: str, text: str) -> str:
+        """Validate the grant format template.
+
+        Args:
+            text: The grant format template.
+
+        Returns:
+            The validated grant format template.
+        """
+        validate_markdown_template(text)
+        return text
 
 
 class GrantFormatFile(FileBase):
@@ -86,17 +124,16 @@ class GrantSection(BaseWithUUIDPK):
 
     __tablename__ = "grant_sections"
 
-    content_guidelines: Mapped[str | None] = mapped_column(Text, nullable=True)
-    guiding_questions: Mapped[list[str]] = mapped_column(ARRAY(String(255)))
-    form_json_schema: Mapped[JSON] = mapped_column(JSON)
-    is_required: Mapped[bool] = mapped_column(Boolean, default=True)
-    section_type: Mapped[GrantSectionEnum] = mapped_column(Enum(GrantSectionEnum))
-    min_words: Mapped[int] = mapped_column(Integer, nullable=True)
+    keywords: Mapped[list[str]] = mapped_column(ARRAY(String(255)), default=list)
     max_words: Mapped[int] = mapped_column(Integer, nullable=True)
+    min_words: Mapped[int] = mapped_column(Integer, nullable=True)
+    type: Mapped[GrantSectionEnum] = mapped_column(Enum(GrantSectionEnum))
 
     # Relationships
     format_id: Mapped[UUID[str]] = mapped_column(UUID(), ForeignKey("grant_formats.id", ondelete="CASCADE"), index=True)
     format: Relationship["GrantFormat"] = relationship("GrantFormat", back_populates="sections")
+
+    aspects: Relationship[list["SectionAspect"]] = relationship("SectionAspect", back_populates="section")
 
 
 class SectionAspect(Base):
@@ -104,27 +141,14 @@ class SectionAspect(Base):
 
     __tablename__ = "section_aspects"
 
+    type: Mapped[ResearchAspectEnum] = mapped_column(Enum(ResearchAspectEnum), primary_key=True)
+    weight: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # Relationships
     section_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("grant_sections.id", ondelete="CASCADE"), primary_key=True
     )
-    aspect_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("research_aspects.id", ondelete="CASCADE"), primary_key=True
-    )
-
-    weight: Mapped[float | None] = mapped_column(Float, nullable=True)
-    ordering: Mapped[int] = mapped_column(Integer)
-    constraints: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
-
-
-class ResearchAspects(BaseWithUUIDPK):
-    """Research aspects table."""
-
-    __tablename__ = "research_aspects"
-
-    type: Mapped[ResearchAspectEnum] = mapped_column(Enum(ResearchAspectEnum))
-    summary_text: Mapped[str] = mapped_column(Text)
-    base_weight: Mapped[float] = mapped_column(Float, default=1.0)
-    facets: Mapped[list[str]] = mapped_column(ARRAY(String(255)), default=set_default_facets)
+    section: Relationship["GrantSection"] = relationship("GrantSection", back_populates="aspects")
 
 
 class GrantFormatVector(VectorBase):
@@ -150,17 +174,6 @@ class GrantFormatVector(VectorBase):
     )
 
 
-class FundingOrganization(BaseWithUUIDPK):
-    """Funding organization table."""
-
-    __tablename__ = "funding_organizations"
-
-    name: Mapped[str] = mapped_column(String(255), unique=True)
-
-    # Relationships
-    cfps: Relationship["GrantCfp"] = relationship("GrantCfp", back_populates="funding_organization")
-
-
 class GrantCfp(BaseWithUUIDPK):
     """Grant call for proposals table."""
 
@@ -178,10 +191,10 @@ class GrantCfp(BaseWithUUIDPK):
     funding_organization_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), index=True
     )
-
     funding_organization: Relationship["FundingOrganization"] = relationship(
         "FundingOrganization", back_populates="cfps"
     )
+
     format_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("grant_formats.id", ondelete="RESTRICT"), index=True
     )

@@ -54,14 +54,12 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
                 insert(GrantFormat)
                 .values(
                     {
-                        "name": request_body["name"],
-                        "markdown_template": "",
+                        "funding_organization_id": request_body["funding_organization_id"],
                     }
                 )
                 .returning(GrantFormat.id)
             )
             format_id = result.scalar_one()
-
             file_ids = await session.scalars(
                 insert(GrantFormatFile)
                 .values(

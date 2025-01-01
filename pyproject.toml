@@ -84,7 +84,7 @@ lint.ignore = [
 src = ["src", "tests"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.*" = ["S", "D", "PT006", "PT007", "PT013", "ARG001", "RUF012"]
+"tests/**/*.*" = ["S", "D", "PT006", "PT007", "PT013", "ARG001", "RUF012", "N815"]
 
 [tool.ruff.format]
 docstring-code-format = true

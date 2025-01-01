@@ -14,7 +14,7 @@ from src.indexer.indexing import index_documents
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:
-    from src.indexer.extraction import OCROutput
+    from src.indexer.dto import OCROutput
 
 
 @pytest.mark.skipif(

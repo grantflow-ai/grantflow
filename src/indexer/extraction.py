@@ -1,4 +1,4 @@
-from typing import Any, Final, NotRequired, TypedDict, cast
+from typing import Final, cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat
@@ -8,7 +8,7 @@ from charset_normalizer import detect
 from pypandoc import convert_text
 
 from src.exceptions import FileParsingError, ValidationError
-from src.indexer.dto import FileDTO
+from src.indexer.dto import FileDTO, OCROutput
 from src.utils.env import get_env
 from src.utils.logging import get_logger
 from src.utils.sync import as_async_callable
@@ -76,145 +76,6 @@ MIME_TYPE_EXT_MAP = {
     "text/x-rst": "rst",
     "text/x-tsv": "tsv",
 }
-
-
-class Span(TypedDict, total=False):
-    """A span of text in a document."""
-
-    offset: NotRequired[int]
-    length: NotRequired[int]
-
-
-class BoundingRegion(TypedDict, total=False):
-    """A bounding region in a document."""
-
-    pageNumber: NotRequired[int]
-    polygon: NotRequired[list[float]]
-
-
-class Word(TypedDict, total=False):
-    """A word in a document."""
-
-    content: str
-    confidence: NotRequired[float]
-    span: NotRequired[Span]
-    polygon: NotRequired[list[float]]
-
-
-class SelectionMark(TypedDict, total=False):
-    """A selection mark in a document."""
-
-    state: str
-    confidence: NotRequired[float]
-    polygon: NotRequired[list[float]]
-    span: NotRequired[Span]
-
-
-class Line(TypedDict, total=False):
-    """A line in a document."""
-
-    content: str
-    polygon: NotRequired[list[float]]
-    spans: NotRequired[list[Span]]
-
-
-class Page(TypedDict, total=False):
-    """A page in a document."""
-
-    pageNumber: NotRequired[int]
-    words: NotRequired[list[Word]]
-    spans: NotRequired[list[Span]]
-    angle: NotRequired[float]
-    width: NotRequired[float]
-    height: NotRequired[float]
-    unit: NotRequired[str]
-    selectionMarks: NotRequired[list[SelectionMark]]
-    lines: NotRequired[list[Line]]
-
-
-class TableCell(TypedDict, total=False):
-    """A table cell in a document."""
-
-    rowIndex: NotRequired[int]
-    columnIndex: NotRequired[int]
-    content: str
-    boundingRegions: NotRequired[list[BoundingRegion]]
-    spans: NotRequired[list[Span]]
-    elements: NotRequired[list[str]]
-    columnSpan: NotRequired[int]
-    rowSpan: NotRequired[int]
-    kind: NotRequired[str]
-
-
-class Table(TypedDict, total=False):
-    """A table in a document."""
-
-    rowCount: NotRequired[int]
-    columnCount: NotRequired[int]
-    cells: NotRequired[list[TableCell]]
-    boundingRegions: NotRequired[list[BoundingRegion]]
-    spans: NotRequired[list[Span]]
-
-
-class Paragraph(TypedDict, total=False):
-    """A paragraph in a document."""
-
-    spans: NotRequired[list[Span]]
-    boundingRegions: NotRequired[list[BoundingRegion]]
-    content: str
-    role: NotRequired[str]
-
-
-class Style(TypedDict, total=False):
-    """A style in a document."""
-
-    confidence: NotRequired[float]
-    spans: NotRequired[list[Span]]
-    isHandwritten: NotRequired[bool]
-
-
-class Section(TypedDict, total=False):
-    """A section in a document."""
-
-    spans: NotRequired[list[Span]]
-    elements: NotRequired[list[str]]
-
-
-class FigureCaption(TypedDict, total=False):
-    """A figure caption in a document."""
-
-    content: str
-    boundingRegions: NotRequired[list[BoundingRegion]]
-    spans: NotRequired[list[Span]]
-    elements: NotRequired[list[str]]
-
-
-class Figure(TypedDict, total=False):
-    """A figure in a document."""
-
-    id: str
-    boundingRegions: NotRequired[list[BoundingRegion]]
-    spans: NotRequired[list[Span]]
-    elements: NotRequired[list[str]]
-    caption: NotRequired[FigureCaption]
-
-
-class OCROutput(TypedDict, total=False):
-    """The raw output from the Azure Document Intelligence prebuilt-layout model api."""
-
-    apiVersion: str
-    modelId: str
-    stringIndexType: str
-    content: str
-    pages: NotRequired[list[Page]]
-    tables: NotRequired[list[Table]]
-    paragraphs: NotRequired[list[Paragraph]]
-    styles: NotRequired[list[Style]]
-    contentFormat: NotRequired[str]
-    sections: NotRequired[list[Section]]
-    figures: NotRequired[list[Figure]]
-    additionalItems: NotRequired[list[str | dict[str, Any]]]
-
 
 pandoc_handler = as_async_callable(convert_text)
 
