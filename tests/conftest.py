@@ -64,10 +64,18 @@ from tests.factories import (
 
 load_dotenv()
 
+
+def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
+    for path in folder.glob("*"):
+        if path.is_dir():
+            yield from _file_path_generator(path)
+        yield path
+
+
 SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
 RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
-TEST_DATA_SOURCES: Generator[Path, Any, Any] = SOURCES_FOLDER.glob("*")
-TEST_DATA_RESULTS: Generator[Path, Any, Any] = RESULTS_FOLDER.glob("*")
+TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER)
+TEST_DATA_RESULTS: Generator[Path, Any, Any] = _file_path_generator(RESULTS_FOLDER)
 
 
 def pytest_collection_modifyitems(items: list[Any]) -> None:
