@@ -1,4 +1,4 @@
-from typing import Final, overload
+from typing import Final, cast, overload
 
 from sqlalchemy import select
 
@@ -20,6 +20,8 @@ async def retrieve_documents(
     search_queries: list[str],
     max_results: int = MAX_RESULTS,
 ) -> list[DocumentDTO]: ...
+
+
 @overload
 async def retrieve_documents(
     *,
@@ -59,8 +61,8 @@ async def retrieve_documents(
     query_embeddings = await generate_embeddings(",".join(search_queries), TaskType.RetrievalQuery)
 
     session_maker = get_session_maker()
-    async with session_maker() as session, session.begin():
-        stmt = (
+    async with session_maker() as session:
+        result = await session.scalars(
             select(vector_table_cls)
             .join(file_table_cls, vector_table_cls.file_id == file_table_cls.id)
             .where(
@@ -72,12 +74,10 @@ async def retrieve_documents(
             .limit(max_results)
         )
 
-        result = await session.scalars(stmt)
-
-    output: list[DocumentDTO] = [
-        DocumentDTO(source=row.file_id, content=row.content, element_type=row.element_type, page_number=row.page_number)
-        for row in result
-    ]
+    output: list[DocumentDTO] = cast(
+        list[DocumentDTO],
+        [{k: v for k, v in row.chunk.items() if k in DocumentDTO.__annotations__ and v is not None} for row in result],
+    )
 
     logger.info(
         "Successfully retrieved documents from vector store", format_id=format_id, application_id=application_id
