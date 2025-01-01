@@ -73,9 +73,9 @@ When generating keywords, assume that the values will be used for RAG queries. A
 - minimum of 2 aspects are required
 """
 
-GENERATE_GRANT_SECTION_QUERIES_PROMPT: Final[Template] = Template("""
+GENERATE_GRANT_SECTION_TASK_DESCRIPTION: Final[str] = """
 The next task in the RAG pipeline is to generate the data for the ${section_type} section type.
-""")
+"""
 
 
 class SectionAspectsDTO(TypedDict):
@@ -145,9 +145,8 @@ async def generate_section(format_id: str, section_type: GrantSectionEnum) -> Se
         The markdown template of the format
     """
     queries_result = await handle_create_search_queries(
-        GENERATE_GRANT_SECTION_QUERIES_PROMPT.substitute(
-            section_type=section_type,
-        )
+        task_description=GENERATE_GRANT_SECTION_TASK_DESCRIPTION,
+        section_type=section_type,
     )
 
     search_results = await retrieve_documents(

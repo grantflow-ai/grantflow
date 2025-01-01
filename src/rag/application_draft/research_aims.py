@@ -66,7 +66,7 @@ __NOTE__: Methodology is an optional sub-section. It should be included only if 
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RESEARCH_AIM_QUERIES_PROMPT: Final[Template] = Template("""
+RESEARCH_AIM_QUERIES_PROMPT: Final[str] = """
 The next task in the RAG pipeline is to write a description for a research aim.
 A research aim or research objective is an overarching goal that the research seeks to achieve.
 The description should address the following implicit questions:
@@ -75,12 +75,7 @@ The description should address the following implicit questions:
 2. What are the general goals of the aim?
 3. What is the methodology employed?
 4. What are the expected results?
-
-Here is the research task data as a JSON object:
-    <research_aim>
-    ${research_aim}
-    </research_aim>
-""")
+"""
 
 
 async def generate_research_aim_description(
@@ -167,7 +162,7 @@ async def handle_research_aim_description_generation(
     research_task_titles = [research_task.title for research_task in research_aim_dto.research_tasks]
 
     queries_result = await handle_create_search_queries(
-        RESEARCH_AIM_QUERIES_PROMPT.substitute(research_aim=serialize(research_aim_dto)),
+        task_description=RESEARCH_AIM_QUERIES_PROMPT, research_aim=research_aim_dto
     )
 
     search_result = await retrieve_documents(
