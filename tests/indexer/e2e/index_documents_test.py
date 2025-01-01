@@ -49,4 +49,4 @@ async def test_index_documents(
     if not index_results.exists():
         index_results.write_bytes(serialize(vector_dtos))
     else:
-        assert content == index_results.read_text()
+        assert serialize(vector_dtos) == index_results.read_bytes()

@@ -50,6 +50,10 @@ def encode_hook(obj: Any) -> Any:
     if isinstance(obj, Exception):
         return {"message": str(obj), "type": type(obj).__name__}
 
+    for key in ["to_dict", "to_dict", "asdict", "as_dict", "model_dump", "json", "to_list", "tolist"]:
+        if hasattr(obj, key) and callable(getattr(obj, key)):
+            return getattr(obj, key)()
+
     raise TypeError(f"Unsupported type: {type(obj)!r}")
 
 

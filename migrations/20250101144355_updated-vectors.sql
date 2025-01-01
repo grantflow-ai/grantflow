@@ -1,7 +1,7 @@
 -- Create enum type "researchaspectenum"
 CREATE TYPE "researchaspectenum" AS ENUM ('BACKGROUND_CONTEXT', 'FEASIBILITY', 'HYPOTHESIS', 'IMPACT', 'MILESTONES_AND_TIMELINE', 'NOVELTY_AND_INNOVATION', 'PRELIMINARY_DATA', 'RATIONALE', 'SCIENTIFIC_INFRASTRUCTURE', 'SPECIFIC_AIMS', 'TEAM_EXCELLENCE');
 -- Modify "application_vectors" table
-ALTER TABLE "application_vectors" DROP COLUMN "element_type", DROP COLUMN "page_number", ADD COLUMN "chunk" json NOT NULL, ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL;
+ALTER TABLE "application_vectors" DROP CONSTRAINT "application_vectors_pkey", DROP COLUMN "chunk_index", DROP COLUMN "content", DROP COLUMN "element_type", DROP COLUMN "page_number", ADD COLUMN "chunk" json NOT NULL, ADD COLUMN "id" uuid NOT NULL, ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL, ADD PRIMARY KEY ("application_id", "file_id", "id");
 -- Drop index "ix_funding_organizations_name" from table: "funding_organizations"
 DROP INDEX "ix_funding_organizations_name";
 -- Modify "funding_organizations" table
@@ -62,13 +62,12 @@ CREATE INDEX "ix_grant_format_files_format_id" ON "grant_format_files" ("format_
 CREATE TABLE "grant_format_vectors" (
   "format_id" uuid NOT NULL,
   "file_id" uuid NOT NULL,
-  "chunk_index" integer NOT NULL,
-  "content" text NOT NULL,
   "embedding" vector(256) NOT NULL,
   "chunk" json NOT NULL,
+  "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("format_id", "file_id", "chunk_index"),
+  PRIMARY KEY ("format_id", "file_id", "id"),
   CONSTRAINT "grant_format_vectors_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "grant_format_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "grant_format_vectors_format_id_fkey" FOREIGN KEY ("format_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );

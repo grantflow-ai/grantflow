@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
@@ -8,6 +9,7 @@ from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Relationship,
+    class_mapper,
     mapped_column,
     relationship,
     validates,
@@ -26,6 +28,14 @@ class Base(DeclarativeBase):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now(), onupdate=now())
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the model's columns to a dictionary.
+
+        Returns:
+            A dictionary containing the model's columns.
+        """
+        return {column.key: getattr(self, column.key) for column in class_mapper(self.__class__).columns}
+
 
 class BaseWithUUIDPK(Base):
     """Base class for all tables with UUID primary keys."""
@@ -33,18 +43,6 @@ class BaseWithUUIDPK(Base):
     __abstract__ = True
 
     id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4)
-
-
-class VectorBase(Base):
-    """Base class for all tables with vector columns."""
-
-    __abstract__ = True
-
-    chunk_index: Mapped[int] = mapped_column(Integer, primary_key=True)
-
-    content: Mapped[str] = mapped_column(Text)
-    embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIMENSIONS))  # Flattened list
-    chunk: Mapped[Chunk] = mapped_column(JSON)
 
 
 class FileBase(BaseWithUUIDPK):
@@ -57,6 +55,15 @@ class FileBase(BaseWithUUIDPK):
     size: Mapped[int] = mapped_column(Integer)
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum))
+
+
+class VectorBase(BaseWithUUIDPK):
+    """Base class for all tables with vector columns."""
+
+    __abstract__ = True
+
+    embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIMENSIONS))  # Flattened list
+    chunk: Mapped[Chunk] = mapped_column(JSON)
 
 
 class FundingOrganization(BaseWithUUIDPK):
