@@ -25,6 +25,13 @@ from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
+RESEARCH_TASK_GENERATION_BASE_QUESTIONS: Final[str] = """
+1. What is task goal or objectives?
+2. What is the experimental design methodology used?
+3. What are the data collection methods?
+4. What is the results analysis and interpretation framework?
+"""
+
 RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS: Final[str] = """
 5. If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
 6. If the task involves vertebrate animals/humans, what are the pertinent biological variables (e.g. subject sex, age etc.)?
@@ -55,11 +62,7 @@ A research task is a specific task within a larger research aim.
 The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
 It should address the following implicit questions:
 
-1. What is task goal or objectives?
-2. What is the experimental design methodology used?
-3. What are the data collection methods?
-4. What is the results analysis and interpretation framework?
-${clinical_trial_questions}
+${guiding_questions}
 
 **Important Guidelines**:
 - The research task JSON object includes an array of relations with other research tasks. If the array is not empty, make sure to include a detailed description of these relations in the text.
@@ -70,22 +73,12 @@ ${clinical_trial_questions}
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RESEARCH_TASK_QUERIES_PROMPT: Final[Template] = Template("""
+RESEARCH_TASK_QUERIES_PROMPT: Final[str] = """
 The next task in the RAG pipeline is to write a description for a research task.
-A research task is a specific task within a larger research aim. The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
+A research task is a specific task within a larger research aim.
+The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
 The description should address the following implicit questions:
-
-1. What is task goal or objectives?
-2. What is the experimental design methodology used?
-3. What are the data collection methods?
-4. What is the results analysis and interpretation framework?
-${clinical_trial_questions}
-
-Here is the research task data as a JSON object:
-    <research_task>
-    ${research_task}
-    </research_task>
-""")
+"""
 
 RESEARCH_TASK_TEMPLATE: Final[Template] = Template("""
 ###### Task ${task_number}: ${title}
@@ -97,7 +90,7 @@ ${content}
 async def generate_research_task_text(
     previous_part_text: str | None,
     *,
-    requires_clinical_trials: bool,
+    guiding_questions: str,
     research_task: ResearchTaskDTO,
     retrieval_results: list[DocumentDTO],
 ) -> CompletionsResult[GenerationResultDTO]:
@@ -105,7 +98,7 @@ async def generate_research_task_text(
 
     Args:
         previous_part_text: The previous part of the research task text, if any.
-        requires_clinical_trials: Whether the research task includes clinical trials.
+        guiding_questions: The guiding questions for the research task.
         research_task: The research task to generate text for.
         retrieval_results: The results of the RAG retrieval.
 
@@ -115,7 +108,7 @@ async def generate_research_task_text(
     user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute(
         research_task=serialize(research_task),
         rag_results=serialize(retrieval_results),
-        clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS if requires_clinical_trials else "",
+        guiding_questions=guiding_questions,
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
         )
@@ -168,13 +161,16 @@ async def handle_research_task_text_generation(
         ):
             return cast(str, result)
 
+    guiding_questions = (
+        f"{RESEARCH_TASK_GENERATION_BASE_QUESTIONS}\n{RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS}"
+        if requires_clinical_trials
+        else RESEARCH_TASK_GENERATION_BASE_QUESTIONS
+    )
+
     queries_result = await handle_create_search_queries(
-        RESEARCH_TASK_QUERIES_PROMPT.substitute(
-            research_task=serialize(research_task_dto),
-            clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
-            if requires_clinical_trials
-            else "",
-        ),
+        task_description=RESEARCH_TASK_QUERIES_PROMPT,
+        research_task=research_task_dto,
+        guiding_questions=guiding_questions,
     )
     search_result = await retrieve_documents(
         application_id=application_id,
@@ -183,7 +179,7 @@ async def handle_research_task_text_generation(
 
     handler = partial(
         generate_research_task_text,
-        requires_clinical_trials=requires_clinical_trials,
+        guiding_questions=guiding_questions,
         research_task=research_task_dto,
         retrieval_results=search_result,
     )

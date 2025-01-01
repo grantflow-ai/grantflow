@@ -21,7 +21,7 @@ from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
-INNOVATION_GENERATION_USER_PROMPT: Final[Template] = Template("""
+GENERATE_RESEARCH_INNOVATION_USER_PROMPT: Final[Template] = Template("""
 Your task is to write the innovation section for a research grant application.
 ${previous_part_text}
 
@@ -61,16 +61,14 @@ Ensure that the text builds upon the significance section and maintains consiste
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~400-500 words).
 """)
 
-RESEARCH_INNOVATION_QUERIES_PROMPT: Final[Template] = Template("""
+GENERATE_RESEARCH_INNOVATION_TASK_DESCRIPTION: Final[str] = """
 The next task in the RAG pipeline is to write the research innovation. This section should answer the following (implicit) questions:
 
 - What makes the project unique compared to what has been done before?
 - What state-of-the-art technologies are being planned to use?
 - How is the use of these technologies in the research context innovative?
 - If the project aims to develop new tools, explain what makes the development different from what already exists in the field and how will t new tools be significant as part of the project and for the field in general?
-
-This is the description of the research innovation provided by the user ${innovation_description}
-""")
+"""
 
 
 async def generate_innovation_text(
@@ -93,7 +91,7 @@ async def generate_innovation_text(
     Returns:
         The generation result tuple.
     """
-    user_prompt = INNOVATION_GENERATION_USER_PROMPT.substitute(
+    user_prompt = GENERATE_RESEARCH_INNOVATION_USER_PROMPT.substitute(
         innovation_description=application.innovation or "No description provided.",
         significance_text=significance_text,
         rag_results=serialize(retrieval_results),
@@ -146,9 +144,8 @@ async def handle_innovation_text_generation(
             return cast(str, result)
 
     queries_result = await handle_create_search_queries(
-        RESEARCH_INNOVATION_QUERIES_PROMPT.substitute(
-            innovation_description=application.innovation or "No description provided.",
-        ).strip()
+        task_description=GENERATE_RESEARCH_INNOVATION_TASK_DESCRIPTION,
+        innovation_description=application.innovation or "",
     )
 
     search_result = await retrieve_documents(

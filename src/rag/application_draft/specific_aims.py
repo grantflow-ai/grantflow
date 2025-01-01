@@ -159,7 +159,7 @@ async def handle_specific_aims_text_generation(
         ):
             return cast(str, result)
 
-    queries_result = await handle_create_search_queries(SPECIFIC_AIMS_QUERIES_PROMPT)
+    queries_result = await handle_create_search_queries(task_description=SPECIFIC_AIMS_QUERIES_PROMPT)
 
     search_result = await retrieve_documents(
         application_id=str(application.id),
