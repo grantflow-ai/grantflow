@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ARRAY, Boolean, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import ARRAY, JSON, Boolean, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -17,6 +17,7 @@ from sqlalchemy.sql.functions import now
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.enums import FileIndexingStatusEnum, GrantSectionEnum, ResearchAspectEnum, UserRoleEnum
 from src.db.utils import validate_markdown_template
+from src.dto import Chunk
 
 
 class Base(DeclarativeBase):
@@ -42,9 +43,8 @@ class VectorBase(Base):
     chunk_index: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     content: Mapped[str] = mapped_column(Text)
-    element_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIMENSIONS))  # Flattened list
-    page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    chunk: Mapped[Chunk] = mapped_column(JSON)
 
 
 class FileBase(BaseWithUUIDPK):

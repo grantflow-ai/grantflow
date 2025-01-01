@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Python tests for extraction_test.test_extraction" type="tests" factoryName="Autodetect" nameIsGenerated="true">
+  <configuration default="false" name="E2E: Text Extraction" type="tests" factoryName="Autodetect">
     <module name="backend" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

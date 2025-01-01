@@ -1,6 +1,6 @@
-h1:Y0DaOL1oOxtEF9lC9kvE67acwW6tcdsY2rlTujIW3Sc=
+h1:KkNKiS4mQ/kr4Zwbtvl7JpXVrDAzgkxKdNsm262hF7I=
 20241216152455_initial.sql h1:L07htaidIS//IsMLo3jU2juJhD0cg6PRa3pgRfX6w3U=
 20241217152521_add-indexes-and-make-description-nullable.sql h1:zl2B79Iim27+XRO8MJTwjvuUbO8a7li8XknWm3qV7d8=
 20241219081528_add-preliminary-results.sql h1:pczpobs5phqEJmCincShLN7PDUdQO7Bq4nSkF20HQ8M=
 20241221092240_add-total-tokens-to-generation-results.sql h1:WTk6tQ8s2v5L3PQhMN33OqKE6Pi3Gy68O72XI4kABME=
-20250101081132_add-grant-format.sql h1:orEV3/9WNmc/5sXjRC5m78SlpGi6gCMhG1Krco3RtKE=
+20250101132143_updated-vectors.sql h1:wqBCVpyn5Vm9oy7lqpj7Em+3LBdncPSCyhSTszJ5Hxo=
