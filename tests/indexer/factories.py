@@ -1,6 +1,6 @@
 from polyfactory.factories import TypedDictFactory
 
-from src.indexer.dto import Chunk
+from src.dto import Chunk
 
 
 class ChunkFactory(TypedDictFactory[Chunk]):

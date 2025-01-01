@@ -78,7 +78,5 @@ async def test_create_application_vector(
         assert result.application_id == vector_data.application_id
         assert result.chunk_index == vector_data.chunk_index
         assert result.content == vector_data.content
-        assert result.element_type == vector_data.element_type
         assert result.file_id == vector_data.file_id
-        assert result.page_number == vector_data.page_number
         assert result.embedding is not None

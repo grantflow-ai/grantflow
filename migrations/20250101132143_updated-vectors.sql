@@ -1,7 +1,7 @@
 -- Create enum type "researchaspectenum"
 CREATE TYPE "researchaspectenum" AS ENUM ('BACKGROUND_CONTEXT', 'FEASIBILITY', 'HYPOTHESIS', 'IMPACT', 'MILESTONES_AND_TIMELINE', 'NOVELTY_AND_INNOVATION', 'PRELIMINARY_DATA', 'RATIONALE', 'SCIENTIFIC_INFRASTRUCTURE', 'SPECIFIC_AIMS', 'TEAM_EXCELLENCE');
 -- Modify "application_vectors" table
-ALTER TABLE "application_vectors" ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL;
+ALTER TABLE "application_vectors" DROP COLUMN "element_type", DROP COLUMN "page_number", ADD COLUMN "chunk" json NOT NULL, ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL;
 -- Drop index "ix_funding_organizations_name" from table: "funding_organizations"
 DROP INDEX "ix_funding_organizations_name";
 -- Modify "funding_organizations" table
@@ -64,9 +64,8 @@ CREATE TABLE "grant_format_vectors" (
   "file_id" uuid NOT NULL,
   "chunk_index" integer NOT NULL,
   "content" text NOT NULL,
-  "element_type" character varying(50) NULL,
   "embedding" vector(256) NOT NULL,
-  "page_number" integer NULL,
+  "chunk" json NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
   PRIMARY KEY ("format_id", "file_id", "chunk_index"),

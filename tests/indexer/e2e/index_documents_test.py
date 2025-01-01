@@ -37,7 +37,7 @@ async def test_index_documents(
     assert extraction_result.exists(), f"Expected file {extraction_result} to exist"
 
     content: str | OCROutput = extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
-    chunks = chunk_text(text=content, mime_type="text/markdown")
+    chunks = chunk_text(text=content, mime_type="text/plain" if data_file.name.endswith(".pdf") else "text/markdown")
 
     await index_documents(
         chunks=chunks,
