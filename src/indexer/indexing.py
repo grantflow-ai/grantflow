@@ -1,7 +1,8 @@
 from asyncio import gather
 from typing import Final
 
-from src.indexer.dto import Chunk, VectorDTO
+from src.dto import Chunk
+from src.indexer.dto import VectorDTO
 from src.utils.embeddings import TaskType, generate_embeddings
 from src.utils.logging import get_logger
 
@@ -28,13 +29,7 @@ async def create_vector_dto(
     embedding = await generate_embeddings([chunk["content"]], task=TaskType.RetrievalDocument)
 
     return VectorDTO(
-        index=chunk["index"],
-        content=chunk["content"],
-        element_type=chunk["element_type"],
-        parent_id=chunk["parent_id"],
-        role=chunk["role"],
-        table_context=chunk["table_context"],
-        position=chunk["position"],
+        chunk=chunk,
         embedding=embedding,
         file_id=file_id,
     )

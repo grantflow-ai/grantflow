@@ -1,3 +1,5 @@
+"""Tests for document content chunking functionality."""
+
 import pytest
 from polyfactory.factories import TypedDictFactory
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
@@ -13,11 +15,20 @@ from src.indexer.chunking import (
     process_table_cell,
     process_table_chunks,
 )
-from src.indexer.dto import BoundingRegion, OCROutput, Page, Paragraph, Span, Table, TableCell
+from src.indexer.dto import (
+    BoundingRegion,
+    OCROutput,
+    Page,
+    Paragraph,
+    ParagraphRole,
+    Span,
+    Table,
+    TableCell,
+)
 
 
 class MockSplitter:
-    """Mock splitter that returns predictable chunks"""
+    """Mock splitter that returns predictable chunks."""
 
     def __init__(self, chunk_size: int = 100, overlap: int = 0) -> None:
         self.chunk_size = chunk_size
@@ -50,6 +61,7 @@ class PageFactory(TypedDictFactory[Page]):
         {"content": "Word1", "span": SpanFactory.build()},
         {"content": "Word2", "span": SpanFactory.build(offset=20)},
     ]
+    languages = [{"locale": "en", "confidence": 0.9}]
 
 
 class TableCellFactory(TypedDictFactory[TableCell]):
@@ -83,7 +95,7 @@ class ParagraphFactory(TypedDictFactory[Paragraph]):
     __model__ = Paragraph
 
     content = "Sample paragraph content"
-    role = "normal"
+    role = ParagraphRole.SECTION_HEADING
     boundingRegions = [BoundingRegionFactory.build()]
     spans = [SpanFactory.build()]
 
@@ -124,6 +136,9 @@ def test_chunk_plain_text() -> None:
     assert len(chunks) > 0
     assert all(isinstance(chunk, dict) for chunk in chunks)
     assert all("content" in chunk for chunk in chunks)
+    assert all("content_hash" in chunk for chunk in chunks)
+    assert all("index" in chunk for chunk in chunks)
+    assert all("element_type" in chunk for chunk in chunks)
 
 
 def test_chunk_ocr_output() -> None:
@@ -131,7 +146,8 @@ def test_chunk_ocr_output() -> None:
     chunks = chunk_text(text=ocr_output, mime_type="application/pdf")
     assert len(chunks) > 0
     assert all(isinstance(chunk, dict) for chunk in chunks)
-    assert all(chunk["element_type"] in ["page", "table_cell", "paragraph", None] for chunk in chunks)
+    valid_types = {"page", "table_cell", "paragraph", "formula", "raw"}
+    assert all(chunk.get("element_type") in valid_types for chunk in chunks)
 
 
 def test_extract_from_lines() -> None:
@@ -157,8 +173,10 @@ def test_page_chunking(mock_splitter: MockSplitter) -> None:
     page = PageFactory.build()
     chunks = list(process_page_chunks(page, mock_splitter))  # type: ignore[arg-type]
     assert len(chunks) > 0
-    assert all(chunk["element_type"] == "page" for chunk in chunks)
-    assert all(chunk["position"] and chunk["position"].get("page_number") == page["pageNumber"] for chunk in chunks)
+    assert all(chunk["element_type"] in {"page", "formula"} for chunk in chunks)
+    assert any(chunk["element_type"] == "page" for chunk in chunks)  # At least one page chunk
+    assert all(chunk.get("page_number") == page["pageNumber"] for chunk in chunks)
+    assert all(isinstance(chunk.get("languages"), list) for chunk in chunks if chunk["element_type"] == "page")
 
 
 def test_cell_chunking(mock_splitter: MockSplitter) -> None:
@@ -169,10 +187,10 @@ def test_cell_chunking(mock_splitter: MockSplitter) -> None:
     assert len(chunks) > 0
     for chunk in chunks:
         assert chunk["element_type"] == "table_cell"
-        assert chunk["parent_id"] == "table_0"
-        assert chunk["table_context"] is not None
-        assert chunk["table_context"].get("row_index") == cell["rowIndex"]
-        assert chunk["table_context"].get("column_index") == cell["columnIndex"]
+        assert chunk["parent"] == "table_0"
+        assert isinstance(chunk["table_context"], dict)
+        assert chunk["table_context"]["row_index"] == cell["rowIndex"]
+        assert chunk["table_context"]["column_index"] == cell["columnIndex"]
 
 
 def test_table_chunking(mock_splitter: MockSplitter) -> None:
@@ -181,7 +199,7 @@ def test_table_chunking(mock_splitter: MockSplitter) -> None:
 
     assert len(chunks) > 0
     assert all(chunk["element_type"] == "table_cell" for chunk in chunks)
-    assert all(chunk["parent_id"] == "table_0" for chunk in chunks)
+    assert all(chunk["parent"] == "table_0" for chunk in chunks)
     assert len(chunks) >= len(table["cells"])
 
 
@@ -191,8 +209,8 @@ def test_paragraph_chunking(mock_splitter: MockSplitter) -> None:
 
     assert len(chunks) > 0
     assert all(chunk["element_type"] == "paragraph" for chunk in chunks)
-    assert all(chunk["parent_id"] == "para_0" for chunk in chunks)
-    assert all(chunk["role"] == para["role"] for chunk in chunks)
+    assert all(chunk["parent"] == "para_0" for chunk in chunks)
+    assert all(chunk.get("role") == para["role"] for chunk in chunks)
 
 
 def test_fallback_chunking(mock_splitter: MockSplitter) -> None:
@@ -201,7 +219,7 @@ def test_fallback_chunking(mock_splitter: MockSplitter) -> None:
 
     assert len(chunks) > 0
     assert all(chunk["element_type"] == "raw" for chunk in chunks)
-    assert all(chunk["position"] and chunk["position"].get("page_number") is None for chunk in chunks)
+    assert all("page_number" not in chunk for chunk in chunks)
 
 
 def test_full_document_processing(mock_splitter: MockSplitter) -> None:
@@ -209,11 +227,9 @@ def test_full_document_processing(mock_splitter: MockSplitter) -> None:
     chunks = chunk_ocr_output(ocr_output, mock_splitter)  # type: ignore[arg-type]
 
     assert len(chunks) > 0
-    # Check we have chunks from all element types
     element_types = {chunk["element_type"] for chunk in chunks}
     assert element_types.issuperset({"page", "table_cell", "paragraph"})
 
-    # Verify indices are sequential
     indices = [chunk["index"] for chunk in chunks]
     assert indices == list(range(len(chunks)))
 
@@ -242,13 +258,13 @@ def test_chunk_size_limits(mock_splitter: MockSplitter, content_length: int) -> 
         assert len(chunk["content"]) <= mock_splitter.chunk_size
 
 
-def test_paragraph_with_invalid_bounds(mock_splitter: MockSplitter) -> None:
+def test_paragraph_with_missing_bounds(mock_splitter: MockSplitter) -> None:
     paragraph = ParagraphFactory.build()
     paragraph["boundingRegions"] = [{}]
     chunks = list(process_paragraph_chunks(paragraph, 0, mock_splitter))  # type: ignore[arg-type]
 
     assert len(chunks) > 0
-    assert all(chunk["position"] and chunk["position"].get("page_number") is None for chunk in chunks)
+    assert all("page_number" not in chunk for chunk in chunks)
 
 
 @pytest.mark.parametrize("mime_type", ["text/markdown", "text/plain"])
@@ -258,7 +274,7 @@ def test_original_chunking_text(mime_type: str) -> None:
 
     In a startling development, researchers from the University of Brazil have reportedly discovered a species of plant
     capable of human speech. The plant, found deep in the Amazon rainforest, was observed engaging in conversations with
-    local wildlife.Dr. Maria Silva, lead botanist on the expedition, claims the plant asked about the weather and expressed
+    local wildlife. Dr. Maria Silva, lead botanist on the expedition, claims the plant asked about the weather and expressed
     concerns about deforestation. Experts worldwide are scrambling to verify this unprecedented finding, which could
     revolutionize our understanding of plant intelligence.
     """

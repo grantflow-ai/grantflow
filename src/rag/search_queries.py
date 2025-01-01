@@ -1,7 +1,5 @@
 from string import Template
-from typing import Final, NamedTuple
-
-from typing_extensions import TypedDict
+from typing import Final, NamedTuple, TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
