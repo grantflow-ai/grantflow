@@ -61,7 +61,7 @@ This sub-section should address the following implicit questions:
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for a minimum of half a page, and a maximum of two pages in length (~200-800 words).
 """)
 
-PRELIMINARY_RESULTS_QUERIES_PROMPT: Final[Template] = Template("""
+PRELIMINARY_RESULTS_QUERIES_PROMPT: Final[str] = """
 The next task in the RAG pipeline is to write a description for the Preliminary Results section.
 Preliminary Results are detailed experimental findings and data analyses that demonstrate research feasibility for a specific research aim or objective.
 The description should address the following implicit questions:
@@ -70,17 +70,7 @@ The description should address the following implicit questions:
 2. What methods and techniques were used?
 3. How was the data analyzed and interpreted?
 4. How do these findings support the proposed research?
-
-Here is the user input for preliminary results:
-    <preliminary_results>
-    ${preliminary_results}
-    </preliminary_results>
-
-Here is the description of the research aim:
-    <research_aim_text>
-    ${research_aim_text}
-    </research_aim_text>
-""")
+"""
 
 
 async def generate_preliminary_results_text(
@@ -160,9 +150,9 @@ async def handle_preliminary_results_text_generation(
             return cast(str, result)
 
     queries_result = await handle_create_search_queries(
-        PRELIMINARY_RESULTS_QUERIES_PROMPT.substitute(
-            preliminary_results=research_aim_dto.preliminary_results, research_aim_text=research_aim_description
-        ),
+        task_description=PRELIMINARY_RESULTS_QUERIES_PROMPT,
+        preliminary_results=research_aim_dto.preliminary_results,
+        research_aim_text=research_aim_description,
     )
 
     search_result = await retrieve_documents(

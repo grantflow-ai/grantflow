@@ -50,17 +50,11 @@ Example output:
 Not all formats require or use all the available section types. But all formats use at least some of them.
 """
 
-GENERATE_GRANT_FORMAT_TEMPLATE_QUERIES_PROMPT: Final[Template] = Template("""
+GENERATE_GRANT_FORMAT_TASK_DESCRIPTION: Final[str] = """
 The next task in the RAG pipeline is to determine the correct format for grant applications.
-
-Our system organizes grant applications into standardized sections:
-
-<grant_section_types>
-${grant_section_types}
-</grant_section_types>
-
-The task is to determine the correct composition of sections. The composition has two dimensions - which sections are included, and how they should be ordered.
-""")
+Our system organizes grant applications into standardized sections types.
+The task is to determine the correct composition of sections given the application guidelines.
+"""
 
 
 class ToolResponse(TypedDict):
@@ -96,9 +90,8 @@ async def generate_format_template(format_id: str) -> ToolResponse:
         The markdown template of the format
     """
     queries_result = await handle_create_search_queries(
-        GENERATE_GRANT_FORMAT_TEMPLATE_QUERIES_PROMPT.substitute(
-            grant_section_types=list(GrantSectionEnum),
-        )
+        task_description=GENERATE_GRANT_FORMAT_TASK_DESCRIPTION,
+        grant_section_types=list(GrantSectionEnum),
     )
 
     search_results = await retrieve_documents(

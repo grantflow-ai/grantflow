@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Python tests for tests.rag.e2e.retrieval_test.test_document_retrieval" type="tests" factoryName="Autodetect" nameIsGenerated="true">
+  <configuration default="false" name="E2E: Parse and Index Application File" type="tests" factoryName="Autodetect">
     <module name="backend" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -8,12 +8,12 @@
       <env name="E2E_TESTS" value="true" />
     </envs>
     <option name="SDK_HOME" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/rag/e2e" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/indexer/e2e" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="_new_additionalArguments" value="&quot;&quot;" />
-    <option name="_new_target" value="&quot;tests.rag.e2e.retrieval_test.test_document_retrieval&quot;" />
+    <option name="_new_target" value="&quot;parse_and_index_file_test.test_parse_application_file&quot;" />
     <option name="_new_targetType" value="&quot;PYTHON&quot;" />
     <method v="2" />
   </configuration>

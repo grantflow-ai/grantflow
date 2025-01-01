@@ -76,7 +76,7 @@ The significance section should open with an introductory paragraph or two that 
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~400-500 words).
 """)
 
-RESEARCH_SIGNIFICANCE_QUERIES_PROMPT: Final[Template] = Template("""
+RESEARCH_SIGNIFICANCE_QUERIES_PROMPT: Final[str] = """
 The next task in the RAG pipeline is to generate the significance section for a grant application.
 
 This section should explain the importance of the problem or critical barrier that the project addresses, and how it impacts human lives.
@@ -91,9 +91,7 @@ The text should answer the following (implicit) questions:
 - What is the hypothesis about the right path to solving the problem?
 - How is this solution transformational in comparison to what has been done before?
 - How could this solution improve human lives in the future?
-
-This is the the description of the research significance provided by the user ${significance_description}
-""")
+"""
 
 
 async def generate_significance_text(
@@ -171,9 +169,7 @@ async def handle_significance_text_generation(
             return cast(str, result)
 
     queries_result = await handle_create_search_queries(
-        RESEARCH_SIGNIFICANCE_QUERIES_PROMPT.substitute(
-            significance_description=application.significance or "No description provided.",
-        ).strip()
+        task_description=RESEARCH_SIGNIFICANCE_QUERIES_PROMPT, significance_description=application.significance or ""
     )
     search_result = await retrieve_documents(
         application_id=str(application.id),

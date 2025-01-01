@@ -60,7 +60,7 @@ This section should address the following implicit questions:
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly two to three paragraphs with a maximum length of half a page (~150-300 words).
 """)
 
-RISKS_AND_ALTERNATIVES_QUERIES_PROMPT: Final[Template] = Template("""
+RISKS_AND_ALTERNATIVES_QUERIES_PROMPT: Final[str] = """
 The next task in the RAG pipeline is to write a description for the Risks and Alternatives section.
 Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
 The description should address the following implicit questions:
@@ -69,17 +69,7 @@ The description should address the following implicit questions:
 2. What strategies can be implemented to mitigate each identified risk?
 3. What alternative approaches are available if these strategies fail?
 4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
-
-Here is the user input for preliminary results:
-    <risks_and_alternatives>
-    ${risks_and_alternatives}
-    </risks_and_alternatives>
-
-Here is the description of the research aim:
-    <research_aim_text>
-    ${research_aim_text}
-    </research_aim_text>
-""")
+"""
 
 
 async def generate_risks_and_alternatives_text(
@@ -160,9 +150,9 @@ async def handle_risks_and_alternatives_text_generation(
             return cast(str, result)
 
     queries_result = await handle_create_search_queries(
-        RISKS_AND_ALTERNATIVES_QUERIES_PROMPT.substitute(
-            risks_and_alternatives=research_aim_dto.risks_and_alternatives, research_aim_text=research_aim_description
-        ),
+        task_description=RISKS_AND_ALTERNATIVES_QUERIES_PROMPT,
+        risks_and_alternatives=research_aim_dto.risks_and_alternatives,
+        research_aim_text=research_aim_description,
     )
 
     search_result = await retrieve_documents(

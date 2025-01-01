@@ -1,25 +1,31 @@
 from string import Template
-from typing import Final, NamedTuple, TypedDict
+from typing import Any, Final, NamedTuple, TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
 from src.utils.logging import get_logger
+from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
 SEARCH_QUERIES_SYSTEM_PROMPT: Final[str] = """
 You are a specialized query generation component within a RAG pipeline designed to assist in writing grant application sections.
 Your function is to generate search queries that will retrieve relevant content from a vector store using cosine similarity.
+The queries should balance specificity with breadth to capture a range of relevant materials.
 """
 
 SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
-Your task is to analyze the description of the next stage in the RAG pipeline and generate between 3-10 distinct search queries that will be executed against the vector store.
-Make sure to optimize the queries for retrieval of relevant content - balance specificity with breadth to capture a range of relevant materials.
-Here is the description of the next task in the RAG pipeline along with any inputs that will be used as sources in the generation:
+Your task is to generate between 3-10 distinct search queries that will be executed against the vector store.
+The queries should be optimized for the next task in the RAG pipeline. Use the following sources:
 
-<prompt>
-${prompt}
-</prompt>
+# Next Task Description
+<task_description>
+${task_description}
+</task_description>
+
+<inputs>
+${inputs}
+</inputs>
 """)
 
 OUTPUT_INSTRUCTIONS: Final[str] = """
@@ -69,12 +75,12 @@ class SearchQueriesResponse(NamedTuple):
     """The total number of billable characters used."""
 
 
-async def handle_create_search_queries(prompt: str) -> SearchQueriesResponse:
+async def handle_create_search_queries(*, task_description: str, **inputs: Any) -> SearchQueriesResponse:
     """Generate an optimized search query for retrieval.
 
     Args:
-        prompt: The prompt to generate the search queries.
-
+        task_description: The description of the next task in the RAG pipeline.
+        **inputs: The inputs for the search query generation
 
     Returns:
         The generated search queries, the total number of tokens, and the total billable characters.
@@ -88,8 +94,8 @@ async def handle_create_search_queries(prompt: str) -> SearchQueriesResponse:
             prompt_identifier="search_queries",
             system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
             user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
-                prompt=prompt,
-            ),
+                task_description=task_description, inputs=serialize(inputs).decode() if inputs else ""
+            ).strip(),
             output_instructions=OUTPUT_INSTRUCTIONS,
             response_schema=response_schema,
             response_type=ToolResponse,
