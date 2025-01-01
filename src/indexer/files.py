@@ -11,6 +11,7 @@ from src.indexer.chunking import chunk_text
 from src.indexer.dto import FileDTO
 from src.indexer.extraction import parse_file_data
 from src.indexer.indexing import index_documents, logger
+from src.utils.serialization import serialize
 
 
 @overload
@@ -95,7 +96,14 @@ async def parse_and_index_file(
                 await session.execute(
                     update(file_table_cls)
                     .where(file_table_cls.id == file_id)
-                    .values(status=FileIndexingStatusEnum.FINISHED)
+                    .values(
+                        {
+                            "status": FileIndexingStatusEnum.FINISHED,
+                            "text_content": extracted_text
+                            if isinstance(extracted_text, str)
+                            else serialize(extracted_text).decode(),
+                        }
+                    )
                 )
                 await session.commit()
                 logger.info("Successfully indexed file", filename=file_dto.filename)

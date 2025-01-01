@@ -28,12 +28,15 @@ async def create_vector_dto(
     embedding = await generate_embeddings([chunk["content"]], task=TaskType.RetrievalDocument)
 
     return VectorDTO(
-        chunk_index=chunk["index"],
+        index=chunk["index"],
         content=chunk["content"],
         element_type=chunk["element_type"],
+        parent_id=chunk["parent_id"],
+        role=chunk["role"],
+        table_context=chunk["table_context"],
+        position=chunk["position"],
         embedding=embedding,
         file_id=file_id,
-        page_number=chunk["page_number"],
     )
 
 

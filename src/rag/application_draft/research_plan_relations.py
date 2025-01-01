@@ -28,7 +28,7 @@ Your objective is to identify and describe relations between research aims and r
 """)
 
 PARSE_AND_ENRICH_RESEARCH_AIMS_FOR_GENERATION_OUTPUT_INSTRUCTIONS = """
-You must respond exclusively by invoking the provided function.
+You must respond by invoking the provided function.
 Return a JSON object adhering to the following format:
 
 ```json

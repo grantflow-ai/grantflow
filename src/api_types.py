@@ -316,5 +316,5 @@ class LoginResponse(TypedDict):
 class CreateGrantFormatRequestBody(TypedDict):
     """The request body for creating an application."""
 
-    name: str
-    """The name of the grant format."""
+    funding_organization_id: str
+    """Grant funding organization ID."""

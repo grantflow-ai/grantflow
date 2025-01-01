@@ -4,6 +4,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
 from src.db.tables import FundingOrganization, GrantCfp
@@ -19,15 +20,17 @@ async def seed_db() -> None:
     grant_cfps_json = Path(__file__).parent / "grant_cfps.json"
 
     async with session_maker() as session, session.begin():
-        # Add test data here
-        await session.execute(
-            insert(FundingOrganization).values(deserialize(funding_orgs_json.read_bytes(), list[dict[str, Any]]))
-        )
-        await session.commit()
-
-    async with session_maker() as session, session.begin():
-        await session.execute(insert(GrantCfp).values(deserialize(grant_cfps_json.read_bytes(), list[dict[str, Any]])))
-        await session.commit()
+        try:
+            await session.execute(
+                insert(FundingOrganization).values(deserialize(funding_orgs_json.read_bytes(), list[dict[str, Any]]))
+            )
+            await session.execute(
+                insert(GrantCfp).values(deserialize(grant_cfps_json.read_bytes(), list[dict[str, Any]]))
+            )
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise e
 
 
 if __name__ == "__main__":
