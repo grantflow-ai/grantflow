@@ -23,7 +23,7 @@ PLAIN_TEXT_MIME_TYPES: set[str] = {
 }
 
 PANDOC_MIME_TYPES = {
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    # "application/vnd.openxmlformats-officedocument.wordprocessingml.document", # we use Azure Document Intelligence for this
     "text/csv",
     "application/csv",
     "text/x-csv",
@@ -96,11 +96,12 @@ async def extract_with_pandoc(file_data: bytes, mime_type: str) -> str:
     return cast(str, await pandoc_handler(file_data, to="md", format=ext, encoding=encoding))
 
 
-async def extract_with_azure_document_intelligence(file_content: bytes) -> OCROutput:
+async def extract_with_azure_document_intelligence(file_content: bytes, mime_type: str) -> OCROutput:
     """Extract text from a document using the Azure Document Intelligence prebuilt-layout model.
 
     Args:
         file_content: The content of the document.
+        mime_type: The mime type of the document.
 
     Raises:
         FileParsingError: If an error occurs during the extraction.
@@ -117,7 +118,9 @@ async def extract_with_azure_document_intelligence(file_content: bytes) -> OCROu
             model_id="prebuilt-layout",
             body=AnalyzeDocumentRequest(bytes_source=file_content),
             output_content_format=DocumentContentFormat.MARKDOWN,
-            features=[DocumentAnalysisFeature.LANGUAGES, DocumentAnalysisFeature.FORMULAS],
+            features=[DocumentAnalysisFeature.FORMULAS, DocumentAnalysisFeature.LANGUAGES]
+            if mime_type == "application/pdf"
+            else None,
         )
         result = await poller.result()
         return cast(OCROutput, result.as_dict())
@@ -153,6 +156,6 @@ async def parse_file_data(file_data: FileDTO) -> tuple[str | OCROutput, str]:
         if mime_type in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES or any(
             mime_type.startswith(value) for value in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES
         ):
-            return await extract_with_azure_document_intelligence(file_data.content), MARKDOWN_MIME_TYPE
+            return await extract_with_azure_document_intelligence(file_data.content, mime_type), MARKDOWN_MIME_TYPE
 
     raise ValidationError(f"Unsupported mime type for file extraction: {mime_type}")
