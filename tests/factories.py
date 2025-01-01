@@ -1,4 +1,5 @@
 from random import uniform
+from textwrap import dedent
 from typing import Any, cast
 
 from faker import Faker
@@ -44,7 +45,6 @@ from src.db.tables import (
     GrantFormatVector,
     GrantSection,
     ResearchAim,
-    ResearchAspects,
     ResearchTask,
     SectionAspect,
     TextGenerationResult,
@@ -58,6 +58,36 @@ faker = Faker()
 # Grant Format Related Factories
 class GrantFormatFactory(SQLAlchemyFactory[GrantFormat]):
     __model__ = GrantFormat
+    template = dedent("""
+    ## Executive Summary
+
+    {{EXECUTIVE_SUMMARY}}
+
+    ## Significance
+
+    {{SIGNIFICANCE}}
+
+    ## Innovation
+
+    {{INNOVATION}}
+
+    ## Specific Aims
+
+    {{SPECIFIC_AIMS}}
+
+    ## Work Plan
+
+    {{WORK_PLAN}}
+
+    ## Resources
+
+    {{RESOURCES}}
+
+    ## Expected Outcomes
+
+    {{EXPECTED_OUTCOMES}}
+
+    """)
 
 
 class GrantFormatFileFactory(SQLAlchemyFactory[GrantFormatFile]):
@@ -70,10 +100,6 @@ class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):
 
 class SectionAspectsFactory(SQLAlchemyFactory[SectionAspect]):
     __model__ = SectionAspect
-
-
-class ResearchAspectsFactory(SQLAlchemyFactory[ResearchAspects]):
-    __model__ = ResearchAspects
 
 
 class GrantFormatVectorFactory(SQLAlchemyFactory[GrantFormatVector]):

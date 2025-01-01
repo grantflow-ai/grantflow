@@ -13,7 +13,7 @@ repos:
       - id: name-tests-test
         args:
           - --pytest
-        exclude: ^tests/factories|^tests/indexer/e2e/utils.py
+        exclude: ^tests/factories|^tests/indexer/e2e/utils.py|^tests/indexer/factories
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
@@ -32,7 +32,7 @@ repos:
         additional_dependencies:
           - tomli
   - repo: https://github.com/jsh9/pydoclint
-    rev: 0.5.13
+    rev: 0.5.14
     hooks:
       - id: pydoclint
         args: [ --style=google, --check-return-types=False, --arg-type-hints-in-docstring=False ]

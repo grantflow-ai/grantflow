@@ -81,6 +81,10 @@ SEGMENTED_GENERATION_SCHEMA = {
 }
 
 
+def _default_validator[T](_: T) -> bool:
+    return True
+
+
 @with_exponential_backoff_retry(TooManyRequests, ValidationError)
 async def handle_completions_request[T](
     *,
@@ -91,6 +95,7 @@ async def handle_completions_request[T](
     system_prompt: str,
     response_schema: dict[str, Any] | None = None,
     user_prompt: str,
+    validator: Callable[[T], bool] = _default_validator,
 ) -> CompletionsResult[T]:
     """Handle a completions request to the model.
 
@@ -102,6 +107,7 @@ async def handle_completions_request[T](
         system_prompt: The system prompt.
         response_schema: The response schema.
         user_prompt: The user prompt.
+        validator: Custom validator function for the response.
 
     Raises:
         ValidationError: If the response received from the model is invalid.
@@ -131,8 +137,12 @@ async def handle_completions_request[T](
             ]
         )
         logger.debug("Received content from model.", text=response.text)
+        data = deserialize(response.text, response_type)
+        if not validator(data):
+            raise ValidationError("Invalid response from model")
+
         return CompletionsResult(
-            response=deserialize(response.text, response_type),
+            response=data,
             tokens_used=tokens.total_tokens,
             billable_characters_used=tokens.total_billable_characters,
         )
