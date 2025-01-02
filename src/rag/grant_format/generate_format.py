@@ -74,12 +74,12 @@ async def generate_grant_format(format_id: str) -> None:
                 insert(SectionAspect).values(
                     [
                         {
-                            "aspect_type": aspect["type"],
-                            "weight": aspect["weight"],
+                            "type": aspect_datum["type"],
+                            "weight": aspect_datum["weight"],
                             "section_id": section_id,
                         }
                         for section_id, section_datum in zip(section_ids, section_data, strict=False)
-                        for aspect in section_datum["aspects"]
+                        for aspect_datum in section_datum["aspects"]
                     ]
                 )
             )

@@ -158,7 +158,7 @@ async def generate_section(format_id: str, section_type: GrantSectionEnum) -> Se
         prompt_identifier="grant_format_structure",
         system_prompt=GRANT_FORMAT_SYSTEM_PROMPT,
         user_prompt=GENERATE_GRANT_SECTION_USER_PROMPT.substitute(
-            grant_aspect_types=serialize([e.value for e in ResearchAspectEnum]),
+            research_aspect_types=serialize([e.value for e in ResearchAspectEnum]),
             section_type=section_type,
             rag_results=serialize(search_results),
         ),
