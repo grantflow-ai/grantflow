@@ -5,7 +5,7 @@ from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import ApplicationFile, GrantFormatFile
+from src.db.tables import GrantApplicationFile, GrantTemplateFile
 
 
 @overload
@@ -19,7 +19,7 @@ async def check_exists_files_being_indexed(
 @overload
 async def check_exists_files_being_indexed(
     *,
-    format_id: UUID | str,
+    template_id: UUID | str,
     session_maker: async_sessionmaker[Any],
 ) -> bool: ...
 
@@ -27,26 +27,26 @@ async def check_exists_files_being_indexed(
 async def check_exists_files_being_indexed(
     *,
     application_id: UUID | str | None = None,
-    format_id: UUID | str | None = None,
+    template_id: UUID | str | None = None,
     session_maker: async_sessionmaker[Any],
 ) -> bool:
     """Check if there are files being indexed for the given application.
 
     Args:
-        application_id: The application ID, required if format_id is not provided.
-        format_id: The format ID, required if application_id is not provided.
+        application_id: The application ID, required if template_id is not provided.
+        template_id: The format ID, required if application_id is not provided.
         session_maker: The session maker.
 
     Raises:
-        ValueError: If neither application_id nor format_id is provided.
+        ValueError: If neither application_id nor template_id is provided.
 
     Returns:
         Whether there are files being indexed.
     """
-    if not application_id and not format_id:
-        raise ValueError("Either application_id or format_id must be provided.")
+    if not application_id and not template_id:
+        raise ValueError("Either application_id or template_id must be provided.")
 
-    file_table_cls = ApplicationFile if application_id else GrantFormatFile
+    file_table_cls = GrantApplicationFile if application_id else GrantTemplateFile
 
     async with session_maker() as session:
         return cast(
@@ -58,7 +58,7 @@ async def check_exists_files_being_indexed(
                         .where(
                             file_table_cls.application_id == application_id
                             if hasattr(file_table_cls, "application_id")
-                            else file_table_cls.format_id == format_id
+                            else file_table_cls.grant_template_id == template_id
                         )
                         .where(file_table_cls.status == FileIndexingStatusEnum.INDEXING)
                     )

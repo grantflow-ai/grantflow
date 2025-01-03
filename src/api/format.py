@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.api_types import APIRequest, CreateGrantFormatRequestBody, TableIdResponse
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import GrantFormat, GrantFormatFile
+from src.db.tables import GrantTemplate, GrantTemplateFile
 from src.exceptions import DatabaseError
 from src.indexer.dto import FileDTO
 from src.utils.logging import get_logger
@@ -51,21 +51,21 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
     async with request.ctx.session_maker() as session, session.begin():
         try:
             result = await session.execute(
-                insert(GrantFormat)
+                insert(GrantTemplate)
                 .values(
                     {
                         "funding_organization_id": request_body["funding_organization_id"],
                     }
                 )
-                .returning(GrantFormat.id)
+                .returning(GrantTemplate.id)
             )
-            format_id = result.scalar_one()
+            template_id = result.scalar_one()
             file_ids = await session.scalars(
-                insert(GrantFormatFile)
+                insert(GrantTemplateFile)
                 .values(
                     [
                         {
-                            "format_id": format_id,
+                            "template_id": template_id,
                             "name": file_dto.filename,
                             "type": file_dto.mime_type,
                             "size": file_dto.content.__sizeof__(),
@@ -74,7 +74,7 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
                         for file_dto in uploaded_files
                     ]
                 )
-                .returning(GrantFormatFile.id)
+                .returning(GrantTemplateFile.id)
             )
 
             await session.commit()
@@ -89,7 +89,7 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
                 request.app.dispatch(
                     "parse_and_index_file",
                     context={
-                        "format_id": format_id,
+                        "template_id": template_id,
                         "file_id": file_id,
                         "file_dto": file_dto,
                     },
@@ -101,12 +101,12 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
     logger.info("Dispatching signal to generate grant format draft")
     await request.app.dispatch(
         "generate_grant_format",
-        context={"format_id": format_id},
+        context={"template_id": template_id},
     )
 
     return json(
         TableIdResponse(
-            id=str(format_id),
+            id=str(template_id),
         ),
         status=HTTPStatus.CREATED,
     )

@@ -30,6 +30,7 @@ dependencies = [
     "uvicorn>=0.32.1",
     "structlog>=24.4.0",
     "jsonschema>=4.23.0",
+    "sqlalchemy-utils>=0.41.2",
 ]
 
 [tool.pdm]

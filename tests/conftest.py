@@ -26,34 +26,32 @@ from vertexai.language_models import TextEmbedding
 
 from src.db.connection import engine_ref, get_session_maker
 from src.db.tables import (
-    Application,
-    ApplicationFile,
     ApplicationVector,
     Base,
     FundingOrganization,
-    GrantCfp,
-    GrantFormat,
-    GrantFormatFile,
-    GrantFormatVector,
+    GenerationResult,
+    GrantApplication,
+    GrantApplicationFile,
     GrantSection,
+    GrantTemplate,
+    GrantTemplateFile,
+    GrantTemplateVector,
     ResearchAim,
     ResearchTask,
-    SectionAspect,
-    TextGenerationResult,
+    SectionTopic,
     Workspace,
     WorkspaceUser,
 )
 from src.utils.ai import embeddings_model, init_ref
 from tests.factories import (
-    ApplicationFactory,
-    ApplicationFileFactory,
     ApplicationVectorFactory,
     FundingOrganizationFactory,
-    GrantCfpFactory,
-    GrantFormatFactory,
+    GrantApplicationFactory,
+    GrantApplicationFileFactory,
     GrantFormatFileFactory,
-    GrantFormatVectorFactory,
     GrantSectionFactory,
+    GrantTemplateFactory,
+    GrantTemplateVectorFactory,
     ResearchAimFactory,
     ResearchTaskFactory,
     SectionAspectsFactory,
@@ -231,8 +229,8 @@ async def org(async_session_maker: async_sessionmaker[Any]) -> FundingOrganizati
 
 
 @pytest.fixture
-async def grant_format(async_session_maker: async_sessionmaker[Any], org: FundingOrganization) -> GrantFormat:
-    format_data = GrantFormatFactory.build(name="NIH Research Grant", funding_organization_id=org.id)
+async def grant_format(async_session_maker: async_sessionmaker[Any], org: FundingOrganization) -> GrantTemplate:
+    format_data = GrantTemplateFactory.build(name="NIH Research Grant", funding_organization_id=org.id)
     async with async_session_maker() as session, session.begin():
         session.add(format_data)
         await session.commit()
@@ -240,8 +238,10 @@ async def grant_format(async_session_maker: async_sessionmaker[Any], org: Fundin
 
 
 @pytest.fixture
-async def grant_format_file(async_session_maker: async_sessionmaker[Any], grant_format: GrantFormat) -> GrantFormatFile:
-    file_data = GrantFormatFileFactory.build(format_id=grant_format.id)
+async def grant_format_file(
+    async_session_maker: async_sessionmaker[Any], grant_format: GrantTemplate
+) -> GrantTemplateFile:
+    file_data = GrantFormatFileFactory.build(template_id=grant_format.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -249,8 +249,8 @@ async def grant_format_file(async_session_maker: async_sessionmaker[Any], grant_
 
 
 @pytest.fixture
-async def grant_section(async_session_maker: async_sessionmaker[Any], grant_format: GrantFormat) -> GrantSection:
-    section_data = GrantSectionFactory.build(format_id=grant_format.id)
+async def grant_section(async_session_maker: async_sessionmaker[Any], grant_format: GrantTemplate) -> GrantSection:
+    section_data = GrantSectionFactory.build(template_id=grant_format.id)
     async with async_session_maker() as session, session.begin():
         session.add(section_data)
         await session.commit()
@@ -261,7 +261,7 @@ async def grant_section(async_session_maker: async_sessionmaker[Any], grant_form
 async def section_aspect(
     async_session_maker: async_sessionmaker[Any],
     grant_section: GrantSection,
-) -> SectionAspect:
+) -> SectionTopic:
     aspect_data = SectionAspectsFactory.build(section_id=grant_section.id)
     async with async_session_maker() as session, session.begin():
         session.add(aspect_data)
@@ -272,10 +272,10 @@ async def section_aspect(
 @pytest.fixture
 async def grant_format_vector(
     async_session_maker: async_sessionmaker[Any],
-    grant_format: GrantFormat,
-    grant_format_file: GrantFormatFile,
-) -> GrantFormatVector:
-    vector_data = GrantFormatVectorFactory.build(format_id=grant_format.id, file_id=grant_format_file.id)
+    grant_format: GrantTemplate,
+    grant_format_file: GrantTemplateFile,
+) -> GrantTemplateVector:
+    vector_data = GrantTemplateVectorFactory.build(template_id=grant_format.id, file_id=grant_format_file.id)
     async with async_session_maker() as session, session.begin():
         session.add(vector_data)
         await session.commit()
@@ -283,23 +283,9 @@ async def grant_format_vector(
 
 
 @pytest.fixture
-async def cfp(
-    async_session_maker: async_sessionmaker[Any],
-    org: FundingOrganization,
-    grant_format: GrantFormat,
-) -> GrantCfp:
-    cfp_data = GrantCfpFactory.build(funding_organization_id=org.id, format_id=grant_format.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(cfp_data)
-        await session.commit()
-    return cfp_data
-
-
-@pytest.fixture
-async def application(async_session_maker: async_sessionmaker[Any], workspace: Workspace, cfp: GrantCfp) -> Application:
-    application_data = ApplicationFactory.build(
+async def application(async_session_maker: async_sessionmaker[Any], workspace: Workspace) -> GrantApplication:
+    application_data = GrantApplicationFactory.build(
         workspace_id=workspace.id,
-        cfp_id=cfp.id,
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)
@@ -308,8 +294,10 @@ async def application(async_session_maker: async_sessionmaker[Any], workspace: W
 
 
 @pytest.fixture
-async def application_file(async_session_maker: async_sessionmaker[Any], application: Application) -> ApplicationFile:
-    file_data = ApplicationFileFactory.build(application_id=application.id)
+async def application_file(
+    async_session_maker: async_sessionmaker[Any], application: GrantApplication
+) -> GrantApplicationFile:
+    file_data = GrantApplicationFileFactory.build(application_id=application.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -317,7 +305,7 @@ async def application_file(async_session_maker: async_sessionmaker[Any], applica
 
 
 @pytest.fixture
-async def research_aim(async_session_maker: async_sessionmaker[Any], application: Application) -> ResearchAim:
+async def research_aim(async_session_maker: async_sessionmaker[Any], application: GrantApplication) -> ResearchAim:
     aim_data = ResearchAimFactory.build(application_id=application.id)
     async with async_session_maker() as session, session.begin():
         session.add(aim_data)
@@ -336,8 +324,8 @@ async def research_task(async_session_maker: async_sessionmaker[Any], research_a
 
 @pytest.fixture
 async def text_generation_result(
-    async_session_maker: async_sessionmaker[Any], application: Application
-) -> TextGenerationResult:
+    async_session_maker: async_sessionmaker[Any], application: GrantApplication
+) -> GenerationResult:
     result_data = TextGenerationResultFactory.build(application_id=application.id)
     async with async_session_maker() as session, session.begin():
         session.add(result_data)
@@ -348,8 +336,8 @@ async def text_generation_result(
 @pytest.fixture
 async def application_vector(
     async_session_maker: async_sessionmaker[Any],
-    application: Application,
-    application_file: ApplicationFile,
+    application: GrantApplication,
+    application_file: GrantApplicationFile,
 ) -> ApplicationVector:
     vector_data = ApplicationVectorFactory.build(application_id=application.id, file_id=application_file.id)
     async with async_session_maker() as session, session.begin():
@@ -359,17 +347,14 @@ async def application_vector(
 
 
 @pytest.fixture
-async def full_application_id(
-    workspace: Workspace, async_session_maker: async_sessionmaker[Any], cfp: GrantCfp
-) -> UUID:
+async def full_application_id(workspace: Workspace, async_session_maker: async_sessionmaker[Any]) -> UUID:
     application_id = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(Application).values(
+            insert(GrantApplication).values(
                 {
                     "id": application_id,
                     "workspace_id": workspace.id,
-                    "cfp_id": cfp.id,
                     "title": "Developing AI tailored immunocytokines to target melanoma brain metastases",
                     "significance": None,
                     "innovation": None,
@@ -487,7 +472,7 @@ async def full_application_id(
     ]
 
     async with async_session_maker() as session, session.begin():
-        await session.execute(insert(ApplicationFile).values(file_data))
+        await session.execute(insert(GrantApplicationFile).values(file_data))
         await session.commit()
 
     async with async_session_maker() as session, session.begin():
