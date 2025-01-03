@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
 from src.db.enums import GrantSectionEnum
-from src.db.tables import GrantFormat, GrantSection, SectionAspect
+from src.db.tables import GrantSection, GrantTemplate, SectionTopic
 from src.exceptions import DatabaseError
 from src.rag.grant_format.generate_section import SectionDTO, generate_section
 from src.rag.grant_format.generate_template import generate_format_template
@@ -20,11 +20,11 @@ TEMPLATE_VARIABLE_PATTERN: Final[Pattern[str]] = compile_regex("{{([^}]+)}}")
 logger = get_logger(__name__)
 
 
-async def generate_grant_format(format_id: str) -> None:
+async def generate_grant_format(template_id: str) -> None:
     """Generate a new grant format from user uploaded instructions.
 
     Args:
-        format_id: The ID of the grant format.
+        template_id: The ID of the grant format.
 
     Raises:
         DatabaseError: If there was an issue updating the grant format in the database.
@@ -34,26 +34,29 @@ async def generate_grant_format(format_id: str) -> None:
     """
     session_maker = get_session_maker()
 
-    logger.info("Starting grant format generation pipeline", format_id=format_id)
-    while await check_exists_files_being_indexed(session_maker=session_maker, format_id=format_id):
+    logger.info("Starting grant format generation pipeline", template_id=template_id)
+    while await check_exists_files_being_indexed(session_maker=session_maker, template_id=template_id):
         logger.info("Waiting for files to finish indexing")
         await sleep(2)
 
     logger.info("Files finished indexing, beginning text generation")
     async with session_maker() as session:
-        grant_format = await session.scalar(select(GrantFormat).where(GrantFormat.id == format_id))
+        grant_format = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == template_id))
 
     logger.info("Generating grant structure")
-    response = await generate_format_template(format_id=str(grant_format.id))
+    response = await generate_format_template(template_id=str(grant_format.id))
     template_section_labels = cast(list[GrantSectionEnum], TEMPLATE_VARIABLE_PATTERN.findall(response["template"]))
     section_data: list[SectionDTO] = await gather(
-        *[generate_section(format_id=format_id, section_type=section_type) for section_type in template_section_labels]
+        *[
+            generate_section(template_id=template_id, section_type=section_type)
+            for section_type in template_section_labels
+        ]
     )
 
     logger.info("Extracted grant sections", template_section_labels=template_section_labels)
     async with session_maker() as session, session.begin():
         try:
-            await session.execute(update(GrantFormat).where(GrantFormat.id == format_id).values(response))
+            await session.execute(update(GrantTemplate).where(GrantTemplate.id == template_id).values(response))
             section_ids = await session.scalars(
                 insert(GrantSection)
                 .values(
@@ -63,7 +66,7 @@ async def generate_grant_format(format_id: str) -> None:
                             "max_words": section_datum["max_words"],
                             "min_words": section_datum["min_words"],
                             "type": section_datum["type"],
-                            "format_id": format_id,
+                            "template_id": template_id,
                         }
                         for section_datum in section_data
                     ]
@@ -71,7 +74,7 @@ async def generate_grant_format(format_id: str) -> None:
                 .returning(GrantSection.id)
             )
             await session.execute(
-                insert(SectionAspect).values(
+                insert(SectionTopic).values(
                     [
                         {
                             "type": aspect_datum["type"],

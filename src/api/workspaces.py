@@ -10,7 +10,6 @@ from src.api.utils import verify_workspace_access
 from src.api_types import (
     APIRequest,
     ApplicationBaseResponse,
-    CfpResponse,
     CreateWorkspaceRequestBody,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,
@@ -18,7 +17,7 @@ from src.api_types import (
     WorkspaceIdResponse,
 )
 from src.db.enums import UserRoleEnum
-from src.db.tables import Application, GrantCfp, Workspace, WorkspaceUser
+from src.db.tables import Workspace, WorkspaceUser
 from src.exceptions import DatabaseError
 from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
@@ -161,13 +160,7 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
     async with request.ctx.session_maker() as session, session.begin():
         try:
             workspace = await session.scalar(
-                select(Workspace)
-                .options(
-                    selectinload(Workspace.applications)
-                    .selectinload(Application.cfp)
-                    .selectinload(GrantCfp.funding_organization)
-                )
-                .where(Workspace.id == workspace_id)
+                select(Workspace).options(selectinload(Workspace.applications)).where(Workspace.id == workspace_id)
             )
         except SQLAlchemyError as e:
             logger.error("Error retrieving workspace", exc_info=e)
@@ -185,18 +178,6 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
                     id=str(application.id),
                     title=application.title,
                     text=application.text,
-                    cfp=CfpResponse(
-                        id=str(application.cfp.id),
-                        allow_clinical_trials=application.cfp.allow_clinical_trials,
-                        allow_resubmissions=application.cfp.allow_resubmissions,
-                        category=application.cfp.category,
-                        code=application.cfp.code,
-                        description=application.cfp.description,
-                        title=application.cfp.title,
-                        url=application.cfp.url,
-                        funding_organization_id=str(application.cfp.funding_organization_id),
-                        funding_organization_name=application.cfp.funding_organization.name,
-                    ),
                 )
                 for application in workspace.applications
             ],

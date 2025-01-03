@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
-from src.db.tables import TextGenerationResult
+from src.db.tables import GenerationResult
 from src.exceptions import DatabaseError
 from src.rag.application_draft.dto import ResearchAimDTO
 from src.rag.application_draft.shared_prompts import (
@@ -135,16 +135,16 @@ async def handle_risks_and_alternatives_text_generation(
     async with session_maker() as session:
         if result := await session.scalar(
             select(
-                TextGenerationResult.content,
+                GenerationResult.content,
             )
             .where(
-                TextGenerationResult.application_id == application_id,
+                GenerationResult.application_id == application_id,
             )
             .where(
-                TextGenerationResult.section_id == research_aim_dto.id,
+                GenerationResult.section_id == research_aim_dto.id,
             )
             .where(
-                TextGenerationResult.section_type == "risks-and-alternatives",
+                GenerationResult.section_type == "risks-and-alternatives",
             )
         ):
             return cast(str, result)
@@ -177,7 +177,7 @@ async def handle_risks_and_alternatives_text_generation(
     async with session_maker() as session, session.begin():
         try:
             await session.execute(
-                insert(TextGenerationResult).values(
+                insert(GenerationResult).values(
                     {
                         "application_id": application_id,
                         "billable_characters_used": queries_result.billable_characters_used

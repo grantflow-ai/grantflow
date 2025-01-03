@@ -49,34 +49,6 @@ class ApplicationDraftCompleteResponse(TypedDict):
     text: str
 
 
-# CFP API Types
-
-
-class CfpResponse(TypedDict):
-    """Response schema for retrieving a CFP."""
-
-    id: str
-    """The ID of the CFP."""
-    allow_clinical_trials: bool
-    """Whether clinical trials are allowed."""
-    allow_resubmissions: bool
-    """Whether resubmissions are allowed."""
-    category: str | None
-    """The category of the CFP."""
-    code: str
-    """The code of the CFP."""
-    description: str | None
-    """The description of the CFP."""
-    title: str
-    """The title of the CFP."""
-    url: str | None
-    """The URL of the CFP."""
-    funding_organization_id: str
-    """The ID of the funding organization."""
-    funding_organization_name: str
-    """The name of the funding organization."""
-
-
 # Workspace API Types
 
 
@@ -134,8 +106,6 @@ class CreateApplicationRequestBody(TypedDict):
 
     title: str
     """The title of the application."""
-    cfp_id: str
-    """The ID of the CFP."""
     significance: str | None
     """The significance of the innovation."""
     innovation: str | None
@@ -149,8 +119,6 @@ class UpdateApplicationRequestBody(TypedDict):
 
     title: NotRequired[str]
     """The title of the application."""
-    cfp_id: NotRequired[str]
-    """The ID of the CFP."""
     significance: NotRequired[str | None]
     """The significance of the innovation."""
     innovation: NotRequired[str | None]
@@ -160,13 +128,12 @@ class UpdateApplicationRequestBody(TypedDict):
 
 
 class ApplicationBaseResponse(TableIdResponse):
-    """The base response body for application endpoints, extending ApplicationIdResponse with title and CFP details."""
+    """The base response body for application endpoints, extending ApplicationIdResponse with title."""
 
     title: str
     """The title of the application."""
-    cfp: CfpResponse
-    """The CFP of the application."""
     text: str | None
+    """The text of the application."""
 
 
 class ApplicationFullResponse(ApplicationBaseResponse):

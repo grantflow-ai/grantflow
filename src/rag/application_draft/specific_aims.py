@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.constants import PREMIUM_TEXT_GENERATION_MODEL
-from src.db.tables import Application, TextGenerationResult
+from src.db.tables import GenerationResult, GrantApplication
 from src.exceptions import DatabaseError
 from src.rag.application_draft.shared_prompts import (
     BASE_SYSTEM_PROMPT,
@@ -124,7 +124,7 @@ async def generate_specific_aims_text(
 
 async def handle_specific_aims_text_generation(
     *,
-    application: Application,
+    application: GrantApplication,
     innovation_text: str,
     research_plan_text: str,
     session_maker: async_sessionmaker[Any],
@@ -148,13 +148,13 @@ async def handle_specific_aims_text_generation(
     async with session_maker() as session:
         if result := await session.scalar(
             select(
-                TextGenerationResult.content,
+                GenerationResult.content,
             )
             .where(
-                TextGenerationResult.section_type == "specific-aims",
+                GenerationResult.section_type == "specific-aims",
             )
             .where(
-                TextGenerationResult.application_id == application.id,
+                GenerationResult.application_id == application.id,
             )
         ):
             return cast(str, result)
@@ -183,7 +183,7 @@ async def handle_specific_aims_text_generation(
     async with session_maker() as session, session.begin():
         try:
             await session.execute(
-                insert(TextGenerationResult).values(
+                insert(GenerationResult).values(
                     {
                         "application_id": application.id,
                         "billable_characters_used": queries_result.billable_characters_used

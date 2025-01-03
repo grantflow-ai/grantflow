@@ -14,7 +14,6 @@ from src.api_types import (
     ApplicationDraftProcessingResponse,
     ApplicationFileResponse,
     ApplicationFullResponse,
-    CfpResponse,
     CreateApplicationRequestBody,
     CreateResearchAimRequestBody,
     CreateResearchTaskRequestBody,
@@ -35,19 +34,18 @@ from src.api_types import (
 )
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.tables import (
-    Application,
-    ApplicationFile,
     ApplicationVector,
     FundingOrganization,
-    GrantCfp,
-    GrantFormat,
-    GrantFormatFile,
-    GrantFormatVector,
+    GenerationResult,
+    GrantApplication,
+    GrantApplicationFile,
     GrantSection,
+    GrantTemplate,
+    GrantTemplateFile,
+    GrantTemplateVector,
     ResearchAim,
     ResearchTask,
-    SectionAspect,
-    TextGenerationResult,
+    SectionTopic,
     Workspace,
     WorkspaceUser,
 )
@@ -56,8 +54,8 @@ faker = Faker()
 
 
 # Grant Format Related Factories
-class GrantFormatFactory(SQLAlchemyFactory[GrantFormat]):
-    __model__ = GrantFormat
+class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
+    __model__ = GrantTemplate
     template = dedent("""
     ## Executive Summary
 
@@ -90,20 +88,20 @@ class GrantFormatFactory(SQLAlchemyFactory[GrantFormat]):
     """)
 
 
-class GrantFormatFileFactory(SQLAlchemyFactory[GrantFormatFile]):
-    __model__ = GrantFormatFile
+class GrantFormatFileFactory(SQLAlchemyFactory[GrantTemplateFile]):
+    __model__ = GrantTemplateFile
 
 
 class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):
     __model__ = GrantSection
 
 
-class SectionAspectsFactory(SQLAlchemyFactory[SectionAspect]):
-    __model__ = SectionAspect
+class SectionAspectsFactory(SQLAlchemyFactory[SectionTopic]):
+    __model__ = SectionTopic
 
 
-class GrantFormatVectorFactory(SQLAlchemyFactory[GrantFormatVector]):
-    __model__ = GrantFormatVector
+class GrantTemplateVectorFactory(SQLAlchemyFactory[GrantTemplateVector]):
+    __model__ = GrantTemplateVector
     embedding = [uniform(-1, 1) for _ in range(EMBEDDING_DIMENSIONS)]
 
     @classmethod
@@ -113,13 +111,9 @@ class GrantFormatVectorFactory(SQLAlchemyFactory[GrantFormatVector]):
         return super().get_type_from_column(column)
 
 
-# Organization and CFP Factories
+# Organization Factories
 class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
     __model__ = FundingOrganization
-
-
-class GrantCfpFactory(SQLAlchemyFactory[GrantCfp]):
-    __model__ = GrantCfp
 
 
 # Workspace Related Factories
@@ -132,12 +126,12 @@ class WorkspaceUserFactory(SQLAlchemyFactory[WorkspaceUser]):
 
 
 # Application Related Factories
-class ApplicationFactory(SQLAlchemyFactory[Application]):
-    __model__ = Application
+class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
+    __model__ = GrantApplication
 
 
-class ApplicationFileFactory(SQLAlchemyFactory[ApplicationFile]):
-    __model__ = ApplicationFile
+class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationFile]):
+    __model__ = GrantApplicationFile
 
 
 class ResearchAimFactory(SQLAlchemyFactory[ResearchAim]):
@@ -148,8 +142,8 @@ class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
     __model__ = ResearchTask
 
 
-class TextGenerationResultFactory(SQLAlchemyFactory[TextGenerationResult]):
-    __model__ = TextGenerationResult
+class TextGenerationResultFactory(SQLAlchemyFactory[GenerationResult]):
+    __model__ = GenerationResult
 
 
 class ApplicationVectorFactory(SQLAlchemyFactory[ApplicationVector]):
@@ -203,10 +197,6 @@ class LoginRequestBodyFactory(TypedDictFactory[LoginRequestBody]):
 # API Response Factories
 class WorkspaceIdResponseFactory(TypedDictFactory[WorkspaceIdResponse]):
     __model__ = WorkspaceIdResponse
-
-
-class CfpResponseFactory(TypedDictFactory[CfpResponse]):
-    __model__ = CfpResponse
 
 
 class ResearchTaskResponseFactory(TypedDictFactory[ResearchTaskResponse]):

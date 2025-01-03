@@ -9,7 +9,6 @@ from src.api.applications import (
     handle_retrieve_application_text,
     handle_update_application,
 )
-from src.api.cfps import handle_retrieve_cfps
 from src.api.format import handle_create_grant_format
 from src.api.health import health_check
 from src.api.login import handle_login
@@ -35,9 +34,6 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     # Auth
     app.add_route(handle_login, "/login", methods=["POST"])
     app.add_route(handle_create_otp, "/otp", methods=["GET"])
-
-    # CFPs
-    app.add_route(handle_retrieve_cfps, "/cfps", methods=["GET"])
 
     # Workspaces
     app.add_route(handle_create_workspace, "/workspaces", methods=["POST"])
