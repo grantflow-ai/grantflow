@@ -26,11 +26,11 @@ CREATE UNIQUE INDEX "uq_format_name_funding_org" ON "grant_formats" ("name", "fu
 -- Drop index "ix_grant_cfps_code" from table: "grant_cfps"
 DROP INDEX "ix_grant_cfps_code";
 -- Modify "grant_cfps" table
-ALTER TABLE "grant_cfps" DROP CONSTRAINT "grant_cfps_funding_organization_id_fkey", ADD COLUMN "format_id" uuid NOT NULL, ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL, ADD
+ALTER TABLE "grant_cfps" DROP CONSTRAINT "grant_cfps_funding_organization_id_fkey", ADD COLUMN "template_id" uuid NOT NULL, ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL, ADD
  CONSTRAINT "grant_cfps_funding_organization_id_fkey" FOREIGN KEY ("funding_organization_id") REFERENCES "funding_organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, ADD
- CONSTRAINT "grant_cfps_format_id_fkey" FOREIGN KEY ("format_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE RESTRICT;
--- Create index "ix_grant_cfps_format_id" to table: "grant_cfps"
-CREATE INDEX "ix_grant_cfps_format_id" ON "grant_cfps" ("format_id");
+ CONSTRAINT "grant_cfps_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE RESTRICT;
+-- Create index "ix_grant_cfps_template_id" to table: "grant_cfps"
+CREATE INDEX "ix_grant_cfps_template_id" ON "grant_cfps" ("template_id");
 -- Create index "uq_cfp_code_funding_org" to table: "grant_cfps"
 CREATE UNIQUE INDEX "uq_cfp_code_funding_org" ON "grant_cfps" ("code", "funding_organization_id");
 -- Modify "workspaces" table
@@ -44,7 +44,7 @@ ALTER TABLE "application_files" DROP CONSTRAINT "application_files_application_i
  CONSTRAINT "application_files_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE;
 -- Create "grant_format_files" table
 CREATE TABLE "grant_format_files" (
-  "format_id" uuid NOT NULL,
+  "template_id" uuid NOT NULL,
   "name" character varying(255) NOT NULL,
   "type" character varying(255) NOT NULL,
   "size" integer NOT NULL,
@@ -54,22 +54,22 @@ CREATE TABLE "grant_format_files" (
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "grant_format_files_format_id_fkey" FOREIGN KEY ("format_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+  CONSTRAINT "grant_format_files_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
--- Create index "ix_grant_format_files_format_id" to table: "grant_format_files"
-CREATE INDEX "ix_grant_format_files_format_id" ON "grant_format_files" ("format_id");
+-- Create index "ix_grant_format_files_template_id" to table: "grant_format_files"
+CREATE INDEX "ix_grant_format_files_template_id" ON "grant_format_files" ("template_id");
 -- Create "grant_format_vectors" table
 CREATE TABLE "grant_format_vectors" (
-  "format_id" uuid NOT NULL,
+  "template_id" uuid NOT NULL,
   "file_id" uuid NOT NULL,
   "embedding" vector(256) NOT NULL,
   "chunk" json NOT NULL,
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("format_id", "file_id", "id"),
+  PRIMARY KEY ("template_id", "file_id", "id"),
   CONSTRAINT "grant_format_vectors_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "grant_format_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT "grant_format_vectors_format_id_fkey" FOREIGN KEY ("format_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+  CONSTRAINT "grant_format_vectors_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 -- Create index "ix_grant_format_vectors_embedding_hnsw" to table: "grant_format_vectors"
 CREATE INDEX "ix_grant_format_vectors_embedding_hnsw" ON "grant_format_vectors" USING hnsw ("embedding" vector_cosine_ops);
@@ -79,15 +79,15 @@ CREATE TABLE "grant_sections" (
   "max_words" integer NULL,
   "min_words" integer NULL,
   "type" "grantsectionenum" NOT NULL,
-  "format_id" uuid NOT NULL,
+  "template_id" uuid NOT NULL,
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "grant_sections_format_id_fkey" FOREIGN KEY ("format_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+  CONSTRAINT "grant_sections_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "grant_formats" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
--- Create index "ix_grant_sections_format_id" to table: "grant_sections"
-CREATE INDEX "ix_grant_sections_format_id" ON "grant_sections" ("format_id");
+-- Create index "ix_grant_sections_template_id" to table: "grant_sections"
+CREATE INDEX "ix_grant_sections_template_id" ON "grant_sections" ("template_id");
 -- Modify "research_aims" table
 ALTER TABLE "research_aims" DROP CONSTRAINT "research_aims_application_id_fkey", ADD COLUMN "created_at" timestamptz NOT NULL DEFAULT now(), ADD COLUMN "updated_at" timestamptz NOT NULL, ADD
  CONSTRAINT "research_aims_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE;

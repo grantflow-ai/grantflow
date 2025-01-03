@@ -15,7 +15,6 @@ from src.api_types import (
     ApplicationDraftProcessingResponse,
     ApplicationFileResponse,
     ApplicationFullResponse,
-    CfpResponse,
     CreateApplicationRequestBody,
     ResearchAimResponse,
     ResearchTaskResponse,
@@ -23,7 +22,7 @@ from src.api_types import (
     UpdateApplicationRequestBody,
 )
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import Application, ApplicationFile, GrantCfp, ResearchAim, ResearchTask
+from src.db.tables import GrantApplication, GrantApplicationFile, ResearchAim, ResearchTask
 from src.exceptions import DatabaseError
 from src.indexer.dto import FileDTO
 from src.utils.logging import get_logger
@@ -67,17 +66,16 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
     async with request.ctx.session_maker() as session, session.begin():
         try:
             result = await session.execute(
-                insert(Application)
+                insert(GrantApplication)
                 .values(
                     {
                         "workspace_id": workspace_id,
                         "title": request_body["title"],
-                        "cfp_id": request_body["cfp_id"],
                         "significance": request_body["significance"],
                         "innovation": request_body["innovation"],
                     }
                 )
-                .returning(Application.id)
+                .returning(GrantApplication.id)
             )
             application_id = result.scalar_one()
 
@@ -115,7 +113,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
             file_ids = (
                 (
                     await session.scalars(
-                        insert(ApplicationFile)
+                        insert(GrantApplicationFile)
                         .values(
                             [
                                 {
@@ -128,7 +126,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
                                 for file_dto in uploaded_files
                             ]
                         )
-                        .returning(ApplicationFile.id)
+                        .returning(GrantApplicationFile.id)
                     )
                 )
                 if uploaded_files
@@ -190,13 +188,12 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
     async with request.ctx.session_maker() as session:
         try:
             result = await session.execute(
-                select(Application)
+                select(GrantApplication)
                 .options(
-                    selectinload(Application.cfp).selectinload(GrantCfp.funding_organization),
-                    selectinload(Application.files),
-                    selectinload(Application.research_aims).selectinload(ResearchAim.research_tasks),
+                    selectinload(GrantApplication.files),
+                    selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
                 )
-                .where(Application.id == application_id)
+                .where(GrantApplication.id == application_id)
             )
             application = result.scalar_one()
         except SQLAlchemyError as e:
@@ -210,18 +207,6 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
             significance=application.significance,
             innovation=application.innovation,
             text=application.text,
-            cfp=CfpResponse(
-                id=str(application.cfp.id),
-                allow_clinical_trials=application.cfp.allow_clinical_trials,
-                allow_resubmissions=application.cfp.allow_resubmissions,
-                category=application.cfp.category,
-                code=application.cfp.code,
-                description=application.cfp.description,
-                title=application.cfp.title,
-                url=application.cfp.url,
-                funding_organization_id=str(application.cfp.funding_organization_id),
-                funding_organization_name=application.cfp.funding_organization.name,
-            ),
             research_aims=[
                 ResearchAimResponse(
                     id=str(research_aim.id),
@@ -277,7 +262,10 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
     async with request.ctx.session_maker() as session, session.begin():
         try:
             await session.execute(
-                update(Application).where(Application.id == application_id).values(request_body).returning(Application)
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .values(request_body)
+                .returning(GrantApplication)
             )
             await session.commit()
         except SQLAlchemyError as e:
@@ -307,7 +295,7 @@ async def handle_delete_application(request: APIRequest, workspace_id: UUID, app
 
     async with request.ctx.session_maker() as session, session.begin():
         try:
-            await session.execute(delete(Application).where(Application.id == application_id))
+            await session.execute(delete(GrantApplication).where(GrantApplication.id == application_id))
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
@@ -335,10 +323,10 @@ async def handle_retrieve_application_text(
     logger.info("handling polling request for application", application_id=application_id)
     async with request.ctx.session_maker() as session:
         result = await session.execute(
-            select(Application.text)
-            .where(Application.id == application_id)
-            .where(Application.completed_at.is_not(None))
-            .where(Application.text.isnot(None))
+            select(GrantApplication.text)
+            .where(GrantApplication.id == application_id)
+            .where(GrantApplication.completed_at.is_not(None))
+            .where(GrantApplication.text.isnot(None))
         )
         application_text = result.scalar_one_or_none()
 

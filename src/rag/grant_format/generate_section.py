@@ -1,7 +1,7 @@
 from string import Template
 from typing import Final, NotRequired, TypedDict
 
-from src.db.enums import GrantSectionEnum, ResearchAspectEnum
+from src.db.enums import ContentTopicEnum, GrantSectionEnum
 from src.rag.grant_format.shared_prompts import GRANT_FORMAT_SYSTEM_PROMPT
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import handle_create_search_queries
@@ -81,7 +81,7 @@ The next task in the RAG pipeline is to generate the data for the ${section_type
 class SectionAspectsDTO(TypedDict):
     """An aspect of a section."""
 
-    type: ResearchAspectEnum
+    type: ContentTopicEnum
     """The type of the aspect."""
     weight: float
     """The weight of the aspect."""
@@ -111,7 +111,7 @@ response_schema = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "type": {"type": "string", "enum": [e.value for e in ResearchAspectEnum]},
+                    "type": {"type": "string", "enum": [e.value for e in ContentTopicEnum]},
                     "weight": {"type": "number", "minimum": 0, "maximum": 1},
                 },
                 "required": ["type", "weight"],
@@ -134,11 +134,11 @@ def validate_section_dto(dto: SectionDTO) -> bool:
     return max_words is None or min_words is None or (max_words > 0 and 0 <= min_words <= max_words)
 
 
-async def generate_section(format_id: str, section_type: GrantSectionEnum) -> SectionDTO:
+async def generate_section(template_id: str, section_type: GrantSectionEnum) -> SectionDTO:
     """Generate the sections of the grant format.
 
     Args:
-        format_id: The ID of the grant format.
+        template_id: The ID of the grant format.
         section_type: The type of the section.
 
     Returns:
@@ -150,7 +150,7 @@ async def generate_section(format_id: str, section_type: GrantSectionEnum) -> Se
     )
 
     search_results = await retrieve_documents(
-        format_id=format_id,
+        template_id=template_id,
         search_queries=queries_result.queries,
     )
 
@@ -158,7 +158,7 @@ async def generate_section(format_id: str, section_type: GrantSectionEnum) -> Se
         prompt_identifier="grant_format_structure",
         system_prompt=GRANT_FORMAT_SYSTEM_PROMPT,
         user_prompt=GENERATE_GRANT_SECTION_USER_PROMPT.substitute(
-            research_aspect_types=serialize([e.value for e in ResearchAspectEnum]),
+            research_aspect_types=serialize([e.value for e in ContentTopicEnum]),
             section_type=section_type,
             rag_results=serialize(search_results),
         ),

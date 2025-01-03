@@ -7,7 +7,7 @@ from anyio import Path
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import ApplicationFile, ApplicationVector
+from src.db.tables import ApplicationVector, GrantApplicationFile
 from src.indexer.dto import VectorDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import SearchQueriesResponse, handle_create_search_queries
@@ -22,7 +22,7 @@ from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_document_retrieval(
     logger: logging.Logger,
-    application_file: ApplicationFile,
+    application_file: GrantApplicationFile,
     async_session_maker: async_sessionmaker[Any],
     data_file: Path,
 ) -> None:

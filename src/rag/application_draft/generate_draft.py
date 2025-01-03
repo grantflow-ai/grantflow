@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
 from src.db.connection import get_session_maker
-from src.db.tables import Application, GrantCfp, ResearchAim
+from src.db.tables import GrantApplication, ResearchAim
 from src.exceptions import DatabaseError
 from src.rag.application_draft.research_innovation import handle_innovation_text_generation
 from src.rag.application_draft.research_plan import handle_research_plan_text_generation
@@ -62,13 +62,12 @@ async def generate_application_draft(*, application_id: str) -> str:
 
     async with session_maker() as session:
         application = await session.scalar(
-            select(Application)
+            select(GrantApplication)
             .options(
-                selectinload(Application.cfp).selectinload(GrantCfp.funding_organization),
-                selectinload(Application.files),
-                selectinload(Application.research_aims).selectinload(ResearchAim.research_tasks),
+                selectinload(GrantApplication.files),
+                selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
             )
-            .where(Application.id == application_id)
+            .where(GrantApplication.id == application_id)
         )
 
     logger.info("Starting research plan section generation")
@@ -120,9 +119,9 @@ async def generate_application_draft(*, application_id: str) -> str:
     async with session_maker() as session, session.begin():
         try:
             await session.execute(
-                update(Application)
+                update(GrantApplication)
                 .values({"text": result, "completed_at": datetime.now(tz=UTC)})
-                .where(Application.id == application_id)
+                .where(GrantApplication.id == application_id)
             )
             await session.commit()
             logger.info("Draft generation result saved to database")

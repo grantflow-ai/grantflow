@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any
 
-from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -15,8 +14,7 @@ from src.api_types import (
 )
 from src.db.enums import UserRoleEnum
 from src.db.tables import (
-    Application,
-    GrantCfp,
+    GrantApplication,
     Workspace,
     WorkspaceUser,
 )
@@ -29,7 +27,6 @@ async def test_create_application_api_request_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    cfp: GrantCfp,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -38,7 +35,7 @@ async def test_create_application_api_request_success(
             )
         )
 
-    data = CreateApplicationRequestBodyFactory.build(workspace_id=str(workspace.id), cfp_id=str(cfp.id))
+    data = CreateApplicationRequestBodyFactory.build(workspace_id=str(workspace.id))
 
     files = {
         "file1": (b"test content 1", "application/pdf"),
@@ -55,7 +52,7 @@ async def test_create_application_api_request_success(
     response_body = deserialize(response.body, TableIdResponse)
 
     async with async_session_maker() as session:
-        application = await session.scalar(select(Application).where(Application.id == response_body["id"]))
+        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == response_body["id"]))
         assert application.title == data["title"]
 
 
@@ -64,8 +61,6 @@ async def test_create_application_no_files_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    cfp: GrantCfp,
-    mocker: MockerFixture,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -74,7 +69,7 @@ async def test_create_application_no_files_success(
             )
         )
 
-    data = CreateApplicationRequestBodyFactory.build(workspace_id=str(workspace.id), cfp_id=str(cfp.id))
+    data = CreateApplicationRequestBodyFactory.build(workspace_id=str(workspace.id))
 
     _, response = await asgi_client.post(
         f"/workspaces/{workspace.id}/applications",
@@ -90,7 +85,7 @@ async def test_retrieve_application_text_processing(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: Application,
+    application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -114,7 +109,7 @@ async def test_retrieve_application_text_complete(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: Application,
+    application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -123,8 +118,8 @@ async def test_retrieve_application_text_complete(
             )
         )
         await session.execute(
-            update(Application)
-            .where(Application.id == application.id)
+            update(GrantApplication)
+            .where(GrantApplication.id == application.id)
             .values({"text": "Generated text", "completed_at": datetime.now(tz=UTC)})
         )
 
@@ -144,7 +139,7 @@ async def test_update_application_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: Application,
+    application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -166,7 +161,7 @@ async def test_update_application_success(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     async with async_session_maker() as session:
-        updated = await session.scalar(select(Application).where(Application.id == application.id))
+        updated = await session.scalar(select(GrantApplication).where(GrantApplication.id == application.id))
         assert updated.title == update_data["title"]
         assert updated.significance == update_data["significance"]
         assert updated.innovation == update_data["innovation"]
@@ -175,7 +170,7 @@ async def test_update_application_success(
 async def test_update_application_unauthorized(
     asgi_client: SanicASGITestClient,
     workspace: Workspace,
-    application: Application,
+    application: GrantApplication,
 ) -> None:
     update_data = UpdateApplicationRequestBody(title="Updated Title")
 
@@ -193,7 +188,7 @@ async def test_delete_application_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: Application,
+    application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -210,14 +205,14 @@ async def test_delete_application_success(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     async with async_session_maker() as session:
-        result = await session.scalar(select(Application).where(Application.id == application.id))
+        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == application.id))
         assert result is None
 
 
 async def test_delete_application_unauthorized(
     asgi_client: SanicASGITestClient,
     workspace: Workspace,
-    application: Application,
+    application: GrantApplication,
 ) -> None:
     _, response = await asgi_client.delete(
         f"/workspaces/{workspace.id}/applications/{application.id}",

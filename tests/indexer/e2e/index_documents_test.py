@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import Application, ApplicationFile
+from src.db.tables import GrantApplication, GrantApplicationFile
 from src.indexer.chunking import chunk_text
 from src.indexer.indexing import index_documents
 from src.utils.serialization import serialize
@@ -26,8 +26,8 @@ async def test_index_documents(
     logger: logging.Logger,
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
-    application: Application,
-    application_file: ApplicationFile,
+    application: GrantApplication,
+    application_file: GrantApplicationFile,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings")
 
