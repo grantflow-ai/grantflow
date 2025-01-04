@@ -50,7 +50,7 @@ async def test_document_retrieval(
         stmt = insert(ApplicationVector).values(
             [
                 {
-                    "application_id": application_file.application_id,
+                    "application_id": application_file.grant_application_id,
                     "file_id": application_file.id,
                     "embedding": vector_dto["embedding"],
                     "chunk": vector_dto["chunk"],
@@ -63,7 +63,7 @@ async def test_document_retrieval(
 
     logger.info("Inserted embeddings data into the database")
     results = await retrieve_documents(
-        application_id=str(application_file.application_id),
+        application_id=str(application_file.grant_application_id),
         search_queries=search_queries,
     )
 

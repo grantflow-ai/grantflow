@@ -273,10 +273,10 @@ class GrantApplicationFile(FileBase):
     __tablename__ = "grant_application_files"
 
     # Relationships
-    application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    grant_application_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
     )
-    application: Relationship["GrantApplication"] = relationship("Application", back_populates="files")
+    grant_application: Relationship["GrantApplication"] = relationship("GrantApplication", back_populates="files")
 
 
 class ResearchAim(BaseWithUUIDPK):
@@ -292,10 +292,12 @@ class ResearchAim(BaseWithUUIDPK):
     title: Mapped[str] = mapped_column(String(255))
 
     # Relationships
-    application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    grant_application_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
     )
-    application: Relationship["GrantApplication"] = relationship("Application", back_populates="research_aims")
+    grant_application: Relationship["GrantApplication"] = relationship(
+        "GrantApplication", back_populates="research_aims"
+    )
     research_tasks: Relationship[list["ResearchTask"]] = relationship("ResearchTask", back_populates="research_aim")
 
 
@@ -327,27 +329,29 @@ class GenerationResult(BaseWithUUIDPK):
     tokens_used: Mapped[int | None] = mapped_column(Integer, default=0)
 
     # Relationships
-    application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    grant_application_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
     )
-    application: Relationship["GrantApplication"] = relationship("Application", back_populates="generation_results")
+    grant_application: Relationship["GrantApplication"] = relationship(
+        "GrantApplication", back_populates="generation_results"
+    )
 
 
 class ApplicationVector(VectorBase):
     """Application vector table."""
 
-    __tablename__ = "application_vectors"
+    __tablename__ = "grant_application_vectors"
 
-    application_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("applications.id", ondelete="CASCADE"), primary_key=True
+    grant_application_id: Mapped[UUID[str]] = mapped_column(
+        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True
     )
     file_id: Mapped[UUID[str]] = mapped_column(
-        UUID(), ForeignKey("application_files.id", ondelete="CASCADE"), primary_key=True
+        UUID(), ForeignKey("grant_application_files.id", ondelete="CASCADE"), primary_key=True
     )
 
     __table_args__ = (
         Index(
-            "idx_application_vectors_embedding",
+            "idx_grant_application_vectors_embedding",
             "embedding",
             postgresql_using="hnsw",
             postgresql_with={"m": 48, "ef_construction": 256},
