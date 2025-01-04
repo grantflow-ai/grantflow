@@ -148,7 +148,7 @@ async def handle_research_aim_description_generation(
                 GenerationResult.content,
             )
             .where(
-                GenerationResult.application_id == application_id,
+                GenerationResult.grant_application_id == application_id,
             )
             .where(
                 GenerationResult.section_id == research_aim_dto.id,

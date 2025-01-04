@@ -138,7 +138,7 @@ async def handle_innovation_text_generation(
                 GenerationResult.section_type == "innovation",
             )
             .where(
-                GenerationResult.application_id == application.id,
+                GenerationResult.grant_application_id == application.id,
             )
         ):
             return cast(str, result)

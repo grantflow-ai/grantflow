@@ -157,7 +157,7 @@ async def handle_significance_text_generation(
                 GenerationResult.section_type == "significance",
             )
             .where(
-                GenerationResult.application_id == application.id,
+                GenerationResult.grant_application_id == application.id,
             )
         ):
             return cast(str, result)
