@@ -69,13 +69,13 @@ async def test_create_application_vector(
         result = await session.get(
             ApplicationVector,
             {
-                "application_id": vector_data.application_id,
+                "application_id": vector_data.grant_application_id,
                 "chunk_index": vector_data.chunk["index"],
                 "file_id": vector_data.file_id,
             },
         )
         assert result is not None
-        assert result.application_id == vector_data.application_id
+        assert result.grant_application_id == vector_data.grant_application_id
         assert result.chunk["index"] == vector_data.chunk["index"]
         assert result.chunk["content"] == vector_data.chunk["content"]
         assert result.file_id == vector_data.file_id

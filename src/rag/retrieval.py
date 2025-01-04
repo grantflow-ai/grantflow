@@ -66,8 +66,8 @@ async def retrieve_documents(
             select(vector_table_cls)
             .join(file_table_cls, vector_table_cls.file_id == file_table_cls.id)
             .where(
-                file_table_cls.application_id == application_id
-                if hasattr(file_table_cls, "application_id")
+                file_table_cls.grant_application_id == application_id
+                if hasattr(file_table_cls, "grant_application_id")
                 else file_table_cls.grant_template_id == template_id
             )
             .order_by(vector_table_cls.embedding.cosine_distance(query_embeddings))

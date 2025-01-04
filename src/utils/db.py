@@ -56,8 +56,8 @@ async def check_exists_files_being_indexed(
                     exists(
                         select(file_table_cls)
                         .where(
-                            file_table_cls.application_id == application_id
-                            if hasattr(file_table_cls, "application_id")
+                            file_table_cls.grant_application_id == application_id
+                            if hasattr(file_table_cls, "grant_application_id")
                             else file_table_cls.grant_template_id == template_id
                         )
                         .where(file_table_cls.status == FileIndexingStatusEnum.INDEXING)
