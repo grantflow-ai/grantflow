@@ -12,7 +12,7 @@ export function useUploadFile(): {
 		isUploading: false,
 		progress: 0,
 		uploadedFile: null,
-		// eslint-disable-next-line @typescript-eslint/require-await,no-unused-vars
+		// eslint-disable-next-line @typescript-eslint/require-await
 		uploadFile: async (_: { url?: string } & File) => {
 			return;
 		},
