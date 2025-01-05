@@ -10,6 +10,7 @@ const WHITE_LISTED_EMAILS = new Set([
 	"dviraran@technion.ac.il",
 	"mgrinstein@bwh.harvard.edu",
 	"naftali.kaminski@yale.edu",
+	"rotemka@ekmd.huji.ac.il",
 ]);
 
 const emailSchema = z.object({

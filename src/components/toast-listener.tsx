@@ -22,7 +22,7 @@ export function ToastListener() {
 			const redirectPath = `${pathname}?${newSearchParams.toString()}`;
 			router.replace(redirectPath, { scroll: false });
 		}
-	}, [searchParams]);
+	}, [searchParams, router, pathname]);
 
 	return null;
 }

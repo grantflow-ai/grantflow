@@ -18,10 +18,11 @@ import { toast } from "sonner";
  */
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
-	const auth = getFirebaseAuth();
 
 	useEffect(() => {
 		const finalizeSignIn = async () => {
+			const auth = getFirebaseAuth();
+
 			const email = globalThis.localStorage.getItem(FIREBASE_LOCAL_STORAGE_KEY);
 			const isEmailLink = isSignInWithEmailLink(auth, globalThis.location.href);
 			if (!email || !isEmailLink) {

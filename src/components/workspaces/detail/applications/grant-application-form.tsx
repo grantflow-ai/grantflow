@@ -35,12 +35,10 @@ export function GrantApplicationForm({ cfps, workspaceId }: { cfps: GrantCfp[]; 
 				formValues: values,
 				workspaceId,
 			});
-			console.log("applicationId", applicationId);
 			const path = PagePath.APPLICATION_DETAIL.replace(":workspaceId", workspaceId).replace(
 				":applicationId",
 				applicationId,
 			);
-			console.log("path", path);
 			router.replace(path);
 		} catch (error) {
 			logError({ error, identifier: "handleCreateApplication" });
@@ -189,7 +187,6 @@ async function handleCreateApplication({
 			body: formData,
 		})
 		.json<ApplicationId>();
-	console.log("created application", id);
 	return id;
 }
 

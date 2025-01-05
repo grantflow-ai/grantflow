@@ -15,7 +15,7 @@ export function ApplicationWorkspace({ application, workspaceId }: { application
 				setDraftText(draft);
 			})();
 		}
-	}, [application.text]);
+	}, [application.text, workspaceId, application.id]);
 
 	return (
 		<div className="flex gap-4" data-testid="application-workspace">
