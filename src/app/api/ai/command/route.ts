@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
  * @param req The incoming request
  * @returns The response to send
  */
-// eslint-disable-next-line @typescript-eslint/require-await,no-unused-vars
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function POST(_: NextRequest) {
 	// const { messages, system } = await req.json();
 
