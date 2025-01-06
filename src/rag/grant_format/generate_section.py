@@ -150,8 +150,7 @@ async def generate_section(template_id: str, section_type: GrantSectionEnum) -> 
     )
 
     search_results = await retrieve_documents(
-        template_id=template_id,
-        search_queries=queries_result.queries,
+        template_id=template_id, search_queries=queries_result.queries, max_results=10
     )
 
     result = await handle_completions_request(
