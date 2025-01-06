@@ -41,8 +41,8 @@ from src.db.tables import (
     GrantApplicationFile,
     GrantSection,
     GrantTemplate,
-    GrantTemplateFile,
     GrantTemplateVector,
+    OrganizationGrantGuidelinesFile,
     ResearchAim,
     ResearchTask,
     SectionTopic,
@@ -88,8 +88,8 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     """)
 
 
-class GrantFormatFileFactory(SQLAlchemyFactory[GrantTemplateFile]):
-    __model__ = GrantTemplateFile
+class GrantFormatFileFactory(SQLAlchemyFactory[OrganizationGrantGuidelinesFile]):
+    __model__ = OrganizationGrantGuidelinesFile
 
 
 class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):

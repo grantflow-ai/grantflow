@@ -3,7 +3,7 @@ from typing import Final, cast, overload
 from sqlalchemy import select
 
 from src.db.connection import get_session_maker
-from src.db.tables import ApplicationVector, GrantApplicationFile, GrantTemplateFile, GrantTemplateVector
+from src.db.tables import ApplicationVector, GrantApplicationFile, GrantTemplateVector, OrganizationGrantGuidelinesFile
 from src.rag.dto import DocumentDTO
 from src.utils.embeddings import TaskType, generate_embeddings
 from src.utils.logging import get_logger
@@ -55,7 +55,7 @@ async def retrieve_documents(
     if not application_id and not template_id:
         raise ValueError("Either application_id or template_id must be provided.")
 
-    file_table_cls = GrantApplicationFile if application_id else GrantTemplateFile
+    file_table_cls = GrantApplicationFile if application_id else OrganizationGrantGuidelinesFile
     vector_table_cls = ApplicationVector if application_id else GrantTemplateVector
 
     query_embeddings = await generate_embeddings(",".join(search_queries), TaskType.RetrievalQuery)

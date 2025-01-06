@@ -5,7 +5,7 @@ from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import GrantApplicationFile, GrantTemplateFile
+from src.db.tables import GrantApplicationFile, OrganizationGrantGuidelinesFile
 
 
 @overload
@@ -46,7 +46,7 @@ async def check_exists_files_being_indexed(
     if not application_id and not template_id:
         raise ValueError("Either application_id or template_id must be provided.")
 
-    file_table_cls = GrantApplicationFile if application_id else GrantTemplateFile
+    file_table_cls = GrantApplicationFile if application_id else OrganizationGrantGuidelinesFile
 
     async with session_maker() as session:
         return cast(

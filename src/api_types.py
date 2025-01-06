@@ -283,9 +283,9 @@ class LoginResponse(TypedDict):
 class CreateGrantTemplateRequestBody(TypedDict):
     """The request body for creating an application."""
 
-    funding_organization_id: NotRequired[str | None]
+    funding_organization_id: NotRequired[str]
     """Grant funding organization ID."""
-    funding_organization_name: NotRequired[str | None]
+    funding_organization_name: NotRequired[str]
     """Grant funding organization name."""
-    cfp_url: NotRequired[str | None]
+    cfp_url: NotRequired[str]
     """Grant CFP URL."""
