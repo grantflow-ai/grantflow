@@ -17,7 +17,9 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --verbose --no-install-project --no-editable --no-dev
+    uv sync --verbose --no-install-project --no-editable --no-dev && \
+    uv run playwright install chromium --with-deps
+
 
 FROM base AS app
 WORKDIR /app/
