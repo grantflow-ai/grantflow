@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import ApplicationVector, GrantApplicationFile, GrantTemplateFile, GrantTemplateVector
+from src.db.tables import ApplicationVector, GrantApplicationFile, GrantTemplateVector, OrganizationGrantGuidelinesFile
 from src.dto import FileDTO
 from src.exceptions import DatabaseError, ExternalOperationError, FileParsingError, ValidationError
 from src.indexer.chunking import chunk_text
@@ -26,7 +26,7 @@ async def parse_and_index_file(
 @overload
 async def parse_and_index_file(
     *,
-    template_id: str,
+    organization_id: str,
     file_dto: FileDTO,
     file_id: str,
 ) -> None: ...
@@ -35,29 +35,29 @@ async def parse_and_index_file(
 async def parse_and_index_file(
     *,
     application_id: str | None = None,
-    template_id: str | None = None,
+    organization_id: str | None = None,
     file_dto: FileDTO,
     file_id: str,
 ) -> None:
     """Parse and index the given file.
 
     Args:
-        application_id: The application ID, required if template_id is not provided.
-        template_id: The format ID, required if application_id is not provided.
+        application_id: The application ID, required if organization_id is not provided.
+        organization_id: The format ID, required if application_id is not provided.
         file_dto: The file to parse and index.
         file_id: The ID of the file in the database.
 
     Raises:
-        ValueError: If neither application_id nor template_id is provided.
+        ValueError: If neither application_id nor organization_id is provided.
         DatabaseError: If there was an issue inserting the vectors into the database.
 
     Returns:
         None
     """
-    if not application_id and not template_id:
-        raise ValueError("Either application_id or template_id must be provided.")
+    if not application_id and not organization_id:
+        raise ValueError("Either application_id or organization_id must be provided.")
 
-    file_table_cls = GrantApplicationFile if application_id else GrantTemplateFile
+    file_table_cls = GrantApplicationFile if application_id else OrganizationGrantGuidelinesFile
     vector_table_cls = ApplicationVector if application_id else GrantTemplateVector
 
     session_maker = get_session_maker()
@@ -91,7 +91,7 @@ async def parse_and_index_file(
                             }
                             if application_id
                             else {
-                                "template_id": template_id,
+                                "organization_id": organization_id,
                                 **vector,
                             }
                             for vector in vectors
@@ -118,7 +118,7 @@ async def parse_and_index_file(
                     exec_info=e,
                     filename=file_dto.filename,
                     application_id=application_id,
-                    template_id=template_id,
+                    organization_id=organization_id,
                 )
                 await session.rollback()
                 raise DatabaseError("Error inserting vectors", context=str(e)) from e
