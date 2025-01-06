@@ -1,13 +1,21 @@
-from dataclasses import dataclass
 from enum import Enum
-from mimetypes import guess_type
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Final, NotRequired, TypedDict, cast
 
-from pathvalidate import sanitize_filename
-from sanic.request import File
+from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
+from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentAnalysisFeature, DocumentContentFormat
+from azure.core.credentials import AzureKeyCredential
+from azure.core.exceptions import HttpResponseError
+from charset_normalizer import detect
+from crawl4ai import AsyncWebCrawler
+from pypandoc import convert_text
 
-from src.constants import SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP
-from src.dto import Chunk
+from src.exceptions import ExternalOperationError, FileParsingError, ValidationError
+from src.utils.env import get_env
+from src.utils.logging import get_logger
+from src.utils.retry import with_exponential_backoff_retry
+from src.utils.sync import as_async_callable
+
+logger = get_logger(__name__)
 
 
 class ParagraphRole(str, Enum):
@@ -273,46 +281,168 @@ class OCROutput(TypedDict, total=False):
     """Languages detected in the document"""
 
 
-@dataclass
-class FileDTO:
-    """DTO for a file."""
+MARKDOWN_MIME_TYPE: Final[str] = "text/markdown"
 
-    content: bytes
-    """The content of the file."""
-    filename: str
-    """The name of the file."""
-    mime_type: str
+PLAIN_TEXT_MIME_TYPES: set[str] = {
+    MARKDOWN_MIME_TYPE,
+    "text/plain",
+}
 
-    @classmethod
-    def from_file(cls, file: File | list[File], filename: str) -> "FileDTO":
-        """Create a FileDTO from a Sanic File object.
+PANDOC_MIME_TYPES = {
+    # "application/vnd.openxmlformats-officedocument.wordprocessingml.document", # we use Azure Document Intelligence for this
+    "text/csv",
+    "application/csv",
+    "text/x-csv",
+    "application/x-csv",
+    "text/tab-separated-values",
+    "text/x-tsv",
+    "application/rtf",
+    "text/rtf",
+    "application/x-rtf",
+    "text/x-rst",
+    "text/rst",
+    "application/vnd.oasis.opendocument.text",
+    "application/x-vnd.oasis.opendocument.text",
+    "application/x-latex",
+    "text/x-latex",
+    "application/latex",
+    "text/latex",
+}
 
-        Args:
-            file: The Sanic File object.
-            filename: The name of the file.
+DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES: set[str] = {
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "image/bmp",
+    "image/gif",
+    "image/heif",
+    "image/jpeg",
+    "image/png",
+    "image/tiff",
+}
 
-        Raises:
-            ValueError: If the mime type of the file cannot be determined.
+MIME_TYPE_EXT_MAP = {
+    "application/csv": "csv",
+    "application/latex": "latex",
+    "application/rtf": "rtf",
+    "application/vnd.oasis.opendocument.text": "odt",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/x-csv": "csv",
+    "application/x-latex": "latex",
+    "application/x-rtf": "rtf",
+    "application/x-vnd.oasis.opendocument.text": "odt",
+    "text/csv": "csv",
+    "text/latex": "latex",
+    "text/rst": "rst",
+    "text/rtf": "rtf",
+    "text/tab-separated-values": "tsv",
+    "text/x-csv": "csv",
+    "text/x-latex": "latex",
+    "text/x-rst": "rst",
+    "text/x-tsv": "tsv",
+}
 
-        Returns:
-            The FileDTO object.
-        """
-        file = file[0] if isinstance(file, list) else file
-        ext = filename.split(".")[-1]
-
-        if mime_type := (guess_type(filename)[0] or SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP.get(ext)):
-            filename = sanitize_filename(filename)
-            return cls(content=file.body, filename=filename, mime_type=mime_type)
-
-        raise ValueError("Could not determine the mime type of the file")
+pandoc_handler = as_async_callable(convert_text)
 
 
-class VectorDTO(TypedDict):
-    """DTO for embeddings and metadata."""
+async def extract_with_pandoc(file_data: bytes, mime_type: str) -> str:
+    """Extract text using pandoc.
 
-    embedding: list[float]
-    """The embeddings of the content."""
-    file_id: str
-    """The ID of the file from which the content is derived."""
-    chunk: Chunk
-    """The chunk of text from which the embeddings are generated."""
+    Args:
+        file_data: The content of the file.
+        mime_type: The mime type of the file.
+
+    Returns:
+        The extracted text.
+    """
+    ext = MIME_TYPE_EXT_MAP[mime_type]
+    encoding = detect(file_data)["encoding"] or "utf-8"
+
+    return cast(str, await pandoc_handler(file_data, to="md", format=ext, encoding=encoding))
+
+
+async def extract_with_azure_document_intelligence(file_content: bytes, mime_type: str) -> OCROutput:
+    """Extract text from a document using the Azure Document Intelligence prebuilt-layout model.
+
+    Args:
+        file_content: The content of the document.
+        mime_type: The mime type of the document.
+
+    Raises:
+        FileParsingError: If an error occurs during the extraction.
+
+    Returns:
+        The extracted text from the document.
+    """
+    client = DocumentIntelligenceClient(
+        endpoint=get_env("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"),
+        credential=AzureKeyCredential(get_env("AZURE_DOCUMENT_INTELLIGENCE_KEY")),
+    )
+    try:
+        poller = await client.begin_analyze_document(
+            model_id="prebuilt-layout",
+            body=AnalyzeDocumentRequest(bytes_source=file_content),
+            output_content_format=DocumentContentFormat.MARKDOWN,
+            features=[DocumentAnalysisFeature.FORMULAS, DocumentAnalysisFeature.LANGUAGES]
+            if mime_type == "application/pdf"
+            else None,
+        )
+        result = await poller.result()
+        return cast(OCROutput, result.as_dict())
+    except HttpResponseError as e:
+        logger.error("Error extracting text from from file.", exec_info=e)
+        raise FileParsingError(
+            "Error extracting text from file",
+            context=str(e),
+        ) from e
+    finally:
+        await client.close()
+
+
+async def extract_file_content(*, content: bytes, mime_type: str) -> tuple[str | OCROutput, str]:
+    """Extract the textual content from a given byte string representing a file's contents.
+
+    Args:
+        content: The content to extract.
+        mime_type: The mime type of the content.
+
+    Raises:
+        ValidationError: If the mime type is not supported.
+
+    Returns:
+        The extracted content and the mime type of the content.
+    """
+    if mime_type in PLAIN_TEXT_MIME_TYPES or any(mime_type.startswith(value) for value in PLAIN_TEXT_MIME_TYPES):
+        return content.decode(), mime_type
+
+    if mime_type in PANDOC_MIME_TYPES or any(mime_type.startswith(value) for value in PANDOC_MIME_TYPES):
+        return await extract_with_pandoc(content, mime_type), MARKDOWN_MIME_TYPE
+
+    if mime_type in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES or any(
+        mime_type.startswith(value) for value in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES
+    ):
+        return await extract_with_azure_document_intelligence(content, mime_type), MARKDOWN_MIME_TYPE
+
+    raise ValidationError(f"Unsupported mime type: {mime_type}")
+
+
+@with_exponential_backoff_retry(ExternalOperationError, max_retries=3)
+async def extract_webpage_content(url: str) -> str:
+    """Extract the content from a webpage as markdown.
+
+    Args:
+        url: The URL of the webpage to extract content from.
+
+    Raises:
+        ExternalOperationError: If the operation failed.
+
+    Returns:
+        The markdown content of the webpage.
+    """
+    try:
+        async with AsyncWebCrawler(verbose=True) as crawler:
+            result = await crawler.arun(url=url)
+            return cast(str, result.markdown)
+    except ValueError as e:
+        raise ExternalOperationError("Failed to get markdown from URL") from e

@@ -1,16 +1,13 @@
 from typing import cast
 from uuid import UUID
 
-from crawl4ai import AsyncWebCrawler
 from sanic import Unauthorized
 from sqlalchemy import select
 
 from src.api_types import APIRequest
 from src.db.enums import UserRoleEnum
 from src.db.tables import WorkspaceUser
-from src.exceptions import ExternalOperationError
 from src.utils.logging import get_logger
-from src.utils.retry import with_exponential_backoff_retry
 
 logger = get_logger(__name__)
 
@@ -47,24 +44,3 @@ async def verify_workspace_access(
         raise Unauthorized("Unauthorized workspace access.")
 
     return cast(UserRoleEnum, workspace_user.role)
-
-
-@with_exponential_backoff_retry(ExternalOperationError, max_retries=3)
-async def extract_webpage_content(url: str) -> str:
-    """Extract the content from a webpage as markdown.
-
-    Args:
-        url: The URL of the webpage to extract content from.
-
-    Raises:
-        ExternalOperationError: If the operation failed.
-
-    Returns:
-        The markdown content of the webpage.
-    """
-    try:
-        async with AsyncWebCrawler(verbose=True) as crawler:
-            result = await crawler.arun(url=url)
-            return cast(str, result.markdown)
-    except ValueError as e:
-        raise ExternalOperationError("Failed to get markdown from URL") from e

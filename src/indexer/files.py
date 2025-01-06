@@ -6,11 +6,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.db.connection import get_session_maker
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import ApplicationVector, GrantApplicationFile, GrantTemplateFile, GrantTemplateVector
+from src.dto import FileDTO
 from src.exceptions import DatabaseError, ExternalOperationError, FileParsingError, ValidationError
 from src.indexer.chunking import chunk_text
-from src.indexer.dto import FileDTO
-from src.indexer.extraction import parse_file_data
 from src.indexer.indexing import index_documents, logger
+from src.utils.extraction import (
+    extract_file_content,
+)
 from src.utils.serialization import serialize
 
 
@@ -60,7 +62,10 @@ async def parse_and_index_file(
 
     session_maker = get_session_maker()
     try:
-        extracted_text, mime_type = await parse_file_data(file_dto)
+        extracted_text, mime_type = await extract_file_content(
+            content=file_dto.content,
+            mime_type=file_dto.mime_type,
+        )
         logger.info("Extracted text from file", filename=file_dto.filename)
         chunks = chunk_text(text=extracted_text, mime_type=mime_type)
         vectors = await index_documents(
