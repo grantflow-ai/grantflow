@@ -8,7 +8,7 @@ from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import ApplicationVector, GrantApplicationFile
-from src.indexer.dto import VectorDTO
+from src.dto import VectorDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import SearchQueriesResponse, handle_create_search_queries
 from src.utils.serialization import deserialize, serialize

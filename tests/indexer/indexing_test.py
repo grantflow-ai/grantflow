@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from src.indexer.dto import VectorDTO
+from src.dto import VectorDTO
 from src.indexer.indexing import create_vector_dto
 from tests.indexer.factories import ChunkFactory
 

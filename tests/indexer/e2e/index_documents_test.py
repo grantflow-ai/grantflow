@@ -14,7 +14,7 @@ from src.utils.serialization import serialize
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:
-    from src.indexer.dto import OCROutput
+    from src.utils.extraction import OCROutput
 
 
 @pytest.mark.skipif(
