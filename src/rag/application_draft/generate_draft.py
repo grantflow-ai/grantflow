@@ -3,7 +3,6 @@ from datetime import UTC, datetime
 from string import Template
 from typing import Final
 
-from inflection import titleize
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
@@ -108,7 +107,7 @@ async def generate_application_draft(*, application_id: str) -> str:
     logger.info("Generating draft")
     result = normalize_markdown(
         DRAFT_APPLICATION_TEMPLATE.substitute(
-            application_title=titleize(application.title),
+            application_title=application.title,
             significance_text=significance_text,
             innovation_text=innovation_text,
             research_plan_text=research_plan_text,

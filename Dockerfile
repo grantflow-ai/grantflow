@@ -1,18 +1,23 @@
-FROM python:3.12-slim-bookworm AS base
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    g++ \
     libpq-dev \
     pandoc \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 FROM base AS install
-ENV PDM_CHECK_UPDATE=false
 WORKDIR /app/
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir pdm
-COPY pyproject.toml pdm.lock ./
+
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 ENV SANIC_NO_UJSON=true
-RUN pdm install --check --prod --no-editable
+
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --verbose --no-install-project --no-editable --no-dev
 
 FROM base AS app
 WORKDIR /app/
