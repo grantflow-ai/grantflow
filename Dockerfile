@@ -8,24 +8,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 FROM base AS install
 WORKDIR /app/
-
-ENV UV_COMPILE_BYTECODE=1
-ENV UV_LINK_MODE=copy
-ENV SANIC_NO_UJSON=true
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    SANIC_NO_UJSON=true
 
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --verbose --no-install-project --no-editable --no-dev && \
-    uv run playwright install chromium --with-deps
-
+    uv sync --verbose --frozen --no-install-project --no-editable --no-dev
 
 FROM base AS app
 WORKDIR /app/
+
 COPY --from=install /app/.venv/ /app/.venv
 COPY src src
+
 ENV PATH="/app/.venv/bin:$PATH"
+RUN playwright install chromium --with-deps
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser && \
     chown -R appuser:appuser /app && \
     chmod -R u+x /app/.venv && \

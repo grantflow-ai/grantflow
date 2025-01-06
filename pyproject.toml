@@ -1,7 +1,7 @@
 [project]
-name = "backend-functions"
+name = "grantflow-backend"
 version = "0.1.0"
-description = "Azure Functions"
+description = "GrantFlow Backend"
 authors = [{ name = "Na'aman Hirschfeld", email = "nhirschfeld@gmail.com" }]
 requires-python = "==3.12.*"
 readme = "README.md"

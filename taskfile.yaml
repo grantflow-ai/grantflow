@@ -1,0 +1,9 @@
+version: '3'
+
+tasks:
+  create-migration:
+    cmds:
+      - PYTHONPATH=. uv run atlas migrate diff --env sqlalchemy {{.CLI_ARGS}}
+  migrate:
+    cmds:
+      - PYTHONPATH=. uv run atlas migrate apply --env sqlalchemy

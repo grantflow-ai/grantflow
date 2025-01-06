@@ -34,8 +34,8 @@ from src.db.tables import (
     GrantApplicationFile,
     GrantSection,
     GrantTemplate,
-    GrantTemplateFile,
     GrantTemplateVector,
+    OrganizationGrantGuidelinesFile,
     ResearchAim,
     ResearchTask,
     SectionTopic,
@@ -240,7 +240,7 @@ async def grant_format(async_session_maker: async_sessionmaker[Any], org: Fundin
 @pytest.fixture
 async def grant_format_file(
     async_session_maker: async_sessionmaker[Any], grant_format: GrantTemplate
-) -> GrantTemplateFile:
+) -> OrganizationGrantGuidelinesFile:
     file_data = GrantFormatFileFactory.build(template_id=grant_format.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
@@ -273,7 +273,7 @@ async def section_aspect(
 async def grant_format_vector(
     async_session_maker: async_sessionmaker[Any],
     grant_format: GrantTemplate,
-    grant_format_file: GrantTemplateFile,
+    grant_format_file: OrganizationGrantGuidelinesFile,
 ) -> GrantTemplateVector:
     vector_data = GrantTemplateVectorFactory.build(template_id=grant_format.id, file_id=grant_format_file.id)
     async with async_session_maker() as session, session.begin():
