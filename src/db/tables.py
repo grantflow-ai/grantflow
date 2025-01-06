@@ -42,6 +42,8 @@ from src.dto import Chunk
 class Base(DeclarativeBase):
     """Base class for all tables."""
 
+    __abstract__ = True
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now(), onupdate=now())
 
@@ -92,10 +94,10 @@ class FundingOrganization(BaseWithUUIDPK):
 
     # Relationships
     grant_templates: Relationship[list["GrantTemplate"]] = relationship(
-        "GrantTemplate", back_populates="funding_organization"
+        "GrantTemplate", back_populates="funding_organization", cascade="all, delete-orphan"
     )
     applications: Relationship[list["GrantApplication"]] = relationship(
-        "Application", back_populates="funding_organization"
+        "GrantApplication", back_populates="funding_organization", cascade="all, delete-orphan"
     )
 
 
@@ -114,9 +116,15 @@ class GrantTemplate(BaseWithUUIDPK):
     funding_organization: Relationship["FundingOrganization"] = relationship(
         "FundingOrganization", back_populates="grant_templates"
     )
-    sections: Relationship[list["GrantSection"]] = relationship("GrantSection", back_populates="grant_template")
-    files: Relationship[list["GrantTemplateFile"]] = relationship("GrantTemplateFile", back_populates="grant_template")
-    applications: Relationship[list["GrantApplication"]] = relationship("Application", back_populates="grant_template")
+    sections: Relationship[list["GrantSection"]] = relationship(
+        "GrantSection", back_populates="grant_template", cascade="all, delete-orphan"
+    )
+    files: Relationship[list["GrantTemplateFile"]] = relationship(
+        "GrantTemplateFile", back_populates="grant_template", cascade="all, delete-orphan"
+    )
+    applications: Relationship[list["GrantApplication"]] = relationship(
+        "GrantApplication", back_populates="grant_template"
+    )
 
     __table_args__ = (Index("idx_grant_template_name_org", "name", "funding_organization_id", unique=True),)
 
@@ -142,7 +150,9 @@ class GrantTemplateFile(FileBase):
     grant_template_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), index=True
     )
-    grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="files")
+    grant_template: Relationship["GrantTemplate"] = relationship(
+        "GrantTemplate", back_populates="files", passive_deletes=True
+    )
 
 
 class GrantSection(BaseWithUUIDPK):
@@ -160,7 +170,9 @@ class GrantSection(BaseWithUUIDPK):
         UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), index=True
     )
     grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="sections")
-    topics: Relationship[list["SectionTopic"]] = relationship("TopicCriteria", back_populates="grant_section")
+    topics: Relationship[list["SectionTopic"]] = relationship(
+        "SectionTopic", back_populates="grant_section", cascade="all, delete-orphan"
+    )
 
 
 class SectionTopic(Base):
@@ -212,8 +224,10 @@ class Workspace(BaseWithUUIDPK):
     name: Mapped[str] = mapped_column(Text, index=True)
 
     # Relationships
-    users: Relationship[list["WorkspaceUser"]] = relationship("WorkspaceUser", back_populates="workspace")
-    applications: Relationship[list["GrantApplication"]] = relationship("Application", back_populates="workspace")
+    users: Relationship[list["WorkspaceUser"]] = relationship(
+        "WorkspaceUser", back_populates="workspace", cascade="all, delete-orphan"
+    )
+    applications: Relationship[list["GrantApplication"]] = relationship("GrantApplication", back_populates="workspace")
 
 
 class WorkspaceUser(Base):
@@ -257,13 +271,13 @@ class GrantApplication(BaseWithUUIDPK):
     grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="applications")
 
     files: Relationship[list["GrantApplicationFile"]] = relationship(
-        "ApplicationFile", back_populates="application", passive_deletes=True
+        "GrantApplicationFile", back_populates="grant_application", passive_deletes=True, cascade="all, delete-orphan"
     )
     research_aims: Relationship[list["ResearchAim"]] = relationship(
-        "ResearchAim", back_populates="application", passive_deletes=True
+        "ResearchAim", back_populates="grant_application", passive_deletes=True, cascade="all, delete-orphan"
     )
     generation_results: Relationship[list["GenerationResult"]] = relationship(
-        "TextGenerationResult", back_populates="application", passive_deletes=True
+        "GenerationResult", back_populates="grant_application", passive_deletes=True, cascade="all, delete-orphan"
     )
 
 
@@ -298,7 +312,9 @@ class ResearchAim(BaseWithUUIDPK):
     grant_application: Relationship["GrantApplication"] = relationship(
         "GrantApplication", back_populates="research_aims"
     )
-    research_tasks: Relationship[list["ResearchTask"]] = relationship("ResearchTask", back_populates="research_aim")
+    research_tasks: Relationship[list["ResearchTask"]] = relationship(
+        "ResearchTask", back_populates="research_aim", cascade="all, delete-orphan"
+    )
 
 
 class ResearchTask(BaseWithUUIDPK):
@@ -338,7 +354,7 @@ class GenerationResult(BaseWithUUIDPK):
 
 
 class ApplicationVector(VectorBase):
-    """Application vector table."""
+    """GrantApplication vector table."""
 
     __tablename__ = "grant_application_vectors"
 

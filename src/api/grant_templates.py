@@ -53,9 +53,7 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
             result = await session.execute(
                 insert(GrantTemplate)
                 .values(
-                    {
-                        "funding_organization_id": request_body["funding_organization_id"],
-                    }
+                    {"funding_organization_id": request_body["funding_organization_id"], "name": "", "template": ""}
                 )
                 .returning(GrantTemplate.id)
             )
@@ -65,7 +63,7 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
                 .values(
                     [
                         {
-                            "template_id": template_id,
+                            "grant_template_id": template_id,
                             "name": file_dto.filename,
                             "type": file_dto.mime_type,
                             "size": file_dto.content.__sizeof__(),

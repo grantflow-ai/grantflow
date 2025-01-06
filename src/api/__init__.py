@@ -2,14 +2,14 @@ from typing import Any
 
 from sanic import Sanic
 
-from src.api.applications import (
+from src.api.grant_applications import (
     handle_create_application,
     handle_delete_application,
     handle_retrieve_application,
     handle_retrieve_application_text,
     handle_update_application,
 )
-from src.api.format import handle_create_grant_format
+from src.api.grant_templates import handle_create_grant_format
 from src.api.health import health_check
 from src.api.login import handle_login
 from src.api.otp import handle_create_otp
