@@ -15,16 +15,7 @@ from src.indexer.chunking import (
     process_table_cell,
     process_table_chunks,
 )
-from src.indexer.dto import (
-    BoundingRegion,
-    OCROutput,
-    Page,
-    Paragraph,
-    ParagraphRole,
-    Span,
-    Table,
-    TableCell,
-)
+from src.utils.extraction import BoundingRegion, OCROutput, Page, Paragraph, ParagraphRole, Span, Table, TableCell
 
 
 class MockSplitter:

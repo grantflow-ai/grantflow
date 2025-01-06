@@ -23,8 +23,8 @@ from src.api_types import (
 )
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import GrantApplication, GrantApplicationFile, ResearchAim, ResearchTask
+from src.dto import FileDTO
 from src.exceptions import DatabaseError
-from src.indexer.dto import FileDTO
 from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
 

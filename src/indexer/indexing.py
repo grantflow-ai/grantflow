@@ -1,8 +1,7 @@
 from asyncio import gather
 from typing import Final
 
-from src.dto import Chunk
-from src.indexer.dto import VectorDTO
+from src.dto import Chunk, VectorDTO
 from src.utils.embeddings import TaskType, generate_embeddings
 from src.utils.logging import get_logger
 
