@@ -12,6 +12,7 @@ dependencies = [
     "anyio>=4.8.0",
     "asyncpg>=0.30.0",
     "azure-ai-documentintelligence>=1.0.0",
+    "crawl4ai>=0.4.247",
     "en-core-web-sm",
     "firebase-admin>=6.6.0",
     "google-cloud-aiplatform>=1.75.0",
