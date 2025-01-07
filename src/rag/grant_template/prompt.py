@@ -78,7 +78,7 @@ Example structure:
     "sections": [
         {
             "type": "EXECUTIVE_SUMMARY",
-            "keywords": ["project overview", "key objectives", "expected impact"],
+            "search_terms": ["project overview", "key objectives", "expected impact"],
             "min_words": 200, // can be null if no minimum
             "max_words": null, // can be null if no limit
             "topics": [
@@ -112,7 +112,7 @@ Example structure:
 2. Section Configuration:
    - Each section must define its content requirements through topics
    - Word limits should reflect typical grant expectations
-   - Keywords should enable effective content retrieval
+   - Search Terms should enable effective content retrieval
 
 3. Topic Weighting System:
    Primary topics (0.7-1.0):
@@ -134,13 +134,14 @@ Template:
 - Clear hierarchical structure
 
 Sections:
-- 3-10 specific, relevant keywords per section
+- 3-10 specific, relevant search_terms per section
 - Valid word limits (max_words ≥ min_words if both provided)
 - Minimum 2 topics per section
-- Topic weights between 0 and 1
+- Topics should be unique per section
+- Topic weights are float values between 0 and 1
 - Appropriate topic types for each section's purpose
 
-Keywords:
+Search Terms:
 - Specific and retrievable terms
 - Relevant to section content
 - Effective for RAG queries
@@ -177,8 +178,8 @@ class SectionDTO(TypedDict):
 
     topics: list[SectionTopicDTO]
     """The topics of the section."""
-    keywords: list[str]
-    """Keywords that describe this section."""
+    search_terms: list[str]
+    """Search Terms that describe this section."""
     max_words: NotRequired[int | None]
     """The maximum number of words in the section."""
     min_words: NotRequired[int | None]
@@ -225,12 +226,12 @@ response_schema = {
                             "required": ["type", "weight"],
                         },
                     },
-                    "keywords": {"type": "array", "minItems": 3, "maxItems": 10, "items": {"type": "string"}},
+                    "search_terms": {"type": "array", "minItems": 3, "maxItems": 10, "items": {"type": "string"}},
                     "max_words": {"type": "number", "nullable": True},
                     "min_words": {"type": "number", "nullable": True},
                     "type": {"type": "string", "enum": [e.value for e in GrantSectionEnum]},
                 },
-                "required": ["topics", "keywords", "type"],
+                "required": ["topics", "search_terms", "type"],
             },
         },
     },
@@ -253,7 +254,7 @@ def validator(tool_reponse: ToolResponse) -> bool:
     except (ValidationError, ValueError):
         return False
 
-    return set(cast(list[GrantSectionEnum], TEMPLATE_VARIABLE_PATTERN.findall(tool_reponse["template"]))) != {
+    return set(cast(list[GrantSectionEnum], TEMPLATE_VARIABLE_PATTERN.findall(tool_reponse["template"]))) == {
         section["type"] for section in tool_reponse["sections"]
     }
 

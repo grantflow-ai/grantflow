@@ -62,28 +62,11 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
 
     ## Significance
 
-    {{SIGNIFICANCE}}
+    {{RESEARCH_SIGNIFICANCE}}
 
     ## Innovation
 
-    {{INNOVATION}}
-
-    ## Specific Aims
-
-    {{SPECIFIC_AIMS}}
-
-    ## Work Plan
-
-    {{WORK_PLAN}}
-
-    ## Resources
-
-    {{RESOURCES}}
-
-    ## Expected Outcomes
-
-    {{EXPECTED_OUTCOMES}}
-
+    {{RESEARCH_INNOVATION}}
     """)
 
 

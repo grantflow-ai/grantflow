@@ -153,7 +153,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
                         "file_dto": file_dto,
                     },
                 )
-                for file_dto, file_id in zip(uploaded_files, file_ids, strict=False)
+                for file_dto, file_id in zip(uploaded_files, file_ids, strict=True)
             ]
         )
 
