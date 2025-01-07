@@ -80,7 +80,7 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
         workspaces = (
             await session.scalars(
                 select(Workspace)
-                .options(selectinload(Workspace.users))
+                .options(selectinload(Workspace.workspace_users))
                 .join(WorkspaceUser)
                 .where(WorkspaceUser.firebase_uid == request.ctx.firebase_uid)
             )
@@ -93,7 +93,7 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
                 name=workspace.name,
                 description=workspace.description,
                 logo_url=workspace.logo_url,
-                role=workspace.users[0].role,
+                role=workspace.workspace_users[0].role,
             )
             for workspace in workspaces
         ]
@@ -160,7 +160,9 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
     async with request.ctx.session_maker() as session, session.begin():
         try:
             workspace = await session.scalar(
-                select(Workspace).options(selectinload(Workspace.applications)).where(Workspace.id == workspace_id)
+                select(Workspace)
+                .options(selectinload(Workspace.grant_applications))
+                .where(Workspace.id == workspace_id)
             )
         except SQLAlchemyError as e:
             logger.error("Error retrieving workspace", exc_info=e)
@@ -179,7 +181,7 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
                     title=application.title,
                     text=application.text,
                 )
-                for application in workspace.applications
+                for application in workspace.grant_applications
             ],
         )
     )
