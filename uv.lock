@@ -168,99 +168,6 @@ wheels = [
 ]
 
 [[package]]
-name = "backend-functions"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "anyio" },
-    { name = "asyncpg" },
-    { name = "azure-ai-documentintelligence" },
-    { name = "crawl4ai" },
-    { name = "en-core-web-sm" },
-    { name = "firebase-admin" },
-    { name = "google-cloud-aiplatform" },
-    { name = "greenlet" },
-    { name = "msgspec" },
-    { name = "pathvalidate" },
-    { name = "pgvector" },
-    { name = "pyjwt" },
-    { name = "pypandoc" },
-    { name = "sanic", extra = ["ext"] },
-    { name = "semantic-text-splitter" },
-    { name = "spacy" },
-    { name = "sqlalchemy" },
-    { name = "structlog" },
-    { name = "tenacity" },
-    { name = "uvicorn" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "atlas-provider-sqlalchemy" },
-    { name = "covdefaults" },
-    { name = "faker" },
-    { name = "mypy" },
-    { name = "polyfactory" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-logger" },
-    { name = "pytest-mock" },
-    { name = "pytest-timeout" },
-    { name = "python-dotenv" },
-    { name = "ruff" },
-    { name = "sanic-testing" },
-    { name = "testcontainers" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = ">=3.11.11" },
-    { name = "anyio", specifier = ">=4.8.0" },
-    { name = "asyncpg", specifier = ">=0.30.0" },
-    { name = "azure-ai-documentintelligence", specifier = ">=1.0.0" },
-    { name = "crawl4ai", specifier = ">=0.4.247" },
-    { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
-    { name = "firebase-admin", specifier = ">=6.6.0" },
-    { name = "google-cloud-aiplatform", specifier = ">=1.75.0" },
-    { name = "greenlet", specifier = ">=3.1.1" },
-    { name = "msgspec", specifier = ">=0.19.0" },
-    { name = "pathvalidate", specifier = ">=3.2.3" },
-    { name = "pgvector", specifier = ">=0.3.6" },
-    { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "pypandoc", specifier = ">=1.14" },
-    { name = "sanic", extras = ["ext"], specifier = ">=24.12.0" },
-    { name = "semantic-text-splitter", specifier = ">=0.20.1" },
-    { name = "spacy", specifier = ">=3.8.3" },
-    { name = "sqlalchemy", specifier = ">=2.0.36" },
-    { name = "structlog", specifier = ">=24.4.0" },
-    { name = "tenacity", specifier = ">=9.0.0" },
-    { name = "uvicorn", specifier = ">=0.34.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "atlas-provider-sqlalchemy", specifier = ">=0.2.4" },
-    { name = "covdefaults", specifier = ">=2.3.0" },
-    { name = "faker", specifier = ">=33.3.0" },
-    { name = "mypy", specifier = ">=1.14.1" },
-    { name = "polyfactory", specifier = ">=2.18.1" },
-    { name = "pre-commit", specifier = ">=4.0.1" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", specifier = ">=0.25.1" },
-    { name = "pytest-cov", specifier = ">=6.0.0" },
-    { name = "pytest-logger", specifier = ">=1.1.1" },
-    { name = "pytest-mock", specifier = ">=3.14.0" },
-    { name = "pytest-timeout", specifier = ">=2.3.1" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "ruff", specifier = ">=0.8.6" },
-    { name = "sanic-testing", specifier = ">=24.6.0" },
-    { name = "testcontainers", specifier = ">=4.9.0" },
-]
-
-[[package]]
 name = "beautifulsoup4"
 version = "4.12.3"
 source = { registry = "https://pypi.org/simple" }
@@ -866,6 +773,101 @@ wheels = [
 [package.optional-dependencies]
 grpc = [
     { name = "grpcio" },
+]
+
+[[package]]
+name = "grantflow-backend"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "anyio" },
+    { name = "asyncpg" },
+    { name = "azure-ai-documentintelligence" },
+    { name = "crawl4ai" },
+    { name = "en-core-web-sm" },
+    { name = "firebase-admin" },
+    { name = "google-cloud-aiplatform" },
+    { name = "greenlet" },
+    { name = "jsonschema" },
+    { name = "msgspec" },
+    { name = "pathvalidate" },
+    { name = "pgvector" },
+    { name = "pyjwt" },
+    { name = "pypandoc" },
+    { name = "sanic", extra = ["ext"] },
+    { name = "semantic-text-splitter" },
+    { name = "spacy" },
+    { name = "sqlalchemy" },
+    { name = "structlog" },
+    { name = "tenacity" },
+    { name = "uvicorn" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "atlas-provider-sqlalchemy" },
+    { name = "covdefaults" },
+    { name = "faker" },
+    { name = "mypy" },
+    { name = "polyfactory" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-logger" },
+    { name = "pytest-mock" },
+    { name = "pytest-timeout" },
+    { name = "python-dotenv" },
+    { name = "ruff" },
+    { name = "sanic-testing" },
+    { name = "testcontainers" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.11.11" },
+    { name = "anyio", specifier = ">=4.8.0" },
+    { name = "asyncpg", specifier = ">=0.30.0" },
+    { name = "azure-ai-documentintelligence", specifier = ">=1.0.0" },
+    { name = "crawl4ai", specifier = ">=0.4.247" },
+    { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
+    { name = "firebase-admin", specifier = ">=6.6.0" },
+    { name = "google-cloud-aiplatform", specifier = ">=1.75.0" },
+    { name = "greenlet", specifier = ">=3.1.1" },
+    { name = "jsonschema", specifier = ">=4.23.0" },
+    { name = "msgspec", specifier = ">=0.19.0" },
+    { name = "pathvalidate", specifier = ">=3.2.3" },
+    { name = "pgvector", specifier = ">=0.3.6" },
+    { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "pypandoc", specifier = ">=1.14" },
+    { name = "sanic", extras = ["ext"], specifier = ">=24.12.0" },
+    { name = "semantic-text-splitter", specifier = ">=0.20.1" },
+    { name = "spacy", specifier = ">=3.8.3" },
+    { name = "sqlalchemy", specifier = ">=2.0.36" },
+    { name = "structlog", specifier = ">=24.4.0" },
+    { name = "tenacity", specifier = ">=9.0.0" },
+    { name = "uvicorn", specifier = ">=0.34.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "atlas-provider-sqlalchemy", specifier = ">=0.2.4" },
+    { name = "covdefaults", specifier = ">=2.3.0" },
+    { name = "faker", specifier = ">=33.3.0" },
+    { name = "mypy", specifier = ">=1.14.1" },
+    { name = "polyfactory", specifier = ">=2.18.1" },
+    { name = "pre-commit", specifier = ">=4.0.1" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "pytest-asyncio", specifier = ">=0.25.1" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "pytest-logger", specifier = ">=1.1.1" },
+    { name = "pytest-mock", specifier = ">=3.14.0" },
+    { name = "pytest-timeout", specifier = ">=2.3.1" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "ruff", specifier = ">=0.8.6" },
+    { name = "sanic-testing", specifier = ">=24.6.0" },
+    { name = "testcontainers", specifier = ">=4.9.0" },
 ]
 
 [[package]]
