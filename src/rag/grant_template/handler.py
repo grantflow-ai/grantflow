@@ -1,6 +1,6 @@
 from asyncio import sleep
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
@@ -34,18 +34,14 @@ async def handle_generate_grant_template(*, cfp_content: str, grant_template_id:
         logger.info("Waiting for files to finish indexing")
         await sleep(2)
 
-    logger.info("Files finished indexing, beginning text generation")
-    async with session_maker() as session:
-        grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
-
-    logger.info("Generating template structure")
-    response = await generate_grant_template(cfp_content=cfp_content, organization_id=str(grant_template.id))
+    logger.info("Files finished indexing, beginning template generation")
+    response = await generate_grant_template(cfp_content=cfp_content, organization_id=grant_template_id)
 
     async with session_maker() as session, session.begin():
         try:
             await session.execute(
                 update(GrantTemplate)
-                .where(GrantTemplate.id == organization_id)
+                .where(GrantTemplate.id == grant_template_id)
                 .values(
                     {
                         "name": response["name"],
@@ -58,11 +54,11 @@ async def handle_generate_grant_template(*, cfp_content: str, grant_template_id:
                 .values(
                     [
                         {
-                            "keywords": section_dto["keywords"],
-                            "max_words": section_dto["max_words"],
-                            "min_words": section_dto["min_words"],
+                            "search_terms": section_dto["search_terms"],
+                            "max_words": section_dto.get("max_words"),
+                            "min_words": section_dto.get("min_words"),
                             "type": section_dto["type"],
-                            "grant_template_id": GrantTemplate.id,
+                            "grant_template_id": grant_template_id,
                         }
                         for section_dto in response["sections"]
                     ]
@@ -75,7 +71,7 @@ async def handle_generate_grant_template(*, cfp_content: str, grant_template_id:
                         {
                             "type": section_topic_dto["type"],
                             "weight": section_topic_dto["weight"],
-                            "section_id": section_id,
+                            "grant_section_id": section_id,
                         }
                         for section_id, section_dto in zip(section_ids, response["sections"], strict=True)
                         for section_topic_dto in section_dto["topics"]
