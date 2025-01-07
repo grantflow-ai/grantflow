@@ -44,13 +44,13 @@ CREATE TABLE "workspaces" (
 CREATE INDEX "ix_workspaces_name" ON "workspaces" ("name");
 -- Create "grant_applications" table
 CREATE TABLE "grant_applications" (
-  "title" character varying(255) NOT NULL,
-  "significance" text NULL,
-  "innovation" text NULL,
   "completed_at" timestamptz NULL,
+  "innovation" text NULL,
+  "significance" text NULL,
   "text" text NULL,
-  "workspace_id" uuid NOT NULL,
+  "title" character varying(255) NOT NULL,
   "grant_template_id" uuid NOT NULL,
+  "workspace_id" uuid NOT NULL,
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
@@ -85,10 +85,10 @@ CREATE INDEX "ix_generation_results_grant_application_id" ON "generation_results
 -- Create "files" table
 CREATE TABLE "files" (
   "name" character varying(255) NOT NULL,
-  "type" character varying(255) NOT NULL,
   "size" integer NOT NULL,
-  "text_content" text NULL,
   "status" "fileindexingstatusenum" NOT NULL,
+  "text_content" text NULL,
+  "type" character varying(255) NOT NULL,
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
@@ -98,19 +98,20 @@ CREATE TABLE "files" (
 CREATE INDEX "ix_files_status" ON "files" ("status");
 -- Create "grant_application_files" table
 CREATE TABLE "grant_application_files" (
-  "grant_application_id" uuid NOT NULL,
   "file_id" uuid NOT NULL,
+  "grant_application_id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("grant_application_id", "file_id"),
+  PRIMARY KEY ("file_id"),
+  CONSTRAINT "grant_application_files_grant_application_id_key" UNIQUE ("grant_application_id"),
   CONSTRAINT "grant_application_files_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "grant_application_files_grant_application_id_fkey" FOREIGN KEY ("grant_application_id") REFERENCES "grant_applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 -- Create "grant_sections" table
 CREATE TABLE "grant_sections" (
-  "search_terms" character varying(255)[] NOT NULL,
   "max_words" integer NULL,
   "min_words" integer NULL,
+  "search_terms" character varying(255)[] NOT NULL,
   "type" "grantsectionenum" NOT NULL,
   "grant_template_id" uuid NOT NULL,
   "id" uuid NOT NULL,
@@ -123,11 +124,12 @@ CREATE TABLE "grant_sections" (
 CREATE INDEX "ix_grant_sections_grant_template_id" ON "grant_sections" ("grant_template_id");
 -- Create "organization_files" table
 CREATE TABLE "organization_files" (
-  "funding_organization_id" uuid NOT NULL,
   "file_id" uuid NOT NULL,
+  "funding_organization_id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("funding_organization_id", "file_id"),
+  PRIMARY KEY ("file_id"),
+  CONSTRAINT "organization_files_funding_organization_id_key" UNIQUE ("funding_organization_id"),
   CONSTRAINT "organization_files_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "organization_files_funding_organization_id_fkey" FOREIGN KEY ("funding_organization_id") REFERENCES "funding_organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
@@ -136,8 +138,8 @@ CREATE TABLE "research_aims" (
   "aim_number" integer NOT NULL,
   "description" text NULL,
   "preliminary_results" text NULL,
-  "risks_and_alternatives" text NULL,
   "requires_clinical_trials" boolean NOT NULL,
+  "risks_and_alternatives" text NULL,
   "title" character varying(255) NOT NULL,
   "grant_application_id" uuid NOT NULL,
   "id" uuid NOT NULL,
@@ -165,19 +167,21 @@ CREATE INDEX "ix_research_tasks_aim_id" ON "research_tasks" ("aim_id");
 -- Create "section_topics" table
 CREATE TABLE "section_topics" (
   "search_terms" character varying(255)[] NOT NULL,
-  "topic" "contenttopicenum" NOT NULL,
-  "weight" double precision NULL,
+  "type" "contenttopicenum" NOT NULL,
+  "weight" double precision NOT NULL,
   "grant_section_id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("topic", "grant_section_id"),
+  PRIMARY KEY ("type", "grant_section_id"),
   CONSTRAINT "section_topics_grant_section_id_fkey" FOREIGN KEY ("grant_section_id") REFERENCES "grant_sections" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
+-- Create index "idx_section_topic_uq" to table: "section_topics"
+CREATE UNIQUE INDEX "idx_section_topic_uq" ON "section_topics" ("type", "grant_section_id");
 -- Create "text_vectors" table
 CREATE TABLE "text_vectors" (
-  "embedding" vector(256) NOT NULL,
   "chunk" json NOT NULL,
-  "file_id" uuid NULL,
+  "embedding" vector(256) NOT NULL,
+  "file_id" uuid NOT NULL,
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
@@ -190,8 +194,8 @@ CREATE INDEX "idx_text_vectors_embedding" ON "text_vectors" USING hnsw ("embeddi
 CREATE INDEX "ix_text_vectors_file_id" ON "text_vectors" ("file_id");
 -- Create "workspace_users" table
 CREATE TABLE "workspace_users" (
-  "role" "userroleenum" NOT NULL,
   "firebase_uid" character varying(128) NOT NULL,
+  "role" "userroleenum" NOT NULL,
   "workspace_id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,

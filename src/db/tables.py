@@ -185,14 +185,16 @@ class SectionTopic(Base):
     __tablename__ = "section_topics"
 
     search_terms: Mapped[list[str]] = mapped_column(ARRAY(String(255)), default=list)
-    topic: Mapped[ContentTopicEnum] = mapped_column(Enum(ContentTopicEnum), primary_key=True)
-    weight: Mapped[float | None] = mapped_column(Float, nullable=True)
+    type: Mapped[ContentTopicEnum] = mapped_column(Enum(ContentTopicEnum), primary_key=True)
+    weight: Mapped[float] = mapped_column(Float)
 
     grant_section_id: Mapped[UUID[str]] = mapped_column(
         UUID(), ForeignKey("grant_sections.id", ondelete="CASCADE"), primary_key=True
     )
 
     grant_section: Relationship["GrantSection"] = relationship("GrantSection", back_populates="section_topics")
+
+    __table_args__ = (Index("idx_section_topic_uq", "type", "grant_section_id", unique=True),)
 
 
 class GrantApplication(BaseWithUUIDPK):
