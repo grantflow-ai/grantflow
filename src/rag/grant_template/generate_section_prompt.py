@@ -2,7 +2,7 @@ from string import Template
 from typing import Final, NotRequired, TypedDict
 
 from src.db.enums import ContentTopicEnum, GrantSectionEnum
-from src.rag.grant_format.shared_prompts import GRANT_FORMAT_SYSTEM_PROMPT
+from src.rag.grant_template.shared_prompts import GRANT_FORMAT_SYSTEM_PROMPT
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import handle_create_search_queries
 from src.rag.utils import handle_completions_request
