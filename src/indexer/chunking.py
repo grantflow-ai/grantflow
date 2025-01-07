@@ -25,7 +25,7 @@ def compute_hash(content: str) -> str:
     Returns:
         str: Hash string of the content
     """
-    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+    return hashlib.sha256(content.encode()).hexdigest()
 
 
 def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
@@ -185,7 +185,7 @@ def process_paragraph_chunks(
     Yields:
         Chunk: for the paragraph
     """
-    page_number = None
+    page_number: int | None = None
     if bounding_regions := para.get("boundingRegions"):
         page_number = next(
             (region.get("pageNumber") for region in bounding_regions if region.get("pageNumber") is not None), None

@@ -134,11 +134,11 @@ def validate_section_dto(dto: SectionDTO) -> bool:
     return max_words is None or min_words is None or (max_words > 0 and 0 <= min_words <= max_words)
 
 
-async def generate_section(template_id: str, section_type: GrantSectionEnum) -> SectionDTO:
+async def generate_section(organization_id: str, section_type: GrantSectionEnum) -> SectionDTO:
     """Generate the sections of the grant format.
 
     Args:
-        template_id: The ID of the grant format.
+        organization_id: The organization ID to generate the grant format for.
         section_type: The type of the section.
 
     Returns:
@@ -150,7 +150,7 @@ async def generate_section(template_id: str, section_type: GrantSectionEnum) -> 
     )
 
     search_results = await retrieve_documents(
-        template_id=template_id, search_queries=queries_result.queries, max_results=10
+        organization_id=organization_id, search_queries=queries_result.queries, max_results=10
     )
 
     result = await handle_completions_request(

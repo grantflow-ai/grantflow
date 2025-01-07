@@ -156,6 +156,7 @@ class GrantTemplate(BaseWithUUIDPK):
 
     __table_args__ = (Index("idx_grant_template_name_org", "name", "funding_organization_id", unique=True),)
 
+    # noinspection PyIncorrectDocstring
     @validates("template")
     def validate_template(self, _: str, text: str) -> str:
         """Validate the grant format template.

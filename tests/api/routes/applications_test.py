@@ -85,7 +85,7 @@ async def test_retrieve_application_text_processing(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: GrantApplication,
+    grant_application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -95,7 +95,7 @@ async def test_retrieve_application_text_processing(
         )
 
     _, response = await asgi_client.get(
-        f"/workspaces/{workspace.id}/applications/{application.id}/content",
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}/content",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -109,7 +109,7 @@ async def test_retrieve_application_text_complete(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: GrantApplication,
+    grant_application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -119,12 +119,12 @@ async def test_retrieve_application_text_complete(
         )
         await session.execute(
             update(GrantApplication)
-            .where(GrantApplication.id == application.id)
+            .where(GrantApplication.id == grant_application.id)
             .values({"text": "Generated text", "completed_at": datetime.now(tz=UTC)})
         )
 
     _, response = await asgi_client.get(
-        f"/workspaces/{workspace.id}/applications/{application.id}/content",
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}/content",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -139,7 +139,7 @@ async def test_update_application_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: GrantApplication,
+    grant_application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -153,7 +153,7 @@ async def test_update_application_success(
     )
 
     _, response = await asgi_client.patch(
-        f"/workspaces/{workspace.id}/applications/{application.id}",
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -161,7 +161,7 @@ async def test_update_application_success(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     async with async_session_maker() as session:
-        updated = await session.scalar(select(GrantApplication).where(GrantApplication.id == application.id))
+        updated = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
         assert updated.title == update_data["title"]
         assert updated.significance == update_data["significance"]
         assert updated.innovation == update_data["innovation"]
@@ -170,12 +170,12 @@ async def test_update_application_success(
 async def test_update_application_unauthorized(
     asgi_client: SanicASGITestClient,
     workspace: Workspace,
-    application: GrantApplication,
+    grant_application: GrantApplication,
 ) -> None:
     update_data = UpdateApplicationRequestBody(title="Updated Title")
 
     _, response = await asgi_client.patch(
-        f"/workspaces/{workspace.id}/applications/{application.id}",
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -188,7 +188,7 @@ async def test_delete_application_success(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
-    application: GrantApplication,
+    grant_application: GrantApplication,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -198,24 +198,24 @@ async def test_delete_application_success(
         )
 
     _, response = await asgi_client.delete(
-        f"/workspaces/{workspace.id}/applications/{application.id}",
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     async with async_session_maker() as session:
-        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == application.id))
+        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
         assert result is None
 
 
 async def test_delete_application_unauthorized(
     asgi_client: SanicASGITestClient,
     workspace: Workspace,
-    application: GrantApplication,
+    grant_application: GrantApplication,
 ) -> None:
     _, response = await asgi_client.delete(
-        f"/workspaces/{workspace.id}/applications/{application.id}",
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 

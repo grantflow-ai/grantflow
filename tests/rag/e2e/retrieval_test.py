@@ -7,7 +7,7 @@ from anyio import Path
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import ApplicationVector, GrantApplicationFile
+from src.db.tables import GrantApplicationFile, TextVector
 from src.dto import VectorDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import SearchQueriesResponse, handle_create_search_queries
@@ -22,7 +22,7 @@ from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_document_retrieval(
     logger: logging.Logger,
-    application_file: GrantApplicationFile,
+    grant_application_file: GrantApplicationFile,
     async_session_maker: async_sessionmaker[Any],
     data_file: Path,
 ) -> None:
@@ -47,11 +47,10 @@ async def test_document_retrieval(
 
     search_queries = queries_response.queries
     async with async_session_maker() as session, session.begin():
-        stmt = insert(ApplicationVector).values(
+        stmt = insert(TextVector).values(
             [
                 {
-                    "application_id": application_file.grant_application_id,
-                    "file_id": application_file.id,
+                    "file_id": grant_application_file.file_id,
                     "embedding": vector_dto["embedding"],
                     "chunk": vector_dto["chunk"],
                 }
@@ -63,7 +62,7 @@ async def test_document_retrieval(
 
     logger.info("Inserted embeddings data into the database")
     results = await retrieve_documents(
-        application_id=str(application_file.grant_application_id),
+        application_id=str(grant_application_file.grant_application_id),
         search_queries=search_queries,
     )
 

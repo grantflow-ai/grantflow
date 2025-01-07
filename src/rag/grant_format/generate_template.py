@@ -80,11 +80,11 @@ response_schema = {
 }
 
 
-async def generate_format_template(template_id: str) -> ToolResponse:
+async def generate_format_template(organization_id: str) -> ToolResponse:
     """Generate the sections of the grant format.
 
     Args:
-        template_id: The ID of the grant format.
+        organization_id: The organization ID to generate the grant format for.
 
     Returns:
         The markdown template of the format
@@ -95,7 +95,7 @@ async def generate_format_template(template_id: str) -> ToolResponse:
     )
 
     search_results = await retrieve_documents(
-        template_id=template_id,
+        organization_id=organization_id,
         search_queries=queries_result.queries,
     )
 

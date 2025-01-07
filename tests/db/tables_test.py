@@ -3,17 +3,17 @@ from typing import Any
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import (
-    ApplicationVector,
     GrantApplication,
     GrantApplicationFile,
     ResearchAim,
     ResearchTask,
+    TextVector,
     Workspace,
     WorkspaceUser,
 )
 from tests.factories import (
-    ApplicationVectorFactory,
     ResearchTaskFactory,
+    TextVectorFactory,
     WorkspaceUserFactory,
 )
 
@@ -54,11 +54,13 @@ async def test_create_research_task(async_session_maker: async_sessionmaker[Any]
 
 
 async def test_create_application_vector(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication, application_file: GrantApplicationFile
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+    grant_application_file: GrantApplicationFile,
 ) -> None:
-    vector_data = ApplicationVectorFactory.build(
-        application_id=application.id,
-        file_id=application_file.id,
+    vector_data = TextVectorFactory.build(
+        application_id=grant_application.id,
+        file_id=grant_application_file.file_id,
     )
 
     async with async_session_maker() as session, session.begin():
@@ -67,15 +69,13 @@ async def test_create_application_vector(
 
     async with async_session_maker() as session:
         result = await session.get(
-            ApplicationVector,
+            TextVector,
             {
-                "application_id": vector_data.grant_application_id,
                 "chunk_index": vector_data.chunk["index"],
                 "file_id": vector_data.file_id,
             },
         )
         assert result is not None
-        assert result.grant_application_id == vector_data.grant_application_id
         assert result.chunk["index"] == vector_data.chunk["index"]
         assert result.chunk["content"] == vector_data.chunk["content"]
         assert result.file_id == vector_data.file_id
