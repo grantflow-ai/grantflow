@@ -2,7 +2,7 @@ from string import Template
 from typing import Final, TypedDict
 
 from src.db.enums import GrantSectionEnum
-from src.rag.grant_format.shared_prompts import GRANT_FORMAT_SYSTEM_PROMPT
+from src.rag.grant_template.shared_prompts import GRANT_FORMAT_SYSTEM_PROMPT
 from src.rag.retrieval import retrieve_documents
 from src.rag.search_queries import handle_create_search_queries
 from src.rag.utils import handle_completions_request
@@ -80,14 +80,14 @@ response_schema = {
 }
 
 
-async def generate_format_template(organization_id: str) -> ToolResponse:
-    """Generate the sections of the grant format.
+async def generate_grant_template(organization_id: str) -> ToolResponse:
+    """Generate the sections of the grant template.
 
     Args:
-        organization_id: The organization ID to generate the grant format for.
+        organization_id: The organization ID to generate the grant template for.
 
     Returns:
-        The markdown template of the format
+        The markdown template of the grant
     """
     queries_result = await handle_create_search_queries(
         task_description=GENERATE_GRANT_FORMAT_TASK_DESCRIPTION,

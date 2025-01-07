@@ -10,8 +10,8 @@ from src.db.connection import get_session_maker
 from src.db.enums import GrantSectionEnum
 from src.db.tables import GrantSection, GrantTemplate, SectionTopic
 from src.exceptions import DatabaseError
-from src.rag.grant_format.generate_section import SectionDTO, generate_section
-from src.rag.grant_format.generate_template import generate_format_template
+from src.rag.grant_template.generate_section_prompt import SectionDTO, generate_section
+from src.rag.grant_template.generate_template_prompt import generate_grant_template
 from src.utils.db import check_exists_files_being_indexed
 from src.utils.logging import get_logger
 
@@ -20,10 +20,12 @@ TEMPLATE_VARIABLE_PATTERN: Final[Pattern[str]] = compile_regex("{{([^}]+)}}")
 logger = get_logger(__name__)
 
 
-async def generate_grant_format(organization_id: str) -> None:
+async def handle_generate_grant_template(*, cfp_content: str, grant_template_id: str, organization_id: str) -> None:
     """Generate a new grant template from user uploaded instructions.
 
     Args:
+        cfp_content: The extracted content of a grant CFP.
+        grant_template_id: The ID of the grant template to update.
         organization_id: The organization ID to generate the grant template for.
 
     Raises:
@@ -41,10 +43,10 @@ async def generate_grant_format(organization_id: str) -> None:
 
     logger.info("Files finished indexing, beginning text generation")
     async with session_maker() as session:
-        grant_format = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == organization_id))
+        grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
 
     logger.info("Generating template structure")
-    response = await generate_format_template(organization_id=str(grant_format.id))
+    response = await generate_grant_template(organization_id=str(grant_template.id))
     template_section_labels = cast(list[GrantSectionEnum], TEMPLATE_VARIABLE_PATTERN.findall(response["template"]))
     section_data: list[SectionDTO] = await gather(
         *[
