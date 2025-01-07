@@ -149,7 +149,6 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
                 request.app.dispatch(
                     "parse_and_index_file",
                     context={
-                        "application_id": application_id,
                         "file_id": file_id,
                         "file_dto": file_dto,
                     },

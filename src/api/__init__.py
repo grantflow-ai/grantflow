@@ -9,7 +9,7 @@ from src.api.routes.grant_applications import (
     handle_retrieve_application_text,
     handle_update_application,
 )
-from src.api.routes.grant_templates import handle_create_grant_format
+from src.api.routes.grant_templates import handle_create_grant_template
 from src.api.routes.health import health_check
 from src.api.routes.login import handle_login
 from src.api.routes.otp import handle_create_otp
@@ -66,4 +66,4 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     )
 
     # Grant Formats
-    app.add_route(handle_create_grant_format, "/grant-formats", methods=["POST"])
+    app.add_route(handle_create_grant_template, "/grant-formats", methods=["POST"])

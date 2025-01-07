@@ -26,7 +26,6 @@ async def parse_and_index_file(
         file_id: The ID of the file in the database.
 
     Raises:
-        ValueError: If neither application_id nor organization_id is provided.
         DatabaseError: If there was an issue inserting the vectors into the database.
 
     Returns:
@@ -48,6 +47,7 @@ async def parse_and_index_file(
         async with session_maker() as session, session.begin():
             await session.execute(update(File).where(File.id == file_id).values(status=FileIndexingStatusEnum.FAILED))
             await session.commit()
+
         logger.error("Failed to parse file", filename=file_dto.filename, exec_info=e)
     else:
         async with session_maker() as session, session.begin():
