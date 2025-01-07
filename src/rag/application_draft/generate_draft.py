@@ -63,7 +63,7 @@ async def generate_application_draft(*, application_id: str) -> str:
         application = await session.scalar(
             select(GrantApplication)
             .options(
-                selectinload(GrantApplication.files),
+                selectinload(GrantApplication.grant_application_files),
                 selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
             )
             .where(GrantApplication.id == application_id)

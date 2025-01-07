@@ -17,6 +17,7 @@ dependencies = [
     "firebase-admin>=6.6.0",
     "google-cloud-aiplatform>=1.75.0",
     "greenlet>=3.1.1",
+    "jsonschema>=4.23.0",
     "msgspec>=0.19.0",
     "pathvalidate>=3.2.3",
     "pgvector>=0.3.6",
