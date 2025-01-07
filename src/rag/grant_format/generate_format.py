@@ -20,35 +20,35 @@ TEMPLATE_VARIABLE_PATTERN: Final[Pattern[str]] = compile_regex("{{([^}]+)}}")
 logger = get_logger(__name__)
 
 
-async def generate_grant_format(template_id: str) -> None:
-    """Generate a new grant format from user uploaded instructions.
+async def generate_grant_format(organization_id: str) -> None:
+    """Generate a new grant template from user uploaded instructions.
 
     Args:
-        template_id: The ID of the grant format.
+        organization_id: The organization ID to generate the grant template for.
 
     Raises:
-        DatabaseError: If there was an issue updating the grant format in the database.
+        DatabaseError: If there was an issue updating the grant template in the database.
 
     Returns:
         None
     """
     session_maker = get_session_maker()
 
-    logger.info("Starting grant format generation pipeline", template_id=template_id)
-    while await check_exists_files_being_indexed(session_maker=session_maker, template_id=template_id):
+    logger.info("Starting grant template generation pipeline", organization_id=organization_id)
+    while await check_exists_files_being_indexed(session_maker=session_maker, organization_id=organization_id):
         logger.info("Waiting for files to finish indexing")
         await sleep(2)
 
     logger.info("Files finished indexing, beginning text generation")
     async with session_maker() as session:
-        grant_format = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == template_id))
+        grant_format = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == organization_id))
 
-    logger.info("Generating grant structure")
-    response = await generate_format_template(template_id=str(grant_format.id))
+    logger.info("Generating template structure")
+    response = await generate_format_template(organization_id=str(grant_format.id))
     template_section_labels = cast(list[GrantSectionEnum], TEMPLATE_VARIABLE_PATTERN.findall(response["template"]))
     section_data: list[SectionDTO] = await gather(
         *[
-            generate_section(template_id=template_id, section_type=section_type)
+            generate_section(organization_id=organization_id, section_type=section_type)
             for section_type in template_section_labels
         ]
     )
@@ -56,7 +56,7 @@ async def generate_grant_format(template_id: str) -> None:
     logger.info("Extracted grant sections", template_section_labels=template_section_labels)
     async with session_maker() as session, session.begin():
         try:
-            await session.execute(update(GrantTemplate).where(GrantTemplate.id == template_id).values(response))
+            await session.execute(update(GrantTemplate).where(GrantTemplate.id == organization_id).values(response))
             section_ids = await session.scalars(
                 insert(GrantSection)
                 .values(
@@ -66,7 +66,7 @@ async def generate_grant_format(template_id: str) -> None:
                             "max_words": section_datum["max_words"],
                             "min_words": section_datum["min_words"],
                             "type": section_datum["type"],
-                            "template_id": template_id,
+                            "template_id": organization_id,
                         }
                         for section_datum in section_data
                     ]

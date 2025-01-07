@@ -26,8 +26,8 @@ app.config.CORS_AUTOMATIC_OPTIONS = True
 
 app.error_handler.add(Exception, handle_exception)
 
-app.register_middleware(authenticate_user, "request")
-app.register_middleware(set_session_maker, "request")
+app.register_middleware(authenticate_user)
+app.register_middleware(set_session_maker)
 app.register_listener(before_server_start_hook, "before_server_start")
 
 app.add_signal(generate_application_draft, generate_application_draft.__name__)
@@ -37,4 +37,4 @@ app.add_signal(generate_grant_format, generate_grant_format.__name__)
 register_routes(app)
 
 if __name__ == "__main__":  # pragma: no cover
-    uvicorn.run(host="0.0.0.0", port=8000, log_level="debug", app="src.main:app")
+    uvicorn.run(host="0.0.0.0", log_level="debug", app="src.main:app")

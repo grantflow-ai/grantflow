@@ -13,7 +13,6 @@ from src.api_types import (
     APIRequest,
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
-    ApplicationFileResponse,
     ApplicationFullResponse,
     CreateApplicationRequestBody,
     ResearchAimResponse,
@@ -22,7 +21,7 @@ from src.api_types import (
     UpdateApplicationRequestBody,
 )
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import GrantApplication, GrantApplicationFile, ResearchAim, ResearchTask
+from src.db.tables import File, GrantApplication, GrantApplicationFile, ResearchAim, ResearchTask
 from src.dto import FileDTO
 from src.exceptions import DatabaseError
 from src.utils.logging import get_logger
@@ -110,28 +109,33 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
                         ]
                     )
                 )
-            file_ids = (
-                (
-                    await session.scalars(
-                        insert(GrantApplicationFile)
-                        .values(
-                            [
-                                {
-                                    "application_id": application_id,
-                                    "name": file_dto.filename,
-                                    "type": file_dto.mime_type,
-                                    "size": file_dto.content.__sizeof__(),
-                                    "status": FileIndexingStatusEnum.INDEXING,
-                                }
-                                for file_dto in uploaded_files
-                            ]
-                        )
-                        .returning(GrantApplicationFile.id)
+            if uploaded_files:
+                file_ids = await session.scalars(
+                    insert(File)
+                    .values(
+                        [
+                            {
+                                "name": file_dto.filename,
+                                "type": file_dto.mime_type,
+                                "size": file_dto.content.__sizeof__(),
+                                "status": FileIndexingStatusEnum.INDEXING,
+                            }
+                            for file_dto in uploaded_files
+                        ]
+                    )
+                    .returning(File.id)
+                )
+                await session.execute(
+                    insert(GrantApplicationFile).values(
+                        [
+                            {
+                                "grant_application_id": application_id,
+                                "file_id": file_id,
+                            }
+                            for file_id in file_ids
+                        ]
                     )
                 )
-                if uploaded_files
-                else []
-            )
 
             await session.commit()
         except SQLAlchemyError as e:
@@ -228,15 +232,7 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
                 )
                 for research_aim in application.research_aims
             ],
-            files=[
-                ApplicationFileResponse(
-                    id=str(application_file.id),
-                    name=application_file.name,
-                    type=application_file.type,
-                    size=application_file.size,
-                )
-                for application_file in application.files
-            ],
+            files=[],
         )
     )
 

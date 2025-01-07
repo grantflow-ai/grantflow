@@ -26,8 +26,8 @@ async def test_index_documents(
     logger: logging.Logger,
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
-    application: GrantApplication,
-    application_file: GrantApplicationFile,
+    grant_application: GrantApplication,
+    grant_application_file: GrantApplicationFile,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings")
 
@@ -41,7 +41,7 @@ async def test_index_documents(
 
     vector_dtos = await index_documents(
         chunks=chunks,
-        file_id=str(application_file.id),
+        file_id=str(grant_application_file.file_id),
     )
 
     index_results = RESULTS_FOLDER / f"index_{data_file.name}_documents_test_result.json"

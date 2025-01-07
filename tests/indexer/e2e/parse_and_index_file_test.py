@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import ApplicationVector, GrantApplication, GrantApplicationFile
+from src.db.tables import GrantApplication, GrantApplicationFile, TextVector
 from src.dto import FileDTO
 from src.indexer.files import parse_and_index_file
 from src.utils.serialization import serialize
@@ -23,8 +23,8 @@ SMALL_PDF_TEST_FILE = SOURCES_FOLDER / FILENAME
 async def test_parse_application_file(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    application: GrantApplication,
-    application_file: GrantApplicationFile,
+    grant_application: GrantApplication,
+    grant_application_file: GrantApplicationFile,
 ) -> None:
     logger.info("Running end-to-end test for parse_and_index_file")
 
@@ -35,14 +35,13 @@ async def test_parse_application_file(
     )
 
     await parse_and_index_file(
-        application_id=str(application.id),
         file_dto=file_dto,
-        file_id=str(application_file.id),
+        file_id=str(grant_application_file.file_id),
     )
 
     async with async_session_maker() as session:
         results = list(
-            await session.scalars(select(ApplicationVector).where(ApplicationVector.file_id == application_file.id))
+            await session.scalars(select(TextVector).where(TextVector.file_id == grant_application_file.file_id))
         )
 
     index_results = RESULTS_FOLDER / "parse_and_index_application_file_result.json"

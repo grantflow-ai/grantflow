@@ -1,13 +1,10 @@
 import os
 from collections.abc import AsyncGenerator, Generator
-from json import loads
 from logging import Logger, getLogger
-from mimetypes import guess_type
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Final
 from unittest.mock import AsyncMock, Mock, patch
-from uuid import UUID, uuid4
 
 import pytest
 from anyio import Path as AsyncPath
@@ -16,7 +13,6 @@ from dotenv import load_dotenv
 from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
-from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from structlog import configure
 from structlog.testing import LogCapture
@@ -24,38 +20,38 @@ from testcontainers.postgres import PostgresContainer
 from vertexai.generative_models import GenerativeModel
 from vertexai.language_models import TextEmbedding
 
+from src.db.base import Base
 from src.db.connection import engine_ref, get_session_maker
 from src.db.tables import (
-    ApplicationVector,
-    Base,
+    File,
     FundingOrganization,
     GenerationResult,
     GrantApplication,
     GrantApplicationFile,
     GrantSection,
     GrantTemplate,
-    GrantTemplateVector,
-    OrganizationGrantGuidelinesFile,
+    OrganizationFile,
     ResearchAim,
     ResearchTask,
     SectionTopic,
+    TextVector,
     Workspace,
     WorkspaceUser,
 )
 from src.utils.ai import embeddings_model, init_ref
 from tests.factories import (
-    ApplicationVectorFactory,
+    FileFactory,
     FundingOrganizationFactory,
+    GenerationResultFactory,
     GrantApplicationFactory,
     GrantApplicationFileFactory,
-    GrantFormatFileFactory,
     GrantSectionFactory,
     GrantTemplateFactory,
-    GrantTemplateVectorFactory,
+    OrganizationFileFactory,
     ResearchAimFactory,
     ResearchTaskFactory,
     SectionAspectsFactory,
-    TextGenerationResultFactory,
+    TextVectorFactory,
     WorkspaceFactory,
     WorkspaceUserFactory,
 )
@@ -220,7 +216,28 @@ async def workspace_user(async_session_maker: async_sessionmaker[Any], workspace
 
 
 @pytest.fixture
-async def org(async_session_maker: async_sessionmaker[Any]) -> FundingOrganization:
+async def file(async_session_maker: async_sessionmaker[Any]) -> File:
+    file_data = FileFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(file_data)
+        await session.commit()
+    return file_data
+
+
+@pytest.fixture
+async def text_vector(
+    async_session_maker: async_sessionmaker[Any],
+    file: File,
+) -> TextVector:
+    vector_data = TextVectorFactory.build(file_id=file.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(vector_data)
+        await session.commit()
+    return vector_data
+
+
+@pytest.fixture
+async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> FundingOrganization:
     org_data = FundingOrganizationFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(org_data)
@@ -229,8 +246,10 @@ async def org(async_session_maker: async_sessionmaker[Any]) -> FundingOrganizati
 
 
 @pytest.fixture
-async def grant_format(async_session_maker: async_sessionmaker[Any], org: FundingOrganization) -> GrantTemplate:
-    format_data = GrantTemplateFactory.build(name="NIH Research Grant", funding_organization_id=org.id)
+async def grant_template(
+    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization
+) -> GrantTemplate:
+    format_data = GrantTemplateFactory.build(name="NIH Research Grant", funding_organization_id=funding_organization.id)
     async with async_session_maker() as session, session.begin():
         session.add(format_data)
         await session.commit()
@@ -238,10 +257,10 @@ async def grant_format(async_session_maker: async_sessionmaker[Any], org: Fundin
 
 
 @pytest.fixture
-async def grant_format_file(
-    async_session_maker: async_sessionmaker[Any], grant_format: GrantTemplate
-) -> OrganizationGrantGuidelinesFile:
-    file_data = GrantFormatFileFactory.build(template_id=grant_format.id)
+async def organization_file(
+    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, file: File
+) -> OrganizationFile:
+    file_data = OrganizationFileFactory.build(funding_organization_id=funding_organization.id, file=file.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -249,8 +268,8 @@ async def grant_format_file(
 
 
 @pytest.fixture
-async def grant_section(async_session_maker: async_sessionmaker[Any], grant_format: GrantTemplate) -> GrantSection:
-    section_data = GrantSectionFactory.build(template_id=grant_format.id)
+async def grant_section(async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate) -> GrantSection:
+    section_data = GrantSectionFactory.build(template_id=grant_template.id)
     async with async_session_maker() as session, session.begin():
         session.add(section_data)
         await session.commit()
@@ -258,7 +277,7 @@ async def grant_section(async_session_maker: async_sessionmaker[Any], grant_form
 
 
 @pytest.fixture
-async def section_aspect(
+async def section_topic(
     async_session_maker: async_sessionmaker[Any],
     grant_section: GrantSection,
 ) -> SectionTopic:
@@ -270,20 +289,7 @@ async def section_aspect(
 
 
 @pytest.fixture
-async def grant_format_vector(
-    async_session_maker: async_sessionmaker[Any],
-    grant_format: GrantTemplate,
-    grant_format_file: OrganizationGrantGuidelinesFile,
-) -> GrantTemplateVector:
-    vector_data = GrantTemplateVectorFactory.build(template_id=grant_format.id, file_id=grant_format_file.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(vector_data)
-        await session.commit()
-    return vector_data
-
-
-@pytest.fixture
-async def application(async_session_maker: async_sessionmaker[Any], workspace: Workspace) -> GrantApplication:
+async def grant_application(async_session_maker: async_sessionmaker[Any], workspace: Workspace) -> GrantApplication:
     application_data = GrantApplicationFactory.build(
         workspace_id=workspace.id,
     )
@@ -294,10 +300,10 @@ async def application(async_session_maker: async_sessionmaker[Any], workspace: W
 
 
 @pytest.fixture
-async def application_file(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication
+async def grant_application_file(
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, file: File
 ) -> GrantApplicationFile:
-    file_data = GrantApplicationFileFactory.build(application_id=application.id)
+    file_data = GrantApplicationFileFactory.build(grant_application_id=grant_application.id, file_id=file.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -305,8 +311,10 @@ async def application_file(
 
 
 @pytest.fixture
-async def research_aim(async_session_maker: async_sessionmaker[Any], application: GrantApplication) -> ResearchAim:
-    aim_data = ResearchAimFactory.build(application_id=application.id)
+async def research_aim(
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
+) -> ResearchAim:
+    aim_data = ResearchAimFactory.build(application_id=grant_application.id)
     async with async_session_maker() as session, session.begin():
         session.add(aim_data)
         await session.commit()
@@ -323,183 +331,11 @@ async def research_task(async_session_maker: async_sessionmaker[Any], research_a
 
 
 @pytest.fixture
-async def text_generation_result(
-    async_session_maker: async_sessionmaker[Any], application: GrantApplication
+async def generation_result(
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
 ) -> GenerationResult:
-    result_data = TextGenerationResultFactory.build(application_id=application.id)
+    result_data = GenerationResultFactory.build(application_id=grant_application.id)
     async with async_session_maker() as session, session.begin():
         session.add(result_data)
         await session.commit()
     return result_data
-
-
-@pytest.fixture
-async def application_vector(
-    async_session_maker: async_sessionmaker[Any],
-    application: GrantApplication,
-    application_file: GrantApplicationFile,
-) -> ApplicationVector:
-    vector_data = ApplicationVectorFactory.build(application_id=application.id, file_id=application_file.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(vector_data)
-        await session.commit()
-    return vector_data
-
-
-@pytest.fixture
-async def full_application_id(workspace: Workspace, async_session_maker: async_sessionmaker[Any]) -> UUID:
-    application_id = uuid4()
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(GrantApplication).values(
-                {
-                    "id": application_id,
-                    "workspace_id": workspace.id,
-                    "title": "Developing AI tailored immunocytokines to target melanoma brain metastases",
-                    "significance": None,
-                    "innovation": None,
-                }
-            )
-        )
-        await session.commit()
-
-    research_aims = [
-        {
-            "id": uuid4(),
-            "aim_number": 1,
-            "application_id": application_id,
-            "title": "Developing BM TME models with holistic, multimodal AI-driven analysis",
-            "description": "The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
-        },
-        {
-            "id": uuid4(),
-            "aim_number": 2,
-            "application_id": application_id,
-            "title": "Preclinical screening of cytokines in orthotopic immunocompetent BM models",
-            "description": "The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
-        },
-        {
-            "id": uuid4(),
-            "aim_number": 3,
-            "application_id": application_id,
-            "title": "Design of tumor-targeting immunocytokines",
-            "description": "The purpose of this aim is to use our advanced single cell technologies to study the immune activity in the BM TME and identify targets for antibodies and cytokines to modulate the immune activity in the brain to more anti-tumor activity.",
-        },
-    ]
-
-    async with async_session_maker() as session, session.begin():
-        await session.execute(insert(ResearchAim).values(research_aims))
-        await session.commit()
-
-    research_tasks = [
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[0]["id"],
-            "task_number": "1.1",
-            "title": "Temporal understanding of immune activity in BM TME",
-            "description": "Research immune temporal changes using Zman-seq in the BM TME using our previous research adapting it from glioma to BM.",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[0]["id"],
-            "task_number": "1.2",
-            "title": "Immune cell-cell interaction in the BM TME",
-            "description": "Use PIC-seq to measure immune cell interaction in the BM TME.",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[0]["id"],
-            "task_number": "1.3",
-            "title": "Immune spatial distribution in the BM TME",
-            "description": "Use stereo-seq to study spatial distribution of immune cells in the BM TME.",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[1]["id"],
-            "task_number": "2.1",
-            "title": "Screening of cytokines in BM TME",
-            "description": "Use our in-house cytokine library to screen for cytokines that modulate immune activity in the BM TME.",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[1]["id"],
-            "task_number": "2.2",
-            "title": "In-vitro validation of cytokines",
-            "description": "Use in-vitro models to validate the cytokines identified in task 1.",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[1]["id"],
-            "task_number": "2.3",
-            "title": "In-vivo validation of cytokines",
-            "description": "Single-cell analysis using in-vitro and in vivo functional screening system on myeloid, NK and T cell activity for trans-acting MiTEsUse",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[2]["id"],
-            "task_number": "3.1",
-            "title": "Design fusion proteins and cleavage site",
-            "description": "We will develop the optimal structures for the fusion proteins of the top 3-5 mAb-cytokine combinations identified in Aim 2, using advanced techniques in protein design. The design process will include the selection of the most suitable peptide linkers, blocking moieties, TAM-specific cleavage sites and the computational optimization of protein structure and stability.",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[2]["id"],
-            "task_number": "3.2",
-            "title": "Produce fusion proteins",
-            "description": "We will manufacture the 3-5 mAb-cytokine fusion proteins. The protein synthesis will be done by a contract research organization (CRO) selected based on our experience with leading CROs based on quality and punctual production. The production will include the selection of stable molecules with high protein expression and no aggregation.",
-        },
-        {
-            "id": uuid4(),
-            "aim_id": research_aims[2]["id"],
-            "task_number": "3.3",
-            "title": "In-vitro validation of immunocytokines",
-            "description": "We will confirm the binding via SPR, ELISA, cell-based binding and reporter assays.We will validate immunocytokines' impact on interactions between myeloid and lymphoid cell activity using in-vitro assays of co-cultured huMDMs, NK or T cells. To assess the efficacy of the fusion proteins in inducing cytotoxic NK and T cell activity, assays of co-cultured huMDMs, NK, or T cells and tumor cells will be treated with the various mAb-cytokine chimeras.",
-        },
-    ]
-
-    async with async_session_maker() as session, session.begin():
-        await session.execute(insert(ResearchTask).values(research_tasks))
-
-    file_data = [
-        {
-            "id": uuid4(),
-            "application_id": application_id,
-            "name": file_path.name,
-            "type": guess_type(file_path)[0] or "application/octet-stream",
-            "size": file_path.read_bytes().__sizeof__(),
-        }
-        for file_path in TEST_DATA_SOURCES
-    ]
-
-    async with async_session_maker() as session, session.begin():
-        await session.execute(insert(GrantApplicationFile).values(file_data))
-        await session.commit()
-
-    async with async_session_maker() as session, session.begin():
-        vector_sources = {
-            test_result.name: loads(test_result.read_text())
-            for test_result in TEST_DATA_RESULTS
-            if test_result.name.endswith("_indexed_documents.json")
-        }
-        for file in file_data:
-            vectors = vector_sources[f"parse_{file['name']}_indexed_documents.json"]
-            assert vectors
-            await session.execute(
-                insert(ApplicationVector).values(
-                    [
-                        {
-                            "application_id": application_id,
-                            "file_id": file["id"],
-                            "chunk_index": vector["chunk_index"],
-                            "content": vector["content"],
-                            "element_type": vector["element_type"],
-                            "embedding": vector["embedding"],
-                            "page_number": vector["page_number"],
-                        }
-                        for vector in vectors
-                    ]
-                )
-            )
-        await session.commit()
-
-    return application_id
