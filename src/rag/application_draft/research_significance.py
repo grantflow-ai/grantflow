@@ -109,7 +109,6 @@ async def generate_significance_text(
     """
     user_prompt = SIGNIFICANCE_GENERATION_USER_PROMPT.substitute(
         application_title=application.title,
-        grant_funding_organization=application.funding_organization.name,
         previous_part_text=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
             previous_part_text=previous_part_text,
         )

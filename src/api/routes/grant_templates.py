@@ -2,14 +2,13 @@ from asyncio import gather
 from typing import cast
 
 from sanic import BadRequest, InternalServerError
-from sanic.request import File
 from sanic.response import JSONResponse
 from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api_types import APIRequest, CreateGrantTemplateRequestBody
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import FundingOrganization, GrantGuidelinesFile
+from src.db.tables import File, FundingOrganization, OrganizationFile
 from src.dto import FileDTO
 from src.exceptions import DatabaseError, ExternalOperationError, FileParsingError, ValidationError
 from src.utils.extraction import extract_file_content, extract_webpage_content
@@ -28,6 +27,7 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
     Raises:
         BadRequest: If there are validation failures.
         InternalServerError: If there was an issue creating the grant format.
+        DatabaseError: If there was an issue creating the grant format in the database.
 
     Returns:
         The response object.
@@ -71,11 +71,10 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
         async with request.ctx.session_maker() as session, session.begin():
             try:
                 file_ids = await session.scalars(
-                    insert(GrantGuidelinesFile)
+                    insert(File)
                     .values(
                         [
                             {
-                                "funding_organization_id": organization_id,
                                 "name": file_dto.filename,
                                 "type": file_dto.mime_type,
                                 "size": file_dto.content.__sizeof__(),
@@ -84,7 +83,12 @@ async def handle_create_grant_format(request: APIRequest) -> JSONResponse:
                             for file_dto in guidelines_files
                         ]
                     )
-                    .returning(GrantGuidelinesFile.id)
+                    .returning(File.id)
+                )
+                await session.execute(
+                    insert(OrganizationFile).values(
+                        [{"organization_id": organization_id, "file_id": file_id} for file_id in file_ids]
+                    )
                 )
                 await session.commit()
             except SQLAlchemyError as e:

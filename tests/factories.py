@@ -34,18 +34,18 @@ from src.api_types import (
 )
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.tables import (
-    ApplicationVector,
+    File,
     FundingOrganization,
     GenerationResult,
     GrantApplication,
     GrantApplicationFile,
     GrantSection,
     GrantTemplate,
-    GrantTemplateVector,
-    OrganizationGrantGuidelinesFile,
+    OrganizationFile,
     ResearchAim,
     ResearchTask,
     SectionTopic,
+    TextVector,
     Workspace,
     WorkspaceUser,
 )
@@ -53,7 +53,6 @@ from src.db.tables import (
 faker = Faker()
 
 
-# Grant Format Related Factories
 class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     __model__ = GrantTemplate
     template = dedent("""
@@ -88,8 +87,12 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     """)
 
 
-class GrantFormatFileFactory(SQLAlchemyFactory[OrganizationGrantGuidelinesFile]):
-    __model__ = OrganizationGrantGuidelinesFile
+class FileFactory(SQLAlchemyFactory[File]):
+    __model__ = File
+
+
+class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
+    __model__ = OrganizationFile
 
 
 class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):
@@ -100,8 +103,8 @@ class SectionAspectsFactory(SQLAlchemyFactory[SectionTopic]):
     __model__ = SectionTopic
 
 
-class GrantTemplateVectorFactory(SQLAlchemyFactory[GrantTemplateVector]):
-    __model__ = GrantTemplateVector
+class TextVectorFactory(SQLAlchemyFactory[TextVector]):
+    __model__ = TextVector
     embedding = [uniform(-1, 1) for _ in range(EMBEDDING_DIMENSIONS)]
 
     @classmethod
@@ -142,19 +145,8 @@ class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
     __model__ = ResearchTask
 
 
-class TextGenerationResultFactory(SQLAlchemyFactory[GenerationResult]):
+class GenerationResultFactory(SQLAlchemyFactory[GenerationResult]):
     __model__ = GenerationResult
-
-
-class ApplicationVectorFactory(SQLAlchemyFactory[ApplicationVector]):
-    __model__ = ApplicationVector
-    embedding = [uniform(-1, 1) for _ in range(EMBEDDING_DIMENSIONS)]
-
-    @classmethod
-    def get_type_from_column(cls, column: Column[Any]) -> type:
-        if column.name == "embedding":
-            return cast(type, Vector)
-        return super().get_type_from_column(column)
 
 
 # Request Body Factories
