@@ -6,7 +6,7 @@ from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-PUBLIC_PATHS = {"login", "health", "grant-formats"}
+PUBLIC_PATHS = {"login", "health", "grant-templates"}
 
 
 def set_session_maker(request: Request) -> None:
