@@ -64,9 +64,14 @@ async def handle_create_grant_template(request: APIRequest) -> JSONResponse:
 
     cfp_content = await _get_cfp_content(request=request, request_body=request_body)
 
-    try:
-        file_ids: list[UUID] = []
+    guidelines_files = (
+        [FileDTO.from_file(filename=file.name, file=file) for file in request.files.getlist("guidelines_files")]
+        if request.files
+        else []
+    )
+    file_ids: list[UUID] = []
 
+    try:
         async with request.ctx.session_maker() as session, session.begin():
             try:
                 if not organization_id:
@@ -76,37 +81,35 @@ async def handle_create_grant_template(request: APIRequest) -> JSONResponse:
                         .returning(FundingOrganization.id)
                     )
 
-                if request.files and (
-                    guidelines_files := [
-                        FileDTO.from_file(filename=file.name, file=file)
-                        for file in request.files.getlist("guidelines_files")
-                    ]
-                ):
-                    file_ids = await session.scalars(
-                        insert(File)
-                        .values(
-                            [
-                                {
-                                    "name": file_dto.filename,
-                                    "type": file_dto.mime_type,
-                                    "size": file_dto.content.__sizeof__(),
-                                    "status": FileIndexingStatusEnum.INDEXING,
-                                }
-                                for file_dto in guidelines_files
-                            ]
+                if guidelines_files:
+                    file_ids = list(
+                        await session.scalars(
+                            insert(File)
+                            .values(
+                                [
+                                    {
+                                        "name": file_dto.filename,
+                                        "type": file_dto.mime_type,
+                                        "size": len(file_dto.content),
+                                        "status": FileIndexingStatusEnum.INDEXING,
+                                        "text_content": None,
+                                    }
+                                    for file_dto in guidelines_files
+                                ]
+                            )
+                            .returning(File.id)
                         )
-                        .returning(File.id)
                     )
                     await session.execute(
                         insert(OrganizationFile).values(
-                            [{"organization_id": organization_id, "file_id": file_id} for file_id in file_ids]
+                            [{"funding_organization_id": organization_id, "file_id": file_id} for file_id in file_ids]
                         )
                     )
 
                 grant_template_id = await session.scalar(
-                    insert(GrantTemplate).values(
-                        {"funding_organization_id": organization_id, "name": "", "template": ""}
-                    )
+                    insert(GrantTemplate)
+                    .values({"funding_organization_id": organization_id, "name": "", "template": ""})
+                    .returning(GrantTemplate.id)
                 )
                 await session.commit()
             except SQLAlchemyError as e:
@@ -114,29 +117,27 @@ async def handle_create_grant_template(request: APIRequest) -> JSONResponse:
                 await session.rollback()
                 raise DatabaseError("Error inserting new records") from e
 
-        if file_ids:
-            logger.info("Dispatching signal to parse and index files")
-            await gather(
-                *[
-                    request.app.dispatch(
-                        "parse_and_index_file",
-                        context={
-                            "file_id": file_id,
-                            "file_dto": file_dto,
-                        },
-                    )
-                    for file_dto, file_id in zip(guidelines_files, file_ids, strict=False)
-                ]
-            )
-
-        await request.app.dispatch(
-            "handle_generate_grant_template",
-            context={
-                "organization_id": str(organization_id),
-                "grant_template_id": str(grant_template_id),
-                "cfp_content": cfp_content,
-            },
-        )
+        signals = [
+            request.app.dispatch(
+                "handle_generate_grant_template",
+                context={
+                    "organization_id": str(organization_id),
+                    "grant_template_id": str(grant_template_id),
+                    "cfp_content": cfp_content,
+                },
+            ),
+            *[
+                request.app.dispatch(
+                    "parse_and_index_file",
+                    context={
+                        "file_id": file_id,
+                        "file_dto": file_dto,
+                    },
+                )
+                for file_dto, file_id in zip(guidelines_files, file_ids, strict=True)
+            ],
+        ]
+        await gather(*signals)
 
         return JSONResponse(TableIdResponse(id=str(grant_template_id)), status=HTTPStatus.CREATED)
     except (FileParsingError, ValidationError, ExternalOperationError) as e:

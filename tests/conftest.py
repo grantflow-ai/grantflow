@@ -339,3 +339,8 @@ async def generation_result(
         session.add(result_data)
         await session.commit()
     return result_data
+
+
+@pytest.fixture
+def signal_dispatch_mock(mocker: MockerFixture) -> AsyncMock:
+    return mocker.patch("sanic.app.Sanic.dispatch", new_callable=AsyncMock)

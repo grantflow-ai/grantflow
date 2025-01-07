@@ -193,7 +193,7 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
             result = await session.execute(
                 select(GrantApplication)
                 .options(
-                    selectinload(GrantApplication.files),
+                    selectinload(GrantApplication.grant_application_files),
                     selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
                 )
                 .where(GrantApplication.id == application_id)

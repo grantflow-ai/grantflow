@@ -65,5 +65,5 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         methods=["GET"],
     )
 
-    # Grant Formats
-    app.add_route(handle_create_grant_template, "/grant-formats", methods=["POST"])
+    # Grant Template
+    app.add_route(handle_create_grant_template, "/grant-templates", methods=["POST"])
