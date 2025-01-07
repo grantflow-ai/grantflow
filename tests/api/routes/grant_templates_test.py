@@ -13,7 +13,7 @@ from src.api_types import CreateGrantTemplateRequestBody, TableIdResponse
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import FundingOrganization, GrantTemplate, OrganizationFile
 from src.utils.serialization import deserialize, serialize
-from tests.conftest import SOURCES_FOLDER
+from tests.conftest import RESULTS_FOLDER, SOURCES_FOLDER
 
 TEST_CFP_URL = "https://grants.nih.gov/grants/guide/rfa-files/RFA-DC-25-005.html"
 GUIDELINES_FILE = SOURCES_FOLDER / "NIH- Instructions for Research (R).pdf"
@@ -84,3 +84,10 @@ async def test_grant_template_create_e2e(
     assert "organization_id" in handle_generate_grant_template_call.kwargs["context"]
     assert "grant_template_id" in handle_generate_grant_template_call.kwargs["context"]
     assert "cfp_content" in handle_generate_grant_template_call.kwargs["context"]
+
+    cfp_content_file = RESULTS_FOLDER / "extracted_cfp_content.md"
+
+    if not cfp_content_file.exists():
+        cfp_content_file.write_text(handle_generate_grant_template_call.kwargs["context"]["cfp_content"])
+    else:
+        assert handle_generate_grant_template_call.kwargs["context"]["cfp_content"] == cfp_content_file.read_text()
