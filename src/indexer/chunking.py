@@ -6,7 +6,7 @@ from typing import Final
 
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
-from src.dto import Chunk, TableContext
+from src.db.json_objects import Chunk, TableContext
 from src.utils.extraction import Formula, OCROutput, Page, Paragraph, Table, TableCell
 from src.utils.logging import get_logger
 

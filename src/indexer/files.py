@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import File, TextVector
+from src.db.tables import RagFile, TextVector
 from src.dto import FileDTO
 from src.exceptions import DatabaseError, ExternalOperationError, FileParsingError, ValidationError
 from src.indexer.chunking import chunk_text
@@ -45,7 +45,9 @@ async def parse_and_index_file(
         )
     except (FileParsingError, ExternalOperationError, ValidationError) as e:
         async with session_maker() as session, session.begin():
-            await session.execute(update(File).where(File.id == file_id).values(status=FileIndexingStatusEnum.FAILED))
+            await session.execute(
+                update(RagFile).where(RagFile.id == file_id).values(status=FileIndexingStatusEnum.FAILED)
+            )
             await session.commit()
 
         logger.error("Failed to parse file", filename=file_dto.filename, exec_info=e)
@@ -54,8 +56,8 @@ async def parse_and_index_file(
             try:
                 await session.execute(insert(TextVector).values(vectors))
                 await session.execute(
-                    update(File)
-                    .where(File.id == file_id)
+                    update(RagFile)
+                    .where(RagFile.id == file_id)
                     .values(
                         {
                             "status": FileIndexingStatusEnum.FINISHED,

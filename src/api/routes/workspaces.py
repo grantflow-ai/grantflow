@@ -9,12 +9,10 @@ from sqlalchemy.orm import selectinload
 from src.api.utils import verify_workspace_access
 from src.api_types import (
     APIRequest,
-    ApplicationBaseResponse,
     CreateWorkspaceRequestBody,
+    TableIdResponse,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,
-    WorkspaceFullResponse,
-    WorkspaceIdResponse,
 )
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
@@ -58,7 +56,7 @@ async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
             raise DatabaseError("Error creating workspace", context=str(e)) from e
 
     return json(
-        WorkspaceIdResponse(
+        TableIdResponse(
             id=str(workspace.id),
         ),
         status=HTTPStatus.CREATED,
@@ -154,7 +152,7 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
     Returns:
         The response object.
     """
-    user_role = await verify_workspace_access(request=request, workspace_id=workspace_id)
+    await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     logger.info("Retrieving workspace", workspace_id=workspace_id)
     async with request.ctx.session_maker() as session, session.begin():
@@ -168,23 +166,7 @@ async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> 
             logger.error("Error retrieving workspace", exc_info=e)
             raise NotFound from e
 
-    return json(
-        WorkspaceFullResponse(
-            id=str(workspace.id),
-            name=workspace.name,
-            description=workspace.description,
-            logo_url=workspace.logo_url,
-            role=user_role,
-            applications=[
-                ApplicationBaseResponse(
-                    id=str(application.id),
-                    title=application.title,
-                    text=application.text,
-                )
-                for application in workspace.grant_applications
-            ],
-        )
-    )
+    return json(workspace)
 
 
 async def handle_delete_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:

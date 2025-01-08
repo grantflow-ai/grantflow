@@ -51,13 +51,13 @@ async def test_grant_template_create_e2e(
     async with async_session_maker() as session:
         org_file = await session.scalar(
             select(OrganizationFile)
-            .options(selectinload(OrganizationFile.file))
+            .options(selectinload(OrganizationFile.rag_file))
             .where(
                 OrganizationFile.funding_organization_id == funding_organization.id,
             )
         )
         assert org_file
-        assert org_file.file.status == FileIndexingStatusEnum.INDEXING
+        assert org_file.rag_file.status == FileIndexingStatusEnum.INDEXING
         grant_template = await session.scalar(
             select(GrantTemplate).where(
                 GrantTemplate.id == response_body["id"],

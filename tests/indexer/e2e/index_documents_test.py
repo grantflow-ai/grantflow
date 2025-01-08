@@ -41,7 +41,7 @@ async def test_index_documents(
 
     vector_dtos = await index_documents(
         chunks=chunks,
-        file_id=str(grant_application_file.file_id),
+        file_id=str(grant_application_file.rag_file_id),
     )
 
     index_results = RESULTS_FOLDER / f"index_{data_file.name}_documents_test_result.json"

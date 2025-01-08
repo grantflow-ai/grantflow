@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.db.tables import GrantApplicationFile, TextVector
 from src.dto import VectorDTO
 from src.rag.retrieval import retrieve_documents
-from src.rag.search_queries import SearchQueriesResponse, handle_create_search_queries
 from src.utils.serialization import deserialize, serialize
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 
@@ -31,26 +30,11 @@ async def test_document_retrieval(
     assert vector_file.exists(), f"Expected file {vector_file} to exist"
 
     vector_dtos = deserialize(vector_file.read_bytes(), list[VectorDTO])
-    search_queries_file = RESULTS_FOLDER / f"search_queries_{data_file.name}_test_result.json"
-
-    if search_queries_file.exists():
-        queries_response = deserialize(search_queries_file.read_bytes(), SearchQueriesResponse)
-    else:
-        queries_response = await handle_create_search_queries(
-            vector_data=[vector_dto["chunk"]["content"] for vector_dto in vector_dtos],
-            task_description="""
-            The task is to test the RAG pipeline by testing that retrieval works.
-            Identify effective queries from the provided content JSON array.
-            """,
-        )
-        search_queries_file.write_bytes(serialize(queries_response))
-
-    search_queries = queries_response.queries
     async with async_session_maker() as session, session.begin():
         stmt = insert(TextVector).values(
             [
                 {
-                    "file_id": grant_application_file.file_id,
+                    "file_id": grant_application_file.rag_file_id,
                     "embedding": vector_dto["embedding"],
                     "chunk": vector_dto["chunk"],
                 }
@@ -63,7 +47,11 @@ async def test_document_retrieval(
     logger.info("Inserted embeddings data into the database")
     results = await retrieve_documents(
         application_id=str(grant_application_file.grant_application_id),
-        search_queries=search_queries,
+        vector_data=[vector_dto["chunk"]["content"] for vector_dto in vector_dtos],
+        task_description="""
+            The task is to test the RAG pipeline by testing that retrieval works.
+            Identify effective queries from the provided content JSON array.
+            """,
     )
 
     retrival_results = RESULTS_FOLDER / f"retrieval_{data_file.name}_test_result.json"

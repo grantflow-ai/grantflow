@@ -9,42 +9,27 @@ from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from sqlalchemy import Column
 
 from src.api_types import (
-    ApplicationBaseResponse,
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
-    ApplicationFileResponse,
-    ApplicationFullResponse,
     CreateApplicationRequestBody,
-    CreateResearchAimRequestBody,
-    CreateResearchTaskRequestBody,
     CreateWorkspaceRequestBody,
     LoginRequestBody,
     LoginResponse,
     OTPResponse,
-    ResearchAimResponse,
-    ResearchTaskResponse,
     TableIdResponse,
     UpdateApplicationRequestBody,
-    UpdateResearchAimRequestBody,
-    UpdateResearchTaskRequestBody,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,
-    WorkspaceFullResponse,
-    WorkspaceIdResponse,
 )
 from src.constants import EMBEDDING_DIMENSIONS
+from src.db.json_objects import GrantSection, ResearchObjective, ResearchTask, TextGenerationResult
 from src.db.tables import (
-    File,
     FundingOrganization,
-    GenerationResult,
     GrantApplication,
     GrantApplicationFile,
-    GrantSection,
     GrantTemplate,
     OrganizationFile,
-    ResearchAim,
-    ResearchTask,
-    SectionTopic,
+    RagFile,
     TextVector,
     Workspace,
     WorkspaceUser,
@@ -70,8 +55,8 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     """)
 
 
-class FileFactory(SQLAlchemyFactory[File]):
-    __model__ = File
+class FileFactory(SQLAlchemyFactory[RagFile]):
+    __model__ = RagFile
 
 
 class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
@@ -80,10 +65,6 @@ class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
 
 class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):
     __model__ = GrantSection
-
-
-class SectionAspectsFactory(SQLAlchemyFactory[SectionTopic]):
-    __model__ = SectionTopic
 
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
@@ -120,18 +101,6 @@ class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationFile]):
     __model__ = GrantApplicationFile
 
 
-class ResearchAimFactory(SQLAlchemyFactory[ResearchAim]):
-    __model__ = ResearchAim
-
-
-class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
-    __model__ = ResearchTask
-
-
-class GenerationResultFactory(SQLAlchemyFactory[GenerationResult]):
-    __model__ = GenerationResult
-
-
 # Request Body Factories
 class CreateApplicationRequestBodyFactory(TypedDictFactory[CreateApplicationRequestBody]):
     __model__ = CreateApplicationRequestBody
@@ -145,57 +114,36 @@ class UpdateWorkspaceRequestBodyFactory(TypedDictFactory[UpdateWorkspaceRequestB
     __model__ = UpdateWorkspaceRequestBody
 
 
-class CreateResearchTaskRequestBodyFactory(TypedDictFactory[CreateResearchTaskRequestBody]):
-    __model__ = CreateResearchTaskRequestBody
-
-
-class CreateResearchAimRequestBodyFactory(TypedDictFactory[CreateResearchAimRequestBody]):
-    __model__ = CreateResearchAimRequestBody
-
-
 class UpdateApplicationRequestBodyFactory(TypedDictFactory[UpdateApplicationRequestBody]):
     __model__ = UpdateApplicationRequestBody
-
-
-class UpdateResearchTaskRequestBodyFactory(TypedDictFactory[UpdateResearchTaskRequestBody]):
-    __model__ = UpdateResearchTaskRequestBody
-
-
-class UpdateResearchAimRequestBodyFactory(TypedDictFactory[UpdateResearchAimRequestBody]):
-    __model__ = UpdateResearchAimRequestBody
 
 
 class LoginRequestBodyFactory(TypedDictFactory[LoginRequestBody]):
     __model__ = LoginRequestBody
 
 
+# JSON Object Factories
+class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
+    __model__ = ResearchObjective
+
+
+class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
+    __model__ = ResearchTask
+
+
+class SectionGrantSectiony(TypedDictFactory[GrantSection]):
+    __model__ = GrantSection
+
+
+class GenerationResultFactory(TypedDictFactory[TextGenerationResult]):
+    __model__ = TextGenerationResult
+
+
 # API Response Factories
-class WorkspaceIdResponseFactory(TypedDictFactory[WorkspaceIdResponse]):
-    __model__ = WorkspaceIdResponse
 
 
-class ResearchTaskResponseFactory(TypedDictFactory[ResearchTaskResponse]):
-    __model__ = ResearchTaskResponse
-
-
-class ResearchAimResponseFactory(TypedDictFactory[ResearchAimResponse]):
-    __model__ = ResearchAimResponse
-
-
-class ApplicationIdResponseFactory(TypedDictFactory[TableIdResponse]):
+class TableIdResponseFactory(TypedDictFactory[TableIdResponse]):
     __model__ = TableIdResponse
-
-
-class ApplicationFileResponseFactory(TypedDictFactory[ApplicationFileResponse]):
-    __model__ = ApplicationFileResponse
-
-
-class ApplicationBaseResponseFactory(TypedDictFactory[ApplicationBaseResponse]):
-    __model__ = ApplicationBaseResponse
-
-
-class ApplicationFullResponseFactory(TypedDictFactory[ApplicationFullResponse]):
-    __model__ = ApplicationFullResponse
 
 
 class ApplicationDraftProcessingResponseFactory(TypedDictFactory[ApplicationDraftProcessingResponse]):
@@ -208,10 +156,6 @@ class ApplicationDraftCompleteResponseFactory(TypedDictFactory[ApplicationDraftC
 
 class WorkspaceBaseResponseFactory(TypedDictFactory[WorkspaceBaseResponse]):
     __model__ = WorkspaceBaseResponse
-
-
-class WorkspaceFullResponseFactory(TypedDictFactory[WorkspaceFullResponse]):
-    __model__ = WorkspaceFullResponse
 
 
 class OTPResponseFactory(TypedDictFactory[OTPResponse]):

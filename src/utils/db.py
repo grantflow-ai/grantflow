@@ -5,7 +5,7 @@ from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import File, GrantApplicationFile, OrganizationFile
+from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile
 
 
 @overload
@@ -55,13 +55,13 @@ async def check_exists_files_being_indexed(
                 select(
                     exists(
                         select(file_table_cls)
-                        .join(File, File.id == file_table_cls.file_id)
+                        .join(RagFile, RagFile.id == file_table_cls.rag_file_id)
                         .where(
                             file_table_cls.grant_application_id == application_id
                             if hasattr(file_table_cls, "grant_application_id")
                             else file_table_cls.funding_organization_id == organization_id
                         )
-                        .where(File.status == FileIndexingStatusEnum.INDEXING)
+                        .where(RagFile.status == FileIndexingStatusEnum.INDEXING)
                     )
                 )
             ),

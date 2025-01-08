@@ -1,6 +1,6 @@
 from polyfactory.factories import TypedDictFactory
 
-from src.dto import Chunk
+from src.db.json_objects import Chunk
 
 
 class ChunkFactory(TypedDictFactory[Chunk]):

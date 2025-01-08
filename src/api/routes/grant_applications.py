@@ -1,11 +1,11 @@
-from asyncio import gather
 from http import HTTPStatus
 from typing import cast
 from uuid import UUID
 
 from sanic import BadRequest, HTTPResponse, NotFound, empty, json
+from sanic.request import File as RequestFile
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
 from src.api.utils import verify_workspace_access
@@ -13,23 +13,46 @@ from src.api_types import (
     APIRequest,
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
-    ApplicationFullResponse,
     CreateApplicationRequestBody,
-    ResearchAimResponse,
-    ResearchTaskResponse,
-    TableIdResponse,
     UpdateApplicationRequestBody,
 )
-from src.db.enums import FileIndexingStatusEnum
-from src.db.tables import File, GrantApplication, GrantApplicationFile, ResearchAim, ResearchTask
+from src.db.tables import GrantApplication, GrantTemplate
 from src.dto import FileDTO
 from src.exceptions import DatabaseError
+from src.rag.grant_template.handler import handle_generate_grant_template
+from src.utils.extraction import extract_file_content, extract_webpage_content
 from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
 
 logger = get_logger(__name__)
 
 PROCESSING_SLEEP_INTERVAL = 15  # seconds
+
+
+async def _get_cfp_content(request: APIRequest, request_body: CreateApplicationRequestBody) -> str:
+    if request.files and (cfp_file_upload := cast(RequestFile | None, request.files.get("cfp_file"))):
+        file = FileDTO.from_file(filename=cfp_file_upload.name, file=cfp_file_upload)
+        output, _ = await extract_file_content(
+            content=file.content,
+            mime_type=file.mime_type,
+        )
+        return output if isinstance(output, str) else output["content"]
+    if cfp_url := request_body.get("cfp_url"):
+        return await extract_webpage_content(url=cfp_url)
+    raise BadRequest("Either one file or a CFP URL is required")
+
+
+async def _retrieve_application(request: APIRequest, application_id: UUID) -> GrantApplication:
+    async with request.ctx.session_maker() as session:
+        try:
+            result = await session.execute(
+                select(GrantApplication)
+                .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
+                .where(GrantApplication.id == application_id)
+            )
+            return result.scalar_one()
+        except NoResultFound as e:
+            raise NotFound from e
 
 
 async def handle_create_application(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
@@ -50,123 +73,29 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     data = cast(str | None, (request.form or {}).get("data"))  # type: ignore[call-overload]
-
     if not data:
-        raise BadRequest("Application creation requires a multipart request")
+        raise BadRequest("Grant format creation requires a multipart request")
 
     request_body = deserialize(data, CreateApplicationRequestBody)
-
-    uploaded_files: list[FileDTO] = [
-        FileDTO.from_file(filename=filename, file=files_list)
-        for filename, files_list in dict(request.files or {}).items()
-        if files_list
-    ]
+    cfp_content = await _get_cfp_content(request=request, request_body=request_body)
+    grant_template_data = await handle_generate_grant_template(cfp_content)
 
     async with request.ctx.session_maker() as session, session.begin():
         try:
-            result = await session.execute(
+            application_id = await session.scalar(
                 insert(GrantApplication)
-                .values(
-                    {
-                        "workspace_id": workspace_id,
-                        "title": request_body["title"],
-                        "significance": request_body["significance"],
-                        "innovation": request_body["innovation"],
-                    }
-                )
+                .values({"workspace_id": workspace_id, "title": request_body["title"]})
                 .returning(GrantApplication.id)
             )
-            application_id = result.scalar_one()
-
-            for research_aim_data in sorted(request_body["research_aims"], key=lambda x: x["aim_number"]):
-                result = await session.execute(
-                    insert(ResearchAim)
-                    .values(
-                        {
-                            "aim_number": research_aim_data["aim_number"],
-                            "application_id": application_id,
-                            "title": research_aim_data["title"],
-                            "description": research_aim_data.get("description", None),
-                            "requires_clinical_trials": research_aim_data.get("requires_clinical_trials", False),
-                        }
-                    )
-                    .returning(ResearchAim.id)
-                )
-                research_aim_id = result.scalar_one()
-
-                await session.execute(
-                    insert(ResearchTask).values(
-                        [
-                            {
-                                "aim_id": research_aim_id,
-                                "task_number": research_task["task_number"],
-                                "title": research_task["title"],
-                                "description": research_task.get("description"),
-                            }
-                            for research_task in sorted(
-                                research_aim_data["research_tasks"], key=lambda x: x["task_number"]
-                            )
-                        ]
-                    )
-                )
-            if uploaded_files:
-                file_ids = await session.scalars(
-                    insert(File)
-                    .values(
-                        [
-                            {
-                                "name": file_dto.filename,
-                                "type": file_dto.mime_type,
-                                "size": file_dto.content.__sizeof__(),
-                                "status": FileIndexingStatusEnum.INDEXING,
-                            }
-                            for file_dto in uploaded_files
-                        ]
-                    )
-                    .returning(File.id)
-                )
-                await session.execute(
-                    insert(GrantApplicationFile).values(
-                        [
-                            {
-                                "grant_application_id": application_id,
-                                "file_id": file_id,
-                            }
-                            for file_id in file_ids
-                        ]
-                    )
-                )
-
+            await session.execute(insert(GrantTemplate).values(grant_template_data))
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error creating application", exc_info=e)
             raise DatabaseError("Error creating application", context=str(e)) from e
 
-        logger.info("Dispatching signal to parse and index files")
-        await gather(
-            *[
-                request.app.dispatch(
-                    "parse_and_index_file",
-                    context={
-                        "file_id": file_id,
-                        "file_dto": file_dto,
-                    },
-                )
-                for file_dto, file_id in zip(uploaded_files, file_ids, strict=True)
-            ]
-        )
-
-    logger.info("Dispatching signal to generate application draft")
-    await request.app.dispatch(
-        "generate_application_draft",
-        context={"application_id": application_id},
-    )
-
     return json(
-        TableIdResponse(
-            id=str(application_id),
-        ),
+        await _retrieve_application(request=request, application_id=application_id),
         status=HTTPStatus.CREATED,
     )
 
@@ -188,52 +117,7 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
     logger.info("Retrieving applications for workspace", workspace_id=workspace_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    async with request.ctx.session_maker() as session:
-        try:
-            result = await session.execute(
-                select(GrantApplication)
-                .options(
-                    selectinload(GrantApplication.grant_application_files),
-                    selectinload(GrantApplication.research_aims).selectinload(ResearchAim.research_tasks),
-                )
-                .where(GrantApplication.id == application_id)
-            )
-            application = result.scalar_one()
-        except SQLAlchemyError as e:
-            logger.error("Error retrieving application", exc_info=e)
-            raise NotFound from e
-
-    return json(
-        ApplicationFullResponse(
-            id=str(application.id),
-            title=application.title,
-            significance=application.significance,
-            innovation=application.innovation,
-            text=application.text,
-            research_aims=[
-                ResearchAimResponse(
-                    id=str(research_aim.id),
-                    aim_number=research_aim.aim_number,
-                    title=research_aim.title,
-                    description=research_aim.description,
-                    requires_clinical_trials=research_aim.requires_clinical_trials,
-                    preliminary_results=research_aim.preliminary_results,
-                    risks_and_alternatives=research_aim.risks_and_alternatives,
-                    research_tasks=[
-                        ResearchTaskResponse(
-                            id=str(research_task.id),
-                            task_number=research_task.task_number,
-                            title=research_task.title,
-                            description=research_task.description,
-                        )
-                        for research_task in research_aim.research_tasks
-                    ],
-                )
-                for research_aim in application.research_aims
-            ],
-            files=[],
-        )
-    )
+    return json(_retrieve_application(request=request, application_id=application_id))
 
 
 async def handle_update_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
@@ -317,15 +201,19 @@ async def handle_retrieve_application_text(
 
     logger.info("handling polling request for application", application_id=application_id)
     async with request.ctx.session_maker() as session:
-        result = await session.execute(
-            select(GrantApplication.text)
+        grant_application: GrantApplication = await session.scalar(
+            select(GrantApplication.text_generation_results, GrantApplication.grant_template)
+            .options(selectinload(GrantApplication.grant_template))
             .where(GrantApplication.id == application_id)
             .where(GrantApplication.completed_at.is_not(None))
-            .where(GrantApplication.text.isnot(None))
+            .where(GrantApplication.text_generation_results.isnot(None))
         )
-        application_text = result.scalar_one_or_none()
 
-    if application_text:
+    if grant_application.text_generation_results and grant_application.grant_template:
+        application_text = grant_application.grant_template.template
+        for result in grant_application.text_generation_results:
+            application_text = application_text.replace(f"{{{result["type"]}}}", result["content"])
+
         return json(
             ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application_text),
             status=HTTPStatus.OK,
