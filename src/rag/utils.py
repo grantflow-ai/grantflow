@@ -1,4 +1,3 @@
-from asyncio import gather
 from collections.abc import Callable, Coroutine
 from time import time
 from typing import Any, Final, NamedTuple
@@ -22,17 +21,6 @@ from src.utils.text import concatenate_segments_with_spacy_coherence
 logger = get_logger(__name__)
 
 
-class CompletionsResult[T](NamedTuple):
-    """The result of a completions request."""
-
-    response: T
-    """The generated text."""
-    tokens_used: int
-    """The number of tokens used for the generation."""
-    billable_characters_used: int
-    """The number of tokens used for the generation."""
-
-
 class SegmentedTextGenerationResult(NamedTuple):
     """The result of segmented text generation."""
 
@@ -42,10 +30,11 @@ class SegmentedTextGenerationResult(NamedTuple):
     """The number of API calls made."""
     generation_duration: int
     """The generated text."""
-    tokens_used: int
-    """The number of tokens used for the generation."""
-    billable_characters_used: int
-    """The number of tokens used for the generation."""
+
+
+DEFAULT_SYSTEM_PROMPT: Final[str] = """
+You are a specialized grant application RAG system component, generating structured outputs that downstream components will consume.
+"""
 
 
 SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
@@ -92,11 +81,11 @@ async def handle_completions_request[T](
     output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
     prompt_identifier: str,
     response_type: type[T],
-    system_prompt: str,
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
     response_schema: dict[str, Any] | None = None,
     user_prompt: str,
     validator: Callable[[T], bool] = _default_validator,
-) -> CompletionsResult[T]:
+) -> T:
     """Handle a completions request to the model.
 
     Args:
@@ -124,28 +113,19 @@ async def handle_completions_request[T](
                 parts=[Part.from_text(user_prompt), Part.from_text(output_instructions)],
             )
         ]
-        tokens, response = await gather(
-            *[
-                client.count_tokens_async(contents),
-                client.generate_content_async(
-                    contents=contents,
-                    generation_config=GenerationConfig(
-                        response_mime_type=CONTENT_TYPE_JSON,
-                        response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA,
-                    ),
-                ),
-            ]
+        response = await client.generate_content_async(
+            contents=contents,
+            generation_config=GenerationConfig(
+                response_mime_type=CONTENT_TYPE_JSON,
+                response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA,
+            ),
         )
         logger.debug("Received content from model.", text=response.text)
         data = deserialize(response.text, response_type)
         if not validator(data):
             raise ValidationError("Invalid response from model")
 
-        return CompletionsResult(
-            response=data,
-            tokens_used=tokens.total_tokens,
-            billable_characters_used=tokens.total_billable_characters,
-        )
+        return data
     except DeserializationError as e:
         logger.warning("Unexpected response from model.", exec_info=e)
         raise ValidationError("Unexpected response from model") from e
@@ -155,7 +135,7 @@ async def handle_segmented_text_generation(
     *,
     entity_type: str,
     entity_identifier: str = "",
-    prompt_handler: Callable[[str | None], Coroutine[Any, Any, CompletionsResult[GenerationResultDTO]]],
+    prompt_handler: Callable[[str | None], Coroutine[Any, Any, GenerationResultDTO]],
 ) -> SegmentedTextGenerationResult:
     """Handle the generation of segmented text.
 
@@ -169,23 +149,19 @@ async def handle_segmented_text_generation(
     """
     results: list[str] = []
     api_call_num = 1
-    tokens_used = 0
-    billable_characters_used = 0
 
     logger.info("Generating text", entity_identifier=entity_identifier, entity_type=entity_type)
     start_time = time()
     while api_call_num < 20:
         last_generation_result = results[-1] if results else None
 
-        response, total_tokens, total_billable_characters = await prompt_handler(
+        response = await prompt_handler(
             last_generation_result,
         )
 
         results.append(response["text"])
 
         api_call_num += 1
-        tokens_used += total_tokens
-        billable_characters_used += total_billable_characters
         if response["is_complete"]:
             break
 
@@ -200,6 +176,4 @@ async def handle_segmented_text_generation(
         content=concatenate_segments_with_spacy_coherence(results),
         number_of_api_calls=api_call_num,
         generation_duration=int(time() - start_time),
-        tokens_used=tokens_used,
-        billable_characters_used=billable_characters_used,
     )

@@ -36,12 +36,14 @@ async def test_parse_application_file(
 
     await parse_and_index_file(
         file_dto=file_dto,
-        file_id=str(grant_application_file.file_id),
+        file_id=str(grant_application_file.rag_file_id),
     )
 
     async with async_session_maker() as session:
         results = list(
-            await session.scalars(select(TextVector).where(TextVector.file_id == grant_application_file.file_id))
+            await session.scalars(
+                select(TextVector).where(TextVector.rag_file_id == grant_application_file.rag_file_id)
+            )
         )
 
     index_results = RESULTS_FOLDER / "parse_and_index_application_file_result.json"

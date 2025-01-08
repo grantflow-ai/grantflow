@@ -1,5 +1,5 @@
 from string import Template
-from typing import Any, Final, NamedTuple, TypedDict
+from typing import Any, Final, TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
@@ -64,18 +64,7 @@ response_schema = {
 }
 
 
-class SearchQueriesResponse(NamedTuple):
-    """The response from the search queries generation."""
-
-    queries: list[str]
-    """The generated search queries."""
-    tokens_used: int
-    """The total number of tokens used."""
-    billable_characters_used: int
-    """The total number of billable characters used."""
-
-
-async def handle_create_search_queries(*, task_description: str, **inputs: Any) -> SearchQueriesResponse:
+async def handle_create_search_queries(*, task_description: str, **inputs: Any) -> list[str]:
     """Generate an optimized search query for retrieval.
 
     Args:
@@ -85,12 +74,10 @@ async def handle_create_search_queries(*, task_description: str, **inputs: Any) 
     Returns:
         The generated search queries, the total number of tokens, and the total billable characters.
     """
-    total_tokens: int = 0
-    total_billable_characters: int = 0
     queries: list[str] = []
 
     while len(queries) < 3:
-        response, tokens_used, billable_characters_used = await handle_completions_request(
+        response = await handle_completions_request(
             prompt_identifier="search_queries",
             system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
             user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
@@ -101,11 +88,8 @@ async def handle_create_search_queries(*, task_description: str, **inputs: Any) 
             response_type=ToolResponse,
             model=FAST_TEXT_GENERATION_MODEL,
         )
-        total_tokens += tokens_used
-        total_billable_characters += billable_characters_used
         queries.extend(response["queries"])
 
     logger.info("Successfully generated search queries for the next stage in the RAG pipeline")
-    return SearchQueriesResponse(
-        queries=queries[:10], tokens_used=total_tokens, billable_characters_used=total_billable_characters
-    )
+
+    return queries[:10]

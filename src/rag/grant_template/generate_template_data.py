@@ -1,23 +1,25 @@
 from string import Template
-from typing import Final, NotRequired, TypedDict, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 from src.constants import TEMPLATE_VARIABLE_PATTERN
 from src.db.enums import ContentTopicEnum, GrantSectionEnum
-from src.db.utils import validate_markdown_template
-from src.rag.grant_template.shared_prompts import GRANT_FORMAT_SYSTEM_PROMPT
+from src.dto import GrantTemplateDTO
 from src.rag.retrieval import retrieve_documents
-from src.rag.search_queries import handle_create_search_queries
 from src.rag.utils import handle_completions_request
 from src.utils.logging import get_logger
 from src.utils.serialization import serialize
+from src.utils.validators import validate_markdown_template
+
+if TYPE_CHECKING:
+    from src.rag.dto import DocumentDTO
+
 
 logger = get_logger(__name__)
 
-
-GENERATE_UNIFIED_GRANT_TEMPLATE_USER_PROMPT: Final[Template] = Template("""
+GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[Template] = Template("""
 ## Context
 Our system models the format and guidelines for generating grant application through several interconnected components:
 
@@ -62,7 +64,7 @@ And these are retrieval results as a JSON array:
     </rag_results>
 """)
 
-GENERATE_UNIFIED_OUTPUT_INSTRUCTIONS = """
+GENERATE_GRANT_TEMPLATE_OUTPUT_INSTRUCTIONS = """
 ## Output Format
 Respond with a JSON object containing:
 - "name": Descriptive name for the grant format
@@ -78,7 +80,7 @@ Example structure:
     "sections": [
         {
             "type": "EXECUTIVE_SUMMARY",
-            "search_terms": ["project overview", "key objectives", "expected impact"],
+            "search_terms": ["project overview", "key objectives", "expected impact"], // 3-10 terms
             "min_words": 200, // can be null if no minimum
             "max_words": null, // can be null if no limit
             "topics": [
@@ -147,7 +149,7 @@ Search Terms:
 - Effective for RAG queries
 """
 
-GENERATE_UNIFIED_TASK_DESCRIPTION: Final[str] = """
+GENERATE_GRANT_TEMPLATE_TASK_DESCRIPTION: Final[str] = """
 ## Context
 Our system models the format and guidelines for generating grant application through several interconnected components:
 
@@ -162,42 +164,6 @@ Analyze the provided sources to:
 2. Define the required sections and their configurations
 3. Specify the weighted research topics for each section
 """
-
-
-class SectionTopicDTO(TypedDict):
-    """An topic of a section."""
-
-    type: ContentTopicEnum
-    """The type of the topic."""
-    weight: float
-    """The weight of the topic."""
-
-
-class SectionDTO(TypedDict):
-    """A grant section."""
-
-    topics: list[SectionTopicDTO]
-    """The topics of the section."""
-    search_terms: list[str]
-    """Search Terms that describe this section."""
-    max_words: NotRequired[int | None]
-    """The maximum number of words in the section."""
-    min_words: NotRequired[int | None]
-    """The minimum number of words in the section."""
-    type: GrantSectionEnum
-    """The type of the section."""
-
-
-class ToolResponse(TypedDict):
-    """The response from the tool call."""
-
-    name: str
-    """The name of the grant format."""
-    template: str
-    """The markdown template for the grant."""
-    sections: list[SectionDTO]
-    """The sections of the grant."""
-
 
 response_schema = {
     "type": "object",
@@ -239,7 +205,7 @@ response_schema = {
 }
 
 
-def validator(tool_reponse: ToolResponse) -> bool:
+def validator(tool_reponse: GrantTemplateDTO) -> bool:
     """Validate the tool response.
 
     Args:
@@ -259,7 +225,7 @@ def validator(tool_reponse: ToolResponse) -> bool:
     }
 
 
-async def generate_grant_template(*, cfp_content: str, organization_id: str) -> ToolResponse:
+async def generate_grant_template(*, cfp_content: str, organization_id: str | None) -> GrantTemplateDTO:
     """Generate a complete grant template including format and section configurations.
 
     Args:
@@ -269,29 +235,30 @@ async def generate_grant_template(*, cfp_content: str, organization_id: str) -> 
     Returns:
         Complete grant template configuration including format and sections
     """
-    queries_result = await handle_create_search_queries(
-        task_description=GENERATE_UNIFIED_TASK_DESCRIPTION,
-        grant_section_types=serialize([e.value for e in GrantSectionEnum]),
-        research_topic_types=serialize([e.value for e in ContentTopicEnum]),
-        cfp_content=cfp_content,
+    search_results: list[DocumentDTO] = (
+        await retrieve_documents(
+            organization_id=organization_id,
+            task_description=GENERATE_GRANT_TEMPLATE_TASK_DESCRIPTION,
+            grant_section_types=serialize([e.value for e in GrantSectionEnum]),
+            research_topic_types=serialize([e.value for e in ContentTopicEnum]),
+            cfp_content=cfp_content,
+        )
+        if organization_id
+        else []
     )
 
-    search_results = await retrieve_documents(organization_id=organization_id, search_queries=queries_result.queries)
-
     result = await handle_completions_request(
-        prompt_identifier="grant_template",
-        system_prompt=GRANT_FORMAT_SYSTEM_PROMPT,
-        user_prompt=GENERATE_UNIFIED_GRANT_TEMPLATE_USER_PROMPT.substitute(
+        prompt_identifier="generate_grant_template",
+        user_prompt=GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
             grant_section_types=serialize([e.value for e in GrantSectionEnum]),
             research_topic_types=serialize([e.value for e in ContentTopicEnum]),
             rag_results=serialize(search_results),
             cfp_content=cfp_content,
         ),
-        response_type=ToolResponse,
+        response_type=GrantTemplateDTO,
         response_schema=response_schema,
-        output_instructions=GENERATE_UNIFIED_OUTPUT_INSTRUCTIONS,
+        output_instructions=GENERATE_GRANT_TEMPLATE_OUTPUT_INSTRUCTIONS,
         validator=validator,
     )
-    logger.info("Generated grant template", response=result.response)
-
-    return result.response
+    logger.debug("Generated grant template", result=result)
+    return result

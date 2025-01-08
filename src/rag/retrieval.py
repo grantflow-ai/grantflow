@@ -1,10 +1,11 @@
-from typing import Final, cast, overload
+from typing import Any, Final, cast
 
 from sqlalchemy import select
 
 from src.db.connection import get_session_maker
-from src.db.tables import File, GrantApplicationFile, OrganizationFile, TextVector
+from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
 from src.rag.dto import DocumentDTO
+from src.rag.search_queries import handle_create_search_queries
 from src.utils.embeddings import TaskType, generate_embeddings
 from src.utils.logging import get_logger
 
@@ -13,38 +14,22 @@ logger = get_logger(__name__)
 MAX_RESULTS: Final[int] = 25
 
 
-@overload
-async def retrieve_documents(
-    *,
-    application_id: str,
-    search_queries: list[str],
-    max_results: int = MAX_RESULTS,
-) -> list[DocumentDTO]: ...
-
-
-@overload
-async def retrieve_documents(
-    *,
-    organization_id: str,
-    search_queries: list[str],
-    max_results: int = MAX_RESULTS,
-) -> list[DocumentDTO]: ...
-
-
 async def retrieve_documents(
     *,
     application_id: str | None = None,
-    organization_id: str | None = None,
     max_results: int = MAX_RESULTS,
-    search_queries: list[str],
+    organization_id: str | None = None,
+    task_description: str,
+    **inputs: Any,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
 
     Args:
         application_id: The application ID, required if organization_id is not provided.
-        organization_id: The organization ID, required if application_id is not provided.
         max_results: The maximum number of results to return.
-        search_queries: The search queries.
+        organization_id: The organization ID, required if application_id is not provided.
+        task_description: The task description.
+        **inputs: The inputs to the task.
 
     Raises:
         ValueError: If neither application_id nor organization_id is provided.
@@ -57,14 +42,15 @@ async def retrieve_documents(
 
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
 
+    search_queries = await handle_create_search_queries(task_description=task_description, **inputs)
     query_embeddings = await generate_embeddings(",".join(search_queries), TaskType.RetrievalQuery)
 
     session_maker = get_session_maker()
     async with session_maker() as session:
         result = await session.scalars(
             select(TextVector)
-            .join(File, TextVector.file_id == File.id)
-            .join(file_table_cls, File.id == file_table_cls.file_id)
+            .join(RagFile, TextVector.rag_file_id == RagFile.id)
+            .join(file_table_cls, RagFile.id == file_table_cls.rag_file_id)
             .where(
                 file_table_cls.grant_application_id == application_id
                 if hasattr(file_table_cls, "grant_application_id")
