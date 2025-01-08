@@ -13,7 +13,7 @@ class Base(DeclarativeBase):
 
     __abstract__ = True
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now(), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now(), onupdate=now())
 
     def _get_relationship_value(self, key: str) -> Any:

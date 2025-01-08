@@ -8,9 +8,9 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api_types import (
+    TableIdResponse,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,
-    WorkspaceIdResponse,
 )
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
@@ -30,7 +30,7 @@ async def test_create_workspace_api_request_success(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.CREATED
-    response_body = deserialize(response.text, WorkspaceIdResponse)
+    response_body = deserialize(response.text, TableIdResponse)
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():

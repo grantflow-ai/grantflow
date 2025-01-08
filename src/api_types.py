@@ -5,6 +5,7 @@ from sanic import Request, Sanic
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import UserRoleEnum
+from src.db.json_objects import ResearchObjective
 
 
 class RequestContext(SimpleNamespace):
@@ -27,31 +28,7 @@ class TableIdResponse(TypedDict):
     """The ID of the application."""
 
 
-# Drafts API Types
-
-
-class ApplicationDraftProcessingResponse(TypedDict):
-    """The response schema for an application draft in processing state."""
-
-    id: str
-    """The ID of the grant application draft."""
-    status: Literal["generating"]
-    """The status of the grant application draft."""
-
-
-class ApplicationDraftCompleteResponse(TypedDict):
-    """The response schema for a completed application draft."""
-
-    id: str
-    """The ID of the grant application draft."""
-    status: Literal["complete"]
-    """The status of the grant application draft."""
-    text: str
-
-
 # Workspace API Types
-
-
 class CreateWorkspaceRequestBody(TypedDict):
     """The request body for creating a workspace."""
 
@@ -74,14 +51,7 @@ class UpdateWorkspaceRequestBody(TypedDict):
     """The URL of the workspace logo."""
 
 
-class WorkspaceIdResponse(TypedDict):
-    """The response schema for retrieving a workspace ID."""
-
-    id: str
-    """The ID of the workspace."""
-
-
-class WorkspaceBaseResponse(WorkspaceIdResponse):
+class WorkspaceBaseResponse(TableIdResponse):
     """Base response for retrieving workspaces."""
 
     name: str
@@ -94,24 +64,14 @@ class WorkspaceBaseResponse(WorkspaceIdResponse):
     """The role of the user in the workspace."""
 
 
-class WorkspaceFullResponse(WorkspaceBaseResponse):
-    """The response body for retrieving a workspace with applications."""
-
-    applications: list["ApplicationBaseResponse"]
-
-
 # Application API Types
 class CreateApplicationRequestBody(TypedDict):
     """The request body for creating an application."""
 
     title: str
     """The title of the application."""
-    significance: str | None
-    """The significance of the innovation."""
-    innovation: str | None
-    """The innovation."""
-    research_aims: list["CreateResearchAimRequestBody"]
-    """The research aims of the application."""
+    cfp_url: NotRequired[str]
+    """Grant CFP URL."""
 
 
 class UpdateApplicationRequestBody(TypedDict):
@@ -119,145 +79,30 @@ class UpdateApplicationRequestBody(TypedDict):
 
     title: NotRequired[str]
     """The title of the application."""
-    significance: NotRequired[str | None]
-    """The significance of the innovation."""
-    innovation: NotRequired[str | None]
-    """The innovation."""
-    research_aims: NotRequired[list["CreateResearchAimRequestBody"]]
-    """The research aims of the application."""
+    research_objectives: NotRequired[list[ResearchObjective]]
+    """The research objectives of the application."""
 
 
-class ApplicationBaseResponse(TableIdResponse):
-    """The base response body for application endpoints, extending ApplicationIdResponse with title."""
-
-    title: str
-    """The title of the application."""
-    text: str | None
-    """The text of the application."""
-
-
-class ApplicationFullResponse(ApplicationBaseResponse):
-    """The detailed response body for retrieving a complete application."""
-
-    significance: str | None
-    """The significance of the innovation."""
-    innovation: str | None
-    """The innovation."""
-    research_aims: list["ResearchAimResponse"]
-    """The research aims of the application."""
-    files: list["ApplicationFileResponse"]
-    """The application files of the application."""
-
-
-class ApplicationFileResponse(TypedDict):
-    """The response schema for retrieving an application file."""
+class ApplicationDraftProcessingResponse(TypedDict):
+    """The response schema for an application draft in processing state."""
 
     id: str
-    """The ID of the file."""
-    name: str
-    """The name of the file."""
-    type: str
-    """The type of the file."""
-    size: int
-    """The size of the file."""
+    """The ID of the grant application draft."""
+    status: Literal["generating"]
+    """The status of the grant application draft."""
 
 
-# Research Aims and Tasks API Types
-
-
-class CreateResearchTaskRequestBody(TypedDict):
-    """The request body for creating a research task."""
-
-    description: str | None
-    """The description of the task."""
-    task_number: int
-    """The number of the task."""
-    title: str
-    """The title of the task."""
-
-
-class CreateResearchAimRequestBody(TypedDict):
-    """The request body for creating a research aim."""
-
-    aim_number: int
-    """The number of the aim."""
-    description: str | None
-    """The description of the aim."""
-    preliminary_results: str | None
-    """The preliminary results of the aim."""
-    requires_clinical_trials: bool
-    """Whether the aim requires clinical trials."""
-    research_tasks: list[CreateResearchTaskRequestBody]
-    """The research tasks of the aim."""
-    risks_and_alternatives: str | None
-    """The risks and alternatives of the aim."""
-    title: str
-    """The title of the aim."""
-
-
-class UpdateResearchTaskRequestBody(TypedDict):
-    """The request body for updating a research task."""
-
-    task_number: NotRequired[int]
-    """The number of the task."""
-    description: NotRequired[str | None]
-    """The description of the task."""
-    title: NotRequired[str]
-    """The title of the task."""
-
-
-class UpdateResearchAimRequestBody(TypedDict):
-    """The request body for updating a research aim."""
-
-    aim_number: NotRequired[int]
-    """The number of the aim."""
-    description: NotRequired[str | None]
-    """The description of the aim."""
-    requires_clinical_trials: NotRequired[bool]
-    """Whether the aim requires clinical trials."""
-    title: NotRequired[str]
-    """The title of the aim."""
-    preliminary_results: NotRequired[str | None]
-    """The preliminary results of the aim."""
-    risks_and_alternatives: NotRequired[str | None]
-    """The risks and alternatives of the aim."""
-
-
-class ResearchTaskResponse(TypedDict):
-    """The response body for retrieving a research task."""
+class ApplicationDraftCompleteResponse(TypedDict):
+    """The response schema for a completed application draft."""
 
     id: str
-    """The ID of the research task."""
-    task_number: int
-    """The number of the task."""
-    description: str
-    """The description of the task."""
-    title: str
-    """The title of the task."""
+    """The ID of the grant application draft."""
+    status: Literal["complete"]
+    """The status of the grant application draft."""
+    text: str
 
 
-class ResearchAimResponse(TypedDict):
-    """The response body for retrieving a research aim."""
-
-    aim_number: int
-    """The number of the aim."""
-    description: str | None
-    """The description of the aim."""
-    id: str
-    """The ID of the research aim."""
-    preliminary_results: str | None
-    """The preliminary results of the aim."""
-    requires_clinical_trials: bool
-    """Whether the aim requires clinical trials."""
-    research_tasks: list[ResearchTaskResponse]
-    """The research tasks of the aim."""
-    risks_and_alternatives: str | None
-    """The risks and alternatives of the aim."""
-    title: str
-    """The title of the aim."""
-
-
-# User API Types
+# Auth API Types
 class OTPResponse(TypedDict):
     """The response body for the OTP endpoint."""
 
@@ -277,15 +122,3 @@ class LoginResponse(TypedDict):
 
     jwt_token: str
     """The JWT token identifying the user."""
-
-
-# Grant Template API Types
-class CreateGrantTemplateRequestBody(TypedDict):
-    """The request body for creating an application."""
-
-    funding_organization_id: NotRequired[str]
-    """Grant funding organization ID."""
-    funding_organization_name: NotRequired[str]
-    """Grant funding organization name."""
-    cfp_url: NotRequired[str]
-    """Grant CFP URL."""

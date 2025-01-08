@@ -1,6 +1,6 @@
 from typing import NotRequired, TypedDict
 
-from src.dto import TableContext
+from src.db.json_objects import TableContext
 
 
 class DocumentDTO(TypedDict):
