@@ -4,6 +4,7 @@ from typing import Any, cast
 
 from faker import Faker
 from pgvector.utils import Vector
+from polyfactory import Use
 from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from sqlalchemy import Column
@@ -61,10 +62,6 @@ class FileFactory(SQLAlchemyFactory[RagFile]):
 
 class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
     __model__ = OrganizationFile
-
-
-class GrantSectionFactory(SQLAlchemyFactory[GrantSection]):
-    __model__ = GrantSection
 
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
@@ -127,7 +124,7 @@ class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
     __model__ = ResearchObjective
 
 
-class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
+class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
     __model__ = ResearchTask
 
 
@@ -135,8 +132,14 @@ class SectionGrantSectiony(TypedDictFactory[GrantSection]):
     __model__ = GrantSection
 
 
-class GenerationResultFactory(TypedDictFactory[TextGenerationResult]):
+class TextGenerationResultFactory(TypedDictFactory[TextGenerationResult]):
     __model__ = TextGenerationResult
+
+    content = Use(faker.text)
+
+
+class GrantSectionFactory(TypedDictFactory[GrantSection]):
+    __model__ = GrantSection
 
 
 # API Response Factories

@@ -24,7 +24,7 @@ async def test_handle_create_search_queries(
     if not retrieval_file.exists():
         return
 
-    queries_response = await handle_create_search_queries(
+    queries = await handle_create_search_queries(
         content=deserialize(retrieval_file.read_bytes(), list[dict[str, Any]]),
         task_description="""
         The task is to test the RAG pipeline by testing that generating queries works.
@@ -32,9 +32,9 @@ async def test_handle_create_search_queries(
         """,
     )
 
-    assert 3 <= len(queries_response.queries) <= 10
+    assert 3 <= len(queries) <= 10
 
     queries_result = RESULTS_FOLDER / f"queries_generation_{data_file.name}_test_result.json"
 
     if not queries_result.exists():
-        queries_result.write_bytes(serialize(queries_response))
+        queries_result.write_bytes(serialize(queries))

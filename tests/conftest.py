@@ -22,16 +22,12 @@ from vertexai.language_models import TextEmbedding
 
 from src.db.base import Base
 from src.db.connection import engine_ref, get_session_maker
-from src.db.json_objects import GrantSection, ResearchObjective, ResearchTask
 from src.db.tables import (
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
     GrantTemplate,
-    OrganizationFile,
     RagFile,
-    TextGenerationResult,
-    TextVector,
     Workspace,
     WorkspaceUser,
 )
@@ -39,15 +35,9 @@ from src.utils.ai import embeddings_model, init_ref
 from tests.factories import (
     FileFactory,
     FundingOrganizationFactory,
-    GenerationResultFactory,
     GrantApplicationFactory,
     GrantApplicationFileFactory,
-    GrantSectionFactory,
     GrantTemplateFactory,
-    OrganizationFileFactory,
-    ResearchObjectiveFactory,
-    ResearchTaskFactory,
-    TextVectorFactory,
     WorkspaceFactory,
     WorkspaceUserFactory,
 )
@@ -92,6 +82,8 @@ def pytest_logger_config(logger_config: Any) -> None:
     Returns:
         None
     """
+    getLogger("sqlalchemy").setLevel("ERROR")
+
     logger_config.add_loggers(["e2e"], stdout_level="info")
     logger_config.set_log_option_default("e2e")
 
@@ -186,7 +178,6 @@ async def async_session_maker(db_connection_string: str) -> async_sessionmaker[A
 
 @pytest.fixture(autouse=True)
 async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
-    getLogger("sqlalchemy").setLevel("ERROR")
     async with async_session_maker() as session:
         for table in reversed(Base.metadata.sorted_tables):
             await session.execute(table.delete())
@@ -221,55 +212,12 @@ async def file(async_session_maker: async_sessionmaker[Any]) -> RagFile:
 
 
 @pytest.fixture
-async def text_vector(
-    async_session_maker: async_sessionmaker[Any],
-    file: RagFile,
-) -> TextVector:
-    vector_data = TextVectorFactory.build(file_id=file.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(vector_data)
-        await session.commit()
-    return vector_data
-
-
-@pytest.fixture
 async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> FundingOrganization:
     org_data = FundingOrganizationFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(org_data)
         await session.commit()
     return org_data
-
-
-@pytest.fixture
-async def grant_template(
-    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization
-) -> GrantTemplate:
-    format_data = GrantTemplateFactory.build(name="NIH Research Grant", funding_organization_id=funding_organization.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(format_data)
-        await session.commit()
-    return format_data
-
-
-@pytest.fixture
-async def organization_file(
-    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, file: RagFile
-) -> OrganizationFile:
-    file_data = OrganizationFileFactory.build(funding_organization_id=funding_organization.id, file=file.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(file_data)
-        await session.commit()
-    return file_data
-
-
-@pytest.fixture
-async def grant_section(async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate) -> GrantSection:
-    section_data = GrantSectionFactory.build(template_id=grant_template.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(section_data)
-        await session.commit()
-    return section_data
 
 
 @pytest.fixture
@@ -284,6 +232,19 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], worksp
 
 
 @pytest.fixture
+async def grant_template(
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
+) -> GrantTemplate:
+    grant_template_data = GrantTemplateFactory.build(
+        grant_application_id=grant_application.id, funding_organization_id=None
+    )
+    async with async_session_maker() as session, session.begin():
+        session.add(grant_template_data)
+        await session.commit()
+    return grant_template_data
+
+
+@pytest.fixture
 async def grant_application_file(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, file: RagFile
 ) -> GrantApplicationFile:
@@ -295,26 +256,12 @@ async def grant_application_file(
 
 
 @pytest.fixture
-async def research_objective(
-    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
-) -> ResearchObjective:
-    return ResearchObjectiveFactory.build(application_id=grant_application.id)
+async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
+    cfp_content_file = RESULTS_FOLDER / "extracted_cfp_content.md"
+    assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
 
-
-@pytest.fixture
-async def research_task(async_session_maker: async_sessionmaker[Any]) -> ResearchTask:
-    return ResearchTaskFactory.build()
-
-
-@pytest.fixture
-async def generation_result(
-    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
-) -> TextGenerationResult:
-    result_data = GenerationResultFactory.build(application_id=grant_application.id)
-    async with async_session_maker() as session, session.begin():
-        session.add(result_data)
-        await session.commit()
-    return result_data
+    contents = cfp_content_file.read_text()
+    return mocker.patch("src.utils.extraction.extract_webpage_content", new_callable=AsyncMock, return_value=contents)
 
 
 @pytest.fixture
