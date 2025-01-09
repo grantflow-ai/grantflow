@@ -2,6 +2,12 @@ from typing import Any
 
 from sanic import Sanic
 
+from src.api.routes.auth import handle_create_otp, handle_login
+from src.api.routes.funding_organizations import (
+    handle_create_organization,
+    handle_delete_organization,
+    handle_update_organization,
+)
 from src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
@@ -10,8 +16,6 @@ from src.api.routes.grant_applications import (
     handle_update_application,
 )
 from src.api.routes.health import health_check
-from src.api.routes.login import handle_login
-from src.api.routes.otp import handle_create_otp
 from src.api.routes.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
@@ -33,6 +37,11 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     # Auth
     app.add_route(handle_login, "/login", methods=["POST"])
     app.add_route(handle_create_otp, "/otp", methods=["GET"])
+
+    # Organizations
+    app.add_route(handle_create_organization, "/organizations", methods=["POST"])
+    app.add_route(handle_update_organization, "/organizations/<organization_id:uuid>", methods=["PATCH"])
+    app.add_route(handle_delete_organization, "/organizations/<organization_id:uuid>", methods=["DELETE"])
 
     # Workspaces
     app.add_route(handle_create_workspace, "/workspaces", methods=["POST"])

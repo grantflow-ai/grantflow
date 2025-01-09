@@ -67,13 +67,16 @@ CREATE TABLE "grant_application_files" (
 CREATE INDEX "ix_grant_application_files_created_at" ON "grant_application_files" ("created_at");
 -- Create "funding_organizations" table
 CREATE TABLE "funding_organizations" (
-  "name" character varying(255) NOT NULL,
+  "full_name" character varying(255) NOT NULL,
+  "abbreviation" character varying(64) NULL,
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "funding_organizations_name_key" UNIQUE ("name")
+  CONSTRAINT "funding_organizations_full_name_key" UNIQUE ("full_name")
 );
+-- Create index "ix_funding_organizations_abbreviation" to table: "funding_organizations"
+CREATE INDEX "ix_funding_organizations_abbreviation" ON "funding_organizations" ("abbreviation");
 -- Create index "ix_funding_organizations_created_at" to table: "funding_organizations"
 CREATE INDEX "ix_funding_organizations_created_at" ON "funding_organizations" ("created_at");
 -- Create "grant_templates" table
