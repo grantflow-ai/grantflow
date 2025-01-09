@@ -17,6 +17,11 @@ from src.api.routes.grant_applications import (
     handle_update_application,
 )
 from src.api.routes.health import health_check
+from src.api.routes.organization_files import (
+    handle_delete_organization_file,
+    handle_organization_file_uploads,
+    retrieve_organization_files,
+)
 from src.api.routes.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
@@ -44,6 +49,13 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     app.add_route(handle_retrieve_organizations, "/organizations", methods=["GET"])
     app.add_route(handle_update_organization, "/organizations/<organization_id:uuid>", methods=["PATCH"])
     app.add_route(handle_delete_organization, "/organizations/<organization_id:uuid>", methods=["DELETE"])
+    app.add_route(handle_organization_file_uploads, "/organizations/<organization_id:uuid>/files", methods=["POST"])
+    app.add_route(retrieve_organization_files, "/organizations/<organization_id:uuid>/files", methods=["GET"])
+    app.add_route(
+        handle_delete_organization_file,
+        "/organizations/<organization_id:uuid>/files/<file_id:uuid>",
+        methods=["DELETE"],
+    )
 
     # Workspaces
     app.add_route(handle_create_workspace, "/workspaces", methods=["POST"])
