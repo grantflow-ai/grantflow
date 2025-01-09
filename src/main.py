@@ -7,7 +7,7 @@ from sanic import Sanic
 from src.api import register_routes
 from src.api_types import RequestContext
 from src.indexer.files import parse_and_index_file
-from src.middleware import authenticate_user, set_session_maker
+from src.middleware import authenticate_request, set_session_maker
 from src.utils.serialization import decoder, encoder
 from src.utils.server import before_server_start_hook, handle_exception
 
@@ -24,7 +24,7 @@ app.config.CORS_AUTOMATIC_OPTIONS = True
 
 app.error_handler.add(Exception, handle_exception)
 
-app.register_middleware(authenticate_user)
+app.register_middleware(authenticate_request)
 app.register_middleware(set_session_maker)
 app.register_listener(before_server_start_hook, "before_server_start")
 

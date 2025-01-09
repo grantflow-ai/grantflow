@@ -4,11 +4,12 @@ from uuid import UUID
 
 from sanic import BadRequest, HTTPResponse, empty, json
 from sanic.request import File as RequestFile
+from sanic.response import JSONResponse
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
-from src.api.utils import verify_workspace_access
+from src.api.utils import retrieve_application, verify_workspace_access
 from src.api_types import (
     APIRequest,
     ApplicationDraftCompleteResponse,
@@ -17,7 +18,6 @@ from src.api_types import (
     TableIdResponse,
     UpdateApplicationRequestBody,
 )
-from src.db.helpers import retrieve_application
 from src.db.tables import GrantApplication
 from src.dto import FileDTO
 from src.exceptions import DatabaseError
@@ -44,7 +44,7 @@ async def _get_cfp_content(request: APIRequest, request_body: CreateApplicationR
     raise BadRequest("Either one file or a CFP URL is required")
 
 
-async def handle_create_application(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+async def handle_create_application(request: APIRequest, workspace_id: UUID) -> JSONResponse:
     """Route handler for creating an Application.
 
     Args:
@@ -63,7 +63,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
 
     data = cast(str | None, (request.form or {}).get("data"))  # type: ignore[call-overload]
     if not data:
-        raise BadRequest("Grant format creation requires a multipart request")
+        raise BadRequest("data is required")
 
     request_body = deserialize(data, CreateApplicationRequestBody)
     cfp_content = await _get_cfp_content(request=request, request_body=request_body)
@@ -95,7 +95,7 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
     )
 
 
-async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> JSONResponse:
     """Route handler for retrieving an Application.
 
     Args:
@@ -112,7 +112,7 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
     return json(retrieve_application(session_maker=request.ctx.session_maker, application_id=application_id))
 
 
-async def handle_update_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
+async def handle_update_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> JSONResponse:
     """Route handler for updating an Application.
 
     Args:
@@ -182,7 +182,7 @@ async def handle_delete_application(request: APIRequest, workspace_id: UUID, app
 
 async def handle_retrieve_application_text(
     request: APIRequest, workspace_id: UUID, application_id: UUID
-) -> HTTPResponse:
+) -> JSONResponse:
     """Route handler for polling for the result of the RAG pipeline.
 
     Args:

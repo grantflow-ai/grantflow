@@ -7,6 +7,7 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from src.api.utils import retrieve_application
 from src.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
@@ -14,7 +15,6 @@ from src.api_types import (
 )
 from src.constants import TEMPLATE_VARIABLE_PATTERN
 from src.db.enums import UserRoleEnum
-from src.db.helpers import retrieve_application
 from src.db.tables import (
     GrantApplication,
     GrantTemplate,

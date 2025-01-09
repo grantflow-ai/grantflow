@@ -100,7 +100,8 @@ class FundingOrganization(BaseWithUUIDPK):
 
     __tablename__ = "funding_organizations"
 
-    name: Mapped[str] = mapped_column(String(255), unique=True)
+    full_name: Mapped[str] = mapped_column(String(255), unique=True)
+    abbreviation: Mapped[str] = mapped_column(String(64), index=True, nullable=True)
 
     grant_templates: Relationship[list["GrantTemplate"]] = relationship(
         "GrantTemplate", back_populates="funding_organization"
