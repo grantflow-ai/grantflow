@@ -79,6 +79,49 @@ async def test_create_organization_api_request_failure_bad_request(
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
+async def test_retrieve_organizations_api_request_success(
+    asgi_client: SanicASGITestClient,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    orgs = [
+        FundingOrganization(full_name="Test Org B", abbreviation="TB"),
+        FundingOrganization(full_name="Test Org A", abbreviation="TA"),
+    ]
+
+    async with async_session_maker() as session, session.begin():
+        session.add_all(orgs)
+        await session.commit()
+
+    _, response = await asgi_client.get(
+        "/organizations",
+        headers={"Authorization": "test-admin-code"},
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    response_data = deserialize(response.text, list[CreateOrganizationRequestBody])
+    assert len(response_data) == 2
+    assert response_data[0]["full_name"] == "Test Org A"
+    assert response_data[1]["full_name"] == "Test Org B"
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {"Authorization": "wrong-code"},
+        {},
+    ],
+)
+async def test_retrieve_organizations_api_request_failure_unauthorized(
+    asgi_client: SanicASGITestClient,
+    headers: dict[str, str],
+) -> None:
+    _, response = await asgi_client.get(
+        "/organizations",
+        headers=headers,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
 async def test_update_organization_api_request_success(
     asgi_client: SanicASGITestClient,
     funding_organization: FundingOrganization,

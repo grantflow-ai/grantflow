@@ -6,6 +6,7 @@ from src.api.routes.auth import handle_create_otp, handle_login
 from src.api.routes.funding_organizations import (
     handle_create_organization,
     handle_delete_organization,
+    handle_retrieve_organizations,
     handle_update_organization,
 )
 from src.api.routes.grant_applications import (
@@ -40,6 +41,7 @@ def register_routes(app: Sanic[Any, Any]) -> None:
 
     # Organizations
     app.add_route(handle_create_organization, "/organizations", methods=["POST"])
+    app.add_route(handle_retrieve_organizations, "/organizations", methods=["GET"])
     app.add_route(handle_update_organization, "/organizations/<organization_id:uuid>", methods=["PATCH"])
     app.add_route(handle_delete_organization, "/organizations/<organization_id:uuid>", methods=["DELETE"])
 
