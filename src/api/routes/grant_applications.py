@@ -2,10 +2,10 @@ from http import HTTPStatus
 from typing import cast
 from uuid import UUID
 
-from sanic import BadRequest, HTTPResponse, NotFound, empty, json
+from sanic import BadRequest, HTTPResponse, empty, json
 from sanic.request import File as RequestFile
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
 from src.api.utils import verify_workspace_access
@@ -14,13 +14,13 @@ from src.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
     CreateApplicationRequestBody,
+    TableIdResponse,
     UpdateApplicationRequestBody,
 )
-from src.db.tables import GrantApplication, GrantTemplate
+from src.db.helpers import retrieve_application
+from src.db.tables import GrantApplication
 from src.dto import FileDTO
 from src.exceptions import DatabaseError
-from src.rag.grant_template.handler import handle_generate_grant_template
-from src.utils.extraction import extract_file_content, extract_webpage_content
 from src.utils.logging import get_logger
 from src.utils.serialization import deserialize
 
@@ -30,6 +30,8 @@ PROCESSING_SLEEP_INTERVAL = 15  # seconds
 
 
 async def _get_cfp_content(request: APIRequest, request_body: CreateApplicationRequestBody) -> str:
+    from src.utils.extraction import extract_file_content, extract_webpage_content
+
     if request.files and (cfp_file_upload := cast(RequestFile | None, request.files.get("cfp_file"))):
         file = FileDTO.from_file(filename=cfp_file_upload.name, file=cfp_file_upload)
         output, _ = await extract_file_content(
@@ -40,19 +42,6 @@ async def _get_cfp_content(request: APIRequest, request_body: CreateApplicationR
     if cfp_url := request_body.get("cfp_url"):
         return await extract_webpage_content(url=cfp_url)
     raise BadRequest("Either one file or a CFP URL is required")
-
-
-async def _retrieve_application(request: APIRequest, application_id: UUID) -> GrantApplication:
-    async with request.ctx.session_maker() as session:
-        try:
-            result = await session.execute(
-                select(GrantApplication)
-                .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
-                .where(GrantApplication.id == application_id)
-            )
-            return result.scalar_one()
-        except NoResultFound as e:
-            raise NotFound from e
 
 
 async def handle_create_application(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
@@ -78,7 +67,6 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
 
     request_body = deserialize(data, CreateApplicationRequestBody)
     cfp_content = await _get_cfp_content(request=request, request_body=request_body)
-    grant_template_data = await handle_generate_grant_template(cfp_content)
 
     async with request.ctx.session_maker() as session, session.begin():
         try:
@@ -87,15 +75,22 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
                 .values({"workspace_id": workspace_id, "title": request_body["title"]})
                 .returning(GrantApplication.id)
             )
-            await session.execute(insert(GrantTemplate).values(grant_template_data))
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error creating application", exc_info=e)
             raise DatabaseError("Error creating application", context=str(e)) from e
 
+    await request.app.dispatch(
+        "handle_generate_grant_template",
+        context={
+            "application_id": application_id,
+            "cfp_content": cfp_content,
+        },
+    )
+
     return json(
-        await _retrieve_application(request=request, application_id=application_id),
+        TableIdResponse(id=str(application_id)),
         status=HTTPStatus.CREATED,
     )
 
@@ -108,16 +103,13 @@ async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, a
         workspace_id: The workspace ID.
         application_id: The application ID.
 
-    Raises:
-        NotFound: If the application was not found.
-
     Returns:
         The response object.
     """
     logger.info("Retrieving applications for workspace", workspace_id=workspace_id)
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    return json(_retrieve_application(request=request, application_id=application_id))
+    return json(retrieve_application(session_maker=request.ctx.session_maker, application_id=application_id))
 
 
 async def handle_update_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
@@ -129,6 +121,7 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
         application_id: The application ID.
 
     Raises:
+        BadRequest: If the request body is empty.
         DatabaseError: If there was an issue updating the application in the database.
 
     Returns:
@@ -138,6 +131,9 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
     await verify_workspace_access(request=request, workspace_id=workspace_id)
 
     request_body = deserialize(request.body, UpdateApplicationRequestBody)
+    if not request_body:
+        raise BadRequest("An empty request body is not allowed")
+
     async with request.ctx.session_maker() as session, session.begin():
         try:
             await session.execute(
@@ -152,7 +148,7 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
             logger.error("Error updating application", exc_info=e)
             raise DatabaseError("Error updating application", context=str(e)) from e
 
-    return empty()
+    return json(await retrieve_application(session_maker=request.ctx.session_maker, application_id=application_id))
 
 
 async def handle_delete_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
@@ -202,7 +198,7 @@ async def handle_retrieve_application_text(
     logger.info("handling polling request for application", application_id=application_id)
     async with request.ctx.session_maker() as session:
         grant_application: GrantApplication = await session.scalar(
-            select(GrantApplication.text_generation_results, GrantApplication.grant_template)
+            select(GrantApplication)
             .options(selectinload(GrantApplication.grant_template))
             .where(GrantApplication.id == application_id)
             .where(GrantApplication.completed_at.is_not(None))
@@ -212,7 +208,9 @@ async def handle_retrieve_application_text(
     if grant_application.text_generation_results and grant_application.grant_template:
         application_text = grant_application.grant_template.template
         for result in grant_application.text_generation_results:
-            application_text = application_text.replace(f"{{{result["type"]}}}", result["content"])
+            application_text = application_text.replace(result["type"], result["content"])
+
+        application_text = application_text.replace("{", "").replace("}", "")
 
         return json(
             ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application_text),

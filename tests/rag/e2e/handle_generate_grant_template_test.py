@@ -6,9 +6,7 @@ from typing import Any
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
 
-from src.db.json_objects import GrantSection
 from src.db.tables import GrantTemplate
 from src.rag.grant_template.handler import handle_generate_grant_template
 from src.utils.serialization import serialize
@@ -30,14 +28,12 @@ async def test_handle_generate_grant_template(
     assert cfp_content_file.exists(), "CFP content file does not exist"
 
     await handle_generate_grant_template(
-        cfp_content=cfp_content_file.read_text(),
+        cfp_content=cfp_content_file.read_text(), application_id=grant_template.grant_application_id
     )
 
     async with async_session_maker() as session:
         updated_grant_template = await session.scalar(
-            select(GrantTemplate)
-            .options(selectinload(GrantTemplate.grant_sections).selectinload(GrantSection))
-            .where(GrantTemplate.id == grant_template.id)
+            select(GrantTemplate).where(GrantTemplate.id == grant_template.id)
         )
         assert updated_grant_template
         assert updated_grant_template.template
