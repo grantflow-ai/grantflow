@@ -2,6 +2,7 @@ from http import HTTPStatus
 from uuid import UUID
 
 from sanic import HTTPResponse, NotFound, empty, json
+from sanic.response import JSONResponse
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
@@ -23,7 +24,7 @@ from src.utils.serialization import deserialize
 logger = get_logger(__name__)
 
 
-async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
+async def handle_create_workspace(request: APIRequest) -> JSONResponse:
     """Route handler for creating a Workspace.
 
     Args:
@@ -63,7 +64,7 @@ async def handle_create_workspace(request: APIRequest) -> HTTPResponse:
     )
 
 
-async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
+async def handle_retrieve_workspaces(request: APIRequest) -> JSONResponse:
     """Route handler for retrieving Workspaces the user can access.
 
     Args:
@@ -98,7 +99,7 @@ async def handle_retrieve_workspaces(request: APIRequest) -> HTTPResponse:
     )
 
 
-async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> JSONResponse:
     """Route handler for updating a Workspace.
 
     Args:
@@ -139,7 +140,7 @@ async def handle_update_workspace(request: APIRequest, workspace_id: UUID) -> HT
     )
 
 
-async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> HTTPResponse:
+async def handle_retrieve_workspace(request: APIRequest, workspace_id: UUID) -> JSONResponse:
     """Route handler for retrieving a Workspace.
 
     Args:

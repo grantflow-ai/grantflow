@@ -13,6 +13,7 @@ from src.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
     CreateApplicationRequestBody,
+    CreateOrganizationRequestBody,
     CreateWorkspaceRequestBody,
     LoginRequestBody,
     LoginResponse,
@@ -101,6 +102,10 @@ class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationFile]):
 # Request Body Factories
 class CreateApplicationRequestBodyFactory(TypedDictFactory[CreateApplicationRequestBody]):
     __model__ = CreateApplicationRequestBody
+
+
+class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):
+    __model__ = CreateOrganizationRequestBody
 
 
 class CreateWorkspaceRequestBodyFactory(TypedDictFactory[CreateWorkspaceRequestBody]):

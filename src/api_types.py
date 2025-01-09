@@ -28,6 +28,21 @@ class TableIdResponse(TypedDict):
     """The ID of the application."""
 
 
+# Organization API Types
+class CreateOrganizationRequestBody(TypedDict):
+    """The request body for creating a funding organization."""
+
+    full_name: str
+    abbreviation: str | None
+
+
+class UpdateOrganizationRequestBody(TypedDict):
+    """The request body for updating a funding organization."""
+
+    full_name: NotRequired[str]
+    abbreviation: NotRequired[str | None]
+
+
 # Workspace API Types
 class CreateWorkspaceRequestBody(TypedDict):
     """The request body for creating a workspace."""

@@ -1,0 +1,173 @@
+from http import HTTPStatus
+from typing import Any
+
+import pytest
+from sanic_testing.testing import SanicASGITestClient
+from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from src.api_types import CreateOrganizationRequestBody
+from src.db.tables import FundingOrganization
+from src.utils.serialization import deserialize
+
+
+@pytest.fixture(autouse=True)
+def mock_admin_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ADMIN_ACCESS_CODE", "test-admin-code")
+
+
+async def test_create_organization_api_request_success(
+    asgi_client: SanicASGITestClient,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    request_body: CreateOrganizationRequestBody = {
+        "full_name": "Test Organization",
+        "abbreviation": "TEST",
+    }
+    _, response = await asgi_client.post(
+        "/organizations",
+        json=request_body,
+        headers={"Authorization": "test-admin-code"},
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    response_body = deserialize(response.text, CreateOrganizationRequestBody)
+    assert response_body["full_name"] == request_body["full_name"]
+    assert response_body["abbreviation"] == request_body["abbreviation"]
+
+    async with async_session_maker() as session, session.begin():
+        organization = await session.scalar(
+            select(FundingOrganization).where(FundingOrganization.full_name == request_body["full_name"])
+        )
+        assert organization is not None
+        assert organization.full_name == request_body["full_name"]
+        assert organization.abbreviation == request_body["abbreviation"]
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {"Authorization": "wrong-code"},
+        {},
+    ],
+)
+async def test_create_organization_api_request_failure_unauthorized(
+    asgi_client: SanicASGITestClient,
+    headers: dict[str, str],
+) -> None:
+    request_body: CreateOrganizationRequestBody = {
+        "full_name": "Test Organization",
+        "abbreviation": None,
+    }
+    _, response = await asgi_client.post(
+        "/organizations",
+        json=request_body,
+        headers=headers,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_create_organization_api_request_failure_bad_request(
+    asgi_client: SanicASGITestClient,
+) -> None:
+    _, response = await asgi_client.post(
+        "/organizations",
+        json={},
+        headers={"Authorization": "test-admin-code"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+async def test_update_organization_api_request_success(
+    asgi_client: SanicASGITestClient,
+    funding_organization: FundingOrganization,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    request_body: CreateOrganizationRequestBody = {
+        "full_name": "Updated Organization",
+        "abbreviation": "UPD",
+    }
+
+    _, response = await asgi_client.patch(
+        f"/organizations/{funding_organization.id}",
+        json=request_body,
+        headers={"Authorization": "test-admin-code"},
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    async with async_session_maker() as session, session.begin():
+        organization = await session.get(FundingOrganization, funding_organization.id)
+        assert organization.full_name == request_body["full_name"]
+        assert organization.abbreviation == request_body["abbreviation"]
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {"Authorization": "wrong-code"},
+        {},
+    ],
+)
+async def test_update_organization_api_request_failure_unauthorized(
+    asgi_client: SanicASGITestClient,
+    funding_organization: FundingOrganization,
+    headers: dict[str, str],
+) -> None:
+    request_body: CreateOrganizationRequestBody = {
+        "full_name": "Updated Organization",
+        "abbreviation": None,
+    }
+    _, response = await asgi_client.patch(
+        f"/organizations/{funding_organization.id}",
+        json=request_body,
+        headers=headers,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_update_organization_api_request_failure_empty_body(
+    asgi_client: SanicASGITestClient,
+    funding_organization: FundingOrganization,
+) -> None:
+    _, response = await asgi_client.patch(
+        f"/organizations/{funding_organization.id}",
+        json={},
+        headers={"Authorization": "test-admin-code"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+async def test_delete_organization_api_request_success(
+    asgi_client: SanicASGITestClient,
+    funding_organization: FundingOrganization,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    _, response = await asgi_client.delete(
+        f"/organizations/{funding_organization.id}",
+        headers={"Authorization": "test-admin-code"},
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    with pytest.raises(NoResultFound):
+        async with async_session_maker() as session, session.begin():
+            await session.get_one(FundingOrganization, funding_organization.id)
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {"Authorization": "wrong-code"},
+        {},
+    ],
+)
+async def test_delete_organization_api_request_failure_unauthorized(
+    asgi_client: SanicASGITestClient,
+    funding_organization: FundingOrganization,
+    headers: dict[str, str],
+) -> None:
+    _, response = await asgi_client.delete(
+        f"/organizations/{funding_organization.id}",
+        headers=headers,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
