@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sanic import BadRequest, empty, json
 from sanic.response import HTTPResponse, JSONResponse
-from sqlalchemy import delete, insert, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api_types import APIRequest, CreateOrganizationRequestBody
@@ -44,6 +44,23 @@ async def handle_create_organization(request: APIRequest) -> JSONResponse:
         organization,
         status=HTTPStatus.CREATED,
     )
+
+
+async def handle_retrieve_organizations(request: APIRequest) -> JSONResponse:
+    """Route handler for retrieving all Funding Organizations.
+
+    Args:
+        request: The request object.
+
+    Returns:
+        The response object.
+    """
+    async with request.ctx.session_maker() as session:
+        organizations = list(
+            await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc()))
+        )
+
+    return json(organizations)
 
 
 async def handle_update_organization(request: APIRequest, organization_id: UUID) -> JSONResponse:
