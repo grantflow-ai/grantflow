@@ -59,11 +59,11 @@ class RagFile(BaseWithUUIDPK):
 
     __tablename__ = "rag_files"
 
-    name: Mapped[str] = mapped_column(String(255))
+    filename: Mapped[str] = mapped_column(String(255))
+    indexing_status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum), index=True)
+    mime_type: Mapped[str] = mapped_column(String(255))
     size: Mapped[int] = mapped_column(BigInteger)
-    status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum), index=True)
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
-    type: Mapped[str] = mapped_column(String(255))
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_file", cascade="all, delete-orphan"
