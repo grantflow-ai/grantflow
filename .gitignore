@@ -8,7 +8,6 @@
 .coverage
 .DS_store
 .env
-.pdm-python
 .venv
 .mypy_cache
 .ruff_cache
