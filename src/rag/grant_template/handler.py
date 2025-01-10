@@ -36,18 +36,24 @@ async def handle_generate_grant_template(
 
     async with session_maker() as session:
         funding_organizations = list(
-            await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc))
+            await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc()))
         )
 
     organization_mapping = {
-        org.id: {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
+        str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
     }
 
     extraction_result = await extract_cfp_data(cfp_content=cfp_content, organization_mapping=organization_mapping)
+    logger.info("Extracted CFP data")
+
     result = await generate_grant_template(
-        cfp_content=extraction_result["content"], organization_id=extraction_result["organization_id"]
+        cfp_content="...".join(extraction_result["content"]),
+        organization_id=extraction_result["organization_id"],
+        organization_name=organization_mapping[extraction_result["organization_id"]]["full_name"]
+        if extraction_result["organization_id"]
+        else None,
     )
-    logger.info("Generated grant template", response=result)
+    logger.info("Generated grant template")
 
     async with session_maker() as session, session.begin():
         try:
@@ -55,10 +61,11 @@ async def handle_generate_grant_template(
                 insert(GrantTemplate)
                 .values(
                     {
-                        "grant_application_id": application_id,
-                        "template": result["template"],
-                        "grant_sections": result["sections"],
                         "funding_organization_id": extraction_result["organization_id"],
+                        "grant_application_id": application_id,
+                        "grant_sections": result["sections"],
+                        "name": result["name"],
+                        "template": result["template"],
                     }
                 )
                 .returning(GrantTemplate)
