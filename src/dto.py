@@ -77,5 +77,3 @@ class GrantTemplateDTO(TypedDict):
     """The markdown template for the grant."""
     sections: list[GrantSection]
     """The sections of the grant."""
-    organization_id: str | None
-    """The organization ID."""

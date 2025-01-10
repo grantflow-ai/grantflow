@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import GrantTemplate
+from src.db.tables import GrantApplication, GrantTemplate
 from src.rag.grant_template.handler import handle_generate_grant_template
 from src.utils.serialization import serialize
 from tests.conftest import RESULTS_FOLDER
@@ -19,7 +19,7 @@ from tests.conftest import RESULTS_FOLDER
 )
 async def test_handle_generate_grant_template(
     logger: logging.Logger,
-    grant_template: GrantTemplate,
+    grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Running end-to-end test for generating a grant format")
@@ -27,13 +27,11 @@ async def test_handle_generate_grant_template(
     cfp_content_file = RESULTS_FOLDER / "extracted_cfp_content.md"
     assert cfp_content_file.exists(), "CFP content file does not exist"
 
-    await handle_generate_grant_template(
-        cfp_content=cfp_content_file.read_text(), application_id=grant_template.grant_application_id
-    )
+    await handle_generate_grant_template(cfp_content=cfp_content_file.read_text(), application_id=grant_application.id)
 
     async with async_session_maker() as session:
         updated_grant_template = await session.scalar(
-            select(GrantTemplate).where(GrantTemplate.id == grant_template.id)
+            select(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id)
         )
         assert updated_grant_template
         assert updated_grant_template.template

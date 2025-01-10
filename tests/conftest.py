@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
+from scripts.seed_db import seed_db
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from structlog import configure
 from structlog.testing import LogCapture
@@ -179,6 +180,11 @@ async def async_session_maker(db_connection_string: str) -> async_sessionmaker[A
     )
     engine_ref.value = None
     return get_session_maker()
+
+
+@pytest.fixture(autouse=True)
+async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
+    await seed_db()
 
 
 @pytest.fixture(autouse=True)
