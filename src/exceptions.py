@@ -29,10 +29,6 @@ class ExternalOperationError(BackendError):
     """Raised when an HTTP request to a remote system fails."""
 
 
-class MissingEnvVariableError(ValueError):
-    """Raised when an environment variable is unset."""
-
-
 class ValidationError(BackendError):
     """Raised when a validation error occurs."""
 

@@ -253,7 +253,7 @@ async def grant_template(
 async def grant_application_file(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, file: RagFile
 ) -> GrantApplicationFile:
-    file_data = GrantApplicationFileFactory.build(grant_application_id=grant_application.id, file_id=file.id)
+    file_data = GrantApplicationFileFactory.build(grant_application_id=grant_application.id, rag_file_id=file.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
