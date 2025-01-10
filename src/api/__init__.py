@@ -2,6 +2,11 @@ from typing import Any
 
 from sanic import Sanic
 
+from src.api.routes.application_files import (
+    handle_application_file_uploads,
+    handle_delete_application_file,
+    retrieve_application_files,
+)
 from src.api.routes.auth import handle_create_otp, handle_login
 from src.api.routes.funding_organizations import (
     handle_create_organization,
@@ -85,4 +90,19 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         handle_retrieve_application_text,
         "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/content",
         methods=["GET"],
+    )
+    app.add_route(
+        handle_application_file_uploads,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/files",
+        methods=["POST"],
+    )
+    app.add_route(
+        retrieve_application_files,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/files",
+        methods=["GET"],
+    )
+    app.add_route(
+        handle_delete_application_file,
+        "/workspaces/<workspace_id:uuid>/applications/<application_id:uuid>/files/<file_id:uuid>",
+        methods=["DELETE"],
     )
