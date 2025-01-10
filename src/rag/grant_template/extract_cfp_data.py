@@ -139,7 +139,7 @@ response_schema = {
 }
 
 
-async def extract_cfp_data(*, cfp_content: str, organization_mapping: dict[UUID | str, str]) -> ToolResponse:
+async def extract_cfp_data(*, cfp_content: str, organization_mapping: dict[UUID | str, dict[str, str]]) -> ToolResponse:
     """Extract the data from a CFP text."""
     result = await handle_completions_request(
         prompt_identifier="extract_cfp_data",

@@ -1,9 +1,10 @@
 from asyncio import gather
 from http import HTTPStatus
+from uuid import UUID
 
 from sanic import BadRequest, HTTPResponse, NotFound, empty, json
 from sanic.response import JSONResponse
-from sqlalchemy import UUID, delete, insert, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
@@ -31,29 +32,36 @@ async def handle_organization_file_uploads(request: APIRequest, organization_id:
     Returns:
         The response object.
     """
-    file_dtos = [FileDTO.from_file(file, filename) for filename, file in request.files.items()]
-    if not file_dtos:
+    if not request.files:
         raise BadRequest("No files were uploaded")
+
+    file_dtos = [FileDTO.from_file(file, filename) for filename, file in request.files.items()]
 
     async with request.ctx.session_maker() as session, session.begin():
         try:
-            file_ids = await session.scalars(
-                insert(RagFile)
-                .values(
-                    {
-                        "name": file_dto.filename,
-                        "content": file_dto.content,
-                        "mime_type": file_dto.mime_type,
-                        "indexing_status": FileIndexingStatusEnum.INDEXING,
-                    }
-                    for file_dto in file_dtos
+            file_ids = list(
+                await session.scalars(
+                    insert(RagFile)
+                    .values(
+                        [
+                            {
+                                "filename": file_dto.filename,
+                                "mime_type": file_dto.mime_type,
+                                "size": file_dto.size,
+                                "indexing_status": FileIndexingStatusEnum.INDEXING,
+                            }
+                            for file_dto in file_dtos
+                        ]
+                    )
+                    .returning(RagFile.id)
                 )
-                .returning(RagFile.id)
             )
             organization_files = list(
                 await session.scalars(
                     insert(OrganizationFile)
-                    .values({"organization_id": organization_id, "rag_file_id": file_id} for file_id in file_ids)
+                    .values(
+                        [{"funding_organization_id": organization_id, "rag_file_id": file_id} for file_id in file_ids]
+                    )
                     .returning(OrganizationFile)
                 )
             )
@@ -86,13 +94,13 @@ async def retrieve_organization_files(request: APIRequest, organization_id: UUID
         The response object.
     """
     async with request.ctx.session_maker() as session:
-        organization_files = (
+        organization_files = list(
             await session.scalars(
                 select(OrganizationFile)
                 .options(selectinload(OrganizationFile.rag_file))
                 .where(OrganizationFile.funding_organization_id == organization_id)
             )
-        ).all()
+        )
 
     return json(organization_files)
 
@@ -107,6 +115,7 @@ async def handle_delete_organization_file(request: APIRequest, organization_id: 
 
     Raises:
         DatabaseError: If there was an issue deleting the file from the organization.
+        NotFound: If the file was not found in the organization.
 
     Returns:
         The response object.

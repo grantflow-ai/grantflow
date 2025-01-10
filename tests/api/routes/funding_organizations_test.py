@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 from sanic_testing.testing import SanicASGITestClient
@@ -12,14 +13,8 @@ from src.db.tables import FundingOrganization
 from src.utils.serialization import deserialize
 
 
-@pytest.fixture(autouse=True)
-def mock_admin_code(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ADMIN_ACCESS_CODE", "test-admin-code")
-
-
 async def test_create_organization_api_request_success(
-    asgi_client: SanicASGITestClient,
-    async_session_maker: async_sessionmaker[Any],
+    asgi_client: SanicASGITestClient, async_session_maker: async_sessionmaker[Any], mock_admin_code: Mock
 ) -> None:
     request_body: CreateOrganizationRequestBody = {
         "full_name": "Test Organization",
@@ -53,8 +48,7 @@ async def test_create_organization_api_request_success(
     ],
 )
 async def test_create_organization_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient,
-    headers: dict[str, str],
+    asgi_client: SanicASGITestClient, headers: dict[str, str], mock_admin_code: Mock
 ) -> None:
     request_body: CreateOrganizationRequestBody = {
         "full_name": "Test Organization",
@@ -69,7 +63,7 @@ async def test_create_organization_api_request_failure_unauthorized(
 
 
 async def test_create_organization_api_request_failure_bad_request(
-    asgi_client: SanicASGITestClient,
+    asgi_client: SanicASGITestClient, mock_admin_code: Mock
 ) -> None:
     _, response = await asgi_client.post(
         "/organizations",
@@ -80,8 +74,7 @@ async def test_create_organization_api_request_failure_bad_request(
 
 
 async def test_retrieve_organizations_api_request_success(
-    asgi_client: SanicASGITestClient,
-    async_session_maker: async_sessionmaker[Any],
+    asgi_client: SanicASGITestClient, async_session_maker: async_sessionmaker[Any], mock_admin_code: Mock
 ) -> None:
     orgs = [
         FundingOrganization(full_name="Test Org B", abbreviation="TB"),
@@ -112,8 +105,7 @@ async def test_retrieve_organizations_api_request_success(
     ],
 )
 async def test_retrieve_organizations_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient,
-    headers: dict[str, str],
+    asgi_client: SanicASGITestClient, headers: dict[str, str], mock_admin_code: Mock
 ) -> None:
     _, response = await asgi_client.get(
         "/organizations",
@@ -126,6 +118,7 @@ async def test_update_organization_api_request_success(
     asgi_client: SanicASGITestClient,
     funding_organization: FundingOrganization,
     async_session_maker: async_sessionmaker[Any],
+    mock_admin_code: Mock,
 ) -> None:
     request_body: CreateOrganizationRequestBody = {
         "full_name": "Updated Organization",
@@ -156,6 +149,7 @@ async def test_update_organization_api_request_failure_unauthorized(
     asgi_client: SanicASGITestClient,
     funding_organization: FundingOrganization,
     headers: dict[str, str],
+    mock_admin_code: Mock,
 ) -> None:
     request_body: CreateOrganizationRequestBody = {
         "full_name": "Updated Organization",
@@ -170,8 +164,7 @@ async def test_update_organization_api_request_failure_unauthorized(
 
 
 async def test_update_organization_api_request_failure_empty_body(
-    asgi_client: SanicASGITestClient,
-    funding_organization: FundingOrganization,
+    asgi_client: SanicASGITestClient, funding_organization: FundingOrganization, mock_admin_code: Mock
 ) -> None:
     _, response = await asgi_client.patch(
         f"/organizations/{funding_organization.id}",
@@ -185,6 +178,7 @@ async def test_delete_organization_api_request_success(
     asgi_client: SanicASGITestClient,
     funding_organization: FundingOrganization,
     async_session_maker: async_sessionmaker[Any],
+    mock_admin_code: Mock,
 ) -> None:
     _, response = await asgi_client.delete(
         f"/organizations/{funding_organization.id}",
@@ -208,6 +202,7 @@ async def test_delete_organization_api_request_failure_unauthorized(
     asgi_client: SanicASGITestClient,
     funding_organization: FundingOrganization,
     headers: dict[str, str],
+    mock_admin_code: Mock,
 ) -> None:
     _, response = await asgi_client.delete(
         f"/organizations/{funding_organization.id}",

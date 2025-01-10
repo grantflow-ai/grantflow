@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-from sqlalchemy import UUID, DateTime
+from sqlalchemy import UUID as SA_UUID
+from sqlalchemy import DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, class_mapper, mapped_column
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.functions import now
@@ -41,4 +42,4 @@ class BaseWithUUIDPK(Base):
 
     __abstract__ = True
 
-    id: Mapped[UUID[str]] = mapped_column(UUID(), primary_key=True, insert_default=uuid4)
+    id: Mapped[UUID] = mapped_column(SA_UUID(), primary_key=True, insert_default=uuid4)
