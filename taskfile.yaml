@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   create-migration:
@@ -7,3 +7,7 @@ tasks:
   migrate:
     cmds:
       - PYTHONPATH=. uv run atlas migrate apply --env sqlalchemy
+  update:
+    cmds:
+      - uv run scripts/update_dependencies.py
+      - pre-commit autoupdate
