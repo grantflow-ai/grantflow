@@ -36,10 +36,12 @@ async def handle_generate_grant_template(
 
     async with session_maker() as session:
         funding_organizations = list(
-            await session.scalars(select(FundingOrganization).order_by(FundingOrganization.name.asc))
+            await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc))
         )
 
-    organization_mapping = {org.id: org.name for org in funding_organizations}
+    organization_mapping = {
+        org.id: {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
+    }
 
     extraction_result = await extract_cfp_data(cfp_content=cfp_content, organization_mapping=organization_mapping)
     result = await generate_grant_template(

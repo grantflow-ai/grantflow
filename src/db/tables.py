@@ -1,10 +1,9 @@
-import uuid
 from datetime import datetime
+from uuid import UUID
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
-    UUID,
     BigInteger,
     CheckConstraint,
     DateTime,
@@ -13,6 +12,9 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+)
+from sqlalchemy import (
+    UUID as SA_UUID,
 )
 from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
 
@@ -47,8 +49,8 @@ class WorkspaceUser(Base):
     firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
     role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum))
 
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True
+    workspace_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True
     )
 
     workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="workspace_users")
@@ -80,7 +82,7 @@ class TextVector(BaseWithUUIDPK):
     chunk: Mapped[Chunk] = mapped_column(JSON)
     embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIMENSIONS))
 
-    rag_file_id: Mapped[uuid.UUID] = mapped_column(UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), index=True)
+    rag_file_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), index=True)
 
     rag_file: Relationship["RagFile"] = relationship("RagFile", back_populates="text_vectors")
 
@@ -116,11 +118,11 @@ class OrganizationFile(Base):
 
     __tablename__ = "organization_files"
 
-    rag_file_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
+    rag_file_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
     )
-    funding_organization_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), unique=True
+    funding_organization_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), primary_key=True
     )
 
     rag_file: Relationship["RagFile"] = relationship("RagFile")
@@ -139,7 +141,7 @@ class GrantApplication(BaseWithUUIDPK):
     text_generation_results: Mapped[list["TextGenerationResult"] | None] = mapped_column(JSON, nullable=True)
     title: Mapped[str] = mapped_column(String(255))
 
-    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    workspace_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
 
     grant_application_files: Relationship[list["GrantApplicationFile"]] = relationship(
         "GrantApplicationFile", back_populates="grant_application", cascade="all, delete-orphan"
@@ -155,11 +157,11 @@ class GrantApplicationFile(Base):
 
     __tablename__ = "grant_application_files"
 
-    rag_file_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
+    rag_file_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
     )
-    grant_application_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), unique=True
+    grant_application_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True
     )
 
     rag_file: Relationship[RagFile] = relationship("RagFile")
@@ -177,11 +179,11 @@ class GrantTemplate(BaseWithUUIDPK):
     name: Mapped[str] = mapped_column(String(255))
     template: Mapped[str] = mapped_column(Text)
 
-    grant_application_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
+    grant_application_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
     )
-    funding_organization_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(), ForeignKey("funding_organizations.id", ondelete="SET NULL"), nullable=True
+    funding_organization_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("funding_organizations.id", ondelete="SET NULL"), nullable=True
     )
 
     grant_application: Relationship[GrantApplication] = relationship(

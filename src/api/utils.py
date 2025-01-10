@@ -41,12 +41,10 @@ async def verify_workspace_access(
             stmt = stmt.where(WorkspaceUser.role.in_(allowed_roles))
 
         result = await session.execute(stmt)
-        workspace_user = result.scalar_one_or_none()
 
-    if workspace_user is None:
-        raise Unauthorized("Unauthorized workspace access.")
-
-    return cast(UserRoleEnum, workspace_user.role)
+    if workspace_user := result.scalar_one_or_none():
+        return cast(UserRoleEnum, workspace_user.role)
+    raise Unauthorized("Unauthorized workspace access.")
 
 
 async def retrieve_application(

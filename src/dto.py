@@ -28,6 +28,11 @@ class FileDTO:
     """The name of the file."""
     mime_type: str
 
+    @property
+    def size(self) -> int:
+        """The size of the file."""
+        return len(self.content)
+
     @classmethod
     def from_file(cls, file: File | list[File], filename: str) -> "FileDTO":
         """Create a FileDTO from a Sanic File object.

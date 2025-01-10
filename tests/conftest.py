@@ -142,6 +142,11 @@ def logger() -> Logger:
     return getLogger("e2e")
 
 
+@pytest.fixture
+def mock_admin_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ADMIN_ACCESS_CODE", "test-admin-code")
+
+
 @pytest.fixture(scope="session")
 async def db_connection_string() -> AsyncGenerator[str, None]:
     container = PostgresContainer("pgvector/pgvector:pg17", driver=None)
