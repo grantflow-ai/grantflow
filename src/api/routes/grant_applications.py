@@ -205,7 +205,7 @@ async def handle_retrieve_application_text(
             .where(GrantApplication.text_generation_results.isnot(None))
         )
 
-    if grant_application.text_generation_results and grant_application.grant_template:
+    if grant_application and grant_application.text_generation_results and grant_application.grant_template:
         application_text = grant_application.grant_template.template
         for result in grant_application.text_generation_results:
             application_text = application_text.replace(result["type"], result["content"])

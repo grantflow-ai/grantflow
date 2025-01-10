@@ -32,15 +32,21 @@ async def authenticate_request(request: Request) -> None:
     if request.method == "OPTIONS" or any(request.path == f"/{path}" for path in PUBLIC_PATHS):
         return
 
+    auth_header = request.headers.get("Authorization", "").strip()
+
     if any(request.path.startswith(f"/{path}") for path in ADMIN_PATHS):
-        if (code := request.headers.get("Authorization", "").removeprefix("Bearer ")) and code == get_env(
-            "ADMIN_ACCESS_CODE"
-        ):
+        access_code = get_env("ADMIN_ACCESS_CODE")
+        if auth_header and auth_header == access_code:
             return
         raise Unauthorized
 
-    jwt_token = request.headers.get("Authorization", "").removeprefix("Bearer ") or request.args.get("otp")
-    if not jwt_token:
-        raise Unauthorized
+    bearer_token = auth_header.removeprefix("Bearer").strip() if auth_header.startswith("Bearer") else None
+    if bearer_token:
+        request.ctx.firebase_uid = verify_jwt_token(bearer_token)
+        return
 
-    request.ctx.firebase_uid = verify_jwt_token(jwt_token)
+    if otp := request.args.get("otp"):
+        request.ctx.firebase_uid = verify_jwt_token(otp)
+        return
+
+    raise Unauthorized

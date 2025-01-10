@@ -37,11 +37,11 @@ CREATE INDEX "ix_grant_applications_created_at" ON "grant_applications" ("create
 CREATE INDEX "ix_grant_applications_workspace_id" ON "grant_applications" ("workspace_id");
 -- Create "rag_files" table
 CREATE TABLE "rag_files" (
-  "name" character varying(255) NOT NULL,
+  "filename" character varying(255) NOT NULL,
+  "indexing_status" "fileindexingstatusenum" NOT NULL,
+  "mime_type" character varying(255) NOT NULL,
   "size" bigint NOT NULL,
-  "status" "fileindexingstatusenum" NOT NULL,
   "text_content" text NULL,
-  "type" character varying(255) NOT NULL,
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
@@ -50,16 +50,15 @@ CREATE TABLE "rag_files" (
 );
 -- Create index "ix_rag_files_created_at" to table: "rag_files"
 CREATE INDEX "ix_rag_files_created_at" ON "rag_files" ("created_at");
--- Create index "ix_rag_files_status" to table: "rag_files"
-CREATE INDEX "ix_rag_files_status" ON "rag_files" ("status");
+-- Create index "ix_rag_files_indexing_status" to table: "rag_files"
+CREATE INDEX "ix_rag_files_indexing_status" ON "rag_files" ("indexing_status");
 -- Create "grant_application_files" table
 CREATE TABLE "grant_application_files" (
   "rag_file_id" uuid NOT NULL,
   "grant_application_id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("rag_file_id"),
-  CONSTRAINT "grant_application_files_grant_application_id_key" UNIQUE ("grant_application_id"),
+  PRIMARY KEY ("rag_file_id", "grant_application_id"),
   CONSTRAINT "grant_application_files_grant_application_id_fkey" FOREIGN KEY ("grant_application_id") REFERENCES "grant_applications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "grant_application_files_rag_file_id_fkey" FOREIGN KEY ("rag_file_id") REFERENCES "rag_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
@@ -103,8 +102,7 @@ CREATE TABLE "organization_files" (
   "funding_organization_id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL,
-  PRIMARY KEY ("rag_file_id"),
-  CONSTRAINT "organization_files_funding_organization_id_key" UNIQUE ("funding_organization_id"),
+  PRIMARY KEY ("rag_file_id", "funding_organization_id"),
   CONSTRAINT "organization_files_funding_organization_id_fkey" FOREIGN KEY ("funding_organization_id") REFERENCES "funding_organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT "organization_files_rag_file_id_fkey" FOREIGN KEY ("rag_file_id") REFERENCES "rag_files" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
