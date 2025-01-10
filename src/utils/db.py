@@ -1,4 +1,4 @@
-from typing import Any, cast, overload
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import exists, select
@@ -6,22 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile
-
-
-@overload
-async def check_exists_files_being_indexed(
-    *,
-    application_id: UUID | str,
-    session_maker: async_sessionmaker[Any],
-) -> bool: ...
-
-
-@overload
-async def check_exists_files_being_indexed(
-    *,
-    organization_id: UUID | str,
-    session_maker: async_sessionmaker[Any],
-) -> bool: ...
+from src.exceptions import ValidationError
 
 
 async def check_exists_files_being_indexed(
@@ -38,13 +23,13 @@ async def check_exists_files_being_indexed(
         session_maker: The session maker.
 
     Raises:
-        ValueError: If neither application_id nor organization_id is provided.
+        ValidationError: If neither application_id nor organization_id is provided.
 
     Returns:
         Whether there are files being indexed.
     """
     if not application_id and not organization_id:
-        raise ValueError("Either application_id or organization_id must be provided.")
+        raise ValidationError("Either application_id or organization_id must be provided.")
 
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
 
