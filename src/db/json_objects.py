@@ -87,7 +87,7 @@ class GrantSection(TypedDict):
     """The maximum number of words in the section."""
     min_words: NotRequired[int]
     """The minimum number of words in the section."""
-    search_terms: NotRequired[list[str]]
+    search_terms: list[str]
     """The search terms for the section."""
     topics: list[SectionTopic]
     """The topics for the section."""

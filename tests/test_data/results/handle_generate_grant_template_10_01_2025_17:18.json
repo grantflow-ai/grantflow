@@ -1,0 +1,207 @@
+{
+  "grant_sections": [
+    {
+      "topics": [
+        {
+          "search_terms": [
+            "project overview",
+            "key objectives",
+            "expected impact"
+          ],
+          "type": "BACKGROUND_CONTEXT",
+          "weight": 0.9
+        },
+        {
+          "search_terms": [
+            "research justification",
+            "unmet need",
+            "clinical relevance"
+          ],
+          "type": "RATIONALE",
+          "weight": 0.7
+        }
+      ],
+      "search_terms": [
+        "project summary",
+        "major goals",
+        "overall impact"
+      ],
+      "max_words": 300,
+      "type": "EXECUTIVE_SUMMARY"
+    },
+    {
+      "topics": [
+        {
+          "search_terms": [
+            "inner ear pathology",
+            "imaging limitations",
+            "current techniques"
+          ],
+          "type": "BACKGROUND_CONTEXT",
+          "weight": 0.8
+        },
+        {
+          "search_terms": [
+            "clinical significance",
+            "diagnostic impact",
+            "treatment potential"
+          ],
+          "type": "IMPACT",
+          "weight": 0.9
+        },
+        {
+          "search_terms": [
+            "literature gaps",
+            "research gap",
+            "clinical care"
+          ],
+          "type": "RATIONALE",
+          "weight": 0.6
+        }
+      ],
+      "search_terms": [
+        "disease burden",
+        "research contribution",
+        "clinical need"
+      ],
+      "max_words": 400,
+      "type": "RESEARCH_SIGNIFICANCE"
+    },
+    {
+      "topics": [
+        {
+          "search_terms": [
+            "novel approach",
+            "innovative technology",
+            "unique methodology"
+          ],
+          "type": "NOVELTY_AND_INNOVATION",
+          "weight": 0.9
+        },
+        {
+          "search_terms": [
+            "imaging resolution",
+            "spatial resolution",
+            "temporal resolution",
+            "functional resolution"
+          ],
+          "type": "RESEARCH_FEASIBILITY",
+          "weight": 0.7
+        }
+      ],
+      "search_terms": [
+        "imaging advancement",
+        "technological leap",
+        "methodological innovation"
+      ],
+      "max_words": 300,
+      "type": "RESEARCH_INNOVATION"
+    },
+    {
+      "topics": [
+        {
+          "search_terms": [
+            "study design",
+            "clinical translation",
+            "timeline",
+            "clinical setting"
+          ],
+          "type": "MILESTONES_AND_TIMELINE",
+          "weight": 0.9
+        },
+        {
+          "search_terms": [
+            "feasibility assessment",
+            "clinical use plan",
+            "human subject research"
+          ],
+          "type": "RESEARCH_FEASIBILITY",
+          "weight": 0.8
+        },
+        {
+          "search_terms": [
+            "clinical data",
+            "study population",
+            "sex/gender analysis"
+          ],
+          "type": "HYPOTHESIS",
+          "weight": 0.6
+        }
+      ],
+      "search_terms": [
+        "research activities",
+        "implementation strategy",
+        "clinical milestones"
+      ],
+      "max_words": 800,
+      "type": "RESEARCH_PLAN"
+    },
+    {
+      "topics": [
+        {
+          "search_terms": [
+            "infrastructure",
+            "equipment",
+            "clinical facilities"
+          ],
+          "type": "SCIENTIFIC_INFRASTRUCTURE",
+          "weight": 0.8
+        },
+        {
+          "search_terms": [
+            "research team",
+            "investigators",
+            "collaborators"
+          ],
+          "type": "TEAM_EXCELLENCE",
+          "weight": 0.9
+        }
+      ],
+      "search_terms": [
+        "available resources",
+        "personnel expertise",
+        "research environment"
+      ],
+      "max_words": 400,
+      "type": "RESOURCES"
+    },
+    {
+      "topics": [
+        {
+          "search_terms": [
+            "diagnostic improvements",
+            "treatment advances",
+            "clinical care impact"
+          ],
+          "type": "IMPACT",
+          "weight": 0.9
+        },
+        {
+          "search_terms": [
+            "data sharing plan",
+            "research data",
+            "clinical translation"
+          ],
+          "type": "MILESTONES_AND_TIMELINE",
+          "weight": 0.7
+        }
+      ],
+      "search_terms": [
+        "potential benefits",
+        "project outcomes",
+        "future applications"
+      ],
+      "max_words": 300,
+      "type": "EXPECTED_OUTCOMES"
+    }
+  ],
+  "name": "NIDCD Inner Ear Imaging Grant Application",
+  "template": "# Executive Summary\n\n{{EXECUTIVE_SUMMARY}}\n\n# Research Significance\n\n{{RESEARCH_SIGNIFICANCE}}\n\n# Research Innovation\n\n{{RESEARCH_INNOVATION}}\n\n# Research Plan\n\n{{RESEARCH_PLAN}}\n\n# Resources\n\n{{RESOURCES}}\n\n# Expected Outcomes\n\n{{EXPECTED_OUTCOMES}}",
+  "grant_application_id": "8cdbac0a-7234-4a9b-b6bb-e9c50608b508",
+  "funding_organization_id": "afa7d3cf-2857-4162-819f-fc5b778b6050",
+  "id": "6cca38ab-a7fe-4211-9c0e-f2463302250a",
+  "created_at": "2025-01-10T17:18:16.165612Z",
+  "updated_at": "2025-01-10T17:18:16.165612Z",
+  "grant_application": null,
+  "funding_organization": null
+}
