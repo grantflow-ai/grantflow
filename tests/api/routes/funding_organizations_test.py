@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from sanic_testing.testing import SanicASGITestClient
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -82,6 +82,7 @@ async def test_retrieve_organizations_api_request_success(
     ]
 
     async with async_session_maker() as session, session.begin():
+        await session.execute(delete(FundingOrganization))  # there is a seed fixture that insert these
         session.add_all(orgs)
         await session.commit()
 
