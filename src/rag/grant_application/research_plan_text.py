@@ -10,23 +10,6 @@ from src.utils.template import Template
 
 logger = get_logger(__name__)
 
-BASE_SYSTEM_PROMPT: Final[str] = """
-You are an expert grant application writer and a part of a RAG system specialized in writing STEM grant applications.
-
-## Style Guidelines
-When generating text, strictly follow these guidelines:
-   - Write with maximum information density, conveying the most detail in the fewest possible words
-   - Assume the reader is an expert; avoid basic definitions or general background information
-   - Use precise, field-specific technical terminology without simplifying
-   - Do not define acronyms; assume the reader is familiar with all terminology
-   - Follow the scientific terminology provided in the inputs
-   - Maintain a formal and data-driven tone, emphasizing succinctness and specificity
-
-### Handling Missing Information
-    - When information is missing or insufficient, do not invent facts or complete the missing information.
-    - Instead, write `**MISSING INFORMATION: <description>**` where `<description>` is a concise description of the missing information.
-"""
-
 DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_SYSTEM_PROMPT: Final[str] = """
 You are an expert grant application writer integrated into a RAG system.
 Your sole task is to analyze and enrich research objectives and tasks with their relationships using the provided tool.
@@ -113,7 +96,7 @@ ${clinical_trial_questions}
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RESEARCH_TASK_QUERIES_PROMPT: Final[Template] = Template("""
+RESEARCH_TASK_TASK_DESCRIPTION: Final[Template] = Template("""
 The next task in the RAG pipeline is to write a description for a research task.
 A research task is a specific task within a larger research objective. The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
 The description should address the following implicit questions:
@@ -172,7 +155,7 @@ __NOTE__: Methodology is an optional sub-section. It should be included only if 
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RESEARCH_OBJECTIVE_QUERIES_PROMPT: Final[str] = """
+RESEARCH_OBJECTIVE_TASK_DESCRIPTION: Final[str] = """
 The next task in the RAG pipeline is to write a description for a research objective.
 A research objective or research objective is an overarching goal that the research seeks to achieve.
 The description should address the following implicit questions:
@@ -189,6 +172,7 @@ You task is to write the Preliminary Results section which forms a sub-section f
     ${research_objective_description}
     </research_objective_description>
 
+${last_generation_result}
 Use the following sources to write the text:
 
 1. User input on Preliminary Results:
@@ -218,7 +202,7 @@ This sub-section should address the following implicit questions:
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for a minimum of half a page, and a maximum of two pages in length (~200-800 words).
 """)
 
-PRELIMINARY_RESULTS_QUERIES_PROMPT: Final[str] = """
+PRELIMINARY_RESULTS_TASK_DESCRIPTION: Final[str] = """
 The next task in the RAG pipeline is to write a description for the Preliminary Results section.
 Preliminary Results are detailed experimental findings and data analyses that demonstrate research feasibility for a specific research aim or objective.
 The description should address the following implicit questions:
@@ -236,6 +220,7 @@ You task is to write the Risks and Alternatives which forms a for the following 
     ${research_objective_description}
     </research_objective_description>
 
+${last_generation_result}
 Use the following sources to write the text:
 
 1. User input on Risks and Alternatives:
@@ -264,7 +249,7 @@ This section should address the following implicit questions:
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly two to three paragraphs with a maximum length of half a page (~150-300 words).
 """)
 
-RISKS_AND_ALTERNATIVES_QUERIES_PROMPT: Final[str] = """
+RISKS_AND_ALTERNATIVES_TASK_DESCRIPTION: Final[str] = """
 The next task in the RAG pipeline is to write a description for the Risks and Alternatives section.
 Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
 The description should address the following implicit questions:
@@ -397,7 +382,7 @@ async def handle_research_task_text_generation(
     """
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=RESEARCH_TASK_QUERIES_PROMPT.substitute(
+        task_description=RESEARCH_TASK_TASK_DESCRIPTION.substitute(
             clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
             if requires_clinical_trials
             else "",
@@ -438,7 +423,7 @@ async def handle_research_objective_description_generation(
 
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=RESEARCH_OBJECTIVE_QUERIES_PROMPT,
+        task_description=RESEARCH_OBJECTIVE_TASK_DESCRIPTION,
         research_objective=research_objective,
     )
 
@@ -478,7 +463,7 @@ async def handle_preliminary_results_text_generation(
     """
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=PRELIMINARY_RESULTS_QUERIES_PROMPT,
+        task_description=PRELIMINARY_RESULTS_TASK_DESCRIPTION,
         preliminary_results=research_objective.get("preliminary_results", ""),
         research_objective_description=research_objective_description,
     )
@@ -515,7 +500,7 @@ async def handle_risks_and_alternatives_text_generation(
     """
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=RISKS_AND_ALTERNATIVES_QUERIES_PROMPT,
+        task_description=RISKS_AND_ALTERNATIVES_TASK_DESCRIPTION,
         risks_and_alternatives=research_objective.get("risks_and_alternatives", ""),
         research_objective_description=research_objective_description,
     )
