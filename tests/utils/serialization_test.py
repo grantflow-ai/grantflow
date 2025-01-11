@@ -1,32 +1,12 @@
-from enum import Enum
-from typing import Any, TypedDict
+from typing import Any
 
 import pytest
 from msgspec import DecodeError, EncodeError
-from pydantic import BaseModel
 from pytest_mock import MockFixture
 
 from src.exceptions import DeserializationError, SerializationError
 from src.utils.serialization import decode_hook, deserialize, encode_hook, serialize
-
-
-class TestModel(BaseModel):
-    name: str
-    value: int
-
-
-class TestEnum(Enum):
-    A = "a"
-    B = "b"
-
-
-class TestModelWithEnum(BaseModel):
-    enum_field: TestEnum
-
-
-class TestDict(TypedDict):
-    name: str
-    value: int
+from tests.test_data.models import TestDict, TestEnum, TestModel, TestModelWithEnum
 
 
 def test_decode_hook_pydantic_model() -> None:
@@ -89,11 +69,11 @@ def test_deserialize_success() -> None:
 
 
 def test_deserialize_decode_error(mocker: MockFixture) -> None:
+    mocker.patch(
+        "src.utils.serialization.decode",
+        side_effect=DecodeError("Failed to decode"),
+    )
     with (
-        mocker.patch(
-            "src.utils.serialization.decode",
-            side_effect=DecodeError("Failed to decode"),
-        ),
         pytest.raises(DeserializationError),
     ):
         deserialize("invalid", dict)
@@ -112,11 +92,11 @@ def test_serialize_with_kwargs() -> None:
 
 
 def test_serialize_encode_error(mocker: MockFixture) -> None:
+    mocker.patch(
+        "src.utils.serialization.encode",
+        side_effect=EncodeError("Failed to encode"),
+    )
     with (
-        mocker.patch(
-            "src.utils.serialization.encode",
-            side_effect=EncodeError("Failed to encode"),
-        ),
         pytest.raises(SerializationError),
     ):
         serialize({"key": object()})
