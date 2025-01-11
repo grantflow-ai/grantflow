@@ -11,7 +11,7 @@ from pypandoc import convert_text
 
 from src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from src.utils.env import get_env
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.retry import with_exponential_backoff_retry
 from src.utils.sync import as_async_callable
 

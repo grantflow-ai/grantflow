@@ -39,7 +39,7 @@ async def test_handle_generate_grant_template(
         assert updated_grant_template.grant_sections
 
     results_file = (
-        RESULTS_FOLDER / f"handle_generate_grant_template_{datetime.now(tz=UTC).strftime("%d_%m_%Y_%H:%M")}.json"
+        RESULTS_FOLDER / f"handle_generate_grant_template_{datetime.now(tz=UTC).strftime('%d_%m_%Y_%H:%M')}.json"
     )
 
     results_file.write_bytes(serialize(updated_grant_template))

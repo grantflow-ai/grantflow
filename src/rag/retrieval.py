@@ -7,7 +7,7 @@ from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextV
 from src.rag.dto import DocumentDTO
 from src.rag.search_queries import handle_create_search_queries
 from src.utils.embeddings import TaskType, generate_embeddings
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

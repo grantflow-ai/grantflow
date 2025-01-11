@@ -6,7 +6,7 @@ from jwt import InvalidTokenError
 from sanic import Unauthorized
 
 from src.utils.env import get_env
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

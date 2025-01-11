@@ -1,6 +1,6 @@
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable
 from time import time
-from typing import Any, Final, NamedTuple
+from typing import Any, Final, TypedDict
 
 from google.api_core.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
@@ -11,25 +11,14 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
 
 from src.constants import CONTENT_TYPE_JSON, PREMIUM_TEXT_GENERATION_MODEL
 from src.exceptions import DeserializationError, ValidationError
-from src.rag.dto import GenerationResultDTO
 from src.utils.ai import get_google_ai_client
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.retry import with_exponential_backoff_retry
 from src.utils.serialization import deserialize
+from src.utils.template import Template
 from src.utils.text import concatenate_segments_with_spacy_coherence
 
 logger = get_logger(__name__)
-
-
-class SegmentedTextGenerationResult(NamedTuple):
-    """The result of segmented text generation."""
-
-    content: str
-    """The generated text."""
-    number_of_api_calls: int
-    """The number of API calls made."""
-    generation_duration: int
-    """The generated text."""
 
 
 DEFAULT_SYSTEM_PROMPT: Final[str] = """
@@ -54,6 +43,20 @@ whether the research aim text is complete or not. Example:
 ```
 """
 
+CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[Template] = Template("""
+Here is the last segment of text that was generated:
+
+<last_generation_result>
+${last_generation_result}
+</last_generation_result>
+
+Instructions:
+1. Analyze the end point of the provided text segment.
+2. Continue the generation from exactly where this text ends.
+3. Do not repeat any content from the previous segment unnecessarily.
+4. Maintain the style, tone, and context of the original text.
+""")
+
 SEGMENTED_GENERATION_SCHEMA = {
     "type": "object",
     "properties": {
@@ -70,6 +73,15 @@ SEGMENTED_GENERATION_SCHEMA = {
 }
 
 
+class SegmentedToolGenerationToolResponse(TypedDict):
+    """The response from the segmented generation tool."""
+
+    text: str
+    """The generated text."""
+    is_complete: bool
+    """Whether the text is complete or not."""
+
+
 def _default_validator[T](_: T) -> bool:
     return True
 
@@ -78,7 +90,7 @@ def _default_validator[T](_: T) -> bool:
 async def handle_completions_request[T](
     *,
     model: str = PREMIUM_TEXT_GENERATION_MODEL,
-    output_instructions: str = SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
+    output_instructions: str,
     prompt_identifier: str,
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
@@ -133,16 +145,14 @@ async def handle_completions_request[T](
 
 async def handle_segmented_text_generation(
     *,
-    entity_type: str,
-    entity_identifier: str = "",
-    prompt_handler: Callable[[str | None], Coroutine[Any, Any, GenerationResultDTO]],
-) -> SegmentedTextGenerationResult:
+    prompt_identifier: str = "",
+    user_prompt_template: Template,
+) -> str:
     """Handle the generation of segmented text.
 
     Args:
-        entity_type: The type of entity to generate text for.
-        entity_identifier: The identifier of the entity to generate text for.
-        prompt_handler: The handler for the prompt.
+        prompt_identifier: The identifier of the entity to generate text for.
+        user_prompt_template: The user prompt template.
 
     Returns:
         The generated text.
@@ -150,13 +160,24 @@ async def handle_segmented_text_generation(
     results: list[str] = []
     api_call_num = 1
 
-    logger.info("Generating text", entity_identifier=entity_identifier, entity_type=entity_type)
+    logger.info("Generating text", entity_identifier=prompt_identifier)
     start_time = time()
     while api_call_num < 20:
         last_generation_result = results[-1] if results else None
 
-        response = await prompt_handler(
-            last_generation_result,
+        response = await handle_completions_request(
+            prompt_identifier=prompt_identifier,
+            system_prompt=DEFAULT_SYSTEM_PROMPT,
+            output_instructions=SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
+            response_schema=SEGMENTED_GENERATION_SCHEMA,
+            user_prompt=user_prompt_template.substitute(
+                last_generation_result=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
+                    last_generation_result=last_generation_result
+                )
+                if last_generation_result
+                else ""
+            ),
+            response_type=SegmentedToolGenerationToolResponse,
         )
 
         results.append(response["text"])
@@ -167,13 +188,9 @@ async def handle_segmented_text_generation(
 
     logger.info(
         "Generated text",
-        entity_type=entity_type,
-        entity_identifier=entity_identifier,
-        api_call_num=entity_identifier,
-    )
-
-    return SegmentedTextGenerationResult(
-        content=concatenate_segments_with_spacy_coherence(results),
-        number_of_api_calls=api_call_num,
+        prompt_identifier=prompt_identifier,
+        api_call_num=api_call_num,
         generation_duration=int(time() - start_time),
     )
+
+    return concatenate_segments_with_spacy_coherence(results)

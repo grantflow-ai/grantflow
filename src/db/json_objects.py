@@ -59,13 +59,17 @@ class ResearchObjective(TypedDict):
     """The number of the research objective."""
     title: str
     """The title of the research objective."""
-    description: str | None
+    description: NotRequired[str]
     """The description of the research objective."""
+    preliminary_results: NotRequired[str]
+    """The preliminary results of the research objective."""
+    risks_and_alternatives: NotRequired[str]
+    """The risks and alternatives of the research objective."""
     requires_clinical_trials: bool
     """Whether the research objective requires clinical trials."""
     research_tasks: list[ResearchTask]
     """The research tasks for the research objective"""
-    relationships: list[str] | None
+    relationships: NotRequired[list[str]]
     """The relations of the research objective to other objectives."""
 
 

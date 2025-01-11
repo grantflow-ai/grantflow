@@ -6,7 +6,7 @@ from google.oauth2.service_account import Credentials
 from sanic import Unauthorized
 
 from src.utils.env import get_env
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.ref import Ref
 from src.utils.serialization import deserialize
 from src.utils.sync import as_async_callable

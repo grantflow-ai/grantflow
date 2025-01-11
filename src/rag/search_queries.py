@@ -1,10 +1,10 @@
-from string import Template
 from typing import Any, Final, TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.serialization import serialize
+from src.utils.template import Template
 
 logger = get_logger(__name__)
 

@@ -3,7 +3,7 @@ from sanic import Request, Unauthorized
 from src.db.connection import get_session_maker
 from src.utils.env import get_env
 from src.utils.jwt import verify_jwt_token
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
