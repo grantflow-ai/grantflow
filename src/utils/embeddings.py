@@ -7,7 +7,7 @@ from vertexai.language_models import TextEmbeddingInput
 from src.constants import EMBEDDING_DIMENSIONS
 from src.exceptions import ExternalOperationError
 from src.utils.ai import get_embeddings_client
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.retry import with_exponential_backoff_retry
 
 logger = get_logger(__name__)

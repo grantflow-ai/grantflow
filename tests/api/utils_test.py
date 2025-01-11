@@ -5,10 +5,11 @@ import pytest
 from sanic import NotFound, Unauthorized
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.utils import retrieve_application, verify_workspace_access
+from src.api.utils import verify_workspace_access
 from src.api_types import APIRequest
 from src.db.enums import UserRoleEnum
 from src.db.tables import GrantApplication, GrantTemplate, Workspace
+from src.utils.db import retrieve_application
 from tests.factories import WorkspaceUserFactory
 from tests.test_utils import create_test_request
 

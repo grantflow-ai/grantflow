@@ -1,6 +1,6 @@
 from spacy.language import Language
 
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.ref import Ref
 
 logger = get_logger(__name__)

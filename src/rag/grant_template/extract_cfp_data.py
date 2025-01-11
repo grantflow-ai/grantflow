@@ -1,9 +1,8 @@
-from string import Template
 from typing import Final, TypedDict
 
 from src.rag.utils import handle_completions_request
-from src.utils.logging import get_logger
-from src.utils.serialization import serialize
+from src.utils.logger import get_logger
+from src.utils.template import Template
 
 logger = get_logger(__name__)
 
@@ -109,7 +108,7 @@ async def extract_cfp_data(*, cfp_content: str, organization_mapping: dict[str, 
     result = await handle_completions_request(
         prompt_identifier="extract_cfp_data",
         user_prompt=EXTRACT_CFP_DATA_USER_PROMPT.substitute(
-            cfp_content=cfp_content, organization_mapping=serialize(organization_mapping).decode()
+            cfp_content=cfp_content, organization_mapping=organization_mapping
         ),
         response_type=ToolResponse,
         response_schema=response_schema,

@@ -7,7 +7,6 @@ from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.utils import retrieve_application
 from src.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
@@ -21,6 +20,7 @@ from src.db.tables import (
     Workspace,
     WorkspaceUser,
 )
+from src.utils.db import retrieve_application
 from src.utils.serialization import deserialize, serialize
 from tests.factories import CreateApplicationRequestBodyFactory, TextGenerationResultFactory
 

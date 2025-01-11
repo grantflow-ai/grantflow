@@ -18,7 +18,7 @@ from src.api_types import (
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
 from src.exceptions import DatabaseError
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.serialization import deserialize
 
 logger = get_logger(__name__)
