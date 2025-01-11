@@ -1,4 +1,3 @@
-from string import Template
 from typing import TYPE_CHECKING, Final, cast
 
 from jsonschema import validate
@@ -9,8 +8,8 @@ from src.db.enums import ContentTopicEnum, GrantSectionEnum
 from src.dto import GrantTemplateDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_completions_request
-from src.utils.logging import get_logger
-from src.utils.serialization import serialize
+from src.utils.logger import get_logger
+from src.utils.template import Template
 from src.utils.validators import validate_markdown_template
 
 if TYPE_CHECKING:
@@ -238,8 +237,8 @@ async def generate_grant_template(
         await retrieve_documents(
             organization_id=organization_id,
             task_description=GENERATE_GRANT_TEMPLATE_TASK_DESCRIPTION,
-            grant_section_types=serialize([e.value for e in GrantSectionEnum]),
-            research_topic_types=serialize([e.value for e in ContentTopicEnum]),
+            grant_section_types=[e.value for e in GrantSectionEnum],
+            research_topic_types=[e.value for e in ContentTopicEnum],
             cfp_content=cfp_content,
         )
         if organization_id
@@ -249,15 +248,13 @@ async def generate_grant_template(
     result = await handle_completions_request(
         prompt_identifier="generate_grant_template",
         user_prompt=GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
-            grant_section_types=serialize([e.value for e in GrantSectionEnum]),
-            research_topic_types=serialize([e.value for e in ContentTopicEnum]),
+            grant_section_types=[e.value for e in GrantSectionEnum],
+            research_topic_types=[e.value for e in ContentTopicEnum],
             cfp_content=cfp_content,
-            guidelines=GUIDELINES_FRAGMENT.substitute(
-                organization_name=organization_name, rag_results=serialize(search_results).decode()
-            )
+            guidelines=GUIDELINES_FRAGMENT.substitute(organization_name=organization_name, rag_results=search_results)
             if search_results and organization_name
             else "",
-        ).strip(),
+        ),
         response_type=GrantTemplateDTO,
         response_schema=response_schema,
         output_instructions=GENERATE_GRANT_TEMPLATE_OUTPUT_INSTRUCTIONS,

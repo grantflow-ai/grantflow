@@ -5,7 +5,7 @@ from sanic import HTTPResponse, json
 from src.api_types import APIRequest, LoginRequestBody, LoginResponse, OTPResponse
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 from src.utils.serialization import deserialize
 
 logger = get_logger(__name__)

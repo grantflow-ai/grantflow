@@ -9,7 +9,7 @@ from src.db.tables import FundingOrganization, GrantTemplate
 from src.exceptions import DatabaseError
 from src.rag.grant_template.extract_cfp_data import extract_cfp_data
 from src.rag.grant_template.generate_template_data import generate_grant_template
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -70,7 +70,6 @@ async def handle_generate_grant_template(
                 )
                 .returning(GrantTemplate)
             )
-            session.add(grant_template)
             await session.commit()
             return cast(GrantTemplate, grant_template)
         except SQLAlchemyError as e:

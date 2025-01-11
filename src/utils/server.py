@@ -14,7 +14,7 @@ from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError
 from src.utils.ai import init_llm_connection
 from src.utils.firebase import get_firebase_app
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

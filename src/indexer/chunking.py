@@ -8,7 +8,7 @@ from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
 from src.db.json_objects import Chunk, TableContext
 from src.utils.extraction import Formula, OCROutput, Page, Paragraph, Table, TableCell
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -4,7 +4,7 @@ from typing import Final
 from src.db.json_objects import Chunk
 from src.dto import VectorDTO
 from src.utils.embeddings import TaskType, generate_embeddings
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

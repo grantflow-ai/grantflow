@@ -14,7 +14,7 @@ from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import GrantApplicationFile, RagFile
 from src.dto import FileDTO
 from src.exceptions import DatabaseError
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
