@@ -2,7 +2,7 @@ from asyncio import gather
 from collections import defaultdict
 from typing import Final, TypedDict
 
-from src.db.json_objects import ResearchObjective, ResearchTask
+from src.db.json_objects import ApplicationDetails, ResearchObjective, ResearchTask
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.logger import get_logger
@@ -12,28 +12,38 @@ logger = get_logger(__name__)
 
 DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_SYSTEM_PROMPT: Final[str] = """
 You are an expert grant application writer integrated into a RAG system.
-Your sole task is to analyze and enrich research objectives and tasks with their relationships using the provided tool.
-
-Always respond by calling the specified function with the exact JSON format detailed in the instructions.
 """
 
 DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT: Final[Template] = Template("""
-Your task is to analyze research objectives and tasks for a grant application, identifying and describing any relations between them.
+Your task is to analyze research objectives and tasks for a grant application, identifying and describing relations between them.
 
-Here is the data you will work with:
+Here are the research objectives and tasks you need to analyze:
     <objectives>
     ${objectives}
     </objectives>
 
-Your objective is to identify and describe relations between research objectives and research tasks:
+Instructions:
 
-1. Relations between research objectives: Determine if an objective builds upon, depends on, or continues from a previous objective.
-2. Relations between tasks within objectives: Determine if a task builds upon, depends on, or continues from a previous task either in the same research objective or a preceding research objective.
+1. Analyze the objectives and tasks to identify the following types of relations:
+   - Between research objectives: Building upon, dependency, or continuity from a previous objective.
+   - Between tasks within objectives: Building upon, dependency, or continuity from a previous task in the same or preceding objective.
+
+2. For each identified relation:
+   - Provide a detailed description.
+   - Always include specific references to objective or task numbers.
+   - Use phrases like "Building upon objective 1...", "Depending on the results of task 2.1...", etc.
+
+3. Only include objectives and tasks that have identified relations in your response.
+
+Before constructing the final JSON output, wrap your analysis in <relation_analysis> tags. In this analysis:
+1. List all objectives and tasks with their numbers for easy reference.
+2. Identify potential relations between objectives and tasks.
+3. Describe each relation in detail, ensuring specific references are included.
+This will ensure a thorough interpretation of the data.
 """)
 
-PARSE_AND_ENRICH_RESEARCH_OBJECTIVES_FOR_GENERATION_OUTPUT_INSTRUCTIONS = """
-You must respond exclusively by invoking the provided function.
-Return a JSON object adhering to the following format:
+DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_OUTPUT_INSTRUCTIONS = """
+Respond using the provided tool with a JSON response adhering to the following format:
 
 ```json
 {
@@ -41,14 +51,9 @@ Return a JSON object adhering to the following format:
 }
 ```
 
-**Relations**:
 - The relations array is a matrix, where each sub-array has two elements.
 - The first element is the objective or task number.
 - The second element is a detailed description of the relation between the objective or task and its predecessor.
-
-**Important**:
-- Only include objectives and tasks that have identified relations. I.e. omit those that do not have any relations to other objectives or tasks from the response object.
-- relation description should be detailed and specific. Make sure to always include the objective or task number. Use phrases such as "Building upon the first objective...", "Depending on the results of objective 1...", or "Based on the candidates identified in Task 1.2, in task 1.3 we will...".
 """
 
 RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS: Final[str] = """
@@ -69,12 +74,12 @@ Use the following sources to write the text:
 
 1. Research Task Data as a JSON object:
     <research_task>
-    ${research_task}
+   {{research_task}}
     </research_task>
 
 2. RAG Retrieval Results for additional context:
     <rag_results>
-    ${rag_results}
+    {{rag_results}}
     </rag_results>
 
 A research task is a specific task within a larger research objective.
@@ -85,7 +90,13 @@ It should address the following implicit questions:
 2. What is the experimental design methodology used?
 3. What are the data collection methods?
 4. What is the results analysis and interpretation framework?
-${clinical_trial_questions}
+
+If you determine that the research task involves clinical trials with a high degree of certainty (above 75%), address the following questions - conditionally:
+5. If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
+6. If the task involves vertebrate animals/humans, what are the pertinent biological variables (e.g. subject sex, age etc.)?
+7. If the task involves hazardous elements, what are the detailed hazard descriptions and planned safety measures and precautions?
+8. If the task uses Human Embryonic Stem Cells (hESCs) not in the NIH Registry, what is the justification for non-registered hESC usage?
+9. If the task uses Human Fetal Tissue (HFT), what is the necessity of HFT, documentation of alternative evaluation methods, and evidence of alternatives consideration?
 
 **Important Guidelines**:
 - The research task JSON object includes an array of relations with other research tasks. If the array is not empty, make sure to include a detailed description of these relations in the text.
@@ -96,7 +107,7 @@ ${clinical_trial_questions}
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RESEARCH_TASK_TASK_DESCRIPTION: Final[Template] = Template("""
+RESEARCH_TASK_TASK_DESCRIPTION: Final[str] = """
 The next task in the RAG pipeline is to write a description for a research task.
 A research task is a specific task within a larger research objective. The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
 The description should address the following implicit questions:
@@ -105,8 +116,7 @@ The description should address the following implicit questions:
 2. What is the experimental design methodology used?
 3. What are the data collection methods?
 4. What is the results analysis and interpretation framework?
-${clinical_trial_questions}
-""")
+"""
 
 RESEARCH_TASK_TEMPLATE: Final[Template] = Template("""
 ###### Task ${task_number}: ${title}
@@ -176,9 +186,9 @@ ${last_generation_result}
 Use the following sources to write the text:
 
 1. User input on Preliminary Results:
-    <preliminary_results>
-    ${preliminary_results}
-    </preliminary_results>
+    <preliminary_data>
+    ${preliminary_data}
+    </preliminary_data>
 
 3. Retrieval Results for additional context as a JSON array:
     <rag_results>
@@ -224,9 +234,9 @@ ${last_generation_result}
 Use the following sources to write the text:
 
 1. User input on Risks and Alternatives:
-    <risks_and_alternatives>
-    ${risks_and_alternatives}
-    </risks_and_alternatives>
+    <risks_and_mitigations>
+    ${risks_and_mitigations}
+    </risks_and_mitigations>
 
 3. Retrieval Results for additional context as a JSON array:
     <rag_results>
@@ -276,7 +286,7 @@ ${research_objective_description_text}
 
 ##### Preliminary Results
 
-${preliminary_results_text}
+${preliminary_data_text}
 
 ##### Research Tasks
 
@@ -284,7 +294,7 @@ ${research_tasks_texts}
 
 ##### Risks and Alternatives
 
-${risks_and_alternatives_text}
+${risks_and_mitigations_text}
 """)
 
 
@@ -344,7 +354,7 @@ async def set_relation_data(research_objectives: list[ResearchObjective]) -> lis
         ),
         response_type=SetRelationsToolResponse,
         response_schema=response_schema,
-        output_instructions=PARSE_AND_ENRICH_RESEARCH_OBJECTIVES_FOR_GENERATION_OUTPUT_INSTRUCTIONS,
+        output_instructions=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_OUTPUT_INSTRUCTIONS,
     )
     logger.info("Generated relations for research objectives and tasks")
 
@@ -365,7 +375,6 @@ async def set_relation_data(research_objectives: list[ResearchObjective]) -> lis
 async def handle_research_task_text_generation(
     *,
     application_id: str,
-    requires_clinical_trials: bool,
     research_task: ResearchTask,
     task_number: str,
 ) -> str:
@@ -373,7 +382,6 @@ async def handle_research_task_text_generation(
 
     Args:
         application_id: The application ID.
-        requires_clinical_trials: Whether the research task includes clinical trials.
         research_task: The research task to generate text for.
         task_number: The task number.
 
@@ -382,11 +390,7 @@ async def handle_research_task_text_generation(
     """
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=RESEARCH_TASK_TASK_DESCRIPTION.substitute(
-            clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
-            if requires_clinical_trials
-            else "",
-        ),
+        task_description=RESEARCH_TASK_TASK_DESCRIPTION,
         research_task=research_task,
     )
 
@@ -394,9 +398,6 @@ async def handle_research_task_text_generation(
         user_prompt_template=RESEARCH_TASK_GENERATION_USER_PROMPT.substitute_partial(
             research_task=research_task,
             rag_results=rag_results,
-            clinical_trial_questions=RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS
-            if requires_clinical_trials
-            else "",
         )
     )
 
@@ -445,8 +446,9 @@ async def handle_research_objective_description_generation(
     return result
 
 
-async def handle_preliminary_results_text_generation(
+async def handle_preliminary_data_text_generation(
     *,
+    application_details: ApplicationDetails,
     application_id: str,
     research_objective: ResearchObjective,
     research_objective_description: str,
@@ -454,6 +456,7 @@ async def handle_preliminary_results_text_generation(
     """Generate the text for preliminary results of a research aim.
 
     Args:
+        application_details: The application details.
         application_id: The ID of the application.
         research_objective: The research objective.
         research_objective_description: The text of the research objective.
@@ -464,7 +467,7 @@ async def handle_preliminary_results_text_generation(
     rag_results = await retrieve_documents(
         application_id=application_id,
         task_description=PRELIMINARY_RESULTS_TASK_DESCRIPTION,
-        preliminary_results=research_objective.get("preliminary_results", ""),
+        preliminary_data=application_details.get("preliminary_data", ""),
         research_objective_description=research_objective_description,
     )
 
@@ -473,15 +476,16 @@ async def handle_preliminary_results_text_generation(
         user_prompt_template=PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute_partial(
             research_objective_description=research_objective_description,
             rag_results=rag_results,
-            preliminary_results=research_objective.get("preliminary_results", ""),
+            preliminary_data=application_details.get("preliminary_data", ""),
         ),
     )
     logger.info("Successfully generated preliminary results.", number=research_objective["number"])
     return result
 
 
-async def handle_risks_and_alternatives_text_generation(
+async def handle_risks_and_mitigations_text_generation(
     *,
+    application_details: ApplicationDetails,
     application_id: str,
     research_objective: ResearchObjective,
     research_objective_description: str,
@@ -489,8 +493,8 @@ async def handle_risks_and_alternatives_text_generation(
     """Generate the text for risks and alternatives of a research aim.
 
     Args:
+        application_details: The application details.
         application_id: The ID of the application.
-
         research_objective: The research objective.
         research_objective_description: The text of the research objective.
 
@@ -501,7 +505,7 @@ async def handle_risks_and_alternatives_text_generation(
     rag_results = await retrieve_documents(
         application_id=application_id,
         task_description=RISKS_AND_ALTERNATIVES_TASK_DESCRIPTION,
-        risks_and_alternatives=research_objective.get("risks_and_alternatives", ""),
+        risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
         research_objective_description=research_objective_description,
     )
 
@@ -510,7 +514,7 @@ async def handle_risks_and_alternatives_text_generation(
         user_prompt_template=RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute_partial(
             research_objective_description=research_objective_description,
             rag_results=rag_results,
-            risks_and_alternatives=research_objective.get("risks_and_alternatives", ""),
+            risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
         ),
     )
     logger.info("Successfully generated risks and alternatives.", number=research_objective["number"])
@@ -520,12 +524,14 @@ async def handle_risks_and_alternatives_text_generation(
 
 async def handle_research_objective_components_generation(
     *,
+    application_details: ApplicationDetails,
     application_id: str,
     research_objective: ResearchObjective,
 ) -> str:
     """Generate the text for the research objective and its components.
 
     Args:
+        application_details: The application details.
         application_id: The application ID.
         research_objective: The research objective to generate text for.
 
@@ -543,7 +549,6 @@ async def handle_research_objective_components_generation(
         *[
             handle_research_task_text_generation(
                 application_id=application_id,
-                requires_clinical_trials=research_objective["requires_clinical_trials"],
                 research_task=research_task,
                 task_number=f"{research_objective['number']}.{research_task['number']}",
             )
@@ -551,15 +556,17 @@ async def handle_research_objective_components_generation(
         ]
     )
 
-    preliminary_results_text, risks_and_alternatives_text = tuple(
+    preliminary_data_text, risks_and_mitigations_text = tuple(
         await gather(
             *[
-                handle_preliminary_results_text_generation(
+                handle_preliminary_data_text_generation(
+                    application_details=application_details,
                     application_id=application_id,
                     research_objective=research_objective,
                     research_objective_description=research_objective_description_text,
                 ),
-                handle_risks_and_alternatives_text_generation(
+                handle_risks_and_mitigations_text_generation(
+                    application_details=application_details,
                     application_id=application_id,
                     research_objective=research_objective,
                     research_objective_description=research_objective_description_text,
@@ -572,20 +579,22 @@ async def handle_research_objective_components_generation(
         objective_number=research_objective["number"],
         title=research_objective["title"],
         research_objective_description_text=research_objective_description_text,
-        preliminary_results_text=preliminary_results_text,
+        preliminary_data_text=preliminary_data_text,
         research_tasks_texts="\n\n".join(research_tasks_texts),
-        risks_and_alternatives_text=risks_and_alternatives_text,
+        risks_and_mitigations_text=risks_and_mitigations_text,
     )
 
 
 async def handle_research_plan_text_generation(
     *,
+    application_details: ApplicationDetails,
     application_id: str,
     research_objectives: list[ResearchObjective],
 ) -> str:
     """Generate the text for the research objectives and tasks.
 
     Args:
+        application_details: The application details.
         application_id: GrantApplication,
         research_objectives: The research objectives to generate text for.
 
@@ -597,6 +606,7 @@ async def handle_research_plan_text_generation(
 
     research_objective_descriptions: list[str] = [
         await handle_research_objective_components_generation(
+            application_details=application_details,
             application_id=application_id,
             research_objective=research_objective,
         )

@@ -1,4 +1,5 @@
 from decimal import Decimal
+from itertools import chain
 from string import Template as StringTemplate
 from textwrap import dedent
 from typing import Any
@@ -11,9 +12,9 @@ class Template(StringTemplate):
     """A string template with variable validation."""
 
     @property
-    def variables(self) -> list[str]:
+    def variables(self) -> set[str]:
         """Get the variables in the template."""
-        return self.pattern.findall(self.template)
+        return {v for v in chain(*self.pattern.findall(self.template)) if v}
 
     def substitute_partial(self, **kwargs: Any) -> "Template":
         """Partially substitute the template.
