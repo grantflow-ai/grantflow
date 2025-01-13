@@ -9,7 +9,7 @@ from src.dto import GrantTemplateDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
-from src.utils.template import Template
+from src.utils.prompttemplate import PromptTemplate
 from src.utils.validators import validate_markdown_template
 
 if TYPE_CHECKING:
@@ -18,63 +18,93 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-GUIDELINES_FRAGMENT: Final[Template] = Template("""
-These are retrieval results from the official funding guidelines for the ${organization_name}:
+GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+You are an expert grant application specialist tasked with creating a structured grant template based on a call for applications. Your goal is to analyze the provided information and generate a JSON object that defines the grant template structure, sections, and research topics.
 
-    <rag_results>
-    ${rag_results}
-    </rag_results>
+First, let's review the key information provided:
 
-Use these to refine and enhance the generated data.
-""")
-
-GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[Template] = Template("""
-
-## Task
-Analyze the provided sources to:
-1. Create an appropriate grant template structure
-2. Define the required sections and their configurations
-3. Specify the weighted research topics for each section
-
-## Sources
-These are the contents of the call for applications:
-    <cfp_content>
-    ${cfp_content}
-    </cfp_content>
+Here is the content of the call for applications:
+<cfp_content>
+${cfp_content}
+</cfp_content>
 
 These are the available section types:
+<grant_section_types>
+${grant_section_types}
+</grant_section_types>
 
-    <grant_section_types>
-    ${grant_section_types}
-    </grant_section_types>
+These are the available research topic types:
+<research_topic_types>
+${research_topic_types}
+</research_topic_types>
 
-These are the available topics:
+These are RAG results from the official funding guidelines for the organization:
+<rag_results>
+${rag_results}
+</rag_results>
 
-    <research_topic_types>
-    ${research_topic_types}
-    </research_topic_types>
+Now, please follow these steps to create the grant template:
 
-${guidelines}
-""")
+1. Analyze the call for applications content, available section types, and research topic types.
 
-GENERATE_GRANT_TEMPLATE_OUTPUT_INSTRUCTIONS: Final[str] = """
-Respond with a JSON object containing:
-    - "name": Descriptive name for the grant format
-    - "template": Markdown template defining the document structure
-    - "sections": Array of section configurations with topics and requirements
+2. Create an appropriate grant template structure:
+   - Use markdown headers for section organization
+   - Enclose section variables in double curly brackets
+   - Maintain consistent heading hierarchy
+   - Include at least two sections
 
-Example structure:
+3. Define the required sections and their configurations:
+   - Each section must define its content requirements through topics
+   - Set appropriate word limits that reflect typical grant expectations
+   - Create 3-10 specific, relevant search queries for each section to enable effective content retrieval
+
+4. Specify the weighted research topics for each section:
+   - Primary topics (weight 0.7-1.0): Core focus of the section, essential elements
+   - Supporting topics (weight 0.4-0.6): Important complementary elements, required but not dominant
+   - Minor topics (weight 0.1-0.3): Contextual or supplementary content, helpful but not critical
+   - Ensure a minimum of 2 topics per section
+   - Topics should be unique within each section
+
+5. Generate a JSON object with the following structure:
+   - "name": Descriptive name for the grant format
+   - "template": Markdown template defining the document structure
+   - "sections": Array of section configurations with topics and requirements
+
+Before generating the final JSON output, wrap your planning process inside <grant_template_planning> tags. This should include:
+
+a. Summarize key points from the call for applications
+b. List potential sections based on the content and available section types
+c. Outline research topics for each section, considering their relevance and importance
+d. Plan the template structure with a hierarchical outline
+e. Consider word limits and search queries for each section
+
+After your planning, provide the final JSON output. Ensure that your output meets these validation requirements:
+
+- Template:
+  - Valid markdown format
+  - Logical section flow
+  - Clear hierarchical structure
+
+- Sections:
+  - 3-10 specific, relevant search_queries per section
+  - Valid word limits (max_words ≥ min_words if both provided)
+  - Minimum 2 topics per section
+  - Topics are unique per section
+  - Topic weights are float values between 0 and 1
+  - Appropriate topic types for each section's purpose
+
+Here's an example of the expected JSON structure:
 
 ```jsonc
 {
     "name": "Comprehensive Research Grant Format",
-    "template": "# Executive Summary\\n\\n{{EXECUTIVE_SUMMARY}}\\n\\n## Research Significance\\n\\n{{RESEARCH_SIGNIFICANCE}}\\n\\n## Research Innovation\\n\\n{{RESEARCH_INNOVATION}}",
+    "template": "# Executive Summary\n\n{{EXECUTIVE_SUMMARY}}\n\n## Research Significance\n\n{{RESEARCH_SIGNIFICANCE}}\n\n## Research Innovation\n\n{{RESEARCH_INNOVATION}}",
     "sections": [
         {
             "type": "EXECUTIVE_SUMMARY",
             "search_queries": ["..."], // 3-10 distinct RAG retrieval queries
             "min_words": 200, // can be omitted if no minimum
-            "max_words: 500,  // can be omitted if no maximum
+            "max_words": 500,  // can be omitted if no maximum
             "topics": [
                 {
                     "type": "BACKGROUND_CONTEXT",
@@ -91,66 +121,8 @@ Example structure:
 }
 ```
 
-### Template Guidelines
-1. Structure:
-   - Use markdown headers for section organization
-   - Enclose section variables in double curly brackets
-   - Maintain consistent heading hierarchy
-   - Include at least two sections
-
-2. Section Configuration:
-   - Each section must define its content requirements through topics
-   - Word limits should reflect typical grant expectations
-   - Search Queries should enable effective content retrieval (see below)
-
-3. Topic Weighting System:
-   Primary topics (0.7-1.0):
-   - Core focus of the section
-   - Essential elements that must be addressed
-
-   Supporting topics (0.4-0.6):
-   - Important complementary elements
-   - Required but not dominant content
-
-   Minor topics (0.1-0.3):
-   - Contextual or supplementary content
-   - Helpful but not critical elements
-
-4. Search Queries:
-    - Will be executed to retrieve documents from a vector store for the section
-    - The queries should balance specificity with breadth to capture a range of relevant materials.
-    - Identity and extract distinct
-
-### Validation Requirements
-Template:
-    - Valid markdown format
-    - Logical section flow
-    - Clear hierarchical structure
-
-Sections:
-    - 3-10 specific, relevant search_queries per section
-    - Valid word limits (max_words ≥ min_words if both provided)
-    - Minimum 2 topics per section
-    - Topics should be unique per section
-    - Topic weights are float values between 0 and 1
-    - Appropriate topic types for each section's purpose
-"""
-
-GENERATE_GRANT_TEMPLATE_TASK_DESCRIPTION: Final[str] = """
-## Context
-Our system models the format and guidelines for generating grant application through several interconnected components:
-
-1. Funding Organizations define the overall grant structure
-2. Grant Templates provide the standardized format for applications
-3. Grant Sections break down the template into logical components
-4. Section Topics define the content focus and requirements of each section
-
-## Task
-Analyze the provided sources to:
-1. Create an appropriate grant template structure
-2. Define the required sections and their configurations
-3. Specify the weighted research topics for each section
-"""
+Please begin your planning process, followed by the JSON output.
+""")
 
 response_schema = {
     "type": "object",
@@ -225,31 +197,19 @@ async def generate_grant_template(
     Returns:
         Complete grant template configuration including format and sections
     """
-    search_results: list[DocumentDTO] = (
-        await retrieve_documents(
-            organization_id=organization_id,
-            task_description=GENERATE_GRANT_TEMPLATE_TASK_DESCRIPTION,
-            grant_section_types=[e.value for e in GrantSectionEnum],
-            research_topic_types=[e.value for e in ContentTopicEnum],
-            cfp_content=cfp_content,
-        )
-        if organization_id
-        else []
+    user_prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute_partial(
+        grant_section_types=[e.value for e in GrantSectionEnum],
+        research_topic_types=[e.value for e in ContentTopicEnum],
+        cfp_content=cfp_content,
     )
-
+    rag_results: list[DocumentDTO] = (
+        await retrieve_documents(organization_id=organization_id, user_prompt=user_prompt) if organization_id else []
+    )
     result = await handle_completions_request(
         prompt_identifier="generate_grant_template",
-        user_prompt=GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
-            grant_section_types=[e.value for e in GrantSectionEnum],
-            research_topic_types=[e.value for e in ContentTopicEnum],
-            cfp_content=cfp_content,
-            guidelines=GUIDELINES_FRAGMENT.substitute(organization_name=organization_name, rag_results=search_results)
-            if search_results and organization_name
-            else "",
-        ),
+        messages=user_prompt.substitute(rag_results=rag_results),
         response_type=GrantTemplateDTO,
         response_schema=response_schema,
-        output_instructions=GENERATE_GRANT_TEMPLATE_OUTPUT_INSTRUCTIONS,
         validator=validator,
     )
     logger.debug("Generated grant template", result=result)

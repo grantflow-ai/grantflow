@@ -13,29 +13,29 @@ from src.constants import CONTENT_TYPE_JSON, PREMIUM_TEXT_GENERATION_MODEL
 from src.exceptions import DeserializationError, ValidationError
 from src.utils.ai import get_google_ai_client
 from src.utils.logger import get_logger
+from src.utils.prompttemplate import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
 from src.utils.serialization import deserialize
-from src.utils.template import Template
 from src.utils.text import concatenate_segments_with_spacy_coherence
 
 logger = get_logger(__name__)
 
+BASE_SYSTEM_PROMPT: Final[str] = """
+You are an expert STEM grant application writer integrated into a RAG (Retrieval-Augmented Generation) system.
+"""
 
-DEFAULT_SYSTEM_PROMPT: Final[str] = """
-You are an expert grant application writer and a part of a RAG system specialized in writing STEM grant applications.
+DEFAULT_SYSTEM_PROMPT: Final[str] = f"""
+{BASE_SYSTEM_PROMPT}
 
-## Text Generation Guidelines
 When generating text, strictly follow these guidelines:
    - Write with maximum information density, conveying the most detail in the fewest possible words
    - Assume the reader is an expert; avoid basic definitions or general background information
    - Use precise, field-specific technical terminology without simplifying
-   - Do not define acronyms; assume the reader is familiar with all terminology
+   - Do not define acronyms; an acroynms table is given in a different part of the text.
    - Follow the scientific terminology provided in the inputs
    - Maintain a formal and data-driven tone, emphasizing succinctness and specificity
-
-### Handling Missing Information
-    - When information is missing or insufficient, do not invent facts or complete the missing information.
-    - Instead, write `**MISSING INFORMATION: <description>**` where `<description>` is a concise description of the missing information.
+   - When information is missing or insufficient, do not invent facts or complete the missing information.
+   - Instead, write `**MISSING INFORMATION: <description>**` where `<description>` is a concise description of the missing information.
 """
 
 
@@ -56,7 +56,7 @@ whether the research aim text is complete or not. Example:
 ```
 """
 
-CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[Template] = Template("""
+CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[PromptTemplate] = PromptTemplate("""
 Here is the last segment of text that was generated:
 
 <last_generation_result>
@@ -64,10 +64,10 @@ ${last_generation_result}
 </last_generation_result>
 
 Instructions:
-1. Analyze the end point of the provided text segment.
-2. Continue the generation from exactly where this text ends.
-3. Do not repeat any content from the previous segment unnecessarily.
-4. Maintain the style, tone, and context of the original text.
+1. Analyze the provided text segment, focusing on its content, style, and end point.
+2. Continue the grant application writing from exactly where the previous segment ends.
+3. Maintain consistency in style, tone, and context with the original text.
+4. Avoid repeating information already presented in the previous segment.
 """)
 
 SEGMENTED_GENERATION_SCHEMA = {
@@ -103,24 +103,22 @@ def _default_validator[T](_: T) -> bool:
 async def handle_completions_request[T](
     *,
     model: str = PREMIUM_TEXT_GENERATION_MODEL,
-    output_instructions: str,
     prompt_identifier: str,
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
     response_schema: dict[str, Any] | None = None,
-    user_prompt: str,
+    messages: str | Part | list[str | Part],
     validator: Callable[[T], bool] = _default_validator,
 ) -> T:
     """Handle a completions request to the model.
 
     Args:
         model: The model to use for the generation.
-        output_instructions: The output instructions.
         prompt_identifier: The identifier of the prompt.
         response_type: The response type.
         system_prompt: The system prompt.
         response_schema: The response schema.
-        user_prompt: The user prompt.
+        messages: The messages to send to the model.
         validator: Custom validator function for the response.
 
     Raises:
@@ -135,7 +133,9 @@ async def handle_completions_request[T](
         contents = [
             Content(
                 role="user",
-                parts=[Part.from_text(user_prompt), Part.from_text(output_instructions)],
+                parts=[Part.from_text(messages)]
+                if isinstance(messages, str)
+                else [Part.from_text(message) if isinstance(message, str) else Part for message in messages],
             )
         ]
         response = await client.generate_content_async(
@@ -159,18 +159,25 @@ async def handle_completions_request[T](
 async def handle_segmented_text_generation(
     *,
     prompt_identifier: str = "",
-    user_prompt_template: Template,
+    messages: str | Part | list[str | Part],
 ) -> str:
     """Handle the generation of segmented text.
 
     Args:
         prompt_identifier: The identifier of the entity to generate text for.
-        user_prompt_template: The user prompt template.
+        messages: The messages to send to the model.
 
     Returns:
         The generated text.
     """
     results: list[str] = []
+
+    parts: list[str | Part] = [Part.from_text(SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS)]
+    if isinstance(messages, str):
+        parts.append(Part.from_text(messages))
+    else:
+        parts.extend(messages)
+
     api_call_num = 1
 
     logger.info("Generating text", entity_identifier=prompt_identifier)
@@ -181,15 +188,15 @@ async def handle_segmented_text_generation(
         response = await handle_completions_request(
             prompt_identifier=prompt_identifier,
             system_prompt=DEFAULT_SYSTEM_PROMPT,
-            output_instructions=SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
             response_schema=SEGMENTED_GENERATION_SCHEMA,
-            user_prompt=user_prompt_template.substitute(
-                last_generation_result=CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(
-                    last_generation_result=last_generation_result
-                )
-                if last_generation_result
-                else ""
-            ),
+            messages=[
+                *parts,
+                Part.from_text(
+                    CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(last_generation_result=last_generation_result)
+                ),
+            ]
+            if last_generation_result
+            else parts,
             response_type=SegmentedToolGenerationToolResponse,
         )
 

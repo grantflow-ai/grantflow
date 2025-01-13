@@ -2,84 +2,105 @@ from typing import Final, TypedDict
 
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
-from src.utils.template import Template
+from src.utils.prompttemplate import PromptTemplate
 
 logger = get_logger(__name__)
 
 
-EXTRACT_CFP_DATA_USER_PROMPT: Final[Template] = Template("""
-Extract requirements for grant application narrative and research plan sections.
+EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+You are an AI assistant specialized in analyzing Call for Proposals (CFPs) for grant applications. Your task is to extract specific requirements from a given CFP and present them in a structured format. 
 
-First, here are the valid funding organizations and their IDs:
-
-<organization_mapping>
-${organization_mapping}
-</organization_mapping>
-
-Here is the CFP to analyze:
+Here is the CFP content you need to analyze:
 
 <cfp_content>
 ${cfp_content}
 </cfp_content>
 
-Extract verbatim text for:
+Now, here is a mapping of funding organizations and their IDs:
 
-1. REQUIRED SECTIONS
-   - Names and hierarchy of required narrative sections
-   - Section-specific content requirements
-   - Required subsections or components
+<organization_mapping>
+${organization_mapping}
+</organization_mapping>
 
-2. FORMAT REQUIREMENTS
-   - Page or word limits
-   - Required headings
-   - Specific formatting rules
-   - Organization requirements
+Your objective is to carefully read through the CFP and extract verbatim quotes that fall into the following categories:
 
-3. CONTENT SPECIFICATIONS
-   - Required topics to address
-   - Required analysis or data
-   - Required planning elements
-   - Required methodological components
+1. Required Sections
+2. Format Requirements
+3. Content Specifications
+4. Special Requirements
 
-4. SPECIAL REQUIREMENTS
-   - Mandatory statements
-   - Required analyses
-   - Required documentation
-   - Required approaches
+For each category, follow these specific instructions:
 
-Extraction Rules:
-    - Extract complete, verbatim quotes about narrative requirements
-    - Maintain document order
-    - Include all formatting and content specifications
-    - Keep exact numerical requirements
+1. Required Sections:
+   - Extract names and hierarchy of required narrative sections
+   - Identify section-specific content requirements
+   - Note any required subsections or components
 
-Do not include:
-    - Submission process
-    - URLs and hyperlinks
-    - Contact information
-    - Budget information
-    - Registration requirements
-    - Eligibility criteria
-    - Review process details
-    - Post-award requirements
-    - Background information
-    - Program goals/context
-""")
+2. Format Requirements:
+   - Identify page or word limits
+   - List required headings
+   - Note specific formatting rules
+   - Capture organization requirements
 
+3. Content Specifications:
+   - List required topics to address
+   - Identify required analysis or data
+   - Note required planning elements
+   - Capture required methodological components
 
-EXTRACT_CFP_DATA_OUTPUT_INSTRUCTIONS: Final[str] = """
-Respond with a JSON object following this structure:
+4. Special Requirements:
+   - Identify mandatory statements
+   - List required analyses
+   - Note required documentation
+   - Capture required approaches
 
-```jsonc
+Important Guidelines:
+- Extract complete, verbatim quotes about narrative requirements
+- Maintain the order as presented in the document
+- Include all formatting and content specifications
+- Preserve exact numerical requirements
+
+Do NOT include information about:
+- Submission process
+- URLs and hyperlinks
+- Contact information
+- Budget information
+- Registration requirements
+- Eligibility criteria
+- Review process details
+- Post-award requirements
+- Background information
+- Program goals/context
+
+Before providing your final output, wrap your analysis in <cfp_breakdown> tags. In this section:
+
+1. List out all the main sections you've identified in the CFP document.
+2. For each main category (Required Sections, Format Requirements, Content Specifications, Special Requirements), write down key phrases or words to look for.
+3. Go through the document section by section, noting relevant quotes for each category.
+
+This will help ensure a thorough interpretation of the CFP.
+
+After your analysis, compile your findings into a JSON object with the following structure:
+
+```json
 {
-    "organization_id": "...", // UUID string from mapping or null
-    "content": ["...",","..."], // Array of extracted strings
-    "entities": ["...",","..."] // List of extracted unique entities
+    "organization_id": "UUID string from mapping or null",
+    "content": [
+        "Verbatim quote 1",
+        "Verbatim quote 2",
+        ...
+    ],
+    "entities": [
+        "Unique entity 1",
+        "Unique entity 2",
+        ...
+    ]
 }
 ```
 
-The content array must contain complete, verbatim quotes that specify what must be included in the grant narrative and research plan, how it must be formatted, and any specific content requirements.
-"""
+The "content" array must contain complete, verbatim quotes that specify what must be included in the grant narrative and research plan, how it must be formatted, and any specific content requirements. The "entities" array should list unique entities extracted from the content.
+
+Please proceed with your analysis and JSON output.""")
 
 
 class ToolResponse(TypedDict):
@@ -114,12 +135,11 @@ async def extract_cfp_data(*, cfp_content: str, organization_mapping: dict[str, 
     """Extract the data from a CFP text."""
     result = await handle_completions_request(
         prompt_identifier="extract_cfp_data",
-        user_prompt=EXTRACT_CFP_DATA_USER_PROMPT.substitute(
+        messages=EXTRACT_CFP_DATA_USER_PROMPT.substitute(
             cfp_content=cfp_content, organization_mapping=organization_mapping
         ),
         response_type=ToolResponse,
         response_schema=response_schema,
-        output_instructions=EXTRACT_CFP_DATA_OUTPUT_INSTRUCTIONS,
     )
     logger.debug("Extracted CFP data", result=result)
 
