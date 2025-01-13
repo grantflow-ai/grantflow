@@ -3,13 +3,12 @@ from typing import Final
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_segmented_text_generation
 from src.utils.logger import get_logger
-from src.utils.template import Template
+from src.utils.prompttemplate import PromptTemplate
 
 logger = get_logger(__name__)
 
-SPECIFIC_AIMS_USER_PROMPT: Final[Template] = Template("""
+SPECIFIC_AIMS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
 Your task is to write the "Specific Aims" section for a research grant application.
-${last_generation_result}
 
 Use the following sources to write the text:
 
@@ -18,12 +17,7 @@ Use the following sources to write the text:
     ${research_plan_text}
     </research_plan_text>
 
-2. RAG Retrieval Results for additional context:
-    <rag_results>
-    ${rag_results}
-    </rag_results>
-
-3. The introductory text of the grant application:
+2. The introductory text of the grant application:
     <intro_text>
     ${intro_text}
     </intro_text>
@@ -49,17 +43,6 @@ Ensure that the Specific Aims section:
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~400-500 words).
 """)
 
-SPECIFIC_AIMS_TASK_DESCRIPTION: Final[str] = """
-The next task in the RAG pipeline is to write the Specific Aims section.
-The Specific Aims section should clearly and concisely outline the purpose and goals of the proposed research and it should answer the following questions:
-
-1. What is the long-term goal of this research?
-2. What critical gap in knowledge or problem does this project address?
-3. What are the measurable objectives (Specific Aims) of the research?
-4. If applicable, what hypotheses are being tested?
-5. How will achieving these aims impact the field or address the stated problem?
-"""
-
 
 async def handle_specific_aims_text_generation(
     *,
@@ -77,18 +60,17 @@ async def handle_specific_aims_text_generation(
     Returns:
         The generated section text.
     """
+    user_prompt = SPECIFIC_AIMS_USER_PROMPT.substitute_partial(
+        research_plan_text=research_plan_text,
+        intro_text=intro_text,
+    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=SPECIFIC_AIMS_TASK_DESCRIPTION,
+        user_prompt=user_prompt,
     )
-
     result = await handle_segmented_text_generation(
         prompt_identifier="specific-aims",
-        user_prompt_template=SPECIFIC_AIMS_USER_PROMPT.substitute_partial(
-            research_plan_text=research_plan_text,
-            intro_text=intro_text,
-            rag_results=rag_results,
-        ),
+        messages=user_prompt.substitute(rag_results=rag_results),
     )
     logger.debug("Successfully enerated Specific Aims text.", text=result)
     return result

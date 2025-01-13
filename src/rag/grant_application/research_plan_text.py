@@ -6,15 +6,11 @@ from src.db.json_objects import ApplicationDetails, ResearchObjective, ResearchT
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.logger import get_logger
-from src.utils.template import Template
+from src.utils.prompttemplate import PromptTemplate
 
 logger = get_logger(__name__)
 
-DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_SYSTEM_PROMPT: Final[str] = """
-You are an expert grant application writer integrated into a RAG system.
-"""
-
-DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT: Final[Template] = Template("""
+DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
 Your task is to analyze research objectives and tasks for a grant application, identifying and describing relations between them.
 
 Here are the research objectives and tasks you need to analyze:
@@ -56,78 +52,96 @@ Respond using the provided tool with a JSON response adhering to the following f
 - The second element is a detailed description of the relation between the objective or task and its predecessor.
 """
 
-RESEARCH_TASK_GENERATION_CLINICAL_TRIAL_QUESTIONS: Final[str] = """
-5. If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
-6. If the task involves vertebrate animals/humans, what are the pertinent biological variables (e.g. subject sex, age etc.)?
-7. If the task involves hazardous elements, what are the detailed hazard descriptions and planned safety measures and precautions?
-8. If the task uses Human Embryonic Stem Cells (hESCs) not in the NIH Registry, what is the justification for non-registered hESC usage?
-9. If the task uses Human Fetal Tissue (HFT), what is the necessity of HFT, documentation of alternative evaluation methods, and evidence of alternatives consideration?x
+RESEARCH_TASK_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+You are an expert grant application writer specializing in STEM fields. Your task is to write a detailed research task description for a grant application. This description should be highly technical, densely informative, and tailored for expert readers.
 
-Note that these sections should be added only if they apply to the given research task.
-"""
+First, carefully review the following information:
 
-RESEARCH_TASK_GENERATION_USER_PROMPT: Final[Template] = Template("""
-Your task is to write a research task description.
-${last_generation_result}
+1. Additional Context from RAG Retrieval:
+<rag_retrieval_results>
+${rag_results}
+</rag_retrieval_results>
 
-Use the following sources to write the text:
+2. Research Task Data:
+<research_task_data>
+${research_task}
+</research_task_data>
 
-1. Research Task Data as a JSON object:
-    <research_task>
-   {{research_task}}
-    </research_task>
+Before writing the final description, conduct your analysis within the following structure:
 
-2. RAG Retrieval Results for additional context:
-    <rag_results>
-    {{rag_results}}
-    </rag_results>
+<detailed_research_analysis>
+1. Task Overview:
+   - Summarize the main goal and objectives of the research task.
+   - Identify key methodologies and approaches mentioned.
+   - Quote relevant parts of the research task data that support your summary.
 
-A research task is a specific task within a larger research objective.
-The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
-It should address the following implicit questions:
+2. Experimental Design:
+   - Outline the experimental design methodology in detail.
+   - Note any specific techniques or protocols mentioned.
+   - Quote relevant parts of the RAG retrieval results that provide context for the experimental design.
 
-1. What is task goal or objectives?
-2. What is the experimental design methodology used?
-3. What are the data collection methods?
-4. What is the results analysis and interpretation framework?
+3. Data Collection:
+   - List and elaborate on the data collection methods.
+   - Identify any specialized equipment or tools required.
+   - Explain how these methods align with the research objectives.
 
-If you determine that the research task involves clinical trials with a high degree of certainty (above 75%), address the following questions - conditionally:
-5. If the task includes randomized groups/interventions, what is the sample size, group/intervention information, and method of sample analysis?
-6. If the task involves vertebrate animals/humans, what are the pertinent biological variables (e.g. subject sex, age etc.)?
-7. If the task involves hazardous elements, what are the detailed hazard descriptions and planned safety measures and precautions?
-8. If the task uses Human Embryonic Stem Cells (hESCs) not in the NIH Registry, what is the justification for non-registered hESC usage?
-9. If the task uses Human Fetal Tissue (HFT), what is the necessity of HFT, documentation of alternative evaluation methods, and evidence of alternatives consideration?
+4. Analysis Framework:
+   - Describe the framework for results analysis and interpretation in depth.
+   - Note any statistical methods or software to be used.
+   - Explain how this framework will address the research questions.
 
-**Important Guidelines**:
-- The research task JSON object includes an array of relations with other research tasks. If the array is not empty, make sure to include a detailed description of these relations in the text.
-- Do not use the title of the research task in the text - the title will be provided to the user above the text.
-- Describe the specific research steps planned in the task in detail.
-- Include concrete facts where applicable, citing the relevant source documents when drawing from RAG results
+5. Clinical Trial Assessment:
+   - Evaluate whether this task involves clinical trials (with >75% certainty).
+   - If yes, address in detail:
+     a. Sample size and group/intervention information (if randomized).
+     b. Relevant biological variables (for vertebrate animals/humans).
+     c. Hazard descriptions and safety measures (if applicable).
+     d. Justification for non-registered hESC usage (if applicable).
+     e. Necessity and alternatives for Human Fetal Tissue use (if applicable).
+   - Quote any relevant information from the provided data to support your assessment.
 
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
-""")
+6. Task Relations:
+   - Analyze the relations array in the research task data.
+   - Summarize how this task relates to other research tasks.
+   - Explain the significance of these relationships to the overall research project.
 
-RESEARCH_TASK_TASK_DESCRIPTION: Final[str] = """
-The next task in the RAG pipeline is to write a description for a research task.
-A research task is a specific task within a larger research objective. The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
-The description should address the following implicit questions:
+7. Key Technical Terms:
+   - Identify and list crucial field-specific terminology to include.
+   - Provide a brief explanation of why each term is important in the context of this research.
 
-1. What is task goal or objectives?
-2. What is the experimental design methodology used?
-3. What are the data collection methods?
-4. What is the results analysis and interpretation framework?
-"""
+8. Information Gaps:
+   - Note any critical missing information that may affect the description.
+   - Explain the potential impact of these gaps on the research task.
 
-RESEARCH_TASK_TEMPLATE: Final[Template] = Template("""
+9. Potential Challenges and Limitations:
+   - Brainstorm possible challenges or limitations of the proposed research.
+   - Suggest potential mitigation strategies for these challenges.
+
+10. Relevance and Impact:
+    - Discuss the potential impact of this research on the field.
+    - Explain how this task contributes to broader scientific understanding.
+
+It's OK for this section to be quite long. The more detailed your analysis, the better the final description will be.
+</detailed_research_analysis>
+
+Based on your analysis, write a comprehensive research task description. Follow these guidelines:
+
+1. Format the description as a continuous text without headings, bullet points, lists, or tables.
+2. Aim for approximately 300-400 words.
+3. Do not include the title of the research task in the description.
+
+Your response should demonstrate a high level of technical expertise and be optimized for an expert audience in the specific STEM field of the research task.""")
+
+
+RESEARCH_TASK_TEMPLATE: Final[PromptTemplate] = PromptTemplate("""
 ###### Task ${task_number}: ${title}
 
 ${content}
 """)
 
 
-RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT: Final[Template] = Template("""
+RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
 Your task is to write a research objective description.
-${last_generation_result}
 
 Use the following sources to write the text:
 
@@ -165,24 +179,12 @@ __NOTE__: Methodology is an optional sub-section. It should be included only if 
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
 """)
 
-RESEARCH_OBJECTIVE_TASK_DESCRIPTION: Final[str] = """
-The next task in the RAG pipeline is to write a description for a research objective.
-A research objective or research objective is an overarching goal that the research seeks to achieve.
-The description should address the following implicit questions:
-
-1. What is the working hypothesis?
-2. What are the general goals of the objective?
-3. What is the methodology employed?
-4. What are the expected results?
-"""
-
-PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[Template] = Template("""
+PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
 You task is to write the Preliminary Results section which forms a sub-section for the following research objective text:
     <research_objective_description>
     ${research_objective_description}
     </research_objective_description>
 
-${last_generation_result}
 Use the following sources to write the text:
 
 1. User input on Preliminary Results:
@@ -212,25 +214,12 @@ This sub-section should address the following implicit questions:
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for a minimum of half a page, and a maximum of two pages in length (~200-800 words).
 """)
 
-PRELIMINARY_RESULTS_TASK_DESCRIPTION: Final[str] = """
-The next task in the RAG pipeline is to write a description for the Preliminary Results section.
-Preliminary Results are detailed experimental findings and data analyses that demonstrate research feasibility for a specific research aim or objective.
-The description should address the following implicit questions:
-
-1. What experiments/analyses have been conducted?
-2. What methods and techniques were used?
-3. How was the data analyzed and interpreted?
-4. How do these findings support the proposed research?
-"""
-
-
-RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[Template] = Template("""
+RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
 You task is to write the Risks and Alternatives which forms a for the following research objective text:
     <research_objective_description>
     ${research_objective_description}
     </research_objective_description>
 
-${last_generation_result}
 Use the following sources to write the text:
 
 1. User input on Risks and Alternatives:
@@ -259,19 +248,7 @@ This section should address the following implicit questions:
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly two to three paragraphs with a maximum length of half a page (~150-300 words).
 """)
 
-RISKS_AND_ALTERNATIVES_TASK_DESCRIPTION: Final[str] = """
-The next task in the RAG pipeline is to write a description for the Risks and Alternatives section.
-Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
-The description should address the following implicit questions:
-
-1. What are the specific risks involved in this research, and how would you describe their severity (High/Medium/Low)?
-2. What strategies can be implemented to mitigate each identified risk?
-3. What alternative approaches are available if these strategies fail?
-4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
-"""
-
-
-RESEARCH_PLAN_SECTION_TEMPLATE: Final[Template] = Template("""
+RESEARCH_PLAN_SECTION_TEMPLATE: Final[PromptTemplate] = PromptTemplate("""
 ## Research Plan
 
 ### Research Objectives
@@ -279,7 +256,7 @@ RESEARCH_PLAN_SECTION_TEMPLATE: Final[Template] = Template("""
 ${research_objectives_text}
 """)
 
-RESEARCH_OBJECTIVE_TEMPLATE: Final[Template] = Template("""
+RESEARCH_OBJECTIVE_TEMPLATE: Final[PromptTemplate] = PromptTemplate("""
 #### Objective ${objective_number}: ${title}
 
 ${research_objective_description_text}
@@ -333,7 +310,6 @@ async def set_relation_data(research_objectives: list[ResearchObjective]) -> lis
     """
     response = await handle_completions_request(
         prompt_identifier="identify_relations",
-        system_prompt=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_SYSTEM_PROMPT,
         user_prompt=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT.substitute(
             objectives=[
                 {
@@ -388,17 +364,15 @@ async def handle_research_task_text_generation(
     Returns:
         The generated section text.
     """
-    rag_results = await retrieve_documents(
-        application_id=application_id,
-        task_description=RESEARCH_TASK_TASK_DESCRIPTION,
+    user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute_partial(
         research_task=research_task,
     )
-
+    rag_results = await retrieve_documents(
+        application_id=application_id,
+        user_prompt=user_prompt,
+    )
     result = await handle_segmented_text_generation(
-        user_prompt_template=RESEARCH_TASK_GENERATION_USER_PROMPT.substitute_partial(
-            research_task=research_task,
-            rag_results=rag_results,
-        )
+        messages=user_prompt.substitute(rag_results=rag_results),
     )
 
     logger.info("Successfully generated research task.", task_number=task_number)
@@ -422,24 +396,22 @@ async def handle_research_objective_description_generation(
     """
     research_task_titles = [research_task["title"] for research_task in research_objective["research_tasks"]]
 
+    user_prompt = RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT.substitute_partial(
+        research_objective={
+            "title": research_objective["title"],
+            "objective_number": research_objective["number"],
+            "description": research_objective.get("description"),
+            "relationships": research_objective.get("relationships"),
+        },
+        research_task_titles=research_task_titles,
+    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=RESEARCH_OBJECTIVE_TASK_DESCRIPTION,
-        research_objective=research_objective,
+        user_prompt=user_prompt,
     )
-
     result = await handle_segmented_text_generation(
         prompt_identifier="research-objective",
-        user_prompt_template=RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT.substitute_partial(
-            research_objective={
-                "title": research_objective["title"],
-                "objective_number": research_objective["number"],
-                "description": research_objective.get("description"),
-                "relationships": research_objective.get("relationships"),
-            },
-            rag_results=rag_results,
-            research_task_titles=research_task_titles,
-        ),
+        messages=user_prompt.substitute(rag_results=rag_results),
     )
     logger.info("Successfully generated research objective", number=research_objective["number"])
 
@@ -464,20 +436,17 @@ async def handle_preliminary_data_text_generation(
     Returns:
         The generated section text.
     """
+    user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute_partial(
+        research_objective_description=research_objective_description,
+        preliminary_data=application_details.get("preliminary_data", ""),
+    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=PRELIMINARY_RESULTS_TASK_DESCRIPTION,
-        preliminary_data=application_details.get("preliminary_data", ""),
-        research_objective_description=research_objective_description,
+        user_prompt=user_prompt,
     )
-
     result = await handle_segmented_text_generation(
         prompt_identifier="preliminary-results",
-        user_prompt_template=PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute_partial(
-            research_objective_description=research_objective_description,
-            rag_results=rag_results,
-            preliminary_data=application_details.get("preliminary_data", ""),
-        ),
+        messages=user_prompt.substitute(rag_results=rag_results),
     )
     logger.info("Successfully generated preliminary results.", number=research_objective["number"])
     return result
@@ -502,20 +471,17 @@ async def handle_risks_and_mitigations_text_generation(
         The generated section text.
 
     """
+    user_prompt = RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute_partial(
+        research_objective_description=research_objective_description,
+        risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
+    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        task_description=RISKS_AND_ALTERNATIVES_TASK_DESCRIPTION,
-        risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
-        research_objective_description=research_objective_description,
+        user_prompt=user_prompt,
     )
-
     result = await handle_segmented_text_generation(
         prompt_identifier="risks-and-alternatives",
-        user_prompt_template=RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute_partial(
-            research_objective_description=research_objective_description,
-            rag_results=rag_results,
-            risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
-        ),
+        messages=user_prompt.substitute(rag_results=rag_results),
     )
     logger.info("Successfully generated risks and alternatives.", number=research_objective["number"])
 

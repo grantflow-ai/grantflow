@@ -1,51 +1,57 @@
-from typing import Any, Final, TypedDict
+from typing import Final, TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
-from src.utils.serialization import serialize
-from src.utils.template import Template
+from src.utils.prompttemplate import PromptTemplate
 
 logger = get_logger(__name__)
 
 SEARCH_QUERIES_SYSTEM_PROMPT: Final[str] = """
-You are a specialized query generation component within a RAG pipeline designed to assist in writing grant application sections.
-Your function is to generate search queries that will retrieve relevant content from a vector store using cosine similarity.
-The queries should balance specificity with breadth to capture a range of relevant materials.
+You are a specialized query generation component within a Retrieval-Augmented Generation (RAG) pipeline designed to assist in writing grant application sections.
+Your primary function is to generate search queries that will retrieve relevant content from a vector store using cosine similarity.
 """
 
-SEARCH_QUERIES_USER_PROMPT: Final[Template] = Template("""
-Your task is to generate between 3-10 distinct search queries that will be executed against the vector store.
-The queries should be optimized for the next task in the RAG pipeline. Use the following sources:
+SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
 
-# Next Task Description
-<task_description>
-${task_description}
-</task_description>
+Here is the user prompt for the next stage of the RAG pipeline:
 
-<inputs>
-${inputs}
-</inputs>
-""")
+<user_prompt>
+${user_prompt}
+</user_prompt>
 
-OUTPUT_INSTRUCTIONS: Final[str] = """
-## Output
+Your task is to generate between 3 and 10 distinct search queries based on this user prompt. These queries will be executed against the vector store to retrieve relevant information for the grant application section.
 
-Respond using the provided tool with a JSON object strictly adhering to the following structure:
+Instructions:
+1. Analyze the user prompt carefully to understand the context and requirements of the grant application section.
+2. Generate search queries that balance specificity with breadth to capture a range of relevant materials.
+3. Ensure that the queries are optimized for the next task in the RAG pipeline, which involves retrieving and processing the relevant information.
+4. Aim for diversity in your queries to cover different aspects of the topic.
 
-```jsonc
+Before providing your final output, wrap your thought process in <query_generation_process> tags. Follow these steps:
+1. List the key concepts or themes in the user prompt.
+2. Identify specific terminology that might be relevant to the grant application.
+3. Brainstorm different aspects of the topic that could be covered in separate queries.
+4. Consider potential synonyms or related terms that could broaden the search.
+5. Generate initial queries based on steps 1-4.
+6. Evaluate each generated query for relevance and effectiveness, refining as necessary.
+
+It's OK for this section to be quite long, as thorough consideration will lead to better queries.
+
+After your thought process, provide your final output as a JSON object strictly adhering to the following structure:
+
+```json
 {
     "queries": [
-        "Example query 1",
-        "Example query 2",
-        "Example query 3",
-        "Example query 4",
-        "Example query 5",
-        // ... and so on as required.
+        "Query 1",
+        "Query 2",
+        "Query 3",
+        // Additional queries as needed, up to 10
     ]
 }
 ```
-"""
+
+Ensure that you generate at least 3 queries and no more than 10 queries. Each query should be a string designed to effectively retrieve relevant information from the vector store.""")
 
 
 class ToolResponse(TypedDict):
@@ -58,18 +64,17 @@ class ToolResponse(TypedDict):
 response_schema = {
     "type": "object",
     "properties": {
-        "queries": {"type": "array", "items": {"type": "string"}},
+        "queries": {"type": "array", "items": {"type": "string"}, "minLength": 3, "maxLength": 10},
     },
     "required": ["queries"],
 }
 
 
-async def handle_create_search_queries(*, task_description: str, **inputs: Any) -> list[str]:
+async def handle_create_search_queries(*, user_prompt: str | PromptTemplate) -> list[str]:
     """Generate an optimized search query for retrieval.
 
     Args:
-        task_description: The description of the next task in the RAG pipeline.
-        **inputs: The inputs for the search query generation
+        user_prompt: The description of the next task in the RAG pipeline.
 
     Returns:
         The generated search queries, the total number of tokens, and the total billable characters.
@@ -79,11 +84,10 @@ async def handle_create_search_queries(*, task_description: str, **inputs: Any) 
     while len(queries) < 3:
         response = await handle_completions_request(
             prompt_identifier="search_queries",
-            system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT.strip(),
-            user_prompt=SEARCH_QUERIES_USER_PROMPT.substitute(
-                task_description=task_description, inputs=serialize(inputs).decode() if inputs else ""
-            ).strip(),
-            output_instructions=OUTPUT_INSTRUCTIONS,
+            system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT,
+            messages=SEARCH_QUERIES_USER_PROMPT.substitute(
+                user_prompt=user_prompt if isinstance(user_prompt, str) else user_prompt.template
+            ),
             response_schema=response_schema,
             response_type=ToolResponse,
             model=FAST_TEXT_GENERATION_MODEL,
