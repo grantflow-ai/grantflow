@@ -9,7 +9,7 @@ from src.dto import GrantTemplateDTO
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
-from src.utils.prompttemplate import PromptTemplate
+from src.utils.prompt_template import PromptTemplate
 from src.utils.validators import validate_markdown_template
 
 if TYPE_CHECKING:
@@ -184,15 +184,12 @@ def validator(tool_response: GrantTemplateDTO) -> bool:
     }
 
 
-async def generate_grant_template(
-    *, cfp_content: str, organization_id: str | None, organization_name: str | None
-) -> GrantTemplateDTO:
+async def generate_grant_template(*, cfp_content: str, organization_id: str | None) -> GrantTemplateDTO:
     """Generate a complete grant template including format and section configurations.
 
     Args:
         cfp_content: The extracted content of a grant CFP.
         organization_id: The funding organization to use for the grant template.
-        organization_name: The name of the organization to use for the grant template.
 
     Returns:
         Complete grant template configuration including format and sections

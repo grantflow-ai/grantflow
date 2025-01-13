@@ -49,9 +49,6 @@ async def handle_generate_grant_template(
     result = await generate_grant_template(
         cfp_content="...".join(extraction_result["content"]),
         organization_id=extraction_result["organization_id"],
-        organization_name=organization_mapping[extraction_result["organization_id"]]["full_name"]
-        if extraction_result["organization_id"]
-        else None,
     )
     logger.info("Generated grant template")
 

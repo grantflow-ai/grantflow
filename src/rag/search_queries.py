@@ -3,7 +3,7 @@ from typing import Final, TypedDict
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
-from src.utils.prompttemplate import PromptTemplate
+from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
