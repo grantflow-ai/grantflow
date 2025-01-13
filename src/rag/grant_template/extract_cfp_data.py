@@ -2,13 +2,13 @@ from typing import Final, TypedDict
 
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
-from src.utils.prompttemplate import PromptTemplate
+from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
 
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
-You are an AI assistant specialized in analyzing Call for Proposals (CFPs) for grant applications. Your task is to extract specific requirements from a given CFP and present them in a structured format. 
+You are an AI assistant specialized in analyzing Call for Proposals (CFPs) for grant applications. Your task is to extract specific requirements from a given CFP and present them in a structured format.
 
 Here is the CFP content you need to analyze:
 

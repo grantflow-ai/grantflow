@@ -1,5 +1,7 @@
 from decimal import Decimal
-from re import Pattern, compile
+from re import Pattern
+from re import compile as compile_re
+from textwrap import dedent
 from typing import Any, ClassVar
 from uuid import UUID
 
@@ -9,7 +11,7 @@ from src.utils.serialization import serialize
 class PromptTemplate:
     """A string template with variable validation."""
 
-    pattern: ClassVar[Pattern[str]] = compile(r"\${([_a-zA-Z][_a-zA-Z0-9]*)}")
+    pattern: ClassVar[Pattern[str]] = compile_re(r"\${([_a-zA-Z][_a-zA-Z0-9]*)}")
 
     def __init__(self, template: str) -> None:
         self.template = template
@@ -42,7 +44,7 @@ class PromptTemplate:
 
         for key, value in kwargs.items():
             if isinstance(value, PromptTemplate):
-                raise ValueError(f"Cannot substitute a Template object: {value}")
+                raise ValueError(f"Cannot substitute a PromptTemplate object: {value}")
             if isinstance(value, str):
                 mapping[key] = value
             elif isinstance(value, (int | float | Decimal | UUID)):
@@ -71,7 +73,7 @@ class PromptTemplate:
 
         return PromptTemplate(template)
 
-    def substitute(self, **kwargs: Any) -> str:  # type: ignore[override]
+    def substitute(self, **kwargs: Any) -> str:
         """Substitute the template.
 
         Args:
@@ -91,4 +93,8 @@ class PromptTemplate:
                 template_string = template_string.replace(f"${{{key}}}", value)
             except KeyError as e:
                 raise ValueError(f"Missing value for variable '{key}' in template") from e
-        return template_string
+        return dedent(template_string).strip()
+
+    def __str__(self) -> str:
+        """Return the template string."""
+        return self.template

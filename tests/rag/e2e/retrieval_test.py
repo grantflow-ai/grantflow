@@ -47,10 +47,11 @@ async def test_document_retrieval(
     logger.info("Inserted embeddings data into the database")
     results = await retrieve_documents(
         application_id=str(grant_application_file.grant_application_id),
-        vector_data=[vector_dto["chunk"]["content"] for vector_dto in vector_dtos],
-        task_description="""
+        user_prompt=f"""
             The task is to test the RAG pipeline by testing that retrieval works.
             Identify effective queries from the provided content JSON array.
+
+            {serialize([vector_dto["chunk"]["content"] for vector_dto in vector_dtos]).decode()}
             """,
     )
 

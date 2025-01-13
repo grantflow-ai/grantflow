@@ -13,7 +13,7 @@ from src.constants import CONTENT_TYPE_JSON, PREMIUM_TEXT_GENERATION_MODEL
 from src.exceptions import DeserializationError, ValidationError
 from src.utils.ai import get_google_ai_client
 from src.utils.logger import get_logger
-from src.utils.prompttemplate import PromptTemplate
+from src.utils.prompt_template import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
 from src.utils.serialization import deserialize
 from src.utils.text import concatenate_segments_with_spacy_coherence
@@ -31,7 +31,7 @@ When generating text, strictly follow these guidelines:
    - Write with maximum information density, conveying the most detail in the fewest possible words
    - Assume the reader is an expert; avoid basic definitions or general background information
    - Use precise, field-specific technical terminology without simplifying
-   - Do not define acronyms; an acroynms table is given in a different part of the text.
+   - Do not define acronyms; an acronyms table is given in a different part of the text.
    - Follow the scientific terminology provided in the inputs
    - Maintain a formal and data-driven tone, emphasizing succinctness and specificity
    - When information is missing or insufficient, do not invent facts or complete the missing information.

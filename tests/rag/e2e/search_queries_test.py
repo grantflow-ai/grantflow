@@ -1,12 +1,11 @@
 import logging
 from os import environ
-from typing import Any
 
 import pytest
 from anyio import Path
 
 from src.rag.search_queries import handle_create_search_queries
-from src.utils.serialization import deserialize, serialize
+from src.utils.serialization import serialize
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 
@@ -25,10 +24,11 @@ async def test_handle_create_search_queries(
         return
 
     queries = await handle_create_search_queries(
-        content=deserialize(retrieval_file.read_bytes(), list[dict[str, Any]]),
-        task_description="""
+        user_prompt=f"""
         The task is to test the RAG pipeline by testing that generating queries works.
         Identify and return effective queries from the provided content JSON array.
+
+        {retrieval_file.read_text()}
         """,
     )
 
