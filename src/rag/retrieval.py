@@ -19,7 +19,8 @@ async def retrieve_documents(
     application_id: str | None = None,
     max_results: int = MAX_RESULTS,
     organization_id: str | None = None,
-    task_description: str,
+    task_description: str | None = None,
+    search_queries: list[str] | None = None,
     **inputs: Any,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
@@ -29,10 +30,12 @@ async def retrieve_documents(
         max_results: The maximum number of results to return.
         organization_id: The organization ID, required if application_id is not provided.
         task_description: The task description.
+        search_queries: The search queries. If not provided, they will be generated from the task description.
         **inputs: The inputs to the task.
 
     Raises:
-        ValueError: If neither application_id nor organization_id is provided.
+        ValueError: If neither application_id nor organization_id is provided or if neither search_queries nor
+            task_description is provided.
 
     Returns:
         list[dict[str, str]]: The retrieved documents.
@@ -42,7 +45,11 @@ async def retrieve_documents(
 
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
 
-    search_queries = await handle_create_search_queries(task_description=task_description, **inputs)
+    if not search_queries:
+        if not task_description:
+            raise ValueError("Either search_queries or task_description must be provided.")
+        search_queries = await handle_create_search_queries(task_description=task_description, **inputs)
+
     query_embeddings = await generate_embeddings(",".join(search_queries), TaskType.RetrievalQuery)
 
     session_maker = get_session_maker()

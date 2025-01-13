@@ -72,8 +72,9 @@ Respond with a JSON object following this structure:
 
 ```jsonc
 {
-    "organization_id": string | null,  // UUID from mapping or null
-    "content": string[]                // Array of narrative/research plan requirements in document order
+    "organization_id": "...", // UUID string from mapping or null
+    "content": ["...",","..."], // Array of extracted strings
+    "entities": ["...",","..."] // List of extracted unique entities
 }
 ```
 
@@ -88,6 +89,8 @@ class ToolResponse(TypedDict):
     """Organization identifier."""
     content: list[str]
     """Array of extracted content strings."""
+    entities: list[str]
+    """List of entities."""
 
 
 response_schema = {
@@ -97,9 +100,13 @@ response_schema = {
             "type": "string",
             "nullable": True,
         },
+        "entities": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
         "content": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["organization_id", "content"],
+    "required": ["organization_id", "entities", "content"],
 }
 
 
