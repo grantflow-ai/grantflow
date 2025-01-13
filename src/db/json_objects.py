@@ -61,12 +61,6 @@ class ResearchObjective(TypedDict):
     """The title of the research objective."""
     description: NotRequired[str]
     """The description of the research objective."""
-    preliminary_results: NotRequired[str]
-    """The preliminary results of the research objective."""
-    risks_and_alternatives: NotRequired[str]
-    """The risks and alternatives of the research objective."""
-    requires_clinical_trials: bool
-    """Whether the research objective requires clinical trials."""
     research_tasks: list[ResearchTask]
     """The research tasks for the research objective"""
     relationships: NotRequired[list[str]]
@@ -76,8 +70,6 @@ class ResearchObjective(TypedDict):
 class SectionTopic(TypedDict):
     """DTO for a section topic."""
 
-    search_terms: list[str]
-    """The search terms for the topic."""
     type: ContentTopicEnum
     """The type of the topic."""
     weight: float
@@ -91,16 +83,45 @@ class GrantSection(TypedDict):
     """The maximum number of words in the section."""
     min_words: NotRequired[int]
     """The minimum number of words in the section."""
-    search_terms: list[str]
-    """The search terms for the section."""
+    search_queries: list[str]
+    """3-10 unique test queries for RAG retrieval."""
     topics: list[SectionTopic]
     """The topics for the section."""
     type: GrantSectionEnum
     """The type of the section."""
 
 
+class ApplicationDetails(TypedDict):
+    """DTO for an application details."""
+
+    background_context: NotRequired[str]
+    """The background context of the application."""
+    hypothesis: NotRequired[str]
+    """The hypothesis of the application."""
+    impact: NotRequired[str]
+    """The impact of the application."""
+    milestones_and_timeline: NotRequired[str]
+    """The milestones and timeline of the application."""
+    novelty_and_innovation: NotRequired[str]
+    """The novelty and innovation of the application."""
+    preliminary_data: NotRequired[str]
+    """The preliminary data of the application."""
+    rationale: NotRequired[str]
+    """The rationale of the application."""
+    research_feasibility: NotRequired[str]
+    """The research feasibility of the application."""
+    risks_and_mitigations: NotRequired[str]
+    """The risks and planned mitigation strategies of the application."""
+    scientific_infrastructure: NotRequired[str]
+    """The scientific infrastructure of the application."""
+    team_excellence: NotRequired[str]
+    """The team excellence of the application."""
+
+
 class TextGenerationResult(TypedDict):
     """DTO for a text generation result."""
 
     content: str
+    """The generated content."""
     type: GrantSectionEnum
+    """The type of the generated content."""

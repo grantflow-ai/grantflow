@@ -72,19 +72,18 @@ Example structure:
     "sections": [
         {
             "type": "EXECUTIVE_SUMMARY",
-            "search_terms": ["project overview", "key objectives", "expected impact"], // 3-10 terms
+            "search_queries": ["..."], // 3-10 distinct RAG retrieval queries
             "min_words": 200, // can be omitted if no minimum
             "max_words: 500,  // can be omitted if no maximum
             "topics": [
                 {
                     "type": "BACKGROUND_CONTEXT",
-                    "weight": 0.9,
-                    "search_terms": ["current knowledge", "literature review"]
+                    "weight": 0.9
                 },
                 {
                     "type": "RATIONALE",
                     "weight": 0.7,
-                    "search_terms": ["research justification", "unmet need"]
+                    "search_queries": ["research justification", "unmet need"]
                 }
             ]
         }
@@ -102,7 +101,7 @@ Example structure:
 2. Section Configuration:
    - Each section must define its content requirements through topics
    - Word limits should reflect typical grant expectations
-   - Search Terms should enable effective content retrieval
+   - Search Queries should enable effective content retrieval (see below)
 
 3. Topic Weighting System:
    Primary topics (0.7-1.0):
@@ -117,6 +116,11 @@ Example structure:
    - Contextual or supplementary content
    - Helpful but not critical elements
 
+4. Search Queries:
+    - Will be executed to retrieve documents from a vector store for the section
+    - The queries should balance specificity with breadth to capture a range of relevant materials.
+    - Identity and extract distinct
+
 ### Validation Requirements
 Template:
     - Valid markdown format
@@ -124,18 +128,12 @@ Template:
     - Clear hierarchical structure
 
 Sections:
-    - 3-10 specific, relevant search_terms per section
+    - 3-10 specific, relevant search_queries per section
     - Valid word limits (max_words ≥ min_words if both provided)
     - Minimum 2 topics per section
     - Topics should be unique per section
     - Topic weights are float values between 0 and 1
     - Appropriate topic types for each section's purpose
-
-Search Terms:
-    - Specific and retrievable terms
-    - Relevant to section content
-    - Effective for RAG queries
-    - Prefer distinct entities where available
 """
 
 GENERATE_GRANT_TEMPLATE_TASK_DESCRIPTION: Final[str] = """
@@ -175,24 +173,18 @@ response_schema = {
                         "items": {
                             "type": "object",
                             "properties": {
-                                "search_terms": {
-                                    "type": "array",
-                                    "minItems": 3,
-                                    "maxItems": 10,
-                                    "items": {"type": "string"},
-                                },
                                 "type": {"type": "string", "enum": [e.value for e in ContentTopicEnum]},
                                 "weight": {"type": "number", "minimum": 0, "maximum": 1},
                             },
-                            "required": ["type", "weight", "search_terms"],
+                            "required": ["type", "weight"],
                         },
                     },
-                    "search_terms": {"type": "array", "minItems": 3, "maxItems": 10, "items": {"type": "string"}},
+                    "search_queries": {"type": "array", "minItems": 3, "maxItems": 10, "items": {"type": "string"}},
                     "max_words": {"type": "number"},
                     "min_words": {"type": "number"},
                     "type": {"type": "string", "enum": [e.value for e in GrantSectionEnum]},
                 },
-                "required": ["topics", "search_terms", "type"],
+                "required": ["topics", "search_queries", "type"],
             },
         },
     },
@@ -200,23 +192,23 @@ response_schema = {
 }
 
 
-def validator(tool_reponse: GrantTemplateDTO) -> bool:
+def validator(tool_response: GrantTemplateDTO) -> bool:
     """Validate the tool response.
 
     Args:
-        tool_reponse: The tool response to validate.
+        tool_response: The tool response to validate.
 
     Returns:
         True if the response is valid, False otherwise.
     """
     try:
-        validate_markdown_template(tool_reponse["template"])
-        validate(response_schema, tool_reponse)
+        validate_markdown_template(tool_response["template"])
+        validate(response_schema, tool_response)
     except (ValidationError, ValueError):
         return False
 
-    return set(cast(list[GrantSectionEnum], TEMPLATE_VARIABLE_PATTERN.findall(tool_reponse["template"]))) == {
-        section["type"] for section in tool_reponse["sections"]
+    return set(cast(list[GrantSectionEnum], TEMPLATE_VARIABLE_PATTERN.findall(tool_response["template"]))) == {
+        section["type"] for section in tool_response["sections"]
     }
 
 
