@@ -6,7 +6,7 @@ from src.db.json_objects import ApplicationDetails, ResearchObjective, ResearchT
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.logger import get_logger
-from src.utils.prompttemplate import PromptTemplate
+from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
@@ -36,9 +36,7 @@ Before constructing the final JSON output, wrap your analysis in <relation_analy
 2. Identify potential relations between objectives and tasks.
 3. Describe each relation in detail, ensuring specific references are included.
 This will ensure a thorough interpretation of the data.
-""")
 
-DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_OUTPUT_INSTRUCTIONS = """
 Respond using the provided tool with a JSON response adhering to the following format:
 
 ```json
@@ -50,7 +48,7 @@ Respond using the provided tool with a JSON response adhering to the following f
 - The relations array is a matrix, where each sub-array has two elements.
 - The first element is the objective or task number.
 - The second element is a detailed description of the relation between the objective or task and its predecessor.
-"""
+""")
 
 RESEARCH_TASK_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
 You are an expert grant application writer specializing in STEM fields. Your task is to write a detailed research task description for a grant application. This description should be highly technical, densely informative, and tailored for expert readers.
@@ -310,7 +308,7 @@ async def set_relation_data(research_objectives: list[ResearchObjective]) -> lis
     """
     response = await handle_completions_request(
         prompt_identifier="identify_relations",
-        user_prompt=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT.substitute(
+        messages=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT.substitute(
             objectives=[
                 {
                     "title": research_objective["title"],
@@ -330,7 +328,6 @@ async def set_relation_data(research_objectives: list[ResearchObjective]) -> lis
         ),
         response_type=SetRelationsToolResponse,
         response_schema=response_schema,
-        output_instructions=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_OUTPUT_INSTRUCTIONS,
     )
     logger.info("Generated relations for research objectives and tasks")
 

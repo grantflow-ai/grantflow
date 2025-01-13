@@ -3,7 +3,7 @@ from typing import Final
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_segmented_text_generation
 from src.utils.logger import get_logger
-from src.utils.prompttemplate import PromptTemplate
+from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
