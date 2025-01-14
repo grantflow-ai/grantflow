@@ -56,14 +56,14 @@ You are an expert grant application writer specializing in STEM fields. Your tas
 First, carefully review the following information:
 
 1. Additional Context from RAG Retrieval:
-<rag_retrieval_results>
-${rag_results}
-</rag_retrieval_results>
+    <rag_retrieval_results>
+    ${rag_results}
+    </rag_retrieval_results>
 
 2. Research Task Data:
-<research_task_data>
-${research_task}
-</research_task_data>
+    <research_task_data>
+    ${research_task}
+    </research_task_data>
 
 Before writing the final description, conduct your analysis within the following structure:
 
@@ -139,111 +139,147 @@ ${content}
 
 
 RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
-Your task is to write a research objective description.
+You are an expert grant application writer specializing in STEM fields. Your task is to write a research objective description for a grant application. This description should be specific, measurable, achievable, relevant, and time-bound (SMART).
 
-Use the following sources to write the text:
+First, review the following information:
 
-1. Research Objective Data as a JSON object with fields:
-    <research_objective>
-    ${research_objective}
-    </research_objective>
-
-2. The titles of the research tasks that are included in this Objective:
-    <research_tasks>
-    ${research_task_titles}
-    </research_tasks>
-
-3. RAG Retrieval Results for additional context as a JSON array:
+1. Additional Context from RAG Retrieval:
     <rag_results>
-    ${rag_results}
+    §{rag_results}
     </rag_results>
 
-A research objective or research objective is an overarching goal that the research objectives to achieve.
-The description should be specific, measurable, achievable, relevant, and time-bound (SMART).
-It should address the following implicit questions:
+2. Research Objective Data:
+    <research_objective_data>
+    ${research_objective}
+    </research_objective_data>
 
-1. What is the working hypothesis?
-2. What are the general goals of the objective?
-3. What is the methodology employed?
-4. What are the expected results?
+3. Research Task Titles:
+    <research_task_titles>
+    ${research_task_titles}
+    </research_task_titles>
 
-__NOTE__: Methodology is an optional sub-section. It should be included only if a similar methodology is used in all research tasks
+Now, please follow these instructions to create the research objective description:
 
-**Important Guidelines**:
-- The research objective JSON object includes an array of relations with other research objectives. If the array is not empty, make sure to include a detailed description of these relations in the text.
-- Do not use the title of the research objective in the text - the title will be provided to the user above the text.
-- Make sure to include concrete facts where applicable.
+1. Analyze the provided information carefully.
 
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~300-400 words).
+2. Address the following questions in your description:
+   - What is the working hypothesis?
+   - What are the general goals of the objective?
+   - What is the methodology employed? (Include this only if a similar methodology is used in all research tasks)
+   - What are the expected results?
+
+3. If the research objective JSON object includes non-empty relations with other research objectives, incorporate a detailed description of these relations in your text.
+
+4. Do not use the title of the research objective in your description.
+
+5. Include concrete facts where applicable.
+
+6. Format your response as a continuous text without headings, bullet points, lists, or tables.
+
+7. Aim for a length of approximately 300-400 words (roughly one page).
+
+Before writing the final description, wrap your analysis and planning in <analysis_and_planning> tags. In this section:
+- Summarize key points from each input section (RAG results, research objective data, and research task titles).
+- Identify potential connections between research tasks and the objective.
+- Outline a structure for the description, ensuring all required elements are included.
+
+After the analysis, generate the output.
+
+Remember, the quality and clarity of your description are crucial for the success of the grant application.
 """)
 
 PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
-You task is to write the Preliminary Results section which forms a sub-section for the following research objective text:
-    <research_objective_description>
+You are an expert grant application writer specializing in STEM fields. Your task is to write the Preliminary Results section for a research grant application. This section will follow directly after the Research Objective section in the full application.
+
+First, review the following information carefully:
+
+1. Research Objective:
+    <research_objective>
     ${research_objective_description}
-    </research_objective_description>
+    </research_objective>
 
-Use the following sources to write the text:
-
-1. User input on Preliminary Results:
+2. Preliminary Data provided by the researcher:
     <preliminary_data>
     ${preliminary_data}
     </preliminary_data>
 
-3. Retrieval Results for additional context as a JSON array:
+3. Additional context from retrieval results:
     <rag_results>
-    ${rag_results}
+    {rag_results}
     </rag_results>
 
-Preliminary Results are detailed experimental findings and data analyses that demonstrate research feasibility.
-This sub-section should address the following implicit questions:
+Now, using this information, you will compose the Preliminary Results section. This section should demonstrate the feasibility of the proposed research by presenting detailed experimental findings and data analyses.
 
-1. What experiments/analyses have been conducted?
-2. What methods and techniques were used?
-3. How was the data analyzed and interpreted?
-4. How do these findings support the proposed research?
+Before writing the section, take some time to analyze the information and plan your approach:
 
-**Important Guidelines**:
-- Generate the text for the subsection preliminary results assuming it will come immediately after the research objective text provided above.
-- Do not include the provided research objective text in the generated text.
-- Do not use the title of the research objective in the text and do not add a title.
-- Make sure to include concrete facts where applicable.
+<preliminary_analysis>
+1. Identify the key experiments or analyses that have been conducted.
+2. List and quote key findings from the preliminary data.
+3. List the methods and techniques used in these experiments/analyses.
+4. Summarize how the data was analyzed and interpreted, including any statistical analyses or quantitative measures.
+5. Explain how these findings support the proposed research objective.
+6. Consider any limitations or challenges encountered in the preliminary work.
+7. Identify potential gaps or areas for further investigation.
+8. Consider how the preliminary results align with existing literature or similar studies in the field.
+9. Plan how to present this information in a logical, flowing narrative.
+</preliminary_analysis>
 
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for a minimum of half a page, and a maximum of two pages in length (~200-800 words).
+After your analysis, write the Preliminary Results section. Remember to adhere to these important guidelines:
+
+1. Write as continuous text without headings, bullet points, lists, or tables.
+2. Aim for a length between 200 and 800 words.
+3. Do not include a title or repeat the research objective.
+4. Begin the text as if it follows directly after the research objective section.
+5. Include concrete facts and specific data where applicable.
+6. Ensure your writing addresses these implicit questions:
+   - What experiments/analyses have been conducted?
+   - What methods and techniques were used?
+   - How was the data analyzed and interpreted?
+   - How do these findings support the proposed research?
+
+Your writing should be clear, concise, and appropriate for an academic audience.
+Focus on presenting the preliminary results in a way that demonstrates the feasibility and potential of the proposed research.
 """)
 
 RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
-You task is to write the Risks and Alternatives which forms a for the following research objective text:
-    <research_objective_description>
+You are an expert grant application writer specializing in STEM fields. Your task is to write the "Risks and Alternatives" section for a research grant application. This section should address potential challenges that may arise during the research process and possible solutions to mitigate them.
+
+First, carefully review the following information:
+
+1. Research Objective:
+    <research_objective>
     ${research_objective_description}
-    </research_objective_description>
+    </research_objective>
 
-Use the following sources to write the text:
-
-1. User input on Risks and Alternatives:
+2. User-provided input on Risks and Mitigations:
     <risks_and_mitigations>
     ${risks_and_mitigations}
     </risks_and_mitigations>
 
-3. Retrieval Results for additional context as a JSON array:
+3. Additional context from Retrieval Results (JSON array):
     <rag_results>
     ${rag_results}
     </rag_results>
 
-Risks and Alternatives are potential challenges that may arise during the research process and possible solutions to mitigate them.
-This section should address the following implicit questions:
+Before composing the final text, analyze the provided information. Break down your thought process inside <risk_assessment> tags, addressing the following points:
 
-1. What are the specific risks involved in this research, and how would you describe their severity (High/Medium/Low)?
-2. What strategies can be implemented to mitigate each identified risk (if applicable/possible)?
-3. What alternative approaches are available if these strategies fail (if any)?
-4. How should these risks be prioritized based on both their severity and likelihood of occurrence?
+1. List each specific risk involved in this research, noting how it relates to the research objective or user-provided input.
+2. For each risk, assess its severity (High/Medium/Low) and explain your reasoning.
+3. Develop strategies to mitigate each identified risk (if applicable).
+4. Consider alternative approaches if these strategies fail.
+5. Prioritize the risks based on their severity and likelihood of occurrence.
+6. Note any relevant information from the RAG results that supports or informs your assessment.
+7. Summarize your key findings and the most critical risks and mitigation strategies.
 
-**Important Guidelines**:
-- Do not include the provided research objective text in the generated text.
-- Do not use the title of the research objective in the text and do not add a title.
-- Make sure to include concrete facts where applicable.
+It's OK for this section to be quite long as you work through each risk thoroughly.
 
-Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly two to three paragraphs with a maximum length of half a page (~150-300 words).
+After your assessment, compose a continuous text that addresses these points without using headings, bullet points, lists, or tables. Your final output should be 2-3 paragraphs long, with a total word count between 150 and 300 words.
+
+Important Guidelines:
+- Do not include the provided research objective text in your output.
+- Do not use the title of the research objective or add any title to your text.
+- Include concrete facts where applicable.
+- Ensure your text flows naturally and reads as a cohesive piece.
 """)
 
 RESEARCH_PLAN_SECTION_TEMPLATE: Final[PromptTemplate] = PromptTemplate("""
