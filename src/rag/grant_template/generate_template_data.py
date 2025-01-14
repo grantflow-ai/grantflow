@@ -19,36 +19,38 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
-You are an expert grant application specialist tasked with creating a structured grant template based on a call for applications. Your goal is to analyze the provided information and generate a JSON object that defines the grant template structure, sections, and research topics.
+You are an expert grant application specialist tasked with creating a structured grant template based on a call for applications.
+Your goal is to analyze the provided information and generate a JSON object that defines the grant template structure, sections, and research topics.
 
 First, let's review the key information provided:
 
 Here is the content of the call for applications:
-<cfp_content>
-${cfp_content}
-</cfp_content>
+    <cfp_content>
+    ${cfp_content}
+    </cfp_content>
 
 These are the available section types:
-<grant_section_types>
-${grant_section_types}
-</grant_section_types>
+    <grant_section_types>
+    ${grant_section_types}
+    </grant_section_types>
 
 These are the available research topic types:
-<research_topic_types>
-${research_topic_types}
-</research_topic_types>
+    <research_topic_types>
+    ${research_topic_types}
+    </research_topic_types>
 
 These are RAG results from the official funding guidelines for the organization:
-<rag_results>
-${rag_results}
-</rag_results>
+    <rag_results>
+    ${rag_results}
+    </rag_results>
 
 Now, please follow these steps to create the grant template:
 
-1. Analyze the call for applications content, available section types, and research topic types.
+1. Analyze the call for applications content, available section types, and available research topic types.
 
-2. Create an appropriate grant template structure:
+2. Map the call for applications content to the appropriate grant template structure:
    - Use markdown headers for section organization
+   - Translate the requirements of the CFP content into sections from the available types - and only from the available types
    - Enclose section variables in double curly brackets
    - Maintain consistent heading hierarchy
    - Include at least two sections
@@ -57,6 +59,7 @@ Now, please follow these steps to create the grant template:
    - Each section must define its content requirements through topics
    - Set appropriate word limits that reflect typical grant expectations
    - Create 3-10 specific, relevant search queries for each section to enable effective content retrieval
+   - Use topics only from the available research topic types
 
 4. Specify the weighted research topics for each section:
    - Primary topics (weight 0.7-1.0): Core focus of the section, essential elements
@@ -84,6 +87,7 @@ After your planning, provide the final JSON output. Ensure that your output meet
   - Valid markdown format
   - Logical section flow
   - Clear hierarchical structure
+  - Uses available section types only
 
 - Sections:
   - 3-10 specific, relevant search_queries per section
@@ -92,6 +96,7 @@ After your planning, provide the final JSON output. Ensure that your output meet
   - Topics are unique per section
   - Topic weights are float values between 0 and 1
   - Appropriate topic types for each section's purpose
+  - Uses available research topic types only
 
 Here's an example of the expected JSON structure:
 
@@ -101,17 +106,17 @@ Here's an example of the expected JSON structure:
     "template": "# Executive Summary\n\n{{EXECUTIVE_SUMMARY}}\n\n## Research Significance\n\n{{RESEARCH_SIGNIFICANCE}}\n\n## Research Innovation\n\n{{RESEARCH_INNOVATION}}",
     "sections": [
         {
-            "type": "EXECUTIVE_SUMMARY",
+            "type": "EXECUTIVE_SUMMARY", // must be one of the available section types
             "search_queries": ["..."], // 3-10 distinct RAG retrieval queries
             "min_words": 200, // can be omitted if no minimum
             "max_words": 500,  // can be omitted if no maximum
             "topics": [
                 {
-                    "type": "BACKGROUND_CONTEXT",
+                    "type": "BACKGROUND_CONTEXT", // must be one of the available research topic types
                     "weight": 0.9
                 },
                 {
-                    "type": "RATIONALE",
+                    "type": "RATIONALE", // must be one of the available research topic types
                     "weight": 0.7,
                     "search_queries": ["research justification", "unmet need"]
                 }
@@ -120,8 +125,6 @@ Here's an example of the expected JSON structure:
     ]
 }
 ```
-
-Please begin your planning process, followed by the JSON output.
 """)
 
 response_schema = {
