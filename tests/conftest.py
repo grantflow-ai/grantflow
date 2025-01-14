@@ -55,7 +55,8 @@ def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
 
 SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
 RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
-TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER)
+FIXTURES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "fixtures"
+TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER / "application_data")
 TEST_DATA_RESULTS: Generator[Path, Any, Any] = _file_path_generator(RESULTS_FOLDER)
 
 
