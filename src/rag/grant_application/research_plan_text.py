@@ -10,7 +10,7 @@ from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
-DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+DETERMINE_RESEARCH_OBJECTIVE_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="determine_objective_relationships",
     template="""
 Your task is to analyze research objectives and tasks for a grant application, identifying and describing relations between them.
@@ -368,7 +368,7 @@ async def set_relation_data(research_objectives: list[ResearchObjective]) -> lis
     """
     response = await handle_completions_request(
         prompt_identifier="identify_relations",
-        messages=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT.to_string(
+        messages=DETERMINE_RESEARCH_OBJECTIVE_RELATIONSHIPS_USER_PROMPT.to_string(
             objectives=[
                 {
                     "title": research_objective["title"],
