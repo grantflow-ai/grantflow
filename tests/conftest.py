@@ -1,3 +1,4 @@
+import logging
 import os
 from collections.abc import AsyncGenerator, Generator
 from logging import Logger, getLogger
@@ -10,6 +11,7 @@ import pytest
 from anyio import Path as AsyncPath
 from asyncpg import connect
 from dotenv import load_dotenv
+from faker import Faker
 from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
@@ -45,6 +47,8 @@ from tests.factories import (
 
 load_dotenv()
 
+logging.getLogger("sqlalchemy.engine.Engine").disabled = True  # otherwise we are spammed with logs
+
 
 def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
     for path in folder.glob("*"):
@@ -56,7 +60,7 @@ def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
 SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
 RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
 FIXTURES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "fixtures"
-TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER / "application_data")
+TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER / "application_sources")
 TEST_DATA_RESULTS: Generator[Path, Any, Any] = _file_path_generator(RESULTS_FOLDER)
 
 
@@ -88,6 +92,11 @@ def pytest_logger_config(logger_config: Any) -> None:
 
     logger_config.add_loggers(["e2e"], stdout_level="info")
     logger_config.set_log_option_default("e2e")
+
+
+@pytest.fixture(scope="session")
+def faker() -> Faker:
+    return Faker()
 
 
 @pytest.fixture

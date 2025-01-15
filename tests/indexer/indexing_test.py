@@ -9,6 +9,6 @@ async def test_create_vector_dto(mock_text_embedding_model: Mock) -> None:
     chunk = ChunkFactory.build()
     file_id = "test_file_id"
 
-    vector_dto = await create_vector_dto(chunk=chunk, file_id=file_id)
+    vector_dto = await create_vector_dto(chunk=chunk, rag_file_id=file_id)
 
-    assert vector_dto == VectorDTO(embedding=[1.0, 2.0, 3.0], file_id="test_file_id", chunk=chunk)
+    assert vector_dto == VectorDTO(embedding=[1.0, 2.0, 3.0], rag_file_id="test_file_id", chunk=chunk)

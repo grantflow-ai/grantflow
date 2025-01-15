@@ -26,7 +26,9 @@ async def handle_generate_grant_application_text(application_id: str) -> str:
         raise ValidationError("Grant application does not have a grant template or research objectives.")
 
     research_plan_text = await handle_research_plan_text_generation(
-        application_id=application_id, research_objectives=grant_application.research_objectives
+        application_id=application_id,
+        research_objectives=grant_application.research_objectives,
+        application_details=grant_application.details or {},
     )
     logger.debug(
         "Generated research plan text for grant application %s",

@@ -14,13 +14,13 @@ CHUNKS_BATCH_SIZE: Final[int] = 30
 async def create_vector_dto(
     *,
     chunk: Chunk,
-    file_id: str,
+    rag_file_id: str,
 ) -> VectorDTO:
     """Process a single chunked element.
 
     Args:
         chunk: The chunked element.
-        file_id: The ID of the file from which the chunk is derived.
+        rag_file_id: The ID of the file from which the chunk is derived.
 
     Returns:
         VectorDTO
@@ -31,7 +31,7 @@ async def create_vector_dto(
     return VectorDTO(
         chunk=chunk,
         embedding=embedding,
-        file_id=file_id,
+        rag_file_id=rag_file_id,
     )
 
 
@@ -55,7 +55,7 @@ async def index_documents(
             *[
                 create_vector_dto(
                     chunk=chunk,
-                    file_id=file_id,
+                    rag_file_id=file_id,
                 )
                 for chunk in chunks[i : i + CHUNKS_BATCH_SIZE]
             ]
