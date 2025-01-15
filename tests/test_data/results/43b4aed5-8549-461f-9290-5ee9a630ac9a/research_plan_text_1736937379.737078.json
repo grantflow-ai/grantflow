@@ -6,7 +6,7 @@
 
 <analysis_and_planning>
 Key points from the RAG results:
-- Zman-seq is a technology that combines fluorescent temporal tracking of cells with scRNA-seq, allowing for the study of immune cell state transitions over time in vivo. It uses a pulse-chase principle where cells are labeled in circulation and tracked in tissues. In a GBM model, Zman-seq revealed that NK cells transition to a dysfunctional state within 24 hours and monocytes differentiate into immunosuppressive TAMs over 36-48 hours. Blocking TREM2 redirects monocyte differentiation towards pro-inflammatory TAMs. 
+- Zman-seq is a technology that combines fluorescent temporal tracking of cells with scRNA-seq, allowing for the study of immune cell state transitions over time in vivo. It uses a pulse-chase principle where cells are labeled in circulation and tracked in tissues. In a GBM model, Zman-seq revealed that NK cells transition to a dysfunctional state within 24 hours and monocytes differentiate into immunosuppressive TAMs over 36-48 hours. Blocking TREM2 redirects monocyte differentiation towards pro-inflammatory TAMs.
 - scRNA-seq is used to profile immune cells and study cell-cell interactions.
 - Single-cell atlases of the tumor microenvironment (TME) have been created, but there's a need for empirical measurements of dynamic processes.
 - In vitro systems are used to study monocyte differentiation, including control experiments using TREM2-/- monocytes. Cytokine and antibody perturbations will be tested in these systems and analyzed using scRNA-seq.
@@ -22,7 +22,7 @@ Key points from the RAG results:
 - All tasks directly support the objective by providing different aspects of the immune activity within the BM TME: Task 1 will use Zman-seq for the temporal aspect, task 2 will use PIC-seq to study cell-cell interactions and task 3 will focus on the spatial distribution. Each task contributes to a comprehensive understanding of the TME, which will allow to find new targets and treatment approaches. The combination of these approaches aims to provide a holistic view of the BM TME.
 
  Structure for the description:
-1. Start with the working hypothesis, that the BM TME leads to an immunosuppressive environment. 
+1. Start with the working hypothesis, that the BM TME leads to an immunosuppressive environment.
  2. State the general goals: to characterize the immune response in the BM TME and identify potential immunotherapeutic targets.
  3. Describe the methodology: single-cell RNA-seq based approaches such as Zman-seq, PIC-seq and spatial transcriptomics to profile immune cells over time, cell-cell interactions and spacial context.
  4. Describe the expected results: Identification of pathways and molecules involved in the immune suppression in the BM TME. Identification of potential targets for therapeutic intervention (cytokines and antibodies) for immune modulation in the BM TME.
