@@ -62,7 +62,7 @@ class VectorDTO(TypedDict):
 
     embedding: list[float]
     """The embeddings of the content."""
-    file_id: str
+    rag_file_id: str
     """The ID of the file from which the content is derived."""
     chunk: Chunk
     """The chunk of text from which the embeddings are generated."""

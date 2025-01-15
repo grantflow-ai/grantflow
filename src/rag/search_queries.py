@@ -1,9 +1,14 @@
-from typing import Final, TypedDict
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Final, TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
+
+if TYPE_CHECKING:
+    from prompt_template import PromptTemplate as _PromptTemplate
 
 logger = get_logger(__name__)
 
@@ -12,8 +17,9 @@ You are a specialized query generation component within a Retrieval-Augmented Ge
 Your primary function is to generate search queries that will retrieve relevant content from a vector store using cosine similarity.
 """
 
-SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
-
+SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="search_queries_generation",
+    template="""
 Here is the user prompt for the next stage of the RAG pipeline:
 
 <user_prompt>
@@ -51,7 +57,8 @@ After your thought process, provide your final output as a JSON object strictly 
 }
 ```
 
-Ensure that you generate at least 3 queries and no more than 10 queries. Each query should be a string designed to effectively retrieve relevant information from the vector store.""")
+Ensure that you generate at least 3 queries and no more than 10 queries. Each query should be a string designed to effectively retrieve relevant information from the vector store.""",
+)
 
 
 class ToolResponse(TypedDict):
@@ -70,7 +77,7 @@ response_schema = {
 }
 
 
-async def handle_create_search_queries(*, user_prompt: str | PromptTemplate) -> list[str]:
+async def handle_create_search_queries(*, user_prompt: str | _PromptTemplate) -> list[str]:
     """Generate an optimized search query for retrieval.
 
     Args:
@@ -85,9 +92,7 @@ async def handle_create_search_queries(*, user_prompt: str | PromptTemplate) -> 
         response = await handle_completions_request(
             prompt_identifier="search_queries",
             system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT,
-            messages=SEARCH_QUERIES_USER_PROMPT.substitute(
-                user_prompt=user_prompt if isinstance(user_prompt, str) else user_prompt.template
-            ),
+            messages=SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt)),
             response_schema=response_schema,
             response_type=ToolResponse,
             model=FAST_TEXT_GENERATION_MODEL,

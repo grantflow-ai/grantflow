@@ -7,7 +7,9 @@ from src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 
-EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="extract_cfp_data",
+    template="""
 You are an AI assistant specialized in analyzing Call for Proposals (CFPs) for grant applications. Your task is to extract specific requirements from a given CFP and present them in a structured format.
 
 Here is the CFP content you need to analyze:
@@ -100,7 +102,8 @@ After your analysis, compile your findings into a JSON object with the following
 
 The "content" array must contain complete, verbatim quotes that specify what must be included in the grant narrative and research plan, how it must be formatted, and any specific content requirements. The "entities" array should list unique entities extracted from the content.
 
-Please proceed with your analysis and JSON output.""")
+Please proceed with your analysis and JSON output.""",
+)
 
 
 class ToolResponse(TypedDict):
@@ -135,7 +138,7 @@ async def extract_cfp_data(*, cfp_content: str, organization_mapping: dict[str, 
     """Extract the data from a CFP text."""
     result = await handle_completions_request(
         prompt_identifier="extract_cfp_data",
-        messages=EXTRACT_CFP_DATA_USER_PROMPT.substitute(
+        messages=EXTRACT_CFP_DATA_USER_PROMPT.to_string(
             cfp_content=cfp_content, organization_mapping=organization_mapping
         ),
         response_type=ToolResponse,

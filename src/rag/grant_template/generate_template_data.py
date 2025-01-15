@@ -18,7 +18,9 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="grant_template_generation",
+    template="""
 You are an expert grant application specialist tasked with creating a structured grant template based on a call for applications.
 Your goal is to analyze the provided information and generate a JSON object that defines the grant template structure, sections, and research topics.
 
@@ -125,7 +127,8 @@ Here's an example of the expected JSON structure:
     ]
 }
 ```
-""")
+""",
+)
 
 response_schema = {
     "type": "object",
@@ -197,7 +200,7 @@ async def generate_grant_template(*, cfp_content: str, organization_id: str | No
     Returns:
         Complete grant template configuration including format and sections
     """
-    user_prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute_partial(
+    user_prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         grant_section_types=[e.value for e in GrantSectionEnum],
         research_topic_types=[e.value for e in ContentTopicEnum],
         cfp_content=cfp_content,
@@ -207,7 +210,7 @@ async def generate_grant_template(*, cfp_content: str, organization_id: str | No
     )
     result = await handle_completions_request(
         prompt_identifier="generate_grant_template",
-        messages=user_prompt.substitute(rag_results=rag_results),
+        messages=user_prompt.to_string(rag_results=rag_results),
         response_type=GrantTemplateDTO,
         response_schema=response_schema,
         validator=validator,
