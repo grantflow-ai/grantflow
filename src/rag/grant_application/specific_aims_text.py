@@ -7,7 +7,9 @@ from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
-SPECIFIC_AIMS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+SPECIFIC_AIMS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="specific_aims_generation",
+    template="""
 Your task is to write the "Specific Aims" section for a research grant application.
 
 Use the following sources to write the text:
@@ -41,7 +43,8 @@ Ensure that the Specific Aims section:
 - Reflect a high level of clarity, innovation, and feasibility to engage reviewers effectively.
 
 Format your response as a continuous text without headings, bullet points, lists, or tables. Aim for roughly one page length (~400-500 words).
-""")
+""",
+)
 
 
 async def handle_specific_aims_text_generation(
@@ -60,7 +63,7 @@ async def handle_specific_aims_text_generation(
     Returns:
         The generated section text.
     """
-    user_prompt = SPECIFIC_AIMS_USER_PROMPT.substitute_partial(
+    user_prompt = SPECIFIC_AIMS_USER_PROMPT.substitute(
         research_plan_text=research_plan_text,
         intro_text=intro_text,
     )
@@ -70,7 +73,7 @@ async def handle_specific_aims_text_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="specific-aims",
-        messages=user_prompt.substitute(rag_results=rag_results),
+        messages=user_prompt.to_string(rag_results=rag_results),
     )
     logger.debug("Successfully enerated Specific Aims text.", text=result)
     return result

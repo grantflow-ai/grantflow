@@ -19,7 +19,10 @@ class Base(DeclarativeBase):
 
     def _get_relationship_value(self, key: str) -> Any:
         try:
-            return getattr(self, key)
+            value = getattr(self, key)
+            if isinstance(value, list):
+                return [item.to_dict() for item in value]
+            return value.to_dict()
         except DetachedInstanceError:
             return None
 
@@ -30,11 +33,15 @@ class Base(DeclarativeBase):
             A dictionary containing the model's columns.
         """
         mapper = class_mapper(self.__class__)
-        column_values = {column.key: getattr(self, column.key) for column in mapper.columns}
+        column_values = {
+            column.key: getattr(self, column.key)
+            for column in mapper.columns
+            if column.key not in {"metadata", "registry"}
+        }
         relationship_values = {
             relationship.key: self._get_relationship_value(relationship.key) for relationship in mapper.relationships
         }
-        return {**column_values, **relationship_values}
+        return {**column_values, **{k: v for k, v in relationship_values.items() if v is not None}}
 
 
 class BaseWithUUIDPK(Base):

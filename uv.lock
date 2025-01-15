@@ -790,6 +790,7 @@ dependencies = [
     { name = "msgspec" },
     { name = "pathvalidate" },
     { name = "pgvector" },
+    { name = "prompt-template" },
     { name = "pyjwt" },
     { name = "pypandoc" },
     { name = "sanic", extra = ["ext"] },
@@ -836,6 +837,7 @@ requires-dist = [
     { name = "msgspec", specifier = ">=0.19.0" },
     { name = "pathvalidate", specifier = ">=3.2.3" },
     { name = "pgvector", specifier = ">=0.3.6" },
+    { name = "prompt-template", specifier = ">=1.0.0" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pypandoc", specifier = ">=1.15" },
     { name = "sanic", extras = ["ext"], specifier = ">=24.12.0" },
@@ -1567,6 +1569,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f3/52/48eefe876a3841c5850bd955daf145d0e408567c8f46a997bce136dc259d/preshed-3.0.9-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a55091d0e395f1fdb62ab43401bb9f8b46c7d7794d5b071813c29dc1ab22fd0", size = 149220 },
     { url = "https://files.pythonhosted.org/packages/55/ea/9e6c1a7b1d623f6340379290d603a3b8a71ce52a93f842fbf7547f7f1812/preshed-3.0.9-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7de8f5138bcac7870424e09684dc3dd33c8e30e81b269f6c9ede3d8c7bb8e257", size = 156809 },
     { url = "https://files.pythonhosted.org/packages/db/e4/d074efb7e8a8873d346d2fb8dd43e19b1eae0697351c0d79cff947cba46e/preshed-3.0.9-cp312-cp312-win_amd64.whl", hash = "sha256:24229c77364628743bc29c5620c5d6607ed104f0e02ae31f8a030f99a78a5ceb", size = 122428 },
+]
+
+[[package]]
+name = "prompt-template"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/28/c8/fe9b8150f7c3dae22d08b3b4c8981cfc10817cba10976f4564f3aad00189/prompt_template-1.0.0.tar.gz", hash = "sha256:b3a7e93572e59c04494d07ed8a62b1f51033860dc887915a06c8909c76023347", size = 32505 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6f/c4/2aeeb0ffe3ad33a89b343055fcc7ca9d7d5f958df539f02130bfe579ec31/prompt_template-1.0.0-py3-none-any.whl", hash = "sha256:d7f0b79175abba9cf99735924b23fa3090a2073d7d2d1ec9095185cbb20b5771", size = 5780 },
 ]
 
 [[package]]

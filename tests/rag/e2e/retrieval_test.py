@@ -34,7 +34,7 @@ async def test_document_retrieval(
         stmt = insert(TextVector).values(
             [
                 {
-                    "file_id": grant_application_file.rag_file_id,
+                    "rag_file_id": grant_application_file.rag_file_id,
                     "embedding": vector_dto["embedding"],
                     "chunk": vector_dto["chunk"],
                 }

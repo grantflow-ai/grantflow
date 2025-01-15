@@ -56,7 +56,9 @@ whether the research aim text is complete or not. Example:
 ```
 """
 
-CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[PromptTemplate] = PromptTemplate("""
+CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[PromptTemplate] = PromptTemplate(
+    name="consecutive_part_generation",
+    template="""
 Here is the last segment of text that was generated:
 
 <last_generation_result>
@@ -68,7 +70,8 @@ Instructions:
 2. Continue the grant application writing from exactly where the previous segment ends.
 3. Maintain consistency in style, tone, and context with the original text.
 4. Avoid repeating information already presented in the previous segment.
-""")
+""",
+)
 
 SEGMENTED_GENERATION_SCHEMA = {
     "type": "object",
@@ -135,7 +138,7 @@ async def handle_completions_request[T](
                 role="user",
                 parts=[Part.from_text(messages)]
                 if isinstance(messages, str)
-                else [Part.from_text(message) if isinstance(message, str) else Part for message in messages],
+                else [Part.from_text(message) if isinstance(message, str) else message for message in messages],
             )
         ]
         response = await client.generate_content_async(
@@ -172,11 +175,11 @@ async def handle_segmented_text_generation(
     """
     results: list[str] = []
 
-    parts: list[str | Part] = [Part.from_text(SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS)]
+    parts: list[str] = [Part.from_text(SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS)]
     if isinstance(messages, str):
         parts.append(Part.from_text(messages))
     else:
-        parts.extend(messages)
+        parts.extend([Part.from_text(message) if isinstance(message, str) else message for message in messages])
 
     api_call_num = 1
 
@@ -190,10 +193,9 @@ async def handle_segmented_text_generation(
             system_prompt=DEFAULT_SYSTEM_PROMPT,
             response_schema=SEGMENTED_GENERATION_SCHEMA,
             messages=[
-                *parts,
-                Part.from_text(
-                    CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.substitute(last_generation_result=last_generation_result)
-                ),
+                *([messages] if isinstance(messages, str) else messages),
+                SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
+                CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.to_string(last_generation_result=last_generation_result),
             ]
             if last_generation_result
             else parts,

@@ -10,9 +10,11 @@ from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
-DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="determine_objective_relationships",
+    template="""
 Your task is to analyze research objectives and tasks for a grant application, identifying and describing relations between them.
-
+️
 Here are the research objectives and tasks you need to analyze:
     <objectives>
     ${objectives}
@@ -48,9 +50,12 @@ Respond using the provided tool with a JSON response adhering to the following f
 - The relations array is a matrix, where each sub-array has two elements.
 - The first element is the objective or task number.
 - The second element is a detailed description of the relation between the objective or task and its predecessor.
-""")
+""",
+)
 
-RESEARCH_TASK_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+RESEARCH_TASK_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="research_task_generation",
+    template="""
 You are an expert grant application writer specializing in STEM fields. Your task is to write a detailed research task description for a grant application. This description should be highly technical, densely informative, and tailored for expert readers.
 
 First, carefully review the following information:
@@ -128,24 +133,30 @@ Based on your analysis, write a comprehensive research task description. Follow 
 2. Aim for approximately 300-400 words.
 3. Do not include the title of the research task in the description.
 
-Your response should demonstrate a high level of technical expertise and be optimized for an expert audience in the specific STEM field of the research task.""")
+Your response should demonstrate a high level of technical expertise and be optimized for an expert audience in the specific STEM field of the research task.""",
+)
 
 
-RESEARCH_TASK_TEMPLATE: Final[PromptTemplate] = PromptTemplate("""
+RESEARCH_TASK_TEMPLATE: Final[PromptTemplate] = PromptTemplate(
+    name="research_task_markdown",
+    template="""
 ###### Task ${task_number}: ${title}
 
 ${content}
-""")
+""",
+)
 
 
-RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="research_objective_generation",
+    template="""
 You are an expert grant application writer specializing in STEM fields. Your task is to write a research objective description for a grant application. This description should be specific, measurable, achievable, relevant, and time-bound (SMART).
 
 First, review the following information:
 
 1. Additional Context from RAG Retrieval:
     <rag_results>
-    §{rag_results}
+    ${rag_results}
     </rag_results>
 
 2. Research Objective Data:
@@ -186,9 +197,12 @@ Before writing the final description, wrap your analysis and planning in <analys
 After the analysis, generate the output.
 
 Remember, the quality and clarity of your description are crucial for the success of the grant application.
-""")
+""",
+)
 
-PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="preliminary_results_generation",
+    template="""
 You are an expert grant application writer specializing in STEM fields. Your task is to write the Preliminary Results section for a research grant application. This section will follow directly after the Research Objective section in the full application.
 
 First, review the following information carefully:
@@ -205,7 +219,7 @@ First, review the following information carefully:
 
 3. Additional context from retrieval results:
     <rag_results>
-    {rag_results}
+    ${rag_results}
     </rag_results>
 
 Now, using this information, you will compose the Preliminary Results section. This section should demonstrate the feasibility of the proposed research by presenting detailed experimental findings and data analyses.
@@ -239,9 +253,12 @@ After your analysis, write the Preliminary Results section. Remember to adhere t
 
 Your writing should be clear, concise, and appropriate for an academic audience.
 Focus on presenting the preliminary results in a way that demonstrates the feasibility and potential of the proposed research.
-""")
+""",
+)
 
-RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate("""
+RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="risks_and_alternatives_generation",
+    template="""
 You are an expert grant application writer specializing in STEM fields. Your task is to write the "Risks and Alternatives" section for a research grant application. This section should address potential challenges that may arise during the research process and possible solutions to mitigate them.
 
 First, carefully review the following information:
@@ -280,17 +297,23 @@ Important Guidelines:
 - Do not use the title of the research objective or add any title to your text.
 - Include concrete facts where applicable.
 - Ensure your text flows naturally and reads as a cohesive piece.
-""")
+""",
+)
 
-RESEARCH_PLAN_SECTION_TEMPLATE: Final[PromptTemplate] = PromptTemplate("""
+RESEARCH_PLAN_SECTION_TEMPLATE: Final[PromptTemplate] = PromptTemplate(
+    name="research_plan_markdown",
+    template="""
 ## Research Plan
 
 ### Research Objectives
 
 ${research_objectives_text}
-""")
+""",
+)
 
-RESEARCH_OBJECTIVE_TEMPLATE: Final[PromptTemplate] = PromptTemplate("""
+RESEARCH_OBJECTIVE_TEMPLATE: Final[PromptTemplate] = PromptTemplate(
+    name="research_objective_markdown",
+    template="""
 #### Objective ${objective_number}: ${title}
 
 ${research_objective_description_text}
@@ -306,7 +329,8 @@ ${research_tasks_texts}
 ##### Risks and Alternatives
 
 ${risks_and_mitigations_text}
-""")
+""",
+)
 
 
 class SetRelationsToolResponse(TypedDict):
@@ -344,7 +368,7 @@ async def set_relation_data(research_objectives: list[ResearchObjective]) -> lis
     """
     response = await handle_completions_request(
         prompt_identifier="identify_relations",
-        messages=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT.substitute(
+        messages=DETERMINE_RESEARCH_OBECTIVE_RELATIONSHIPS_USER_PROMPT.to_string(
             objectives=[
                 {
                     "title": research_objective["title"],
@@ -397,7 +421,7 @@ async def handle_research_task_text_generation(
     Returns:
         The generated section text.
     """
-    user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute_partial(
+    user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute(
         research_task=research_task,
     )
     rag_results = await retrieve_documents(
@@ -405,12 +429,12 @@ async def handle_research_task_text_generation(
         user_prompt=user_prompt,
     )
     result = await handle_segmented_text_generation(
-        messages=user_prompt.substitute(rag_results=rag_results),
+        messages=user_prompt.to_string(rag_results=rag_results),
     )
 
     logger.info("Successfully generated research task.", task_number=task_number)
 
-    return RESEARCH_TASK_TEMPLATE.substitute(task_number=task_number, title=research_task["title"], content=result)
+    return RESEARCH_TASK_TEMPLATE.to_string(task_number=task_number, title=research_task["title"], content=result)
 
 
 async def handle_research_objective_description_generation(
@@ -429,7 +453,7 @@ async def handle_research_objective_description_generation(
     """
     research_task_titles = [research_task["title"] for research_task in research_objective["research_tasks"]]
 
-    user_prompt = RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT.substitute_partial(
+    user_prompt = RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT.substitute(
         research_objective={
             "title": research_objective["title"],
             "objective_number": research_objective["number"],
@@ -444,7 +468,7 @@ async def handle_research_objective_description_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="research-objective",
-        messages=user_prompt.substitute(rag_results=rag_results),
+        messages=user_prompt.to_string(rag_results=rag_results),
     )
     logger.info("Successfully generated research objective", number=research_objective["number"])
 
@@ -469,7 +493,7 @@ async def handle_preliminary_data_text_generation(
     Returns:
         The generated section text.
     """
-    user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute_partial(
+    user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute(
         research_objective_description=research_objective_description,
         preliminary_data=application_details.get("preliminary_data", ""),
     )
@@ -479,7 +503,7 @@ async def handle_preliminary_data_text_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="preliminary-results",
-        messages=user_prompt.substitute(rag_results=rag_results),
+        messages=user_prompt.to_string(rag_results=rag_results),
     )
     logger.info("Successfully generated preliminary results.", number=research_objective["number"])
     return result
@@ -504,7 +528,7 @@ async def handle_risks_and_mitigations_text_generation(
         The generated section text.
 
     """
-    user_prompt = RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute_partial(
+    user_prompt = RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute(
         research_objective_description=research_objective_description,
         risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
     )
@@ -514,7 +538,7 @@ async def handle_risks_and_mitigations_text_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="risks-and-alternatives",
-        messages=user_prompt.substitute(rag_results=rag_results),
+        messages=user_prompt.to_string(rag_results=rag_results),
     )
     logger.info("Successfully generated risks and alternatives.", number=research_objective["number"])
 
@@ -574,7 +598,7 @@ async def handle_research_objective_components_generation(
         )
     )
 
-    return RESEARCH_OBJECTIVE_TEMPLATE.substitute(
+    return RESEARCH_OBJECTIVE_TEMPLATE.to_string(
         objective_number=research_objective["number"],
         title=research_objective["title"],
         research_objective_description_text=research_objective_description_text,
@@ -614,6 +638,6 @@ async def handle_research_plan_text_generation(
 
     logger.info("Successfully generated research objectives and tasks", application_id=application_id)
 
-    return RESEARCH_PLAN_SECTION_TEMPLATE.substitute(
+    return RESEARCH_PLAN_SECTION_TEMPLATE.to_string(
         research_objectives_text="\n\n".join(research_objective_descriptions)
     )

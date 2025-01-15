@@ -60,7 +60,7 @@ async def parse_and_index_file(
                     .where(RagFile.id == file_id)
                     .values(
                         {
-                            "status": FileIndexingStatusEnum.FINISHED,
+                            "indexing_status": FileIndexingStatusEnum.FINISHED,
                             "text_content": extracted_text
                             if isinstance(extracted_text, str)
                             else serialize(extracted_text).decode(),
