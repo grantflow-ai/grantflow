@@ -10,99 +10,83 @@ logger = get_logger(__name__)
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_cfp_data",
     template="""
-You are an AI assistant specialized in analyzing Call for Proposals (CFPs) for grant applications. Your task is to extract specific requirements from a given CFP and present them in a structured format.
+Extract grant requirements from CFP content.
 
-Here is the CFP content you need to analyze:
-
+Source data:
 <cfp_content>
 ${cfp_content}
 </cfp_content>
 
-Now, here is a mapping of funding organizations and their IDs:
-
+Organization mapping:
 <organization_mapping>
 ${organization_mapping}
 </organization_mapping>
 
-Your objective is to carefully read through the CFP and extract verbatim quotes that fall into the following categories:
+<planning>
+1. Document Structure
+   - Identify main sections and headers
+   - Map hierarchical relationships
+   - Note key requirement markers
 
+2. Requirements Extraction
+   - Required narrative sections and subsections
+   - Format specifications and limits
+   - Content requirements and topics
+   - Special requirements and statements
+
+3. Entity Recognition
+   - Organizations and departments
+   - Research areas and fields
+   - Technical terminology
+   - Required methodologies
+</planning>
+
+Requirements by Category:
 1. Required Sections
+   - Narrative section names and hierarchy
+   - Section-specific requirements
+   - Required components
+
 2. Format Requirements
+   - Page/word limits
+   - Required headers
+   - Formatting rules
+   - Organization rules
+
 3. Content Specifications
+   - Required topics
+   - Required analyses
+   - Planning elements
+   - Methods requirements
+
 4. Special Requirements
+   - Mandatory statements
+   - Required analyses
+   - Required documentation
+   - Required approaches
 
-For each category, follow these specific instructions:
-
-1. Required Sections:
-   - Extract names and hierarchy of required narrative sections
-   - Identify section-specific content requirements
-   - Note any required subsections or components
-
-2. Format Requirements:
-   - Identify page or word limits
-   - List required headings
-   - Note specific formatting rules
-   - Capture organization requirements
-
-3. Content Specifications:
-   - List required topics to address
-   - Identify required analysis or data
-   - Note required planning elements
-   - Capture required methodological components
-
-4. Special Requirements:
-   - Identify mandatory statements
-   - List required analyses
-   - Note required documentation
-   - Capture required approaches
-
-Important Guidelines:
-- Extract complete, verbatim quotes about narrative requirements
-- Maintain the order as presented in the document
-- Include all formatting and content specifications
-- Preserve exact numerical requirements
-
-Do NOT include information about:
+Exclusions:
 - Submission process
-- URLs and hyperlinks
-- Contact information
-- Budget information
-- Registration requirements
-- Eligibility criteria
-- Review process details
-- Post-award requirements
-- Background information
-- Program goals/context
+- URLs/contact information
+- Budget details
+- Registration/eligibility
+- Review process
+- Post-award details
+- Background/goals
 
-Before providing your final output, wrap your analysis in <cfp_breakdown> tags. In this section:
-
-1. List out all the main sections you've identified in the CFP document.
-2. For each main category (Required Sections, Format Requirements, Content Specifications, Special Requirements), write down key phrases or words to look for.
-3. Go through the document section by section, noting relevant quotes for each category.
-
-This will help ensure a thorough interpretation of the CFP.
-
-After your analysis, compile your findings into a JSON object with the following structure:
-
-```json
+Output format:
 {
-    "organization_id": "UUID string from mapping or null",
-    "content": [
-        "Verbatim quote 1",
-        "Verbatim quote 2",
-        ...
-    ],
-    "entities": [
-        "Unique entity 1",
-        "Unique entity 2",
-        ...
-    ]
+    "organization_id": "UUID from mapping or null",
+    "content": ["verbatim quote 1", "verbatim quote 2"],
+    "entities": ["unique entity 1", "unique entity 2"]
 }
-```
 
-The "content" array must contain complete, verbatim quotes that specify what must be included in the grant narrative and research plan, how it must be formatted, and any specific content requirements. The "entities" array should list unique entities extracted from the content.
-
-Please proceed with your analysis and JSON output.""",
+Guidelines:
+- Extract exact quotes
+- Preserve original order
+- Include all specifications
+- Keep numerical requirements exact
+""",
 )
 
 

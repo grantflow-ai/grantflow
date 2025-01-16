@@ -1,10 +1,6 @@
-from re import Pattern
-from re import compile as compile_regex
 from typing import Final
 
 from src.utils.env import get_env
-
-TEMPLATE_VARIABLE_PATTERN: Final[Pattern[str]] = compile_regex("{{([^}]+)}}")
 
 CONTENT_TYPE_JSON: Final[str] = "application/json"
 CONTENT_TYPE_TEXT: Final[str] = "text/plain"
