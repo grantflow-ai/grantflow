@@ -235,7 +235,7 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     2. Technical Integration
     - Map methodologies to research objectives
     - Link preliminary data points
-    - Extract equipment specifications
+    - Extract specifications
     - Note technical dependencies
 
     3. Content Structure
@@ -258,6 +258,21 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - Mark gaps: **MISSING INFORMATION: <description>**
 """,
 )
+
+
+def get_length_constraints(grant_section: GrantSection) -> tuple[int, int]:
+    """Get the length constraints for a given grant section type.
+
+    Args:
+        grant_section: The grant section for which to get the length constraints.
+
+    Returns:
+        The minimum and maximum word limits for the section.
+    """
+    default_min, default_max = SECTION_LENGTH_DEFAULTS[grant_section["type"]]
+    max_words = grant_section.get("max_words") or default_min
+    min_words = min(grant_section.get("min_words") or default_max, max_words)
+    return min_words, max_words
 
 
 async def handle_section_text_generation(
@@ -284,8 +299,7 @@ async def handle_section_text_generation(
 
     topics = [{**topic, "criteria": CRITERIA_MAPPING[topic["type"]]} for topic in grant_section["topics"]]
 
-    max_words = grant_section.get("max_words", SECTION_LENGTH_DEFAULTS[grant_section["type"]][1])
-    min_words = min(grant_section.get("min_words", SECTION_LENGTH_DEFAULTS[grant_section["type"]][0]), max_words)
+    min_words, max_words = get_length_constraints(grant_section)
 
     user_prompt = GENERATE_SECTION_TEXT_USER_PROMPT.substitute(
         application_details=application_details,
@@ -300,6 +314,7 @@ async def handle_section_text_generation(
     rag_results = await retrieve_documents(
         application_id=application_id,
         search_queries=grant_section["search_queries"],
+        user_prompt=user_prompt,
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="generate_section_text",

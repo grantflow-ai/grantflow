@@ -1,1 +1,154 @@
-{"grant_sections":[{"topics":[{"type":"BACKGROUND_CONTEXT","weight":0.9},{"type":"IMPACT","weight":0.8},{"type":"RATIONALE","weight":0.7}],"search_queries":["project summary","overall impact","translational potential","scientific aims","rationale for collaboration","synergistic opportunities","project goals","clinical impact"],"max_words":500,"type":"EXECUTIVE_SUMMARY"},{"topics":[{"type":"IMPACT","weight":0.9},{"type":"RATIONALE","weight":0.7},{"type":"BACKGROUND_CONTEXT","weight":0.6}],"search_queries":["relevance to melanoma research","clinical implications","long-term impact","scientific merit","contribution to field","unmet needs","significance of research","potential for clinical translation"],"max_words":400,"type":"RESEARCH_SIGNIFICANCE"},{"topics":[{"type":"PRELIMINARY_DATA","weight":0.9},{"type":"RESEARCH_FEASIBILITY","weight":0.8},{"type":"HYPOTHESIS","weight":0.7},{"type":"MILESTONES_AND_TIMELINE","weight":0.6},{"type":"RISKS_AND_MITIGATIONS","weight":0.6}],"search_queries":["experimental design","research methods","statistical analysis plan","study timeline","project milestones","potential challenges","mitigation strategies","preliminary results","clinical trial protocol","data analysis plan"],"max_words":1500,"type":"RESEARCH_PLAN"},{"topics":[{"type":"SCIENTIFIC_INFRASTRUCTURE","weight":0.9},{"type":"TEAM_EXCELLENCE","weight":0.8}],"search_queries":["available equipment","institutional resources","data sharing plan","personnel expertise","collaborator qualifications","mentoring plan","organizational assurances","research environment"],"max_words":300,"type":"RESOURCES"},{"topics":[{"type":"IMPACT","weight":0.9},{"type":"MILESTONES_AND_TIMELINE","weight":0.8}],"search_queries":["expected research outcomes","clinical deliverables","long-term goals","potential future directions","knowledge dissemination","potential clinical impact","project completion timeline"],"max_words":300,"type":"EXPECTED_OUTCOMES"}],"name":"MRA Research Grant Application Template","template":"# Executive Summary\n\n{{EXECUTIVE_SUMMARY}}\n\n## Research Significance\n\n{{RESEARCH_SIGNIFICANCE}}\n\n## Research Plan\n\n{{RESEARCH_PLAN}}\n\n## Resources\n\n{{RESOURCES}}\n\n## Expected Outcomes\n\n{{EXPECTED_OUTCOMES}}","grant_application_id":"43b4aed5-8549-461f-9290-5ee9a630ac9a","funding_organization_id":null,"id":"961ecfa9-86a7-499f-8b05-71c50a6c9a8e","created_at":"2025-01-14T08:29:35.094783Z","updated_at":"2025-01-14T08:29:35.094783Z","grant_application":null,"funding_organization":null}
+{
+  "grant_sections": [
+    {
+      "topics": [
+        {
+          "type": "BACKGROUND_CONTEXT",
+          "weight": 0.9
+        },
+        {
+          "type": "IMPACT",
+          "weight": 0.8
+        },
+        {
+          "type": "RATIONALE",
+          "weight": 0.7
+        }
+      ],
+      "search_queries": [
+        "project summary",
+        "overall impact",
+        "translational potential",
+        "scientific aims",
+        "rationale for collaboration",
+        "synergistic opportunities",
+        "project goals",
+        "clinical impact"
+      ],
+      "max_words": 500,
+      "type": "EXECUTIVE_SUMMARY"
+    },
+    {
+      "topics": [
+        {
+          "type": "IMPACT",
+          "weight": 0.9
+        },
+        {
+          "type": "RATIONALE",
+          "weight": 0.7
+        },
+        {
+          "type": "BACKGROUND_CONTEXT",
+          "weight": 0.6
+        }
+      ],
+      "search_queries": [
+        "relevance to melanoma research",
+        "clinical implications",
+        "long-term impact",
+        "scientific merit",
+        "contribution to field",
+        "unmet needs",
+        "significance of research",
+        "potential for clinical translation"
+      ],
+      "max_words": 400,
+      "type": "RESEARCH_SIGNIFICANCE"
+    },
+    {
+      "topics": [
+        {
+          "type": "PRELIMINARY_DATA",
+          "weight": 0.9
+        },
+        {
+          "type": "RESEARCH_FEASIBILITY",
+          "weight": 0.8
+        },
+        {
+          "type": "HYPOTHESIS",
+          "weight": 0.7
+        },
+        {
+          "type": "MILESTONES_AND_TIMELINE",
+          "weight": 0.6
+        },
+        {
+          "type": "RISKS_AND_MITIGATIONS",
+          "weight": 0.6
+        }
+      ],
+      "search_queries": [
+        "experimental design",
+        "research methods",
+        "statistical analysis plan",
+        "study timeline",
+        "project milestones",
+        "potential challenges",
+        "mitigation strategies",
+        "preliminary results",
+        "clinical trial protocol",
+        "data analysis plan"
+      ],
+      "max_words": 1500,
+      "type": "RESEARCH_PLAN"
+    },
+    {
+      "topics": [
+        {
+          "type": "SCIENTIFIC_INFRASTRUCTURE",
+          "weight": 0.9
+        },
+        {
+          "type": "TEAM_EXCELLENCE",
+          "weight": 0.8
+        }
+      ],
+      "search_queries": [
+        "available equipment",
+        "institutional resources",
+        "data sharing plan",
+        "personnel expertise",
+        "collaborator qualifications",
+        "mentoring plan",
+        "organizational assurances",
+        "research environment"
+      ],
+      "max_words": 300,
+      "type": "RESOURCES"
+    },
+    {
+      "topics": [
+        {
+          "type": "IMPACT",
+          "weight": 0.9
+        },
+        {
+          "type": "MILESTONES_AND_TIMELINE",
+          "weight": 0.8
+        }
+      ],
+      "search_queries": [
+        "expected research outcomes",
+        "clinical deliverables",
+        "long-term goals",
+        "potential future directions",
+        "knowledge dissemination",
+        "potential clinical impact",
+        "project completion timeline"
+      ],
+      "max_words": 300,
+      "type": "EXPECTED_OUTCOMES"
+    }
+  ],
+  "name": "MRA Research Grant Application Template",
+  "template": "# Executive Summary\n\n{{EXECUTIVE_SUMMARY}}\n\n## Research Significance\n\n{{RESEARCH_SIGNIFICANCE}}\n\n## Research Plan\n\n{{RESEARCH_PLAN}}\n\n## Resources\n\n{{RESOURCES}}\n\n## Expected Outcomes\n\n{{EXPECTED_OUTCOMES}}",
+  "grant_application_id": "43b4aed5-8549-461f-9290-5ee9a630ac9a",
+  "funding_organization_id": null,
+  "id": "961ecfa9-86a7-499f-8b05-71c50a6c9a8e",
+  "created_at": "2025-01-14T08:29:35.094783Z",
+  "updated_at": "2025-01-14T08:29:35.094783Z",
+  "grant_application": null,
+  "funding_organization": null
+}
