@@ -1,5 +1,6 @@
 import logging
 import os
+from asyncio import gather
 from collections.abc import AsyncGenerator, Generator
 from logging import Logger, getLogger
 from pathlib import Path
@@ -16,7 +17,9 @@ from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 from scripts.seed_db import seed_db
+from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 from structlog import configure
 from structlog.testing import LogCapture
 from testcontainers.postgres import PostgresContainer
@@ -25,6 +28,7 @@ from vertexai.language_models import TextEmbedding
 
 from src.db.base import Base
 from src.db.connection import engine_ref, get_session_maker
+from src.db.enums import FileIndexingStatusEnum
 from src.db.json_objects import ApplicationDetails, ResearchObjective, ResearchTask
 from src.db.tables import (
     FundingOrganization,
@@ -32,10 +36,16 @@ from src.db.tables import (
     GrantApplicationFile,
     GrantTemplate,
     RagFile,
+    TextVector,
     Workspace,
     WorkspaceUser,
 )
+from src.dto import FileDTO
+from src.indexer.files import parse_and_index_file
+from src.rag.grant_template.handler import handle_generate_grant_template
 from src.utils.ai import embeddings_model, init_ref
+from src.utils.extraction import extract_file_content
+from src.utils.serialization import deserialize, serialize
 from tests.factories import (
     FileFactory,
     FundingOrganizationFactory,
@@ -257,12 +267,99 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], worksp
 async def grant_template(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
 ) -> GrantTemplate:
+    async with async_session_maker() as session:
+        result = await session.execute(select(FundingOrganization.id).where(FundingOrganization.abbreviation == "NIH"))
+        funding_organization_id = result.scalar_one()
+
     grant_template_data = GrantTemplateFactory.build(
-        grant_application_id=grant_application.id, funding_organization_id=None
+        grant_application_id=grant_application.id,
+        funding_organization_id=funding_organization_id,
+        grant_sections=[
+            {
+                "topics": [
+                    {"type": "BACKGROUND_CONTEXT", "weight": 0.8},
+                    {"type": "IMPACT", "weight": 0.7},
+                    {"type": "RATIONALE", "weight": 0.5},
+                ],
+                "search_queries": [
+                    "current state of inner ear imaging",
+                    "limitations of current imaging techniques",
+                    "clinical needs in inner ear diagnosis",
+                    "rationale for improved imaging",
+                    "potential impact on patient care",
+                ],
+                "max_words": 400,
+                "type": "EXECUTIVE_SUMMARY",
+            },
+            {
+                "topics": [
+                    {"type": "IMPACT", "weight": 0.9},
+                    {"type": "RATIONALE", "weight": 0.8},
+                    {"type": "BACKGROUND_CONTEXT", "weight": 0.5},
+                ],
+                "search_queries": [
+                    "importance of inner ear imaging",
+                    "clinical significance of improved resolution",
+                    "impact of inner ear pathology diagnosis",
+                    "current unmet needs in diagnosis and treatment",
+                    "clinical justification",
+                ],
+                "max_words": 600,
+                "type": "RESEARCH_SIGNIFICANCE",
+            },
+            {
+                "topics": [
+                    {"type": "NOVELTY_AND_INNOVATION", "weight": 1.0},
+                    {"type": "RESEARCH_FEASIBILITY", "weight": 0.7},
+                    {"type": "BACKGROUND_CONTEXT", "weight": 0.4},
+                ],
+                "search_queries": [
+                    "novel imaging approaches for inner ear",
+                    "innovative aspects of proposed technology",
+                    "feasibility of achieving resolution increase",
+                    "comparison to existing methods",
+                    "technological advancements in imaging",
+                ],
+                "max_words": 600,
+                "type": "RESEARCH_INNOVATION",
+            },
+            {
+                "topics": [
+                    {"type": "MILESTONES_AND_TIMELINE", "weight": 0.9},
+                    {"type": "RESEARCH_FEASIBILITY", "weight": 0.8},
+                    {"type": "RISKS_AND_MITIGATIONS", "weight": 0.6},
+                ],
+                "search_queries": [
+                    "timeline for technology development",
+                    "plan for clinical translation",
+                    "steps for non-invasive application",
+                    "limitations of technology",
+                    "alternative paths for clinical use",
+                    "risk assessment in imaging technology",
+                ],
+                "max_words": 1000,
+                "type": "RESEARCH_PLAN",
+            },
+            {
+                "topics": [{"type": "IMPACT", "weight": 1.0}, {"type": "RATIONALE", "weight": 0.7}],
+                "search_queries": [
+                    "impact on clinical decision making",
+                    "improved diagnosis of inner ear pathologies",
+                    "clinical settings for proposed use",
+                    "treatments enabled by improved diagnosis",
+                    "benefits of increased imaging resolution",
+                ],
+                "max_words": 500,
+                "type": "EXPECTED_OUTCOMES",
+            },
+        ],
+        name="Inner Ear Imaging Technology Grant",
+        template="# Executive Summary\n\n{{EXECUTIVE_SUMMARY}}\n\n## Research Significance\n\n{{RESEARCH_SIGNIFICANCE}}\n\n## Research Innovation\n\n{{RESEARCH_INNOVATION}}\n\n## Research Plan\n\n{{RESEARCH_PLAN}}\n\n## Expected Outcomes\n\n{{EXPECTED_OUTCOMES}}",
     )
     async with async_session_maker() as session, session.begin():
         session.add(grant_template_data)
         await session.commit()
+
     return grant_template_data
 
 
@@ -376,3 +473,166 @@ def application_details() -> ApplicationDetails:
         impact="Brain metastases (BMs) occur in almost 50% of patients with metastatic melanoma, resulting in a dismal prognosis with a poor overall survival for most patients. Development of effective novel therapies for melanoma BMs could significantly increase life expectancy and not less important - life quality of metastatic melanoma patients.",
         scientific_infrastructure="Our lab is equipped with the state-of-the-art single cell and molecular biology technologies and is supported by the vast scientific infrastructure of the Weizmann Institute of Science.",
     )
+
+
+async def parse_source_file(
+    application_id: str,
+    source_file: Path,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    file_content = await AsyncPath(source_file).read_bytes()
+    file_dto = FileDTO(
+        content=file_content,
+        filename=source_file.name,
+        mime_type="application/pdf"
+        if source_file.suffix == ".pdf"
+        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+
+    async with async_session_maker() as session:
+        file_id = await session.scalar(
+            insert(RagFile)
+            .values(
+                {
+                    "filename": file_dto.filename,
+                    "mime_type": file_dto.mime_type,
+                    "size": file_dto.size,
+                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                }
+            )
+            .returning(RagFile.id)
+        )
+        await session.execute(
+            insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_file_id": file_id}])
+        )
+        await session.commit()
+
+    await parse_and_index_file(file_dto=file_dto, file_id=str(file_id))
+
+    async with async_session_maker() as session:
+        application_file_data = await session.scalar(
+            select(GrantApplicationFile)
+            .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
+            .where(GrantApplicationFile.grant_application_id == application_id)
+            .where(GrantApplicationFile.rag_file_id == file_id)
+        )
+
+    filename = source_file.name.replace("pdf", "json").replace("docx", "json")
+    await AsyncPath(FIXTURES_FOLDER / application_id / "files" / filename).write_bytes(serialize(application_file_data))
+
+
+@pytest.fixture
+async def full_application_id(
+    workspace: Workspace,
+    research_objectives: list[ResearchObjective],
+    application_details: ApplicationDetails,
+    async_session_maker: async_sessionmaker[Any],
+) -> str:
+    fixture_id = "43b4aed5-8549-461f-9290-5ee9a630ac9a"
+    async with async_session_maker() as session:
+        application_id = await session.scalar(
+            insert(GrantApplication)
+            .values(
+                {
+                    "id": fixture_id,
+                    "workspace_id": workspace.id,
+                    "title": "Developing AI tailored immunocytokines to target melanoma brain metastases",
+                    "research_objectives": research_objectives,
+                    "details": application_details,
+                }
+            )
+            .returning(GrantApplication.id)
+        )
+        await session.commit()
+
+    data_fixture_folder = FIXTURES_FOLDER / fixture_id
+    if not data_fixture_folder.exists():
+        data_fixture_folder.mkdir(parents=True)
+
+    cfp_content_file = data_fixture_folder / "cfp_content.md"
+    if not cfp_content_file.exists():
+        cfp_file = SOURCES_FOLDER / "cfps" / "MRA-2023-2024-RFP-Final.pdf"
+
+        output, _ = await extract_file_content(
+            content=cfp_file.read_bytes(),
+            mime_type="application/pdf",
+        )
+        content = output if isinstance(output, str) else output["content"]
+        cfp_content_file.write_text(content)
+
+    grant_template_file = data_fixture_folder / "grant_template.json"
+    if not grant_template_file.exists():
+        await handle_generate_grant_template(cfp_content=cfp_content_file.read_text(), application_id=application_id)
+
+        async with async_session_maker() as session:
+            grant_template = await session.scalar(
+                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
+            )
+
+        grant_template_file.write_bytes(serialize(grant_template))
+    else:
+        data = deserialize(grant_template_file.read_text(), dict[str, Any])
+
+        async with async_session_maker() as session:
+            await session.execute(
+                insert(GrantTemplate).values(
+                    {k: v for k, v in data.items() if v is not None and k not in {"created_at", "updated_at"}}
+                )
+            )
+            await session.commit()
+
+    application_files_dir = data_fixture_folder / "files"
+    if not application_files_dir.exists():
+        application_files_dir.mkdir(parents=True)
+
+    if not list(application_files_dir.glob("*")):
+        await gather(
+            *[
+                parse_source_file(
+                    application_id=str(application_id), source_file=source_file, async_session_maker=async_session_maker
+                )
+                for source_file in TEST_DATA_SOURCES
+            ]
+        )
+
+    for application_file in application_files_dir.glob("*.json"):
+        data = deserialize(application_file.read_bytes(), dict[str, Any])
+        async with async_session_maker() as session:
+            rag_file_data = data.pop("rag_file")
+            rag_file_id = data.pop("rag_file_id")
+            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
+            await session.execute(
+                insert(RagFile).values(
+                    {
+                        "id": rag_file_id,
+                        **{
+                            k: v
+                            for k, v in rag_file_data.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
+                        },
+                    }
+                )
+            )
+            await session.execute(
+                insert(GrantApplicationFile).values(
+                    {
+                        "grant_application_id": application_id,
+                        "rag_file_id": rag_file_id,
+                    }
+                )
+            )
+            await session.execute(
+                insert(TextVector).values(
+                    [
+                        {
+                            k: v
+                            for k, v in text_vector.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
+                        }
+                        for text_vector in text_vectors
+                    ]
+                )
+            )
+            await session.commit()
+
+    return str(application_id)

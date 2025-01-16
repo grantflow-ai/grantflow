@@ -16,7 +16,7 @@ from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
 from src.utils.serialization import deserialize
-from src.utils.text import concatenate_segments_with_spacy_coherence
+from src.utils.text import concatenate_segments_with_spacy_coherence, normalize_markdown
 
 logger = get_logger(__name__)
 
@@ -215,4 +215,4 @@ async def handle_segmented_text_generation(
         generation_duration=int(time() - start_time),
     )
 
-    return concatenate_segments_with_spacy_coherence(results)
+    return normalize_markdown(concatenate_segments_with_spacy_coherence(results))
