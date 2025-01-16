@@ -52,7 +52,7 @@ async def retrieve_documents(
         if not user_prompt:
             raise ValueError("Either search_queries or user_prompt must be provided.")
 
-        search_queries = await handle_create_search_queries(user_prompt=user_prompt)
+        search_queries = await handle_create_search_queries(user_prompt=user_prompt, search_queries=search_queries)
 
     query_embeddings = await generate_embeddings(",".join(search_queries), TaskType.RetrievalQuery)
 

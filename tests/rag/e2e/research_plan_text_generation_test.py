@@ -1,21 +1,12 @@
 import logging
-from asyncio import gather
 from datetime import UTC, datetime
 from os import environ
-from pathlib import Path
 from typing import Any
 
 import pytest
-from anyio import Path as AsyncPath
-from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
 
-from src.db.enums import FileIndexingStatusEnum
 from src.db.json_objects import ApplicationDetails, ResearchObjective
-from src.db.tables import GrantApplication, GrantApplicationFile, GrantTemplate, RagFile, TextVector, Workspace
-from src.dto import FileDTO
-from src.indexer.files import parse_and_index_file
 from src.patterns import XML_TAG_PATTERN
 from src.rag.grant_application.research_plan_text import (
     handle_preliminary_data_text_generation,
@@ -25,175 +16,9 @@ from src.rag.grant_application.research_plan_text import (
     handle_risks_and_mitigations_text_generation,
     set_relation_data,
 )
-from src.rag.grant_template.handler import handle_generate_grant_template
 from src.utils.db import retrieve_application
-from src.utils.extraction import extract_file_content
-from src.utils.serialization import deserialize, serialize
-from tests.conftest import FIXTURES_FOLDER, RESULTS_FOLDER, SOURCES_FOLDER, TEST_DATA_SOURCES
-
-
-async def parse_source_file(
-    application_id: str,
-    source_file: Path,
-    async_session_maker: async_sessionmaker[Any],
-) -> None:
-    file_content = await AsyncPath(source_file).read_bytes()
-    file_dto = FileDTO(
-        content=file_content,
-        filename=source_file.name,
-        mime_type="application/pdf"
-        if source_file.suffix == ".pdf"
-        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    )
-
-    async with async_session_maker() as session:
-        file_id = await session.scalar(
-            insert(RagFile)
-            .values(
-                {
-                    "filename": file_dto.filename,
-                    "mime_type": file_dto.mime_type,
-                    "size": file_dto.size,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
-                }
-            )
-            .returning(RagFile.id)
-        )
-        await session.execute(
-            insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_file_id": file_id}])
-        )
-        await session.commit()
-
-    await parse_and_index_file(file_dto=file_dto, file_id=str(file_id))
-
-    async with async_session_maker() as session:
-        application_file_data = await session.scalar(
-            select(GrantApplicationFile)
-            .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
-            .where(GrantApplicationFile.grant_application_id == application_id)
-            .where(GrantApplicationFile.rag_file_id == file_id)
-        )
-
-    filename = source_file.name.replace("pdf", "json").replace("docx", "json")
-    await AsyncPath(FIXTURES_FOLDER / application_id / "files" / filename).write_bytes(serialize(application_file_data))
-
-
-@pytest.fixture
-async def full_application_id(
-    workspace: Workspace,
-    research_objectives: list[ResearchObjective],
-    application_details: ApplicationDetails,
-    async_session_maker: async_sessionmaker[Any],
-) -> str:
-    fixture_uuid = "43b4aed5-8549-461f-9290-5ee9a630ac9a"
-
-    async with async_session_maker() as session:
-        application_id = await session.scalar(
-            insert(GrantApplication)
-            .values(
-                {
-                    "id": fixture_uuid,
-                    "workspace_id": workspace.id,
-                    "title": "Developing AI tailored immunocytokines to target melanoma brain metastases",
-                    "research_objectives": research_objectives,
-                    "details": application_details,
-                }
-            )
-            .returning(GrantApplication.id)
-        )
-        await session.commit()
-
-    data_fixture_folder = FIXTURES_FOLDER / fixture_uuid
-    if not data_fixture_folder.exists():
-        data_fixture_folder.mkdir(parents=True)
-
-    cfp_content_file = data_fixture_folder / "cfp_content.md"
-    if not cfp_content_file.exists():
-        cfp_file = SOURCES_FOLDER / "cfps" / "MRA-2023-2024-RFP-Final.pdf"
-
-        output, _ = await extract_file_content(
-            content=cfp_file.read_bytes(),
-            mime_type="application/pdf",
-        )
-        content = output if isinstance(output, str) else output["content"]
-        cfp_content_file.write_text(content)
-
-    grant_template_file = data_fixture_folder / "grant_template.json"
-    if not grant_template_file.exists():
-        await handle_generate_grant_template(cfp_content=cfp_content_file.read_text(), application_id=application_id)
-
-        async with async_session_maker() as session:
-            grant_template = await session.scalar(
-                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
-            )
-
-        grant_template_file.write_bytes(serialize(grant_template))
-    else:
-        data = deserialize(grant_template_file.read_text(), dict[str, Any])
-
-        async with async_session_maker() as session:
-            await session.execute(
-                insert(GrantTemplate).values(
-                    {k: v for k, v in data.items() if v is not None and k not in {"created_at", "updated_at"}}
-                )
-            )
-            await session.commit()
-
-    application_files_dir = data_fixture_folder / "files"
-    if not application_files_dir.exists():
-        application_files_dir.mkdir(parents=True)
-
-    if not list(application_files_dir.glob("*")):
-        await gather(
-            *[
-                parse_source_file(
-                    application_id=str(application_id), source_file=source_file, async_session_maker=async_session_maker
-                )
-                for source_file in TEST_DATA_SOURCES
-            ]
-        )
-
-    for application_file in application_files_dir.glob("*.json"):
-        data = deserialize(application_file.read_bytes(), dict[str, Any])
-        async with async_session_maker() as session:
-            rag_file_data = data.pop("rag_file")
-            rag_file_id = data.pop("rag_file_id")
-            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
-            await session.execute(
-                insert(RagFile).values(
-                    {
-                        "id": rag_file_id,
-                        **{
-                            k: v
-                            for k, v in rag_file_data.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        },
-                    }
-                )
-            )
-            await session.execute(
-                insert(GrantApplicationFile).values(
-                    {
-                        "grant_application_id": application_id,
-                        "rag_file_id": rag_file_id,
-                    }
-                )
-            )
-            await session.execute(
-                insert(TextVector).values(
-                    [
-                        {
-                            k: v
-                            for k, v in text_vector.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        }
-                        for text_vector in text_vectors
-                    ]
-                )
-            )
-            await session.commit()
-
-    return str(application_id)
+from src.utils.serialization import serialize
+from tests.conftest import RESULTS_FOLDER
 
 
 @pytest.mark.skipif(
@@ -226,23 +51,23 @@ async def test_generate_research_plan(
     sections = research_plan_text.split("\n\n")
     assert len(sections) > 1
 
-    objectives = [obj for obj in sections if obj.startswith("#### Objective")]
-    assert len(objectives) >= 1
-
-    for objective in objectives:
-        assert "##### Preliminary Results" in objective
-        assert "##### Research Tasks" in objective
-        assert "##### Risks and Alternatives" in objective
-        assert "###### Task" in objective
+    for value, expected_len in [
+        ("## Research Plan", 1),
+        ("### Research Objectives", 1),
+        ("#### Objective", 3),
+        ("##### Preliminary Results", 3),
+        ("##### Research Tasks", 3),
+        ("##### Risks and Alternatives", 3),
+        ("###### Task", 9),
+    ]:
+        assert len([obj for obj in sections if obj.startswith(value)]) == expected_len, (
+            f"expected {value} to be in the document {expected_len} times"
+        )
 
     assert not XML_TAG_PATTERN.findall(research_plan_text)
 
     headers = [line for line in research_plan_text.split("\n") if line.startswith("#")]
     assert all(1 <= line.count("#") <= 6 for line in headers)
-
-    expected_headers = ["## Research Plan", "### Research Objectives", "#### Objective"]
-    for header in expected_headers:
-        assert any(h.startswith(header) for h in headers)
 
     result_folder = RESULTS_FOLDER / full_application_id
     result_folder.mkdir(parents=True, exist_ok=True)
