@@ -12,7 +12,6 @@ from src.api_types import (
     ApplicationDraftProcessingResponse,
     UpdateApplicationRequestBody,
 )
-from src.constants import TEMPLATE_VARIABLE_PATTERN
 from src.db.enums import UserRoleEnum
 from src.db.tables import (
     GrantApplication,
@@ -20,6 +19,7 @@ from src.db.tables import (
     Workspace,
     WorkspaceUser,
 )
+from src.patterns import TEMPLATE_VARIABLE_PATTERN
 from src.utils.db import retrieve_application
 from src.utils.serialization import deserialize, serialize
 from tests.factories import CreateApplicationRequestBodyFactory, TextGenerationResultFactory

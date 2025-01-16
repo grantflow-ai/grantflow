@@ -35,3 +35,4 @@ async def handle_generate_grant_application_text(application_id: str) -> str:
         application_id=application_id,
         research_plan_text=research_plan_text,
     )
+    return ""
