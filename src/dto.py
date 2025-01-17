@@ -69,11 +69,11 @@ class VectorDTO(TypedDict):
 
 
 class GrantTemplateDTO(TypedDict):
-    """The response from the tool call."""
+    """Grant template specification."""
 
     name: str
-    """The name of the grant format."""
+    """Name of the grant format."""
     template: str
-    """The markdown template for the grant."""
+    """Markdown template with section placeholders."""
     sections: list[GrantSection]
-    """The sections of the grant."""
+    """Section specifications."""
