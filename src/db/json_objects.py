@@ -1,7 +1,5 @@
 from typing import NotRequired, TypedDict
 
-from src.db.enums import ContentTopicEnum, GrantSectionEnum
-
 
 class TableContext(TypedDict):
     """Context information for table cells."""
@@ -67,28 +65,23 @@ class ResearchObjective(TypedDict):
     """The relations of the research objective to other objectives."""
 
 
-class SectionTopic(TypedDict):
-    """DTO for a section topic."""
-
-    type: ContentTopicEnum
-    """The type of the topic."""
-    weight: float
-    """The weight of the topic. Range between 0-1"""
-
-
 class GrantSection(TypedDict):
-    """DTO for a grant section."""
+    """A section in the grant template."""
 
-    max_words: NotRequired[int]
-    """The maximum number of words in the section."""
+    name: str
+    """Unique section identifier."""
+    title: str
+    """Section heading title."""
+    instructions: str
+    """Detailed content generation instructions."""
+    keywords: list[str]
+    """Technical terms specific to section."""
+    depends_on: list[str]
+    """Sections that must be generated before this one."""
     min_words: NotRequired[int]
-    """The minimum number of words in the section."""
-    search_queries: list[str]
-    """3-10 unique test queries for RAG retrieval."""
-    topics: list[SectionTopic]
-    """The topics for the section."""
-    type: GrantSectionEnum
-    """The type of the section."""
+    """Minimum word count if specified."""
+    max_words: NotRequired[int]
+    """Maximum word count if specified."""
 
 
 class ApplicationDetails(TypedDict):
@@ -123,5 +116,5 @@ class TextGenerationResult(TypedDict):
 
     content: str
     """The generated content."""
-    type: GrantSectionEnum
+    type: str
     """The type of the generated content."""

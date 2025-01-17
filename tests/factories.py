@@ -133,10 +133,6 @@ class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
     __model__ = ResearchTask
 
 
-class SectionGrantSectiony(TypedDictFactory[GrantSection]):
-    __model__ = GrantSection
-
-
 class TextGenerationResultFactory(TypedDictFactory[TextGenerationResult]):
     __model__ = TextGenerationResult
 
