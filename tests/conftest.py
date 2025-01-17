@@ -73,6 +73,7 @@ RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
 FIXTURES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "fixtures"
 TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER / "application_sources")
 TEST_DATA_RESULTS: Generator[Path, Any, Any] = _file_path_generator(RESULTS_FOLDER)
+CFP_FIXTURES: Generator[Path, Any, Any] = _file_path_generator(FIXTURES_FOLDER / "cfps")
 
 
 def pytest_collection_modifyitems(items: list[Any]) -> None:
@@ -88,21 +89,6 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
         async_test.add_marker(session_scope_marker, append=False)
-
-
-def pytest_logger_config(logger_config: Any) -> None:
-    """Configure the logger for the tests.
-
-    Args:
-        logger_config: Logger configuration
-
-    Returns:
-        None
-    """
-    getLogger("sqlalchemy").setLevel("ERROR")
-
-    logger_config.add_loggers(["e2e"], stdout_level="info")
-    logger_config.set_log_option_default("e2e")
 
 
 @pytest.fixture(scope="session")
@@ -376,7 +362,7 @@ async def grant_application_file(
 
 @pytest.fixture
 async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
-    cfp_content_file = RESULTS_FOLDER / "extracted_cfp_content.md"
+    cfp_content_file = RESULTS_FOLDER / "nih-cfp.md"
     assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
 
     contents = cfp_content_file.read_text()

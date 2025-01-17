@@ -2,7 +2,7 @@ from collections.abc import Callable
 from time import time
 from typing import Any, Final, TypedDict
 
-from google.api_core.exceptions import TooManyRequests
+from google.cloud.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
     Content,
     GenerationConfig,
@@ -15,7 +15,7 @@ from src.utils.ai import get_google_ai_client
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
-from src.utils.serialization import deserialize
+from src.utils.serialization import deserialize, serialize
 from src.utils.text import concatenate_segments_with_spacy_coherence, normalize_markdown
 
 logger = get_logger(__name__)
@@ -98,22 +98,29 @@ class SegmentedToolGenerationToolResponse(TypedDict):
     """Whether the text is complete or not."""
 
 
-def _default_validator[T](_: T) -> bool:
-    return True
+def _default_validator[T](_: T) -> None:
+    return None
 
 
-@with_exponential_backoff_retry(TooManyRequests, ValidationError)
-async def handle_completions_request[T](
+@with_exponential_backoff_retry(TooManyRequests)
+async def make_completions_request[T](
     *,
-    model: str = PREMIUM_TEXT_GENERATION_MODEL,
+    model: str,
     prompt_identifier: str,
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
     response_schema: dict[str, Any] | None = None,
     messages: str | Part | list[str | Part],
-    validator: Callable[[T], bool] = _default_validator,
 ) -> T:
-    """Handle a completions request to the model.
+    """Make a completions request to the model.
+
+    Args:
+        model:
+        prompt_identifier:
+        response_type:
+        system_prompt:
+        response_schema:
+        messages:
 
     Args:
         model: The model to use for the generation.
@@ -122,41 +129,104 @@ async def handle_completions_request[T](
         system_prompt: The system prompt.
         response_schema: The response schema.
         messages: The messages to send to the model.
-        validator: Custom validator function for the response.
-
-    Raises:
-        ValidationError: If the response received from the model is invalid.
 
     Returns:
         The generated text.
     """
     client = get_google_ai_client(prompt_identifier=prompt_identifier, system_instructions=system_prompt, model=model)
 
-    try:
-        contents = [
-            Content(
-                role="user",
-                parts=[Part.from_text(messages)]
-                if isinstance(messages, str)
-                else [Part.from_text(message) if isinstance(message, str) else message for message in messages],
-            )
-        ]
-        response = await client.generate_content_async(
-            contents=contents,
-            generation_config=GenerationConfig(
-                response_mime_type=CONTENT_TYPE_JSON,
-                response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA,
-            ),
+    contents = [
+        Content(
+            role="user",
+            parts=[Part.from_text(messages)]
+            if isinstance(messages, str)
+            else [Part.from_text(message) if isinstance(message, str) else message for message in messages],
         )
-        logger.debug("Received content from model.", text=response.text)
-        data = deserialize(response.text, response_type)
-        if not validator(data):
-            raise ValidationError("Invalid response from model")
+    ]
+    response = await client.generate_content_async(
+        contents=contents,
+        generation_config=GenerationConfig(
+            response_mime_type=CONTENT_TYPE_JSON,
+            response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA,
+        ),
+    )
+    logger.debug("Received content from model.", text=response.text)
+    return deserialize(response.text, response_type)
 
-        return data
-    except DeserializationError as e:
-        logger.warning("Unexpected response from model.", exec_info=e)
-        raise ValidationError("Unexpected response from model") from e
+
+async def handle_completions_request[T](
+    *,
+    max_attempts: int = 3,
+    messages: str | Part | list[str | Part],
+    model: str = PREMIUM_TEXT_GENERATION_MODEL,
+    prompt_identifier: str,
+    response_schema: dict[str, Any] | None = None,
+    response_type: type[T],
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+    validator: Callable[[T], None] = _default_validator,
+) -> T:
+    """Handle a completions request to the model.
+
+    Args:
+        max_attempts: The maximum number of attempts to make.
+        messages: The messages to send to the model.
+        model: The model to use for the generation.
+        prompt_identifier: The identifier of the prompt.
+        response_schema: The response schema.
+        response_type: The response type.
+        system_prompt: The system prompt.
+        validator: Custom validator function for the response.
+
+    Raises:
+        ValidationError: If the response is invalid.
+
+    Returns:
+        The generated text.
+    """
+    attempts = 0
+
+    response: T | None = None
+    error_message: str | None = None
+
+    while attempts < max_attempts:
+        try:
+            msgs = messages
+            if error_message:
+                msgs = [error_message, *messages]
+
+            response = await make_completions_request(
+                model=model,
+                prompt_identifier=prompt_identifier,
+                response_type=response_type,
+                system_prompt=system_prompt,
+                response_schema=response_schema,
+                messages=msgs,
+            )
+
+            validator(response)
+            return response
+        except ValidationError as e:
+            attempts += 1
+            error_message = f"""
+            This is the content returned by the last API call with the provided prompt:
+
+            {serialize(response).decode()}
+
+            This is the error:
+            {e!s}
+            """
+
+            response = None
+        except DeserializationError as e:
+            attempts += 1
+            error_message = f"""
+            The last API call with the provided prompt returned either an invalid JSON object or an object that does not conform with the JSON schema.
+
+            This is the error:
+            {e!s}
+            """
+
+    raise ValidationError(f"Failed to generate text after {max_attempts} attempts.")
 
 
 async def handle_segmented_text_generation(

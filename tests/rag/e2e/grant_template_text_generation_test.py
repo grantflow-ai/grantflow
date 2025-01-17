@@ -1,23 +1,22 @@
 import logging
 from datetime import UTC, datetime
 from os import environ
+from pathlib import Path
 from typing import Any
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.enums import ContentTopicEnum, GrantSectionEnum
-from src.db.tables import FundingOrganization, GrantApplication, GrantTemplate
+from src.db.tables import FundingOrganization, GrantApplication
 from src.rag.grant_template.extract_cfp_data import extract_cfp_data
 from src.rag.grant_template.generate_template_data import generate_grant_template
-from src.rag.grant_template.handler import handle_generate_grant_template
 from src.utils.serialization import serialize
-from tests.conftest import RESULTS_FOLDER
+from tests.conftest import CFP_FIXTURES, RESULTS_FOLDER
 
 
 @pytest.fixture
-async def organizations_by_id(async_session_maker: async_sessionmaker[Any]) -> dict[str, dict[str, str | None]]:
+async def organizations_by_id(async_session_maker: async_sessionmaker[Any]) -> dict[str, dict[str, str]]:
     async with async_session_maker() as session:
         organizations = await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc()))
         return {
@@ -35,17 +34,17 @@ async def organizations_by_id(async_session_maker: async_sessionmaker[Any]) -> d
 )
 async def test_extract_cfp_data(
     logger: logging.Logger,
-    organizations_by_id: dict[str, dict[str, str | None]],
+    organizations_by_id: dict[str, dict[str, str]],
 ) -> None:
     logger.info("Running end-to-end test for extracting CFP data")
     start_time = datetime.now(UTC)
 
-    cfp_content_file = RESULTS_FOLDER / "extracted_cfp_content.md"
+    cfp_content_file = RESULTS_FOLDER / "nih-cfp.md"
     assert cfp_content_file.exists(), "CFP content file does not exist"
 
     result = await extract_cfp_data(
         cfp_content=cfp_content_file.read_text(),
-        organization_mapping=organizations_by_id,  # type: ignore[arg-type]
+        organization_mapping=organizations_by_id,
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -86,19 +85,19 @@ async def test_extract_cfp_data(
 )
 async def test_pipeline_flow(
     logger: logging.Logger,
-    organizations_by_id: dict[str, dict[str, str | None]],
+    organizations_by_id: dict[str, dict[str, str]],
 ) -> None:
     logger.info("Running end-to-end test for full grant template pipeline")
     pipeline_start = datetime.now(UTC)
 
-    cfp_content_file = RESULTS_FOLDER / "extracted_cfp_content.md"
+    cfp_content_file = RESULTS_FOLDER / "nih-cfp.md"
     assert cfp_content_file.exists(), "CFP content file does not exist"
     cfp_content = cfp_content_file.read_text()
 
     extraction_start = datetime.now(UTC)
     extract_result = await extract_cfp_data(
         cfp_content=cfp_content,
-        organization_mapping=organizations_by_id,  # type: ignore[arg-type]
+        organization_mapping=organizations_by_id,
     )
     extraction_time = (datetime.now(UTC) - extraction_start).total_seconds()
 
@@ -135,58 +134,68 @@ async def test_pipeline_flow(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
+@pytest.mark.parametrize("cfp_content_file", list(CFP_FIXTURES))
 async def test_handle_generate_grant_template(
     logger: logging.Logger,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
+    cfp_content_file: Path,
 ) -> None:
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    cfp_content_file = RESULTS_FOLDER / "extracted_cfp_content.md"
-    assert cfp_content_file.exists(), "CFP content file does not exist"
-
-    result = await handle_generate_grant_template(
-        cfp_content=cfp_content_file.read_text(),
-        application_id=grant_application.id,
-    )
+    template_result = await generate_grant_template(cfp_content=cfp_content_file.read_text(), organization_id=None)
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
-    assert elapsed_time < 120
+    assert elapsed_time < 60
 
-    assert isinstance(result, GrantTemplate)
-    assert result.grant_application_id == grant_application.id
-    assert result.template
-    assert len(result.template) > 100
-    assert result.name
-    assert len(result.name) >= 10
-    assert result.grant_sections
-    assert len(result.grant_sections) >= 2
+    assert isinstance(template_result, dict)
+    assert "name" in template_result
+    assert "template" in template_result
+    assert "sections" in template_result
 
-    async with async_session_maker() as session:
-        db_template = await session.scalar(
-            select(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id)
-        )
-        assert db_template is not None
-        assert db_template.id == result.id
-        assert db_template.template == result.template
-        assert db_template.name == result.name
-        assert len(db_template.grant_sections) == len(result.grant_sections)
+    assert isinstance(template_result["name"], str)
+    assert len(template_result["name"]) > 0
+    assert isinstance(template_result["template"], str)
+    assert len(template_result["template"]) > 0
 
-        assert "{{" in db_template.template
-        assert "}}" in db_template.template
+    sections = template_result["sections"]
+    assert isinstance(sections, list)
+    assert len(sections) > 0
 
-        for section in db_template.grant_sections:
-            assert section["type"] in GrantSectionEnum
-            assert isinstance(section["topics"], list)
-            assert len(section["topics"]) >= 2
-            for topic in section["topics"]:
-                assert topic["type"] in ContentTopicEnum
-                assert 0 <= topic["weight"] <= 1
+    section_names = {s["name"] for s in sections}
 
-        results_file = (
-            RESULTS_FOLDER / f"handle_generate_grant_template_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
-        )
-        results_file.write_bytes(serialize(result))
+    for section in sections:
+        assert isinstance(section, dict)
+        assert all(key in section for key in ["name", "title", "instructions", "keywords", "depends_on"])
 
-    logger.info("Completed end-to-end grant template generation in %.2f seconds", elapsed_time)
+        assert isinstance(section["name"], str)
+        assert isinstance(section["title"], str)
+        assert isinstance(section["instructions"], str)
+        assert len(section["name"]) > 0
+        assert len(section["title"]) > 0
+        assert len(section["instructions"]) > 0
+
+        assert isinstance(section["keywords"], list)
+        assert 3 <= len(section["keywords"]) <= 10
+        assert all(isinstance(k, str) for k in section["keywords"])
+        assert all(len(k) > 0 for k in section["keywords"])
+
+        assert isinstance(section["depends_on"], list)
+        assert all(isinstance(d, str) for d in section["depends_on"])
+
+        assert all(d in section_names for d in section["depends_on"])
+
+        assert section["name"] not in section["depends_on"]
+
+    for section_name in section_names:
+        content_placeholder = f"{{{{{section_name}.content}}}}"
+        assert content_placeholder in template_result["template"]
+
+        title_placeholder = f"{{{{{section_name}.title}}}}"
+        assert title_placeholder in template_result["template"]
+
+    results_file = RESULTS_FOLDER / f"grant_template_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file.write_bytes(serialize(template_result))
+
+    logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))

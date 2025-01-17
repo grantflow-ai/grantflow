@@ -1,0 +1,97 @@
+{
+  "name": "In Vivo High-Resolution Inner Ear Imaging Grant Application",
+  "template": "# {{project_summary.title}} {{project_summary.content}} # {{research_strategy.title}} ## {{significance_innovation.title}} {{significance_innovation.content}} ## {{approach.title}} {{approach.content}} ## {{investigators_environment.title}} {{investigators_environment.content}} # {{human_subjects_vertebrate_animals.title}} {{human_subjects_vertebrate_animals.content}} # {{data_management_sharing_plan.title}} {{data_management_sharing_plan.content}}",
+  "sections": [
+    {
+      "name": "project_summary",
+      "title": "Project Summary",
+      "instructions": "Provide a concise overview of the proposed project, including the specific aims, the imaging technology to be developed or improved, and the expected impact on inner ear diagnosis and treatment.",
+      "keywords": [
+        "imaging technology",
+        "inner ear",
+        "high-resolution imaging",
+        "clinical translation",
+        "non-invasive techniques"
+      ],
+      "depends_on": []
+    },
+    {
+      "name": "significance_innovation",
+      "title": "Significance and Innovation",
+      "instructions": "Discuss the significance of the proposed research in the context of current scientific challenges and opportunities. Evaluate the importance of the proposed research for advancing knowledge within the field, or more broadly. Evaluate how the proposed improved technology or techniques advance imaging of the human inner ear.  Assess how the new technologies or techniques will be state-of-the-art, and the advantages or disadvantages that this advance represents.",
+      "keywords": [
+        "inner ear disorders",
+        "imaging modalities",
+        "clinical management",
+        "state-of-the-art techniques",
+        "pathology",
+        "current limitations"
+      ],
+      "depends_on": [
+        "project_summary"
+      ]
+    },
+    {
+      "name": "approach",
+      "title": "Approach",
+      "instructions": "Describe in detail the experimental design and methods, discussing the imaging techniques and tools, including hardware and software. Explain plans for data analysis, image reconstruction and processing, and the rationale for the chosen approach. Evaluate how feasible the plans for reaching the desired increase in resolution are. Evaluate the challenges that may prevent the imaging techniques from being translated to use in humans and the proposed timeline as well. Evaluate the possible pitfalls with the timeline and proposed necessary steps for bringing the imaging techniques into use with humans, and to a clinical setting.",
+      "keywords": [
+        "imaging techniques",
+        "spatial resolution",
+        "signal-to-noise ratio",
+        "image processing",
+        "micro-CT",
+        "OCT",
+        "MRI",
+        "fMRI",
+        "photoacoustic imaging"
+      ],
+      "depends_on": [
+        "significance_innovation"
+      ]
+    },
+    {
+      "name": "investigators_environment",
+      "title": "Investigators and Environment",
+      "instructions": "Describe the qualifications of the research team, the available resources to conduct the proposed research, and assess how well the PD(s)/PI(s) are positioned to make significant leaps forward in imaging resolution. If a multidisciplinary team is proposed, evaluate how well team members complement each other's expertise and skill sets in the proposed work?",
+      "keywords": [
+        "multidisciplinary team",
+        "investigator expertise",
+        "institutional resources",
+        "research team"
+      ],
+      "depends_on": [
+        "approach"
+      ]
+    },
+    {
+      "name": "human_subjects_vertebrate_animals",
+      "title": "Protections for Human Subjects and/or Vertebrate Animals",
+      "instructions": "If the proposed research involves human subjects, provide justification for their involvement.  If research involves human subjects or vertebrate animals, evaluate the justification for involvement of human subjects and the proposed protections from research risk relating to their participation. If the proposed research includes Vertebrate Animals, evaluate the involvement of live vertebrate animals",
+      "keywords": [
+        "human subjects",
+        "vertebrate animals",
+        "ethical considerations",
+        "informed consent",
+        "animal welfare"
+      ],
+      "depends_on": [
+        "approach"
+      ]
+    },
+    {
+      "name": "data_management_sharing_plan",
+      "title": "Data Management and Sharing Plan",
+      "instructions": "Describe the plan for data management and sharing, including how the data will be stored, accessed, and shared with the research community, consistent with the NIH policy for data management and sharing.",
+      "keywords": [
+        "data management",
+        "data sharing",
+        "data storage",
+        "FAIR principles"
+      ],
+      "depends_on": [
+        "approach"
+      ]
+    }
+  ]
+}
