@@ -2,7 +2,7 @@ import pytest
 
 from src.db.json_objects import GrantSection
 from src.exceptions import ValidationError
-from src.utils.validators import validate_grant_template
+from src.utils.validators import validate_grant_template, validate_section_length_constraints
 from tests.factories import GrantSectionFactory
 
 
@@ -153,3 +153,30 @@ def test_validate_grant_template(text: str, sections: list[GrantSection], should
 def test_validate_grant_template_error_messages(text: str, sections: list[GrantSection], expected_message: str) -> None:
     with pytest.raises(ValidationError, match=expected_message):
         validate_grant_template(text, sections)
+
+
+@pytest.mark.parametrize(
+    "section, should_raise",
+    [
+        # valid min_words and max_words
+        (GrantSectionFactory.build(min_words=10, max_words=100), False),
+        # valid min_words
+        (GrantSectionFactory.build(min_words=10, max_words=None), False),
+        # valid max_words
+        (GrantSectionFactory.build(min_words=None, max_words=100), False),
+        # min_ words > max_words
+        (GrantSectionFactory.build(min_words=1000, max_words=100), True),
+        # Invalid max_words
+        (GrantSectionFactory.build(min_words=None, max_words=0), True),
+        # negative max_words
+        (GrantSectionFactory.build(min_words=None, max_words=-1), True),
+        # negative min_words
+        (GrantSectionFactory.build(min_words=-1, max_words=100), True),
+    ],
+)
+def test_validate_length_constraints(section: GrantSection, should_raise: bool) -> None:
+    if should_raise:
+        with pytest.raises(ValidationError):
+            validate_section_length_constraints(section)
+    else:
+        validate_section_length_constraints(section)
