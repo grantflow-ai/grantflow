@@ -1,7 +1,6 @@
 import logging
 from datetime import UTC, datetime
 from os import environ
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -12,7 +11,7 @@ from src.db.tables import FundingOrganization, GrantApplication
 from src.rag.grant_template.extract_cfp_data import extract_cfp_data
 from src.rag.grant_template.generate_template_data import generate_grant_template
 from src.utils.serialization import serialize
-from tests.conftest import CFP_FIXTURES, RESULTS_FOLDER
+from tests.conftest import FIXTURES_FOLDER, RESULTS_FOLDER
 
 
 @pytest.fixture
@@ -134,13 +133,84 @@ async def test_pipeline_flow(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-@pytest.mark.parametrize("cfp_content_file", list(CFP_FIXTURES))
-async def test_handle_generate_grant_template(
+async def test_handle_generate_grant_template_without_rag(
     logger: logging.Logger,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    cfp_content_file: Path,
 ) -> None:
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "melanoma_alliance_cfp.md"
+    logger.info("Running end-to-end test for complete grant template generation")
+    start_time = datetime.now(UTC)
+
+    template_result = await generate_grant_template(cfp_content=cfp_content_file.read_text(), organization_id=None)
+
+    elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
+    assert elapsed_time < 60
+
+    assert isinstance(template_result, dict)
+    assert "name" in template_result
+    assert "template" in template_result
+    assert "sections" in template_result
+
+    assert isinstance(template_result["name"], str)
+    assert len(template_result["name"]) > 0
+    assert isinstance(template_result["template"], str)
+    assert len(template_result["template"]) > 0
+
+    sections = template_result["sections"]
+    assert isinstance(sections, list)
+    assert len(sections) > 0
+
+    section_names = {s["name"] for s in sections}
+
+    for section in sections:
+        assert isinstance(section, dict)
+        assert all(key in section for key in ["name", "title", "instructions", "keywords", "depends_on"])
+
+        assert isinstance(section["name"], str)
+        assert isinstance(section["title"], str)
+        assert isinstance(section["instructions"], str)
+        assert len(section["name"]) > 0
+        assert len(section["title"]) > 0
+        assert len(section["instructions"]) > 0
+
+        assert isinstance(section["keywords"], list)
+        assert 3 <= len(section["keywords"]) <= 10
+        assert all(isinstance(k, str) for k in section["keywords"])
+        assert all(len(k) > 0 for k in section["keywords"])
+
+        assert isinstance(section["depends_on"], list)
+        assert all(isinstance(d, str) for d in section["depends_on"])
+
+        assert all(d in section_names for d in section["depends_on"])
+
+        assert section["name"] not in section["depends_on"]
+
+    for section_name in section_names:
+        content_placeholder = f"{{{{{section_name}.content}}}}"
+        assert content_placeholder in template_result["template"]
+
+        title_placeholder = f"{{{{{section_name}.title}}}}"
+        assert title_placeholder in template_result["template"]
+
+    results_file = RESULTS_FOLDER / f"grant_template_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file.write_bytes(serialize(template_result))
+
+    logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
+
+
+@pytest.mark.skipif(
+    not environ.get("E2E_TESTS"),
+    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
+)
+async def test_handle_generate_grant_template_with_rag(
+    logger: logging.Logger,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    nih_guidelines: None,
+) -> None:
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih-cfp.md"
+
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 

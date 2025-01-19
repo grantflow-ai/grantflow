@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 GRANT_TEMPLATE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="grant_template_generation",
     template="""
-Generate grant application template from CFP requirements.
+Generate application template from CFP requirements.
 
 Source data:
 <cfp_content>
@@ -51,9 +51,9 @@ ${rag_results}
 
 3. Keyword Selection
    Keywords must be:
-   - Specific to section scope
-   - Non-redundant across categories
-   - Technical rather than generic
+   - Extract relevant entities pertinent to the section scope
+   - Filter the entities to the most relevant
+   - Prefer highly specific keywords and avoid generic terms
    - Derived from CFP terminology
 
 4. Template Format
@@ -82,23 +82,22 @@ Output Format:
 }
 
 Requirements:
+- Template string must:
+  - Include required CFP section headers as fixed text
+  - Use {{section_name.title}} and {{section_name.content}} only for sections defined in the sections array
+  - Follow document hierarchy with proper markdown heading levels
+
+- The generation instructions should:
+  - Be detailed and cover any contents requirements
+  - Use the correct terminology
+  - Cover what kinds of topics should be covered - try to be exhaustive
+
 - Section Structure
   - Use unique identifiers
   - Provide clear generation instructions
   - Include domain-specific keywords
   - Specify word limits only if explicit in CFP
   - List linear dependencies in depends_on field
-
-- Content Organization
-  - Break down composite sections into atomic units
-  - Maintain logical content grouping
-  - Map linear section dependencies
-  - Preserve sequence relationships
-
-- Template string must:
-  - Include required CFP section headers as fixed text
-  - Use {{section_name.title}} and {{section_name.content}} only for sections defined in the sections array
-  - Follow document hierarchy with proper markdown heading levels
 
 Exclude:
 - Administrative processes
@@ -119,7 +118,7 @@ Example output:
             // Maps to {{specific_aims.title}} and {{specific_aims.content}}
             "name": "specific_aims",
             "title": "Specific Aims",
-            "instructions": "Define the key objectives...",
+            "instructions": "Define the key objectives...", // this is a markdown string and can be multiline.
             "keywords": ["imaging_resolution", "visualization_targets", "clinical_translation"],
             "depends_on": [],
             "max_words": 500

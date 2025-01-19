@@ -35,6 +35,7 @@ from src.db.tables import (
     GrantApplication,
     GrantApplicationFile,
     GrantTemplate,
+    OrganizationFile,
     RagFile,
     TextVector,
     Workspace,
@@ -462,10 +463,16 @@ def application_details() -> ApplicationDetails:
 
 
 async def parse_source_file(
-    application_id: str,
+    *,
+    application_id: str | None = None,
+    organization_id: str | None = None,
     source_file: Path,
     async_session_maker: async_sessionmaker[Any],
+    target_folder: Path,
 ) -> None:
+    if not application_id and not organization_id:
+        raise ValueError("Either application_id or organization_id must be provided")
+
     file_content = await AsyncPath(source_file).read_bytes()
     file_dto = FileDTO(
         content=file_content,
@@ -490,21 +497,33 @@ async def parse_source_file(
         )
         await session.execute(
             insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_file_id": file_id}])
+            if application_id
+            else insert(OrganizationFile).values([{"funding_organization_id": organization_id, "rag_file_id": file_id}])
         )
         await session.commit()
 
     await parse_and_index_file(file_dto=file_dto, file_id=str(file_id))
 
     async with async_session_maker() as session:
-        application_file_data = await session.scalar(
+        stmt = (
             select(GrantApplicationFile)
             .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
-            .where(GrantApplicationFile.grant_application_id == application_id)
             .where(GrantApplicationFile.rag_file_id == file_id)
         )
+        if application_id:
+            stmt = stmt.where(GrantApplicationFile.grant_application_id == application_id)
+        else:
+            stmt = stmt.where(OrganizationFile.funding_organization_id == organization_id)
+
+        file_datum = await session.scalar(stmt)
+
+    await AsyncPath(target_folder).mkdir(parents=True, exist_ok=True)
+
+    markdown_file = target_folder / source_file.name.replace("pdf", "md").replace("docx", "md")
+    markdown_file.write_bytes(file_content)
 
     filename = source_file.name.replace("pdf", "json").replace("docx", "json")
-    await AsyncPath(FIXTURES_FOLDER / application_id / "files" / filename).write_bytes(serialize(application_file_data))
+    await AsyncPath(target_folder / filename).write_bytes(serialize(file_datum))
 
 
 @pytest.fixture
@@ -575,7 +594,10 @@ async def full_application_id(
         await gather(
             *[
                 parse_source_file(
-                    application_id=str(application_id), source_file=source_file, async_session_maker=async_session_maker
+                    application_id=str(application_id),
+                    source_file=source_file,
+                    async_session_maker=async_session_maker,
+                    target_folder=FIXTURES_FOLDER / application_id / "files",
                 )
                 for source_file in TEST_DATA_SOURCES
             ]
@@ -622,3 +644,79 @@ async def full_application_id(
             await session.commit()
 
     return str(application_id)
+
+
+@pytest.fixture
+async def nih_guidelines(
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session:
+        result = await session.execute(select(FundingOrganization.id).where(FundingOrganization.abbreviation == "NIH"))
+        funding_organization_id = result.scalar_one()
+
+    data_fixture_folder = FIXTURES_FOLDER / "organization_files" / "nih" / "files"
+
+    if not data_fixture_folder.exists():
+        data_fixture_folder.mkdir(parents=True)
+
+    organization_files = list(data_fixture_folder.glob("*.json"))
+
+    if not list(organization_files):
+        source_folder = SOURCES_FOLDER / "guidelines" / "nih"
+        assert source_folder.exists(), f"Source folder {source_folder} does not exist"
+
+        sources = list(source_folder.glob("*.pdf"))
+        if not sources:
+            raise FileNotFoundError(f"No fixtures found in {source_folder}")
+
+        await gather(
+            *[
+                parse_source_file(
+                    organization_id=str(funding_organization_id),
+                    source_file=source_file,
+                    async_session_maker=async_session_maker,
+                    target_folder=data_fixture_folder,
+                )
+                for source_file in source_folder.glob("*.pdf")
+            ]
+        )
+
+    for organization_file in data_fixture_folder.glob("*.json"):
+        data = deserialize(organization_file.read_bytes(), dict[str, Any])
+        async with async_session_maker() as session:
+            rag_file_data = data.pop("rag_file")
+            rag_file_id = data.pop("rag_file_id")
+            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
+            await session.execute(
+                insert(RagFile).values(
+                    {
+                        "id": rag_file_id,
+                        **{
+                            k: v
+                            for k, v in rag_file_data.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
+                        },
+                    }
+                )
+            )
+            await session.execute(
+                insert(OrganizationFile).values(
+                    {
+                        "funding_organization_id": funding_organization_id,
+                        "rag_file_id": rag_file_id,
+                    }
+                )
+            )
+            await session.execute(
+                insert(TextVector).values(
+                    [
+                        {
+                            k: v
+                            for k, v in text_vector.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
+                        }
+                        for text_vector in text_vectors
+                    ]
+                )
+            )
+            await session.commit()
