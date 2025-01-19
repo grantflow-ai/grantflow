@@ -82,6 +82,8 @@ class GrantSection(TypedDict):
     """Minimum word count if specified."""
     max_words: NotRequired[int]
     """Maximum word count if specified."""
+    topics: list[str]
+    """Topics that the section covers."""
 
 
 class ApplicationDetails(TypedDict):

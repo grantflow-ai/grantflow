@@ -38,7 +38,7 @@ async def test_extract_cfp_data(
     logger.info("Running end-to-end test for extracting CFP data")
     start_time = datetime.now(UTC)
 
-    cfp_content_file = RESULTS_FOLDER / "nih-cfp.md"
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih-cfp.md"
     assert cfp_content_file.exists(), "CFP content file does not exist"
 
     result = await extract_cfp_data(
@@ -89,7 +89,7 @@ async def test_pipeline_flow(
     logger.info("Running end-to-end test for full grant template pipeline")
     pipeline_start = datetime.now(UTC)
 
-    cfp_content_file = RESULTS_FOLDER / "nih-cfp.md"
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih-cfp.md"
     assert cfp_content_file.exists(), "CFP content file does not exist"
     cfp_content = cfp_content_file.read_text()
 
@@ -152,6 +152,7 @@ async def test_handle_generate_grant_template_without_rag(
     assert "template" in template_result
     assert "sections" in template_result
 
+    assert "::research_plan::" in template_result["template"]
     assert isinstance(template_result["name"], str)
     assert len(template_result["name"]) > 0
     assert isinstance(template_result["template"], str)
@@ -182,7 +183,7 @@ async def test_handle_generate_grant_template_without_rag(
         assert isinstance(section["depends_on"], list)
         assert all(isinstance(d, str) for d in section["depends_on"])
 
-        assert all(d in section_names for d in section["depends_on"])
+        assert all((d in {"::research_plan::", "researc_plan", *section_names}) for d in section["depends_on"])
 
         assert section["name"] not in section["depends_on"]
 

@@ -214,6 +214,9 @@ async def handle_completions_request[T](
 
             This is the error:
             {e!s}
+
+            Following are the original messages sent to the model, which may help you identify the issue.
+            Address the errors and return corrected content
             """
 
             response = None
@@ -224,6 +227,9 @@ async def handle_completions_request[T](
 
             This is the error:
             {e!s}
+
+            Following are the original messages sent to the model, which may help you identify the issue.
+            Address the errors and return corrected content
             """
 
     raise ValidationError(f"Failed to generate text after {max_attempts} attempts.")
