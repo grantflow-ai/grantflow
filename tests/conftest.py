@@ -516,11 +516,9 @@ async def parse_source_file(
             stmt = stmt.where(OrganizationFile.funding_organization_id == organization_id)
 
         file_datum = await session.scalar(stmt)
+        assert file_datum is not None, f"File {source_file} not found in the database"
 
     await AsyncPath(target_folder).mkdir(parents=True, exist_ok=True)
-
-    markdown_file = target_folder / source_file.name.replace("pdf", "md").replace("docx", "md")
-    markdown_file.write_bytes(file_content)
 
     filename = source_file.name.replace("pdf", "json").replace("docx", "json")
     await AsyncPath(target_folder / filename).write_bytes(serialize(file_datum))
