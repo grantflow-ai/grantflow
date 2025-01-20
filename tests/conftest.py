@@ -548,11 +548,7 @@ async def full_application_id(
         )
         await session.commit()
 
-    data_fixture_folder = FIXTURES_FOLDER / fixture_id
-    if not data_fixture_folder.exists():
-        data_fixture_folder.mkdir(parents=True)
-
-    cfp_content_file = data_fixture_folder / "cfp_content.md"
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "melanoma_alliance_cfp.md"
     if not cfp_content_file.exists():
         cfp_file = SOURCES_FOLDER / "cfps" / "MRA-2023-2024-RFP-Final.pdf"
 
@@ -562,6 +558,10 @@ async def full_application_id(
         )
         content = output if isinstance(output, str) else output["content"]
         cfp_content_file.write_text(content)
+
+    data_fixture_folder = FIXTURES_FOLDER / fixture_id
+    if not data_fixture_folder.exists():
+        data_fixture_folder.mkdir(parents=True)
 
     grant_template_file = data_fixture_folder / "grant_template.json"
     if not grant_template_file.exists():

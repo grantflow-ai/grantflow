@@ -71,7 +71,7 @@ async def test_generate_research_plan(
 
     result_folder = RESULTS_FOLDER / full_application_id
     result_folder.mkdir(parents=True, exist_ok=True)
-    result_file = result_folder / f"research_plan_text_{datetime.now(UTC).timestamp()}.json"
+    result_file = result_folder / f"research_plan_text_{datetime.now(UTC).timestamp()}.md"
     result_file.write_text(research_plan_text)
 
     logger.info("Completed research plan generation test in %.2f seconds", elapsed_time)
@@ -110,7 +110,7 @@ async def test_generate_research_task(
 
     result_folder = RESULTS_FOLDER / full_application_id
     result_folder.mkdir(parents=True, exist_ok=True)
-    result_file = result_folder / f"research_task_text_{datetime.now(UTC).timestamp()}.json"
+    result_file = result_folder / f"research_task_text_{datetime.now(UTC).timestamp()}.md"
     result_file.write_text(task_text)
 
     logger.info("Completed research task generation test in %.2f seconds with %d words", elapsed_time, word_count)
@@ -159,7 +159,7 @@ async def test_generate_risks_and_mitigations(
 
     result_folder = RESULTS_FOLDER / full_application_id
     result_folder.mkdir(parents=True, exist_ok=True)
-    result_file = result_folder / f"risks_mitigations_text_{datetime.now(UTC).timestamp()}.json"
+    result_file = result_folder / f"risks_mitigations_text_{datetime.now(UTC).timestamp()}.md"
     result_file.write_text(risks_text)
 
     logger.info("Completed risks and mitigations test in %.2f seconds with %d words", elapsed_time, word_count)
@@ -202,7 +202,7 @@ async def test_set_relation_data(
 
     result_folder = RESULTS_FOLDER / "relations"
     result_folder.mkdir(exist_ok=True)
-    result_file = result_folder / f"relations_data_{datetime.now(UTC).timestamp()}.json"
+    result_file = result_folder / f"relations_data_{datetime.now(UTC).timestamp()}.md"
     result_file.write_text(serialize(enriched_objectives).decode())
 
     total_relationships = sum(
@@ -258,7 +258,7 @@ async def test_generate_preliminary_data(
 
     result_folder = RESULTS_FOLDER / full_application_id
     result_folder.mkdir(parents=True, exist_ok=True)
-    result_file = result_folder / f"preliminary_data_text_{datetime.now(UTC).timestamp()}.json"
+    result_file = result_folder / f"preliminary_data_text_{datetime.now(UTC).timestamp()}.md"
     result_file.write_text(prelim_text)
 
     logger.info("Completed preliminary data generation test in %.2f seconds with %d words", elapsed_time, word_count)
@@ -295,7 +295,7 @@ async def test_generate_research_objective(
 
     result_folder = RESULTS_FOLDER / full_application_id
     result_folder.mkdir(parents=True, exist_ok=True)
-    result_file = result_folder / f"research_objective_text_{datetime.now(UTC).timestamp()}.json"
+    result_file = result_folder / f"research_objective_text_{datetime.now(UTC).timestamp()}.md"
     result_file.write_text(objective_text)
 
     logger.info("Completed research objective generation test in %.2f seconds with %d words", elapsed_time, word_count)
