@@ -6,8 +6,8 @@ import { ToastListener } from "@/components/toast-listener";
 import { getEnv } from "@/utils/env";
 import { fontSans } from "@/utils/fonts";
 import { Analytics } from "@vercel/analytics/next";
-import { cn } from "gen/cn";
-import { Toaster } from "gen/ui/sonner";
+import { cn } from "@/utils/cn";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { ReactNode, Suspense } from "react";
 

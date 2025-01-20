@@ -1,6 +1,6 @@
 import { formatBytes } from "@/utils/format";
-import { cn } from "gen/cn";
-import { Button } from "gen/ui/button";
+import { cn } from "@/utils/cn";
+import { Button } from "@/components/ui/button";
 import { Paperclip, Upload } from "lucide-react";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";

@@ -1,8 +1,8 @@
 "use client";
 import { PagePath } from "@/enums";
 import { ApplicationBase } from "@/types/api-types";
-import { Badge } from "gen/ui/badge";
-import { Card, CardContent } from "gen/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight, FileText } from "lucide-react";
 import Link from "next/link";
 

@@ -1,7 +1,7 @@
 import { SubmitButton } from "@/components/submit-button";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
-import { Input } from "gen/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
