@@ -6,7 +6,7 @@ import { ToastListener } from "@/components/toast-listener";
 import { getEnv } from "@/utils/env";
 import { fontSans } from "@/utils/fonts";
 import { Analytics } from "@vercel/analytics/next";
-import { utils } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { ReactNode, Suspense } from "react";
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				<link href="https://use.typekit.net/get1yhn.css" rel="stylesheet" />
 				<link href="/favicon.ico" rel="icon" sizes="any" />
 			</head>
-			<body className={utils("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
+			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
 					<main
 						className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"

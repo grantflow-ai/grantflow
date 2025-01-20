@@ -1,10 +1,10 @@
-import { formatBytes } from "@/utils/format";
-import { utils } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Upload } from "lucide-react";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { formatBytes } from "@/utils/format";
 
 const DEFAULT_FILE_ACCEPTS = {
 	"application/csv": [".csv"],
@@ -105,11 +105,12 @@ export function FileUploader({
 		return (
 			<div
 				{...getRootProps()}
-				className={utils(
+				className={cn(
 					"p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors",
 					isDragActive ? "border-primary bg-primary/10" : "border-input hover:border-primary",
 					currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed",
 				)}
+				data-testid="file-dropzone"
 			>
 				<input {...getInputProps()} />
 				<Upload className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -144,7 +145,8 @@ export function FileUploader({
 			/>
 			<Button
 				asChild
-				className={utils("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
+				className={cn("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
+				data-testid="upload-files-button"
 				size="sm"
 				variant="outline"
 			>
