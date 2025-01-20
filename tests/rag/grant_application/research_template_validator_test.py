@@ -132,7 +132,7 @@ def test_invalid_section_references(section_name: str, section_content: str) -> 
 def test_section_field_validation(section_field: str, invalid_value: Any) -> None:
     """Test validation of various section fields."""
     template = create_valid_template()
-    template["sections"][0][section_field] = invalid_value
+    template["sections"][0][section_field] = invalid_value  # type: ignore[literal-required]
     with pytest.raises(ValidationError):
         validator(template)
 
@@ -156,7 +156,7 @@ def test_word_count_constraints(min_words: int, max_words: int) -> None:
 @pytest.mark.parametrize("required_field", ["name", "template", "sections"])
 def test_missing_required_fields(required_field: str) -> None:
     template = create_valid_template()
-    del template[required_field]
+    del template[required_field]  # type: ignore[misc]
     with pytest.raises(ValidationError):
         validator(template)
 
@@ -166,7 +166,7 @@ def test_missing_required_fields(required_field: str) -> None:
 )
 def test_missing_required_section_fields(required_section_field: str) -> None:
     template = create_valid_template()
-    del template["sections"][0][required_section_field]
+    del template["sections"][0][required_section_field]  # type: ignore[misc]
     with pytest.raises(ValidationError):
         validator(template)
 

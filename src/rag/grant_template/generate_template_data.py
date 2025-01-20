@@ -214,7 +214,7 @@ response_schema = {
 }
 
 
-def validator(tool_response: GrantTemplateDTO) -> None:
+def validator(tool_response: GrantTemplateDTO) -> None:  # noqa: C901, PLR0912, PLR0915
     """Validate the tool response.
 
     Args:
@@ -223,6 +223,7 @@ def validator(tool_response: GrantTemplateDTO) -> None:
     Raises:
         ValidationError: If the response is invalid.
     """
+    # TODO: refactor this function to reduce complexity
     errors: list[str] = []
     try:
         validate(
