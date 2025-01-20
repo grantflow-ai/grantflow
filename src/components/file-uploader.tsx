@@ -1,5 +1,5 @@
 import { formatBytes } from "@/utils/format";
-import { cn } from "@/utils/cn";
+import { utils } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Upload } from "lucide-react";
 import React, { useCallback } from "react";
@@ -105,7 +105,7 @@ export function FileUploader({
 		return (
 			<div
 				{...getRootProps()}
-				className={cn(
+				className={utils(
 					"p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors",
 					isDragActive ? "border-primary bg-primary/10" : "border-input hover:border-primary",
 					currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed",
@@ -144,7 +144,7 @@ export function FileUploader({
 			/>
 			<Button
 				asChild
-				className={cn("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
+				className={utils("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
 				size="sm"
 				variant="outline"
 			>

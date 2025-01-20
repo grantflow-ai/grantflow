@@ -1,6 +1,6 @@
 import { ResearchTaskForm } from "@/components/workspaces/detail/applications/research-tasks-form";
 import { GrantApplicationFormValues, MIN_TITLE_LENGTH } from "@/components/workspaces/detail/applications/schema";
-import { cn } from "@/utils/cn";
+import { utils } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -92,7 +92,7 @@ export function ResearchAimForm({
 								{field.value && (
 									<p
 										aria-live="polite"
-										className={cn(
+										className={utils(
 											"text-xs text-muted-foreground transition-colors duration-200",
 											field.value.length < MIN_TITLE_LENGTH && "text-red-500",
 											field.value.length >= MIN_TITLE_LENGTH &&
@@ -167,7 +167,7 @@ export function ResearchAimForm({
 								{field.value && (
 									<p
 										aria-live="polite"
-										className={cn(
+										className={utils(
 											"text-xs text-muted-foreground transition-colors duration-200",
 											"text-green-500",
 										)}
@@ -239,7 +239,7 @@ export function ResearchAimForm({
 								{field.value && (
 									<p
 										aria-live="polite"
-										className={cn(
+										className={utils(
 											"text-xs text-muted-foreground transition-colors duration-200",
 											"text-green-500",
 										)}
@@ -313,7 +313,7 @@ export function ResearchAimForm({
 								{field.value && (
 									<p
 										aria-live="polite"
-										className={cn(
+										className={utils(
 											"text-xs text-muted-foreground transition-colors duration-200",
 											"text-green-500",
 										)}
