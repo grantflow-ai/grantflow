@@ -1,4 +1,4 @@
-import { utils } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
@@ -6,7 +6,7 @@ export function SubmitButton({ children, className = "", isLoading, ...props }: 
 	return (
 		<Button
 			aria-busy={isLoading}
-			className={utils(
+			className={cn(
 				className,
 				"disabled:text-muted-foreground-400 disabled:cursor-not-allowed invalid:text-destructive-400 invalid:cursor-not-allowed",
 			)}
