@@ -1,7 +1,6 @@
 "use client";
 import { getApplicationText } from "@/actions/api";
 import { Loader } from "@/components/loader";
-import { EditorContainer } from "@/components/workspaces/detail/applications/detail/editor-container";
 import { Application, ApplicationDraftResponse } from "@/types/api-types";
 import { useEffect, useState } from "react";
 
@@ -19,9 +18,7 @@ export function ApplicationWorkspace({ application, workspaceId }: { application
 
 	return (
 		<div className="flex gap-4" data-testid="application-workspace">
-			{draftText ? (
-				<EditorContainer application={application} draftText={draftText} />
-			) : (
+			{draftText ?? (
 				<div className="flex flex-col justify-center w-full h-full gap-2">
 					<div className="space-y-2 flex justify-center text-lg font-semibold italic pt-10">
 						<span>Generating draft... Grab a coffee, this will take a few minutes. </span>

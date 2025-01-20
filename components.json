@@ -1,8 +1,8 @@
 {
 	"$schema": "https://ui.shadcn.com/schema.json",
 	"aliases": {
-		"components": "gen",
-		"utils": "gen"
+		"components": "src/components",
+		"utils": "src/utils"
 	},
 	"rsc": true,
 	"style": "default",

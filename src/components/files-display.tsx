@@ -1,6 +1,6 @@
 import { ApplicationFile } from "@/types/api-types";
 import { formatBytes } from "@/utils/format";
-import { Button } from "gen/ui/button";
+import { Button } from "@/components/ui/button";
 import { FileTextIcon, X } from "lucide-react";
 
 export function FileCard({ file, handleRemoveFile }: { file: ApplicationFile | File; handleRemoveFile: () => void }) {

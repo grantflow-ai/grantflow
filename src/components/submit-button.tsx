@@ -1,5 +1,5 @@
-import { cn } from "gen/cn";
-import { Button, type ButtonProps } from "gen/ui/button";
+import { cn } from "@/utils/cn";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 export function SubmitButton({ children, className = "", isLoading, ...props }: { isLoading?: boolean } & ButtonProps) {

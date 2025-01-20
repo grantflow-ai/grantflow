@@ -1,7 +1,7 @@
 import { FileUploader } from "@/components/file-uploader";
 import { FilesDisplay } from "@/components/files-display";
 import { GrantApplicationFormValues } from "@/components/workspaces/detail/applications/schema";
-import { FormControl, FormField, FormItem } from "gen/ui/form";
+import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useCallback } from "react";
 import { UseFormReturn } from "react-hook-form";
 

@@ -10,7 +10,7 @@ import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { logError } from "@/utils/logging";
 import { GoogleAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "gen/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useState } from "react";
 import { toast } from "sonner";

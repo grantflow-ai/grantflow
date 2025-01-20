@@ -1,11 +1,11 @@
 import { GrantApplicationFormValues, MIN_TITLE_LENGTH } from "@/components/workspaces/detail/applications/schema";
-import { cn } from "gen/cn";
-import { Button } from "gen/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "gen/ui/collapsible";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "gen/ui/form";
-import { Input } from "gen/ui/input";
-import { Textarea } from "gen/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "gen/ui/tooltip";
+import { cn } from "@/utils/cn";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChevronDown, ChevronUp, HelpCircle, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
