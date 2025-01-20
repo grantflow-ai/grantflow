@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeToggle } from "@/components/theme-toggle";
-import { cn } from "@/utils/cn";
+import { utils } from "@/lib/utils";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -43,7 +43,7 @@ export function Navbar() {
 
 	return (
 		<nav
-			className={cn(
+			className={utils(
 				"w-full",
 				"border-b border-gray-200 dark:border-gray-700",
 				"bg-white dark:bg-secondary",

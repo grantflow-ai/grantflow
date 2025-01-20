@@ -1,6 +1,6 @@
 import { GrantApplicationFormValues } from "@/components/workspaces/detail/applications/schema";
 import { GrantCfp } from "@/types/api-types";
-import { cn } from "@/utils/cn";
+import { utils } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -112,7 +112,7 @@ export function ApplicationDetailsForm({
 													>
 														<Check
 															aria-hidden="true"
-															className={cn(
+															className={utils(
 																"mr-2 h-4 w-4",
 																field.value === cfp.id ? "opacity-100" : "opacity-0",
 															)}
@@ -183,7 +183,7 @@ export function ApplicationDetailsForm({
 						{field.value && (
 							<p
 								aria-live="polite"
-								className={cn(
+								className={utils(
 									"text-xs text-muted-foreground transition-colors duration-200",
 									field.value.length < 10 && "text-red-500",
 									field.value.length >= 10 && field.value.length <= 255 && "text-green-500",
@@ -263,7 +263,7 @@ export function ApplicationDetailsForm({
 						{field.value && (
 							<p
 								aria-live="polite"
-								className={cn(
+								className={utils(
 									"text-xs text-muted-foreground transition-colors duration-200",
 									"text-green-500",
 								)}
@@ -338,7 +338,7 @@ export function ApplicationDetailsForm({
 						{field.value && (
 							<p
 								aria-live="polite"
-								className={cn(
+								className={utils(
 									"text-xs text-muted-foreground transition-colors duration-200",
 									"text-green-500",
 								)}
