@@ -2,7 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 
-import { cn } from "@/utils/cn";
+import { utils } from "@/lib/utils";
 
 const Breadcrumb = React.forwardRef<
 	HTMLElement,
@@ -15,7 +15,7 @@ Breadcrumb.displayName = "Breadcrumb";
 const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWithoutRef<"ol">>(
 	({ className, ...props }, ref) => (
 		<ol
-			className={cn(
+			className={utils(
 				"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5",
 				className,
 			)}
@@ -28,7 +28,7 @@ BreadcrumbList.displayName = "BreadcrumbList";
 
 const BreadcrumbItem = React.forwardRef<HTMLLIElement, React.ComponentPropsWithoutRef<"li">>(
 	({ className, ...props }, ref) => (
-		<li className={cn("inline-flex items-center gap-1.5", className)} ref={ref} {...props} />
+		<li className={utils("inline-flex items-center gap-1.5", className)} ref={ref} {...props} />
 	),
 );
 BreadcrumbItem.displayName = "BreadcrumbItem";
@@ -41,7 +41,7 @@ const BreadcrumbLink = React.forwardRef<
 >(({ asChild, className, ...props }, ref) => {
 	const Comp = asChild ? Slot : "a";
 
-	return <Comp className={cn("transition-colors hover:text-foreground", className)} ref={ref} {...props} />;
+	return <Comp className={utils("transition-colors hover:text-foreground", className)} ref={ref} {...props} />;
 });
 BreadcrumbLink.displayName = "BreadcrumbLink";
 
@@ -50,7 +50,7 @@ const BreadcrumbPage = React.forwardRef<HTMLSpanElement, React.ComponentPropsWit
 		<span
 			aria-current="page"
 			aria-disabled="true"
-			className={cn("font-normal text-foreground", className)}
+			className={utils("font-normal text-foreground", className)}
 			ref={ref}
 			role="link"
 			{...props}
@@ -60,7 +60,7 @@ const BreadcrumbPage = React.forwardRef<HTMLSpanElement, React.ComponentPropsWit
 BreadcrumbPage.displayName = "BreadcrumbPage";
 
 const BreadcrumbSeparator = ({ children, className, ...props }: React.ComponentProps<"li">) => (
-	<li aria-hidden="true" className={cn("[&>svg]:w-3.5 [&>svg]:h-3.5", className)} role="presentation" {...props}>
+	<li aria-hidden="true" className={utils("[&>svg]:w-3.5 [&>svg]:h-3.5", className)} role="presentation" {...props}>
 		{children ?? <ChevronRight />}
 	</li>
 );
@@ -69,7 +69,7 @@ BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => (
 	<span
 		aria-hidden="true"
-		className={cn("flex h-9 w-9 items-center justify-center", className)}
+		className={utils("flex h-9 w-9 items-center justify-center", className)}
 		role="presentation"
 		{...props}
 	>

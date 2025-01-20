@@ -1,5 +1,5 @@
 import { GrantApplicationFormValues, MIN_TITLE_LENGTH } from "@/components/workspaces/detail/applications/schema";
-import { cn } from "@/utils/cn";
+import { utils } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -76,7 +76,7 @@ export function ResearchTaskForm({
 								{field.value && (
 									<p
 										aria-live="polite"
-										className={cn(
+										className={utils(
 											"text-xs text-muted-foreground transition-colors duration-200",
 											field.value.length < 5 && "text-red-500",
 											field.value.length >= 5 && field.value.length <= 255 && "text-green-500",
@@ -138,7 +138,7 @@ export function ResearchTaskForm({
 								{field.value && (
 									<p
 										aria-live="polite"
-										className={cn(
+										className={utils(
 											"text-xs text-muted-foreground transition-colors duration-200",
 											"text-green-500",
 										)}
