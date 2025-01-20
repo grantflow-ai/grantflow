@@ -9,7 +9,6 @@ import {
 	ApplicationId,
 	CreateApplicationRequestBody,
 	CreateWorkspaceRequestBody,
-	GrantCfp,
 	LoginRequestBody,
 	LoginResponse,
 	OTPResponse,
@@ -137,18 +136,6 @@ export async function getApplicationText(workspaceId: string, applicationId: str
 				headers: await createAuthHeaders(),
 			})
 			.json<ApplicationDraftResponse>(),
-	);
-}
-
-/**
- * Retrieve all available Call for Proposals (CFPs).
- * @returns Promise containing an array of grant CFPs
- */
-export async function getCfps() {
-	return withAuthRedirect(
-		getClient()
-			.get("cfps", { headers: await createAuthHeaders() })
-			.json<GrantCfp[]>(),
 	);
 }
 
