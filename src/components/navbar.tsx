@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeToggle } from "@/components/theme-toggle";
-import { cn } from "gen/cn";
+import { cn } from "@/utils/cn";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -9,7 +9,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbPage,
 	BreadcrumbSeparator,
-} from "gen/ui/breadcrumb";
+} from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 

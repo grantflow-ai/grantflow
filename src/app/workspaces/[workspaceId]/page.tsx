@@ -3,7 +3,7 @@
 import { getWorkspace } from "@/actions/api";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
-import { Button } from "gen/ui/button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {

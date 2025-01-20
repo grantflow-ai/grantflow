@@ -1,8 +1,8 @@
 import { UserRole } from "@/constants";
 import { PagePath } from "@/enums";
 import { WorkspaceBase } from "@/types/api-types";
-import { Badge } from "gen/ui/badge";
-import { Card, CardContent } from "gen/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 

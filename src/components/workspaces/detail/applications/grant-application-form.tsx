@@ -13,9 +13,9 @@ import { ApplicationId, CreateApplicationRequestBody, GrantCfp } from "@/types/a
 import { getClient } from "@/utils/api-client";
 import { logError } from "@/utils/logging";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "gen/ui/button";
-import { Form } from "gen/ui/form";
-import { TooltipProvider } from "gen/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
