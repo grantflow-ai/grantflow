@@ -57,8 +57,8 @@ async def test_make_completions_request_with_retry(
     mock_client: AsyncMock,
 ) -> None:
     mock_client.generate_content_async.side_effect = [
-        TooManyRequests("error"),
-        TooManyRequests("error"),
+        TooManyRequests("error"),  # type: ignore[no-untyped-call]
+        TooManyRequests("error"),  # type: ignore[no-untyped-call]
         Mock(text='{"key": "value"}'),
     ]
 

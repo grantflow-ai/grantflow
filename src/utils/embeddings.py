@@ -1,5 +1,5 @@
 from enum import StrEnum
-from itertools import batched, chain
+from itertools import batched
 
 from google.api_core.exceptions import GoogleAPIError
 from vertexai.language_models import TextEmbeddingInput
@@ -21,7 +21,7 @@ class TaskType(StrEnum):
 
 
 @with_exponential_backoff_retry(ExternalOperationError)
-async def get_embeddings(inputs: list[TextEmbeddingInput]) -> list[float]:
+async def get_embeddings(inputs: list[TextEmbeddingInput]) -> list[list[float]]:
     """Get embeddings for the given text.
 
     Args:
@@ -40,13 +40,13 @@ async def get_embeddings(inputs: list[TextEmbeddingInput]) -> list[float]:
             output_dimensionality=EMBEDDING_DIMENSIONS,
         )
         logger.info("Successfully generated embeddings")
-        return list(chain(*[embedding.values for embedding in embeddings]))
+        return [embedding.values for embedding in embeddings]
     except GoogleAPIError as e:
         logger.error("Failed to get embeddings due to an API error.", exec_info=e)
         raise ExternalOperationError(message="Failed to get embeddings", context=str(e)) from e
 
 
-async def generate_embeddings(inputs: str | list[str], task: TaskType) -> list[float]:
+async def generate_embeddings(inputs: str | list[str], task: TaskType) -> list[list[float]]:
     """Generate embeddings for the given text using the specified model.
 
     Args:
@@ -59,7 +59,7 @@ async def generate_embeddings(inputs: str | list[str], task: TaskType) -> list[f
     if not isinstance(inputs, list):
         inputs = [inputs]
 
-    ret: list[float] = []
+    ret: list[list[float]] = []
     for batch in batched(inputs, 100):
         result = await get_embeddings([TextEmbeddingInput(text=text, task_type=task) for text in batch])
         ret.extend(result)

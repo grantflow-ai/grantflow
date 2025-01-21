@@ -1,16 +1,13 @@
-from __future__ import annotations
-
 from textwrap import dedent
-from typing import TYPE_CHECKING, Final, TypedDict
+from typing import Any, Final, TypedDict
+
+from prompt_template import PromptTemplate as _PromptTemplate
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.serialization import serialize
-
-if TYPE_CHECKING:
-    from prompt_template import PromptTemplate as _PromptTemplate
 
 logger = get_logger(__name__)
 
@@ -79,25 +76,24 @@ response_schema = {
 }
 
 
-async def handle_create_search_queries(
-    *, user_prompt: str | _PromptTemplate, search_queries: list[str] | None = None
-) -> list[str]:
+async def handle_create_search_queries(*, user_prompt: str | _PromptTemplate, **kwargs: Any) -> list[str]:
     """Generate an optimized search query for retrieval.
 
     Args:
         user_prompt: The description of the next task in the RAG pipeline.
-        search_queries: The previously generated search queries.
+        **kwargs: Additional kwarg to inject into the template. If provided these are lists of strings, which
+            should be regarded as keywords and other related metadata.
 
     Returns:
         The generated search queries, the total number of tokens, and the total billable characters.
     """
     messages = [SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
-    if search_queries:
+    if kwargs:
         messages.append(
             dedent(f"""
-        Here are previously generated search queries that you can use as a starting point:
+        Here are additional values to factor in - these values should be regarded as metadata for the task.
 
-        {serialize(search_queries).decode()}
+        {serialize(kwargs).decode()}
         """)
         )
 
