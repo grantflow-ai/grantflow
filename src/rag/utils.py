@@ -1,6 +1,5 @@
 from collections.abc import Callable
-from time import time
-from typing import Any, Final, TypedDict
+from typing import Any, Final
 
 from google.cloud.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
@@ -9,14 +8,12 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
     Part,
 )
 
-from src.constants import CONTENT_TYPE_JSON, PREMIUM_TEXT_GENERATION_MODEL
+from src.constants import CONTENT_TYPE_JSON, FAST_TEXT_GENERATION_MODEL, PREMIUM_TEXT_GENERATION_MODEL
 from src.exceptions import DeserializationError, ValidationError
 from src.utils.ai import get_google_ai_client
 from src.utils.logger import get_logger
-from src.utils.prompt_template import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
 from src.utils.serialization import deserialize, serialize
-from src.utils.text import concatenate_segments_with_spacy_coherence, normalize_markdown
 
 logger = get_logger(__name__)
 
@@ -39,65 +36,6 @@ When generating text, strictly follow these guidelines:
 """
 
 
-SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS: Final[str] = """
-## Output
-
-Respond with a valid JSON object containing the generated text and a boolean value indicating
-whether the research aim text is complete or not. Example:
-
-```jsonc
-{
-    "text": "The generated text",
-    "is_complete": true // false if the text is not complete and requires further generation
-}
-
-**Important**:
-    - if the text is complete but information is missing, is_complete should be true.
-```
-"""
-
-CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[PromptTemplate] = PromptTemplate(
-    name="consecutive_part_generation",
-    template="""
-Here is the last segment of text that was generated:
-
-<last_generation_result>
-${last_generation_result}
-</last_generation_result>
-
-Instructions:
-1. Analyze the provided text segment, focusing on its content, style, and end point.
-2. Continue the grant application writing from exactly where the previous segment ends.
-3. Maintain consistency in style, tone, and context with the original text.
-4. Avoid repeating information already presented in the previous segment.
-""",
-)
-
-SEGMENTED_GENERATION_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "text": {
-            "type": "string",
-            "description": "The output text that was generated",
-        },
-        "is_complete": {
-            "type": "boolean",
-            "description": "Whether the text is complete or requires further prompts for generation",
-        },
-    },
-    "required": ["text", "is_complete"],
-}
-
-
-class SegmentedToolGenerationToolResponse(TypedDict):
-    """The response from the segmented generation tool."""
-
-    text: str
-    """The generated text."""
-    is_complete: bool
-    """Whether the text is complete or not."""
-
-
 def _default_validator[T](_: T) -> None:
     return None
 
@@ -105,7 +43,7 @@ def _default_validator[T](_: T) -> None:
 @with_exponential_backoff_retry(TooManyRequests)
 async def make_completions_request[T](
     *,
-    model: str,
+    model: str = FAST_TEXT_GENERATION_MODEL,
     prompt_identifier: str,
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
@@ -145,10 +83,7 @@ async def make_completions_request[T](
     ]
     response = await client.generate_content_async(
         contents=contents,
-        generation_config=GenerationConfig(
-            response_mime_type=CONTENT_TYPE_JSON,
-            response_schema=response_schema or SEGMENTED_GENERATION_SCHEMA,
-        ),
+        generation_config=GenerationConfig(response_mime_type=CONTENT_TYPE_JSON, response_schema=response_schema),
     )
     logger.debug("Received content from model.", text=response.text)
     return deserialize(response.text, response_type)
@@ -233,62 +168,3 @@ async def handle_completions_request[T](
             """
 
     raise ValidationError(f"Failed to generate text after {max_attempts} attempts.")
-
-
-async def handle_segmented_text_generation(
-    *,
-    prompt_identifier: str = "",
-    messages: str | Part | list[str | Part],
-) -> str:
-    """Handle the generation of segmented text.
-
-    Args:
-        prompt_identifier: The identifier of the entity to generate text for.
-        messages: The messages to send to the model.
-
-    Returns:
-        The generated text.
-    """
-    results: list[str] = []
-
-    parts: list[str] = [Part.from_text(SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS)]
-    if isinstance(messages, str):
-        parts.append(Part.from_text(messages))
-    else:
-        parts.extend([Part.from_text(message) if isinstance(message, str) else message for message in messages])
-
-    api_call_num = 1
-
-    logger.info("Generating text", entity_identifier=prompt_identifier)
-    start_time = time()
-    while api_call_num < 20:
-        last_generation_result = results[-1] if results else None
-
-        response = await handle_completions_request(
-            prompt_identifier=prompt_identifier,
-            system_prompt=DEFAULT_SYSTEM_PROMPT,
-            response_schema=SEGMENTED_GENERATION_SCHEMA,
-            messages=[
-                *([messages] if isinstance(messages, str) else messages),
-                SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
-                CONSECUTIVE_PART_GENERATION_INSTRUCTIONS.to_string(last_generation_result=last_generation_result),
-            ]
-            if last_generation_result
-            else parts,
-            response_type=SegmentedToolGenerationToolResponse,
-        )
-
-        results.append(response["text"])
-
-        api_call_num += 1
-        if response["is_complete"]:
-            break
-
-    logger.info(
-        "Generated text",
-        prompt_identifier=prompt_identifier,
-        api_call_num=api_call_num,
-        generation_duration=int(time() - start_time),
-    )
-
-    return normalize_markdown(concatenate_segments_with_spacy_coherence(results))
