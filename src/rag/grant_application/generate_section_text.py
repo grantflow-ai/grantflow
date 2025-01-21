@@ -2,7 +2,7 @@ from typing import Final
 
 from src.db.json_objects import GrantSection
 from src.rag.retrieval import retrieve_documents
-from src.rag.utils import handle_segmented_text_generation
+from src.rag.segmented_tool_generation import handle_segmented_text_generation
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -83,7 +83,7 @@ async def handle_section_text_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="generate_section_text",
-        messages=user_prompt.to_string(rag_results=rag_results),
+        user_prompt=user_prompt.to_string(rag_results=rag_results),
     )
     logger.debug("Successfully generated section text.", grant_section=grant_section, text=result)
     return result
