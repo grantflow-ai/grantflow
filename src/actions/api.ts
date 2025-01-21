@@ -3,19 +3,22 @@
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
 import {
-	Application,
-	ApplicationBase,
 	ApplicationDraftResponse,
-	ApplicationId,
-	CreateApplicationRequestBody,
+	CreateOrganizationRequestBody,
 	CreateWorkspaceRequestBody,
+	FundingOrganization,
+	GrantApplication,
+	GrantApplicationFile,
 	LoginRequestBody,
 	LoginResponse,
+	OrganizationFile,
 	OTPResponse,
+	TableIdResponse,
 	UpdateApplicationRequestBody,
+	UpdateOrganizationRequestBody,
 	UpdateWorkspaceRequestBody,
 	Workspace,
-	WorkspaceBase,
+	WorkspaceBaseResponse,
 } from "@/types/api-types";
 import { getClient } from "@/utils/api-client";
 import { getEnv } from "@/utils/env";
@@ -32,36 +35,6 @@ const createAuthHeaders = async () => {
 	return { Authorization: `Bearer ${cookie.value}` };
 };
 
-/**
- * 	Handle the login process.
- *
- * 	1. Send the ID token to the backend.
- * 	2. Receive a signed JWT token.
- * 	3. Set the JWT token in a secure, HTTP-only cookie.
- *
- * 	@param idToken - The ID token.
- */
-export async function login(idToken: string) {
-	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
-	const requestBody = { id_token: idToken } satisfies LoginRequestBody;
-
-	console.log(`sending loging request to ${loginUrl} with ${JSON.stringify(requestBody)}`);
-	const { jwt_token } = await getClient().post(loginUrl, { json: requestBody }).json<LoginResponse>();
-
-	const cookieStore = await cookies();
-
-	cookieStore.set({
-		httpOnly: true,
-		maxAge: 60 * 60 * 24 * 7,
-		name: SESSION_COOKIE,
-		sameSite: "strict",
-		secure: getEnv().NEXT_PUBLIC_SITE_URL.startsWith("https"),
-		value: jwt_token,
-	});
-
-	redirect(PagePath.WORKSPACES);
-}
-
 const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 	try {
 		return await promise;
@@ -73,61 +46,115 @@ const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 	}
 };
 
+// Application endpoints
 /**
- * Create a new grant application within a workspace.
- * @param workspaceId - The unique identifier of the workspace
- * @param data - The grant application creation request data
- * @returns Promise containing the created grant application
+ *
  */
-export async function createApplication(workspaceId: string, data: CreateApplicationRequestBody) {
+export async function createApplication(workspaceId: string, data: FormData) {
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/applications`, { headers: await createAuthHeaders(), json: data })
-			.json<ApplicationId>(),
+			.post(`workspaces/${workspaceId}/applications`, { body: data, headers: await createAuthHeaders() })
+			.json<TableIdResponse>(),
 	);
 }
 
+// Organization endpoints
 /**
- * Create a new workspace.
- * @param data - The workspace creation request data
- * @returns Promise containing the created workspace
+ *
+ */
+export async function createOrganization(data: CreateOrganizationRequestBody) {
+	return withAuthRedirect(
+		getClient()
+			.post("organizations", { headers: await createAuthHeaders(), json: data })
+			.json<TableIdResponse>(),
+	);
+}
+
+// Workspace endpoints
+/**
+ *
  */
 export async function createWorkspace(data: CreateWorkspaceRequestBody) {
 	return withAuthRedirect(
 		getClient()
 			.post("workspaces", { headers: await createAuthHeaders(), json: data })
-			.json<Workspace>(),
+			.json<TableIdResponse>(),
 	);
 }
 
 /**
- * Delete a workspace.
- * @param workspaceId - The unique identifier of the workspace to delete
- * @returns Promise that resolves when deletion is complete
+ *
  */
-export async function deleteWorkspace(workspaceId: string): Promise<void> {
+export async function deleteApplication(workspaceId: string, applicationId: string) {
+	await withAuthRedirect(
+		getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
+}
+
+/**
+ *
+ */
+export async function deleteApplicationFile(workspaceId: string, applicationId: string, fileId: string) {
+	await withAuthRedirect(
+		getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}/files/${fileId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
+}
+
+/**
+ *
+ */
+export async function deleteOrganization(organizationId: string) {
+	await withAuthRedirect(
+		getClient().delete(`organizations/${organizationId}`, { headers: await createAuthHeaders() }),
+	);
+}
+
+/**
+ *
+ */
+export async function deleteOrganizationFile(organizationId: string, fileId: string) {
+	await withAuthRedirect(
+		getClient().delete(`organizations/${organizationId}/files/${fileId}`, { headers: await createAuthHeaders() }),
+	);
+}
+
+/**
+ *
+ */
+export async function deleteWorkspace(workspaceId: string) {
 	await withAuthRedirect(getClient().delete(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() }));
 }
 
 /**
- * Retrieve detailed information about a specific application.
- * @param workspaceId - The unique identifier of the workspace
- * @param applicationId - The unique identifier of the application
- * @returns Promise containing detailed grant application information
+ *
  */
 export async function getApplication(workspaceId: string, applicationId: string) {
 	return withAuthRedirect(
 		getClient()
 			.get(`workspaces/${workspaceId}/applications/${applicationId}`, { headers: await createAuthHeaders() })
-			.json<Application>(),
+			.json<GrantApplication>(),
 	);
 }
 
 /**
- * Retrieve a draft for a grant application.
- * @param workspaceId - The unique identifier of the workspace
- * @param applicationId - The unique identifier of the application
- * @returns Promise containing the application draft
+ *
+ */
+export async function getApplicationFiles(workspaceId: string, applicationId: string) {
+	return withAuthRedirect(
+		getClient()
+			.get(`workspaces/${workspaceId}/applications/${applicationId}/files`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<GrantApplicationFile[]>(),
+	);
+}
+
+/**
+ *
  */
 export async function getApplicationText(workspaceId: string, applicationId: string) {
 	return withAuthRedirect(
@@ -140,8 +167,29 @@ export async function getApplicationText(workspaceId: string, applicationId: str
 }
 
 /**
- * Get a one-time password (OTP) for websocket authentication.
- * @returns Promise containing the OTP response
+ *
+ */
+export async function getOrganizationFiles(organizationId: string) {
+	return withAuthRedirect(
+		getClient()
+			.get(`organizations/${organizationId}/files`, { headers: await createAuthHeaders() })
+			.json<OrganizationFile[]>(),
+	);
+}
+
+/**
+ *
+ */
+export async function getOrganizations() {
+	return withAuthRedirect(
+		getClient()
+			.get("organizations", { headers: await createAuthHeaders() })
+			.json<FundingOrganization[]>(),
+	);
+}
+
+/**
+ *
  */
 export async function getOtp() {
 	return withAuthRedirect(
@@ -152,9 +200,7 @@ export async function getOtp() {
 }
 
 /**
- * Retrieve a specific workspace by ID.
- * @param workspaceId - The unique identifier of the workspace
- * @returns Promise containing the workspace details
+ *
  */
 export async function getWorkspace(workspaceId: string) {
 	return withAuthRedirect(
@@ -165,23 +211,41 @@ export async function getWorkspace(workspaceId: string) {
 }
 
 /**
- * Retrieve all workspaces for the authenticated user.
- * @returns Promise containing an array of workspaces
+ *
  */
 export async function getWorkspaces() {
 	return withAuthRedirect(
 		getClient()
 			.get("workspaces", { headers: await createAuthHeaders() })
-			.json<WorkspaceBase[]>(),
+			.json<WorkspaceBaseResponse[]>(),
 	);
 }
 
+// Auth endpoints
 /**
- * Update an existing grant application.
- * @param workspaceId - The unique identifier of the workspace
- * @param applicationId - The unique identifier of the application
- * @param data - The application update request data
- * @returns Promise containing the updated grant application
+ *
+ */
+export async function login(idToken: string) {
+	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
+	const requestBody: LoginRequestBody = { id_token: idToken };
+
+	const { jwt_token } = await getClient().post(loginUrl, { json: requestBody }).json<LoginResponse>();
+
+	const cookieStore = await cookies();
+	cookieStore.set({
+		httpOnly: true,
+		maxAge: 60 * 60 * 24 * 7,
+		name: SESSION_COOKIE,
+		sameSite: "strict",
+		secure: getEnv().NEXT_PUBLIC_SITE_URL.startsWith("https"),
+		value: jwt_token,
+	});
+
+	redirect(PagePath.WORKSPACES);
+}
+
+/**
+ *
  */
 export async function updateApplication(
 	workspaceId: string,
@@ -194,20 +258,55 @@ export async function updateApplication(
 				headers: await createAuthHeaders(),
 				json: data,
 			})
-			.json<ApplicationBase>(),
+			.json<GrantApplication>(),
 	);
 }
 
 /**
- * Update an existing workspace.
- * @param workspaceId - The unique identifier of the workspace to update
- * @param data - The workspace update request data
- * @returns Promise containing the updated workspace
+ *
+ */
+export async function updateOrganization(organizationId: string, data: UpdateOrganizationRequestBody) {
+	return withAuthRedirect(
+		getClient()
+			.patch(`organizations/${organizationId}`, { headers: await createAuthHeaders(), json: data })
+			.json<FundingOrganization>(),
+	);
+}
+
+/**
+ *
  */
 export async function updateWorkspace(workspaceId: string, data: UpdateWorkspaceRequestBody) {
 	return withAuthRedirect(
 		getClient()
 			.patch(`workspaces/${workspaceId}`, { headers: await createAuthHeaders(), json: data })
-			.json<WorkspaceBase>(),
+			.json<WorkspaceBaseResponse>(),
+	);
+}
+
+// Application files
+/**
+ *
+ */
+export async function uploadApplicationFiles(workspaceId: string, applicationId: string, formData: FormData) {
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications/${applicationId}/files`, {
+				body: formData,
+				headers: await createAuthHeaders(),
+			})
+			.json<GrantApplicationFile[]>(),
+	);
+}
+
+// Organization files
+/**
+ *
+ */
+export async function uploadOrganizationFiles(organizationId: string, formData: FormData) {
+	return withAuthRedirect(
+		getClient()
+			.post(`organizations/${organizationId}/files`, { body: formData, headers: await createAuthHeaders() })
+			.json<OrganizationFile[]>(),
 	);
 }

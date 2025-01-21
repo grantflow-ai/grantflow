@@ -1,10 +1,16 @@
 "use client";
 import { getApplicationText } from "@/actions/api";
 import { Loader } from "@/components/loader";
-import { Application, ApplicationDraftResponse } from "@/types/api-types";
+import { ApplicationDraftResponse, GrantApplication } from "@/types/api-types";
 import { useEffect, useState } from "react";
 
-export function ApplicationWorkspace({ application, workspaceId }: { application: Application; workspaceId: string }) {
+export function ApplicationWorkspace({
+	application,
+	workspaceId,
+}: {
+	application: GrantApplication;
+	workspaceId: string;
+}) {
 	const [draftText, setDraftText] = useState(application.text);
 
 	useEffect(() => {

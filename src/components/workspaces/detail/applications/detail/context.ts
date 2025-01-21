@@ -1,4 +1,4 @@
-import { Application } from "@/types/api-types";
+import { GrantApplication } from "@/types/api-types";
 import { createContext } from "react";
 
-export const ApplicationContext = createContext<Application | null>(null);
+export const ApplicationContext = createContext<GrantApplication | null>(null);
