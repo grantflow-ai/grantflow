@@ -1,12 +1,12 @@
-from textwrap import dedent
+from functools import partial
 from time import time
 from typing import Final, TypedDict
 
-from src.rag.llm_evaluation import evaluation_prompt_output
+from src.exceptions import EvaluationError
+from src.rag.llm_evaluation import with_prompt_evaluation
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
-from src.utils.serialization import serialize
 from src.utils.text import concatenate_segments_with_spacy_coherence, normalize_markdown
 
 logger = get_logger(__name__)
@@ -69,15 +69,15 @@ class SegmentedToolGenerationToolResponse(TypedDict):
 
 
 async def generate_segmeneted_text(
+    user_prompt: str,
     *,
     prompt_identifier: str = "",
-    user_prompt: str,
 ) -> str:
     """Generate segmented text.
 
     Args:
-        prompt_identifier: The identifier of the entity to generate text for.
         user_prompt: The user prompt string to send to the model.
+        prompt_identifier: The identifier of the entity to generate text for.
 
     Returns:
         The generated text.
@@ -136,42 +136,12 @@ async def handle_segmented_text_generation(
     Returns:
         The generated text.
     """
-    prompt = user_prompt
-
-    while retries > 0:
-        retries -= 1
-
-        model_output = await generate_segmeneted_text(prompt_identifier=prompt_identifier, user_prompt=prompt)
-        evaluation_result = await evaluation_prompt_output(original_prompt=user_prompt, model_output=model_output)
-        if all(v["score"] >= 85 for v in evaluation_result.values()):  # type: ignore[index]
-            return model_output
-
-        failing_criteria = {k: v["reasoning"] for k, v in evaluation_result.items() if v["score"] < 85}  # type: ignore[index]
-
-        prompt = dedent(f"""
-        Here is the output from a previous API call:
-
-        ```markdown
-        {model_output}
-        ```
-
-        This output failed evaluation on the following criteria:
-        ```json
-        {serialize(failing_criteria).decode()}
-        ```
-
-        Here is the original prompt:
-        ```markdown
-        {user_prompt}
-        ```
-
-        Your task is to update the model output to address the failing criteria.
-
-        Guidelines:
-            - Reuse the model output as much as possible
-            - Address the failures in the evaluation criteria
-
-        If you are unable to address the failures due to missing information, indicate this in the response using the format given in the original prompt.
-        """)
-
-    return "**Failed to generate text for this section due to insufficient information.**"
+    try:
+        return await with_prompt_evaluation(
+            prompt_handler=partial(generate_segmeneted_text, prompt_identifier=prompt_identifier),
+            user_prompt=user_prompt,
+            retries=retries,
+        )
+    except EvaluationError as e:
+        logger.error("Failed to generate segmented text", prompt_identifier=prompt_identifier, error=e)
+        return "**Failed to generate text for this section due to insufficient information.**"

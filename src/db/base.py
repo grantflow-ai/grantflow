@@ -23,7 +23,7 @@ class Base(DeclarativeBase):
             if isinstance(value, list):
                 return [item.to_dict() for item in value]
             return value.to_dict()
-        except DetachedInstanceError:
+        except (DetachedInstanceError, AttributeError):
             return None
 
     def to_dict(self) -> dict[str, Any]:

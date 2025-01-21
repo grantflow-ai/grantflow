@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import FundingOrganization, GrantApplication
 from src.rag.grant_template.extract_cfp_data import extract_cfp_data
-from src.rag.grant_template.generate_template_data import generate_grant_template
+from src.rag.grant_template.generate_template_data import handle_generate_grant_template
 from src.utils.serialization import serialize
 from tests.conftest import FIXTURES_FOLDER, RESULTS_FOLDER
 
@@ -105,7 +105,7 @@ async def test_pipeline_flow(
         assert extract_result["organization_id"] in organizations_by_id
 
     template_start = datetime.now(UTC)
-    template_result = await generate_grant_template(
+    template_result = await handle_generate_grant_template(
         cfp_content="...".join(extract_result["content"]),
         organization_id=extract_result["organization_id"],
     )
@@ -142,7 +142,9 @@ async def test_handle_generate_grant_template_without_rag(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    template_result = await generate_grant_template(cfp_content=cfp_content_file.read_text(), organization_id=None)
+    template_result = await handle_generate_grant_template(
+        cfp_content=cfp_content_file.read_text(), organization_id=None
+    )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 60
@@ -215,7 +217,9 @@ async def test_handle_generate_grant_template_with_rag(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    template_result = await generate_grant_template(cfp_content=cfp_content_file.read_text(), organization_id=None)
+    template_result = await handle_generate_grant_template(
+        cfp_content=cfp_content_file.read_text(), organization_id=None
+    )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 60
