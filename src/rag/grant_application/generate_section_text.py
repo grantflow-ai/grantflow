@@ -15,18 +15,23 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     Your task is to write the ${section_title} section of a STEM grant application.
 
     ## Generation Instructions
-    ${instructions}
+        ${instructions}
 
     ### Topics
     The text should draw upon and touch the following topics:
-    ${topics}
+        ${topics}
 
     ### Keywords
     Guide your writing with the following keywords:
-    ${keywords}
+        ${keywords}
 
-    Sources:
-    Here are RAG results.
+    ## Sources:
+    ### User Inputs:
+        <user_inputs>
+        ${user_inputs}
+        </user_inputs>
+
+    ### Rag Results:
         <rag_results>
         ${rag_results}
         </rag_results>
@@ -39,15 +44,17 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 async def handle_section_text_generation(
     *,
     application_id: str,
-    grant_section: GrantSection,
     dependencies: str,
+    grant_section: GrantSection,
+    user_inputs: dict[str, str],
 ) -> str:
     """Generate the text for a given grant section.
 
     Args:
         application_id: The ID of the application.
-        grant_section: The grant section for which to generate text.
         dependencies: The dependencies of the grant section.
+        grant_section: The grant section for which to generate text.
+        user_inputs: The user inputs.
 
     Returns:
         The generated section text.
@@ -55,11 +62,20 @@ async def handle_section_text_generation(
     logger.debug("Generating section text.", grant_section=grant_section)
 
     user_prompt = GENERATE_SECTION_TEXT_USER_PROMPT.substitute(
-        dependencies=dependencies,
+        dependencies=f"""
+        ### Dependencies
+        These are the grant application portions that already been written and on the content of which this section should rely:
+        <dependencies>
+        {dependencies}
+        </dependencies>
+        """
+        if dependencies
+        else "",
         instructions=grant_section["instructions"],
         keywords=grant_section["keywords"],
         section_title=grant_section["title"],
         topics=grant_section["topics"],
+        user_inputs=user_inputs,
     )
     rag_results = await retrieve_documents(
         application_id=application_id,

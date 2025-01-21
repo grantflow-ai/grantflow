@@ -1,9 +1,13 @@
 from asyncio import gather
 from itertools import batched
 
+from sqlalchemy import update
+from sqlalchemy.exc import SQLAlchemyError
+
 from src.db.connection import get_session_maker
 from src.db.json_objects import GrantSection
-from src.exceptions import ValidationError
+from src.db.tables import GrantApplication
+from src.exceptions import DatabaseError, ValidationError
 from src.rag.grant_application.generate_section_text import handle_section_text_generation
 from src.rag.grant_application.research_plan_text import handle_research_plan_text_generation
 from src.utils.db import retrieve_application
@@ -31,11 +35,7 @@ def create_dependencies_text(depends_on: list[str], texts: dict[str, str]) -> st
     for dependency in depends_on:
         obj[dependency] = texts[dependency]
 
-    return f"""
-    Here are the texts for the sections on which this section depends on:
-
-    {serialize(obj).decode()}
-    """
+    return serialize(obj).decode()
 
 
 def create_generation_groups(sections: list[GrantSection]) -> list[list[GrantSection]]:
@@ -100,6 +100,7 @@ async def handle_generate_grant_application_text(application_id: str) -> str:
         application_id: The ID of the grant application.
 
     Raises:
+        DatabaseError: If the grant application text could not be updated.
         ValidationError: If the grant application does not have a grant template or research objectives.
 
     Returns:
@@ -115,7 +116,7 @@ async def handle_generate_grant_application_text(application_id: str) -> str:
     research_plan_text = await handle_research_plan_text_generation(
         application_id=application_id,
         research_objectives=grant_application.research_objectives,
-        application_details=grant_application.details or {},
+        application_details=grant_application.form_inputs or {},
     )
 
     logger.debug(
@@ -136,6 +137,7 @@ async def handle_generate_grant_application_text(application_id: str) -> str:
                         application_id=application_id,
                         grant_section=section,
                         dependencies=create_dependencies_text(depends_on=section["depends_on"], texts=texts),
+                        user_inputs=grant_application.form_inputs or {},
                     )
                     for section in batch
                 ]
@@ -143,8 +145,19 @@ async def handle_generate_grant_application_text(application_id: str) -> str:
             texts.update({section["name"]: result for section, result in zip(batch, results, strict=True)})
             logger.debug("Generated texts for sections.", keys=[section["name"] for section in batch])
 
-    return populate_template_string(
+    result = populate_template_string(
         template=grant_application.grant_template.template,
         sections=grant_application.grant_template.grant_sections,
         texts=texts,
     )
+
+    async with session_maker() as session, session.begin():
+        try:
+            await session.execute(
+                update(GrantApplication).where(GrantApplication.id == application_id).values(text=result)
+            )
+        except SQLAlchemyError as e:
+            logger.error("Failed to update grant application text.", application_id=application_id, error=e)
+            raise DatabaseError("Failed to update grant application text.") from e
+
+    return result
