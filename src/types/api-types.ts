@@ -1,10 +1,10 @@
-export enum FileIndexingStatusEnum {
+export enum FileIndexingStatus {
 	FAILED = "FAILED",
 	FINISHED = "FINISHED",
 	INDEXING = "INDEXING",
 }
 
-export enum UserRoleEnum {
+export enum UserRole {
 	ADMIN = "ADMIN",
 	MEMBER = "MEMBER",
 	OWNER = "OWNER",
@@ -75,7 +75,7 @@ export interface GrantApplication extends TableIdResponse {
 	details: ApplicationDetails | null;
 	grant_template: GrantTemplate | null;
 	research_objectives: null | ResearchObjective[];
-	text_generation_results: null | TextGenerationResult[];
+	text: null | string;
 	title: string;
 	workspace_id: string;
 }
@@ -83,6 +83,17 @@ export interface GrantApplication extends TableIdResponse {
 export interface GrantApplicationFile {
 	grant_application_id: string;
 	rag_file: RagFileResponse;
+}
+
+export interface GrantSection {
+	depends_on: string[];
+	instructions: string;
+	keywords: string[];
+	max_words: number;
+	min_words: number;
+	name: string;
+	title: string;
+	topics: string[];
 }
 
 export interface GrantTemplate extends TableIdResponse {
@@ -113,7 +124,7 @@ export interface OTPResponse {
 // File Types
 export interface RagFileResponse extends TableIdResponse {
 	filename: string;
-	indexing_status: FileIndexingStatusEnum;
+	indexing_status: FileIndexingStatus;
 	mime_type: string;
 	size: number;
 }
@@ -136,11 +147,6 @@ export interface ResearchTask {
 
 export interface TableIdResponse {
 	id: string;
-}
-
-export interface TextGenerationResult {
-	content: string;
-	type: string;
 }
 
 export interface UpdateApplicationRequestBody {
@@ -167,5 +173,5 @@ export interface WorkspaceBaseResponse extends TableIdResponse {
 	description: null | string;
 	logo_url: null | string;
 	name: string;
-	role: UserRoleEnum;
+	role: UserRole;
 }

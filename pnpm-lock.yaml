@@ -163,8 +163,8 @@ importers:
         specifier: ^9.1.7
         version: 9.1.7
       interface-forge:
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: ^2.1.0
+        version: 2.1.0
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -541,10 +541,6 @@ packages:
   '@eslint/plugin-kit@0.2.5':
     resolution: {integrity: sha512-lB05FkqEdUg2AA0xEbUz0SnkXT1LcCTa438W4IWTUh4hdOnVbQyOJ81OrDXsJk/LSiJHubgGEFoR5EHq1NsH1A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@faker-js/faker@8.4.1':
-    resolution: {integrity: sha512-XQ3cU+Q8Uqmrbf2e0cIC/QN43sTBSC8KF12u29Mb47tWrt2hAgBXSgpZMj4Ao8Uk0iJcU99QsOCaIL8934obCg==}
-    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0, npm: '>=6.14.13'}
 
   '@faker-js/faker@9.4.0':
     resolution: {integrity: sha512-85+k0AxaZSTowL0gXp8zYWDIrWclTbRPg/pm/V0dSFZ6W6D4lhcG3uuZl4zLsEKfEvs69xDbLN2cHQudwp95JA==}
@@ -2760,8 +2756,8 @@ packages:
     resolution: {integrity: sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==}
     engines: {node: '>=8'}
 
-  interface-forge@2.0.1:
-    resolution: {integrity: sha512-Uj/iFOEnBR+Szt9BLpP80HlnjVF1XcnCnLolf6vBoe6indRBaAEk5bMMiXyzThzrRZErUHazyDEgKjXkUflZRQ==}
+  interface-forge@2.1.0:
+    resolution: {integrity: sha512-4sW9y3P3huo88qASkTCZwqVa2w2fsp1kSIhIqErACrVodaMctAtnk+8Namk33Prbt1RuehUZSY/h8tK3B+pzVg==}
 
   internal-slot@1.1.0:
     resolution: {integrity: sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==}
@@ -4511,8 +4507,6 @@ snapshots:
     dependencies:
       '@eslint/core': 0.10.0
       levn: 0.4.1
-
-  '@faker-js/faker@8.4.1': {}
 
   '@faker-js/faker@9.4.0': {}
 
@@ -7001,9 +6995,9 @@ snapshots:
 
   indent-string@4.0.0: {}
 
-  interface-forge@2.0.1:
+  interface-forge@2.1.0:
     dependencies:
-      '@faker-js/faker': 8.4.1
+      '@faker-js/faker': 9.4.0
       '@tool-belt/type-predicates': 1.3.0
 
   internal-slot@1.1.0:
