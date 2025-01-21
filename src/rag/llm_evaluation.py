@@ -1,8 +1,12 @@
+from collections.abc import Callable, Coroutine
 from string import Template
-from typing import TypedDict
+from textwrap import dedent
+from typing import Any, TypedDict
 
+from src.exceptions import EvaluationError
 from src.rag.utils import make_completions_request
 from src.utils.logger import get_logger
+from src.utils.serialization import serialize
 
 logger = get_logger(__name__)
 
@@ -140,7 +144,7 @@ json_schema = {
 }
 
 
-async def evaluation_prompt_output(*, original_prompt: str, model_output: str) -> EvaluationToolResponse:
+async def evaluate_prompt_output(*, original_prompt: str, model_output: Any) -> EvaluationToolResponse:
     """Generate an evaluation prompt for assessing the quality of a language model output.
 
     Args:
@@ -156,4 +160,69 @@ async def evaluation_prompt_output(*, original_prompt: str, model_output: str) -
         response_schema=json_schema,
         system_prompt=EVALUATION_SYSTEM_PROMPT,
         messages=EVALUATION_PROMPT.substitute(original_prompt=original_prompt, model_output=model_output),
+    )
+
+
+async def with_prompt_evaluation[T](
+    *,
+    min_passing_score: int = 85,
+    prompt_handler: Callable[[str], Coroutine[None, None, T]],
+    retries: int = 3,
+    user_prompt: str,
+) -> T:
+    """Prompt the user for an evaluation of the generated text.
+
+    Args:
+        min_passing_score: The minimum score required to pass the evaluation.
+        prompt_handler: The prompt handler function.
+        retries: The number of retries allowed for the evaluation.
+        user_prompt: The user prompt to evaluate.
+
+    Raises:
+        EvaluationError: If the model output does not meet the evaluation criteria.
+
+    Returns:
+        The model output that passed the evaluation.
+    """
+    prompt = user_prompt
+
+    while retries > 0:
+        retries -= 1
+
+        model_output = await prompt_handler(prompt)
+        evaluation_result = await evaluate_prompt_output(original_prompt=user_prompt, model_output=model_output)
+        if all(v["score"] >= min_passing_score for v in evaluation_result.values()):  # type: ignore[index]
+            return model_output
+
+        failing_criteria = {k: v["reasoning"] for k, v in evaluation_result.items() if v["score"] < min_passing_score}  # type: ignore[index]
+
+        prompt = dedent(f"""
+            Here is the output from a previous API call:
+
+            ```markdown
+            {model_output}
+            ```
+
+            This output failed evaluation on the following criteria:
+            ```json
+            {serialize(failing_criteria).decode()}
+            ```
+
+            Here is the original prompt:
+            ```markdown
+            {user_prompt}
+            ```
+
+            Your task is to update the model output to address the failing criteria.
+
+            Guidelines:
+                - Reuse the model output as much as possible
+                - Address the failures in the evaluation criteria
+                - Respond using the prompt instructions
+
+            If you are unable to address the failures due to missing information, indicate this in the response using the format given in the original prompt.
+            """)
+
+    raise EvaluationError(
+        f"Failed to generate an acceptable response after {retries} retries. Please review the evaluation criteria and try again."
     )

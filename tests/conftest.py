@@ -17,7 +17,8 @@ from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 from scripts.seed_db import seed_db
-from sqlalchemy import insert, select
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 from structlog import configure
@@ -43,7 +44,7 @@ from src.db.tables import (
 )
 from src.dto import FileDTO
 from src.indexer.files import parse_and_index_file
-from src.rag.grant_template.handler import handle_generate_grant_template
+from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from src.utils.ai import embeddings_model, init_ref
 from src.utils.extraction import extract_file_content
 from src.utils.serialization import deserialize, serialize
@@ -490,7 +491,7 @@ async def parse_source_file(
                     "filename": file_dto.filename,
                     "mime_type": file_dto.mime_type,
                     "size": file_dto.size,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                    "indexing_status": FileIndexingStatusEnum.FINISHED,
                 }
             )
             .returning(RagFile.id)
@@ -565,7 +566,9 @@ async def full_application_id(
 
     grant_template_file = data_fixture_folder / "grant_template.json"
     if not grant_template_file.exists():
-        await handle_generate_grant_template(cfp_content=cfp_content_file.read_text(), application_id=application_id)
+        await grant_template_generation_pipeline_handler(
+            cfp_content=cfp_content_file.read_text(), application_id=application_id
+        )
 
         async with async_session_maker() as session:
             grant_template = await session.scalar(
@@ -584,61 +587,64 @@ async def full_application_id(
             )
             await session.commit()
 
-    application_files_dir = data_fixture_folder / "files"
-    if not application_files_dir.exists():
-        application_files_dir.mkdir(parents=True)
+    application_files_fixtures_dir = data_fixture_folder / "files"
+    if not application_files_fixtures_dir.exists():
+        application_files_fixtures_dir.mkdir(parents=True)
 
-    if not list(application_files_dir.glob("*")):
+    if not list(application_files_fixtures_dir.glob("*.json")):
         await gather(
             *[
                 parse_source_file(
                     application_id=str(application_id),
                     source_file=source_file,
                     async_session_maker=async_session_maker,
-                    target_folder=FIXTURES_FOLDER / application_id / "files",
+                    target_folder=application_files_fixtures_dir,
                 )
                 for source_file in TEST_DATA_SOURCES
             ]
         )
 
-    for application_file in application_files_dir.glob("*.json"):
-        data = deserialize(application_file.read_bytes(), dict[str, Any])
         async with async_session_maker() as session:
-            rag_file_data = data.pop("rag_file")
-            rag_file_id = data.pop("rag_file_id")
-            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
-            await session.execute(
-                insert(RagFile).values(
-                    {
-                        "id": rag_file_id,
-                        **{
-                            k: v
-                            for k, v in rag_file_data.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        },
-                    }
-                )
-            )
-            await session.execute(
-                insert(GrantApplicationFile).values(
-                    {
-                        "grant_application_id": application_id,
-                        "rag_file_id": rag_file_id,
-                    }
-                )
-            )
-            await session.execute(
-                insert(TextVector).values(
-                    [
+            for application_file in application_files_fixtures_dir.glob("*.json"):
+                data = deserialize(application_file.read_bytes(), dict[str, Any])
+                rag_file_data = data.pop("rag_file")
+                rag_file_id = data.pop("rag_file_id")
+                text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
+
+                await session.execute(
+                    insert(RagFile)
+                    .values(
                         {
-                            k: v
-                            for k, v in text_vector.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
+                            "id": rag_file_id,
+                            **{
+                                k: v
+                                for k, v in rag_file_data.items()
+                                if v is not None and k not in {"created_at", "updated_at"}
+                            },
                         }
-                        for text_vector in text_vectors
-                    ]
+                    )
+                    .on_conflict_do_nothing(index_elements=["id"])
                 )
-            )
+                await session.execute(
+                    insert(GrantApplicationFile).values(
+                        {
+                            "grant_application_id": application_id,
+                            "rag_file_id": rag_file_id,
+                        }
+                    )
+                )
+                await session.execute(
+                    insert(TextVector).values(
+                        [
+                            {
+                                k: v
+                                for k, v in text_vector.items()
+                                if v is not None and k not in {"created_at", "updated_at"}
+                            }
+                            for text_vector in text_vectors
+                        ]
+                    )
+                )
             await session.commit()
 
     return str(application_id)

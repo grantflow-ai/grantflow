@@ -33,6 +33,10 @@ class ValidationError(BackendError):
     """Raised when a validation error occurs."""
 
 
+class EvaluationError(BackendError):
+    """Raised when an LLM response's evaluation fails."""
+
+
 class SerializationError(BackendError):
     """Raised when an error occurs during serialization."""
 

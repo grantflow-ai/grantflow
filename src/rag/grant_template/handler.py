@@ -8,13 +8,13 @@ from src.db.connection import get_session_maker
 from src.db.tables import FundingOrganization, GrantTemplate
 from src.exceptions import DatabaseError
 from src.rag.grant_template.extract_cfp_data import extract_cfp_data
-from src.rag.grant_template.generate_template_data import generate_grant_template
+from src.rag.grant_template.generate_template_data import handle_generate_grant_template
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-async def handle_generate_grant_template(
+async def grant_template_generation_pipeline_handler(
     *,
     application_id: str | UUID,
     cfp_content: str,
@@ -46,7 +46,7 @@ async def handle_generate_grant_template(
     extraction_result = await extract_cfp_data(cfp_content=cfp_content, organization_mapping=organization_mapping)
     logger.info("Extracted CFP data")
 
-    result = await generate_grant_template(
+    result = await handle_generate_grant_template(
         cfp_content="...".join(extraction_result["content"]),
         organization_id=extraction_result["organization_id"],
     )

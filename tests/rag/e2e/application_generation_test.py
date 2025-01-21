@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.rag.grant_application.handler import handle_generate_grant_application_text
+from src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from tests.conftest import RESULTS_FOLDER
 
 
@@ -20,7 +20,7 @@ async def test_generate_full_application_text(
 ) -> None:
     logger.info("Running end-to-end test for generating a full grant application text format")
 
-    result = await handle_generate_grant_application_text(
+    result = await grant_application_text_generation_pipeline_handler(
         application_id=full_application_id,
     )
 

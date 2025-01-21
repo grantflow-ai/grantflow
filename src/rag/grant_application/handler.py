@@ -93,7 +93,7 @@ def populate_template_string(template: str, sections: list[GrantSection], texts:
     return application_text.replace("{{", "").replace("}}", "")
 
 
-async def handle_generate_grant_application_text(application_id: str) -> str:
+async def grant_application_text_generation_pipeline_handler(application_id: str) -> str:
     """Handles the generation of a grant application text.
 
     Args:
