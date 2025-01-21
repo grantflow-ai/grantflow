@@ -2,7 +2,7 @@ from asyncio import gather
 from collections import defaultdict
 from typing import Final, TypedDict
 
-from src.db.json_objects import ApplicationDetails, ResearchObjective, ResearchTask
+from src.db.json_objects import ResearchObjective, ResearchTask
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import handle_completions_request, handle_segmented_text_generation
 from src.utils.logger import get_logger
@@ -432,7 +432,7 @@ async def handle_research_objective_description_generation(
 
 async def handle_preliminary_data_text_generation(
     *,
-    application_details: ApplicationDetails,
+    application_details: dict[str, str],
     application_id: str,
     research_objective: ResearchObjective,
     research_objective_description: str,
@@ -466,7 +466,7 @@ async def handle_preliminary_data_text_generation(
 
 async def handle_risks_and_mitigations_text_generation(
     *,
-    application_details: ApplicationDetails,
+    application_details: dict[str, str],
     application_id: str,
     research_objective: ResearchObjective,
     research_objective_description: str,
@@ -502,7 +502,7 @@ async def handle_risks_and_mitigations_text_generation(
 
 async def handle_research_objective_components_generation(
     *,
-    application_details: ApplicationDetails,
+    application_details: dict[str, str],
     application_id: str,
     research_objective: ResearchObjective,
 ) -> str:
@@ -565,7 +565,7 @@ async def handle_research_objective_components_generation(
 
 async def handle_research_plan_text_generation(
     *,
-    application_details: ApplicationDetails,
+    application_details: dict[str, str],
     application_id: str,
     research_objectives: list[ResearchObjective],
 ) -> str:

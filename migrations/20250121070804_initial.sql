@@ -19,8 +19,9 @@ CREATE INDEX "ix_workspaces_name" ON "workspaces" ("name");
 -- Create "grant_applications" table
 CREATE TABLE "grant_applications" (
   "completed_at" timestamptz NULL,
+  "form_inputs" json NULL,
   "research_objectives" json NULL,
-  "details" json NULL,
+  "text" text NULL,
   "text_generation_results" json NULL,
   "title" character varying(255) NOT NULL,
   "workspace_id" uuid NOT NULL,

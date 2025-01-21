@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.json_objects import ApplicationDetails, ResearchObjective
+from src.db.json_objects import ResearchObjective
 from src.patterns import XML_TAG_PATTERN
 from src.rag.grant_application.research_plan_text import (
     handle_preliminary_data_text_generation,
@@ -39,7 +39,7 @@ async def test_generate_research_plan(
     research_plan_text = await handle_research_plan_text_generation(
         application_id=full_application_id,
         research_objectives=grant_application.research_objectives or [],
-        application_details=grant_application.details or {},
+        application_details=grant_application.form_inputs or {},
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -123,7 +123,7 @@ async def test_generate_risks_and_mitigations(
     logger: logging.Logger,
     full_application_id: str,
     research_objectives: list[ResearchObjective],
-    application_details: ApplicationDetails,
+    form_inputs: dict[str, str],
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Testing risks and mitigations text generation")
@@ -135,7 +135,7 @@ async def test_generate_risks_and_mitigations(
     risks_text = await handle_risks_and_mitigations_text_generation(
         application_id=full_application_id,
         research_objective=research_objective,
-        application_details=application_details,
+        application_details=form_inputs,
         research_objective_description=objective_description,
     )
 
@@ -225,7 +225,7 @@ async def test_generate_preliminary_data(
     logger: logging.Logger,
     full_application_id: str,
     research_objectives: list[ResearchObjective],
-    application_details: ApplicationDetails,
+    form_inputs: dict[str, str],
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Testing preliminary data text generation")
@@ -237,7 +237,7 @@ async def test_generate_preliminary_data(
     prelim_text = await handle_preliminary_data_text_generation(
         application_id=full_application_id,
         research_objective=research_objective,
-        application_details=application_details,
+        application_details=form_inputs,
         research_objective_description=objective_description,
     )
 

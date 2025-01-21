@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.db.json_objects import ApplicationDetails, ResearchObjective, ResearchTask
+from src.db.json_objects import ResearchObjective, ResearchTask
 from src.rag.grant_application.research_plan_text import (
     handle_preliminary_data_text_generation,
     handle_research_objective_components_generation,
@@ -64,11 +64,11 @@ def research_objective() -> ResearchObjective:
 
 
 @pytest.fixture
-def application_details() -> ApplicationDetails:
-    return ApplicationDetails(
-        preliminary_data="Test preliminary data",
-        risks_and_mitigations="Test risks and mitigations",
-    )
+def user_inputs() -> dict[str, str]:
+    return {
+        "preliminary_data": "Test preliminary data",
+        "risks_and_mitigations": "Test risks and mitigations",
+    }
 
 
 @pytest.mark.asyncio
@@ -123,14 +123,14 @@ async def test_handle_preliminary_data_text_generation(
     mock_retrieve_documents: AsyncMock,
     mock_text_generation: AsyncMock,
     research_objective: ResearchObjective,
-    application_details: ApplicationDetails,
+    user_inputs: dict[str, str],
 ) -> None:
     with (
         patch("src.rag.grant_application.research_plan_text.retrieve_documents", mock_retrieve_documents),
         patch("src.rag.grant_application.research_plan_text.handle_segmented_text_generation", mock_text_generation),
     ):
         result = await handle_preliminary_data_text_generation(
-            application_details=application_details,
+            application_details=user_inputs,
             application_id="test-id",
             research_objective=research_objective,
             research_objective_description="Test description",
@@ -146,14 +146,14 @@ async def test_handle_risks_and_mitigations_text_generation(
     mock_retrieve_documents: AsyncMock,
     mock_text_generation: AsyncMock,
     research_objective: ResearchObjective,
-    application_details: ApplicationDetails,
+    user_inputs: dict[str, str],
 ) -> None:
     with (
         patch("src.rag.grant_application.research_plan_text.retrieve_documents", mock_retrieve_documents),
         patch("src.rag.grant_application.research_plan_text.handle_segmented_text_generation", mock_text_generation),
     ):
         result = await handle_risks_and_mitigations_text_generation(
-            application_details=application_details,
+            application_details=user_inputs,
             application_id="test-id",
             research_objective=research_objective,
             research_objective_description="Test description",
@@ -169,14 +169,14 @@ async def test_handle_research_objective_components_generation(
     mock_retrieve_documents: AsyncMock,
     mock_text_generation: AsyncMock,
     research_objective: ResearchObjective,
-    application_details: ApplicationDetails,
+    user_inputs: dict[str, str],
 ) -> None:
     with (
         patch("src.rag.grant_application.research_plan_text.retrieve_documents", mock_retrieve_documents),
         patch("src.rag.grant_application.research_plan_text.handle_segmented_text_generation", mock_text_generation),
     ):
         result = await handle_research_objective_components_generation(
-            application_details=application_details,
+            application_details=user_inputs,
             application_id="test-id",
             research_objective=research_objective,
         )
@@ -193,7 +193,7 @@ async def test_handle_research_plan_text_generation(
     mock_completions_request: AsyncMock,
     mock_text_generation: AsyncMock,
     research_objective: ResearchObjective,
-    application_details: ApplicationDetails,
+    user_inputs: dict[str, str],
 ) -> None:
     with (
         patch("src.rag.grant_application.research_plan_text.retrieve_documents", mock_retrieve_documents),
@@ -201,7 +201,7 @@ async def test_handle_research_plan_text_generation(
         patch("src.rag.grant_application.research_plan_text.handle_segmented_text_generation", mock_text_generation),
     ):
         result = await handle_research_plan_text_generation(
-            application_details=application_details,
+            application_details=user_inputs,
             application_id="test-id",
             research_objectives=[research_objective],
         )
