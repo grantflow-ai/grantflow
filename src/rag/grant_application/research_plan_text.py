@@ -4,7 +4,8 @@ from typing import Final, TypedDict
 
 from src.db.json_objects import ResearchObjective, ResearchTask
 from src.rag.retrieval import retrieve_documents
-from src.rag.utils import handle_completions_request, handle_segmented_text_generation
+from src.rag.segmented_tool_generation import handle_segmented_text_generation
+from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -384,7 +385,7 @@ async def handle_research_task_text_generation(
         user_prompt=user_prompt,
     )
     result = await handle_segmented_text_generation(
-        messages=user_prompt.to_string(rag_results=rag_results),
+        user_prompt=user_prompt.to_string(rag_results=rag_results),
     )
 
     logger.info("Successfully generated research task.", task_number=task_number)
@@ -423,7 +424,7 @@ async def handle_research_objective_description_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="research-objective",
-        messages=user_prompt.to_string(rag_results=rag_results),
+        user_prompt=user_prompt.to_string(rag_results=rag_results),
     )
     logger.info("Successfully generated research objective", number=research_objective["number"])
 
@@ -458,7 +459,7 @@ async def handle_preliminary_data_text_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="preliminary-results",
-        messages=user_prompt.to_string(rag_results=rag_results),
+        user_prompt=user_prompt.to_string(rag_results=rag_results),
     )
     logger.info("Successfully generated preliminary results.", number=research_objective["number"])
     return result
@@ -493,7 +494,7 @@ async def handle_risks_and_mitigations_text_generation(
     )
     result = await handle_segmented_text_generation(
         prompt_identifier="risks-and-alternatives",
-        messages=user_prompt.to_string(rag_results=rag_results),
+        user_prompt=user_prompt.to_string(rag_results=rag_results),
     )
     logger.info("Successfully generated risks and alternatives.", number=research_objective["number"])
 
