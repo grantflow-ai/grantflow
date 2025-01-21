@@ -1,4 +1,3 @@
-from random import uniform
 from textwrap import dedent
 from typing import Any, cast
 
@@ -67,7 +66,7 @@ class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
     __model__ = TextVector
-    embedding = [uniform(-1, 1) for _ in range(EMBEDDING_DIMENSIONS)]
+    embedding = [0.1 for _ in range(EMBEDDING_DIMENSIONS)]
 
     @classmethod
     def get_type_from_column(cls, column: Column[Any]) -> type:

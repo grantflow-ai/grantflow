@@ -8,6 +8,7 @@ from jsonschema.validators import validate
 
 from src.dto import GrantTemplateDTO
 from src.exceptions import ValidationError
+from src.rag.llm_evaluation import with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.rag.utils import BASE_SYSTEM_PROMPT, handle_completions_request
 from src.utils.logger import get_logger
@@ -307,7 +308,28 @@ def validator(tool_response: GrantTemplateDTO) -> None:  # noqa: C901, PLR0912, 
         raise ValidationError("\n".join(errors))
 
 
-async def generate_grant_template(*, cfp_content: str, organization_id: str | None) -> GrantTemplateDTO:
+async def generate_grant_template(user_prompt: str) -> GrantTemplateDTO:
+    """Generate a complete grant template including format and section configurations.
+
+    Args:
+        user_prompt: The user prompt to send to the model.
+
+    Returns:
+        Complete grant template configuration including format and sections
+    """
+    result = await handle_completions_request(
+        prompt_identifier="generate_grant_template",
+        messages=user_prompt,
+        response_type=GrantTemplateDTO,
+        response_schema=response_schema,
+        system_prompt=BASE_SYSTEM_PROMPT,
+        validator=validator,
+    )
+    logger.debug("Generated grant template", result=result)
+    return result
+
+
+async def handle_generate_grant_template(*, cfp_content: str, organization_id: str | None) -> GrantTemplateDTO:
     """Generate a complete grant template including format and section configurations.
 
     Args:
@@ -324,13 +346,7 @@ async def generate_grant_template(*, cfp_content: str, organization_id: str | No
     rag_results: list[DocumentDTO] = (
         await retrieve_documents(organization_id=organization_id, user_prompt=user_prompt) if organization_id else []
     )
-    result = await handle_completions_request(
-        prompt_identifier="generate_grant_template",
-        messages=user_prompt.to_string(rag_results=rag_results),
-        response_type=GrantTemplateDTO,
-        response_schema=response_schema,
-        system_prompt=BASE_SYSTEM_PROMPT,
-        validator=validator,
+    return await with_prompt_evaluation(
+        prompt_handler=generate_grant_template,
+        user_prompt=user_prompt.to_string(rag_results=rag_results),
     )
-    logger.debug("Generated grant template", result=result)
-    return result
