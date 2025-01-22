@@ -37,10 +37,10 @@ ${last_generation_result}
 </last_generation_result>
 
 Instructions:
-1. Analyze the provided text segment, focusing on its content, style, and end point.
-2. Continue the grant application writing from exactly where the previous segment ends.
-3. Maintain consistency in style, tone, and context with the original text.
-4. Avoid repeating information already presented in the previous segment.
+    1. Analyze the provided text segment, focusing on its content, style, and end point.
+    2. Continue the grant application writing from exactly where the previous segment ends.
+    3. Maintain consistency in style, tone, and context with the original text.
+    4. Avoid repeating information already presented in the previous segment.
 """,
 )
 SEGMENTED_GENERATION_SCHEMA = {

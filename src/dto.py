@@ -68,6 +68,15 @@ class VectorDTO(TypedDict):
     """The chunk of text from which the embeddings are generated."""
 
 
+class GrantSectionDTO(TypedDict):
+    """DTO for a grant section."""
+
+    name: str
+    """The name of the section."""
+    content: str
+    """The content of the section."""
+
+
 class GrantTemplateDTO(TypedDict):
     """Grant template specification."""
 

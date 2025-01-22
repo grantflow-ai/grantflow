@@ -76,6 +76,8 @@ class GrantSection(TypedDict):
     """Detailed content generation instructions."""
     keywords: list[str]
     """Technical terms specific to section."""
+    search_queries: NotRequired[list[str]]
+    """Search queries to retrieve information for the section."""
     depends_on: list[str]
     """Sections that must be generated before this one."""
     min_words: NotRequired[int]

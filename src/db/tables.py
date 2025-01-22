@@ -91,7 +91,7 @@ class TextVector(BaseWithUUIDPK):
             "idx_text_vectors_embedding",
             "embedding",
             postgresql_using="hnsw",
-            postgresql_with={"m": 48, "ef_construction": 256},
+            postgresql_with={"m": 48, "ef_construction": 256, "iterative_scan": "strict_order"},
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
     )
