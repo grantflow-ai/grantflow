@@ -26,6 +26,7 @@ async def test_document_retrieval(
     application = await retrieve_application(application_id=full_application_id, session_maker=async_session_maker)
 
     results = await retrieve_documents(
+        skip_reranking=True,
         application_id=full_application_id,
         user_prompt=f"""
             The task is to test the RAG pipeline by testing that retrieval works.
@@ -35,8 +36,7 @@ async def test_document_retrieval(
             {serialize(application).decode()}
             """,
     )
-    assert len(results) >= 3
-    assert len(results) <= 10
+    assert len(results) == 25
 
     retrival_results = (
         RESULTS_FOLDER / full_application_id / f"retrieval_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"

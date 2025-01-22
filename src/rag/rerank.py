@@ -1,8 +1,8 @@
-from textwrap import dedent
 from typing import Final, TypedDict
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.db.tables import TextVector
+from src.exceptions import ValidationError
 from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -10,118 +10,116 @@ from src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 RERANKING_SYSTEM_PROMPT: Final[str] = """
-You are a specialized reranking component within a RAG pipeline for STEM grant applications.
-Your task is to analyze multiple documents and return an ordered list of document indices
-based on their relevance to the query. Focus on technical accuracy and relevance to grant-writing contexts.
+You are a specialized reranking component within a RAG pipeline for grant application text generation.
 """
 
 RERANKING_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="batch_reranking",
     template="""
-Analyze and rank the following documents based on their relevance to the query.
+Your task is to analyze multiple documents and return an ordered list of document ids
+based on their relevance to the queries and task.
 
-<query>
-${query}
-</query>
+Analyze and rank the following documents based on their relevance to the queries and user prompt:
 
-<documents>
-${documents}
-</documents>
+1. The queries:
+    <queries>
+    ${queries}
+    </queries>
 
-Evaluation criteria:
-1. Query relevance: Direct correspondence to the query content
-2. Technical depth: Substantive technical or scientific content
-3. Grant context fit: Relevance for grant writing purposes
+2. The user prompt:
+    <user_prompt>
+    ${user_prompt}
+    </user_prompt>
 
-Return a JSON array of document indices in order of highest to lowest relevance. Use zero-based indexing.
-The array should include all document indices exactly once.
+3. The documents to be ranked:
+    <documents>
+    ${documents}
+    </documents>
 
-Example response format:
-```json
+Follow these steps to complete the task:
+
+1. Analyze each document in relation to the queries and user prompt.
+2. Evaluate each document based on the following criteria:
+   a. Query relevance: Direct correspondence to the queries' content
+   b. Technical depth: Substantive technical or scientific content
+   c. Prompt task fit: Relevance for the text generation task in the user prompt
+3. Rank the documents based on your evaluation.
+4. Validate that your response includes only valid document IDs.
+
+Respond to the provided tool using a JSON object adhereing to the following format:
+
+```jsonc
 {
-    "ranked_indices": [2, 0, 1, 3],
-    "reasoning": [
-        {
-            "index": 2,
-            "score": 95,
-            "explanation": "Highest technical relevance with direct query alignment..."
-        },
-        // ... explanations for other top documents
-    ]
+    "reranked_document_ids": [
+        5, 3, 1, // ... etc. this array must contain the document IDs in the order of relevance
+    ],
 }
 ```
 """,
 )
 
 
-class RerankingExplanation(TypedDict):
-    """Explanation for a document's ranking."""
-
-    index: int
-    score: int
-    explanation: str
-
-
-class BatchRerankingResponse(TypedDict):
+class RerankingToolResponse(TypedDict):
     """Response from batch reranking."""
 
-    ranked_indices: list[int]
-    reasoning: list[RerankingExplanation]
+    reranked_document_ids: list[int]
 
 
 RERANKING_SCHEMA = {
     "type": "object",
     "properties": {
-        "ranked_indices": {
+        "reranked_document_ids": {
             "type": "array",
-            "items": {"type": "integer", "minimum": 0},
-            "description": "Ordered list of document indices by relevance",
-        },
-        "reasoning": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "index": {"type": "integer", "minimum": 0},
-                    "score": {"type": "integer", "minimum": 0, "maximum": 100},
-                    "explanation": {"type": "string"},
-                },
-                "required": ["index", "score", "explanation"],
-            },
+            "items": {"type": "integer", "minimum": 1},
         },
     },
-    "required": ["ranked_indices", "reasoning"],
+    "required": ["reranked_document_ids"],
 }
 
 
-async def rerank_vectors(vectors: list[TextVector], query: str) -> list[TextVector]:
+async def rerank_vectors(*, vectors: list[TextVector], queries: list[str], user_prompt: str) -> list[TextVector]:
     """Rerank vectors based on content relevance.
 
     Args:
         vectors: List of vectors to rerank
-        query: The query to rerank against
+        queries: The queries to rerank against
+        user_prompt: The user prompt for the reranking task
 
     Returns:
         Reranked list of vectors
     """
-    documents_text = [
-        dedent(f"""
-        Document {idx}:
-        Content: {vector.chunk["content"]}
-        Element Type: {vector.chunk.get("element_type", "N/A")}
-        Role: {vector.chunk.get("role", "N/A")}
-        """)
+    documents = [
+        {
+            "document_id": idx + 1,
+            "content": vector.chunk["content"],
+            "element_type": vector.chunk.get("element_type"),
+            "role": vector.chunk.get("role"),
+        }
         for idx, vector in enumerate(vectors)
     ]
 
+    def validator(tool_response: RerankingToolResponse) -> None:
+        document_ids = {d["document_id"] for d in documents}
+
+        if invalid_ids := [i for i in tool_response["reranked_document_ids"] if i not in document_ids]:
+            raise ValidationError(
+                "Response includes invalid IDs that do not correspond with the provided documents.",
+                context={
+                    "source_ids": document_ids,
+                    "invalid_ids": invalid_ids,
+                },
+            )
+
     response = await handle_completions_request(
         prompt_identifier="batch_reranking",
+        system_prompt=RERANKING_SYSTEM_PROMPT,
         response_schema=RERANKING_SCHEMA,
-        response_type=BatchRerankingResponse,
+        response_type=RerankingToolResponse,
         model=FAST_TEXT_GENERATION_MODEL,
-        messages=RERANKING_USER_PROMPT.to_string(query=query, documents="\n".join(documents_text)),
+        messages=RERANKING_USER_PROMPT.to_string(queries=queries, documents=documents, user_prompt=user_prompt),
+        validator=validator,
     )
 
-    logger.debug("Reranking explanations", explanations=response["reasoning"], num_docs=len(vectors))
-
-    return [vectors[i] for i in response["ranked_indices"]]
+    reranked_document_ids = response["reranked_document_ids"]
+    logger.info("Reranked documents", num_docs=len(vectors), reranked_document_ids=reranked_document_ids)
+    return [vectors[i - 1] for i in reranked_document_ids]

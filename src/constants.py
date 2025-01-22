@@ -7,7 +7,7 @@ CONTENT_TYPE_TEXT: Final[str] = "text/plain"
 ONE_MINUTE_SECONDS: Final[int] = 60
 
 # Model constants
-EMBEDDING_DIMENSIONS: Final[int] = 256
+EMBEDDING_DIMENSIONS: Final[int] = 384
 EMBEDDINGS_MODEL: Final[str] = get_env("EMBEDDINGS_MODEL", fallback="text-embedding-005")
 FAST_TEXT_GENERATION_MODEL: Final[str] = get_env("FAST_TEXT_GENERATION_MODEL", fallback="gemini-2.0-flash-exp")
 PREMIUM_TEXT_GENERATION_MODEL: Final[str] = get_env("PREMIUM_TEXT_GENERATION_MODEL", fallback="gemini-2.0-flash-exp")
