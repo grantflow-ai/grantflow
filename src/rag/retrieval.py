@@ -1,5 +1,3 @@
-from asyncio import gather
-from itertools import chain
 from typing import Any, Final, cast
 
 from prompt_template import PromptTemplate
@@ -10,7 +8,7 @@ from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextV
 from src.rag.dto import DocumentDTO
 from src.rag.rerank import rerank_vectors
 from src.rag.search_queries import handle_create_search_queries
-from src.utils.embeddings import TaskType, generate_embeddings
+from src.utils.embeddings import generate_embeddings
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -90,33 +88,21 @@ async def retrieve_documents(
         raise ValueError("Either search_queries or user_prompt must be provided.")
 
     search_queries = await handle_create_search_queries(user_prompt=user_prompt, **kwargs)
-    query_embeddings = await generate_embeddings(search_queries, TaskType.RetrievalQuery)
+    query_embeddings = await generate_embeddings(",".join(search_queries))
 
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
     limit = int(max_results * INITIAL_RETRIEVAL_MULTIPLIER) if not skip_reranking else max_results
 
-    vectors = list(
-        chain(
-            *(
-                await gather(
-                    *[
-                        retrieve_vectors_for_embedding(
-                            file_table_cls=file_table_cls,
-                            application_id=application_id,
-                            organization_id=organization_id,
-                            embedding=query_embedding,
-                            limit=limit,
-                        )
-                        for query_embedding in query_embeddings
-                    ]
-                )
-            )
-        )
+    vectors = await retrieve_vectors_for_embedding(
+        file_table_cls=file_table_cls,
+        application_id=application_id,
+        organization_id=organization_id,
+        embedding=query_embeddings[0],
+        limit=limit,
     )
 
     if not skip_reranking and vectors:
-        vectors = await rerank_vectors(vectors, str(user_prompt))
-        vectors = vectors[:max_results]
+        vectors = await rerank_vectors(vectors=vectors, queries=search_queries, user_prompt=str(user_prompt))
 
     documents = [
         cast(DocumentDTO, {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None})

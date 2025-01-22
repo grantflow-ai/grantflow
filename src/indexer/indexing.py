@@ -4,7 +4,7 @@ from typing import Final
 from src.db.json_objects import Chunk
 from src.dto import VectorDTO
 from src.exceptions import ExternalOperationError
-from src.utils.embeddings import TaskType, generate_embeddings
+from src.utils.embeddings import generate_embeddings
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -30,7 +30,7 @@ async def create_vector_dto(
         VectorDTO
 
     """
-    embedding = await generate_embeddings([chunk["content"]], task=TaskType.RetrievalDocument)
+    embedding = await generate_embeddings([chunk["content"]])
 
     if len(embedding) != 1:
         logger.error("Expected a single embedding to be generated for the content")

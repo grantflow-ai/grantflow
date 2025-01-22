@@ -1,4 +1,3 @@
-from json import dumps
 from typing import Any
 
 
@@ -14,11 +13,15 @@ class BackendError(Exception):
 
     def __str__(self) -> str:
         """Return a string representation of the exception."""
-        return f"{self.__class__.__name__}: {super().__str__()}\n\nContext: {dumps(self.context, indent=2)}"
+        from src.utils.serialization import serialize
+
+        ctx = f"\n\nContext: {serialize(self.context).decode()}" if self.context else ""
+
+        return f"{self.__class__.__name__}: {super().__str__()}{ctx}"
 
     def __repr__(self) -> str:
         """Return a string representation of the exception."""
-        return f"{self.__class__.__name__}({super().__repr__()})\n\nContext: {dumps(self.context, indent=2)}"
+        return self.__str__()
 
 
 class FileParsingError(BackendError):
