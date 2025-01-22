@@ -122,6 +122,7 @@ async def handle_completions_request[T](
 
     response: T | None = None
     error_message: str | None = None
+    errors: list[Exception] = []
 
     while attempts < max_attempts:
         try:
@@ -148,23 +149,25 @@ async def handle_completions_request[T](
             {serialize(response).decode()}
 
             This is the error:
-            {e!s}
+            {e}
 
             Following are the original messages sent to the model, which may help you identify the issue.
             Address the errors and return corrected content
             """
 
             response = None
+            errors.append(e)
         except DeserializationError as e:
             attempts += 1
             error_message = f"""
             The last API call with the provided prompt returned either an invalid JSON object or an object that does not conform with the JSON schema.
 
             This is the error:
-            {e!s}
+            {e}
 
             Following are the original messages sent to the model, which may help you identify the issue.
             Address the errors and return corrected content
             """
+            errors.append(e)
 
-    raise ValidationError(f"Failed to generate text after {max_attempts} attempts.")
+    raise ValidationError(f"Failed to generate text after {max_attempts} attempts.", context={"errors": errors})

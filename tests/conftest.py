@@ -506,15 +506,20 @@ async def parse_source_file(
     await parse_and_index_file(file_dto=file_dto, file_id=str(file_id))
 
     async with async_session_maker() as session:
-        stmt = (
-            select(GrantApplicationFile)
-            .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
-            .where(GrantApplicationFile.rag_file_id == file_id)
-        )
         if application_id:
-            stmt = stmt.where(GrantApplicationFile.grant_application_id == application_id)
+            stmt = (
+                select(GrantApplicationFile)
+                .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
+                .where(GrantApplicationFile.rag_file_id == file_id)
+                .where(GrantApplicationFile.grant_application_id == application_id)
+            )
         else:
-            stmt = stmt.where(OrganizationFile.funding_organization_id == organization_id)
+            stmt = (
+                select(OrganizationFile)  # type: ignore[assignment]
+                .options(selectinload(OrganizationFile.rag_file).selectinload(RagFile.text_vectors))
+                .where(OrganizationFile.rag_file_id == file_id)
+                .where(OrganizationFile.funding_organization_id == organization_id)
+            )
 
         file_datum = await session.scalar(stmt)
         assert file_datum is not None, f"File {source_file} not found in the database"
@@ -603,49 +608,50 @@ async def full_application_id(
                 for source_file in TEST_DATA_SOURCES
             ]
         )
+    async with async_session_maker() as session, session.begin():
+        for application_file in application_files_fixtures_dir.glob("*.json"):
+            data = deserialize(application_file.read_bytes(), dict[str, Any])
+            rag_file_data = data.pop("rag_file")
+            rag_file_id = data.pop("rag_file_id")
+            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
 
-        async with async_session_maker() as session:
-            for application_file in application_files_fixtures_dir.glob("*.json"):
-                data = deserialize(application_file.read_bytes(), dict[str, Any])
-                rag_file_data = data.pop("rag_file")
-                rag_file_id = data.pop("rag_file_id")
-                text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
-
-                await session.execute(
-                    insert(RagFile)
-                    .values(
+            await session.execute(
+                insert(RagFile)
+                .values(
+                    {
+                        "id": rag_file_id,
+                        **{
+                            k: v
+                            for k, v in rag_file_data.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
+                        },
+                    }
+                )
+                .on_conflict_do_nothing(index_elements=["id"])
+            )
+            await session.execute(
+                insert(GrantApplicationFile)
+                .values(
+                    {
+                        "grant_application_id": application_id,
+                        "rag_file_id": rag_file_id,
+                    }
+                )
+                .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_file_id"])
+            )
+            await session.execute(
+                insert(TextVector).values(
+                    [
                         {
-                            "id": rag_file_id,
-                            **{
-                                k: v
-                                for k, v in rag_file_data.items()
-                                if v is not None and k not in {"created_at", "updated_at"}
-                            },
+                            k: v
+                            for k, v in text_vector.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
                         }
-                    )
-                    .on_conflict_do_nothing(index_elements=["id"])
+                        for text_vector in text_vectors
+                    ]
                 )
-                await session.execute(
-                    insert(GrantApplicationFile).values(
-                        {
-                            "grant_application_id": application_id,
-                            "rag_file_id": rag_file_id,
-                        }
-                    )
-                )
-                await session.execute(
-                    insert(TextVector).values(
-                        [
-                            {
-                                k: v
-                                for k, v in text_vector.items()
-                                if v is not None and k not in {"created_at", "updated_at"}
-                            }
-                            for text_vector in text_vectors
-                        ]
-                    )
-                )
-            await session.commit()
+            )
+        await session.commit()
 
     return str(application_id)
 
@@ -671,7 +677,7 @@ async def nih_guidelines(
 
         sources = list(source_folder.glob("*.pdf"))
         if not sources:
-            raise FileNotFoundError(f"No fixtures found in {source_folder}")
+            raise FileNotFoundError(f"No nih guidelines found in {source_folder}")
 
         await gather(
             *[
@@ -685,14 +691,16 @@ async def nih_guidelines(
             ]
         )
 
-    for organization_file in data_fixture_folder.glob("*.json"):
-        data = deserialize(organization_file.read_bytes(), dict[str, Any])
-        async with async_session_maker() as session:
+    async with async_session_maker() as session, session.begin():
+        for organization_file in data_fixture_folder.glob("*.json"):
+            data = deserialize(organization_file.read_bytes(), dict[str, Any])
             rag_file_data = data.pop("rag_file")
             rag_file_id = data.pop("rag_file_id")
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
+
             await session.execute(
-                insert(RagFile).values(
+                insert(RagFile)
+                .values(
                     {
                         "id": rag_file_id,
                         **{
@@ -702,14 +710,17 @@ async def nih_guidelines(
                         },
                     }
                 )
+                .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(OrganizationFile).values(
+                insert(OrganizationFile)
+                .values(
                     {
                         "funding_organization_id": funding_organization_id,
                         "rag_file_id": rag_file_id,
                     }
                 )
+                .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_file_id"])
             )
             await session.execute(
                 insert(TextVector).values(
@@ -723,4 +734,4 @@ async def nih_guidelines(
                     ]
                 )
             )
-            await session.commit()
+        await session.commit()

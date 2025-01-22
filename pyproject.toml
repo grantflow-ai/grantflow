@@ -15,6 +15,7 @@ dependencies = [
   "azure-ai-documentintelligence>=1.0.0",
   "crawl4ai>=0.4.247",
   "en-core-web-sm",
+  "fastembed>=0.5.1",
   "firebase-admin>=6.6.0",
   "google-cloud-aiplatform>=1.77.0",
   "greenlet>=3.1.1",
