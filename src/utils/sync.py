@@ -1,5 +1,7 @@
+from asyncio import gather
 from collections.abc import Callable, Coroutine
 from functools import partial
+from itertools import batched
 from typing import Any
 
 from anyio.to_thread import run_sync as any_io_run_sync  # use anyio to simplify asyncio and ensure multi loop compat
@@ -34,3 +36,22 @@ def as_async_callable[**P, T](sync_fn: Callable[P, T]) -> Callable[P, Coroutine[
         return await run_sync(sync_fn, *args, **kwargs)
 
     return wrapper
+
+
+async def batched_gather[T](
+    *coroutines: Coroutine[Any, Any, T],
+    batch_size: int,
+) -> list[T]:
+    """Gather coroutines in batches.
+
+    Args:
+        *coroutines: The coroutines to gather.
+        batch_size: The batch size.
+
+    Returns:
+        The gathered results.
+    """
+    ret = []
+    for batch in batched(coroutines, batch_size):
+        ret.extend(await gather(*batch))
+    return ret
