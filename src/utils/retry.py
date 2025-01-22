@@ -9,6 +9,28 @@ from tenacity import (
 )
 
 
+def with_retry[**P, R](
+    *exc: type[Exception],
+    max_retries: int = 3,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """Retry decorator for retrying a function multiple times.
+
+    Args:
+        *exc: The exception types to retry on.
+        max_retries: The maximum number of retries.
+
+    Returns:
+        A decorator that retries the function multiple times.
+    """
+    return cast(
+        Callable[[Callable[P, R]], Callable[P, R]],
+        retry(
+            retry=retry_if_exception_type(exc),
+            stop=stop_after_attempt(max_retries),
+        ),
+    )
+
+
 def with_exponential_backoff_retry[**P, R](
     *exc: type[Exception],
     max_retries: int = 5,
