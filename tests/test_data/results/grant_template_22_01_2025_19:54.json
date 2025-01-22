@@ -1,0 +1,103 @@
+{
+  "name": "In Vivo High-Resolution Imaging for Inner Ear Visualization (R01) Grant Application",
+  "template": "# Part 1. Overview Information\n\n# Key Dates\n\n# Part 2. Full Text of Announcement\n\n## {{opportunity_description.title}}\n\n{{opportunity_description.content}}\n\n## {{background.title}}\n\n{{background.content}}\n\n## {{scope.title}}\n\n{{scope.content}}\n\n::research_plan::\n\n",
+  "sections": [
+    {
+      "depends_on": [],
+      "instructions": "Provide a summary of the funding opportunity's purpose, goals, and key focus areas. Highlight the importance of the research and its potential impact.",
+      "keywords": [
+        "in vivo imaging",
+        "inner ear visualization",
+        "high-resolution imaging",
+        "structural imaging",
+        "functional imaging"
+      ],
+      "max_words": 250,
+      "min_words": 100,
+      "name": "opportunity_description",
+      "title": "Notice of Funding Opportunity Description",
+      "topics": [
+        "Background Context",
+        "Rationale",
+        "Impact"
+      ],
+      "search_queries": [
+        "in vivo imaging techniques for inner ear research",
+        "high-resolution structural imaging of the inner ear",
+        "functional imaging methods for inner ear studies",
+        "visualization of inner ear anatomy using advanced imaging",
+        "impact of inner ear imaging research on hearing loss",
+        "research on in vivo imaging for inner ear disorders",
+        "high resolution in vivo imaging structural functional inner ear",
+        "advanced imaging techniques to visualize inner ear",
+        "potential of inner ear imaging to improve diagnostics"
+      ]
+    },
+    {
+      "depends_on": [
+        "opportunity_description"
+      ],
+      "instructions": "Describe the current limitations in inner ear imaging technologies and the need for improved methods. Summarize the previous work done in the field and how the proposed research addresses the gaps in existing knowledge.",
+      "keywords": [
+        "inner ear anatomy",
+        "imaging limitations",
+        "non-invasive imaging",
+        "post-mortem tissue",
+        "clinical management"
+      ],
+      "max_words": 500,
+      "min_words": 200,
+      "name": "background",
+      "title": "Background",
+      "topics": [
+        "Background Context",
+        "Rationale",
+        "Scientific Infrastructure"
+      ],
+      "search_queries": [
+        "limitations of current inner ear imaging techniques",
+        "challenges in non-invasive imaging of the inner ear",
+        "advancements in inner ear imaging since previous work",
+        "post-mortem inner ear tissue imaging methodologies",
+        "gaps in knowledge related to inner ear imaging",
+        "need for improved inner ear imaging for clinical management",
+        "high-resolution imaging of inner ear anatomy",
+        "comparison of invasive and non-invasive inner ear imaging",
+        "novel approaches to inner ear imaging research"
+      ]
+    },
+    {
+      "depends_on": [
+        "background"
+      ],
+      "instructions": "Elaborate on the specific areas of interest for this funding opportunity, including development of new imaging techniques, improvement of existing techniques, and development of novel probes. Address what areas of study are not responsive to the call.",
+      "keywords": [
+        "imaging techniques",
+        "spatial resolution",
+        "contrast agents",
+        "imaging probes",
+        "clinical translation"
+      ],
+      "max_words": 500,
+      "min_words": 250,
+      "name": "scope",
+      "title": "Scope",
+      "topics": [
+        "Research Feasibility",
+        "Novelty And Innovation",
+        "Methodology"
+      ],
+      "search_queries": [
+        "development of new imaging techniques",
+        "improvement of existing imaging techniques",
+        "novel imaging probe development",
+        "advanced imaging modalities",
+        "high spatial resolution imaging",
+        "contrast agent development",
+        "clinical translation of imaging techniques",
+        "limitations of current imaging probes",
+        "non-responsive research areas imaging"
+      ]
+    }
+  ]
+}
