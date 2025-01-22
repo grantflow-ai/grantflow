@@ -28,6 +28,10 @@ class FileParsingError(BackendError):
     """Raised when an error occurs during parsing."""
 
 
+class InternalOperationError(BackendError):
+    """Raised when an internal operation fails."""
+
+
 class ExternalOperationError(BackendError):
     """Raised when an HTTP request to a remote system fails."""
 

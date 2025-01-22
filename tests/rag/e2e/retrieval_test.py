@@ -26,7 +26,7 @@ async def test_document_retrieval(
     application = await retrieve_application(application_id=full_application_id, session_maker=async_session_maker)
 
     results = await retrieve_documents(
-        skip_reranking=True,
+        rerank=True,
         application_id=full_application_id,
         user_prompt=f"""
             The task is to test the RAG pipeline by testing that retrieval works.
