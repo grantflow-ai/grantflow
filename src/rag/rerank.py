@@ -3,7 +3,7 @@ from typing import Final, TypedDict
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.db.tables import TextVector
 from src.exceptions import ValidationError
-from src.rag.utils import handle_completions_request
+from src.rag.completion import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -16,45 +16,45 @@ You are a specialized reranking component within a RAG pipeline for grant applic
 RERANKING_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="batch_reranking",
     template="""
-Your task is to analyze multiple documents and return an ordered list of document ids
-based on their relevance to the queries and task.
+    Your task is to analyze multiple documents and return an ordered list of document ids
+    based on their relevance to the queries and task.
 
-Analyze and rank the following documents based on their relevance to the queries and user prompt:
+    Analyze and rank the following documents based on their relevance to the queries and user prompt:
 
-1. The queries:
-    <queries>
-    ${queries}
-    </queries>
+    1. The queries:
+        <queries>
+        ${queries}
+        </queries>
 
-2. The user prompt:
-    <user_prompt>
-    ${user_prompt}
-    </user_prompt>
+    2. The user prompt:
+        <user_prompt>
+        ${user_prompt}
+        </user_prompt>
 
-3. The documents to be ranked:
-    <documents>
-    ${documents}
-    </documents>
+    3. The documents to be ranked:
+        <documents>
+        ${documents}
+        </documents>
 
-Follow these steps to complete the task:
+    Follow these steps to complete the task:
 
-1. Analyze each document in relation to the queries and user prompt.
-2. Evaluate each document based on the following criteria:
-   a. Query relevance: Direct correspondence to the queries' content
-   b. Technical depth: Substantive technical or scientific content
-   c. Prompt task fit: Relevance for the text generation task in the user prompt
-3. Rank the documents based on your evaluation.
-4. Validate that your response includes only valid document IDs.
+    1. Analyze each document in relation to the queries and user prompt.
+    2. Evaluate each document based on the following criteria:
+       a. Query relevance: Direct correspondence to the queries' content
+       b. Technical depth: Substantive technical or scientific content
+       c. Prompt task fit: Relevance for the text generation task in the user prompt
+    3. Rank the documents based on your evaluation.
+    4. Validate that your response includes only valid document IDs.
 
-Respond to the provided tool using a JSON object adhereing to the following format:
+    Respond to the provided tool using a JSON object adhereing to the following format:
 
-```jsonc
-{
-    "reranked_document_ids": [
-        5, 3, 1, // ... etc. this array must contain the document IDs in the order of relevance
-    ],
-}
-```
+    ```jsonc
+    {
+        "reranked_document_ids": [
+            5, 3, 1, // ... etc. this array must contain the document IDs in the order of relevance
+        ],
+    }
+    ```
 """,
 )
 

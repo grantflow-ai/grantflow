@@ -1,6 +1,6 @@
 from typing import Final, TypedDict
 
-from src.rag.utils import handle_completions_request
+from src.rag.completion import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 

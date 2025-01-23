@@ -9,9 +9,9 @@ from jsonschema.validators import validate
 from src.db.json_objects import GrantSection
 from src.dto import GrantTemplateDTO
 from src.exceptions import ValidationError
+from src.rag.completion import handle_completions_request
 from src.rag.llm_evaluation import with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
-from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.sync import batched_gather
@@ -303,18 +303,18 @@ def grant_template_validator(tool_response: GrantTemplateDTO) -> None:  # noqa: 
         raise ValidationError("\n".join(errors))
 
 
-async def generate_grant_template(user_prompt: str) -> GrantTemplateDTO:
+async def generate_grant_template(task_description: str) -> GrantTemplateDTO:
     """Generate a complete grant template including format and section configurations.
 
     Args:
-        user_prompt: The user prompt to send to the model.
+        task_description: The user prompt to send to the model.
 
     Returns:
         Complete grant template configuration including format and sections
     """
     result = await handle_completions_request(
         prompt_identifier="generate_grant_template",
-        messages=user_prompt,
+        messages=task_description,
         response_type=GrantTemplateDTO,
         response_schema=grant_template_response_schema,
         system_prompt=GRANT_TEMPLATE_GENERATION_SYSTEM_PROMPT,
@@ -410,11 +410,13 @@ async def handle_generate_grant_template(*, cfp_content: str, organization_id: s
         topics=SECTION_TOPICS,
     )
     rag_results: list[DocumentDTO] = (
-        await retrieve_documents(organization_id=organization_id, user_prompt=user_prompt) if organization_id else []
+        await retrieve_documents(organization_id=organization_id, task_description=user_prompt)
+        if organization_id
+        else []
     )
     prompt_template_response = await with_prompt_evaluation(
         prompt_handler=generate_grant_template,
-        user_prompt=user_prompt.to_string(rag_results=rag_results),
+        prompt=user_prompt.to_string(rag_results=rag_results),
     )
     search_queries = await batched_gather(
         *[generate_section_search_queries(GrantSection(**section)) for section in prompt_template_response["sections"]],

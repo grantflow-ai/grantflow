@@ -68,7 +68,7 @@ async def test_with_prompt_evaluation_success(
     with patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request):
         result = await with_prompt_evaluation(
             prompt_handler=mock_handler,
-            user_prompt="test prompt",
+            task_description="test prompt",
             min_passing_score=85,
         )
 
@@ -90,7 +90,7 @@ async def test_with_prompt_evaluation_failure(
     ):
         await with_prompt_evaluation(
             prompt_handler=mock_handler,
-            user_prompt="test prompt",
+            task_description="test prompt",
             min_passing_score=85,
             retries=1,
         )
@@ -107,7 +107,7 @@ async def test_with_prompt_evaluation_retry_success(
     with patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request):
         result = await with_prompt_evaluation(
             prompt_handler=mock_handler,
-            user_prompt="test prompt",
+            task_description="test prompt",
             min_passing_score=85,
         )
 
@@ -126,7 +126,7 @@ async def test_with_prompt_evaluation_different_min_score(
     with patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request):
         result = await with_prompt_evaluation(
             prompt_handler=mock_handler,
-            user_prompt="test prompt",
+            task_description="test prompt",
             min_passing_score=30,
         )
 

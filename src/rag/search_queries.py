@@ -4,7 +4,7 @@ from typing import Any, Final, TypedDict
 from prompt_template import PromptTemplate as _PromptTemplate
 
 from src.constants import FAST_TEXT_GENERATION_MODEL
-from src.rag.utils import handle_completions_request
+from src.rag.completion import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.serialization import serialize
@@ -25,7 +25,8 @@ SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ${user_prompt}
     </user_prompt>
 
-    Your task is to generate between 3 and 10 distinct search queries based on this user prompt. These queries will be executed against the vector store to retrieve relevant information for the grant application section.
+    Your task is to generate between 3 and 10 distinct search queries based on this user prompt.
+    These queries will be executed against the vector store to retrieve relevant information for the grant application section.
 
     Instructions:
     1. Analyze the user prompt carefully to understand the context and requirements of the grant application section.

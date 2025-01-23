@@ -28,7 +28,7 @@ async def test_document_retrieval(
     results = await retrieve_documents(
         rerank=True,
         application_id=full_application_id,
-        user_prompt=f"""
+        task_description=f"""
             The task is to test the RAG pipeline by testing that retrieval works.
 
             Here is the content of the grant application:
