@@ -32,9 +32,9 @@ CONSECUTIVE_PART_GENERATION_INSTRUCTIONS: Final[PromptTemplate] = PromptTemplate
     template="""
 Here is the last segment of text that was generated:
 
-<last_generation_result>
-${last_generation_result}
-</last_generation_result>
+    <last_generation_result>
+    ${last_generation_result}
+    </last_generation_result>
 
 Instructions:
     1. Analyze the provided text segment, focusing on its content, style, and end point.
@@ -43,6 +43,7 @@ Instructions:
     4. Avoid repeating information already presented in the previous segment.
 """,
 )
+
 SEGMENTED_GENERATION_SCHEMA = {
     "type": "object",
     "properties": {
@@ -94,6 +95,7 @@ async def generate_segmeneted_text(
         response = await handle_completions_request(
             prompt_identifier=prompt_identifier,
             response_schema=SEGMENTED_GENERATION_SCHEMA,
+            system_prompt="Generate the next segment of text.",
             messages=[
                 user_prompt,
                 SEGMENTED_GENERATION_OUTPUT_INSTRUCTIONS,
