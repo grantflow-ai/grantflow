@@ -2,6 +2,8 @@ from collections.abc import Callable
 from typing import Any, Final
 
 from google.cloud.exceptions import TooManyRequests
+from jsonschema import ValidationError as JSONSchemaValidationError
+from jsonschema.validators import validate
 from vertexai.generative_models import (  # type: ignore[import-untyped]
     Content,
     GenerationConfig,
@@ -36,10 +38,6 @@ When generating text, strictly follow these guidelines:
 """
 
 
-def _default_validator[T](_: T) -> None:
-    return None
-
-
 @with_exponential_backoff_retry(TooManyRequests)
 async def make_completions_request[T](
     *,
@@ -51,14 +49,6 @@ async def make_completions_request[T](
     messages: str | Part | list[str | Part],
 ) -> T:
     """Make a completions request to the model.
-
-    Args:
-        model:
-        prompt_identifier:
-        response_type:
-        system_prompt:
-        response_schema:
-        messages:
 
     Args:
         model: The model to use for the generation.
@@ -89,6 +79,25 @@ async def make_completions_request[T](
     return deserialize(response.text, response_type)
 
 
+def create_json_schema_validator(json_schema: dict[str, Any]) -> Callable[[Any], None]:
+    """Create a JSON schema validator.
+
+    Args:
+        json_schema: The JSON schema.
+
+    Returns:
+        The validator function.
+    """
+
+    def validator(response: Any) -> None:
+        try:
+            validate(schema=json_schema, instance=response)
+        except JSONSchemaValidationError as e:
+            raise ValidationError(e.message) from e
+
+    return validator
+
+
 async def handle_completions_request[T](
     *,
     max_attempts: int = 3,
@@ -98,7 +107,7 @@ async def handle_completions_request[T](
     response_schema: dict[str, Any] | None = None,
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
-    validator: Callable[[T], None] = _default_validator,
+    validator: Callable[[T], None] | None = None,
 ) -> T:
     """Handle a completions request to the model.
 
@@ -138,8 +147,11 @@ async def handle_completions_request[T](
                 response_schema=response_schema,
                 messages=msgs,
             )
+            # if not validator and response_schema:
+            #     validator = create_json_schema_validator(response_schema)  # noqa: ERA001
 
-            validator(response)
+            if validator:
+                validator(response)
             return response
         except ValidationError as e:
             attempts += 1
