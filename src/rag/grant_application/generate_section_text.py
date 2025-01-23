@@ -2,8 +2,8 @@ from typing import Final
 
 from src.db.json_objects import GrantSection
 from src.exceptions import EvaluationError
+from src.rag.long_form import handle_long_form_text_generation
 from src.rag.retrieval import retrieve_documents
-from src.rag.segmented_tool_generation import handle_segmented_text_generation
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_text_generation",
     template="""
-    You are an expert grant application writer specializing in STEM fields. Your task is to write the ${section_title} section of a grant application, ensuring it is compelling, informative, and aligned with the provided instructions and context.
+    Your task is to write the ${section_title} section of a grant application, ensuring it is compelling, informative, and aligned with the provided instructions and context.
 
     ## Generation Instructions
 
@@ -44,18 +44,6 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     <dependencies>
     ${dependencies}
     </dependencies>
-
-    ## Source Materials
-
-    Thoroughly analyze and synthesize information from the following sources to craft a well-supported and persuasive argument:
-
-    <user_inputs>
-    ${user_inputs}
-    </user_inputs>
-
-    <rag_results>
-    ${rag_results}
-    </rag_results>
 """,
 )
 
@@ -80,27 +68,31 @@ async def handle_section_text_generation(
     """
     logger.debug("Generating section text.", grant_section=grant_section)
 
-    user_prompt = GENERATE_SECTION_TEXT_USER_PROMPT.substitute(
+    user_prompt = GENERATE_SECTION_TEXT_USER_PROMPT.to_string(
         dependencies=dependencies if dependencies else "N/A",
         instructions=grant_section["instructions"],
         keywords=grant_section["keywords"],
         section_title=grant_section["title"],
         topics=grant_section["topics"],
-        user_inputs=user_inputs,
     )
     try:
         rag_results = await retrieve_documents(
             application_id=application_id,
-            user_prompt=user_prompt,
+            task_description=user_prompt,
             search_queries=grant_section.get("search_queries"),
+            user_inputs=user_inputs,
         )
     except EvaluationError as e:
         logger.error("Failed to retrieve rag results.", grant_section=grant_section, error=e)
         return "**Insufficient Context: The system determined that the available data is insufficient to generate this section.**"
 
-    result = await handle_segmented_text_generation(
+    result = await handle_long_form_text_generation(
+        max_words=grant_section.get("max_words", 250),
+        min_words=grant_section.get("min_words", 750),
         prompt_identifier="generate_section_text",
-        user_prompt=user_prompt.to_string(rag_results=rag_results),
+        rag_results=rag_results,
+        task_description=user_prompt,
+        user_inputs=user_inputs,
     )
     logger.debug("Successfully generated section text.", grant_section=grant_section, text=result)
     return result

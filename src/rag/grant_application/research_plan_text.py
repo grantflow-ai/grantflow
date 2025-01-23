@@ -3,9 +3,9 @@ from collections import defaultdict
 from typing import Final, TypedDict
 
 from src.db.json_objects import ResearchObjective, ResearchTask
+from src.rag.completion import handle_completions_request
+from src.rag.long_form import handle_long_form_text_generation
 from src.rag.retrieval import retrieve_documents
-from src.rag.segmented_tool_generation import handle_segmented_text_generation
-from src.rag.utils import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -47,22 +47,13 @@ Guidelines:
 """,
 )
 
-RESEARCH_TASK_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="research_task_generation",
-    template="""
-Generate a detailed research task description using:
+RESEARCH_TASK_GENERATION_TASK_DESCRIPTION: Final[str] = """
+Your task is to generate a detailed description for the provided research task.
 
-Task data:
-<research_task_data>
-${research_task}
-</research_task_data>
+## Generation Instructions
 
-RAG context:
-<rag_retrieval_results>
-${rag_results}
-</rag_retrieval_results>
+Before beginning generation, follow these steps:
 
-<planning>
 1. Methodology Analysis
    - Extract methodologies from task data and RAG results
    - Map specific techniques to research goals
@@ -88,39 +79,16 @@ ${rag_results}
    - List missing critical information
    - Note technical challenges
    - Define mitigation approaches
-</planning>
-
-Guidelines:
-- Write 300-400 words continuous text
-- No headers/lists
-- No task title inclusion
-- Technical language for expert audience
-- Include all concrete methodologies
-""",
-)
+"""
 
 
-RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="research_objective_generation",
-    template="""
-Generate research objective description using:
+RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT: Final[str] = """
+Your task is to generate a detailed description for the provided research objective.
 
-Context:
-<rag_results>
-${rag_results}
-</rag_results>
+## Generation Instructions
 
-Objective data:
-<research_objective_data>
-${research_objective}
-</research_objective_data>
+Before beginning generation, follow these steps:
 
-Task titles:
-<research_task_titles>
-${research_task_titles}
-</research_task_titles>
-
-<planning>
 1. Hypothesis & Goals
    - Extract working hypothesis
    - Map objective goals to tasks
@@ -140,36 +108,15 @@ ${research_task_titles}
    - Map relationships to other objectives
    - Note prerequisite work
    - Identify downstream impacts
-</planning>
+"""
 
-Guidelines:
-- Write 300-400 words continuous text
-- Technical language for expert audience
-- Include concrete methodologies
-""",
-)
+PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[str] = """
+Your task is to generate a preliminary results section for the provided research objective.
 
-PRELIMINARY_RESULTS_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="preliminary_results_generation",
-    template="""
-Generate preliminary results section using:
+## Generation Instructions
 
-Research objective:
-<research_objective>
-${research_objective_description}
-</research_objective>
+Before beginning generation, follow these steps:
 
-Preliminary data:
-<preliminary_data>
-${preliminary_data}
-</preliminary_data>
-
-RAG context:
-<rag_results>
-${rag_results}
-</rag_results>
-
-<planning>
 1. Data Analysis
    - Extract key experimental findings
    - Map methods to results
@@ -187,36 +134,15 @@ ${rag_results}
    - Map to proposed work
    - Identify next steps
    - List technical challenges
-</planning>
+"""
 
-Guidelines:
-- Write 200-800 words continuous text
-- Follow objective section directly
-- Include concrete data points
-""",
-)
+RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[str] = """
+Your task is to generate a risks and alternatives section for the provided research objective.
 
-RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="risks_and_alternatives_generation",
-    template="""
-Generate risks and alternatives section using:
+## Generation Instructions
 
-Research objective:
-<research_objective>
-${research_objective_description}
-</research_objective>
+Before beginning generation, follow these steps:
 
-Risk data:
-<risks_and_mitigations>
-${risks_and_mitigations}
-</risks_and_mitigations>
-
-RAG context:
-<rag_results>
-${rag_results}
-</rag_results>
-
-<planning>
 1. Risk Assessment
    - Map technical risks
    - Identify methodological challenges
@@ -234,14 +160,7 @@ ${rag_results}
    - List alternative approaches
    - Map resource requirements
    - Note validation methods
-</planning>
-
-Guidelines:
-- Write 150-300 words continuous text
-- Focus on concrete risks and solutions
-- Include specific mitigation steps
-""",
-)
+"""
 
 RESEARCH_TASK_TEMPLATE: Final[PromptTemplate] = PromptTemplate(
     name="research_task_markdown",
@@ -373,15 +292,17 @@ async def handle_research_task_text_generation(
     Returns:
         The generated section text.
     """
-    user_prompt = RESEARCH_TASK_GENERATION_USER_PROMPT.substitute(
-        research_task=research_task,
-    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        user_prompt=user_prompt,
+        task_description=RESEARCH_TASK_GENERATION_TASK_DESCRIPTION,
     )
-    result = await handle_segmented_text_generation(
-        user_prompt=user_prompt.to_string(rag_results=rag_results),
+    result = await handle_long_form_text_generation(
+        max_words=500,
+        min_words=300,
+        prompt_identifier="research-task",
+        rag_results=rag_results,
+        research_task=research_task,
+        task_description=RESEARCH_TASK_GENERATION_TASK_DESCRIPTION,
     )
 
     logger.info("Successfully generated research task.", task_number=task_number)
@@ -403,24 +324,26 @@ async def handle_research_objective_description_generation(
     Returns:
         The generated section text.
     """
-    research_task_titles = [research_task["title"] for research_task in research_objective["research_tasks"]]
+    objective_data = {
+        "title": research_objective["title"],
+        "objective_number": research_objective["number"],
+        "description": research_objective.get("description"),
+        "relationships": research_objective.get("relationships"),
+        "research_tasks": [research_task["title"] for research_task in research_objective["research_tasks"]],
+    }
 
-    user_prompt = RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT.substitute(
-        research_objective={
-            "title": research_objective["title"],
-            "objective_number": research_objective["number"],
-            "description": research_objective.get("description"),
-            "relationships": research_objective.get("relationships"),
-        },
-        research_task_titles=research_task_titles,
-    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        user_prompt=user_prompt,
+        research_objective=objective_data,
+        task_description=RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT,
     )
-    result = await handle_segmented_text_generation(
+    result = await handle_long_form_text_generation(
+        max_words=500,
+        min_words=300,
         prompt_identifier="research-objective",
-        user_prompt=user_prompt.to_string(rag_results=rag_results),
+        rag_results=rag_results,
+        research_objective=objective_data,
+        task_description=RESEARCH_OBJECTIVE_GENERATION_USER_PROMPT,
     )
     logger.info("Successfully generated research objective", number=research_objective["number"])
 
@@ -445,17 +368,20 @@ async def handle_preliminary_data_text_generation(
     Returns:
         The generated section text.
     """
-    user_prompt = PRELIMINARY_RESULTS_GENERATION_USER_PROMPT.substitute(
-        research_objective_description=research_objective_description,
-        preliminary_data=application_details.get("preliminary_data", ""),
-    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        user_prompt=user_prompt,
+        preliminary_data=application_details.get("preliminary_data", ""),
+        research_objective_description=research_objective_description,
+        task_description=PRELIMINARY_RESULTS_GENERATION_USER_PROMPT,
     )
-    result = await handle_segmented_text_generation(
+    result = await handle_long_form_text_generation(
+        max_words=800,
+        min_words=200,
+        preliminary_data=application_details.get("preliminary_data", ""),
         prompt_identifier="preliminary-results",
-        user_prompt=user_prompt.to_string(rag_results=rag_results),
+        rag_results=rag_results,
+        research_objective_description=research_objective_description,
+        task_description=PRELIMINARY_RESULTS_GENERATION_USER_PROMPT,
     )
     logger.info("Successfully generated preliminary results.", number=research_objective["number"])
     return result
@@ -480,17 +406,20 @@ async def handle_risks_and_mitigations_text_generation(
         The generated section text.
 
     """
-    user_prompt = RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT.substitute(
-        research_objective_description=research_objective_description,
-        risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
-    )
     rag_results = await retrieve_documents(
         application_id=application_id,
-        user_prompt=user_prompt,
+        research_objective_description=research_objective_description,
+        risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
+        task_description=RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT,
     )
-    result = await handle_segmented_text_generation(
+    result = await handle_long_form_text_generation(
         prompt_identifier="risks-and-alternatives",
-        user_prompt=user_prompt.to_string(rag_results=rag_results),
+        rag_results=rag_results,
+        research_objective_description=research_objective_description,
+        risks_and_mitigations=application_details.get("risks_and_mitigations", ""),
+        task_description=RISKS_AND_ALTERNATIVES_GENERATION_USER_PROMPT,
+        min_words=100,
+        max_words=300,
     )
     logger.info("Successfully generated risks and alternatives.", number=research_objective["number"])
 
