@@ -34,9 +34,7 @@ DEFAULT_SYSTEM_PROMPT: Final[str] = f"""
    - Follow the scientific terminology provided in the inputs
    - Maintain a formal and data-driven tone, emphasizing succinctness and specificity
 
-## Handling Missing Information:
-   When information is missing or insufficient, do not invent facts or complete the missing information instead.
-   write `**[MISSING INFORMATION: description]**` where description is a concise description of the missing information.
+**important**: When information is missing or insufficient, do not invent facts. Instead write `**[MISSING INFORMATION: description of the missing information]**`.
 """
 
 

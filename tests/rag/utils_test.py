@@ -6,7 +6,7 @@ from google.cloud.exceptions import TooManyRequests
 from pytest_mock import MockerFixture
 
 from src.exceptions import ValidationError
-from src.rag.utils import handle_completions_request, make_completions_request
+from src.rag.completion import handle_completions_request, make_completions_request
 
 
 @pytest.fixture

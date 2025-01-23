@@ -6,10 +6,10 @@ from sqlalchemy import select
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
 from src.exceptions import EvaluationError
+from src.rag.completion import handle_completions_request
 from src.rag.dto import DocumentDTO
 from src.rag.rerank import rerank_vectors
 from src.rag.search_queries import handle_create_search_queries
-from src.rag.utils import handle_completions_request
 from src.utils.embeddings import generate_embeddings
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -26,34 +26,32 @@ You are an AI assistant specializing in evaluating the relevance and comprehensi
 GUIDED_RETRIEVAL_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="guided_retrieval",
     template="""
-    Your task is to analyze the following components and determine whether the retrieved information when combined with the contents of the user prompt has sufficient quality, detail and depth to support the text generation task.
+    Your task is to analyze the following components and determine whether the retrieved information when combined with the contents of the prompt has sufficient quality, detail and depth to support the text generation task.
 
-    ## User Prompt
-
-    This prompt outlines the task that needs to be completed using the retrieved information:
-
-    ${user_prompt}
+    ## Generation Task Description
+    This is the task description:
+        <task_description>
+        ${task_description}
+        </task_description>
 
     ## Search Queries
-
     These queries were used to retrieve information relevant to the task:
-
-    ${queries}
+        <queries>
+        ${queries}
+        </queries>
 
     ## RAG Results
-
     These are the documents retrieved from the vector database based on the search queries:
-
-    ${rag_results}
+        <rag_results>
+        ${rag_results}
+        </rag_results>
 
     ## Evaluation Criteria
 
     Consider the following criteria when evaluating the RAG results:
 
-    * **Task Alignment:** Do the retrieved documents provide information that is directly relevant to the task outlined in the user prompt?
-    * **Relevance:** Do the retrieved documents address the key concepts and topics implied by the search queries?
-    * **Comprehensiveness:** Do the results provide a diverse range of perspectives and sufficient depth of information to adequately address the task?
-    * **Quality:** Are the retrieved documents reliable, authoritative, and up-to-date?
+    * **Task Alignment:** Do the retrieved documents provide information that is directly relevant to the task outlined in the prompt?
+    * **Comprehensiveness:** Do the results provide a sufficient depth of information to adequately address the task?
 
     ## Output
 
@@ -169,7 +167,7 @@ async def retrieve_documents(
     organization_id: str | None = None,
     rerank: bool = False,
     search_queries: list[str] | None = None,
-    user_prompt: str | _PromptTemplate,
+    task_description: str | _PromptTemplate,
     **kwargs: Any,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
@@ -180,7 +178,7 @@ async def retrieve_documents(
         organization_id: The organization ID, required if application_id is not provided.
         rerank: Whether to rerank the retrieved documents.
         search_queries: The search queries.
-        user_prompt: The user prompt.
+        task_description: The task description.
         **kwargs: Additional keyword arguments.
 
     Raises:
@@ -193,7 +191,7 @@ async def retrieve_documents(
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
 
-    search_queries = search_queries or await handle_create_search_queries(user_prompt=user_prompt, **kwargs)
+    search_queries = search_queries or await handle_create_search_queries(user_prompt=task_description, **kwargs)
     limit = int(max_results * INITIAL_RETRIEVAL_MULTIPLIER) if rerank else max_results
 
     attempts = 0
@@ -217,7 +215,7 @@ async def retrieve_documents(
             response_type=GuidedRetrievalToolResponse,
             system_prompt=GUIDED_RETRIEVAL_SYSTEM_PROMPT,
             messages=GUIDED_RETRIEVAL_USER_PROMPT.to_string(
-                user_prompt=user_prompt,
+                task_description=task_description,
                 queries=search_queries,
                 rag_results=[
                     cast(
@@ -245,7 +243,7 @@ async def retrieve_documents(
         raise EvaluationError("Guided retrieval response indicated insufficient context")
 
     if rerank:
-        vectors = await rerank_vectors(vectors=vectors, queries=search_queries, user_prompt=str(user_prompt))
+        vectors = await rerank_vectors(vectors=vectors, queries=search_queries, user_prompt=str(task_description))
 
     logger.info(
         "Successfully retrieved and processed documents",

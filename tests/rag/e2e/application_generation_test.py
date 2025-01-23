@@ -10,6 +10,7 @@ from src.rag.grant_application.handler import grant_application_text_generation_
 from tests.conftest import RESULTS_FOLDER
 
 
+@pytest.mark.timeout(60 * 30)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"), reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests"
 )
