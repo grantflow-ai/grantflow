@@ -92,7 +92,7 @@ async def handle_section_text_generation(
         rag_results = await retrieve_documents(
             application_id=application_id,
             user_prompt=user_prompt,
-            search_queries=grant_section["search_queries"],
+            search_queries=grant_section.get("search_queries"),
         )
     except EvaluationError as e:
         logger.error("Failed to retrieve rag results.", grant_section=grant_section, error=e)

@@ -96,7 +96,6 @@ Guidelines:
 - No task title inclusion
 - Technical language for expert audience
 - Include all concrete methodologies
-- Note **MISSING INFORMATION** where critical data absent
 """,
 )
 
@@ -147,7 +146,6 @@ Guidelines:
 - Write 300-400 words continuous text
 - Technical language for expert audience
 - Include concrete methodologies
-- Note **MISSING INFORMATION** where critical data absent
 """,
 )
 
@@ -195,7 +193,6 @@ Guidelines:
 - Write 200-800 words continuous text
 - Follow objective section directly
 - Include concrete data points
-- Note **MISSING INFORMATION** where critical data absent
 """,
 )
 
@@ -243,7 +240,6 @@ Guidelines:
 - Write 150-300 words continuous text
 - Focus on concrete risks and solutions
 - Include specific mitigation steps
-- Note **MISSING INFORMATION** where critical data absent
 """,
 )
 
