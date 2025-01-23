@@ -375,24 +375,6 @@ class SectionQueriesToolResponse(TypedDict):
     """The generated search queries."""
 
 
-def section_search_queries_validator(tool_response: SectionQueriesToolResponse) -> None:
-    """Validate the tool response for generating search queries for a grant section.
-
-    Args:
-        tool_response: The tool response to validate.
-
-    Raises:
-        ValidationError: If the response is invalid.
-
-    Returns:
-        Complete grant template configuration including format and
-    """
-    try:
-        validate(instance=tool_response, schema=section_search_queries_response_schema)
-    except JSONSchemaValidationError as e:
-        raise ValidationError(e.message) from e
-
-
 async def generate_section_search_queries(grant_section: GrantSection) -> list[str]:
     """Generate search queries for a grant section.
 
@@ -407,7 +389,6 @@ async def generate_section_search_queries(grant_section: GrantSection) -> list[s
         response_type=SectionQueriesToolResponse,
         response_schema=section_search_queries_response_schema,
         system_prompt=SECTION_SEARCH_QUERIES_SYSTEM_PROMPT,
-        validator=section_search_queries_validator,
         messages=SECTION_SEARCH_QUERIES_USER_PROMPT.to_string(grant_section=grant_section),
     )
     logger.debug("Generated search queries for grant section", result=result)
