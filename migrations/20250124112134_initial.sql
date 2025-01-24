@@ -83,6 +83,7 @@ CREATE INDEX "ix_funding_organizations_created_at" ON "funding_organizations" ("
 -- Create "grant_templates" table
 CREATE TABLE "grant_templates" (
   "grant_sections" json NOT NULL,
+  "research_plan" json NOT NULL,
   "name" character varying(255) NOT NULL,
   "template" text NOT NULL,
   "grant_application_id" uuid NOT NULL,

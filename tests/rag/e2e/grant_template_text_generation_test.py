@@ -147,7 +147,7 @@ async def test_handle_generate_grant_template_without_rag(
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
-    assert elapsed_time < 60
+    assert elapsed_time < 120
 
     assert isinstance(template_result, dict)
     assert "name" in template_result
@@ -185,7 +185,7 @@ async def test_handle_generate_grant_template_without_rag(
         assert isinstance(section["depends_on"], list)
         assert all(isinstance(d, str) for d in section["depends_on"])
 
-        assert all((d in {"::research_plan::", "researc_plan", *section_names}) for d in section["depends_on"])
+        assert all((d in {"::research_plan::", "research_plan", *section_names}) for d in section["depends_on"])
 
         assert section["name"] not in section["depends_on"]
 

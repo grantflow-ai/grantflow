@@ -1,6 +1,7 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from src.exceptions import EvaluationError
 from src.rag.llm_evaluation import (
@@ -8,11 +9,9 @@ from src.rag.llm_evaluation import (
     evaluate_prompt_output,
     with_prompt_evaluation,
 )
+from src.utils.prompt_template import PromptTemplate
 
-
-@pytest.fixture
-def mock_make_completions_request() -> AsyncMock:
-    return AsyncMock()
+TEST_PROMPT = PromptTemplate("test prompt")
 
 
 @pytest.fixture
@@ -51,85 +50,111 @@ def low_score_evaluation() -> EvaluationToolResponse:
     }
 
 
-async def test_evaluate_prompt_output(mock_make_completions_request: AsyncMock) -> None:
-    with patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request):
-        await evaluate_prompt_output(original_prompt="test prompt", model_output="test output")
+async def test_evaluate_prompt_output(mocker: MockerFixture) -> None:
+    mock_completions = mocker.patch("src.rag.llm_evaluation.make_completions_request", new_callable=AsyncMock)
 
-    mock_make_completions_request.assert_called_once()
+    await evaluate_prompt_output(prompt="test prompt", model_output="test output")
+    mock_completions.assert_called_once()
 
 
 async def test_with_prompt_evaluation_success(
-    mock_make_completions_request: AsyncMock,
+    mocker: MockerFixture,
     passing_evaluation: EvaluationToolResponse,
 ) -> None:
     mock_handler = AsyncMock(return_value="test output")
-    mock_make_completions_request.return_value = passing_evaluation
+    mock_completions = mocker.patch(
+        "src.rag.llm_evaluation.make_completions_request",
+        new_callable=AsyncMock,
+        return_value=passing_evaluation,
+    )
 
-    with patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request):
-        result = await with_prompt_evaluation(
-            prompt_handler=mock_handler,
-            task_description="test prompt",
-            min_passing_score=85,
-        )
+    result = await with_prompt_evaluation(
+        prompt_handler=mock_handler,
+        prompt=TEST_PROMPT,
+        min_passing_score=85,
+    )
 
     assert result == "test output"
-    mock_handler.assert_called_once_with("test prompt")
-    mock_make_completions_request.assert_called_once()
+    mock_handler.assert_called_once_with(TEST_PROMPT)
+    mock_completions.assert_called_once()
 
 
 async def test_with_prompt_evaluation_failure(
-    mock_make_completions_request: AsyncMock,
+    mocker: MockerFixture,
     failing_evaluation: EvaluationToolResponse,
 ) -> None:
     mock_handler = AsyncMock(return_value="test output")
-    mock_make_completions_request.return_value = failing_evaluation
+    mocker.patch(
+        "src.rag.llm_evaluation.make_completions_request",
+        new_callable=AsyncMock,
+        return_value=failing_evaluation,
+    )
 
-    with (
-        patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request),
-        pytest.raises(EvaluationError),
-    ):
+    with pytest.raises(EvaluationError):
         await with_prompt_evaluation(
             prompt_handler=mock_handler,
-            task_description="test prompt",
+            prompt=TEST_PROMPT,
             min_passing_score=85,
             retries=1,
         )
 
 
 async def test_with_prompt_evaluation_retry_success(
-    mock_make_completions_request: AsyncMock,
+    mocker: MockerFixture,
     failing_evaluation: EvaluationToolResponse,
     passing_evaluation: EvaluationToolResponse,
 ) -> None:
     mock_handler = AsyncMock(return_value="test output")
-    mock_make_completions_request.side_effect = [failing_evaluation, passing_evaluation]
+    mock_completions = mocker.patch(
+        "src.rag.llm_evaluation.make_completions_request",
+        new_callable=AsyncMock,
+        side_effect=[failing_evaluation, passing_evaluation],
+    )
 
-    with patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request):
-        result = await with_prompt_evaluation(
-            prompt_handler=mock_handler,
-            task_description="test prompt",
-            min_passing_score=85,
-        )
+    result = await with_prompt_evaluation(
+        prompt_handler=mock_handler,
+        prompt=TEST_PROMPT,
+        min_passing_score=85,
+    )
 
     assert result == "test output"
     assert mock_handler.call_count == 2
-    assert mock_make_completions_request.call_count == 2
+    assert mock_completions.call_count == 2
 
 
-async def test_with_prompt_evaluation_different_min_score(
-    mock_make_completions_request: AsyncMock,
+@pytest.mark.parametrize(
+    "min_score,should_pass",
+    [
+        (30, True),
+        (40, False),
+        (50, False),
+    ],
+)
+async def test_with_prompt_evaluation_different_min_scores(
+    mocker: MockerFixture,
     low_score_evaluation: EvaluationToolResponse,
+    min_score: int,
+    should_pass: bool,
 ) -> None:
     mock_handler = AsyncMock(return_value="test output")
-    mock_make_completions_request.return_value = low_score_evaluation
+    mock_completions = mocker.patch(
+        "src.rag.llm_evaluation.make_completions_request",
+        new_callable=AsyncMock,
+        return_value=low_score_evaluation,
+    )
 
-    with patch("src.rag.llm_evaluation.make_completions_request", mock_make_completions_request):
+    if should_pass:
         result = await with_prompt_evaluation(
             prompt_handler=mock_handler,
-            task_description="test prompt",
-            min_passing_score=30,
+            prompt=TEST_PROMPT,
+            min_passing_score=min_score,
         )
-
-    assert result == "test output"
-    mock_handler.assert_called_once()
-    mock_make_completions_request.assert_called_once()
+        assert result == "test output"
+        mock_completions.assert_called_once()
+    else:
+        with pytest.raises(EvaluationError):
+            await with_prompt_evaluation(
+                prompt_handler=mock_handler,
+                prompt=TEST_PROMPT,
+                min_passing_score=min_score,
+            )

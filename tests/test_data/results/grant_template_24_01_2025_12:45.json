@@ -1,0 +1,200 @@
+{
+  "name": "MRA Grant Application",
+  "template": "# Project Summary\n\n## {{general_audience_abstract.title}}\n{{general_audience_abstract.content}}\n\n## {{technical_abstract.title}}\n{{technical_abstract.content}}\n\n## {{rationale_and_fit.title}}\n{{rationale_and_fit.content}}\n\n::research_plan::\n\n## {{team_excellence.title}}\n{{team_excellence.content}}\n\n## {{current_and_pending_support.title}}\n{{current_and_pending_support.content}}\n\n## {{mra_portfolio_fit.title}}\n{{mra_portfolio_fit.content}}",
+  "sections": [
+    {
+      "depends_on": [],
+      "instructions": "Provide a non-technical summary of the proposed research project, suitable for a general audience. Focus on the significance and potential impact of the research.",
+      "keywords": [
+        "melanoma research",
+        "cancer",
+        "prevention",
+        "detection",
+        "diagnosis",
+        "treatment",
+        "public health"
+      ],
+      "min_words": 100,
+      "max_words": 285,
+      "name": "general_audience_abstract",
+      "title": "General Audience Abstract",
+      "topics": [
+        "Impact",
+        "Broader Impacts"
+      ],
+      "search_queries": [
+        "melanoma research impact on public health",
+        "significance of advancements in melanoma detection",
+        "potential benefits of novel melanoma treatment strategies",
+        "how melanoma research improves prevention methods",
+        "melanoma diagnosis and its effect on patient outcomes",
+        "broad impact of melanoma research on cancer research"
+      ]
+    },
+    {
+      "depends_on": [],
+      "instructions": "Provide a concise technical summary of the proposed research project, including the aims, methods, and expected outcomes. Use appropriate scientific terminology.",
+      "keywords": [
+        "melanoma research",
+        "translational science",
+        "clinical trials",
+        "biomarkers",
+        "immunotherapy",
+        "molecular mechanisms",
+        "tumor microenvironment"
+      ],
+      "min_words": 100,
+      "max_words": 285,
+      "name": "technical_abstract",
+      "title": "Technical Abstract",
+      "topics": [
+        "Hypothesis",
+        "Methodology"
+      ],
+      "search_queries": [
+        "technical summary of melanoma research project",
+        "research aims methods melanoma",
+        "expected outcomes melanoma immunotherapy",
+        "melanoma clinical trials biomarkers research",
+        "molecular mechanisms tumor microenvironment",
+        "melanoma translational science research",
+        "scientific methods melanoma research",
+        "experimental design melanoma research",
+        "technical aspects melanoma research",
+        "research project aims melanoma"
+      ]
+    },
+    {
+      "depends_on": [],
+      "instructions": "Explain the rationale for the proposed research, referencing the problem it addresses, and how the project fits within the MRA's key criteria for high-impact research.",
+      "keywords": [
+        "melanoma",
+        "translational research",
+        "high-impact",
+        "clinical need",
+        "scientific gap",
+        "MRA priorities",
+        "research rationale"
+      ],
+      "min_words": 300,
+      "max_words": 500,
+      "name": "rationale_and_fit",
+      "title": "Rationale and Fit with Key Criteria",
+      "topics": [
+        "Rationale",
+        "Impact"
+      ],
+      "search_queries": [
+        "scientific rationale for proposed melanoma research",
+        "clinical need addressed by melanoma translational research",
+        "alignment of melanoma project with MRA high-impact criteria",
+        "addressing scientific gap in melanoma research",
+        "justification of melanoma research proposal based on MRA priorities",
+        "research impact melanoma unmet clinical need",
+        "translational research melanoma rationale",
+        "novel approach to melanoma treatment scientific basis"
+      ]
+    },
+    {
+      "depends_on": [
+        "research_plan"
+      ],
+      "instructions": "Describe the qualifications, expertise, and roles of the project team members. Highlight any multidisciplinary aspects of the team and the mentoring plan for junior researchers, if applicable. Include details on the administrative PI for team awards.",
+      "keywords": [
+        "principal investigator",
+        "co-investigator",
+        "mentor",
+        "young investigator",
+        "multidisciplinary team",
+        "research team",
+        "mentorship"
+      ],
+      "min_words": 200,
+      "max_words": 400,
+      "name": "team_excellence",
+      "title": "Team Excellence and Mentorship",
+      "topics": [
+        "Team Excellence",
+        "Training And Development"
+      ],
+      "search_queries": [
+        "research team qualifications and expertise",
+        "roles and responsibilities of co-investigators in cancer research",
+        "mentorship plan for junior researchers in biomedical research",
+        "multidisciplinary team composition in translational research",
+        "administrative principal investigator duties in research grants",
+        "experience of team in melanoma research",
+        "mentoring strategies for young investigators in oncology",
+        "team expertise in clinical trials methodology",
+        "research team qualifications for NIH funded project"
+      ]
+    },
+    {
+      "depends_on": [
+        "research_plan"
+      ],
+      "instructions": "List all current and pending support for the applicant and key personnel, noting any overlap with the proposed research. Include funding sources, project titles, and funding periods. Explain any overlap of current or pending support with the MRA proposal.",
+      "keywords": [
+        "current support",
+        "pending support",
+        "funding sources",
+        "research funding",
+        "financial overlap",
+        "grant support"
+      ],
+      "min_words": 200,
+      "max_words": 300,
+      "name": "current_and_pending_support",
+      "title": "Current and Pending Support",
+      "topics": [
+        "Budget And Resources"
+      ],
+      "search_queries": [
+        "current melanoma research funding sources and amounts",
+        "pending melanoma research grants and their financial overlap",
+        "active research support for principal investigator melanoma research",
+        "financial support for melanoma research projects",
+        "details of all current and pending funding for melanoma studies",
+        "overlap of current funding with proposed melanoma research",
+        "funding sources for key personnel in melanoma research",
+        "budget details of current and pending funding",
+        "funding periods of existing melanoma research grants"
+      ]
+    },
+    {
+      "depends_on": [
+        "research_plan"
+      ],
+      "instructions": "Briefly explain how the proposed research project fits within MRA's overall research portfolio, addressing how it aligns with MRA's strategic goals and priorities for advancing melanoma research.",
+      "keywords": [
+        "MRA research portfolio",
+        "strategic goals",
+        "research priorities",
+        "melanoma research advancement",
+        "research alignment",
+        "MRA vision"
+      ],
+      "min_words": 100,
+      "max_words": 200,
+      "name": "mra_portfolio_fit",
+      "title": "Fit Within MRA's Research Portfolio",
+      "topics": [
+        "Impact",
+        "Rationale"
+      ],
+      "search_queries": [
+        "alignment with MRA strategic goals melanoma research",
+        "project fit within MRA research priorities",
+        "contribution to melanoma research advancement MRA",
+        "MRA research portfolio project alignment",
+        "how project advances MRA vision in melanoma",
+        "MRA strategic research priorities and this project"
+      ]
+    }
+  ],
+  "research_plan": {
+    "min_words": 2136,
+    "max_words": 3315,
+    "title": "Research Plan"
+  }
+}
