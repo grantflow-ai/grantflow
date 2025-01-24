@@ -21,7 +21,7 @@ from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.base import Base, BaseWithUUIDPK
 from src.db.enums import FileIndexingStatusEnum, UserRoleEnum
-from src.db.json_objects import Chunk, GrantSection, ResearchObjective, TextGenerationResult
+from src.db.json_objects import Chunk, GrantSection, ResearchObjective, ResearchPlanMetadata, TextGenerationResult
 
 
 class Workspace(BaseWithUUIDPK):
@@ -83,7 +83,6 @@ class TextVector(BaseWithUUIDPK):
     embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIMENSIONS))
 
     rag_file_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), index=True)
-
     rag_file: Relationship["RagFile"] = relationship("RagFile", back_populates="text_vectors")
 
     __table_args__ = (
@@ -91,8 +90,8 @@ class TextVector(BaseWithUUIDPK):
             "idx_text_vectors_embedding",
             "embedding",
             postgresql_using="hnsw",
-            postgresql_with={"m": 48, "ef_construction": 256, "iterative_scan": "strict_order"},
-            postgresql_ops={"embedding": "vector_cosine_ops"},
+            postgresql_with={"m": 48, "ef_construction": 256},
+            postgresql_ops={"embedding": "vector_cosine_ops", "iterative_scan": "strict_order"},
         ),
     )
 
@@ -178,6 +177,7 @@ class GrantTemplate(BaseWithUUIDPK):
     __tablename__ = "grant_templates"
 
     grant_sections: Mapped[list[GrantSection]] = mapped_column(JSON)
+    research_plan: Mapped[ResearchPlanMetadata] = mapped_column(JSON)
     name: Mapped[str] = mapped_column(String(255))
     template: Mapped[str] = mapped_column(Text)
 

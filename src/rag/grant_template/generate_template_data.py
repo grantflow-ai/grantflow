@@ -61,126 +61,175 @@ GRANT_TEMPLATE_GENERATION_SYSTEM_PROMPT: Final[str] = (
 GRANT_TEMPLATE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="grant_template_generation",
     template="""
-You are an AI assistant specialized in creating structured templates for grant applications based on Call for Proposals (CFP) requirements.
-Your task is to analyze the provided CFP content, organization guidelines, and available topics to generate a comprehensive template for a grant application.
+    You are an AI assistant specializing in creating structured grant application templates based on Call for Proposals (CFP) requirements.
+    Your task is to analyze the provided CFP content, organization guidelines, and available topics to generate a comprehensive grant application template.
 
-Here is the CFP content:
-    <cfp_content>
-    ${cfp_content}
-    </cfp_content>
+    ## Sources
 
-Here are the organization guidelines:
-    <rag_results>
-    ${rag_results}
-    </rag_results>
+    Use these sources for template generation:
+    Here is the CFP content:
+        <cfp_content>
+        ${cfp_content}
+        </cfp_content>
 
-These are the available topics for section classification:
-    <topics>
-    ${topics}
-    </topics>
+    Here are the organization's guidelines:
+        <rag_results>
+        ${rag_results}
+        </rag_results>
 
-Before generating the final output, please conduct a thorough analysis of the provided information. Conduct your analysis inside <cfp_breakdown> tags, including:
+    ## Topics
 
-1. Section Identification:
-   - List all sections and subsections found in the CFP, numbering each one.
-   - Identify and exclude sections of the following types:
-        - Administrative processes
-        - Budgeting and financial information
-        - Eligibility criteria
-        - Forms
-        - Keywords, ToC and other metadata
-        - Letters of support
-        - Post-award requirements
-        - References and bibliography
-        - Review criteria
-        - Submission guidelines
-        - Third party document sections
-   - Map the remaining sections and identify the hierarchy and relationships between them.
-   - Extract and quote explicit requirements and constraints, including any word limits.
-   - Identify and list sequential dependencies between sections.
-   - Extract and list domain-specific terminology found in the CFP.
-   - Determine optimal research plan placement, noting reasons for your choice.
+    Use these topics for section classification
 
-2. Content Organization:
-   - Break down composite sections into atomic units, listing each one.
-   - Map dependencies between sections, creating a dependency graph.
-   - Consider and note how to balance granularity vs coherence in the template.
-   - For each section, list relevant topics from the provided list.
-   - Identify potential integration points for the research plan.
+        <topics>
+        ${topics}
+        </topics>
 
-3. Research Plan Integration:
-   - Determine where to place the ::research_plan:: tag in the template, providing reasoning.
-   - List which sections depend on the research plan.
+    ## Generation Instructions
 
-4. Keyword Selection:
-   - For each section, extract and list relevant entities pertinent to its scope.
-   - Filter the entities to the most relevant, aiming for 3-10 per section.
-   - Ensure selected keywords are specific and derived from CFP terminology.
-   - List the final selected keywords for each section.
+    Before beginning generation, follow these steps:
 
-After your analysis, generate the output in the following JSON format:
+    1. Section Identification:
+       - List all sections and subsections found in the sources (CFP content + organization guidelines), numbering each.
+       - Identify and exclude sections of the following types:
+         - Administrative processes
+         - Budgeting and financial information
+         - Eligibility criteria
+         - Forms
+         - Keywords, ToC, and other metadata
+         - Data management plan
+         - Letters of support
+         - Post-award requirements
+         - References and bibliography
+         - Review criteria
+         - Submission guidelines
+         - Third-party document sections
+       - Identify which sections correlate with the research plan:
+         - The research plan is the part of the application that discusses the research objectives, methodology, concrete research tasks, risks, and mitigations.
+         - The research plan should account for 50-66% of the total length of the grant application text.
+       - Record the title the research plan section should have (see output), and then remove any section that correlates to it from the list of sections.
+       - Map the remaining sections and identify the hierarchy and relationships between them.
+       - Identify and list sequential dependencies between sections.
+       - Identify which sections depend on the research plan.
 
-{
-   "name": "Grant application name",
-   "template": "# Regular Markdown Header\n\n## {{some_section.title}}\n\n{{some_section.content}}\n\n:research_plan:\n\n...",
-   "sections": [
-       {
-           "depends_on": ["other_section_id"],
-           "instructions": "Detailed content generation instructions",
-           "keywords": ["keyword1", "keyword2"],
-           "max_words": null,
-           "min_words": null,
-           "name": "section_id",
-           "title": "Section Heading",
-           "topics": ["Topic1", "Topic2"],
-       }
-   ],
-}
+    2. Content Organization:
+       - Break down composite sections into atomic units, listing each one.
+       - Map dependencies between sections, creating a dependency graph.
+       - Consider and note how to balance granularity vs coherence in the template.
+       - For each section, list relevant topics from the provided list.
+       - Identify potential integration points for the research plan.
 
-Output Requirements:
-1. Template Format:
-   - The template string must be composed only of markdown headings and variable placeholders
-   - Use {{section_name.title}} and {{section_name.content}} for all the sections defined in the sections array
-   - Use regular headings for non-dynamic sections
-   - Ensure that for each section there is a corresponding both {{section_name.title}} and {{section_name.content}} in the template
-   - Follow markdown heading hierarchy (# for top level, ## for subsections)
-   - Include exactly one ::research_plan:: tag where detailed methodology belongs
-   - Do not use variable placeholders for section headings not defined in the sections array
-   - Place the sections in the correct order according to the sources
-   - For non dynamic sections (i.e. headings), use regular text with markdown headings. Example:
-        - This is valid: `"# Project Summary\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
-        - This is invalid because the dynamic section title is set as static text: `"# Project Summary\n## Background and Specific Aims\n{{background_and_specific_aims.content}}"`
-        - This is invalid because the dynamic section content is set as static text: `"# Project Summary\n## {{background_and_specific_aims.title}}\nBackground and Specific Aims"`
-        - This is invalid because "# Project Summary" should be a heading here and not a variable: `"{{project_summary}}\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
-        - This is invalid because "# Project Summary" should be a heading here and not a variable: `"{{project_summary.title}}\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
+    3. Research Plan Integration:
+       - Determine where to place the ::research_plan:: tag in the template, providing reasoning.
+       - List which sections depend on the research plan.
 
-2. Section Structure:
-   - Use unique identifiers matching template variables
-   - Provide clear generation instructions using domain terminology
-   - Include 3-10 specific keywords derived from CFP
-   - Select 2+ relevant topics from the provided list
-   - List section dependencies in the depends_on field
-   - Specify word limits only if explicit in CFP
+    4. Keyword Selection:
+       - For each section, extract and list relevant entities pertinent to its scope.
+       - Filter the entities to the most relevant, aiming for 3-10 per section.
+       - Ensure selected keywords are specific and derived from sources' terminology.
+       - List the final selected keywords for each section.
 
-3. Content Instructions:
-   - Be detailed and specific about required content
-   - Use correct domain terminology
-   - Cover all relevant topics exhaustively
-   - Consider research plan context
-   - Do not include the 'research_plan' section in the sections array - this is always generated by the system separately.
+    5. Limit Analysis:
+       - Identify and list all text length limits defined in the sources (max characters, words and/or pages).
+       - Convert all limits to words by using the following conversion rate:
+         - Page-to-word conversion when format unspecified:
+             - Use Times New Roman 11pt baseline: 415 words/page
+             - Add 10% if single-spaced: 456 words/page
+             - Subtract 12% if double-spaced: 365 words/page
+             - Subtract 5% for Arial vs. TNR: 394 words/page
+             - Subtract 10% for 12pt vs 11pt: 373 words/page
+         - Character limits to words:
+             - Divide character count by 7
+             - Round down to the nearest whole number. Example: 5000 chars = 714 words
+       - Determine the maximum number of words for the total grant application (convert as required) - including the sections you identified prior and the research plan.
+       - Adjust the maximum to allow space for user-inserted figures by subtracting 12.5% of the total words.
+       - Define the total minimum number of words as 85% of the total maximum number of words.
+       - Determine the minimum and maximum number of words for the research plan section; if the maximum is not specified, assume the maximum is 60% and derive the minimum as 85% of this number.
+       - Determine the minimum and maximum number of words for non-research-plan sections by subtracting the research plan minimum and maximum from the total minimum and maximum.  from the tota maximum.
+       - For each section, if the section does not have explicit limits specified in the sources, assign a default base on the following, which should be adjusted to fit the available words limits:
+         - Background section: 400-500 words
+         - Technical section: 500-1000 words
+         - Impact section: 200-500 words
+         - Timeline section: 200-300 words
+         - Resource section: 200-300 words
+       - Adjust the limits for each section to ensure the total does not exceed the maximum number of words allowed.
 
-4. Dependencies and Integration:
-    - Ensure all sections defined in the sections array are included in the template
-    - Ensure all dependencies refer to dependencies defined in the dependencies array or the "research_plan" value
+    After your analysis, generate the output in the following JSON format:
 
-Output Validation:
+        ```jsonc
+            {
+            "name": "Grant application name",
+            "template": "# Regular Markdown Header\n\n## {{some_section.title}}\n\n{{some_section.content}}\n\n::research_plan::\n\n..."
+            "sections": [
+                {
+                    "depends_on": ["other_section_id"],
+                    "instructions": "Detailed content generation instructions",
+                    "keywords": ["keyword1", "keyword2"],
+                    "min_words": 300,
+                    "max_words": 500,
+                    "name": "section_id",
+                    "title": "Section Heading",
+                    "topics": ["Topic1", "Topic2"],
+                    "search_queries": ["query1", "query2"]
+                }
+            ],
+            "research_plan": {
+                    "title": "Research Plan",
+                    "min_words": 2000,
+                    "max_words": 4000
+            }
+            }
+        ```
+
+    ## Output Requirements
+
+    1. Template Format:
+       - The template string must be composed only of markdown headings and variable placeholders
+       - Use {{section_name.title}} and {{section_name.content}} for all the sections defined in the sections array
+       - Use regular headings for nondynamic sections
+       - Ensure that for each section, there is a corresponding both {{section_name.title}} and {{section_name.content}} in the template
+       - Follow markdown heading hierarchy (# for top level, ## for subsections)
+       - Include exactly one ::research_plan:: tag where detailed methodology belongs
+       - Do not use variable placeholders for section headings not defined in the sections array
+       - Place the sections in the correct order according to the sources
+       - For nondynamic sections (i.e., headings), use regular text with markdown headings. Example:
+           - This is valid: `"# Project Summary\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
+           - This is invalid because the dynamic section title is set as static text: `"# Project Summary\n## Background and Specific Aims\n{{background_and_specific_aims.content}}"`
+           - This is invalid because the dynamic section content is set as static text: `"# Project Summary\n## {{background_and_specific_aims.title}}\nBackground and Specific Aims"`
+           - This is invalid because "# Project Summary" should be a heading here and not a variable: `"{{project_summary}}\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
+           - This is invalid because "# Project Summary" should be a heading here and not a variable: `"{{project_summary.title}}\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
+
+    2. Section Structure:
+       - Use unique identifiers matching template variables
+       - Provide clear generation instructions using domain terminology
+       - Include 3-10 specific keywords derived from CFP
+       - Select 2+ relevant topics from the provided list
+       - List section dependencies in the depends_on field
+       - Specify word limits only if explicit in CFP
+
+    3. Content Instructions:
+       - Be detailed and specific about the required content
+       - Use correct domain terminology
+       - Cover all relevant topics exhaustively
+       - Consider the research plan context
+       - Do not include the 'research_plan' section in the sections array - this is always generated by the system separately.
+
+    4. Dependencies and Integration:
+       - Ensure all sections defined in the sections array are included in the template
+       - Ensure all dependencies refer to dependencies defined in the dependencies array or the "research_plan" value
+
+    5. Word Limits:
+       - If sources specify limits, these take priority
+       - If no limits are provided, use defaults
+       - If CFP specifies some but not all limits, apply the limit + sensible defaults
+
+    ## Validation
+
     - Ensure the template structure and format are correct
     - Check that the template string does not have redundant titles
     - Verify dependencies between sections are logical and consistent
-    - If both max_words and min_words are set for a section, ensure max_words is greater to or equal min_words
-    - If max_words is set, ensure it is greater than 0
-    - If min_words is set, ensure it is greater than or equal to 0
-""",
+    - Max words must be greater than min words and min words >= 0
+    """,
 )
 
 
@@ -197,107 +246,112 @@ grant_template_response_schema = {
                     "depends_on": {"type": "array", "items": {"type": "string"}},
                     "instructions": {"type": "string"},
                     "keywords": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
-                    "max_words": {"type": "integer", "minimum": 1},
                     "min_words": {"type": "integer", "minimum": 0},
-                    "name": {"type": "string"},
+                    "max_words": {"type": "integer", "minimum": 0},
+                    "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
                     "title": {"type": "string"},
-                    "topics": {"type": "array", "items": {"type": "string", "enum": SECTION_TOPICS}, "minItems": 2},
+                    "topics": {"type": "array", "items": {"type": "string", "enum": SECTION_TOPICS}, "minItems": 1},
+                    "search_queries": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
                 },
-                "required": ["depends_on", "instructions", "keywords", "name", "title", "topics"],
+                "required": [
+                    "depends_on",
+                    "instructions",
+                    "keywords",
+                    "min_words",
+                    "max_words",
+                    "name",
+                    "title",
+                    "topics",
+                    "search_queries",
+                ],
             },
         },
+        "research_plan": {
+            "type": "object",
+            "properties": {
+                "min_words": {"type": "integer", "minimum": 0},
+                "max_words": {"type": "integer", "minimum": 0},
+                "title": {"type": "string"},
+            },
+            "required": ["min_words", "max_words", "title"],
+        },
     },
-    "required": ["name", "template", "sections"],
+    "required": ["name", "template", "sections", "research_plan"],
 }
 
 
-def grant_template_validator(tool_response: GrantTemplateDTO) -> None:  # noqa: C901, PLR0912, PLR0915
-    """Validate the tool response.
-
-    Args:
-        tool_response: The tool response to validate.
-
-    Raises:
-        ValidationError: If the response is invalid.
-    """
-    # TODO: refactor this function to reduce complexity
+def grant_template_validator(tool_response: GrantTemplateDTO) -> None:  # noqa: C901, PLR0912
+    """Validate grant template response."""
+    # TODO: refactor to reduce complexity
     errors: list[str] = []
+
     try:
         validate(
+            instance=tool_response,
             schema={
                 **grant_template_response_schema,
                 "$schema": "http://json-schema.org/draft-07/schema#",
             },
-            instance=tool_response,
         )
     except JSONSchemaValidationError as e:
         raise ValidationError(e.message) from e
 
+    # Validate research plan tag
     if tool_response["template"].count("::research_plan::") != 1:
         errors.append("Template must contain exactly one ::research_plan:: tag")
 
-    mapped_sections = {section["name"]: section for section in tool_response["sections"]}
-    section_names = set(mapped_sections)
+    # Map sections and validate template structure
+    sections = {s["name"]: s for s in tool_response["sections"]}
     found_sections: defaultdict[str, set[Literal["title", "content"]]] = defaultdict(set)
 
+    # Updated pattern matching
+    patterns = {
+        "heading": compile_regex(r"^#{1,6}\s+[A-Za-z0-9\s.:-]+$"),
+        "section_title": compile_regex(r"^#{1,6}\s+\{\{([a-z][a-z0-9_]*)\.title\}\}$"),
+        "section_content": compile_regex(r"^\{\{([a-z][a-z0-9_]*)\.content\}\}$"),
+    }
+
     for line in tool_response["template"].splitlines():
-        if line := line.strip():
-            if "::research_plan::" in line:
-                continue
-            if heading_match := SECTION_HEADING_PATTERN.match(line):
-                section_name = heading_match.group(1)
-                if section_name not in section_names:
-                    errors.append(f"Invalid section name '{section_name}' in heading")
-                    continue
-                found_sections.setdefault(section_name, set()).add("title")
-            elif content_match := SECTION_CONTENT_PATTERN.match(line):
-                section_name = content_match.group(1)
-                if section_name not in section_names:
-                    errors.append(f"Invalid section name '{section_name}' in content")
-                    continue
-                found_sections.setdefault(section_name, set()).add("content")
-            elif not (MARKDOWN_HEADING_PATTERN.match(line)):
-                errors.append(f"Lines must be either headings with '.title' variables or regular headings, got {line}")
-
-    for section in tool_response["sections"]:
-        if section["name"] not in found_sections:
-            errors.append(f"Template is missing required section '{section['name']}'")
+        if not (line := line.strip()):
             continue
-        if found_sections[section["name"]] != {"title", "content"}:
-            errors.append(f"Section '{section['name']}' is missing required parts")
 
-        for dependency in section["depends_on"]:
-            if dependency in {"research_plan", "::research_plan::"}:
+        if "::research_plan::" in line:
+            continue
+
+        # Match patterns
+        if m := patterns["section_title"].match(line):
+            section = m.group(1)
+            if section not in sections:
+                errors.append(f"Invalid section '{section}' in title")
+            found_sections[section].add("title")
+        elif m := patterns["section_content"].match(line):
+            section = m.group(1)
+            if section not in sections:
+                errors.append(f"Invalid section '{section}' in content")
+            found_sections[section].add("content")
+        elif not patterns["heading"].match(line):
+            errors.append(f"Invalid line format: {line}")
+
+    # Validate section completeness and dependencies
+    for name, section in sections.items():
+        if found_sections[name] != {"title", "content"}:
+            errors.append(f"Section '{name}' missing title or content")
+
+        for dep in section["depends_on"]:
+            if dep == "research_plan":
                 continue
+            if dep not in sections:
+                errors.append(f"Section '{name}' has invalid dependency '{dep}'")
+            if dep == name:
+                errors.append(f"Section '{name}' cannot depend on itself")
 
-            if dependency not in section_names:
-                errors.append(
-                    f"Section '{section['name']}' depends on '{dependency}', which is not defined in the sections array"
-                )
-            if dependency == section["name"]:
-                errors.append(f"Section '{section['name']}' cannot depend on itself")
+        # Word count validation
+        if section["min_words"] > section["max_words"]:
+            errors.append(f"Section '{name}' min_words exceeds max_words")
 
-        min_words = section.get("min_words")
-        max_words = section.get("max_words")
-        if min_words is not None and max_words is not None and min_words > max_words:
-            errors.append(f"Section '{section['name']}' has a minimum word count greater than the maximum word count")
-
-        if min_words is not None and min_words < 0:
-            errors.append(f"Section '{section['name']}' has a negative minimum word count")
-
-        if max_words is not None and max_words <= 0:
-            errors.append(f"Section '{section['name']}' has a negative or zero maximum word count")
-
-        if len(section["topics"]) < 2:
-            errors.append(f"Section '{section['name']}' must have at least 2 topics")
-
-        if len(section["keywords"]) < 3 or len(section["keywords"]) > 10:
-            errors.append(f"Section '{section['name']}' must have between 3 and 10 keywords")
-
-    if unrelated_variables := set(found_sections) - section_names:
-        errors.append(
-            f"Template has variables for dynamic sections not defined in the sections array: {','.join(list(unrelated_variables))}"
-        )
+        # Query validation
+        if not 3 <= len(section["search_queries"]) <= 10:
+            errors.append(f"Section '{name}' must have 3-10 search queries")
 
     if errors:
         raise ValidationError("\n".join(errors))

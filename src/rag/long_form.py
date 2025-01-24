@@ -117,7 +117,7 @@ async def generate_long_form_text(prompt: PromptTemplate, *, prompt_identifier: 
             response_type=LongFormToolResponse,
         )
 
-        result = concatenate_segments_with_spacy_coherence(response["text"])
+        result = concatenate_segments_with_spacy_coherence([result, response["text"]])
 
         api_call_num += 1
         if response["is_complete"]:

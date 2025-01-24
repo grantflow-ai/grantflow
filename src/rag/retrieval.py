@@ -8,7 +8,7 @@ from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextV
 from src.exceptions import EvaluationError
 from src.rag.completion import handle_completions_request
 from src.rag.dto import DocumentDTO
-from src.rag.rerank import rerank_vectors
+from src.rag.rerank import rerank_documents
 from src.rag.search_queries import handle_create_search_queries
 from src.utils.embeddings import generate_embeddings
 from src.utils.logger import get_logger
@@ -154,7 +154,7 @@ async def retrieve_vectors_for_embedding(
 async def handle_retrieval(
     *,
     application_id: str | None = None,
-    limit: int,
+    max_results: int,
     organization_id: str | None = None,
     search_queries: list[str],
 ) -> list[TextVector]:
@@ -162,18 +162,18 @@ async def handle_retrieval(
 
     Args:
         application_id: The application ID, required if organization_id is not provided.
-        limit: The maximum number of results to retrieve
+        max_results: The maximum number of results to retrieve.
         organization_id: The organization ID, required if application_id is not provided.
         search_queries: The search queries.
 
     Returns:
         The retrieved documents.
     """
+    limit = int(max_results * INITIAL_RETRIEVAL_MULTIPLIER)
     query_embeddings = await generate_embeddings(search_queries)
-
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
 
-    return await retrieve_vectors_for_embedding(
+    vectors = await retrieve_vectors_for_embedding(
         file_table_cls=file_table_cls,
         application_id=application_id,
         organization_id=organization_id,
@@ -181,13 +181,18 @@ async def handle_retrieval(
         limit=limit,
     )
 
+    vectors = rerank_documents(
+        vectors=vectors,
+        query_embeddings=query_embeddings,
+    )
+    return vectors[:max_results]
+
 
 async def retrieve_documents(
     *,
     application_id: str | None = None,
     max_results: int = MAX_RESULTS,
     organization_id: str | None = None,
-    rerank: bool = False,
     search_queries: list[str] | None = None,
     task_description: str | _PromptTemplate,
     **kwargs: Any,
@@ -198,7 +203,6 @@ async def retrieve_documents(
         application_id: The application ID, required if organization_id is not provided.
         max_results: The maximum number of results to retrieve.
         organization_id: The organization ID, required if application_id is not provided.
-        rerank: Whether to rerank the retrieved documents.
         search_queries: The search queries.
         task_description: The task description.
         **kwargs: Additional keyword arguments.
@@ -214,11 +218,10 @@ async def retrieve_documents(
         raise ValueError("Either application_id or organization_id must be provided.")
 
     search_queries = search_queries or await handle_create_search_queries(user_prompt=task_description, **kwargs)
-    limit = int(max_results * INITIAL_RETRIEVAL_MULTIPLIER) if rerank else max_results
 
     attempts = 0
     vectors: list[TextVector] = []
-
+    documents: list[DocumentDTO] = []
     has_sufficient_context = False
 
     while attempts < 3:
@@ -228,8 +231,20 @@ async def retrieve_documents(
             application_id=application_id,
             organization_id=organization_id,
             search_queries=search_queries,
-            limit=limit,
+            max_results=max_results,
         )
+
+        documents = [
+            cast(
+                DocumentDTO,
+                {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
+            )
+            for vector in vectors
+        ]
+
+        if vectors and len(vectors) == max_results:
+            has_sufficient_context = True
+            break
 
         tool_response = await handle_completions_request(
             prompt_identifier="guided_retrieval",
@@ -239,13 +254,7 @@ async def retrieve_documents(
             messages=GUIDED_RETRIEVAL_USER_PROMPT.to_string(
                 task_description=task_description,
                 queries=search_queries,
-                rag_results=[
-                    cast(
-                        DocumentDTO,
-                        {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
-                    )
-                    for vector in vectors
-                ],
+                rag_results=documents,
             ),
         )
 
@@ -261,22 +270,15 @@ async def retrieve_documents(
 
         search_queries = tool_response["new_queries"]
 
-    if not has_sufficient_context:
-        raise EvaluationError("Guided retrieval response indicated insufficient context")
+    if has_sufficient_context:
+        logger.info(
+            "Successfully retrieved and processed documents",
+            organization_id=organization_id,
+            application_id=application_id,
+            num_docs=len(vectors),
+            attempts=attempts,
+        )
 
-    if rerank:
-        vectors = await rerank_vectors(vectors=vectors, queries=search_queries, user_prompt=str(task_description))
+        return documents
 
-    logger.info(
-        "Successfully retrieved and processed documents",
-        organization_id=organization_id,
-        application_id=application_id,
-        reranking_applied=rerank,
-        num_docs=len(vectors),
-        attempts=attempts,
-    )
-
-    return [
-        cast(DocumentDTO, {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None})
-        for vector in vectors[:max_results]
-    ]
+    raise EvaluationError("Insufficient context retrieved")

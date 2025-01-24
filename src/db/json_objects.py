@@ -65,6 +65,17 @@ class ResearchObjective(TypedDict):
     """The relations of the research objective to other objectives."""
 
 
+class ResearchPlanMetadata(TypedDict):
+    """The research plan metadata."""
+
+    title: str
+    """The title of the research plan."""
+    min_words: int
+    """Minimum word count if specified."""
+    max_words: int
+    """Maximum word count if specified."""
+
+
 class GrantSection(TypedDict):
     """A section in the grant template."""
 
@@ -80,9 +91,9 @@ class GrantSection(TypedDict):
     """Search queries to retrieve information for the section."""
     depends_on: list[str]
     """Sections that must be generated before this one."""
-    min_words: NotRequired[int]
+    min_words: int
     """Minimum word count if specified."""
-    max_words: NotRequired[int]
+    max_words: int
     """Maximum word count if specified."""
     topics: list[str]
     """Topics that the section covers."""
