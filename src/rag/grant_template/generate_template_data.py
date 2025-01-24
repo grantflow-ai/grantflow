@@ -28,31 +28,61 @@ SECTION_CONTENT_PATTERN: Final[Pattern[str]] = compile_regex(r"^\{\{([a-zA-Z0-9_
 
 
 SECTION_TOPICS = [
-    "Background Context",
-    "Research Feasibility",
-    "Hypothesis",
-    "Impact",
-    "Milestones And Timeline",
-    "Novelty And Innovation",
-    "Risks And Mitigations",
-    "Preliminary Data",
-    "Rationale",
-    "Scientific Infrastructure",
-    "Team Excellence",
-    "Methodology",
-    "Budget And Resources",
-    "Expected Outcomes",
-    "Knowledge Translation",
-    "Broader Impacts",
-    "Data Management Plan",
-    "Ethical Considerations",
-    "Stakeholder Engagement",
-    "Sustainability Plan",
-    "Policy Implications",
-    "Research Environment",
-    "Training And Development",
-    "Evaluation Framework",
-    "Collaboration Strategy",
+    "background_context",
+    "research_feasibility",
+    "hypothesis",
+    "impact",
+    "milestones_and_timeline",
+    "novelty_and_innovation",
+    "risks_and_mitigations",
+    "preliminary_data",
+    "rationale",
+    "scientific_infrastructure",
+    "team_excellence",
+    "methodology",
+    "expected_outcomes",
+    "knowledge_translation",
+    "broader_impacts",
+    "data_management_plan",
+    "ethical_considerations",
+    "stakeholder_engagement",
+    "sustainability_plan",
+    "policy_implications",
+    "research_environment",
+    "training_and_development",
+    "evaluation_framework",
+    "collaboration_strategy",
+]
+
+FILTERED_SECTION_TOPICS = [
+    "acknowledgments",
+    "acronyms",
+    "administrative_processes",
+    "addresses_and_contact_information",
+    "appendices",
+    "attachments",
+    "author_information",
+    "bibliography",
+    "budgeting_and_financial_information",
+    "confidentiality",
+    "conflicts_of_interest",
+    "documents_or_media_uploads",
+    "eligibility_criteria",
+    "ethical_considerations",
+    "figures",
+    "forms",
+    "glossary",
+    "intellectual_property",
+    "keywords",
+    "letters_of_support",
+    "literature_review",
+    "post_award_requirements",
+    "references",
+    "review_criteria",
+    "table_of_contents",
+    "tables",
+    "terms_and_conditions",
+    "third_party_documents",
 ]
 
 GRANT_TEMPLATE_GENERATION_SYSTEM_PROMPT: Final[str] = (
@@ -77,37 +107,30 @@ GRANT_TEMPLATE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ${rag_results}
         </rag_results>
 
-    ## Topics
-
-    Use these topics for section classification
-
-        <topics>
-        ${topics}
-        </topics>
-
     ## Generation Instructions
 
     Before beginning generation, follow these steps:
 
     1. Section Identification:
        - List all sections and subsections found in the sources (CFP content + organization guidelines), numbering each.
-       - Identify and exclude sections of the following types:
-         - Administrative processes
-         - Budgeting and financial information
-         - Eligibility criteria
-         - Forms
-         - Keywords, ToC, and other metadata
-         - Data management plan
-         - Letters of support
-         - Post-award requirements
-         - References and bibliography
-         - Review criteria
-         - Submission guidelines
-         - Third-party document sections
-       - Identify which sections correlate with the research plan:
-         - The research plan is the part of the application that discusses the research objectives, methodology, concrete research tasks, risks, and mitigations.
+       - Filter the sections by determining whether the section fits any combination of the following labels. If the section fits any of these labels, filter it out:
+            <filtered_topic_labels>
+            ${filtered_topic_labels}
+            </filtered_topic_labels>
+
+       - For each of the remaining sections, assign an array of topic labels that best describe the content of the section, derived from the following list:
+            <section_topics_labels>
+            ${section_topics_labels}
+            </section_topics_labels>
+
+       - Identify which sections correlate with the research plan and filter these out of the list of sections.:
+         - The research plan is the part of the application that discusses the methodology, concrete research tasks, risks, and mitigations in depth.
          - The research plan should account for 50-66% of the total length of the grant application text.
-       - Record the title the research plan section should have (see output), and then remove any section that correlates to it from the list of sections.
+         - Some sections outside the research plan can and often touch upon parts of the research plan:
+                - E.g. significance, specific aims, expected outcomes etc. are common sections that either precede or come after the research plan section.
+                - The research plan is the only section that should cover all aspects in detail and it is generated separately from the other sections.
+                - Its **important** NOT to filter these sections out of the list of sections.
+       - Record the title the research plan section should have (see output).
        - Map the remaining sections and identify the hierarchy and relationships between them.
        - Identify and list sequential dependencies between sections.
        - Identify which sections depend on the research plan.
@@ -158,32 +181,32 @@ GRANT_TEMPLATE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
         ```jsonc
             {
-            "name": "Grant application name",
-            "template": "# Regular Markdown Header\n\n## {{some_section.title}}\n\n{{some_section.content}}\n\n::research_plan::\n\n..."
-            "sections": [
-                {
-                    "depends_on": ["other_section_id"],
-                    "instructions": "Detailed content generation instructions",
-                    "keywords": ["keyword1", "keyword2"],
-                    "min_words": 300,
-                    "max_words": 500,
-                    "name": "section_id",
-                    "title": "Section Heading",
-                    "topics": ["Topic1", "Topic2"],
-                    "search_queries": ["query1", "query2"]
+                "name": "Grant application name",
+                "template": "# Regular Markdown Header\n\n## {{some_section.title}}\n\n{{some_section.content}}\n\n::research_plan::\n\n..."
+                "sections": [
+                    {
+                        "depends_on": ["other_section_id"],
+                        "instructions": "Detailed content generation instructions",
+                        "keywords": ["keyword1", "keyword2"],
+                        "min_words": 525,
+                        "max_words": 500,
+                        "name": "section_id",
+                        "title": "Section Heading",
+                        "topics": ["topic_1", "topic_2"],
+                        "search_queries": ["query1", "query2"]
+                    }
+                ],
+                "research_plan": {
+                        "title": "Research Plan",
+                        "min_words": 3400,
+                        "max_words": 4000
                 }
-            ],
-            "research_plan": {
-                    "title": "Research Plan",
-                    "min_words": 2000,
-                    "max_words": 4000
-            }
             }
         ```
 
     ## Output Requirements
 
-    1. Template Format:
+    1. Template Structure:
        - The template string must be composed only of markdown headings and variable placeholders
        - Use {{section_name.title}} and {{section_name.content}} for all the sections defined in the sections array
        - Use regular headings for nondynamic sections
@@ -199,36 +222,24 @@ GRANT_TEMPLATE_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
            - This is invalid because "# Project Summary" should be a heading here and not a variable: `"{{project_summary}}\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
            - This is invalid because "# Project Summary" should be a heading here and not a variable: `"{{project_summary.title}}\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}"`
 
-    2. Section Structure:
-       - Use unique identifiers matching template variables
-       - Provide clear generation instructions using domain terminology
-       - Include 3-10 specific keywords derived from CFP
-       - Select 2+ relevant topics from the provided list
-       - List section dependencies in the depends_on field
-       - Specify word limits only if explicit in CFP
+    2. Section Configuration:
+       - Does not include the 'research_plan' section in the sections array - this is always generated by the system separately.
+       - Uses unique identifiers matching template variables
+       - Provides clear generation instructions using domain terminology
+       - The section should not be included if its main topics are in the filtered topic list: ${filtered_topic_labels}
+       - Has 3-10 specific keywords derived from sources
+       - Has 2+ relevant topics from the provided list
+       - has correct section dependencies in the depends_on field
+       - Has a minimum and maximum word count
+       - The generation instructions:
+           - Are detailed and specific about the required content
+           - Use correct domain terminology
+           - Cover all relevant topics exhaustively
+           - Consider the dependencies and relationships with other sections (the dependency texts will be injected into the template during generation, so the instructions can refer to the dependencies by using the section name identifiers)
 
-    3. Content Instructions:
-       - Be detailed and specific about the required content
-       - Use correct domain terminology
-       - Cover all relevant topics exhaustively
-       - Consider the research plan context
-       - Do not include the 'research_plan' section in the sections array - this is always generated by the system separately.
-
-    4. Dependencies and Integration:
+    3. Dependencies and Integration:
        - Ensure all sections defined in the sections array are included in the template
        - Ensure all dependencies refer to dependencies defined in the dependencies array or the "research_plan" value
-
-    5. Word Limits:
-       - If sources specify limits, these take priority
-       - If no limits are provided, use defaults
-       - If CFP specifies some but not all limits, apply the limit + sensible defaults
-
-    ## Validation
-
-    - Ensure the template structure and format are correct
-    - Check that the template string does not have redundant titles
-    - Verify dependencies between sections are logical and consistent
-    - Max words must be greater than min words and min words >= 0
     """,
 )
 
@@ -461,7 +472,8 @@ async def handle_generate_grant_template(*, cfp_content: str, organization_id: s
     """
     user_prompt = GRANT_TEMPLATE_GENERATION_USER_PROMPT.substitute(
         cfp_content=cfp_content,
-        topics=SECTION_TOPICS,
+        section_topics_labels=SECTION_TOPICS,
+        filtered_topic_labels=FILTERED_SECTION_TOPICS,
     )
     rag_results: list[DocumentDTO] = (
         await retrieve_documents(organization_id=organization_id, task_description=user_prompt)

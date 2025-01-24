@@ -41,24 +41,24 @@ def create_dependencies_text(depends_on: list[str], texts: dict[str, str]) -> st
 def create_generation_groups(sections: list[GrantSection]) -> list[list[GrantSection]]:
     """Create the groups for LLM generation.
 
-    - First group has no dependencies
-    - Second group has dependencies in the first group
-    - Third group has dependencies in the second or first group
-    - ... ad infinitum
+        - First group has no dependencies
+        - Second group has dependencies in the first group
+        - Third group has dependencies in the second or first group
+        - ... ad infinitum
 
     Args:
         sections: The sections.
 
     Raises:
-        ValueError: If a circular dependency is detected or missing sections in dependencies.
+        ValidationError: If a circular dependency is detected or if a section is missing in the dependencies.
 
     Returns:
         The generation groups.
     """
     groups: list[list[GrantSection]] = []
-    generated = set[str]()
+    generated = {"research_plan"}
 
-    while len(generated) < len(sections):
+    while len(generated) + 1 < len(sections):
         if current_group := [
             section
             for section in sections
@@ -68,7 +68,10 @@ def create_generation_groups(sections: list[GrantSection]) -> list[list[GrantSec
             generated.update(section["name"] for section in current_group)
             continue
 
-        raise ValueError("Circular dependency detected or missing sections in dependencies.")
+        raise ValidationError(
+            "Circular dependency detected or missing sections in dependencies.",
+            context={"generated": generated, "sections": sections},
+        )
 
     return groups
 
