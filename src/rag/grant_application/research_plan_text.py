@@ -1,12 +1,14 @@
 from asyncio import gather
 from collections import defaultdict
+from textwrap import dedent
 from typing import Final, TypedDict
 
-from src.db.json_objects import ResearchObjective, ResearchTask
+from src.db.json_objects import ResearchObjective, ResearchPlanMetadata, ResearchTask
 from src.rag.completion import handle_completions_request
 from src.rag.long_form import handle_long_form_text_generation
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
+from src.utils.nlp import get_word_count
 from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
@@ -195,7 +197,7 @@ ${risks_and_mitigations_text}
 RESEARCH_PLAN_SECTION_TEMPLATE: Final[PromptTemplate] = PromptTemplate(
     name="research_plan_markdown",
     template="""
-## Research Plan
+## ${title}
 
 ### Research Objectives
 
@@ -494,6 +496,7 @@ async def handle_research_plan_text_generation(
     application_details: dict[str, str],
     application_id: str,
     research_objectives: list[ResearchObjective],
+    metadata: ResearchPlanMetadata,
 ) -> str:
     """Generate the text for the research objectives and tasks.
 
@@ -501,6 +504,7 @@ async def handle_research_plan_text_generation(
         application_details: The application details.
         application_id: GrantApplication,
         research_objectives: The research objectives to generate text for.
+        metadata: The metadata for the research plan.
 
     Returns:
         The generated research plan text.
@@ -519,6 +523,63 @@ async def handle_research_plan_text_generation(
 
     logger.info("Successfully generated research objectives and tasks", application_id=application_id)
 
-    return RESEARCH_PLAN_SECTION_TEMPLATE.to_string(
-        research_objectives_text="\n\n".join(research_objective_descriptions)
+    research_plan_text = RESEARCH_PLAN_SECTION_TEMPLATE.to_string(
+        title=metadata["title"], research_objectives_text="\n\n".join(research_objective_descriptions)
     )
+    word_count = get_word_count(research_plan_text)
+    if word_count > metadata["max_words"]:
+        return await handle_long_form_text_generation(
+            prompt_identifier="shorten_research_plan_text",
+            task_description=dedent(f"""
+            Your task is to shorten the research plan text to meet the word limit.
+            
+            This is the existing text:
+                <research_plan_text>
+                {research_plan_text}
+                </research_plan_text>
+            
+            Its current word count is {word_count}, which exceeds the maximum word count of {metadata["max_words"]}.
+            
+            Guidelines:
+                - Begin by removing anything that can be construed as "fluff" or "filler" text.
+                - If the word count is still too high, identify repetitions and reduce these - do not hurt coherence or logic, factor in hierarch and relationships.
+                - If the word count is still too high, categorize information by its signficiance and remove the least significant information.
+                - Try not to reduce the information density if possible. Instead, prefer making the text denser and utilize technical language.
+            
+            **Important!**
+                - Ensure that the text remains coherent and logical.
+                - Ensure the scientific terminology is precise and correct. 
+                - Do not change headings, sections or the organization of the text.            
+            """),
+            min_words=metadata["min_words"],
+            max_words=metadata["max_words"],
+        )
+    if word_count < metadata["min_words"]:
+        return await handle_long_form_text_generation(
+            prompt_identifier="extend_research_plan_text",
+            task_description=dedent(f"""
+            Your task is to shorten the research plan text to meet the word limit.
+            
+            This is the existing text:
+                <research_plan_text>
+                {research_plan_text}
+                </research_plan_text>
+            
+            Its current word count is {word_count}, which exceeds the maximum word count of {metadata["max_words"]}.
+            
+            Guidelines:
+                - Begin by removing anything that can be construed as "fluff" or "filler" text.
+                - If the word count is still too high, identify repetitions and reduce these - do not hurt coherence or logic, factor in hierarch and relationships.
+                - If the word count is still too high, categorize information by its signficiance and remove the least significant information.
+                - Try not to reduce the information density if possible. Instead, prefer making the text denser and utilize technical language.
+            
+            **Important!**
+                - Ensure that the text remains coherent and logical.
+                - Ensure the scientific terminology is precise and correct. 
+                - Do not change headings, sections or the organization of the text.            
+            """),
+            min_words=metadata["min_words"],
+            max_words=metadata["max_words"],
+        )
+
+    return research_plan_text
