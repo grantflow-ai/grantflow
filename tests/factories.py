@@ -2,6 +2,7 @@ from textwrap import dedent
 from typing import Any, cast
 
 from faker import Faker
+from numpy.random import default_rng
 from pgvector.utils import Vector
 from polyfactory import Use
 from polyfactory.factories import TypedDictFactory
@@ -37,6 +38,7 @@ from src.db.tables import (
 )
 
 faker = Faker()
+rng = default_rng()
 
 
 class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
@@ -66,7 +68,7 @@ class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
     __model__ = TextVector
-    embedding = [0.1 for _ in range(EMBEDDING_DIMENSIONS)]
+    embedding = rng.random(EMBEDDING_DIMENSIONS).tolist()
 
     @classmethod
     def get_type_from_column(cls, column: Column[Any]) -> type:

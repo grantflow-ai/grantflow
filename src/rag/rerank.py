@@ -1,125 +1,75 @@
-from typing import Final, TypedDict
+from typing import Final
 
-from src.constants import FAST_TEXT_GENERATION_MODEL
+from numpy import argsort, array, zeros
+from sklearn.metrics.pairwise import cosine_similarity
+
 from src.db.tables import TextVector
-from src.exceptions import ValidationError
-from src.rag.completion import handle_completions_request
-from src.utils.logger import get_logger
-from src.utils.prompt_template import PromptTemplate
 
-logger = get_logger(__name__)
-
-RERANKING_SYSTEM_PROMPT: Final[str] = """
-You are a specialized reranking component within a RAG pipeline for grant application text generation.
-"""
-
-RERANKING_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="batch_reranking",
-    template="""
-    Your task is to analyze multiple documents and return an ordered list of document ids
-    based on their relevance to the queries and task.
-
-    Analyze and rank the following documents based on their relevance to the queries and user prompt:
-
-    1. The queries:
-        <queries>
-        ${queries}
-        </queries>
-
-    2. The user prompt:
-        <user_prompt>
-        ${user_prompt}
-        </user_prompt>
-
-    3. The documents to be ranked:
-        <documents>
-        ${documents}
-        </documents>
-
-    Follow these steps to complete the task:
-
-    1. Analyze each document in relation to the queries and user prompt.
-    2. Evaluate each document based on the following criteria:
-       a. Query relevance: Direct correspondence to the queries' content
-       b. Technical depth: Substantive technical or scientific content
-       c. Prompt task fit: Relevance for the text generation task in the user prompt
-    3. Rank the documents based on your evaluation.
-    4. Validate that your response includes only valid document IDs.
-
-    Respond to the provided tool using a JSON object adhereing to the following format:
-
-    ```jsonc
-    {
-        "reranked_document_ids": [
-            5, 3, 1, // ... etc. this array must contain the document IDs in the order of relevance
-        ],
-    }
-    ```
-""",
-)
-
-
-class RerankingToolResponse(TypedDict):
-    """Response from batch reranking."""
-
-    reranked_document_ids: list[int]
-
-
-RERANKING_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "reranked_document_ids": {
-            "type": "array",
-            "items": {"type": "integer", "minimum": 1},
-        },
-    },
-    "required": ["reranked_document_ids"],
+ELEMENT_TYPE_WEIGHTS: Final[dict[str, float]] = {
+    "paragraph": 1.0,
+    "table_cell": 0.8,
+    "formula": 0.7,
+    "figure": 0.5,
+    "raw": 0.5,
+    "sectionHeading": 1.2,
+    "title": 1.3,
+    "footnote": 0.6,
 }
 
+ROLE_WEIGHTS: Final[dict[str, float]] = {
+    "header": 1.2,
+    "body": 1.0,
+    "footer": 0.6,
+    "pageHeader": 1.2,
+    "pageFooter": 0.5,
+    "formulaBlock": 0.8,
+    "pageNumber": 0.3,
+}
 
-async def rerank_vectors(*, vectors: list[TextVector], queries: list[str], user_prompt: str) -> list[TextVector]:
-    """Rerank vectors based on content relevance.
+PAGE_WEIGHT: Final[float] = 0.15
+CONFIDENCE_WEIGHT: Final[float] = 0.2
+
+
+def rerank_documents(
+    *,
+    query_embeddings: list[list[float]],
+    vectors: list[TextVector],
+) -> list[TextVector]:
+    """Rerank the documents based on the query embeddings and the vector metadata.
 
     Args:
-        vectors: List of vectors to rerank
-        queries: The queries to rerank against
-        user_prompt: The user prompt for the reranking task
+        query_embeddings: The query embeddings.
+        vectors: The list of text vectors.
 
     Returns:
-        Reranked list of vectors
+        The reranked list of text vectors.
     """
-    documents = [
-        {
-            "document_id": idx + 1,
-            "content": vector.chunk["content"],
-            "element_type": vector.chunk.get("element_type"),
-            "role": vector.chunk.get("role"),
-        }
-        for idx, vector in enumerate(vectors)
-    ]
+    if not vectors:
+        return []
 
-    def validator(tool_response: RerankingToolResponse) -> None:
-        document_ids = {d["document_id"] for d in documents}
+    query_embeddings_array = array(query_embeddings)
+    if query_embeddings_array.ndim == 1:
+        query_embeddings_array = query_embeddings_array.reshape(1, -1)
 
-        if invalid_ids := [i for i in tool_response["reranked_document_ids"] if i not in document_ids]:
-            raise ValidationError(
-                "Response includes invalid IDs that do not correspond with the provided documents.",
-                context={
-                    "source_ids": document_ids,
-                    "invalid_ids": invalid_ids,
-                },
-            )
+    doc_embeddings = array([vector.embedding for vector in vectors])
+    content_scores_matrix = cosine_similarity(query_embeddings_array, doc_embeddings)
+    content_scores = content_scores_matrix.mean(axis=0)  # Aggregate across query embeddings
 
-    response = await handle_completions_request(
-        prompt_identifier="batch_reranking",
-        system_prompt=RERANKING_SYSTEM_PROMPT,
-        response_schema=RERANKING_SCHEMA,
-        response_type=RerankingToolResponse,
-        model=FAST_TEXT_GENERATION_MODEL,
-        messages=RERANKING_USER_PROMPT.to_string(queries=queries, documents=documents, user_prompt=user_prompt),
-        validator=validator,
-    )
+    layout_scores = zeros(len(vectors))
+    for i, text_vector in enumerate(vectors):
+        element_type = text_vector.chunk.get("element_type", "raw")
+        layout_scores[i] += ELEMENT_TYPE_WEIGHTS.get(element_type, 0.5)
 
-    reranked_document_ids = response["reranked_document_ids"]
-    logger.info("Reranked documents", num_docs=len(vectors), reranked_document_ids=reranked_document_ids)
-    return [vectors[i - 1] for i in reranked_document_ids]
+        role = text_vector.chunk.get("role", "body")
+        layout_scores[i] += ROLE_WEIGHTS.get(role, 1.0)
+
+        page_number = text_vector.chunk.get("page_number", 1)
+        layout_scores[i] += max(0, PAGE_WEIGHT * (1 / page_number))
+
+        confidence = text_vector.chunk.get("confidence", 1.0)
+        layout_scores[i] += CONFIDENCE_WEIGHT * confidence
+
+    combined_scores = content_scores + layout_scores
+    sorted_indices = argsort(combined_scores)[::-1]
+
+    return [vectors[i] for i in sorted_indices]

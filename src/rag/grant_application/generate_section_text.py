@@ -87,8 +87,8 @@ async def handle_section_text_generation(
         return "**Insufficient Context: The system determined that the available data is insufficient to generate this section.**"
 
     result = await handle_long_form_text_generation(
-        max_words=grant_section.get("max_words", 250),
-        min_words=grant_section.get("min_words", 750),
+        max_words=grant_section["max_words"],
+        min_words=grant_section["min_words"],
         prompt_identifier="generate_section_text",
         rag_results=rag_results,
         task_description=user_prompt,
