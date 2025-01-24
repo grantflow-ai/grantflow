@@ -16,3 +16,16 @@ def get_spacy_model() -> Language:
         logger.info("Loading spaCy model")
         nlp.value = load("en_core_web_sm")
     return nlp.value
+
+
+def get_word_count(text: str) -> int:
+    """Counts the number of words in a string using spaCy.
+
+    Args:
+      text: The string to count words in.
+
+    Returns:
+      The number of words in the string.
+    """
+    model = get_spacy_model()
+    return len([token for token in model(text) if not token.is_punct and not token.is_space])
