@@ -1,1 +1,211 @@
-{"grant_sections":[{"name":"general_audience_abstract","title":"General Audience Abstract","instructions":"Provide a non-technical summary of the proposed research project suitable for a general audience. Clearly and concisely describe the project's goals, methods, and expected impact, avoiding jargon.","keywords":["melanoma","research","prevention","detection","diagnosis","treatment","impact"],"topics":["Impact","Knowledge Translation"],"depends_on":[],"max_words":2000},{"name":"technical_abstract","title":"Technical Abstract","instructions":"Provide a concise technical summary of the proposed research project, including the specific aims, research design, and expected outcomes. Use appropriate scientific terminology. Clearly articulate the translational potential of the project.","keywords":["melanoma","translational research","specific aims","research design","outcomes","clinical impact","biomarkers"],"topics":["Background Context","Hypothesis","Impact"],"depends_on":[],"max_words":2000},{"name":"keywords","title":"Keywords","instructions":"Provide a list of keywords that accurately describe the proposed research. Include specific terms related to melanoma, research methodology, and key concepts relevant to your project. Separate keywords by commas.","keywords":["melanoma","immunotherapy","biomarkers","targeted therapy","drug discovery","translational science"],"topics":["Background Context","Methodology"],"depends_on":[],"max_words":100},{"name":"background_and_specific_aims","title":"Background and Specific Aims","instructions":"Provide a comprehensive background of the research topic, including relevant gaps in the field. Clearly state the specific aims of the proposed project, ensuring they are measurable and achievable within the project's timeframe. Articulate the project's scientific rationale and how it addresses a critical need in melanoma research.","keywords":["melanoma","research gaps","specific aims","scientific rationale","translational potential","prevention","diagnosis","treatment"],"topics":["Background Context","Rationale","Hypothesis"],"depends_on":[],"max_words":1000},{"name":"preliminary_data","title":"Preliminary Data","instructions":"Present relevant preliminary data that supports the feasibility of the proposed research. Clearly describe the methodologies used to generate the data, and highlight key findings that justify the research plan. Emphasize the strengths of the preliminary data, and how it sets the foundation for the proposed research.","keywords":["preliminary data","feasibility","supporting evidence","methodology","key findings","validation","pilot studies"],"topics":["Preliminary Data","Research Feasibility"],"depends_on":[],"max_words":1000},{"name":"experimental_design_and_methods","title":"Experimental Design and Methods","instructions":"Describe in detail the experimental design and methods that will be used to achieve the project's specific aims. Ensure to provide enough detail to ensure reproducibility and validity.  Include specifics on study design, data collection methods, and controls.","keywords":["experimental design","research methods","data collection","controls","reproducibility","validation","scientific rigor"],"topics":["Methodology","Research Feasibility","Data Management Plan"],"depends_on":["background_and_specific_aims","preliminary_data"],"max_words":1000},{"name":"statistical_plan","title":"Statistical Plan","instructions":"Outline the statistical methods that will be used to analyze the collected data. Include sample size calculations, statistical tests, and rationale for chosen methodologies. Address how the data will be analyzed and interpreted, ensuring rigor and reproducibility.","keywords":["statistical analysis","sample size","statistical tests","data interpretation","biostatistics","statistical methods","reproducibility"],"topics":["Methodology","Research Feasibility","Data Management Plan"],"depends_on":["experimental_design_and_methods"],"max_words":500},{"name":"rationale_and_fit","title":"Rationale/Fit with Key Criteria","instructions":"Explain how the proposed project addresses key criteria and aligns with MRA's priorities for melanoma research, especially related to prevention, detection, diagnosis, or treatment. Justify the translational impact and rationale. Describe how the research fits into the MRA research portfolio. Address the potential for clinical impact and innovation.","keywords":["melanoma research priorities","translational impact","clinical significance","innovation","prevention","diagnosis","treatment"],"topics":["Rationale","Impact","Novelty And Innovation"],"depends_on":["experimental_design_and_methods","statistical_plan"],"max_words":1000},{"name":"clinical_protocol_synopsis","title":"Clinical Protocol Synopsis","instructions":"Provide a brief protocol synopsis for the proposed clinical study including a timeline with milestones. Include details on IRB approval plans and patient accrual timeline.  This section is only required if a clinical study is proposed.","keywords":["clinical trial","protocol synopsis","timeline","milestones","IRB approval","patient accrual","regulatory approval"],"topics":["Milestones And Timeline","Ethical Considerations","Research Feasibility"],"depends_on":["rationale_and_fit"],"max_words":1000},{"name":"mra_portfolio_fit","title":"MRA Portfolio Fit","instructions":"Provide a brief statement (up to 2000 characters) of how the proposed research project fits within MRA's overall research portfolio, highlighting alignment with MRA's goals and priorities.","keywords":["MRA portfolio","research alignment","strategic goals","melanoma research","MRA priorities","funding priorities"],"topics":["Rationale","Impact"],"depends_on":["rationale_and_fit"],"max_words":2000}],"name":"MRA Grant Application","template":"# Project Summary\n## {{general_audience_abstract.title}}\n{{general_audience_abstract.content}}\n## {{technical_abstract.title}}\n{{technical_abstract.content}}\n## {{keywords.title}}\n{{keywords.content}}\n# Project Description\n## {{background_and_specific_aims.title}}\n{{background_and_specific_aims.content}}\n## {{preliminary_data.title}}\n{{preliminary_data.content}}\n::research_plan::\n## {{experimental_design_and_methods.title}}\n{{experimental_design_and_methods.content}}\n## {{statistical_plan.title}}\n{{statistical_plan.content}}\n## {{rationale_and_fit.title}}\n{{rationale_and_fit.content}}\n# Additional Information\n## {{clinical_protocol_synopsis.title}}\n{{clinical_protocol_synopsis.content}}\n## {{mra_portfolio_fit.title}}\n{{mra_portfolio_fit.content}}\n","grant_application_id":"43b4aed5-8549-461f-9290-5ee9a630ac9a","funding_organization_id":null,"id":"ab1b6be6-fa4f-4797-b5e3-7329fa7181ff","created_at":"2025-01-20T07:01:17.705833Z","updated_at":"2025-01-20T07:01:17.705833Z"}
+{
+  "grant_sections": [
+    {
+      "depends_on": [],
+      "instructions": "Provide a concise summary of the proposed research project, suitable for a general audience. Focus on the significance and potential impact of the research, avoiding technical jargon.",
+      "keywords": [
+        "melanoma research",
+        "translational science",
+        "prevention",
+        "detection",
+        "diagnosis",
+        "treatment",
+        "impact"
+      ],
+      "min_words": 100,
+      "max_words": 200,
+      "name": "general_audience_abstract",
+      "title": "General Audience Abstract",
+      "topics": [
+        "Impact",
+        "Knowledge Translation"
+      ],
+      "search_queries": [
+        "melanoma research translational impact",
+        "significance of melanoma research in prevention",
+        "early detection and diagnosis of melanoma research",
+        "new treatment strategies for melanoma impact",
+        "clinical relevance of melanoma research",
+        "simplified explanation of melanoma research outcomes",
+        "potential benefits of melanoma research to the public"
+      ]
+    },
+    {
+      "depends_on": [],
+      "instructions": "Provide a detailed abstract of the proposed research, including specific aims, methodology, and expected outcomes. Use technical language appropriate for experts in the field.",
+      "keywords": [
+        "melanoma",
+        "immunotherapy",
+        "biomarkers",
+        "clinical trials",
+        "molecular mechanisms",
+        "translational research",
+        "tumor microenvironment"
+      ],
+      "min_words": 250,
+      "max_words": 300,
+      "name": "technical_abstract",
+      "title": "Technical Abstract",
+      "topics": [
+        "Hypothesis",
+        "Methodology"
+      ],
+      "search_queries": [
+        "Detailed research methodology for melanoma immunotherapy clinical trials",
+        "Molecular mechanisms of action for immunotherapy biomarkers in melanoma",
+        "Translational research plan for tumor microenvironment modulation in melanoma",
+        "Specific aims and expected outcomes for immunotherapy based melanoma research",
+        "Technical explanation of the proposed research design and rationale for melanoma treatment",
+        "Hypothesis driven approach to investigating melanoma response to immunotherapy",
+        "Biomarker discovery and validation methods for predicting immunotherapy efficacy in melanoma"
+      ]
+    },
+    {
+      "depends_on": [],
+      "instructions": "Explain how the proposed research project fits within MRA's overall research portfolio, including alignment with the call's goals and research priorities. Include potential clinical impact of the project.",
+      "keywords": [
+        "MRA research portfolio",
+        "clinical impact",
+        "translational goals",
+        "melanoma research priorities",
+        "scientific goals"
+      ],
+      "min_words": 150,
+      "max_words": 285,
+      "name": "rationale_and_fit",
+      "title": "Rationale and Fit with MRA Portfolio",
+      "topics": [
+        "Rationale",
+        "Impact"
+      ],
+      "search_queries": [
+        "alignment with MRA's melanoma research priorities",
+        "translational research impact melanoma",
+        "clinical significance melanoma research",
+        "MRA portfolio fit proposed project",
+        "contribution to melanoma treatment advances",
+        "potential clinical impact melanoma research",
+        "scientific goals MRA melanoma research",
+        "relevance to melanoma treatment",
+        "translational potential of melanoma research",
+        "MRA objectives in melanoma research"
+      ]
+    },
+    {
+      "depends_on": [
+        "research_plan"
+      ],
+      "instructions": "Describe the composition of the research team, highlighting the expertise and roles of each key personnel (PI, Co-Investigators, Collaborators, Mentors, and Young Investigators). If applicable, address the multidisciplinary nature of the team. Detail the qualifications, skills, and experience of the individuals involved, and how they will contribute to the project.",
+      "keywords": [
+        "Principal Investigator",
+        "co-investigator",
+        "collaborator",
+        "mentor",
+        "young investigator",
+        "multidisciplinary team",
+        "expertise",
+        "teamwork"
+      ],
+      "min_words": 400,
+      "max_words": 500,
+      "name": "team_excellence",
+      "title": "Team Excellence",
+      "topics": [
+        "Team Excellence",
+        "Scientific Infrastructure"
+      ],
+      "search_queries": [
+        "roles and responsibilities of principal investigator co-investigators collaborators mentors young investigators in research projects",
+        "expertise and qualifications of research team members in multidisciplinary research",
+        "contribution of research team members to project goals and objectives",
+        "multidisciplinary team composition in scientific research",
+        "relevant experience of research personnel",
+        "teamwork and collaboration in scientific research",
+        "scientific research team structure",
+        "skill sets and expertise of research team"
+      ]
+    },
+    {
+      "depends_on": [
+        "research_plan"
+      ],
+      "instructions": "Present a clear timeline for the proposed research project, including specific milestones and deadlines. Outline the project's progress in a structured way, including IRB and regulatory approvals (if required), patient accrual timelines (if a clinical trial), and completion of analyses. Include the start date, estimated end date, and key deliverables for each stage.",
+      "keywords": [
+        "project timeline",
+        "milestones",
+        "deadlines",
+        "IRB approval",
+        "regulatory approval",
+        "patient accrual",
+        "data analysis",
+        "project deliverables"
+      ],
+      "min_words": 250,
+      "max_words": 350,
+      "name": "timeline_and_milestones",
+      "title": "Timeline and Milestones",
+      "topics": [
+        "Milestones And Timeline",
+        "Research Feasibility"
+      ],
+      "search_queries": [
+        "research project timeline with specific milestones and deadlines",
+        "project progress structured with IRB and regulatory approvals",
+        "patient accrual timelines for clinical trial research",
+        "data analysis completion timeline for research",
+        "key deliverables and estimated end date for research project stages",
+        "research project timeline and milestones",
+        "project deadlines and deliverables for each phase",
+        "timeline for patient accrual and data analysis",
+        "project IRB and regulatory approvals",
+        "research project start date and estimated end date"
+      ]
+    },
+    {
+      "depends_on": [
+        "research_plan"
+      ],
+      "instructions": "List all current and pending support for the Principal Investigator and other Key Personnel (as applicable). Clearly describe any overlap between the proposed research and existing funding, and explain how the funding requests complement each other.",
+      "keywords": [
+        "current funding",
+        "pending funding",
+        "funding overlap",
+        "funding sources",
+        "support explanation",
+        "resource allocation"
+      ],
+      "min_words": 250,
+      "max_words": 350,
+      "name": "current_and_pending_support",
+      "title": "Current and Pending Support",
+      "topics": [
+        "Budget And Resources",
+        "Research Feasibility"
+      ],
+      "search_queries": [
+        "principal investigator current funding sources",
+        "key personnel pending research support",
+        "funding overlap proposed research",
+        "complementary funding resource allocation",
+        "active grants principal investigator",
+        "pending grant applications key personnel",
+        "project overlap funding analysis",
+        "budgetary overlap between funded projects",
+        "how current grants enable future research",
+        "funding synergy research proposals"
+      ]
+    }
+  ],
+  "research_plan": {
+    "min_words": 2550,
+    "max_words": 3825,
+    "title": "Research Plan"
+  },
+  "name": "Melanoma Research Grant Application",
+  "template": "# Project Summary\n\n## {{general_audience_abstract.title}}\n{{general_audience_abstract.content}}\n\n## {{technical_abstract.title}}\n{{technical_abstract.content}}\n\n## {{rationale_and_fit.title}}\n{{rationale_and_fit.content}}\n\n::research_plan::\n\n## {{team_excellence.title}}\n{{team_excellence.content}}\n\n## {{timeline_and_milestones.title}}\n{{timeline_and_milestones.content}}\n\n## {{current_and_pending_support.title}}\n{{current_and_pending_support.content}}",
+  "grant_application_id": "43b4aed5-8549-461f-9290-5ee9a630ac9a",
+  "funding_organization_id": null,
+  "id": "15f5b75b-fd9b-44c4-b444-5132069a6bea",
+  "created_at": "2025-01-24T12:57:12.458668Z",
+  "updated_at": "2025-01-24T12:57:12.458668Z"
+}
