@@ -1,7 +1,7 @@
 from typing import Any, Final, TypedDict, cast
 
 from prompt_template import PromptTemplate as _PromptTemplate
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
@@ -92,28 +92,34 @@ guided_retrieval_json_schema: Final[dict[str, Any]] = {
 
 async def retrieve_vectors_for_embedding(
     *,
-    file_table_cls: type[GrantApplicationFile | OrganizationFile],
     application_id: str | None = None,
-    organization_id: str | None = None,
-    embedding: list[float],
+    embeddings: list[list[float]],
+    file_table_cls: type[GrantApplicationFile | OrganizationFile],
+    iteration: int = 1,
     limit: int = MAX_RESULTS,
+    organization_id: str | None = None,
 ) -> list[TextVector]:
     """Retrieve vectors from the vector store based on the given embedding.
 
     Args:
-        file_table_cls: The file table class.
         application_id: The application ID, required if organization_id is not provided.
-        organization_id: The organization ID, required if application_id is not provided.
-        embedding: The embedding to compare against.
+        embeddings: The embeddings matrix to compare against.
+        file_table_cls: The file table class.
+        iteration: The iteration count
         limit: The maximum number of results to return.
+        organization_id: The organization ID, required if application_id is not provided.
 
     Returns:
         The retrieved vectors.
     """
     session_maker = get_session_maker()
 
+    max_threshold = 1.0
+    threshold = min(0.25 + 0.15 * iteration, max_threshold)
+    similarity_conditions = [TextVector.embedding.cosine_distance(embedding) <= threshold for embedding in embeddings]
+
     async with session_maker() as session:
-        return list(
+        result = list(
             await session.scalars(
                 select(TextVector)
                 .join(RagFile, TextVector.rag_file_id == RagFile.id)
@@ -123,10 +129,26 @@ async def retrieve_vectors_for_embedding(
                     if hasattr(file_table_cls, "grant_application_id")
                     else file_table_cls.funding_organization_id == organization_id
                 )
-                .order_by(TextVector.embedding.cosine_distance(embedding))
+                .where(or_(*similarity_conditions))
+                .order_by(func.least(*[TextVector.embedding.cosine_distance(embedding) for embedding in embeddings]))
                 .limit(limit)
             )
         )
+
+    if len(result) < limit and threshold < 1.0:
+        return await retrieve_vectors_for_embedding(
+            file_table_cls=file_table_cls,
+            application_id=application_id,
+            organization_id=organization_id,
+            embeddings=embeddings,
+            limit=limit,
+            iteration=iteration + 1,
+        )
+
+    if not result and threshold >= max_threshold:
+        logger.warning("No results found within the threshold range.")
+
+    return result
 
 
 async def handle_retrieval(
@@ -147,7 +169,7 @@ async def handle_retrieval(
     Returns:
         The retrieved documents.
     """
-    query_embeddings = await generate_embeddings(",".join(search_queries))
+    query_embeddings = await generate_embeddings(search_queries)
 
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
 
@@ -155,7 +177,7 @@ async def handle_retrieval(
         file_table_cls=file_table_cls,
         application_id=application_id,
         organization_id=organization_id,
-        embedding=query_embeddings[0],
+        embeddings=query_embeddings,
         limit=limit,
     )
 
