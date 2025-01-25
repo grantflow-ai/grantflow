@@ -1,0 +1,370 @@
+[
+  {
+    "depends_on": [
+      "research_plan"
+    ],
+    "generation_instructions": "Provide a concise summary of the proposed research project, including the project's goals, objectives, and significance. Include both a general audience abstract and a technical abstract (2000 character max each).  The abstract should be written in a clear and accessible style.",
+    "is_research_plan": false,
+    "keywords": [
+      "research goals",
+      "objectives",
+      "impact"
+    ],
+    "max_words": 571,
+    "min_words": 485,
+    "name": "abstract_section",
+    "parent_id": "narrative",
+    "search_queries": [
+      "project goals and objectives research proposal",
+      "significance of research impact statement",
+      "technical abstract research summary",
+      "research project concise summary",
+      "research objectives and methodology",
+      "impact of the research goals",
+      "technical project description",
+      "research project significance",
+      "project summary for grant application",
+      "research impact assessment"
+    ],
+    "title": "Abstract",
+    "topics": [
+      "project_summary",
+      "technical_abstract"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [],
+    "generation_instructions": "Provide a detailed description of the research plan, including background, specific aims, preliminary data, experimental design and methods, and statistical analysis plan. Also include an explanation of the project's potential for clinical impact and fit with the funder's goals. This section is limited to 5 pages.",
+    "is_research_plan": true,
+    "keywords": [
+      "methodology",
+      "experimental design",
+      "data analysis",
+      "research environment",
+      "statistical plan",
+      "specific aims"
+    ],
+    "max_words": 2075,
+    "min_words": 1763,
+    "name": "research_plan",
+    "parent_id": "narrative",
+    "search_queries": [
+      "research methodology experimental design protocols",
+      "data collection analysis statistical methods",
+      "research environment infrastructure resources",
+      "statistical analysis plan power analysis",
+      "specific aims hypothesis rationale",
+      "research timeline milestones deliverables",
+      "preliminary data feasibility study results",
+      "clinical impact translation dissemination",
+      "ethical considerations human subjects research",
+      "technical approach innovation methodology"
+    ],
+    "title": "Research Plan",
+    "topics": [
+      "background_context",
+      "hypothesis",
+      "rationale",
+      "methodology",
+      "expected_outcomes",
+      "knowledge_translation",
+      "ethical_considerations",
+      "research_environment",
+      "preliminary_data",
+      "milestones_and_timeline",
+      "technical_approach"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [
+      "research_plan"
+    ],
+    "generation_instructions": "Describe the project team and the role of each member. If applicable, explain the mentorship plan and the experience of mentors. Highlight the expertise of team members and how it is relevant to the project goals",
+    "is_research_plan": false,
+    "keywords": [
+      "mentorship",
+      "team",
+      "expertise"
+    ],
+    "max_words": 500,
+    "min_words": 425,
+    "name": "team_and_mentorship",
+    "parent_id": "narrative",
+    "search_queries": [
+      "project team roles and responsibilities",
+      "mentorship plan for research project",
+      "team member expertise and relevance to project goals",
+      "research team experience and qualifications",
+      "mentorship experience in scientific research",
+      "team member training and development plan",
+      "expertise in specific research methodologies",
+      "research team composition and structure",
+      "mentorship qualifications and previous mentees",
+      "project team skills and capabilities"
+    ],
+    "title": "Team and Mentorship",
+    "topics": [
+      "team_excellence",
+      "training_and_development"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [
+      "research_plan"
+    ],
+    "generation_instructions": "Describe the project's significance and potential impact, fitting within MRA's research portfolio. Detail how the research addresses important gaps or problems in the field. Discuss the translational potential of the project and its relevance to MRA's goals.",
+    "is_research_plan": false,
+    "keywords": [
+      "translational potential",
+      "impact",
+      "relevance"
+    ],
+    "max_words": 500,
+    "min_words": 425,
+    "name": "project_relevance",
+    "parent_id": "narrative",
+    "search_queries": [
+      "impact of research on melanoma treatment",
+      "translational potential of melanoma research",
+      "relevance of research to melanoma research alliance goals",
+      "addressing gaps in melanoma research",
+      "policy implications of melanoma research findings",
+      "clinical significance of melanoma research outcomes",
+      "advancing melanoma treatment through research",
+      "novel melanoma research directions"
+    ],
+    "title": "Project Relevance",
+    "topics": [
+      "impact",
+      "policy_implications"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [],
+    "generation_instructions": "List and provide contact information for all key personnel including the Principal Investigator, co-investigators, mentors, young investigators, and collaborators. Provide ORCID IDs for PI, Young Investigator and Mentors. Clearly specify the role and contribution of each person.",
+    "is_research_plan": false,
+    "keywords": [
+      "personnel",
+      "investigators",
+      "collaborators",
+      "mentors"
+    ],
+    "max_words": 300,
+    "min_words": 255,
+    "name": "key_personnel",
+    "parent_id": "project_info",
+    "search_queries": [
+      "principal investigator ORCID ID",
+      "co-investigator roles contributions",
+      "mentor qualifications experience",
+      "young investigator ORCID",
+      "collaborator expertise",
+      "key personnel contact information",
+      "research team structure",
+      "investigator biosketches",
+      "team member responsibilities"
+    ],
+    "title": "Key Personnel",
+    "topics": [
+      "team_excellence",
+      "research_environment"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [
+      "key_personnel"
+    ],
+    "generation_instructions": "List all current and pending funding for the applicant and other key personnel (for Team Science Applications). Describe any overlap with the proposed project. Upload NIH format biosketches for all key personnel.",
+    "is_research_plan": false,
+    "keywords": [
+      "funding",
+      "support",
+      "biosketch",
+      "overlap"
+    ],
+    "max_words": 300,
+    "min_words": 255,
+    "name": "current_and_pending_support",
+    "parent_id": "project_info",
+    "search_queries": [
+      "current and pending research funding",
+      "nih biosketch format requirements",
+      "research project overlap analysis",
+      "key personnel funding support",
+      "budget justification for overlapping projects",
+      "funding sources for scientific research",
+      "research grant support documentation",
+      "team science funding applications"
+    ],
+    "title": "Current and Pending Support",
+    "topics": [
+      "budget_justification",
+      "research_feasibility"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [],
+    "generation_instructions": "Provide a detailed justification for all budget items, including personnel, supplies, and equipment. Explain how the funds will be used to accomplish the project goals. For Academic-Industry Partnership applications, clearly explain the contributions from both MRA and the industry partner. Include any costs associated with MRA's data sharing policy.  If required, upload budget justification documents.",
+    "is_research_plan": false,
+    "keywords": [
+      "budget",
+      "funding",
+      "personnel",
+      "supplies"
+    ],
+    "max_words": 300,
+    "min_words": 255,
+    "name": "budget_justification",
+    "parent_id": "budget_info",
+    "search_queries": [
+      "budget justification personnel costs",
+      "project funding allocation research supplies",
+      "equipment budget industry partnership",
+      "mra data sharing policy costs",
+      "academic industry collaboration budget",
+      "research project budget justification",
+      "personnel expenses budget allocation"
+    ],
+    "title": "Budget Justification",
+    "topics": [
+      "budget_justification",
+      "research_feasibility"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [
+      "research_plan"
+    ],
+    "generation_instructions": "Describe your plan for sharing data and resources generated from the project to promote rapid research advancement, transparency, reproducibility, and collaboration. Explain how you will post outputs to pre-print servers and public data repositories, and publish in open-access journals. Detail how you will comply with MRA's data sharing policy. Include any costs associated with MRA's data sharing policy within the budget.",
+    "is_research_plan": false,
+    "keywords": [
+      "data sharing",
+      "open access",
+      "reproducibility",
+      "data management plan"
+    ],
+    "max_words": 300,
+    "min_words": 255,
+    "name": "data_sharing",
+    "parent_id": "supporting_docs",
+    "search_queries": [
+      "data sharing policy compliance",
+      "open access publication strategy",
+      "research data management plan",
+      "pre-print server deposition protocols",
+      "public data repository submissions",
+      "reproducible research practices",
+      "knowledge translation data dissemination",
+      "MRA data sharing policy costs",
+      "research output sharing mechanisms"
+    ],
+    "title": "Data Sharing Plan",
+    "topics": [
+      "data_management_plan",
+      "knowledge_translation"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [
+      "key_personnel"
+    ],
+    "generation_instructions": "Include letters of support from mentors and industry partners if applicable. The mentor letters should confirm that the applicant has an independent research program and a brief statement about the applicant, the Mentor's role, mentoring plan, and research environment.",
+    "is_research_plan": false,
+    "keywords": [
+      "letters",
+      "support",
+      "mentors",
+      "industry partners"
+    ],
+    "max_words": 300,
+    "min_words": 255,
+    "name": "letters_of_support",
+    "parent_id": "supporting_docs",
+    "search_queries": [
+      "letters of support mentor independent research program",
+      "mentor letter applicant research mentoring plan",
+      "letters of support research environment",
+      "industry partner support letter research collaboration",
+      "mentorship confirmation research independence",
+      "letters of support research program",
+      "mentor role research mentoring",
+      "research support documents"
+    ],
+    "title": "Letters of Support",
+    "topics": [
+      "team_excellence",
+      "research_environment"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [
+      "research_plan"
+    ],
+    "generation_instructions": "If the proposal includes a clinical trial, attach a protocol synopsis, a timeline, and project milestones. Include IRB and regulatory approval timelines, patient accrual timeline, and completion of analyses timeline.",
+    "is_research_plan": false,
+    "keywords": [
+      "clinical trials",
+      "protocol",
+      "timeline",
+      "IRB approval"
+    ],
+    "max_words": 2075,
+    "min_words": 1763,
+    "name": "clinical_trial_info",
+    "parent_id": "supporting_docs",
+    "search_queries": [
+      "clinical trial protocol synopsis timeline",
+      "IRB regulatory approval timeline clinical trial",
+      "patient accrual timeline clinical trial",
+      "clinical trial data analysis timeline milestones",
+      "research feasibility clinical trial project plan"
+    ],
+    "title": "Clinical Trial Information",
+    "topics": [
+      "milestones_and_timeline",
+      "research_feasibility"
+    ],
+    "type": "section"
+  },
+  {
+    "depends_on": [],
+    "generation_instructions": "Complete the Applicant Eligibility Checklist to confirm eligibility for the award. Requires signature of the Department Chair, Division Head, or Dean.",
+    "is_research_plan": false,
+    "keywords": [
+      "eligibility",
+      "checklist",
+      "signature"
+    ],
+    "max_words": 300,
+    "min_words": 255,
+    "name": "eligibility_checklist",
+    "parent_id": "supporting_docs",
+    "search_queries": [
+      "eligibility criteria research grants",
+      "applicant eligibility checklist requirements",
+      "department chair signature grant application",
+      "division head approval research funding",
+      "dean certification grant eligibility",
+      "research project eligibility verification process",
+      "institutional eligibility for grant awards",
+      "grant eligibility and compliance",
+      "required signatures for grant submissions",
+      "institutional review of grant proposals"
+    ],
+    "title": "Eligibility Checklist",
+    "topics": [
+      "research_feasibility",
+      "project_summary"
+    ],
+    "type": "section"
+  }
+]

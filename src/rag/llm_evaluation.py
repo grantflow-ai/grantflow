@@ -38,8 +38,8 @@ EVALUATION_PROMPT = Template(
         - Draws relevant information from the provided sources
 
     2. Accuracy (0-100)
-        - Factual correctness of statements
-        - Proper use of any technical terms
+        - Factual correctness of the output
+        - Correct use of teminology
         - Consistency with information given in the prompt
         - Consistency with information provided in the sources
 
@@ -53,17 +53,19 @@ EVALUATION_PROMPT = Template(
         - Following explicit directions
         - Respecting stated constraints
         - Maintaining requested format/structure
+        - Fulfills all requirements
+        - Passess any validatation
 
     5. Coherence and Clarity (0-100)
         - Logical flow and organization
         - Clear expression of ideas
         - Appropriate transitions and connections
+        - Correct hierarchy and structure
 
     6. Hallucination Assessment (0-100)
-        - Sticking to available information
-        - No unsupported claims
-        - Appropriate qualification of uncertainties
-        - Uses information strictly provided in the prompt and/or sources
+        - All information is derived from the provided sources
+        - Missing information is clearly identified
+        - Does not fabiracte information or draws upon training data not provided as input
 
     Analysis Process:
         1. First read both prompt and output carefully
@@ -72,6 +74,7 @@ EVALUATION_PROMPT = Template(
         4. Cite specific examples for each score
         5. Synthesize overall assessment
         6. Score each criterion from 0-100, where 0 is worst and 100 is best
+        7. Do a validation pass to ensure all criteria are met and are correctly set
 
     Based on your analysis, respond using the provided tool with a JSON object.
 
