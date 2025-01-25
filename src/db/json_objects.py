@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 
 class TableContext(TypedDict):
@@ -65,30 +65,37 @@ class ResearchObjective(TypedDict):
     """The relations of the research objective to other objectives."""
 
 
-class ResearchPlanMetadata(TypedDict):
-    """The research plan metadata."""
-
-    title: str
-    """The title of the research plan."""
-    min_words: int
-    """Minimum word count if specified."""
-    max_words: int
-    """Maximum word count if specified."""
-
-
-class GrantSection(TypedDict):
-    """A section in the grant template."""
+class BaseSection(TypedDict):
+    """Base section data."""
 
     name: str
     """Unique section identifier."""
     title: str
     """Section heading title."""
-    instructions: str
+    parent_id: str
+    """Parent section name or "<root>"."""
+
+
+class HeadingSection(BaseSection):
+    """A section in the grant template."""
+
+    type: Literal["heading"]
+    """Section type."""
+
+
+class GrantSection(BaseSection):
+    """A section in the grant template."""
+
+    type: Literal["section"]
+    """Section type."""
+    generation_instructions: str
     """Detailed content generation instructions."""
     keywords: list[str]
     """Technical terms specific to section."""
-    search_queries: NotRequired[list[str]]
+    search_queries: list[str]
     """Search queries to retrieve information for the section."""
+    is_research_plan: bool
+    """Whether the section is the research plan."""
     depends_on: list[str]
     """Sections that must be generated before this one."""
     min_words: int

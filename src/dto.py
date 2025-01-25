@@ -6,7 +6,7 @@ from pathvalidate import sanitize_filename
 from sanic.request import File
 
 from src.constants import SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP
-from src.db.json_objects import Chunk, GrantSection, ResearchPlanMetadata
+from src.db.json_objects import Chunk
 
 
 class APIError(TypedDict):
@@ -75,16 +75,3 @@ class GrantSectionDTO(TypedDict):
     """The name of the section."""
     content: str
     """The content of the section."""
-
-
-class GrantTemplateDTO(TypedDict):
-    """Grant template specification."""
-
-    name: str
-    """Name of the grant format."""
-    template: str
-    """Markdown template with section placeholders."""
-    sections: list[GrantSection]
-    """Section specifications."""
-    research_plan: ResearchPlanMetadata
-    """The research plan metadata."""
