@@ -120,6 +120,7 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
         application_id=application_id,
         research_objectives=grant_application.research_objectives,
         application_details=grant_application.form_inputs or {},
+        metadata=grant_application.grant_template.research_plan,
     )
 
     logger.debug(

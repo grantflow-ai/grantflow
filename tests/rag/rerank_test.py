@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 from numpy.random import default_rng
 
@@ -26,7 +28,7 @@ def mock_text_vectors() -> list[TextVector]:
 
 @pytest.fixture
 def query_embeddings() -> list[list[float]]:
-    return [rng.random(EMBEDDING_DIMENSIONS).tolist()]
+    return [cast(list[float], rng.random(EMBEDDING_DIMENSIONS).tolist())]
 
 
 def test_rerank_documents_empty_vectors(query_embeddings: list[list[float]]) -> None:

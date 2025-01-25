@@ -61,9 +61,6 @@ async def grant_template_generation_pipeline_handler(
                         "funding_organization_id": extraction_result["organization_id"],
                         "grant_application_id": application_id,
                         "grant_sections": result["sections"],
-                        "name": result["name"],
-                        "template": result["template"],
-                        "research_plan": result["research_plan"],
                     }
                 )
                 .returning(GrantTemplate)

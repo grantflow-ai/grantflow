@@ -532,51 +532,24 @@ async def handle_research_plan_text_generation(
             prompt_identifier="shorten_research_plan_text",
             task_description=dedent(f"""
             Your task is to shorten the research plan text to meet the word limit.
-            
+
             This is the existing text:
                 <research_plan_text>
                 {research_plan_text}
                 </research_plan_text>
-            
+
             Its current word count is {word_count}, which exceeds the maximum word count of {metadata["max_words"]}.
-            
+
             Guidelines:
                 - Begin by removing anything that can be construed as "fluff" or "filler" text.
                 - If the word count is still too high, identify repetitions and reduce these - do not hurt coherence or logic, factor in hierarch and relationships.
-                - If the word count is still too high, categorize information by its signficiance and remove the least significant information.
+                - If the word count is still too high, categorize information by its significance and remove the least significant information.
                 - Try not to reduce the information density if possible. Instead, prefer making the text denser and utilize technical language.
-            
+
             **Important!**
                 - Ensure that the text remains coherent and logical.
-                - Ensure the scientific terminology is precise and correct. 
-                - Do not change headings, sections or the organization of the text.            
-            """),
-            min_words=metadata["min_words"],
-            max_words=metadata["max_words"],
-        )
-    if word_count < metadata["min_words"]:
-        return await handle_long_form_text_generation(
-            prompt_identifier="extend_research_plan_text",
-            task_description=dedent(f"""
-            Your task is to shorten the research plan text to meet the word limit.
-            
-            This is the existing text:
-                <research_plan_text>
-                {research_plan_text}
-                </research_plan_text>
-            
-            Its current word count is {word_count}, which exceeds the maximum word count of {metadata["max_words"]}.
-            
-            Guidelines:
-                - Begin by removing anything that can be construed as "fluff" or "filler" text.
-                - If the word count is still too high, identify repetitions and reduce these - do not hurt coherence or logic, factor in hierarch and relationships.
-                - If the word count is still too high, categorize information by its signficiance and remove the least significant information.
-                - Try not to reduce the information density if possible. Instead, prefer making the text denser and utilize technical language.
-            
-            **Important!**
-                - Ensure that the text remains coherent and logical.
-                - Ensure the scientific terminology is precise and correct. 
-                - Do not change headings, sections or the organization of the text.            
+                - Ensure the scientific terminology is precise and correct.
+                - Do not change headings, sections or the organization of the text.
             """),
             min_words=metadata["min_words"],
             max_words=metadata["max_words"],
