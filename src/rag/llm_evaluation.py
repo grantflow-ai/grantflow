@@ -230,6 +230,7 @@ async def with_prompt_evaluation[T, P](
     prompt: P,
     prompt_handler: Callable[[P], Awaitable[T]],
     retries: int = 4,
+    increment: float = 2.5,
 ) -> T:
     """Prompt the user for an evaluation of the generated text.
 
@@ -238,6 +239,7 @@ async def with_prompt_evaluation[T, P](
         prompt: The prompt to evaluate
         prompt_handler: The prompt handler function.
         retries: The number of retries allowed for the evaluation.
+        increment: The amount to reduce the passing score by on each retry.
 
     Raises:
         EvaluationError: If the model output does not meet the evaluation criteria.
@@ -248,7 +250,7 @@ async def with_prompt_evaluation[T, P](
     current_prompt = str(prompt)
 
     iteration = 1
-    min_passing_score = passing_score
+    min_passing_score: float = passing_score
 
     while iteration <= retries:
         model_output = await prompt_handler(prompt)
@@ -262,7 +264,7 @@ async def with_prompt_evaluation[T, P](
 
         failing_criteria = {k: v["reasoning"] for k, v in scores.items() if v["score"] < min_passing_score}  # type: ignore[index]
 
-        min_passing_score -= round(iteration * 2.5)
+        min_passing_score -= increment
         iteration += 1
 
         current_prompt = dedent(f"""
