@@ -2,191 +2,93 @@ from typing import Any
 
 import pytest
 
-from src.dto import GrantTemplateDTO
 from src.exceptions import ValidationError
-from src.rag.grant_template.generate_template_data import grant_template_validator
+from src.rag.grant_template.generate_template_data import TemplateSectionsResponse, validate_template_sections
+from tests.factories import GrantPartFactory, GrantSectionFactory
 
 
-def create_valid_template() -> GrantTemplateDTO:
-    return {
-        "name": "Test Grant",
-        "template": """# {{introduction.title}}
-{{introduction.content}}
+@pytest.fixture
+def base_response() -> TemplateSectionsResponse:
+    research_plan = GrantSectionFactory.build(name="research_strategy", is_research_plan=True)
+    background = GrantSectionFactory.build(name="background", depends_on=[research_plan["name"]])
+    impact = GrantSectionFactory.build(name="impact", depends_on=[research_plan["name"]])
 
-# {{methods.title}}
-{{methods.content}}
-
-<research_plan>
-
-# {{results.title}}
-{{results.content}}""",
-        "sections": [
-            {
-                "name": "introduction",
-                "title": "Introduction",
-                "instructions": "Write an introduction",
-                "keywords": ["background", "context", "objectives"],
-                "topics": ["Background Context", "Methodology"],
-                "depends_on": [],
-                "min_words": 100,
-                "max_words": 500,
-            },
-            {
-                "name": "methods",
-                "title": "Methods",
-                "instructions": "Describe methods",
-                "keywords": ["protocol", "analysis", "design"],
-                "topics": ["Methodology", "Rationale"],
-                "depends_on": ["introduction"],
-                "min_words": 200,
-                "max_words": 1000,
-            },
-            {
-                "name": "results",
-                "title": "Results",
-                "instructions": "Present results",
-                "keywords": ["findings", "data", "outcomes"],
-                "topics": ["Rationale", "Knowledge Translation"],
-                "depends_on": ["methods"],
-                "min_words": 300,
-                "max_words": 1500,
-            },
-        ],
-    }
+    return {"parts": [GrantPartFactory.build()], "sections": [research_plan, background, impact]}
 
 
-def test_valid_template() -> None:
-    template = create_valid_template()
-    grant_template_validator(template)  # Should not raise
+def test_valid_template(base_response: TemplateSectionsResponse) -> None:
+    validate_template_sections(base_response)
 
 
-@pytest.mark.parametrize(
-    "template_text, expected_message",
-    [
-        (
-            "# {{introduction.title}}\n{{introduction.content}}\n",
-            "Template must contain exactly one <research_plan> tag",
-        ),
-        (
-            "# {{introduction.title}}\n{{introduction.content}}\n<research_plan>\n<research_plan>",
-            "Template must contain exactly one <research_plan> tag",
-        ),
-    ],
-)
-def test_research_plan_tag(template_text: str, expected_message: str) -> None:
-    template = create_valid_template()
-    template["template"] = template_text
-    with pytest.raises(ValidationError, match=expected_message):
-        grant_template_validator(template)
-
-
-@pytest.mark.parametrize(
-    "template_text, missing_section",
-    [
-        (
-            "# {{introduction.title}}\n{{introduction.content}}\n<research_plan>\n# {{results.title}}\n{{results.content}}",
-            "methods",
-        ),
-        (
-            "# {{methods.title}}\n{{methods.content}}\n<research_plan>\n# {{results.title}}\n{{results.content}}",
-            "introduction",
-        ),
-    ],
-)
-def test_missing_required_sections(template_text: str, missing_section: str) -> None:
-    template = create_valid_template()
-    template["template"] = template_text
+def test_duplicate_section_names(base_response: TemplateSectionsResponse) -> None:
+    duplicate_section = base_response["sections"][0].copy()
+    base_response["sections"].append(duplicate_section)
     with pytest.raises(ValidationError):
-        grant_template_validator(template)
+        validate_template_sections(base_response)
 
 
-@pytest.mark.parametrize(
-    "section_name, section_content",
-    [
-        ("undefined", "\n# {{undefined.title}}\n{{undefined.content}}"),
-        ("invalid", "\n# {{invalid.title}}\nsome content"),
-    ],
-)
-def test_invalid_section_references(section_name: str, section_content: str) -> None:
-    template = create_valid_template()
-    template["template"] += section_content
+def test_invalid_parent_id(base_response: TemplateSectionsResponse) -> None:
+    base_response["sections"][0]["parent_id"] = "nonexistent"
     with pytest.raises(ValidationError):
-        grant_template_validator(template)
+        validate_template_sections(base_response)
+
+
+def test_circular_parent_dependency(base_response: TemplateSectionsResponse) -> None:
+    base_response["sections"][0]["parent_id"] = "background"
+    base_response["sections"][1]["parent_id"] = "research_strategy"
+    with pytest.raises(ValidationError):
+        validate_template_sections(base_response)
 
 
 @pytest.mark.parametrize(
-    "section_field, invalid_value",
+    ("research_plan_count", "valid"),
+    [(0, False), (1, True), (2, False)],
+)
+def test_research_plan_count(base_response: TemplateSectionsResponse, research_plan_count: int, valid: bool) -> None:
+    base_response["sections"] = [
+        GrantSectionFactory.build(is_research_plan=i < research_plan_count)
+        for i, _ in enumerate(base_response["sections"])
+    ]
+
+    if valid:
+        validate_template_sections(base_response)
+    else:
+        with pytest.raises(ValidationError):
+            validate_template_sections(base_response)
+
+
+def test_invalid_dependencies(base_response: TemplateSectionsResponse) -> None:
+    base_response["sections"][0]["depends_on"] = ["nonexistent"]
+    with pytest.raises(ValidationError):
+        validate_template_sections(base_response)
+
+
+def test_circular_dependencies(base_response: TemplateSectionsResponse) -> None:
+    base_response["sections"][0]["depends_on"] = ["background"]
+    base_response["sections"][1]["depends_on"] = ["research_strategy"]
+    with pytest.raises(ValidationError):
+        validate_template_sections(base_response)
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid_value"),
     [
-        (
-            "keywords",
-            ["only", "two"],
-        ),
-        (
-            "topics",
-            ["invalid_topic"],
-        ),
-        ("min_words", -100),
+        ("name", 123),
+        ("title", 123),
+        ("type", "invalid"),
+        ("parent_id", 123),
+        ("keywords", ["one", "two"]),
+        ("topics", ["one"]),
         ("max_words", 0),
+        ("max_words", -1),
+        ("max_words", 20000),
+        ("search_queries", ["one", "two"]),
+        ("search_queries", ["q" for _ in range(11)]),
+        ("order", 0),
+        ("order", -1),
     ],
 )
-def test_section_field_validation(section_field: str, invalid_value: Any) -> None:
-    """Test validation of various section fields."""
-    template = create_valid_template()
-    template["sections"][0][section_field] = invalid_value  # type: ignore[literal-required]
-    with pytest.raises(ValidationError):
-        grant_template_validator(template)
-
-
-@pytest.mark.parametrize(
-    "min_words, max_words",
-    [
-        (600, 500),
-        (-1, 100),
-        (100, 0),
-    ],
-)
-def test_word_count_constraints(min_words: int, max_words: int) -> None:
-    template = create_valid_template()
-    template["sections"][0]["min_words"] = min_words
-    template["sections"][0]["max_words"] = max_words
-    with pytest.raises(ValidationError):
-        grant_template_validator(template)
-
-
-@pytest.mark.parametrize("required_field", ["name", "template", "sections"])
-def test_missing_required_fields(required_field: str) -> None:
-    template = create_valid_template()
-    del template[required_field]  # type: ignore[misc]
-    with pytest.raises(ValidationError):
-        grant_template_validator(template)
-
-
-@pytest.mark.parametrize(
-    "required_section_field", ["name", "title", "instructions", "keywords", "topics", "depends_on"]
-)
-def test_missing_required_section_fields(required_section_field: str) -> None:
-    template = create_valid_template()
-    del template["sections"][0][required_section_field]  # type: ignore[misc]
-    with pytest.raises(ValidationError):
-        grant_template_validator(template)
-
-
-def test_broken_dependency_chain() -> None:
-    template = create_valid_template()
-    # Remove methods section but keep results which depends on it
-    template["template"] = """# {{introduction.title}}
-{{introduction.content}}
-
-<research_plan>
-
-# {{results.title}}
-{{results.content}}"""
-    with pytest.raises(ValidationError, match="Section 'results' depends on 'methods'"):
-        grant_template_validator(template)
-
-
-def test_invalid_line_format() -> None:
-    template = create_valid_template()
-    template["template"] = template["template"].replace("{{introduction.title}}", "introduction.title")
-    with pytest.raises(ValidationError, match="Lines must be either headings with"):
-        grant_template_validator(template)
+def test_invalid_field_values(base_response: TemplateSectionsResponse, field: str, invalid_value: Any) -> None:
+    base_response["sections"][0][field] = invalid_value  # type: ignore
+    with pytest.raises((ValidationError, TypeError)):
+        validate_template_sections(base_response)
