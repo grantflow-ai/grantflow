@@ -77,14 +77,18 @@ async def handle_generate_research_plan_component(
         instructions=component["instructions"],
         keywords=component["keywords"],
         relationships=component["relationships"],
-        section_title=component["title"],
         research_plan_text=research_plan_text,
+        object_type="task" if component.get("task_number") else "objective",
+        object_type_description="a concrete research that that is a part of a larger specific research objective"
+        if component.get("task_number")
+        else "a specific research goal or aim",
     )
     try:
         rag_results = await retrieve_documents(
             application_id=application_id,
             task_description=user_prompt,
             user_inputs=form_inputs,
+            section_title=component["title"],
         )
 
         result = await handle_long_form_text_generation(
@@ -94,6 +98,7 @@ async def handle_generate_research_plan_component(
             rag_results=rag_results,
             task_description=user_prompt,
             user_inputs=form_inputs,
+            section_title=component["title"],
         )
         logger.debug("Generated text for section.", component=component, application_id=application_id)
         return result

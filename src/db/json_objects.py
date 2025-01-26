@@ -102,12 +102,3 @@ class GrantSection(BaseSection):
     """Maximum word count if specified."""
     topics: list[str]
     """Topics that the section covers."""
-
-
-class TextGenerationResult(TypedDict):
-    """DTO for a text generation result."""
-
-    content: str
-    """The generated content."""
-    type: str
-    """The type of the generated content."""

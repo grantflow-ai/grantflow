@@ -188,31 +188,20 @@ response_schema = {
                     "max_words": {"type": "integer", "minimum": 50},
                     "relationships": {
                         "type": "array",
-                        "items": {
-                            "type": "array",
-                            "items": {"type": "string", "minItems": 2, "maxItems": 2},
-                        },
+                        "items": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 2},
                     },
                     "instructions": {"type": "string"},
-                    "guiding_questions": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "minItems": 3,
-                    },
-                    "keywords": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "minItems": 5,
-                    },
+                    "guiding_questions": {"type": "array", "items": {"type": "string"}, "minItems": 3},
+                    "keywords": {"type": "array", "items": {"type": "string"}, "minItems": 5},
                 },
                 "required": [
                     "objective_number",
                     "title",
                     "description",
+                    "max_words",
                     "relationships",
                     "instructions",
                     "guiding_questions",
-                    "max_words",
                     "keywords",
                 ],
             },
@@ -229,26 +218,16 @@ response_schema = {
                     "max_words": {"type": "integer", "minimum": 50},
                     "relationships": {
                         "type": "array",
-                        "items": {
-                            "type": "array",
-                            "items": {"type": "string", "minItems": 2, "maxItems": 2},
-                        },
+                        "items": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 2},
                     },
                     "instructions": {"type": "string"},
-                    "guiding_questions": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "minItems": 3,
-                    },
-                    "keywords": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "minItems": 5,
-                    },
+                    "guiding_questions": {"type": "array", "items": {"type": "string"}, "minItems": 3},
+                    "keywords": {"type": "array", "items": {"type": "string"}, "minItems": 5},
                 },
                 "required": [
                     "task_number",
-                    "objective_numbertitle",
+                    "objective_number",
+                    "title",
                     "description",
                     "max_words",
                     "relationships",
@@ -431,4 +410,5 @@ async def handle_enrich_and_plan_research_plan(
     return await with_prompt_evaluation(
         prompt=prompt.to_string(rag_results=rag_results),
         prompt_handler=partial(enrich_and_plan_research_plan_generation, input_objectives=research_objectives),
+        increment=5,
     )
