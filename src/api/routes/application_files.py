@@ -12,8 +12,8 @@ from src.api.utils import verify_workspace_access
 from src.api_types import APIRequest
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import GrantApplicationFile, RagFile
-from src.dto import FileDTO
 from src.exceptions import DatabaseError
+from src.files import FileDTO
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)

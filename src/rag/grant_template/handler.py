@@ -46,11 +46,11 @@ async def grant_template_generation_pipeline_handler(
     extraction_result = await extract_cfp_data(cfp_content=cfp_content, organization_mapping=organization_mapping)
     logger.info("Extracted CFP data")
 
-    result = await handle_generate_grant_template(
+    extracted_sections = await handle_generate_grant_template(
         cfp_content="...".join(extraction_result["content"]),
         organization_id=extraction_result["organization_id"],
     )
-    logger.info("Generated grant template")
+    logger.info("Extracted grant template sections")
 
     async with session_maker() as session, session.begin():
         try:
@@ -60,7 +60,7 @@ async def grant_template_generation_pipeline_handler(
                     {
                         "funding_organization_id": extraction_result["organization_id"],
                         "grant_application_id": application_id,
-                        "grant_sections": result["sections"],
+                        "grant_sections": extracted_sections,
                     }
                 )
                 .returning(GrantTemplate)

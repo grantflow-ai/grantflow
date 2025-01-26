@@ -1,6 +1,5 @@
 from typing import Any, Final, TypedDict, cast
 
-from prompt_template import PromptTemplate as _PromptTemplate
 from sqlalchemy import func, or_, select
 
 from src.db.connection import get_session_maker
@@ -194,7 +193,7 @@ async def retrieve_documents(
     max_results: int = MAX_RESULTS,
     organization_id: str | None = None,
     search_queries: list[str] | None = None,
-    task_description: str | _PromptTemplate,
+    task_description: str | PromptTemplate,
     **kwargs: Any,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.

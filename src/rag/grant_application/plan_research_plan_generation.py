@@ -1,0 +1,397 @@
+from functools import partial
+from typing import Final, TypedDict
+
+from src.db.json_objects import GrantSection, ResearchObjective
+from src.exceptions import ValidationError
+from src.rag.completion import handle_completions_request
+from src.rag.llm_evaluation import with_prompt_evaluation
+from src.rag.retrieval import retrieve_documents
+from src.utils.prompt_template import PromptTemplate
+
+ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="enrich_objectives",
+    template="""
+    Your task is to create a detailed plan for the research plan section in JSON format.  This plan will guide the AI in generating a comprehensive and persuasive research plan.
+
+    ## Sources
+
+    - **Objectives:**
+        <objectives>
+        ${objectives}
+        </objectives>
+
+    - **Retrieval Results:**
+        <rag_results>
+        ${rag_results}
+        </rag_results>
+
+    - **User Inputs:**
+        <user_inputs>
+        ${user_inputs}
+        </user_inputs>
+
+    ## Metadata
+
+    * **Keywords:**
+        <keywords>
+        ${keywords}
+        </keywords>
+
+    * **Topics:**
+        <topics>
+        ${topics}
+        </topics>
+
+    ## Constraints:
+
+    The research plan section has a maximum word limit:
+        <max_words>
+        ${max_words}.
+        </max_words>
+
+    ## Task Description
+
+    1. **Analyze Objectives:**
+        * Deconstruct each research objective into its constituent research tasks.
+        * Ensure that each task contributes to the overall objective.
+        * Ground the analysis in the provided keywords and topics, using them to understand the core concepts and focus of the research.
+
+    2. **Determine Narrative:**
+        * Establish a clear and logical progression of research activities.
+        * Consider the interdependencies between objectives and tasks.
+        * Ensure the narrative aligns with the overall research goals and the provided keywords and topics.
+
+    3. **Identify Relationships:**
+        *  Identify dependencies between objectives. (e.g., Objective 2 builds upon the foundation established in Objective 1).
+        *  Identify dependencies between tasks within an objective (e.g., Task 1.1 must be completed before Task 1.2 can begin).
+        *  Identify dependencies across objectives (e.g., Findings from Task 2.3 will inform the approach taken in Objective 4).
+        *  Specify the type of relationship (e.g., causal, sequential, complementary, iterative feedback).
+        *  Consider how the relationships between objectives and tasks contribute to addressing the keywords and topics.
+
+    4. **Guiding Questions:**
+        *  Formulate a comprehensive set of guiding questions for each objective and task.
+        *  **Prioritize the use of provided keywords when creating questions.**
+        *  Ensure each objective has at least 3 guiding questions.
+        *  Focus on questions that address the core purpose, methodology, expected outcomes, potential challenges, and broader implications of the research.
+        *  Ground the questions in the provided keywords and topics to ensure relevance and focus.
+
+    5. **Detailed Descriptions:**
+        *  **Purpose:** Clearly state the purpose of each objective and task and its contribution to the overall research goal.
+        *  **Methodology:**  Describe the methods and techniques to be employed. Be specific (e.g., "use CRISPR-Cas9 gene editing to target the specific gene sequence...").
+        *  **Expected Results:** Outline anticipated outcomes, deliverables, and potential impact.
+        *  **Dependencies:** Summarize key dependencies identified in step 3.
+        *  **Potential Risks:** Identify potential challenges, limitations, and mitigation strategies.
+        *  Ensure the descriptions are grounded in the provided keywords and topics, using them to provide context and focus.
+
+    6. **Generation Instructions:**
+        *  Provide detailed instructions for AI text generation of each objective and task description.
+        *  Prioritize information from the sources (weight = 2) and incorporate metadata (weight = 1).
+        *  Specify the desired writing style (e.g., formal and academic, persuasive, concise).
+        *  Include instructions on the level of detail, use of technical terminology, and any specific formatting requirements.
+        *  **Explicitly instruct the AI to use the provided keywords and topics to guide the generation of the text.**
+        *  Example: "Generate a concise and persuasive description of Objective 2, emphasizing its innovative methodology and potential for clinical translation. Use formal and academic language. Highlight the connection to [keyword 1] and [topic 2]. Explain how this objective addresses the knowledge gap identified in [source 3]."
+
+    7. **Calculate Max Words:**
+        *  Calculate the maximum number of words for each objective and task description based on the total word limit provided.
+        *  Ensure that the word count aligns with the level of detail and complexity required for each component.
+        *  Verify the total word count for the entire research plan section aligns with the numbers assigned to the objectives and tasks.
+
+    ## Output Structure
+
+    Respond using this JSON structure:
+
+    ```json
+    {
+        "research_objectives": [
+            {
+                "objective_number": "1",
+                "title": "Research Objective Title",
+                "description": "Research Objective Description",
+                "relationships": [
+                    ["2", "Objective 1 provides the foundational data required for Objective 2. Objective 2 will also provide feedback to Objective 1 to refine the experimental design based on initial results."],
+                    ["2.1", "The methodology developed in Objective 1 will be directly applied to Task 2.1.  The results from Task 2.1 will inform the optimization of the methodology in Objective 1."]
+                ],
+                "instructions": "Generate a concise and persuasive description of the objective, emphasizing its importance in achieving the overall research goal. Use formal and academic language. Highlight the connection to [keyword 1] and [keyword 2].",
+                "guiding_questions": [
+                    "What is the primary aim of this objective?",
+                    "How does this objective contribute to the overall research project?",
+                    "What are the key challenges anticipated in achieving this objective?"
+                ],
+                "keywords": [
+                    "keyword1",
+                    "keyword2",
+                    "topic1",
+                    // ... relevant and specific terms from sources and metadata
+                ],
+            }
+        ],
+        "research_tasks": [
+            {
+                "objective_number": "1",
+                "task_number": "1",
+                "title": "Research Task Title",
+                "description": "Research Task Description",
+                "relationships": [
+                    ["2", "This task contributes to the development of [specific deliverable] required for Objective 2.  Findings from Objective 2 may necessitate adjustments to the task."],
+                    ["2.1", "The results of this task will be directly used as input for Task 2.1.  The results from Task 2.1 may require modifications to the approach taken in this task."]
+                ],
+                "instructions": "Generate a detailed description of the task, including specific methodologies, datasets, and expected outcomes.  Ensure the description aligns with [topic 1] and addresses potential challenges related to [keyword 3].",
+                "guiding_questions": [
+                    "What specific methods will be used to complete this task?",
+                    "What are the anticipated deliverables of this task?",
+                    "How will the results of this task be validated?"
+                ],
+                "keywords": [
+                    "keyword3",
+                    "keyword4",
+                    "topic2",
+                    // ... relevant and terms from sources and metadata
+                ]
+            }
+        ]
+    }
+
+    ## Validation:
+
+    1. **Completeness Check:** Verify that all objectives and tasks have complete information, including titles, descriptions, relationships, instructions, guiding questions, and metadata.
+    2. **Relationship Validation:**
+        *  Ensure that all relationships are clearly explained and reference specific objective/task numbers.
+        *  Check that relationship descriptions accurately reflect dependencies and progression.
+        *  Confirm that relationships are bidirectional where appropriate (e.g., Objective 1 informs Objective 2, and Objective 2 provides feedback to Objective 1).
+    3. **Instruction Validation:**
+        *  Ensure that generation instructions are clear, detailed, and specific.
+        *  Confirm that instructions align with the provided sources and metadata.
+        *  Verify that instructions specify the desired writing style, level of detail, and use of technical terminology.
+    4. **Metadata Validation:**
+        *  Ensure that the `metadata` field for each objective and task contains relevant and diverse terms.
+        *  Confirm that the metadata is derived from the sources and the provided keywords and topics.
+    5. **Coherence Check:** Review the overall logic and flow of the research plan. Ensure that there is a clear progression and interconnectedness between objectives and tasks.
+    6. **Grounding Check:**  Verify that the provided keywords and topics are appropriately integrated throughout the JSON structure, guiding the analysis, descriptions, and generation instructions.
+    7. **Consistency Check:** Ensure that all information in the JSON is consistent with the provided sources and metadata.
+    8. **Formatting Check:**  Validate that the JSON adheres to the specified structure and formatting conventions.
+    9. **Word Count Verification:** Confirm that the total word count for the research plan section aligns with the provided word limit.
+    """,
+)
+
+
+response_schema = {
+    "type": "object",
+    "properties": {
+        "research_objectives": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "objective_number": {"type": "integer", "minimum": 1, "maximum": 100},
+                    "title": {"type": "string"},
+                    "description": {"type": "string"},
+                    "max_words": {"type": "integer", "minimum": 50},
+                    "relationships": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {"type": "string", "minItems": 2, "maxItems": 2},
+                        },
+                    },
+                    "instructions": {"type": "string"},
+                    "guiding_questions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 3,
+                    },
+                    "keywords": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 5,
+                    },
+                },
+                "required": [
+                    "objective_number",
+                    "title",
+                    "description",
+                    "relationships",
+                    "instructions",
+                    "guiding_questions",
+                    "max_words",
+                    "keywords",
+                ],
+            },
+        },
+        "research_tasks": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "objective_number": {"type": "integer", "minimum": 1, "maximum": 100},
+                    "task_number": {"type": "integer", "minimum": 1, "maximum": 100},
+                    "title": {"type": "string"},
+                    "description": {"type": "string"},
+                    "max_words": {"type": "integer", "minimum": 50},
+                    "relationships": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {"type": "string", "minItems": 2, "maxItems": 2},
+                        },
+                    },
+                    "instructions": {"type": "string"},
+                    "guiding_questions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 3,
+                    },
+                    "keywords": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 5,
+                    },
+                },
+                "required": [
+                    "task_number",
+                    "objective_numbertitle",
+                    "description",
+                    "max_words",
+                    "relationships",
+                    "instructions",
+                    "guiding_questions",
+                    "keywords",
+                ],
+            },
+        },
+    },
+    "required": ["research_objectives", "research_tasks"],
+}
+
+
+class ResearchObjectiveDTO(TypedDict):
+    """DTO for a research objective data."""
+
+    objective_number: int
+    """The number of the research objective."""
+    title: str
+    """The title of the task or objective."""
+    description: str
+    """The description of the task or objective."""
+    max_words: int
+    """The maximum number of words."""
+    relationships: list[list[tuple[str, str]]]
+    """The relations of the research task to other tasks and objectives.
+
+    Format:
+    [
+        ("task_number", "relationship_type"),
+        ...
+    ]
+    """
+    instructions: str
+    """Instructions for the research task."""
+    guiding_questions: list[str]
+    """Guiding questions for the research task."""
+    keywords: list[str]
+    """Keywords for the research task."""
+
+
+class ResearchTaskDTO(ResearchObjectiveDTO):
+    """DTO for a research task data."""
+
+    task_number: int
+    """The number of the task."""
+
+
+class ResearchPlanDTO(TypedDict):
+    """DTO for a research plan."""
+
+    research_objectives: list[ResearchObjectiveDTO]
+    """The research objectives for the research plan."""
+    research_tasks: list[ResearchTaskDTO]
+    """The research tasks for the research plan."""
+
+
+def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives: list[ResearchObjective]) -> None:
+    """Validate the research plan response.
+
+    Args:
+        tool_response: The response to validate.
+        input_objectives: The input research objectives.
+
+    Raises:
+        ValidationError: If the response is invalid.
+
+    Returns:
+        None
+    """
+    if len(tool_response["research_objectives"]) != len(input_objectives):
+        raise ValidationError("The number of research objectives does not match the input.")
+
+    mapped_input_objectives = {objective["number"]: objective for objective in input_objectives}
+
+    for objective in tool_response["research_objectives"]:
+        objective_tasks = [
+            task
+            for task in tool_response["research_tasks"]
+            if task["objective_number"] == objective["objective_number"]
+        ]
+        if input_objective := mapped_input_objectives.get(objective["objective_number"]):
+            if len(objective_tasks) != len(input_objective["research_tasks"]):
+                raise ValidationError(
+                    f"The number of tasks for objective number {objective['objective_number']} does not match the input."
+                )
+        else:
+            raise ValidationError(
+                f"Objective number {objective['objective_number']} not found in the input objectives."
+            )
+
+
+async def enrich_and_plan_research_plan_generation(
+    task_description: str, *, input_objectives: list[ResearchObjective]
+) -> ResearchPlanDTO:
+    """Generate a detailed plan for the research plan section.
+
+    Args:
+        task_description: The task description for the research plan.
+        input_objectives: The input research objectives. This value is piped through to the validator.
+
+    Returns:
+        The research plan dto.
+    """
+    return await handle_completions_request(
+        prompt_identifier="enrich_and_plan_research_plan",
+        messages=task_description,
+        response_type=ResearchPlanDTO,
+        response_schema=response_schema,
+        validator=partial(research_plan_validator, input_objectives=input_objectives),
+    )
+
+
+async def handle_enrich_and_plan_research_plan(
+    *,
+    application_id: str,
+    grant_section: GrantSection,
+    research_objectives: list[ResearchObjective],
+    form_inputs: dict[str, str],
+) -> ResearchPlanDTO:
+    """Generate a detailed plan for the research plan section.
+
+    Args:
+        application_id: The ID of the grant application.
+        grant_section: The grant section for the research plan.
+        research_objectives: The research objectives.
+        form_inputs: The user inputs.
+
+    Returns:
+        The research plan dto.
+    """
+    prompt = ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT.substitute(
+        research_objectives=research_objectives,
+        keywords=grant_section["keywords"],
+        topics=grant_section["topics"],
+        max_words=grant_section["max_words"],
+        user_inputs=form_inputs,
+    )
+    rag_results = await retrieve_documents(
+        application_id=application_id, search_queries=grant_section["search_queries"], task_description=prompt
+    )
+    return await with_prompt_evaluation(
+        prompt=prompt.to_string(rag_results=rag_results),
+        prompt_handler=partial(enrich_and_plan_research_plan_generation, input_objectives=research_objectives),
+    )
