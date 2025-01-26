@@ -16,9 +16,9 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
     ## Sources
 
     - **Objectives:**
-        <objectives>
-        ${objectives}
-        </objectives>
+        <research_objectives>
+        ${research_objectives}
+        </research_objectives>
 
     - **Retrieval Results:**
         <rag_results>
@@ -274,7 +274,7 @@ class ResearchObjectiveDTO(TypedDict):
     """The description of the task or objective."""
     max_words: int
     """The maximum number of words."""
-    relationships: list[list[tuple[str, str]]]
+    relationships: list[tuple[str, str]]
     """The relations of the research task to other tasks and objectives.
 
     Format:
@@ -307,18 +307,15 @@ class ResearchPlanDTO(TypedDict):
     """The research tasks for the research plan."""
 
 
-def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives: list[ResearchObjective]) -> None:
+def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives: list[ResearchObjective]) -> None:  # noqa: C901, PLR0912
     """Validate the research plan response.
 
     Args:
-        tool_response: The response to validate.
+        tool_response: The tool response.
         input_objectives: The input research objectives.
 
     Raises:
         ValidationError: If the response is invalid.
-
-    Returns:
-        None
     """
     if len(tool_response["research_objectives"]) != len(input_objectives):
         raise ValidationError("The number of research objectives does not match the input.")
@@ -331,6 +328,7 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
             for task in tool_response["research_tasks"]
             if task["objective_number"] == objective["objective_number"]
         ]
+
         if input_objective := mapped_input_objectives.get(objective["objective_number"]):
             if len(objective_tasks) != len(input_objective["research_tasks"]):
                 raise ValidationError(
@@ -340,6 +338,43 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
             raise ValidationError(
                 f"Objective number {objective['objective_number']} not found in the input objectives."
             )
+
+        for relationship in objective["relationships"]:
+            if len(relationship) != 2:
+                raise ValidationError("Each relationship must have exactly two elements")
+
+            target_id = relationship[0]
+            try:
+                if "." in target_id:
+                    obj_num, task_num = map(int, target_id.split("."))
+                    if not any(
+                        task["objective_number"] == obj_num and task["task_number"] == task_num
+                        for task in tool_response["research_tasks"]
+                    ):
+                        raise ValidationError(f"Referenced task {target_id} not found")
+                elif not any(obj["objective_number"] == int(target_id) for obj in tool_response["research_objectives"]):
+                    raise ValidationError(f"Referenced objective {target_id} not found")
+            except ValueError as e:
+                raise ValidationError(f"Invalid relationship target ID format: {target_id}") from e
+
+    for task in tool_response["research_tasks"]:
+        for relationship in task["relationships"]:
+            if len(relationship) != 2:
+                raise ValidationError("Each relationship must have exactly two elements")
+
+            target_id = relationship[0]
+            try:
+                if "." in target_id:
+                    obj_num, task_num = map(int, target_id.split("."))
+                    if not any(
+                        t["objective_number"] == obj_num and t["task_number"] == task_num
+                        for t in tool_response["research_tasks"]
+                    ):
+                        raise ValidationError(f"Referenced task {target_id} not found")
+                elif not any(obj["objective_number"] == int(target_id) for obj in tool_response["research_objectives"]):
+                    raise ValidationError(f"Referenced objective {target_id} not found")
+            except ValueError as e:
+                raise ValidationError(f"Invalid relationship target ID format: {target_id}") from e
 
 
 async def enrich_and_plan_research_plan_generation(
@@ -389,7 +424,9 @@ async def handle_enrich_and_plan_research_plan(
         user_inputs=form_inputs,
     )
     rag_results = await retrieve_documents(
-        application_id=application_id, search_queries=grant_section["search_queries"], task_description=prompt
+        application_id=application_id,
+        search_queries=grant_section["search_queries"],
+        task_description=prompt,
     )
     return await with_prompt_evaluation(
         prompt=prompt.to_string(rag_results=rag_results),
