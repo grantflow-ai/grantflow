@@ -2,6 +2,7 @@ from collections.abc import Awaitable, Callable
 from textwrap import dedent
 from typing import Any, Protocol, TypedDict, cast
 
+from src.constants import EVALUATION_MODEL
 from src.exceptions import EvaluationError
 from src.rag.completion import make_completions_request
 from src.utils.logger import get_logger
@@ -212,6 +213,7 @@ async def evaluate_prompt_output(*, prompt: str, model_output: str | dict[str, A
         response_type=EvaluationToolResponse,
         response_schema=json_schema,
         system_prompt=EVALUATION_SYSTEM_PROMPT,
+        model=EVALUATION_MODEL,
         messages=EVALUATION_PROMPT.to_string(prompt=prompt, model_output=model_output),
     )
 
@@ -257,12 +259,15 @@ async def with_prompt_evaluation[T, P](
         evaluation_result = await evaluate_prompt_output(
             prompt=current_prompt, model_output=cast(dict[str, Any] | str, model_output)
         )
-        scores = evaluation_result["scores"]
 
-        if all(v["score"] >= min_passing_score for v in scores.values()):  # type: ignore[index]
+        if all(v["score"] >= min_passing_score for v in evaluation_result["scores"].values()):  # type: ignore[index]
             return model_output
 
-        failing_criteria = {k: v["reasoning"] for k, v in scores.items() if v["score"] < min_passing_score}  # type: ignore[index]
+        failing_criteria: dict[str, str] = {
+            k: v["reasoning"]  # type: ignore[index]
+            for k, v in evaluation_result["scores"].items()
+            if v["score"] < min_passing_score  # type: ignore[index]
+        }
 
         min_passing_score -= increment
         iteration += 1

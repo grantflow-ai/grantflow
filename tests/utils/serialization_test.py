@@ -50,7 +50,8 @@ def test_encode_hook_exception() -> None:
 
 def test_encode_hook_object_with_to_dict() -> None:
     class TestObject:
-        def to_dict(self) -> dict[str, str]:
+        @staticmethod
+        def to_dict() -> dict[str, str]:
             return {"key": "value"}
 
     result = encode_hook(TestObject())

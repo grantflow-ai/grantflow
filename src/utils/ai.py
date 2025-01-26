@@ -3,15 +3,12 @@ from typing import Any
 from google.cloud.aiplatform import init
 from google.oauth2.service_account import Credentials
 from vertexai.generative_models import GenerativeModel
-from vertexai.language_models import TextEmbeddingModel
 
-from src.constants import EMBEDDINGS_MODEL
 from src.utils.env import get_env
 from src.utils.ref import Ref
 from src.utils.serialization import deserialize
 
 init_ref = Ref[bool]()
-embeddings_model = Ref[TextEmbeddingModel]()
 clients: dict[str, GenerativeModel] = {}
 
 
@@ -25,19 +22,6 @@ def init_llm_connection() -> None:
             credentials=Credentials.from_service_account_info(credentials),  # type: ignore[no-untyped-call]
         )
         init_ref.value = True
-
-
-def get_embeddings_client() -> TextEmbeddingModel:
-    """Get the TextEmbeddingModel client.
-
-    Returns:
-        The TextEmbeddingModel client.
-    """
-    if not embeddings_model.value:
-        init_llm_connection()
-        embeddings_model.value = TextEmbeddingModel.from_pretrained(EMBEDDINGS_MODEL)
-
-    return embeddings_model.value
 
 
 def get_google_ai_client(*, prompt_identifier: str, system_instructions: str, model: str) -> GenerativeModel:

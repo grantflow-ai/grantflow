@@ -10,7 +10,7 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
     Part,
 )
 
-from src.constants import CONTENT_TYPE_JSON, FAST_TEXT_GENERATION_MODEL, PREMIUM_TEXT_GENERATION_MODEL
+from src.constants import CONTENT_TYPE_JSON, EVALUATION_MODEL, GENERATION_MODEL
 from src.exceptions import DeserializationError, ValidationError
 from src.utils.ai import get_google_ai_client
 from src.utils.logger import get_logger
@@ -41,7 +41,7 @@ DEFAULT_SYSTEM_PROMPT: Final[str] = f"""
 @with_exponential_backoff_retry(TooManyRequests)
 async def make_completions_request[T](
     *,
-    model: str = FAST_TEXT_GENERATION_MODEL,
+    model: str = EVALUATION_MODEL,
     prompt_identifier: str,
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
@@ -102,7 +102,7 @@ async def handle_completions_request[T](
     *,
     max_attempts: int = 3,
     messages: str | Part | list[str | Part],
-    model: str = PREMIUM_TEXT_GENERATION_MODEL,
+    model: str = GENERATION_MODEL,
     prompt_identifier: str,
     response_schema: dict[str, Any] | None = None,
     response_type: type[T],
