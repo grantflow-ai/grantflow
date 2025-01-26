@@ -32,12 +32,12 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
 
     ## Metadata
 
-    * **Keywords:**
+    - **Keywords:**
         <keywords>
         ${keywords}
         </keywords>
 
-    * **Topics:**
+    - **Topics:**
         <topics>
         ${topics}
         </topics>
@@ -46,8 +46,10 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
 
     The research plan section has a maximum word limit:
         <max_words>
-        ${max_words}.
+        ${max_words}
         </max_words>
+
+
 
     ## Task Description
 
@@ -95,6 +97,7 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
         *  Calculate the maximum number of words for each objective and task description based on the total word limit provided.
         *  Ensure that the word count aligns with the level of detail and complexity required for each component.
         *  Verify the total word count for the entire research plan section aligns with the numbers assigned to the objectives and tasks.
+        *  Assign each objective and each task the appropriate word limit based on its complexity and importance.
 
     ## Output Structure
 
@@ -117,6 +120,7 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
                     "How does this objective contribute to the overall research project?",
                     "What are the key challenges anticipated in achieving this objective?"
                 ],
+                "max_words": 200,
                 "keywords": [
                     "keyword1",
                     "keyword2",
@@ -141,6 +145,7 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
                     "What are the anticipated deliverables of this task?",
                     "How will the results of this task be validated?"
                 ],
+                "max_words": 150,
                 "keywords": [
                     "keyword3",
                     "keyword4",
@@ -153,23 +158,23 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
 
     ## Validation:
 
-    1. **Completeness Check:** Verify that all objectives and tasks have complete information, including titles, descriptions, relationships, instructions, guiding questions, and metadata.
-    2. **Relationship Validation:**
-        *  Ensure that all relationships are clearly explained and reference specific objective/task numbers.
-        *  Check that relationship descriptions accurately reflect dependencies and progression.
-        *  Confirm that relationships are bidirectional where appropriate (e.g., Objective 1 informs Objective 2, and Objective 2 provides feedback to Objective 1).
-    3. **Instruction Validation:**
-        *  Ensure that generation instructions are clear, detailed, and specific.
-        *  Confirm that instructions align with the provided sources and metadata.
-        *  Verify that instructions specify the desired writing style, level of detail, and use of technical terminology.
-    4. **Metadata Validation:**
-        *  Ensure that the `metadata` field for each objective and task contains relevant and diverse terms.
-        *  Confirm that the metadata is derived from the sources and the provided keywords and topics.
-    5. **Coherence Check:** Review the overall logic and flow of the research plan. Ensure that there is a clear progression and interconnectedness between objectives and tasks.
-    6. **Grounding Check:**  Verify that the provided keywords and topics are appropriately integrated throughout the JSON structure, guiding the analysis, descriptions, and generation instructions.
-    7. **Consistency Check:** Ensure that all information in the JSON is consistent with the provided sources and metadata.
-    8. **Formatting Check:**  Validate that the JSON adheres to the specified structure and formatting conventions.
-    9. **Word Count Verification:** Confirm that the total word count for the research plan section aligns with the provided word limit.
+    1. Completeness Check: Verify that all objectives and tasks have complete information, including titles, descriptions, relationships, instructions, guiding questions, and metadata.
+    2. Relationship Validation:
+        -  Ensure that all relationships are clearly explained and reference specific objective/task numbers.
+        -  Check that relationship descriptions accurately reflect dependencies and progression.
+        -  Confirm that relationships are bidirectional where appropriate (e.g., Objective 1 informs Objective 2, and Objective 2 provides feedback to Objective 1).
+    3. Instruction Validation:
+        -  Ensure that generation instructions are clear, detailed, and specific.
+        -  Confirm that instructions align with the provided sources and metadata.
+        -  Verify that instructions specify the desired writing style, level of detail, and use of technical terminology.
+    4. Metadata Validation:
+        -  Ensure that the `metadata` field for each objective and task contains relevant and diverse terms.
+        -  Confirm that the metadata is derived from the sources and the provided keywords and topics.
+    5. Coherence Check: Review the overall logic and flow of the research plan. Ensure that there is a clear progression and interconnectedness between objectives and tasks.
+    6. Grounding Check:  Verify that the provided keywords and topics are appropriately integrated throughout the JSON structure, guiding the analysis, descriptions, and generation instructions.
+    7. Consistency Check: Ensure that all information in the JSON is consistent with the provided sources and metadata.
+    8. Formatting Check:  Validate that the JSON adheres to the specified structure and formatting conventions.
+    9. Word Count Verification: Confirm that the total word count for the research plan section aligns with the provided word limit.
     """,
 )
 
@@ -410,5 +415,7 @@ async def handle_enrich_and_plan_research_plan(
     return await with_prompt_evaluation(
         prompt=prompt.to_string(rag_results=rag_results),
         prompt_handler=partial(enrich_and_plan_research_plan_generation, input_objectives=research_objectives),
+        passing_score=95,
         increment=5,
+        retries=5,
     )

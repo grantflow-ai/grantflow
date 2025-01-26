@@ -1,11 +1,9 @@
-from unittest.mock import Mock
-
 from src.dto import VectorDTO
 from src.indexer.indexing import create_vector_dto
 from tests.indexer.factories import ChunkFactory
 
 
-async def test_create_vector_dto(mock_text_embedding_model: Mock) -> None:
+async def test_create_vector_dto() -> None:
     chunk = ChunkFactory.build()
     file_id = "test_file_id"
 
