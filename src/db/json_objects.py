@@ -61,8 +61,6 @@ class ResearchObjective(TypedDict):
     """The description of the research objective."""
     research_tasks: list[ResearchTask]
     """The research tasks for the research objective"""
-    relationships: NotRequired[list[str]]
-    """The relations of the research objective to other objectives."""
 
 
 class BaseSection(TypedDict):
