@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import GrantApplication, GrantApplicationFile, TextVector
-from src.dto import FileDTO
+from src.files import FileDTO
 from src.indexer.files import parse_and_index_file
 from src.utils.serialization import serialize
 from tests.conftest import RESULTS_FOLDER, SOURCES_FOLDER

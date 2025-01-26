@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-from src.dto import FileDTO
+from src.files import FileDTO
 from src.utils.extraction import extract_file_content
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 

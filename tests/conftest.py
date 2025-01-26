@@ -42,7 +42,7 @@ from src.db.tables import (
     Workspace,
     WorkspaceUser,
 )
-from src.dto import FileDTO
+from src.files import FileDTO
 from src.indexer.files import parse_and_index_file
 from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from src.utils.ai import embeddings_model, init_ref

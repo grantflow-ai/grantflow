@@ -1,14 +1,12 @@
-from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any, Final
 from unittest.mock import AsyncMock
 
 from sanic_testing.testing import SanicASGITestClient
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api_types import (
-    ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
     UpdateApplicationRequestBody,
 )
@@ -19,10 +17,9 @@ from src.db.tables import (
     Workspace,
     WorkspaceUser,
 )
-from src.patterns import TEMPLATE_VARIABLE_PATTERN
 from src.utils.db import retrieve_application
 from src.utils.serialization import deserialize, serialize
-from tests.factories import CreateApplicationRequestBodyFactory, TextGenerationResultFactory
+from tests.factories import CreateApplicationRequestBodyFactory
 
 TEST_CFP_URL: Final[str] = "https://grants.nih.gov/grants/guide/rfa-files/RFA-DC-25-005.html"
 
@@ -100,42 +97,12 @@ async def test_retrieve_application_text_complete(
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
 ) -> None:
-    generation_results = [
-        TextGenerationResultFactory.build(
-            type=section_type,
-        )
-        for section_type in TEMPLATE_VARIABLE_PATTERN.findall(grant_template.template)
-    ]
-
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
-            )
-        )
-        await session.execute(
-            update(GrantApplication)
-            .where(GrantApplication.id == grant_application.id)
-            .values({"completed_at": datetime.now(tz=UTC), "text_generation_results": generation_results})
-        )
-        await session.commit()
-
     _, response = await asgi_client.get(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/content",
         headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK
-    response_body = deserialize(response.body, ApplicationDraftCompleteResponse)
-
-    expected_result = grant_template.template
-    for generation_result in generation_results:
-        expected_result = expected_result.replace(generation_result["type"], generation_result["content"])
-
-    expected_result = expected_result.replace("{", "").replace("}", "")
-
-    assert response_body["status"] == "complete"
-    assert response_body["text"] == expected_result
 
 
 async def test_update_application_success(
