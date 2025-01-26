@@ -202,8 +202,7 @@ async def handle_retrieve_application_text(
             select(GrantApplication)
             .options(selectinload(GrantApplication.grant_template))
             .where(GrantApplication.id == application_id)
-            .where(GrantApplication.completed_at.is_not(None))
-            .where(GrantApplication.text_generation_results.isnot(None))
+            .where(GrantApplication.text.is_not(None))
         )
 
     if grant_application and grant_application.text:

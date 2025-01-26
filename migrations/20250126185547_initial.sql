@@ -22,7 +22,6 @@ CREATE TABLE "grant_applications" (
   "form_inputs" json NULL,
   "research_objectives" json NULL,
   "text" text NULL,
-  "text_generation_results" json NULL,
   "title" character varying(255) NOT NULL,
   "workspace_id" uuid NOT NULL,
   "id" uuid NOT NULL,
