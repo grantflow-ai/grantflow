@@ -4,8 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.db.connection import get_session_maker
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import RagFile, TextVector
-from src.dto import FileDTO
 from src.exceptions import DatabaseError, ExternalOperationError, FileParsingError, ValidationError
+from src.files import FileDTO
 from src.indexer.chunking import chunk_text
 from src.indexer.indexing import index_documents, logger
 from src.utils.extraction import (

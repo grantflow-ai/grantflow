@@ -19,8 +19,8 @@ from src.api_types import (
     UpdateApplicationRequestBody,
 )
 from src.db.tables import GrantApplication
-from src.dto import FileDTO
 from src.exceptions import DatabaseError
+from src.files import FileDTO
 from src.utils.db import retrieve_application
 from src.utils.logger import get_logger
 from src.utils.serialization import deserialize
@@ -206,15 +206,9 @@ async def handle_retrieve_application_text(
             .where(GrantApplication.text_generation_results.isnot(None))
         )
 
-    if grant_application and grant_application.text_generation_results and grant_application.grant_template:
-        application_text = grant_application.grant_template.template
-        for result in grant_application.text_generation_results:
-            application_text = application_text.replace(result["type"], result["content"])
-
-        application_text = application_text.replace("{", "").replace("}", "")
-
+    if grant_application and grant_application.text:
         return json(
-            ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=application_text),
+            ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=grant_application.text),
             status=HTTPStatus.OK,
         )
 

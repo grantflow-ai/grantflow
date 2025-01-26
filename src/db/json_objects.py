@@ -74,12 +74,14 @@ class BaseSection(TypedDict):
     """Section heading title."""
     parent_id: str
     """Parent section name or "<root>"."""
+    order: int
+    """Order of the section in the grant application."""
 
 
-class HeadingSection(BaseSection):
+class GrantPart(BaseSection):
     """A section in the grant template."""
 
-    type: Literal["heading"]
+    type: Literal["part"]
     """Section type."""
 
 
@@ -98,8 +100,6 @@ class GrantSection(BaseSection):
     """Whether the section is the research plan."""
     depends_on: list[str]
     """Sections that must be generated before this one."""
-    min_words: int
-    """Minimum word count if specified."""
     max_words: int
     """Maximum word count if specified."""
     topics: list[str]
