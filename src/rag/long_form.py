@@ -165,6 +165,7 @@ async def handle_long_form_text_generation(
                 max_words=max_words,
                 sources=sources,
             ),
+            increment=5,
         )
     except EvaluationError as e:
         logger.error("Failed to generate long-form text", prompt_identifier=prompt_identifier, error=e)

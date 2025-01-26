@@ -4,7 +4,6 @@ from typing import Any, cast
 from faker import Faker
 from numpy.random import default_rng
 from pgvector.utils import Vector
-from polyfactory import Use
 from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from sqlalchemy import Column
@@ -24,7 +23,7 @@ from src.api_types import (
     WorkspaceBaseResponse,
 )
 from src.constants import EMBEDDING_DIMENSIONS
-from src.db.json_objects import GrantPart, GrantSection, ResearchObjective, ResearchTask, TextGenerationResult
+from src.db.json_objects import GrantPart, GrantSection, ResearchObjective, ResearchTask
 from src.db.tables import (
     FundingOrganization,
     GrantApplication,
@@ -132,12 +131,6 @@ class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
 
 class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
     __model__ = ResearchTask
-
-
-class TextGenerationResultFactory(TypedDictFactory[TextGenerationResult]):
-    __model__ = TextGenerationResult
-
-    content = Use(faker.text)
 
 
 class GrantSectionFactory(TypedDictFactory[GrantSection]):
