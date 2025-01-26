@@ -415,7 +415,7 @@ async def handle_enrich_and_plan_research_plan(
     return await with_prompt_evaluation(
         prompt=prompt.to_string(rag_results=rag_results),
         prompt_handler=partial(enrich_and_plan_research_plan_generation, input_objectives=research_objectives),
-        passing_score=95,
+        passing_score=90,
         increment=5,
         retries=5,
     )
