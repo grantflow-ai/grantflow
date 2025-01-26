@@ -1,7 +1,7 @@
 from textwrap import dedent
 from typing import Any, Final, TypedDict
 
-from src.constants import FAST_TEXT_GENERATION_MODEL
+from src.constants import EVALUATION_MODEL
 from src.rag.completion import handle_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -105,7 +105,7 @@ async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **k
             messages=messages,
             response_schema=response_schema,
             response_type=ToolResponse,
-            model=FAST_TEXT_GENERATION_MODEL,
+            model=EVALUATION_MODEL,
         )
         queries.extend(response["queries"])
 

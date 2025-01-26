@@ -25,7 +25,6 @@ from structlog import configure
 from structlog.testing import LogCapture
 from testcontainers.postgres import PostgresContainer
 from vertexai.generative_models import GenerativeModel
-from vertexai.language_models import TextEmbedding
 
 from src.db.base import Base
 from src.db.connection import engine_ref, get_session_maker
@@ -45,7 +44,7 @@ from src.db.tables import (
 from src.files import FileDTO
 from src.indexer.files import parse_and_index_file
 from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from src.utils.ai import embeddings_model, init_ref
+from src.utils.ai import init_ref
 from src.utils.extraction import extract_file_content
 from src.utils.serialization import deserialize, serialize
 from tests.factories import (
@@ -126,17 +125,6 @@ def mock_generative_model() -> Generator[Mock, Any, None]:
     with patch("vertexai.generative_models.GenerativeModel") as mock:
         mock_instance = Mock(spec=GenerativeModel)
         mock.return_value = mock_instance
-        yield mock
-
-
-@pytest.fixture
-def mock_text_embedding_model() -> Generator[Mock, Any, None]:
-    init_ref.value = True
-    embeddings_model.value = None
-    with patch("src.utils.ai.TextEmbeddingModel") as mock:
-        mock.from_pretrained = Mock(
-            return_value=Mock(get_embeddings_async=AsyncMock(return_value=[TextEmbedding(values=[1.0, 2.0, 3.0])]))
-        )
         yield mock
 
 

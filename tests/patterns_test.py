@@ -109,7 +109,8 @@ def test_tag_positions(test_input: str, expected_positions: list[tuple[int, int]
 def test_tag_content(test_input: str, match_content: str) -> None:
     match: Match[str] | None = XML_TAG_PATTERN.search(test_input)
     assert match is not None
-    inner_content: str = match.group(0)[1:-1]
+
+    inner_content: str = match.group()[1:-1]
     assert inner_content == match_content
 
 
