@@ -165,6 +165,7 @@ async def handle_long_form_text_generation(
                 max_words=max_words,
                 sources=sources,
             ),
+            passing_score=85,
             increment=5,
         )
     except EvaluationError as e:

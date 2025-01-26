@@ -194,6 +194,7 @@ async def retrieve_documents(
     organization_id: str | None = None,
     search_queries: list[str] | None = None,
     task_description: str | PromptTemplate,
+    with_guided_retrieval: bool = False,
     **kwargs: Any,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
@@ -204,6 +205,7 @@ async def retrieve_documents(
         organization_id: The organization ID, required if application_id is not provided.
         search_queries: The search queries.
         task_description: The task description.
+        with_guided_retrieval: Whether to use guided retrieval.
         **kwargs: Additional keyword arguments.
 
     Raises:
@@ -241,7 +243,7 @@ async def retrieve_documents(
             for vector in vectors
         ]
 
-        if vectors and len(vectors) == max_results:
+        if not with_guided_retrieval and vectors and len(vectors) == max_results:
             has_sufficient_context = True
             break
 

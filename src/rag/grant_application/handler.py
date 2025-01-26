@@ -57,6 +57,9 @@ async def generate_research_plan_text(
     research_plan_text = ""
 
     for research_objective in research_plan_dto["research_objectives"]:
+        objective_number = research_objective["objective_number"]
+        research_tasks = [t for t in research_plan_dto["research_tasks"] if t["objective_number"] == objective_number]
+
         research_objective_text = await handle_generate_research_plan_component(
             application_id=application_id,
             component=research_objective,
@@ -64,8 +67,9 @@ async def generate_research_plan_text(
             form_inputs=form_inputs,
         )
 
-        research_plan_text += f"\n\n### Objective {research_objective['objective_number']}:\n{research_objective_text}"
-
+        research_plan_text += (
+            f"\n\n### Objective {objective_number}: {research_objective['title']}\n{research_objective_text}"
+        )
         research_task_texts = await gather(
             *[
                 handle_generate_research_plan_component(
@@ -74,15 +78,14 @@ async def generate_research_plan_text(
                     research_plan_text=research_plan_text,
                     form_inputs=form_inputs,
                 )
-                for research_task in research_plan_dto["research_tasks"]
+                for research_task in research_tasks
             ]
         )
 
-        for research_task, research_task_text in zip(
-            research_plan_dto["research_tasks"], research_task_texts, strict=True
-        ):
+        for research_task, research_task_text in zip(research_tasks, research_task_texts, strict=True):
+            task_number = research_task["task_number"]
             research_plan_text += (
-                f"\n\n#### {research_objective['objective_number']}.{research_task}:\n{research_task_text}"
+                f"\n\n#### {objective_number}.{task_number}: {research_task['title']}\n{research_task_text}"
             )
 
     return normalize_markdown(research_plan_text)
@@ -92,28 +95,38 @@ async def generate_grant_section_texts(
     application_id: str,
     form_inputs: dict[str, str],
     grant_sections: list[GrantSection],
-    section_texts: dict[str, str],
-) -> None:
+    research_objectives: list[ResearchObjective],
+) -> dict[str, str]:
     """Generate the grant section texts for a grant application.
 
     Args:
         application_id: The ID of the grant application.
         form_inputs: The form inputs for the grant application.
         grant_sections: The grant sections.
-        section_texts: The section texts.
+        research_objectives: The research objectives for the grant application.
 
     Returns:
         None
     """
+    section_texts: dict[str, str] = {}
     generation_groups = create_generation_groups(sections=grant_sections)
 
     for generation_group in generation_groups:
         results = await batched_gather(
             *[
-                handle_section_text_generation(
+                (
+                    handle_section_text_generation(
+                        application_id=application_id,
+                        grant_section=section,
+                        dependencies=create_dependencies_text(depends_on=section["depends_on"], texts=section_texts),
+                        form_inputs=form_inputs,
+                    )
+                )
+                if not section.get("is_research_plan")
+                else generate_research_plan_text(
                     application_id=application_id,
-                    grant_section=section,
-                    dependencies=create_dependencies_text(depends_on=section["depends_on"], texts=section_texts),
+                    research_plan_section=section,
+                    research_objectives=research_objectives,
                     form_inputs=form_inputs,
                 )
                 for section in generation_group
@@ -124,6 +137,8 @@ async def generate_grant_section_texts(
             {section["name"]: result for section, result in zip(generation_group, results, strict=True)}
         )
         logger.debug("Generated texts for sections.", keys=[section["name"] for section in generation_group])
+
+    return section_texts
 
 
 def generate_appliction_text(
@@ -167,24 +182,11 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
     if not research_plan_sections:
         raise ValidationError("Grant template does not have a research plan section.")
 
-    research_plan_section = research_plan_sections[0]
-
-    research_plan_text = await generate_research_plan_text(
-        application_id=application_id,
-        research_plan_section=research_plan_section,
-        research_objectives=grant_application.research_objectives,
-        form_inputs=grant_application.form_inputs or {},
-    )
-
-    section_texts = {  # we update the mapping by reference
-        research_plan_section["name"]: research_plan_text
-    }
-
-    await generate_grant_section_texts(
+    section_texts = await generate_grant_section_texts(
         application_id=application_id,
         grant_sections=grant_sections,
         form_inputs=grant_application.form_inputs or {},
-        section_texts=section_texts,
+        research_objectives=grant_application.research_objectives,
     )
 
     application_text = generate_appliction_text(

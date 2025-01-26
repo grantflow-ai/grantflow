@@ -25,7 +25,6 @@ EVALUATION_PROMPT = PromptTemplate(
         ${prompt}
         </prompt>
 
-
     And this is the model output that should be evaluated:
         <model_output>
         ${model_output}
@@ -96,6 +95,11 @@ EVALUATION_PROMPT = PromptTemplate(
         - Identify specific issues
         - Provide actionable fixes
         - Set clear success criteria
+
+    6. Missing Information:
+        - Identify gaps in information
+        - If the information can be inferred correctly from the prompt, provide it in the instructions
+        - Note: `**[Missing Information: Description]**` should be used to indicate missing information textual outputs
 
     Please begin you analysis, after which respond with a JSON object adhering to the following structure:
 
