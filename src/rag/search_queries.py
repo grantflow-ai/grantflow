@@ -1,8 +1,6 @@
 from textwrap import dedent
 from typing import Any, Final, TypedDict
 
-from prompt_template import PromptTemplate as _PromptTemplate
-
 from src.constants import FAST_TEXT_GENERATION_MODEL
 from src.rag.completion import handle_completions_request
 from src.utils.logger import get_logger
@@ -77,7 +75,7 @@ response_schema = {
 }
 
 
-async def handle_create_search_queries(*, user_prompt: str | _PromptTemplate, **kwargs: Any) -> list[str]:
+async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **kwargs: Any) -> list[str]:
     """Generate an optimized search query for retrieval.
 
     Args:

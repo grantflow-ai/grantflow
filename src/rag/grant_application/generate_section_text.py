@@ -1,5 +1,6 @@
 from typing import Final
 
+from src.constants import MIN_WORDS_RATIO
 from src.db.json_objects import GrantSection
 from src.exceptions import EvaluationError
 from src.rag.long_form import handle_long_form_text_generation
@@ -19,31 +20,32 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     Adhere to these specific instructions to generate the text for this section:
 
-    <instructions>
-    ${instructions}
-    </instructions>
+        <instructions>
+        ${instructions}
+        </instructions>
+
+    ## Dependencies
+    The are the generation results for the dependencies of this section (if any):
+
+        <dependencies>
+        ${dependencies}
+        </dependencies>
+
+    Use the dependencies to ensure that the generated text is consistent with the context and information provided in the previous sections.
 
     ## Content Guidance
 
-    Ensure the text covers the following topics comprehensively:
+    Use the following topic labels to guide the content of the section:
 
-    <topics>
-    ${topics}
-    </topics>
+        <topics>
+        ${topics}
+        </topics>
 
-    Use these keywords to guide your writing and ensure the inclusion of essential concepts:
+    Use these keywords to ground the content in the specific context of the grant application:
 
-    <keywords>
-    ${keywords}
-    </keywords>
-
-    ## Contextual Information
-
-    Consider these previously written grant application sections, the content of which this section relies on:
-
-    <dependencies>
-    ${dependencies}
-    </dependencies>
+        <keywords>
+        ${keywords}
+        </keywords>
 """,
 )
 
@@ -51,9 +53,9 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 async def handle_section_text_generation(
     *,
     application_id: str,
-    dependencies: str,
+    dependencies: dict[str, str],
     grant_section: GrantSection,
-    user_inputs: dict[str, str],
+    form_inputs: dict[str, str],
 ) -> str:
     """Generate the text for a given grant section.
 
@@ -61,7 +63,7 @@ async def handle_section_text_generation(
         application_id: The ID of the application.
         dependencies: The dependencies of the grant section.
         grant_section: The grant section for which to generate text.
-        user_inputs: The user inputs.
+        form_inputs: The user inputs.
 
     Returns:
         The generated section text.
@@ -69,8 +71,8 @@ async def handle_section_text_generation(
     logger.debug("Generating section text.", grant_section=grant_section)
 
     user_prompt = GENERATE_SECTION_TEXT_USER_PROMPT.to_string(
-        dependencies=dependencies if dependencies else "N/A",
-        instructions=grant_section["instructions"],
+        dependencies=dependencies,
+        instructions=grant_section["generation_instructions"],
         keywords=grant_section["keywords"],
         section_title=grant_section["title"],
         topics=grant_section["topics"],
@@ -80,19 +82,22 @@ async def handle_section_text_generation(
             application_id=application_id,
             task_description=user_prompt,
             search_queries=grant_section.get("search_queries"),
-            user_inputs=user_inputs,
+            user_inputs=form_inputs,
         )
+
+        result = await handle_long_form_text_generation(
+            max_words=grant_section["max_words"],
+            min_words=int(grant_section["max_words"] * MIN_WORDS_RATIO),
+            prompt_identifier="generate_section_text",
+            rag_results=rag_results,
+            task_description=user_prompt,
+            user_inputs=form_inputs,
+        )
+        logger.debug("Successfully generated section text.", grant_section=grant_section, text=result)
+        return result
+
     except EvaluationError as e:
         logger.error("Failed to retrieve rag results.", grant_section=grant_section, error=e)
-        return "**Insufficient Context: The system determined that the available data is insufficient to generate this section.**"
-
-    result = await handle_long_form_text_generation(
-        max_words=grant_section["max_words"],
-        min_words=grant_section["min_words"],
-        prompt_identifier="generate_section_text",
-        rag_results=rag_results,
-        task_description=user_prompt,
-        user_inputs=user_inputs,
-    )
-    logger.debug("Successfully generated section text.", grant_section=grant_section, text=result)
-    return result
+        return (
+            "**Text generation for this section failed. If this is not due to missing context data, please try again.**"
+        )

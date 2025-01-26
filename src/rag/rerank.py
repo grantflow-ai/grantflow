@@ -7,26 +7,15 @@ from src.db.tables import TextVector
 
 ELEMENT_TYPE_WEIGHTS: Final[dict[str, float]] = {
     "paragraph": 1.0,
-    "table_cell": 0.8,
-    "formula": 0.7,
-    "figure": 0.5,
-    "raw": 0.5,
-    "sectionHeading": 1.2,
-    "title": 1.3,
-    "footnote": 0.6,
+    "table_cell": 1.0,
+    "formula": 1.0,
+    "figure": 1.0,
+    "raw": 1.0,
+    "sectionHeading": 1.0,
+    "title": 1.0,
+    "footnote": 1.0,
 }
 
-ROLE_WEIGHTS: Final[dict[str, float]] = {
-    "header": 1.2,
-    "body": 1.0,
-    "footer": 0.6,
-    "pageHeader": 1.2,
-    "pageFooter": 0.5,
-    "formulaBlock": 0.8,
-    "pageNumber": 0.3,
-}
-
-PAGE_WEIGHT: Final[float] = 0.15
 CONFIDENCE_WEIGHT: Final[float] = 0.2
 
 
@@ -59,12 +48,6 @@ def rerank_documents(
     for i, text_vector in enumerate(vectors):
         element_type = text_vector.chunk.get("element_type", "raw")
         layout_scores[i] += ELEMENT_TYPE_WEIGHTS.get(element_type, 0.5)
-
-        role = text_vector.chunk.get("role", "body")
-        layout_scores[i] += ROLE_WEIGHTS.get(role, 1.0)
-
-        page_number = text_vector.chunk.get("page_number", 1)
-        layout_scores[i] += max(0, PAGE_WEIGHT * (1 / page_number))
 
         confidence = text_vector.chunk.get("confidence", 1.0)
         layout_scores[i] += CONFIDENCE_WEIGHT * confidence
