@@ -100,7 +100,7 @@ def map_to_tree(
                 text=section_texts.get(section["name"]),
                 children=map_to_tree(sections=sections, section_texts=section_texts, parent_id=section["name"]),
             )
-            for section in sections
+            for section in sorted(sections, key=lambda s: s["order"])
             if section["parent_id"] == parent_id
         ],
         key=lambda s: s["order"],
