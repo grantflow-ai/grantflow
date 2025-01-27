@@ -9,15 +9,50 @@ from tests.factories import GrantPartFactory, GrantSectionFactory
 
 @pytest.fixture
 def base_response() -> TemplateSectionsResponse:
-    research_plan = GrantSectionFactory.build(name="research_strategy", is_research_plan=True)
-    background = GrantSectionFactory.build(name="background", depends_on=[research_plan["name"]])
-    impact = GrantSectionFactory.build(name="impact", depends_on=[research_plan["name"]])
+    narrative_part = GrantPartFactory.build(name="narrative", parent_id="<root>", order=1)
 
-    return {"parts": [GrantPartFactory.build()], "sections": [research_plan, background, impact]}
+    research_plan = GrantSectionFactory.build(
+        name="research_strategy", is_research_plan=True, parent_id=narrative_part["name"], order=1
+    )
+    background = GrantSectionFactory.build(
+        name="background", depends_on=[research_plan["name"]], parent_id=narrative_part["name"], order=2
+    )
+    impact = GrantSectionFactory.build(
+        name="impact", depends_on=[research_plan["name"]], parent_id=narrative_part["name"], order=3
+    )
+
+    return {"parts": [narrative_part], "sections": [research_plan, background, impact]}
 
 
 def test_valid_template(base_response: TemplateSectionsResponse) -> None:
     validate_template_sections(base_response)
+
+
+def test_duplicate_order_same_parent() -> None:
+    narrative_part = GrantPartFactory.build(name="narrative", parent_id="<root>", order=1)
+    sections = [
+        GrantSectionFactory.build(parent_id=narrative_part["name"], order=1, is_research_plan=True),
+        GrantSectionFactory.build(parent_id=narrative_part["name"], order=1),
+        GrantSectionFactory.build(parent_id=narrative_part["name"], order=2),
+    ]
+
+    with pytest.raises(ValidationError):
+        validate_template_sections({"parts": [narrative_part], "sections": sections})
+
+
+def test_valid_order_different_parents() -> None:
+    narrative_part = GrantPartFactory.build(name="narrative", parent_id="<root>", order=1)
+    resources_part = GrantPartFactory.build(name="resources", parent_id="<root>", order=2)
+
+    sections = [
+        GrantSectionFactory.build(
+            parent_id="<root>", order=3, is_research_plan=True
+        ),  # Changed order to 3 to avoid conflict with parts
+        GrantSectionFactory.build(parent_id=narrative_part["name"], order=1),
+        GrantSectionFactory.build(parent_id=resources_part["name"], order=1),
+    ]
+
+    validate_template_sections({"parts": [narrative_part, resources_part], "sections": sections})
 
 
 def test_duplicate_section_names(base_response: TemplateSectionsResponse) -> None:
@@ -44,17 +79,20 @@ def test_circular_parent_dependency(base_response: TemplateSectionsResponse) -> 
     ("research_plan_count", "valid"),
     [(0, False), (1, True), (2, False)],
 )
-def test_research_plan_count(base_response: TemplateSectionsResponse, research_plan_count: int, valid: bool) -> None:
-    base_response["sections"] = [
-        GrantSectionFactory.build(is_research_plan=i < research_plan_count)
-        for i, _ in enumerate(base_response["sections"])
+def test_research_plan_count(research_plan_count: int, valid: bool) -> None:
+    narrative_part = GrantPartFactory.build(name="narrative", parent_id="<root>", order=1)
+    sections = [
+        GrantSectionFactory.build(
+            is_research_plan=i < research_plan_count, parent_id=narrative_part["name"], order=i + 1
+        )
+        for i in range(3)
     ]
 
     if valid:
-        validate_template_sections(base_response)
+        validate_template_sections({"parts": [narrative_part], "sections": sections})
     else:
         with pytest.raises(ValidationError):
-            validate_template_sections(base_response)
+            validate_template_sections({"parts": [narrative_part], "sections": sections})
 
 
 def test_invalid_dependencies(base_response: TemplateSectionsResponse) -> None:

@@ -89,6 +89,7 @@ async def handle_generate_research_plan_component(
             task_description=user_prompt,
             user_inputs=form_inputs,
             section_title=component["title"],
+            search_queries=component["search_queries"],
         )
 
         result = await handle_long_form_text_generation(
