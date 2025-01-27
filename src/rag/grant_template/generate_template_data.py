@@ -51,31 +51,11 @@ You are a specialized system designed to analyze grant application requirements 
 
 GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="grant_template_generation",
-    template="""
+    template=r"""
     # Grant Application Analysis System
 
-    ## Definition and Scope
-
-    A grant application text includes:
-    - Written narrative sections authored by the applicant
-    - All textual components requiring original writing
-
-    ## Technical Model
-
-    The grant application follows a hierarchical tree where:
-    - Root node represents title page and front matter.
-    - Exactly one section must be have the 'is_research_plan' flag set to true, and the following should apply to it
-    - The research plan section comprises 50-66% of total length of the application.
-    - Research plan can not depend on sections, only on parts in our model because it is generated first in our system.
-    - Other sections can depend on the research plan.
-    - The research plan includes a detailed discussion of methodology, research objectives and the research tasks to be done.
-      Other sections can also touch upon these topics, but the research plan is the main part of the application where these are discussed in detail.
-    - The research plan can have children as required - e.g. It is common for some formats to have the preliminary results section as a child of the research plan.
-    - In other formats it is a sibling of the research plan.
-    - Child nodes represent sections and subsections.
-    - Parent-child relationships define section connections.
-    - There is no limit on the number of sections and subsections, or the depth of the tree, which allows for nesting.
-    - For example, a section can have subsections, and those subsections can have their own subsections.
+    You are analyzing the provided information to produce a **structured JSON output** representing a **grant application**.
+    **Focus only on narrative sections** (original writing). **Exclude** non-narrative elements, bureaucratic sections, addenda, and front/back matter.
 
     ## Sources
 
@@ -89,7 +69,61 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ${organization_guidelines}
         </organization_guidelines>
 
-    ## Length Analysis Guidelines
+    ## Topic Labels
+    Use these labels for content classification:
+        <section_labels>
+        ${section_labels}
+        </section_labels>
+
+    Note: Add labels as required
+
+    ## Definition and Scope
+
+    A grant application text includes:
+        - Written narrative sections authored by the applicant
+        - All textual components requiring original writing
+
+    ## Technical Model
+
+    Our system models a grant application's structure as a tree of nodes. The nodes can either be a `part` or a `section`, with parts being purely structural headings, and sections being a heading and textual content.
+
+    1. The `<root>` node epresents the title page and front matter (excluded from the output).
+    2. Exactly **one section** must have the `is_research_plan` flag set to `true`:
+        - The research plan must comprise **50-66%** of the total application length.
+        - The research plan **cannot depend on any sections**, only on parts, as it is generated first in the system.
+        - Other sections can **depend on the research plan**.
+        - The research plan includes a detailed discussion of:
+             - **Methodology**
+             - **Research objectives**
+             - **Research tasks**
+         *Note:* Other sections may reference these topics, but the research plan serves as the primary section for detailed discussion.
+        - The research plan can have **child sections**, as required:
+            - For example, **preliminary results** may be structured as a child section in some formats.
+            - In other formats, **preliminary results** may appear as a sibling section.
+
+    3. Parent/Child and Siblings:
+      - All parts and sections are children of a parent - if the part or section are top-level, the parent is `<root>`, otherwise the parent is a part or section.
+      - A section can be the child of a part and vice-versa - this correlates with how headings can be nested in levels.
+      - The maximum depth of the tree is 6, including the root node. This reflects the maximal level of heading available in markdown.
+      - For example, a section or part can have children, and those children can have their own children, forming a hierarchical tree up to 6 layers deep.
+      - Siblings are parts or sections that have the same parent.
+      - All nodes in tree have an `order` property. This property determines the order of placement of sibling nodes under a parent - on the page. If the parent will be translated to a header 2 (true for children of <root>), then its children will each be translated to header 3, followed by content (for sections) and children.
+
+
+    ## Sources
+
+    ### Call for Proposals
+        <cfp_content>
+        ${cfp_content}
+        </cfp_content>
+
+    ### Organizational Guidelines
+        <organization_guidelines>
+        ${organization_guidelines}
+        </organization_guidelines>
+
+    ## Guidelines
+    ### Length Analysis
 
     1. **Identify Length Limits:** Analyze the sources to identify all text length limits (characters, words, pages).
     2. **Convert to Words:**
@@ -113,43 +147,47 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     7. **Remaining Words:** Calculate the total words remaining after allocating to the research plan.
     8. **Adjust Non-Research Sections:** Proportionally adjust the lengths of non-research sections to ensure the total does not exceed the remaining word count.
 
-    ## Search Query Guidelines
-
+    ### Search Query
     For each section, generate:
-    - Minimum of 3 search queries and maximum of 10
-    - Optimized for vector store retrieval
-    - Using domain-specific terminology
-    - Focused on technical content
+        - Minimum of 3 search queries and maximum of 10
+        - Optimized for vector store retrieval
+        - Using domain-specific terminology
+        - Focused on technical content
+
+    ### Ordering
+
+    1.  Every part and section have an order property that determines its position relative to its siblings.
+    2.  Siblings are any parts or sections that share the same parent\_id.
+    3.  Order:
+        *   Must be 1-based positive integers (1, 2, 3, etc.).
+        *   Must be unique among all siblings (both parts and sections).
+        *   Follow ascending order for display (1 comes before 2, etc.).
 
     ## Output Schema
 
     ```json
     {
-        "parts": [
-            {
-                "name": "string",                       // Unique identifier
-                "title": "string",                      // Part title
-                "type": "string",                       // "part"
-                "parent_id": "string"                   // Parent name or "<root>"
-                "order": "int"                          // Order of appearance, 1 based index, the ordering is relative to the parent
-            }
-        ],
-        "sections": [
-            {
-                "name": "string",                       // Unique identifier
-                "title": "string",                      // Section heading
-                "type": "string",                       // "section"
-                "is_research_plan": "bool",             // True if research plan - must be true only once
-                "parent_id": "string",                  // Parent name or "<root>"
-                "keywords": ["string"],                 // List of technical terms specific to section
-                "topics": ["string"],                   // List of topic labels for retrieval
-                "generation_instructions": "string",    // Detailed generation guidelines
-                "depends_on": ["string"],               // List of dependencies
-                "max_words": "int",                     // Maximum word count (> 0)
-                "search_queries": ["string"]            // 3-10 search queries for retrieval
-                "order": "int"                          // Order of appearance, 1 based index, the ordering is relative to the parent
-            }
-        ]
+        "parts": [{
+            "name": "string",                       // Unique identifier
+            "title": "string",                      // Part title
+            "type": "string",                       // "part"
+            "parent_id": "string",                  // Parent name or "<root>"
+            "order": integer                        // Order of appearance, 1 based index
+        }],
+        "sections": [{
+            "name": "string",                       // Unique identifier
+            "title": "string",                      // Section heading
+            "type": "string",                       // "section"
+            "is_research_plan": "bool",             // True if research plan - must be true only once
+            "parent_id": "string",                  // Parent name or "<root>"
+            "keywords": ["string"],                 // A list of technical terms specific to this section that should be used in the search queries and content generation.
+            "topics": ["string"],                   // List of topic labels for retrieval. Use these to guide content generation and ensure relevance to the section's purpose.
+            "generation_instructions": "string",    // Detailed generation guidelines. Explain the purpose of this section and what information should be included.
+            "depends_on": ["string"],               // List of dependencies. Gemini, pay special attention to this field to ensure that all dependencies are valid and that there are no circular dependencies.
+            "max_words": integer,                   // Maximum word count (> 0)
+            "search_queries": ["string"],           // 3-10 search queries for retrieval. Gemini, use the keywords and topics to generate effective search queries that will retrieve relevant information for each section.
+            "order": integer                        // Order of appearance, 1 based index
+        }]
     }
     ```
 
@@ -163,14 +201,14 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
                 "title": "Narrative",
                 "type": "part",
                 "parent_id": "<root>",
-                "order": 1"
+                "order": 1
             },
             {
                 "name": "resources",
                 "title": "Resources",
                 "type": "part",
                 "parent_id": "<root>",
-                "order": 2"
+                "order": 2
             }
         ],
         "sections": [
@@ -191,84 +229,105 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
                     "technical approach outcomes"
                 ],
                 "order": 1
+            }
+        ]
+    }
+    ```
+
+    ### Complex Nested Example
+
+    ```json
+    {
+        "parts": [
+            {
+                "name": "narrative",
+                "title": "Narrative",
+                "type": "part",
+                "parent_id": "<root>",
+                "order": 1
             },
+            {
+                "name": "methodology",
+                "title": "Methodology",
+                "type": "part",
+                "parent_id": "narrative",
+                "order": 2
+            }
+        ],
+        "sections": [
             {
                 "name": "research_strategy",
                 "title": "Research Strategy",
                 "type": "section",
                 "is_research_plan": true,
-                "parent_id": "narrative",
-                "keywords": ["methodology", "experimental design", "data analysis"],
-                "topics": [
-                    "background_context",
-                    "hypothesis",
-                    "methodology",
-                    "expected_outcomes"
-                ],
-                "generation_instructions": "Describe the overall research strategy, methodology, and analyses to be used to accomplish the specific aims of the project. Discuss potential problems and alternative strategies.",
-                "depends_on": [],
+                "parent_id": "methodology",
+                "order": 1,
+                "keywords": ["methodology", "design"],
+                "topics": ["methodology"],
+                "generation_instructions": "Detailed methodology description...",
+                "depends_on":,
                 "max_words": 3000,
-                "search_queries": [
-                    "research methodology experimental design protocols",
-                    "data collection analysis methods",
-                    "experimental approach techniques",
-                    "research strategy implementation"
-                ],
-                "order": 2
+                "search_queries": ["query1", "query2", "query3"]
             },
             {
-                "name": "preliminary_results",
-                "title": "Preliminary Results",
+                "name": "subsection_1",
+                "title": "Experimental Design",
                 "type": "section",
                 "is_research_plan": false,
-                "parent_id": "research_strategy", // Child of research strategy
-                "keywords": ["data", "analysis", "interpretation"],
-                "topics": ["preliminary_data", "research_feasibility"],
-                "generation_instructions": "Present any preliminary data that is relevant to the proposed research project. Discuss the significance of the data and how it supports the feasibility of the project.",
+                "parent_id": "research_strategy",
+                "order": 1,
+                "keywords": ["experiments"],
+                "topics": ["methodology"],
+                "generation_instructions": "Experimental design details...",
                 "depends_on": ["research_strategy"],
                 "max_words": 500,
-                "search_queries": [
-                    "preliminary data results analysis",
-                    "research feasibility interpretation",
-                    "data significance relevance"
-                ],
-                "order": 1
+                "search_queries": ["query1", "query2", "query3"]
             },
             {
-                "name": "risks_and_mitigations",
-                "title": "Risks and Mitigations",
+                "name": "sub_subsection",
+                "title": "Protocol Details",
                 "type": "section",
                 "is_research_plan": false,
-                "parent_id": "narrative",
-                "keywords": ["risk assessment", "contingency plan", "mitigation strategies"],
-                // ... other fields
+                "parent_id": "subsection_1",
+                "order": 1,
+                "keywords": ["protocols"],
+                "topics": ["methodology"],
+                "generation_instructions": "Detailed protocols...",
+                "depends_on": ["research_strategy", "subsection_1"],
+                "max_words": 300,
+                "search_queries": ["query1", "query2", "query3"]
             }
-            // ... other sections
         ]
     }
     ```
 
     ## Requirements and Validation Rules
 
-    1. All sections need unique names
-    2. The root node and front matter are not included in the sections or parts -
-        these are assumed to be part of the application structure and should not be included.
-    3. Remove from the output all non-narrative sections or parts, e.g. those relating to:
-        - Non-narrative elements - e.g. forms, tables, list of figures, attachments
-        - Front-matter and back-matter (title page, author information, table of contents)
-        - Addendums, notices, required statements, and other non-research content
-        - Supporting documents (letters, CVs, references, etc.)
-        - Bureaucratic sections (budget, compliance, eligibility, address information etc.)
-    3. Define all parent-child relationships
-    4. Specify section dependencies
-    5. Partd are structural containers only, e.g. "Part 1.", "Part 2.", "Narrative", "Resources" etc. - they correlate to a heading in the application structure under which there are subsections.
-    6. One section must be marked as research plan (is_research_plan: true)
-    7. All sections must have max_words > 0
-    8. Topics must be from the approved list
-    9. Each section must have 3-10 search queries
-    10. Dependencies cannot form cycles
-    11. Parent relationships cannot form cycles
-    12. Total word count must not exceed application maximum
+    1. The parts and sections include only the narrative sections of the application and do not include any of the following:
+        - Non-narrative elements (forms, tables, list of figures, attachments).
+        - Front-matter and back-matter (title page, author information, table of contents).
+        - Addendums, notices, required statements, and other non-research content.
+        - Supporting documents (letters, CVs, references, etc.).
+        - Bureaucratic sections (budget, compliance, eligibility, address information etc.).
+    2. All sections need unique names globally across the entire tree.
+    3. The root node and front matter are not included in the sections or parts - these are assumed to be part of the application structure.
+    4. Define all parent-child relationships:
+        - Every section/part must reference a valid parent.
+        - Root is indicated by "<root>" parent_id.
+    5. Specify all section dependencies.
+    6. Parts are structural containers only (e.g., "Part 1", "Part 2", "Narrative", "Resources").
+    7. One and only one section must be marked as research plan (is_research_plan: true).
+    8. All sections must have max_words > 0.
+    9. Each section must have between 3-10 search queries.
+    10. Each section must have at least 1 keyword.
+    11. Generation instructions must be non-empty and describe the section's purpose and requirements.
+    12. Titles must be between 1-255 characters.
+    13. Dependencies cannot form cycles.
+    14. Parent relationships cannot form cycles.
+    15. Total word count must not exceed application maximum.
+    16. Research plan must be 50-66% of total word count.
+    17. The order of sections must be consistent with the application structure and guidelines.
+    18. The value of order must be unique among siblings: if two elements (part or section) have the same `parent_id`, the value of order **MUST** be different
 
     ## Topic Labels
     Use these labels for content classification:
@@ -369,14 +428,14 @@ def detect_cycle(graph: dict[str, list[str]], start: str, visited: set[str], pat
     return False
 
 
-def validate_template_sections(response: TemplateSectionsResponse) -> None:  # noqa: PLR0912
-    """Validate the extracted template sections.
+def validate_template_sections(response: TemplateSectionsResponse) -> None:  # noqa: C901, PLR0912
+    """Validate the extracted grant template sections.
 
     Args:
-        response: The template sections response to validate.
+        response: The extracted grant template sections.
 
     Raises:
-        ValidationError: If validation fails.
+        ValidationError: If the sections are invalid.
     """
     try:
         validate(instance=response, schema=section_extraction_json_schema)
@@ -393,9 +452,24 @@ def validate_template_sections(response: TemplateSectionsResponse) -> None:  # n
             raise ValidationError(f"Invalid parent_id {section['parent_id']} in section {section['name']}")
 
     parent_graph: dict[str, list[str]] = {}
+    sections_by_parent: dict[str, list[GrantSection | GrantPart]] = {}
+
     for section in response["parts"] + response["sections"]:
         if section["parent_id"] != "<root>":
             parent_graph[section["name"]] = [section["parent_id"]]
+
+        sections_by_parent.setdefault(section["parent_id"], []).append(section)
+
+    for parent_id, siblings in sections_by_parent.items():
+        orders = [s["order"] for s in siblings]
+        if len(orders) != len(set(orders)):
+            raise ValidationError(
+                f"Non-unique order values for sections under {parent_id}. The order values of siblings must be unique.",
+                context={
+                    "parent_id": parent_id,
+                    "siblings": [{"name": s["name"], "order": s["order"]} for s in siblings],
+                },
+            )
 
     for section_name in parent_graph:
         if detect_cycle(parent_graph, section_name, set(), set()):
@@ -460,6 +534,7 @@ async def handle_generate_grant_template(
                 else []
             )
         ),
+        increment=5,
     )
 
     return [*result["parts"], *result["sections"]]

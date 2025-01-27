@@ -49,8 +49,6 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
         ${max_words}
         </max_words>
 
-
-
     ## Task Description
 
     1. **Analyze Objectives:**
@@ -99,6 +97,12 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
         *  Verify the total word count for the entire research plan section aligns with the numbers assigned to the objectives and tasks.
         *  Assign each objective and each task the appropriate word limit based on its complexity and importance.
 
+    8. **Search Query Generation:**
+        * Identify the specific terminology that is relevant to each objective and task.
+        * Brainstorm different potential queries - balance specificity with breadth for RAG retrieval.
+        * Consider potential synonyms or related terms that could broaden the search.
+        * Evaluate each generated query for relevance and effectiveness, refining as necessary.
+
     ## Output Structure
 
     Respond using this JSON structure:
@@ -127,6 +131,12 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
                     "topic1",
                     // ... relevant and specific terms from sources and metadata
                 ],
+                "search_queries": [
+                    "Query 1",
+                    "Query 2",
+                    "Query 3",
+                    // Additional queries as needed, up to 10
+                ]
             }
         ],
         "research_tasks": [
@@ -151,6 +161,12 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
                     "keyword4",
                     "topic2",
                     // ... relevant and terms from sources and metadata
+                ],
+                "search_queries": [
+                    "Query 1",
+                    "Query 2",
+                    "Query 3",
+                    // Additional queries as needed, up to 10
                 ]
             }
         ]
@@ -175,6 +191,7 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
     7. Consistency Check: Ensure that all information in the JSON is consistent with the provided sources and metadata.
     8. Formatting Check:  Validate that the JSON adheres to the specified structure and formatting conventions.
     9. Word Count Verification: Confirm that the total word count for the research plan section aligns with the provided word limit.
+    10. Keyword Relevance: Ensure that the keywords provided are relevant to the objectives and tasks, guiding the content generation effectively. Keywords must balance specificity and topic coverage.
     """,
 )
 
@@ -198,6 +215,7 @@ response_schema = {
                     "instructions": {"type": "string"},
                     "guiding_questions": {"type": "array", "items": {"type": "string"}, "minItems": 3},
                     "keywords": {"type": "array", "items": {"type": "string"}, "minItems": 5},
+                    "search_queries": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
                 },
                 "required": [
                     "objective_number",
@@ -208,6 +226,7 @@ response_schema = {
                     "instructions",
                     "guiding_questions",
                     "keywords",
+                    "search_queries",
                 ],
             },
         },
@@ -228,6 +247,7 @@ response_schema = {
                     "instructions": {"type": "string"},
                     "guiding_questions": {"type": "array", "items": {"type": "string"}, "minItems": 3},
                     "keywords": {"type": "array", "items": {"type": "string"}, "minItems": 5},
+                    "search_queries": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
                 },
                 "required": [
                     "task_number",
@@ -239,6 +259,7 @@ response_schema = {
                     "instructions",
                     "guiding_questions",
                     "keywords",
+                    "search_queries",
                 ],
             },
         },
@@ -253,13 +274,13 @@ class ResearchObjectiveDTO(TypedDict):
     objective_number: int
     """The number of the research objective."""
     title: str
-    """The title of the task or objective."""
+    """The title of the research objective or task."""
     description: str
-    """The description of the task or objective."""
+    """The description of the research objective or task."""
     max_words: int
     """The maximum number of words."""
     relationships: list[tuple[str, str]]
-    """The relations of the research task to other tasks and objectives.
+    """The relations of the research objective or task to other tasks and objectives.
 
     Format:
     [
@@ -268,11 +289,12 @@ class ResearchObjectiveDTO(TypedDict):
     ]
     """
     instructions: str
-    """Instructions for the research task."""
+    """Instructions for the research objective or task."""
     guiding_questions: list[str]
-    """Guiding questions for the research task."""
+    """Guiding questions for the research objective or task."""
     keywords: list[str]
-    """Keywords for the research task."""
+    """Keywords for guiding the writing of the research objective or task."""
+    search_queries: list[str]
 
 
 class ResearchTaskDTO(ResearchObjectiveDTO):

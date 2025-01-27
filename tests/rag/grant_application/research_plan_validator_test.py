@@ -22,6 +22,7 @@ VALID_OBJECTIVE_1: ResearchObjectiveDTO = {
     "instructions": "Test instructions",
     "guiding_questions": ["Q1", "Q2", "Q3"],
     "keywords": ["k1", "k2", "k3", "k4", "k5"],
+    "search_queries": ["q1", "q2", "q3"],
 }
 
 VALID_OBJECTIVE_2: ResearchObjectiveDTO = {
@@ -33,6 +34,7 @@ VALID_OBJECTIVE_2: ResearchObjectiveDTO = {
     "instructions": "Test instructions",
     "guiding_questions": ["Q1", "Q2", "Q3"],
     "keywords": ["k1", "k2", "k3", "k4", "k5"],
+    "search_queries": ["q1", "q2", "q3"],
 }
 
 VALID_TASK_1: ResearchTaskDTO = {
@@ -45,6 +47,7 @@ VALID_TASK_1: ResearchTaskDTO = {
     "instructions": "Test instructions",
     "guiding_questions": ["Q1", "Q2", "Q3"],
     "keywords": ["k1", "k2", "k3", "k4", "k5"],
+    "search_queries": ["q1", "q2", "q3"],
 }
 
 VALID_TASK_2: ResearchTaskDTO = {
@@ -57,6 +60,7 @@ VALID_TASK_2: ResearchTaskDTO = {
     "instructions": "Test instructions",
     "guiding_questions": ["Q1", "Q2", "Q3"],
     "keywords": ["k1", "k2", "k3", "k4", "k5"],
+    "search_queries": ["q1", "q2", "q3"],
 }
 
 
