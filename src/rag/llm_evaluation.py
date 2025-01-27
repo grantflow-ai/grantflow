@@ -53,11 +53,6 @@ EVALUATION_PROMPT = PromptTemplate(
         - Clear relationships between ideas
         - No contradictions
         - Not ambiguous or confusing
-    6. Precision (0-100):
-        - No unnecessary information
-        - Direct and focused answers
-        - Appropriate level of detail
-        - Optimal use of available space
     7. Information Density (0-100):
         - High ratio of factual information to text length
         - Balance of high-level and detailed information
@@ -122,10 +117,6 @@ EVALUATION_PROMPT = PromptTemplate(
                 "score": 90,
                 "reasoning": "The output is coherent and clear in its structure and flow, if other parts of the text are provided, the output is consistent with these"
             },
-            "precision": {
-                "score": 90,
-                "reasoning": "The output is precise and to the point, avoiding unnecessary information and utilizing the sources optimally"
-            },
             "information_density": {
                 "score": 90,
                 "reasoning": "The output has a very high information density, providing both high level detail and expert level factual depth"
@@ -157,8 +148,6 @@ class CriteriaObject(TypedDict):
     """The correctness of the output."""
     coherence: EvaluationScore
     """The coherence of the output."""
-    precision: EvaluationScore
-    """The precision of the output."""
     information_density: EvaluationScore
     """The information density of the output."""
 
@@ -188,10 +177,9 @@ json_schema = {
                 "completeness": score_object_schema,
                 "correctness": score_object_schema,
                 "coherence": score_object_schema,
-                "precision": score_object_schema,
                 "information_density": score_object_schema,
             },
-            "required": ["accuracy", "completeness", "correctness", "coherence", "precision", "information_density"],
+            "required": ["accuracy", "completeness", "correctness", "coherence", "information_density"],
         },
         "instructions": {"type": "string"},
     },
@@ -237,6 +225,11 @@ async def with_prompt_evaluation[T, P](
     prompt_handler: Callable[[P], Awaitable[T]],
     retries: int = 4,
     increment: float = 2.5,
+    accuracy_weight: float = 1.0,
+    completeness_weight: float = 1.0,
+    correctness_weight: float = 1.0,
+    coherence_weight: float = 1.0,
+    information_density_weight: float = 1.0,
 ) -> T:
     """Prompt the user for an evaluation of the generated text.
 
@@ -246,6 +239,11 @@ async def with_prompt_evaluation[T, P](
         prompt_handler: The prompt handler function.
         retries: The number of retries allowed for the evaluation.
         increment: The amount to reduce the passing score by on each retry.
+        accuracy_weight: The weight of the accuracy criterion.
+        completeness_weight: The weight of the completeness criterion.
+        correctness_weight: The weight of the correctness criterion.
+        coherence_weight: The weight of the coherence criterion.
+        information_density_weight: The weight of the information density criterion.
 
     Raises:
         EvaluationError: If the model output does not meet the evaluation criteria.
@@ -264,7 +262,16 @@ async def with_prompt_evaluation[T, P](
             prompt=current_prompt, model_output=cast(dict[str, Any] | str, model_output)
         )
 
-        if all(v["score"] >= min_passing_score for v in evaluation_result["scores"].values()):  # type: ignore[index]
+        weighted_score = (
+            evaluation_result["scores"]["accuracy"]["score"] * accuracy_weight
+            + evaluation_result["scores"]["completeness"]["score"] * completeness_weight
+            + evaluation_result["scores"]["correctness"]["score"] * correctness_weight
+            + evaluation_result["scores"]["coherence"]["score"] * coherence_weight
+            + evaluation_result["scores"]["information_density"]["score"] * information_density_weight
+        ) / (accuracy_weight + completeness_weight + correctness_weight + coherence_weight + information_density_weight)
+
+        # Check if the weighted score meets the passing threshold
+        if weighted_score >= min_passing_score:
             return model_output
 
         failing_criteria: dict[str, str] = {
