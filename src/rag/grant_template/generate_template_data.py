@@ -1,7 +1,5 @@
-from typing import Final, TypedDict
-
-from jsonschema.exceptions import ValidationError as JSONValidationError
-from jsonschema.validators import validate
+from collections import defaultdict
+from typing import Final, TypedDict, cast
 
 from src.db.json_objects import GrantPart, GrantSection
 from src.exceptions import ValidationError
@@ -75,23 +73,26 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ${section_labels}
         </section_labels>
 
-    Note: Add labels as required
+    Note: Additional labels may be added as required based on the application content.
 
     ## Definition and Scope
 
     A grant application text includes:
         - Written narrative sections authored by the applicant
-        - All textual components requiring original writing
+        - All textual components requiring original writing and analysis
 
     ## Technical Model
 
-    Our system models a grant application's structure as a tree of nodes. The nodes can either be a `part` or a `section`, with parts being purely structural headings, and sections being a heading and textual content.
+    Our system models a grant application's structure as a tree of nodes. The nodes can either be a `part` or a `section`, with parts being purely structural headings without content, and sections being a heading with textual content.
 
-    1. The `<root>` node epresents the title page and front matter (excluded from the output).
+    1. The `<root>` node represents the title page and front matter (excluded from the output).
+
     2. Exactly **one section** must have the `is_research_plan` flag set to `true`:
         - The research plan must comprise **50-66%** of the total application length.
-        - The research plan **cannot depend on any sections**, only on parts, as it is generated first in the system.
-        - Other sections can **depend on the research plan**.
+        - Dependencies:
+            - The research plan must list only parts in its `depends_on` array, as it is the first content to be generated.
+            - All other sections can list both parts and sections in their `depends_on` array.
+            - Dependencies do not need to match the `order` property values - they are used only for content generation logic.
         - The research plan includes a detailed discussion of:
              - **Methodology**
              - **Research objectives**
@@ -101,28 +102,15 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
             - For example, **preliminary results** may be structured as a child section in some formats.
             - In other formats, **preliminary results** may appear as a sibling section.
 
-    3. Parent/Child and Siblings:
-      - All parts and sections are children of a parent - if the part or section are top-level, the parent is `<root>`, otherwise the parent is a part or section.
-      - A section can be the child of a part and vice-versa - this correlates with how headings can be nested in levels.
-      - The maximum depth of the tree is 6, including the root node. This reflects the maximal level of heading available in markdown.
-      - For example, a section or part can have children, and those children can have their own children, forming a hierarchical tree up to 6 layers deep.
-      - Siblings are parts or sections that have the same parent.
-      - All nodes in tree have an `order` property. This property determines the order of placement of sibling nodes under a parent - on the page. If the parent will be translated to a header 2 (true for children of <root>), then its children will each be translated to header 3, followed by content (for sections) and children.
-
-
-    ## Sources
-
-    ### Call for Proposals
-        <cfp_content>
-        ${cfp_content}
-        </cfp_content>
-
-    ### Organizational Guidelines
-        <organization_guidelines>
-        ${organization_guidelines}
-        </organization_guidelines>
+    3. Structure and Ordering:
+      - All parts and sections must have a parent - if the part or section is top-level, the parent is `<root>`.
+      - Parts and sections can be nested in any combination (parts can have section parents and vice versa).
+      - The maximum depth of the tree is 6 levels, including the root node.
+      - Siblings are parts or sections that share the same parent.
+      - The `order` property must form a sequence starting from 1 across all parts and sections. This order determines the final document structure but is independent of parent-child relationships and dependencies.
 
     ## Guidelines
+
     ### Length Analysis
 
     1. **Identify Length Limits:** Analyze the sources to identify all text length limits (characters, words, pages).
@@ -134,34 +122,50 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
           - Adjust for font size: 12pt (-10%).
        -  **Characters:** Divide by 7 and round down (e.g., 5000 chars = 714 words).
     3. **Total Application Length:** Determine the maximum words for the entire application.
-    4. **Adjust for Figures:** Subtract 12.5% from the total word count to accommodate figures.
+    4. **Figure Space Allocation:** Reserve 12.5% of total word count for figures and visual elements.
     5. **Research Plan Length:**
        - If specified, use the source-defined maximum.
-       - Otherwise, assume 60% of the adjusted total application length.
-    6. **Default Section Lengths:** For sections without explicit limits, assign defaults:
+       - Otherwise, allocate 60% of the adjusted total application length.
+    6. **Default Section Lengths:** For sections without explicit limits:
        - Background: 500 words
        - Technical: 1000 words
        - Impact: 500 words
        - Timeline: 300 words
        - Resource: 300 words
+       These defaults should be proportionally adjusted based on total length constraints.
     7. **Remaining Words:** Calculate the total words remaining after allocating to the research plan.
-    8. **Adjust Non-Research Sections:** Proportionally adjust the lengths of non-research sections to ensure the total does not exceed the remaining word count.
+    8. **Adjust Non-Research Sections:** Proportionally adjust the lengths of non-research sections to fit within remaining word count.
 
-    ### Search Query
-    For each section, generate:
-        - Minimum of 3 search queries and maximum of 10
-        - Optimized for vector store retrieval
-        - Using domain-specific terminology
-        - Focused on technical content
+    ### Search Query Generation
+    For each section:
+    - Generate 3-10 search queries
+    - Optimize for vector store retrieval
+    - Use domain-specific terminology from keywords list
+    - Focus on technical content relevance
+    - Validate query quality against section topics and objectives
 
-    ### Ordering
+    ### Ordering and Cross-References
 
-    1.  Every part and section have an order property that determines its position relative to its siblings.
-    2.  Siblings are any parts or sections that share the same parent\_id.
-    3.  Order:
-        *   Must be 1-based positive integers (1, 2, 3, etc.).
-        *   Must be unique among all siblings (both parts and sections).
-        *   Follow ascending order for display (1 comes before 2, etc.).
+    1. Organize the parts and sections in the order they should appear in the application text.
+    2. Assign each part a sequential number (1, 2, 3, etc.):
+        - The order number dictates text placement in the application. 1 is first, 2 is second, etc.
+        - Parts serve as structural headings only. Example:
+        ```markdown
+        ## Part 1: Narrative
+
+        ### Research Strategy
+        <research_strategy_content>
+        ```
+    3. Handle cross-references:
+        - References to other sections must be validated against dependencies
+        - References can only point to previously defined sections
+        - References must use consistent section naming
+
+    ### Topic Labels:
+        - Primary topics are provided in the list - prefer these whenever they match the content.
+        - When content requires additional topics, you may add them following these rules:
+            - Must be descriptive of the content (e.g., "data_collection", "statistical_methods")
+            - Must use snake_case formatting
 
     ## Output Schema
 
@@ -169,46 +173,46 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     {
         "parts": [{
             "name": "string",                       // Unique identifier
-            "title": "string",                      // Part title
+            "title": "string",                      // Part title (1-255 chars)
             "type": "string",                       // "part"
             "parent_id": "string",                  // Parent name or "<root>"
-            "order": integer                        // Order of appearance, 1 based index
+            "order": "integer"                      // Order of appearance in output text
         }],
         "sections": [{
             "name": "string",                       // Unique identifier
-            "title": "string",                      // Section heading
+            "title": "string",                      // Section heading (1-255 chars)
             "type": "string",                       // "section"
-            "is_research_plan": "bool",             // True if research plan - must be true only once
+            "is_research_plan": boolean,            // True if research plan - must be true only once
             "parent_id": "string",                  // Parent name or "<root>"
-            "keywords": ["string"],                 // A list of technical terms specific to this section that should be used in the search queries and content generation.
-            "topics": ["string"],                   // List of topic labels for retrieval. Use these to guide content generation and ensure relevance to the section's purpose.
-            "generation_instructions": "string",    // Detailed generation guidelines. Explain the purpose of this section and what information should be included.
-            "depends_on": ["string"],               // List of dependencies. Gemini, pay special attention to this field to ensure that all dependencies are valid and that there are no circular dependencies.
-            "max_words": integer,                   // Maximum word count (> 0)
-            "search_queries": ["string"],           // 3-10 search queries for retrieval. Gemini, use the keywords and topics to generate effective search queries that will retrieve relevant information for each section.
-            "order": integer                        // Order of appearance, 1 based index
+            "keywords": ["string"],                 // List of technical terms (min 1)
+            "topics": ["string"],                   // List of topic labels from defined set
+            "generation_instructions": "string",     // Non-empty section requirements
+            "depends_on": ["string"],               // Valid section dependencies
+            "max_words": "integer",                 // Maximum word count (> 0)
+            "search_queries": ["string"],           // 3-10 search queries
+            "order": "integer"                      // Order of appearance in output text
         }]
     }
     ```
 
     ## Example Output
 
-    ```jsonc
+    ```json
     {
         "parts": [
             {
-                "name": "narrative",
-                "title": "Narrative",
+                "name": "project_summary",
+                "title": "Project Summary",
                 "type": "part",
                 "parent_id": "<root>",
                 "order": 1
             },
             {
-                "name": "resources",
-                "title": "Resources",
+                "name": "narrative",
+                "title": "Narrative",
                 "type": "part",
                 "parent_id": "<root>",
-                "order": 2
+                "order": 3
             }
         ],
         "sections": [
@@ -217,125 +221,84 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
                 "title": "Abstract",
                 "type": "section",
                 "is_research_plan": false,
-                "parent_id": "<root>",
-                "keywords": ["research goals", "objectives", "impact"],
-                "topics": ["project_summary", "technical_abstract"],
-                "generation_instructions": "Provide a concise summary of the proposed research project, including the project's goals, objectives, and significance. The abstract should be written in a clear and accessible style, as it will be read by a broad audience of scientists and administrators.",
+                "parent_id": "project_summary",
+                "order": 2,
+                "keywords": ["overview", "objectives"],
+                "topics": ["executive_summary"],
+                "generation_instructions": "Provide a comprehensive summary of the project's objectives, methodology, and expected outcomes.",
                 "depends_on": ["research_strategy"],
                 "max_words": 300,
                 "search_queries": [
-                    "research objectives methodology impact",
-                    "project goals innovation significance",
-                    "technical approach outcomes"
-                ],
-                "order": 1
-            }
-        ]
-    }
-    ```
-
-    ### Complex Nested Example
-
-    ```json
-    {
-        "parts": [
-            {
-                "name": "narrative",
-                "title": "Narrative",
-                "type": "part",
-                "parent_id": "<root>",
-                "order": 1
+                    "research objectives methodology overview",
+                    "project summary expected outcomes",
+                    "research goals impact summary"
+                ]
             },
-            {
-                "name": "methodology",
-                "title": "Methodology",
-                "type": "part",
-                "parent_id": "narrative",
-                "order": 2
-            }
-        ],
-        "sections": [
             {
                 "name": "research_strategy",
                 "title": "Research Strategy",
                 "type": "section",
                 "is_research_plan": true,
-                "parent_id": "methodology",
-                "order": 1,
-                "keywords": ["methodology", "design"],
+                "parent_id": "narrative",
+                "order": 4,
+                "keywords": ["methodology", "design", "approach"],
                 "topics": ["methodology"],
-                "generation_instructions": "Detailed methodology description...",
-                "depends_on":,
+                "generation_instructions": "Detail the research methodology, experimental approach, and analytical methods.",
+                "depends_on": [],
                 "max_words": 3000,
-                "search_queries": ["query1", "query2", "query3"]
-            },
-            {
-                "name": "subsection_1",
-                "title": "Experimental Design",
-                "type": "section",
-                "is_research_plan": false,
-                "parent_id": "research_strategy",
-                "order": 1,
-                "keywords": ["experiments"],
-                "topics": ["methodology"],
-                "generation_instructions": "Experimental design details...",
-                "depends_on": ["research_strategy"],
-                "max_words": 500,
-                "search_queries": ["query1", "query2", "query3"]
-            },
-            {
-                "name": "sub_subsection",
-                "title": "Protocol Details",
-                "type": "section",
-                "is_research_plan": false,
-                "parent_id": "subsection_1",
-                "order": 1,
-                "keywords": ["protocols"],
-                "topics": ["methodology"],
-                "generation_instructions": "Detailed protocols...",
-                "depends_on": ["research_strategy", "subsection_1"],
-                "max_words": 300,
-                "search_queries": ["query1", "query2", "query3"]
+                "search_queries": [
+                    "research methodology experimental design",
+                    "analytical methods research approach",
+                    "experimental protocol methodology"
+                ]
             }
         ]
     }
     ```
 
+    This output can be translated into the following structure:
+
+    ```mermaid
+    graph TD
+        A[root] --> B[project_summary]
+        A --> C[narrative]
+
+        B --> D[abstract]
+        C --> E[research_strategy]
+    ```
+
     ## Requirements and Validation Rules
 
-    1. The parts and sections include only the narrative sections of the application and do not include any of the following:
-        - Non-narrative elements (forms, tables, list of figures, attachments).
-        - Front-matter and back-matter (title page, author information, table of contents).
-        - Addendums, notices, required statements, and other non-research content.
-        - Supporting documents (letters, CVs, references, etc.).
-        - Bureaucratic sections (budget, compliance, eligibility, address information etc.).
-    2. All sections need unique names globally across the entire tree.
-    3. The root node and front matter are not included in the sections or parts - these are assumed to be part of the application structure.
-    4. Define all parent-child relationships:
-        - Every section/part must reference a valid parent.
-        - Root is indicated by "<root>" parent_id.
-    5. Specify all section dependencies.
-    6. Parts are structural containers only (e.g., "Part 1", "Part 2", "Narrative", "Resources").
-    7. One and only one section must be marked as research plan (is_research_plan: true).
-    8. All sections must have max_words > 0.
-    9. Each section must have between 3-10 search queries.
-    10. Each section must have at least 1 keyword.
-    11. Generation instructions must be non-empty and describe the section's purpose and requirements.
-    12. Titles must be between 1-255 characters.
-    13. Dependencies cannot form cycles.
-    14. Parent relationships cannot form cycles.
-    15. Total word count must not exceed application maximum.
-    16. Research plan must be 50-66% of total word count.
-    17. The order of sections must be consistent with the application structure and guidelines.
-    18. The value of order must be unique among siblings: if two elements (part or section) have the same `parent_id`, the value of order **MUST** be different
+    1. Content Scope:
+        - Include only narrative sections requiring original writing
+        - Exclude:
+            - Non-narrative elements (forms, tables, list of figures, attachments)
+            - Front-matter and back-matter
+            - Addendums and notices
+            - Supporting documents
+            - Bureaucratic sections
 
-    ## Topic Labels
-    Use these labels for content classification:
-        <section_labels>
-        ${section_labels}
-        </section_labels>
+    2. Structural Requirements:
+        - All section/part names must be unique across the entire tree
+        - Root node and front matter are excluded from sections/parts list
+        - Maximum tree depth of 6 levels (including root)
+        - Parts must not contain content (structural containers only)
+        - Valid parent-child relationships required for all nodes
+        - No circular dependencies or parent relationships
 
-    * Add labels as required
+    3. Research Plan Requirements:
+        - Exactly one section with `"is_research_plan": true` - it can have child sections, but they should be marked `"is_research_plan": false`
+        - Research plan usually takes 50-66% of total word count (exceptions to this rule exist)
+        - Research plan cannot depend on other sections (but can depend on parts)
+        - Other sections may depend on research plan
+
+    4. Content Requirements:
+        - All sections must have max_words > 0
+        - Total word count must not exceed application maximum
+        - Each section must have 3-10 search queries
+        - Each section must have at least 1 keyword
+        - Generation instructions must be detailed
+        - Order values must form a sequence starting from 1 across all parts and sections
     """,
 )
 
@@ -349,8 +312,8 @@ section_extraction_json_schema = {
                 "type": "object",
                 "required": ["name", "title", "type", "parent_id", "order"],
                 "properties": {
-                    "name": {"type": "string"},
-                    "title": {"type": "string"},
+                    "name": {"type": "string", "minLength": 1},
+                    "title": {"type": "string", "minLength": 1, "maxLength": 255},
                     "type": {"type": "string", "enum": ["part"]},
                     "parent_id": {"type": "string"},
                     "order": {"type": "integer", "minimum": 1},
@@ -359,7 +322,7 @@ section_extraction_json_schema = {
         },
         "sections": {
             "type": "array",
-            "minItems": 3,
+            "minItems": 1,
             "items": {
                 "type": "object",
                 "required": [
@@ -377,14 +340,14 @@ section_extraction_json_schema = {
                     "order",
                 ],
                 "properties": {
-                    "name": {"type": "string"},
-                    "title": {"type": "string"},
+                    "name": {"type": "string", "minLength": 1},
+                    "title": {"type": "string", "minLength": 1, "maxLength": 255},
                     "type": {"type": "string", "enum": ["section"]},
                     "is_research_plan": {"type": "boolean"},
                     "parent_id": {"type": "string"},
-                    "keywords": {"type": "array", "items": {"type": "string"}, "minItems": 3},
-                    "topics": {"type": "array", "items": {"type": "string"}, "minItems": 2},
-                    "generation_instructions": {"type": "string"},
+                    "keywords": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                    "topics": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                    "generation_instructions": {"type": "string", "minLength": 1},
                     "depends_on": {"type": "array", "items": {"type": "string"}},
                     "max_words": {"type": "integer", "minimum": 1, "maximum": 10000},
                     "search_queries": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
@@ -400,9 +363,7 @@ class TemplateSectionsResponse(TypedDict):
     """Response from the tool for generating grant template sections."""
 
     parts: list[GrantPart]
-    """The parts."""
     sections: list[GrantSection]
-    """The grant sections."""
 
 
 def detect_cycle(graph: dict[str, list[str]], start: str, visited: set[str], path: set[str]) -> bool:
@@ -435,59 +396,90 @@ def validate_template_sections(response: TemplateSectionsResponse) -> None:  # n
         response: The extracted grant template sections.
 
     Raises:
-        ValidationError: If the sections are invalid.
+        ValidationError: If the response is invalid.
     """
-    try:
-        validate(instance=response, schema=section_extraction_json_schema)
-    except JSONValidationError as e:
-        raise ValidationError(f"Invalid format: {e!s}") from e
+    name_counts = defaultdict[str, int](int)
+    for name in [part["name"] for part in response["parts"]] + [section["name"] for section in response["sections"]]:
+        name_counts[name] += 1
+        if name_counts[name] > 1:
+            raise ValidationError("Duplicate section/part names found", context={"duplicate_name": name})
 
-    all_names = [s["name"] for s in response["parts"]] + [s["name"] for s in response["sections"]]
-    if len(all_names) != len(set(all_names)):
-        raise ValidationError("Section and heading names must be unique")
+    research_plan_sections = [s for s in response["sections"] if s["is_research_plan"]]
+    if len(research_plan_sections) != 1:
+        raise ValidationError(
+            "Must have exactly one research plan section", context={"research_plan_count": len(research_plan_sections)}
+        )
 
-    valid_parents = {"<root>"} | set(all_names)
-    for section in response["parts"] + response["sections"]:
-        if section["parent_id"] not in valid_parents:
-            raise ValidationError(f"Invalid parent_id {section['parent_id']} in section {section['name']}")
+    research_plan = research_plan_sections[0]
+    part_names = {p["name"] for p in response["parts"]}
+    invalid_deps = [dep for dep in research_plan["depends_on"] if dep not in part_names]
+    if invalid_deps:
+        raise ValidationError("Research plan can only depend on parts", context={"invalid_dependencies": invalid_deps})
 
-    parent_graph: dict[str, list[str]] = {}
-    sections_by_parent: dict[str, list[GrantSection | GrantPart]] = {}
+    parent_map = {"<root>": 0}  # node -> depth
+    for item in [*response["parts"], *response["sections"]]:
+        parent_map[item["name"]] = -1  # Add all nodes first, depth calculated later
 
-    for section in response["parts"] + response["sections"]:
-        if section["parent_id"] != "<root>":
-            parent_graph[section["name"]] = [section["parent_id"]]
-
-        sections_by_parent.setdefault(section["parent_id"], []).append(section)
-
-    for parent_id, siblings in sections_by_parent.items():
-        orders = [s["order"] for s in siblings]
-        if len(orders) != len(set(orders)):
+    # Now validate parents exist and calculate depths
+    for item in [*response["parts"], *response["sections"]]:
+        if item["parent_id"] not in parent_map:
             raise ValidationError(
-                f"Non-unique order values for sections under {parent_id}. The order values of siblings must be unique.",
-                context={
-                    "parent_id": parent_id,
-                    "siblings": [{"name": s["name"], "order": s["order"]} for s in siblings],
-                },
+                "Invalid parent reference", context={"invalid_parent": item["parent_id"], "section": item["name"]}
             )
 
-    for section_name in parent_graph:
-        if detect_cycle(parent_graph, section_name, set(), set()):
-            raise ValidationError(f"Circular parent dependency in {section_name}")
+        current = item["name"]
+        depth = 0
+        path = set()
 
-    research_plans = [s for s in response["sections"] if s["is_research_plan"]]
-    if len(research_plans) != 1:
-        raise ValidationError("Exactly one section must be research plan")
+        while current != "<root>":
+            if current in path:
+                raise ValidationError(
+                    "Circular parent-child relationships detected", context={"starting_node": current}
+                )
+            path.add(current)
+            current = next(x["parent_id"] for x in [*response["parts"], *response["sections"]] if x["name"] == current)
+            depth += 1
+            if depth > 5:
+                raise ValidationError(
+                    "Tree depth exceeds maximum of 6 levels", context={"section": item["name"], "depth": depth + 1}
+                )
 
-    for section in response["sections"]:
-        invalid_deps = set(section["depends_on"]) - set(all_names)
+    all_names = part_names | {s["name"] for s in response["sections"]}
+    non_research_sections = [s for s in response["sections"] if not s["is_research_plan"]]
+    for section in non_research_sections:
+        invalid_deps = [dep for dep in section["depends_on"] if dep not in all_names]
         if invalid_deps:
-            raise ValidationError(f"Invalid dependencies in {section['name']}: {invalid_deps}")
+            raise ValidationError(
+                "Dependencies reference non-existent parts/sections",
+                context={"section": section["name"], "invalid_dependencies": invalid_deps},
+            )
 
-    dependency_graph = {s["name"]: s["depends_on"] for s in response["sections"]}
-    for section_name in dependency_graph:
-        if detect_cycle(dependency_graph, section_name, set(), set()):
-            raise ValidationError(f"Circular dependency in {section_name}")
+    all_orders = [item["order"] for item in [*response["parts"], *response["sections"]]]
+    expected_orders = set(range(1, len(all_orders) + 1))
+    if len(set(all_orders)) != len(expected_orders):
+        raise ValidationError(
+            "Order values must form a sequence of numbers without repetition starting from 1 across all parts and sections",
+            context={"found_orders": sorted(all_orders), "expected_orders": sorted(expected_orders)},
+        )
+
+    # Check for circular parent relationships
+    parent_graph = defaultdict(list)
+    for item in [*response["parts"], *response["sections"]]:
+        if item["parent_id"] != "<root>":
+            parent_graph[item["parent_id"]].append(item["name"])
+
+    for name in parent_graph:
+        if detect_cycle(parent_graph, name, set(), set()):
+            raise ValidationError("Circular parent-child relationships detected", context={"starting_node": name})
+
+    # Check for circular dependencies
+    dependency_graph = defaultdict(list)
+    for section in response["sections"]:
+        dependency_graph[section["name"]].extend(section["depends_on"])
+
+    for name in dependency_graph:
+        if detect_cycle(dependency_graph, name, set(), set()):
+            raise ValidationError("Circular dependencies detected", context={"starting_node": name})
 
 
 async def extract_sections(task_description: str) -> TemplateSectionsResponse:
@@ -534,7 +526,17 @@ async def handle_generate_grant_template(
                 else []
             )
         ),
+        passing_score=90,
         increment=5,
+        correctness_weight=1.2,
+        information_density_weight=0.5,
+        coherence_weight=0.8,
     )
 
-    return [*result["parts"], *result["sections"]]
+    sorted_sections = cast(
+        list[GrantSection | GrantPart], sorted([*result["parts"], *result["sections"]], key=lambda x: x["order"])
+    )
+    for i, section in enumerate(sorted_sections):
+        section["order"] = i + 1
+
+    return sorted_sections
