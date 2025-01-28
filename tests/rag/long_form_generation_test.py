@@ -91,6 +91,7 @@ async def test_handle_segmented_text_generation_success(
         task_description="Test task",
         min_words=100,
         max_words=200,
+        criteria=[],
     )
 
     assert result == mock_completions_single["text"]
@@ -107,6 +108,7 @@ async def test_handle_segmented_text_generation_failure(mocker: MockerFixture) -
         task_description="Test task",
         min_words=100,
         max_words=200,
+        criteria=[],
     )
 
     assert "Failed to generate section text" in result
@@ -134,6 +136,7 @@ async def test_handle_segmented_text_generation_retries(
         min_words=100,
         max_words=200,
         retries=retries,
+        criteria=[],
     )
 
     assert "Failed to generate section text" in result

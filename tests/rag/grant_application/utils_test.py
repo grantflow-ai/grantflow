@@ -1,6 +1,6 @@
 import pytest
 
-from src.db.json_objects import GrantPart, GrantSection
+from src.db.json_objects import GrantSection
 from src.exceptions import ValidationError
 from src.rag.grant_application.utils import (
     TreeNode,
@@ -9,7 +9,7 @@ from src.rag.grant_application.utils import (
     create_text_recursively,
     map_to_tree,
 )
-from tests.factories import GrantPartFactory, GrantSectionFactory
+from tests.factories import GrantSectionFactory
 
 SAMPLE_TEXTS = {
     "abstract": "This is an abstract.",
@@ -38,16 +38,16 @@ def test_create_dependencies_text_with_dependencies() -> None:
     [
         (
             [
-                {"name": "a", "depends_on": []},
-                {"name": "b", "depends_on": ["a"]},
+                {"id": "a", "depends_on": []},
+                {"id": "b", "depends_on": ["a"]},
             ],
             [["a"], ["b"]],
         ),
         (
             [
-                {"name": "a", "depends_on": []},
-                {"name": "b", "depends_on": []},
-                {"name": "c", "depends_on": ["a", "b"]},
+                {"id": "a", "depends_on": []},
+                {"id": "b", "depends_on": []},
+                {"id": "c", "depends_on": ["a", "b"]},
             ],
             [["a", "b"], ["c"]],
         ),
@@ -58,28 +58,26 @@ def test_create_generation_groups(sections: list[GrantSection], expected_groups:
     assert len(groups) == len(expected_groups)
     assert all(len(group) == len(expected) for group, expected in zip(groups, expected_groups, strict=False))
     assert all(
-        section["name"] in expected
-        for group, expected in zip(groups, expected_groups, strict=False)
-        for section in group
+        section["id"] in expected for group, expected in zip(groups, expected_groups, strict=False) for section in group
     )
 
 
 def test_create_generation_groups_circular_dependency() -> None:
     sections = [
-        {"name": "a", "depends_on": ["b"]},
-        {"name": "b", "depends_on": ["a"]},
+        {"id": "a", "depends_on": ["b"]},
+        {"id": "b", "depends_on": ["a"]},
     ]
     with pytest.raises(ValidationError):
         create_generation_groups(sections)  # type: ignore[arg-type]
 
 
 def test_create_generation_groups_missing_dependency() -> None:
-    sections = [{"name": "a", "depends_on": ["missing"]}]
+    sections = [{"id": "a", "depends_on": ["missing"]}]
     with pytest.raises(ValidationError):
         create_generation_groups(sections)  # type: ignore[arg-type]
 
 
-def test_map_to_tree_simple(grant_sections: list[GrantPart | GrantSection]) -> None:
+def test_map_to_tree_simple(grant_sections: list[GrantSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS)
     assert len(result) == 2  # abstract and narrative at root
     assert result[0]["title"] == "Narrative"
@@ -88,14 +86,14 @@ def test_map_to_tree_simple(grant_sections: list[GrantPart | GrantSection]) -> N
     assert not result[1]["children"]
 
 
-def test_map_to_tree_nested(grant_sections: list[GrantPart | GrantSection]) -> None:
+def test_map_to_tree_nested(grant_sections: list[GrantSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS)
     narrative = next(node for node in result if node["title"] == "Narrative")
     assert len(narrative["children"]) == 3  # research_strategy, risks_and_mitigations, impact
     assert narrative["children"][0]["title"] == "Research Strategy"
 
 
-def test_map_to_tree_ordering(grant_sections: list[GrantPart | GrantSection]) -> None:
+def test_map_to_tree_ordering(grant_sections: list[GrantSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS)
     narrative = next(node for node in result if node["title"] == "Narrative")
     children_titles = [child["title"] for child in narrative["children"]]
@@ -185,57 +183,57 @@ def test_create_text_recursively_max_depth() -> None:
 
 
 @pytest.fixture
-def multi_level_sections() -> list[GrantPart | GrantSection]:
+def multi_level_sections() -> list[GrantSection]:
     return [
-        GrantPartFactory.build(
-            name="part_b",
+        GrantSectionFactory.build(
+            id="part_b",
             title="Part B",
             parent_id="<root>",
             order=2,
         ),
-        GrantPartFactory.build(
-            name="part_a",
+        GrantSectionFactory.build(
+            id="part_a",
             title="Part A",
             parent_id="<root>",
             order=1,
         ),
         GrantSectionFactory.build(
-            name="section_b2",
+            id="section_b2",
             title="Section B2",
             parent_id="part_b",
             order=2,
             depends_on=[],
         ),
         GrantSectionFactory.build(
-            name="section_b1",
+            id="section_b1",
             title="Section B1",
             parent_id="part_b",
             order=1,
             depends_on=[],
         ),
         GrantSectionFactory.build(
-            name="section_a2",
+            id="section_a2",
             title="Section A2",
             parent_id="part_a",
             order=2,
             depends_on=[],
         ),
         GrantSectionFactory.build(
-            name="section_a1",
+            id="section_a1",
             title="Section A1",
             parent_id="part_a",
             order=1,
             depends_on=[],
         ),
         GrantSectionFactory.build(
-            name="subsection_b1_2",
+            id="subsection_b1_2",
             title="Subsection B1.2",
             parent_id="section_b1",
             order=2,
             depends_on=[],
         ),
         GrantSectionFactory.build(
-            name="subsection_b1_1",
+            id="subsection_b1_1",
             title="Subsection B1.1",
             parent_id="section_b1",
             order=1,
@@ -244,13 +242,13 @@ def multi_level_sections() -> list[GrantPart | GrantSection]:
     ]
 
 
-def test_tree_multi_level_root_ordering(multi_level_sections: list[GrantPart | GrantSection]) -> None:
+def test_tree_multi_level_root_ordering(multi_level_sections: list[GrantSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
     root_titles = [node["title"] for node in tree]
     assert root_titles == ["Part A", "Part B"]
 
 
-def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantPart | GrantSection]) -> None:
+def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
 
     part_a = next(node for node in tree if node["title"] == "Part A")
@@ -262,7 +260,7 @@ def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantPart
     assert part_b_children == ["Section B1", "Section B2"]
 
 
-def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[GrantPart | GrantSection]) -> None:
+def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[GrantSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
 
     part_b = next(node for node in tree if node["title"] == "Part B")
@@ -271,7 +269,7 @@ def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[Gran
     assert section_b1_children == ["Subsection B1.1", "Subsection B1.2"]
 
 
-def test_tree_multi_level_text_generation(multi_level_sections: list[GrantPart | GrantSection]) -> None:
+def test_tree_multi_level_text_generation(multi_level_sections: list[GrantSection]) -> None:
     section_texts = {
         "part_a": "Part A content",
         "part_b": "Part B content",
@@ -296,7 +294,7 @@ def test_tree_multi_level_text_generation(multi_level_sections: list[GrantPart |
         assert text.index(expected) < text.index(expected_order[i + 1])
 
 
-def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantPart | GrantSection]) -> None:
+def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
 
     assert len(tree) == 2

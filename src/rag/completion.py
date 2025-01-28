@@ -10,7 +10,7 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
     Part,
 )
 
-from src.constants import CONTENT_TYPE_JSON, EVALUATION_MODEL, GENERATION_MODEL
+from src.constants import CONTENT_TYPE_JSON, GENERATION_MODEL
 from src.exceptions import DeserializationError, ValidationError
 from src.utils.ai import get_google_ai_client
 from src.utils.logger import get_logger
@@ -41,7 +41,7 @@ DEFAULT_SYSTEM_PROMPT: Final[str] = f"""
 @with_exponential_backoff_retry(TooManyRequests)
 async def make_completions_request[T](
     *,
-    model: str = EVALUATION_MODEL,
+    model: str = GENERATION_MODEL,
     prompt_identifier: str,
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
@@ -137,7 +137,7 @@ async def handle_completions_request[T](
         try:
             msgs = messages
             if error_message:
-                msgs = [error_message, *messages]
+                msgs = [*messages, error_message]
 
             response = await make_completions_request(
                 model=model,
@@ -156,21 +156,18 @@ async def handle_completions_request[T](
         except ValidationError as e:
             attempts += 1
             error_message = f"""
-            The last response from the API failed validation due to this error:
-            <error>
-            {e}
-            </error>
+            The last response from the API failed validation due to the following error:
+                <error>
+                {e!s}
+                </error>
 
-            Your task is to fix the response data:
+            Your task is to fix the error and return the corrected response data:
+                <data>
+                {serialize(response).decode()}
+                <data>
 
-            <data>
-            {serialize(response).decode()}
-            <data>
-
-            1. Begin by analyzing the original prompt to understand the issue
-            2. Apply a fix to the data
-            3. Validate that your modification addresses the error, if not, repeat steps 1-3
-            4. Submit the fixed response data.
+            1. Begin by analyzing the error message to understand the issue
+            2. Apply the necessary changes to the response data to address the error
             """
 
             response = None

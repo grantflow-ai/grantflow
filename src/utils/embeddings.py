@@ -1,9 +1,22 @@
 from fastembed import TextEmbedding
 
 from src.utils.logger import get_logger
+from src.utils.ref import Ref
 
 logger = get_logger(__name__)
-embedding_model = TextEmbedding()
+embedding_model_ref = Ref[TextEmbedding]()
+
+
+def get_embedding_model() -> TextEmbedding:
+    """Get the embedding model.
+
+    Returns:
+        The embedding model.
+    """
+    if embedding_model_ref.value is None:
+        embedding_model_ref.value = TextEmbedding()
+
+    return embedding_model_ref.value
 
 
 async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
@@ -18,4 +31,4 @@ async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
     if not isinstance(inputs, list):
         inputs = [inputs]
 
-    return list(embedding_model.embed(inputs))
+    return list(get_embedding_model().embed(inputs))
