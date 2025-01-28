@@ -4,7 +4,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
-from src.db.json_objects import GrantPart, GrantSection, ResearchObjective
+from src.db.json_objects import GrantSection, ResearchObjective
 from src.db.tables import GrantApplication
 from src.exceptions import DatabaseError, ValidationError
 from src.rag.grant_application.generate_research_text import handle_generate_research_plan_component
@@ -133,17 +133,13 @@ async def generate_grant_section_texts(
             ],
             batch_size=3,
         )
-        section_texts.update(
-            {section["name"]: result for section, result in zip(generation_group, results, strict=True)}
-        )
-        logger.debug("Generated texts for sections.", keys=[section["name"] for section in generation_group])
+        section_texts.update({section["id"]: result for section, result in zip(generation_group, results, strict=True)})
+        logger.debug("Generated texts for sections.", keys=[section["id"] for section in generation_group])
 
     return section_texts
 
 
-def generate_appliction_text(
-    title: str, grant_sections: list[GrantSection | GrantPart], section_texts: dict[str, str]
-) -> str:
+def generate_appliction_text(title: str, grant_sections: list[GrantSection], section_texts: dict[str, str]) -> str:
     """Generate the application text.
 
     Args:
@@ -176,15 +172,14 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
     if not grant_application.grant_template or not grant_application.research_objectives:
         raise ValidationError("Grant application does not have a grant template or research objectives.")
 
-    grant_sections = [s for s in grant_application.grant_template.grant_sections if s["type"] == "section"]
-    research_plan_sections = [s for s in grant_sections if s.get("is_research_plan")]
+    research_plan_sections = [s for s in grant_application.grant_template.grant_sections if s.get("is_research_plan")]
 
     if not research_plan_sections:
         raise ValidationError("Grant template does not have a research plan section.")
 
     section_texts = await generate_grant_section_texts(
         application_id=application_id,
-        grant_sections=grant_sections,
+        grant_sections=grant_application.grant_template.grant_sections,
         form_inputs=grant_application.form_inputs or {},
         research_objectives=grant_application.research_objectives,
     )

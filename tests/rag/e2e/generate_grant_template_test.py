@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import FundingOrganization, GrantApplication
 from src.rag.grant_template.extract_cfp_data import extract_cfp_data
-from src.rag.grant_template.generate_template_data import handle_generate_grant_template
+from src.rag.grant_template.handler import extract_and_enrich_sections
 from src.utils.serialization import serialize
 from tests.conftest import FIXTURES_FOLDER, RESULTS_FOLDER
 
@@ -82,55 +82,6 @@ async def test_extract_cfp_data(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-async def test_pipeline_flow(
-    logger: logging.Logger,
-    organizations_by_id: dict[str, dict[str, str]],
-) -> None:
-    logger.info("Running end-to-end test for full grant template pipeline")
-    pipeline_start = datetime.now(UTC)
-
-    cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih-cfp.md"
-    assert cfp_content_file.exists(), "CFP content file does not exist"
-    cfp_content = cfp_content_file.read_text()
-
-    extraction_start = datetime.now(UTC)
-    extract_result = await extract_cfp_data(
-        cfp_content=cfp_content,
-        organization_mapping=organizations_by_id,
-    )
-    extraction_time = (datetime.now(UTC) - extraction_start).total_seconds()
-
-    assert len(extract_result["content"]) >= 3
-    if extract_result["organization_id"]:
-        assert extract_result["organization_id"] in organizations_by_id
-
-    template_start = datetime.now(UTC)
-    sections = await handle_generate_grant_template(
-        cfp_content="...".join(extract_result["content"]),
-        organization_id=extract_result["organization_id"],
-    )
-    template_time = (datetime.now(UTC) - template_start).total_seconds()
-
-    assert len(sections) >= 2
-
-    total_time = (datetime.now(UTC) - pipeline_start).total_seconds()
-    assert total_time < 180
-
-    results_file = RESULTS_FOLDER / f"pipeline_flow_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
-    results_file.write_bytes(serialize(sections))
-
-    logger.info(
-        "Completed pipeline flow in %.2f seconds (extraction: %.2f, template: %.2f)",
-        total_time,
-        extraction_time,
-        template_time,
-    )
-
-
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
 async def test_handle_generate_grant_template_without_rag(
     logger: logging.Logger,
     grant_application: GrantApplication,
@@ -140,12 +91,37 @@ async def test_handle_generate_grant_template_without_rag(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    sections = await handle_generate_grant_template(cfp_content=cfp_content_file.read_text(), organization_id=None)
+    sections = await extract_and_enrich_sections(cfp_content=cfp_content_file.read_text(), organization_id=None)
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 180
 
-    results_file = RESULTS_FOLDER / f"grant_template_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = RESULTS_FOLDER / f"grant_template_no_rag_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file.write_bytes(serialize(sections))
+
+    logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
+
+
+@pytest.mark.skipif(
+    not environ.get("E2E_TESTS"),
+    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
+)
+async def test_handle_generate_grant_template_standard_aware(
+    logger: logging.Logger,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "standard_awards.md"
+    logger.info("Running end-to-end test for complete grant template generation")
+    start_time = datetime.now(UTC)
+
+    sections = await extract_and_enrich_sections(cfp_content=cfp_content_file.read_text(), organization_id=None)
+
+    elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
+
+    results_file = (
+        RESULTS_FOLDER / f"grant_template_standard_awards_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    )
     results_file.write_bytes(serialize(sections))
 
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
@@ -159,19 +135,21 @@ async def test_handle_generate_grant_template_with_rag(
     logger: logging.Logger,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    nih_guidelines: None,
+    nih_organization_id: str,
 ) -> None:
     cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih-cfp.md"
 
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    sections = await handle_generate_grant_template(cfp_content=cfp_content_file.read_text(), organization_id=None)
+    sections = await extract_and_enrich_sections(
+        cfp_content=cfp_content_file.read_text(), organization_id=nih_organization_id
+    )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 120
 
-    results_file = RESULTS_FOLDER / f"grant_template_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = RESULTS_FOLDER / f"grant_template_rag_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
     results_file.write_bytes(serialize(sections))
 
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))

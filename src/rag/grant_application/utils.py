@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from src.db.json_objects import GrantPart, GrantSection
+from src.db.json_objects import GrantSection
 from src.exceptions import ValidationError
 
 
@@ -49,10 +49,10 @@ def create_generation_groups(sections: list[GrantSection]) -> list[list[GrantSec
         if current_group := [
             section
             for section in sections
-            if section["name"] not in generated and all(dep in generated for dep in section["depends_on"])
+            if section["id"] not in generated and all(dep in generated for dep in section["depends_on"])
         ]:
             groups.append(current_group)
-            generated.update(section["name"] for section in current_group)
+            generated.update(section["id"] for section in current_group)
             continue
 
         raise ValidationError(
@@ -80,7 +80,7 @@ def map_to_tree(
     *,
     parent_id: str = "<root>",
     section_texts: dict[str, str],
-    sections: list[GrantPart | GrantSection],
+    sections: list[GrantSection],
 ) -> list[TreeNode]:
     """Map the sections to a tree structure.
 
@@ -97,8 +97,8 @@ def map_to_tree(
             TreeNode(
                 order=section["order"],
                 title=section["title"],
-                text=section_texts.get(section["name"]),
-                children=map_to_tree(sections=sections, section_texts=section_texts, parent_id=section["name"]),
+                text=section_texts.get(section["id"]),
+                children=map_to_tree(sections=sections, section_texts=section_texts, parent_id=section["id"]),
             )
             for section in sorted(sections, key=lambda s: s["order"])
             if section["parent_id"] == parent_id

@@ -66,13 +66,13 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - Required approaches
 
     Exclusions:
-    - Submission process
-    - URLs/contact information
-    - Budget details
-    - Registration/eligibility
-    - Review process
-    - Post-award details
-    - Background/goals
+        - Submission process
+        - URLs/contact information
+        - Budget details
+        - Registration/eligibility
+        - Review process
+        - Post-award details
+        - Background/goals
 
     Output format:
     {
@@ -82,10 +82,10 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     }
 
     Guidelines:
-    - Extract exact quotes
-    - Preserve original order
-    - Include all specifications
-    - Keep numerical requirements exact
+        - Extract exact quotes
+        - Preserve original order
+        - Include all specifications
+        - Keep numerical requirements exact
 """,
 )
 
