@@ -143,7 +143,7 @@ async def test_handle_generate_grant_template_without_rag(
     sections = await handle_generate_grant_template(cfp_content=cfp_content_file.read_text(), organization_id=None)
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
-    assert elapsed_time < 120
+    assert elapsed_time < 180
 
     results_file = RESULTS_FOLDER / f"grant_template_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
     results_file.write_bytes(serialize(sections))

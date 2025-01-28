@@ -4,7 +4,7 @@ from typing import Final, TypedDict, cast
 from src.db.json_objects import GrantPart, GrantSection
 from src.exceptions import ValidationError
 from src.rag.completion import handle_completions_request
-from src.rag.llm_evaluation import with_prompt_evaluation
+from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -110,7 +110,16 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
       - The `order` property must form a sequence starting from 1 across all parts and sections. This order determines the final document structure but is independent of parent-child relationships and dependencies.
 
     ## Guidelines
-
+    
+    ### Filter Out Non-Narrative Elements
+    
+    1. **Exclude Non-Narrative Elements:** Identify all non narrative parts and sections:
+        - skip statement sections, attachments of documents, supporting documents, and forms.
+        - if a part has no children, exclude it as well.
+    2. Verify that all the parts are the textual parts the applicant needs to write.
+    3. Do not include budget sections, supporting documents, biosketches or addendums.
+    4. Do not include bibliography, references, appendices etc.
+    
     ### Length Analysis
 
     1. **Identify Length Limits:** Analyze the sources to identify all text length limits (characters, words, pages).
@@ -271,7 +280,7 @@ GRANT_SECTIONS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     1. Content Scope:
         - Include only narrative sections requiring original writing
-        - Exclude:
+        - Does not include in the output:
             - Non-narrative elements (forms, tables, list of figures, attachments)
             - Front-matter and back-matter
             - Addendums and notices
@@ -526,11 +535,138 @@ async def handle_generate_grant_template(
                 else []
             )
         ),
-        passing_score=90,
+        passing_score=95,
         increment=5,
-        correctness_weight=1.2,
-        information_density_weight=0.5,
-        coherence_weight=0.8,
+        retries=5,
+        criteria=[
+            EvaluationCriterion(
+                name="Completeness",
+                evaluation_instructions="""
+    Evaluate the completeness of the grant template by checking:
+
+    1. Parts Structure:
+        - All required structural parts are included
+        - Each part has a valid parent relationship
+        - Parts have appropriate titles and ordering
+        - No content elements in parts (structural only)
+
+    2. Sections Content:
+        - All narrative sections identified and included
+        - Each section has complete metadata (keywords, topics, etc.)
+        - Generation instructions are provided and detailed
+        - Search queries are present (3-10 per section)
+        - Word limits are specified for all sections
+        - Dependencies are clearly defined
+
+    3. Research Plan Section:
+        - Exactly one section marked as research plan
+        - Research plan has appropriate word allocation (50-66% of total)
+        - Child sections properly related to research plan
+        - Dependencies properly restricted to parts only
+
+    Score lower if any required elements are missing or incomplete.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Correctness",
+                evaluation_instructions="""
+    Assess the technical accuracy and validity of the template structure:
+
+    1. Tree Structure:
+        - Maximum depth of 6 levels (including root)
+        - Valid parent-child relationships
+        - No circular dependencies
+        - Proper nesting of parts and sections
+
+    2. Data Validation:
+        - Unique section/part names across tree
+        - Sequential order values (1, 2, 3, ...)
+        - Valid parent_id references
+        - Correct data types for all fields
+
+    3. Dependency Logic:
+        - Research plan only depends on parts
+        - Valid section and part references in dependencies
+        - No circular dependency chains
+        - Logical progression of dependencies
+
+    Score lower for any technical errors or structural inconsistencies.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Prompt Adherence",
+                evaluation_instructions="""
+    Evaluate adherence to prompt requirements and guidelines:
+
+    1. Section Requirements:
+        - Follows JSON schema exactly
+        - Includes all required fields
+        - Proper formatting of arrays and values
+        - Adheres to field constraints (min/max values)
+
+    2. Content Guidelines:
+        - Research plan comprises 50-66% of total length
+        - Word counts properly allocated
+        - Topics selected from provided list
+        - Search queries follow specified format
+
+    3. Structure Rules:
+        - Non-narrative elements excluded
+        - Front/back matter excluded
+        - Supporting documents excluded
+        - Only original writing sections included
+
+    Score lower if output deviates from prompt specifications.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Relevance",
+                evaluation_instructions="""
+    Evaluate the relevance and appropriateness of template content:
+
+    1. Section Relevance:
+        - Sections align with grant application purpose
+        - Topics match section content
+        - Keywords appropriate for subject matter
+        - Search queries target relevant content
+
+    2. Source Integration:
+        - Template reflects CFP requirements
+        - Organizational guidelines incorporated
+        - Section structure matches grant type
+        - Word limits align with guidelines
+
+    3. Content Focus:
+        - Narrative sections properly identified
+        - Appropriate scope for each section
+        - Clear content boundaries
+        - Logical content progression
+
+    Score lower if content strays from grant requirements or source materials.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Scope",
+                evaluation_instructions="""
+    Evaluate the scope and boundaries of included content:
+
+    1. Inclusion Criteria:
+        - Only narrative sections requiring original writing
+        - Essential grant application components
+        - Required research plan elements
+        - Necessary supporting narratives
+
+    2. Exclusion Verification:
+        - No forms or administrative sections
+        - No tables or figures sections
+        - No attachments or appendices
+        - No bureaucratic elements
+
+    Score lower if scope includes inappropriate content or excludes required elements.
+    """,
+                weight=1.5,
+            ),
+        ],
     )
 
     sorted_sections = cast(

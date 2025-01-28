@@ -156,22 +156,21 @@ async def handle_completions_request[T](
         except ValidationError as e:
             attempts += 1
             error_message = f"""
-            The last response from the API failed validation:
-
+            The last response from the API failed validation due to this error:
+            <error>
             {e}
+            </error>
 
-            This is the response data:
+            Your task is to fix the response data:
 
+            <data>
             {serialize(response).decode()}
+            <data>
 
-            The following message is the original prompt submitted to the model. Follow these steps to fix the errors:
-
-            1. Analyze the original prompt sent to the model to understand the task.
-            2. Extract and analyze and validations or requirements available in the prompt.
-            3. Analyze the error message and compare it to the the model response to identify the issue.
-            4. Update the response data to match the requirements of the prompt.
-            5. Validate the response data against the prompt requirements and validations and adjust as required.
-            6. Submit the response data in accordance with the prompt guidelines.
+            1. Begin by analyzing the original prompt to understand the issue
+            2. Apply a fix to the data
+            3. Validate that your modification addresses the error, if not, repeat steps 1-3
+            4. Submit the fixed response data.
             """
 
             response = None
