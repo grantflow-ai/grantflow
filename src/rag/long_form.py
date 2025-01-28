@@ -4,7 +4,7 @@ from typing import Any, Final, TypedDict
 
 from src.exceptions import EvaluationError
 from src.rag.completion import handle_completions_request
-from src.rag.llm_evaluation import with_prompt_evaluation
+from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.text import concatenate_segments_with_spacy_coherence, normalize_markdown
@@ -140,6 +140,7 @@ async def handle_long_form_text_generation(
     task_description: str,
     min_words: int,
     max_words: int,
+    criteria: list[EvaluationCriterion],
     **sources: Any,
 ) -> str:
     """Handle the generation of long-form text.
@@ -149,7 +150,8 @@ async def handle_long_form_text_generation(
         retries: The number of retries to attempt.
         task_description: The description of the task.
         min_words: The minimum number of words to generate.
-        max_words: The maximum number of words to generate
+        max_words: The maximum number of words to generate.
+        criteria: The evaluation criteria.
         **sources: Additional keyword arguments to pass to the prompt handler.
 
     Returns:
@@ -165,7 +167,7 @@ async def handle_long_form_text_generation(
                 max_words=max_words,
                 sources=sources,
             ),
-            passing_score=85,
+            criteria=criteria,
             increment=5,
         )
     except EvaluationError as e:

@@ -3,6 +3,7 @@ from typing import Final
 from src.constants import MIN_WORDS_RATIO
 from src.db.json_objects import GrantSection
 from src.exceptions import EvaluationError
+from src.rag.llm_evaluation import EvaluationCriterion
 from src.rag.long_form import handle_long_form_text_generation
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
@@ -92,6 +93,50 @@ async def handle_section_text_generation(
             rag_results=rag_results,
             task_description=user_prompt,
             user_inputs=form_inputs,
+            criteria=[
+                EvaluationCriterion(
+                    name="Completeness",
+                    evaluation_instructions="""
+                    - Ensure all aspects of the grant section are addressed.
+                    - Verify that the text leverages the provided sources.
+                    """,
+                ),
+                EvaluationCriterion(
+                    name="Grounding",
+                    evaluation_instructions="""
+                    - Confirm that the content is firmly grounded.
+                    - Verify accurate buildup on dependencies.
+                    """,
+                ),
+                EvaluationCriterion(
+                    name="Clarity",
+                    evaluation_instructions="""
+                    - Ensure the narrative is clear, concise, and free of ambiguity.
+                    - Verify logical structure and smooth flow of ideas.
+                    """,
+                ),
+                EvaluationCriterion(
+                    name="Scientific Accuracy",
+                    evaluation_instructions="""
+                    - Verify the use of precise, field-specific technical terminology.
+                    - Ensure factual accuracy and absence of fabricated information.
+                    """,
+                ),
+                EvaluationCriterion(
+                    name="Style",
+                    evaluation_instructions="""
+                    - Ensure a formal, data-driven tone is maintained.
+                    - Emphasize succinctness and specificity in the text.
+                    """,
+                ),
+                EvaluationCriterion(
+                    name="Word Count Adherence",
+                    evaluation_instructions="""
+                    - Verify that the text does not exceed the allocated word count.
+                    - Ensure the length is appropriate for the level of detail required.
+                    """,
+                ),
+            ],
         )
         logger.debug("Successfully generated section text.", grant_section=grant_section, text=result)
         return result

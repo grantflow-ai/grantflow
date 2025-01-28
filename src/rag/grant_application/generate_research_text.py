@@ -3,6 +3,7 @@ from typing import Final
 from src.constants import MIN_WORDS_RATIO
 from src.exceptions import EvaluationError
 from src.rag.grant_application.plan_research_plan_generation import ResearchObjectiveDTO, ResearchTaskDTO
+from src.rag.llm_evaluation import EvaluationCriterion
 from src.rag.long_form import handle_long_form_text_generation
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
@@ -100,6 +101,64 @@ async def handle_generate_research_plan_component(
             task_description=user_prompt,
             user_inputs=form_inputs,
             section_title=component["title"],
+            criteria=[
+                EvaluationCriterion(
+                    name="Completeness",
+                    evaluation_instructions="""
+                - Ensure all aspects of the research task or objective are addressed.
+                - Verify that the text leverages the research plan, keywords, and metadata effectively.
+                """,
+                ),
+                EvaluationCriterion(
+                    name="Grounding",
+                    evaluation_instructions="""
+                - Confirm that the content is firmly grounded in the context provided by the research plan, keywords, and metadata.
+                - Verify accurate reflection of relationships with other objectives/tasks in the narrative.
+                """,
+                ),
+                EvaluationCriterion(
+                    name="Clarity",
+                    evaluation_instructions="""
+                - Ensure the narrative is clear, concise, and free of ambiguity.
+                - Verify logical structure and smooth flow of ideas.
+                """,
+                ),
+                EvaluationCriterion(
+                    name="Information Density",
+                    evaluation_instructions="""
+                - Ensure high information density with minimal redundancy.
+                - Confirm the use of expert terminology to convey complex concepts effectively.
+                """,
+                ),
+                EvaluationCriterion(
+                    name="Scientific Accuracy",
+                    evaluation_instructions="""
+                - Verify the use of precise, field-specific technical terminology.
+                - Ensure factual accuracy and absence of fabricated information.
+                """,
+                ),
+                EvaluationCriterion(
+                    name="Specificity",
+                    evaluation_instructions="""
+                - Confirm that methodologies, expected outcomes, and dependencies are detailed and precise.
+                - Avoid vague or overly general statements.
+                """,
+                ),
+                EvaluationCriterion(
+                    name="Style",
+                    evaluation_instructions="""
+                - Ensure a formal, data-driven tone is maintained.
+                - Emphasize succinctness and specificity in the text.
+                """,
+                ),
+                EvaluationCriterion(
+                    name="Word Count Adherence",
+                    evaluation_instructions="""
+                - Verify that the text does not exceed the allocated word count.
+                - Ensure the length is appropriate for the level of detail required.
+                """,
+                ),
+            ],
         )
         logger.debug("Generated text for section.", component=component, application_id=application_id)
         return result
