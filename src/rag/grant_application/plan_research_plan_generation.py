@@ -4,7 +4,7 @@ from typing import Final, TypedDict
 from src.db.json_objects import GrantSection, ResearchObjective
 from src.exceptions import ValidationError
 from src.rag.completion import handle_completions_request
-from src.rag.llm_evaluation import with_prompt_evaluation
+from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.prompt_template import PromptTemplate
 
@@ -440,4 +440,146 @@ async def handle_enrich_and_plan_research_plan(
         passing_score=90,
         increment=5,
         retries=5,
+        criteria=[
+            EvaluationCriterion(
+                name="Completeness",
+                evaluation_instructions="""
+    Evaluate the completeness of the research plan by checking:
+
+    1. Research Objectives:
+        - Each objective has all required fields (title, description, relationships, etc.)
+        - All objectives from input are included
+        - Objectives have appropriate level of detail in descriptions
+        - At least 3 guiding questions per objective
+        - Contains 5+ relevant keywords
+        - Contains 3-10 search queries
+
+    2. Research Tasks:
+        - Each task has all required fields
+        - All tasks from input objectives are included
+        - Tasks have appropriate level of detail
+        - At least 3 guiding questions per task
+        - Contains 5+ relevant keywords
+        - Contains 3-10 search queries
+
+    3. Word Count Allocation:
+        - Each objective and task has specified max_words
+        - Word counts are reasonable for complexity
+        - Total word count matches section limit
+
+    Score lower if any required elements are missing or incomplete.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Correctness",
+                evaluation_instructions="""
+    Assess the technical accuracy and logical consistency:
+
+    1. Objective and Task Structure:
+        - Objective numbers match input objectives
+        - Task numbers correctly associated with objectives
+        - Hierarchical structure maintains correct parent-child relationships
+
+    2. Data Formatting:
+        - Numbers are within valid ranges (1-100)
+        - Relationship arrays contain exactly 2 elements
+        - IDs in relationships use correct format (e.g., "1" or "1.1")
+
+    3. Content Logic:
+        - Instructions align with objective/task purpose
+        - Guiding questions are relevant to the objective/task
+        - Keywords relate to content and purpose
+        - Search queries are well-formed and relevant
+
+    Score lower for any technical errors or logical inconsistencies.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Prompt Adherence",
+                evaluation_instructions="""
+    Evaluate how well the response follows prompt requirements:
+
+    1. Task Description Adherence:
+        - Follows the 8-step process outlined
+        - Properly analyzes objectives
+        - Establishes clear narrative
+        - Identifies relationships correctly
+        - Creates appropriate guiding questions
+        - Provides detailed descriptions
+        - Includes generation instructions
+        - Calculates word counts
+        - Generates search queries
+
+    2. Output Structure:
+        - Follows specified JSON structure exactly
+        - All required fields present
+        - Arrays contain minimum required items
+        - Data types match schema requirements
+
+    3. Metadata Integration:
+        - Effectively uses provided keywords
+        - Incorporates specified topics
+        - References source materials appropriately
+
+    Score lower if response deviates from prompt instructions.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Relevance",
+                evaluation_instructions="""
+    Assess the relevance and appropriateness of content:
+
+    1. Content Relevance:
+        - Keywords align with research domain
+        - Search queries target relevant information
+        - Guiding questions address core research aspects
+        - Instructions focus on essential elements
+
+    2. Source Integration:
+        - Content reflects provided research objectives
+        - Incorporates user inputs appropriately
+        - Utilizes retrieval results effectively
+        - References provided keywords and topics
+
+    3. Purpose Alignment:
+        - Content supports overall research goals
+        - Tasks contribute to objective completion
+        - Instructions guide toward desired outcomes
+        - Questions probe relevant aspects
+
+    Score lower if content strays from research focus or fails to integrate sources.
+    """,
+            ),
+            EvaluationCriterion(
+                name="Relationships",
+                evaluation_instructions="""
+    Evaluate the quality and logic of relationships:
+
+    1. Relationship Structure:
+        - Each relationship properly formatted [id, description]
+        - IDs reference valid objectives or tasks
+        - Descriptions explain connection clearly
+
+    2. Relationship Logic:
+        - Dependencies are correctly identified
+        - Progression between objectives is logical
+        - Task interdependencies make sense
+        - Circular dependencies are avoided
+
+    3. Relationship Completeness:
+        - All important connections identified
+        - Bidirectional relationships noted where appropriate
+        - Cross-objective relationships included
+        - Task-to-task relationships documented
+
+    4. Relationship Description Quality:
+        - Clear explanation of connection type
+        - Specific about how elements relate
+        - Identifies impact and dependencies
+        - Notes feedback loops where relevant
+
+    Score lower for missing, incorrect, or poorly described relationships.
+    """,
+            ),
+        ],
     )
