@@ -23,7 +23,7 @@ from src.api_types import (
     WorkspaceBaseResponse,
 )
 from src.constants import EMBEDDING_DIMENSIONS
-from src.db.json_objects import GrantPart, GrantSection, ResearchObjective, ResearchTask
+from src.db.json_objects import GrantSection, ResearchObjective, ResearchTask
 from src.db.tables import (
     FundingOrganization,
     GrantApplication,
@@ -144,13 +144,6 @@ class GrantSectionFactory(TypedDictFactory[GrantSection]):
     max_words = 3000
     search_queries = ["query1", "query2", "query3"]
     depends_on: list[str] = []
-
-
-class GrantPartFactory(TypedDictFactory[GrantPart]):
-    __model__ = GrantPart
-    type = "part"
-    parent_id = "<root>"
-    order = 1
 
 
 # API Response Factories

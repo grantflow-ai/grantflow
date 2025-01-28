@@ -608,7 +608,7 @@ wheels = [
 
 [[package]]
 name = "google-api-core"
-version = "2.24.0"
+version = "2.24.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-auth" },
@@ -617,9 +617,9 @@ dependencies = [
     { name = "protobuf" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/56/d70d66ed1b5ab5f6c27bf80ec889585ad8f865ff32acbafd3b2ef0bfb5d0/google_api_core-2.24.0.tar.gz", hash = "sha256:e255640547a597a4da010876d333208ddac417d60add22b6851a0c66a831fcaf", size = 162647 }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/b7/481c83223d7b4f02c7651713fceca648fa3336e1571b9804713f66bca2d8/google_api_core-2.24.1.tar.gz", hash = "sha256:f8b36f5456ab0dd99a1b693a40a31d1e7757beea380ad1b38faaf8941eae9d8a", size = 163508 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a1/76/65b8b94e74bf1b6d1cc38d916089670c4da5029d25762441d8c5c19e51dd/google_api_core-2.24.0-py3-none-any.whl", hash = "sha256:10d82ac0fca69c82a25b3efdeefccf6f28e02ebb97925a8cce8edbfe379929d9", size = 158576 },
+    { url = "https://files.pythonhosted.org/packages/b1/a6/8e30ddfd3d39ee6d2c76d3d4f64a83f77ac86a4cab67b286ae35ce9e4369/google_api_core-2.24.1-py3-none-any.whl", hash = "sha256:bc78d608f5a5bf853b80bd70a795f703294de656c096c0968320830a4bc280f1", size = 160059 },
 ]
 
 [package.optional-dependencies]
@@ -630,7 +630,7 @@ grpc = [
 
 [[package]]
 name = "google-api-python-client"
-version = "2.159.0"
+version = "2.160.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core" },
@@ -639,9 +639,9 @@ dependencies = [
     { name = "httplib2" },
     { name = "uritemplate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/9f/12b58cca5a93d63fd6a7abed570423bdf2db4349eb9361ac5214d42ed7d6/google_api_python_client-2.159.0.tar.gz", hash = "sha256:55197f430f25c907394b44fa078545ffef89d33fd4dca501b7db9f0d8e224bd6", size = 12302576 }
+sdist = { url = "https://files.pythonhosted.org/packages/af/42/cbf81242376c99d6e5248e62aa4376bfde5bbefbe0a69b1b06fd4b73ab25/google_api_python_client-2.160.0.tar.gz", hash = "sha256:a8ccafaecfa42d15d5b5c3134ced8de08380019717fc9fb1ed510ca58eca3b7e", size = 12304236 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/ab/d0671375afe79e6e8c51736e115a69bb6b4bcdc80cd5c01bf667486cd24c/google_api_python_client-2.159.0-py2.py3-none-any.whl", hash = "sha256:baef0bb631a60a0bd7c0bf12a5499e3a40cd4388484de7ee55c1950bf820a0cf", size = 12814228 },
+    { url = "https://files.pythonhosted.org/packages/49/35/41623ac3b581781169eed7f5fcd24bc114c774dc491fab5c05d8eb81af36/google_api_python_client-2.160.0-py2.py3-none-any.whl", hash = "sha256:63d61fb3e4cf3fb31a70a87f45567c22f6dfe87bbfa27252317e3e2c42900db4", size = 12814302 },
 ]
 
 [[package]]
@@ -886,7 +886,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.2.2" },
     { name = "pathvalidate", specifier = ">=3.2.3" },
     { name = "pgvector", specifier = ">=0.3.6" },
-    { name = "prompt-template", specifier = ">=1.0.1" },
+    { name = "prompt-template", specifier = ">=1.1.0" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pypandoc", specifier = ">=1.15" },
     { name = "sanic", extras = ["ext"], specifier = ">=24.12.0" },
@@ -1057,7 +1057,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "0.27.1"
+version = "0.28.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -1068,9 +1068,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/d2/d6976de7542792fc077b498d64af64882b6d8bb40679284ec0bff77d5929/huggingface_hub-0.27.1.tar.gz", hash = "sha256:c004463ca870283909d715d20f066ebd6968c2207dae9393fdffb3c1d4d8f98b", size = 379407 }
+sdist = { url = "https://files.pythonhosted.org/packages/10/fd/c8ff7693942dac1c642ec3a93a2bf7cbac36e2e920dd61a79965d9a662b7/huggingface_hub-0.28.0.tar.gz", hash = "sha256:c2b18c02a47d4384763caddb4d0ab2a8fc6c16e0800d6de4d55d0a896244aba3", size = 387079 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/3f/50f6b25fafdcfb1c089187a328c95081abf882309afd86f4053951507cd1/huggingface_hub-0.27.1-py3-none-any.whl", hash = "sha256:1c5155ca7d60b60c2e2fc38cbb3ffb7f7c3adf48f824015b219af9061771daec", size = 450658 },
+    { url = "https://files.pythonhosted.org/packages/cc/ac/07f92291add9f425f40b3fd70a1d0c7117f6e1152599abc2bd7fda5b6abe/huggingface_hub-0.28.0-py3-none-any.whl", hash = "sha256:71cff4e500efe68061d94b7f6d3114e183715088be7a90bf4dd84af83b5f5cdb", size = 464084 },
 ]
 
 [[package]]
@@ -1553,7 +1553,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.60.1"
+version = "1.60.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1565,9 +1565,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/c4/a220c957aa4097f25498770c6eff8f3abd35934a8859e7a78928a8a70846/openai-1.60.1.tar.gz", hash = "sha256:beb1541dfc38b002bd629ab68b0d6fe35b870c5f4311d9bc4404d85af3214d5e", size = 348070 }
+sdist = { url = "https://files.pythonhosted.org/packages/08/ae/8d9706b8ff2363287b4a8807de2dd29cdbdad5424e9d05d345df724320f5/openai-1.60.2.tar.gz", hash = "sha256:a8f843e10f2855713007f491d96afb2694b11b5e02cb97c7d01a0be60bc5bb51", size = 348185 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7a/ad/55b2d03feda5a0adc0a86048dcb7c9863fd24a3726815a04d5669e82e41e/openai-1.60.1-py3-none-any.whl", hash = "sha256:714181ec1c452353d456f143c22db892de7b373e3165063d02a2b798ed575ba1", size = 456110 },
+    { url = "https://files.pythonhosted.org/packages/e5/5a/d5474ca67a547dde9b87b5bc8a8f90eadf29f523d410f2ba23d63c9b82ec/openai-1.60.2-py3-none-any.whl", hash = "sha256:993bd11b96900b9098179c728026f016b4982ded7ee30dfcf4555eab1171fff9", size = 456107 },
 ]
 
 [[package]]
@@ -1703,11 +1703,11 @@ wheels = [
 
 [[package]]
 name = "prompt-template"
-version = "1.0.2"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ae/c9/b8c91a27438ee15b8ae82c631faec2278de9027f829f71eb34a435c567b5/prompt_template-1.0.2.tar.gz", hash = "sha256:3e267b9a8fe17d2baae12214d3b1617dd0d25d05356ed719b3ea80d4d2c58e85", size = 35494 }
+sdist = { url = "https://files.pythonhosted.org/packages/48/87/cc0a525b8a004dba14ba05cd37b48cb3c62e55916766664f07c26b1a5bb4/prompt_template-1.1.0.tar.gz", hash = "sha256:77ac23f1668f1dda0d4f44d7152b5a85a9bf918f4484f19272af67945feb13f6", size = 36786 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/77/d9/311098acd4dcf356becb0db0d8764a6be96fe69d3e420a42e416e8fd1326/prompt_template-1.0.2-py3-none-any.whl", hash = "sha256:910d64a4731b20802e3b1451df9bcdfed879cb708b4019b8237613801b7f61d7", size = 6654 },
+    { url = "https://files.pythonhosted.org/packages/9e/b8/8b1e083cedaada9e8d3b4dbb4296bff8a676ec9ea4cbb3e426d322a01803/prompt_template-1.1.0-py3-none-any.whl", hash = "sha256:1520dc57d2aced224bbf232a806fd2df86066a03b4ab54e30970cb7c2fbbe46c", size = 7434 },
 ]
 
 [[package]]
@@ -1737,14 +1737,14 @@ wheels = [
 
 [[package]]
 name = "proto-plus"
-version = "1.25.0"
+version = "1.26.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7e/05/74417b2061e1bf1b82776037cad97094228fa1c1b6e82d08a78d3fb6ddb6/proto_plus-1.25.0.tar.gz", hash = "sha256:fbb17f57f7bd05a68b7707e745e26528b0b3c34e378db91eef93912c54982d91", size = 56124 }
+sdist = { url = "https://files.pythonhosted.org/packages/26/79/a5c6cbb42268cfd3ddc652dc526889044a8798c688a03ff58e5e92b743c8/proto_plus-1.26.0.tar.gz", hash = "sha256:6e93d5f5ca267b54300880fff156b6a3386b3fa3f43b1da62e680fc0c586ef22", size = 56136 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/25/0b7cc838ae3d76d46539020ec39fc92bfc9acc29367e58fe912702c2a79e/proto_plus-1.25.0-py3-none-any.whl", hash = "sha256:c91fc4a65074ade8e458e95ef8bac34d4008daa7cce4a12d6707066fca648961", size = 50126 },
+    { url = "https://files.pythonhosted.org/packages/42/c3/59308ccc07b34980f9d532f7afc718a9f32b40e52cde7a740df8d55632fb/proto_plus-1.26.0-py3-none-any.whl", hash = "sha256:bf2dfaa3da281fc3187d12d224c707cb57214fb2c22ba854eb0c105a3fb2d4d7", size = 50166 },
 ]
 
 [[package]]

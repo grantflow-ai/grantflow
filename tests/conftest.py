@@ -645,9 +645,9 @@ async def full_application_id(
 
 
 @pytest.fixture
-async def nih_guidelines(
+async def nih_organization_id(
     async_session_maker: async_sessionmaker[Any],
-) -> None:
+) -> str:
     async with async_session_maker() as session:
         result = await session.execute(select(FundingOrganization.id).where(FundingOrganization.abbreviation == "NIH"))
         funding_organization_id = result.scalar_one()
@@ -723,3 +723,5 @@ async def nih_guidelines(
                 )
             )
         await session.commit()
+
+    return str(funding_organization_id)

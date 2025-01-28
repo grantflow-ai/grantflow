@@ -1,4 +1,4 @@
-from typing import Literal, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 
 class TableContext(TypedDict):
@@ -63,42 +63,30 @@ class ResearchObjective(TypedDict):
     """The research tasks for the research objective"""
 
 
-class BaseSection(TypedDict):
-    """Base section data."""
+class GrantSection(TypedDict):
+    """DTO for a grant section data."""
 
-    name: str
-    """Unique section identifier."""
-    title: str
-    """Section heading title."""
-    parent_id: str
-    """Parent section name or "<root>"."""
-    order: int
-    """Order of the section in the grant application."""
-
-
-class GrantPart(BaseSection):
-    """A section in the grant template."""
-
-    type: Literal["part"]
-    """Section type."""
-
-
-class GrantSection(BaseSection):
-    """A section in the grant template."""
-
-    type: Literal["section"]
-    """Section type."""
-    generation_instructions: str
-    """Detailed content generation instructions."""
-    keywords: list[str]
-    """Technical terms specific to section."""
-    search_queries: list[str]
-    """Search queries to retrieve information for the section."""
-    is_research_plan: bool
-    """Whether the section is the research plan."""
     depends_on: list[str]
     """Sections that must be generated before this one."""
+    generation_instructions: str
+    """Detailed content generation instructions."""
+    id: str
+    """Section identifier."""
+    is_research_plan: bool
+    """Whether the section is the research plan."""
+    keywords: list[str]
+    """Technical terms specific to section."""
     max_words: int
     """Maximum word count if specified."""
+    order: int
+    """Order of the section in the grant application."""
+    parent_id: str
+    """Parent section name or "<root>"."""
+    part: str | None
+    """The part of the grant application this section belongs to."""
+    search_queries: list[str]
+    """Search queries to retrieve information for the section."""
+    title: str
+    """Section heading title."""
     topics: list[str]
     """Topics that the section covers."""

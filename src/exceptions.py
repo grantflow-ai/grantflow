@@ -40,6 +40,10 @@ class ValidationError(BackendError):
     """Raised when a validation error occurs."""
 
 
+class InsufficientContextError(BackendError):
+    """Raised when a insufficient input error occurs."""
+
+
 class EvaluationError(BackendError):
     """Raised when an LLM response's evaluation fails."""
 
