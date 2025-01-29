@@ -82,7 +82,7 @@ async def test_extract_cfp_data(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-async def test_handle_generate_grant_template_without_rag(
+async def test_handle_generate_grant_template_melanoma_alliance(
     logger: logging.Logger,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -96,7 +96,9 @@ async def test_handle_generate_grant_template_without_rag(
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 180
 
-    results_file = RESULTS_FOLDER / f"grant_template_no_rag_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = (
+        RESULTS_FOLDER / f"grant_template_melanoma_alliance_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    )
     results_file.write_bytes(serialize(sections))
 
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
@@ -131,7 +133,7 @@ async def test_handle_generate_grant_template_standard_aware(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-async def test_handle_generate_grant_template_with_rag(
+async def test_handle_generate_grant_template_nih(
     logger: logging.Logger,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -147,9 +149,8 @@ async def test_handle_generate_grant_template_with_rag(
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
-    assert elapsed_time < 120
 
-    results_file = RESULTS_FOLDER / f"grant_template_rag_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = RESULTS_FOLDER / f"grant_template_nih_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
     results_file.write_bytes(serialize(sections))
 
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))

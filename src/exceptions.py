@@ -4,10 +4,10 @@ from typing import Any
 class BackendError(Exception):
     """Raised when an internal error occurs."""
 
-    context: dict[str, Any] | str | None
+    context: Any
     """The context of the error."""
 
-    def __init__(self, message: str, context: dict[str, Any] | str | None = None) -> None:
+    def __init__(self, message: str, context: Any = None) -> None:
         self.context = context
         super().__init__(message)
 

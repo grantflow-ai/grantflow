@@ -42,7 +42,9 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     template="""
      # Grant Application Section Analyzer
 
-    You are tasked with analyzing grant application requirements to identify and classify all sections.
+    You are tasked with analyzing and extracting from a CFP (Call for Proposals) document and the funding organization guidelines (if available)
+    the structure of a grant application targeting the CFP.
+
     Pay particular attention to core research narrative components, as these will be the focus of further refinement.
 
     ## Sources
@@ -232,14 +234,19 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
       - Broader Societal Impacts of Research
 
     ## Instructions
-
-    1. Identify the grant applications sections mentioned in the input sources.
+    1. Begin by analyzing the source to determine the structure of a grant application targeting the CFP and in accordance with any guidelines.
+        - Determine- is it composed of multiple distinct parts (think of this as top top-level headings)?
+        - If so, list these parts in the "parts" field.
+        - The values in parts should be part titles, e.g. "Project Summary", "Research Strategy", etc. derived from the input sources.
+    2. Identify the grant applications sections.
         - If the information is too scarce, try to complement it with reasonable assumptions based on conventions for the organization - if known.
         - If this is not possible, return an empty list of sections, and write an explanation in the "error" key.
-    2. Assign a "type" to each section based on the provided categories.
+    3. If the parts list is non-empty, assign each section to a part based on the provided information.
+        - Sections should have a null value for part if they are not part of a specific part.
+    4. Assign a "type" to each section based on the provided categories.
         - For the `core_research_narrative` category, include in it only sections you have above 85% certainty belong to it.
         - If the you have low certainty about where a section belongs, assign it to the "Other" category.
-    3. Respond with a JSON object containing the sections and their metadata.
+    5. Respond with a JSON object containing the sections and their metadata.
 
     ## Output
 
@@ -247,11 +254,14 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
 
     ```json
     {
+        "parts": [
+            "string"                          // List of parts, e.g. "Project Summary", can be empty if no parts are identified
+        ],
         "sections": [{                        // List of sections, empty if insufficient information
             "type": "string",                 // Section category (e.g., "core_research_narrative")
             "title": "string",                // Section title as appears in source
             "id": "string",                   // Unique snake_case identifier, e.g. 'abstract'
-            "part": "string",                 // The title of the part, e.g. "Project Summary", nullable
+            "part": "string",                 // The part of the grant application this section belongs to, nullable, if specified, must correlate with a part in the "parts" list
             "parent_id": "string",            // ID of parent section, nullable
         }],
         "error": "string"                     // Error message if applicable, null if no error
@@ -262,8 +272,10 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
 
 section_extraction_json_schema = {
     "type": "object",
-    "required": ["sections"],
+    "required": ["sections", "parts"],
     "properties": {
+        "parts": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 255}},
+        "error": {"type": "string", "nullable": True},
         "sections": {
             "type": "array",
             "items": {
@@ -281,7 +293,7 @@ section_extraction_json_schema = {
                     "part": {"type": "string", "nullable": True, "minLength": 1, "maxLength": 255},
                 },
             },
-        }
+        },
     },
 }
 
@@ -304,8 +316,12 @@ class ExtractedSectionDTO(TypedDict):
 class ExtractedSections(TypedDict):
     """Container for all extracted sections."""
 
+    parts: list[str]
+    """List of parts, e.g. "Project Summary", can be empty if no parts are identified."""
     sections: list[ExtractedSectionDTO]
+    """List of sections, empty if insufficient information."""
     error: NotRequired[str | None]
+    """Error message if applicable, null if no error."""
 
 
 def validate_section_extraction(response: ExtractedSections) -> None:
@@ -377,22 +393,23 @@ async def handle_extract_sections(cfp_content: str, organization_id: str | None 
     Returns:
         Classified sections with their relationships and metadata
     """
-    prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.to_string(
+    prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         section_tags=SECTION_CATEGORIES,
         cfp_content=cfp_content,
-        organization_guidelines=(
-            await retrieve_documents(
-                organization_id=organization_id,
-                task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.to_string(),
-            )
-            if organization_id
-            else []
-        ),
+    )
+
+    organization_guidelines = (
+        await retrieve_documents(
+            organization_id=organization_id,
+            task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+        )
+        if organization_id
+        else []
     )
 
     return await with_prompt_evaluation(
         prompt_handler=extract_sections,
-        prompt=prompt,
+        prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         increment=10,
         retries=5,
         passing_score=90,
