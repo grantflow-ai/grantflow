@@ -14,7 +14,7 @@ from src.utils.serialization import serialize
 from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:
-    from src.utils.extraction import OCROutput
+    from azure.ai.documentintelligence.models import AnalyzeResult
 
 
 @pytest.mark.skipif(
@@ -36,7 +36,9 @@ async def test_index_documents(
     extraction_result = RESULTS_FOLDER / f"parse_{data_file.name}_data_test_result.{ext}"
     assert extraction_result.exists(), f"Expected file {extraction_result} to exist"
 
-    content: str | OCROutput = extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
+    content: str | AnalyzeResult = (
+        extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
+    )
     chunks = chunk_text(text=content, mime_type="text/plain" if data_file.name.endswith(".pdf") else "text/markdown")
 
     vector_dtos = await index_documents(

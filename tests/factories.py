@@ -137,7 +137,7 @@ class GrantSectionFactory(TypedDictFactory[GrantSection]):
     __model__ = GrantSection
     type = "section"
     is_research_plan = False
-    parent_id = "<root>"
+    parent_id = None
     order = 1
     keywords = ["methodology", "design", "analysis"]
     topics = ["background_context", "methodology"]

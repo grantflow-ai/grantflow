@@ -1,0 +1,317 @@
+{
+  "parts": [
+    "Title Page",
+    "Download Templates and Instructions",
+    "Enable Other Users to Access this Proposal",
+    "Applicant/PI",
+    "Institution and Contacts",
+    "Key Personnel",
+    "Abstracts and Non-technical Information",
+    "Facilities and Environment",
+    "Budget Period Details",
+    "Budget Summary AND Justification",
+    "Other Support/ Certification of Funding Overlap",
+    "Organization Assurances",
+    "Research Plan and Supporting Attachments",
+    "Conflict of Interest Self-Report",
+    "PI Data Sheet",
+    "Signatures and Print",
+    "Validate"
+  ],
+  "sections": [
+    {
+      "type": "administrative_documentation",
+      "title": "Project Title",
+      "id": "project_title",
+      "parent_id": null,
+      "part": "Title Page"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Non-Technical Title",
+      "id": "non_technical_title",
+      "parent_id": null,
+      "part": "Title Page"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Keywords",
+      "id": "keywords",
+      "parent_id": null,
+      "part": "Title Page"
+    },
+    {
+      "type": "research_resources",
+      "title": "Project Budget",
+      "id": "project_budget",
+      "parent_id": null,
+      "part": "Title Page"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Project Period",
+      "id": "project_period",
+      "parent_id": null,
+      "part": "Title Page"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Response to Prior Critiques/Changes from Prior Submission",
+      "id": "response_to_prior_critiques",
+      "parent_id": null,
+      "part": "Title Page"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Summary of Previous BrightFocus Support",
+      "id": "summary_of_previous_brightfocus_support",
+      "parent_id": null,
+      "part": "Title Page"
+    },
+    {
+      "type": "document_structure",
+      "title": "Download Templates and Instructions",
+      "id": "download_templates_and_instructions",
+      "parent_id": null,
+      "part": "Download Templates and Instructions"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Enable Other Users to Access this Proposal",
+      "id": "enable_other_users_to_access_this_proposal",
+      "parent_id": null,
+      "part": "Enable Other Users to Access this Proposal"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Applicant/PI",
+      "id": "applicant_pi",
+      "parent_id": null,
+      "part": "Applicant/PI"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Institution and Contacts",
+      "id": "institution_and_contacts",
+      "parent_id": null,
+      "part": "Institution and Contacts"
+    },
+    {
+      "type": "institutional_authorization",
+      "title": "Institutional Official",
+      "id": "institutional_official",
+      "parent_id": null,
+      "part": "Institution and Contacts"
+    },
+    {
+      "type": "institutional_authorization",
+      "title": "Financial Official",
+      "id": "financial_official",
+      "parent_id": null,
+      "part": "Institution and Contacts"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Key Personnel",
+      "id": "key_personnel",
+      "parent_id": null,
+      "part": "Key Personnel"
+    },
+    {
+      "type": "core_research_narrative",
+      "title": "Non-technical Summary",
+      "id": "non_technical_summary",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "core_research_narrative",
+      "title": "Technical Abstract",
+      "id": "technical_abstract",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "other",
+      "title": "Research Category",
+      "id": "research_category",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "other",
+      "title": "Common Alzheimer's and Related Dementias Research Ontology (CADRO)",
+      "id": "cadro",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "compliance_and_policy",
+      "title": "Rigor and Reproducibility",
+      "id": "rigor_and_reproducibility",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "compliance_and_policy",
+      "title": "Data Sharing Plan",
+      "id": "data_sharing_plan",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "core_research_narrative",
+      "title": "Specific Aims and Benchmark Accomplishments",
+      "id": "specific_aims_and_benchmark_accomplishments",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "core_research_narrative",
+      "title": "Relevance of Proposed Research to Alzheimer's disease",
+      "id": "relevance_of_proposed_research_to_alzheimers_disease",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "core_research_narrative",
+      "title": "Innovative Aspects",
+      "id": "innovative_aspects",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "core_research_narrative",
+      "title": "Future Plans",
+      "id": "future_plans",
+      "parent_id": null,
+      "part": "Abstracts and Non-technical Information"
+    },
+    {
+      "type": "research_resources",
+      "title": "Facilities and Environment",
+      "id": "facilities_and_environment",
+      "parent_id": null,
+      "part": "Facilities and Environment"
+    },
+    {
+      "type": "research_resources",
+      "title": "Budget Period Details",
+      "id": "budget_period_details",
+      "parent_id": null,
+      "part": "Budget Period Details"
+    },
+    {
+      "type": "research_resources",
+      "title": "Budget Summary",
+      "id": "budget_summary",
+      "parent_id": null,
+      "part": "Budget Summary AND Justification"
+    },
+    {
+      "type": "research_resources",
+      "title": "Budget Justification",
+      "id": "budget_justification",
+      "parent_id": null,
+      "part": "Budget Summary AND Justification"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Other Support/ Certification of Funding Overlap",
+      "id": "other_support_certification_of_funding_overlap",
+      "parent_id": null,
+      "part": "Other Support/ Certification of Funding Overlap"
+    },
+    {
+      "type": "compliance_and_policy",
+      "title": "Organization Assurances",
+      "id": "organization_assurances",
+      "parent_id": null,
+      "part": "Organization Assurances"
+    },
+    {
+      "type": "compliance_and_policy",
+      "title": "Human Subjects",
+      "id": "human_subjects",
+      "parent_id": null,
+      "part": "Organization Assurances"
+    },
+    {
+      "type": "compliance_and_policy",
+      "title": "Vertebrate Animals",
+      "id": "vertebrate_animals",
+      "parent_id": null,
+      "part": "Organization Assurances"
+    },
+    {
+      "type": "core_research_narrative",
+      "title": "Research Plan",
+      "id": "research_plan",
+      "parent_id": null,
+      "part": "Research Plan and Supporting Attachments"
+    },
+    {
+      "type": "document_structure",
+      "title": "Literature Cited",
+      "id": "literature_cited",
+      "parent_id": null,
+      "part": "Research Plan and Supporting Attachments"
+    },
+    {
+      "type": "external_validation",
+      "title": "Letters of Support",
+      "id": "letters_of_support",
+      "parent_id": null,
+      "part": "Research Plan and Supporting Attachments"
+    },
+    {
+      "type": "external_validation",
+      "title": "Biographical Sketches",
+      "id": "biographical_sketches",
+      "parent_id": null,
+      "part": "Research Plan and Supporting Attachments"
+    },
+    {
+      "type": "supplementary_technical_components",
+      "title": "Appendix",
+      "id": "appendix",
+      "parent_id": null,
+      "part": "Research Plan and Supporting Attachments"
+    },
+    {
+      "type": "supplementary_technical_components",
+      "title": "Multimedia Files",
+      "id": "multimedia_files",
+      "parent_id": null,
+      "part": "Research Plan and Supporting Attachments"
+    },
+    {
+      "type": "other",
+      "title": "Conflict of Interest Self-Report",
+      "id": "conflict_of_interest_self_report",
+      "parent_id": null,
+      "part": "Conflict of Interest Self-Report"
+    },
+    {
+      "type": "other",
+      "title": "PI Data Sheet",
+      "id": "pi_data_sheet",
+      "parent_id": null,
+      "part": "PI Data Sheet"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Signatures and Print",
+      "id": "signatures_and_print",
+      "parent_id": null,
+      "part": "Signatures and Print"
+    },
+    {
+      "type": "administrative_documentation",
+      "title": "Validate",
+      "id": "validate",
+      "parent_id": null,
+      "part": "Validate"
+    }
+  ]
+}

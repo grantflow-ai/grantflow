@@ -1,0 +1,81 @@
+[
+  {
+    "id": "section_i  _notice_of_funding_opportunity_description",
+    "title": "Section I. Notice of Funding Opportunity Description",
+    "is_research_plan": false,
+    "parent_id": "null",
+    "part": "Part 2. Full Text of Announcement",
+    "keywords": [
+      "inner ear imaging",
+      "high-resolution",
+      "in vivo",
+      "imaging techniques",
+      "clinical translation",
+      "human inner ear",
+      "non-invasive"
+    ],
+    "topics": [
+      "background",
+      "scope",
+      "clinical relevance",
+      "imaging modalities",
+      "technology development",
+      "research goals"
+    ],
+    "generation_instructions": "Write a comprehensive overview of the funding opportunity, including: 1. The background and rationale for inner ear imaging research; 2. The scope of research supported, including specific imaging techniques; 3. The clinical relevance and potential impact of the research; 4. Specific requirements for clinical trials supported by this NOFO; 5. Clear description of what is not responsive to the NOFO; 6. Emphasis on multidisciplinary team approach; 7. Include specific examples of how improved imaging can benefit clinical management. ",
+    "depends_on": [],
+    "max_words": 1400,
+    "search_queries": [
+      "in vivo high-resolution inner ear imaging",
+      "non-invasive inner ear imaging techniques",
+      "clinical applications of inner ear imaging",
+      "challenges in inner ear visualization",
+      "advanced imaging for auditory and vestibular structures",
+      "inner ear imaging probes and contrast agents"
+    ],
+    "order": 1
+  },
+  {
+    "id": "research_plan_section",
+    "title": "Research Plan Section",
+    "is_research_plan": true,
+    "parent_id": "null",
+    "part": null,
+    "keywords": [
+      "research strategy",
+      "imaging methods",
+      "clinical translation",
+      "experimental design",
+      "data analysis",
+      "feasibility",
+      "timeline",
+      "resolution",
+      "technology",
+      "clinical setting"
+    ],
+    "topics": [
+      "research_aims",
+      "methodology",
+      "project timeline",
+      "experimental_approach",
+      "data_management",
+      "clinical_significance",
+      "innovation"
+    ],
+    "generation_instructions": "Develop a detailed research plan section that: 1. Clearly articulates the research aims and objectives; 2. Provides a detailed description of the proposed methodology, including imaging techniques and data analysis; 3. Presents a realistic timeline and plan for translating the proposed work into a clinical setting; 4. Specifies the current imaging resolution, and details how the proposed improvements will advance current techniques and capabilities; 5. Addresses the feasibility of the proposed approach, including potential challenges; 6. Explains the clinical settings and conditions under which the techniques can be used, and how it will inform clinical care and decision-making, and 7. Discusses what auditory and vestibular pathologies can be better diagnosed and what treatments may become feasible if the increase in imaging resolution is achieved.",
+    "depends_on": [
+      "section_i_notice_of_funding_opportunity_description"
+    ],
+    "max_words": 2500,
+    "search_queries": [
+      "high-resolution in vivo imaging experimental design",
+      "clinical translation of advanced imaging techniques",
+      "inner ear imaging data analysis methods",
+      "feasibility of novel imaging for human inner ear",
+      "timeline for translating research to clinic setting",
+      "methods for improving inner ear imaging resolution",
+      "inner ear pathologies diagnosed by high-resolution imaging"
+    ],
+    "order": 2
+  }
+]

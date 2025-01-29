@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from azure.ai.documentintelligence.models import AnalyzeResult
 
 from src.files import FileDTO
 from src.utils.extraction import extract_file_content
@@ -26,7 +27,7 @@ async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
     file_dto = FileDTO(content=data_file.read_bytes(), filename=data_file.name, mime_type=mime_type)
     result, _ = await extract_file_content(content=file_dto.content, mime_type=file_dto.mime_type)
     ext = "json" if isinstance(result, dict) else "md"
-    content = dumps(result) if isinstance(result, dict) else result
+    content = dumps(result) if isinstance(result, AnalyzeResult) else result
 
     existing_results = RESULTS_FOLDER / f"parse_{file_dto.filename}_data_test_result.{ext}"
     if not existing_results.exists():
