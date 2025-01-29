@@ -1,0 +1,201 @@
+[
+  {
+    "id": "non_technical_summary",
+    "title": "Non-technical Summary",
+    "is_research_plan": false,
+    "parent_id": "null",
+    "part": "Abstracts and Non-technical Information",
+    "keywords": [
+      "lay summary",
+      "public education",
+      "alzheimer's disease",
+      "research impact"
+    ],
+    "topics": [
+      "public_engagement",
+      "research_impact",
+      "non_technical_communication"
+    ],
+    "generation_instructions": "Write a concise non-technical summary of the proposed research that is easily understandable by a general audience. Focus on the potential impact of the research on Alzheimer's disease. Highlight the importance and broader implications of the work. Avoid technical jargon and explain the research in clear and simple terms.",
+    "depends_on": [],
+    "max_words": 85,
+    "search_queries": [
+      "alzheimer's disease research non-technical summary",
+      "public understanding of alzheimer's research",
+      "impact of alzheimer's research on patients and families",
+      "communicating scientific research to the public"
+    ],
+    "order": 1
+  },
+  {
+    "id": "technical_abstract",
+    "title": "Technical Abstract",
+    "is_research_plan": false,
+    "parent_id": "null",
+    "part": "Abstracts and Non-technical Information",
+    "keywords": [
+      "research objectives",
+      "hypothesis",
+      "methods",
+      "alzheimer's disease"
+    ],
+    "topics": [
+      "research_objectives",
+      "research_methodology",
+      "study_design"
+    ],
+    "generation_instructions": "Write a technical abstract summarizing the research objectives, hypotheses, and specific aims of the proposed research. Include a brief overview of the research methods. Ensure the abstract is concise, accurate, and suitable for a scientific audience. This should include a description of the experiments that will be performed to prove the hypothesis and their significance in the field of Alzheimer's research. Briefly mention the expected findings.",
+    "depends_on": [],
+    "max_words": 342,
+    "search_queries": [
+      "alzheimer's disease research technical abstract",
+      "research methods for alzheimer's disease",
+      "hypothesis testing in alzheimer's research",
+      "scientific abstract guidelines"
+    ],
+    "order": 2
+  },
+  {
+    "id": "specific_aims_and_benchmark_accomplishments",
+    "title": "Specific Aims and Benchmark Accomplishments",
+    "is_research_plan": false,
+    "parent_id": "null",
+    "part": "Abstracts and Non-technical Information",
+    "keywords": [
+      "research aims",
+      "milestones",
+      "project timeline",
+      "alzheimer's disease"
+    ],
+    "topics": [
+      "research_goals",
+      "project_planning",
+      "progress_assessment"
+    ],
+    "generation_instructions": "Clearly state the specific research objectives and hypotheses to be tested. Describe concisely and realistically what the specific research aims to accomplish. Include milestone or benchmark accomplishments that will be used to assess progress on the project. Provide a timeline of key project steps that can be used to measure progress against a realistic plan, including contingencies. Describe how the project outcomes will be measured and assessed in an objective and verifiable fashion.",
+    "depends_on": [],
+    "max_words": 600,
+    "search_queries": [
+      "specific aims alzheimer's research",
+      "research milestones alzheimer's disease",
+      "project planning research grants",
+      "benchmarks in research progress"
+    ],
+    "order": 3
+  },
+  {
+    "id": "relevance_of_proposed_research_to_alzheimers_disease",
+    "title": "Relevance of Proposed Research to Alzheimer's disease",
+    "is_research_plan": false,
+    "parent_id": "null",
+    "part": "Abstracts and Non-technical Information",
+    "keywords": [
+      "alzheimer's disease",
+      "disease relevance",
+      "impact on treatment",
+      "research significance"
+    ],
+    "topics": [
+      "disease_etiology",
+      "treatment_strategies",
+      "clinical_implications"
+    ],
+    "generation_instructions": "Briefly and concisely explain how the proposed research relates to the causes, treatment, or cure for Alzheimer's disease or related dementias. Focus on the importance of this research in the context of the disease, including what are the key unknowns that this research is poised to solve. Emphasize the impact the findings will have on the field or if the research will immediately have clinical relevance or treatment implications.",
+    "depends_on": [],
+    "max_words": 171,
+    "search_queries": [
+      "relevance alzheimer's research",
+      "alzheimer's disease research priorities",
+      "translational research alzheimer's disease",
+      "impact of research on alzheimer's disease"
+    ],
+    "order": 4
+  },
+  {
+    "id": "innovative_aspects",
+    "title": "Innovative Aspects",
+    "is_research_plan": false,
+    "parent_id": "null",
+    "part": "Abstracts and Non-technical Information",
+    "keywords": [
+      "novel approach",
+      "innovative methodology",
+      "research novelty",
+      "high-risk research"
+    ],
+    "topics": [
+      "research_innovation",
+      "novel_techniques",
+      "unconventional_approaches"
+    ],
+    "generation_instructions": "Describe the innovative aspects of the proposed research, including its unique approach, hypothesis, or methodology. Explain what makes this research different from existing projects. Highlight the potential for high impact and how the project addresses a gap in current knowledge. Discuss why the project has the potential to lead to a significant advancement in understanding, diagnosing or treating Alzheimer's disease.",
+    "depends_on": [],
+    "max_words": 107,
+    "search_queries": [
+      "innovative alzheimer's research",
+      "novel research methods",
+      "high risk high reward research",
+      "cutting edge alzheimer's research"
+    ],
+    "order": 5
+  },
+  {
+    "id": "future_plans",
+    "title": "Future Plans",
+    "is_research_plan": false,
+    "parent_id": "null",
+    "part": "Abstracts and Non-technical Information",
+    "keywords": [
+      "research expansion",
+      "clinical translation",
+      "long-term impact",
+      "alzheimer's disease"
+    ],
+    "topics": [
+      "research_development",
+      "clinical_translation",
+      "long_term_planning"
+    ],
+    "generation_instructions": "Describe the general administrative and experimental plan for advancing the research line of inquiry, assuming that the proposed research aims are successful. Explain the anticipated long-term impact of the research and how the findings could be translated into practical solutions for Alzheimer's disease. Address the steps that will be taken to bring the research to a stage of clinical relevance or widespread adoption in the scientific field.",
+    "depends_on": [],
+    "max_words": 214,
+    "search_queries": [
+      "future direction alzheimer's research",
+      "translational research planning",
+      "long-term impact research",
+      "alzheimer's disease clinical implications"
+    ],
+    "order": 6
+  },
+  {
+    "id": "research_plan",
+    "title": "Research Plan",
+    "is_research_plan": true,
+    "parent_id": "null",
+    "part": "Research Plan and Supporting Attachments",
+    "keywords": [
+      "background",
+      "preliminary data",
+      "experimental design",
+      "methods",
+      "data analysis",
+      "alzheimer's disease"
+    ],
+    "topics": [
+      "research_methodology",
+      "experimental_approach",
+      "data_analysis",
+      "literature_review"
+    ],
+    "generation_instructions": "Write a detailed research plan that includes: a concise summary of the background and significance of the research, emphasizing gaps in current knowledge; relevant preliminary studies demonstrating the investigator's competence; a clear and detailed experimental design with appropriate methodology; a description of data collection, analysis, and interpretation; and a discussion of potential difficulties, limitations, and alternative approaches. Provide a timeline and list the responsibilities for key personnel and collaborators. Describe the facilities and resources required. Include plans for rigor and reproducibility, including statistical power. Ensure all information supports the research goals and demonstrates feasibility and scientific merit. If applicable describe how animal and human subject research will be conducted in a responsible and compliant fashion.",
+    "depends_on": [],
+    "max_words": 2700,
+    "search_queries": [
+      "alzheimer's disease research plan",
+      "experimental design alzheimer's research",
+      "research methods alzheimer's disease",
+      "data analysis alzheimer's research"
+    ],
+    "order": 7
+  }
+]

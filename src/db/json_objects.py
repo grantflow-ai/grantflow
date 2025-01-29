@@ -80,8 +80,8 @@ class GrantSection(TypedDict):
     """Maximum word count if specified."""
     order: int
     """Order of the section in the grant application."""
-    parent_id: str
-    """Parent section name or "<root>"."""
+    parent_id: str | None
+    """Parent section name."""
     part: str | None
     """The part of the grant application this section belongs to."""
     search_queries: list[str]

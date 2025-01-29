@@ -4,10 +4,17 @@ import hashlib
 from collections.abc import Generator
 from typing import Final
 
+from azure.ai.documentintelligence.models import (
+    AnalyzeResult,
+    DocumentFormula,
+    DocumentPage,
+    DocumentParagraph,
+    DocumentTable,
+    DocumentTableCell,
+)
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
 from src.db.json_objects import Chunk, TableContext
-from src.utils.extraction import Formula, OCROutput, Page, Paragraph, Table, TableCell
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -42,7 +49,7 @@ def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
     return TextSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
 
 
-def extract_page_content(page: Page) -> str:
+def extract_page_content(page: DocumentPage) -> str:
     """Extract content from a page, handling both lines and words.
 
     Args:
@@ -71,7 +78,7 @@ def extract_page_content(page: Page) -> str:
 
 
 def process_page_chunks(
-    page: Page,
+    page: DocumentPage,
     splitter: MarkdownSplitter | TextSplitter,
 ) -> Generator[Chunk, None, None]:
     """Process a page into chunks.
@@ -106,9 +113,9 @@ def process_page_chunks(
 
 
 def process_table_cell(
-    cell: TableCell,
+    cell: DocumentTableCell,
     table_idx: int,
-    table: Table,
+    table: DocumentTable,
     page_number: int | None,
     splitter: MarkdownSplitter | TextSplitter,
 ) -> Generator[Chunk, None, None]:
@@ -148,7 +155,7 @@ def process_table_cell(
 
 
 def process_table_chunks(
-    table: Table,
+    table: DocumentTable,
     table_idx: int,
     splitter: MarkdownSplitter | TextSplitter,
 ) -> Generator[Chunk, None, None]:
@@ -171,7 +178,7 @@ def process_table_chunks(
 
 
 def process_paragraph_chunks(
-    para: Paragraph,
+    para: DocumentParagraph,
     para_idx: int,
     splitter: MarkdownSplitter | TextSplitter,
 ) -> Generator[Chunk, None, None]:
@@ -208,7 +215,7 @@ def process_paragraph_chunks(
 
 
 def process_formula_chunks(
-    formula: Formula,
+    formula: DocumentFormula,
     formula_idx: int,
     splitter: MarkdownSplitter | TextSplitter,
     page_number: int | None,
@@ -264,7 +271,7 @@ def process_fallback_chunks(
         )
 
 
-def chunk_text(*, text: str | OCROutput, mime_type: str) -> list[Chunk]:
+def chunk_text(*, text: str | AnalyzeResult, mime_type: str) -> list[Chunk]:
     """Chunk the text into smaller pieces.
 
     Args:
@@ -276,7 +283,7 @@ def chunk_text(*, text: str | OCROutput, mime_type: str) -> list[Chunk]:
     """
     splitter = get_splitter(mime_type)
 
-    if isinstance(text, dict):
+    if isinstance(text, AnalyzeResult):
         return chunk_ocr_output(text, splitter)
 
     return [
@@ -291,7 +298,7 @@ def chunk_text(*, text: str | OCROutput, mime_type: str) -> list[Chunk]:
 
 
 def chunk_ocr_output(
-    extracted_data: OCROutput,
+    extracted_data: AnalyzeResult,
     splitter: MarkdownSplitter | TextSplitter,
 ) -> list[Chunk]:
     """Parse the OCR output and chunk the text into smaller pieces with preserved context.

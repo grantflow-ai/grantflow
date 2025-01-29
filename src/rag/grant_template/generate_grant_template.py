@@ -103,7 +103,7 @@ GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
             "id": "string",                   // Must match input section ID exactly
             "title": "string",                // Display title
             "is_research_plan": boolean,      // True for research plan only
-            "parent_id": "string",            // Parent or "<root>"
+            "parent_id": "string",            // Parent or null
             "part": "string",                 // Must match input part exactly
             "keywords": ["string"],           // Grounding keywords
             "topics": ["string"],             // Textual topics
