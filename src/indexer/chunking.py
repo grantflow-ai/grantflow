@@ -1,38 +1,22 @@
 """Module for chunking document content from Azure Document Intelligence output."""
 
-import hashlib
-from collections.abc import Generator
+from collections.abc import Mapping
+from itertools import chain
 from typing import Final
 
 from azure.ai.documentintelligence.models import (
     AnalyzeResult,
-    DocumentFormula,
     DocumentPage,
-    DocumentParagraph,
-    DocumentTable,
-    DocumentTableCell,
 )
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
-from src.db.json_objects import Chunk, TableContext
+from src.db.json_objects import Chunk
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 MAX_CHARACTERS: Final[int] = 2000
 OVERLAP_CHARACTERS: Final[int] = 200
-
-
-def compute_hash(content: str) -> str:
-    """Compute a hash of the content for deduplication.
-
-    Args:
-        content: The text content to hash
-
-    Returns:
-        str: Hash string of the content
-    """
-    return hashlib.sha256(content.encode()).hexdigest()
 
 
 def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
@@ -80,195 +64,27 @@ def extract_page_content(page: DocumentPage) -> str:
 def process_page_chunks(
     page: DocumentPage,
     splitter: MarkdownSplitter | TextSplitter,
-) -> Generator[Chunk, None, None]:
+) -> list[Chunk]:
     """Process a page into chunks.
 
     Args:
         page: Page object from OCR output
         splitter: Text splitter instance
 
-    Yields:
-        Chunk: for the page
+    Returns:
+        List of chunks with preserved context
     """
-    page_number = page.get("pageNumber")
-    languages = page.get("languages", [])
-    language_codes = [lang["locale"] for lang in languages if "locale" in lang] if languages else []
     contents = extract_page_content(page)
 
+    chunks = []
     for text_chunk in splitter.chunks(contents):
-        chunk: Chunk = {
-            "content": text_chunk,
-            "content_hash": compute_hash(text_chunk),
-            "index": -1,
-            "element_type": "page",
-            "languages": language_codes,
-        }
-        if page_number is not None:
+        chunk: Chunk = {"content": text_chunk}
+        if page_number := page.get("pageNumber"):
             chunk["page_number"] = page_number
 
-        yield chunk
+        chunks.append(chunk)
 
-    for formula_idx, formula in enumerate(page.get("formulas", [])):
-        yield from process_formula_chunks(formula, formula_idx, splitter, page_number)
-
-
-def process_table_cell(
-    cell: DocumentTableCell,
-    table_idx: int,
-    table: DocumentTable,
-    page_number: int | None,
-    splitter: MarkdownSplitter | TextSplitter,
-) -> Generator[Chunk, None, None]:
-    """Process a table cell into chunks.
-
-    Args:
-        cell: Table cell object
-        table_idx: Index of the parent table
-        table: Parent table object
-        page_number: Page number where the table appears
-        splitter: Text splitter instance
-
-    Yields:
-        Chunk: for the table cell
-    """
-    table_context = TableContext(
-        row_index=cell.get("rowIndex"),
-        column_index=cell.get("columnIndex"),
-        table_dimensions=f"{table.get('rowCount')}x{table.get('columnCount')}",
-    )
-
-    for text_chunk in splitter.chunks(cell.get("content", "")):
-        chunk: Chunk = {
-            "content": text_chunk,
-            "content_hash": compute_hash(text_chunk),
-            "index": -1,
-            "element_type": "table_cell",
-            "parent": f"table_{table_idx}",
-            "table_context": table_context,
-        }
-        if page_number is not None:
-            chunk["page_number"] = page_number
-        if cell.get("kind"):
-            chunk["role"] = cell["kind"]
-
-        yield chunk
-
-
-def process_table_chunks(
-    table: DocumentTable,
-    table_idx: int,
-    splitter: MarkdownSplitter | TextSplitter,
-) -> Generator[Chunk, None, None]:
-    """Process a table into chunks.
-
-    Args:
-        table: Table object from OCR output
-        table_idx: Index of the table in document order
-        splitter: Text splitter instance
-
-    Yields:
-        Chunk: for the table
-    """
-    bounding_regions = table.get("boundingRegions") or []
-    page_numbers = [region.get("pageNumber") for region in bounding_regions if region.get("pageNumber") is not None]
-    page_number = page_numbers[0] if page_numbers else None
-
-    for cell in table.get("cells") or []:
-        yield from process_table_cell(cell, table_idx, table, page_number, splitter)
-
-
-def process_paragraph_chunks(
-    para: DocumentParagraph,
-    para_idx: int,
-    splitter: MarkdownSplitter | TextSplitter,
-) -> Generator[Chunk, None, None]:
-    """Process a paragraph into chunks.
-
-    Args:
-        para: Paragraph object from OCR output
-        para_idx: Index of the paragraph in document order
-        splitter: Text splitter instance
-
-    Yields:
-        Chunk: for the paragraph
-    """
-    page_number: int | None = None
-    if bounding_regions := para.get("boundingRegions"):
-        page_number = next(
-            (region.get("pageNumber") for region in bounding_regions if region.get("pageNumber") is not None), None
-        )
-
-    for text_chunk in splitter.chunks(para.get("content", "")):
-        chunk: Chunk = {
-            "content": text_chunk,
-            "content_hash": compute_hash(text_chunk),
-            "index": -1,
-            "element_type": "paragraph",
-            "parent": f"para_{para_idx}",
-        }
-        if page_number is not None:
-            chunk["page_number"] = page_number
-        if para.get("role"):
-            chunk["role"] = para["role"]
-
-        yield chunk
-
-
-def process_formula_chunks(
-    formula: DocumentFormula,
-    formula_idx: int,
-    splitter: MarkdownSplitter | TextSplitter,
-    page_number: int | None,
-) -> Generator[Chunk, None, None]:
-    """Process a formula into chunks.
-
-    Args:
-        formula: Formula object from OCR output
-        formula_idx: Index of the formula in document order
-        splitter: Text splitter instance
-        page_number: Page number where the formula appears
-
-    Yields:
-        Chunk: for the formula
-    """
-    for text_chunk in splitter.chunks(formula.get("value", "")):
-        chunk: Chunk = {
-            "content": text_chunk,
-            "content_hash": compute_hash(text_chunk),
-            "index": -1,
-            "element_type": "formula",
-            "parent": f"formula_{formula_idx}",
-        }
-        if page_number is not None:
-            chunk["page_number"] = page_number
-        if formula.get("kind"):
-            chunk["role"] = formula["kind"]
-        if formula.get("confidence"):
-            chunk["confidence"] = formula["confidence"]
-
-        yield chunk
-
-
-def process_fallback_chunks(
-    content: str,
-    splitter: MarkdownSplitter | TextSplitter,
-) -> Generator[Chunk, None, None]:
-    """Process raw content when no structured elements are found.
-
-    Args:
-        content: Raw text content
-        splitter: Text splitter instance
-
-    Yields:
-        Chunk: for the raw content
-    """
-    for text_chunk in splitter.chunks(content):
-        yield Chunk(
-            content=text_chunk,
-            content_hash=compute_hash(text_chunk),
-            index=-1,
-            element_type="raw",
-        )
+    return chunks
 
 
 def chunk_text(*, text: str | AnalyzeResult, mime_type: str) -> list[Chunk]:
@@ -283,18 +99,10 @@ def chunk_text(*, text: str | AnalyzeResult, mime_type: str) -> list[Chunk]:
     """
     splitter = get_splitter(mime_type)
 
-    if isinstance(text, AnalyzeResult):
+    if isinstance(text, (Mapping | dict)):
         return chunk_ocr_output(text, splitter)
 
-    return [
-        Chunk(
-            content=chunk,
-            content_hash=compute_hash(chunk),
-            index=index,
-            element_type="raw",
-        )
-        for index, chunk in enumerate(splitter.chunks(text))
-    ]
+    return [Chunk(content=chunk) for index, chunk in enumerate(splitter.chunks(text))]
 
 
 def chunk_ocr_output(
@@ -310,21 +118,11 @@ def chunk_ocr_output(
     Returns:
         List of enriched chunks with semantic context
     """
-    chunks: list[Chunk] = []
-
-    for page in extracted_data.get("pages", []):
-        chunks.extend(process_page_chunks(page, splitter))
-
-    for table_idx, table in enumerate(extracted_data.get("tables", [])):
-        chunks.extend(process_table_chunks(table, table_idx, splitter))
-
-    for para_idx, para in enumerate(extracted_data.get("paragraphs", [])):
-        chunks.extend(process_paragraph_chunks(para, para_idx, splitter))
+    chunks: list[Chunk] = list(
+        chain(*[process_page_chunks(page, splitter) for page in extracted_data.get("pages", [])])
+    )
 
     if not chunks and "content" in extracted_data:
-        chunks.extend(process_fallback_chunks(extracted_data["content"], splitter))
-
-    for idx, chunk in enumerate(chunks):
-        chunk["index"] = idx
+        chunks = [Chunk(content=text_chunk) for text_chunk in splitter.chunks(extracted_data["content"])]
 
     return chunks

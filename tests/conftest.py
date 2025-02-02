@@ -711,7 +711,8 @@ async def nih_organization_id(
                 .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_file_id"])
             )
             await session.execute(
-                insert(TextVector).values(
+                insert(TextVector)
+                .values(
                     [
                         {
                             k: v
@@ -721,6 +722,7 @@ async def nih_organization_id(
                         for text_vector in text_vectors
                     ]
                 )
+                .on_conflict_do_nothing(index_elements=["id"])
             )
         await session.commit()
 

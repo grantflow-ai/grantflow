@@ -19,6 +19,7 @@ SECTION_CATEGORY = Literal[
     "supplementary_technical_components",
     "other",
 ]
+
 SECTION_CATEGORIES: Final[list[SECTION_CATEGORY]] = [
     "core_research_narrative",
     "career_and_training_development",
@@ -32,6 +33,16 @@ SECTION_CATEGORIES: Final[list[SECTION_CATEGORY]] = [
     "other",
 ]
 
+EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
+    "technical abstract methodology results scientific premise evidence rationale",
+    "project summary objectives goals research strategy experimental design",
+    "technical background state of art literature integration findings review",
+    "innovation approach novel methods preliminary results experimental data",
+    "research timeline milestones tasks procedures protocols deliverables",
+    "expected outcomes anticipated results impact advancement knowledge",
+    "scientific methodology experimental design data analysis findings implementation",
+]
+
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT: Final[str] = """"
 You are a specialized system designed to analyze grant application requirements and generate structured specifications.
@@ -42,22 +53,23 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     template="""
      # Grant Application Section Analyzer
 
-    You are tasked with analyzing and extracting from a CFP (Call for Proposals) document and the funding organization guidelines (if available)
-    the structure of a grant application targeting the CFP.
+    You are tasked with determining the correct format for a grant application for a provided CFP.
 
-    Pay particular attention to core research narrative components, as these will be the focus of further refinement.
+    This is the text extracted from the CFP source:
 
-    ## Sources
-
-    ### Call for Proposals
+    ## CFP Content:
     <cfp_content>
     ${cfp_content}
     </cfp_content>
+
+    And these are the RAG results:
 
     ### Organization Guidelines
     <organization_guidelines>
     ${organization_guidelines}
     </organization_guidelines>
+
+    As a first stage, begin by determining which of the sources - if any of them - contains concrete information about the expected structure of the grant application document or text. It is not always the case this information is available. Flag all other input that is impertinent to this, as irrelevant and proceed.
 
     ## Section Tags
     Use the following section categories:
@@ -234,19 +246,22 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
       - Broader Societal Impacts of Research
 
     ## Instructions
-    1. Begin by analyzing the source to determine the structure of a grant application targeting the CFP and in accordance with any guidelines.
+    1. Begin by determining which of the sources - if any of them - contains concrete information about the expected structure of the grant application document or text.
+        - Flag all other input that is impertinent to this, as irrelevant and proceed.
+        - It is not always the case this information is available, if it is not available, or only partially available, try to identify the organization offering the funding opportunity and extrapolate from this the expected grant structure.
+    2. Begin by analyzing the source to determine the structure of a grant application targeting the CFP and in accordance with any guidelines.
         - Determine- is it composed of multiple distinct parts (think of this as top top-level headings)?
         - If so, list these parts in the "parts" field.
         - The values in parts should be part titles, e.g. "Project Summary", "Research Strategy", etc. derived from the input sources.
-    2. Identify the grant applications sections.
+    3. Identify the grant applications sections.
         - If the information is too scarce, try to complement it with reasonable assumptions based on conventions for the organization - if known.
         - If this is not possible, return an empty list of sections, and write an explanation in the "error" key.
-    3. If the parts list is non-empty, assign each section to a part based on the provided information.
+    4. If the parts list is non-empty, assign each section to a part based on the provided information.
         - Sections should have a null value for part if they are not part of a specific part.
-    4. Assign a "type" to each section based on the provided categories.
+    5. Assign a "type" to each section based on the provided categories.
         - For the `core_research_narrative` category, include in it only sections you have above 85% certainty belong to it.
         - If the you have low certainty about where a section belongs, assign it to the "Other" category.
-    5. Respond with a JSON object containing the sections and their metadata.
+    6. Respond with a JSON object containing the sections and their metadata.
 
     ## Output
 
@@ -402,6 +417,7 @@ async def handle_extract_sections(cfp_content: str, organization_id: str | None 
         await retrieve_documents(
             organization_id=organization_id,
             task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+            search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
         )
         if organization_id
         else []
@@ -410,28 +426,33 @@ async def handle_extract_sections(cfp_content: str, organization_id: str | None 
     return await with_prompt_evaluation(
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
-        increment=10,
+        increment=5,
         retries=5,
         passing_score=90,
         criteria=[
             EvaluationCriterion(
-                name="Core Research Narrative Sections Completeness - Identification",
+                name="Correctness",
+                evaluation_instructions="Evaluate if the extracted sections reflect the expected structure of the grant application or whether they reflect the structure of the CFP document (wrong!).",
+                weight=1.5,
+            ),
+            EvaluationCriterion(
+                name="Identification",
                 evaluation_instructions="Evaluate if all core research sections are identified and assigned reasonably.",
             ),
             EvaluationCriterion(
-                name="Core Research Narrative Sections Completeness - Titles",
+                name="Titles",
                 evaluation_instructions="Evaluate if all core research sections have descriptive titles.",
             ),
             EvaluationCriterion(
-                name="Core Research Narrative Sections Completeness - Classifications",
+                name="Classifications",
                 evaluation_instructions="Evaluate if all core research sections have accurate classifications.",
             ),
             EvaluationCriterion(
-                name="Core Research Narrative Sections Completeness - Part Specification",
+                name="Part Specification",
                 evaluation_instructions="Evaluate if all core research sections have the correct part specified, if applicable.",
             ),
             EvaluationCriterion(
-                name="Core Research Narrative Sections Completeness - Parent-Child Relationships",
+                name="Parent-Child Relationships",
                 evaluation_instructions="Evaluate if all core research sections have accurate parent-child relationships.",
             ),
         ],

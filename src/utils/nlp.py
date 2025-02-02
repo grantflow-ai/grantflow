@@ -9,7 +9,11 @@ nlp = Ref[Language]()
 
 
 def get_spacy_model() -> Language:
-    """Get the Spacy model. Initializing it if it is not already loaded."""
+    """Get the Spacy model. Initializing it if it is not already loaded.
+
+    Returns:
+        The spacy language
+    """
     if nlp.value is None:
         from spacy import load
 

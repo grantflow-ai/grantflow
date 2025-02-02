@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     libpq-dev \
     pandoc \
+    tesseract-ocr \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 FROM base AS install
