@@ -7,7 +7,6 @@ from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextV
 from src.exceptions import EvaluationError
 from src.rag.completion import handle_completions_request
 from src.rag.dto import DocumentDTO
-from src.rag.rerank import rerank_documents
 from src.rag.search_queries import handle_create_search_queries
 from src.utils.embeddings import generate_embeddings
 from src.utils.logger import get_logger
@@ -16,7 +15,6 @@ from src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 MAX_RESULTS: Final[int] = 25
-INITIAL_RETRIEVAL_MULTIPLIER: Final[float] = 4.0
 
 GUIDED_RETRIEVAL_SYSTEM_PROMPT: Final[str] = """
 You are an AI assistant specializing in evaluating the relevance and comprehensiveness of information retrieved from a vector database for the purpose of completing a specific task.
@@ -168,23 +166,20 @@ async def handle_retrieval(
     Returns:
         The retrieved documents.
     """
-    limit = int(max_results * INITIAL_RETRIEVAL_MULTIPLIER)
     query_embeddings = await generate_embeddings(search_queries)
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
 
-    vectors = await retrieve_vectors_for_embedding(
-        file_table_cls=file_table_cls,
-        application_id=application_id,
-        organization_id=organization_id,
-        embeddings=query_embeddings,
-        limit=limit,
+    return (
+        await retrieve_vectors_for_embedding(
+            file_table_cls=file_table_cls,
+            application_id=application_id,
+            organization_id=organization_id,
+            embeddings=query_embeddings,
+            limit=max_results,
+        )
+        if len(query_embeddings)
+        else []
     )
-
-    vectors = rerank_documents(
-        vectors=vectors,
-        query_embeddings=query_embeddings,
-    )
-    return vectors[:max_results]
 
 
 async def retrieve_documents(
@@ -194,7 +189,7 @@ async def retrieve_documents(
     organization_id: str | None = None,
     search_queries: list[str] | None = None,
     task_description: str | PromptTemplate,
-    with_guided_retrieval: bool = False,
+    with_guided_retrieval: bool = True,
     **kwargs: Any,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
@@ -243,9 +238,8 @@ async def retrieve_documents(
             for vector in vectors
         ]
 
-        if not with_guided_retrieval and vectors and len(vectors) == max_results:
-            has_sufficient_context = True
-            break
+        if not with_guided_retrieval and len(documents) == max_results:
+            return documents
 
         tool_response = await handle_completions_request(
             prompt_identifier="guided_retrieval",
@@ -260,8 +254,7 @@ async def retrieve_documents(
         )
 
         if tool_response["is_sufficient"]:
-            has_sufficient_context = True
-            break
+            return documents
 
         logger.info(
             "Guided retrieval response indicated insufficient context",

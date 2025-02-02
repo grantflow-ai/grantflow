@@ -1,3 +1,5 @@
+from re import Pattern
+from re import compile as compile_regex
 from typing import Final, cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
@@ -9,98 +11,41 @@ from azure.ai.documentintelligence.models import (
 )
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
-from charset_normalizer import detect
 from crawl4ai import AsyncWebCrawler
-from pypandoc import convert_text
+from kreuzberg import KreuzbergError, extract_bytes
 
 from src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from src.utils.env import get_env
 from src.utils.logger import get_logger
 from src.utils.retry import with_exponential_backoff_retry
-from src.utils.sync import as_async_callable
 
 logger = get_logger(__name__)
 
-
-MARKDOWN_MIME_TYPE: Final[str] = "text/markdown"
-
-PLAIN_TEXT_MIME_TYPES: set[str] = {
-    MARKDOWN_MIME_TYPE,
-    "text/plain",
-}
-
-PANDOC_MIME_TYPES = {
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "text/csv",
-    "application/csv",
-    "text/x-csv",
-    "application/x-csv",
-    "text/tab-separated-values",
-    "text/x-tsv",
-    "application/rtf",
-    "text/rtf",
-    "application/x-rtf",
-    "text/x-rst",
-    "text/rst",
-    "application/vnd.oasis.opendocument.text",
-    "application/x-vnd.oasis.opendocument.text",
-    "application/x-latex",
-    "text/x-latex",
-    "application/latex",
-    "text/latex",
-}
-
-DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES: set[str] = {
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "image/bmp",
-    "image/gif",
-    "image/heif",
-    "image/jpeg",
-    "image/png",
-    "image/tiff",
-}
-
-MIME_TYPE_EXT_MAP = {
-    "application/csv": "csv",
-    "application/latex": "latex",
-    "application/rtf": "rtf",
-    "application/vnd.oasis.opendocument.text": "odt",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-    "application/x-csv": "csv",
-    "application/x-latex": "latex",
-    "application/x-rtf": "rtf",
-    "application/x-vnd.oasis.opendocument.text": "odt",
-    "text/csv": "csv",
-    "text/latex": "latex",
-    "text/rst": "rst",
-    "text/rtf": "rtf",
-    "text/tab-separated-values": "tsv",
-    "text/x-csv": "csv",
-    "text/x-latex": "latex",
-    "text/x-rst": "rst",
-    "text/x-tsv": "tsv",
-}
-
-pandoc_handler = as_async_callable(convert_text)
+CORRUPTED_PATTERN_REGEX: Final[Pattern[str]] = compile_regex(
+    r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]|�|[\uFFFD\uFFFE\uFFFF]|(?<!\w)[®©™](?!\w)|[A-Z]\*[A-Z]|\+[A-Z]|(?<![a-z])l(?=[A-Z])|(?<=[a-z])[A-Z](?=[a-z])"
+)
 
 
-async def extract_with_pandoc(file_data: bytes, mime_type: str) -> str:
-    """Extract text using pandoc.
+def validate_extracted_text(text: str, min_valid_ratio: float = 0.8) -> bool:
+    """Validates text extracted from PDF for corruption.
+
 
     Args:
-        file_data: The content of the file.
-        mime_type: The mime type of the file.
+        text: The extracted text to validate
+        min_valid_ratio: Minimum ratio of valid characters required
 
     Returns:
-        The extracted text.
+        ValidationResult containing validation status, detected language, and any error message
     """
-    ext = MIME_TYPE_EXT_MAP[mime_type]
-    encoding = detect(file_data)["encoding"] or "utf-8"
+    total_chars = len(text)
+    if not total_chars:
+        return False
 
-    return cast(str, await pandoc_handler(file_data, to="md", format=ext, encoding=encoding))
+    invalid_chars = len(CORRUPTED_PATTERN_REGEX.findall(text))
+
+    valid_ratio = (total_chars - invalid_chars) / total_chars
+
+    return valid_ratio >= min_valid_ratio
 
 
 async def extract_with_azure_document_intelligence(file_content: bytes, mime_type: str) -> AnalyzeResult:
@@ -141,12 +86,15 @@ async def extract_with_azure_document_intelligence(file_content: bytes, mime_typ
         await client.close()
 
 
-async def extract_file_content(*, content: bytes, mime_type: str) -> tuple[str | AnalyzeResult, str]:
+async def extract_file_content(
+    *, content: bytes, mime_type: str, use_azure: bool = False
+) -> tuple[str | AnalyzeResult, str]:
     """Extract the textual content from a given byte string representing a file's contents.
 
     Args:
         content: The content to extract.
         mime_type: The mime type of the content.
+        use_azure: Whether to use Azure Document Intelligence for extraction.
 
     Raises:
         ValidationError: If the mime type is not supported.
@@ -154,18 +102,26 @@ async def extract_file_content(*, content: bytes, mime_type: str) -> tuple[str |
     Returns:
         The extracted content and the mime type of the content.
     """
-    if mime_type in PLAIN_TEXT_MIME_TYPES or any(mime_type.startswith(value) for value in PLAIN_TEXT_MIME_TYPES):
-        return content.decode(), mime_type
+    try:
+        if use_azure:
+            return await extract_with_azure_document_intelligence(
+                file_content=content, mime_type=mime_type
+            ), "text/markdown"
 
-    if mime_type in PANDOC_MIME_TYPES or any(mime_type.startswith(value) for value in PANDOC_MIME_TYPES):
-        return await extract_with_pandoc(content, mime_type), MARKDOWN_MIME_TYPE
+        result = await extract_bytes(content=content, mime_type=mime_type)
+        if validate_extracted_text(result.content):
+            return result.content, result.mime_type
 
-    if mime_type in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES or any(
-        mime_type.startswith(value) for value in DOCUMENT_INTELLIGENCE_SUPPORTED_MIME_TYPES
-    ):
-        return await extract_with_azure_document_intelligence(content, mime_type), MARKDOWN_MIME_TYPE
+        return await extract_bytes(content=content, mime_type=mime_type, force_ocr=True)
 
-    raise ValidationError(f"Unsupported mime type: {mime_type}")
+    except KreuzbergError as e:
+        raise ValidationError(
+            "Error extracting content from file",
+            context={
+                "mime_type": mime_type,
+                "error": str(e),
+            },
+        ) from e
 
 
 @with_exponential_backoff_retry(ExternalOperationError, max_retries=3)
