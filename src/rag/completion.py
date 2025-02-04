@@ -1,5 +1,6 @@
 from collections.abc import Callable
-from typing import Any, Final
+from functools import partial
+from typing import Any, Final, TypedDict
 
 from google.cloud.exceptions import TooManyRequests
 from jsonschema import ValidationError as JSONSchemaValidationError
@@ -14,6 +15,7 @@ from src.constants import CONTENT_TYPE_JSON, GENERATION_MODEL
 from src.exceptions import DeserializationError, ValidationError
 from src.utils.ai import get_google_ai_client
 from src.utils.logger import get_logger
+from src.utils.prompt_template import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
 from src.utils.serialization import deserialize, serialize
 
@@ -36,6 +38,96 @@ DEFAULT_SYSTEM_PROMPT: Final[str] = f"""
 
 **important**: When information is missing or insufficient, do not invent facts. Instead write `**[MISSING INFORMATION: description of the missing information]**`.
 """
+
+SELECT_BEST_RESPONSE_SYSTEM_PROMPT: Final[str] = """
+You are a specialist in selecting the best response from a list of generated responses.
+"""
+
+SELECT_BEST_RESPONSE_USE_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="select_best_response_use_prompt",
+    template="""
+    Your task is to select the best response.
+
+    ## Prompt
+    The responses were generated for the following prompt:
+
+    <prompt>
+    ${prompt}
+    </prompt>
+
+    ## Responses
+    <responses>
+    ${responses}
+    </responses>
+
+    Select the key (integer id) of the best response from the object.
+
+    The response should be a single key (integer) from the object, which correlates with the best response value:
+
+    ```json
+    {
+        "best_response": 1
+    }
+    ```
+    """,
+)
+
+select_best_response_json_schema = {
+    "type": "object",
+    "properties": {
+        "best_response": {"type": "integer", "minimum": 0},
+    },
+    "required": ["best_response"],
+}
+
+
+class BestResponseSelection(TypedDict):
+    """The best response selection response."""
+
+    best_response: int
+    """The best response."""
+
+
+def validate_select_best_response(tool_response: BestResponseSelection, *, candidates: dict[int, Any]) -> None:
+    """Validate the best response selection.
+
+    Args:
+        tool_response: The tool response.
+        candidates: The candidates.
+
+    Raises:
+        ValidationError: If the selected response is not in the candidates.
+    """
+    if tool_response["best_response"] not in candidates:
+        raise ValidationError("The selected response id is not in a key in the candidates object.")
+
+
+async def select_best_response[T](
+    candidates: dict[int, T],
+    prompt: str | PromptTemplate,
+) -> T:
+    """Select the best response from a list of candidates.
+
+    Args:
+        candidates: The list of candidates.
+        prompt: The prompt.
+
+    Returns:
+        The best response.
+    """
+    response = await handle_completions_request(
+        prompt_identifier="select_best_response_use_prompt",
+        response_type=BestResponseSelection,
+        response_schema=select_best_response_json_schema,
+        messages=SELECT_BEST_RESPONSE_USE_PROMPT.to_string(
+            prompt=prompt,
+            responses=candidates,
+        ),
+        temperature=0.2,
+        top_p=0.7,
+        validator=partial(validate_select_best_response, candidates=candidates),
+    )
+    return candidates[response["best_response"]]
 
 
 @with_exponential_backoff_retry(TooManyRequests)
@@ -91,8 +183,19 @@ async def make_completions_request[T](
             candidate_count=candidate_count,
         ),
     )
-    logger.debug("Received content from model.", text=response.text)
-    return deserialize(response.text, response_type)
+    if not candidate_count:
+        return deserialize(response.text, response_type)
+
+    prompt = (
+        messages
+        if isinstance(messages, str)
+        else "\n".join([message if isinstance(message, str) else message.text for message in messages])
+    )
+
+    return await select_best_response(
+        candidates={index + 1: deserialize(r.text, response_type) for index, r in enumerate(response.candidates)},
+        prompt=prompt,
+    )
 
 
 def create_json_schema_validator(json_schema: dict[str, Any]) -> Callable[[Any], None]:
@@ -160,7 +263,7 @@ async def handle_completions_request[T](
 
     while attempts < max_attempts:
         try:
-            msgs = messages
+            msgs = [messages] if isinstance(messages, str) else messages
             if error_message:
                 msgs = [*messages, error_message]
 

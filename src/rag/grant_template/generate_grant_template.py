@@ -291,7 +291,57 @@ async def generate_grant_template(
         response_type=TemplateSectionsResponse,
         validator=partial(validate_template_sections, input_sections=input_sections),
         system_prompt=GENERATE_GRANT_TEMPLATE_SYSTEM_PROMPT,
+        temperature=0.2,
+        top_p=0.7,
+        candidate_count=3,
     )
+
+
+evaluation_criteria = [
+    EvaluationCriterion(
+        name="Content Generation Guidance",
+        evaluation_instructions="""
+            Assess quality and coherence of content guidance:
+            1. All sections have generation instructions
+            2. Generation instructions are specific and actionable
+            3. The keywords ground the scope effectively
+            4. The topics comprehensively cover required content
+            5. Instructions, keywords, and topics form coherent guidance
+            """,
+    ),
+    EvaluationCriterion(
+        name="Structural Organization",
+        evaluation_instructions="""
+            Evaluate the organizational structure:
+            1. Sections properly arranged
+            2. Dependencies correctly identified
+            3. Research plan properly positioned
+            4. Sequential ordering appropriate
+            """,
+    ),
+    EvaluationCriterion(
+        name="Word Count Distribution",
+        evaluation_instructions="""
+            Assess word count allocation:
+            1. Research plan within 50-66% range unless specified otherwise in context
+            2. Section limits appropriate to content
+            3. Total within application maximum
+            4. Figure space properly reserved
+            5. Distribution logical across sections
+            """,
+    ),
+    EvaluationCriterion(
+        name="Search Query Quality",
+        evaluation_instructions="""
+            Evaluate search queries for each section:
+            1. Queries target specific content areas
+            2. Use appropriate technical terminology
+            3. Align with section keywords and topics
+            4. Cover full scope of section content
+            5. Are effective RAG queries
+            """,
+    ),
+]
 
 
 async def handle_generate_grant_template(
@@ -321,53 +371,9 @@ async def handle_generate_grant_template(
             )
         ),
         passing_score=90,
-        increment=5,
+        increment=10,
         retries=5,
-        criteria=[
-            EvaluationCriterion(
-                name="Content Generation Guidance",
-                evaluation_instructions="""
-            Assess quality and coherence of content guidance:
-            1. All sections have generation instructions
-            2. Generation instructions are specific and actionable
-            3. The keywords ground the scope effectively
-            4. The topics comprehensively cover required content
-            5. Instructions, keywords, and topics form coherent guidance
-            """,
-            ),
-            EvaluationCriterion(
-                name="Structural Organization",
-                evaluation_instructions="""
-            Evaluate the organizational structure:
-            1. Sections properly arranged
-            2. Dependencies correctly identified
-            3. Research plan properly positioned
-            4. Sequential ordering appropriate
-            """,
-            ),
-            EvaluationCriterion(
-                name="Word Count Distribution",
-                evaluation_instructions="""
-            Assess word count allocation:
-            1. Research plan within 50-66% range unless specified otherwise in context
-            2. Section limits appropriate to content
-            3. Total within application maximum
-            4. Figure space properly reserved
-            5. Distribution logical across sections
-            """,
-            ),
-            EvaluationCriterion(
-                name="Search Query Quality",
-                evaluation_instructions="""
-            Evaluate search queries for each section:
-            1. Queries target specific content areas
-            2. Use appropriate technical terminology
-            3. Align with section keywords and topics
-            4. Cover full scope of section content
-            5. Are effective RAG queries
-            """,
-            ),
-        ],
+        criteria=evaluation_criteria,
     )
 
     sorted_sections = cast(list[GrantSection], sorted(result["sections"], key=lambda x: x["order"]))

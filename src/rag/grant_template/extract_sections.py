@@ -423,6 +423,7 @@ async def extract_sections(task_description: str) -> ExtractedSections:
         validator=validate_section_extraction,
         temperature=1.3,
         top_p=0.97,
+        candidate_count=3,
     )
 
 
@@ -478,6 +479,7 @@ async def handle_extract_sections(
         EvaluationCriterion(
             name="Parent-Child Relationships",
             evaluation_instructions="Evaluate if the sections have accurate parent-child relationships.",
+            weight=0.75,
         ),
     ]
 
@@ -492,8 +494,8 @@ async def handle_extract_sections(
     return await with_prompt_evaluation(
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
-        increment=5,
-        retries=5,
-        passing_score=90,
         criteria=criteria,
+        passing_score=90,
+        increment=10,
+        retries=5,
     )
