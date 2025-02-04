@@ -130,6 +130,8 @@ async def evaluate_prompt_output(
         system_prompt=EVALUATION_SYSTEM_PROMPT,
         model=EVALUATION_MODEL,
         messages=EVALUATION_PROMPT.to_string(prompt=prompt, model_output=model_output),
+        temperature=0.2,
+        top_p=0.7,
     )
 
 
@@ -194,7 +196,7 @@ async def with_prompt_evaluation[T, P](
     failures: list[dict[str, EvaluationScore]] = []
 
     while iteration <= retries:
-        model_output = await prompt_handler(prompt)
+        model_output = await prompt_handler(current_prompt)  # type: ignore[arg-type]
         evaluation_result = await evaluate_prompt_output(
             prompt=current_prompt, model_output=cast(dict[str, Any] | str, model_output), criteria=criteria
         )
