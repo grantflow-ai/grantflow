@@ -47,6 +47,11 @@ async def make_completions_request[T](
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
     response_schema: dict[str, Any] | None = None,
     messages: str | Part | list[str | Part],
+    # generation settings
+    temperature: float = 0,
+    top_p: float | None = None,
+    top_k: int | None = None,
+    candidate_count: int | None = None,
 ) -> T:
     """Make a completions request to the model.
 
@@ -57,6 +62,10 @@ async def make_completions_request[T](
         system_prompt: The system prompt.
         response_schema: The response schema.
         messages: The messages to send to the model.
+        temperature: The temperature.
+        top_p: The top-p value.
+        top_k: The top-k value.
+        candidate_count: The candidate count.
 
     Returns:
         The generated text.
@@ -73,7 +82,14 @@ async def make_completions_request[T](
     ]
     response = await client.generate_content_async(
         contents=contents,
-        generation_config=GenerationConfig(response_mime_type=CONTENT_TYPE_JSON, response_schema=response_schema),
+        generation_config=GenerationConfig(
+            response_mime_type=CONTENT_TYPE_JSON,
+            response_schema=response_schema,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            candidate_count=candidate_count,
+        ),
     )
     logger.debug("Received content from model.", text=response.text)
     return deserialize(response.text, response_type)
@@ -108,6 +124,11 @@ async def handle_completions_request[T](
     response_type: type[T],
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
     validator: Callable[[T], None] | None = None,
+    # generation settings
+    temperature: float = 0,
+    top_p: float | None = None,
+    top_k: int | None = None,
+    candidate_count: int | None = None,
 ) -> T:
     """Handle a completions request to the model.
 
@@ -120,6 +141,10 @@ async def handle_completions_request[T](
         response_type: The response type.
         system_prompt: The system prompt.
         validator: Custom validator function for the response.
+        temperature: The temperature.
+        top_p: The top-p value.
+        top_k: The top-k value.
+        candidate_count: The candidate count.
 
     Raises:
         ValidationError: If the response is invalid.
@@ -146,6 +171,10 @@ async def handle_completions_request[T](
                 system_prompt=system_prompt,
                 response_schema=response_schema,
                 messages=msgs,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                candidate_count=candidate_count,
             )
             # if not validator and response_schema:
             #     validator = create_json_schema_validator(response_schema)  # noqa: ERA001

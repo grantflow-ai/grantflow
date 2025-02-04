@@ -13,7 +13,7 @@ repos:
       - id: name-tests-test
         args:
           - --pytest
-        exclude: factories|test_utils|completion.py|test_data
+        exclude: factories|test_utils|completion.py|test_data|utils
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="E2E: Generate Research Task Text" type="tests" factoryName="Autodetect">
+  <configuration default="false" name="E2E: Grant Template (ICS)" type="tests" factoryName="Autodetect" folderName="E2E Tests">
     <module name="backend" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -14,7 +14,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="_new_additionalArguments" value="&quot;&quot;" />
-    <option name="_new_target" value="&quot;tests.rag.e2e.research_plan_text_generation_test.test_generate_research_task&quot;" />
+    <option name="_new_target" value="&quot;generate_grant_template_test.test_handle_generate_grant_template_ics&quot;" />
     <option name="_new_targetType" value="&quot;PYTHON&quot;" />
     <method v="2" />
   </configuration>
