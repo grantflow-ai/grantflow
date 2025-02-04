@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="E2E: Grant Template (NIH)" type="tests" factoryName="Autodetect">
+  <configuration default="false" name="E2E: Grant Template (NIH)" type="tests" factoryName="Autodetect" folderName="E2E Tests">
     <module name="backend" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
