@@ -1,5 +1,6 @@
 from typing import Final, Literal, NotRequired, TypedDict
 
+from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.patterns import SNAKE_CASE_PATTERN
 from src.rag.completion import handle_completions_request
@@ -51,25 +52,32 @@ You are a specialized system designed to analyze grant application requirements 
 EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_grant_application_sections",
     template="""
-     # Grant Application Section Analyzer
+    # Grant Application Section Analyzer
 
-    You are tasked with determining the correct format for a grant application for a provided CFP.
+    You are tasked with determining the correct format for a grant application given the provided sources.
 
-    This is the text extracted from the CFP source:
+    ## Sources
 
-    ## CFP Content:
+    ${organization_guidelines}
+
+    This is the text extracted from the funding opportunity announcement:
+
+    ### Announcement Content:
+
+    #### The announcement subject is:
+
+    <cfp_subject>
+    ${cfp_subject}
+    </cfp_subject>
+
+    #### And these are the requirements and guidelines extracted from the announcement:
+
     <cfp_content>
     ${cfp_content}
     </cfp_content>
 
-    And these are the RAG results:
-
-    ### Organization Guidelines
-    <organization_guidelines>
-    ${organization_guidelines}
-    </organization_guidelines>
-
-    As a first stage, begin by determining which of the sources - if any of them - contains concrete information about the expected structure of the grant application document or text. It is not always the case this information is available. Flag all other input that is impertinent to this, as irrelevant and proceed.
+    As a first stage, begin by determining which of the sources contains concrete information about the expected structure of the grant application document or text.
+    It is not always the case this information is available. Flag all other input that is impertinent to this, as irrelevant and proceed.
 
     ## Section Tags
     Use the following section categories:
@@ -84,6 +92,7 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     - **Scientific Content**
       - Technical Abstract
       - Project Summary
+      - Project Narrative
       - Research Strategy/Plan
       - Technical Background
       - Scientific Premise
@@ -285,6 +294,23 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     """,
 )
 
+ORGANIZATION_GUIDELINES_FRAGMENT: Final[PromptTemplate] = PromptTemplate(
+    name="organization_fragment",
+    template="""
+The grant application is for a funding opportunity offer by the ${organization_full_name} (${organization_abbreviation}):
+
+These are retrieval results for the organization application writing guidelines from our database:
+
+### Organization Guidelines
+    <rag_results>
+    ${rag_results}
+    </rag_results>
+
+If these are available (non empty JSON array), regard them as the primary source, and use the announcement content for additional context.
+Otherwise, use the CFP as the source for guidelines as well.
+""",
+)
+
 section_extraction_json_schema = {
     "type": "object",
     "required": ["sections", "parts"],
@@ -395,33 +421,73 @@ async def extract_sections(task_description: str) -> ExtractedSections:
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
         validator=validate_section_extraction,
+        temperature=1.3,
+        top_p=0.97,
     )
 
 
-async def handle_extract_sections(cfp_content: str, organization_id: str | None = None) -> ExtractedSections:
+async def handle_extract_sections(
+    cfp_content: str, cfp_subject: str, organization: FundingOrganization | None = None
+) -> ExtractedSections:
     """Extract and classify sections from grant application materials.
 
     Args:
         cfp_content: Content of the call for proposals
-        organization_id: Optional organization ID for retrieving additional guidelines
+        cfp_subject: Subject of the call for proposals
+        organization: The funding organization
 
     Returns:
         Classified sections with their relationships and metadata
     """
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         section_tags=SECTION_CATEGORIES,
+        cfp_subject=cfp_subject,
         cfp_content=cfp_content,
     )
 
     organization_guidelines = (
-        await retrieve_documents(
-            organization_id=organization_id,
-            task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
-            search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+        ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results=await retrieve_documents(
+                organization_id=str(organization.id),
+                task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+                search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+            ),
+            organization_full_name=organization.full_name,
+            organization_abbreviation=organization.abbreviation,
         )
-        if organization_id
-        else []
+        if organization
+        else ""
     )
+    criteria = [
+        EvaluationCriterion(
+            name="Correctness",
+            evaluation_instructions="Evaluate the correctness of the result in relation to the sources.",
+        ),
+        EvaluationCriterion(
+            name="Titles",
+            evaluation_instructions="Evaluate if the sections have descriptive, conventional titles.",
+        ),
+        EvaluationCriterion(
+            name="Classifications",
+            evaluation_instructions="Evaluate if the sections have accurate classifications.",
+        ),
+        EvaluationCriterion(
+            name="Part Specification",
+            evaluation_instructions="Evaluate if the sections have the correct part specified, if applicable.",
+        ),
+        EvaluationCriterion(
+            name="Parent-Child Relationships",
+            evaluation_instructions="Evaluate if the sections have accurate parent-child relationships.",
+        ),
+    ]
+
+    if organization:
+        criteria.append(
+            EvaluationCriterion(
+                name="Organization Guidelines Fit",
+                evaluation_instructions="Evaluate if the result derives from the organization guidelines correctly.",
+            )
+        )
 
     return await with_prompt_evaluation(
         prompt_handler=extract_sections,
@@ -429,31 +495,5 @@ async def handle_extract_sections(cfp_content: str, organization_id: str | None 
         increment=5,
         retries=5,
         passing_score=90,
-        criteria=[
-            EvaluationCriterion(
-                name="Correctness",
-                evaluation_instructions="Evaluate if the extracted sections reflect the expected structure of the grant application or whether they reflect the structure of the CFP document (wrong!).",
-                weight=1.5,
-            ),
-            EvaluationCriterion(
-                name="Identification",
-                evaluation_instructions="Evaluate if all core research sections are identified and assigned reasonably.",
-            ),
-            EvaluationCriterion(
-                name="Titles",
-                evaluation_instructions="Evaluate if all core research sections have descriptive titles.",
-            ),
-            EvaluationCriterion(
-                name="Classifications",
-                evaluation_instructions="Evaluate if all core research sections have accurate classifications.",
-            ),
-            EvaluationCriterion(
-                name="Part Specification",
-                evaluation_instructions="Evaluate if all core research sections have the correct part specified, if applicable.",
-            ),
-            EvaluationCriterion(
-                name="Parent-Child Relationships",
-                evaluation_instructions="Evaluate if all core research sections have accurate parent-child relationships.",
-            ),
-        ],
+        criteria=criteria,
     )

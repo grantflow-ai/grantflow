@@ -8,7 +8,7 @@ from src.db.connection import get_session_maker
 from src.db.json_objects import GrantSection
 from src.db.tables import FundingOrganization, GrantTemplate
 from src.exceptions import DatabaseError
-from src.rag.grant_template.extract_cfp_data import extract_cfp_data
+from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
 from src.rag.grant_template.extract_sections import handle_extract_sections
 from src.rag.grant_template.generate_grant_template import handle_generate_grant_template
 from src.utils.logger import get_logger
@@ -18,20 +18,23 @@ logger = get_logger(__name__)
 
 async def extract_and_enrich_sections(
     cfp_content: str,
-    organization_id: str | None,
+    cfp_subject: str,
+    organization: FundingOrganization | None,
 ) -> list[GrantSection]:
     """Extract and enrich the sections from the grant CFP content.
 
     Args:
         cfp_content: The content of the grant CFP.
-        organization_id: The organization ID.
+        cfp_subject: The subject of the grant CFP.
+        organization: The funding organization.
 
     Returns:
         The extracted and enriched sections.
     """
     extracted_sections = await handle_extract_sections(
         cfp_content=cfp_content,
-        organization_id=organization_id,
+        cfp_subject=cfp_subject,
+        organization=organization,
     )
 
     core_narrative_sections = [s for s in extracted_sections["sections"] if s["type"] == "core_research_narrative"]
@@ -43,7 +46,7 @@ async def extract_and_enrich_sections(
 
     return await handle_generate_grant_template(
         cfp_content=cfp_content,
-        organization_id=organization_id,
+        organization=organization,
         core_narrative_sections=core_narrative_sections,
     )
 
@@ -77,12 +80,21 @@ async def grant_template_generation_pipeline_handler(
         str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
     }
 
-    extraction_result = await extract_cfp_data(cfp_content=cfp_content, organization_mapping=organization_mapping)
+    extraction_result = await handle_extract_cfp_data(
+        cfp_content=cfp_content, organization_mapping=organization_mapping
+    )
+    organization = (
+        next(org for org in funding_organizations if org.id == extraction_result["organization_id"])
+        if extraction_result["organization_id"]
+        else None
+    )
+
     logger.info("Extracted CFP data")
 
     enriched_sections = await extract_and_enrich_sections(
         cfp_content="...".join(extraction_result["content"]),
-        organization_id=extraction_result["organization_id"],
+        cfp_subject=extraction_result["cfp_subject"],
+        organization=organization,
     )
     logger.info("Extracted grant template sections")
 

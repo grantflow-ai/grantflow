@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator, Generator
 from logging import Logger, getLogger
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Final
+from typing import Any, Final, cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -645,12 +645,12 @@ async def full_application_id(
 
 
 @pytest.fixture
-async def nih_organization_id(
+async def nih_organization(
     async_session_maker: async_sessionmaker[Any],
-) -> str:
+) -> FundingOrganization:
     async with async_session_maker() as session:
-        result = await session.execute(select(FundingOrganization.id).where(FundingOrganization.abbreviation == "NIH"))
-        funding_organization_id = result.scalar_one()
+        result = await session.execute(select(FundingOrganization).where(FundingOrganization.abbreviation == "NIH"))
+        funding_organization = result.scalar_one()
 
     data_fixture_folder = FIXTURES_FOLDER / "organization_files" / "nih" / "files"
 
@@ -670,7 +670,7 @@ async def nih_organization_id(
         await gather(
             *[
                 parse_source_file(
-                    organization_id=str(funding_organization_id),
+                    organization_id=str(funding_organization.id),
                     source_file=source_file,
                     async_session_maker=async_session_maker,
                     target_folder=data_fixture_folder,
@@ -704,7 +704,7 @@ async def nih_organization_id(
                 insert(OrganizationFile)
                 .values(
                     {
-                        "funding_organization_id": funding_organization_id,
+                        "funding_organization_id": funding_organization.id,
                         "rag_file_id": rag_file_id,
                     }
                 )
@@ -726,4 +726,17 @@ async def nih_organization_id(
             )
         await session.commit()
 
-    return str(funding_organization_id)
+    return cast(FundingOrganization, funding_organization)
+
+
+@pytest.fixture
+async def organization_mapping(async_session_maker: async_sessionmaker[Any]) -> dict[str, dict[str, str]]:
+    async with async_session_maker() as session:
+        organizations = await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc()))
+        return {
+            str(org.id): {
+                "full_name": org.full_name,
+                "abbreviation": org.abbreviation,
+            }
+            for org in organizations
+        }

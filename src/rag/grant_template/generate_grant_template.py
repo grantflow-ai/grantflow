@@ -3,6 +3,7 @@ from functools import partial
 from typing import Final, NotRequired, TypedDict, cast
 
 from src.db.json_objects import GrantSection
+from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.rag.completion import handle_completions_request
 from src.rag.grant_template.extract_sections import ExtractedSectionDTO
@@ -294,13 +295,13 @@ async def generate_grant_template(
 
 
 async def handle_generate_grant_template(
-    *, cfp_content: str, organization_id: str | None, core_narrative_sections: list[ExtractedSectionDTO]
+    *, cfp_content: str, organization: FundingOrganization | None, core_narrative_sections: list[ExtractedSectionDTO]
 ) -> list[GrantSection]:
     """Generate a complete grant template including format and section configurations.
 
     Args:
         cfp_content: The extracted content of a grant CFP.
-        organization_id: The funding organization to use for the grant template.
+        organization: The funding organization.
         core_narrative_sections: The extracted sections from the CFP content.
 
     Returns:
@@ -314,8 +315,8 @@ async def handle_generate_grant_template(
         prompt_handler=partial(generate_grant_template, input_sections=core_narrative_sections),
         prompt=prompt.to_string(
             organization_guidelines=(
-                await retrieve_documents(organization_id=organization_id, task_description=prompt)
-                if organization_id
+                await retrieve_documents(organization_id=str(organization.id), task_description=prompt)
+                if organization
                 else []
             )
         ),
