@@ -1,0 +1,210 @@
+[
+    {
+        "id": "general_audience_abstract",
+        "title": "General Audience Abstract",
+        "is_research_plan": false,
+        "parent_id": "null",
+        "part": null,
+        "keywords": [
+            "lay summary",
+            "public interest",
+            "project overview",
+            "non-technical",
+            "melanoma",
+            "impact"
+        ],
+        "topics": [
+            "project summary",
+            "research significance",
+            "public health relevance",
+            "melanoma research"
+        ],
+        "generation_instructions": "Write a general audience abstract summarizing the proposed research project in non-technical language. The abstract should explain the research problem, objectives, and impact on melanoma research. Character limit: 1,000 to 1,200 characters.",
+        "depends_on": [],
+        "max_words": 200,
+        "search_queries": [
+            "melanoma research lay summary examples",
+            "non-technical research summary examples"
+        ],
+        "order": 1
+    },
+    {
+        "id": "technical_abstract",
+        "title": "Technical Abstract",
+        "is_research_plan": false,
+        "parent_id": "null",
+        "part": null,
+        "keywords": [
+            "scientific summary",
+            "research goals",
+            "methods",
+            "melanoma",
+            "technical details",
+            "experimental design"
+        ],
+        "topics": [
+            "research objectives",
+            "experimental design",
+            "expected outcomes",
+            "melanoma research methods"
+        ],
+        "generation_instructions": "Write a detailed technical abstract summarizing the proposed research project for a scientific audience. Include background, hypothesis, specific aims, methods, and expected results. Adhere to a limit of 2,000 characters.",
+        "depends_on": [],
+        "max_words": 250,
+        "search_queries": [
+            "melanoma research abstract examples",
+            "how to write a technical research abstract"
+        ],
+        "order": 2
+    },
+    {
+        "id": "background",
+        "title": "Background",
+        "is_research_plan": false,
+        "parent_id": "project_description",
+        "part": "Project Description",
+        "keywords": [
+            "background",
+            "rationale",
+            "target validation",
+            "research problem",
+            "melanoma"
+        ],
+        "topics": [
+            "research background",
+            "rationale for study",
+            "target selection and validation"
+        ],
+        "generation_instructions": "Write the background section for the project description. Include the research problem, target selection, validation evidence, rationale, and hypothesis. Length: 0.8 to 1 page.",
+        "depends_on": [],
+        "max_words": 350,
+        "search_queries": [
+            "melanoma research background examples",
+            "how to write research background"
+        ],
+        "order": 3
+    },
+    {
+        "id": "specific_aims",
+        "title": "Specific Aims",
+        "is_research_plan": true,
+        "parent_id": "project_description",
+        "part": "Project Description",
+        "keywords": [
+            "specific aims",
+            "objectives",
+            "goals",
+            "milestones"
+        ],
+        "topics": [
+            "research objectives",
+            "specific research aims"
+        ],
+        "generation_instructions": "Outline the specific aims of the project. Clearly state each aim as a goal, indicating expected outcomes and contribution to melanoma research. Length: 0.3 to 0.5 pages.",
+        "depends_on": [],
+        "max_words": 175,
+        "search_queries": [
+            "examples of research specific aims",
+            "melanoma research aims"
+        ],
+        "order": 4
+    },
+    {
+        "id": "preliminary_data",
+        "title": "Preliminary Data",
+        "is_research_plan": false,
+        "parent_id": "project_description",
+        "part": "Project Description",
+        "keywords": [
+            "preliminary data",
+            "results",
+            "feasibility",
+            "evidence"
+        ],
+        "topics": [
+            "preliminary research results",
+            "feasibility evidence"
+        ],
+        "generation_instructions": "Summarize the preliminary data that supports the project's feasibility. Include key results relevant to the hypothesis and specific aims. Length: 0.5 to 1 page.",
+        "depends_on": [],
+        "max_words": 400,
+        "search_queries": [
+            "melanoma preliminary data examples",
+            "how to present preliminary results"
+        ],
+        "order": 5
+    },
+    {
+        "id": "milestone_plan",
+        "title": "Milestone Plan and Timeline",
+        "is_research_plan": false,
+        "parent_id": "project_description",
+        "part": "Project Description",
+        "keywords": [
+            "milestones",
+            "timeline",
+            "progress tracking"
+        ],
+        "topics": [
+            "milestone plan",
+            "timeline for research"
+        ],
+        "generation_instructions": "Describe the milestone plan and timeline for the project. Identify key milestones and expected timeframes to track progress. Length: 0.3 to 0.5 pages.",
+        "depends_on": [],
+        "max_words": 175,
+        "search_queries": [
+            "research milestone plan example",
+            "project timeline for research"
+        ],
+        "order": 6
+    },
+    {
+        "id": "clinical_impact",
+        "title": "Clinical Impact Rationale",
+        "is_research_plan": false,
+        "parent_id": "project_description",
+        "part": "Project Description",
+        "keywords": [
+            "clinical impact",
+            "health outcomes",
+            "translational research"
+        ],
+        "topics": [
+            "clinical relevance",
+            "health impact"
+        ],
+        "generation_instructions": "Explain the potential clinical impact of the project on melanoma treatment or diagnosis. Address both short-term and long-term outcomes. Length: 0.3 to 0.5 pages.",
+        "depends_on": [],
+        "max_words": 175,
+        "search_queries": [
+            "clinical impact examples in research",
+            "melanoma clinical relevance"
+        ],
+        "order": 7
+    },
+    {
+        "id": "literature_references",
+        "title": "Literature References",
+        "is_research_plan": false,
+        "parent_id": "null",
+        "part": "Literature References",
+        "keywords": [
+            "references",
+            "citation",
+            "research background",
+            "supporting evidence"
+        ],
+        "topics": [
+            "supporting literature",
+            "research citations"
+        ],
+        "generation_instructions": "Provide a list of up to 30 references relevant to the research proposal. Cite studies that validate the background, hypothesis, and specific aims.",
+        "depends_on": [],
+        "max_words": null,
+        "search_queries": [
+            "how to write literature references",
+            "examples of research citations"
+        ],
+        "order": 8
+    }
+]

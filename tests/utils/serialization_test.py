@@ -1,12 +1,32 @@
-from typing import Any
+from enum import Enum
+from typing import Any, TypedDict
 
 import pytest
 from msgspec import DecodeError, EncodeError
+from pydantic import BaseModel
 from pytest_mock import MockFixture
 
 from src.exceptions import DeserializationError, SerializationError
 from src.utils.serialization import decode_hook, deserialize, encode_hook, serialize
-from tests.test_data.models import TestDict, TestEnum, TestModel, TestModelWithEnum
+
+
+class TestModel(BaseModel):
+    name: str
+    value: int
+
+
+class TestEnum(Enum):
+    A = "a"
+    B = "b"
+
+
+class TestModelWithEnum(BaseModel):
+    enum_field: TestEnum
+
+
+class TestDict(TypedDict):
+    name: str
+    value: int
 
 
 def test_decode_hook_pydantic_model() -> None:
