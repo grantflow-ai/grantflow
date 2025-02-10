@@ -148,6 +148,7 @@ async def handle_extract_cfp_data(
         The extracted CFP data.
     """
     return await with_prompt_evaluation(
+        prompt_identifier="extract_cfp_data",
         prompt_handler=extract_cfp_data,
         prompt=EXTRACT_CFP_DATA_USER_PROMPT.to_string(
             cfp_content=cfp_content, organization_mapping=organization_mapping

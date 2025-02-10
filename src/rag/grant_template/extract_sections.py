@@ -492,6 +492,7 @@ async def handle_extract_sections(
         )
 
     return await with_prompt_evaluation(
+        prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         criteria=criteria,

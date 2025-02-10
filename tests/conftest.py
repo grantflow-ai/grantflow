@@ -72,6 +72,7 @@ def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
 SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
 RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
 FIXTURES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "fixtures"
+SYNTHETHIC_DATA_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "synthethic"
 TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER / "application_sources")
 TEST_DATA_RESULTS: Generator[Path, Any, Any] = _file_path_generator(RESULTS_FOLDER)
 CFP_FIXTURES: Generator[Path, Any, Any] = _file_path_generator(FIXTURES_FOLDER / "cfps")
@@ -352,7 +353,7 @@ async def grant_application_file(
 
 @pytest.fixture
 async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
-    cfp_content_file = RESULTS_FOLDER / "nih-cfp.md"
+    cfp_content_file = RESULTS_FOLDER / "nih.md"
     assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
 
     contents = cfp_content_file.read_text()

@@ -11,5 +11,5 @@ EMBEDDING_DIMENSIONS: Final[int] = 384
 
 MIN_WORDS_RATIO: Final[float] = 0.8
 
-EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.0-flash-exp")
-GENERATION_MODEL: Final[str] = get_env("GENERATION_MODEL", fallback="gemini-2.0-flash-exp")
+EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.0-flash-001")
+GENERATION_MODEL: Final[str] = get_env("GENERATION_MODEL", fallback="gemini-2.0-flash-001")

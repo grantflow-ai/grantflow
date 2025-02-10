@@ -6,7 +6,7 @@ from src.db.json_objects import GrantSection
 from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.rag.completion import handle_completions_request
-from src.rag.grant_template.extract_sections import ExtractedSectionDTO
+from src.rag.grant_template.structure_research_plan import RestructuredSection
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
@@ -44,57 +44,30 @@ GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ${organization_guidelines}
         </organization_guidelines>
 
-    ## Instructions
-
+## Instructions
     1. Length Analysis and Word Count Allocation:
-       - Identify total application length limits from sources, or complement with sensible defaults based on the organization (if known) or similar documents.
+       - Identify total application length limits from sources
        - Convert all measurements to word counts:
-         * Page count: 415 words/page (TNR 11pt), adjust for font type, font size and line spacing
+         * Page count: 415 words/page (TNR 11pt), adjust for font type
          * Characters: divide by 7
        - Reduce by 12.5% to account for figures
-       - Research plan: Estimate roughly 60% of remaining words unless a different ratio is explicitly specified
-       - Distribute remaining words across sections based on guidelines or content importance
+       - Distribute words across sections based on research plan allocation
+       - Research plan should be 50-66% of total words unless specified otherwise
 
     2. Writing Guidance Integration:
-       - Assign keywords to ground content and define LLM scope
-       - Assign topics that capture the required content areas
-       - Write specific, actionable generation instructions for the LLM
-       Example:
-       ```
-       {
-           "keywords": ["methodology", "experimental_design", "controls", "statistical_analysis"],
-           "topics": ["research_methodology", "experimental_approach", "data_analysis"],
-           "generation_instructions": "Write a detailed methodology section that:
-               1. Opens with an overview of the experimental approach
-               2. Describes each experimental protocol step-by-step
-               3. Details control experiments and their rationale
-               4. Explains statistical methods for data analysis
-               5. Addresses potential technical challenges"
-       }
-       ```
+       - Assign keywords to ground content
+       - Assign topics that capture required content areas
+       - Write specific, actionable generation instructions
 
     3. Search Query Generation:
        - Create 3-10 focused search queries for RAG
        - Target specific content areas
        - Use section-specific terminology
 
-    4. Research Plan:
-       - Set one section to `is_research_plan: true`:
-            - This section is the core research plan, which is usually between 50-66% of the total word count (unless otherwise specified)
-            - Identify this section, or if multiple are present, choose the most likely candidate
-            - If no section can be identified as the research plan, return an error and an empty list of sections
-
-    5. Dependencies
-       - Consider that sections are grouped based on their dependencies and then generated. The generated text is injected as input to any dependent sections.
-       - Assign the dependencies based on the topics and content flow:
-              * If a section depends on another, ensure the dependent section is generated first and the dependency is listed in the `depends_on` field.
-              * If a section is independent, leave the `depends_on` field empty.
-       - A section can depend on multiple sections, but all dependencies must be generated before the dependent section.
-
-    6. Ordering
-        - Consider that the "order" value determines the order in which the sections appear on the page, and thus the relationships between titles and content.
-        - Consider that order should make sense together with parent_id, which also determined the structure of the document.
-        - Assign a unique positive value - starting from 1 (appearance at top of document) and incrementing by 1 for each subsequent section.
+    4. Dependencies and Order:
+       - Maintain existing parent-child relationships
+       - Add content dependencies between sections
+       - Order sections logically within hierarchy
 
     ## Output Schema
 
@@ -145,7 +118,7 @@ grant_template_generation_json_schema: Final = {
                     "id": {"type": "string", "minLength": 1, "maxLength": 100},
                     "title": {"type": "string", "minLength": 1, "maxLength": 255},
                     "is_research_plan": {"type": "boolean"},
-                    "parent_id": {"type": "string", "minLength": 1},
+                    "parent_id": {"type": "string", "nullable": True, "minLength": 1},
                     "part": {"type": "string", "nullable": True},
                     "keywords": {
                         "type": "array",
@@ -208,14 +181,14 @@ def detect_cycle(graph: dict[str, list[str]], start: str, visited: set[str], pat
     return False
 
 
-def validate_template_sections(
-    response: TemplateSectionsResponse, *, input_sections: list[ExtractedSectionDTO]
+def validate_template_sections(  # noqa: PLR0912
+    response: TemplateSectionsResponse, *, input_sections: list[RestructuredSection]
 ) -> None:
     """Validate the generated grant template sections.
 
     Args:
         response: The generated template sections
-        input_sections: The original input sections that should be preserved
+        input_sections: The pre-structured input sections
 
     Raises:
         ValidationError: If the response is invalid
@@ -224,7 +197,7 @@ def validate_template_sections(
     if not response["sections"]:
         if error := response.get("error"):
             raise InsufficientContextError(error)
-        raise ValidationError("No sections generated. Please provide an error message.", context=response)
+        raise ValidationError("No sections generated")
 
     input_section_ids = {section["id"] for section in input_sections}
     output_section_ids = {section["id"] for section in response["sections"]}
@@ -242,29 +215,29 @@ def validate_template_sections(
 
     for section in response["sections"]:
         input_section = next(s for s in input_sections if s["id"] == section["id"])
+        if input_section["parent_id"] != section["parent_id"]:
+            raise ValidationError("Parent relationship modified")
         if input_section["part"] != section["part"]:
-            raise ValidationError(
-                "Part assignment mismatch",
-                context={
-                    "section_id": section["id"],
-                    "expected_part": input_section["part"],
-                    "found_part": section["part"],
-                },
-            )
-
-    research_plan_sections = [s for s in response["sections"] if s["is_research_plan"]]
-    if len(research_plan_sections) != 1:
-        raise ValidationError(
-            f"Must have exactly one research plan section. Found {len(research_plan_sections)}. Fix the issue by assigning a single section as 'is_research_plan'=true",
-            context={"research_plan_sections": research_plan_sections},
-        )
+            raise ValidationError("Part assignment modified")
+        if input_section["is_research_plan"] != section["is_research_plan"]:
+            raise ValidationError("Research plan designation modified")
 
     all_orders = [section["order"] for section in response["sections"]]
     if len(set(all_orders)) != len(all_orders):
         raise ValidationError("Duplicate order values found")
 
+    if min(all_orders) != 1 or max(all_orders) != len(all_orders):
+        raise ValidationError("Order values must start at 1 and be consecutive")
+
     dependency_graph = defaultdict[str, list[str]](list)
     for section in response["sections"]:
+        if not section["depends_on"]:
+            continue
+
+        invalid_deps = set(section["depends_on"]) - output_section_ids
+        if invalid_deps:
+            raise ValidationError(f"Invalid dependencies found: {invalid_deps}")
+
         dependency_graph[section["id"]].extend(section["depends_on"])
 
     for section_id in dependency_graph:
@@ -273,7 +246,7 @@ def validate_template_sections(
 
 
 async def generate_grant_template(
-    task_description: str, *, input_sections: list[ExtractedSectionDTO]
+    task_description: str, *, input_sections: list[RestructuredSection]
 ) -> TemplateSectionsResponse:
     """Generate a grant template from a given task description.
 
@@ -302,57 +275,56 @@ evaluation_criteria = [
         name="Content Generation Guidance",
         evaluation_instructions="""
             Assess quality and coherence of content guidance:
-            1. All sections have generation instructions
-            2. Generation instructions are specific and actionable
-            3. The keywords ground the scope effectively
-            4. The topics comprehensively cover required content
-            5. Instructions, keywords, and topics form coherent guidance
-            """,
-    ),
-    EvaluationCriterion(
-        name="Structural Organization",
-        evaluation_instructions="""
-            Evaluate the organizational structure:
-            1. Sections properly arranged
-            2. Dependencies correctly identified
-            3. Research plan properly positioned
-            4. Sequential ordering appropriate
+            1. Section-specific keywords ground the scope
+            2. Topics match section purpose
+            3. Generation instructions are clear and actionable
+            4. Instructions capture full content requirements
+            5. Content relationships properly reflected
             """,
     ),
     EvaluationCriterion(
         name="Word Count Distribution",
         evaluation_instructions="""
             Assess word count allocation:
-            1. Research plan within 50-66% range unless specified otherwise in context
-            2. Section limits appropriate to content
-            3. Total within application maximum
-            4. Figure space properly reserved
-            5. Distribution logical across sections
+            1. Total length matches requirements
+            2. Section limits are proportional
+            3. Research plan allocation preserved
+            4. Space for figures considered
+            5. Limits support content needs
             """,
     ),
     EvaluationCriterion(
-        name="Search Query Quality",
+        name="Dependencies and Flow",
         evaluation_instructions="""
-            Evaluate search queries for each section:
-            1. Queries target specific content areas
-            2. Use appropriate technical terminology
-            3. Align with section keywords and topics
-            4. Cover full scope of section content
-            5. Are effective RAG queries
+            Evaluate section relationships:
+            1. Dependencies reflect content flow
+            2. Generation order is logical
+            3. Parent-child structure preserved
+            4. Section order matches hierarchy
+            """,
+    ),
+    EvaluationCriterion(
+        name="Search Query Effectiveness",
+        evaluation_instructions="""
+            Evaluate search queries:
+            1. Target section-specific content
+            2. Use precise terminology
+            3. Cover full content scope
+            4. Support RAG retrieval
             """,
     ),
 ]
 
 
 async def handle_generate_grant_template(
-    *, cfp_content: str, organization: FundingOrganization | None, core_narrative_sections: list[ExtractedSectionDTO]
+    *, cfp_content: str, organization: FundingOrganization | None, core_narrative_sections: list[RestructuredSection]
 ) -> list[GrantSection]:
     """Generate a complete grant template including format and section configurations.
 
     Args:
-        cfp_content: The extracted content of a grant CFP.
+        cfp_content: The content of the grant CFP.
         organization: The funding organization.
-        core_narrative_sections: The extracted sections from the CFP content.
+        core_narrative_sections: The core narrative sections extracted from the CFP.
 
     Returns:
         Complete grant template configuration including format and sections
@@ -362,6 +334,7 @@ async def handle_generate_grant_template(
         core_narrative_sections=core_narrative_sections,
     )
     result: TemplateSectionsResponse = await with_prompt_evaluation(
+        prompt_identifier="grant_template_generation",
         prompt_handler=partial(generate_grant_template, input_sections=core_narrative_sections),
         prompt=prompt.to_string(
             organization_guidelines=(

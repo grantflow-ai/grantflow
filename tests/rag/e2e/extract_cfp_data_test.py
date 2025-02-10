@@ -20,7 +20,7 @@ async def test_extract_cfp_data_nih(
     logger.info("Running end-to-end test for extracting CFP data")
     start_time = datetime.now(UTC)
 
-    cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih-cfp.md"
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
     assert cfp_content_file.exists(), "CFP content file does not exist"
 
     result = await handle_extract_cfp_data(
@@ -62,7 +62,7 @@ async def test_extract_cfp_data_israeli_chief_scientist(
     logger.info("Running end-to-end test for extracting CFP data")
     start_time = datetime.now(UTC)
 
-    cfp_content_file = FIXTURES_FOLDER / "cfps" / "ics-cfp.md"
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "ics.md"
     assert cfp_content_file.exists(), "CFP content file does not exist"
 
     result = await handle_extract_cfp_data(
