@@ -164,6 +164,7 @@ FIX_OUTPUT_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 async def with_prompt_evaluation[T, P](
     *,
+    prompt_identifier: str,
     passing_score: int = 100,
     prompt: P,
     prompt_handler: Callable[[P], Awaitable[T]],
@@ -174,6 +175,7 @@ async def with_prompt_evaluation[T, P](
     """Evaluate the output of a language model against a set of criteria and provide feedback.
 
     Args:
+        prompt_identifier: The identifier for the prompt.
         passing_score: The minimum score required to pass the evaluation.
         prompt: The prompt used to generate the output.
         prompt_handler: The function that generates the output.
@@ -225,5 +227,8 @@ async def with_prompt_evaluation[T, P](
 
     raise EvaluationError(
         f"Failed to generate an acceptable response after {retries} retries. Please review the evaluation criteria and try again.",
-        context={f"response_{i + 1}_evaluation_results": failure for i, failure in enumerate(failures)},
+        context={
+            "prompt_identifier": prompt_identifier,
+            "failures": {i + 1: failure for i, failure in enumerate(failures)},
+        },
     )

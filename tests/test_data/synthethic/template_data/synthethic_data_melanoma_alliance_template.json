@@ -3,7 +3,7 @@
         "id": "general_audience_abstract",
         "title": "General Audience Abstract",
         "is_research_plan": false,
-        "parent_id": "null",
+        "parent_id": null,
         "part": null,
         "keywords": [
             "lay summary",
@@ -32,7 +32,7 @@
         "id": "technical_abstract",
         "title": "Technical Abstract",
         "is_research_plan": false,
-        "parent_id": "null",
+        "parent_id": null,
         "part": null,
         "keywords": [
             "scientific summary",
@@ -186,7 +186,7 @@
         "id": "literature_references",
         "title": "Literature References",
         "is_research_plan": false,
-        "parent_id": "null",
+        "parent_id": null,
         "part": "Literature References",
         "keywords": [
             "references",
@@ -200,7 +200,7 @@
         ],
         "generation_instructions": "Provide a list of up to 30 references relevant to the research proposal. Cite studies that validate the background, hypothesis, and specific aims.",
         "depends_on": [],
-        "max_words": null,
+        "max_words": 300,
         "search_queries": [
             "how to write literature references",
             "examples of research citations"

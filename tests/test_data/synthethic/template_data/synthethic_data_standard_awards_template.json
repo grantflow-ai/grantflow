@@ -3,7 +3,7 @@
     "id": "technical_title",
     "title": "Technical Title",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": null,
     "keywords": [
       "project title",
@@ -59,7 +59,7 @@
     "id": "keywords",
     "title": "Keywords",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": null,
     "keywords": [
       "alzheimer's disease",
@@ -88,7 +88,7 @@
     "id": "non_technical_summary",
     "title": "Non-technical Summary",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan",
     "keywords": [
       "lay language",
@@ -117,7 +117,7 @@
     "id": "technical_abstract",
     "title": "Technical Abstract",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan",
     "keywords": [
       "research summary",
@@ -147,7 +147,7 @@
     "id": "objectives_and_hypotheses",
     "title": "Specific Aims and Benchmark Accomplishments",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan",
     "keywords": [
       "research objectives",
@@ -176,7 +176,7 @@
     "id": "relevance_to_alzheimers_disease",
     "title": "Relevance to Alzheimer's disease",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan",
     "keywords": [
       "alzheimer's",
@@ -205,7 +205,7 @@
     "id": "innovation",
     "title": "Innovative Aspects",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan",
     "keywords": [
       "novel approach",
@@ -234,7 +234,7 @@
     "id": "Future Plans",
     "title": "Future Plans",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan",
     "keywords": [
       "research plan",
@@ -264,7 +264,7 @@
     "id": "research_plan",
     "title": "Research Plan",
     "is_research_plan": true,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan",
     "keywords": [
       "research design",
@@ -295,7 +295,7 @@
     "id": "research_plan_sections_a_c",
     "title": "FACILITIES AND ENVIRONMENT",
     "is_research_plan": false,
-    "parent_id": "null",
+    "parent_id": null,
     "part": "Research Plan Sections A-C",
     "keywords": [
       "research facilities",

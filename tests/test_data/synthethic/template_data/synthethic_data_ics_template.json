@@ -3,7 +3,7 @@
         "id": "abstract_scientific_english",
         "title": "Scientific Abstract (English)",
         "is_research_plan": false,
-        "parent_id": "null",
+        "parent_id": null,
         "part": "Abstracts",
         "keywords": [
             "background",
@@ -32,7 +32,7 @@
         "id": "abstract_scientific_hebrew",
         "title": "Scientific Abstract (Hebrew)",
         "is_research_plan": false,
-        "parent_id": "null",
+        "parent_id": null,
         "part": "Abstracts",
         "keywords": [
             "background",
@@ -61,7 +61,7 @@
         "id": "abstract_layman",
         "title": "Layman's Abstract",
         "is_research_plan": false,
-        "parent_id": "null",
+        "parent_id": null,
         "part": "Abstracts",
         "keywords": [
             "lay summary",

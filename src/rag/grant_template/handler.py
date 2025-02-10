@@ -11,6 +11,7 @@ from src.exceptions import DatabaseError
 from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
 from src.rag.grant_template.extract_sections import handle_extract_sections
 from src.rag.grant_template.generate_grant_template import handle_generate_grant_template
+from src.rag.grant_template.structure_research_plan import handle_restructure_sections
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -44,10 +45,14 @@ async def extract_and_enrich_sections(
         if section["parent_id"] not in valid_parents:
             section["parent_id"] = None
 
+    restructured_sections = await handle_restructure_sections(
+        cfp_content=cfp_content, organization=organization, core_narrative_sections=core_narrative_sections
+    )
+
     return await handle_generate_grant_template(
         cfp_content=cfp_content,
         organization=organization,
-        core_narrative_sections=core_narrative_sections,
+        core_narrative_sections=restructured_sections,
     )
 
 
