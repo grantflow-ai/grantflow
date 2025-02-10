@@ -17,39 +17,33 @@ STRUCTURE_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     template="""
     # Research Plan Structure Analysis
 
-    Your task is to analyze and restructure research plan sections, determining if they should be split into standard sub-components.
+    Your task is to refine a list of grant sections that have been previously extracted from the sources and identify the research-plan section.
 
-    ## Input Data
+    These are the sources from which the information has been extracted:
 
-    ### Core Narrative Sections
-    These are the core narrative sections objects (JSON array) you should analyze:
-        <core_narrative_sections>
-        ${core_narrative_sections}
-        </core_narrative_sections>
-
-    ### Sources
-    #### Call for Proposals
+    ## Sources
+    ### Call for Proposals
         <cfp_content>
         ${cfp_content}
         </cfp_content>
 
-    #### Organization Guidelines
+    ### Organization Guidelines
         <organization_guidelines>
         ${organization_guidelines}
         </organization_guidelines>
 
-    ## Instructions
-    1. Identify the research plan section and determine if it should be split into standard sub-sections:
-       - Common sub-sections include: Specific Aims, Significance, Innovation, Approach, Methodology
-       - Split if the CFP or organization guidelines suggest these components should be separate
-       - Split if these components are traditionally separate for this type of grant
-       - The research plan should be marked with is_research_plan=true
-       - Only one section can be marked as the research plan
+    And this is the list of sections:
 
-    2. Structure relationships:
-       - Sub-sections should have parent_id pointing to research plan
-       - Maintain the original part assignment
-       - Order sections logically (aims before approach, etc.)
+    ### Sections
+        <core_narrative_sections>
+        ${core_narrative_sections}
+        </core_narrative_sections>
+
+    ## Instructions
+    1. Identify from the provided sections which section is the research-plan section.
+        -
+        -
+        -
 
     ## Examples
 
@@ -340,7 +334,8 @@ async def handle_restructure_sections(
                 Evaluate if:
                 - Correctly identified the research plan section
                 - Only one section marked as research plan
-                - The selected section is appropriate as main research plan
+                - The selected section is appropriate as the research plan
+                - It correctly includes only the detailed research objectives and specific planned steps
                 """,
             ),
             EvaluationCriterion(
@@ -348,9 +343,9 @@ async def handle_restructure_sections(
                 evaluation_instructions="""
                 Evaluate if:
                 - Appropriate decision made about splitting sections
-                - Split sections follow standard components (Aims, Significance, etc.)
-                - Split aligned with CFP/organization requirements
-                - Generated section IDs are valid snake_case
+                - Split sections follow information from the sources and/or conventional components (Specific Aims, Significance, etc.)
+                - Split aligned with sources and/or conventions
+                - Parent-child relationships are logical after split
                 """,
             ),
             EvaluationCriterion(

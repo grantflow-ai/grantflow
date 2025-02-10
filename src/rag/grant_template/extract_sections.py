@@ -1,4 +1,7 @@
-from typing import Final, Literal, NotRequired, TypedDict
+from asyncio import gather
+from typing import Final, NotRequired, TypedDict
+
+from sentence_transformers import SentenceTransformer, util
 
 from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
@@ -7,32 +10,155 @@ from src.rag.completion import handle_completions_request
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.prompt_template import PromptTemplate
+from src.utils.ref import Ref
+from src.utils.sync import run_sync
 
-SECTION_CATEGORY = Literal[
-    "core_research_narrative",
-    "career_and_training_development",
-    "administrative_documentation",
-    "compliance_and_policy",
-    "external_validation",
-    "document_structure",
-    "research_resources",
-    "institutional_authorization",
-    "supplementary_technical_components",
-    "other",
+ref = Ref[SentenceTransformer]()
+exclude_embeddings_ref = Ref[list[float]]()
+
+
+def get_sentence_transformers_model() -> SentenceTransformer:
+    """Get the SentenceTransformer model."""
+    if not ref.value:
+        ref.value = SentenceTransformer("all-MiniLM-L6-v2")
+    return ref.value
+
+
+async def get_exclude_embeddings() -> list[float]:
+    """Get the embeddings to exclude."""
+    if exclude_embeddings_ref.value is None:
+        exclude_embeddings_ref.value = await run_sync(
+            get_sentence_transformers_model().encode, EXCLUDE_CATEGORIES, convert_to_tensor=True
+        )
+    return exclude_embeddings_ref.value
+
+
+EXCLUDE_CATEGORIES = [
+    "Additional Materials",
+    "Advisory Input",
+    "Algorithms & Code Repositories",
+    "Analysis Scripts",
+    "Appendices",
+    "Application Processing",
+    "Approvals",
+    "Bibliography",
+    "Biosafety Protocol",
+    "Breakdown of Subcontracted Work Costs",
+    "Broader Societal Impacts of Research",
+    "Budget Justification",
+    "Budget",
+    "CVs",
+    "Career Goals",
+    "Certifications",
+    "Checklists",
+    "Citations",
+    "Clearances",
+    "Code Sharing",
+    "Collaboration Agreements",
+    "Computational Pipelines and Workflows",
+    "Computational Training",
+    "Computing Costs",
+    "Computing Resources",
+    "Conference Travel",
+    "Contact Information",
+    "Costs",
+    "Coursework",
+    "Cover Sheets",
+    "Credentials",
+    "Current/Pending Support",
+    "Curriculum Vitae",
+    "DEI",
+    "Data Management",
+    "Data Supplements",
+    "Data Use Agreements",
+    "Dataset Provenance Documentation",
+    "Department Details",
+    "Diversity",
+    "Documentation",
+    "Education",
+    "Environmental Impact Assessment",
+    "Equipment List",
+    "Equipment Specs",
+    "Equipment Usage",
+    "Equipment",
+    "Ethical Approvals",
+    "Ethical Use of AI Authorization",
+    "Ethics",
+    "Evaluation Criteria",
+    "Expenses",
+    "Expert Reviews",
+    "Facilities",
+    "Facility Access",
+    "Facility Use Agreements",
+    "Feedback",
+    "Figure Index",
+    "Forms",
+    "Front Matter",
+    "Funding Justification Statements",
+    "High-Performance Computing Resources",
+    "History",
+    "Human Subjects/IRB",
+    "Independence Path",
+    "Independent Validation of Preliminary Results",
+    "Infrastructure",
+    "Institutional Information",
+    "Integrity",
+    "Interactive Visualizations or Datasets",
+    "Interdisciplinary Collaboration",
+    "Laboratory Safety",
+    "Laboratory Space",
+    "Laboratory/Center Data",
+    "Letters",
+    "Milestone Tracking",
+    "Navigation Elements",
+    "Notes",
+    "Open Science Compliance Plan",
+    "Other Authorizations",
+    "Partnerships with Non-STEM Fields",
+    "Partnerships",
+    "Patent Records",
+    "Personnel",
+    "Pilot Data",
+    "Policies",
+    "Previous Findings",
+    "Previous Grant Performance",
+    "Project Management",
+    "Protection",
+    "Protocol Details",
+    "Protocols",
+    "Publication Records",
+    "Quality Assurance",
+    "Quality Control",
+    "Radiation Safety",
+    "Raw Data",
+    "References",
+    "Review",
+    "Reviewers",
+    "STEM Career Development",
+    "Safety Certifications",
+    "Safety Protocols",
+    "Skill Development",
+    "Skills",
+    "Societal Relevance",
+    "Software Documentation",
+    "Space Allocation",
+    "Specialized Training",
+    "Staff",
+    "Standard Operating Procedures",
+    "Standards",
+    "Submission Forms",
+    "Supplements",
+    "Support",
+    "TOC",
+    "Table Index",
+    "Table of Contents",
+    "Timeline",
+    "Title page",
+    "Title",
+    "Training",
+    "Workshops on Ethical Research Practices",
 ]
 
-SECTION_CATEGORIES: Final[list[SECTION_CATEGORY]] = [
-    "core_research_narrative",
-    "career_and_training_development",
-    "administrative_documentation",
-    "compliance_and_policy",
-    "external_validation",
-    "document_structure",
-    "research_resources",
-    "institutional_authorization",
-    "supplementary_technical_components",
-    "other",
-]
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
     "technical abstract methodology results scientific premise evidence rationale",
@@ -46,13 +172,13 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
 
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT: Final[str] = """"
-You are a specialized system designed to analyze grant application requirements and generate structured specifications.
+You are a specialized system designed to analyze STEM grant application requirements and generate structured specifications.
 """
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_grant_application_sections",
     template="""
-    # Grant Application Section Analyzer
+    # Grant Application Section Extraction
 
     You are tasked with determining the correct format for a grant application given the provided sources.
 
@@ -76,201 +202,67 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     ${cfp_content}
     </cfp_content>
 
-    As a first stage, begin by determining which of the sources contains concrete information about the expected structure of the grant application document or text.
-    It is not always the case this information is available. Flag all other input that is impertinent to this, as irrelevant and proceed.
-
-    ## Section Tags
-    Use the following section categories:
-
-    <section_tags>
-    ${section_tags}
-    </section_tags>
-
-    The section tags are broad categories that encompass the various components of a grant application. Your task is to identify and classify sections based on these tags:
-
-    ### Core Research Narrative
-    - **Scientific Content**
-      - Technical Abstract
-      - Project Summary
-      - Project Narrative
-      - Research Strategy/Plan
-      - Technical Background
-      - Scientific Premise
-      - Innovation & Approach
-      - Preliminary Results
-      - Expected Outcomes
-      - Technical Timeline
-      - Research Tasks
-      - Integration with Existing Literature
-    - **Technical Impact**
-      - Scientific Impact
-      - Technical Feasibility
-      - Risk Mitigation
-      - Technology Transfer
-      - Research Products
-      - Reproducibility Plan
-      - Broader Impacts on STEM Fields
-    - **Research Team**
-      - Technical Expertise
-      - Prior Contributions
-      - Team Complementarity
-      - Technical Management
-      - Research Track Record
-      - Diversity and Inclusion in Team Composition
-      - Technical Resources Command
-
-    ### Career & Training Development
-    - **STEM Career Development**
-      - Scientific Career Goals
-      - Technical Skill Development
-      - Research Independence Path
-    - **Technical Training**
-      - Methods Training
-      - Laboratory Skills
-      - Computational Training
-      - Machine Learning & AI Skills
-    - **Research Education**
-      - Scientific Coursework
-      - Technical Certifications
-      - Specialized Training
-      - Workshops on Ethical Research Practices
-
-    ### Administrative Documentation
-    - **Application Processing**
-      - Contact Information
-      - Cover Sheets
-      - Submission Forms
-    - **Institutional Information**
-      - Department Details
-      - Laboratory/Center Data
-      - Current/Pending Support
-    - **Project Management**
-      - Research Timeline
-      - Milestone Tracking
-      - Quality Control
-      - Funding Justification Statements
-      - Previous Grant Performance
-
-    ### Compliance & Policy
-    - **Research Protection**
-      - Human Subjects/IRB
-      - Laboratory Safety
-      - Biosafety Protocol
-      - Radiation Safety
-    - **Research Policies**
-      - Data Management
-      - Code Sharing
-      - Materials Sharing
-      - Research Integrity
-      - Open Science Compliance Plan
-    - **Technical Standards**
-      - Safety Protocols
-      - Quality Assurance
-      - Standard Operating Procedures
-      - Environmental Impact Assessment
-
-    ### External Validation
-    - **Technical Support**
-      - Collaboration Agreements
-      - Equipment Access
-      - Facility Use Agreements
-      - Letters from Industry Partners
-    - **Research Credentials**
-      - Scientific CVs
-      - Publication Records
-      - Patent Records
-    - **Technical Review**
-      - Expert Reviews
-      - Advisory Input
-      - Technical Feedback
-      - Independent Validation of Preliminary Results
-
-    ### Document Structure
-    - **Navigation Elements**
-      - Table of Contents
-      - Figure Index
-      - Table Index
-    - **Research References**
-      - Scientific Bibliography
-      - Technical Citations
-      - Method References
-      - Dataset Provenance Documentation
-    - **Technical Supplements**
-      - Technical Appendices
-      - Data Supplements
-      - Method Details
-      - Algorithms & Code Repositories
-
-    ### Research Resources
-    - **Technical Infrastructure**
-      - Equipment List
-      - Laboratory Space
-      - Computing Resources
-      - Technical Facilities
-      - High-Performance Computing Resources
-    - **Research Budget**
-      - Equipment Costs
-      - Material Expenses
-      - Technical Staff
-      - Computing Costs
-      - Breakdown of Subcontracted Work Costs
-    - **Personnel & Training**
-      - Research Staff
-      - Technical Training
-      - Conference Travel
-
-    ### Institutional Authorization
-    - **Research Certifications**
-      - Safety Certifications
-      - Technical Approvals
-      - Protocol Clearances
-    - **Laboratory Approvals**
-      - Facility Access
-      - Equipment Usage
-      - Space Allocation
-    - **Other Authorizations**
-      - Data Use Agreements
-      - Ethical Use of AI Authorization
-
-    ### Supplementary Technical Components
-    - **Technical History**
-      - Previous Findings
-      - Pilot Data
-      - Method Development
-    - **Technical Documentation**
-      - Equipment Specs
-      - Software Documentation
-      - Protocol Details
-      - Computational Pipelines and Workflows
-    - **Additional Materials**
-      - Raw Data
-      - Analysis Scripts
-      - Technical Notes
-      - Interactive Visualizations or Datasets
-
-    ### Other
-    - **Interdisciplinary Collaboration**
-      - Partnerships with Non-STEM Fields
-    - **Societal Relevance**
-      - Broader Societal Impacts of Research
-
     ## Instructions
-    1. Begin by determining which of the sources - if any of them - contains concrete information about the expected structure of the grant application document or text.
-        - Flag all other input that is impertinent to this, as irrelevant and proceed.
-        - It is not always the case this information is available, if it is not available, or only partially available, try to identify the organization offering the funding opportunity and extrapolate from this the expected grant structure.
-    2. Begin by analyzing the source to determine the structure of a grant application targeting the CFP and in accordance with any guidelines.
-        - Determine- is it composed of multiple distinct parts (think of this as top top-level headings)?
-        - If so, list these parts in the "parts" field.
-        - The values in parts should be part titles, e.g. "Project Summary", "Research Strategy", etc. derived from the input sources.
-    3. Identify the grant applications sections.
-        - If the information is too scarce, try to complement it with reasonable assumptions based on conventions for the organization - if known.
-        - If this is not possible, return an empty list of sections, and write an explanation in the "error" key.
-    4. If the parts list is non-empty, assign each section to a part based on the provided information.
-        - Sections should have a null value for part if they are not part of a specific part.
-    5. Assign a "type" to each section based on the provided categories.
-        - For the `core_research_narrative` category, include in it only sections you have above 85% certainty belong to it.
-        - If the you have low certainty about where a section belongs, assign it to the "Other" category.
-    6. Respond with a JSON object containing the sections and their metadata.
+
+    1. Identify required core research narrative sections from the grant application:
+      - Core research narrative sections are sections focused primarily on:
+        - Scientific Content
+          - Technical Abstract
+          - Project Summary
+          - Project Narrative
+          - Research Strategy/Plan
+          - Technical Background
+          - Scientific Premise
+          - Innovation & Approach
+          - Preliminary Results
+          - Expected Outcomes
+          - Technical Timeline
+          - Research Tasks
+          - Integration with Existing Literature
+        - Technical Impact
+          - Scientific Impact
+          - Technical Feasibility
+          - Risk Mitigation
+          - Technology Transfer
+          - Research Products
+          - Reproducibility Plan
+          - Broader Impacts on STEM Fields
+        - Research Team
+          - Technical Expertise
+          - Prior Contributions
+          - Team Complementarity
+          - Technical Management
+          - Research Track Record
+          - Diversity and Inclusion in Team Composition
+          - Technical Resources Command
+      - Only include sections whose primary focus matches the above categories
+      - Exclude sections focused primarily on:
+            <exclude_categories>
+            ${exclude_categories}
+            </exclude_categories>
+      - When organization guidelines are available, they take precedence over CFP requirements
+      - Base yourself on the available sources. If information is lacking, reason about conventional grant structure
+      - If reasonable assumptions cannot be made with high confidence based on sources, stop and return an error
+
+    2. Model the structure as a tree:
+      - Maximum nesting depth is 5 levels
+      - Sections can have a 'parent_id'. Top level sections have null parent_id
+      - Top-level sections correlate with H2 headings, child sections with H3 to H6 headers
+      - Be detailed in identifying all sections and subsections within nesting limit
+
+    3. Flag the workplan details section:
+      - Exactly one section must be flagged as the detailed workplan
+      - This section contains only research objectives and specific planned experimental steps
+      - Can be top-level or child section depending on grant structure
+      - Children of the workplan section should not be flagged as workplan
+
+    4. Review and validate results:
+      - If confidence below 60% about:
+        - Required sections being identified correctly
+        - Section hierarchy accuracy
+        - Workplan section identification
+        - Adherence to organization guidelines
+      Then return detailed error message explaining low confidence causes and empty sections array
 
     ## Output
 
@@ -278,19 +270,14 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
 
     ```json
     {
-        "parts": [
-            "string"                          // List of parts, e.g. "Project Summary", can be empty if no parts are identified
-        ],
-        "sections": [{                        // List of sections, empty if insufficient information
-            "type": "string",                 // Section category (e.g., "core_research_narrative")
-            "title": "string",                // Section title as appears in source
-            "id": "string",                   // Unique snake_case identifier, e.g. 'abstract'
-            "part": "string",                 // The part of the grant application this section belongs to, nullable, if specified, must correlate with a part in the "parts" list
-            "parent_id": "string",            // ID of parent section, nullable
-        }],
-        "error": "string"                     // Error message if applicable, null if no error
+       "sections": [{                          // List of sections, empty if insufficient information
+           "id": "string",                     // Unique snake_case identifier, e.g. 'abstract'
+           "is_detailed_workplan": "boolean",    // Whether the section is the research plan, nullable
+           "parent_id": "string",              // ID of parent section, nullable
+           "title": "string",                   // Section title as appears in source
+       }],
+       "error": "string"                       // Error message if applicable, null if no error
     }
-    ```
     """,
 )
 
@@ -321,9 +308,8 @@ section_extraction_json_schema = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["type", "title", "id", "parent_id"],
+                "required": ["title", "id", "parent_id"],
                 "properties": {
-                    "type": {"type": "string", "enum": SECTION_CATEGORIES},
                     "title": {"type": "string", "minLength": 1, "maxLength": 255},
                     "id": {
                         "type": "string",
@@ -331,7 +317,7 @@ section_extraction_json_schema = {
                         "maxLength": 100,
                     },
                     "parent_id": {"type": "string", "nullable": True},
-                    "part": {"type": "string", "nullable": True, "minLength": 1, "maxLength": 255},
+                    "is_detailed_workplan": {"type": "boolean", "nullable": True},
                 },
             },
         },
@@ -342,23 +328,19 @@ section_extraction_json_schema = {
 class ExtractedSectionDTO(TypedDict):
     """Represents a single section in the grant application."""
 
-    type: SECTION_CATEGORY
-    """The category of the section."""
     title: str
     """The title of the section."""
     id: str
     """The unique identifier of the section."""
     parent_id: NotRequired[str | None]
     """The parent section ID if this section is a sub-section."""
-    part: str | None
-    """The part of the grant application this section belongs to."""
+    is_detailed_workplan: NotRequired[bool | None]
+    """Whether the section is the research plan."""
 
 
 class ExtractedSections(TypedDict):
     """Container for all extracted sections."""
 
-    parts: list[str]
-    """List of parts, e.g. "Project Summary", can be empty if no parts are identified."""
     sections: list[ExtractedSectionDTO]
     """List of sections, empty if insufficient information."""
     error: NotRequired[str | None]
@@ -405,6 +387,40 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             )
 
 
+async def _should_keep_section(title: str, threshold: float, exclude_embeddings: list[float]) -> bool:
+    model = get_sentence_transformers_model()
+    title_embedding = await run_sync(model.encode, title, convert_to_tensor=True)
+    similarities = await run_sync(util.cos_sim, title_embedding, exclude_embeddings)
+    if similarities is not None and len(similarities) > 0:
+        return float(similarities[0].max().item()) < threshold
+    return False
+
+
+async def filter_extracted_sections(sections: list[ExtractedSectionDTO], threshold: float = 0.3) -> list[dict]:
+    """Filter sections based on semantic similarity to excluded categories."""
+    exclude_embeddings = await get_exclude_embeddings()
+
+    current_threshold = threshold
+    while current_threshold <= 1.0:
+        sections_to_keep = await gather(
+            *[
+                _should_keep_section(
+                    title=section["title"], threshold=current_threshold, exclude_embeddings=exclude_embeddings
+                )
+                for section in sections
+            ]
+        )
+        filtered_sections = [
+            section for section, should_keep in zip(sections, sections_to_keep, strict=True) if should_keep
+        ]
+        if any(s["is_detailed_workplan"] for s in filtered_sections):
+            return filtered_sections
+
+        current_threshold += 0.1
+
+    return sections
+
+
 async def extract_sections(task_description: str) -> ExtractedSections:
     """Extract and classify sections from grant application materials.
 
@@ -441,9 +457,9 @@ async def handle_extract_sections(
         Classified sections with their relationships and metadata
     """
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
-        section_tags=SECTION_CATEGORIES,
         cfp_subject=cfp_subject,
         cfp_content=cfp_content,
+        exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
     organization_guidelines = (
@@ -461,25 +477,36 @@ async def handle_extract_sections(
     )
     criteria = [
         EvaluationCriterion(
-            name="Correctness",
-            evaluation_instructions="Evaluate the correctness of the result in relation to the sources.",
+            name="Section ID Format",
+            evaluation_instructions="Verify that all section IDs follow the snake_case format and are unique across the entire response. Check that IDs are descriptive and reflect the section content.",
         ),
         EvaluationCriterion(
-            name="Titles",
-            evaluation_instructions="Evaluate if the sections have descriptive, conventional titles.",
+            name="Hierarchy Integrity",
+            evaluation_instructions="Assess the section hierarchy: verify parent_id references exist, no circular dependencies, proper nesting depth (H2 to H6), and logical parent-child relationships match the content structure.",
         ),
         EvaluationCriterion(
-            name="Classifications",
-            evaluation_instructions="Evaluate if the sections have accurate classifications.",
+            name="Core Research Focus",
+            evaluation_instructions="Verify sections are strictly limited to core research narrative content (Scientific Content, Technical Impact, Research Team). Confirm excluded categories (Front Matter, Career Development, etc.) are not present.",
         ),
         EvaluationCriterion(
-            name="Part Specification",
-            evaluation_instructions="Evaluate if the sections have the correct part specified, if applicable.",
+            name="Title Conventions",
+            evaluation_instructions="Evaluate section titles for clarity, conventional academic terminology, consistency with source materials, and appropriate level of detail for their hierarchy level.",
         ),
         EvaluationCriterion(
-            name="Parent-Child Relationships",
-            evaluation_instructions="Evaluate if the sections have accurate parent-child relationships.",
-            weight=0.75,
+            name="Workplan Identification",
+            evaluation_instructions="Verify exactly one section is marked as is_detailed_workplan=true, it contains research objectives and specific planned steps, and its placement in the hierarchy is appropriate.",
+        ),
+        EvaluationCriterion(
+            name="Source Alignment",
+            evaluation_instructions="Evaluate how well the extracted sections align with the provided source materials (CFP content and organization guidelines). Check for missed required sections or incorrectly added optional ones.",
+        ),
+        EvaluationCriterion(
+            name="Organization Guidelines Compliance",
+            evaluation_instructions="When organization guidelines are provided, verify sections strictly follow organization-specific requirements for structure, naming, and hierarchy.",
+        ),
+        EvaluationCriterion(
+            name="Contextual Completeness",
+            evaluation_instructions="Evaluate if the extracted structure represents a complete grant application format given the context, with no missing critical sections that would be expected for the grant type.",
         ),
     ]
 
@@ -491,12 +518,16 @@ async def handle_extract_sections(
             )
         )
 
-    return await with_prompt_evaluation(
+    result = await with_prompt_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         criteria=criteria,
-        passing_score=90,
-        increment=10,
+        increment=5,
         retries=5,
+    )
+
+    return ExtractedSections(
+        error=result.get("error"),
+        sections=await filter_extracted_sections(result["sections"]),
     )
