@@ -1,0 +1,41 @@
+{
+  "error": null,
+  "sections": [
+    {
+      "title": "Experimental Design and Methods",
+      "id": "experimental_design_and_methods",
+      "parent_id": null,
+      "is_detailed_workplan": true
+    },
+    {
+      "title": "Statistical Plan",
+      "id": "statistical_plan",
+      "parent_id": null,
+      "is_detailed_workplan": false
+    },
+    {
+      "title": "Rationale and Fit with Key Criteria",
+      "id": "rationale_and_fit_with_key_criteria",
+      "parent_id": null,
+      "is_detailed_workplan": false
+    },
+    {
+      "title": "Potential for Clinical Impact",
+      "id": "potential_for_clinical_impact",
+      "parent_id": null,
+      "is_detailed_workplan": false
+    },
+    {
+      "title": "Innovation and Approach",
+      "id": "innovation_and_approach",
+      "parent_id": null,
+      "is_detailed_workplan": false
+    },
+    {
+      "title": "Expected Outcomes",
+      "id": "expected_outcomes",
+      "parent_id": null,
+      "is_detailed_workplan": false
+    }
+  ]
+}
