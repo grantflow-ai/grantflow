@@ -96,7 +96,7 @@ async def test_extract_sections_nih_cfp(
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
-        source_file_name="nih-cfp.md",
+        source_file_name="nih.md",
         organization_mapping=organization_mapping,
     )
     logger.info("Running end-to-end test for extracting sections from CFP data")
@@ -130,7 +130,7 @@ async def test_extract_sections_ics_cfp(
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
-        source_file_name="ics-cfp.md",
+        source_file_name="ics.md",
         organization_mapping=organization_mapping,
     )
     logger.info("Running end-to-end test for extracting sections from CFP data")

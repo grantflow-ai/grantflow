@@ -159,6 +159,7 @@ async def handle_long_form_text_generation(
     """
     try:
         return await with_prompt_evaluation(
+            prompt_identifier="long_form",
             prompt_handler=partial(generate_long_form_text, prompt_identifier=prompt_identifier),
             retries=retries,
             prompt=LONG_FORM_GENERATION_USER_PROMPT.substitute(
