@@ -459,8 +459,7 @@ async def handle_extract_sections(
             ),
         ),
         EvaluationCriterion(
-            name="Content Categorization",
-            evaluation_instructions="Verify that sections are categorized correctly."
+            name="Content Categorization", evaluation_instructions="Verify that sections are categorized correctly."
         ),
         EvaluationCriterion(
             name="Workplan Identification",

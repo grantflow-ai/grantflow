@@ -77,26 +77,82 @@ def test_create_generation_groups_missing_dependency() -> None:
         create_generation_groups(sections)  # type: ignore[arg-type]
 
 
+@pytest.fixture
+def grant_sections() -> list[GrantSection]:
+    return [
+        {
+            "id": "abstract",
+            "title": "Abstract",
+            "type": "section",
+            "order": 1,
+            "parent_id": "<root>",
+            "depends_on": [],
+            "is_research_plan": False,
+            "keywords": [],
+            "topics": [],
+            "max_words": 500,
+            "search_queries": [],
+        },
+        {
+            "id": "research_strategy",
+            "title": "Research Strategy",
+            "type": "section",
+            "order": 2,
+            "parent_id": "narrative",
+            "depends_on": [],
+            "is_research_plan": True,
+            "keywords": [],
+            "topics": [],
+            "max_words": 1000,
+            "search_queries": [],
+        },
+        {
+            "id": "risks_and_mitigations",
+            "title": "Risks and Mitigations",
+            "type": "section",
+            "order": 3,
+            "parent_id": "narrative",
+            "depends_on": ["research_strategy"],
+            "is_research_plan": True,
+            "keywords": [],
+            "topics": [],
+            "max_words": 500,
+            "search_queries": [],
+        },
+        {
+            "id": "impact",
+            "title": "Potential Impact",
+            "type": "section",
+            "order": 4,
+            "parent_id": "narrative",
+            "depends_on": ["research_strategy"],
+            "is_research_plan": True,
+            "keywords": [],
+            "topics": [],
+            "max_words": 500,
+            "search_queries": [],
+        },
+    ]
+
+
 def test_map_to_tree_simple(grant_sections: list[GrantSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS)
-    assert len(result) == 2  # abstract and narrative at root
-    assert result[0]["title"] == "Narrative"
-    assert result[1]["title"] == "Abstract"
-    assert result[1]["text"] == "This is an abstract."
-    assert not result[1]["children"]
+    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="<root>")
+    assert len(result) == 1  # only abstract at root
+    assert result[0]["title"] == "Abstract"
+    assert result[0]["text"] == "This is an abstract."
+    assert not result[0]["children"]
 
 
 def test_map_to_tree_nested(grant_sections: list[GrantSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS)
-    narrative = next(node for node in result if node["title"] == "Narrative")
-    assert len(narrative["children"]) == 3  # research_strategy, risks_and_mitigations, impact
-    assert narrative["children"][0]["title"] == "Research Strategy"
+    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")
+    assert len(result) == 3  # research_strategy, risks_and_mitigations, impact
+    assert result[0]["title"] == "Research Strategy"
+    assert result[0]["text"] == "This is the research strategy."
 
 
 def test_map_to_tree_ordering(grant_sections: list[GrantSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS)
-    narrative = next(node for node in result if node["title"] == "Narrative")
-    children_titles = [child["title"] for child in narrative["children"]]
+    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")
+    children_titles = [child["title"] for child in result]
     assert children_titles == ["Research Strategy", "Risks and Mitigations", "Potential Impact"]
 
 
