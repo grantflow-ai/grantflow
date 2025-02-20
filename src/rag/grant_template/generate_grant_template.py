@@ -6,7 +6,7 @@ from src.db.json_objects import GrantSection
 from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.rag.completion import handle_completions_request
-from src.rag.grant_template.structure_research_plan import RestructuredSection
+from src.rag.grant_template.extract_sections import ExtractedSectionDTO
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
@@ -76,9 +76,9 @@ GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         "sections": [{                        // List of sections, if error, return empty list
             "id": "string",                   // Must match input section ID exactly
             "title": "string",                // Display title
-            "is_research_plan": boolean,      // True for research plan only
+            "is_detailed_workplan": boolean,      // True for research plan only
             "parent_id": "string",            // Parent or null
-            "part": "string",                 // Must match input part exactly
+            "is_title_only": "boolean",       // Must match input part exactly
             "keywords": ["string"],           // Grounding keywords
             "topics": ["string"],             // Textual topics
             "generation_instructions": "string", // Section generation instruction
@@ -104,7 +104,7 @@ grant_template_generation_json_schema: Final = {
                 "required": [
                     "id",
                     "title",
-                    "is_research_plan",
+                    "is_detailed_workplan",
                     "parent_id",
                     "keywords",
                     "topics",
@@ -117,9 +117,9 @@ grant_template_generation_json_schema: Final = {
                 "properties": {
                     "id": {"type": "string", "minLength": 1, "maxLength": 100},
                     "title": {"type": "string", "minLength": 1, "maxLength": 255},
-                    "is_research_plan": {"type": "boolean"},
+                    "is_detailed_workplan": {"type": "boolean"},
                     "parent_id": {"type": "string", "nullable": True, "minLength": 1},
-                    "part": {"type": "string", "nullable": True},
+                    "is_title_only": {"type": "boolean", "nullable": True},
                     "keywords": {
                         "type": "array",
                         "items": {"type": "string", "minLength": 2, "maxLength": 50},
@@ -182,7 +182,7 @@ def detect_cycle(graph: dict[str, list[str]], start: str, visited: set[str], pat
 
 
 def validate_template_sections(  # noqa: PLR0912
-    response: TemplateSectionsResponse, *, input_sections: list[RestructuredSection]
+    response: TemplateSectionsResponse, *, input_sections: list[ExtractedSectionDTO]
 ) -> None:
     """Validate the generated grant template sections.
 
@@ -217,9 +217,9 @@ def validate_template_sections(  # noqa: PLR0912
         input_section = next(s for s in input_sections if s["id"] == section["id"])
         if input_section["parent_id"] != section["parent_id"]:
             raise ValidationError("Parent relationship modified")
-        if input_section["part"] != section["part"]:
+        if input_section["is_title_only"] != section["is_title_only"]:
             raise ValidationError("Part assignment modified")
-        if input_section["is_research_plan"] != section["is_research_plan"]:
+        if input_section["is_detailed_workplan"] != section["is_detailed_workplan"]:
             raise ValidationError("Research plan designation modified")
 
     all_orders = [section["order"] for section in response["sections"]]
@@ -246,7 +246,7 @@ def validate_template_sections(  # noqa: PLR0912
 
 
 async def generate_grant_template(
-    task_description: str, *, input_sections: list[RestructuredSection]
+    task_description: str, *, input_sections: list[ExtractedSectionDTO]
 ) -> TemplateSectionsResponse:
     """Generate a grant template from a given task description.
 
@@ -317,7 +317,7 @@ evaluation_criteria = [
 
 
 async def handle_generate_grant_template(
-    *, cfp_content: str, organization: FundingOrganization | None, core_narrative_sections: list[RestructuredSection]
+    *, cfp_content: str, organization: FundingOrganization | None, core_narrative_sections: list[ExtractedSectionDTO]
 ) -> list[GrantSection]:
     """Generate a complete grant template including format and section configurations.
 
@@ -343,8 +343,7 @@ async def handle_generate_grant_template(
                 else []
             )
         ),
-        passing_score=90,
-        increment=10,
+        increment=5,
         retries=5,
         criteria=evaluation_criteria,
     )

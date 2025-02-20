@@ -6,7 +6,7 @@ from google.cloud.exceptions import TooManyRequests
 from pytest_mock import MockerFixture
 
 from src.exceptions import ValidationError
-from src.rag.completion import handle_completions_request, make_completions_request
+from src.rag.completion import handle_completions_request, make_google_completions_request
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ async def test_make_completions_request_with_string_message(
     mock_get_google_ai_client: AsyncMock,
     mock_client: AsyncMock,
 ) -> None:
-    result = await make_completions_request(
+    result = await make_google_completions_request(
         prompt_identifier="test", response_type=dict[str, str], messages="test message"
     )
 
@@ -44,7 +44,7 @@ async def test_make_completions_request_with_list_messages(
     mock_get_google_ai_client: AsyncMock,
     mock_client: AsyncMock,
 ) -> None:
-    result = await make_completions_request(
+    result = await make_google_completions_request(
         prompt_identifier="test", response_type=dict[str, str], messages=["message1", "message2"]
     )
 
@@ -62,7 +62,7 @@ async def test_make_completions_request_with_retry(
         Mock(text='{"key": "value"}'),
     ]
 
-    result = await make_completions_request(
+    result = await make_google_completions_request(
         prompt_identifier="test", response_type=dict[str, str], messages="test message"
     )
 

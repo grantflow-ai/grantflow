@@ -1,12 +1,10 @@
 import logging
 from datetime import UTC, datetime
 from os import environ
-from typing import Any
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import FundingOrganization, GrantApplication
+from src.db.tables import FundingOrganization
 from src.rag.grant_template.extract_sections import handle_extract_sections
 from src.utils.serialization import serialize
 from tests.conftest import RESULTS_FOLDER
@@ -19,8 +17,6 @@ from tests.rag.e2e.utils import get_extracted_section_data
 )
 async def test_extract_sections_melanoma_alliance_cfp(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
@@ -54,8 +50,6 @@ async def test_extract_sections_melanoma_alliance_cfp(
 )
 async def test_extract_sections_standard_awards_cfp(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
@@ -90,8 +84,6 @@ async def test_extract_sections_standard_awards_cfp(
 )
 async def test_extract_sections_nih_cfp(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
     nih_organization: FundingOrganization,
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
@@ -124,8 +116,6 @@ async def test_extract_sections_nih_cfp(
 )
 async def test_extract_sections_ics_cfp(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
     nih_organization: FundingOrganization,
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
