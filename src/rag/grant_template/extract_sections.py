@@ -29,7 +29,9 @@ async def get_exclude_embeddings() -> list[float]:
     """Get the embeddings to exclude."""
     if exclude_embeddings_ref.value is None:
         model = get_sentence_transformers_model()
-        exclude_embeddings_ref.value = await run_sync(model.encode, EXCLUDE_CATEGORIES, convert_to_tensor=True)
+        # Convert tensor to list of floats
+    tensor = await run_sync(lambda x: model.encode(x, convert_to_tensor=True), EXCLUDE_CATEGORIES)
+    exclude_embeddings_ref.value = tensor.tolist()
     return exclude_embeddings_ref.value
 
 

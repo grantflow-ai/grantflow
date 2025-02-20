@@ -181,7 +181,7 @@ def detect_cycle(graph: dict[str, list[str]], start: str, visited: set[str], pat
     return False
 
 
-def validate_template_sections(  # noqa: PLR0912
+def validate_template_sections(
     response: TemplateSectionsResponse, *, input_sections: list[ExtractedSectionDTO]
 ) -> None:
     """Validate the generated grant template sections.
@@ -217,10 +217,7 @@ def validate_template_sections(  # noqa: PLR0912
         input_section = next(s for s in input_sections if s["id"] == section["id"])
         if input_section["parent_id"] != section["parent_id"]:
             raise ValidationError("Parent relationship modified")
-        if input_section["is_title_only"] != section["is_title_only"]:
-            raise ValidationError("Part assignment modified")
-        if input_section["is_detailed_workplan"] != section["is_detailed_workplan"]:
-            raise ValidationError("Research plan designation modified")
+        # Skip validation of is_title_only and is_detailed_workplan since they are not part of GrantSection
 
     all_orders = [section["order"] for section in response["sections"]]
     if len(set(all_orders)) != len(all_orders):

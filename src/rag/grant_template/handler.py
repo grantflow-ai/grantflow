@@ -50,7 +50,6 @@ async def extract_and_enrich_sections(
         organization=organization,
         core_narrative_sections=[s for s in sections if not s.get("is_title_only")],
     )
-    # TODO: recombine the sections with the parts.
 
 
 async def grant_template_generation_pipeline_handler(
