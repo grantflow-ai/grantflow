@@ -39,7 +39,7 @@ faker = Faker()
 rng = default_rng()
 
 
-class GrantSectionFactory(TypedDictFactory):
+class GrantSectionFactory(TypedDictFactory[GrantSection]):
     __model__ = GrantSection
     type = "section"
     is_research_plan = False
@@ -142,13 +142,6 @@ class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
 class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
     __model__ = ResearchTask
 
-
-class GrantSectionFactory(TypedDictFactory[GrantSection]):
-    __model__ = GrantSection
-    type = "section"
-    is_research_plan = False
-    parent_id = None
-    order = 1
     keywords = ["methodology", "design", "analysis"]
     topics = ["background_context", "methodology"]
     max_words = 3000

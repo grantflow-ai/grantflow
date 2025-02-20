@@ -251,10 +251,12 @@ async def make_anthorpic_completions_request[T](
     if not len(response.content) == 1:
         raise ValidationError("The response does not contain a single content object.")
 
-    if not isinstance(response.content[0], ToolUseBlock):
+    content = response.content[0]
+    if not isinstance(content, ToolUseBlock):
         raise ValidationError("The response does not contain a valid ToolUseBlock object.")
 
-    result = cast(dict, response.content[0].output)
+    # The output attribute exists at runtime but is not in type stubs
+    result = cast(dict[str, Any], cast(Any, content).output)
     validator = create_json_schema_validator(response_schema)
     validator(result)
     return response_type(**result)
@@ -341,7 +343,7 @@ async def handle_completions_request[T](
                     model=model,
                     response_type=response_type,
                     system_prompt=system_prompt,
-                    user_prompt=msgs,
+                    user_prompt=str(msgs),  # Ensure msgs is converted to string
                     response_schema=response_schema,
                     temperature=temperature,
                     top_p=top_p,
