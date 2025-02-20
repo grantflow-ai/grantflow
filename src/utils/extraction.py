@@ -1,6 +1,4 @@
-from re import Pattern
-from re import compile as compile_regex
-from typing import Final, cast
+from typing import cast
 
 from azure.ai.documentintelligence.aio import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import (
@@ -20,32 +18,6 @@ from src.utils.logger import get_logger
 from src.utils.retry import with_exponential_backoff_retry
 
 logger = get_logger(__name__)
-
-CORRUPTED_PATTERN_REGEX: Final[Pattern[str]] = compile_regex(
-    r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]|�|[\uFFFD\uFFFE\uFFFF]|(?<!\w)[®©™](?!\w)|[A-Z]\*[A-Z]|\+[A-Z]|(?<![a-z])l(?=[A-Z])|(?<=[a-z])[A-Z](?=[a-z])"
-)
-
-
-def validate_extracted_text(text: str, min_valid_ratio: float = 0.8) -> bool:
-    """Validates text extracted from PDF for corruption.
-
-
-    Args:
-        text: The extracted text to validate
-        min_valid_ratio: Minimum ratio of valid characters required
-
-    Returns:
-        ValidationResult containing validation status, detected language, and any error message
-    """
-    total_chars = len(text)
-    if not total_chars:
-        return False
-
-    invalid_chars = len(CORRUPTED_PATTERN_REGEX.findall(text))
-
-    valid_ratio = (total_chars - invalid_chars) / total_chars
-
-    return valid_ratio >= min_valid_ratio
 
 
 async def extract_with_azure_document_intelligence(file_content: bytes, mime_type: str) -> AnalyzeResult:
@@ -109,10 +81,7 @@ async def extract_file_content(
             ), "text/markdown"
 
         result = await extract_bytes(content=content, mime_type=mime_type)
-        if validate_extracted_text(result.content):
-            return result.content, result.mime_type
-
-        return await extract_bytes(content=content, mime_type=mime_type, force_ocr=True)
+        return result.content, result.mime_type
 
     except KreuzbergError as e:
         raise ValidationError(

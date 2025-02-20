@@ -11,7 +11,6 @@ from src.exceptions import DatabaseError
 from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
 from src.rag.grant_template.extract_sections import handle_extract_sections
 from src.rag.grant_template.generate_grant_template import handle_generate_grant_template
-from src.rag.grant_template.structure_research_plan import handle_restructure_sections
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -32,28 +31,26 @@ async def extract_and_enrich_sections(
     Returns:
         The extracted and enriched sections.
     """
-    extracted_sections = await handle_extract_sections(
+    sections = await handle_extract_sections(
         cfp_content=cfp_content,
         cfp_subject=cfp_subject,
         organization=organization,
     )
 
-    core_narrative_sections = [s for s in extracted_sections["sections"] if s["type"] == "core_research_narrative"]
     # Ensure that all sections have valid parents and dependencies after we filter out non-core research sections
-    valid_parents = {s["id"] for s in core_narrative_sections}
-    for section in core_narrative_sections:
+    valid_parents = {s["id"] for s in sections}
+    for section in sections:
         if section["parent_id"] not in valid_parents:
             section["parent_id"] = None
+        if not section.get("is_title_only"):
+            section["is_title_only"] = False
 
-    restructured_sections = await handle_restructure_sections(
-        cfp_content=cfp_content, organization=organization, core_narrative_sections=core_narrative_sections
-    )
-
-    return await handle_generate_grant_template(
+    results = await handle_generate_grant_template(
         cfp_content=cfp_content,
         organization=organization,
-        core_narrative_sections=restructured_sections,
+        core_narrative_sections=[s for s in sections if not s.get("is_title_only")],
     )
+    # TODO: recombine the sections with the parts.
 
 
 async def grant_template_generation_pipeline_handler(
