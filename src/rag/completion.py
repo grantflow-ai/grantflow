@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from typing import Any, Final, TypedDict, cast
 
-from anthropic import NotGiven, NOT_GIVEN
+from anthropic import NOT_GIVEN
 from anthropic.types import ToolParam, ToolUseBlock
 from google.cloud.exceptions import TooManyRequests
 from jsonschema import ValidationError as JSONSchemaValidationError

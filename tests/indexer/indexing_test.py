@@ -1,4 +1,3 @@
-from src.dto import VectorDTO
 from src.indexer.indexing import create_vector_dto
 from tests.indexer.factories import ChunkFactory
 
@@ -9,4 +8,8 @@ async def test_create_vector_dto() -> None:
 
     vector_dto = await create_vector_dto(chunk=chunk, rag_file_id=file_id)
 
-    assert vector_dto == VectorDTO(embedding=[1.0, 2.0, 3.0], rag_file_id="test_file_id", chunk=chunk)
+    assert isinstance(vector_dto, dict)
+    assert vector_dto["rag_file_id"] == "test_file_id"
+    assert vector_dto["chunk"] == chunk
+    assert len(vector_dto["embedding"]) == 384  # fastembed default dimension
+    assert all(isinstance(x, float) for x in vector_dto["embedding"])

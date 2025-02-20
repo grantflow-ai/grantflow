@@ -253,6 +253,8 @@ async def grant_template(
         funding_organization_id=funding_organization_id,
         grant_sections=[
             {
+                "title": "Executive Summary",
+                "description": "A brief overview of the research proposal",
                 "topics": [
                     {"type": "BACKGROUND_CONTEXT", "weight": 0.8},
                     {"type": "IMPACT", "weight": 0.7},
@@ -266,9 +268,13 @@ async def grant_template(
                     "potential impact on patient care",
                 ],
                 "max_words": 400,
-                "type": "EXECUTIVE_SUMMARY",
+                "type": "section",
+                "is_research_plan": False,
+                "order": 1,
             },
             {
+                "title": "Research Significance",
+                "description": "The importance and potential impact of the research",
                 "topics": [
                     {"type": "IMPACT", "weight": 0.9},
                     {"type": "RATIONALE", "weight": 0.8},
@@ -282,9 +288,13 @@ async def grant_template(
                     "clinical justification",
                 ],
                 "max_words": 600,
-                "type": "RESEARCH_SIGNIFICANCE",
+                "type": "section",
+                "is_research_plan": False,
+                "order": 2,
             },
             {
+                "title": "Research Innovation",
+                "description": "Novel aspects and innovative approaches of the research",
                 "topics": [
                     {"type": "NOVELTY_AND_INNOVATION", "weight": 1.0},
                     {"type": "RESEARCH_FEASIBILITY", "weight": 0.7},
@@ -298,9 +308,13 @@ async def grant_template(
                     "technological advancements in imaging",
                 ],
                 "max_words": 600,
-                "type": "RESEARCH_INNOVATION",
+                "type": "section",
+                "is_research_plan": False,
+                "order": 3,
             },
             {
+                "title": "Research Plan",
+                "description": "Detailed methodology and implementation plan",
                 "topics": [
                     {"type": "MILESTONES_AND_TIMELINE", "weight": 0.9},
                     {"type": "RESEARCH_FEASIBILITY", "weight": 0.8},
@@ -315,9 +329,13 @@ async def grant_template(
                     "risk assessment in imaging technology",
                 ],
                 "max_words": 1000,
-                "type": "RESEARCH_PLAN",
+                "type": "section",
+                "is_research_plan": True,
+                "order": 4,
             },
             {
+                "title": "Expected Outcomes",
+                "description": "Anticipated results and impact of the research",
                 "topics": [{"type": "IMPACT", "weight": 1.0}, {"type": "RATIONALE", "weight": 0.7}],
                 "search_queries": [
                     "impact on clinical decision making",
@@ -327,11 +345,11 @@ async def grant_template(
                     "benefits of increased imaging resolution",
                 ],
                 "max_words": 500,
-                "type": "EXPECTED_OUTCOMES",
+                "type": "section",
+                "is_research_plan": False,
+                "order": 5,
             },
         ],
-        name="Inner Ear Imaging Technology Grant",
-        template="# Executive Summary\n\n{{EXECUTIVE_SUMMARY}}\n\n## Research Significance\n\n{{RESEARCH_SIGNIFICANCE}}\n\n## Research Innovation\n\n{{RESEARCH_INNOVATION}}\n\n## Research Plan\n\n{{RESEARCH_PLAN}}\n\n## Expected Outcomes\n\n{{EXPECTED_OUTCOMES}}",
     )
     async with async_session_maker() as session, session.begin():
         session.add(grant_template_data)
@@ -353,7 +371,7 @@ async def grant_application_file(
 
 @pytest.fixture
 async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
-    cfp_content_file = RESULTS_FOLDER / "nih.md"
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
     assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
 
     contents = cfp_content_file.read_text()

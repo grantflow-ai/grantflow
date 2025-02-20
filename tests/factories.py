@@ -1,4 +1,3 @@
-from textwrap import dedent
 from typing import Any, cast
 
 from faker import Faker
@@ -40,21 +39,32 @@ faker = Faker()
 rng = default_rng()
 
 
+class GrantSectionFactory(TypedDictFactory):
+    __model__ = GrantSection
+    type = "section"
+    is_research_plan = False
+    parent_id = None
+    order = 1
+    keywords = ["methodology", "design", "analysis"]
+    topics = ["background_context", "methodology"]
+    max_words = 3000
+    search_queries = ["query1", "query2", "query3"]
+    depends_on: list[str] = []
+
+
 class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     __model__ = GrantTemplate
-    template = dedent("""
-    ## Executive Summary
-
-    {{EXECUTIVE_SUMMARY}}
-
-    ## Significance
-
-    {{RESEARCH_SIGNIFICANCE}}
-
-    ## Innovation
-
-    {{RESEARCH_INNOVATION}}
-    """)
+    grant_sections = [
+        GrantSectionFactory.build(
+            title="Executive Summary", description="A brief overview of the research proposal", order=1
+        ),
+        GrantSectionFactory.build(
+            title="Significance", description="The importance and potential impact of the research", order=2
+        ),
+        GrantSectionFactory.build(
+            title="Innovation", description="Novel aspects and innovative approaches of the research", order=3
+        ),
+    ]
 
 
 class FileFactory(SQLAlchemyFactory[RagFile]):
