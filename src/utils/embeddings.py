@@ -31,4 +31,4 @@ async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
     if not isinstance(inputs, list):
         inputs = [inputs]
 
-    return list(get_embedding_model().embed(inputs))
+    return [[float(x) for x in embedding] for embedding in get_embedding_model().embed(inputs)]

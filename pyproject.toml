@@ -98,6 +98,15 @@ max_supported_python = "3.12"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+filterwarnings = [
+  "ignore::DeprecationWarning:pkg_resources.*",
+  "ignore::DeprecationWarning:google.*",
+  "ignore::DeprecationWarning:websockets.*",
+  "ignore::pydantic.PydanticDeprecatedSince20",
+  "ignore::DeprecationWarning:fake_http_header.*",
+  "ignore::DeprecationWarning:importlib.resources.*",
+  "ignore::DeprecationWarning:tracerite.*",
+]
 
 [tool.coverage.run]
 omit = [ "tests/*" ]
