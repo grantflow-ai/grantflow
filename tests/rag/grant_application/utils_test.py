@@ -83,7 +83,6 @@ def grant_sections() -> list[GrantSection]:
         {
             "id": "abstract",
             "title": "Abstract",
-            "type": "section",
             "order": 1,
             "parent_id": "<root>",
             "depends_on": [],
@@ -92,11 +91,12 @@ def grant_sections() -> list[GrantSection]:
             "topics": [],
             "max_words": 500,
             "search_queries": [],
+            "generation_instructions": "Write a clear and concise abstract",
+            "part": "main",
         },
         {
             "id": "research_strategy",
             "title": "Research Strategy",
-            "type": "section",
             "order": 2,
             "parent_id": "narrative",
             "depends_on": [],
@@ -105,11 +105,12 @@ def grant_sections() -> list[GrantSection]:
             "topics": [],
             "max_words": 1000,
             "search_queries": [],
+            "generation_instructions": "Detail the research strategy",
+            "part": "main",
         },
         {
             "id": "risks_and_mitigations",
             "title": "Risks and Mitigations",
-            "type": "section",
             "order": 3,
             "parent_id": "narrative",
             "depends_on": ["research_strategy"],
@@ -118,11 +119,12 @@ def grant_sections() -> list[GrantSection]:
             "topics": [],
             "max_words": 500,
             "search_queries": [],
+            "generation_instructions": "Describe potential risks and mitigation strategies",
+            "part": "main",
         },
         {
             "id": "impact",
             "title": "Potential Impact",
-            "type": "section",
             "order": 4,
             "parent_id": "narrative",
             "depends_on": ["research_strategy"],
@@ -131,6 +133,8 @@ def grant_sections() -> list[GrantSection]:
             "topics": [],
             "max_words": 500,
             "search_queries": [],
+            "generation_instructions": "Describe the potential impact of the research",
+            "part": "main",
         },
     ]
 

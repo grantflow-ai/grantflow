@@ -1,7 +1,7 @@
 from pytest_mock import MockerFixture
 
 from src.constants import EMBEDDING_DIMENSIONS
-from src.utils.embeddings import generate_embeddings, embedding_model_ref
+from src.utils.embeddings import embedding_model_ref, generate_embeddings
 
 
 async def test_generate_embeddings(mocker: MockerFixture) -> None:

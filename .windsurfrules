@@ -1,0 +1,4 @@
+1. Use `uv run ...` to run commands, e.g. `uv run pytest`
+2. Do not add inline comments unless something is obscure
+3. Add full type hints for arguments and return statements, including tests
+4. Target python 3.12 and above
