@@ -1,7 +1,9 @@
 from collections.abc import Callable
 from functools import partial
-from typing import Any, Final, TypedDict
+from typing import Any, Final, TypedDict, cast
 
+from anthropic import NotGiven, NOT_GIVEN
+from anthropic.types import ToolParam, ToolUseBlock
 from google.cloud.exceptions import TooManyRequests
 from jsonschema import ValidationError as JSONSchemaValidationError
 from jsonschema.validators import validate
@@ -11,9 +13,9 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
     Part,
 )
 
-from src.constants import CONTENT_TYPE_JSON, GENERATION_MODEL
-from src.exceptions import DeserializationError, ValidationError
-from src.utils.ai import get_google_ai_client
+from src.constants import ANTHROPIC_SONNET_MODEL, CONTENT_TYPE_JSON, GENERATION_MODEL
+from src.exceptions import BackendError, DeserializationError, ValidationError
+from src.utils.ai import get_anthropic_client, get_google_ai_client
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
@@ -131,7 +133,7 @@ async def select_best_response[T](
 
 
 @with_exponential_backoff_retry(TooManyRequests)
-async def make_completions_request[T](
+async def make_google_completions_request[T](
     *,
     model: str = GENERATION_MODEL,
     prompt_identifier: str,
@@ -198,6 +200,66 @@ async def make_completions_request[T](
     )
 
 
+@with_exponential_backoff_retry(TooManyRequests)
+async def make_anthorpic_completions_request[T](
+    *,
+    model: str,
+    response_schema: dict[str, Any],
+    response_type: type[T],
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+    temperature: float = 0,
+    top_k: int | None = None,
+    top_p: float | None = None,
+    user_prompt: str,
+) -> T:
+    """Make a completions request to the model.
+
+    Args:
+        model: The model to use for the generation.
+        response_schema: The response schema.
+        response_type: The response type.
+        system_prompt: The system prompt.
+        temperature: The temperature.
+        top_k: The top-k value.
+        top_p: The top-p value.
+        user_prompt: The user prompt.
+
+    Raises:
+        ValidationError: If the response is invalid.
+
+    Returns:
+        The generated text.
+    """
+    anthropic_client = get_anthropic_client()
+
+    response = await anthropic_client.messages.create(
+        model=model,
+        max_tokens=8192,
+        messages=[{"role": "user", "content": user_prompt}],
+        system=system_prompt,
+        tools=[
+            ToolParam(
+                name="set_output",
+                description="returns the response output",
+                input_schema=response_schema,
+            )
+        ],
+        temperature=temperature,
+        top_p=top_p or NOT_GIVEN,
+        top_k=top_k or NOT_GIVEN,
+    )
+    if not len(response.content) == 1:
+        raise ValidationError("The response does not contain a single content object.")
+
+    if not isinstance(response.content[0], ToolUseBlock):
+        raise ValidationError("The response does not contain a valid ToolUseBlock object.")
+
+    result = cast(dict, response.content[0].output)
+    validator = create_json_schema_validator(response_schema)
+    validator(result)
+    return response_type(**result)
+
+
 def create_json_schema_validator(json_schema: dict[str, Any]) -> Callable[[Any], None]:
     """Create a JSON schema validator.
 
@@ -251,6 +313,7 @@ async def handle_completions_request[T](
 
     Raises:
         ValidationError: If the response is invalid.
+        BackendError: If the user prompt is not a string.
 
     Returns:
         The generated text.
@@ -267,20 +330,36 @@ async def handle_completions_request[T](
             if error_message:
                 msgs = [*messages, error_message]
 
-            response = await make_completions_request(
-                model=model,
-                prompt_identifier=prompt_identifier,
-                response_type=response_type,
-                system_prompt=system_prompt,
-                response_schema=response_schema,
-                messages=msgs,
-                temperature=temperature,
-                top_p=top_p,
-                top_k=top_k,
-                candidate_count=candidate_count,
-            )
-            # if not validator and response_schema:
-            #     validator = create_json_schema_validator(response_schema)  # noqa: ERA001
+            if model == ANTHROPIC_SONNET_MODEL:
+                if not isinstance(messages, str):
+                    raise BackendError("User prompt must be a string")
+
+                if not response_schema:
+                    raise BackendError("Response schema must be provided")
+
+                response = await make_anthorpic_completions_request(
+                    model=model,
+                    response_type=response_type,
+                    system_prompt=system_prompt,
+                    user_prompt=msgs,
+                    response_schema=response_schema,
+                    temperature=temperature,
+                    top_p=top_p,
+                    top_k=top_k,
+                )
+            else:
+                response = await make_google_completions_request(
+                    model=model,
+                    prompt_identifier=prompt_identifier,
+                    response_type=response_type,
+                    system_prompt=system_prompt,
+                    response_schema=response_schema,
+                    messages=msgs,
+                    temperature=temperature,
+                    top_p=top_p,
+                    top_k=top_k,
+                    candidate_count=candidate_count,
+                )
 
             if validator:
                 validator(response)
@@ -317,4 +396,7 @@ async def handle_completions_request[T](
             """
             errors.append(e)
 
-    raise ValidationError(f"Failed to generate text after {max_attempts} attempts.", context={"errors": errors})
+    raise ValidationError(
+        f"Failed to generate text after {max_attempts} attempts.",
+        context={"errors": errors, "prompt_identifier": prompt_identifier},
+    )

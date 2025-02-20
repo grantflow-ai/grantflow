@@ -6,7 +6,7 @@ from typing import Any, Final, TypedDict, cast
 
 from src.constants import EVALUATION_MODEL
 from src.exceptions import EvaluationError
-from src.rag.completion import make_completions_request
+from src.rag.completion import make_google_completions_request
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -123,7 +123,7 @@ async def evaluate_prompt_output(
         "required": ["criteria"],
     }
 
-    return await make_completions_request(
+    return await make_google_completions_request(
         prompt_identifier="evaluation_prompt_output",
         response_type=EvaluationToolResponse,
         response_schema=json_schema,

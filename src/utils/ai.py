@@ -1,5 +1,6 @@
 from typing import Any
 
+from anthropic import AsyncAnthropicVertex
 from google.cloud.aiplatform import init
 from google.oauth2.service_account import Credentials
 from vertexai.generative_models import GenerativeModel
@@ -9,17 +10,27 @@ from src.utils.ref import Ref
 from src.utils.serialization import deserialize
 
 init_ref = Ref[bool]()
-clients: dict[str, GenerativeModel] = {}
+anthem_client = Ref[AsyncAnthropicVertex]()
+google_clients: dict[str, GenerativeModel] = {}
+
+
+def get_vertex_credentials() -> Credentials:
+    """Get the Vertex AI credentials.
+
+    Returns:
+        The Vertex AI credentials.
+    """
+    credentials = deserialize(get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
+    return Credentials.from_service_account_info(credentials)  # type: ignore[no-any-return,no-untyped-call]
 
 
 def init_llm_connection() -> None:
     """Handle the initialization of the clients."""
     if not init_ref.value:
-        credentials = deserialize(get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
         init(
-            project=get_env("GOOGLE_CLOUD_PROJECT"),
+            credentials=get_vertex_credentials(),
             location=get_env("GOOGLE_CLOUD_REGION"),
-            credentials=Credentials.from_service_account_info(credentials),  # type: ignore[no-untyped-call]
+            project=get_env("GOOGLE_CLOUD_PROJECT"),
         )
         init_ref.value = True
 
@@ -35,7 +46,22 @@ def get_google_ai_client(*, prompt_identifier: str, system_instructions: str, mo
     Returns:
         The GenerativeModel client.
     """
-    if prompt_identifier not in clients:
+    if prompt_identifier not in google_clients:
         init_llm_connection()
-        clients[prompt_identifier] = GenerativeModel(model, system_instruction=system_instructions)
-    return clients[prompt_identifier]
+        google_clients[prompt_identifier] = GenerativeModel(model, system_instruction=system_instructions)
+    return google_clients[prompt_identifier]
+
+
+def get_anthropic_client() -> AsyncAnthropicVertex:
+    """Get the AnthropicVertex client.
+
+    Returns:
+        The AnthropicVertex client.
+    """
+    if not anthem_client.value:
+        anthem_client.value = AsyncAnthropicVertex(
+            credentials=get_vertex_credentials(),
+            project_id=get_env("GOOGLE_CLOUD_PROJECT"),
+            region=get_env("GOOGLE_CLOUD_REGION"),
+        )
+    return anthem_client.value
