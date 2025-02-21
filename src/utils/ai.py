@@ -1,6 +1,6 @@
 from typing import Any
 
-from anthropic import AsyncAnthropicVertex
+from anthropic import AsyncAnthropic
 from google.cloud.aiplatform import init
 from google.oauth2.service_account import Credentials
 from vertexai.generative_models import GenerativeModel
@@ -10,7 +10,7 @@ from src.utils.ref import Ref
 from src.utils.serialization import deserialize
 
 init_ref = Ref[bool]()
-anthem_client = Ref[AsyncAnthropicVertex]()
+anthropic_client = Ref[AsyncAnthropic]()
 google_clients: dict[str, GenerativeModel] = {}
 
 
@@ -52,16 +52,14 @@ def get_google_ai_client(*, prompt_identifier: str, system_instructions: str, mo
     return google_clients[prompt_identifier]
 
 
-def get_anthropic_client() -> AsyncAnthropicVertex:
+def get_anthropic_client() -> AsyncAnthropic:
     """Get the AnthropicVertex client.
 
     Returns:
         The AnthropicVertex client.
     """
-    if not anthem_client.value:
-        anthem_client.value = AsyncAnthropicVertex(
-            credentials=get_vertex_credentials(),
-            project_id=get_env("GOOGLE_CLOUD_PROJECT"),
-            region=get_env("GOOGLE_CLOUD_REGION"),
+    if not anthropic_client.value:
+        anthropic_client.value = AsyncAnthropic(
+            api_key=get_env("ANTHROPIC_API_KEY"),
         )
-    return anthem_client.value
+    return anthropic_client.value

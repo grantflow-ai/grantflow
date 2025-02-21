@@ -180,12 +180,12 @@ async def async_session_maker(db_connection_string: str) -> async_sessionmaker[A
     return get_session_maker()
 
 
-@pytest.fixture(autouse=True)
+# @pytest.fixture(autouse=True)
 async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
     await seed_db()
 
 
-@pytest.fixture(autouse=True)
+# @pytest.fixture(autouse=True)
 async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
     async with async_session_maker() as session:
         for table in reversed(Base.metadata.sorted_tables):
