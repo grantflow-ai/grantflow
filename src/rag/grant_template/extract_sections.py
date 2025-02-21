@@ -208,6 +208,10 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
 
     5. Identify and flag all sections that are titles only.
 
+    6. Identify and flag all sections that are clinical trial sections:
+        - Clinical trial sections are sections that describe the clinical trial aspects of the project.
+        - These sections do not appear in all grant applications, only those that may potentially involve clinical trials.
+
     6. Review and validate results:
       - If your confidence is below 75% about:
         - Required sections being identified correctly.
@@ -230,11 +234,13 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
            "is_detailed_workplan": "boolean",   // Whether the section is the research plan, nullable
            "is_long_form": "boolean",           // Whether the section is a long form section, required
            "is_title_only": "boolean",          // Whether the section contains only a title, nullable
+           "is_clinical_trial": "boolean",      // Whether the section is a clinical trial section, nullable
            "parent_id": "string",               // ID of parent section, nullable
            "title": "string",                   // Section title as appears in source
        }],
        "error": "string"                        // Error message if applicable, null if no error
     }
+    ```
     """,
 )
 
@@ -257,9 +263,8 @@ Otherwise, use the CFP as the source for guidelines as well.
 
 section_extraction_json_schema = {
     "type": "object",
-    "required": ["sections", "parts"],
+    "required": ["sections"],
     "properties": {
-        "parts": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 255}},
         "error": {"type": "string", "nullable": True},
         "sections": {
             "type": "array",
@@ -277,6 +282,7 @@ section_extraction_json_schema = {
                     "is_detailed_workplan": {"type": "boolean", "nullable": True},
                     "is_title_only": {"type": "boolean", "nullable": True},
                     "is_long_form": {"type": "boolean"},
+                    "is_clinical_trial": {"type": "boolean", "nullable": True},
                 },
             },
         },
@@ -297,6 +303,8 @@ class ExtractedSectionDTO(TypedDict):
     """Whether the section is the research plan."""
     is_title_only: NotRequired[bool | None]
     """Whether the section contains only a title."""
+    is_clinical_trial: NotRequired[bool | None]
+    """Whether the section is a clinical trial section."""
     is_long_form: bool
     """Whether the section is a long form section."""
 
@@ -407,9 +415,6 @@ async def extract_sections(task_description: str) -> ExtractedSections:
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
         validator=validate_section_extraction,
-        temperature=1.3,
-        top_p=0.97,
-        candidate_count=3,
     )
 
 
