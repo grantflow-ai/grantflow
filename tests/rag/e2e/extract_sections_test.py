@@ -17,11 +17,10 @@ from tests.rag.e2e.utils import get_extracted_section_data
 )
 async def test_extract_sections_melanoma_alliance_cfp(
     logger: logging.Logger,
-    organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
         source_file_name="melanoma_alliance_cfp.md",
-        organization_mapping=organization_mapping,
+        organization_mapping={},
     )
     logger.info("Running end-to-end test for extracting sections from CFP data")
     start_time = datetime.now(UTC)
@@ -50,11 +49,10 @@ async def test_extract_sections_melanoma_alliance_cfp(
 )
 async def test_extract_sections_standard_awards_cfp(
     logger: logging.Logger,
-    organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
         source_file_name="standard_awards.md",
-        organization_mapping=organization_mapping,
+        organization_mapping={},
     )
 
     logger.info("Running end-to-end test for extracting sections from CFP data")
@@ -116,18 +114,16 @@ async def test_extract_sections_nih_cfp(
 )
 async def test_extract_sections_ics_cfp(
     logger: logging.Logger,
-    nih_organization: FundingOrganization,
-    organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
         source_file_name="ics.md",
-        organization_mapping=organization_mapping,
+        organization_mapping={},
     )
     logger.info("Running end-to-end test for extracting sections from CFP data")
     start_time = datetime.now(UTC)
 
     sections = await handle_extract_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=nih_organization
+        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"]
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()

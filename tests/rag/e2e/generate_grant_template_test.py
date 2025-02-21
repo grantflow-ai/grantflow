@@ -4,7 +4,6 @@ from os import environ
 from typing import Any
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.tables import FundingOrganization, GrantApplication
 from src.rag.grant_template.handler import extract_and_enrich_sections
@@ -19,13 +18,10 @@ from tests.rag.e2e.utils import get_extracted_section_data
 )
 async def test_handle_generate_grant_template_melanoma_alliance(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
         source_file_name="melanoma_alliance_cfp.md",
-        organization_mapping=organization_mapping,
+        organization_mapping={},
     )
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
@@ -53,13 +49,10 @@ async def test_handle_generate_grant_template_melanoma_alliance(
 )
 async def test_handle_generate_grant_template_standard_aware(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
         source_file_name="standard_awards.md",
-        organization_mapping=organization_mapping,
+        organization_mapping={},
     )
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
@@ -86,8 +79,6 @@ async def test_handle_generate_grant_template_standard_aware(
 )
 async def test_handle_generate_grant_template_nih(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
     nih_organization: FundingOrganization,
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
@@ -120,20 +111,16 @@ async def test_handle_generate_grant_template_nih(
 )
 async def test_handle_generate_grant_template_ics(
     logger: logging.Logger,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    nih_organization: FundingOrganization,
-    organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     result = await get_extracted_section_data(
         source_file_name="ics.md",
-        organization_mapping=organization_mapping,
+        organization_mapping={},
     )
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=nih_organization
+        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=None
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()

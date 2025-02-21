@@ -5,8 +5,6 @@ from typing import Any, Final, TypedDict, cast
 from anthropic import NOT_GIVEN
 from anthropic.types import ToolParam, ToolUseBlock
 from google.cloud.exceptions import TooManyRequests
-from jsonschema import ValidationError as JSONSchemaValidationError
-from jsonschema.validators import validate
 from vertexai.generative_models import (  # type: ignore[import-untyped]
     Content,
     GenerationConfig,
@@ -248,37 +246,12 @@ async def make_anthorpic_completions_request[T](
         top_p=top_p or NOT_GIVEN,
         top_k=top_k or NOT_GIVEN,
     )
-    if not len(response.content) == 1:
-        raise ValidationError("The response does not contain a single content object.")
+    tool_blocks = [block for block in response.content if isinstance(block, ToolUseBlock)]
+    if not tool_blocks:
+        raise ValidationError("The response does not contain a tool use blocks.")
 
-    content = response.content[0]
-    if not isinstance(content, ToolUseBlock):
-        raise ValidationError("The response does not contain a valid ToolUseBlock object.")
-
-    # The output attribute exists at runtime but is not in type stubs
-    result = cast(dict[str, Any], cast(Any, content).output)
-    validator = create_json_schema_validator(response_schema)
-    validator(result)
+    result = cast(dict[str, Any], tool_blocks[0].input)
     return response_type(**result)
-
-
-def create_json_schema_validator(json_schema: dict[str, Any]) -> Callable[[Any], None]:
-    """Create a JSON schema validator.
-
-    Args:
-        json_schema: The JSON schema.
-
-    Returns:
-        The validator function.
-    """
-
-    def validator(response: Any) -> None:
-        try:
-            validate(schema=json_schema, instance=response)
-        except JSONSchemaValidationError as e:
-            raise ValidationError(e.message) from e
-
-    return validator
 
 
 async def handle_completions_request[T](
