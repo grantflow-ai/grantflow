@@ -56,8 +56,14 @@ class GrantSection(TypedDict):
     """Detailed content generation instructions."""
     id: str
     """Section identifier."""
-    is_research_plan: bool
-    """Whether the section is the research plan."""
+    is_clinical_trial: bool | None
+    """Whether the section is a clinical trial section."""
+    is_detailed_workplan: bool | None
+    """Whether the section is the work plan."""
+    is_long_form: bool
+    """Whether the section is a long form section."""
+    is_title_only: bool | None
+    """Whether the section contains only a title."""
     keywords: list[str]
     """Technical terms specific to section."""
     max_words: int
@@ -66,8 +72,6 @@ class GrantSection(TypedDict):
     """Order of the section in the grant application."""
     parent_id: str | None
     """Parent section name."""
-    part: str | None
-    """The part of the grant application this section belongs to."""
     search_queries: list[str]
     """Search queries to retrieve information for the section."""
     title: str

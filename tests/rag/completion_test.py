@@ -113,7 +113,7 @@ async def test_make_anthropic_completions_request(mock_anthropic_api_response: M
     tool_use = Mock(spec=ToolUseBlock)
     tool_use.type = "tool_use"
     tool_use.name = "set_output"
-    tool_use.output = {"key": "value"}
+    tool_use.input = {"key": "value"}
     mock_anthropic_api_response.content = [tool_use]
     mock_anthropic_api_response.model = ANTHROPIC_SONNET_MODEL
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
@@ -130,7 +130,7 @@ async def test_make_anthropic_completions_request_with_generation_params(mock_an
     tool_use = Mock(spec=ToolUseBlock)
     tool_use.type = "tool_use"
     tool_use.name = "set_output"
-    tool_use.output = {"key": "value"}
+    tool_use.input = {"key": "value"}
     mock_anthropic_api_response.content = [tool_use]
     mock_anthropic_api_response.model = ANTHROPIC_SONNET_MODEL
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
@@ -203,12 +203,23 @@ async def test_handle_completions_request_with_schema(mock_google_api_response: 
     assert result == {"key": "value"}
 
 
-async def test_handle_completions_request_invalid_response(mock_google_api_response: Mock) -> None:
-    mock_google_api_response.text = '{"wrong_key": "value"}'
+async def test_handle_completions_request_invalid_response(mock_anthropic_api_response: Mock) -> None:
+    # Create a ToolUseBlock with invalid input
+    tool_use = Mock(spec=ToolUseBlock)
+    tool_use.type = "tool_use"
+    tool_use.name = "set_output"
+    tool_use.input = {"wrong_key": "value"}
+    tool_use.__class__ = ToolUseBlock
+
+    # Set up the response
+    mock_anthropic_api_response.messages.create.return_value = {"content": [tool_use]}
+
+    # Set up the schema that requires a 'key' field
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
 
     with pytest.raises(ValidationError):
         await handle_completions_request(
+            model=ANTHROPIC_SONNET_MODEL,
             prompt_identifier="test",
             response_type=dict[str, str],
             messages="test message",
