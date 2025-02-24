@@ -21,7 +21,7 @@ repos:
       - id: check-case-conflict
       - id: detect-private-key
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.5.1"
+    rev: "v3.5.2"
     hooks:
       - id: prettier
         exclude: ^tests|^.idea|^migrations|^.git

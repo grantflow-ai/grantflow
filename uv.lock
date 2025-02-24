@@ -958,7 +958,7 @@ requires-dist = [
     { name = "prompt-template", specifier = ">=1.2.0" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "sanic", extras = ["ext"], specifier = ">=24.12.0" },
-    { name = "semantic-text-splitter", specifier = ">=0.24.0" },
+    { name = "semantic-text-splitter", specifier = ">=0.24.1" },
     { name = "sentence-transformers", extras = ["onnx"], specifier = ">=3.4.1" },
     { name = "spacy", specifier = ">=3.8.4" },
     { name = "sqlalchemy", specifier = ">=2.0.38" },

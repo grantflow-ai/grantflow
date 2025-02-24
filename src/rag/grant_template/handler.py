@@ -44,8 +44,12 @@ async def extract_and_enrich_sections(
             section["parent_id"] = None
         if not section.get("is_title_only"):
             section["is_title_only"] = False
+        if not section.get("is_detailed_workplan"):
+            section["is_detailed_workplan"] = False
+        if not section.get("is_clinical_trial"):
+            section["is_clinical_trial"] = False
 
-    results = await handle_generate_grant_template(
+    return await handle_generate_grant_template(
         cfp_content=cfp_content,
         organization=organization,
         core_narrative_sections=[s for s in sections if not s.get("is_title_only")],

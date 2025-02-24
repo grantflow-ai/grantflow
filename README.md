@@ -10,7 +10,7 @@ committed to GitHub.
 1. Install UV on your system (see: https://docs.astral.sh/uv/getting-started/installation):
 
    ```shell
-   brew install pdm
+   brew install uv
    ```
 
 2. Inside the repository, execute the sync command:
@@ -21,3 +21,15 @@ committed to GitHub.
 
    This command will install the necessary dependencies on the machine and use UV to create a virtual environment under
    the `.venv` folder, which is git ignored, and install the dependencies inside it.
+
+3. Install pre-commit:
+
+   ```shell
+   brew install pre-commit
+   ```
+
+4. Install the pre-commit hooks:
+
+   ```shell
+   pre-commit install && pre-commit install --hook-type commit-msg
+   ```
