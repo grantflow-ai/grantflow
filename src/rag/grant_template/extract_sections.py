@@ -10,6 +10,7 @@ from src.patterns import SNAKE_CASE_PATTERN
 from src.rag.completion import handle_completions_request
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
+from src.utils.embeddings import get_embedding_model
 from src.utils.prompt_template import PromptTemplate
 from src.utils.ref import Ref
 from src.utils.sync import run_sync
@@ -18,20 +19,12 @@ ref = Ref[SentenceTransformer]()
 exclude_embeddings_ref = Ref[list[float]]()
 
 
-def get_sentence_transformers_model() -> SentenceTransformer:
-    """Get the SentenceTransformer model."""
-    if not ref.value:
-        ref.value = SentenceTransformer("all-MiniLM-L6-v2")
-    return ref.value
-
-
 async def get_exclude_embeddings() -> list[float]:
     """Get the embeddings to exclude."""
     if exclude_embeddings_ref.value is None:
-        model = get_sentence_transformers_model()
-        # Convert tensor to list of floats
-    tensor = await run_sync(lambda x: model.encode(x, convert_to_tensor=True), EXCLUDE_CATEGORIES)
-    exclude_embeddings_ref.value = tensor.tolist()
+        model = await run_sync(get_embedding_model)
+        tensor = model.encode(EXCLUDE_CATEGORIES, convert_to_tensor=True, device="cpu")
+        exclude_embeddings_ref.value = tensor.tolist()
     return exclude_embeddings_ref.value
 
 
@@ -192,11 +185,14 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
 
     3. Identify and flag the workplan details section:
         - Identify all the sections that are potential candidate to be the detailed workplan:
-            - The detailed workplan is a section that includes the research objectives and specific planned experimental and analiticl steps of the project.
-            - It should not include in itself or as subsections significance, innovation, impact, background etc.
+            - The detailed workplan is a section that includes the research objectives and specific detailed planned experimental and analytical steps of the project.
+            - It does not include in itself or as subsections significance, innovation, impact, background etc.
             - It could be a top-level or child section depending on the grant structure.
-            - The workplan section cannot have child sections.
+            - It does not have child sections.
+            - It is usually the longest section in the grant application.
+            - Common names for this section are Work Plan, Research Plan, Researech Details, Project Details, Experimental Design etc.
         - Select the most fitting candidate and flag exactly one section as the detailed workplan.
+        - If no section can be reasonably assigned as the workplan details, return an error.
 
     4. Identify and flag all sections that belong to the research long form sections:
       - Research long form sections are sections that the applicants write (i.e. not external materials, letters of support, etc.).
@@ -231,7 +227,7 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     {
        "sections": [{                           // List of sections, empty if insufficient information
            "id": "string",                      // Unique snake_case identifier, e.g. 'abstract'
-           "is_detailed_workplan": "boolean",   // Whether the section is the research plan, nullable
+           "is_detailed_workplan": "boolean",   // Whether the section is the work plan, nullable
            "is_long_form": "boolean",           // Whether the section is a long form section, required
            "is_title_only": "boolean",          // Whether the section contains only a title, nullable
            "is_clinical_trial": "boolean",      // Whether the section is a clinical trial section, nullable
@@ -300,7 +296,7 @@ class ExtractedSectionDTO(TypedDict):
     parent_id: NotRequired[str | None]
     """The parent section ID if this section is a sub-section."""
     is_detailed_workplan: NotRequired[bool | None]
-    """Whether the section is the research plan."""
+    """Whether the section is the work plan."""
     is_title_only: NotRequired[bool | None]
     """Whether the section contains only a title."""
     is_clinical_trial: NotRequired[bool | None]
@@ -363,8 +359,8 @@ def validate_section_extraction(response: ExtractedSections) -> None:
 
 
 async def _should_keep_section(title: str, threshold: float, exclude_embeddings: list[float]) -> bool:
-    model = get_sentence_transformers_model()
-    title_embedding = await run_sync(model.encode, title, convert_to_tensor=True)
+    model = get_embedding_model()
+    title_embedding = await run_sync(model.encode, title, convert_to_tensor=True, device="cpu")
     similarities = await run_sync(util.cos_sim, title_embedding, exclude_embeddings)
     if similarities is not None and len(similarities) > 0:
         return float(similarities[0].max().item()) < threshold
@@ -418,6 +414,76 @@ async def extract_sections(task_description: str) -> ExtractedSections:
     )
 
 
+evaluation_criteria = [
+    EvaluationCriterion(
+        name="Technical Structure",
+        evaluation_instructions="""
+        Evaluate the technical aspects of the extracted structure:
+            - Section IDs must use snake_case and be unique
+            - IDs should be descriptive and reflect section content
+            - No circular dependencies in parent-child relationships
+            - Maximum nesting depth of 5 levels is respected
+            - Parent section references must be valid
+        """,
+    ),
+    EvaluationCriterion(
+        name="Content Architecture",
+        evaluation_instructions="""
+        Assess the logical organization and completeness of content:
+            - Sections follow a coherent hierarchical structure
+            - Required grant components are present
+            - Organization between sections is logical
+            - Section relationships reflect natural content flow
+            - Critical grant components aren't missing
+        """,
+    ),
+    EvaluationCriterion(
+        name="Work Plan Identification",
+        evaluation_instructions="""
+        Verify Work plan section identification:
+            - Exactly one section is marked as detailed workplan
+            - Workplan contains research objectives and experimental steps
+            - Workplan section is appropriately placed in hierarchy
+            - Workplan doesn't contain ineligible content (background, significance)
+            - No subsections exist under workplan
+        """,
+    ),
+    EvaluationCriterion(
+        name="Section Type Classification",
+        evaluation_instructions="""
+        Verify accuracy of section type flags:
+            - Long-form sections correctly identified based on length requirements
+            - Title-only sections properly marked
+            - Clinical trial sections accurately identified
+            - No contradictory type assignments
+            - Types align with section content and purpose
+        """,
+    ),
+    EvaluationCriterion(
+        name="Source Material Compliance",
+        evaluation_instructions="""
+        Evaluate adherence to source materials:
+            - Primary: Organization guidelines (when provided)
+            - Secondary: CFP requirements
+            - Section names match source terminology
+            - Required sections from sources are included
+            - Structure follows source-specified organization
+        """,
+    ),
+    EvaluationCriterion(
+        name="Exclusion Handling",
+        evaluation_instructions="""
+        Check proper handling of excluded content:
+            - Sections matching exclude categories are omitted
+            - Essential sections aren't incorrectly excluded
+            - Exclusions don't break hierarchical relationships
+            - Similar but non-matching sections are retained
+            - Borderline cases are handled appropriately
+        """,
+    ),
+]
+
+
 async def handle_extract_sections(
     cfp_content: str, cfp_subject: str, organization: FundingOrganization | None = None
 ) -> list[ExtractedSectionDTO]:
@@ -451,61 +517,20 @@ async def handle_extract_sections(
         else ""
     )
 
-    criteria = [
-        EvaluationCriterion(
-            name="Section ID Format and Uniqueness",
-            evaluation_instructions=(
-                "Ensure all section IDs are in snake_case, unique, and descriptive of their content."
-            ),
-        ),
-        EvaluationCriterion(
-            name="Hierarchy Integrity",
-            evaluation_instructions=(
-                "Confirm that each section's parent_id is valid, no circular dependencies exist, "
-                "and the nesting depth is within allowed limits (H2 to H6)."
-            ),
-        ),
-        EvaluationCriterion(
-            name="Content Categorization", evaluation_instructions="Verify that sections are categorized correctly."
-        ),
-        EvaluationCriterion(
-            name="Workplan Identification",
-            evaluation_instructions=(
-                "Ensure exactly one section is marked as the detailed workplan, which should contain "
-                "research objectives and specific planned experimental steps, and be appropriately placed "
-                "in the hierarchy."
-            ),
-            weight=1.5,
-        ),
-        EvaluationCriterion(
-            name="Source Alignment and Completeness",
-            evaluation_instructions=(
-                "Assess whether the extracted sections accurately reflect the provided source materials "
-                "(CFP content and, if available, organization guidelines) and represent a complete, "
-                "logical grant application structure without critical omissions."
-            ),
-        ),
-        EvaluationCriterion(
-            name="Title Clarity and Consistency",
-            evaluation_instructions=(
-                "Evaluate section titles for clarity, adherence to academic conventions, and consistency "
-                "with the source materials and content hierarchy."
-            ),
-        ),
-        EvaluationCriterion(
-            name="Organization Guidelines Compliance",
-            evaluation_instructions=(
-                "If organization guidelines are provided, confirm that the sections adhere strictly to the "
-                "organization-specific requirements for structure, naming, and hierarchy."
-            ),
-        ),
-    ]
+    criteria = [*evaluation_criteria]
 
     if organization:
         criteria.append(
             EvaluationCriterion(
-                name="Organization Guidelines Fit",
-                evaluation_instructions="Evaluate if the result derives from the organization guidelines correctly.",
+                name="Organization Requirements",
+                evaluation_instructions="""
+                Verify strict compliance with organization guidelines:
+                    - Section structure matches organization requirements
+                    - Naming conventions follow organization standards
+                    - Organization-specific sections are included
+                    - Hierarchy reflects organization preferences
+                    - Any deviations from guidelines are justified by CFP
+                """,
             )
         )
 

@@ -206,7 +206,7 @@ async def with_prompt_evaluation[T, P](
         failing_criteria = {
             k: v
             for k, v in evaluation_result["criteria"].items()
-            if v["score"] < min_passing_score * mapped_criteria[k].weight
+            if v["score"] < min(min_passing_score * mapped_criteria[k].weight, 100)
         }
 
         if not failing_criteria:

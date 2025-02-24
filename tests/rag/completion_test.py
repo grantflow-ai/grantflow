@@ -11,7 +11,6 @@ from src.constants import ANTHROPIC_SONNET_MODEL
 from src.exceptions import ValidationError
 from src.rag.completion import (
     BestResponseSelection,
-    create_json_schema_validator,
     handle_completions_request,
     make_anthorpic_completions_request,
     make_google_completions_request,
@@ -147,19 +146,6 @@ async def test_make_anthropic_completions_request_with_generation_params(mock_an
     assert result == {"key": "value"}
 
 
-# Test create_json_schema_validator
-def test_create_json_schema_validator() -> None:
-    schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
-    validator = create_json_schema_validator(schema)
-
-    # Valid data
-    validator({"key": "value"})
-
-    # Invalid data
-    with pytest.raises(ValidationError):
-        validator({"key": 123})
-
-
 # Test handle_completions_request
 async def test_handle_completions_request_success(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = '{"key": "value"}'
@@ -228,7 +214,6 @@ async def test_handle_completions_request_invalid_response(mock_google_api_respo
             messages="test message",
             response_schema=schema,
             max_attempts=1,
-            validator=create_json_schema_validator(schema),
         )
 
 
@@ -240,5 +225,4 @@ async def test_handle_completions_request_deserialization_error(mock_google_api_
             prompt_identifier="test",
             response_type=dict[str, str],
             messages="test message",
-            max_attempts=3,
         )
