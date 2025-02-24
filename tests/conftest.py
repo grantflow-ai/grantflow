@@ -4,12 +4,14 @@ from asyncio import gather
 from collections.abc import AsyncGenerator, Generator
 from logging import Logger, getLogger
 from pathlib import Path
+from socket import AF_INET, SOCK_STREAM, socket
 from textwrap import dedent
 from typing import Any, Final, cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from anyio import Path as AsyncPath
+from anyio import run_process, sleep
 from asyncpg import connect
 from dotenv import load_dotenv
 from faker import Faker
@@ -23,7 +25,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 from structlog import configure
 from structlog.testing import LogCapture
-from testcontainers.postgres import PostgresContainer
 from vertexai.generative_models import GenerativeModel
 
 from src.db.base import Base
@@ -148,44 +149,88 @@ def mock_admin_code(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture(scope="session")
 async def db_connection_string() -> AsyncGenerator[str, None]:
-    container = PostgresContainer("pgvector/pgvector:pg17", driver=None)
-    container.start()
+    """
+    Creates a temporary PostgreSQL database for testing, applies migrations,
+    yields the connection string, and then cleans up the database.
 
-    connection_string = container.get_connection_url()
-    connection = await connect(connection_string)
+    Notes:
+        - we were using TestContainers for this purpose, but they have issues support mac docker
+    """
+    container_name = "test_postgres_container"
 
-    await connection.execute(
+    with socket(AF_INET, SOCK_STREAM) as s:
+        s.bind(("", 0))
+        local_port = s.getsockname()[1]
+
+    await run_process(["docker", "rm", "-f", container_name], check=False)
+
+    await run_process(
+        [
+            "docker",
+            "run",
+            "--name",
+            container_name,
+            "-e",
+            "POSTGRES_USER=test_user",
+            "-e",
+            "POSTGRES_PASSWORD=test_password",
+            "-e",
+            "POSTGRES_DB=test_db",
+            "-p",
+            f"{local_port}:5432",
+            "-d",
+            "pgvector/pgvector:pg17",
+        ]
+    )
+
+    await sleep(3)
+
+    connection_string = f"postgresql://test_user:test_password@0.0.0.0:{local_port}/test_db"
+    test_conn = await connect(connection_string)
+
+    await test_conn.execute(
         dedent("""
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
         CREATE EXTENSION IF NOT EXISTS vector;
-    """)
+        """)
     )
 
-    sorted_files = sorted((Path(__file__).parent.parent / "migrations").glob("*.sql"))
-    for file in sorted_files:
-        sql = await AsyncPath(file).read_text()
-        await connection.execute(sql)
+    migrations_path = AsyncPath(__file__).parent.parent / "migrations"
+    async for file in migrations_path.glob("*.sql"):
+        sql = await file.read_text()
+        await test_conn.execute(sql)
 
-    await connection.close()
-    yield connection_string
-    container.stop()
+    await test_conn.close()
+
+    yield connection_string.replace("postgresql://", "postgresql+asyncpg://")
+
+    admin_conn = await connect(connection_string)
+
+    await admin_conn.execute("""
+        SELECT pg_terminate_backend(pg_stat_activity.pid)
+        FROM pg_stat_activity
+        WHERE pg_stat_activity.datname = 'test_db' AND pid <> pg_backend_pid();
+    """)
+
+    await admin_conn.execute("DROP DATABASE IF EXISTS test_db WITH (FORCE)")
+    await admin_conn.close()
+
+    await run_process(["docker", "rm", "-f", container_name], check=False)
 
 
 @pytest.fixture(scope="session")
 async def async_session_maker(db_connection_string: str) -> async_sessionmaker[Any]:
-    os.environ.update(
-        {"DATABASE_CONNECTION_STRING": db_connection_string.replace("postgresql://", "postgresql+asyncpg://")}
-    )
+    os.environ.update({"DATABASE_CONNECTION_STRING": db_connection_string})
     engine_ref.value = None
     return get_session_maker()
 
 
-# @pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
     await seed_db()
 
 
-# @pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
     async with async_session_maker() as session:
         for table in reversed(Base.metadata.sorted_tables):
@@ -680,6 +725,91 @@ async def nih_organization(
 
     if not list(organization_files):
         source_folder = SOURCES_FOLDER / "guidelines" / "nih"
+        assert source_folder.exists(), f"Source folder {source_folder} does not exist"
+
+        sources = list(source_folder.glob("*.pdf"))
+        if not sources:
+            raise FileNotFoundError(f"No nih guidelines found in {source_folder}")
+
+        await gather(
+            *[
+                parse_source_file(
+                    organization_id=str(funding_organization.id),
+                    source_file=source_file,
+                    async_session_maker=async_session_maker,
+                    target_folder=data_fixture_folder,
+                )
+                for source_file in source_folder.glob("*.pdf")
+            ]
+        )
+
+    async with async_session_maker() as session, session.begin():
+        for organization_file in data_fixture_folder.glob("*.json"):
+            data = deserialize(organization_file.read_bytes(), dict[str, Any])
+            rag_file_data = data.pop("rag_file")
+            rag_file_id = data.pop("rag_file_id")
+            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
+
+            await session.execute(
+                insert(RagFile)
+                .values(
+                    {
+                        "id": rag_file_id,
+                        **{
+                            k: v
+                            for k, v in rag_file_data.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
+                        },
+                    }
+                )
+                .on_conflict_do_nothing(index_elements=["id"])
+            )
+            await session.execute(
+                insert(OrganizationFile)
+                .values(
+                    {
+                        "funding_organization_id": funding_organization.id,
+                        "rag_file_id": rag_file_id,
+                    }
+                )
+                .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_file_id"])
+            )
+            await session.execute(
+                insert(TextVector)
+                .values(
+                    [
+                        {
+                            k: v
+                            for k, v in text_vector.items()
+                            if v is not None and k not in {"created_at", "updated_at"}
+                        }
+                        for text_vector in text_vectors
+                    ]
+                )
+                .on_conflict_do_nothing(index_elements=["id"])
+            )
+        await session.commit()
+
+    return cast(FundingOrganization, funding_organization)
+
+
+@pytest.fixture
+async def erc_organization(
+    async_session_maker: async_sessionmaker[Any],
+) -> FundingOrganization:
+    async with async_session_maker() as session:
+        result = await session.execute(select(FundingOrganization).where(FundingOrganization.abbreviation == "ERC"))
+        funding_organization = result.scalar_one()
+
+    data_fixture_folder = FIXTURES_FOLDER / "organization_files" / "erc" / "files"
+
+    if not data_fixture_folder.exists():
+        data_fixture_folder.mkdir(parents=True)
+
+    organization_files = list(data_fixture_folder.glob("*.json"))
+
+    if not list(organization_files):
+        source_folder = SOURCES_FOLDER / "guidelines" / "erc"
         assert source_folder.exists(), f"Source folder {source_folder} does not exist"
 
         sources = list(source_folder.glob("*.pdf"))

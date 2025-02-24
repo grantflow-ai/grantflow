@@ -2,6 +2,7 @@ from typing import Any, Final, TypedDict, cast
 
 from sqlalchemy import func, or_, select
 
+from src.constants import ANTHROPIC_SONNET_MODEL
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
 from src.exceptions import EvaluationError
@@ -189,7 +190,7 @@ async def retrieve_documents(
     organization_id: str | None = None,
     search_queries: list[str] | None = None,
     task_description: str | PromptTemplate,
-    with_guided_retrieval: bool = True,
+    with_guided_retrieval: bool = False,
     **kwargs: Any,
 ) -> list[DocumentDTO]:
     """Retrieve documents from the vector store.
@@ -243,6 +244,7 @@ async def retrieve_documents(
 
         tool_response = await handle_completions_request(
             prompt_identifier="guided_retrieval",
+            model=ANTHROPIC_SONNET_MODEL,
             response_schema=guided_retrieval_json_schema,
             response_type=GuidedRetrievalToolResponse,
             system_prompt=GUIDED_RETRIEVAL_SYSTEM_PROMPT,

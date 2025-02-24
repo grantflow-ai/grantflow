@@ -7,6 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+FROM base AS model-download
+WORKDIR /models/
+RUN pip install --no-cache-dir "huggingface-hub[cli]"
+RUN huggingface-cli download sentence-transformers/all-MiniLM-L12-v2
+
 FROM base AS install
 WORKDIR /app/
 ENV UV_COMPILE_BYTECODE=1 \
@@ -22,6 +27,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM base AS app
 WORKDIR /app/
 
+COPY --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
 COPY --from=install /app/.venv/ /app/.venv
 COPY src src
 
