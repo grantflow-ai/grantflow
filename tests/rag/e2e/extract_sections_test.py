@@ -47,6 +47,38 @@ async def test_extract_sections_melanoma_alliance_cfp(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
+async def test_extract_sections_erc_cfp(
+    logger: logging.Logger,
+    erc_organization: FundingOrganization,
+    organization_mapping: dict[str, dict[str, str]],
+) -> None:
+    result = await get_extracted_section_data(
+        source_file_name="erc.md",
+        organization_mapping=organization_mapping,
+    )
+    logger.info("Running end-to-end test for extracting sections from CFP data")
+    start_time = datetime.now(UTC)
+
+    sections = await handle_extract_sections(
+        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=erc_organization
+    )
+
+    elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
+    assert elapsed_time < 180
+
+    folder = RESULTS_FOLDER / "cfps" / "extracted_sections"
+    if not folder.exists():
+        folder.mkdir(parents=True, exist_ok=True)
+
+    results_file = folder / f"handle_extract_sections_erc_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file.write_bytes(serialize(sections))
+    logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
+
+
+@pytest.mark.skipif(
+    not environ.get("E2E_TESTS"),
+    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
+)
 async def test_extract_sections_standard_awards_cfp(
     logger: logging.Logger,
 ) -> None:
