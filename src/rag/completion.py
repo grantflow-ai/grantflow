@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from typing import Any, Final, TypedDict, cast
 
-from anthropic import NOT_GIVEN
+from anthropic import NOT_GIVEN, RateLimitError
 from anthropic.types import ToolParam, ToolUseBlock
 from google.cloud.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
@@ -198,7 +198,7 @@ async def make_google_completions_request[T](
     )
 
 
-@with_exponential_backoff_retry(TooManyRequests)
+@with_exponential_backoff_retry(RateLimitError)
 async def make_anthorpic_completions_request[T](
     *,
     model: str,
