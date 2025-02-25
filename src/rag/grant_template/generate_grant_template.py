@@ -7,6 +7,7 @@ from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.rag.completion import handle_completions_request
 from src.rag.grant_template.extract_sections import ExtractedSectionDTO
+from src.rag.grant_template.validation_utils import detect_cycle
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
@@ -158,29 +159,6 @@ class TemplateSectionsResponse(TypedDict):
     """Error message if any."""
 
 
-def detect_cycle(graph: dict[str, list[str]], start: str, visited: set[str], path: set[str]) -> bool:
-    """Detect cycles in a directed graph using DFS.
-
-    Args:
-        graph: Adjacency list representation of graph
-        start: Current node being visited
-        visited: Set of all visited nodes
-        path: Set of nodes in current DFS path
-
-    Returns:
-        bool: True if cycle detected, False otherwise
-    """
-    visited.add(start)
-    path.add(start)
-
-    for neighbor in graph.get(start, []):
-        if neighbor in path or (neighbor not in visited and detect_cycle(graph, neighbor, visited, path)):
-            return True
-
-    path.remove(start)
-    return False
-
-
 def validate_template_sections(
     response: TemplateSectionsResponse, *, input_sections: list[ExtractedSectionDTO]
 ) -> None:
@@ -238,7 +216,7 @@ def validate_template_sections(
         dependency_graph[section["id"]].extend(section["depends_on"])
 
     for section_id in dependency_graph:
-        if detect_cycle(dependency_graph, section_id, set(), set()):
+        if detect_cycle(graph=dependency_graph, start=section_id):
             raise ValidationError("Circular dependencies detected", context={"starting_node": section_id})
 
 

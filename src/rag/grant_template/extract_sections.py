@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Final, NotRequired, TypedDict
 
 from sentence_transformers import SentenceTransformer, util
@@ -7,6 +8,7 @@ from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.patterns import SNAKE_CASE_PATTERN
 from src.rag.completion import handle_completions_request
+from src.rag.grant_template.validation_utils import detect_cycle
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.embeddings import get_embedding_model
@@ -329,17 +331,6 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             raise InsufficientContextError(error)
         raise ValidationError("No sections extracted. Please provide an error message.", context=response)
 
-    for section in response["sections"]:
-        if not SNAKE_CASE_PATTERN.match(section["id"]):
-            raise ValidationError(
-                "Invalid section ID format", context={"section_id": section["id"], "expected_format": "snake_case"}
-            )
-        if section["parent_id"] == section["id"]:
-            raise ValidationError(
-                "Circular dependency detected. A section cannot be its own parent.",
-                context={"section_id": section["id"]},
-            )
-
     section_ids = [section["id"] for section in response["sections"]]
     if len(section_ids) != len(set(section_ids)):
         raise ValidationError(
@@ -348,14 +339,51 @@ def validate_section_extraction(response: ExtractedSections) -> None:
 
     mapped_sections = {section["id"]: section for section in response["sections"]}
 
+    dependency_graph = defaultdict[str, list[str]](list)
+    for section in response["sections"]:
+        if parent_id := section.get("parent_id"):
+            dependency_graph[section["id"]].append(parent_id)
+
+    for section_id in dependency_graph:
+        if detect_cycle(graph=dependency_graph, start=section_id):
+            raise ValidationError(
+                "Circular dependency detected in section hierarchy",
+                context={"starting_node": section_id},
+            )
+
     valid_ids = set(section_ids)
     for section in response["sections"]:
-        if section["parent_id"] and section["parent_id"] not in valid_ids:
+        if not SNAKE_CASE_PATTERN.match(section["id"]):
             raise ValidationError(
-                f"Invalid parent section reference. The section {section['id']} defines a parent section {section['parent_id']} that does not exist in the sections list.",
+                "Invalid section ID format", context={"section_id": section["id"], "expected_format": "snake_case"}
             )
-        if section["parent_id"] and mapped_sections[section["parent_id"]].get("is_detailed_workplan"):
-            raise ValidationError("The workplan section cannot have any sub-sections as children")
+
+        if len(section["id"].split("_")) < 2:
+            raise ValidationError(
+                "Section ID must be descriptive (at least two words)",
+                context={"section_id": section["id"]},
+            )
+
+        if section["parent_id"]:
+            if section["parent_id"] not in valid_ids:
+                raise ValidationError(
+                    f"Invalid parent section reference. The section {section['id']} defines a parent section {section['parent_id']} that does not exist in the sections list.",
+                )
+            if mapped_sections[section["parent_id"]].get("is_detailed_workplan"):
+                raise ValidationError("The workplan section cannot have any sub-sections as children")
+
+        # Calculate section depth
+        depth = 1  # Start at 1 for the section itself
+        current_id = section["id"]
+        while parent_id := mapped_sections[current_id].get("parent_id"):
+            depth += 1
+            current_id = parent_id
+
+        if depth > 5:
+            raise ValidationError(
+                "Maximum nesting depth exceeded",
+                context={"section_id": section["id"], "depth": depth, "max_depth": 5},
+            )
 
 
 def _should_keep_section(
@@ -447,25 +475,24 @@ async def extract_sections(task_description: str) -> ExtractedSections:
 
 evaluation_criteria = [
     EvaluationCriterion(
-        name="Technical Structure",
+        name="Section Extraction",
         evaluation_instructions="""
-        Evaluate the technical aspects of the extracted structure:
-            - Section IDs must use snake_case and be unique
-            - IDs should be descriptive and reflect section content
-            - No circular dependencies in parent-child relationships
-            - Maximum nesting depth of 5 levels is respected
-            - Parent section references must be valid
+        Evaluate whether the extracted sections are accurate and complete:
+            - All the identifiable sections are present
+            - Sections are correctly identified and classified
+            - Section titles are correct and consistent
         """,
+        weight=1.5,
     ),
     EvaluationCriterion(
         name="Content Architecture",
         evaluation_instructions="""
         Assess the logical organization and completeness of content:
             - Sections follow a coherent hierarchical structure
-            - Required grant components are present
+            - Any grant components are present
             - Organization between sections is logical
             - Section relationships reflect natural content flow
-            - Critical grant components aren't missing
+            - Any grant components aren't missing
         """,
     ),
     EvaluationCriterion(
@@ -473,11 +500,12 @@ evaluation_criteria = [
         evaluation_instructions="""
         Verify Work plan section identification:
             - Exactly one section is marked as detailed workplan
+            - The correct section is identified as the workplan given the available sources
             - Workplan contains research objectives and experimental steps
             - Workplan section is appropriately placed in hierarchy
-            - Workplan doesn't contain ineligible content (background, significance)
-            - No subsections exist under workplan
+            - Workplan doesn't contain ineligible content
         """,
+        weight=1.5,
     ),
     EvaluationCriterion(
         name="Section Type Classification",
@@ -486,7 +514,6 @@ evaluation_criteria = [
             - Long-form sections correctly identified based on length requirements
             - Title-only sections properly marked
             - Clinical trial sections accurately identified
-            - No contradictory type assignments
             - Types align with section content and purpose
         """,
     ),
@@ -499,17 +526,6 @@ evaluation_criteria = [
             - Section names match source terminology
             - Required sections from sources are included
             - Structure follows source-specified organization
-        """,
-    ),
-    EvaluationCriterion(
-        name="Exclusion Handling",
-        evaluation_instructions="""
-        Check proper handling of excluded content:
-            - Sections matching exclude categories are omitted
-            - Essential sections aren't incorrectly excluded
-            - Exclusions don't break hierarchical relationships
-            - Similar but non-matching sections are retained
-            - Borderline cases are handled appropriately
         """,
     ),
 ]
