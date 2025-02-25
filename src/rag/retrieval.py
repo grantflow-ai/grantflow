@@ -2,7 +2,6 @@ from typing import Any, Final, TypedDict, cast
 
 from sqlalchemy import func, or_, select
 
-from src.constants import ANTHROPIC_SONNET_MODEL
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
 from src.exceptions import EvaluationError
@@ -244,7 +243,6 @@ async def retrieve_documents(
 
         tool_response = await handle_completions_request(
             prompt_identifier="guided_retrieval",
-            model=ANTHROPIC_SONNET_MODEL,
             response_schema=guided_retrieval_json_schema,
             response_type=GuidedRetrievalToolResponse,
             system_prompt=GUIDED_RETRIEVAL_SYSTEM_PROMPT,

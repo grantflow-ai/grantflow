@@ -1,4 +1,3 @@
-from asyncio import gather
 from typing import Final, NotRequired, TypedDict
 
 from sentence_transformers import SentenceTransformer, util
@@ -120,7 +119,8 @@ EXCLUDE_CATEGORIES = [
     "Standard Operating Procedures",
     "Submission Forms",
     "Supplements",
-    "TOC",
+    "Supporting Documentation",
+    "ToC",
     "Table Index",
     "Table of Contents",
     "Training",
@@ -358,40 +358,71 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             raise ValidationError("The workplan section cannot have any sub-sections as children")
 
 
-async def _should_keep_section(title: str, threshold: float, exclude_embeddings: list[float]) -> bool:
+def _should_keep_section(
+    section: ExtractedSectionDTO,
+    sections: list[ExtractedSectionDTO],
+    threshold: float,
+    exclude_embeddings: list[float],
+) -> bool:
+    """Check if a section should be kept based on its semantic similarity to excluded categories.
+
+    Args:
+        section: Extracted section to check
+        sections: List of all extracted sections
+        threshold: Maximum allowed similarity score (0-1)
+        exclude_embeddings: List of embeddings for excluded categories
+
+    Returns:
+        bool: True if the section should be kept, False if it's too similar to excluded categories
+    """
+    if section.get("is_detailed_workplan"):
+        return True
+
+    if not section.get("is_long_form") and not any(
+        s.get("parent_id") == section["id"] and s.get("is_long_form") for s in sections
+    ):
+        return False
+
+    if any((section["title"] in v or v in section["title"]) for v in EXCLUDE_CATEGORIES):
+        return False
+
     model = get_embedding_model()
-    title_embedding = await run_sync(model.encode, title, convert_to_tensor=True, device="cpu")
-    similarities = await run_sync(util.cos_sim, title_embedding, exclude_embeddings)
+    title_embedding = model.encode(section["title"], convert_to_tensor=True, device="cpu")
+
+    similarities = util.cos_sim(title_embedding, exclude_embeddings)
     if similarities is not None and len(similarities) > 0:
         return float(similarities[0].max().item()) < threshold
-    return False
+
+    return True
 
 
 async def filter_extracted_sections(
-    sections: list[ExtractedSectionDTO], threshold: float = 0.5
+    sections: list[ExtractedSectionDTO], threshold: float = 0.7
 ) -> list[ExtractedSectionDTO]:
-    """Filter sections based on semantic similarity to excluded categories."""
+    """Filter sections based on semantic similarity to excluded categories.
+
+    Uses an adaptive threshold that gradually increases if no detailed workplan
+    sections are found in the filtered results. This ensures we don't accidentally
+    filter out critical sections.
+
+    Args:
+        sections: List of extracted sections to filter
+        threshold: Similarity threshold (0.1-0.9)
+
+    Returns:
+        List of sections that passed the similarity threshold check
+    """
     exclude_embeddings = await get_exclude_embeddings()
-
-    current_threshold = threshold
-    while current_threshold <= 1.0:
-        sections_to_keep = await gather(
-            *[
-                _should_keep_section(
-                    title=section["title"], threshold=current_threshold, exclude_embeddings=exclude_embeddings
-                )
-                for section in sections
-            ]
+    sections_to_keep = [
+        _should_keep_section(
+            section=section,
+            sections=sections,
+            threshold=threshold,
+            exclude_embeddings=exclude_embeddings,
         )
-        filtered_sections = [
-            section for section, should_keep in zip(sections, sections_to_keep, strict=True) if should_keep
-        ]
-        if any(s.get("is_detailed_workplan") for s in filtered_sections):
-            return filtered_sections
-
-        current_threshold += 0.1
-
-    return sections
+        for section in sections
+    ]
+    return [section for section, should_keep in zip(sections, sections_to_keep, strict=True) if should_keep]
 
 
 async def extract_sections(task_description: str) -> ExtractedSections:
@@ -509,6 +540,7 @@ async def handle_extract_sections(
                 organization_id=str(organization.id),
                 task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
                 search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+                max_results=10,
             ),
             organization_full_name=organization.full_name,
             organization_abbreviation=organization.abbreviation,

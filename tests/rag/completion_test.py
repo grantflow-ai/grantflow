@@ -212,7 +212,9 @@ async def test_handle_completions_request_invalid_response(mock_anthropic_api_re
     tool_use.__class__ = ToolUseBlock
 
     # Set up the response
-    mock_anthropic_api_response.messages.create.return_value = {"content": [tool_use]}
+    response = Mock()
+    response.content = [tool_use]  # Anthropic API returns a list of content blocks
+    mock_anthropic_api_response.messages.create.return_value = response
 
     # Set up the schema that requires a 'key' field
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
