@@ -59,6 +59,7 @@ from tests.factories import (
 )
 
 load_dotenv()
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 logging.getLogger("sqlalchemy.engine.Engine").disabled = True  # otherwise we are spammed with logs
 
@@ -203,17 +204,6 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
     await test_conn.close()
 
     yield connection_string.replace("postgresql://", "postgresql+asyncpg://")
-
-    admin_conn = await connect(connection_string)
-
-    await admin_conn.execute("""
-        SELECT pg_terminate_backend(pg_stat_activity.pid)
-        FROM pg_stat_activity
-        WHERE pg_stat_activity.datname = 'test_db' AND pid <> pg_backend_pid();
-    """)
-
-    await admin_conn.execute("DROP DATABASE IF EXISTS test_db WITH (FORCE)")
-    await admin_conn.close()
 
     await run_process(["docker", "rm", "-f", container_name], check=False)
 
