@@ -1,4 +1,18 @@
+## General
+
 1. Use `uv run ...` to run commands, e.g. `uv run pytest`
-2. Do not add inline comments unless something is obscure
-3. Add full type hints for arguments and return statements, including tests
-4. Target python 3.12 and above
+2. Run `pre-commit run --all-files` to test for linting errors
+3. Do not add inline comments
+4. Add full type hints for arguments and return statements, including tests
+5. Target python 3.12 and above - especially in type hints
+6. Write optimized code, performance is important
+
+## tests
+
+1. Use the factories defined in `tests/factories.py` where applicable
+2. Always inspect what conftest files are in context - there are several different files
+3. Always type all arguments and return statements in test files
+4. Do not add doc strings and inline comments at all in test files
+5. Do not use test classes, always use function based tests.
+6. Follow the existing codebase conventions closely. When in doubt, open some test files to inspect them
+7. Parameterize tests when applicable - maximum parameters are 5. Above that, split tests into multiple smaller tests
