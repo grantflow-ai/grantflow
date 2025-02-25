@@ -60,8 +60,7 @@ from tests.factories import (
 
 load_dotenv()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-logging.getLogger("sqlalchemy.engine.Engine").disabled = True  # otherwise we are spammed with logs
+logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.ERROR)
 
 
 def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
