@@ -47,34 +47,35 @@ class ResearchObjective(TypedDict):
     """The research tasks for the research objective"""
 
 
-class GrantSection(TypedDict):
+class GrantElement(TypedDict):
+    """DTO for a grant element."""
+
+    id: str
+    """Section identifier."""
+    order: int
+    """Order of the section in the grant application."""
+    title: str
+    """Section heading title."""
+
+
+class GrantLongFormSection(GrantElement):
     """DTO for a grant section data."""
 
     depends_on: list[str]
     """Sections that must be generated before this one."""
     generation_instructions: str
     """Detailed content generation instructions."""
-    id: str
-    """Section identifier."""
     is_clinical_trial: bool | None
     """Whether the section is a clinical trial section."""
     is_detailed_workplan: bool | None
     """Whether the section is the work plan."""
-    is_long_form: bool
-    """Whether the section is a long form section."""
-    is_title_only: bool | None
-    """Whether the section contains only a title."""
     keywords: list[str]
     """Technical terms specific to section."""
     max_words: int
     """Maximum word count if specified."""
-    order: int
-    """Order of the section in the grant application."""
     parent_id: str | None
     """Parent section name."""
     search_queries: list[str]
     """Search queries to retrieve information for the section."""
-    title: str
-    """Section heading title."""
     topics: list[str]
     """Topics that the section covers."""

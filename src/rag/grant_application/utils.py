@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from src.db.json_objects import GrantSection
+from src.db.json_objects import GrantLongFormSection
 from src.exceptions import ValidationError
 
 
@@ -25,7 +25,7 @@ def create_dependencies_text(depends_on: list[str], texts: dict[str, str]) -> di
     return dependency_texts
 
 
-def create_generation_groups(sections: list[GrantSection]) -> list[list[GrantSection]]:
+def create_generation_groups(sections: list[GrantLongFormSection]) -> list[list[GrantLongFormSection]]:
     """Create the groups for LLM generation.
 
         - First group has no dependencies
@@ -42,7 +42,7 @@ def create_generation_groups(sections: list[GrantSection]) -> list[list[GrantSec
     Returns:
         The generation groups.
     """
-    groups: list[list[GrantSection]] = []
+    groups: list[list[GrantLongFormSection]] = []
     generated = set[str]()
 
     while len(generated) < len(sections):
@@ -80,7 +80,7 @@ def map_to_tree(
     *,
     parent_id: str = "<root>",
     section_texts: dict[str, str],
-    sections: list[GrantSection],
+    sections: list[GrantLongFormSection],
 ) -> list[TreeNode]:
     """Map the sections to a tree structure.
 

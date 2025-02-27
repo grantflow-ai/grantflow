@@ -5,7 +5,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
-from src.db.json_objects import GrantSection
+from src.db.json_objects import GrantLongFormSection
 from src.db.tables import FundingOrganization, GrantTemplate
 from src.exceptions import DatabaseError
 from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
@@ -20,7 +20,7 @@ async def extract_and_enrich_sections(
     cfp_content: str,
     cfp_subject: str,
     organization: FundingOrganization | None,
-) -> list[GrantSection]:
+) -> list[GrantLongFormSection]:
     """Extract and enrich the sections from the grant CFP content.
 
     Args:

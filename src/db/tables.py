@@ -21,7 +21,7 @@ from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.base import Base, BaseWithUUIDPK
 from src.db.enums import FileIndexingStatusEnum, UserRoleEnum
-from src.db.json_objects import Chunk, GrantSection, ResearchObjective
+from src.db.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
 
 
 class Workspace(BaseWithUUIDPK):
@@ -175,7 +175,7 @@ class GrantTemplate(BaseWithUUIDPK):
 
     __tablename__ = "grant_templates"
 
-    grant_sections: Mapped[list[GrantSection]] = mapped_column(JSON)
+    grant_sections: Mapped[list[GrantLongFormSection | GrantElement]] = mapped_column(JSON)
 
     grant_application_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True

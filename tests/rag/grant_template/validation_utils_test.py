@@ -65,7 +65,7 @@ def test_detect_cycle_complex() -> None:
         ]
     )
 
-    assert detect_cycle(graph, "a", set(), set()) # a -> b -> d -> g -> i -> j -> k -> e -> g
-    assert detect_cycle(graph, "b", set(), set()) # b -> d -> g -> i -> j -> k -> e -> g
-    assert detect_cycle(graph, "c", set(), set()) # c -> f -> h -> i -> j -> k -> e -> g -> i
-    assert not detect_cycle(graph, "1", set(), set()) # 1 -> 2
+    assert detect_cycle(graph, "a", set(), set())  # a -> b -> d -> g -> i -> j -> k -> e -> g
+    assert detect_cycle(graph, "b", set(), set())  # b -> d -> g -> i -> j -> k -> e -> g
+    assert detect_cycle(graph, "c", set(), set())  # c -> f -> h -> i -> j -> k -> e -> g -> i
+    assert not detect_cycle(graph, "1", set(), set())  # 1 -> 2
