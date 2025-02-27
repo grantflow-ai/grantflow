@@ -112,9 +112,7 @@ async def test_apply_semantic_ranking(mocker: MockFixture) -> None:
     # Mock the similarity scores
     similarities = [0.8, 0.3, 0.6]
 
-    mock_model.encode.side_effect = (
-        lambda text, convert_to_tensor=True: mock_query_tensor if text == query else mock_sentence_tensors
-    )
+    mock_model.encode.side_effect = lambda text, **_: mock_query_tensor if text == query else mock_sentence_tensors
 
     mock_cos_sim = mocker.patch("sentence_transformers.util.pytorch_cos_sim")
     mock_cos_sim.return_value = mocker.MagicMock()
@@ -135,7 +133,7 @@ async def test_parse_documents(
     sample_documents: list[DocumentDTO], sample_sentence_infos: list[SentenceInfo], mocker: MockFixture
 ) -> None:
     mock_count_tokens = mocker.patch("src.rag.post_processing.count_tokens")
-    mock_count_tokens.side_effect = lambda text, model="test-model": len(text.split())
+    mock_count_tokens.side_effect = lambda text, **_: len(text.split())
 
     result = await parse_documents(
         original_docs=sample_documents, sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model"

@@ -122,7 +122,7 @@ async def generate_grant_section_texts(
                         form_inputs=form_inputs,
                     )
                 )
-                if not section.get("is_research_plan")
+                if not section.get("is_detailed_workplan")
                 else generate_research_plan_text(
                     application_id=application_id,
                     research_plan_section=section,

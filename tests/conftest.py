@@ -60,7 +60,10 @@ from tests.factories import (
 
 load_dotenv()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.ERROR)
+
+for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
+    logging.getLogger(logger_name).setLevel(logging.WARNING)
+    logging.getLogger(logger_name).propagate = False
 
 
 def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
