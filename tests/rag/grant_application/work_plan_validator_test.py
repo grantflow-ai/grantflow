@@ -3,12 +3,12 @@ from pytest_mock import MockerFixture
 
 from src.db.json_objects import ResearchObjective
 from src.exceptions import ValidationError
-from src.rag.grant_application.plan_research_plan_generation import (
+from src.rag.grant_application.plan_work_plan_generation import (
     ResearchObjectiveDTO,
     ResearchPlanDTO,
     ResearchTaskDTO,
-    enrich_and_plan_research_plan_generation,
-    handle_enrich_and_plan_research_plan,
+    enrich_and_plan_work_plan_generation,
+    handle_enrich_and_plan_work_plan,
     research_plan_validator,
 )
 from tests.factories import GrantSectionFactory
@@ -130,23 +130,23 @@ def test_invalid_relationships(
         research_plan_validator(valid_research_plan, input_objectives=input_objectives)
 
 
-async def test_enrich_and_plan_research_plan_generation(mocker: MockerFixture) -> None:
+async def test_enrich_and_plan_work_plan_generation(mocker: MockerFixture) -> None:
     mock_handle_completions = mocker.patch(
-        "src.rag.grant_application.plan_research_plan_generation.handle_completions_request",
+        "src.rag.grant_application.plan_work_plan_generation.handle_completions_request",
         return_value={"research_objectives": [], "research_tasks": []},
     )
 
-    await enrich_and_plan_research_plan_generation("test", input_objectives=[])
+    await enrich_and_plan_work_plan_generation("test", input_objectives=[])
     mock_handle_completions.assert_called_once()
 
 
-async def test_handle_enrich_and_plan_research_plan(mocker: MockerFixture) -> None:
+async def test_handle_enrich_and_plan_work_plan(mocker: MockerFixture) -> None:
     mock_retrieve = mocker.patch(
-        "src.rag.grant_application.plan_research_plan_generation.retrieve_documents",
+        "src.rag.grant_application.plan_work_plan_generation.retrieve_documents",
         return_value=["test"],
     )
     mock_evaluation = mocker.patch(
-        "src.rag.grant_application.plan_research_plan_generation.with_prompt_evaluation",
+        "src.rag.grant_application.plan_work_plan_generation.with_prompt_evaluation",
         return_value={"research_objectives": [], "research_tasks": []},
     )
 
@@ -157,7 +157,7 @@ async def test_handle_enrich_and_plan_research_plan(mocker: MockerFixture) -> No
         search_queries=["q1"],
     )
 
-    result = await handle_enrich_and_plan_research_plan(
+    result = await handle_enrich_and_plan_work_plan(
         application_id="test",
         grant_section=grant_section,
         research_objectives=[],

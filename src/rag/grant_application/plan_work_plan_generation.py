@@ -8,10 +8,10 @@ from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.prompt_template import PromptTemplate
 
-ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+ENRICH_AND_PLAN_WORK_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="enrich_objectives",
     template="""
-    Your task is to create a detailed plan for the research plan section in JSON format.  This plan will guide the AI in generating a comprehensive and persuasive research plan.
+    Your task is to create a detailed plan for the work plan section in JSON format. This plan will guide the generation of a comprehensive and persuasive work plan that effectively communicates the scientific methodology and experimental approach.
 
     ## Sources
 
@@ -62,11 +62,12 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
         * Ensure the narrative aligns with the overall research goals and the provided keywords and topics.
 
     3. **Identify Relationships:**
-        *  Identify dependencies between objectives. (e.g., Objective 2 builds upon the foundation established in Objective 1).
+        *  Identify dependencies between objectives (e.g., Objective 2 builds upon the foundation established in Objective 1).
         *  Identify dependencies between tasks within an objective (e.g., Task 1.1 must be completed before Task 1.2 can begin).
         *  Identify dependencies across objectives (e.g., Findings from Task 2.3 will inform the approach taken in Objective 4).
         *  Specify the type of relationship (e.g., causal, sequential, complementary, iterative feedback).
         *  Consider how the relationships between objectives and tasks contribute to addressing the keywords and topics.
+        *  Ensure relationships demonstrate a cohesive research strategy with logical connections between components.
 
     4. **Guiding Questions:**
         *  Formulate a comprehensive set of guiding questions for each objective and task.
@@ -77,11 +78,12 @@ ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
 
     5. **Detailed Descriptions:**
         *  **Purpose:** Clearly state the purpose of each objective and task and its contribution to the overall research goal.
-        *  **Methodology:**  Describe the methods and techniques to be employed. Be specific (e.g., "use CRISPR-Cas9 gene editing to target the specific gene sequence...").
-        *  **Expected Results:** Outline anticipated outcomes, deliverables, and potential impact.
-        *  **Dependencies:** Summarize key dependencies identified in step 3.
-        *  **Potential Risks:** Identify potential challenges, limitations, and mitigation strategies.
-        *  Ensure the descriptions are grounded in the provided keywords and topics, using them to provide context and focus.
+        *  **Methodology:** Describe the methods and techniques to be employed with technical precision (e.g., "use CRISPR-Cas9 gene editing to target the specific gene sequence...").
+        *  **Expected Results:** Outline anticipated outcomes, deliverables, and potential impact with measurable indicators.
+        *  **Dependencies:** Summarize key dependencies identified in step 3, highlighting critical path relationships.
+        *  **Potential Risks:** Identify potential challenges, limitations, and mitigation strategies with contingency plans.
+        *  **Innovation Elements:** Highlight novel approaches or techniques that distinguish this research.
+        *  Ensure all descriptions are grounded in the provided keywords and topics, using them to provide scientific context and focus.
 
     6. **Generation Instructions:**
         *  Provide detailed instructions for AI text generation of each objective and task description.
@@ -383,20 +385,20 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
                 raise ValidationError(f"Invalid relationship target ID format: {target_id}") from e
 
 
-async def enrich_and_plan_research_plan_generation(
+async def enrich_and_plan_work_plan_generation(
     task_description: str, *, input_objectives: list[ResearchObjective]
 ) -> ResearchPlanDTO:
-    """Generate a detailed plan for the research plan section.
+    """Generate a detailed plan for the work plan section.
 
     Args:
-        task_description: The task description for the research plan.
+        task_description: The task description for the work plan.
         input_objectives: The input research objectives. This value is piped through to the validator.
 
     Returns:
-        The research plan dto.
+        The work plan dto.
     """
     return await handle_completions_request(
-        prompt_identifier="enrich_and_plan_research_plan",
+        prompt_identifier="enrich_and_plan_work_plan",
         messages=task_description,
         response_type=ResearchPlanDTO,
         response_schema=response_schema,
@@ -404,25 +406,169 @@ async def enrich_and_plan_research_plan_generation(
     )
 
 
-async def handle_enrich_and_plan_research_plan(
+evaluation_criteria = [
+    EvaluationCriterion(
+        name="Completeness",
+        evaluation_instructions="""
+        Evaluate the completeness of the research plan by checking:
+
+        1. Research Objectives:
+            - Each objective has all required fields (title, description, relationships, etc.)
+            - All objectives from input are included
+            - Objectives have appropriate level of detail in descriptions
+            - At least 3 guiding questions per objective
+            - Contains 5+ relevant keywords
+            - Contains 3-10 search queries
+
+        2. Research Tasks:
+            - Each task has all required fields
+            - All tasks from input objectives are included
+            - Tasks have appropriate level of detail
+            - At least 3 guiding questions per task
+            - Contains 5+ relevant keywords
+            - Contains 3-10 search queries
+
+        3. Word Count Allocation:
+            - Each objective and task has specified max_words
+            - Word counts are reasonable for complexity
+            - Total word count matches section limit
+
+        Score lower if any required elements are missing or incomplete.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Correctness",
+        evaluation_instructions="""
+        Assess the technical accuracy and logical consistency:
+
+        1. Objective and Task Structure:
+            - Objective numbers match input objectives
+            - Task numbers correctly associated with objectives
+            - Hierarchical structure maintains correct parent-child relationships
+
+        2. Data Formatting:
+            - Numbers are within valid ranges (1-100)
+            - Relationship arrays contain exactly 2 elements
+            - IDs in relationships use correct format (e.g., "1" or "1.1")
+
+        3. Content Logic:
+            - Instructions align with objective/task purpose
+            - Guiding questions are relevant to the objective/task
+            - Keywords relate to content and purpose
+            - Search queries are well-formed and relevant
+
+        Score lower for any technical errors or logical inconsistencies.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Prompt Adherence",
+        evaluation_instructions="""
+        Evaluate how well the response follows prompt requirements:
+
+        1. Task Description Adherence:
+            - Follows the 8-step process outlined
+            - Properly analyzes objectives
+            - Establishes clear narrative
+            - Identifies relationships correctly
+            - Creates appropriate guiding questions
+            - Provides detailed descriptions
+            - Includes generation instructions
+            - Calculates word counts
+            - Generates search queries
+
+        2. Output Structure:
+            - Follows specified JSON structure exactly
+            - All required fields present
+            - Arrays contain minimum required items
+            - Data types match schema requirements
+
+        3. Metadata Integration:
+            - Effectively uses provided keywords
+            - Incorporates specified topics
+            - References source materials appropriately
+
+        Score lower if response deviates from prompt instructions.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Relevance",
+        evaluation_instructions="""
+        Assess the relevance and appropriateness of content:
+
+        1. Content Relevance:
+            - Keywords align with research domain
+            - Search queries target relevant information
+            - Guiding questions address core research aspects
+            - Instructions focus on essential elements
+
+        2. Source Integration:
+            - Content reflects provided research objectives
+            - Incorporates user inputs appropriately
+            - Utilizes retrieval results effectively
+            - References provided keywords and topics
+
+        3. Purpose Alignment:
+            - Content supports overall research goals
+            - Tasks contribute to objective completion
+            - Instructions guide toward desired outcomes
+            - Questions probe relevant aspects
+
+        Score lower if content strays from research focus or fails to integrate sources.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Relationships",
+        evaluation_instructions="""
+        Evaluate the quality and logic of relationships:
+
+        1. Relationship Structure:
+            - Each relationship properly formatted [id, description]
+            - IDs reference valid objectives or tasks
+            - Descriptions explain connection clearly
+
+        2. Relationship Logic:
+            - Dependencies are correctly identified
+            - Progression between objectives is logical
+            - Task interdependencies make sense
+            - Circular dependencies are avoided
+
+        3. Relationship Completeness:
+            - All important connections identified
+            - Bidirectional relationships noted where appropriate
+            - Cross-objective relationships included
+            - Task-to-task relationships documented
+
+        4. Relationship Description Quality:
+            - Clear explanation of connection type
+            - Specific about how elements relate
+            - Identifies impact and dependencies
+            - Notes feedback loops where relevant
+
+        Score lower for missing, incorrect, or poorly described relationships.
+        """,
+    ),
+]
+
+
+async def handle_enrich_and_plan_work_plan(
     *,
     application_id: str,
     grant_section: GrantLongFormSection,
     research_objectives: list[ResearchObjective],
     form_inputs: dict[str, str],
 ) -> ResearchPlanDTO:
-    """Generate a detailed plan for the research plan section.
+    """Generate a detailed plan for the work plan section.
 
     Args:
         application_id: The ID of the grant application.
-        grant_section: The grant section for the research plan.
+        grant_section: The grant section for the work plan.
         research_objectives: The research objectives.
         form_inputs: The user inputs.
 
     Returns:
-        The research plan dto.
+        The work plan dto.
     """
-    prompt = ENRICH_AND_PLAN_RESEARCH_PLAN_USER_PROMPT.substitute(
+    prompt = ENRICH_AND_PLAN_WORK_PLAN_USER_PROMPT.substitute(
         research_objectives=research_objectives,
         keywords=grant_section["keywords"],
         topics=grant_section["topics"],
@@ -435,152 +581,11 @@ async def handle_enrich_and_plan_research_plan(
         task_description=prompt,
     )
     return await with_prompt_evaluation(
-        prompt_identifier="research_plan_generation",
+        prompt_identifier="work_plan_generation",
         prompt=prompt.to_string(rag_results=rag_results),
-        prompt_handler=partial(enrich_and_plan_research_plan_generation, input_objectives=research_objectives),
+        prompt_handler=partial(enrich_and_plan_work_plan_generation, input_objectives=research_objectives),
         passing_score=90,
         increment=5,
         retries=5,
-        criteria=[
-            EvaluationCriterion(
-                name="Completeness",
-                evaluation_instructions="""
-    Evaluate the completeness of the research plan by checking:
-
-    1. Research Objectives:
-        - Each objective has all required fields (title, description, relationships, etc.)
-        - All objectives from input are included
-        - Objectives have appropriate level of detail in descriptions
-        - At least 3 guiding questions per objective
-        - Contains 5+ relevant keywords
-        - Contains 3-10 search queries
-
-    2. Research Tasks:
-        - Each task has all required fields
-        - All tasks from input objectives are included
-        - Tasks have appropriate level of detail
-        - At least 3 guiding questions per task
-        - Contains 5+ relevant keywords
-        - Contains 3-10 search queries
-
-    3. Word Count Allocation:
-        - Each objective and task has specified max_words
-        - Word counts are reasonable for complexity
-        - Total word count matches section limit
-
-    Score lower if any required elements are missing or incomplete.
-    """,
-            ),
-            EvaluationCriterion(
-                name="Correctness",
-                evaluation_instructions="""
-    Assess the technical accuracy and logical consistency:
-
-    1. Objective and Task Structure:
-        - Objective numbers match input objectives
-        - Task numbers correctly associated with objectives
-        - Hierarchical structure maintains correct parent-child relationships
-
-    2. Data Formatting:
-        - Numbers are within valid ranges (1-100)
-        - Relationship arrays contain exactly 2 elements
-        - IDs in relationships use correct format (e.g., "1" or "1.1")
-
-    3. Content Logic:
-        - Instructions align with objective/task purpose
-        - Guiding questions are relevant to the objective/task
-        - Keywords relate to content and purpose
-        - Search queries are well-formed and relevant
-
-    Score lower for any technical errors or logical inconsistencies.
-    """,
-            ),
-            EvaluationCriterion(
-                name="Prompt Adherence",
-                evaluation_instructions="""
-    Evaluate how well the response follows prompt requirements:
-
-    1. Task Description Adherence:
-        - Follows the 8-step process outlined
-        - Properly analyzes objectives
-        - Establishes clear narrative
-        - Identifies relationships correctly
-        - Creates appropriate guiding questions
-        - Provides detailed descriptions
-        - Includes generation instructions
-        - Calculates word counts
-        - Generates search queries
-
-    2. Output Structure:
-        - Follows specified JSON structure exactly
-        - All required fields present
-        - Arrays contain minimum required items
-        - Data types match schema requirements
-
-    3. Metadata Integration:
-        - Effectively uses provided keywords
-        - Incorporates specified topics
-        - References source materials appropriately
-
-    Score lower if response deviates from prompt instructions.
-    """,
-            ),
-            EvaluationCriterion(
-                name="Relevance",
-                evaluation_instructions="""
-    Assess the relevance and appropriateness of content:
-
-    1. Content Relevance:
-        - Keywords align with research domain
-        - Search queries target relevant information
-        - Guiding questions address core research aspects
-        - Instructions focus on essential elements
-
-    2. Source Integration:
-        - Content reflects provided research objectives
-        - Incorporates user inputs appropriately
-        - Utilizes retrieval results effectively
-        - References provided keywords and topics
-
-    3. Purpose Alignment:
-        - Content supports overall research goals
-        - Tasks contribute to objective completion
-        - Instructions guide toward desired outcomes
-        - Questions probe relevant aspects
-
-    Score lower if content strays from research focus or fails to integrate sources.
-    """,
-            ),
-            EvaluationCriterion(
-                name="Relationships",
-                evaluation_instructions="""
-    Evaluate the quality and logic of relationships:
-
-    1. Relationship Structure:
-        - Each relationship properly formatted [id, description]
-        - IDs reference valid objectives or tasks
-        - Descriptions explain connection clearly
-
-    2. Relationship Logic:
-        - Dependencies are correctly identified
-        - Progression between objectives is logical
-        - Task interdependencies make sense
-        - Circular dependencies are avoided
-
-    3. Relationship Completeness:
-        - All important connections identified
-        - Bidirectional relationships noted where appropriate
-        - Cross-objective relationships included
-        - Task-to-task relationships documented
-
-    4. Relationship Description Quality:
-        - Clear explanation of connection type
-        - Specific about how elements relate
-        - Identifies impact and dependencies
-        - Notes feedback loops where relevant
-
-    Score lower for missing, incorrect, or poorly described relationships.
-    """,
-            ),
-        ],
+        criteria=evaluation_criteria,
     )

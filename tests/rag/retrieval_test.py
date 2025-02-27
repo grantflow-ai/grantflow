@@ -71,7 +71,7 @@ async def test_retrieve_documents_basic(mock_text_vectors: list[TextVector], moc
         task_description="Test task",
     )
 
-    assert result == processed_docs
+    assert result == processed_docs  # type: ignore[comparison-overlap]
 
     mock_handle_create_queries.assert_called_once()
     mock_handle_retrieval.assert_called_once()
@@ -110,7 +110,7 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: Moc
         with_guided_retrieval=True,
     )
 
-    assert result == processed_docs2
+    assert result == processed_docs2  # type: ignore[comparison-overlap]
 
     assert mock_handle_retrieval.call_count == 2
     assert mock_handle_retrieval.call_args_list[1][1]["search_queries"] == ["better query"]

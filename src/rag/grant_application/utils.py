@@ -1,7 +1,19 @@
-from typing import TypedDict
+from typing import TypedDict, TypeGuard
 
-from src.db.json_objects import GrantLongFormSection
+from src.db.json_objects import GrantElement, GrantLongFormSection
 from src.exceptions import ValidationError
+
+
+def is_grant_long_form_section(section: GrantElement | GrantLongFormSection) -> TypeGuard[GrantLongFormSection]:
+    """Type guard to check if a section is a GrantLongFormSection.
+
+    Args:
+        section: The section to check.
+
+    Returns:
+        Whether the section is a GrantLongFormSection.
+    """
+    return "depends_on" in section
 
 
 def create_dependencies_text(depends_on: list[str], texts: dict[str, str]) -> dict[str, str]:
@@ -80,7 +92,7 @@ def map_to_tree(
     *,
     parent_id: str = "<root>",
     section_texts: dict[str, str],
-    sections: list[GrantLongFormSection],
+    sections: list[GrantElement | GrantLongFormSection],
 ) -> list[TreeNode]:
     """Map the sections to a tree structure.
 
