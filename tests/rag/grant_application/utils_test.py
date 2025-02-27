@@ -1,6 +1,6 @@
 import pytest
 
-from src.db.json_objects import GrantSection
+from src.db.json_objects import GrantLongFormSection
 from src.exceptions import ValidationError
 from src.rag.grant_application.utils import (
     TreeNode,
@@ -53,7 +53,7 @@ def test_create_dependencies_text_with_dependencies() -> None:
         ),
     ],
 )
-def test_create_generation_groups(sections: list[GrantSection], expected_groups: list[list[str]]) -> None:
+def test_create_generation_groups(sections: list[GrantLongFormSection], expected_groups: list[list[str]]) -> None:
     groups = create_generation_groups(sections)
     assert len(groups) == len(expected_groups)
     assert all(len(group) == len(expected) for group, expected in zip(groups, expected_groups, strict=False))
@@ -78,7 +78,7 @@ def test_create_generation_groups_missing_dependency() -> None:
 
 
 @pytest.fixture
-def grant_sections() -> list[GrantSection]:
+def grant_sections() -> list[GrantLongFormSection]:
     return [
         {
             "id": "abstract",
@@ -139,7 +139,7 @@ def grant_sections() -> list[GrantSection]:
     ]
 
 
-def test_map_to_tree_simple(grant_sections: list[GrantSection]) -> None:
+def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="<root>")
     assert len(result) == 1  # only abstract at root
     assert result[0]["title"] == "Abstract"
@@ -147,14 +147,14 @@ def test_map_to_tree_simple(grant_sections: list[GrantSection]) -> None:
     assert not result[0]["children"]
 
 
-def test_map_to_tree_nested(grant_sections: list[GrantSection]) -> None:
+def test_map_to_tree_nested(grant_sections: list[GrantLongFormSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")
     assert len(result) == 3  # research_strategy, risks_and_mitigations, impact
     assert result[0]["title"] == "Research Strategy"
     assert result[0]["text"] == "This is the research strategy."
 
 
-def test_map_to_tree_ordering(grant_sections: list[GrantSection]) -> None:
+def test_map_to_tree_ordering(grant_sections: list[GrantLongFormSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")
     children_titles = [child["title"] for child in result]
     assert children_titles == ["Research Strategy", "Risks and Mitigations", "Potential Impact"]
@@ -243,7 +243,7 @@ def test_create_text_recursively_max_depth() -> None:
 
 
 @pytest.fixture
-def multi_level_sections() -> list[GrantSection]:
+def multi_level_sections() -> list[GrantLongFormSection]:
     return [
         GrantSectionFactory.build(
             id="part_b",
@@ -302,13 +302,13 @@ def multi_level_sections() -> list[GrantSection]:
     ]
 
 
-def test_tree_multi_level_root_ordering(multi_level_sections: list[GrantSection]) -> None:
+def test_tree_multi_level_root_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
     root_titles = [node["title"] for node in tree]
     assert root_titles == ["Part A", "Part B"]
 
 
-def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantSection]) -> None:
+def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
 
     part_a = next(node for node in tree if node["title"] == "Part A")
@@ -320,7 +320,7 @@ def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantSect
     assert part_b_children == ["Section B1", "Section B2"]
 
 
-def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[GrantSection]) -> None:
+def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
 
     part_b = next(node for node in tree if node["title"] == "Part B")
@@ -329,7 +329,7 @@ def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[Gran
     assert section_b1_children == ["Subsection B1.1", "Subsection B1.2"]
 
 
-def test_tree_multi_level_text_generation(multi_level_sections: list[GrantSection]) -> None:
+def test_tree_multi_level_text_generation(multi_level_sections: list[GrantLongFormSection]) -> None:
     section_texts = {
         "part_a": "Part A content",
         "part_b": "Part B content",
@@ -354,7 +354,7 @@ def test_tree_multi_level_text_generation(multi_level_sections: list[GrantSectio
         assert text.index(expected) < text.index(expected_order[i + 1])
 
 
-def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantSection]) -> None:
+def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantLongFormSection]) -> None:
     tree = map_to_tree(sections=multi_level_sections, section_texts={})
 
     assert len(tree) == 2

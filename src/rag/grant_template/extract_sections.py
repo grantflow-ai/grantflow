@@ -205,12 +205,17 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
             </exclude_categories>
 
     5. Identify and flag all sections that are titles only.
+        - Titles only sections are sections that contain only a title and subsections, e.g. "Part 1", etc.
 
     6. Identify and flag all sections that are clinical trial sections:
         - Clinical trial sections are sections that describe the clinical trial aspects of the project.
         - These sections do not appear in all grant applications, only those that may potentially involve clinical trials.
 
-    6. Review and validate results:
+    7. Assign an order to each section:
+        - Order starts at 1 and increments by 1 for each section.
+        - The order should reflect the order of the section in the application.
+
+    8. Review and validate results:
       - If your confidence is below 75% about:
         - Required sections being identified correctly.
         - Section hierarchy accuracy.
@@ -229,10 +234,11 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     {
        "sections": [{                           // List of sections, empty if insufficient information
            "id": "string",                      // Unique snake_case identifier, e.g. 'abstract'
+           "is_clinical_trial": "boolean",      // Whether the section is a clinical trial section, nullable
            "is_detailed_workplan": "boolean",   // Whether the section is the work plan, nullable
            "is_long_form": "boolean",           // Whether the section is a long form section, required
            "is_title_only": "boolean",          // Whether the section contains only a title, nullable
-           "is_clinical_trial": "boolean",      // Whether the section is a clinical trial section, nullable
+           "order": "integer"                   // Order of the section in the grant application, starts at 1
            "parent_id": "string",               // ID of parent section, nullable
            "title": "string",                   // Section title as appears in source
        }],
@@ -276,6 +282,7 @@ section_extraction_json_schema = {
                         "minLength": 1,
                         "maxLength": 100,
                     },
+                    "order": {"type": "integer", "minimum": 1},
                     "parent_id": {"type": "string", "nullable": True},
                     "is_detailed_workplan": {"type": "boolean", "nullable": True},
                     "is_title_only": {"type": "boolean", "nullable": True},
@@ -295,6 +302,8 @@ class ExtractedSectionDTO(TypedDict):
     """The title of the section."""
     id: str
     """The unique identifier of the section."""
+    order: int
+    """The order of the section in the grant application."""
     parent_id: NotRequired[str | None]
     """The parent section ID if this section is a sub-section."""
     is_detailed_workplan: NotRequired[bool | None]
@@ -330,6 +339,13 @@ def validate_section_extraction(response: ExtractedSections) -> None:
         if error := response.get("error"):
             raise InsufficientContextError(error)
         raise ValidationError("No sections extracted. Please provide an error message.", context=response)
+
+    all_orders = [section["order"] for section in response["sections"]]
+    if len(set(all_orders)) != len(all_orders):
+        raise ValidationError("Duplicate order values found")
+
+    if min(all_orders) != 1 or max(all_orders) != len(all_orders):
+        raise ValidationError("Order values must start at 1 and be consecutive")
 
     section_ids = [section["id"] for section in response["sections"]]
     if len(section_ids) != len(set(section_ids)):
