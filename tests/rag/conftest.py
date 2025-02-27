@@ -3,14 +3,14 @@ from uuid import UUID
 
 import pytest
 
-from src.db.json_objects import GrantSection
+from src.db.json_objects import GrantLongFormSection
 from tests.factories import GrantSectionFactory
 
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
 
 
 @pytest.fixture
-def grant_sections() -> list[GrantSection]:
+def grant_sections() -> list[GrantLongFormSection]:
     return [
         GrantSectionFactory.build(
             name="abstract",
@@ -158,7 +158,7 @@ def grant_sections() -> list[GrantSection]:
 
 
 @pytest.fixture
-def grant_template_data(grant_sections: list[GrantSection]) -> dict[str, Any]:
+def grant_template_data(grant_sections: list[GrantLongFormSection]) -> dict[str, Any]:
     return {
         "grant_sections": grant_sections,
         "grant_application_id": str(GRANT_APPLICATION_ID),

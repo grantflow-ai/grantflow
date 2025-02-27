@@ -2,7 +2,7 @@ from collections import defaultdict
 from functools import partial
 from typing import Final, NotRequired, TypedDict, cast
 
-from src.db.json_objects import GrantSection
+from src.db.json_objects import GrantLongFormSection
 from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.rag.completion import handle_completions_request
@@ -153,7 +153,7 @@ grant_template_generation_json_schema: Final = {
 class TemplateSectionsResponse(TypedDict):
     """Response from the tool for generating grant template sections."""
 
-    sections: list[GrantSection]
+    sections: list[GrantLongFormSection]
     """List of generated grant template sections."""
     error: NotRequired[str | None]
     """Error message if any."""
@@ -196,13 +196,6 @@ def validate_template_sections(
         if input_section["parent_id"] != section["parent_id"]:
             raise ValidationError("Parent relationship modified")
         # Skip validation of is_title_only and is_detailed_workplan since they are not part of GrantSection
-
-    all_orders = [section["order"] for section in response["sections"]]
-    if len(set(all_orders)) != len(all_orders):
-        raise ValidationError("Duplicate order values found")
-
-    if min(all_orders) != 1 or max(all_orders) != len(all_orders):
-        raise ValidationError("Order values must start at 1 and be consecutive")
 
     dependency_graph = defaultdict[str, list[str]](list)
     for section in response["sections"]:
@@ -293,7 +286,7 @@ evaluation_criteria = [
 
 async def handle_generate_grant_template(
     *, cfp_content: str, organization: FundingOrganization | None, core_narrative_sections: list[ExtractedSectionDTO]
-) -> list[GrantSection]:
+) -> list[GrantLongFormSection]:
     """Generate a complete grant template including format and section configurations.
 
     Args:
@@ -323,7 +316,7 @@ async def handle_generate_grant_template(
         criteria=evaluation_criteria,
     )
 
-    sorted_sections = cast(list[GrantSection], sorted(result["sections"], key=lambda x: x["order"]))
+    sorted_sections = cast(list[GrantLongFormSection], sorted(result["sections"], key=lambda x: x["order"]))
     for i, section in enumerate(sorted_sections):
         section["order"] = i + 1
 

@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Final, TypedDict
 
-from src.db.json_objects import GrantSection, ResearchObjective
+from src.db.json_objects import GrantLongFormSection, ResearchObjective
 from src.exceptions import ValidationError
 from src.rag.completion import handle_completions_request
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
@@ -407,7 +407,7 @@ async def enrich_and_plan_research_plan_generation(
 async def handle_enrich_and_plan_research_plan(
     *,
     application_id: str,
-    grant_section: GrantSection,
+    grant_section: GrantLongFormSection,
     research_objectives: list[ResearchObjective],
     form_inputs: dict[str, str],
 ) -> ResearchPlanDTO:

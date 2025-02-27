@@ -1,10 +1,12 @@
 import pytest
 
 from src.exceptions import InsufficientContextError, ValidationError
-from src.rag.grant_template.extract_sections import ExtractedSectionDTO, ExtractedSections, validate_section_extraction
+from src.rag.grant_template.extract_sections import ExtractedSectionDTO, validate_section_extraction
 
 
-def create_section(*, id: str, parent_id: str | None = None, is_detailed_workplan: bool | None = None) -> ExtractedSectionDTO:
+def create_section(
+    *, id: str, parent_id: str | None = None, is_detailed_workplan: bool | None = None
+) -> ExtractedSectionDTO:
     return {
         "id": id,
         "title": "Test Section",
@@ -42,36 +44,44 @@ def test_validate_descriptive_ids() -> None:
 
 def test_validate_unique_ids() -> None:
     with pytest.raises(ValidationError) as exc:
-        validate_section_extraction({
-            "sections": [
-                create_section(id="duplicate_id"),
-                create_section(id="duplicate_id"),
-            ]
-        })
+        validate_section_extraction(
+            {
+                "sections": [
+                    create_section(id="duplicate_id"),
+                    create_section(id="duplicate_id"),
+                ]
+            }
+        )
     assert "Duplicate section IDs found" in str(exc.value)
 
 
 def test_validate_parent_references() -> None:
     with pytest.raises(ValidationError) as exc:
-        validate_section_extraction({"sections": [create_section(id="test_child_section", parent_id="nonexistent_parent")]})
+        validate_section_extraction(
+            {"sections": [create_section(id="test_child_section", parent_id="nonexistent_parent")]}
+        )
     assert "Invalid parent section reference" in str(exc.value)
 
-    validate_section_extraction({
-        "sections": [
-            create_section(id="test_parent_section"),
-            create_section(id="test_child_section", parent_id="test_parent_section"),
-        ]
-    })
+    validate_section_extraction(
+        {
+            "sections": [
+                create_section(id="test_parent_section"),
+                create_section(id="test_child_section", parent_id="test_parent_section"),
+            ]
+        }
+    )
 
 
 def test_validate_workplan_children() -> None:
     with pytest.raises(ValidationError) as exc:
-        validate_section_extraction({
-            "sections": [
-                create_section(id="workplan_section", is_detailed_workplan=True),
-                create_section(id="child_section", parent_id="workplan_section"),
-            ]
-        })
+        validate_section_extraction(
+            {
+                "sections": [
+                    create_section(id="workplan_section", is_detailed_workplan=True),
+                    create_section(id="child_section", parent_id="workplan_section"),
+                ]
+            }
+        )
     assert "The workplan section cannot have any sub-sections" in str(exc.value)
 
 
@@ -96,11 +106,13 @@ def test_validate_nesting_depth() -> None:
 
 def test_validate_circular_dependencies() -> None:
     with pytest.raises(ValidationError) as exc:
-        validate_section_extraction({
-            "sections": [
-                create_section(id="section_a", parent_id="section_b"),
-                create_section(id="section_b", parent_id="section_c"),
-                create_section(id="section_c", parent_id="section_a"),
-            ]
-        })
+        validate_section_extraction(
+            {
+                "sections": [
+                    create_section(id="section_a", parent_id="section_b"),
+                    create_section(id="section_b", parent_id="section_c"),
+                    create_section(id="section_c", parent_id="section_a"),
+                ]
+            }
+        )
     assert "Circular dependency detected" in str(exc.value)

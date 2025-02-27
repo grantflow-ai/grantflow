@@ -22,7 +22,7 @@ from src.api_types import (
     WorkspaceBaseResponse,
 )
 from src.constants import EMBEDDING_DIMENSIONS
-from src.db.json_objects import GrantSection, ResearchObjective, ResearchTask
+from src.db.json_objects import GrantLongFormSection, ResearchObjective, ResearchTask
 from src.db.tables import (
     FundingOrganization,
     GrantApplication,
@@ -39,8 +39,8 @@ faker = Faker()
 rng = default_rng()
 
 
-class GrantSectionFactory(TypedDictFactory[GrantSection]):
-    __model__ = GrantSection
+class GrantSectionFactory(TypedDictFactory[GrantLongFormSection]):
+    __model__ = GrantLongFormSection
     type = "section"
     is_research_plan = False
     parent_id = None

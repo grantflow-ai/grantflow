@@ -1,7 +1,7 @@
 from typing import Final
 
 from src.constants import MIN_WORDS_RATIO
-from src.db.json_objects import GrantSection
+from src.db.json_objects import GrantLongFormSection
 from src.exceptions import EvaluationError
 from src.rag.llm_evaluation import EvaluationCriterion
 from src.rag.long_form import handle_long_form_text_generation
@@ -55,7 +55,7 @@ async def handle_section_text_generation(
     *,
     application_id: str,
     dependencies: dict[str, str],
-    grant_section: GrantSection,
+    grant_section: GrantLongFormSection,
     form_inputs: dict[str, str],
 ) -> str:
     """Generate the text for a given grant section.

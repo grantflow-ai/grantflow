@@ -1,8 +1,9 @@
 """Tests for the template sections validator."""
+
 import pytest
 
 from src.exceptions import InsufficientContextError, ValidationError
-from src.rag.grant_template.generate_grant_template import TemplateSectionsResponse, validate_template_sections
+from src.rag.grant_template.generate_grant_template import validate_template_sections
 from tests.factories import GrantSectionFactory
 
 

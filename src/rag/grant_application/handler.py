@@ -4,7 +4,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
-from src.db.json_objects import GrantSection, ResearchObjective
+from src.db.json_objects import GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication
 from src.exceptions import DatabaseError, ValidationError
 from src.rag.grant_application.generate_research_text import handle_generate_research_plan_component
@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 
 async def generate_research_plan_text(
     application_id: str,
-    research_plan_section: GrantSection,
+    research_plan_section: GrantLongFormSection,
     form_inputs: dict[str, str],
     research_objectives: list[ResearchObjective],
 ) -> str:
@@ -94,7 +94,7 @@ async def generate_research_plan_text(
 async def generate_grant_section_texts(
     application_id: str,
     form_inputs: dict[str, str],
-    grant_sections: list[GrantSection],
+    grant_sections: list[GrantLongFormSection],
     research_objectives: list[ResearchObjective],
 ) -> dict[str, str]:
     """Generate the grant section texts for a grant application.
@@ -139,7 +139,9 @@ async def generate_grant_section_texts(
     return section_texts
 
 
-def generate_appliction_text(title: str, grant_sections: list[GrantSection], section_texts: dict[str, str]) -> str:
+def generate_appliction_text(
+    title: str, grant_sections: list[GrantLongFormSection], section_texts: dict[str, str]
+) -> str:
     """Generate the application text.
 
     Args:
