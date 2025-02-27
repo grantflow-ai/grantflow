@@ -37,6 +37,8 @@ async def test_document_retrieval(
             """,
     )
     assert len(results) == 25
+    # Verify results are strings, not DocumentDTO objects
+    assert all(isinstance(result, str) for result in results)
 
     retrival_results = (
         RESULTS_FOLDER / full_application_id / f"retrieval_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"

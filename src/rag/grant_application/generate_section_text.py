@@ -79,7 +79,7 @@ async def handle_section_text_generation(
         topics=grant_section["topics"],
     )
     try:
-        rag_results = await retrieve_documents(
+        document_contents = await retrieve_documents(
             application_id=application_id,
             task_description=user_prompt,
             search_queries=grant_section.get("search_queries"),
@@ -90,7 +90,7 @@ async def handle_section_text_generation(
             max_words=grant_section["max_words"],
             min_words=int(grant_section["max_words"] * MIN_WORDS_RATIO),
             prompt_identifier="generate_section_text",
-            rag_results=rag_results,
+            rag_results=document_contents,
             task_description=user_prompt,
             user_inputs=form_inputs,
             criteria=[
