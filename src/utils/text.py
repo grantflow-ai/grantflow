@@ -235,7 +235,7 @@ async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
 
     try:
         client = get_google_ai_client(prompt_identifier="", system_instructions="", model=model)
-        response = await client.count_tokens(text)
-        return int(response["total_tokens"])
+        response = client.count_tokens(text)
+        return int(response.total_tokens)
     except (ValueError, KeyError, AttributeError):
         return estimate_token_count(text)

@@ -1,4 +1,4 @@
-from typing import Final, NotRequired, TypedDict
+from typing import Any, Final, NotRequired, TypedDict
 
 from src.exceptions import InsufficientContextError, ValidationError
 from src.rag.completion import handle_completions_request
@@ -114,11 +114,12 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
         raise ValidationError("No content extracted. Please provide an error message.")
 
 
-async def extract_cfp_data(task_description: str) -> ExtractedCFPData:
+async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:
     """Extract the data from a CFP text.
 
     Args:
         task_description: The task description.
+        **_: Additional keyword arguments (unused)
 
     Returns:
         The extracted CFP data.

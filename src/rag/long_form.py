@@ -1,10 +1,7 @@
-from functools import partial
 from time import time
 from typing import Any, Final, TypedDict
 
-from src.exceptions import EvaluationError
 from src.rag.completion import handle_completions_request
-from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.text import concatenate_segments_with_spacy_coherence, normalize_markdown
@@ -93,12 +90,22 @@ class LongFormToolResponse(TypedDict):
     """Whether the text is complete or not."""
 
 
-async def generate_long_form_text(prompt: PromptTemplate, *, prompt_identifier: str) -> str:
+async def generate_long_form_text(
+    *,
+    max_words: int,
+    min_words: int,
+    prompt_identifier: str,
+    task_description: str,
+    **sources: Any,
+) -> str:
     """Generate long-form text.
 
     Args:
-        prompt: The prompt template.
+        max_words: The maximum number of words to generate.
+        min_words: The minimum number of words to generate.
         prompt_identifier: The identifier of the entity to generate text for.
+        task_description: The description of the task.
+        **sources: Additional keyword arguments to pass to the prompt handler.
 
     Returns:
         The generated text.
@@ -110,10 +117,18 @@ async def generate_long_form_text(prompt: PromptTemplate, *, prompt_identifier: 
     logger.info("Generating text", entity_identifier=prompt_identifier)
     start_time = time()
     while api_call_num < 5:
+        prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
+            task_description=task_description,
+            min_words=min_words,
+            max_words=max_words,
+            sources=sources,
+            already_generated_text=result,
+        )
+
         response = await handle_completions_request(
             prompt_identifier=prompt_identifier,
             response_schema=LONG_FORM_SCHEMA,
-            messages=prompt.to_string(already_generated_text=result),
+            messages=prompt,
             response_type=LongFormToolResponse,
         )
 
@@ -131,46 +146,3 @@ async def generate_long_form_text(prompt: PromptTemplate, *, prompt_identifier: 
     )
 
     return normalize_markdown(result)
-
-
-async def handle_long_form_text_generation(
-    *,
-    prompt_identifier: str = "",
-    retries: int = 3,
-    task_description: str,
-    min_words: int,
-    max_words: int,
-    criteria: list[EvaluationCriterion],
-    **sources: Any,
-) -> str:
-    """Handle the generation of long-form text.
-
-    Args:
-        prompt_identifier: The identifier of the entity to generate text for.
-        retries: The number of retries to attempt.
-        task_description: The description of the task.
-        min_words: The minimum number of words to generate.
-        max_words: The maximum number of words to generate.
-        criteria: The evaluation criteria.
-        **sources: Additional keyword arguments to pass to the prompt handler.
-
-    Returns:
-        The generated text.
-    """
-    try:
-        return await with_prompt_evaluation(
-            prompt_identifier="long_form",
-            prompt_handler=partial(generate_long_form_text, prompt_identifier=prompt_identifier),
-            retries=retries,
-            prompt=LONG_FORM_GENERATION_USER_PROMPT.substitute(
-                task_description=task_description,
-                min_words=min_words,
-                max_words=max_words,
-                sources=sources,
-            ),
-            criteria=criteria,
-            increment=5,
-        )
-    except EvaluationError as e:
-        logger.error("Failed to generate long-form text", prompt_identifier=prompt_identifier, error=e)
-        return "**Failed to generate section text - this is probably due to insufficient or low quality data.**"
