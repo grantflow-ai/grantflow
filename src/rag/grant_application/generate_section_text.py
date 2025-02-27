@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_text_generation",
     template="""
-    Your task is to write the ${section_title} section of a grant application, ensuring it is compelling, informative, and aligned with the provided instructions and context.
+    Your task is to write the ${section_title} section of a grant application, ensuring it is scientifically rigorous, compelling, and aligned with the provided instructions and context. This section will be evaluated by scientific experts in the field and must demonstrate technical precision while effectively communicating the research value.
 
     ## Generation Instructions
 
@@ -26,7 +26,7 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         </instructions>
 
     ## Dependencies
-    The are the generation results for the dependencies of this section (if any):
+    These are the generation results for the dependencies of this section (if any):
 
         <dependencies>
         ${dependencies}
@@ -49,6 +49,51 @@ GENERATE_SECTION_TEXT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         </keywords>
 """,
 )
+
+evaluation_criteria = [
+    EvaluationCriterion(
+        name="Completeness",
+        evaluation_instructions="""
+        - Ensure all aspects of the grant section are addressed.
+        - Verify that the text leverages the provided sources.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Grounding",
+        evaluation_instructions="""
+        - Confirm that the content is firmly grounded.
+        - Verify accurate buildup on dependencies.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Clarity",
+        evaluation_instructions="""
+        - Ensure the narrative is clear, concise, and free of ambiguity.
+        - Verify logical structure and smooth flow of ideas.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Scientific Accuracy",
+        evaluation_instructions="""
+        - Verify the use of precise, field-specific technical terminology.
+        - Ensure factual accuracy and absence of fabricated information.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Style",
+        evaluation_instructions="""
+        - Ensure a formal, data-driven tone is maintained.
+        - Emphasize succinctness and specificity in the text.
+        """,
+    ),
+    EvaluationCriterion(
+        name="Word Count Adherence",
+        evaluation_instructions="""
+        - Verify that the text does not exceed the allocated word count.
+        - Ensure the length is appropriate for the level of detail required.
+        """,
+    ),
+]
 
 
 async def handle_section_text_generation(
@@ -93,50 +138,7 @@ async def handle_section_text_generation(
             rag_results=document_contents,
             task_description=user_prompt,
             user_inputs=form_inputs,
-            criteria=[
-                EvaluationCriterion(
-                    name="Completeness",
-                    evaluation_instructions="""
-                    - Ensure all aspects of the grant section are addressed.
-                    - Verify that the text leverages the provided sources.
-                    """,
-                ),
-                EvaluationCriterion(
-                    name="Grounding",
-                    evaluation_instructions="""
-                    - Confirm that the content is firmly grounded.
-                    - Verify accurate buildup on dependencies.
-                    """,
-                ),
-                EvaluationCriterion(
-                    name="Clarity",
-                    evaluation_instructions="""
-                    - Ensure the narrative is clear, concise, and free of ambiguity.
-                    - Verify logical structure and smooth flow of ideas.
-                    """,
-                ),
-                EvaluationCriterion(
-                    name="Scientific Accuracy",
-                    evaluation_instructions="""
-                    - Verify the use of precise, field-specific technical terminology.
-                    - Ensure factual accuracy and absence of fabricated information.
-                    """,
-                ),
-                EvaluationCriterion(
-                    name="Style",
-                    evaluation_instructions="""
-                    - Ensure a formal, data-driven tone is maintained.
-                    - Emphasize succinctness and specificity in the text.
-                    """,
-                ),
-                EvaluationCriterion(
-                    name="Word Count Adherence",
-                    evaluation_instructions="""
-                    - Verify that the text does not exceed the allocated word count.
-                    - Ensure the length is appropriate for the level of detail required.
-                    """,
-                ),
-            ],
+            criteria=evaluation_criteria,
         )
         logger.debug("Successfully generated section text.", grant_section=grant_section, text=result)
         return result

@@ -140,7 +140,7 @@ def grant_sections() -> list[GrantLongFormSection]:
 
 
 def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="<root>")
+    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="<root>")  # type: ignore[arg-type]
     assert len(result) == 1  # only abstract at root
     assert result[0]["title"] == "Abstract"
     assert result[0]["text"] == "This is an abstract."
@@ -148,14 +148,14 @@ def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
 
 
 def test_map_to_tree_nested(grant_sections: list[GrantLongFormSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")
+    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")  # type: ignore[arg-type]
     assert len(result) == 3  # research_strategy, risks_and_mitigations, impact
     assert result[0]["title"] == "Research Strategy"
     assert result[0]["text"] == "This is the research strategy."
 
 
 def test_map_to_tree_ordering(grant_sections: list[GrantLongFormSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")
+    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")  # type: ignore[arg-type]
     children_titles = [child["title"] for child in result]
     assert children_titles == ["Research Strategy", "Risks and Mitigations", "Potential Impact"]
 
@@ -303,13 +303,13 @@ def multi_level_sections() -> list[GrantLongFormSection]:
 
 
 def test_tree_multi_level_root_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})
+    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
     root_titles = [node["title"] for node in tree]
     assert root_titles == ["Part A", "Part B"]
 
 
 def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})
+    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
 
     part_a = next(node for node in tree if node["title"] == "Part A")
     part_a_children = [node["title"] for node in part_a["children"]]
@@ -321,7 +321,7 @@ def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantLong
 
 
 def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})
+    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
 
     part_b = next(node for node in tree if node["title"] == "Part B")
     section_b1 = next(node for node in part_b["children"] if node["title"] == "Section B1")
@@ -341,7 +341,7 @@ def test_tree_multi_level_text_generation(multi_level_sections: list[GrantLongFo
         "subsection_b1_2": "Subsection B1.2 content",
     }
 
-    tree = map_to_tree(sections=multi_level_sections, section_texts=section_texts)
+    tree = map_to_tree(sections=multi_level_sections, section_texts=section_texts)  # type: ignore[arg-type]
     text = create_text_recursively(tree[0])  # Part A
 
     expected_order = [
@@ -355,7 +355,7 @@ def test_tree_multi_level_text_generation(multi_level_sections: list[GrantLongFo
 
 
 def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})
+    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
 
     assert len(tree) == 2
     for root in tree:

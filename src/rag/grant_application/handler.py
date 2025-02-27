@@ -4,16 +4,17 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
-from src.db.json_objects import GrantLongFormSection, ResearchObjective
+from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication
 from src.exceptions import DatabaseError, ValidationError
-from src.rag.grant_application.generate_research_text import handle_generate_research_plan_component
 from src.rag.grant_application.generate_section_text import handle_section_text_generation
-from src.rag.grant_application.plan_research_plan_generation import handle_enrich_and_plan_research_plan
+from src.rag.grant_application.generate_work_text import handle_generate_work_plan_component
+from src.rag.grant_application.plan_work_plan_generation import handle_enrich_and_plan_work_plan
 from src.rag.grant_application.utils import (
     create_dependencies_text,
     create_generation_groups,
     create_text_recursively,
+    is_grant_long_form_section,
     map_to_tree,
 )
 from src.utils.db import retrieve_application
@@ -24,58 +25,58 @@ from src.utils.text import normalize_markdown
 logger = get_logger(__name__)
 
 
-async def generate_research_plan_text(
+async def generate_work_plan_text(
     application_id: str,
-    research_plan_section: GrantLongFormSection,
+    work_plan_section: GrantLongFormSection,
     form_inputs: dict[str, str],
     research_objectives: list[ResearchObjective],
 ) -> str:
-    """Generate the research plan text for a grant application.
+    """Generate the work plan text for a grant application.
 
     Args:
         application_id: The ID of the grant application.
-        research_plan_section: The research plan section.
+        work_plan_section: The work plan section.
         form_inputs: The form inputs for the grant application.
         research_objectives: The research objectives for the grant application.
 
     Returns:
-        The generated research plan text.
+        The generated work plan text.
     """
-    research_plan_dto = await handle_enrich_and_plan_research_plan(
+    work_plan_dto = await handle_enrich_and_plan_work_plan(
         application_id=application_id,
         research_objectives=research_objectives,
-        grant_section=research_plan_section,
+        grant_section=work_plan_section,
         form_inputs=form_inputs,
     )
 
     logger.debug(
-        "Generated research plan dto for grant application %s",
+        "Generated work plan dto for grant application %s",
         application_id=application_id,
-        research_plan_dto=research_plan_dto,
+        work_plan_dto=work_plan_dto,
     )
 
-    research_plan_text = ""
+    work_plan_text = ""
 
-    for research_objective in research_plan_dto["research_objectives"]:
+    for research_objective in work_plan_dto["research_objectives"]:
         objective_number = research_objective["objective_number"]
-        research_tasks = [t for t in research_plan_dto["research_tasks"] if t["objective_number"] == objective_number]
+        research_tasks = [t for t in work_plan_dto["research_tasks"] if t["objective_number"] == objective_number]
 
-        research_objective_text = await handle_generate_research_plan_component(
+        research_objective_text = await handle_generate_work_plan_component(
             application_id=application_id,
             component=research_objective,
-            research_plan_text=research_plan_text,
+            work_plan_text=work_plan_text,
             form_inputs=form_inputs,
         )
 
-        research_plan_text += (
+        work_plan_text += (
             f"\n\n### Objective {objective_number}: {research_objective['title']}\n{research_objective_text}"
         )
         research_task_texts = await gather(
             *[
-                handle_generate_research_plan_component(
+                handle_generate_work_plan_component(
                     application_id=application_id,
                     component=research_task,
-                    research_plan_text=research_plan_text,
+                    work_plan_text=work_plan_text,
                     form_inputs=form_inputs,
                 )
                 for research_task in research_tasks
@@ -84,17 +85,17 @@ async def generate_research_plan_text(
 
         for research_task, research_task_text in zip(research_tasks, research_task_texts, strict=True):
             task_number = research_task["task_number"]
-            research_plan_text += (
+            work_plan_text += (
                 f"\n\n#### {objective_number}.{task_number}: {research_task['title']}\n{research_task_text}"
             )
 
-    return normalize_markdown(research_plan_text)
+    return normalize_markdown(work_plan_text)
 
 
 async def generate_grant_section_texts(
     application_id: str,
     form_inputs: dict[str, str],
-    grant_sections: list[GrantLongFormSection],
+    grant_sections: list[GrantElement | GrantLongFormSection],
     research_objectives: list[ResearchObjective],
 ) -> dict[str, str]:
     """Generate the grant section texts for a grant application.
@@ -106,10 +107,13 @@ async def generate_grant_section_texts(
         research_objectives: The research objectives for the grant application.
 
     Returns:
-        None
+        The generated section texts.
     """
     section_texts: dict[str, str] = {}
-    generation_groups = create_generation_groups(sections=grant_sections)
+
+    # Filter for long form sections only for generation groups
+    long_form_sections = [s for s in grant_sections if is_grant_long_form_section(s)]
+    generation_groups = create_generation_groups(sections=long_form_sections)
 
     for generation_group in generation_groups:
         results = await batched_gather(
@@ -123,9 +127,9 @@ async def generate_grant_section_texts(
                     )
                 )
                 if not section.get("is_detailed_workplan")
-                else generate_research_plan_text(
+                else generate_work_plan_text(
                     application_id=application_id,
-                    research_plan_section=section,
+                    work_plan_section=section,
                     research_objectives=research_objectives,
                     form_inputs=form_inputs,
                 )
@@ -139,8 +143,8 @@ async def generate_grant_section_texts(
     return section_texts
 
 
-def generate_appliction_text(
-    title: str, grant_sections: list[GrantLongFormSection], section_texts: dict[str, str]
+def generate_application_text(
+    title: str, grant_sections: list[GrantElement | GrantLongFormSection], section_texts: dict[str, str]
 ) -> str:
     """Generate the application text.
 
@@ -174,10 +178,17 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
     if not grant_application.grant_template or not grant_application.research_objectives:
         raise ValidationError("Grant application does not have a grant template or research objectives.")
 
-    research_plan_sections = [s for s in grant_application.grant_template.grant_sections if s.get("is_research_plan")]
+    # Filter sections to find work plan sections
+    work_plan_sections = []
+    if grant_application.grant_template.grant_sections:
+        work_plan_sections = [
+            section
+            for section in grant_application.grant_template.grant_sections
+            if is_grant_long_form_section(section) and section.get("is_detailed_workplan")
+        ]
 
-    if not research_plan_sections:
-        raise ValidationError("Grant template does not have a research plan section.")
+    if not work_plan_sections:
+        raise ValidationError("Grant template does not have a detailed work plan section.")
 
     section_texts = await generate_grant_section_texts(
         application_id=application_id,
@@ -186,7 +197,7 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
         research_objectives=grant_application.research_objectives,
     )
 
-    application_text = generate_appliction_text(
+    application_text = generate_application_text(
         title=grant_application.title,
         grant_sections=grant_application.grant_template.grant_sections,
         section_texts=section_texts,

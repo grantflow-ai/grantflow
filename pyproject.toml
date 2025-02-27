@@ -10,7 +10,7 @@ requires-python = "==3.12.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
 dependencies = [
   "aiohttp>=3.11.13",
-  "anthropic[vertex]>=0.47.2",
+  "anthropic[vertex]>=0.48.0",
   "anyio>=4.8.0",
   "asyncpg>=0.30.0",
   "azure-ai-documentintelligence>=1.0.0",
@@ -51,7 +51,7 @@ dev = [
   "pytest-mock>=3.14.0",
   "pytest-timeout>=2.3.1",
   "python-dotenv>=1.0.1",
-  "ruff>=0.9.7",
+  "ruff>=0.9.8",
   "sanic-testing>=24.6.0",
 ]
 
