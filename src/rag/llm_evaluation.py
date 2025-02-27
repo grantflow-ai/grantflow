@@ -162,15 +162,16 @@ FIX_OUTPUT_PROMPT: Final[PromptTemplate] = PromptTemplate(
 )
 
 
-async def with_prompt_evaluation[T, P](
+async def with_prompt_evaluation[T, **P](
     *,
     prompt_identifier: str,
     passing_score: int = 100,
-    prompt: P,
-    prompt_handler: Callable[[P], Awaitable[T]],
+    prompt: str,
+    prompt_handler: Callable[P, Awaitable[T]],
     retries: int = 4,
     increment: float = 2.5,
     criteria: list[EvaluationCriterion],
+    **kwargs: Any,
 ) -> T:
     """Evaluate the output of a language model against a set of criteria and provide feedback.
 
@@ -178,10 +179,11 @@ async def with_prompt_evaluation[T, P](
         prompt_identifier: The identifier for the prompt.
         passing_score: The minimum score required to pass the evaluation.
         prompt: The prompt used to generate the output.
-        prompt_handler: The function that generates the output.
-        retries: The maximum number of retries allowed.
-        increment: The amount by which to decrease the passing score on each retry.
+        prompt_handler: The handler for generating the output.
+        retries: The number of retries allowed.
+        increment: The increment for temperature in retries.
         criteria: The evaluation criteria to use.
+        **kwargs: Additional keyword arguments.
 
     Raises:
         EvaluationError: If the output does not meet the evaluation criteria after the maximum number of retries.
@@ -198,7 +200,7 @@ async def with_prompt_evaluation[T, P](
     failures: list[dict[str, EvaluationScore]] = []
 
     while iteration <= retries:
-        model_output = await prompt_handler(current_prompt)  # type: ignore[arg-type]
+        model_output = await prompt_handler(current_prompt, **kwargs)  # type: ignore[arg-type]
         evaluation_result = await evaluate_prompt_output(
             prompt=current_prompt, model_output=cast(dict[str, Any] | str, model_output), criteria=criteria
         )

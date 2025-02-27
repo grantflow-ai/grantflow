@@ -578,7 +578,7 @@ async def handle_enrich_and_plan_work_plan(
     rag_results = await retrieve_documents(
         application_id=application_id,
         search_queries=grant_section["search_queries"],
-        task_description=prompt,
+        task_description=str(prompt),
     )
     return await with_prompt_evaluation(
         prompt_identifier="work_plan_generation",

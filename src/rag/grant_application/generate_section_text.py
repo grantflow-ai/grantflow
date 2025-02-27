@@ -1,10 +1,9 @@
-from typing import Final
+from typing import Any, Final
 
 from src.constants import MIN_WORDS_RATIO
 from src.db.json_objects import GrantLongFormSection
-from src.exceptions import EvaluationError
-from src.rag.llm_evaluation import EvaluationCriterion
-from src.rag.long_form import handle_long_form_text_generation
+from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from src.rag.long_form import generate_long_form_text
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -97,6 +96,33 @@ evaluation_criteria = [
 
 
 async def handle_section_text_generation(
+    prompt: str,
+    *,
+    min_words: int,
+    max_words: int,
+    **kwargs: Any,
+) -> str:
+    """Generate the text for a given grant section.
+
+    Args:
+        prompt: The prompt to use for generating the section text.
+        min_words: The minimum number of words to generate.
+        max_words: The maximum number of words to generate.
+        **kwargs: Additional keyword arguments for the generation process
+
+    Returns:
+        The generated section text.
+    """
+    return await generate_long_form_text(
+        max_words=max_words,
+        min_words=min_words,
+        prompt_identifier="generate_section_text",
+        task_description=prompt,
+        **kwargs,
+    )
+
+
+async def generate_section_text(
     *,
     application_id: str,
     dependencies: dict[str, str],
@@ -116,35 +142,29 @@ async def handle_section_text_generation(
     """
     logger.debug("Generating section text.", grant_section=grant_section)
 
-    user_prompt = GENERATE_SECTION_TEXT_USER_PROMPT.to_string(
+    prompt = GENERATE_SECTION_TEXT_USER_PROMPT.to_string(
         dependencies=dependencies,
         instructions=grant_section["generation_instructions"],
         keywords=grant_section["keywords"],
         section_title=grant_section["title"],
         topics=grant_section["topics"],
     )
-    try:
-        document_contents = await retrieve_documents(
-            application_id=application_id,
-            task_description=user_prompt,
-            search_queries=grant_section.get("search_queries"),
-            user_inputs=form_inputs,
-        )
+    rag_results = await retrieve_documents(
+        application_id=application_id,
+        task_description=prompt,
+        search_queries=grant_section.get("search_queries"),
+        user_inputs=form_inputs,
+    )
 
-        result = await handle_long_form_text_generation(
-            max_words=grant_section["max_words"],
-            min_words=int(grant_section["max_words"] * MIN_WORDS_RATIO),
-            prompt_identifier="generate_section_text",
-            rag_results=document_contents,
-            task_description=user_prompt,
-            user_inputs=form_inputs,
-            criteria=evaluation_criteria,
-        )
-        logger.debug("Successfully generated section text.", grant_section=grant_section, text=result)
-        return result
-
-    except EvaluationError as e:
-        logger.error("Failed to retrieve rag results.", grant_section=grant_section, error=e)
-        return (
-            "**Text generation for this section failed. If this is not due to missing context data, please try again.**"
-        )
+    return await with_prompt_evaluation(
+        criteria=evaluation_criteria,
+        max_words=grant_section["max_words"],
+        min_words=int(grant_section["max_words"] * MIN_WORDS_RATIO),
+        prompt=prompt,
+        prompt_handler=handle_section_text_generation,
+        prompt_identifier="generate_section_text",
+        rag_results=rag_results,
+        passing_score=90,
+        increment=10,
+        retries=5,
+    )

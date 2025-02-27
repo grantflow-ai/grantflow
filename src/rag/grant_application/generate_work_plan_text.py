@@ -1,10 +1,8 @@
-from typing import Final
+from typing import Any, Final
 
-from src.constants import MIN_WORDS_RATIO
-from src.exceptions import EvaluationError
 from src.rag.grant_application.plan_work_plan_generation import ResearchObjectiveDTO, ResearchTaskDTO
-from src.rag.llm_evaluation import EvaluationCriterion
-from src.rag.long_form import handle_long_form_text_generation
+from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from src.rag.long_form import generate_long_form_text
 from src.rag.retrieval import retrieve_documents
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -12,8 +10,8 @@ from src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 
-GENERATE_WORK_PLAN_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="work_plan_component_generation",
+GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="work_component_generation",
     template="""
     Your task is to write the text for a ${object_type} in a grant application work plan.
 
@@ -50,7 +48,7 @@ GENERATE_WORK_PLAN_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate
         <work_plan_text>
         ${work_plan_text}
         </work_plan_text>
-""",
+    """,
 )
 
 evaluation_criteria = [
@@ -113,7 +111,34 @@ evaluation_criteria = [
 ]
 
 
-async def handle_generate_work_plan_component(
+async def handle_work_component_generation(
+    prompt: str,
+    *,
+    min_words: int,
+    max_words: int,
+    **kwargs: Any,
+) -> str:
+    """Generate the text for a given work plan component.
+
+    Args:
+        prompt: The prompt to use for generating the component text.
+        min_words: The minimum number of words to generate.
+        max_words: The maximum number of words to generate.
+        **kwargs: Additional keyword arguments for the generation process.
+
+    Returns:
+        The generated component text.
+    """
+    return await generate_long_form_text(
+        max_words=max_words,
+        min_words=min_words,
+        prompt_identifier="generate_work_component",
+        task_description=prompt,
+        **kwargs,
+    )
+
+
+async def generate_work_plan_component_text(
     *,
     application_id: str,
     component: ResearchObjectiveDTO | ResearchTaskDTO,
@@ -131,8 +156,9 @@ async def handle_generate_work_plan_component(
     Returns:
         The generated work plan component text.
     """
-    logger.debug("Generating text for section.", component=component, application_id=application_id)
-    user_prompt = GENERATE_WORK_PLAN_COMPONENT_USER_PROMPT.to_string(
+    logger.debug("Generating text for work plan component.", component=component)
+
+    prompt = GENERATE_WORK_COMPONENT_USER_PROMPT.to_string(
         guiding_questions=component["guiding_questions"],
         instructions=component["instructions"],
         keywords=component["keywords"],
@@ -143,30 +169,22 @@ async def handle_generate_work_plan_component(
         if component.get("task_number")
         else "a specific research goal or aim",
     )
-    try:
-        rag_results = await retrieve_documents(
-            application_id=application_id,
-            task_description=user_prompt,
-            user_inputs=form_inputs,
-            section_title=component["title"],
-            search_queries=component["search_queries"],
-        )
 
-        result = await handle_long_form_text_generation(
-            max_words=component["max_words"],
-            min_words=int(component["max_words"] * MIN_WORDS_RATIO),
-            prompt_identifier="generate_work_plan_component",
-            rag_results=rag_results,
-            task_description=user_prompt,
-            user_inputs=form_inputs,
-            section_title=component["title"],
-            criteria=evaluation_criteria,
-        )
-        logger.debug("Generated text for section.", component=component, application_id=application_id)
-        return result
+    rag_results = await retrieve_documents(
+        application_id=application_id,
+        task_description=prompt,
+        search_queries=component["search_queries"],
+        user_inputs=form_inputs,
+        section_title=component["title"],
+    )
 
-    except EvaluationError as e:
-        logger.error("Text generation failed.", component=component, application_id=application_id, error=e)
-        return (
-            "**Text generation for this section failed. If this is not due to missing context data, please try again.**"
-        )
+    return await with_prompt_evaluation(
+        criteria=evaluation_criteria,
+        prompt=prompt,
+        prompt_handler=handle_work_component_generation,
+        prompt_identifier="generate_work_component",
+        rag_results=rag_results,
+        passing_score=90,
+        increment=10,
+        retries=5,
+    )

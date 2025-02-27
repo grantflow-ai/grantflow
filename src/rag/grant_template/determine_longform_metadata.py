@@ -213,7 +213,7 @@ def validate_template_sections(
         ValidationError: If the response is invalid
         InsufficientContextError: If the response is missing sections
     """
-    if error := response.get("error"):
+    if error := response.get("error"):  # occasionally, the model suffers a stroke and returns "null" as a string
         raise InsufficientContextError(error)
 
     if not response["sections"]:
@@ -338,7 +338,6 @@ evaluation_criteria = [
             - Word allocations are practical and balanced across sections
             - The workplan has appropriate priority in word allocation
         """,
-        weight=1.3,
     ),
     EvaluationCriterion(
         name="Content Guidance Quality",
@@ -351,7 +350,6 @@ evaluation_criteria = [
             - Context-specific requirements are appropriately incorporated
             - Instructions enable generation of high-quality content
         """,
-        weight=1.5,
     ),
     EvaluationCriterion(
         name="Search Query Effectiveness",
@@ -364,7 +362,6 @@ evaluation_criteria = [
             - Queries are well-formed and likely to retrieve relevant content
             - Appropriate number of queries for each section (3-10)
         """,
-        weight=1.2,
     ),
     EvaluationCriterion(
         name="Structural Coherence",
@@ -379,22 +376,9 @@ evaluation_criteria = [
         """,
     ),
     EvaluationCriterion(
-        name="Organizational Compliance",
+        name="Technical/Scientific Rigor",
         evaluation_instructions="""
-        Evaluate adherence to organizational guidelines:
-            - Template respects specific organizational formatting requirements
-            - Section naming conventions match organizational preferences
-            - Word count limits align with organizational guidelines
-            - Content requirements specific to the organization are addressed
-            - Structure follows organization-specific templates where provided
-            - Balance between sections matches organizational preferences
-        """,
-        weight=1.2,
-    ),
-    EvaluationCriterion(
-        name="Scientific Rigor",
-        evaluation_instructions="""
-        Assess scientific rigor in content requirements:
+        Assess technical and scientific rigor in content requirements:
             - Template emphasizes evidence-based content where appropriate
             - Requirements for methodology sections ensure technical adequacy
             - Appropriate emphasis on data analysis and interpretation
@@ -442,7 +426,7 @@ async def handle_generate_grant_template(
         ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
             rag_results=await retrieve_documents(
                 organization_id=str(organization.id),
-                task_description=prompt,
+                task_description=str(prompt),
             ),
             organization_full_name=organization.full_name,
             organization_abbreviation=organization.abbreviation,
@@ -450,6 +434,24 @@ async def handle_generate_grant_template(
         if organization
         else ""
     )
+
+    criteria = [*evaluation_criteria]
+
+    if organization_guidelines:
+        criteria.append(
+            EvaluationCriterion(
+                name="Organizational Compliance",
+                evaluation_instructions="""
+            Evaluate adherence to organizational guidelines:
+                - Template respects specific organizational formatting requirements
+                - Section naming conventions match organizational preferences
+                - Word count limits align with organizational guidelines
+                - Content requirements specific to the organization are addressed
+                - Structure follows organization-specific templates where provided
+                - Balance between sections matches organizational preferences
+            """,
+            )
+        )
 
     result: TemplateSectionsResponse = await with_prompt_evaluation(
         prompt_identifier="grant_template_generation",
@@ -459,6 +461,6 @@ async def handle_generate_grant_template(
         ),
         increment=5,
         retries=5,
-        criteria=evaluation_criteria,
+        criteria=criteria,
     )
     return result["sections"]
