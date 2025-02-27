@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Final, NotRequired, TypedDict
+from typing import Any, Final, NotRequired, TypedDict
 
 from sentence_transformers import SentenceTransformer, util
 
@@ -278,7 +278,7 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
            "parent_id": "string",               // ID of parent section, nullable
            "title": "string",                   // Section title as appears in source
        }],
-       "error": "string"                        // Error message if applicable, null if no error
+       "error": "string"                 // Error message if applicable, leave as empty string or json null if no error
     }
     ```
     """,
@@ -354,7 +354,9 @@ def validate_section_extraction(response: ExtractedSections) -> None:
         ValidationError: If the response is invalid.
         InsufficientContextError: If no sections were extracted.
     """
-    if error := response.get("error"):
+    if (
+        error := response.get("error")
+    ) and error != "null":  # occasionally, the model suffers a stroke and returns "null" as a string
         raise InsufficientContextError(error)
 
     if not response["sections"]:
@@ -617,11 +619,12 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
     return sorted_sections
 
 
-async def extract_sections(task_description: str) -> ExtractedSections:
+async def extract_sections(task_description: str, **_: Any) -> ExtractedSections:
     """Extract and classify sections from grant application materials.
 
     Args:
         task_description: Description of the task to be performed
+        **_: Additional keyword arguments (unused)
 
     Returns:
         Classified sections with their relationships and metadata

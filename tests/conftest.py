@@ -598,7 +598,7 @@ async def full_application_id(
         )
         await session.commit()
 
-    cfp_content_file = FIXTURES_FOLDER / "cfps" / "melanoma_alliance_cfp.md"
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "melanoma_alliance.md"
     if not cfp_content_file.exists():
         cfp_file = SOURCES_FOLDER / "cfps" / "MRA-2023-2024-RFP-Final.pdf"
 

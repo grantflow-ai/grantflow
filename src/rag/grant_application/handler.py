@@ -7,8 +7,8 @@ from src.db.connection import get_session_maker
 from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication
 from src.exceptions import DatabaseError, ValidationError
-from src.rag.grant_application.generate_section_text import handle_section_text_generation
-from src.rag.grant_application.generate_work_text import handle_generate_work_plan_component
+from src.rag.grant_application.generate_section_text import generate_section_text
+from src.rag.grant_application.generate_work_plan_text import generate_work_plan_component_text
 from src.rag.grant_application.plan_work_plan_generation import handle_enrich_and_plan_work_plan
 from src.rag.grant_application.utils import (
     create_dependencies_text,
@@ -61,7 +61,7 @@ async def generate_work_plan_text(
         objective_number = research_objective["objective_number"]
         research_tasks = [t for t in work_plan_dto["research_tasks"] if t["objective_number"] == objective_number]
 
-        research_objective_text = await handle_generate_work_plan_component(
+        research_objective_text = await generate_work_plan_component_text(
             application_id=application_id,
             component=research_objective,
             work_plan_text=work_plan_text,
@@ -73,7 +73,7 @@ async def generate_work_plan_text(
         )
         research_task_texts = await gather(
             *[
-                handle_generate_work_plan_component(
+                generate_work_plan_component_text(
                     application_id=application_id,
                     component=research_task,
                     work_plan_text=work_plan_text,
@@ -119,7 +119,7 @@ async def generate_grant_section_texts(
         results = await batched_gather(
             *[
                 (
-                    handle_section_text_generation(
+                    generate_section_text(
                         application_id=application_id,
                         grant_section=section,
                         dependencies=create_dependencies_text(depends_on=section["depends_on"], texts=section_texts),

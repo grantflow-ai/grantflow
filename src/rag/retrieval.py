@@ -244,9 +244,7 @@ async def retrieve_documents(
         processed_contents = await post_process_documents(
             documents=documents,
             query=",".join(search_queries),
-            task_description=str(task_description)
-            if isinstance(task_description, PromptTemplate)
-            else task_description,
+            task_description=str(task_description),
             max_tokens=max_tokens,
             model=model,
         )

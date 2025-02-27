@@ -21,6 +21,7 @@ from src.utils.serialization import deserialize, serialize
 
 logger = get_logger(__name__)
 
+USER_MESSAGE_ROLE: Final[str] = "user"
 BASE_SYSTEM_PROMPT: Final[str] = """
 You are an expert STEM grant application writer integrated into a RAG (Retrieval-Augmented Generation) system.
 """
@@ -164,12 +165,13 @@ async def make_google_completions_request[T](
     """
     client = get_google_ai_client(prompt_identifier=prompt_identifier, system_instructions=system_prompt, model=model)
 
+    if not isinstance(messages, list):
+        messages = [messages]
+
     contents = [
         Content(
-            role="user",
-            parts=[Part.from_text(messages)]
-            if isinstance(messages, str)
-            else [Part.from_text(message) if isinstance(message, str) else message for message in messages],
+            role=USER_MESSAGE_ROLE,
+            parts=[message if isinstance(message, Part) else Part.from_text(message) for message in messages],
         )
     ]
     response = await client.generate_content_async(
@@ -186,11 +188,7 @@ async def make_google_completions_request[T](
     if not candidate_count:
         return deserialize(response.text, response_type)
 
-    prompt = (
-        messages
-        if isinstance(messages, str)
-        else "\n".join([message if isinstance(message, str) else message.text for message in messages])
-    )
+    prompt = "\n".join([message.text if isinstance(message, Part) else message for message in messages])
 
     return await select_best_response(
         candidates={index + 1: deserialize(r.text, response_type) for index, r in enumerate(response.candidates)},
