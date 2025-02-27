@@ -780,6 +780,7 @@ async def handle_extract_sections(
                 task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
                 search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
                 max_results=10,
+                model=ANTHROPIC_SONNET_MODEL,
             ),
             organization_full_name=organization.full_name,
             organization_abbreviation=organization.abbreviation,

@@ -2,11 +2,13 @@ from typing import Any, Final, TypedDict, cast
 
 from sqlalchemy import func, or_, select
 
+from src.constants import GENERATION_MODEL
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
 from src.exceptions import EvaluationError
 from src.rag.completion import handle_completions_request
 from src.rag.dto import DocumentDTO
+from src.rag.post_processing import post_process_documents
 from src.rag.search_queries import handle_create_search_queries
 from src.utils.embeddings import generate_embeddings
 from src.utils.logger import get_logger
@@ -186,17 +188,21 @@ async def retrieve_documents(
     *,
     application_id: str | None = None,
     max_results: int = MAX_RESULTS,
+    max_tokens: int = 4000,
+    model: str = GENERATION_MODEL,
     organization_id: str | None = None,
     search_queries: list[str] | None = None,
     task_description: str | PromptTemplate,
     with_guided_retrieval: bool = False,
     **kwargs: Any,
-) -> list[DocumentDTO]:
+) -> list[str]:
     """Retrieve documents from the vector store.
 
     Args:
         application_id: The application ID, required if organization_id is not provided.
         max_results: The maximum number of results to retrieve.
+        max_tokens: Maximum token count when post-processing.
+        model: The model to use for token counting.
         organization_id: The organization ID, required if application_id is not provided.
         search_queries: The search queries.
         task_description: The task description.
@@ -208,7 +214,7 @@ async def retrieve_documents(
         EvaluationError: If the guided retrieval response indicates insufficient context.
 
     Returns:
-        The retrieved documents.
+        List of document content strings.
     """
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
@@ -238,8 +244,18 @@ async def retrieve_documents(
             for vector in vectors
         ]
 
-        if not with_guided_retrieval and len(documents) == max_results:
-            return documents
+        processed_contents = await post_process_documents(
+            documents=documents,
+            query=",".join(search_queries),
+            task_description=str(task_description)
+            if isinstance(task_description, PromptTemplate)
+            else task_description,
+            max_tokens=max_tokens,
+            model=model,
+        )
+
+        if not with_guided_retrieval:
+            return processed_contents
 
         tool_response = await handle_completions_request(
             prompt_identifier="guided_retrieval",
@@ -249,12 +265,12 @@ async def retrieve_documents(
             messages=GUIDED_RETRIEVAL_USER_PROMPT.to_string(
                 task_description=task_description,
                 queries=search_queries,
-                rag_results=documents,
+                rag_results=processed_contents,
             ),
         )
 
         if tool_response["is_sufficient"]:
-            return documents
+            return processed_contents
 
         logger.info(
             "Guided retrieval response indicated insufficient context",
@@ -273,6 +289,6 @@ async def retrieve_documents(
             attempts=attempts,
         )
 
-        return documents
+        return [doc["content"] for doc in documents]
 
     raise EvaluationError("Insufficient context retrieved")

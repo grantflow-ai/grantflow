@@ -1,6 +1,14 @@
+import math
+from functools import lru_cache
 from re import compile as re_compile
+from typing import Final
 
-from src.utils.nlp import get_spacy_model
+from src.constants import ANTHROPIC_SONNET_MODEL
+from src.utils.ai import get_google_ai_client
+from src.utils.nlp import get_spacy_model, get_word_count
+
+# Estimating approximately 4 characters per token as a default ratio
+CHARS_PER_TOKEN: Final[float] = 4.0
 
 # Regex patterns for Unicode punctuation normalization
 SINGLE_QUOTE_PATTERN = re_compile(
@@ -173,3 +181,61 @@ def _finalize_normalized_lines(normalized_lines: list[str]) -> str:
     while result and not result[-1]:
         result.pop()
     return "\n".join(result)
+
+
+@lru_cache(maxsize=1000)  # Cache the most recent 1000 token estimates
+def estimate_token_count(text: str) -> int:
+    """Estimate token count without making an API call.
+
+    This uses character count and word count to approximate token count.
+    It's less accurate than the API but doesn't count against rate limits.
+
+    Args:
+        text: The text to estimate tokens for
+
+    Returns:
+        Estimated token count
+    """
+    if not text:
+        return 0
+
+    # For very short text, use character count / CHARS_PER_TOKEN
+    if len(text) < 100:
+        return math.ceil(len(text) / CHARS_PER_TOKEN)
+
+    # For longer text, use a combination of character and word count
+    # Words are generally 1-2 tokens, with some longer words being 3+
+    word_count = get_word_count(text)
+    char_count = len(text)
+
+    char_tokens = char_count / CHARS_PER_TOKEN
+    word_tokens = word_count * 1.3
+
+    return math.ceil((char_tokens + word_tokens) / 2)
+
+
+async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
+    """Count the number of tokens in a text string.
+
+    Uses a fast local estimation for Anthropic models to avoid rate limits.
+    Uses Google AI client for other models.
+
+    Args:
+        text: The text to count tokens for
+        model: The model to use for counting tokens
+
+    Returns:
+        The number of tokens in the text
+    """
+    if not text:
+        return 0
+
+    if ANTHROPIC_SONNET_MODEL in model:
+        return estimate_token_count(text)
+
+    try:
+        client = get_google_ai_client(prompt_identifier="", system_instructions="", model=model)
+        response = await client.count_tokens(text)
+        return response["total_tokens"]
+    except (ValueError, KeyError, AttributeError):
+        return estimate_token_count(text)
