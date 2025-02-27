@@ -1,10 +1,9 @@
 from collections import defaultdict
-from collections.abc import MutableMapping, Sequence
 
 from src.rag.grant_template.validation_utils import detect_cycle
 
 
-def create_graph(edges: list[tuple[str, list[str]]]) -> MutableMapping[str, Sequence[str]]:
+def create_graph(edges: list[tuple[str, list[str]]]) -> dict[str, list[str]]:
     graph = defaultdict(list)
     for node, neighbors in edges:
         graph[node] = neighbors

@@ -313,7 +313,7 @@ class ResearchPlanDTO(TypedDict):
     """The research tasks for the research plan."""
 
 
-def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives: list[ResearchObjective]) -> None:  # noqa: C901, PLR0912
+def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives: list[ResearchObjective]) -> None:
     """Validate the research plan response.
 
     Args:

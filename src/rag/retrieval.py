@@ -222,9 +222,6 @@ async def retrieve_documents(
     search_queries = search_queries or await handle_create_search_queries(user_prompt=task_description, **kwargs)
 
     attempts = 0
-    vectors: list[TextVector] = []
-    documents: list[DocumentDTO] = []
-    has_sufficient_context = False
 
     while attempts < 3:
         attempts += 1
@@ -257,7 +254,7 @@ async def retrieve_documents(
         if not with_guided_retrieval:
             return processed_contents
 
-        tool_response = await handle_completions_request(
+        tool_response: GuidedRetrievalToolResponse = await handle_completions_request(
             prompt_identifier="guided_retrieval",
             response_schema=guided_retrieval_json_schema,
             response_type=GuidedRetrievalToolResponse,
@@ -269,26 +266,15 @@ async def retrieve_documents(
             ),
         )
 
-        if tool_response["is_sufficient"]:
+        if tool_response.get("is_sufficient", False):
             return processed_contents
 
         logger.info(
             "Guided retrieval response indicated insufficient context",
-            reason=tool_response["reason"],
+            reason=tool_response.get("reason", ""),
             attempts=attempts,
         )
 
-        search_queries = tool_response["new_queries"]
-
-    if has_sufficient_context:
-        logger.info(
-            "Successfully retrieved and processed documents",
-            organization_id=organization_id,
-            application_id=application_id,
-            num_docs=len(vectors),
-            attempts=attempts,
-        )
-
-        return [doc["content"] for doc in documents]
+        search_queries = tool_response.get("new_queries", [])
 
     raise EvaluationError("Insufficient context retrieved")

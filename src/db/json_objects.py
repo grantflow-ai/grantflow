@@ -56,6 +56,8 @@ class GrantElement(TypedDict):
     """Order of the section in the grant application."""
     title: str
     """Section heading title."""
+    parent_id: str | None
+    """Parent section name."""
 
 
 class GrantLongFormSection(GrantElement):
@@ -73,8 +75,6 @@ class GrantLongFormSection(GrantElement):
     """Technical terms specific to section."""
     max_words: int
     """Maximum word count if specified."""
-    parent_id: str | None
-    """Parent section name."""
     search_queries: list[str]
     """Search queries to retrieve information for the section."""
     topics: list[str]

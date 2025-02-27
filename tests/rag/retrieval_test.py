@@ -66,20 +66,16 @@ async def test_retrieve_documents_basic(mock_text_vectors: list[TextVector], moc
     processed_docs = [{"content": "Processed content 1"}, {"content": "Processed content 2"}]
     mock_post_process.return_value = processed_docs
 
-    mock_completions_request = mocker.patch("src.rag.retrieval.handle_completions_request")
-    mock_completions_request.return_value = {"is_sufficient": True, "reason": "Test reason", "new_queries": []}
-
     result = await retrieve_documents(
         application_id="test-app-id",
         task_description="Test task",
     )
 
-    assert result == ["Processed content 1", "Processed content 2"]
+    assert result == processed_docs
 
     mock_handle_create_queries.assert_called_once()
     mock_handle_retrieval.assert_called_once()
     mock_post_process.assert_called_once()
-    mock_completions_request.assert_called_once()
 
 
 async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: MockFixture) -> None:
@@ -114,7 +110,7 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: Moc
         with_guided_retrieval=True,
     )
 
-    assert result == ["Better processed 1", "Better processed 2"]
+    assert result == processed_docs2
 
     assert mock_handle_retrieval.call_count == 2
     assert mock_handle_retrieval.call_args_list[1][1]["search_queries"] == ["better query"]
