@@ -5,12 +5,12 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.connection import get_session_maker
-from src.db.json_objects import GrantLongFormSection
+from src.db.json_objects import GrantElement, GrantLongFormSection
 from src.db.tables import FundingOrganization, GrantTemplate
 from src.exceptions import DatabaseError
+from src.rag.grant_template.determine_application_sections import handle_extract_sections
+from src.rag.grant_template.determine_longform_metadata import handle_generate_grant_template
 from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
-from src.rag.grant_template.extract_sections import handle_extract_sections
-from src.rag.grant_template.generate_grant_template import handle_generate_grant_template
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -20,7 +20,7 @@ async def extract_and_enrich_sections(
     cfp_content: str,
     cfp_subject: str,
     organization: FundingOrganization | None,
-) -> list[GrantLongFormSection]:
+) -> list[GrantElement | GrantLongFormSection]:
     """Extract and enrich the sections from the grant CFP content.
 
     Args:
@@ -37,23 +37,46 @@ async def extract_and_enrich_sections(
         organization=organization,
     )
 
-    # Ensure that all sections have valid parents and dependencies after we filter out non-core research sections
-    valid_parents = {s["id"] for s in sections}
-    for section in sections:
-        if section["parent_id"] not in valid_parents:
-            section["parent_id"] = None
-        if not section.get("is_title_only"):
-            section["is_title_only"] = False
-        if not section.get("is_detailed_workplan"):
-            section["is_detailed_workplan"] = False
-        if not section.get("is_clinical_trial"):
-            section["is_clinical_trial"] = False
-
-    return await handle_generate_grant_template(
+    section_metadata = await handle_generate_grant_template(
         cfp_content=cfp_content,
+        cfp_subject=cfp_subject,
         organization=organization,
-        core_narrative_sections=[s for s in sections if not s.get("is_title_only")],
+        long_form_sections=[s for s in sections if not s.get("is_title_only")],
     )
+
+    mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
+
+    ret: list[GrantElement | GrantLongFormSection] = []
+    for section in sections:
+        if section.get("is_title_only"):
+            ret.append(
+                GrantElement(
+                    id=section["id"],
+                    order=section["order"],
+                    parent_id=section.get("parent_id"),
+                    title=section["title"],
+                )
+            )
+        else:
+            metadata = mapped_metadata[section["id"]]
+            ret.append(
+                GrantLongFormSection(
+                    depends_on=metadata["depends_on"],
+                    generation_instructions=metadata["generation_instructions"],
+                    id=section["id"],
+                    is_clinical_trial=section.get("is_clinical_trial", False),
+                    is_detailed_workplan=section.get("is_detailed_workplan", False),
+                    keywords=metadata["keywords"],
+                    max_words=metadata["max_words"],
+                    order=section["order"],
+                    parent_id=section.get("parent_id"),
+                    search_queries=metadata["search_queries"],
+                    title=section["title"],
+                    topics=metadata["topics"],
+                )
+            )
+
+    return ret
 
 
 async def grant_template_generation_pipeline_handler(
@@ -96,7 +119,7 @@ async def grant_template_generation_pipeline_handler(
 
     logger.info("Extracted CFP data")
 
-    enriched_sections = await extract_and_enrich_sections(
+    grant_sections = await extract_and_enrich_sections(
         cfp_content="...".join(extraction_result["content"]),
         cfp_subject=extraction_result["cfp_subject"],
         organization=organization,
@@ -111,7 +134,7 @@ async def grant_template_generation_pipeline_handler(
                     {
                         "funding_organization_id": extraction_result["organization_id"],
                         "grant_application_id": application_id,
-                        "grant_sections": enriched_sections,
+                        "grant_sections": grant_sections,
                     }
                 )
                 .returning(GrantTemplate)

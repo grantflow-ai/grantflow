@@ -1,4 +1,4 @@
-from src.rag.grant_template.extract_sections import (
+from src.rag.grant_template.determine_application_sections import (
     ExtractedSectionDTO,
     ExtractedSections,
     filter_extracted_sections,
@@ -244,7 +244,7 @@ async def test_section_filtering_threshold() -> None:
     assert len(high_result) == 1
 
     # Low threshold should filter it out (but since workplan is missing, it might keep it due to adaptive logic)
-    low_result = await filter_extracted_sections(sections=sections, initial_threshold=0.5)
+    await filter_extracted_sections(sections=sections, initial_threshold=0.5)
     # We're not asserting the length here because it now depends on the adaptive threshold behavior
 
 

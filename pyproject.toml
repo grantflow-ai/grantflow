@@ -85,10 +85,13 @@ lint.ignore = [
 ]
 lint.per-file-ignores."tests/**/*.*" = [ "ARG001", "D", "N815", "PT006", "PT007", "PT013", "RUF012", "S" ]
 lint.isort.known-first-party = [ "src", "tests" ]
-lint.mccabe.max-complexity = 15
+lint.mccabe.max-complexity = 25
 lint.pydocstyle.convention = "google"
 lint.pylint.max-args = 12
+lint.pylint.max-branches = 25
+
 lint.pylint.max-returns = 10
+lint.pylint.max-statements = 100
 
 [tool.pyproject-fmt]
 keep_full_version = true

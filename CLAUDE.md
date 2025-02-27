@@ -3,17 +3,20 @@
 ## Common Commands
 
 ### Setup & Dependencies
+
 ```bash
 uv sync                          # Install dependencies
 task update                      # Update dependencies and pre-commit hooks
 ```
 
 ### Development
+
 ```bash
 uvicorn src.main:app --reload    # Run server with hot reloading
 ```
 
 ### Testing
+
 ```bash
 uv run python -m pytest          # Run all tests
 uv run python -m pytest tests/<path> -v                       # Verbose test output
@@ -21,6 +24,7 @@ uv run python -m pytest -xvs tests/path/to/test.py::test_name # Specific test fu
 ```
 
 ### Code Quality
+
 ```bash
 uv run pre-commit run --all-files # Run all checks (ruff, mypy, etc.)
 uv run ruff check --fix .         # Lint code
@@ -29,6 +33,7 @@ uv run mypy                       # Type checking
 ```
 
 ### Database
+
 ```bash
 task create-migration            # Create migration
 task migrate                     # Apply migrations
@@ -55,10 +60,10 @@ task migrate                     # Apply migrations
 - **Docker-based PostgreSQL** container with pgvector extension for test database
 - **End-to-End Tests**: Controlled with `E2E_TESTS` environment variable
 - **API Tests**: Uses Sanic's ASGI test client
-- **Test Data**: 
+- **Test Data**:
   - Fixtures in `tests/test_data/fixtures/`
   - Factory pattern with polyfactory
-- **Async Testing**: 
+- **Async Testing**:
   - Uses pytest-asyncio
   - Async fixtures for database operations
 

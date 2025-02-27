@@ -3,7 +3,7 @@ from typing import Final, TypedDict
 
 from rank_bm25 import BM25Okapi
 from sentence_transformers import util
-from spacy import Language
+from spacy.language import Language
 from spacy.tokens import Span
 
 from src.rag.dto import DocumentDTO
@@ -45,15 +45,14 @@ class SentenceInfo(TypedDict):
 
 
 class BM25Ranker:
-    """Precomputes BM25 scores for faster retrieval."""
+    """Precomputes BM25 scores for faster retrieval.
+
+    Args:
+        sentences: List of sentences to rank
+        nlp: spaCy NLP model for tokenization
+    """
 
     def __init__(self, sentences: list[str], nlp: Language) -> None:
-        """Initialize the BM25 ranker with tokenized corpus.
-
-        Args:
-            sentences: List of sentences to rank
-            nlp: spaCy NLP model for tokenization
-        """
         self.sentences = sentences
         tokenized_corpus = [
             [token.text.lower() for token in nlp(sentence) if not token.is_punct and not token.is_space]
