@@ -191,12 +191,26 @@ def validate_template_sections(
             },
         )
 
+    # Check order values
+    all_orders = [section["order"] for section in response["sections"]]
+    if len(set(all_orders)) != len(all_orders):
+        duplicate_orders = [order for order in all_orders if all_orders.count(order) > 1]
+        raise ValidationError("Duplicate order values found", context={"duplicate_orders": duplicate_orders})
+
+    if min(all_orders) != 1 or max(all_orders) != len(all_orders):
+        raise ValidationError(
+            "Order values must start at 1 and be consecutive",
+            context={"min_order": min(all_orders), "max_order": max(all_orders), "expected_max": len(all_orders)},
+        )
+
+    # Check parent relationships
     for section in response["sections"]:
         input_section = next(s for s in input_sections if s["id"] == section["id"])
         if input_section["parent_id"] != section["parent_id"]:
             raise ValidationError("Parent relationship modified")
         # Skip validation of is_title_only and is_detailed_workplan since they are not part of GrantSection
 
+    # Check dependencies
     dependency_graph = defaultdict[str, list[str]](list)
     for section in response["sections"]:
         if not section["depends_on"]:
@@ -208,6 +222,7 @@ def validate_template_sections(
 
         dependency_graph[section["id"]].extend(section["depends_on"])
 
+    # Check for circular dependencies
     for section_id in dependency_graph:
         if detect_cycle(graph=dependency_graph, start=section_id):
             raise ValidationError("Circular dependencies detected", context={"starting_node": section_id})
