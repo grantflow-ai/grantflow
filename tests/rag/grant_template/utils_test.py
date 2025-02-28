@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from src.rag.grant_template.validation_utils import detect_cycle
+from src.rag.grant_template.utils import detect_cycle
 
 
 def create_graph(edges: list[tuple[str, list[str]]]) -> dict[str, list[str]]:

@@ -2,6 +2,7 @@ from typing import TypedDict, TypeGuard
 
 from src.db.json_objects import GrantElement, GrantLongFormSection
 from src.exceptions import ValidationError
+from src.rag.grant_template.utils import detect_cycle
 
 
 def is_grant_long_form_section(section: GrantElement | GrantLongFormSection) -> TypeGuard[GrantLongFormSection]:
@@ -67,10 +68,42 @@ def create_generation_groups(sections: list[GrantLongFormSection]) -> list[list[
             generated.update(section["id"] for section in current_group)
             continue
 
-        raise ValidationError(
-            "Circular dependency detected or missing sections in dependencies.",
-            context={"generated": generated, "sections": sections},
-        )
+        # No progress was made, which means there's a circular dependency
+        # Let's detect the cycle using our improved function
+        dependency_graph = {s["id"]: s["depends_on"] for s in sections}
+
+        cycle_detected = False
+        for section_id in [s["id"] for s in sections if s["id"] not in generated]:
+            if cycle_nodes := detect_cycle(graph=dependency_graph, start=section_id):
+                cycle_detected = True
+                raise ValidationError(
+                    "Circular dependency detected in section dependencies.",
+                    context={
+                        "generated": list(generated),
+                        "remaining": [s["id"] for s in sections if s["id"] not in generated],
+                        "dependency_graph": dependency_graph,
+                        "cycle_nodes": list(cycle_nodes),
+                        "cycle_path": " → ".join([*list(cycle_nodes), next(iter(cycle_nodes))]),
+                        "recovery_instruction": "Break the circular dependency by removing one of these dependencies or reorganizing your sections.",
+                    },
+                )
+
+        # If no specific cycle was detected but we still can't make progress
+        if not cycle_detected:
+            raise ValidationError(
+                "Missing sections in dependencies.",
+                context={
+                    "generated": list(generated),
+                    "remaining": [s["id"] for s in sections if s["id"] not in generated],
+                    "dependency_graph": dependency_graph,
+                    "sections_with_unresolved_deps": {
+                        s["id"]: [dep for dep in s["depends_on"] if dep not in generated]
+                        for s in sections
+                        if s["id"] not in generated and any(dep not in generated for dep in s["depends_on"])
+                    },
+                    "recovery_instruction": "Ensure all section IDs referenced in dependencies exist and there are no typos.",
+                },
+            )
 
     return groups
 

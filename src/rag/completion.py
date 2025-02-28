@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from functools import partial
+from textwrap import dedent
 from typing import Any, Final, TypedDict, cast
 
 from anthropic import NOT_GIVEN, RateLimitError
@@ -12,7 +13,7 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
 )
 
 from src.constants import ANTHROPIC_SONNET_MODEL, CONTENT_TYPE_JSON, GENERATION_MODEL
-from src.exceptions import BackendError, DeserializationError, ValidationError
+from src.exceptions import BackendError, DeserializationError, InsufficientContextError, ValidationError
 from src.utils.ai import get_anthropic_client, get_google_ai_client
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -252,6 +253,42 @@ async def make_anthorpic_completions_request[T](
     return response_type(**result)
 
 
+def format_error_for_llm(error: Exception) -> str:
+    """Format an error for consumption by LLMs.
+
+    Provides a consistent, structured format for errors that need to be
+    presented to an LLM for correction.
+
+    Args:
+        error: The exception to format.
+
+    Returns:
+        A formatted error message suitable for LLM consumption.
+    """
+    if isinstance(error, ValidationError):
+        context_str = ""
+        if hasattr(error, "context") and error.context:
+            context_str = "\n\nContext:\n"
+            for k, v in error.context.items():
+                context_str += f"- {k}: {v}\n"
+
+        return dedent(f"""
+            ValidationError: {error!s}
+            {context_str}
+            Validation failures require specific corrections to the output structure or content.
+            Please correct the issues described above.
+        """)
+
+    if isinstance(error, InsufficientContextError):
+        return dedent(f"""
+            InsufficientContextError: {error!s}
+            This indicates the information provided is inadequate to complete the task.
+            Please identify what additional information is needed and request it explicitly.
+        """)
+
+    return f"Error ({type(error).__name__}): {error!s}"
+
+
 async def handle_completions_request[T](
     *,
     max_attempts: int = 3,
@@ -339,10 +376,18 @@ async def handle_completions_request[T](
             return response
         except ValidationError as e:
             attempts += 1
+            logger.warning(
+                "Validation error in completion request",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                error=str(e),
+                error_context=e.context if hasattr(e, "context") else None,
+            )
             error_message = f"""
             The last response from the API failed validation due to the following error:
                 <error>
-                {e!s}
+                {format_error_for_llm(e)}
                 </error>
 
             Your task is to fix the error and return the corrected response data:
@@ -358,6 +403,13 @@ async def handle_completions_request[T](
             errors.append(e)
         except DeserializationError as e:
             attempts += 1
+            logger.warning(
+                "Deserialization error in completion request",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                error=str(e),
+            )
             error_message = f"""
             The last API call with the provided prompt returned either an invalid JSON object or an object that does not conform with the JSON schema.
 
@@ -371,5 +423,18 @@ async def handle_completions_request[T](
 
     raise ValidationError(
         f"Failed to generate text after {max_attempts} attempts.",
-        context={"errors": errors, "prompt_identifier": prompt_identifier},
+        context={
+            "errors": errors,
+            "prompt_identifier": prompt_identifier,
+            "attempts": [
+                {
+                    "attempt": i + 1,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "error_context": getattr(e, "context", None),
+                }
+                for i, e in enumerate(errors)
+            ],
+            "recovery_instruction": "Review the errors from each attempt to understand the persistent issues",
+        },
     )

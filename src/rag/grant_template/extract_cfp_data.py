@@ -110,8 +110,22 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
     """Validate the extracted CFP data."""
     if not response["content"]:
         if error := response.get("error"):
-            raise InsufficientContextError(error)
-        raise ValidationError("No content extracted. Please provide an error message.")
+            raise InsufficientContextError(
+                error,
+                context={
+                    "cfp_subject": response.get("cfp_subject", ""),
+                    "organization_id": response.get("organization_id", None),
+                    "recovery_instruction": "The CFP content appears to be insufficient or unclear. Try extracting more specific guidelines or requirements.",
+                },
+            )
+        raise ValidationError(
+            "No content extracted. Please provide an error message.",
+            context={
+                "cfp_subject": response.get("cfp_subject", ""),
+                "organization_id": response.get("organization_id", None),
+                "recovery_instruction": "Extract at least 3-5 relevant guidelines or requirements from the CFP content, or provide a specific error message.",
+            },
+        )
 
 
 async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:

@@ -176,7 +176,15 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
     session_maker = get_session_maker()
     grant_application = await retrieve_application(application_id=application_id, session_maker=session_maker)
     if not grant_application.grant_template or not grant_application.research_objectives:
-        raise ValidationError("Grant application does not have a grant template or research objectives.")
+        raise ValidationError(
+            "Grant application does not have a grant template or research objectives.",
+            context={
+                "application_id": application_id,
+                "has_grant_template": grant_application.grant_template is not None,
+                "has_research_objectives": grant_application.research_objectives is not None,
+                "recovery_instruction": "Ensure the grant application has both a grant template and research objectives before generating text.",
+            },
+        )
 
     # Filter sections to find work plan sections
     work_plan_sections = []
@@ -188,7 +196,27 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
         ]
 
     if not work_plan_sections:
-        raise ValidationError("Grant template does not have a detailed work plan section.")
+        raise ValidationError(
+            "Grant template does not have a detailed work plan section.",
+            context={
+                "application_id": application_id,
+                "grant_section_count": len(grant_application.grant_template.grant_sections)
+                if grant_application.grant_template.grant_sections
+                else 0,
+                "long_form_sections": [
+                    {
+                        "id": section["id"],
+                        "title": section["title"],
+                        "is_detailed_workplan": section.get("is_detailed_workplan", False),
+                    }
+                    for section in grant_application.grant_template.grant_sections
+                    if is_grant_long_form_section(section)
+                ]
+                if grant_application.grant_template.grant_sections
+                else [],
+                "recovery_instruction": "Add a detailed work plan section to the grant template with is_detailed_workplan=True.",
+            },
+        )
 
     section_texts = await generate_grant_section_texts(
         application_id=application_id,

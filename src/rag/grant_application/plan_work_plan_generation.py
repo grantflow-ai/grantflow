@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Final, TypedDict
 
+from src.constants import ANTHROPIC_SONNET_MODEL
 from src.db.json_objects import GrantLongFormSection, ResearchObjective
 from src.exceptions import ValidationError
 from src.rag.completion import handle_completions_request
@@ -326,7 +327,13 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
         ValidationError: If the response is invalid.
     """
     if len(tool_response["research_objectives"]) != len(input_objectives):
-        raise ValidationError("The number of research objectives does not match the input.")
+        raise ValidationError(
+            "The number of research objectives does not match the input.",
+            context={
+                "tool_response_objectives": tool_response["research_objectives"],
+                "input_objectives": input_objectives,
+            },
+        )
 
     mapped_input_objectives = {objective["number"]: objective for objective in input_objectives}
 
@@ -340,16 +347,37 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
         if input_objective := mapped_input_objectives.get(objective["objective_number"]):
             if len(objective_tasks) != len(input_objective["research_tasks"]):
                 raise ValidationError(
-                    f"The number of tasks for objective number {objective['objective_number']} does not match the input."
+                    f"The number of tasks for objective number {objective['objective_number']} does not match the input.",
+                    context={
+                        "objective_number": objective["objective_number"],
+                        "expected_task_count": len(input_objective["research_tasks"]),
+                        "actual_task_count": len(objective_tasks),
+                        "objective_title": objective.get("title", ""),
+                        "recovery_instruction": "Ensure each objective has the exact same number of tasks as in the input objective",
+                    },
                 )
         else:
             raise ValidationError(
-                f"Objective number {objective['objective_number']} not found in the input objectives."
+                f"Objective number {objective['objective_number']} not found in the input objectives.",
+                context={
+                    "objective_number": objective["objective_number"],
+                    "available_objective_numbers": list(mapped_input_objectives.keys()),
+                    "objective_title": objective.get("title", ""),
+                    "recovery_instruction": "Ensure objective numbers match those in the input exactly",
+                },
             )
 
         for relationship in objective["relationships"]:
             if len(relationship) != 2:
-                raise ValidationError("Each relationship must have exactly two elements")
+                raise ValidationError(
+                    "Each relationship must have exactly two elements",
+                    context={
+                        "objective_number": objective["objective_number"],
+                        "relationship": relationship,
+                        "expected_format": "[target_id, description]",
+                        "recovery_instruction": "Format each relationship as an array with exactly two elements: [target_id, description]",
+                    },
+                )
 
             target_id = relationship[0]
             try:
@@ -359,16 +387,53 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
                         task["objective_number"] == obj_num and task["task_number"] == task_num
                         for task in tool_response["research_tasks"]
                     ):
-                        raise ValidationError(f"Referenced task {target_id} not found")
+                        raise ValidationError(
+                            f"Referenced task {target_id} not found",
+                            context={
+                                "objective_number": objective["objective_number"],
+                                "referenced_task": target_id,
+                                "available_tasks": [
+                                    f"{t['objective_number']}.{t['task_number']}"
+                                    for t in tool_response["research_tasks"]
+                                ],
+                                "recovery_instruction": "Ensure the referenced task exists in the research_tasks list",
+                            },
+                        )
                 elif not any(obj["objective_number"] == int(target_id) for obj in tool_response["research_objectives"]):
-                    raise ValidationError(f"Referenced objective {target_id} not found")
+                    raise ValidationError(
+                        f"Referenced objective {target_id} not found",
+                        context={
+                            "objective_number": objective["objective_number"],
+                            "referenced_objective": target_id,
+                            "available_objectives": [
+                                str(obj["objective_number"]) for obj in tool_response["research_objectives"]
+                            ],
+                            "recovery_instruction": "Ensure the referenced objective exists in the research_objectives list",
+                        },
+                    )
             except ValueError as e:
-                raise ValidationError(f"Invalid relationship target ID format: {target_id}") from e
+                raise ValidationError(
+                    f"Invalid relationship target ID format: {target_id}",
+                    context={
+                        "target_id": target_id,
+                        "valid_formats": ["1", "1.2"],
+                        "example": "Use integer for objectives, dot notation for tasks",
+                        "recovery_instruction": "Format target IDs as integers for objectives (e.g., '1') or dot notation for tasks (e.g., '1.2')",
+                    },
+                ) from e
 
     for task in tool_response["research_tasks"]:
         for relationship in task["relationships"]:
             if len(relationship) != 2:
-                raise ValidationError("Each relationship must have exactly two elements")
+                raise ValidationError(
+                    "Each relationship must have exactly two elements",
+                    context={
+                        "task_id": f"{task['objective_number']}.{task['task_number']}",
+                        "relationship": relationship,
+                        "expected_format": "[target_id, description]",
+                        "recovery_instruction": "Format each relationship as an array with exactly two elements: [target_id, description]",
+                    },
+                )
 
             target_id = relationship[0]
             try:
@@ -378,11 +443,41 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
                         t["objective_number"] == obj_num and t["task_number"] == task_num
                         for t in tool_response["research_tasks"]
                     ):
-                        raise ValidationError(f"Referenced task {target_id} not found")
+                        raise ValidationError(
+                            f"Referenced task {target_id} not found",
+                            context={
+                                "task_id": f"{task['objective_number']}.{task['task_number']}",
+                                "referenced_task": target_id,
+                                "available_tasks": [
+                                    f"{t['objective_number']}.{t['task_number']}"
+                                    for t in tool_response["research_tasks"]
+                                ],
+                                "recovery_instruction": "Ensure the referenced task exists in the research_tasks list",
+                            },
+                        )
                 elif not any(obj["objective_number"] == int(target_id) for obj in tool_response["research_objectives"]):
-                    raise ValidationError(f"Referenced objective {target_id} not found")
+                    raise ValidationError(
+                        f"Referenced objective {target_id} not found",
+                        context={
+                            "task_id": f"{task['objective_number']}.{task['task_number']}",
+                            "referenced_objective": target_id,
+                            "available_objectives": [
+                                str(obj["objective_number"]) for obj in tool_response["research_objectives"]
+                            ],
+                            "recovery_instruction": "Ensure the referenced objective exists in the research_objectives list",
+                        },
+                    )
             except ValueError as e:
-                raise ValidationError(f"Invalid relationship target ID format: {target_id}") from e
+                raise ValidationError(
+                    f"Invalid relationship target ID format: {target_id}",
+                    context={
+                        "task_id": f"{task['objective_number']}.{task['task_number']}",
+                        "target_id": target_id,
+                        "valid_formats": ["1", "1.2"],
+                        "example": "Use integer for objectives, dot notation for tasks",
+                        "recovery_instruction": "Format target IDs as integers for objectives (e.g., '1') or dot notation for tasks (e.g., '1.2')",
+                    },
+                ) from e
 
 
 async def enrich_and_plan_work_plan_generation(
@@ -402,6 +497,7 @@ async def enrich_and_plan_work_plan_generation(
         messages=task_description,
         response_type=ResearchPlanDTO,
         response_schema=response_schema,
+        model=ANTHROPIC_SONNET_MODEL,
         validator=partial(research_plan_validator, input_objectives=input_objectives),
     )
 

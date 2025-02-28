@@ -8,7 +8,7 @@ from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.patterns import SNAKE_CASE_PATTERN
 from src.rag.completion import handle_completions_request
-from src.rag.grant_template.validation_utils import detect_cycle
+from src.rag.grant_template.utils import detect_cycle
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.rag.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
@@ -428,10 +428,16 @@ def validate_section_extraction(response: ExtractedSections) -> None:
 
     # Check for circular dependencies
     for section_id in dependency_graph:
-        if detect_cycle(graph=dependency_graph, start=section_id):
+        if cycle_nodes := detect_cycle(graph=dependency_graph, start=section_id):
             raise ValidationError(
                 "Circular dependency detected in section hierarchy",
-                context={"starting_node": section_id},
+                context={
+                    "starting_node": section_id,
+                    "cycle_nodes": list(cycle_nodes),
+                    "full_dependency_graph": dict(dependency_graph.items()),
+                    "cycle_path": " → ".join([*list(cycle_nodes), next(iter(cycle_nodes))]),
+                    "recovery_instruction": "Break the circular dependency by removing one of the parent-child relationships in the cycle.",
+                },
             )
 
     # Validate each section's properties

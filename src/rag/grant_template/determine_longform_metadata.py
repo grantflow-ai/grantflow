@@ -214,10 +214,24 @@ def validate_template_sections(
         InsufficientContextError: If the response is missing sections
     """
     if error := response.get("error"):  # occasionally, the model suffers a stroke and returns "null" as a string
-        raise InsufficientContextError(error)
+        raise InsufficientContextError(
+            error,
+            context={
+                "input_section_count": len(input_sections),
+                "input_section_ids": [s["id"] for s in input_sections],
+                "recovery_instruction": "Ensure you fully understand the input sections before generating metadata",
+            },
+        )
 
     if not response["sections"]:
-        raise ValidationError("No sections generated")
+        raise ValidationError(
+            "No sections generated",
+            context={
+                "input_section_count": len(input_sections),
+                "input_section_ids": [s["id"] for s in input_sections],
+                "recovery_instruction": "Generate metadata for all input sections",
+            },
+        )
 
     # Check for section ID correspondence
     input_section_ids = {section["id"] for section in input_sections}
@@ -231,6 +245,12 @@ def validate_template_sections(
             context={
                 "added_sections": list(added) if added else None,
                 "removed_sections": list(removed) if removed else None,
+                "expected_section_ids": list(input_section_ids),
+                "actual_section_ids": list(output_section_ids),
+                "recovery_instruction": (
+                    "Remove any sections that weren't in the input and add back all missing sections. "
+                    "Section IDs must match the input exactly."
+                ),
             },
         )
 
@@ -238,13 +258,27 @@ def validate_template_sections(
         if len(section["keywords"]) < 3:
             raise ValidationError(
                 "Insufficient keywords provided",
-                context={"section_id": section["id"], "keyword_count": len(section["keywords"]), "min_required": 3},
+                context={
+                    "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
+                    "keyword_count": len(section["keywords"]),
+                    "min_required": 3,
+                    "provided_keywords": section["keywords"],
+                    "recovery_instruction": f"Provide at least 3 relevant keywords for section '{section['id']}'",
+                },
             )
 
         if len(section["topics"]) < 2:
             raise ValidationError(
                 "Insufficient topics provided",
-                context={"section_id": section["id"], "topic_count": len(section["topics"]), "min_required": 2},
+                context={
+                    "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
+                    "topic_count": len(section["topics"]),
+                    "min_required": 2,
+                    "provided_topics": section["topics"],
+                    "recovery_instruction": f"Provide at least 2 relevant topics for section '{section['id']}'",
+                },
             )
 
         if len(section["generation_instructions"]) < 50:
@@ -252,41 +286,75 @@ def validate_template_sections(
                 "Generation instructions too short",
                 context={
                     "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
                     "instruction_length": len(section["generation_instructions"]),
                     "min_required": 50,
+                    "actual_instructions": section["generation_instructions"],
+                    "recovery_instruction": f"Provide more detailed generation instructions (at least 50 characters) for section '{section['id']}'",
                 },
             )
 
         if len(section["search_queries"]) < 3:
             raise ValidationError(
                 "Insufficient search queries provided",
-                context={"section_id": section["id"], "query_count": len(section["search_queries"]), "min_required": 3},
+                context={
+                    "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
+                    "query_count": len(section["search_queries"]),
+                    "min_required": 3,
+                    "provided_queries": section["search_queries"],
+                    "recovery_instruction": f"Provide at least 3 diverse search queries for section '{section['id']}'",
+                },
             )
 
         for dependency in section["depends_on"]:
             if dependency not in input_section_ids:
                 raise ValidationError(
                     "Invalid section dependency",
-                    context={"section_id": section["id"], "invalid_dependency": dependency},
+                    context={
+                        "section_id": section["id"],
+                        "section_title": next(
+                            (s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"
+                        ),
+                        "invalid_dependency": dependency,
+                        "valid_dependencies": list(input_section_ids),
+                        "recovery_instruction": f"Section '{section['id']}' depends on '{dependency}' which doesn't exist. Use only valid section IDs from the input.",
+                    },
                 )
 
         if section["max_words"] <= 0:
             raise ValidationError(
                 "Invalid word count",
-                context={"section_id": section["id"], "max_words": section["max_words"]},
+                context={
+                    "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
+                    "max_words": section["max_words"],
+                    "recommended_minimum": 50,
+                    "recovery_instruction": f"Provide a positive word count (at least 50) for section '{section['id']}'",
+                },
             )
 
         if section["id"] in section["depends_on"]:
             raise ValidationError(
                 "Section cannot depend on itself",
-                context={"section_id": section["id"]},
+                context={
+                    "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
+                    "dependencies": section["depends_on"],
+                    "recovery_instruction": f"Remove self-reference from the dependencies of section '{section['id']}'",
+                },
             )
 
     total_words = sum(section["max_words"] for section in response["sections"])
     if total_words < 50:
         raise ValidationError(
             "Total word count allocation is unreasonably low",
-            context={"total_words": total_words, "min_expected": 50},
+            context={
+                "total_words": total_words,
+                "min_expected": 50,
+                "section_word_counts": {s["id"]: s["max_words"] for s in response["sections"]},
+                "recovery_instruction": "Increase word counts across sections to reach a reasonable total (at least 1000 words recommended)",
+            },
         )
 
     workplan_sections = [s for s in input_sections if s.get("is_detailed_workplan")]
@@ -297,7 +365,13 @@ def validate_template_sections(
         if workplan_metadata and workplan_metadata["max_words"] < 100:
             raise ValidationError(
                 "Workplan section requires more substantial word count",
-                context={"section_id": workplan_id, "max_words": workplan_metadata["max_words"], "min_expected": 100},
+                context={
+                    "section_id": workplan_id,
+                    "section_title": workplan_sections[0].get("title", "Workplan"),
+                    "max_words": workplan_metadata["max_words"],
+                    "min_expected": 100,
+                    "recovery_instruction": f"Increase the word count for the workplan section '{workplan_id}' to at least 100 words",
+                },
             )
 
 
