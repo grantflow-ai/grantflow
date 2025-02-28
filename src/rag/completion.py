@@ -5,6 +5,7 @@ from typing import Any, Final, TypedDict
 
 from anthropic import NOT_GIVEN, RateLimitError
 from anthropic.types import ToolParam, ToolUseBlock
+from google.api_core.exceptions import ServiceUnavailable
 from google.cloud.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
     Content,
@@ -18,7 +19,7 @@ from src.utils.ai import get_anthropic_client, get_google_ai_client
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.retry import with_exponential_backoff_retry
-from src.utils.serialization import deserialize, serialize
+from src.utils.serialization import deserialize, fix_string_json_values, serialize
 
 logger = get_logger(__name__)
 
@@ -132,7 +133,7 @@ async def select_best_response[T](
     return candidates[response["best_response"]]
 
 
-@with_exponential_backoff_retry(TooManyRequests)
+@with_exponential_backoff_retry(TooManyRequests, ServiceUnavailable)
 async def make_google_completions_request[T](
     *,
     model: str = GENERATION_MODEL,
@@ -249,7 +250,10 @@ async def make_anthorpic_completions_request[T](
     if not tool_blocks:
         raise ValidationError("The response does not contain a tool use blocks.")
 
-    return deserialize(serialize(tool_blocks[0].input), response_type)
+    try:
+        return deserialize(serialize(tool_blocks[0].input), response_type)
+    except DeserializationError:
+        return fix_string_json_values(tool_blocks[0].model_dump(include="input")["input"])
 
 
 def format_error_for_llm(error: Exception) -> str:

@@ -173,7 +173,9 @@ ENRICH_AND_PLAN_WORK_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ]
     }
 
-    **Important**: The response object MUST BE a JSON object, not a string! This also applies to any nested object or array within it!
+    **Important**:
+        - The `research_objectives` MUST BE a JSON array, not a string!
+        - The `research_tasks` MUST BE a JSON array, not a string!
     """,
 )
 
@@ -326,15 +328,22 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
         if input_objective := mapped_input_objectives.get(objective["objective_number"]):
             expected_task_count = len(input_objective["research_tasks"])
             actual_task_count = len(objective_tasks)
+
             if expected_task_count != actual_task_count:
+                missing_task_numbers = [
+                    task["number"]
+                    for task in input_objective["research_tasks"]
+                    if task["number"] not in objective_tasks
+                ]
+
                 raise ValidationError(
-                    f"The number of tasks for objective number {objective['objective_number']} does not match the input.",
+                    "Research tasks have been dropped!",
                     context={
-                        "objective_number": objective["objective_number"],
+                        "missing_task_numbers": missing_task_numbers,
                         "expected_task_count": expected_task_count,
                         "actual_task_count": actual_task_count,
-                        "objective_title": objective.get("title", ""),
-                        "recovery_instruction": "Ensure each objective has the exact same number of tasks as in the input objective",
+                        "objective_number": input_objective["number"],
+                        "recovery_instruction": "Ensure all research objectives have all the research tasks",
                     },
                 )
         else:
@@ -662,7 +671,7 @@ async def handle_enrich_and_plan_work_plan(
         prompt=prompt.to_string(rag_results=rag_results),
         prompt_handler=partial(enrich_and_plan_work_plan_generation, input_objectives=research_objectives),
         passing_score=90,
-        increment=5,
+        increment=10,
         retries=5,
         criteria=evaluation_criteria,
     )

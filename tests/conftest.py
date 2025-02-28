@@ -489,8 +489,12 @@ def research_objectives() -> list[ResearchObjective]:
 
 
 @pytest.fixture
-def form_inputs() -> dict[str, str]:
-    return {
+async def melanoma_alliance_full_application_id(
+    workspace: Workspace,
+    research_objectives: list[ResearchObjective],
+    async_session_maker: async_sessionmaker[Any],
+) -> str:
+    form_inputs: dict[str, str] = {
         "background_context": "Brain metastases (BMs) occur in almost 50% of patients with metastatic melanoma, resulting in a dismal prognosis with a poor overall survival for most patients. Immunotherapy has revolutionized treatment for melanoma patients, extending median survival from 6 months to nearly 6 years for patients in advanced disease stages. However, many patients still face early relapse or do not respond to treatments. Particularly in BMs, the milieu of the brain creates a highly immunosuppressive tumor microenvironment (TME). Single-cell technologies together with machine learning have emerged as powerful tools to decipher complex interactions between cells in the TME, enabling development of data driven designs of immunotherapies. Using our advanced technologies to study cells in the tumor microenvironment at a single-cell resolution, we identified a subtype of immune cell which is a central part of the TME coined regulatory (TREM2+) macrophages. These cells play a crucial role in suppressing the body's ability to fight cancer, especially in subsets of immunotherapy-resistant tumors such as melanoma. We have already developed an antibody that blocks the suppressive action of these cells.",
         "hypothesis": "Our hypothesis is that using our advanced single cell technologies, including cell temporal tracking (ZMAN-seq, differentiation flows), cell-cell interactions (PIC-seq), and improved strategies for AI analysis of spatial transcriptomics with Stereo-seq, we can to get an in-depth understanding of the BM TME and identify cytokines capable of remodulating the TME towards anti-tumor activity. This understanding will enable us to design novel immunocytokines combining the most promising cytokines with our antiTREM2 antibody to modulate both the myeloid and T and NK cell compartments. Our hypothesis is that our single cell and AI analysis will also enable us to identify biomarkers to design masking strategies to increase the specificity of the immunocytokine to the BM TME.",
         "rationale": "Our rationale is that the advances in single cell technologies enable an in depth understanding of the immune environment of BMs and identifying novel approaches for activating the immune system to eliminate the BMs. Our rationale is also that simultaneously modulating different immune cell compartments (macrophages, T cells, NK cells) can induce unprecedented anti-tumor immune response.",
@@ -501,15 +505,6 @@ def form_inputs() -> dict[str, str]:
         "impact": "Brain metastases (BMs) occur in almost 50% of patients with metastatic melanoma, resulting in a dismal prognosis with a poor overall survival for most patients. Development of effective novel therapies for melanoma BMs could significantly increase life expectancy and not less important - life quality of metastatic melanoma patients.",
         "scientific_infrastructure": "Our lab is equipped with the state-of-the-art single cell and molecular biology technologies and is supported by the vast scientific infrastructure of the Weizmann Institute of Science.",
     }
-
-
-@pytest.fixture
-async def melanoma_alliance_full_application_id(
-    workspace: Workspace,
-    research_objectives: list[ResearchObjective],
-    form_inputs: dict[str, str],
-    async_session_maker: async_sessionmaker[Any],
-) -> str:
     return await create_grant_application_data(
         workspace=workspace,
         research_objectives=research_objectives,
@@ -517,7 +512,7 @@ async def melanoma_alliance_full_application_id(
         async_session_maker=async_session_maker,
         fixture_id="43b4aed5-8549-461f-9290-5ee9a630ac9a",
         cfp_markdown_file_name="melanoma_alliance.md",
-        source_file_names=["melanoma_alliance.pdf"],
+        source_file_names=["MRA-2023-2024-RFP-Final.pdf"],
     )
 
 
