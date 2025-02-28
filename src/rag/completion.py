@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from functools import partial
 from textwrap import dedent
-from typing import Any, Final, TypedDict, cast
+from typing import Any, Final, TypedDict
 
 from anthropic import NOT_GIVEN, RateLimitError
 from anthropic.types import ToolParam, ToolUseBlock
@@ -249,8 +249,7 @@ async def make_anthorpic_completions_request[T](
     if not tool_blocks:
         raise ValidationError("The response does not contain a tool use blocks.")
 
-    result = cast(dict[str, Any], tool_blocks[0].input)
-    return response_type(**result)
+    return deserialize(serialize(tool_blocks[0].input), response_type)
 
 
 def format_error_for_llm(error: Exception) -> str:

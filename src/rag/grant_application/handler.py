@@ -13,9 +13,8 @@ from src.rag.grant_application.plan_work_plan_generation import handle_enrich_an
 from src.rag.grant_application.utils import (
     create_dependencies_text,
     create_generation_groups,
-    create_text_recursively,
+    generate_application_text,
     is_grant_long_form_section,
-    map_to_tree,
 )
 from src.utils.db import retrieve_application
 from src.utils.logger import get_logger
@@ -143,24 +142,7 @@ async def generate_grant_section_texts(
     return section_texts
 
 
-def generate_application_text(
-    title: str, grant_sections: list[GrantElement | GrantLongFormSection], section_texts: dict[str, str]
-) -> str:
-    """Generate the application text.
-
-    Args:
-        title: The title of the grant application.
-        grant_sections: The grant sections.
-        section_texts: The section texts.
-
-    Returns:
-        The generated application text.
-    """
-    tree = map_to_tree(sections=grant_sections, section_texts=section_texts)
-    return "\n\n".join([f"# {title}", *[create_text_recursively(node) for node in tree]])
-
-
-async def grant_application_text_generation_pipeline_handler(application_id: str) -> str:
+async def grant_application_text_generation_pipeline_handler(application_id: str) -> tuple[str, dict[str, str]]:
     """Handles the generation of a grant application text.
 
     Args:
@@ -240,4 +222,4 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
             logger.error("Failed to update grant application text.", application_id=application_id, error=e)
             raise DatabaseError("Failed to update grant application text.") from e
 
-    return application_text
+    return application_text, section_texts

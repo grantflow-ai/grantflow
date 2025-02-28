@@ -1,6 +1,6 @@
 from src.rag.grant_template.extract_cfp_data import ExtractedCFPData, handle_extract_cfp_data
 from src.utils.serialization import deserialize, serialize
-from tests.conftest import FIXTURES_FOLDER
+from tests.test_utils import FIXTURES_FOLDER
 
 
 async def get_extracted_section_data(

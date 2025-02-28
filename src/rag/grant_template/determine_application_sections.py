@@ -281,6 +281,8 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
        "error": "string"                 // Error message if applicable, leave as empty string or json null if no error
     }
     ```
+
+    **Important**: The response object MUST BE a JSON object, not a string! This also applies to any nested object or array within it!
     """,
 )
 

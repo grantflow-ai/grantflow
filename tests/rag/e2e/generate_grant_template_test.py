@@ -8,8 +8,8 @@ import pytest
 from src.db.tables import FundingOrganization, GrantApplication
 from src.rag.grant_template.handler import extract_and_enrich_sections
 from src.utils.serialization import serialize
-from tests.conftest import RESULTS_FOLDER
 from tests.rag.e2e.utils import get_extracted_section_data
+from tests.test_utils import RESULTS_FOLDER
 
 
 @pytest.mark.skipif(

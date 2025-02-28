@@ -11,7 +11,7 @@ from src.db.tables import GrantApplication, GrantApplicationFile
 from src.indexer.chunking import chunk_text
 from src.indexer.indexing import index_documents
 from src.utils.serialization import serialize
-from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
+from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:
     from azure.ai.documentintelligence.models import AnalyzeResult

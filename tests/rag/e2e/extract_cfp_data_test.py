@@ -6,7 +6,7 @@ import pytest
 
 from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
 from src.utils.serialization import serialize
-from tests.conftest import FIXTURES_FOLDER, RESULTS_FOLDER
+from tests.test_utils import FIXTURES_FOLDER, RESULTS_FOLDER
 
 
 @pytest.mark.skipif(

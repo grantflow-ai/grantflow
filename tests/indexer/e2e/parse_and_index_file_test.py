@@ -10,7 +10,7 @@ from src.db.tables import GrantApplication, GrantApplicationFile, TextVector
 from src.files import FileDTO
 from src.indexer.files import parse_and_index_file
 from src.utils.serialization import serialize
-from tests.conftest import RESULTS_FOLDER, SOURCES_FOLDER
+from tests.test_utils import RESULTS_FOLDER, SOURCES_FOLDER
 
 FILENAME = "PIC seq.pdf"
 SMALL_PDF_TEST_FILE = SOURCES_FOLDER / FILENAME
