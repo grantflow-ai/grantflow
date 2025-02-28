@@ -58,9 +58,6 @@ from tests.factories import (
     WorkspaceUserFactory,
 )
 
-load_dotenv()
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)
     logging.getLogger(logger_name).propagate = False
@@ -95,6 +92,28 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
         async_test.add_marker(session_scope_marker, append=False)
+
+
+@pytest.fixture(autouse=True)
+def stub_env() -> None:
+    load_dotenv()  # we use a real env file for E2E tests, but its not always present
+    os.environ["TOKENIZERS_PARALLELISM"] = (
+        "false"  # we don't want to run tokenizers in parallel due to pytest limitations
+    )
+
+    mock_creds = (
+        '{"type":"service_account","project_id":"grantflow","private_key_id":"abc","private_key":'
+        ',"client_email":"x@grantflow.iam.gserviceaccount.com","client_id":"1000000000","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"","universe_domain":"googleapis.com"}'
+    )
+    os.environ.setdefault("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
+    os.environ.setdefault("LLM_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
+    os.environ.setdefault("JWT_SECRET", "abc123")
+    os.environ.setdefault("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT", "https://test.com")
+    os.environ.setdefault("AZURE_DOCUMENT_INTELLIGENCE_KEY", "abc123")
+    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "grantflow")
+    os.environ.setdefault("GOOGLE_CLOUD_REGION", "us-central1")
+    os.environ.setdefault("ADMIN_ACCESS_CODE", "123456")
+    os.environ.setdefault("ANTHROPIC_API_KEY", "sd-ant-api03-ABC123")
 
 
 @pytest.fixture(scope="session")

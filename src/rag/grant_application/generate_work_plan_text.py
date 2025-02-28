@@ -1,5 +1,6 @@
 from typing import Any, Final
 
+from src.constants import MIN_WORDS_RATIO
 from src.rag.grant_application.plan_work_plan_generation import ResearchObjectiveDTO, ResearchTaskDTO
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.long_form import generate_long_form_text
@@ -111,7 +112,7 @@ evaluation_criteria = [
 ]
 
 
-async def handle_work_component_generation(
+async def handle_work_plan_component_generation(
     prompt: str,
     *,
     min_words: int,
@@ -180,8 +181,10 @@ async def generate_work_plan_component_text(
 
     return await with_prompt_evaluation(
         criteria=evaluation_criteria,
+        max_words=component["max_words"],
+        min_words=int(component["max_words"] * MIN_WORDS_RATIO),
         prompt=prompt,
-        prompt_handler=handle_work_component_generation,
+        prompt_handler=handle_work_plan_component_generation,
         prompt_identifier="generate_work_component",
         rag_results=rag_results,
         passing_score=90,
