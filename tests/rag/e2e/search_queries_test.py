@@ -6,7 +6,7 @@ from anyio import Path
 
 from src.rag.search_queries import handle_create_search_queries
 from src.utils.serialization import serialize
-from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
+from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 
 @pytest.mark.skipif(

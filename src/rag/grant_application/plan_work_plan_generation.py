@@ -50,65 +50,63 @@ ENRICH_AND_PLAN_WORK_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ${max_words}
         </max_words>
 
-    ## Task Description
+    ## Instructions
 
-    1. **Analyze Objectives:**
-        * Deconstruct each research objective into its constituent research tasks.
-        * Ensure that each task contributes to the overall objective.
-        * Ground the analysis in the provided keywords and topics, using them to understand the core concepts and focus of the research.
+    1. Analyze the Research Objectives:
+        - Deconstruct each research objective into its constituent research tasks.
+        - Ensure that each task contributes to the overall objective.
+        - Ground the analysis in the provided keywords and topics, using them to understand the core concepts and focus of the research.
 
-    2. **Determine Narrative:**
-        * Establish a clear and logical progression of research activities.
-        * Consider the interdependencies between objectives and tasks.
-        * Ensure the narrative aligns with the overall research goals and the provided keywords and topics.
+    2. Determine what is the research narrative:
+        - Establish a clear and logical progression of research activities.
+        - Consider the interdependencies between objectives and tasks.
+        - Ensure the narrative aligns with the overall research goals and the provided keywords and topics.
 
-    3. **Identify Relationships:**
-        *  Identify dependencies between objectives (e.g., Objective 2 builds upon the foundation established in Objective 1).
-        *  Identify dependencies between tasks within an objective (e.g., Task 1.1 must be completed before Task 1.2 can begin).
-        *  Identify dependencies across objectives (e.g., Findings from Task 2.3 will inform the approach taken in Objective 4).
-        *  Specify the type of relationship (e.g., causal, sequential, complementary, iterative feedback).
-        *  Consider how the relationships between objectives and tasks contribute to addressing the keywords and topics.
-        *  Ensure relationships demonstrate a cohesive research strategy with logical connections between components.
+    3. Identify relationships and inter-dependencies:
+        - Identify dependencies between objectives (e.g., Objective 2 builds upon the foundation established in Objective 1).
+        - Identify dependencies between tasks within an objective (e.g., Task 1.1 must be completed before Task 1.2 can begin).
+        - Identify dependencies across objectives (e.g., Findings from Task 2.3 will inform the approach taken in Objective 4).
+        - Specify the type of relationship (e.g., causal, sequential, complementary, iterative feedback).
+        - Consider how the relationships between objectives and tasks contribute to addressing the keywords and topics.
+        - Ensure relationships demonstrate a cohesive research strategy with logical connections between components.
 
-    4. **Guiding Questions:**
-        *  Formulate a comprehensive set of guiding questions for each objective and task.
-        *  **Prioritize the use of provided keywords when creating questions.**
-        *  Ensure each objective has at least 3 guiding questions.
-        *  Focus on questions that address the core purpose, methodology, expected outcomes, potential challenges, and broader implications of the research.
-        *  Ground the questions in the provided keywords and topics to ensure relevance and focus.
+    4.  Formulate a set of specific guiding questions for each objective and task:
+        - Ensure each objective has at least 3 guiding questions.
+        - Focus on questions that address the core purpose, methodology, expected outcomes, potential challenges, and broader implications of the research.
+        - Ground the questions in the provided keywords and topics to ensure relevance and focus.
 
-    5. **Detailed Descriptions:**
-        *  **Purpose:** Clearly state the purpose of each objective and task and its contribution to the overall research goal.
-        *  **Methodology:** Describe the methods and techniques to be employed with technical precision (e.g., "use CRISPR-Cas9 gene editing to target the specific gene sequence...").
-        *  **Expected Results:** Outline anticipated outcomes, deliverables, and potential impact with measurable indicators.
-        *  **Dependencies:** Summarize key dependencies identified in step 3, highlighting critical path relationships.
-        *  **Potential Risks:** Identify potential challenges, limitations, and mitigation strategies with contingency plans.
-        *  **Innovation Elements:** Highlight novel approaches or techniques that distinguish this research.
-        *  Ensure all descriptions are grounded in the provided keywords and topics, using them to provide scientific context and focus.
+    5. Generate detailed descriptions for each objective and task, addressing the following elements:
+        - **Purpose:** Clearly state the purpose of each objective and task and its contribution to the overall research goal.
+        - **Methodology:** Describe the methods and techniques to be employed with technical precision (e.g., "use CRISPR-Cas9 gene editing to target the specific gene sequence...").
+        - **Expected Results:** Outline anticipated outcomes, deliverables, and potential impact with measurable indicators.
+        - **Dependencies:** Summarize key dependencies identified in step 3, highlighting critical path relationships.
+        - **Potential Risks:** Identify potential challenges, limitations, and mitigation strategies with contingency plans.
+        - **Innovation Elements:** Highlight novel approaches or techniques that distinguish this research.
+        - Ensure all descriptions are grounded in the provided keywords and topics, using them to provide scientific context and focus.
 
-    6. **Generation Instructions:**
-        *  Provide detailed instructions for AI text generation of each objective and task description.
-        *  Prioritize information from the sources (weight = 2) and incorporate metadata (weight = 1).
-        *  Specify the desired writing style (e.g., formal and academic, persuasive, concise).
-        *  Include instructions on the level of detail, use of technical terminology, and any specific formatting requirements.
-        *  **Explicitly instruct the AI to use the provided keywords and topics to guide the generation of the text.**
-        *  Example: "Generate a concise and persuasive description of Objective 2, emphasizing its innovative methodology and potential for clinical translation. Use formal and academic language. Highlight the connection to [keyword 1] and [topic 2]. Explain how this objective addresses the knowledge gap identified in [source 3]."
+    6. Write detailed instructions for AI text generation:
+        - Provide detailed instructions for AI text generation of each objective and task description.
+        - Prioritize information from the sources and incorporate metadata.
+        - Specify the desired writing style (e.g., formal and academic, persuasive, concise).
+        - Include instructions on the level of detail, use of technical terminology, and any specific formatting requirements.
+        - **Explicitly instruct the AI to use the provided keywords and topics to guide the generation of the text.**
+        - Example: "Generate a concise and persuasive description of Objective 2, emphasizing its innovative methodology and potential for clinical translation. Use formal and academic language. Highlight the connection to [keyword 1] and [topic 2]. Explain how this objective addresses the knowledge gap identified in [source 3]."
 
-    7. **Calculate Max Words:**
-        *  Calculate the maximum number of words for each objective and task description based on the total word limit provided.
-        *  Ensure that the word count aligns with the level of detail and complexity required for each component.
-        *  Verify the total word count for the entire research plan section aligns with the numbers assigned to the objectives and tasks.
-        *  Assign each objective and each task the appropriate word limit based on its complexity and importance.
+    7. Calculate the maximum word count allocation for each objective and task:
+        - Calculate the maximum number of words for each objective and task description based on the total word limit provided.
+        - Ensure that the word count aligns with the level of detail and complexity required for each component.
+        - Verify the total word count for the entire research plan section aligns with the numbers assigned to the objectives and tasks.
+        - Assign each objective and each task the appropriate word limit based on its complexity and importance.
 
-    8. **Search Query Generation:**
-        * Identify the specific terminology that is relevant to each objective and task.
-        * Brainstorm different potential queries - balance specificity with breadth for RAG retrieval.
-        * Consider potential synonyms or related terms that could broaden the search.
-        * Evaluate each generated query for relevance and effectiveness, refining as necessary.
+    8. Generate search queries for retrieval of relevant information:
+        - Identify the specific terminology that is relevant to each objective and task.
+        - Brainstorm different potential queries - balance specificity with breadth for RAG retrieval.
+        - Consider potential synonyms or related terms that could broaden the search.
+        - Evaluate each generated query for relevance and effectiveness, refining as necessary.
 
     ## Output Structure
 
-    Respond using this JSON structure:
+    Respond with a JSON object adhering to the following format:
 
     ```json
     {
@@ -175,26 +173,7 @@ ENRICH_AND_PLAN_WORK_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ]
     }
 
-    ## Validation:
-
-    1. Completeness Check: Verify that all objectives and tasks have complete information, including titles, descriptions, relationships, instructions, guiding questions, and metadata.
-    2. Relationship Validation:
-        -  Ensure that all relationships are clearly explained and reference specific objective/task numbers.
-        -  Check that relationship descriptions accurately reflect dependencies and progression.
-        -  Confirm that relationships are bidirectional where appropriate (e.g., Objective 1 informs Objective 2, and Objective 2 provides feedback to Objective 1).
-    3. Instruction Validation:
-        -  Ensure that generation instructions are clear, detailed, and specific.
-        -  Confirm that instructions align with the provided sources and metadata.
-        -  Verify that instructions specify the desired writing style, level of detail, and use of technical terminology.
-    4. Metadata Validation:
-        -  Ensure that the `metadata` field for each objective and task contains relevant and diverse terms.
-        -  Confirm that the metadata is derived from the sources and the provided keywords and topics.
-    5. Coherence Check: Review the overall logic and flow of the research plan. Ensure that there is a clear progression and interconnectedness between objectives and tasks.
-    6. Grounding Check:  Verify that the provided keywords and topics are appropriately integrated throughout the JSON structure, guiding the analysis, descriptions, and generation instructions.
-    7. Consistency Check: Ensure that all information in the JSON is consistent with the provided sources and metadata.
-    8. Formatting Check:  Validate that the JSON adheres to the specified structure and formatting conventions.
-    9. Word Count Verification: Confirm that the total word count for the research plan section aligns with the provided word limit.
-    10. Keyword Relevance: Ensure that the keywords provided are relevant to the objectives and tasks, guiding the content generation effectively. Keywords must balance specificity and topic coverage.
+    **Important**: The response object MUST BE a JSON object, not a string! This also applies to any nested object or array within it!
     """,
 )
 
@@ -345,13 +324,15 @@ def research_plan_validator(tool_response: ResearchPlanDTO, *, input_objectives:
         ]
 
         if input_objective := mapped_input_objectives.get(objective["objective_number"]):
-            if len(objective_tasks) != len(input_objective["research_tasks"]):
+            expected_task_count = len(input_objective["research_tasks"])
+            actual_task_count = len(objective_tasks)
+            if expected_task_count != actual_task_count:
                 raise ValidationError(
                     f"The number of tasks for objective number {objective['objective_number']} does not match the input.",
                     context={
                         "objective_number": objective["objective_number"],
-                        "expected_task_count": len(input_objective["research_tasks"]),
-                        "actual_task_count": len(objective_tasks),
+                        "expected_task_count": expected_task_count,
+                        "actual_task_count": actual_task_count,
                         "objective_title": objective.get("title", ""),
                         "recovery_instruction": "Ensure each objective has the exact same number of tasks as in the input objective",
                     },

@@ -12,7 +12,7 @@ from src.utils.extraction import (
     extract_webpage_content,
     extract_with_azure_document_intelligence,
 )
-from tests.conftest import TEST_DATA_SOURCES
+from tests.test_utils import TEST_DATA_SOURCES
 
 
 @pytest.fixture

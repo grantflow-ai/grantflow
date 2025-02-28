@@ -10,7 +10,7 @@ from azure.ai.documentintelligence.models import AnalyzeResult
 
 from src.files import FileDTO
 from src.utils.extraction import extract_file_content
-from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
+from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 
 @pytest.mark.skipif(
