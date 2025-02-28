@@ -58,3 +58,18 @@ class DeserializationError(BackendError):
 
 class DatabaseError(BackendError):
     """Raised when an error occurs during database operations."""
+
+
+class RagProcessingError(BackendError):
+    """Raised when an error occurs during RAG processing."""
+
+    def __init__(self, message: str, context: Any = None, *, step: str | None = None) -> None:
+        if step and context:
+            if isinstance(context, dict):
+                context["rag_processing_step"] = step
+            else:
+                context = {"original_context": context, "rag_processing_step": step}
+        elif step:
+            context = {"rag_processing_step": step}
+
+        super().__init__(message, context)
