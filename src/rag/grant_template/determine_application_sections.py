@@ -10,8 +10,6 @@ from src.patterns import SNAKE_CASE_PATTERN
 from src.rag.completion import handle_completions_request
 from src.rag.grant_template.utils import detect_cycle
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
-from src.rag.retrieval import retrieve_documents
-from src.rag.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 from src.utils.embeddings import get_embedding_model
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -442,22 +440,13 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                 },
             )
 
-    # Validate each section's properties
     valid_ids = set(section_ids)
     for section in response["sections"]:
-        # Check ID format
         if not SNAKE_CASE_PATTERN.match(section["id"]):
             raise ValidationError(
                 "Invalid section ID format", context={"section_id": section["id"], "expected_format": "snake_case"}
             )
 
-        if len(section["id"].split("_")) < 2:
-            raise ValidationError(
-                "Section ID must be descriptive (at least two words)",
-                context={"section_id": section["id"]},
-            )
-
-        # Check parent references
         if section["parent_id"]:
             if section["parent_id"] not in valid_ids:
                 raise ValidationError(
@@ -469,8 +458,7 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                     context={"workplan_id": section["parent_id"], "child_id": section["id"]},
                 )
 
-        # Calculate section depth
-        depth = 1  # Start at 1 for the section itself
+        depth = 1
         current_id = section["id"]
         while parent_id := mapped_sections[current_id].get("parent_id"):
             depth += 1
@@ -500,33 +488,25 @@ def _should_keep_section(
     Returns:
         bool: True if the section should be kept, False if it's too similar to excluded categories
     """
-    # Always keep workplan sections
     if section.get("is_detailed_workplan"):
         return True
 
-    # Check if this is a long-form section or has long-form children
     has_long_form_children = any(s.get("parent_id") == section["id"] and s.get("is_long_form") for s in sections)
 
-    # Check if this is a parent of a section we want to keep
-    # This prevents orphaned hierarchies
     has_important_role = section.get("is_long_form") or has_long_form_children
 
     if not has_important_role:
-        # Additional check: is this section a parent of any section?
         is_parent = any(s.get("parent_id") == section["id"] for s in sections)
         if not is_parent:
             return False
 
-    # String matching with normalized text
     normalized_title = section["title"].lower().strip()
     for category in EXCLUDE_CATEGORIES:
         normalized_category = category.lower().strip()
-        # Check both ways: category in title and title in category
         if normalized_category in normalized_title or normalized_title in normalized_category:
             return False
 
     try:
-        # Compute semantic similarity
         model = get_embedding_model()
         title_embedding = model.encode(section["title"], convert_to_tensor=True, device="cpu")
 
@@ -561,7 +541,6 @@ async def filter_extracted_sections(
     threshold = initial_threshold
     max_threshold = 0.9
 
-    # Try filtering with increasingly lenient thresholds
     while threshold <= max_threshold:
         sections_to_keep = [
             _should_keep_section(
@@ -577,17 +556,13 @@ async def filter_extracted_sections(
             section for section, should_keep in zip(sections, sections_to_keep, strict=True) if should_keep
         ]
 
-        # Check if we have a workplan section
         has_workplan = any(s.get("is_detailed_workplan") for s in filtered_sections)
 
-        # Ensure we keep at least one section marked as long-form
         has_long_form = any(s.get("is_long_form") for s in filtered_sections)
 
         if has_workplan and has_long_form:
-            # Maintain hierarchy integrity
             return _maintain_hierarchy_integrity(filtered_sections)
 
-        # If we filtered out critical sections, relax threshold
         threshold += 0.05
 
     # If we couldn't find a threshold that preserves required sections,
@@ -757,46 +732,47 @@ async def handle_extract_sections(
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
-    organization_guidelines = (
-        ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-            rag_results=await retrieve_documents(
-                organization_id=str(organization.id),
-                task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
-                search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
-                model=ANTHROPIC_SONNET_MODEL,
-            ),
-            organization_full_name=organization.full_name,
-            organization_abbreviation=organization.abbreviation,
-        )
-        if organization
-        else ""
-    )
+    # organization_guidelines = (
+    #     ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+    #         rag_results=await retrieve_documents(
+    #             organization_id=str(organization.id),
+    #             task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+    #             search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+    #             model=ANTHROPIC_SONNET_MODEL,
+    #         ),
+    #         organization_full_name=organization.full_name,
+    #         organization_abbreviation=organization.abbreviation,
+    #     )
+    #     if organization
+    #     else ""
+    # )
 
     criteria = [*evaluation_criteria]
 
-    if organization:
-        criteria.append(
-            EvaluationCriterion(
-                name="Organization-Specific Compliance",
-                evaluation_instructions="""
-                Verify strict compliance with this specific organization's guidelines:
-                    - Section structure exactly matches these organization's requirements (at least 95% accuracy)
-                    - Naming conventions precisely follow this organization's standards and terminology
-                    - All organization-specific required sections are included without exception
-                    - Hierarchy precisely reflects this organization's documented preferences
-                    - Any deviations from organization guidelines are explicitly justified by CFP requirements
-                    - Organization-specific formatting or structural requirements are correctly implemented
-                    - Special section types unique to this organization are properly identified
-                """,
-                weight=1.3,
-            )
-        )
+    # if organization:
+    #     criteria.append(
+    #         EvaluationCriterion(
+    #             name="Organization-Specific Compliance",
+    #             evaluation_instructions="""
+    #             Verify strict compliance with this specific organization's guidelines:
+    #                 - Section structure exactly matches these organization's requirements (at least 95% accuracy)
+    #                 - Naming conventions precisely follow this organization's standards and terminology
+    #                 - All organization-specific required sections are included without exception
+    #                 - Hierarchy precisely reflects this organization's documented preferences
+    #                 - Any deviations from organization guidelines are explicitly justified by CFP requirements
+    #                 - Organization-specific formatting or structural requirements are correctly implemented
+    #                 - Special section types unique to this organization are properly identified
+    #             """,
+    #             weight=1.3,
+    #         )
+    #     )
 
     result = await with_prompt_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
-        prompt=prompt.to_string(organization_guidelines=organization_guidelines),
+        prompt=prompt.to_string(organization_guidelines=""),
         criteria=criteria,
+        passing_score=90,
         increment=10,
         retries=5,
     )
