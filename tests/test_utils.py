@@ -371,9 +371,10 @@ async def create_grant_application_data(
     fixture_id: str,
     cfp_markdown_file_name: str,
     source_file_names: list[str],
+    title: str = "Test Application",
 ) -> str:
     application_id = await create_funding_application(
-        async_session_maker, fixture_id, str(workspace.id), "Test Application", research_objectives, form_inputs
+        async_session_maker, fixture_id, str(workspace.id), title, research_objectives, form_inputs
     )
 
     cfp_content_file = FIXTURES_FOLDER / "cfps" / cfp_markdown_file_name
@@ -386,7 +387,7 @@ async def create_grant_application_data(
 
     application_files_fixtures_dir = data_fixture_folder / "files"
     ensure_directory(application_files_fixtures_dir)
-    source_files = [SOURCES_FOLDER / "cfps" / name for name in source_file_names]
+    source_files = list((SOURCES_FOLDER / "application_sources").glob("*.*"))
 
     await process_application_files(application_id, application_files_fixtures_dir, source_files, async_session_maker)
 
