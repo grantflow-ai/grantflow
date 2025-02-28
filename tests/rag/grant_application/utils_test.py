@@ -1,12 +1,15 @@
+from typing import cast
+
 import pytest
 
-from src.db.json_objects import GrantLongFormSection
+from src.db.json_objects import GrantElement, GrantLongFormSection
 from src.exceptions import ValidationError
 from src.rag.grant_application.utils import (
     TreeNode,
     create_dependencies_text,
     create_generation_groups,
     create_text_recursively,
+    generate_application_text,
     map_to_tree,
 )
 from tests.factories import GrantSectionFactory
@@ -84,7 +87,7 @@ def grant_sections() -> list[GrantLongFormSection]:
             "id": "abstract",
             "title": "Abstract",
             "order": 1,
-            "parent_id": "<root>",
+            "parent_id": None,
             "depends_on": [],
             "is_detailed_workplan": False,
             "keywords": [],
@@ -140,7 +143,7 @@ def grant_sections() -> list[GrantLongFormSection]:
 
 
 def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="<root>")  # type: ignore[arg-type]
+    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id=None)  # type: ignore[arg-type]
     assert len(result) == 1  # only abstract at root
     assert result[0]["title"] == "Abstract"
     assert result[0]["text"] == "This is an abstract."
@@ -248,13 +251,13 @@ def multi_level_sections() -> list[GrantLongFormSection]:
         GrantSectionFactory.build(
             id="part_b",
             title="Part B",
-            parent_id="<root>",
+            parent_id=None,
             order=2,
         ),
         GrantSectionFactory.build(
             id="part_a",
             title="Part A",
-            parent_id="<root>",
+            parent_id=None,
             order=1,
         ),
         GrantSectionFactory.build(
@@ -364,3 +367,88 @@ def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantLon
         if root["title"] == "Part B":
             section_b1 = next(node for node in root["children"] if node["title"] == "Section B1")
             assert len(section_b1["children"]) == 2
+
+
+def test_generate_application_text() -> None:
+    grant_sections = [
+        {"id": "abstract_section", "order": 1, "parent_id": None, "title": "Abstracts"},
+        {
+            "depends_on": [],
+            "generation_instructions": "",
+            "id": "general_audience_abstract",
+            "is_clinical_trial": False,
+            "is_detailed_workplan": False,
+            "keywords": [],
+            "max_words": 285,
+            "order": 2,
+            "parent_id": "abstract_section",
+            "search_queries": [],
+            "title": "General Audience Abstract",
+            "topics": [],
+        },
+        {
+            "depends_on": [],
+            "generation_instructions": "",
+            "id": "technical_abstract_section",
+            "is_clinical_trial": False,
+            "is_detailed_workplan": False,
+            "keywords": [],
+            "max_words": 285,
+            "order": 3,
+            "parent_id": "abstract_section",
+            "search_queries": [],
+            "title": "Technical Abstract",
+            "topics": [],
+        },
+        {"id": "project_description_section", "order": 4, "parent_id": None, "title": "Project Description"},
+        {
+            "depends_on": [],
+            "generation_instructions": "",
+            "id": "background_specific_aims",
+            "is_clinical_trial": False,
+            "is_detailed_workplan": False,
+            "keywords": [],
+            "max_words": 830,
+            "order": 5,
+            "parent_id": "project_description_section",
+            "search_queries": [],
+            "title": "Background and Specific Aims",
+            "topics": [],
+        },
+        {"id": "clinical_trial_section", "order": 10, "parent_id": None, "title": "Clinical Trial Documentation"},
+    ]
+    section_texts: dict[str, str] = {
+        "general_audience_abstract": "Melanoma is a serious skin cancer...",
+        "technical_abstract_section": "This research proposal addresses the critical need...",
+        "background_specific_aims": "Melanoma, the most lethal form of skin cancer...",
+        "preliminary_data_section": "Our preliminary data strongly support the feasibility...",
+        "experimental_design_methods": "### Objective 1: X\n\nObjective 1 will employ an innovative...",
+        "statistical_plan_section": "For Objective 1, statistical analysis of ...",
+        "rationale_clinical_impact": "The clinical relevance of this research is underscored...",
+    }
+    title = "Developing AI solutions for cancer"
+
+    text = generate_application_text(
+        title, cast(list[GrantLongFormSection | GrantElement], grant_sections), section_texts
+    )
+
+    assert (
+        text
+        == """# Developing AI solutions for cancer
+
+## Abstracts
+
+### General Audience Abstract
+
+Melanoma is a serious skin cancer...### Technical Abstract
+
+This research proposal addresses the critical need...
+
+## Project Description
+
+### Background and Specific Aims
+
+Melanoma, the most lethal form of skin cancer...
+
+## Clinical Trial Documentation"""
+    )

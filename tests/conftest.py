@@ -1,12 +1,10 @@
 import logging
 import os
-from asyncio import gather
 from collections.abc import AsyncGenerator, Generator
 from logging import Logger, getLogger
-from pathlib import Path
 from socket import AF_INET, SOCK_STREAM, socket
 from textwrap import dedent
-from typing import Any, Final, cast
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -20,34 +18,24 @@ from pytest_mock import MockerFixture
 from sanic_testing.testing import SanicASGITestClient
 from scripts.seed_db import seed_db
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
 from structlog import configure
 from structlog.testing import LogCapture
 from vertexai.generative_models import GenerativeModel
 
 from src.db.base import Base
 from src.db.connection import engine_ref, get_session_maker
-from src.db.enums import FileIndexingStatusEnum
 from src.db.json_objects import ResearchObjective, ResearchTask
 from src.db.tables import (
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
     GrantTemplate,
-    OrganizationFile,
     RagFile,
-    TextVector,
     Workspace,
     WorkspaceUser,
 )
-from src.files import FileDTO
-from src.indexer.files import parse_and_index_file
-from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from src.utils.ai import init_ref
-from src.utils.extraction import extract_file_content
-from src.utils.serialization import deserialize, serialize
 from tests.factories import (
     FileFactory,
     FundingOrganizationFactory,
@@ -57,26 +45,15 @@ from tests.factories import (
     WorkspaceFactory,
     WorkspaceUserFactory,
 )
+from tests.test_utils import (
+    FIXTURES_FOLDER,
+    create_grant_application_data,
+    process_funding_organization,
+)
 
 for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)
     logging.getLogger(logger_name).propagate = False
-
-
-def _file_path_generator(folder: Path) -> Generator[Path, Any, Any]:
-    for path in folder.glob("*"):
-        if path.is_dir():
-            yield from _file_path_generator(path)
-        yield path
-
-
-SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
-RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
-FIXTURES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "fixtures"
-SYNTHETHIC_DATA_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "synthethic"
-TEST_DATA_SOURCES: Generator[Path, Any, Any] = _file_path_generator(SOURCES_FOLDER / "application_sources")
-TEST_DATA_RESULTS: Generator[Path, Any, Any] = _file_path_generator(RESULTS_FOLDER)
-CFP_FIXTURES: Generator[Path, Any, Any] = _file_path_generator(FIXTURES_FOLDER / "cfps")
 
 
 def pytest_collection_modifyitems(items: list[Any]) -> None:
@@ -526,367 +503,36 @@ def form_inputs() -> dict[str, str]:
     }
 
 
-async def parse_source_file(
-    *,
-    application_id: str | None = None,
-    organization_id: str | None = None,
-    source_file: Path,
-    async_session_maker: async_sessionmaker[Any],
-    target_folder: Path,
-) -> None:
-    if not application_id and not organization_id:
-        raise ValueError("Either application_id or organization_id must be provided")
-
-    file_content = await AsyncPath(source_file).read_bytes()
-    file_dto = FileDTO(
-        content=file_content,
-        filename=source_file.name,
-        mime_type="application/pdf"
-        if source_file.suffix == ".pdf"
-        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    )
-
-    async with async_session_maker() as session:
-        file_id = await session.scalar(
-            insert(RagFile)
-            .values(
-                {
-                    "filename": file_dto.filename,
-                    "mime_type": file_dto.mime_type,
-                    "size": file_dto.size,
-                    "indexing_status": FileIndexingStatusEnum.FINISHED,
-                }
-            )
-            .returning(RagFile.id)
-        )
-        await session.execute(
-            insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_file_id": file_id}])
-            if application_id
-            else insert(OrganizationFile).values([{"funding_organization_id": organization_id, "rag_file_id": file_id}])
-        )
-        await session.commit()
-
-    await parse_and_index_file(file_dto=file_dto, file_id=str(file_id))
-
-    async with async_session_maker() as session:
-        if application_id:
-            stmt = (
-                select(GrantApplicationFile)
-                .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
-                .where(GrantApplicationFile.rag_file_id == file_id)
-                .where(GrantApplicationFile.grant_application_id == application_id)
-            )
-        else:
-            stmt = (
-                select(OrganizationFile)  # type: ignore[assignment]
-                .options(selectinload(OrganizationFile.rag_file).selectinload(RagFile.text_vectors))
-                .where(OrganizationFile.rag_file_id == file_id)
-                .where(OrganizationFile.funding_organization_id == organization_id)
-            )
-
-        file_datum = await session.scalar(stmt)
-        assert file_datum is not None, f"File {source_file} not found in the database"
-
-    await AsyncPath(target_folder).mkdir(parents=True, exist_ok=True)
-
-    filename = source_file.name.replace("pdf", "json").replace("docx", "json")
-    await AsyncPath(target_folder / filename).write_bytes(serialize(file_datum))
-
-
 @pytest.fixture
-async def full_application_id(
+async def melanoma_alliance_full_application_id(
     workspace: Workspace,
     research_objectives: list[ResearchObjective],
     form_inputs: dict[str, str],
     async_session_maker: async_sessionmaker[Any],
 ) -> str:
-    fixture_id = "43b4aed5-8549-461f-9290-5ee9a630ac9a"
-    async with async_session_maker() as session:
-        application_id = await session.scalar(
-            insert(GrantApplication)
-            .values(
-                {
-                    "id": fixture_id,
-                    "workspace_id": workspace.id,
-                    "title": "Developing AI tailored immunocytokines to target melanoma brain metastases",
-                    "research_objectives": research_objectives,
-                    "form_inputs": form_inputs,
-                }
-            )
-            .returning(GrantApplication.id)
-        )
-        await session.commit()
-
-    cfp_content_file = FIXTURES_FOLDER / "cfps" / "melanoma_alliance.md"
-    if not cfp_content_file.exists():
-        cfp_file = SOURCES_FOLDER / "cfps" / "MRA-2023-2024-RFP-Final.pdf"
-
-        output, _ = await extract_file_content(
-            content=cfp_file.read_bytes(),
-            mime_type="application/pdf",
-        )
-        content = output if isinstance(output, str) else output["content"]
-        cfp_content_file.write_text(content)
-
-    data_fixture_folder = FIXTURES_FOLDER / fixture_id
-    if not data_fixture_folder.exists():
-        data_fixture_folder.mkdir(parents=True)
-
-    grant_template_file = data_fixture_folder / "grant_template.json"
-    if not grant_template_file.exists():
-        await grant_template_generation_pipeline_handler(
-            cfp_content=cfp_content_file.read_text(), application_id=application_id
-        )
-
-        async with async_session_maker() as session:
-            grant_template = await session.scalar(
-                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
-            )
-
-        grant_template_file.write_bytes(serialize(grant_template))
-    else:
-        data = deserialize(grant_template_file.read_text(), dict[str, Any])
-
-        async with async_session_maker() as session:
-            await session.execute(
-                insert(GrantTemplate).values(
-                    {k: v for k, v in data.items() if v is not None and k not in {"created_at", "updated_at"}}
-                )
-            )
-            await session.commit()
-
-    application_files_fixtures_dir = data_fixture_folder / "files"
-    if not application_files_fixtures_dir.exists():
-        application_files_fixtures_dir.mkdir(parents=True)
-
-    if not list(application_files_fixtures_dir.glob("*.json")):
-        await gather(
-            *[
-                parse_source_file(
-                    application_id=str(application_id),
-                    source_file=source_file,
-                    async_session_maker=async_session_maker,
-                    target_folder=application_files_fixtures_dir,
-                )
-                for source_file in TEST_DATA_SOURCES
-            ]
-        )
-    async with async_session_maker() as session, session.begin():
-        for application_file in application_files_fixtures_dir.glob("*.json"):
-            data = deserialize(application_file.read_bytes(), dict[str, Any])
-            rag_file_data = data.pop("rag_file")
-            rag_file_id = data.pop("rag_file_id")
-            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
-
-            await session.execute(
-                insert(RagFile)
-                .values(
-                    {
-                        "id": rag_file_id,
-                        **{
-                            k: v
-                            for k, v in rag_file_data.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        },
-                    }
-                )
-                .on_conflict_do_nothing(index_elements=["id"])
-            )
-            await session.execute(
-                insert(GrantApplicationFile)
-                .values(
-                    {
-                        "grant_application_id": application_id,
-                        "rag_file_id": rag_file_id,
-                    }
-                )
-                .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_file_id"])
-            )
-            await session.execute(
-                insert(TextVector).values(
-                    [
-                        {
-                            k: v
-                            for k, v in text_vector.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        }
-                        for text_vector in text_vectors
-                    ]
-                )
-            )
-        await session.commit()
-
-    return str(application_id)
+    return await create_grant_application_data(
+        workspace=workspace,
+        research_objectives=research_objectives,
+        form_inputs=form_inputs,
+        async_session_maker=async_session_maker,
+        fixture_id="43b4aed5-8549-461f-9290-5ee9a630ac9a",
+        cfp_markdown_file_name="melanoma_alliance.md",
+        source_file_names=["melanoma_alliance.pdf"],
+    )
 
 
 @pytest.fixture
 async def nih_organization(
     async_session_maker: async_sessionmaker[Any],
 ) -> FundingOrganization:
-    async with async_session_maker() as session:
-        result = await session.execute(select(FundingOrganization).where(FundingOrganization.abbreviation == "NIH"))
-        funding_organization = result.scalar_one()
-
-    data_fixture_folder = FIXTURES_FOLDER / "organization_files" / "nih" / "files"
-
-    if not data_fixture_folder.exists():
-        data_fixture_folder.mkdir(parents=True)
-
-    organization_files = list(data_fixture_folder.glob("*.json"))
-
-    if not list(organization_files):
-        source_folder = SOURCES_FOLDER / "guidelines" / "nih"
-        assert source_folder.exists(), f"Source folder {source_folder} does not exist"
-
-        sources = list(source_folder.glob("*.pdf"))
-        if not sources:
-            raise FileNotFoundError(f"No nih guidelines found in {source_folder}")
-
-        await gather(
-            *[
-                parse_source_file(
-                    organization_id=str(funding_organization.id),
-                    source_file=source_file,
-                    async_session_maker=async_session_maker,
-                    target_folder=data_fixture_folder,
-                )
-                for source_file in source_folder.glob("*.pdf")
-            ]
-        )
-
-    async with async_session_maker() as session, session.begin():
-        for organization_file in data_fixture_folder.glob("*.json"):
-            data = deserialize(organization_file.read_bytes(), dict[str, Any])
-            rag_file_data = data.pop("rag_file")
-            rag_file_id = data.pop("rag_file_id")
-            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
-
-            await session.execute(
-                insert(RagFile)
-                .values(
-                    {
-                        "id": rag_file_id,
-                        **{
-                            k: v
-                            for k, v in rag_file_data.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        },
-                    }
-                )
-                .on_conflict_do_nothing(index_elements=["id"])
-            )
-            await session.execute(
-                insert(OrganizationFile)
-                .values(
-                    {
-                        "funding_organization_id": funding_organization.id,
-                        "rag_file_id": rag_file_id,
-                    }
-                )
-                .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_file_id"])
-            )
-            await session.execute(
-                insert(TextVector)
-                .values(
-                    [
-                        {
-                            k: v
-                            for k, v in text_vector.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        }
-                        for text_vector in text_vectors
-                    ]
-                )
-                .on_conflict_do_nothing(index_elements=["id"])
-            )
-        await session.commit()
-
-    return cast(FundingOrganization, funding_organization)
+    return await process_funding_organization(async_session_maker, "NIH")
 
 
 @pytest.fixture
 async def erc_organization(
     async_session_maker: async_sessionmaker[Any],
 ) -> FundingOrganization:
-    async with async_session_maker() as session:
-        result = await session.execute(select(FundingOrganization).where(FundingOrganization.abbreviation == "ERC"))
-        funding_organization = result.scalar_one()
-
-    data_fixture_folder = FIXTURES_FOLDER / "organization_files" / "erc" / "files"
-
-    if not data_fixture_folder.exists():
-        data_fixture_folder.mkdir(parents=True)
-
-    organization_files = list(data_fixture_folder.glob("*.json"))
-
-    if not list(organization_files):
-        source_folder = SOURCES_FOLDER / "guidelines" / "erc"
-        assert source_folder.exists(), f"Source folder {source_folder} does not exist"
-
-        sources = list(source_folder.glob("*.pdf"))
-        if not sources:
-            raise FileNotFoundError(f"No nih guidelines found in {source_folder}")
-
-        await gather(
-            *[
-                parse_source_file(
-                    organization_id=str(funding_organization.id),
-                    source_file=source_file,
-                    async_session_maker=async_session_maker,
-                    target_folder=data_fixture_folder,
-                )
-                for source_file in source_folder.glob("*.pdf")
-            ]
-        )
-
-    async with async_session_maker() as session, session.begin():
-        for organization_file in data_fixture_folder.glob("*.json"):
-            data = deserialize(organization_file.read_bytes(), dict[str, Any])
-            rag_file_data = data.pop("rag_file")
-            rag_file_id = data.pop("rag_file_id")
-            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
-
-            await session.execute(
-                insert(RagFile)
-                .values(
-                    {
-                        "id": rag_file_id,
-                        **{
-                            k: v
-                            for k, v in rag_file_data.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        },
-                    }
-                )
-                .on_conflict_do_nothing(index_elements=["id"])
-            )
-            await session.execute(
-                insert(OrganizationFile)
-                .values(
-                    {
-                        "funding_organization_id": funding_organization.id,
-                        "rag_file_id": rag_file_id,
-                    }
-                )
-                .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_file_id"])
-            )
-            await session.execute(
-                insert(TextVector)
-                .values(
-                    [
-                        {
-                            k: v
-                            for k, v in text_vector.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        }
-                        for text_vector in text_vectors
-                    ]
-                )
-                .on_conflict_do_nothing(index_elements=["id"])
-            )
-        await session.commit()
-
-    return cast(FundingOrganization, funding_organization)
+    return await process_funding_organization(async_session_maker, "ERC")
 
 
 @pytest.fixture
