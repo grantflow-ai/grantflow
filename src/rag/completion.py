@@ -4,7 +4,9 @@ from textwrap import dedent
 from typing import Any, Final, TypedDict
 
 from anthropic import NOT_GIVEN, RateLimitError
+from anthropic import InternalServerError as AnthropicInternalServerError
 from anthropic.types import ToolParam, ToolUseBlock
+from google.api_core.exceptions import InternalServerError as GoogleInternalServerError
 from google.api_core.exceptions import ServiceUnavailable
 from google.cloud.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
@@ -14,7 +16,7 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
 )
 
 from src.constants import ANTHROPIC_SONNET_MODEL, CONTENT_TYPE_JSON, GENERATION_MODEL
-from src.exceptions import BackendError, DeserializationError, InsufficientContextError, ValidationError
+from src.exceptions import BackendError, DeserializationError, InsufficientContextError, RagError, ValidationError
 from src.utils.ai import get_anthropic_client, get_google_ai_client
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -199,7 +201,7 @@ async def make_google_completions_request[T](
 
 
 @with_exponential_backoff_retry(RateLimitError)
-async def make_anthorpic_completions_request[T](
+async def make_anthropic_completions_request[T](
     *,
     model: str,
     response_schema: dict[str, Any],
@@ -253,7 +255,9 @@ async def make_anthorpic_completions_request[T](
     try:
         return deserialize(serialize(tool_blocks[0].input), response_type)
     except DeserializationError:
-        return fix_string_json_values(tool_blocks[0].model_dump(include="input")["input"])
+        return deserialize(
+            serialize(fix_string_json_values(tool_blocks[0].model_dump(include={"input"})["input"])), response_type
+        )
 
 
 def format_error_for_llm(error: Exception) -> str:
@@ -325,7 +329,7 @@ async def handle_completions_request[T](
         candidate_count: The candidate count.
 
     Raises:
-        ValidationError: If the response is invalid.
+        RagError: If the response is invalid.
         BackendError: If the user prompt is not a string.
 
     Returns:
@@ -350,7 +354,7 @@ async def handle_completions_request[T](
                 if not response_schema:
                     raise BackendError("Response schema must be provided")
 
-                response = await make_anthorpic_completions_request(
+                response = await make_anthropic_completions_request(
                     model=model,
                     response_type=response_type,
                     system_prompt=system_prompt,
@@ -423,8 +427,26 @@ async def handle_completions_request[T](
             Address the errors and return corrected content
             """
             errors.append(e)
+        except AnthropicInternalServerError as e:
+            logger.warning(
+                "Internal server error received from anthorpic in completion request. Switching models.",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                error=str(e),
+            )
+            model = GENERATION_MODEL  # Switch to Google model
+        except GoogleInternalServerError as e:
+            logger.warning(
+                "Internal server error received from google in completion request. Switching models.",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                error=str(e),
+            )
+            model = ANTHROPIC_SONNET_MODEL  # Switch to Anthropic model
 
-    raise ValidationError(
+    raise RagError(
         f"Failed to generate text after {max_attempts} attempts.",
         context={
             "errors": errors,
