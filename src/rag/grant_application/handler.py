@@ -98,14 +98,6 @@ async def generate_work_plan_text(
             ]
         )
 
-    # word_count_limits = await allocate_word_counts(
-    #     research_components=dtos,
-    #     max_words=work_plan_section["max_words"],
-    # )
-    #
-    # for dto in dtos:
-    #     dto["max_words"] = word_count_limits[dto["number"]]
-
     work_plan_text = ""
 
     total_objectives = len(research_objectives)
