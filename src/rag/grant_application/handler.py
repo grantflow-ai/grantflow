@@ -7,9 +7,11 @@ from src.db.connection import get_session_maker
 from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication
 from src.exceptions import DatabaseError, ValidationError
+from src.rag.grant_application.dto import ResearchComponentGenerationDTO
+from src.rag.grant_application.enrich_research_objective import handle_enrich_objective
+from src.rag.grant_application.extract_relationships import handle_extract_relationships
 from src.rag.grant_application.generate_section_text import generate_section_text
 from src.rag.grant_application.generate_work_plan_text import generate_work_plan_component_text
-from src.rag.grant_application.plan_work_plan_generation import handle_enrich_and_plan_work_plan
 from src.rag.grant_application.utils import (
     create_dependencies_text,
     create_generation_groups,
@@ -41,35 +43,86 @@ async def generate_work_plan_text(
     Returns:
         The generated work plan text.
     """
-    work_plan_dto = await handle_enrich_and_plan_work_plan(
+    relationships = await handle_extract_relationships(
         application_id=application_id,
         research_objectives=research_objectives,
         grant_section=work_plan_section,
         form_inputs=form_inputs,
     )
 
-    logger.debug(
-        "Generated work plan dto for grant application %s",
-        application_id=application_id,
-        work_plan_dto=work_plan_dto,
+    enrichment_responses = await gather(
+        *[
+            handle_enrich_objective(
+                application_id=application_id,
+                research_objective=research_objective,
+                grant_section=work_plan_section,
+                form_inputs=form_inputs,
+            )
+            for research_objective in research_objectives
+        ]
     )
+    dtos = []
+    total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
+    words_per_component = round(work_plan_section["max_words"] / (len(research_objectives) + total_tasks))
+    for research_objective, enrichment_response in zip(research_objectives, enrichment_responses, strict=True):
+        objective_enrichment = enrichment_response["research_objective"]
+        tasks_enrichment = enrichment_response["research_tasks"]
+        research_tasks = research_objective["research_tasks"]
+        dtos.append(
+            ResearchComponentGenerationDTO(
+                number=str(research_objective["number"]),
+                title=research_objective["title"],
+                description=objective_enrichment["description"],
+                instructions=objective_enrichment["instructions"],
+                guiding_questions=objective_enrichment["guiding_questions"],
+                search_queries=objective_enrichment["search_queries"],
+                relationships=relationships.get(str(research_objective["number"]), []),
+                max_words=words_per_component,
+                type="objective",
+            )
+        )
+        dtos.extend(
+            [
+                ResearchComponentGenerationDTO(
+                    number=f"{research_objective['number']}.{research_task['number']}",
+                    title=research_task["title"],
+                    description=task_enrichment["description"],
+                    instructions=task_enrichment["instructions"],
+                    guiding_questions=task_enrichment["guiding_questions"],
+                    search_queries=task_enrichment["search_queries"],
+                    relationships=relationships.get(f"{research_objective['number']}.{research_task['number']}", []),
+                    max_words=words_per_component,
+                    type="task",
+                )
+                for research_task, task_enrichment in zip(research_tasks, tasks_enrichment, strict=True)
+            ]
+        )
+
+    # word_count_limits = await allocate_word_counts(
+    #     research_components=dtos,
+    #     max_words=work_plan_section["max_words"],
+    # )
+    #
+    # for dto in dtos:
+    #     dto["max_words"] = word_count_limits[dto["number"]]
 
     work_plan_text = ""
 
-    for research_objective in work_plan_dto["research_objectives"]:
-        objective_number = research_objective["objective_number"]
-        research_tasks = [t for t in work_plan_dto["research_tasks"] if t["objective_number"] == objective_number]
+    total_objectives = len(research_objectives)
+    count = 0
+    while count != total_objectives:
+        count += 1
+        objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
+        tasks: list[ResearchComponentGenerationDTO] = [t for t in dtos if t["number"].startswith(f"{count}.")]
 
         research_objective_text = await generate_work_plan_component_text(
             application_id=application_id,
-            component=research_objective,
+            component=objective,
             work_plan_text=work_plan_text,
             form_inputs=form_inputs,
         )
 
-        work_plan_text += (
-            f"\n\n### Objective {objective_number}: {research_objective['title']}\n{research_objective_text}"
-        )
+        work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{research_objective_text}"
         research_task_texts = await gather(
             *[
                 generate_work_plan_component_text(
@@ -78,15 +131,12 @@ async def generate_work_plan_text(
                     work_plan_text=work_plan_text,
                     form_inputs=form_inputs,
                 )
-                for research_task in research_tasks
+                for research_task in tasks
             ]
         )
 
-        for research_task, research_task_text in zip(research_tasks, research_task_texts, strict=True):
-            task_number = research_task["task_number"]
-            work_plan_text += (
-                f"\n\n#### {objective_number}.{task_number}: {research_task['title']}\n{research_task_text}"
-            )
+        for research_task, research_task_text in zip(tasks, research_task_texts, strict=True):
+            work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
 
     return normalize_markdown(work_plan_text)
 

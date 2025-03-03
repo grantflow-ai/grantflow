@@ -12,7 +12,7 @@ from src.exceptions import ValidationError
 from src.rag.completion import (
     BestResponseSelection,
     handle_completions_request,
-    make_anthorpic_completions_request,
+    make_anthropic_completions_request,
     make_google_completions_request,
     select_best_response,
     validate_select_best_response,
@@ -117,7 +117,7 @@ async def test_make_anthropic_completions_request(mock_anthropic_api_response: M
     mock_anthropic_api_response.content = [tool_use]
     mock_anthropic_api_response.model = ANTHROPIC_SONNET_MODEL
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
-    result = await make_anthorpic_completions_request(
+    result = await make_anthropic_completions_request(
         model=ANTHROPIC_SONNET_MODEL,
         response_schema=schema,
         response_type=dict[str, str],
@@ -134,7 +134,7 @@ async def test_make_anthropic_completions_request_with_generation_params(mock_an
     mock_anthropic_api_response.content = [tool_use]
     mock_anthropic_api_response.model = ANTHROPIC_SONNET_MODEL
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
-    result = await make_anthorpic_completions_request(
+    result = await make_anthropic_completions_request(
         model=ANTHROPIC_SONNET_MODEL,
         response_schema=schema,
         response_type=dict[str, str],

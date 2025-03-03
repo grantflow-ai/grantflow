@@ -7,6 +7,19 @@ from src.constants import ANTHROPIC_SONNET_MODEL
 from src.utils.ai import get_google_ai_client
 from src.utils.nlp import get_spacy_model, get_word_count
 
+
+def count_words(text: str) -> int:
+    """Count the number of words in a text string.
+
+    Args:
+        text: The text to count words for
+
+    Returns:
+        The number of words in the text
+    """
+    return len(text.split())
+
+
 # Estimating approximately 4 characters per token as a default ratio
 CHARS_PER_TOKEN: Final[float] = 4.0
 
