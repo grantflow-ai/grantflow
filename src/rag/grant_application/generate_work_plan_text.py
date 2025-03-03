@@ -1,7 +1,7 @@
 from typing import Any, Final
 
 from src.constants import MIN_WORDS_RATIO
-from src.rag.grant_application.plan_work_plan_generation import ResearchObjectiveDTO, ResearchTaskDTO
+from src.rag.grant_application.dto import ResearchComponentGenerationDTO
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.long_form import generate_long_form_text
 from src.rag.retrieval import retrieve_documents
@@ -142,17 +142,17 @@ async def handle_work_plan_component_generation(
 async def generate_work_plan_component_text(
     *,
     application_id: str,
-    component: ResearchObjectiveDTO | ResearchTaskDTO,
-    work_plan_text: str,
+    component: ResearchComponentGenerationDTO,
     form_inputs: dict[str, str],
+    work_plan_text: str,
 ) -> str:
     """Generate the text for a given work plan component.
 
     Args:
         application_id: The ID of the application.
         component: The work plan component for which to generate text.
-        work_plan_text: The text of the work plan section.
         form_inputs: The user inputs for the application.
+        work_plan_text: The text of the work plan section.
 
     Returns:
         The generated work plan component text.
@@ -162,12 +162,12 @@ async def generate_work_plan_component_text(
     prompt = GENERATE_WORK_COMPONENT_USER_PROMPT.to_string(
         guiding_questions=component["guiding_questions"],
         instructions=component["instructions"],
-        keywords=component["keywords"],
+        keywords=component["guiding_questions"],
         relationships=component["relationships"],
         work_plan_text=work_plan_text,
-        object_type="task" if component.get("task_number") else "objective",
+        object_type=component["type"],
         object_type_description="a concrete research task that is a part of a larger specific research objective"
-        if component.get("task_number")
+        if component["type"] == "task"
         else "a specific research goal or aim",
     )
 

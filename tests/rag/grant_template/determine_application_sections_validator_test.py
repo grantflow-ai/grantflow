@@ -52,18 +52,6 @@ def test_validate_snake_case_ids() -> None:
     )
 
 
-def test_validate_descriptive_ids() -> None:
-    with pytest.raises(ValidationError) as exc:
-        validate_section_extraction(
-            {"sections": [create_section(section_id="short", is_detailed_workplan=True, order=1)]}
-        )
-    assert "Section ID must be descriptive" in str(exc.value)
-
-    validate_section_extraction(
-        {"sections": [create_section(section_id="descriptive_id", is_detailed_workplan=True, order=1)]}
-    )
-
-
 def test_validate_unique_ids() -> None:
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(

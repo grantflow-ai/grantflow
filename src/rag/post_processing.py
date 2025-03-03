@@ -242,11 +242,20 @@ async def deduplicate_sentences(sentences: list[str]) -> list[str]:
             similarity = util.pytorch_cos_sim(tensor_i, tensor_j).item()
 
             if similarity > SIMILARITY_THRESHOLD:
-                if len(
-                    [w for w in sentences[i].split() if w.lower() not in ("the", "a", "an", "is", "are", "was", "were")]
-                ) >= len(
-                    [w for w in sentences[j].split() if w.lower() not in ("the", "a", "an", "is", "are", "was", "were")]
-                ):
+                words_i = [
+                    w for w in sentences[i].split() if w.lower() not in ("the", "a", "an", "is", "are", "was", "were")
+                ]
+                words_j = [
+                    w for w in sentences[j].split() if w.lower() not in ("the", "a", "an", "is", "are", "was", "were")
+                ]
+
+                unique_words_i = len({w.lower() for w in words_i})
+                unique_words_j = len({w.lower() for w in words_j})
+
+                info_density_i = unique_words_i / len(words_i) if words_i else 0
+                info_density_j = unique_words_j / len(words_j) if words_j else 0
+
+                if info_density_i >= info_density_j:
                     keep_indices.discard(j)
                     removed.add(j)
                 else:
