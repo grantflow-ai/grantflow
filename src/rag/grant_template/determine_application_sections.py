@@ -10,6 +10,8 @@ from src.patterns import SNAKE_CASE_PATTERN
 from src.rag.completion import handle_completions_request
 from src.rag.grant_template.utils import detect_cycle
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from src.rag.retrieval import retrieve_documents
+from src.rag.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 from src.utils.embeddings import get_embedding_model
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
@@ -137,7 +139,7 @@ EXCLUDE_CATEGORIES = [
     "STEM Career Development",
     "Training",
     "Workshops on Ethical Research Practices",
-    # Data management (may be required in some grants)
+    # Data management (required in some grants)
     "Data Management",
     # Project management (context-dependent)
     "Environmental Impact Assessment",
@@ -732,45 +734,45 @@ async def handle_extract_sections(
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
-    # organization_guidelines = (
-    #     ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-    #         rag_results=await retrieve_documents(
-    #             organization_id=str(organization.id),
-    #             task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
-    #             search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
-    #             model=ANTHROPIC_SONNET_MODEL,
-    #         ),
-    #         organization_full_name=organization.full_name,
-    #         organization_abbreviation=organization.abbreviation,
-    #     )
-    #     if organization
-    #     else ""
-    # )
+    organization_guidelines = (
+        ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results=await retrieve_documents(
+                organization_id=str(organization.id),
+                task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+                search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+                model=ANTHROPIC_SONNET_MODEL,
+            ),
+            organization_full_name=organization.full_name,
+            organization_abbreviation=organization.abbreviation,
+        )
+        if organization
+        else ""
+    )
 
     criteria = [*evaluation_criteria]
 
-    # if organization:
-    #     criteria.append(
-    #         EvaluationCriterion(
-    #             name="Organization-Specific Compliance",
-    #             evaluation_instructions="""
-    #             Verify strict compliance with this specific organization's guidelines:
-    #                 - Section structure exactly matches these organization's requirements (at least 95% accuracy)
-    #                 - Naming conventions precisely follow this organization's standards and terminology
-    #                 - All organization-specific required sections are included without exception
-    #                 - Hierarchy precisely reflects this organization's documented preferences
-    #                 - Any deviations from organization guidelines are explicitly justified by CFP requirements
-    #                 - Organization-specific formatting or structural requirements are correctly implemented
-    #                 - Special section types unique to this organization are properly identified
-    #             """,
-    #             weight=1.3,
-    #         )
-    #     )
+    if organization:
+        criteria.append(
+            EvaluationCriterion(
+                name="Organization-Specific Compliance",
+                evaluation_instructions="""
+                Verify strict compliance with this specific organization's guidelines:
+                    - Section structure exactly matches these organization's requirements (at least 95% accuracy)
+                    - Naming conventions precisely follow this organization's standards and terminology
+                    - All organization-specific required sections are included without exception
+                    - Hierarchy precisely reflects this organization's documented preferences
+                    - Any deviations from organization guidelines are explicitly justified by CFP requirements
+                    - Organization-specific formatting or structural requirements are correctly implemented
+                    - Special section types unique to this organization are properly identified
+                """,
+                weight=1.3,
+            )
+        )
 
     result = await with_prompt_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
-        prompt=prompt.to_string(organization_guidelines=""),
+        prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         criteria=criteria,
         passing_score=90,
         increment=10,
