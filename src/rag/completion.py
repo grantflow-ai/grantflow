@@ -418,10 +418,12 @@ async def handle_completions_request[T](
                 error=str(e),
             )
             error_message = f"""
-            The last API call with the provided prompt returned either an invalid JSON object or an object that does not conform with the JSON schema.
+            The last API call with the provided prompt returned an invalid JSON object.
 
             This is the error:
-            {e}
+            <error>
+            {e!s}
+            </error>
 
             Following are the original messages sent to the model, which may help you identify the issue.
             Address the errors and return corrected content

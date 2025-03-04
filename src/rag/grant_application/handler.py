@@ -63,7 +63,7 @@ async def generate_work_plan_text(
     )
     dtos = []
     total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
-    words_per_component = round(work_plan_section["max_words"] / (len(research_objectives) + total_tasks))
+    words_per_component = abs(round(work_plan_section["max_words"] / (len(research_objectives) + total_tasks)))
     for research_objective, enrichment_response in zip(research_objectives, enrichment_responses, strict=True):
         objective_enrichment = enrichment_response["research_objective"]
         tasks_enrichment = enrichment_response["research_tasks"]

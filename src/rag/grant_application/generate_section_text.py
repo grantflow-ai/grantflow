@@ -92,6 +92,13 @@ evaluation_criteria = [
         - Ensure the length is appropriate for the level of detail required.
         """,
     ),
+    EvaluationCriterion(
+        name="Hellucination",
+        evaluation_instructions="""
+        - Ensure the text does not contain hallucinated information (invented facts, persons, terms, etc.).
+        """,
+        weight=1.5,
+    ),
 ]
 
 
@@ -164,7 +171,7 @@ async def generate_section_text(
         prompt_handler=handle_section_text_generation,
         prompt_identifier="generate_section_text",
         rag_results=rag_results,
-        passing_score=90,
+        passing_score=80,
         increment=10,
         retries=5,
     )
