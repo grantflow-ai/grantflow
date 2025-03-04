@@ -358,7 +358,7 @@ async def handle_extract_relationships(
         prompt_handler=extract_relationships_generation,
         research_objectives=research_objectives,
         criteria=criteria,
-        passing_score=90,
+        passing_score=80,
         increment=10,
     )
     ret = defaultdict[str, list[tuple[str, str]]](list)

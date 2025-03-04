@@ -74,7 +74,13 @@ def deserialize[T](value: str | bytes, target_type: type[T]) -> T:
     try:
         return decode(value, type=target_type, dec_hook=decode_hook, strict=False)
     except MsgspecError as e:
-        raise DeserializationError(str(e)) from e
+        raise DeserializationError(
+            str(e),
+            context={
+                "value": value,
+                "target_type": target_type.__name__,
+            },
+        ) from e
 
 
 def serialize(value: Any, **kwargs: Any) -> bytes:
@@ -97,7 +103,13 @@ def serialize(value: Any, **kwargs: Any) -> bytes:
     try:
         return encode(value, enc_hook=encode_hook)
     except MsgspecError as e:
-        raise SerializationError(str(e)) from e
+        raise SerializationError(
+            str(e),
+            context={
+                "value": value,
+                "value_type": type(value).__name__,
+            },
+        ) from e
 
 
 decoder = partial(decode, dec_hook=decode_hook)

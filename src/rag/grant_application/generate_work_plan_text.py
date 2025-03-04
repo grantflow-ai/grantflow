@@ -109,6 +109,13 @@ evaluation_criteria = [
         - Ensure the length is appropriate for the level of detail required.
         """,
     ),
+    EvaluationCriterion(
+        name="Hellucination",
+        evaluation_instructions="""
+        - Ensure the text does not contain hallucinated information (invented facts, persons, terms, etc.).
+        """,
+        weight=1.5,
+    ),
 ]
 
 
@@ -187,7 +194,7 @@ async def generate_work_plan_component_text(
         prompt_handler=handle_work_plan_component_generation,
         prompt_identifier="generate_work_component",
         rag_results=rag_results,
-        passing_score=90,
+        passing_score=85,
         increment=10,
         retries=5,
     )

@@ -405,6 +405,6 @@ async def handle_enrich_objective(
         prompt=enrichment_prompt.to_string(rag_results=enrichment_rag_results),
         input_objective=research_objective,
         criteria=criteria,
-        passing_score=95,
+        passing_score=80,
         increment=10,
     )
