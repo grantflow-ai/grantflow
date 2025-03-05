@@ -5,6 +5,7 @@ from src.db.json_objects import GrantLongFormSection
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.long_form import generate_long_form_text
 from src.rag.retrieval import retrieve_documents
+from src.rag.source_validation import handle_source_validation
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -134,7 +135,7 @@ async def generate_section_text(
     application_id: str,
     dependencies: dict[str, str],
     grant_section: GrantLongFormSection,
-    form_inputs: dict[str, str],
+    user_inputs: dict[str, str],
 ) -> str:
     """Generate the text for a given grant section.
 
@@ -142,7 +143,7 @@ async def generate_section_text(
         application_id: The ID of the application.
         dependencies: The dependencies of the grant section.
         grant_section: The grant section for which to generate text.
-        form_inputs: The user inputs.
+        user_inputs: The user inputs.
 
     Returns:
         The generated section text.
@@ -156,12 +157,18 @@ async def generate_section_text(
         section_title=grant_section["title"],
         topics=grant_section["topics"],
     )
+
     rag_results = await retrieve_documents(
         application_id=application_id,
         task_description=prompt,
         search_queries=grant_section.get("search_queries"),
-        user_inputs=form_inputs,
+        user_inputs=user_inputs,
     )
+
+    if source_validation_error := await handle_source_validation(
+        task_description=str(prompt), sources={"rag_results": rag_results, "user_inputs": user_inputs}
+    ):
+        return source_validation_error
 
     return await with_prompt_evaluation(
         criteria=evaluation_criteria,
@@ -171,6 +178,7 @@ async def generate_section_text(
         prompt_handler=handle_section_text_generation,
         prompt_identifier="generate_section_text",
         rag_results=rag_results,
+        user_inputs=user_inputs,
         passing_score=80,
         increment=10,
         retries=5,
