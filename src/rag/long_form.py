@@ -12,81 +12,118 @@ logger = get_logger(__name__)
 # Maximum number of API calls for text generation
 MAX_API_CALLS: Final[int] = 5
 
+LONG_FORM_GENERATION_SYSTEM_PROMPT: Final[str] = """
+You are a specialized long-form text generation component in a RAG system dedicated to generating STEM grant applications.
+
+Your primary responsibility is to generate scientifically accurate, well-structured, and cohesive text that meets rigorous academic standards. You excel at:
+1. Synthesizing information from provided sources without fabricating details
+2. Maintaining consistent technical terminology and precise scientific language
+3. Writing with high information density appropriate for expert reviewers
+4. Ensuring logical flow between text segments in multi-part generation
+5. Flagging missing information rather than inventing content
+"""
+
+
 LONG_FORM_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="long_form_generation",
     template="""
-    You are a specialized component long-form text generation component in a RAG system dedicated to generating STEM grant applications.
+    ## Task Overview
+    Generate a high-quality segment of text for a STEM grant application. This text will be part of a multi-step generation process for a complete grant application section.
 
-    ## Text Generation
-    Your task is to generate a text segment, which is a part of a longer text that is being generated across multiple API calls.
+    ## Task Requirements
+    <task_description>
+    ${task_description}
+    </task_description>
 
-    Here is the description of the text requirements:
-        <task_description>
-        ${task_description}
-        <task_description>
+    ## Previously Generated Text
+    <already_generated_text>
+    ${already_generated_text}
+    </already_generated_text>
 
-    Here is the previously generated text:
-        <already_generated_text>
-        ${already_generated_text}
-        </already_generated_text>
+    **Length Requirements**: The complete text must be between ${min_words} words (minimum) and ${max_words} words (maximum).
 
-    **important**: The entire text should be at least ${min_words} words long and at most ${max_words} words long.
+    ## Source Materials
+    Use ONLY the following sources for your generation. Do not incorporate external knowledge or make up information.
+    <sources>
+    ${sources}
+    </sources>
 
-    ## Sources
-    These are the sources for generation. Use these sources exclusively for generating the output.
-    The sources are provided as a JSON object. The top-level keys of the object indicate the type of the source.
-        <sources>
-        ${sources}
-        </sources>
+    ## Generation Guidelines
+    1. Content Analysis:
+       - Carefully assess the task description and source materials
+       - Identify all available and missing information critical to the task
 
-    ## Instructions
-    Follow these steps to complete the task:
-        1. Begin by analyzing the task description.
-        2. If a previously generated text is provided above:
-            - Analyze the provided text segment, focusing on its content, style, and end point.
-            - Continue the grant application writing from exactly where the previous segment ends.
-            - Maintain consistency in style, tone, narrative and context with the original text.
-            - Avoid repeating information already presented in the previous segment.
+    2. Continuation Strategy:
+       - Seamlessly continue from the previously generated text
+       - Maintain consistent scientific terminology, writing style, and narrative flow
+       - Never repeat content already covered in previous segments
 
-    ## Output
-    Respond with a JSON object adhering to the following format:
+    3. Scientific Writing Principles:
+       - Maximize information density with precise, field-specific terminology
+       - Write for expert reviewers who understand technical concepts without explanation
+       - Present methodologies, results, and implications with formal, data-driven language
+       - Use passive voice and academic tone appropriate for grant applications
+       - Arrange content in a logical sequence with clear transitions between ideas
+       - Do not define acronyms; assume a separate acronyms table exists
 
-    ```jsonc
+    4. Information Integrity:
+       - NEVER invent or fabricate facts, data, or methodologies not present in the sources
+       - When critical information is missing, use this exact format: `**[MISSING INFORMATION: specific description]**`
+       - Cite sources accurately if citation formats are provided in source materials
+
+    ## Output Format
+    Respond with a valid JSON object following this schema:
+    ```json
     {
-        "text": "The generated text segment",
-        "is_complete": true // false if the text is incomplete and requires further generation
+        "text": "The generated text segment with academic formatting and appropriate paragraph breaks",
+        "is_complete": true or false
     }
-
-    **Important!**:
-        - if the text is complete but information is missing, is_complete should be true.
-        - Remember: if you are missing information in the sources (inputs + rag results), do not invent facts or complete the missing information from your training data, instead write `**[MISSING INFORMATION: description]**` where description is a concise description of the missing information.
     ```
+
+    Set "is_complete" to:
+    - true: When the section is finished, even if it contains missing information markers
+    - false: When more generation is needed to complete the full text
+
+    Note: Missing information markers do not make a text incomplete - they simply highlight gaps in the source materials.
 """,
 )
 
 SHORTEN_TEXT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="shorten_text",
     template="""
-    ## Task
-    Your task is to shorten the following text.
+    ## Scientific Text Revision Task
+    You must reduce the length of this STEM grant application text while preserving scientific accuracy and core meaning.
 
-    Here is the text to be shortened:
-        <text>
-        ${text}
-        </text>
+    ## Text To Revise
+    <text>
+    ${text}
+    </text>
 
-    You should shorten it by at least ${words_overflow} words.
+    ## Requirements
+    - Reduce the text by at least ${words_overflow} words
+    - The final version must maintain all essential scientific information
+    - Preserve the academic tone and formal structure
 
-    ## Instructions
-    Follow these instructions to complete the task:
-        1. Begin by analyzing the text provided.
-        2. Identify the core information and essential parts of the text.
-        3. Shorten the text by removing the least necessary information.
-        4. Ensure that the shortened text maintains the original meaning and context.
-        5. Respond with the shortened text.
+    ## Revision Strategy
+    1. Prioritize content analysis:
+       - Identify the central scientific claims, methodologies, and results
+       - Distinguish between essential content and supporting/contextual information
 
-    ## Output
-    Respond with the shortened text.
+    2. Apply targeted reduction techniques:
+       - Remove redundancies and unnecessarily verbose descriptions
+       - Condense lengthy explanations while maintaining technical precision
+       - Eliminate tangential examples that aren't crucial to understanding
+       - Consolidate similar points or methodological descriptions
+       - Tighten transitions between concepts
+
+    3. Preserve scientific integrity:
+       - Do not remove critical data points, measurements, or core methodologies
+       - Maintain all essential citations and references to prior work
+       - Ensure any **[MISSING INFORMATION]** markers remain intact
+       - Keep the logical flow of arguments and experimental descriptions
+
+    ## Output Format
+    Provide only the revised text with the reduced word count. Maintain appropriate formatting including paragraph structure and any special markup.
 """,
 )
 
@@ -172,6 +209,7 @@ async def handle_long_form_text_generation(
             messages=prompt,
             response_type=LongFormToolResponse,
             model=model,
+            system_prompt=LONG_FORM_GENERATION_SYSTEM_PROMPT,
         )
 
         result = concatenate_segments_with_spacy_coherence([result, response["text"]])

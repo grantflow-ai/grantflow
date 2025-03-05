@@ -136,6 +136,7 @@ async def generate_section_text(
     dependencies: dict[str, str],
     grant_section: GrantLongFormSection,
     user_inputs: dict[str, str],
+    workplan_text: str,
 ) -> str:
     """Generate the text for a given grant section.
 
@@ -144,6 +145,7 @@ async def generate_section_text(
         dependencies: The dependencies of the grant section.
         grant_section: The grant section for which to generate text.
         user_inputs: The user inputs.
+        workplan_text: The text of the work plan section.
 
     Returns:
         The generated section text.
@@ -166,7 +168,8 @@ async def generate_section_text(
     )
 
     if source_validation_error := await handle_source_validation(
-        task_description=str(prompt), sources={"rag_results": rag_results, "user_inputs": user_inputs}
+        task_description=str(prompt),
+        sources={"rag_results": rag_results, "user_inputs": user_inputs, "workplan_text": workplan_text},
     ):
         return source_validation_error
 
@@ -179,6 +182,7 @@ async def generate_section_text(
         prompt_identifier="generate_section_text",
         rag_results=rag_results,
         user_inputs=user_inputs,
+        workplan_text=workplan_text,
         passing_score=80,
         increment=10,
         retries=5,
