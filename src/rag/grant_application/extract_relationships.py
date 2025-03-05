@@ -10,6 +10,12 @@ from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.prompt_template import PromptTemplate
 
+EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT: Final[str] = """
+You are a specialized component in a RAG system dedicated to analyzing STEM grant applications.
+Your specific role is to identify and characterize relationships between research objectives and tasks,
+helping create a coherent research narrative that demonstrates strategic planning and scientific rigor.
+"""
+
 EXTRACT_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_relationships",
     template="""
@@ -248,6 +254,7 @@ async def extract_relationships_generation(
         response_type=RelationshipsDTO,
         response_schema=relationships_schema,
         model=ANTHROPIC_SONNET_MODEL,
+        system_prompt=EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT,
         validator=partial(validate_relationships_response, research_objectives=research_objectives),
     )
 

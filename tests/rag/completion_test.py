@@ -63,7 +63,11 @@ async def test_select_best_response(mock_google_api_response: Mock) -> None:
 async def test_make_completions_request_with_string_message(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     result = await make_google_completions_request(
-        prompt_identifier="test", response_type=dict[str, str], messages="test message", candidate_count=None
+        prompt_identifier="test",
+        response_type=dict[str, str],
+        messages="test message",
+        candidate_count=None,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -75,6 +79,7 @@ async def test_make_completions_request_with_part_message(mock_google_api_respon
         response_type=dict[str, str],
         messages=[Part.from_text("test message")],
         candidate_count=None,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -91,6 +96,7 @@ async def test_make_completions_request_with_multiple_candidates(mock_google_api
         response_type=dict[str, str],
         messages="test message",
         candidate_count=2,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value1"}
 
@@ -104,6 +110,7 @@ async def test_make_completions_request_with_schema_validation(mock_google_api_r
         messages="test message",
         response_schema=schema,
         candidate_count=None,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -122,6 +129,7 @@ async def test_make_anthropic_completions_request(mock_anthropic_api_response: M
         response_schema=schema,
         response_type=dict[str, str],
         user_prompt="test message",
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -142,6 +150,7 @@ async def test_make_anthropic_completions_request_with_generation_params(mock_an
         temperature=0.5,
         top_k=10,
         top_p=0.9,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -153,6 +162,7 @@ async def test_handle_completions_request_success(mock_google_api_response: Mock
         prompt_identifier="test",
         response_type=dict[str, str],
         messages="test message",
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -170,6 +180,7 @@ async def test_handle_completions_request_with_retry(mock_google_api_response: M
         response_type=dict[str, str],
         messages="test message",
         max_attempts=3,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -186,6 +197,7 @@ async def test_handle_completions_request_with_custom_validator(mock_google_api_
         response_type=dict[str, str],
         messages="test message",
         validator=custom_validator,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -199,6 +211,7 @@ async def test_handle_completions_request_with_schema(mock_google_api_response: 
         response_type=dict[str, str],
         messages="test message",
         response_schema=schema,
+        system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
 
@@ -211,4 +224,5 @@ async def test_handle_completions_request_deserialization_error(mock_google_api_
             prompt_identifier="test",
             response_type=dict[str, str],
             messages="test message",
+            system_prompt="You are a helpful assistant.",
         )

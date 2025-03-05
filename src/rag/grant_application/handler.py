@@ -153,9 +153,24 @@ async def generate_grant_section_texts(
     section_texts: dict[str, str] = {}
 
     # Filter for long form sections only for generation groups
-    long_form_sections = [s for s in grant_sections if is_grant_long_form_section(s)]
-    generation_groups = create_generation_groups(sections=long_form_sections)
+    workplan_section = next(
+        s for s in grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
+    )
+    workplan_text = await generate_work_plan_text(
+        application_id=application_id,
+        work_plan_section=workplan_section,
+        research_objectives=research_objectives,
+        form_inputs=form_inputs,
+    )
 
+    long_form_sections = [
+        s for s in grant_sections if is_grant_long_form_section(s) and not s.get("is_detailed_workplan")
+    ]
+    for section in long_form_sections:
+        # we inject the workplan text into all sections regardless of dependencies ~keep
+        section["depends_on"] = [v for v in section["depends_on"] if v != workplan_section["id"]]
+
+    generation_groups = create_generation_groups(sections=long_form_sections)
     for generation_group in generation_groups:
         results = await batched_gather(
             *[
@@ -163,16 +178,13 @@ async def generate_grant_section_texts(
                     generate_section_text(
                         application_id=application_id,
                         grant_section=section,
-                        dependencies=create_dependencies_text(depends_on=section["depends_on"], texts=section_texts),
+                        dependencies=create_dependencies_text(
+                            depends_on=section["depends_on"],
+                            texts=section_texts,
+                        ),
                         user_inputs=form_inputs,
+                        workplan_text=workplan_text,
                     )
-                )
-                if not section.get("is_detailed_workplan")
-                else generate_work_plan_text(
-                    application_id=application_id,
-                    work_plan_section=section,
-                    research_objectives=research_objectives,
-                    form_inputs=form_inputs,
                 )
                 for section in generation_group
             ],
