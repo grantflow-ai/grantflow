@@ -9,6 +9,12 @@ from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
 from src.utils.prompt_template import PromptTemplate
 
+ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
+You are a specialized component in a RAG system dedicated to enriching STEM grant applications.
+Your role is to enhance research objectives with detailed scientific content, guiding questions,
+and search queries that will produce competitive and compelling grant applications.
+"""
+
 ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="enrich_research_objective",
     template="""
@@ -290,6 +296,7 @@ async def enrich_objective_generation(
         response_type=ObjectiveEnrichmentDTO,
         response_schema=research_objective_enrichment_schema,
         model=ANTHROPIC_SONNET_MODEL,
+        system_prompt=ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT,
         validator=partial(validate_enrichment_response, input_objective=input_objective),
     )
 

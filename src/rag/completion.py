@@ -26,23 +26,6 @@ from src.utils.serialization import deserialize, fix_string_json_values, seriali
 logger = get_logger(__name__)
 
 USER_MESSAGE_ROLE: Final[str] = "user"
-BASE_SYSTEM_PROMPT: Final[str] = """
-You are an expert STEM grant application writer integrated into a RAG (Retrieval-Augmented Generation) system.
-"""
-
-DEFAULT_SYSTEM_PROMPT: Final[str] = f"""
-{BASE_SYSTEM_PROMPT}
-
-## Text Guidelines:
-   - Write with maximum information density, conveying the most detail in the fewest possible words
-   - Assume the reader is an expert; avoid basic definitions or general background information
-   - Use precise, field-specific technical terminology without simplifying
-   - Do not define acronyms; an acronyms table is given in a different part of the text
-   - Follow the scientific terminology provided in the inputs
-   - Maintain a formal and data-driven tone, emphasizing succinctness and specificity
-
-**important**: When information is missing or insufficient, do not invent facts. Instead write `**[MISSING INFORMATION: description of the missing information]**`.
-"""
 
 SELECT_BEST_RESPONSE_SYSTEM_PROMPT: Final[str] = """
 You are a specialist in selecting the best response from a list of generated responses.
@@ -131,6 +114,7 @@ async def select_best_response[T](
         temperature=0.2,
         top_p=0.7,
         validator=partial(validate_select_best_response, candidates=candidates),
+        system_prompt=SELECT_BEST_RESPONSE_SYSTEM_PROMPT,
     )
     return candidates[response["best_response"]]
 
@@ -141,7 +125,7 @@ async def make_google_completions_request[T](
     model: str = GENERATION_MODEL,
     prompt_identifier: str,
     response_type: type[T],
-    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+    system_prompt: str,
     response_schema: dict[str, Any] | None = None,
     messages: str | Part | list[str | Part],
     # generation settings
@@ -206,7 +190,7 @@ async def make_anthropic_completions_request[T](
     model: str,
     response_schema: dict[str, Any],
     response_type: type[T],
-    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+    system_prompt: str,
     temperature: float = 0,
     top_k: int | None = None,
     top_p: float | None = None,
@@ -304,7 +288,7 @@ async def handle_completions_request[T](
     prompt_identifier: str,
     response_schema: dict[str, Any] | None = None,
     response_type: type[T],
-    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+    system_prompt: str,
     validator: Callable[[T], None] | None = None,
     # generation settings
     temperature: float = 0,
