@@ -5,6 +5,7 @@ from src.rag.grant_application.dto import ResearchComponentGenerationDTO
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.long_form import generate_long_form_text
 from src.rag.retrieval import retrieve_documents
+from src.rag.source_validation import handle_source_validation
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 
@@ -150,7 +151,7 @@ async def generate_work_plan_component_text(
     *,
     application_id: str,
     component: ResearchComponentGenerationDTO,
-    form_inputs: dict[str, str],
+    user_inputs: dict[str, str],
     work_plan_text: str,
 ) -> str:
     """Generate the text for a given work plan component.
@@ -158,7 +159,7 @@ async def generate_work_plan_component_text(
     Args:
         application_id: The ID of the application.
         component: The work plan component for which to generate text.
-        form_inputs: The user inputs for the application.
+        user_inputs: The user inputs for the application.
         work_plan_text: The text of the work plan section.
 
     Returns:
@@ -182,9 +183,14 @@ async def generate_work_plan_component_text(
         application_id=application_id,
         task_description=prompt,
         search_queries=component["search_queries"],
-        user_inputs=form_inputs,
+        user_inputs=user_inputs,
         section_title=component["title"],
     )
+
+    if source_validation_error := await handle_source_validation(
+        task_description=str(prompt), sources={"rag_results": rag_results, "user_inputs": user_inputs}
+    ):
+        return source_validation_error
 
     return await with_prompt_evaluation(
         criteria=evaluation_criteria,
@@ -194,6 +200,7 @@ async def generate_work_plan_component_text(
         prompt_handler=handle_work_plan_component_generation,
         prompt_identifier="generate_work_component",
         rag_results=rag_results,
+        user_input=user_inputs,
         passing_score=85,
         increment=10,
         retries=5,

@@ -111,7 +111,7 @@ async def generate_work_plan_text(
             application_id=application_id,
             component=objective,
             work_plan_text=work_plan_text,
-            form_inputs=form_inputs,
+            user_inputs=form_inputs,
         )
 
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{research_objective_text}"
@@ -121,7 +121,7 @@ async def generate_work_plan_text(
                     application_id=application_id,
                     component=research_task,
                     work_plan_text=work_plan_text,
-                    form_inputs=form_inputs,
+                    user_inputs=form_inputs,
                 )
                 for research_task in tasks
             ]
@@ -164,7 +164,7 @@ async def generate_grant_section_texts(
                         application_id=application_id,
                         grant_section=section,
                         dependencies=create_dependencies_text(depends_on=section["depends_on"], texts=section_texts),
-                        form_inputs=form_inputs,
+                        user_inputs=form_inputs,
                     )
                 )
                 if not section.get("is_detailed_workplan")

@@ -46,7 +46,7 @@ async def parse_and_index_file(
     except (FileParsingError, ExternalOperationError, ValidationError) as e:
         async with session_maker() as session, session.begin():
             await session.execute(
-                update(RagFile).where(RagFile.id == file_id).values(status=FileIndexingStatusEnum.FAILED)
+                update(RagFile).where(RagFile.id == file_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
             )
             await session.commit()
 
