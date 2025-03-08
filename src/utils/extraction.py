@@ -39,7 +39,7 @@ async def extract_with_azure_document_intelligence(file_content: bytes, mime_typ
     )
     try:
         poller = await client.begin_analyze_document(
-            model_id="prebuilt-read",  # or "prebuilt-layout"
+            model_id="prebuilt-read",
             body=AnalyzeDocumentRequest(bytes_source=file_content),
             output_content_format=DocumentContentFormat.MARKDOWN,
             features=[DocumentAnalysisFeature.FORMULAS, DocumentAnalysisFeature.LANGUAGES]

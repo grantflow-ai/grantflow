@@ -40,7 +40,6 @@ async def test_upload_application_files_success(
     async_session_maker: async_sessionmaker[Any],
     signal_dispatch_mock: AsyncMock,
 ) -> None:
-    # Setup workspace access
     async with async_session_maker() as session, session.begin():
         workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
         session.add(workspace_user)

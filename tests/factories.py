@@ -93,12 +93,10 @@ class TextVectorFactory(SQLAlchemyFactory[TextVector]):
         return super().get_type_from_column(column)
 
 
-# Organization Factories
 class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
     __model__ = FundingOrganization
 
 
-# Workspace Related Factories
 class WorkspaceFactory(SQLAlchemyFactory[Workspace]):
     __model__ = Workspace
 
@@ -107,7 +105,6 @@ class WorkspaceUserFactory(SQLAlchemyFactory[WorkspaceUser]):
     __model__ = WorkspaceUser
 
 
-# Application Related Factories
 class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __model__ = GrantApplication
 
@@ -116,7 +113,6 @@ class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationFile]):
     __model__ = GrantApplicationFile
 
 
-# Request Body Factories
 class CreateApplicationRequestBodyFactory(TypedDictFactory[CreateApplicationRequestBody]):
     __model__ = CreateApplicationRequestBody
 
@@ -141,7 +137,6 @@ class LoginRequestBodyFactory(TypedDictFactory[LoginRequestBody]):
     __model__ = LoginRequestBody
 
 
-# JSON Object Factories
 class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
     __model__ = ResearchObjective
 
@@ -154,9 +149,6 @@ class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
     max_words = 3000
     search_queries = ["query1", "query2", "query3"]
     depends_on: list[str] = []
-
-
-# API Response Factories
 
 
 class TableIdResponseFactory(TypedDictFactory[TableIdResponse]):

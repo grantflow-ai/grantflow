@@ -233,7 +233,6 @@ def validate_template_sections(
             },
         )
 
-    # Check for section ID correspondence
     input_section_ids = {section["id"] for section in input_sections}
     output_section_ids = {section["id"] for section in response["sections"]}
 

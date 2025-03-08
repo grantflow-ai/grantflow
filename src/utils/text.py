@@ -20,20 +20,13 @@ def count_words(text: str) -> int:
     return len(text.split())
 
 
-# Estimating approximately 4 characters per token as a default ratio
 CHARS_PER_TOKEN: Final[float] = 4.0
 
-# Regex patterns for Unicode punctuation normalization
-SINGLE_QUOTE_PATTERN = re_compile(
-    r"[\u2018\u2019]"
-)  # U+2018 LEFT SINGLE QUOTATION MARK, U+2019 RIGHT SINGLE QUOTATION MARK
-DOUBLE_QUOTE_PATTERN = re_compile(
-    r"[\u201C\u201D\u201F]"
-)  # U+201C LEFT DOUBLE QUOTATION MARK, U+201D RIGHT DOUBLE QUOTATION MARK
-DASH_PATTERN = re_compile(r"[\u2013\u2014\u2015]")  # EN DASH, EM DASH, HORIZONTAL BAR
-ELLIPSIS_PATTERN = re_compile(r"\u2026")  # HORIZONTAL ELLIPSIS
 
-# Markdown patterns
+SINGLE_QUOTE_PATTERN = re_compile(r"[\u2018\u2019]")
+DOUBLE_QUOTE_PATTERN = re_compile(r"[\u201C\u201D\u201F]")
+DASH_PATTERN = re_compile(r"[\u2013\u2014\u2015]")
+ELLIPSIS_PATTERN = re_compile(r"\u2026")
 BROKEN_MARKDOWN_BOLD_PATTERN = re_compile(r"(\*\*)(.*?)\s+\*\*")
 HEADING_PATTERN = re_compile(r"^#{1,6}\s+\S+")
 LIST_ITEM_PATTERN = re_compile(r"^\s*(?:[*+-]|\d+\.)\s+\S+")
@@ -181,7 +174,7 @@ def _handle_regular_line(
         normalized_lines.append("")
         current_list_items.clear()
     normalized_lines.append(normalized_line)
-    if i < len(lines) - 1:  # Add a blank line between regular lines
+    if i < len(lines) - 1:
         normalized_lines.append("")
 
 
@@ -196,7 +189,7 @@ def _finalize_normalized_lines(normalized_lines: list[str]) -> str:
     return "\n".join(result)
 
 
-@lru_cache(maxsize=1000)  # Cache the most recent 1000 token estimates
+@lru_cache(maxsize=1000)
 def estimate_token_count(text: str) -> int:
     """Estimate token count without making an API call.
 
@@ -212,12 +205,9 @@ def estimate_token_count(text: str) -> int:
     if not text:
         return 0
 
-    # For very short text, use character count / CHARS_PER_TOKEN
     if len(text) < 100:
         return math.ceil(len(text) / CHARS_PER_TOKEN)
 
-    # For longer text, use a combination of character and word count
-    # Words are generally 1-2 tokens, with some longer words being 3+
     word_count = get_word_count(text)
     char_count = len(text)
 

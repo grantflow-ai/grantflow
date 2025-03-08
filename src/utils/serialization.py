@@ -97,7 +97,7 @@ def serialize(value: Any, **kwargs: Any) -> bytes:
         A JSON string.
     """
     if isinstance(value, dict) and kwargs:
-        # this guard is required for structlog
+        # this guard is required for structlog ~keep
         value = value | kwargs
 
     try:

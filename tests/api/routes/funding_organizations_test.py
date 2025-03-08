@@ -82,7 +82,7 @@ async def test_retrieve_organizations_api_request_success(
     ]
 
     async with async_session_maker() as session, session.begin():
-        await session.execute(delete(FundingOrganization))  # there is a seed fixture that insert these
+        await session.execute(delete(FundingOrganization))
         session.add_all(orgs)
         await session.commit()
 

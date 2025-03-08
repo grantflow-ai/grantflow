@@ -33,7 +33,6 @@ async def get_exclude_embeddings() -> list[float]:
 
 
 EXCLUDE_CATEGORIES = [
-    # Administrative documents
     "Advisory Input",
     "Application Processing",
     "Approvals",
@@ -57,7 +56,6 @@ EXCLUDE_CATEGORIES = [
     "Submission Guidelines",
     "Submission Requirements",
     "Supporting Documentation",
-    # References and metadata
     "Appendices",
     "Bibliography",
     "Citations",
@@ -67,7 +65,6 @@ EXCLUDE_CATEGORIES = [
     "Table Index",
     "Table of Contents",
     "ToC",
-    # Personnel documentation
     "Biosketch",
     "C.V.",
     "CVs",
@@ -82,7 +79,6 @@ EXCLUDE_CATEGORIES = [
     "Previous Funding",
     "Previous Grant Performance",
     "Publication Records",
-    # Budget and resources
     "Breakdown of Subcontracted Work Costs",
     "Budget Justification",
     "Budget",
@@ -101,7 +97,6 @@ EXCLUDE_CATEGORIES = [
     "Infrastructure",
     "Laboratory Space",
     "Space Allocation",
-    # Compliance and authorizations
     "Biosafety Protocol",
     "Collaboration Agreements",
     "Data Use Agreements",
@@ -118,7 +113,6 @@ EXCLUDE_CATEGORIES = [
     "Safety Certifications",
     "Safety Protocols",
     "Standard Operating Procedures",
-    # Supplementary technical materials
     "Algorithms & Code Repositories",
     "Analysis Scripts",
     "Code Sharing",
@@ -127,7 +121,6 @@ EXCLUDE_CATEGORIES = [
     "Interactive Visualizations or Datasets",
     "Raw Data",
     "Software Documentation",
-    # Career development (context-dependent)
     "Career Goals",
     "Coursework",
     "DEI",
@@ -139,31 +132,25 @@ EXCLUDE_CATEGORIES = [
     "STEM Career Development",
     "Training",
     "Workshops on Ethical Research Practices",
-    # Data management (required in some grants)
     "Data Management",
-    # Project management (context-dependent)
     "Environmental Impact Assessment",
     "Project Management",
 ]
 
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
-    # Core queries focused on workplan identification and structure
     "detailed workplan research plan experimental approach specific aims methodology protocols",
     "research strategy experimental design technical approach methods procedures protocols",
     "project timeline milestones tasks deliverables research objectives implementation",
-    # Grant structure and required sections
     "grant application structure required sections template organization format",
     "application guidelines formatting requirements section organization hierarchy",
     "proposal organization mandatory sections required components outline structure",
-    # Scientific content and section relationships
     "technical abstract methodology results scientific premise evidence rationale",
     "project summary objectives goals research strategy experimental design",
     "technical background state of art literature integration findings review",
     "innovation approach novel methods preliminary results experimental data",
     "expected outcomes anticipated results impact advancement knowledge",
     "scientific methodology data analysis findings implementation relationship between sections",
-    # Specialized section identification
     "clinical trial requirements intervention protocol human subjects research",
     "section hierarchical relationships parent child dependencies workplan",
     "distinguishing features workplan background significance innovation approach methodology",
@@ -358,20 +345,18 @@ def validate_section_extraction(response: ExtractedSections) -> None:
     """
     if (
         error := response.get("error")
-    ) and error != "null":  # occasionally, the model suffers a stroke and returns "null" as a string
+    ) and error != "null":  # occasionally, the model suffers a stroke and returns "null" as a string ~keep
         raise InsufficientContextError(error)
 
     if not response["sections"]:
         raise ValidationError("No sections extracted. Please provide an error message.", context=response)
 
-    # Check section titles are meaningful
     for section in response["sections"]:
         if len(section["title"].strip()) < 3:
             raise ValidationError(
                 "Section title too short or empty", context={"section_id": section["id"], "title": section["title"]}
             )
 
-    # Check for duplicate titles
     section_titles = [section["title"].strip().lower() for section in response["sections"]]
     for title in set(section_titles):
         if section_titles.count(title) > 1:
@@ -381,7 +366,6 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                 context={"title": title, "section_ids": [s["id"] for s in duplicate_sections]},
             )
 
-    # Check order values
     all_orders = [section["order"] for section in response["sections"]]
     if len(set(all_orders)) != len(all_orders):
         duplicate_orders = [order for order in all_orders if all_orders.count(order) > 1]
@@ -393,7 +377,6 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             context={"min_order": min(all_orders), "max_order": max(all_orders), "expected_max": len(all_orders)},
         )
 
-    # Check for duplicate IDs
     section_ids = [section["id"] for section in response["sections"]]
     if len(section_ids) != len(set(section_ids)):
         duplicate_ids = [section_id for section_id in section_ids if section_ids.count(section_id) > 1]
@@ -401,7 +384,6 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             "Duplicate section IDs found. Section IDs must be unique.", context={"duplicate_ids": duplicate_ids}
         )
 
-    # Check for exactly one workplan section
     workplan_sections = [s for s in response["sections"] if s.get("is_detailed_workplan")]
     if len(workplan_sections) != 1:
         raise ValidationError(
@@ -409,26 +391,22 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             context={"workplan_sections": [s["id"] for s in workplan_sections]},
         )
 
-    # Check that workplan section is marked as long-form
     if workplan_sections and not workplan_sections[0].get("is_long_form"):
         raise ValidationError(
             "The detailed workplan section must be marked as a long-form section",
             context={"workplan_id": workplan_sections[0]["id"], "title": workplan_sections[0]["title"]},
         )
 
-    # Check for at least one long-form section
     long_form_sections = [s for s in response["sections"] if s.get("is_long_form")]
     if not long_form_sections:
         raise ValidationError("At least one section must be marked as long-form")
 
-    # Build section map and dependency graph
     mapped_sections = {section["id"]: section for section in response["sections"]}
     dependency_graph = defaultdict[str, list[str]](list)
     for section in response["sections"]:
         if parent_id := section.get("parent_id"):
             dependency_graph[section["id"]].append(parent_id)
 
-    # Check for circular dependencies
     for section_id in dependency_graph:
         if cycle_nodes := detect_cycle(graph=dependency_graph, start=section_id):
             raise ValidationError(
@@ -567,14 +545,11 @@ async def filter_extracted_sections(
 
         threshold += 0.05
 
-    # If we couldn't find a threshold that preserves required sections,
-    # default to keeping all workplan and long-form sections
     fallback_sections = [
         section for section in sections if section.get("is_detailed_workplan") or section.get("is_long_form")
     ]
 
     if not fallback_sections:
-        # Last resort: just keep the original workplan
         fallback_sections = [section for section in sections if section.get("is_detailed_workplan")]
 
     return _maintain_hierarchy_integrity(fallback_sections or sections)
@@ -589,14 +564,12 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
     Returns:
         Sections with fixed parent relationships and consecutive ordering
     """
-    # Get valid section IDs after filtering
     valid_ids = {s["id"] for s in sections}
 
     for section in sections:
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
             section["parent_id"] = None
 
-    # Fix ordering to be consecutive
     sorted_sections = sorted(sections, key=lambda s: s["order"])
     for i, section in enumerate(sorted_sections, start=1):
         section["order"] = i

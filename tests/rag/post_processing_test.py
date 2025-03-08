@@ -103,13 +103,10 @@ async def test_apply_semantic_ranking(mocker: MockFixture) -> None:
 
     mock_model = mocker.MagicMock()
 
-    # Create mock query tensor
     mock_query_tensor = mocker.MagicMock()
 
-    # Create mock batch-encoded sentence tensors
     mock_sentence_tensors = mocker.MagicMock()
 
-    # Mock the similarity scores
     similarities = [0.8, 0.3, 0.6]
 
     mock_model.encode.side_effect = lambda text, **_: mock_query_tensor if text == query else mock_sentence_tensors

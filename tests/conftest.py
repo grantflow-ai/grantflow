@@ -73,9 +73,9 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 @pytest.fixture(autouse=True)
 def stub_env() -> None:
-    load_dotenv()  # we use a real env file for E2E tests, but its not always present
+    load_dotenv()  # we use a real env file for E2E tests, but its not always present ~keep
     os.environ["TOKENIZERS_PARALLELISM"] = (
-        "false"  # we don't want to run tokenizers in parallel due to pytest limitations
+        "false"  # we don't want to run tokenizers in parallel due to pytest limitations ~keep
     )
 
     mock_creds = (

@@ -25,7 +25,7 @@ def get_logger(name: str) -> FilteringBoundLogger:
         from structlog.dev import ConsoleRenderer
         from structlog.processors import JSONRenderer, TimeStamper, add_log_level, format_exc_info
 
-        configure_once(  # will raise an error if called more than once
+        configure_once(
             cache_logger_on_first_use=True,
             wrapper_class=make_filtering_bound_logger(
                 logging.DEBUG if get_env("DEBUG", raise_on_missing=False) else logging.INFO,
