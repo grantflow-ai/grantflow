@@ -144,7 +144,7 @@ def grant_sections() -> list[GrantLongFormSection]:
 
 def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id=None)  # type: ignore[arg-type]
-    assert len(result) == 1  # only abstract at root
+    assert len(result) == 1
     assert result[0]["title"] == "Abstract"
     assert result[0]["text"] == "This is an abstract."
     assert not result[0]["children"]
@@ -152,7 +152,7 @@ def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
 
 def test_map_to_tree_nested(grant_sections: list[GrantLongFormSection]) -> None:
     result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")  # type: ignore[arg-type]
-    assert len(result) == 3  # research_strategy, risks_and_mitigations, impact
+    assert len(result) == 3
     assert result[0]["title"] == "Research Strategy"
     assert result[0]["text"] == "This is the research strategy."
 
@@ -345,7 +345,7 @@ def test_tree_multi_level_text_generation(multi_level_sections: list[GrantLongFo
     }
 
     tree = map_to_tree(sections=multi_level_sections, section_texts=section_texts)  # type: ignore[arg-type]
-    text = create_text_recursively(tree[0])  # Part A
+    text = create_text_recursively(tree[0])
 
     expected_order = [
         "## Part A",

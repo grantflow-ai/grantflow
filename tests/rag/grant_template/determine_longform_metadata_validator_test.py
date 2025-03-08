@@ -58,12 +58,10 @@ def test_validate_empty_sections() -> None:
     """Test validation of empty sections."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
-    # Test with empty sections
     with pytest.raises(ValidationError) as validation_exc:
         validate_template_sections({"sections": []}, input_sections=input_sections)
     assert "No sections generated" in str(validation_exc.value)
 
-    # Test with error message
     with pytest.raises(InsufficientContextError) as insufficient_context_exc:
         validate_template_sections({"sections": [], "error": "test error"}, input_sections=input_sections)
     assert "test error" in str(insufficient_context_exc.value)
@@ -76,14 +74,13 @@ def test_validate_section_mismatch() -> None:
         create_extracted_section(section_id="section_two"),
     ]
 
-    # Test with added sections
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
                     create_section_metadata(section_id="section_one"),
                     create_section_metadata(section_id="section_two"),
-                    create_section_metadata(section_id="section_three"),  # Extra section
+                    create_section_metadata(section_id="section_three"),
                 ]
             },
             input_sections=input_sections,
@@ -91,10 +88,9 @@ def test_validate_section_mismatch() -> None:
     assert "Section mismatch detected" in str(exc.value)
     assert "added_sections" in str(exc.value)
 
-    # Test with missing sections
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
-            {"sections": [create_section_metadata(section_id="section_one")]},  # Missing section_two
+            {"sections": [create_section_metadata(section_id="section_one")]},
             input_sections=input_sections,
         )
     assert "Section mismatch detected" in str(exc.value)
@@ -105,25 +101,21 @@ def test_validate_keywords() -> None:
     """Test validation of keywords."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
-    # Test with insufficient keywords
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(section_id="section_one", keywords=["keyword1", "keyword2"]),  # Less than 3
+                    create_section_metadata(section_id="section_one", keywords=["keyword1", "keyword2"]),
                 ]
             },
             input_sections=input_sections,
         )
     assert "Insufficient keywords provided" in str(exc.value)
 
-    # Test with valid keywords
     validate_template_sections(
         {
             "sections": [
-                create_section_metadata(
-                    section_id="section_one", keywords=["keyword1", "keyword2", "keyword3"]
-                ),  # Exactly 3
+                create_section_metadata(section_id="section_one", keywords=["keyword1", "keyword2", "keyword3"]),
             ]
         },
         input_sections=input_sections,
@@ -134,23 +126,21 @@ def test_validate_topics() -> None:
     """Test validation of topics."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
-    # Test with insufficient topics
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(section_id="section_one", topics=["topic1"]),  # Less than 2
+                    create_section_metadata(section_id="section_one", topics=["topic1"]),
                 ]
             },
             input_sections=input_sections,
         )
     assert "Insufficient topics provided" in str(exc.value)
 
-    # Test with valid topics
     validate_template_sections(
         {
             "sections": [
-                create_section_metadata(section_id="section_one", topics=["topic1", "topic2"]),  # Exactly 2
+                create_section_metadata(section_id="section_one", topics=["topic1", "topic2"]),
             ]
         },
         input_sections=input_sections,
@@ -161,21 +151,17 @@ def test_validate_generation_instructions() -> None:
     """Test validation of generation instructions."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
-    # Test with short instructions
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(
-                        section_id="section_one", generation_instructions="Short"
-                    ),  # Less than 50 chars
+                    create_section_metadata(section_id="section_one", generation_instructions="Short"),
                 ]
             },
             input_sections=input_sections,
         )
     assert "Generation instructions too short" in str(exc.value)
 
-    # Test with valid instructions
     validate_template_sections(
         {
             "sections": [
@@ -193,27 +179,21 @@ def test_validate_search_queries() -> None:
     """Test validation of search queries."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
-    # Test with insufficient queries
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(
-                        section_id="section_one", search_queries=["query1", "query2"]
-                    ),  # Less than 3
+                    create_section_metadata(section_id="section_one", search_queries=["query1", "query2"]),
                 ]
             },
             input_sections=input_sections,
         )
     assert "Insufficient search queries provided" in str(exc.value)
 
-    # Test with valid queries
     validate_template_sections(
         {
             "sections": [
-                create_section_metadata(
-                    section_id="section_one", search_queries=["query1", "query2", "query3"]
-                ),  # Exactly 3
+                create_section_metadata(section_id="section_one", search_queries=["query1", "query2", "query3"]),
             ]
         },
         input_sections=input_sections,
@@ -227,7 +207,6 @@ def test_validate_dependencies() -> None:
         create_extracted_section(section_id="section_two", is_detailed_workplan=True),
     ]
 
-    # Test with invalid dependency
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
@@ -240,12 +219,11 @@ def test_validate_dependencies() -> None:
         )
     assert "Invalid section dependency" in str(exc.value)
 
-    # Test with circular dependency (self-reference)
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(section_id="section_one", depends_on=["section_one"]),  # Self-reference
+                    create_section_metadata(section_id="section_one", depends_on=["section_one"]),
                     create_section_metadata(section_id="section_two"),
                 ]
             },
@@ -253,7 +231,6 @@ def test_validate_dependencies() -> None:
         )
     assert "Section cannot depend on itself" in str(exc.value)
 
-    # Test with valid dependency
     validate_template_sections(
         {
             "sections": [
@@ -269,35 +246,32 @@ def test_validate_word_count() -> None:
     """Test validation of word count."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
-    # Test with zero word count
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(section_id="section_one", max_words=0),  # Zero words
+                    create_section_metadata(section_id="section_one", max_words=0),
                 ]
             },
             input_sections=input_sections,
         )
     assert "Invalid word count" in str(exc.value)
 
-    # Test with negative word count
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(section_id="section_one", max_words=-100),  # Negative words
+                    create_section_metadata(section_id="section_one", max_words=-100),
                 ]
             },
             input_sections=input_sections,
         )
     assert "Invalid word count" in str(exc.value)
 
-    # Test with valid word count
     validate_template_sections(
         {
             "sections": [
-                create_section_metadata(section_id="section_one", max_words=500),  # Positive word count
+                create_section_metadata(section_id="section_one", max_words=500),
             ]
         },
         input_sections=input_sections,
@@ -311,12 +285,11 @@ def test_validate_workplan_word_count() -> None:
         create_extracted_section(section_id="other_section"),
     ]
 
-    # Test with insufficient workplan word count
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
-                    create_section_metadata(section_id="workplan_section", max_words=50),  # Less than 100 words
+                    create_section_metadata(section_id="workplan_section", max_words=50),
                     create_section_metadata(section_id="other_section", max_words=500),
                 ]
             },
@@ -324,11 +297,10 @@ def test_validate_workplan_word_count() -> None:
         )
     assert "Workplan section requires more substantial word count" in str(exc.value)
 
-    # Test with sufficient workplan word count
     validate_template_sections(
         {
             "sections": [
-                create_section_metadata(section_id="workplan_section", max_words=500),  # More than 100 words
+                create_section_metadata(section_id="workplan_section", max_words=500),
                 create_section_metadata(section_id="other_section", max_words=300),
             ]
         },
@@ -343,25 +315,23 @@ def test_validate_total_word_count() -> None:
         create_extracted_section(section_id="section_two", is_detailed_workplan=False),
     ]
 
-    # Test with low total word count
     with pytest.raises(ValidationError) as exc:
         validate_template_sections(
             {
                 "sections": [
                     create_section_metadata(section_id="section_one", max_words=20),
-                    create_section_metadata(section_id="section_two", max_words=20),  # Total: 40 (less than 50)
+                    create_section_metadata(section_id="section_two", max_words=20),
                 ]
             },
             input_sections=input_sections,
         )
     assert "Total word count allocation is unreasonably low" in str(exc.value)
 
-    # Test with reasonable total word count
     validate_template_sections(
         {
             "sections": [
                 create_section_metadata(section_id="section_one", max_words=500),
-                create_section_metadata(section_id="section_two", max_words=300),  # Total: 800
+                create_section_metadata(section_id="section_two", max_words=300),
             ]
         },
         input_sections=input_sections,

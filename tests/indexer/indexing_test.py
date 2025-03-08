@@ -11,5 +11,5 @@ async def test_create_vector_dto() -> None:
     assert isinstance(vector_dto, dict)
     assert vector_dto["rag_file_id"] == "test_file_id"
     assert vector_dto["chunk"] == chunk
-    assert len(vector_dto["embedding"]) == 384  # fastembed default dimension
+    assert len(vector_dto["embedding"]) == 384
     assert all(isinstance(x, float) for x in vector_dto["embedding"])

@@ -100,7 +100,7 @@ def test_validate_missing_objective_fields() -> None:
 
 def test_validate_objective_guiding_questions() -> None:
     """Test validation of objective guiding questions."""
-    # Test with too few questions
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_objective=create_enrichment_data(guiding_questions=["Q1", "Q2"])),
@@ -111,7 +111,7 @@ def test_validate_objective_guiding_questions() -> None:
 
 def test_validate_objective_search_queries() -> None:
     """Test validation of objective search queries."""
-    # Test with too few queries
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_objective=create_enrichment_data(search_queries=["Q1", "Q2"])),
@@ -122,7 +122,7 @@ def test_validate_objective_search_queries() -> None:
 
 def test_validate_objective_instructions_length() -> None:
     """Test validation of objective instructions length."""
-    # Test with short instructions
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_objective=create_enrichment_data(instructions="Too short")),
@@ -133,7 +133,7 @@ def test_validate_objective_instructions_length() -> None:
 
 def test_validate_objective_description_length() -> None:
     """Test validation of objective description length."""
-    # Test with short description
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_objective=create_enrichment_data(description="Too short")),
@@ -157,7 +157,6 @@ def test_validate_task_count_mismatch() -> None:
     """Test validation of task count mismatch."""
     input_objective = create_research_objective(tasks=[{"title": "Task 1"}, {"title": "Task 2"}])
 
-    # Test with fewer tasks than input
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_tasks=[create_enrichment_data()]),
@@ -165,7 +164,6 @@ def test_validate_task_count_mismatch() -> None:
         )
     assert "Number of enriched tasks doesn't match" in str(exc.value)
 
-    # Test with more tasks than input
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(
@@ -213,7 +211,7 @@ def test_validate_task_fields() -> None:
 
 def test_validate_task_guiding_questions() -> None:
     """Test validation of task guiding questions."""
-    # Test with too few questions
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_tasks=[create_enrichment_data(guiding_questions=["Q1", "Q2"])]),
@@ -224,7 +222,7 @@ def test_validate_task_guiding_questions() -> None:
 
 def test_validate_task_search_queries() -> None:
     """Test validation of task search queries."""
-    # Test with too few queries
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_tasks=[create_enrichment_data(search_queries=["Q1", "Q2"])]),
@@ -235,7 +233,7 @@ def test_validate_task_search_queries() -> None:
 
 def test_validate_task_instructions_length() -> None:
     """Test validation of task instructions length."""
-    # Test with short instructions
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_tasks=[create_enrichment_data(instructions="Too short")]),
@@ -246,7 +244,7 @@ def test_validate_task_instructions_length() -> None:
 
 def test_validate_task_description_length() -> None:
     """Test validation of task description length."""
-    # Test with short description
+
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
             create_enrichment_response(research_tasks=[create_enrichment_data(description="Too short")]),
@@ -259,13 +257,11 @@ def test_validate_valid_enrichment() -> None:
     """Test validation of valid enrichment."""
     input_objective = create_research_objective(tasks=[{"title": "Task 1"}, {"title": "Task 2"}])
 
-    # Test with valid enrichment data
     validate_enrichment_response(
         create_enrichment_response(research_tasks=[create_enrichment_data(), create_enrichment_data()]),
         input_objective=input_objective,
     )
 
-    # Test with valid enrichment data and no input objective
     validate_enrichment_response(
         create_enrichment_response(research_tasks=[create_enrichment_data()]),
         input_objective=None,

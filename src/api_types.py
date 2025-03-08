@@ -28,7 +28,7 @@ class TableIdResponse(TypedDict):
     """The ID of the application."""
 
 
-# Organization API Types
+# Organization API Types ~keep
 class CreateOrganizationRequestBody(TypedDict):
     """The request body for creating a funding organization."""
 
@@ -43,7 +43,7 @@ class UpdateOrganizationRequestBody(TypedDict):
     abbreviation: NotRequired[str | None]
 
 
-# Workspace API Types
+# Workspace API Types ~keep
 class CreateWorkspaceRequestBody(TypedDict):
     """The request body for creating a workspace."""
 
@@ -79,7 +79,7 @@ class WorkspaceBaseResponse(TableIdResponse):
     """The role of the user in the workspace."""
 
 
-# Application API Types
+# Application API Types ~keep
 class CreateApplicationRequestBody(TypedDict):
     """The request body for creating an application."""
 
@@ -117,7 +117,7 @@ class ApplicationDraftCompleteResponse(TypedDict):
     text: str
 
 
-# Auth API Types
+# Auth API Types  ~keep
 class OTPResponse(TypedDict):
     """The response body for the OTP endpoint."""
 

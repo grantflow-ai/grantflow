@@ -198,11 +198,8 @@ async def handle_source_validation(
         model=ANTHROPIC_SONNET_MODEL,
     )
 
-    # Check if percentage is below the minimum threshold
     if result["percentage_available"] < minimum_percentage:
-        # Convert the list of missing information into a markdown bullet list
         missing_info_bullets = [f"\t- {item}" for item in result["missing_information"]]
         return "Missing Information:\n" + "\n".join(missing_info_bullets)
 
-    # If percentage meets or exceeds the minimum, return None
     return None

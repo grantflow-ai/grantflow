@@ -188,7 +188,7 @@ async def _process_sentence(*, sent: Span) -> str:
         for token in sent
         if (
             token.pos_ in {"NOUN", "VERB", "ADJ", "ADV", "PROPN", "NUM"}
-            or token.ent_type_  # Named entities
+            or token.ent_type_
             or (token.is_alpha and token.is_title)
         )
     ]

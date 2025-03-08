@@ -128,7 +128,6 @@ async def make_google_completions_request[T](
     system_prompt: str,
     response_schema: dict[str, Any] | None = None,
     messages: str | Part | list[str | Part],
-    # generation settings
     temperature: float = 0,
     top_p: float | None = None,
     top_k: int | None = None,
@@ -290,7 +289,6 @@ async def handle_completions_request[T](
     response_type: type[T],
     system_prompt: str,
     validator: Callable[[T], None] | None = None,
-    # generation settings
     temperature: float = 0,
     top_p: float | None = None,
     top_k: int | None = None,
@@ -342,7 +340,7 @@ async def handle_completions_request[T](
                     model=model,
                     response_type=response_type,
                     system_prompt=system_prompt,
-                    user_prompt=str(msgs),  # Ensure msgs is converted to string
+                    user_prompt=str(msgs),
                     response_schema=response_schema,
                     temperature=temperature,
                     top_p=top_p,
@@ -421,7 +419,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
             )
-            model = GENERATION_MODEL  # Switch to Google model
+            model = GENERATION_MODEL  # Switch to Google model ~keep
         except GoogleInternalServerError as e:
             logger.warning(
                 "Internal server error received from google in completion request. Switching models.",
@@ -430,7 +428,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
             )
-            model = ANTHROPIC_SONNET_MODEL  # Switch to Anthropic model
+            model = ANTHROPIC_SONNET_MODEL  # Switch to Anthropic model ~keep
 
     raise RagError(
         f"Failed to generate text after {max_attempts} attempts.",

@@ -46,7 +46,6 @@ def test_validate_snake_case_ids() -> None:
         )
     assert "Invalid section ID format" in str(exc.value)
 
-    # For valid tests, we need to include a workplan section
     validate_section_extraction(
         {"sections": [create_section(section_id="valid_snake_case", is_detailed_workplan=True, order=1)]}
     )
@@ -63,30 +62,29 @@ def test_validate_unique_ids() -> None:
             }
         )
     assert "Duplicate section IDs found" in str(exc.value)
-    assert "duplicate_ids" in str(exc.value)  # Check for context info
+    assert "duplicate_ids" in str(exc.value)
 
 
 def test_validate_order_values() -> None:
     """Test validation of order values."""
-    # Test duplicate orders
+
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
                 "sections": [
                     create_section(section_id="section_one", order=1, title="Section One", is_detailed_workplan=True),
-                    create_section(section_id="section_two", order=1, title="Section Two"),  # Same order value
+                    create_section(section_id="section_two", order=1, title="Section Two"),
                 ]
             }
         )
     assert "Duplicate order values found" in str(exc.value)
 
-    # Test non-consecutive orders
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
                 "sections": [
                     create_section(section_id="section_one", order=1, title="Section One", is_detailed_workplan=True),
-                    create_section(section_id="section_two", order=3, title="Section Two"),  # Gap in order
+                    create_section(section_id="section_two", order=3, title="Section Two"),
                 ]
             }
         )
@@ -139,7 +137,7 @@ def test_validate_workplan_children() -> None:
             }
         )
     assert "The workplan section cannot have any sub-sections" in str(exc.value)
-    assert "workplan_id" in str(exc.value)  # Check for context info
+    assert "workplan_id" in str(exc.value)
 
 
 def test_workplan_must_be_longform() -> None:
@@ -199,9 +197,8 @@ def test_validate_nesting_depth() -> None:
         validate_section_extraction(cast(ExtractedSections, {"sections": sections["sections"]}))
     assert "Maximum nesting depth exceeded" in str(exc.value)
 
-    # Remove the level six section and fix the order of the workplan section
-    sections["sections"].pop(5)  # Remove the level_six section
-    # Update the workplan order to maintain consecutive ordering
+    sections["sections"].pop(5)
+
     sections["sections"][-1]["order"] = 6
     validate_section_extraction(sections)
 
@@ -223,7 +220,7 @@ def test_validate_circular_dependencies() -> None:
 
 def test_exactly_one_workplan_section() -> None:
     """Test that exactly one section must be marked as workplan."""
-    # Test no workplan sections
+
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
@@ -235,7 +232,6 @@ def test_exactly_one_workplan_section() -> None:
         )
     assert "Exactly one section must be marked as detailed workplan" in str(exc.value)
 
-    # Test multiple workplan sections
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
@@ -247,7 +243,6 @@ def test_exactly_one_workplan_section() -> None:
         )
     assert "Exactly one section must be marked as detailed workplan" in str(exc.value)
 
-    # Test valid case with exactly one workplan section
     validate_section_extraction(
         {
             "sections": [

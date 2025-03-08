@@ -4,7 +4,7 @@ from functools import partial
 from itertools import batched
 from typing import Any, cast
 
-from anyio.to_thread import run_sync as any_io_run_sync  # use anyio to simplify asyncio and ensure multi loop compat
+from anyio.to_thread import run_sync as any_io_run_sync
 
 
 async def run_sync[**P, T](sync_fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:

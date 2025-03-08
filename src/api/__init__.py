@@ -42,14 +42,11 @@ def register_routes(app: Sanic[Any, Any]) -> None:
     Args:
         app: The Sanic app instance
     """
-    # Health check
     app.add_route(health_check, "/health", methods=["GET"])
 
-    # Auth
     app.add_route(handle_login, "/login", methods=["POST"])
     app.add_route(handle_create_otp, "/otp", methods=["GET"])
 
-    # Organizations
     app.add_route(handle_create_organization, "/organizations", methods=["POST"])
     app.add_route(handle_retrieve_organizations, "/organizations", methods=["GET"])
     app.add_route(handle_update_organization, "/organizations/<organization_id:uuid>", methods=["PATCH"])
@@ -62,14 +59,12 @@ def register_routes(app: Sanic[Any, Any]) -> None:
         methods=["DELETE"],
     )
 
-    # Workspaces
     app.add_route(handle_create_workspace, "/workspaces", methods=["POST"])
     app.add_route(handle_retrieve_workspaces, "/workspaces", methods=["GET"])
     app.add_route(handle_update_workspace, "/workspaces/<workspace_id:uuid>", methods=["PATCH"])
     app.add_route(handle_retrieve_workspace, "/workspaces/<workspace_id:uuid>", methods=["GET"])
     app.add_route(handle_delete_workspace, "/workspaces/<workspace_id:uuid>", methods=["DELETE"])
 
-    # Applications
     app.add_route(handle_create_application, "/workspaces/<workspace_id:uuid>/applications", methods=["POST"])
     app.add_route(
         handle_retrieve_application,

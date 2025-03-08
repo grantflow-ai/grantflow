@@ -38,7 +38,6 @@ def handle_exception(request: APIRequest, exception: Exception) -> HTTPResponse:
         message = "An unexpected backend error occurred"
         status = HTTPStatus.INTERNAL_SERVER_ERROR
     elif isinstance(exception, HTTPException):
-        # here we get the status code from the exception and we do not log. This is because the exception is expected.
         message = exception.message
         status = exception.status_code
     elif isinstance(exception, SQLAlchemyError):

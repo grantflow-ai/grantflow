@@ -152,7 +152,6 @@ async def generate_grant_section_texts(
     """
     section_texts: dict[str, str] = {}
 
-    # Filter for long form sections only for generation groups
     workplan_section = next(
         s for s in grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
     )
@@ -222,7 +221,6 @@ async def grant_application_text_generation_pipeline_handler(application_id: str
             },
         )
 
-    # Filter sections to find work plan sections
     work_plan_sections = []
     if grant_application.grant_template.grant_sections:
         work_plan_sections = [
