@@ -37,7 +37,6 @@ def mock_anthropic_api_response(mocker: MockerFixture) -> Mock:
     return response
 
 
-# Test select_best_response and validate_select_best_response
 async def test_validate_select_best_response_valid() -> None:
     candidates = {1: "response1", 2: "response2"}
     selection = cast(BestResponseSelection, {"best_response": 1})
@@ -59,7 +58,6 @@ async def test_select_best_response(mock_google_api_response: Mock) -> None:
     assert result == "response1"
 
 
-# Test make_google_completions_request
 async def test_make_completions_request_with_string_message(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     result = await make_google_completions_request(
@@ -115,7 +113,6 @@ async def test_make_completions_request_with_schema_validation(mock_google_api_r
     assert result == {"key": "value"}
 
 
-# Test make_anthorpic_completions_request
 async def test_make_anthropic_completions_request(mock_anthropic_api_response: Mock) -> None:
     tool_use = Mock(spec=ToolUseBlock)
     tool_use.type = "tool_use"
@@ -155,7 +152,6 @@ async def test_make_anthropic_completions_request_with_generation_params(mock_an
     assert result == {"key": "value"}
 
 
-# Test handle_completions_request
 async def test_handle_completions_request_success(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     result = await handle_completions_request(

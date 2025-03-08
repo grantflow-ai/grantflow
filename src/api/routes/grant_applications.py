@@ -27,7 +27,7 @@ from src.utils.serialization import deserialize
 
 logger = get_logger(__name__)
 
-PROCESSING_SLEEP_INTERVAL = 15  # seconds
+PROCESSING_SLEEP_INTERVAL = 15  # seconds ~keep
 
 
 async def _get_cfp_content(request: APIRequest, request_body: CreateApplicationRequestBody) -> str:

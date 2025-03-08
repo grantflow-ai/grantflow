@@ -9,7 +9,7 @@ from src.utils.text import concatenate_segments_with_spacy_coherence, count_word
 
 logger = get_logger(__name__)
 
-# Maximum number of API calls for text generation
+
 MAX_API_CALLS: Final[int] = 5
 
 LONG_FORM_GENERATION_SYSTEM_PROMPT: Final[str] = """
@@ -242,7 +242,6 @@ async def handle_long_form_text_generation(
             )
             break
 
-    # Validate word count meets minimum requirement
     word_count = count_words(result)
     if word_count < min_words:
         logger.warning(
@@ -312,7 +311,6 @@ async def generate_long_form_text(
         max_words=max_words,
     )
 
-    # Attempt to shorten text if it's too long
     max_shortening_attempts = 3
     attempts = 0
     while long_form_length > max_words and attempts < max_shortening_attempts:

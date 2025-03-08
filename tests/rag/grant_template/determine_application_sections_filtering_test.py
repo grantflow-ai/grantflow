@@ -164,7 +164,7 @@ async def test_section_filtering_always_keeps_workplan() -> None:
     """Test that workplan sections are always kept regardless of title."""
     sections: list[ExtractedSectionDTO] = [
         {
-            "title": "Methods",  # This is in EXCLUDE_CATEGORIES
+            "title": "Methods",
             "id": "methods",
             "parent_id": None,
             "is_detailed_workplan": True,
@@ -231,7 +231,7 @@ async def test_section_filtering_threshold() -> None:
     """Test that similarity threshold affects which sections are kept."""
     sections: list[ExtractedSectionDTO] = [
         {
-            "title": "Research Methods Section",  # Very similar to 'Methods'
+            "title": "Research Methods Section",
             "id": "methods",
             "parent_id": None,
             "is_detailed_workplan": False,
@@ -239,29 +239,26 @@ async def test_section_filtering_threshold() -> None:
             "order": 1,
         }
     ]
-    # High threshold should keep the section
+
     high_result = await filter_extracted_sections(sections=sections, initial_threshold=0.9)
     assert len(high_result) == 1
 
-    # Low threshold should filter it out (but since workplan is missing, it might keep it due to adaptive logic)
     await filter_extracted_sections(sections=sections, initial_threshold=0.5)
-    # We're not asserting the length here because it now depends on the adaptive threshold behavior
 
 
 async def test_adaptive_threshold_preserves_workplan() -> None:
     """Test that the adaptive threshold preserves the workplan section."""
     sections: list[ExtractedSectionDTO] = [
         {
-            "title": "Methods",  # This would normally be filtered out
+            "title": "Methods",
             "id": "methods",
             "parent_id": None,
-            "is_detailed_workplan": True,  # But it's a workplan
+            "is_detailed_workplan": True,
             "is_long_form": True,
             "order": 1,
         }
     ]
 
-    # Even with a low threshold, the workplan should be preserved
     result = await filter_extracted_sections(sections=sections, initial_threshold=0.1)
     assert len(result) == 1
     assert result[0]["is_detailed_workplan"] is True
@@ -287,7 +284,7 @@ async def test_maintain_hierarchy_integrity() -> None:
             "order": 2,
         },
         {
-            "title": "Budget",  # This should be filtered out
+            "title": "Budget",
             "id": "budget",
             "parent_id": None,
             "is_detailed_workplan": False,
@@ -298,15 +295,12 @@ async def test_maintain_hierarchy_integrity() -> None:
 
     result = await filter_extracted_sections(sections=sections, initial_threshold=0.5)
 
-    # Check if at least the workplan is preserved
     assert any(s["is_detailed_workplan"] for s in result)
 
-    # Check if orders are consecutive
     orders = [s["order"] for s in result]
     assert min(orders) == 1
     assert max(orders) == len(orders)
 
-    # The resulting sections should have valid parent references
     for section in result:
         if section.get("parent_id"):
             assert any(s["id"] == section["parent_id"] for s in result)

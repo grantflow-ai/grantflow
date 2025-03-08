@@ -68,8 +68,6 @@ def create_generation_groups(sections: list[GrantLongFormSection]) -> list[list[
             generated.update(section["id"] for section in current_group)
             continue
 
-        # No progress was made, which means there's a circular dependency
-        # Let's detect the cycle using our improved function
         dependency_graph = {s["id"]: s["depends_on"] for s in sections}
 
         cycle_detected = False
@@ -88,7 +86,6 @@ def create_generation_groups(sections: list[GrantLongFormSection]) -> list[list[
                     },
                 )
 
-        # If no specific cycle was detected but we still can't make progress
         if not cycle_detected:
             raise ValidationError(
                 "Missing sections in dependencies.",
