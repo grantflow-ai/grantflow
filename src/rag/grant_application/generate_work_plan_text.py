@@ -115,7 +115,7 @@ evaluation_criteria = [
         evaluation_instructions="""
         - Ensure the text does not contain hallucinated information (invented facts, persons, terms, etc.).
         """,
-        weight=1.5,
+        weight=1.2,
     ),
 ]
 
@@ -191,7 +191,6 @@ async def generate_work_plan_component_text(
         task_description=str(prompt), sources={"rag_results": rag_results, "user_inputs": user_inputs}
     ):
         return source_validation_error
-
     return await with_prompt_evaluation(
         criteria=evaluation_criteria,
         max_words=component["max_words"],

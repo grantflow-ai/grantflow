@@ -38,6 +38,10 @@ EVALUATION_PROMPT = PromptTemplate(
         3. Evaluate the output against the evaluation criteria provided factoring the quality and availability of sources in the prompt.
         4. Assign scores based on the quality of the output: 0 is the worst and 100 is the best, offsetting for missing source data in the prompt.
         5. Provide concrete instructions for improvement, if the sources provided in the prompt are insufficient or the output is inaccurate.
+
+    **IMPORTANT**:
+        - If information is missing the model should signify this with `**[MISSING INFORMATION: specific description]**` rather than invent facts.
+        - If `**[MISSING INFORMATION: specific description]**` is provided, this should not reduce the score - unless the information is actually available, in which case this should be considered negatively.
     """,
 )
 
@@ -158,6 +162,8 @@ FIX_OUTPUT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     1. Begin by analyzing the prompt to understand the requirements, guidelines, and any provided validation rules it specifies.
     2. Apply the necessary changes, and ensure that the output meets the requirements and validation criteria.
     3. Respond with the updated model output adhering with the output instruction in the prompt.
+
+    **IMPORTANT**: If information is insufficient, write `**[MISSING INFORMATION: specific description]**`
     """,
 )
 
