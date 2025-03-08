@@ -256,6 +256,7 @@ async def extract_relationships_generation(
         model=ANTHROPIC_SONNET_MODEL,
         system_prompt=EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT,
         validator=partial(validate_relationships_response, research_objectives=research_objectives),
+        max_attempts=5,
     )
 
 
@@ -349,7 +350,22 @@ async def handle_extract_relationships(
         The relationships between objectives and tasks.
     """
     prompt = EXTRACT_RELATIONSHIPS_USER_PROMPT.substitute(
-        research_objectives=research_objectives,
+        research_objectives=[
+            {
+                "number": str(objective["number"]),
+                "title": objective["title"],
+                "description": objective.get("description", ""),
+                "research_tasks": [
+                    {
+                        "number": f"{objective['number']}.{task['number']}",
+                        "title": task["title"],
+                        "description": task.get("description", ""),
+                    }
+                    for task in objective["research_tasks"]
+                ],
+            }
+            for objective in research_objectives
+        ],
         user_inputs=form_inputs,
     )
 
@@ -367,6 +383,7 @@ async def handle_extract_relationships(
         criteria=criteria,
         passing_score=80,
         increment=10,
+        retries=5,
     )
     ret = defaultdict[str, list[tuple[str, str]]](list)
     for dependent_id, target_id, description in result["relationships"]:
