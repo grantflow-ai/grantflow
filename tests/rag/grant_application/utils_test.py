@@ -440,7 +440,9 @@ def test_generate_application_text() -> None:
 
 ### General Audience Abstract
 
-Melanoma is a serious skin cancer...### Technical Abstract
+Melanoma is a serious skin cancer...
+
+### Technical Abstract
 
 This research proposal addresses the critical need...
 

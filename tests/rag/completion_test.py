@@ -214,11 +214,15 @@ async def test_handle_completions_request_with_schema(mock_google_api_response: 
 
 async def test_handle_completions_request_deserialization_error(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = "invalid json"
+    response_schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
 
-    with pytest.raises(ValidationError, match="Failed to generate text after 3 attempts"):
+    from src.exceptions import RagError
+
+    with pytest.raises(RagError, match="Failed to generate text after 3 attempts"):
         await handle_completions_request(
             prompt_identifier="test",
             response_type=dict[str, str],
             messages="test message",
             system_prompt="You are a helpful assistant.",
+            response_schema=response_schema,
         )
