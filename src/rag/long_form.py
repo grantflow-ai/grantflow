@@ -280,6 +280,7 @@ async def generate_long_form_text(
         prompt_identifier: The identifier of the entity to generate text for.
         task_description: The description of the task.
         max_api_calls: Maximum number of API calls to make for text generation.
+        model: The model to use for text generation.
         **sources: Additional keyword arguments to pass to the prompt handler.
             These are passed directly to the prompt template and may include
             retrieved documents, reference sources, or other context needed

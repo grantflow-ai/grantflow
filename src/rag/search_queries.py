@@ -1,8 +1,11 @@
 from textwrap import dedent
-from typing import Any, Final, TypedDict
+from typing import Any, Final, NotRequired, TypedDict
+
+from sentence_transformers import util
 
 from src.constants import EVALUATION_MODEL
 from src.rag.completion import handle_completions_request
+from src.utils.embeddings import get_embedding_model
 from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.serialization import serialize
@@ -14,7 +17,7 @@ You are a specialized query generation component within a Retrieval-Augmented Ge
 Your primary function is to generate search queries that will retrieve relevant content from a vector store using cosine similarity.
 """
 
-SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+DIVERSE_SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="search_queries_generation",
     template="""
     Here is the user prompt for the next stage of the RAG pipeline:
@@ -23,14 +26,18 @@ SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ${user_prompt}
     </user_prompt>
 
-    Your task is to generate between 3 and 10 distinct search queries based on this user prompt.
+    Your task is to generate between 3 and 10 highly diverse search queries based on this user prompt.
     These queries will be executed against the vector store to retrieve relevant information for the grant application section.
 
     Instructions:
     1. Analyze the user prompt carefully to understand the context and requirements of the grant application section.
     2. Generate search queries that balance specificity with breadth to capture a range of relevant materials.
     3. Ensure that the queries are optimized for the next task in the RAG pipeline, which involves retrieving and processing the relevant information.
-    4. Aim for diversity in your queries to cover different aspects of the topic.
+    4. Ensure maximum diversity by creating queries that cover different:
+       - Aspects of the topic (methodological, theoretical, practical, etc.)
+       - Semantic angles (using different terminology for similar concepts)
+       - Levels of specificity (broad concepts and specific details)
+       - Query types (factual, conceptual, procedural, comparative)
 
     Before providing your final output, wrap your thought process in <query_generation_process> tags. Follow these steps:
     1. List the key concepts or themes in the user prompt.
@@ -38,7 +45,8 @@ SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     3. Brainstorm different aspects of the topic that could be covered in separate queries.
     4. Consider potential synonyms or related terms that could broaden the search.
     5. Generate initial queries based on steps 1-4.
-    6. Evaluate each generated query for relevance and effectiveness, refining as necessary.
+    6. Evaluate each generated query for relevance, effectiveness, and DIVERSITY from other queries.
+    7. Ensure queries are not semantically similar to each other and cover distinct aspects.
 
     It's OK for this section to be quite long, as thorough consideration will lead to better queries.
 
@@ -47,46 +55,135 @@ SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ```json
     {
         "queries": [
-            "Query 1",
-            "Query 2",
-            "Query 3",
+            {
+                "text": "Query 1",
+                "type": "factual|conceptual|procedural|comparative",
+                "aspect": "brief description of what aspect this query covers"
+            },
+            {
+                "text": "Query 2",
+                "type": "factual|conceptual|procedural|comparative",
+                "aspect": "brief description of what aspect this query covers"
+            },
             // Additional queries as needed, up to 10
         ]
     }
     ```
 
-    Ensure that you generate at least 3 queries and no more than 10 queries. Each query should be a string designed to effectively retrieve relevant information from the vector store.""",
+    Ensure that you generate at least 3 queries and no more than 10 queries. Each query should be designed to retrieve distinct, relevant information from the vector store.""",
 )
 
 
-class ToolResponse(TypedDict):
-    """The response from the tool call."""
+class QueryInfo(TypedDict):
+    """Information about a generated query."""
 
-    queries: list[str]
-    """The generated search queries."""
+    text: str
+    """The query text."""
+    type: str
+    """The type of query (factual, conceptual, procedural, comparative)."""
+    aspect: str
+    """Brief description of what aspect this query covers."""
+
+
+class DiverseQueryResponse(TypedDict):
+    """Response with diverse query information."""
+
+    queries: list[QueryInfo]
+    """The generated search queries with metadata."""
+
+
+class QueryResult(TypedDict):
+    """Result of query generation with metadata."""
+
+    query: str
+    """The query text."""
+    type: NotRequired[str]
+    """The type of query (factual, conceptual, procedural, comparative)."""
+    aspect: NotRequired[str]
+    """Description of what aspect this query covers."""
 
 
 response_schema = {
     "type": "object",
     "properties": {
-        "queries": {"type": "array", "items": {"type": "string"}, "minLength": 3, "maxLength": 10},
+        "queries": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string"},
+                    "type": {"type": "string", "enum": ["factual", "conceptual", "procedural", "comparative"]},
+                    "aspect": {"type": "string"},
+                },
+                "required": ["text", "type", "aspect"],
+            },
+            "minItems": 3,
+            "maxItems": 10,
+        },
     },
     "required": ["queries"],
 }
 
 
+SIMILARITY_THRESHOLD: Final[float] = 0.85
+"""Threshold for semantic similarity above which queries are considered duplicates."""
+
+
+async def deduplicate_queries(queries: list[str]) -> list[str]:
+    """Remove semantically similar queries using embeddings.
+
+    Args:
+        queries: List of queries to deduplicate
+
+    Returns:
+        List of deduplicated queries
+    """
+    if len(queries) <= 1:
+        return queries
+
+    model = get_embedding_model()
+    embeddings = model.encode(queries, convert_to_tensor=True)
+
+    keep_indices = set(range(len(queries)))
+    removed = set()
+
+    for i in range(len(queries)):
+        if i in removed:
+            continue
+
+        for j in range(i + 1, len(queries)):
+            if j in removed:
+                continue
+
+            similarity = util.pytorch_cos_sim(
+                embeddings[i] if isinstance(embeddings, list) else embeddings[i, :],
+                embeddings[j] if isinstance(embeddings, list) else embeddings[j, :],
+            ).item()
+
+            if similarity > SIMILARITY_THRESHOLD:
+                if len(queries[i]) >= len(queries[j]):
+                    keep_indices.discard(j)
+                    removed.add(j)
+                else:
+                    keep_indices.discard(i)
+                    removed.add(i)
+                    break
+
+    return [queries[i] for i in sorted(keep_indices)]
+
+
 async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **kwargs: Any) -> list[str]:
-    """Generate an optimized search query for retrieval.
+    """Generate an optimized set of diverse search queries for retrieval.
 
     Args:
         user_prompt: The description of the next task in the RAG pipeline.
-        **kwargs: Additional kwarg to inject into the template. If provided these are lists of strings, which
+        **kwargs: Additional kwargs to inject into the template. If provided these are lists of strings, which
             should be regarded as keywords and other related metadata.
 
     Returns:
-        The generated search queries, the total number of tokens, and the total billable characters.
+        The generated search queries, deduplicated and diversified.
     """
-    messages = [SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
+    messages = [DIVERSE_SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
     if kwargs:
         messages.append(
             dedent(f"""
@@ -96,19 +193,56 @@ async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **k
         """)
         )
 
-    queries: list[str] = []
+    query_results: list[QueryResult] = []
+    attempts = 0
+    max_attempts = 3
 
-    while len(queries) < 3:
+    while len(query_results) < 3 and attempts < max_attempts:
+        attempts += 1
         response = await handle_completions_request(
-            prompt_identifier="search_queries",
+            prompt_identifier="diverse_search_queries",
             system_prompt=SEARCH_QUERIES_SYSTEM_PROMPT,
             messages=messages,
             response_schema=response_schema,
-            response_type=ToolResponse,
+            response_type=DiverseQueryResponse,
             model=EVALUATION_MODEL,
         )
-        queries.extend(response["queries"])
 
-    logger.info("Successfully generated search queries for the next stage in the RAG pipeline")
+        current_query_texts = [q["text"] for q in response["queries"]]
+        existing_query_texts = [q["query"] for q in query_results]
 
-    return queries[:10]
+        # Check if we have existing queries to deduplicate against
+        if existing_query_texts:
+            # Deduplicate the combined list of existing and new queries
+            deduplicated_texts = await deduplicate_queries(existing_query_texts + current_query_texts)
+
+            # Find which queries are new (not in the existing queries)
+            new_query_texts = [q for q in deduplicated_texts if q not in existing_query_texts]
+        else:
+            # If no existing queries, just deduplicate the current ones
+            new_query_texts = await deduplicate_queries(current_query_texts)
+
+        query_results.extend(
+            [
+                {"query": q["text"], "type": q["type"], "aspect": q["aspect"]}
+                for q in response["queries"]
+                if q["text"] in new_query_texts
+            ]
+        )
+
+        if not new_query_texts and len(query_results) < 3:
+            messages.append(
+                dedent(f"""
+            The queries you've generated are too similar to these existing queries:
+            {existing_query_texts}
+
+            Please generate completely different queries covering other aspects of the topic.
+            """)
+            )
+
+    final_queries = [q["query"] for q in query_results]
+
+    query_types = [q.get("type", "unknown") for q in query_results]
+    logger.info("Generated diverse search queries", query_count=len(final_queries), query_types=query_types)
+
+    return final_queries[:10]

@@ -100,8 +100,38 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: Moc
 
     mock_completions_request = mocker.patch("src.rag.retrieval.handle_completions_request")
     mock_completions_request.side_effect = [
-        {"is_sufficient": False, "reason": "Need better content", "new_queries": ["better query"]},
-        {"is_sufficient": True, "reason": "Good content now", "new_queries": []},
+        {
+            "assessment": {
+                "relevance_score": 5.0,
+                "comprehensiveness_score": 4.0,
+                "diversity_score": 3.0,
+                "depth_score": 4.0,
+                "freshness_score": 6.0,
+                "overall_score": 4.4,
+                "explanation": "The retrieved content lacks depth and diversity"
+            },
+            "optimization": {
+                "information_gaps": ["Missing specific details"],
+                "improved_queries": ["better query"],
+                "query_strategies": "Be more specific"
+            }
+        },
+        {
+            "assessment": {
+                "relevance_score": 9.0,
+                "comprehensiveness_score": 8.0,
+                "diversity_score": 8.0,
+                "depth_score": 8.0,
+                "freshness_score": 8.0,
+                "overall_score": 8.2,
+                "explanation": "Much better content now"
+            },
+            "optimization": {
+                "information_gaps": [],
+                "improved_queries": [],
+                "query_strategies": "Current strategy is working well"
+            }
+        }
     ]
 
     result = await retrieve_documents(

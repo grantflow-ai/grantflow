@@ -11,7 +11,9 @@ logger = get_logger(__name__)
 VALIDATE_SOURCES_SYSTEM_PROMPT: Final[str] = """
 You are a specialized validation component in a RAG system that analyzes whether the provided sources
 contain sufficient information to complete requested tasks. You excel at identifying information gaps
-and determining if critical data is missing for successful task completion.
+and determining if critical data is missing for successful task completion. You carefully consider the
+required output length when evaluating information needs - shorter outputs require less comprehensive
+sources, while longer outputs demand more detailed information.
 """
 
 VALIDATE_SOURCES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -39,30 +41,36 @@ VALIDATE_SOURCES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ## Instructions
 
-    1. Carefully analyze the task description to identify the key information requirements:
-       - What specific data or context is needed to complete the task?
-       - What methodological details must be available?
-       - What domain knowledge is required?
+    1. First, analyze the max length to understand the scope and detail level expected:
+       - If max length is short (under 1000 characters), you should only require essential core information and be more lenient in your validation
+       - If max length is medium (1000-5000 characters), you should require moderate detail on key points
+       - If max length is long (over 5000 characters), you should expect comprehensive information and be more stringent in your validation
+
+    2. Carefully analyze the task description to identify the key information requirements based on expected output length:
+       - What specific data or context is needed to complete the task at the appropriate level of detail?
+       - What methodological details must be available, considering the depth possible in the output?
+       - What domain knowledge is required for an output of this length?
        - What constraints or parameters need to be defined?
 
-    2. Evaluate the available sources to determine if they contain all required information:
+    3. Evaluate the available sources to determine if they contain all required information:
        - Check if all key concepts, terms, and references in the task description are addressed in the sources
-       - Assess if the sources provide adequate context, background, and specifics
+       - Assess if the sources provide adequate context, background, and specifics for the expected output length
        - Verify if the sources include sufficient methodological details
        - Determine if any critical domain knowledge is missing
 
-    3. Identify any specific gaps or missing information:
+    4. Identify any specific gaps or missing information:
        - Note any key requirements mentioned in the task that aren't addressed in the sources
        - Identify ambiguities that cannot be resolved with the available information
        - Flag any incomplete or insufficient methodological details
        - Highlight if domain-specific knowledge is required but not provided
 
-    4. Calculate the percentage of required information that is available in the sources:
-       - Enumerate all discrete pieces of information needed for the task
+    5. Calculate the percentage of required information that is available in the sources:
+       - Enumerate all discrete pieces of information needed for the task, scaled appropriately to the max length
        - Count how many of these pieces are adequately covered in the sources
        - Calculate the percentage of required information that is available
+       - For shorter outputs, fewer pieces of information are required, so adjust your evaluation accordingly
 
-    Important: The caluculation must be relative to the max length of the expected text.
+    Important: The calculation MUST be relative to the max length of the expected text. A shorter max length means fewer details are required, while a longer max length requires more comprehensive information.
 
     ## Output Format
 
@@ -169,7 +177,7 @@ def validate_source_validation_response(response: SourceValidationResult) -> Non
 async def handle_source_validation(
     *,
     task_description: str,
-    minimum_percentage: float = 35.0,
+    minimum_percentage: float = 50.0,
     max_length: int,
     **sources: Any,
 ) -> str | None:
