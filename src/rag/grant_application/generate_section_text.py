@@ -169,6 +169,7 @@ async def generate_section_text(
 
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
+        max_length=grant_section["max_words"],
         sources={"rag_results": rag_results, "user_inputs": user_inputs, "workplan_text": workplan_text},
     ):
         return source_validation_error
