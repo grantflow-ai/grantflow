@@ -2,10 +2,9 @@ from typing import Any, Final, TypedDict, cast
 
 from sqlalchemy import func, or_, select
 
-from src.constants import GENERATION_MODEL
+from src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from src.db.connection import get_session_maker
 from src.db.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
-from src.exceptions import EvaluationError
 from src.rag.completion import handle_completions_request
 from src.rag.dto import DocumentDTO
 from src.rag.post_processing import post_process_documents
@@ -16,7 +15,7 @@ from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
-MAX_RESULTS: Final[int] = 25
+MAX_RESULTS: Final[int] = 100
 
 GUIDED_RETRIEVAL_SYSTEM_PROMPT: Final[str] = """
 You are an AI assistant specializing in evaluating the relevance and comprehensiveness of information retrieved from a vector database for the purpose of completing a specific task.
@@ -211,7 +210,6 @@ async def retrieve_documents(
 
     Raises:
         ValueError: If neither application_id nor organization_id is provided.
-        EvaluationError: If the guided retrieval response indicates insufficient context.
 
     Returns:
         List of document content strings.
@@ -223,40 +221,41 @@ async def retrieve_documents(
 
     attempts = 0
 
+    vectors = await handle_retrieval(
+        application_id=application_id,
+        organization_id=organization_id,
+        search_queries=search_queries,
+        max_results=max_results,
+    )
+
+    documents = [
+        cast(
+            DocumentDTO,
+            {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
+        )
+        for vector in vectors
+    ]
+
+    processed_contents = await post_process_documents(
+        documents=documents,
+        query=",".join(search_queries),
+        task_description=str(task_description),
+        max_tokens=max_tokens,
+        model=model,
+    )
+
+    if not with_guided_retrieval:
+        return processed_contents
+
     while attempts < 3:
         attempts += 1
 
-        vectors = await handle_retrieval(
-            application_id=application_id,
-            organization_id=organization_id,
-            search_queries=search_queries,
-            max_results=max_results,
-        )
-
-        documents = [
-            cast(
-                DocumentDTO,
-                {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
-            )
-            for vector in vectors
-        ]
-
-        processed_contents = await post_process_documents(
-            documents=documents,
-            query=",".join(search_queries),
-            task_description=str(task_description),
-            max_tokens=max_tokens,
-            model=model,
-        )
-
-        if not with_guided_retrieval:
-            return processed_contents
-
-        tool_response: GuidedRetrievalToolResponse = await handle_completions_request(
+        tool_response = await handle_completions_request(
             prompt_identifier="guided_retrieval",
             response_schema=guided_retrieval_json_schema,
             response_type=GuidedRetrievalToolResponse,
             system_prompt=GUIDED_RETRIEVAL_SYSTEM_PROMPT,
+            model=ANTHROPIC_SONNET_MODEL,
             messages=GUIDED_RETRIEVAL_USER_PROMPT.to_string(
                 task_description=task_description,
                 queries=search_queries,
@@ -275,4 +274,4 @@ async def retrieve_documents(
 
         search_queries = tool_response.get("new_queries", [])
 
-    raise EvaluationError("Insufficient context retrieved")
+    return processed_contents

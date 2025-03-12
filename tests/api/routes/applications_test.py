@@ -2,7 +2,6 @@ from http import HTTPStatus
 from typing import Any, Final
 from unittest.mock import AsyncMock
 
-import pytest
 from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -66,7 +65,6 @@ async def test_create_application(
     assert len(signal_calls) == 1
 
 
-@pytest.mark.skip(reason="code needs to be reworked first")
 async def test_retrieve_application_text_processing(
     asgi_client: SanicASGITestClient,
     async_session_maker: async_sessionmaker[Any],
