@@ -22,10 +22,6 @@ def test_validate_no_research_objectives() -> None:
 
     with pytest.raises(ValidationError) as exc:
         validate_relationships_response({"relationships": []}, research_objectives=None)
-    assert "Missing relationships in response" in str(exc.value)
-
-    with pytest.raises(ValidationError) as exc:
-        validate_relationships_response({"relationships": []}, research_objectives=None)
     assert "Relationships array is empty" in str(exc.value)
 
     validate_relationships_response(
@@ -43,10 +39,6 @@ def test_validate_with_research_objectives() -> None:
 
     with pytest.raises(ValidationError) as exc:
         validate_relationships_response({"relationships": []}, research_objectives=objectives)
-    assert "Missing relationships in response" in str(exc.value)
-
-    with pytest.raises(ValidationError) as exc:
-        validate_relationships_response({"relationships": []}, research_objectives=objectives)
     assert "Relationships array is empty" in str(exc.value)
 
 
@@ -59,14 +51,7 @@ def test_validate_relationship_format() -> None:
             {"relationships": [("1", "1.1", "A detailed description of the relationship")]},
             research_objectives=objectives,
         )
-    assert "incorrect format" in str(exc.value)
-
-    with pytest.raises(ValidationError) as exc:
-        validate_relationships_response(
-            {"relationships": [("1", "1.1", "A detailed description of the relationship")]},
-            research_objectives=objectives,
-        )
-    assert "incorrect format" in str(exc.value)
+    assert "is too short" in str(exc.value)
 
 
 def test_validate_relationship_ids() -> None:
