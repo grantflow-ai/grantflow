@@ -161,6 +161,7 @@ async def generate_grant_section_texts(
         research_objectives=research_objectives,
         form_inputs=form_inputs,
     )
+    section_texts[workplan_section["id"]] = workplan_text
 
     long_form_sections = [
         s for s in grant_sections if is_grant_long_form_section(s) and not s.get("is_detailed_workplan")

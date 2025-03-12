@@ -269,6 +269,7 @@ async def generate_long_form_text(
     prompt_identifier: str,
     task_description: str,
     max_api_calls: int = MAX_API_CALLS,
+    model: str = GENERATION_MODEL,
     **sources: Any,
 ) -> str:
     """Generate long-form text.
@@ -300,6 +301,7 @@ async def generate_long_form_text(
         prompt_identifier=prompt_identifier,
         task_description=task_description,
         max_api_calls=max_api_calls,
+        model=model,
         **sources,
     )
 

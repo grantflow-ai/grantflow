@@ -49,7 +49,7 @@
     },
     {
       "depends_on": [],
-      "generation_instructions": "This section requires a brief but comprehensive description of the core idea that will be taken to proof of concept. Clearly articulate the underlying technology or research finding that forms the basis of the innovation. Emphasize the novelty and originality of the idea, highlighting its scientific basis and technical specifications. Provide enough technical detail to allow reviewers to understand the concept without overwhelming them. Explain the potential applications of the idea and the problem it solves. Briefly touch upon the feasibility of bringing the idea to fruition. This section sets the stage for demonstrating the breakthrough innovation potential and high-risk/high-gain aspects in the subsequent sections. Avoid jargon and clearly define any technical terms. Focus on the 'what' and 'why' of the idea. Maintain a clear and concise writing style, using visuals where appropriate to illustrate complex concepts.",
+      "generation_instructions": "Provide a brief, non-specialist description of your PoC project with expected outcomes. Structure your response in three clear sections: 1) The problem: Describe the problem to be solved, including its context and impact; 2) The solution: Detail the proposed solution, its value proposition, core technology/research, and potential applications; 3) The origin: Explain the connection to the original ERC-funded project, including the scientific basis and innovative aspects. Use clear language, avoid jargon, define technical terms, and incorporate visuals where helpful.",
       "id": "idea_description",
       "is_clinical_trial": false,
       "is_detailed_workplan": false,
@@ -69,7 +69,7 @@
         "ERC Proof of Concept",
         "Cutting-edge research"
       ],
-      "max_words": 1000,
+      "max_words": 285,
       "order": 3,
       "parent_id": "section_1a",
       "search_queries": [
@@ -96,7 +96,7 @@
       "depends_on": [
         "idea_description"
       ],
-      "generation_instructions": "This section requires a compelling demonstration of the breakthrough innovation potential of the idea. Clearly articulate how the idea represents a significant advancement over existing technologies or approaches. Quantify the potential impact of the innovation, considering factors such as market size, competitive advantage, disruptive potential, and scalability. Provide evidence to support claims of breakthrough innovation, such as published research, patent filings, or expert opinions. Explain how the innovation addresses an unmet need or solves a significant problem. Discuss the scalability of the innovation and its potential for widespread adoption and commercialization. Avoid vague or unsubstantiated claims. Focus on the 'how' and 'why' the idea is truly innovative. Adopt a persuasive and confident tone, highlighting the unique value proposition of the innovation.",
+      "generation_instructions": "Demonstrate how the idea drives innovation and tackles societal challenges. Detail how the project outcomes are innovative compared to existing solutions. Include: 1) A clear value proposition explaining why potential users should choose this solution over alternatives, 2) A detailed comparison with competing products/solutions highlighting your unique advantages, and 3) Quantifiable evidence of breakthrough potential (market size, competitive advantage, scalability). Provide supporting evidence from research, patents, or expert opinions. Explain how the innovation addresses an unmet need, its scalability and commercialization potential. Use a persuasive tone that emphasizes the 'how' and 'why' of your innovation's distinctiveness.",
       "id": "innovation_potential",
       "is_clinical_trial": false,
       "is_detailed_workplan": false,
@@ -114,9 +114,11 @@
         "Scalability",
         "Commercialization",
         "ERC Proof of Concept",
-        "Value Proposition"
+        "Value Proposition",
+        "Existing Solutions",
+        "Comparative Advantage"
       ],
-      "max_words": 1000,
+      "max_words": 430,
       "order": 4,
       "parent_id": "section_1a",
       "search_queries": [
@@ -144,7 +146,7 @@
         "idea_description",
         "innovation_potential"
       ],
-      "generation_instructions": "This section requires a clear demonstration of the high-risk/high-gain nature of the idea. Identify the key risks and uncertainties associated with the project, including technical, market, and regulatory risks. Quantify the potential gains if the project is successful, considering factors such as economic impact, social benefits, and scientific advancements. Explain why the potential gains justify the risks involved. Describe the strategies that will be used to mitigate the risks. Provide a realistic assessment of the feasibility of achieving the project's objectives. Avoid downplaying the risks or overstating the potential gains. Focus on the 'what if' scenarios and the potential upside if the risks are successfully managed. Adopt a balanced and realistic tone, acknowledging the challenges while emphasizing the potential rewards.",
+      "generation_instructions": "Explain how the successful implementation of this idea will result in breakthrough innovation and significant impact. Highlight the high-gain aspects including potential economic, social, and scientific advancements that justify pursuing this high-risk endeavor. Identify and analyze the specific challenging aspects that may be difficult to overcome, including technical barriers, market uncertainties, and regulatory hurdles. Describe what features might require development of new approaches or methodologies. Provide a realistic assessment of these challenges while emphasizing the transformative potential rewards. Balance acknowledging risks with strategies for mitigation. Adopt a confident tone that conveys both the ambitious nature of the project and a thoughtful understanding of its feasibility.",
       "id": "high_risk_gain",
       "is_clinical_trial": false,
       "is_detailed_workplan": false,
@@ -162,9 +164,12 @@
         "Market Risk",
         "Technical Risk",
         "ERC Proof of Concept",
-        "Risk-Reward Analysis"
+        "Risk-Reward Analysis",
+        "Technical Barriers",
+        "New Approaches",
+        "Transformative Impact"
       ],
-      "max_words": 1000,
+      "max_words": 285,
       "order": 5,
       "parent_id": "section_1a",
       "search_queries": [
@@ -197,28 +202,28 @@
       "depends_on": [
         "idea_description"
       ],
-      "generation_instructions": "This section requires a detailed outline of the approach and methodology that will be used to explore the innovation potential of the ERC-funded research. Describe the specific experiments, simulations, or analyses that will be conducted. Explain the rationale behind the chosen methodology and why it is appropriate for the project's objectives. Provide a clear timeline for the project, including key milestones and deliverables. Discuss the methods that will be used to validate the results and ensure statistical significance. Address any potential challenges or limitations of the methodology and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'how' the project will be executed and the 'why' the chosen approach is the most effective. Use a clear and concise writing style, providing sufficient detail to allow reviewers to assess the rigor of the methodology.",
+      "generation_instructions": "This section requires a concise outline of the approach and methodology to explore the commercial and innovation potential of your ERC-funded research. Begin with a brief market analysis of the relevant industry, including market size, growth projections, and commercial opportunities. Describe your chosen pathway from research to innovation (e.g., patenting, creation of spinouts, licensing agreements) and explain why this pathway is most appropriate. Clearly articulate how your approach represents a paradigm shift or significant advancement over existing technologies, highlighting 2-3 key competitive advantages. Outline your specific research objectives in numbered format (3-4 objectives maximum), describing only the essential experiments or development steps without excessive technical detail. Conclude with a brief statement about commercial strategy, including potential partnerships, IP protection, or formation of new entities. Use a clear, concise style with business-oriented language that emphasizes commercial potential alongside scientific innovation. Limit discussions of technical methodology to only what's necessary for understanding the innovation's unique value.",
       "id": "approach_methodology",
       "is_clinical_trial": false,
       "is_detailed_workplan": false,
       "keywords": [
         "Methodology",
         "Approach",
-        "Experiment",
-        "Design",
-        "Analysis",
-        "Validation",
-        "Testing",
-        "Proof of Concept",
-        "Innovation",
-        "Research",
-        "Statistical Analysis",
-        "Data Collection",
-        "ERC Proof of Concept",
-        "Experimental Design",
-        "Analytical Techniques"
+        "Commercialization",
+        "Market Analysis",
+        "Innovation Pathway",
+        "Competitive Advantage",
+        "Research Objectives",
+        "Business Strategy",
+        "IP Protection",
+        "Paradigm Shift",
+        "Technology Transfer",
+        "Spinout",
+        "Licensing",
+        "Partnerships",
+        "Market Opportunity"
       ],
-      "max_words": 2000,
+      "max_words": 285,
       "order": 7,
       "parent_id": "section_1b",
       "search_queries": [
@@ -245,27 +250,27 @@
       "depends_on": [
         "approach_methodology"
       ],
-      "generation_instructions": "This section requires a detailed description of the specific activities that will be undertaken during the project. Break down the project into manageable tasks and deliverables. Provide a clear timeline for each activity, including start and end dates. Describe the resources that will be required for each activity. Explain how progress will be monitored and reported. Address any potential challenges or risks associated with each activity and how they will be mitigated. Avoid vague or generic descriptions. Focus on the 'what' and 'when' of each activity and how it contributes to the overall project objectives. Use bullet points or tables to enhance readability and clarity. Emphasize quality control measures to ensure the reliability of the results.",
+      "generation_instructions": "This section requires a clear, direct description of activities that will explore the innovation potential of your ERC-funded research. Begin immediately with your planned approach, using active voice statements like 'To understand X, we will...' followed by numbered points of key methodological steps (1-3 points maximum). For each major technological approach, start a new paragraph with 'To [accomplish specific goal], we are using [specific technology/method].' Include both planned activities and ongoing work seamlessly, using present tense. After describing the core methodological approaches (approximately 30%-40% of content), transition to preliminary data with phrases like 'The feasibility of this project is supported by strong preliminary data...' and describe 2-3 key preliminary findings that demonstrate proof-of-concept. Include a note in bold where figures would enhance understanding (e.g., '**[FIGURE X: Brief description would be helpful here]**'). Conclude with two clearly labeled sections: 1) 'IPR strategy:' outlining patent development and technology transfer plans with your university; and 2) 'Market landscape and potential end users:' describing commercialization plans, intended user base, and any planned commercial entities or partnerships. Use technical language appropriate to the field without excessive detail or jargon, focusing on methodological approaches rather than granular protocols.",
       "id": "activities",
       "is_clinical_trial": false,
       "is_detailed_workplan": false,
       "keywords": [
-        "Tasks",
-        "Deliverables",
-        "Milestones",
-        "Timeline",
-        "Work Packages",
-        "Progress",
-        "Reporting",
-        "Management",
-        "Coordination",
-        "Execution",
-        "Resource Allocation",
-        "Quality Control",
+        "Methodological Approach",
+        "Technology Platform",
+        "Preliminary Results",
+        "Validation Strategy",
+        "Testing Protocol",
+        "IPR Strategy",
+        "Commercialization",
+        "Market Analysis",
+        "End Users",
+        "Technology Transfer",
+        "Partnerships",
+        "Research Plan",
         "ERC Proof of Concept",
-        "Project Management"
+        "Innovation Pathway"
       ],
-      "max_words": 2000,
+      "max_words": 570,
       "order": 8,
       "parent_id": "section_1b",
       "search_queries": [
@@ -319,7 +324,7 @@
         "ERC Proof of Concept",
         "Project Scheduling"
       ],
-      "max_words": 2000,
+      "max_words": 800,
       "order": 10,
       "parent_id": "proof_of_concept_plan",
       "search_queries": [
@@ -347,7 +352,7 @@
         "work_plan",
         "activities"
       ],
-      "generation_instructions": "This section requires a detailed description of the resources that will be required to successfully complete the project. Provide a clear breakdown of the budget, including personnel costs, equipment costs, consumables costs, travel costs, and other expenses. Justify the need for each resource and explain how it will be used to achieve the project's objectives. Describe the equipment, infrastructure, and facilities that will be required. Explain how personnel will be allocated to the project and their roles and responsibilities. Address any potential resource constraints and how they will be addressed. Avoid vague or unsubstantiated requests. Focus on the 'what' and 'why' of each resource and how it contributes to the overall project objectives. Include a cost-effectiveness analysis to demonstrate the value for money of the proposed resources.",
+      "generation_instructions": "This section requires a concise description of the resources needed for project implementation, without including any financial figures or costs. Organize the content by objective or task leader, with each paragraph following this pattern: 'Task/Objective X, led by [Name/Role], will require [specific personnel allocation in person-months] of [specific roles].' For each task, clearly specify: 1) Task leadership, 2) Personnel requirements with specific time allocations (in person-months or work months), 3) Materials and equipment needed (specify whether using existing equipment or requiring new purchases), 4) External services or partnerships if applicable, and 5) Expected duration in months. Include only essential details that demonstrate the appropriate allocation of resources for achieving project objectives. The tone should be matter-of-fact and focused on resource justification rather than detailed methodology. Use brief, direct sentences and avoid unnecessary elaboration on technical processes unless directly relevant to resource needs.",
       "id": "resources",
       "is_clinical_trial": false,
       "is_detailed_workplan": false,
@@ -367,7 +372,7 @@
         "ERC Proof of Concept",
         "Resource Management"
       ],
-      "max_words": 900,
+      "max_words": 300,
       "order": 11,
       "parent_id": "proof_of_concept_plan",
       "search_queries": [
@@ -412,7 +417,7 @@
         "ERC Proof of Concept",
         "Team Building"
       ],
-      "max_words": 900,
+      "max_words": 200,
       "order": 12,
       "parent_id": "proof_of_concept_plan",
       "search_queries": [
