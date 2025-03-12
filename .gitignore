@@ -12,6 +12,7 @@
 .mypy_cache
 .ruff_cache
 __pycache__/
-coverage.xml
+coverage.*
+.coverage*
 requirements.txt
 **/http-client.private.env.json
