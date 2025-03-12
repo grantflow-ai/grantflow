@@ -166,7 +166,7 @@ def create_text_recursively(node: TreeNode, *, depth: int = 2) -> str:
         text += f"{node_text}\n\n"
 
     for child in node["children"]:
-        text += f"\n\n{create_text_recursively(child, depth=depth + 1)}"
+        text += f"{create_text_recursively(child, depth=depth + 1)}\n\n"
 
     return text.strip()
 

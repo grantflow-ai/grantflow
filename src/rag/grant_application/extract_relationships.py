@@ -139,18 +139,14 @@ def validate_relationships_response(
     Returns:
           None
     """
-    if not research_objectives:
-        if "relationships" not in response:
-            raise ValidationError("Missing relationships in response", context=response)
-        if not response["relationships"]:
-            raise ValidationError("Relationships array is empty", context=response)
-        return
-
     if "relationships" not in response:
         raise ValidationError("Missing relationships in response", context=response)
 
     if not response["relationships"]:
         raise ValidationError("Relationships array is empty", context=response)
+
+    if not research_objectives:
+        return
 
     valid_ids = set()
     for obj_idx, objective in enumerate(research_objectives, start=1):

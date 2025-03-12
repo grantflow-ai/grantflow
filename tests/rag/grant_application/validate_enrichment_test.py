@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 import pytest
 
@@ -68,31 +68,18 @@ def test_validate_missing_objective_fields() -> None:
     fields = ["instructions", "description", "guiding_questions", "search_queries"]
 
     for field in fields:
-        enrichment_data = create_enrichment_data()
-        enrichment_data_dict = dict(enrichment_data)
-        del enrichment_data_dict[field]
-        instructions = enrichment_data_dict.get("instructions")
-        description = enrichment_data_dict.get("description")
-        guiding_questions = enrichment_data_dict.get("guiding_questions")
-        search_queries = enrichment_data_dict.get("search_queries")
+        enrichment_data = {}
 
-        enrichment_data = cast(
-            EnrichmentDataDTO,
-            {
-                "instructions": str(instructions) if instructions is not None else "",
-                "description": str(description) if description is not None else "",
-                "guiding_questions": list(guiding_questions)
-                if guiding_questions is not None and isinstance(guiding_questions, list | tuple)
-                else [],
-                "search_queries": list(search_queries)
-                if search_queries is not None and isinstance(search_queries, list | tuple)
-                else [],
-            },
-        )
+        for f in fields:
+            if f != field:
+                if f in ["guiding_questions", "search_queries"]:
+                    enrichment_data[f] = ["Q1", "Q2", "Q3"]
+                else:
+                    enrichment_data[f] = ["This is a test value that is long enough to pass validation"]
 
         with pytest.raises(ValidationError) as exc:
             validate_enrichment_response(
-                {"research_objective": enrichment_data, "research_tasks": []},
+                {"research_objective": enrichment_data, "research_tasks": []},  # type: ignore
                 input_objective=None,
             )
         assert f"Missing {field} in objective" in str(exc.value)
@@ -179,31 +166,21 @@ def test_validate_task_fields() -> None:
     fields = ["instructions", "description", "guiding_questions", "search_queries"]
 
     for field in fields:
-        enrichment_data = create_enrichment_data()
-        enrichment_data_dict = dict(enrichment_data)
-        del enrichment_data_dict[field]
-        instructions = enrichment_data_dict.get("instructions")
-        description = enrichment_data_dict.get("description")
-        guiding_questions = enrichment_data_dict.get("guiding_questions")
-        search_queries = enrichment_data_dict.get("search_queries")
+        task_data = {}
 
-        enrichment_data = cast(
-            EnrichmentDataDTO,
-            {
-                "instructions": str(instructions) if instructions is not None else "",
-                "description": str(description) if description is not None else "",
-                "guiding_questions": list(guiding_questions)
-                if guiding_questions is not None and isinstance(guiding_questions, list | tuple)
-                else [],
-                "search_queries": list(search_queries)
-                if search_queries is not None and isinstance(search_queries, list | tuple)
-                else [],
-            },
-        )
+        for f in fields:
+            if f != field:
+                if f in ["guiding_questions", "search_queries"]:
+                    task_data[f] = ["Q1", "Q2", "Q3"]
+                else:
+                    task_data[f] = ["This is a test value that is long enough to pass validation"]
 
         with pytest.raises(ValidationError) as exc:
             validate_enrichment_response(
-                create_enrichment_response(research_tasks=[enrichment_data]),
+                {
+                    "research_objective": create_enrichment_data(),
+                    "research_tasks": [task_data],  # type: ignore
+                },
                 input_objective=None,
             )
         assert f"Missing {field} in task at index 0" in str(exc.value)
