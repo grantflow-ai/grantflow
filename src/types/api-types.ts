@@ -15,7 +15,7 @@ export interface APIError {
 	message: string;
 }
 
-export interface ApplicationDetails {
+export interface ApplicationDetailsForm {
 	background_context?: string;
 	hypothesis?: string;
 	impact?: string;
@@ -52,27 +52,14 @@ export interface CreateOrganizationRequestBody {
 	full_name: string;
 }
 
-// Workspace Types
 export interface CreateWorkspaceRequestBody {
 	description?: null | string;
 	logo_url?: null | string;
 	name: string;
 }
-
-// Organization Types
-export interface FundingOrganization extends TableIdResponse {
-	abbreviation: null | string;
-	full_name: string;
-}
-
-export interface FundingOrganizationBase extends TableIdResponse {
-	abbreviation: null | string;
-	full_name: string;
-}
-
 export interface GrantApplication extends TableIdResponse {
 	completed_at: null | string;
-	details: ApplicationDetails | null;
+	details: ApplicationDetailsForm | null;
 	grant_template: GrantTemplate | null;
 	research_objectives: null | ResearchObjective[];
 	text: null | string;
@@ -97,7 +84,11 @@ export interface GrantSection {
 }
 
 export interface GrantTemplate extends TableIdResponse {
-	funding_organization: FundingOrganizationBase | null;
+	funding_organization: {
+		abbreviation: null | string;
+		full_name: string;
+		id: string;
+	} | null;
 	grant_sections: GrantSection[];
 	name: string;
 	template: string;
@@ -111,17 +102,10 @@ export interface LoginResponse {
 	jwt_token: string;
 }
 
-export interface OrganizationFile {
-	funding_organization_id: string;
-	rag_file: RagFileResponse;
-}
-
-// Auth Types
 export interface OTPResponse {
 	otp: string;
 }
 
-// File Types
 export interface RagFileResponse extends TableIdResponse {
 	filename: string;
 	indexing_status: FileIndexingStatus;
@@ -132,16 +116,13 @@ export interface RagFileResponse extends TableIdResponse {
 export interface ResearchObjective {
 	description?: string;
 	number: number;
-	relationships?: string[];
 	research_tasks: ResearchTask[];
 	title: string;
 }
 
-// Application Types
 export interface ResearchTask {
 	description?: string;
 	number: number;
-	relationships?: string[];
 	title: string;
 }
 
@@ -152,11 +133,6 @@ export interface TableIdResponse {
 export interface UpdateApplicationRequestBody {
 	research_objectives?: ResearchObjective[];
 	title?: string;
-}
-
-export interface UpdateOrganizationRequestBody {
-	abbreviation?: null | string;
-	full_name?: string;
 }
 
 export interface UpdateWorkspaceRequestBody {

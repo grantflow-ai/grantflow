@@ -42,7 +42,7 @@ export function ResearchTaskForm({
 			<div className="space-y-4">
 				<FormField
 					control={form.control}
-					name={`researchPlan.objectives.${objectiveIndex}.tasks.${taskIndex}.title`}
+					name={`research_objectives.${objectiveIndex}.research_tasks.${taskIndex}.title`}
 					render={({ field }) => (
 						<FormItem className="space-y-2">
 							<div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ export function ResearchTaskForm({
 									onChange={(e) => {
 										field.onChange(e);
 										form.setValue(
-											`researchPlan.objectives.${objectiveIndex}.tasks.${taskIndex}.title`,
+											`research_objectives.${objectiveIndex}.research_tasks.${taskIndex}.title`,
 											e.target.value,
 										);
 									}}
@@ -96,7 +96,7 @@ export function ResearchTaskForm({
 				/>
 				<FormField
 					control={form.control}
-					name={`researchPlan.objectives.${objectiveIndex}.tasks.${taskIndex}.description`}
+					name={`research_objectives.${objectiveIndex}.research_tasks.${taskIndex}.description`}
 					render={({ field }) => (
 						<FormItem className="space-y-2">
 							<div className="flex items-center gap-2">

@@ -17,7 +17,7 @@ export function ResearchTaskTabs({
 }) {
 	const { append, fields, remove } = useFieldArray({
 		control: form.control,
-		name: `researchPlan.objectives.${objectiveIndex}.tasks`,
+		name: `research_objectives.${objectiveIndex}.research_tasks`,
 	});
 
 	const [activeTab, setActiveTab] = useState("0");
@@ -37,7 +37,7 @@ export function ResearchTaskTabs({
 					aria-label="Add Task"
 					data-testid="add-task-button"
 					onClick={() => {
-						const newTask = { description: "", task_number: fields.length + 1, title: "" };
+						const newTask = { description: "", number: fields.length + 1, title: "" };
 						append(newTask);
 						setActiveTab(fields.length.toString());
 					}}
@@ -67,8 +67,8 @@ export function ResearchTaskTabs({
 								});
 							} else {
 								// Replace the last task with an empty one
-								form.setValue(`researchPlan.objectives.${objectiveIndex}.tasks`, [
-									{ description: "", title: "" },
+								form.setValue(`research_objectives.${objectiveIndex}.research_tasks`, [
+									{ description: "", number: 1, title: "" },
 								]);
 								setActiveTab("0");
 							}
