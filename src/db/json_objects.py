@@ -30,6 +30,8 @@ class ResearchTask(TypedDict):
     """The title of the task."""
     description: NotRequired[str]
     """The description of the task."""
+    relationships: NotRequired[list[dict[str, str]]]
+    """The relationships to other tasks or objectives."""
 
 
 class ResearchObjective(TypedDict):

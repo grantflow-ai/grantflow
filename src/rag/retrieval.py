@@ -16,15 +16,18 @@ from src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 MAX_RESULTS: Final[int] = 100
+MAX_OPTIMIZATION_ATTEMPTS: Final[int] = 2
+MIN_QUALITY_SCORE: Final[float] = 7.0
 
-GUIDED_RETRIEVAL_SYSTEM_PROMPT: Final[str] = """
-You are an AI assistant specializing in evaluating the relevance and comprehensiveness of information retrieved from a vector database for the purpose of completing a specific task.
+RETRIEVAL_OPTIMIZATION_SYSTEM_PROMPT: Final[str] = """
+You are an AI assistant specializing in evaluating and improving information retrieval quality for Retrieval Augmented Generation (RAG) systems.
+Your goal is to optimize the quality, relevance, depth, and diversity of information retrieved to maximize the performance of downstream generation tasks.
 """
 
-GUIDED_RETRIEVAL_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="guided_retrieval",
+RETRIEVAL_OPTIMIZATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="retrieval_optimization",
     template="""
-    Your task is to analyze the following components and determine whether the retrieved information when combined with the contents of the prompt has sufficient quality, detail and depth to support the text generation task.
+    Your task is to analyze the retrieved information quality and provide detailed feedback to optimize retrieval for the generation task.
 
     ## Generation Task Description
     This is the task description:
@@ -44,47 +47,123 @@ GUIDED_RETRIEVAL_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ${rag_results}
         </rag_results>
 
-    ## Evaluation Criteria
+    ## Quality Assessment
 
-    Consider the following criteria when evaluating the RAG results:
+    Evaluate the retrieval quality on the following dimensions (score each from 0-10):
 
-    * **Task Alignment:** Do the retrieved documents provide information that is directly relevant to the task outlined in the prompt?
-    * **Comprehensiveness:** Do the results provide a sufficient depth of information to adequately address the task?
+    1. **Relevance:** How directly does the information address the task's specific needs?
+    2. **Comprehensiveness:** How complete is the coverage of key aspects needed for the task?
+    3. **Information Diversity:** How well does the retrieval cover different aspects and perspectives?
+    4. **Depth:** How detailed and substantive is the information for critical aspects?
+    5. **Freshness:** Are there any gaps in current information that might benefit from more recent sources?
 
-    ## Output
+    ## Optimization Strategy
+
+    For any dimension scoring below 8, provide specific improvement suggestions:
+    - Identify specific information gaps
+    - Recommend new query strategies
+    - Suggest alternative phrasings or terminology
+
+    ## Output Format
 
     Provide a JSON object with the following structure:
 
     ```jsonc
     {
-      "is_sufficient": false,  // or true, if the results are sufficient.
-      "reason": "Explanation of the assessment",
-      "new_queries": ["list of improved queries"] // should be empty if is_sufficient is true
+      "assessment": {
+        "relevance_score": 7,  // 0-10 scale
+        "comprehensiveness_score": 6,  // 0-10 scale
+        "diversity_score": 5,  // 0-10 scale
+        "depth_score": 7,  // 0-10 scale
+        "freshness_score": 8,  // 0-10 scale
+        "overall_score": 6.6,  // average of all scores
+        "explanation": "Brief explanation of the quality assessment"
+      },
+      "optimization": {
+        "information_gaps": ["Specific missing information types or aspects"],
+        "improved_queries": ["List of targeted queries to fill identified gaps"],
+        "query_strategies": "Recommendations for improving future queries"
+      }
     }
     ```
     """,
 )
 
 
-class GuidedRetrievalToolResponse(TypedDict):
-    """Response from guided retrieval."""
+class RetrievalAssessment(TypedDict):
+    """Assessment of retrieval quality."""
 
-    is_sufficient: bool
-    """Whether the RAG results are sufficient."""
-    reason: str
-    """Explanation of the assessment."""
-    new_queries: list[str]
-    """List of improved queries."""
+    relevance_score: float
+    """Relevance score (0-10)."""
+    comprehensiveness_score: float
+    """Comprehensiveness score (0-10)."""
+    diversity_score: float
+    """Diversity score (0-10)."""
+    depth_score: float
+    """Depth score (0-10)."""
+    freshness_score: float
+    """Freshness score (0-10)."""
+    overall_score: float
+    """Overall score (average of all scores)."""
+    explanation: str
+    """Explanation of the quality assessment."""
 
 
-guided_retrieval_json_schema: Final[dict[str, Any]] = {
+class RetrievalOptimization(TypedDict):
+    """Optimization recommendations for retrieval."""
+
+    information_gaps: list[str]
+    """Specific missing information types or aspects."""
+    improved_queries: list[str]
+    """List of targeted queries to fill identified gaps."""
+    query_strategies: str
+    """Recommendations for improving future queries."""
+
+
+class RetrievalQualityResponse(TypedDict):
+    """Response from retrieval quality assessment and optimization."""
+
+    assessment: RetrievalAssessment
+    """Assessment of retrieval quality."""
+    optimization: RetrievalOptimization
+    """Optimization recommendations for retrieval."""
+
+
+retrieval_quality_schema: Final[dict[str, Any]] = {
     "type": "object",
     "properties": {
-        "is_sufficient": {"type": "boolean"},
-        "reason": {"type": "string"},
-        "new_queries": {"type": "array", "items": {"type": "string"}},
+        "assessment": {
+            "type": "object",
+            "properties": {
+                "relevance_score": {"type": "number", "minimum": 0, "maximum": 10},
+                "comprehensiveness_score": {"type": "number", "minimum": 0, "maximum": 10},
+                "diversity_score": {"type": "number", "minimum": 0, "maximum": 10},
+                "depth_score": {"type": "number", "minimum": 0, "maximum": 10},
+                "freshness_score": {"type": "number", "minimum": 0, "maximum": 10},
+                "overall_score": {"type": "number", "minimum": 0, "maximum": 10},
+                "explanation": {"type": "string"},
+            },
+            "required": [
+                "relevance_score",
+                "comprehensiveness_score",
+                "diversity_score",
+                "depth_score",
+                "freshness_score",
+                "overall_score",
+                "explanation",
+            ],
+        },
+        "optimization": {
+            "type": "object",
+            "properties": {
+                "information_gaps": {"type": "array", "items": {"type": "string"}},
+                "improved_queries": {"type": "array", "items": {"type": "string"}},
+                "query_strategies": {"type": "string"},
+            },
+            "required": ["information_gaps", "improved_queries", "query_strategies"],
+        },
     },
-    "required": ["is_sufficient", "reason", "new_queries"],
+    "required": ["assessment", "optimization"],
 }
 
 
@@ -195,7 +274,7 @@ async def retrieve_documents(
     with_guided_retrieval: bool = False,
     **kwargs: Any,
 ) -> list[str]:
-    """Retrieve documents from the vector store.
+    """Retrieve documents from the vector store with quality optimization.
 
     Args:
         application_id: The application ID, required if organization_id is not provided.
@@ -205,7 +284,7 @@ async def retrieve_documents(
         organization_id: The organization ID, required if application_id is not provided.
         search_queries: The search queries.
         task_description: The task description.
-        with_guided_retrieval: Whether to use guided retrieval.
+        with_guided_retrieval: Whether to use guided retrieval optimization.
         **kwargs: Additional keyword arguments.
 
     Raises:
@@ -220,6 +299,8 @@ async def retrieve_documents(
     search_queries = search_queries or await handle_create_search_queries(user_prompt=task_description, **kwargs)
 
     attempts = 0
+    previous_scores: list[float] = []
+    best_score = 0.0
 
     vectors = await handle_retrieval(
         application_id=application_id,
@@ -244,34 +325,95 @@ async def retrieve_documents(
         model=model,
     )
 
-    if not with_guided_retrieval:
+    if not with_guided_retrieval or not processed_contents:
         return processed_contents
 
-    while attempts < 3:
+    best_processed_contents = processed_contents
+    while attempts < MAX_OPTIMIZATION_ATTEMPTS:
         attempts += 1
 
-        tool_response = await handle_completions_request(
-            prompt_identifier="guided_retrieval",
-            response_schema=guided_retrieval_json_schema,
-            response_type=GuidedRetrievalToolResponse,
-            system_prompt=GUIDED_RETRIEVAL_SYSTEM_PROMPT,
+        quality_response = await handle_completions_request(
+            prompt_identifier="retrieval_optimization",
+            response_schema=retrieval_quality_schema,
+            response_type=RetrievalQualityResponse,
+            system_prompt=RETRIEVAL_OPTIMIZATION_SYSTEM_PROMPT,
             model=ANTHROPIC_SONNET_MODEL,
-            messages=GUIDED_RETRIEVAL_USER_PROMPT.to_string(
+            messages=RETRIEVAL_OPTIMIZATION_USER_PROMPT.to_string(
                 task_description=task_description,
                 queries=search_queries,
                 rag_results=processed_contents,
             ),
         )
 
-        if tool_response.get("is_sufficient", False):
-            return processed_contents
+        assessment = quality_response["assessment"]
+        current_score = assessment["overall_score"]
 
         logger.info(
-            "Guided retrieval response indicated insufficient context",
-            reason=tool_response.get("reason", ""),
-            attempts=attempts,
+            "Retrieval quality assessment",
+            attempt=attempts,
+            overall_score=current_score,
+            relevance=assessment["relevance_score"],
+            comprehensiveness=assessment["comprehensiveness_score"],
+            diversity=assessment["diversity_score"],
+            depth=assessment["depth_score"],
+            explanation=assessment["explanation"],
         )
 
-        search_queries = tool_response.get("new_queries", [])
+        if current_score > best_score:
+            best_score = current_score
+            best_processed_contents = processed_contents
 
-    return processed_contents
+        if current_score >= MIN_QUALITY_SCORE:
+            logger.info("Retrieval quality meets target threshold", score=current_score, threshold=MIN_QUALITY_SCORE)
+            return best_processed_contents
+
+        previous_scores.append(current_score)
+        if attempts > 1 and (current_score - previous_scores[-2]) < 0.5:
+            logger.info(
+                "Retrieval quality optimization plateaued", last_score=previous_scores[-2], current_score=current_score
+            )
+            return best_processed_contents
+
+        optimization = quality_response["optimization"]
+        improved_queries = optimization["improved_queries"]
+
+        if not improved_queries:
+            logger.info("No improved queries suggested, ending optimization")
+            return best_processed_contents
+
+        logger.info(
+            "Using improved queries for retrieval optimization",
+            queries=improved_queries,
+            information_gaps=optimization["information_gaps"],
+        )
+
+        new_vectors = await handle_retrieval(
+            application_id=application_id,
+            organization_id=organization_id,
+            search_queries=improved_queries,
+            max_results=max_results,
+        )
+
+        new_documents = [
+            cast(
+                DocumentDTO,
+                {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
+            )
+            for vector in new_vectors
+        ]
+
+        combined_documents = documents + new_documents
+
+        processed_contents = await post_process_documents(
+            documents=combined_documents,
+            query=",".join(search_queries + improved_queries),
+            task_description=str(task_description),
+            max_tokens=max_tokens,
+            model=model,
+        )
+
+        search_queries = improved_queries
+
+    logger.info("Completed retrieval optimization", attempts=attempts, final_score=best_score)
+
+    return best_processed_contents

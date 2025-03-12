@@ -12,6 +12,36 @@ from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
+TASK_CONTENT_GUIDELINES: Final[str] = """For this task:
+- Be specific about the methodologies, protocols, and techniques that will be used
+- Include concrete steps for implementation
+- Clarify dependencies on other tasks where applicable
+- Explain expected outcomes and deliverables
+- Consider potential challenges and contingency plans
+"""
+
+TASK_RELATIONSHIP_GUIDELINES: Final[str] = """When addressing relationships between tasks:
+- Make explicit connections to prerequisite tasks
+- Explain how this task builds upon outputs from other tasks
+- Clarify how results from this task will feed into subsequent tasks
+- Maintain clear timeline dependencies
+- Ensure methodological consistency across related tasks
+"""
+
+OBJECTIVE_CONTENT_GUIDELINES: Final[str] = """For this research objective:
+- Articulate the overarching scientific goal and its significance
+- Provide a high-level strategy for achievement
+- Explain how this objective advances knowledge in your field
+- Outline how the constituent tasks collectively address this objective
+- Highlight the expected scientific impact
+"""
+
+OBJECTIVE_RELATIONSHIP_GUIDELINES: Final[str] = """When addressing relationships between objectives:
+- Explain how this objective complements other research objectives
+- Highlight synergies between objectives that enhance overall scientific impact
+- Maintain conceptual alignment with the broader research goals
+- Ensure your objective creates a coherent narrative with other research aims
+"""
 
 GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="work_component_generation",
@@ -19,6 +49,12 @@ GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     Your task is to write the text for a ${object_type} in a grant application work plan.
 
     An ${object_type} is ${object_type_description}. This component must be scientifically accurate, methodologically sound, and demonstrate a clear scientific contribution to the field. The text will be evaluated by scientific experts and must balance technical precision with clarity.
+
+    The title of this ${object_type} is ${object_title} and the user provided the following description for it:
+
+    <description>
+    ${description}
+    </description>
 
     ## Generation Instructions
 
@@ -33,19 +69,18 @@ GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         ${relationships}
         </relationships>
 
+    ${relationship_guidance}
+
     Use these relationships to ensure that the generated text is consistent with the context and information provided in the previous sections.
 
     ## Content Guidance
+
+    ${object_type_specific_guidance}
 
     The generated text should address (implicitly) the following guiding questions:
         <guiding_questions>
         ${guiding_questions}
         </guiding_questions>
-
-    Use these keywords to ground the content in the specific context of the grant application:
-        <keywords>
-        ${keywords}
-        </keywords>
 
     Use the part of the work plan that has already been written to ensure that the generated text is consistent with the context and information provided in the previous sections:
         <work_plan_text>
@@ -148,16 +183,26 @@ async def generate_work_plan_component_text(
     """
     logger.debug("Generating text for work plan component.", component=component)
 
+    object_type_specific_guidance = (
+        TASK_CONTENT_GUIDELINES if component["type"] == "task" else OBJECTIVE_CONTENT_GUIDELINES
+    )
+    relationship_guidance = (
+        TASK_RELATIONSHIP_GUIDELINES if component["type"] == "task" else OBJECTIVE_RELATIONSHIP_GUIDELINES
+    )
+
     prompt = GENERATE_WORK_COMPONENT_USER_PROMPT.to_string(
+        description=component.get("description", "none given"),
         guiding_questions=component["guiding_questions"],
         instructions=component["instructions"],
-        keywords=component["guiding_questions"],
         relationships=component["relationships"],
         work_plan_text=work_plan_text,
         object_type=component["type"],
         object_type_description="a concrete research task that is a part of a larger specific research objective"
         if component["type"] == "task"
         else "a specific research goal or aim",
+        object_type_specific_guidance=object_type_specific_guidance,
+        relationship_guidance=relationship_guidance,
+        object_title=component["title"],
     )
 
     rag_results = await retrieve_documents(
