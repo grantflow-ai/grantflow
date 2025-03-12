@@ -1,6 +1,7 @@
 from typing import Any, Final
 
-from src.constants import MIN_WORDS_RATIO
+from src.constants import ANTHROPIC_SONNET_MODEL, MIN_WORDS_RATIO
+from src.exceptions import EvaluationError
 from src.rag.grant_application.dto import ResearchComponentGenerationDTO
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.long_form import generate_long_form_text
@@ -57,22 +58,15 @@ evaluation_criteria = [
     EvaluationCriterion(
         name="Completeness",
         evaluation_instructions="""
-        - Ensure all aspects of the research task or objective are addressed.
-        - Verify that the text leverages the work plan, keywords, and metadata effectively.
+        - Ensure all aspects of the research task or objective are addressed given the provided word limits.
+        - If information is missing, **MISSING INFORMATION** is inserted as expected.
         """,
     ),
     EvaluationCriterion(
         name="Grounding",
         evaluation_instructions="""
-        - Confirm that the content is firmly grounded in the context provided by the work plan, keywords, and metadata.
+        - Confirm that the content is firmly grounded in the sources.
         - Verify accurate reflection of relationships with other objectives/tasks in the narrative.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Clarity",
-        evaluation_instructions="""
-        - Ensure the narrative is clear, concise, and free of ambiguity.
-        - Verify logical structure and smooth flow of ideas.
         """,
     ),
     EvaluationCriterion(
@@ -86,14 +80,7 @@ evaluation_criteria = [
         name="Scientific Accuracy",
         evaluation_instructions="""
         - Verify the use of precise, field-specific technical terminology.
-        - Ensure factual accuracy and absence of fabricated information.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Specificity",
-        evaluation_instructions="""
-        - Confirm that methodologies, expected outcomes, and dependencies are detailed and precise.
-        - Avoid vague or overly general statements.
+        - Ensure factual accuracy.
         """,
     ),
     EvaluationCriterion(
@@ -101,13 +88,6 @@ evaluation_criteria = [
         evaluation_instructions="""
         - Ensure a formal, data-driven tone is maintained.
         - Emphasize succinctness and specificity in the text.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Word Count Adherence",
-        evaluation_instructions="""
-        - Verify that the text does not exceed the allocated word count.
-        - Ensure the length is appropriate for the level of detail required.
         """,
     ),
     EvaluationCriterion(
@@ -143,6 +123,7 @@ async def handle_work_plan_component_generation(
         min_words=min_words,
         prompt_identifier="generate_work_component",
         task_description=prompt,
+        model=ANTHROPIC_SONNET_MODEL,
         **kwargs,
     )
 
@@ -185,22 +166,28 @@ async def generate_work_plan_component_text(
         search_queries=component["search_queries"],
         user_inputs=user_inputs,
         section_title=component["title"],
+        with_guided_retrieval=True,
     )
 
     if source_validation_error := await handle_source_validation(
-        task_description=str(prompt), sources={"rag_results": rag_results, "user_inputs": user_inputs}
+        task_description=str(prompt),
+        sources={"rag_results": rag_results, "user_inputs": user_inputs},
+        max_length=component["max_words"],
     ):
         return source_validation_error
-    return await with_prompt_evaluation(
-        criteria=evaluation_criteria,
-        max_words=component["max_words"],
-        min_words=int(component["max_words"] * MIN_WORDS_RATIO),
-        prompt=prompt,
-        prompt_handler=handle_work_plan_component_generation,
-        prompt_identifier="generate_work_component",
-        rag_results=rag_results,
-        user_input=user_inputs,
-        passing_score=85,
-        increment=10,
-        retries=5,
-    )
+    try:
+        return await with_prompt_evaluation(
+            criteria=evaluation_criteria,
+            max_words=component["max_words"],
+            min_words=int(component["max_words"] * MIN_WORDS_RATIO),
+            prompt=prompt,
+            prompt_handler=handle_work_plan_component_generation,
+            prompt_identifier="generate_work_component",
+            rag_results=rag_results,
+            user_input=user_inputs,
+            passing_score=85,
+            increment=10,
+            retries=5,
+        )
+    except EvaluationError:
+        return "Failed to generate component text."

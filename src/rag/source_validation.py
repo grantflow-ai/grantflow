@@ -25,6 +25,12 @@ VALIDATE_SOURCES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ${task_description}
     </task_description>
 
+    ## Max Length
+
+    <max_length>
+    ${max_length}
+    </max_length>
+
     ## Available Sources
 
     <sources>
@@ -55,6 +61,8 @@ VALIDATE_SOURCES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - Enumerate all discrete pieces of information needed for the task
        - Count how many of these pieces are adequately covered in the sources
        - Calculate the percentage of required information that is available
+
+    Important: The caluculation must be relative to the max length of the expected text.
 
     ## Output Format
 
@@ -161,7 +169,8 @@ def validate_source_validation_response(response: SourceValidationResult) -> Non
 async def handle_source_validation(
     *,
     task_description: str,
-    minimum_percentage: float = 50.0,
+    minimum_percentage: float = 35.0,
+    max_length: int,
     **sources: Any,
 ) -> str | None:
     """Validate whether the sources contain sufficient information to complete the task.
@@ -170,6 +179,7 @@ async def handle_source_validation(
         task_description: The description of the task to be completed.
         minimum_percentage: The minimum percentage of required information that must be available
                            for the sources to be considered sufficient. Defaults to 75.0.
+        max_length: The maximum length of the expected text.
         **sources: The available sources of information.
 
     Returns:
@@ -186,6 +196,7 @@ async def handle_source_validation(
     prompt = VALIDATE_SOURCES_USER_PROMPT.to_string(
         task_description=task_description,
         sources=sources,
+        max_length=max_length,
     )
 
     result = await handle_completions_request(

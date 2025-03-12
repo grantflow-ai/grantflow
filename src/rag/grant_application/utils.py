@@ -149,7 +149,7 @@ def map_to_tree(
     )
 
 
-def create_text_recursively(node: TreeNode, *, depth: int = 1) -> str:
+def create_text_recursively(node: TreeNode, *, depth: int = 2) -> str:
     """Create the text recursively.
 
     Args:
@@ -159,14 +159,14 @@ def create_text_recursively(node: TreeNode, *, depth: int = 1) -> str:
     Returns:
         The text.
     """
-    title_prefix = "#" * min(depth + 1, 6)
+    title_prefix = "#" * min(depth, 6)
     text = f"{title_prefix} {node['title']}\n\n"
 
     if node_text := node["text"]:
         text += f"{node_text}\n\n"
 
     for child in node["children"]:
-        text += create_text_recursively(child, depth=depth + 1)
+        text += f"\n\n{create_text_recursively(child, depth=depth + 1)}"
 
     return text.strip()
 
