@@ -29,7 +29,7 @@ export function ResearchObjectivesForm({ form }: { form: UseFormReturn<NewGrantW
 
 	const { append, fields, remove } = useFieldArray({
 		control: form.control,
-		name: "researchPlan.objectives",
+		name: "research_objectives",
 	});
 
 	useEffect(() => {
@@ -47,8 +47,8 @@ export function ResearchObjectivesForm({ form }: { form: UseFormReturn<NewGrantW
 				return prev;
 			});
 		} else {
-			form.setValue("researchPlan.objectives", [
-				{ description: "", tasks: [{ description: "", title: "" }], title: "" },
+			form.setValue("research_objectives", [
+				{ description: "", number: 1, research_tasks: [{ description: "", number: 1, title: "" }], title: "" },
 			]);
 			setActiveTab("0");
 		}
@@ -69,7 +69,8 @@ export function ResearchObjectivesForm({ form }: { form: UseFormReturn<NewGrantW
 						onClick={() => {
 							append({
 								description: "",
-								tasks: [{ description: "", title: "" }],
+								number: 1,
+								research_tasks: [{ description: "", number: 1, title: "" }],
 								title: "",
 							});
 							setActiveTab(fields.length.toString());
@@ -118,7 +119,7 @@ export function ResearchObjectivesForm({ form }: { form: UseFormReturn<NewGrantW
 
 						<FormField
 							control={form.control}
-							name={`researchPlan.objectives.${index}.title`}
+							name={`research_objectives.${index}.title`}
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel className="flex items-center gap-2">
@@ -147,7 +148,7 @@ export function ResearchObjectivesForm({ form }: { form: UseFormReturn<NewGrantW
 
 						<FormField
 							control={form.control}
-							name={`researchPlan.objectives.${index}.description`}
+							name={`research_objectives.${index}.description`}
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel className="flex items-center gap-2">

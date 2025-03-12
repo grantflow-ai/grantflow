@@ -1,5 +1,5 @@
 import {
-	ApplicationDetails,
+	ApplicationDetailsForm,
 	GrantApplication,
 	ResearchObjective,
 	ResearchTask,
@@ -27,7 +27,7 @@ export const WorkspaceFactory = new Factory<Workspace>((factory) => ({
 	role: factory.helpers.arrayElement([UserRole.MEMBER, UserRole.ADMIN, UserRole.OWNER]),
 }));
 
-const ApplicationDetailsFactory = new Factory<ApplicationDetails>((factory) => ({
+const ApplicationDetailsFactory = new Factory<ApplicationDetailsForm>((factory) => ({
 	background_context: factory.lorem.paragraphs(),
 	hypothesis: factory.lorem.paragraph(),
 	impact: factory.lorem.paragraphs(),

@@ -7,8 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { CharacterCount } from "@/components/character-count";
 
 export function NewApplicationForm({ onSubmit }: { onSubmit: (data: NewGrantApplicationFormValues) => Promise<void> }) {
@@ -18,7 +17,6 @@ export function NewApplicationForm({ onSubmit }: { onSubmit: (data: NewGrantAppl
 		defaultValues: {
 			cfpFile: undefined,
 			cfpUrl: "",
-			specificAimsFile: undefined,
 			title: "",
 		},
 		resolver: zodResolver(newGrantApplicationSchema),
@@ -35,13 +33,11 @@ export function NewApplicationForm({ onSubmit }: { onSubmit: (data: NewGrantAppl
 		}
 	};
 
-	const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fieldName: "cfpFile" | "specificAimsFile") => {
+	const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fieldName: "cfpFile") => {
 		const file = e.target.files?.[0];
 		if (file) {
 			form.setValue(fieldName, file);
-			if (fieldName === "cfpFile") {
-				form.setValue("cfpUrl", "");
-			}
+			form.setValue("cfpUrl", "");
 		} else {
 			form.setValue(fieldName, undefined);
 		}
@@ -143,53 +139,6 @@ export function NewApplicationForm({ onSubmit }: { onSubmit: (data: NewGrantAppl
 					</div>
 
 					<Separator className="my-8" />
-
-					<div className="space-y-4">
-						<div className="flex items-center space-x-2">
-							<h3 className="text-md font-semibold">Upload Specific Aims (Optional)</h3>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button className="h-4 w-4 p-0" size="icon" variant="ghost">
-										<HelpCircle className="h-4 w-4" />
-										<span className="sr-only">Help</span>
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>
-									Uploading a Specific Aims document will help pre-populate the wizard with your
-									research objectives and tasks.
-								</TooltipContent>
-							</Tooltip>
-						</div>
-
-						<FormField
-							control={form.control}
-							name="specificAimsFile"
-							render={({
-								field: {
-									// eslint-disable-next-line @typescript-eslint/no-unused-vars
-									onChange,
-									// eslint-disable-next-line @typescript-eslint/no-unused-vars
-									value,
-									...field
-								},
-							}) => (
-								<FormItem>
-									<FormControl>
-										<Input
-											accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-											data-testid="specific-aims-file-upload"
-											onChange={(e) => {
-												handleFileChange(e, "specificAimsFile");
-											}}
-											type="file"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
 
 					<div className="pt-4 flex justify-end">
 						<Button data-testid="submit-application-button" disabled={isProcessing} type="submit">

@@ -29,18 +29,20 @@ export function ResearchPlanForm({ form }: { form: UseFormReturn<NewGrantWizardF
 
 	const { fields: objectiveFields } = useFieldArray({
 		control: form.control,
-		name: "researchPlan.objectives",
+		name: "research_objectives",
 	});
 
 	const handleRemoveTask = (objectiveIndex: number, taskIndex: number) => {
-		const tasks = form.getValues(`researchPlan.objectives.${objectiveIndex}.tasks`);
+		const tasks = form.getValues(`research_objectives.${objectiveIndex}.research_tasks`);
 		if (tasks.length > 1) {
 			const updatedTasks = [...tasks];
 			updatedTasks.splice(taskIndex, 1);
-			form.setValue(`researchPlan.objectives.${objectiveIndex}.tasks`, updatedTasks);
+			form.setValue(`research_objectives.${objectiveIndex}.research_tasks`, updatedTasks);
 		} else {
 			// Replace the last task with an empty one
-			form.setValue(`researchPlan.objectives.${objectiveIndex}.tasks`, [{ description: "", title: "" }]);
+			form.setValue(`research_objectives.${objectiveIndex}.research_tasks`, [
+				{ description: "", number: 1, title: "" },
+			]);
 		}
 		setActiveTasks((prev) => ({ ...prev, [objectiveIndex]: Math.max(0, taskIndex - 1).toString() }));
 	};
@@ -80,7 +82,7 @@ export function ResearchPlanForm({ form }: { form: UseFormReturn<NewGrantWizardF
 							<div className="flex items-center justify-between mb-4">
 								<TabsList>
 									{form
-										.watch(`researchPlan.objectives.${objectiveIndex}.tasks`)
+										.watch(`research_objectives.${objectiveIndex}.research_tasks`)
 										.map((_, taskIndex) => (
 											<TabsTrigger key={taskIndex} value={taskIndex.toString()}>
 												Task {objectiveIndex + 1}.{taskIndex + 1}
@@ -90,9 +92,11 @@ export function ResearchPlanForm({ form }: { form: UseFormReturn<NewGrantWizardF
 								<Button
 									data-testid={`add-task-button-${objectiveIndex}`}
 									onClick={() => {
-										const tasks = form.getValues(`researchPlan.objectives.${objectiveIndex}.tasks`);
-										const newTask = { description: "", title: "" };
-										form.setValue(`researchPlan.objectives.${objectiveIndex}.tasks`, [
+										const tasks = form.getValues(
+											`research_objectives.${objectiveIndex}.research_tasks`,
+										);
+										const newTask = { description: "", number: tasks.length + 1, title: "" };
+										form.setValue(`research_objectives.${objectiveIndex}.research_tasks`, [
 											...tasks,
 											newTask,
 										]);
@@ -110,7 +114,7 @@ export function ResearchPlanForm({ form }: { form: UseFormReturn<NewGrantWizardF
 								</Button>
 							</div>
 
-							{form.watch(`researchPlan.objectives.${objectiveIndex}.tasks`).map((_, taskIndex) => (
+							{form.watch(`research_objectives.${objectiveIndex}.research_tasks`).map((_, taskIndex) => (
 								<TabsContent className="space-y-4" key={taskIndex} value={taskIndex.toString()}>
 									<div className="flex justify-between items-center">
 										<h4 className="text-md font-semibold">Task {taskIndex + 1}</h4>
@@ -149,7 +153,7 @@ export function ResearchPlanForm({ form }: { form: UseFormReturn<NewGrantWizardF
 
 									<FormField
 										control={form.control}
-										name={`researchPlan.objectives.${objectiveIndex}.tasks.${taskIndex}.title`}
+										name={`research_objectives.${objectiveIndex}.research_tasks.${taskIndex}.title`}
 										render={({ field }) => (
 											<FormItem>
 												<FormLabel className="flex items-center gap-2">
@@ -180,7 +184,7 @@ export function ResearchPlanForm({ form }: { form: UseFormReturn<NewGrantWizardF
 
 									<FormField
 										control={form.control}
-										name={`researchPlan.objectives.${objectiveIndex}.tasks.${taskIndex}.description`}
+										name={`research_objectives.${objectiveIndex}.research_tasks.${taskIndex}.description`}
 										render={({ field }) => (
 											<FormItem>
 												<FormLabel className="flex items-center gap-2">

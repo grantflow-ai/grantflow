@@ -22,9 +22,9 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 				</Button>
 			</div>
 			<div className="border rounded-lg p-6 bg-card">
-				{workspace.applications.length > 0 ? (
+				{workspace.grant_applications.length > 0 ? (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-						{workspace.applications.map((application) => (
+						{workspace.grant_applications.map((application) => (
 							<GrantApplicationCard
 								application={application}
 								key={application.id}

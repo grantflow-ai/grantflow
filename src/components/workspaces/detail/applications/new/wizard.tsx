@@ -20,20 +20,18 @@ export function Wizard({ onSubmit }: { onSubmit: (data: NewGrantWizardFormValues
 	const form = useForm<NewGrantWizardFormValues>({
 		defaultValues: {
 			files: [],
-			researchPlan: {
-				objectives: [
-					{
-						description: "",
-						tasks: [
-							{
-								description: "",
-								title: "",
-							},
-						],
-						title: "",
-					},
-				],
-			},
+			research_objectives: [
+				{
+					description: "",
+					research_tasks: [
+						{
+							description: "",
+							title: "",
+						},
+					],
+					title: "",
+				},
+			],
 		},
 		resolver: zodResolver(newGrantWizardForm),
 	});

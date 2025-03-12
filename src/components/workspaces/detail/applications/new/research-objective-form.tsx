@@ -38,13 +38,13 @@ export function ResearchObjectiveForm({
 			<div className="space-y-6">
 				<FormField
 					control={form.control}
-					name={`researchPlan.objectives.${index}.title`}
+					name={`research_objectives.${index}.title`}
 					render={({ field }) => (
 						<FormItem className="space-y-2">
 							<div className="flex items-center gap-2">
 								<FormLabel
 									data-testid={`research-objective-form-title-label-${index}`}
-									htmlFor={`researchPlan.objectives.${index}.title`}
+									htmlFor={`research_objectives.${index}.title`}
 								>
 									Research Objective Title <span className="text-red-300 p-0">*</span>
 								</FormLabel>
@@ -71,15 +71,15 @@ export function ResearchObjectiveForm({
 							<FormControl>
 								<Input
 									{...field}
-									aria-invalid={!!form.formState.errors.researchPlan?.objectives?.[index]?.title}
+									aria-invalid={!!form.formState.errors.research_objectives?.[index]?.title}
 									aria-required="true"
 									className="transition-all duration-200 focus:ring-2 focus:ring-primary"
 									data-testid={`research-objective-form-title-input-${index}`}
 									disabled={loading}
-									id={`researchPlan.objectives.${index}.title`}
+									id={`research_objectives.${index}.title`}
 									onChange={(e) => {
 										field.onChange(e);
-										form.setValue(`researchPlan.objectives.${index}.title`, e.target.value);
+										form.setValue(`research_objectives.${index}.title`, e.target.value);
 									}}
 									placeholder="Enter the Research Objective Title"
 								/>
@@ -99,13 +99,13 @@ export function ResearchObjectiveForm({
 
 				<FormField
 					control={form.control}
-					name={`researchPlan.objectives.${index}.description`}
+					name={`research_objectives.${index}.description`}
 					render={({ field }) => (
 						<FormItem className="space-y-2">
 							<div className="flex items-center gap-2">
 								<FormLabel
 									data-testid={`research-objective-form-description-label-${index}`}
-									htmlFor={`researchPlan.objectives.${index}.description`}
+									htmlFor={`research_objectives.${index}.description`}
 								>
 									Research Objective Description
 								</FormLabel>
@@ -132,14 +132,12 @@ export function ResearchObjectiveForm({
 							<FormControl>
 								<Textarea
 									{...field}
-									aria-invalid={
-										!!form.formState.errors.researchPlan?.objectives?.[index]?.description
-									}
+									aria-invalid={!!form.formState.errors.research_objectives?.[index]?.description}
 									aria-required="true"
 									className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary"
 									data-testid={`research-objective-form-description-input-${index}`}
 									disabled={loading}
-									id={`researchPlan.objectives.${index}.description`}
+									id={`research_objectives.${index}.description`}
 									onChange={(e) => {
 										field.onChange(e);
 									}}
