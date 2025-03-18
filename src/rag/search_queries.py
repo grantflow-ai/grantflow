@@ -211,15 +211,11 @@ async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **k
         current_query_texts = [q["text"] for q in response["queries"]]
         existing_query_texts = [q["query"] for q in query_results]
 
-        # Check if we have existing queries to deduplicate against
         if existing_query_texts:
-            # Deduplicate the combined list of existing and new queries
             deduplicated_texts = await deduplicate_queries(existing_query_texts + current_query_texts)
 
-            # Find which queries are new (not in the existing queries)
             new_query_texts = [q for q in deduplicated_texts if q not in existing_query_texts]
         else:
-            # If no existing queries, just deduplicate the current ones
             new_query_texts = await deduplicate_queries(current_query_texts)
 
         query_results.extend(

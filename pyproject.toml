@@ -9,29 +9,29 @@ authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
 requires-python = "==3.12.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
 dependencies = [
-  "aiohttp>=3.11.13",
+  "aiohttp>=3.11.14",
   "anthropic[vertex]>=0.49.0",
   "anyio>=4.8.0",
   "asyncpg>=0.30.0",
-  "azure-ai-documentintelligence>=1.0.0",
+  "azure-ai-documentintelligence>=1.0.1",
   "crawl4ai>=0.5.0.post4",
   "en-core-web-sm",
-  "firebase-admin>=6.6.0",
-  "google-cloud-aiplatform>=1.83.0",
+  "firebase-admin>=6.7.0",
+  "google-cloud-aiplatform>=1.84.0",
   "greenlet>=3.1.1",
   "kreuzberg>=2.1.2",
+  "litestar>=2.15.1",
   "msgspec>=0.19.0",
   "pathvalidate>=3.2.3",
-  "pgvector>=0.3.6",
+  "pgvector>=0.4.0",
   "prompt-template>=1.2.0",
   "pyjwt>=2.10.1",
   "rank-bm25>=0.2.2",
-  "sanic[ext]>=24.12.0",
   "semantic-text-splitter>=0.24.1",
   "sentence-transformers[onnx]>=3.4.1",
   "spacy>=3.8.4",
-  "sqlalchemy>=2.0.38",
-  "structlog>=25.1.0",
+  "sqlalchemy>=2.0.39",
+  "structlog>=25.2.0",
   "tenacity>=9.0.0",
   "uvicorn>=0.34.0",
 ]
@@ -40,8 +40,9 @@ dependencies = [
 dev = [
   "atlas-provider-sqlalchemy>=0.2.4",
   "covdefaults>=2.3.0",
-  "faker>=37.0.0",
+  "faker>=37.0.1",
   "huggingface-hub[cli]>=0.29.1",
+  "litestar[testing]>=2.15.1",
   "mypy>=1.15.0",
   "polyfactory>=2.19.0",
   "pre-commit>=4.1.0",
@@ -51,8 +52,7 @@ dev = [
   "pytest-mock>=3.14.0",
   "pytest-timeout>=2.3.1",
   "python-dotenv>=1.0.1",
-  "ruff>=0.9.10",
-  "sanic-testing>=24.6.0",
+  "ruff>=0.11.0",
 ]
 
 [tool.ruff]
@@ -67,10 +67,7 @@ lint.ignore = [
   "ANN401",   # Dynamically typed ANY
   "ASYNC110", # Use Event instead of sleep in async loop
   "COM812",   # Conflicts with formatter
-  "D100",     # Missing docstring in public module
-  "D104",     # Missing docstring in public package
-  "D107",     # Missing docstring in __init__
-  "D205",     # 1 blank line required between summary line and description
+  "D",        # Doc strings
   "E501",     # Line too long, handled by ruff format
   "EM",       # Exception messages,
   "FBT",      # Boolean-typed positional argument in function definition

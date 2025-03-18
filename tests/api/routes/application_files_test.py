@@ -1,9 +1,9 @@
 from http import HTTPStatus
 from typing import Any
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import pytest
-from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -16,7 +16,7 @@ from src.db.tables import (
     Workspace,
     WorkspaceUser,
 )
-from src.utils.serialization import deserialize
+from tests.conftest import TestingClientType
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ async def application_file(
 
 
 async def test_upload_application_files_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
     firebase_uid: str,
@@ -50,7 +50,7 @@ async def test_upload_application_files_success(
         "test2.txt": b"Test content 2",
     }
 
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files",
         files=test_files,
         headers={"Authorization": "Bearer some_token"},
@@ -81,7 +81,7 @@ async def test_upload_application_files_success(
 
 
 async def test_upload_application_files_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
 ) -> None:
@@ -89,7 +89,7 @@ async def test_upload_application_files_unauthorized(
         "test.txt": b"Test content",
     }
 
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files",
         files=test_files,
         headers={"Authorization": "Bearer some_token"},
@@ -99,7 +99,7 @@ async def test_upload_application_files_unauthorized(
 
 
 async def test_upload_application_files_no_files(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
     firebase_uid: str,
@@ -110,7 +110,7 @@ async def test_upload_application_files_no_files(
         session.add(workspace_user)
         await session.commit()
 
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files",
         files={},
         headers={"Authorization": "Bearer some_token"},
@@ -120,7 +120,7 @@ async def test_upload_application_files_no_files(
 
 
 async def test_retrieve_application_files_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
     application_file: GrantApplicationFile,
@@ -132,24 +132,24 @@ async def test_retrieve_application_files_success(
         session.add(workspace_user)
         await session.commit()
 
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files",
         headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK
-    files = deserialize(response.text, list[dict[str, Any]])
+    files = response.json()
     assert len(files) == 1
     assert files[0]["grant_application_id"] == str(grant_application.id)
     assert files[0]["rag_file_id"] == str(application_file.rag_file_id)
 
 
 async def test_retrieve_application_files_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
 ) -> None:
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files",
         headers={"Authorization": "Bearer some_token"},
     )
@@ -158,7 +158,7 @@ async def test_retrieve_application_files_unauthorized(
 
 
 async def test_delete_application_file_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
     application_file: GrantApplicationFile,
@@ -170,7 +170,7 @@ async def test_delete_application_file_success(
         session.add(workspace_user)
         await session.commit()
 
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/{application_file.rag_file_id}",
         headers={"Authorization": "Bearer some_token"},
     )
@@ -192,12 +192,12 @@ async def test_delete_application_file_success(
 
 
 async def test_delete_application_file_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
     application_file: GrantApplicationFile,
 ) -> None:
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/{application_file.rag_file_id}",
         headers={"Authorization": "Bearer some_token"},
     )
@@ -206,7 +206,7 @@ async def test_delete_application_file_unauthorized(
 
 
 async def test_delete_application_file_not_found(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
     firebase_uid: str,
@@ -217,8 +217,8 @@ async def test_delete_application_file_not_found(
         session.add(workspace_user)
         await session.commit()
 
-    _, response = await asgi_client.delete(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/00000000-0000-0000-0000-000000000000",
+    response = await test_client.delete(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/{UUID('00000000-0000-0000-0000-000000000000')}",
         headers={"Authorization": "Bearer some_token"},
     )
 

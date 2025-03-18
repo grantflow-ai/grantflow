@@ -1,40 +1,24 @@
 from datetime import timedelta
 
-from sanic import HTTPResponse, json
+from litestar import get, post
 
-from src.api_types import APIRequest, LoginRequestBody, LoginResponse, OTPResponse
+from src.api_types import LoginRequestBody, LoginResponse, OTPResponse
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
 from src.utils.logger import get_logger
-from src.utils.serialization import deserialize
 
 logger = get_logger(__name__)
 
 
-async def handle_login(request: APIRequest) -> HTTPResponse:
-    """Route handler for logging in a user.
-
-    Args:
-        request: The request object.
-
-    Returns:
-        The response object.
-    """
-    request_body = deserialize(request.body, LoginRequestBody)
-    decoded_token = await verify_id_token(request_body["id_token"])
+@post("/login")
+async def handle_login(data: LoginRequestBody) -> LoginResponse:
+    decoded_token = await verify_id_token(data["id_token"])
     jwt = create_jwt(decoded_token["uid"])
-    return json(LoginResponse(jwt_token=jwt))
+    return LoginResponse(jwt_token=jwt)
 
 
-async def handle_create_otp(request: APIRequest) -> HTTPResponse:
-    """Route handler for creating an OTP.
-
-    Args:
-        request: The request object.
-
-    Returns:
-        The response object.
-    """
+@get("/otp")
+async def handle_create_otp(auth: str) -> OTPResponse:
     # TODO: we need to add a second layer of security here
-    otp = create_jwt(firebase_uid=request.ctx.firebase_uid, ttl=timedelta(hours=1))
-    return json(OTPResponse(otp=otp))
+    otp = create_jwt(firebase_uid=auth, ttl=timedelta(hours=1))
+    return OTPResponse(otp=otp)

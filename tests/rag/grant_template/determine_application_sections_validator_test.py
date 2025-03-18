@@ -194,7 +194,7 @@ def test_validate_nesting_depth() -> None:
         "error": None,
     }
     with pytest.raises(ValidationError) as exc:
-        validate_section_extraction(cast(ExtractedSections, {"sections": sections["sections"]}))
+        validate_section_extraction(cast("ExtractedSections", {"sections": sections["sections"]}))
     assert "Maximum nesting depth exceeded" in str(exc.value)
 
     sections["sections"].pop(5)

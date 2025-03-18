@@ -15,8 +15,7 @@ RUN huggingface-cli download sentence-transformers/all-MiniLM-L12-v2
 FROM base AS install
 WORKDIR /app/
 ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
-    SANIC_NO_UJSON=true
+    UV_LINK_MODE=copy
 
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \

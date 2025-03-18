@@ -89,7 +89,7 @@ class TextVectorFactory(SQLAlchemyFactory[TextVector]):
     @classmethod
     def get_type_from_column(cls, column: Column[Any]) -> type:
         if column.name == "embedding":
-            return cast(type, Vector)
+            return cast("type", Vector)
         return super().get_type_from_column(column)
 
 
