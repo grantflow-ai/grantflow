@@ -39,13 +39,13 @@ def mock_anthropic_api_response(mocker: MockerFixture) -> Mock:
 
 async def test_validate_select_best_response_valid() -> None:
     candidates = {1: "response1", 2: "response2"}
-    selection = cast(BestResponseSelection, {"best_response": 1})
+    selection = cast("BestResponseSelection", {"best_response": 1})
     validate_select_best_response(selection, candidates=candidates)
 
 
 async def test_validate_select_best_response_invalid() -> None:
     candidates = {1: "response1", 2: "response2"}
-    selection = cast(BestResponseSelection, {"best_response": 3})
+    selection = cast("BestResponseSelection", {"best_response": 3})
     with pytest.raises(ValidationError, match="The selected response id is not in a key in the candidates object"):
         validate_select_best_response(selection, candidates=candidates)
 

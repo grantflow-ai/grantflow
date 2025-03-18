@@ -208,7 +208,7 @@ async def with_prompt_evaluation[T, **P](
     while iteration <= retries:
         model_output = await prompt_handler(current_prompt, **kwargs)  # type: ignore[arg-type]
         evaluation_result = await evaluate_prompt_output(
-            prompt=current_prompt, model_output=cast(dict[str, Any] | str, model_output), criteria=criteria
+            prompt=current_prompt, model_output=cast("dict[str, Any] | str", model_output), criteria=criteria
         )
 
         failing_criteria = {

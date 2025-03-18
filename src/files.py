@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from mimetypes import guess_type
 
+from litestar.datastructures.upload_file import UploadFile
 from pathvalidate import sanitize_filename
-from sanic.request import File
 
 from src.exceptions import ValidationError
 
@@ -51,11 +51,11 @@ class FileDTO:
         return len(self.content)
 
     @classmethod
-    def from_file(cls, file: File | list[File], filename: str) -> "FileDTO":
-        """Create a FileDTO from a Sanic File object.
+    async def from_file(cls, file: UploadFile | list[UploadFile], filename: str) -> "FileDTO":
+        """Create a FileDTO from a Litestar UploadFile object.
 
         Args:
-            file: The Sanic File object.
+            file: The Litestar UploadFile object or list of UploadFile objects.
             filename: The name of the file.
 
         Raises:
@@ -69,6 +69,7 @@ class FileDTO:
 
         if mime_type := (guess_type(filename)[0] or SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP.get(ext)):
             filename = sanitize_filename(filename)
-            return cls(content=file.body, filename=filename, mime_type=mime_type)
+            content = await file.read()
+            return cls(content=content, filename=filename, mime_type=mime_type)
 
         raise ValidationError("Could not determine the mime type of the file")

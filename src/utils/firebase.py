@@ -3,7 +3,7 @@ from typing import Any, cast
 from firebase_admin import App
 from firebase_admin.exceptions import FirebaseError
 from google.oauth2.service_account import Credentials
-from sanic import Unauthorized
+from litestar.exceptions import NotAuthorizedException
 
 from src.utils.env import get_env
 from src.utils.logger import get_logger
@@ -40,7 +40,7 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
         id_token: The ID token to verify.
 
     Raises:
-        Unauthorized: If the token is invalid
+        NotAuthorizedException: If the token is invalid
 
     Returns:
         The firebase user ID if the token is valid, otherwise None.
@@ -50,10 +50,10 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
     handler = as_async_callable(firebase_verify_id_token)
     try:
         decoded_token = await handler(id_token, app=get_firebase_app())
-        return cast(dict[str, Any], decoded_token)
+        return cast("dict[str, Any]", decoded_token)
     except (
         ValueError,
         FirebaseError,
     ) as e:
         logger.warning("Error verifying token.", exec_info=e)
-        raise Unauthorized("Invalid ID token") from e
+        raise NotAuthorizedException("Invalid ID token") from e

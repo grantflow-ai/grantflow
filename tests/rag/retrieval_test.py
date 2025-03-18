@@ -108,13 +108,13 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: Moc
                 "depth_score": 4.0,
                 "freshness_score": 6.0,
                 "overall_score": 4.4,
-                "explanation": "The retrieved content lacks depth and diversity"
+                "explanation": "The retrieved content lacks depth and diversity",
             },
             "optimization": {
                 "information_gaps": ["Missing specific details"],
                 "improved_queries": ["better query"],
-                "query_strategies": "Be more specific"
-            }
+                "query_strategies": "Be more specific",
+            },
         },
         {
             "assessment": {
@@ -124,14 +124,14 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: Moc
                 "depth_score": 8.0,
                 "freshness_score": 8.0,
                 "overall_score": 8.2,
-                "explanation": "Much better content now"
+                "explanation": "Much better content now",
             },
             "optimization": {
                 "information_gaps": [],
                 "improved_queries": [],
-                "query_strategies": "Current strategy is working well"
-            }
-        }
+                "query_strategies": "Current strategy is working well",
+            },
+        },
     ]
 
     result = await retrieve_documents(

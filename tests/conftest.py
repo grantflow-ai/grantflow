@@ -13,9 +13,10 @@ from anyio import run_process, sleep
 from asyncpg import connect
 from dotenv import load_dotenv
 from faker import Faker
+from litestar import Litestar
+from litestar.testing import AsyncTestClient
 from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
-from sanic_testing.testing import SanicASGITestClient
 from scripts.seed_db import seed_db
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -36,6 +37,7 @@ from src.db.tables import (
     WorkspaceUser,
 )
 from src.utils.ai import init_ref
+from src.utils.firebase import firebase_app_ref
 from tests.factories import (
     FileFactory,
     FundingOrganizationFactory,
@@ -50,6 +52,8 @@ from tests.test_utils import (
     create_grant_application_data,
     process_funding_organization,
 )
+
+TestingClientType = AsyncTestClient[Litestar]
 
 for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)
@@ -113,13 +117,6 @@ def firebase_uid() -> str:
     return "a" * 128
 
 
-@pytest.fixture(autouse=True)
-def patch_firebase_auth(firebase_uid: str, mocker: MockerFixture) -> None:
-    mocker.patch("firebase_admin.initialize_app")
-    mocker.patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid})
-    mocker.patch("jwt.decode", return_value={"sub": firebase_uid})
-
-
 @pytest.fixture
 def mock_generative_model() -> Generator[Mock, Any, None]:
     init_ref.value = True
@@ -130,10 +127,17 @@ def mock_generative_model() -> Generator[Mock, Any, None]:
 
 
 @pytest.fixture(scope="session")
-def asgi_client() -> SanicASGITestClient:
+async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[TestingClientType, None]:
+    patch("src.utils.firebase.firebase_admin.initialize_app")
+    patch("src.utils.firebase.firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid})
+    patch("src.utils.jwt.decode", return_value={"sub": firebase_uid})
+
+    firebase_app_ref.value = Mock()
+
     from src.main import app
 
-    return app.asgi_client
+    async with AsyncTestClient(app=app) as client:
+        yield client
 
 
 @pytest.fixture(scope="session")
@@ -412,8 +416,8 @@ async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
 
 
 @pytest.fixture
-def signal_dispatch_mock(mocker: MockerFixture) -> AsyncMock:
-    return mocker.patch("sanic.app.Sanic.dispatch", new_callable=AsyncMock)
+def signal_dispatch_mock(mocker: MockerFixture) -> Mock:
+    return mocker.patch("litestar.events.emitter.Emitter.emit")
 
 
 @pytest.fixture

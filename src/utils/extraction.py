@@ -47,7 +47,7 @@ async def extract_with_azure_document_intelligence(file_content: bytes, mime_typ
             else None,
         )
         result = await poller.result()
-        return cast(AnalyzeResult, result.as_dict())
+        return cast("AnalyzeResult", result.as_dict())
     except HttpResponseError as e:
         logger.error("Error extracting text from from file.", exec_info=e)
         raise FileParsingError(
@@ -109,6 +109,6 @@ async def extract_webpage_content(url: str) -> str:
     try:
         async with AsyncWebCrawler(verbose=True) as crawler:
             result = await crawler.arun(url=url)
-            return cast(str, result.markdown)
+            return cast("str", result.markdown)
     except ValueError as e:
         raise ExternalOperationError("Failed to get markdown from URL") from e

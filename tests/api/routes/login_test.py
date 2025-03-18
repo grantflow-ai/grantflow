@@ -1,16 +1,15 @@
 from http import HTTPStatus
 
 from pytest_mock import MockerFixture
-from sanic_testing.testing import SanicASGITestClient
 
-from src.api_types import LoginRequestBody, LoginResponse
-from src.utils.serialization import deserialize
+from src.api_types import LoginRequestBody
+from tests.conftest import TestingClientType
 
 
-async def test_login_success(asgi_client: SanicASGITestClient, mocker: MockerFixture) -> None:
+async def test_login_success(test_client: TestingClientType, mocker: MockerFixture) -> None:
     mocker.patch("jwt.encode", return_value="jwt_token")
 
-    _, response = await asgi_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
+    response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
     assert response.status_code == HTTPStatus.OK
-    response_body = deserialize(response.body, LoginResponse)
+    response_body = response.json()
     assert response_body["jwt_token"] == "jwt_token"

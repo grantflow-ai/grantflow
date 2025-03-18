@@ -1,33 +1,34 @@
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
-from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import delete, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api_types import CreateOrganizationRequestBody
 from src.db.tables import FundingOrganization
-from src.utils.serialization import deserialize
+from tests.conftest import TestingClientType
+
+if TYPE_CHECKING:
+    from src.api_types import CreateOrganizationRequestBody
 
 
 async def test_create_organization_api_request_success(
-    asgi_client: SanicASGITestClient, async_session_maker: async_sessionmaker[Any], mock_admin_code: Mock
+    test_client: TestingClientType, async_session_maker: async_sessionmaker[Any], mock_admin_code: Mock
 ) -> None:
     request_body: CreateOrganizationRequestBody = {
         "full_name": "Test Organization",
         "abbreviation": "TEST",
     }
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         "/organizations",
         json=request_body,
         headers={"Authorization": "test-admin-code"},
     )
     assert response.status_code == HTTPStatus.CREATED
 
-    response_body = deserialize(response.text, CreateOrganizationRequestBody)
+    response_body = response.json()
     assert response_body["full_name"] == request_body["full_name"]
     assert response_body["abbreviation"] == request_body["abbreviation"]
 
@@ -48,13 +49,13 @@ async def test_create_organization_api_request_success(
     ],
 )
 async def test_create_organization_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient, headers: dict[str, str], mock_admin_code: Mock
+    test_client: TestingClientType, headers: dict[str, str], mock_admin_code: Mock
 ) -> None:
     request_body: CreateOrganizationRequestBody = {
         "full_name": "Test Organization",
         "abbreviation": None,
     }
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         "/organizations",
         json=request_body,
         headers=headers,
@@ -63,9 +64,9 @@ async def test_create_organization_api_request_failure_unauthorized(
 
 
 async def test_create_organization_api_request_failure_bad_request(
-    asgi_client: SanicASGITestClient, mock_admin_code: Mock
+    test_client: TestingClientType, mock_admin_code: Mock
 ) -> None:
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         "/organizations",
         json={},
         headers={"Authorization": "test-admin-code"},
@@ -74,7 +75,7 @@ async def test_create_organization_api_request_failure_bad_request(
 
 
 async def test_retrieve_organizations_api_request_success(
-    asgi_client: SanicASGITestClient, async_session_maker: async_sessionmaker[Any], mock_admin_code: Mock
+    test_client: TestingClientType, async_session_maker: async_sessionmaker[Any], mock_admin_code: Mock
 ) -> None:
     orgs = [
         FundingOrganization(full_name="Test Org B", abbreviation="TB"),
@@ -86,13 +87,13 @@ async def test_retrieve_organizations_api_request_success(
         session.add_all(orgs)
         await session.commit()
 
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         "/organizations",
         headers={"Authorization": "test-admin-code"},
     )
     assert response.status_code == HTTPStatus.OK
 
-    response_data = deserialize(response.text, list[CreateOrganizationRequestBody])
+    response_data = response.json()
     assert len(response_data) == 2
     assert response_data[0]["full_name"] == "Test Org A"
     assert response_data[1]["full_name"] == "Test Org B"
@@ -106,9 +107,9 @@ async def test_retrieve_organizations_api_request_success(
     ],
 )
 async def test_retrieve_organizations_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient, headers: dict[str, str], mock_admin_code: Mock
+    test_client: TestingClientType, headers: dict[str, str], mock_admin_code: Mock
 ) -> None:
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         "/organizations",
         headers=headers,
     )
@@ -116,7 +117,7 @@ async def test_retrieve_organizations_api_request_failure_unauthorized(
 
 
 async def test_update_organization_api_request_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     async_session_maker: async_sessionmaker[Any],
     mock_admin_code: Mock,
@@ -126,7 +127,7 @@ async def test_update_organization_api_request_success(
         "abbreviation": "UPD",
     }
 
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/organizations/{funding_organization.id}",
         json=request_body,
         headers={"Authorization": "test-admin-code"},
@@ -147,7 +148,7 @@ async def test_update_organization_api_request_success(
     ],
 )
 async def test_update_organization_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     headers: dict[str, str],
     mock_admin_code: Mock,
@@ -156,7 +157,7 @@ async def test_update_organization_api_request_failure_unauthorized(
         "full_name": "Updated Organization",
         "abbreviation": None,
     }
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/organizations/{funding_organization.id}",
         json=request_body,
         headers=headers,
@@ -165,9 +166,9 @@ async def test_update_organization_api_request_failure_unauthorized(
 
 
 async def test_update_organization_api_request_failure_empty_body(
-    asgi_client: SanicASGITestClient, funding_organization: FundingOrganization, mock_admin_code: Mock
+    test_client: TestingClientType, funding_organization: FundingOrganization, mock_admin_code: Mock
 ) -> None:
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/organizations/{funding_organization.id}",
         json={},
         headers={"Authorization": "test-admin-code"},
@@ -176,12 +177,12 @@ async def test_update_organization_api_request_failure_empty_body(
 
 
 async def test_delete_organization_api_request_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     async_session_maker: async_sessionmaker[Any],
     mock_admin_code: Mock,
 ) -> None:
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/organizations/{funding_organization.id}",
         headers={"Authorization": "test-admin-code"},
     )
@@ -200,12 +201,12 @@ async def test_delete_organization_api_request_success(
     ],
 )
 async def test_delete_organization_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     headers: dict[str, str],
     mock_admin_code: Mock,
 ) -> None:
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/organizations/{funding_organization.id}",
         headers=headers,
     )

@@ -1,38 +1,56 @@
-from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from sanic import Unauthorized
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from litestar.connection import ASGIConnection
+from litestar.exceptions import NotAuthorizedException
+from litestar.middleware import AuthenticationResult
 
-from src.middleware import authenticate_request, set_session_maker
-from tests.test_utils import create_test_request
+from src.db.enums import UserRoleEnum
+from src.db.tables import WorkspaceUser
+from src.middleware import AuthMiddleware
 
 
 @pytest.fixture
-def mock_session_maker() -> Mock:
-    return Mock(spec=async_sessionmaker[Any])
+def auth_middleware() -> AuthMiddleware:
+    mock_app = Mock()
+    return AuthMiddleware(app=mock_app)
 
 
-def test_set_session_maker(mock_session_maker: Mock) -> None:
-    request = create_test_request()
-    with patch("src.middleware.get_session_maker", return_value=mock_session_maker):
-        set_session_maker(request)
-
-    assert request.ctx.session_maker == mock_session_maker
+@pytest.fixture
+def mock_connection() -> Mock:
+    connection = Mock(spec=ASGIConnection)
+    connection.url = Mock()
+    connection.headers = {}
+    connection.query_params = {}
+    connection.path_params = {}
+    connection.route_handler = Mock()
+    connection.route_handler.opt = {}
+    connection.method = "GET"
+    return connection
 
 
 @pytest.mark.parametrize(
-    "path, method",
+    "path, method, expected_result",
     [
-        ("/login", "GET"),
-        ("/health", "GET"),
-        ("/any-path", "OPTIONS"),
+        ("/login", "GET", AuthenticationResult(user=None, auth=None)),
+        ("/health", "GET", AuthenticationResult(user=None, auth=None)),
+        ("/any-path", "OPTIONS", AuthenticationResult(user=None, auth=None)),
     ],
 )
-async def test_authenticate_request_public_paths(path: str, method: str) -> None:
-    request = create_test_request(url=path, method=method)
-    await authenticate_request(request)
+async def test_authenticate_request_public_paths(
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+    path: str,
+    method: str,
+    expected_result: AuthenticationResult,
+) -> None:
+    mock_connection.url.path = path
+    mock_connection.method = method
+
+    result = await auth_middleware.authenticate_request(mock_connection)
+
+    assert result.user == expected_result.user
+    assert result.auth == expected_result.auth
 
 
 @pytest.mark.parametrize(
@@ -44,16 +62,23 @@ async def test_authenticate_request_public_paths(path: str, method: str) -> None
     ],
 )
 async def test_authenticate_request_admin_paths(
-    admin_code: str, should_pass: bool, monkeypatch: pytest.MonkeyPatch
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+    admin_code: str,
+    should_pass: bool,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    request = create_test_request(url="/organizations/test", headers={"Authorization": admin_code})
+    mock_connection.url.path = "/organizations/test"
+    mock_connection.headers = {"Authorization": admin_code}
     monkeypatch.setenv("ADMIN_ACCESS_CODE", "correct-code")
 
     if should_pass:
-        await authenticate_request(request)
+        result = await auth_middleware.authenticate_request(mock_connection)
+        assert result.user is None
+        assert result.auth is None
     else:
-        with pytest.raises(Unauthorized):
-            await authenticate_request(request)
+        with pytest.raises(NotAuthorizedException):
+            await auth_middleware.authenticate_request(mock_connection)
 
 
 @pytest.mark.parametrize(
@@ -63,41 +88,110 @@ async def test_authenticate_request_admin_paths(
         ("Bearer valid-token ", "test-uid"),
     ],
 )
-async def test_authenticate_request_valid_jwt(auth_header: str, expected_uid: str) -> None:
-    request = create_test_request(url="/some-protected-path", headers={"Authorization": auth_header})
+async def test_authenticate_request_valid_jwt(
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+    auth_header: str,
+    expected_uid: str,
+) -> None:
+    mock_connection.url.path = "/some-protected-path"
+    mock_connection.headers = {"Authorization": auth_header}
 
     with patch("src.middleware.verify_jwt_token", return_value=expected_uid):
-        await authenticate_request(request)
+        result = await auth_middleware.authenticate_request(mock_connection)
 
-    assert request.ctx.firebase_uid == expected_uid
-
-
-@pytest.mark.parametrize(
-    "auth_header",
-    [
-        "",
-        "Bearer ",
-        "invalid-format",
-    ],
-)
-async def test_authenticate_request_invalid_auth(auth_header: str) -> None:
-    request = create_test_request(url="/some-protected-path", headers={"Authorization": auth_header})
-
-    with pytest.raises(Unauthorized):
-        await authenticate_request(request)
+    assert result.auth == expected_uid
 
 
-async def test_authenticate_request_jwt_verification_error() -> None:
-    request = create_test_request(url="/some-protected-path", headers={"Authorization": "Bearer invalid-token"})
-
-    with patch("src.middleware.verify_jwt_token", side_effect=Unauthorized), pytest.raises(Unauthorized):
-        await authenticate_request(request)
-
-
-async def test_authenticate_request_with_otp() -> None:
-    request = create_test_request(url="/some-protected-path?otp=valid-otp")
+async def test_authenticate_request_with_otp(
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+) -> None:
+    mock_connection.url.path = "/some-protected-path"
+    mock_connection.query_params = {"otp": "valid-otp"}
 
     with patch("src.middleware.verify_jwt_token", return_value="test-uid"):
-        await authenticate_request(request)
+        result = await auth_middleware.authenticate_request(mock_connection)
 
-    assert request.ctx.firebase_uid == "test-uid"
+    assert result.auth == "test-uid"
+
+
+async def test_authenticate_request_with_allowed_roles(
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+) -> None:
+    mock_connection.url.path = "/workspaces/123/some-path"
+    mock_connection.headers = {"Authorization": "Bearer valid-token"}
+    mock_connection.route_handler.opt = {"allowed_roles": [UserRoleEnum.ADMIN, UserRoleEnum.OWNER]}
+    mock_connection.path_params = {"workspace_id": "123"}
+
+    workspace_user = Mock(spec=WorkspaceUser)
+    workspace_user.role = UserRoleEnum.ADMIN
+
+    mock_session = AsyncMock()
+    mock_result = AsyncMock()
+    mock_result.scalar_one_or_none.return_value = workspace_user
+    mock_session.execute.return_value = mock_result
+    mock_session.__aenter__.return_value = mock_session
+
+    with (
+        patch("src.middleware.verify_jwt_token", return_value="test-uid"),
+        patch("src.middleware.get_session_maker", return_value=lambda: mock_session),
+    ):
+        result = await auth_middleware.authenticate_request(mock_connection)
+
+    assert result.user == UserRoleEnum.ADMIN
+    assert result.auth == "test-uid"
+
+
+async def test_authenticate_request_with_allowed_roles_no_workspace_user(
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+) -> None:
+    mock_connection.url.path = "/workspaces/123/some-path"
+    mock_connection.headers = {"Authorization": "Bearer valid-token"}
+    mock_connection.route_handler.opt = {"allowed_roles": [UserRoleEnum.ADMIN, UserRoleEnum.OWNER]}
+    mock_connection.path_params = {"workspace_id": "123"}
+
+    mock_session = AsyncMock()
+    mock_result = AsyncMock()
+    mock_result.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_result
+    mock_session.__aenter__.return_value = mock_session
+
+    with (
+        patch("src.middleware.verify_jwt_token", return_value="test-uid"),
+        patch("src.middleware.get_session_maker", return_value=lambda: mock_session),
+        pytest.raises(NotAuthorizedException),
+    ):
+        await auth_middleware.authenticate_request(mock_connection)
+
+
+async def test_authenticate_request_with_allowed_roles_no_workspace_id(
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+) -> None:
+    mock_connection.url.path = "/some-path-without-workspace-id"
+    mock_connection.headers = {"Authorization": "Bearer valid-token"}
+    mock_connection.route_handler.opt = {"allowed_roles": [UserRoleEnum.ADMIN, UserRoleEnum.OWNER]}
+    mock_connection.path_params = {}
+
+    with (
+        patch("src.middleware.verify_jwt_token", return_value="test-uid"),
+        pytest.raises(NotAuthorizedException),
+    ):
+        await auth_middleware.authenticate_request(mock_connection)
+
+
+async def test_authenticate_request_jwt_verification_error(
+    auth_middleware: AuthMiddleware,
+    mock_connection: Mock,
+) -> None:
+    mock_connection.url.path = "/some-protected-path"
+    mock_connection.headers = {"Authorization": "Bearer invalid-token"}
+
+    with (
+        patch("src.middleware.verify_jwt_token", side_effect=NotAuthorizedException),
+        pytest.raises(NotAuthorizedException),
+    ):
+        await auth_middleware.authenticate_request(mock_connection)

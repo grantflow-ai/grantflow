@@ -19,7 +19,7 @@ async def run_sync[**P, T](sync_fn: Callable[P, T], *args: P.args, **kwargs: P.k
         The result of the synchronous function.
     """
     handler = partial(sync_fn, **kwargs)
-    return cast(T, await any_io_run_sync(handler, *args))  # pyright: ignore [reportCallIssue]
+    return cast("T", await any_io_run_sync(handler, *args))  # pyright: ignore [reportCallIssue]
 
 
 def as_async_callable[**P, T](sync_fn: Callable[P, T]) -> Callable[P, Coroutine[Any, Any, T]]:

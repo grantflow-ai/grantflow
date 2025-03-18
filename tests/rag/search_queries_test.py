@@ -26,7 +26,7 @@ def mock_handle_completions_request(mocker: MockerFixture) -> Mock:
         }
 
     mock = mocker.patch("src.rag.search_queries.handle_completions_request", side_effect=mock_response)
-    # Mock deduplicate_queries to return input unchanged for predictable tests
+
     mocker.patch("src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
     return mock
 
@@ -79,7 +79,6 @@ async def test_handle_create_search_queries_retries_until_minimum(mocker: Mocker
         side_effect=list(responses),
     )
 
-    # Pass through deduplication to ensure predictable results
     mocker.patch("src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
 
     result = await handle_create_search_queries(user_prompt="test prompt")

@@ -2,12 +2,10 @@ from http import HTTPStatus
 from typing import Any, Final
 from unittest.mock import AsyncMock
 
-from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api_types import (
-    ApplicationDraftProcessingResponse,
     UpdateApplicationRequestBody,
 )
 from src.db.enums import UserRoleEnum
@@ -18,14 +16,14 @@ from src.db.tables import (
     WorkspaceUser,
 )
 from src.utils.db import retrieve_application
-from src.utils.serialization import deserialize, serialize
+from tests.conftest import TestingClientType
 from tests.factories import CreateApplicationRequestBodyFactory
 
 TEST_CFP_URL: Final[str] = "https://grants.nih.gov/grants/guide/rfa-files/RFA-DC-25-005.html"
 
 
 async def test_create_application(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
@@ -41,16 +39,14 @@ async def test_create_application(
 
     request_body = CreateApplicationRequestBodyFactory.build(cfp_url=TEST_CFP_URL)
 
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         f"/workspaces/{workspace.id}/applications",
-        data={
-            "data": serialize(request_body).decode(),
-        },
+        json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
 
-    response_body = response.json
+    response_body = response.json()
     assert response_body["id"]
 
     grant_application = await retrieve_application(
@@ -66,7 +62,7 @@ async def test_create_application(
 
 
 async def test_retrieve_application_text_processing(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
@@ -79,18 +75,18 @@ async def test_retrieve_application_text_processing(
             )
         )
 
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/content",
         headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK
-    response_body = deserialize(response.body, ApplicationDraftProcessingResponse)
+    response_body = response.json()
     assert response_body["status"] == "generating"
 
 
 async def test_retrieve_application_text_complete(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
@@ -104,7 +100,7 @@ async def test_retrieve_application_text_complete(
             )
         )
 
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/content",
         headers={"Authorization": "Bearer some_token"},
     )
@@ -113,7 +109,7 @@ async def test_retrieve_application_text_complete(
 
 
 async def test_update_application_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
@@ -128,7 +124,7 @@ async def test_update_application_success(
 
     update_data = UpdateApplicationRequestBody(title="Updated Title")
 
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
@@ -142,13 +138,13 @@ async def test_update_application_success(
 
 
 async def test_update_application_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
 ) -> None:
     update_data = UpdateApplicationRequestBody(title="Updated Title")
 
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
@@ -158,7 +154,7 @@ async def test_update_application_unauthorized(
 
 
 async def test_update_application_bad_request(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
@@ -171,7 +167,7 @@ async def test_update_application_bad_request(
             )
         )
 
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         json={},
         headers={"Authorization": "Bearer some_token"},
@@ -181,7 +177,7 @@ async def test_update_application_bad_request(
 
 
 async def test_delete_application_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
     workspace: Workspace,
@@ -194,7 +190,7 @@ async def test_delete_application_success(
             )
         )
 
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
@@ -207,11 +203,11 @@ async def test_delete_application_success(
 
 
 async def test_delete_application_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
 ) -> None:
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )

@@ -23,7 +23,7 @@ async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
         return
 
     logger.info("Running end-to-end test for extracting text from a document")
-    mime_type = cast(str, guess_type(data_file.name)[0])
+    mime_type = cast("str", guess_type(data_file.name)[0])
     file_dto = FileDTO(content=data_file.read_bytes(), filename=data_file.name, mime_type=mime_type)
     result, _ = await extract_file_content(content=file_dto.content, mime_type=file_dto.mime_type)
     ext = "json" if isinstance(result, dict) else "md"
