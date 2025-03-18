@@ -2,35 +2,32 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
-from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api_types import (
-    TableIdResponse,
     UpdateWorkspaceRequestBody,
-    WorkspaceBaseResponse,
 )
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
-from src.utils.serialization import deserialize
+from tests.conftest import TestingClientType
 from tests.factories import CreateWorkspaceRequestBodyFactory, WorkspaceFactory
 
 
 async def test_create_workspace_api_request_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     request_body = CreateWorkspaceRequestBodyFactory.build()
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         "/workspaces",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.CREATED
-    response_body = deserialize(response.text, TableIdResponse)
+    response_body = response.json()
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
@@ -42,11 +39,11 @@ async def test_create_workspace_api_request_success(
 
 
 async def test_create_workspace_api_request_failure(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         "/workspaces",
         json={},
         headers={"Authorization": "Bearer some_token"},
@@ -55,7 +52,7 @@ async def test_create_workspace_api_request_failure(
 
 
 async def test_retrieve_workspaces_api_request(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -98,13 +95,13 @@ async def test_retrieve_workspaces_api_request(
         )
         await session.commit()
 
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         "/workspaces",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
-    values = deserialize(response.text, list[WorkspaceBaseResponse])
+    values = response.json()
     assert len(values) == 3
 
     for workspace in workspaces_with_user_access:
@@ -135,7 +132,7 @@ async def test_retrieve_workspaces_api_request(
     ),
 )
 async def test_update_workspace_api_request_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
     async_session_maker: async_sessionmaker[Any],
@@ -150,7 +147,7 @@ async def test_update_workspace_api_request_success(
             )
         )
 
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/workspaces/{workspace.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
@@ -165,7 +162,7 @@ async def test_update_workspace_api_request_success(
 
 
 async def test_update_workspace_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
     async_session_maker: async_sessionmaker[Any],
@@ -177,7 +174,7 @@ async def test_update_workspace_api_request_failure_unauthorized(
             )
         )
 
-    _, response = await asgi_client.patch(
+    response = await test_client.patch(
         f"/workspaces/{workspace.id}",
         json=UpdateWorkspaceRequestBody(name="new_name"),
         headers={"Authorization": "Bearer some_token"},
@@ -186,7 +183,7 @@ async def test_update_workspace_api_request_failure_unauthorized(
 
 
 async def test_delete_workspace_api_request_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
     async_session_maker: async_sessionmaker[Any],
@@ -198,7 +195,7 @@ async def test_delete_workspace_api_request_success(
             )
         )
 
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/workspaces/{workspace.id}",
         headers={"Authorization": "Bearer some_token"},
     )
@@ -211,7 +208,7 @@ async def test_delete_workspace_api_request_success(
 
 @pytest.mark.parametrize("user_role", (UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
 async def test_delete_workspace_api_request_failure_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
     async_session_maker: async_sessionmaker[Any],
@@ -224,7 +221,7 @@ async def test_delete_workspace_api_request_failure_unauthorized(
             )
         )
 
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/workspaces/{workspace.id}",
         headers={"Authorization": "Bearer some_token"},
     )

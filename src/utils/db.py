@@ -1,7 +1,7 @@
 from typing import Any, cast
 from uuid import UUID
 
-from sanic import NotFound
+from litestar.exceptions import NotFoundException
 from sqlalchemy import exists, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -38,7 +38,7 @@ async def check_exists_files_being_indexed(
 
     async with session_maker() as session:
         return cast(
-            bool,
+            "bool",
             await session.scalar(
                 select(
                     exists(
@@ -78,6 +78,6 @@ async def retrieve_application(
                 .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
                 .where(GrantApplication.id == application_id)
             )
-            return cast(GrantApplication, result.scalar_one())
+            return cast("GrantApplication", result.scalar_one())
         except NoResultFound as e:
-            raise NotFound from e
+            raise NotFoundException("Application not found") from e

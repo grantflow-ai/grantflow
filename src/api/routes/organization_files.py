@@ -1,11 +1,16 @@
 from asyncio import gather
-from http import HTTPStatus
+from typing import Annotated, Any
 from uuid import UUID
 
-from sanic import BadRequest, HTTPResponse, NotFound, empty, json
-from sanic.response import JSONResponse
-from sqlalchemy import delete, insert, select
+from litestar import delete, get, post
+from litestar.datastructures import UploadFile
+from litestar.enums import RequestEncodingType
+from litestar.exceptions import NotFoundException, ValidationException
+from litestar.params import Body
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from src.api_types import APIRequest
@@ -18,26 +23,19 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-async def handle_organization_file_uploads(request: APIRequest, organization_id: UUID) -> JSONResponse:
-    """Route handler for uploading files to an organization.
+@post("/organizations/{organization_id:uuid}/files")
+async def handle_organization_file_uploads(
+    data: Annotated[dict[str, UploadFile], Body(media_type=RequestEncodingType.MULTI_PART)],
+    organization_id: UUID,
+    session_maker: async_sessionmaker[Any],
+    request: APIRequest,
+) -> list[OrganizationFile]:
+    if not data:
+        raise ValidationException("No files were uploaded")
 
-    Args:
-        request: The request object.
-        organization_id: The organization ID.
+    file_dtos = await gather(*[FileDTO.from_file(file, filename) for filename, file in data.items()])
 
-    Raises:
-        DatabaseError: If there was an issue uploading the files to the organization.
-        BadRequest: If no files were uploaded.
-
-    Returns:
-        The response object.
-    """
-    if not request.files:
-        raise BadRequest("No files were uploaded")
-
-    file_dtos = [FileDTO.from_file(file, filename) for filename, file in request.files.items()]
-
-    async with request.ctx.session_maker() as session, session.begin():
+    async with session_maker() as session, session.begin():
         try:
             file_ids = list(
                 await session.scalars(
@@ -70,31 +68,19 @@ async def handle_organization_file_uploads(request: APIRequest, organization_id:
             await session.rollback()
             raise DatabaseError("Error uploading organization files", context=str(e)) from e
 
-    await gather(
-        *[
-            request.app.dispatch("parse_and_index_file", context={"file_id": file_id, "file_dto": file_dto})
-            for file_id, file_dto in zip(file_ids, file_dtos, strict=True)
-        ]
-    )
+    for file_id, file_dto in zip(file_ids, file_dtos, strict=True):
+        request.app.emit("parse_and_index_file", file_id=file_id, file_dto=file_dto)
 
-    return json(
-        organization_files,
-        status=HTTPStatus.CREATED,
-    )
+    return organization_files
 
 
-async def retrieve_organization_files(request: APIRequest, organization_id: UUID) -> JSONResponse:
-    """Route handler for retrieving files from an organization.
-
-    Args:
-        request: The request object.
-        organization_id: The organization ID.
-
-    Returns:
-        The response object.
-    """
-    async with request.ctx.session_maker() as session:
-        organization_files = list(
+@get("/organizations/{organization_id:uuid}/files")
+async def retrieve_organization_files(
+    organization_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> list[OrganizationFile]:
+    async with session_maker() as session:
+        return list(
             await session.scalars(
                 select(OrganizationFile)
                 .options(selectinload(OrganizationFile.rag_file))
@@ -102,25 +88,14 @@ async def retrieve_organization_files(request: APIRequest, organization_id: UUID
             )
         )
 
-    return json(organization_files)
 
-
-async def handle_delete_organization_file(request: APIRequest, organization_id: UUID, file_id: UUID) -> HTTPResponse:
-    """Route handler for deleting a file from an organization.
-
-    Args:
-        request: The request object.
-        organization_id: The organization ID.
-        file_id: The file ID.
-
-    Raises:
-        DatabaseError: If there was an issue deleting the file from the organization.
-        NotFound: If the file was not found in the organization.
-
-    Returns:
-        The response object.
-    """
-    async with request.ctx.session_maker() as session, session.begin():
+@delete("/organizations/{organization_id:uuid}/files/{file_id:uuid}")
+async def handle_delete_organization_file(
+    organization_id: UUID,
+    file_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    async with session_maker() as session, session.begin():
         try:
             result = await session.execute(
                 select(OrganizationFile)
@@ -130,13 +105,11 @@ async def handle_delete_organization_file(request: APIRequest, organization_id: 
                 )
             )
             result.scalar_one()
-            await session.execute(delete(RagFile).where(RagFile.id == file_id))
+            await session.execute(sa_delete(RagFile).where(RagFile.id == file_id))
             await session.commit()
         except NoResultFound as e:
-            raise NotFound from e
+            raise NotFoundException from e
         except SQLAlchemyError as e:
             logger.error("Error deleting organization file", exc_info=e)
             await session.rollback()
             raise DatabaseError("Error deleting organization file", context=str(e)) from e
-
-    return empty()

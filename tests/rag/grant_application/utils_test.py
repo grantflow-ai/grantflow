@@ -429,7 +429,7 @@ def test_generate_application_text() -> None:
     title = "Developing AI solutions for cancer"
 
     text = generate_application_text(
-        title, cast(list[GrantLongFormSection | GrantElement], grant_sections), section_texts
+        title, cast("list[GrantLongFormSection | GrantElement]", grant_sections), section_texts
     )
 
     assert (

@@ -59,7 +59,7 @@ task migrate                     # Apply migrations
 
 - **Docker-based PostgreSQL** container with pgvector extension for test database
 - **End-to-End Tests**: Controlled with `E2E_TESTS` environment variable
-- **API Tests**: Uses Sanic's ASGI test client
+- **API Tests**: Uses Litestar's test client
 - **Test Data**:
   - Fixtures in `tests/test_data/fixtures/`
   - Factory pattern with polyfactory
@@ -73,7 +73,8 @@ task migrate                     # Apply migrations
 - **Types**: Python 3.12 syntax; comprehensive type hints required
 - **Patterns**:
   - Use async/await for database operations
-  - No inline comments
   - Sort kwargs alphabetically
   - For 3+ arguments, use kwargs only (e.g., `def func(*, arg1, arg2, arg3)`)
   - Prefer functional approach over OOP
+
+**IMPORTANT**: Do not add inline comments!

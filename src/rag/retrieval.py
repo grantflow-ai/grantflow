@@ -311,7 +311,7 @@ async def retrieve_documents(
 
     documents = [
         cast(
-            DocumentDTO,
+            "DocumentDTO",
             {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
         )
         for vector in vectors
@@ -396,7 +396,7 @@ async def retrieve_documents(
 
         new_documents = [
             cast(
-                DocumentDTO,
+                "DocumentDTO",
                 {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
             )
             for vector in new_vectors

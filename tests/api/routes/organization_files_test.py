@@ -3,14 +3,13 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from sanic_testing.testing import SanicASGITestClient
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import FundingOrganization, OrganizationFile, RagFile
-from src.utils.serialization import deserialize
+from tests.conftest import TestingClientType
 
 
 @pytest.fixture
@@ -27,7 +26,7 @@ async def organization_file(
 
 
 async def test_upload_organization_files_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     signal_dispatch_mock: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
@@ -38,7 +37,7 @@ async def test_upload_organization_files_success(
         "test2.txt": b"Test content 2",
     }
 
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         f"/organizations/{funding_organization.id}/files",
         files=test_files,
         headers={"Authorization": "test-admin-code"},
@@ -69,9 +68,9 @@ async def test_upload_organization_files_success(
 
 
 async def test_upload_organization_files_failure_no_files(
-    asgi_client: SanicASGITestClient, funding_organization: FundingOrganization, mock_admin_code: Mock
+    test_client: TestingClientType, funding_organization: FundingOrganization, mock_admin_code: Mock
 ) -> None:
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         f"/organizations/{funding_organization.id}/files",
         files={},
         headers={"Authorization": "test-admin-code"},
@@ -81,31 +80,31 @@ async def test_upload_organization_files_failure_no_files(
 
 
 async def test_retrieve_organization_files_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     organization_file: OrganizationFile,
     mock_admin_code: Mock,
 ) -> None:
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         f"/organizations/{funding_organization.id}/files",
         headers={"Authorization": "test-admin-code"},
     )
 
     assert response.status_code == HTTPStatus.OK
-    files = deserialize(response.text, list[dict[str, Any]])
+    files = response.json()
     assert len(files) == 1
     assert files[0]["funding_organization_id"] == str(funding_organization.id)
     assert files[0]["rag_file_id"] == str(organization_file.rag_file_id)
 
 
 async def test_delete_organization_file_success(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     organization_file: OrganizationFile,
     async_session_maker: async_sessionmaker[Any],
     mock_admin_code: Mock,
 ) -> None:
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/organizations/{funding_organization.id}/files/{organization_file.rag_file_id}",
         headers={"Authorization": "test-admin-code"},
     )
@@ -127,9 +126,9 @@ async def test_delete_organization_file_success(
 
 
 async def test_delete_organization_file_not_found(
-    asgi_client: SanicASGITestClient, funding_organization: FundingOrganization, mock_admin_code: Mock
+    test_client: TestingClientType, funding_organization: FundingOrganization, mock_admin_code: Mock
 ) -> None:
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/organizations/{funding_organization.id}/files/00000000-0000-0000-0000-000000000000",
         headers={"Authorization": "test-admin-code"},
     )
@@ -145,25 +144,25 @@ async def test_delete_organization_file_not_found(
     ],
 )
 async def test_organization_files_unauthorized(
-    asgi_client: SanicASGITestClient,
+    test_client: TestingClientType,
     funding_organization: FundingOrganization,
     headers: dict[str, str],
     mock_admin_code: Mock,
 ) -> None:
-    _, response = await asgi_client.post(
+    response = await test_client.post(
         f"/organizations/{funding_organization.id}/files",
         files={"test.txt": b"Test content"},
         headers=headers,
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
-    _, response = await asgi_client.get(
+    response = await test_client.get(
         f"/organizations/{funding_organization.id}/files",
         headers=headers,
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
-    _, response = await asgi_client.delete(
+    response = await test_client.delete(
         f"/organizations/{funding_organization.id}/files/00000000-0000-0000-0000-000000000000",
         headers=headers,
     )

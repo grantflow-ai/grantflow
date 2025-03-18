@@ -46,4 +46,4 @@ def get_logger(name: str) -> FilteringBoundLogger:
 
     from structlog import get_logger as get_structlog_logger
 
-    return cast(FilteringBoundLogger, get_structlog_logger(name))
+    return cast("FilteringBoundLogger", get_structlog_logger(name))

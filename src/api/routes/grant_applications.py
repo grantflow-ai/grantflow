@@ -1,15 +1,18 @@
-from http import HTTPStatus
-from typing import cast
+from dataclasses import dataclass
+from typing import Annotated, Any
 from uuid import UUID
 
-from sanic import BadRequest, HTTPResponse, empty, json
-from sanic.request import File as RequestFile
-from sanic.response import JSONResponse
-from sqlalchemy import delete, insert, select, update
+from litestar import delete, get, patch, post
+from litestar.datastructures import UploadFile
+from litestar.enums import RequestEncodingType
+from litestar.exceptions import ValidationException
+from litestar.params import Body
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from src.api.utils import verify_workspace_access
 from src.api_types import (
     APIRequest,
     ApplicationDraftCompleteResponse,
@@ -18,62 +21,61 @@ from src.api_types import (
     TableIdResponse,
     UpdateApplicationRequestBody,
 )
+from src.db.enums import UserRoleEnum
 from src.db.tables import GrantApplication
 from src.exceptions import DatabaseError
 from src.files import FileDTO
 from src.utils.db import retrieve_application
 from src.utils.logger import get_logger
-from src.utils.serialization import deserialize
 
 logger = get_logger(__name__)
 
 PROCESSING_SLEEP_INTERVAL = 15  # seconds ~keep
 
 
-async def _get_cfp_content(request: APIRequest, request_body: CreateApplicationRequestBody) -> str:
+@dataclass
+class FormData:
+    data: CreateApplicationRequestBody
+    cfp_file: UploadFile | None = None
+
+
+async def _get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
     from src.utils.extraction import extract_file_content, extract_webpage_content
 
-    if request.files and (cfp_file_upload := cast(RequestFile | None, request.files.get("cfp_file"))):
-        file = FileDTO.from_file(filename=cfp_file_upload.name, file=cfp_file_upload)
+    if cfp_file_upload:
+        file = await FileDTO.from_file(filename=cfp_file_upload.filename, file=cfp_file_upload)
         output, _ = await extract_file_content(
             content=file.content,
             mime_type=file.mime_type,
         )
         return output if isinstance(output, str) else output["content"]
-    if cfp_url := request_body.get("cfp_url"):
+    if cfp_url:
         return await extract_webpage_content(url=cfp_url)
-    raise BadRequest("Either one file or a CFP URL is required")
+    raise ValidationException("Either one file or a CFP URL is required")
 
 
-async def handle_create_application(request: APIRequest, workspace_id: UUID) -> JSONResponse:
-    """Route handler for creating an Application.
-
-    Args:
-        request: The request object.
-        workspace_id: The workspace ID.
-
-    Raises:
-        DatabaseError: If there was an issue creating the application in the database.
-        BadRequest: If the request is not a multipart request.
-
-    Returns:
-        The response object.
-    """
+@post(
+    "/workspaces/{workspace_id:uuid}/applications",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+)
+async def handle_create_application(
+    request: APIRequest,
+    data: Annotated[FormData, Body(media_type=RequestEncodingType.MULTI_PART)],
+    workspace_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> TableIdResponse:
     logger.info("Creating application for workspace", workspace_id=workspace_id)
-    await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    data = cast(str | None, (request.form or {}).get("data"))  # type: ignore[call-overload]
-    if not data:
-        raise BadRequest("data is required")
+    cfp_content = await _get_cfp_content(
+        cfp_file_upload=data.cfp_file,
+        cfp_url=data.data.get("cfp_url"),
+    )
 
-    request_body = deserialize(data, CreateApplicationRequestBody)
-    cfp_content = await _get_cfp_content(request=request, request_body=request_body)
-
-    async with request.ctx.session_maker() as session, session.begin():
+    async with session_maker() as session, session.begin():
         try:
             application_id = await session.scalar(
                 insert(GrantApplication)
-                .values({"workspace_id": workspace_id, "title": request_body["title"]})
+                .values({"workspace_id": workspace_id, "title": data.data["title"]})
                 .returning(GrantApplication.id)
             )
             await session.commit()
@@ -82,65 +84,43 @@ async def handle_create_application(request: APIRequest, workspace_id: UUID) -> 
             logger.error("Error creating application", exc_info=e)
             raise DatabaseError("Error creating application", context=str(e)) from e
 
-    await request.app.dispatch(
+    request.app.emit(
         "handle_generate_grant_template",
-        context={
-            "application_id": application_id,
-            "cfp_content": cfp_content,
-        },
+        application_id=application_id,
+        cfp_content=cfp_content,
     )
 
-    return json(
-        TableIdResponse(id=str(application_id)),
-        status=HTTPStatus.CREATED,
-    )
+    return TableIdResponse(id=str(application_id))
 
 
-async def handle_retrieve_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> JSONResponse:
-    """Route handler for retrieving an Application.
-
-    Args:
-        request: The request object
-        workspace_id: The workspace ID.
-        application_id: The application ID.
-
-    Returns:
-        The response object.
-    """
+@get(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+)
+async def handle_retrieve_application(
+    workspace_id: UUID,
+    application_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> GrantApplication:
     logger.info("Retrieving applications for workspace", workspace_id=workspace_id)
-    await verify_workspace_access(request=request, workspace_id=workspace_id)
-
-    return json(retrieve_application(session_maker=request.ctx.session_maker, application_id=application_id))
+    return await retrieve_application(session_maker=session_maker, application_id=application_id)
 
 
-async def handle_update_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> JSONResponse:
-    """Route handler for updating an Application.
-
-    Args:
-        request: The request object.
-        workspace_id: The workspace ID.
-        application_id: The application ID.
-
-    Raises:
-        BadRequest: If the request body is empty.
-        DatabaseError: If there was an issue updating the application in the database.
-
-    Returns:
-        The response object
-    """
+@patch(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+)
+async def handle_update_application(
+    data: UpdateApplicationRequestBody, application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> GrantApplication:
     logger.info("Updating application", application_id=application_id)
-    await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    request_body = deserialize(request.body, UpdateApplicationRequestBody)
-    if not request_body:
-        raise BadRequest("An empty request body is not allowed")
-
-    async with request.ctx.session_maker() as session, session.begin():
+    async with session_maker() as session, session.begin():
         try:
             await session.execute(
                 update(GrantApplication)
                 .where(GrantApplication.id == application_id)
-                .values(request_body)
+                .values(data)
                 .returning(GrantApplication)
             )
             await session.commit()
@@ -149,55 +129,35 @@ async def handle_update_application(request: APIRequest, workspace_id: UUID, app
             logger.error("Error updating application", exc_info=e)
             raise DatabaseError("Error updating application", context=str(e)) from e
 
-    return json(await retrieve_application(session_maker=request.ctx.session_maker, application_id=application_id))
+    return await retrieve_application(session_maker=session_maker, application_id=application_id)
 
 
-async def handle_delete_application(request: APIRequest, workspace_id: UUID, application_id: UUID) -> HTTPResponse:
-    """Route handler for deleting an Application.
-
-    Args:
-        request: The request object.
-        workspace_id: The workspace ID.
-        application_id: The application ID.
-
-    Raises:
-        DatabaseError: If there was an issue deleting the application in the database.
-
-    Returns:
-        The response object.
-    """
+@delete(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+)
+async def handle_delete_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     logger.info("Deleting application", application_id=application_id)
-    await verify_workspace_access(request=request, workspace_id=workspace_id)
 
-    async with request.ctx.session_maker() as session, session.begin():
+    async with session_maker() as session, session.begin():
         try:
-            await session.execute(delete(GrantApplication).where(GrantApplication.id == application_id))
+            await session.execute(sa_delete(GrantApplication).where(GrantApplication.id == application_id))
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error deleting application", exc_info=e)
             raise DatabaseError("Error deleting application", context=str(e)) from e
 
-    return empty()
 
-
+@get(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/content",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+)
 async def handle_retrieve_application_text(
-    request: APIRequest, workspace_id: UUID, application_id: UUID
-) -> JSONResponse:
-    """Route handler for polling for the result of the RAG pipeline.
-
-    Args:
-        request: The request object.
-        workspace_id: The workspace ID.
-        application_id: The application ID.
-
-    Returns:
-        The response object.
-    """
-    await verify_workspace_access(request=request, workspace_id=workspace_id)
-
+    application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> ApplicationDraftCompleteResponse | ApplicationDraftProcessingResponse:
     logger.info("handling polling request for application", application_id=application_id)
-    async with request.ctx.session_maker() as session:
+    async with session_maker() as session:
         grant_application: GrantApplication = await session.scalar(
             select(GrantApplication)
             .options(selectinload(GrantApplication.grant_template))
@@ -206,12 +166,6 @@ async def handle_retrieve_application_text(
         )
 
     if grant_application and grant_application.text:
-        return json(
-            ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=grant_application.text),
-            status=HTTPStatus.OK,
-        )
+        return ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=grant_application.text)
 
-    return json(
-        ApplicationDraftProcessingResponse(id=str(application_id), status="generating"),
-        status=HTTPStatus.OK,
-    )
+    return ApplicationDraftProcessingResponse(id=str(application_id), status="generating")

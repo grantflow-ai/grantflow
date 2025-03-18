@@ -140,7 +140,7 @@ async def grant_template_generation_pipeline_handler(
                 .returning(GrantTemplate)
             )
             await session.commit()
-            return cast(GrantTemplate, grant_template)
+            return cast("GrantTemplate", grant_template)
         except SQLAlchemyError as e:
             logger.error("Error generating grant template", error=e)
             await session.rollback()

@@ -1,24 +1,21 @@
-from types import SimpleNamespace
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, Protocol, TypedDict
 
-from sanic import Request, Sanic
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from litestar import Request
+from litestar.datastructures import State
 
 from src.db.enums import UserRoleEnum
 from src.db.json_objects import ResearchObjective
 
 
-class RequestContext(SimpleNamespace):
-    """The context of an API request."""
-
-    firebase_uid: str
-    """The Firebase User ID."""
-
-    session_maker: async_sessionmaker[Any]
-    """The session maker."""
+class RequestContext(Protocol):
+    session_maker: Any
 
 
-APIRequest = Request[Sanic[Any, RequestContext], RequestContext]
+class APIRequestState(State):
+    ctx: RequestContext
+
+
+APIRequest = Request[UserRoleEnum | None, str | None, APIRequestState]
 
 
 class TableIdResponse(TypedDict):

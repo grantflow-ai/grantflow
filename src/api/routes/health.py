@@ -1,12 +1,11 @@
-from sanic import HTTPResponse, text
-
-from src.api_types import APIRequest
+from litestar import get
 
 
-async def health_check(_: APIRequest) -> HTTPResponse:
+@get("/health", media_type="text/plain")
+async def health_check() -> str:
     """Route handler for the health check endpoint.
 
     Returns:
-        The response object.
+        Args string
     """
-    return text("OK")
+    return "OK"
