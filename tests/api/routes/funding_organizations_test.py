@@ -11,7 +11,7 @@ from src.db.tables import FundingOrganization
 from tests.conftest import TestingClientType
 
 if TYPE_CHECKING:
-    from src.api_types import CreateOrganizationRequestBody
+    from src.api.api_types import CreateOrganizationRequestBody
 
 
 async def test_create_organization_api_request_success(
@@ -26,7 +26,7 @@ async def test_create_organization_api_request_success(
         json=request_body,
         headers={"Authorization": "test-admin-code"},
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     response_body = response.json()
     assert response_body["full_name"] == request_body["full_name"]
@@ -60,7 +60,7 @@ async def test_create_organization_api_request_failure_unauthorized(
         json=request_body,
         headers=headers,
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
 async def test_create_organization_api_request_failure_bad_request(
@@ -71,7 +71,7 @@ async def test_create_organization_api_request_failure_bad_request(
         json={},
         headers={"Authorization": "test-admin-code"},
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
 async def test_retrieve_organizations_api_request_success(
@@ -91,7 +91,7 @@ async def test_retrieve_organizations_api_request_success(
         "/organizations",
         headers={"Authorization": "test-admin-code"},
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.text
 
     response_data = response.json()
     assert len(response_data) == 2
@@ -113,7 +113,7 @@ async def test_retrieve_organizations_api_request_failure_unauthorized(
         "/organizations",
         headers=headers,
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
 async def test_update_organization_api_request_success(
@@ -132,7 +132,7 @@ async def test_update_organization_api_request_success(
         json=request_body,
         headers={"Authorization": "test-admin-code"},
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.OK, response.text
 
     async with async_session_maker() as session, session.begin():
         organization = await session.get(FundingOrganization, funding_organization.id)
@@ -162,7 +162,7 @@ async def test_update_organization_api_request_failure_unauthorized(
         json=request_body,
         headers=headers,
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
 async def test_update_organization_api_request_failure_empty_body(
@@ -173,7 +173,7 @@ async def test_update_organization_api_request_failure_empty_body(
         json={},
         headers={"Authorization": "test-admin-code"},
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
 async def test_delete_organization_api_request_success(
@@ -186,7 +186,7 @@ async def test_delete_organization_api_request_success(
         f"/organizations/{funding_organization.id}",
         headers={"Authorization": "test-admin-code"},
     )
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     with pytest.raises(NoResultFound):
         async with async_session_maker() as session, session.begin():
@@ -210,4 +210,4 @@ async def test_delete_organization_api_request_failure_unauthorized(
         f"/organizations/{funding_organization.id}",
         headers=headers,
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text

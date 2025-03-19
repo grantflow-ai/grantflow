@@ -18,8 +18,8 @@ from litestar.testing import AsyncTestClient
 from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from scripts.seed_db import seed_db
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy import NullPool, select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from structlog import configure
 from structlog.testing import LogCapture
 from vertexai.generative_models import GenerativeModel
@@ -82,10 +82,7 @@ def stub_env() -> None:
         "false"  # we don't want to run tokenizers in parallel due to pytest limitations ~keep
     )
 
-    mock_creds = (
-        '{"type":"service_account","project_id":"grantflow","private_key_id":"abc","private_key":'
-        ',"client_email":"x@grantflow.iam.gserviceaccount.com","client_id":"1000000000","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"","universe_domain":"googleapis.com"}'
-    )
+    mock_creds = '{"type":"service_account","project_id":"grantflow","private_key_id":"abc","private_key":"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC+0J+xaF97Kqhq\\naahY04lj7dO+xyZHMKt3NXy0FSvpNUscx9UB8UVh9D/QvJ0zgfRo9G0kfEpmKE86\\nRFd9tCW2ytnMbdi7XRF9eSVJXjpGh/5pXvhakb/6+BHJoFriYeYU/QHWesIDr0An\\nDG5H9pLGXBzGJ34rGfPmVseh3xKdnZzcPvdjNj6OMbNpwxkwFJupRB9I3pvYIjQw\\nEH1ca5JYrAYwm6jspO6liZKVQCuqTvkWQZdG8SEHtoaIXJyDgvT20vTmlV5Ktzxt\\n9F3MHDncqNFTmAIQvOe+Lq14gWkEznBhZ8y/tgmVEC//RZyHySI3GPSQZg8nQwKZ\\nlAq7p4UDAgMBAAECggEABxHVZS1iddLSV6PT1VMvXpROZRtBxzZ1atE4FiGVQbQm\\nKbh+hDh1TOvQjPiMX7E12KXsJeaJ5JFvqaHH+ZOsmyvrAp0kV1NfqMPiMULrpIKZ\\nzx0qvIBDOCh5kFWXwgxnFzgG0JkVXq2a6lG9FVGSZbKVLmDXFPCKpQgohL2A71Xl\\n25AfWXSYXX5WH3cE/UCtxwtBpVoYOopPgwJh1wN9TUKuOqzP6/3+SgQMBExNIT2s\\nDPzqJ49bjPpQiPBOZOxJWIYYTdUi/YpQVTZ3vGytpUAKgcKS0SMqEVCRWqMzOxqH\\no27pUcvCWUvB99v77HsJQUwWCrOSsKK5L7vDG/1aOQKBgQDu8RH6QMi9BnNYCc4E\\nRTbBQeNNZkRpD4h43PynIJM0YhBXULD+LE4h/27nAEOu+5iFW/LkwxoMcf30UhXN\\n3OjtjfMzR7FcLuTQQzGbIa0xEbvk0VE0JPu8/lZnzVeuehvC6mKqIQtv4jDGrpVU\\nkJB8axrLQTUMnbKTHdz+/UhxCQKBgQDMO5EMCUY9LMzTD1R+BK4r3qrFqKJGp1wd\\nLVcUvLZv5A3mzFKrHyeATw6NCMp4iSDcNCwQCuFUjYYYmmc68AE0GkU5JOSi3Xw9\\noOtRQKHpFN1p01FpuZ/h99qrnCLjQkF4ooJOa2ixrBGWfxCLSNAFrRJEYpSsKS+U\\nWKHRMWRiuwKBgDdfn0PChFhzQZjTVJPRwj+vc7jJcpnm2eSH4qb5KD3OB3/JTLZ6\\nxJ6w7mIPSADZGO4IX12O+FdEQeakiWKsR9VBBdRwQDnVEYqrcGqddIv27RTrBV3I\\nXJOSKyVQwGEVRITFbZXVwVDj2fIVndfng+RFBiQ+5pZ7KR0A9D+A1RhpAoGBAMSm\\nUjrDnaz6RiaRguBpWqS9QzJmFbhxcl7hRa7lrqWzBhHjvBwE9OkTqMJ7TYBw6bMc\\nxO3lXDxIhTqNw0Y7MsZZdO96NvuB3Z2FHH7Vw/CcPA0jzUgqqwJcyBZIkl8nx0HN\\nZ/qQ5jLIiCzI+ixoZsZJYpxkxZgcDTjGK7n45D/bAoGAB1ALGisNkA8OR35oMedk\\n9NwsnksdOz0DHcuHE7APDiCNkGVp2x0ZrGRBV6x+qy6hgYFLNB+kDxNtWvyDkiLO\\nDC5XUA4mPF4btHgvVG3/5NpVJZGU2r9M07zHYyCdFCBFX93+EKMNYFLtC75Cj3A+\\nrQVqm5nZC/+90P2uFCFnO5c=\\n-----END PRIVATE KEY-----\\n","client_email":"x@grantflow.iam.gserviceaccount.com","client_id":"1000000000","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"","universe_domain":"googleapis.com"}'
     os.environ.setdefault("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
     os.environ.setdefault("LLM_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
     os.environ.setdefault("JWT_SECRET", "abc123")
@@ -128,16 +125,28 @@ def mock_generative_model() -> Generator[Mock, Any, None]:
 
 @pytest.fixture(scope="session")
 async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[TestingClientType, None]:
-    patch("src.utils.firebase.firebase_admin.initialize_app")
-    patch("src.utils.firebase.firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid})
-    patch("src.utils.jwt.decode", return_value={"sub": firebase_uid})
+    firebase_uid = "a" * 128
 
     firebase_app_ref.value = Mock()
 
-    from src.main import app
+    init_ref.value = True
 
-    async with AsyncTestClient(app=app) as client:
-        yield client
+    with (
+        patch("src.api.main.before_server_start"),
+        patch("src.utils.ai.get_vertex_credentials", return_value=Mock()),
+        patch("src.utils.ai.init", return_value=None),
+        patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
+        patch("jwt.decode", return_value={"sub": firebase_uid}),
+        patch("src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),
+        patch("firebase_admin.initialize_app", return_value=Mock()),
+    ):
+        from src.api.main import app
+
+        # this is usually happening in the `before_server_start` hook, which we are patching above ~keep
+        app.state.session_maker = async_session_maker
+
+        async with AsyncTestClient(app=app) as client:
+            yield client
 
 
 @pytest.fixture(scope="session")
@@ -212,8 +221,7 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
 
 @pytest.fixture(scope="session")
 async def async_session_maker(db_connection_string: str) -> async_sessionmaker[Any]:
-    os.environ.update({"DATABASE_CONNECTION_STRING": db_connection_string})
-    engine_ref.value = None
+    engine_ref.value = create_async_engine(db_connection_string, echo=False, poolclass=NullPool)
     return get_session_maker()
 
 
@@ -416,8 +424,9 @@ async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
 
 
 @pytest.fixture
-def signal_dispatch_mock(mocker: MockerFixture) -> Mock:
-    return mocker.patch("litestar.events.emitter.Emitter.emit")
+def signal_dispatch_mock() -> Generator[Mock, None]:
+    with patch("litestar.events.emitter.SimpleEventEmitter.emit") as mock:
+        yield mock
 
 
 @pytest.fixture
