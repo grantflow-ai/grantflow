@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -13,11 +12,15 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from src.api_types import (
+from src.api.api_types import (
     APIRequest,
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
+    ApplicationResponse,
+    BaseApplicationResponse,
     CreateApplicationRequestBody,
+    FundingOrganizationResponse,
+    GrantTemplateResponse,
     TableIdResponse,
     UpdateApplicationRequestBody,
 )
@@ -31,12 +34,6 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 PROCESSING_SLEEP_INTERVAL = 15  # seconds ~keep
-
-
-@dataclass
-class FormData:
-    data: CreateApplicationRequestBody
-    cfp_file: UploadFile | None = None
 
 
 async def _get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
@@ -59,23 +56,23 @@ async def _get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | No
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
 )
 async def handle_create_application(
+    data: Annotated[CreateApplicationRequestBody, Body(media_type=RequestEncodingType.MULTI_PART)],
     request: APIRequest,
-    data: Annotated[FormData, Body(media_type=RequestEncodingType.MULTI_PART)],
     workspace_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> TableIdResponse:
     logger.info("Creating application for workspace", workspace_id=workspace_id)
 
     cfp_content = await _get_cfp_content(
-        cfp_file_upload=data.cfp_file,
-        cfp_url=data.data.get("cfp_url"),
+        cfp_file_upload=data.get("cfp_file"),
+        cfp_url=data.get("cfp_url"),
     )
 
     async with session_maker() as session, session.begin():
         try:
             application_id = await session.scalar(
                 insert(GrantApplication)
-                .values({"workspace_id": workspace_id, "title": data.data["title"]})
+                .values({"workspace_id": workspace_id, "title": data["title"]})
                 .returning(GrantApplication.id)
             )
             await session.commit()
@@ -101,9 +98,29 @@ async def handle_retrieve_application(
     workspace_id: UUID,
     application_id: UUID,
     session_maker: async_sessionmaker[Any],
-) -> GrantApplication:
+) -> ApplicationResponse:
     logger.info("Retrieving applications for workspace", workspace_id=workspace_id)
-    return await retrieve_application(session_maker=session_maker, application_id=application_id)
+    application = await retrieve_application(session_maker=session_maker, application_id=application_id)
+    return ApplicationResponse(
+        id=str(application.id),
+        title=application.title,
+        completed_at=application.completed_at.isoformat() if application.completed_at else None,
+        text=application.text,
+        form_inputs=application.form_inputs,
+        research_objectives=application.research_objectives,
+        grant_template=GrantTemplateResponse(
+            grant_sections=application.grant_template.grant_sections,
+            funding_organization=FundingOrganizationResponse(
+                id=str(application.grant_template.funding_organization.id),
+                full_name=application.grant_template.funding_organization.full_name,
+                abbreviation=application.grant_template.funding_organization.abbreviation,
+            )
+            if application.grant_template.funding_organization
+            else None,
+        )
+        if application.grant_template
+        else None,
+    )
 
 
 @patch(
@@ -112,16 +129,17 @@ async def handle_retrieve_application(
 )
 async def handle_update_application(
     data: UpdateApplicationRequestBody, application_id: UUID, session_maker: async_sessionmaker[Any]
-) -> GrantApplication:
+) -> BaseApplicationResponse:
     logger.info("Updating application", application_id=application_id)
+
+    if not data:
+        raise ValidationException("Request body cannot be empty")
 
     async with session_maker() as session, session.begin():
         try:
+            update_values = dict(data)
             await session.execute(
-                update(GrantApplication)
-                .where(GrantApplication.id == application_id)
-                .values(data)
-                .returning(GrantApplication)
+                update(GrantApplication).where(GrantApplication.id == application_id).values(update_values)
             )
             await session.commit()
         except SQLAlchemyError as e:
@@ -129,7 +147,12 @@ async def handle_update_application(
             logger.error("Error updating application", exc_info=e)
             raise DatabaseError("Error updating application", context=str(e)) from e
 
-    return await retrieve_application(session_maker=session_maker, application_id=application_id)
+    application = await retrieve_application(session_maker=session_maker, application_id=application_id)
+    return BaseApplicationResponse(
+        id=str(application.id),
+        title=application.title,
+        completed_at=application.completed_at.isoformat() if application.completed_at else None,
+    )
 
 
 @delete(

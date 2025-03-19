@@ -1,18 +1,15 @@
-from typing import Any, Literal, NotRequired, Protocol, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from litestar import Request
-from litestar.datastructures import State
+from litestar.datastructures import State, UploadFile
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import UserRoleEnum
-from src.db.json_objects import ResearchObjective
-
-
-class RequestContext(Protocol):
-    session_maker: Any
+from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 
 
 class APIRequestState(State):
-    ctx: RequestContext
+    session_maker: async_sessionmaker[Any]
 
 
 APIRequest = Request[UserRoleEnum | None, str | None, APIRequestState]
@@ -38,6 +35,16 @@ class UpdateOrganizationRequestBody(TypedDict):
 
     full_name: NotRequired[str]
     abbreviation: NotRequired[str | None]
+
+
+class FundingOrganizationResponse(TypedDict):
+    """The response schema for a funding organization."""
+
+    id: str
+    """The ID of the funding organization."""
+    full_name: str
+    """The full name of the funding organization."""
+    abbreviation: str | None
 
 
 # Workspace API Types ~keep
@@ -76,6 +83,13 @@ class WorkspaceBaseResponse(TableIdResponse):
     """The role of the user in the workspace."""
 
 
+class WorkspaceResponse(WorkspaceBaseResponse):
+    """Response for retrieving a workspace."""
+
+    grant_applications: list["BaseApplicationResponse"]
+    """The grant applications in the workspace"""
+
+
 # Application API Types ~keep
 class CreateApplicationRequestBody(TypedDict):
     """The request body for creating an application."""
@@ -84,6 +98,8 @@ class CreateApplicationRequestBody(TypedDict):
     """The title of the application."""
     cfp_url: NotRequired[str]
     """Grant CFP URL."""
+    cfp_file: NotRequired[UploadFile]
+    """Grant CFP file."""
 
 
 class UpdateApplicationRequestBody(TypedDict):
@@ -112,6 +128,36 @@ class ApplicationDraftCompleteResponse(TypedDict):
     status: Literal["complete"]
     """The status of the grant application draft."""
     text: str
+
+
+class BaseApplicationResponse(TableIdResponse):
+    """Base response for retrieving applications."""
+
+    title: str
+    """The title of the grant application draft."""
+    completed_at: str | None
+    """The completed date of the grant application draft."""
+
+
+class GrantTemplateResponse(TypedDict):
+    """Response for retrieving a grant template."""
+
+    grant_sections: list[GrantLongFormSection | GrantElement]
+    """The name of the grant template."""
+    funding_organization: FundingOrganizationResponse | None
+    """The funding organization of the grant template."""
+
+
+class ApplicationResponse(BaseApplicationResponse):
+    """Response for retrieving an application."""
+
+    form_inputs: dict[str, str] | None
+    """The form inputs of the application."""
+    research_objectives: list[ResearchObjective] | None
+    """The research objectives of the application."""
+    text: str | None
+    """The text content of the application."""
+    grant_template: GrantTemplateResponse | None
 
 
 # Auth API Types  ~keep

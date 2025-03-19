@@ -42,7 +42,6 @@ dev = [
   "covdefaults>=2.3.0",
   "faker>=37.0.1",
   "huggingface-hub[cli]>=0.29.1",
-  "litestar[testing]>=2.15.1",
   "mypy>=1.15.0",
   "polyfactory>=2.19.0",
   "pre-commit>=4.1.0",

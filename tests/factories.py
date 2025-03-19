@@ -7,7 +7,7 @@ from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from sqlalchemy import Column
 
-from src.api_types import (
+from src.api.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
     CreateApplicationRequestBody,

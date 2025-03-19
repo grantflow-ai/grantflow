@@ -6,7 +6,7 @@ from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
 from sqlalchemy import select
 
-from src.db.connection import get_session_maker
+from src.api.api_types import APIRequestState
 from src.db.tables import WorkspaceUser
 from src.utils.env import get_env
 from src.utils.jwt import verify_jwt_token
@@ -21,7 +21,9 @@ ADMIN_PATHS = {"organizations"}
 class AuthMiddleware(AbstractAuthenticationMiddleware):
     """Middleware class responsible for handling authentication in an ASGI application."""
 
-    async def authenticate_request(self, connection: ASGIConnection[Any, Any, Any, Any]) -> AuthenticationResult:
+    async def authenticate_request(
+        self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
+    ) -> AuthenticationResult:
         """Authenticates incoming requests based on the route access level, headers, and query
         parameters. This method checks for the presence of an authorization header or query
         parameters to determine if the request is authorized. Depending on the endpoint the
@@ -73,8 +75,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             if not firebase_uid:
                 raise NotAuthorizedException
 
-            session_maker = get_session_maker()
-            async with session_maker() as session:
+            async with connection.app.state.session_maker() as session:
                 stmt = (
                     select(WorkspaceUser)
                     .where(WorkspaceUser.firebase_uid == firebase_uid)
@@ -87,6 +88,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
             if workspace_user := result.scalar_one_or_none():
                 return AuthenticationResult(user=workspace_user.role, auth=firebase_uid)
+            raise NotAuthorizedException
 
         if firebase_uid:
             return AuthenticationResult(user=None, auth=firebase_uid)

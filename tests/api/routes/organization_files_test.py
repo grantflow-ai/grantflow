@@ -63,8 +63,8 @@ async def test_upload_organization_files_success(
     signal_calls = [call for call in signal_dispatch_mock.mock_calls if call.args[0] == "parse_and_index_file"]
     assert len(signal_calls) == 2
     for call in signal_calls:
-        assert "file_id" in call.kwargs["context"]
-        assert "file_dto" in call.kwargs["context"]
+        assert "file_id" in call.kwargs
+        assert "file_dto" in call.kwargs
 
 
 async def test_upload_organization_files_failure_no_files(
@@ -93,8 +93,7 @@ async def test_retrieve_organization_files_success(
     assert response.status_code == HTTPStatus.OK
     files = response.json()
     assert len(files) == 1
-    assert files[0]["funding_organization_id"] == str(funding_organization.id)
-    assert files[0]["rag_file_id"] == str(organization_file.rag_file_id)
+    assert files[0]["id"] == str(organization_file.rag_file_id)
 
 
 async def test_delete_organization_file_success(
