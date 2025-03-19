@@ -13,7 +13,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from src.api_types import APIRequest
+from src.api.api_types import APIRequest, TableIdResponse
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import OrganizationFile, RagFile
 from src.exceptions import DatabaseError
@@ -29,7 +29,7 @@ async def handle_organization_file_uploads(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
     request: APIRequest,
-) -> list[OrganizationFile]:
+) -> list[TableIdResponse]:
     if not data:
         raise ValidationException("No files were uploaded")
 
@@ -60,7 +60,7 @@ async def handle_organization_file_uploads(
                     .values(
                         [{"funding_organization_id": organization_id, "rag_file_id": file_id} for file_id in file_ids]
                     )
-                    .returning(OrganizationFile)
+                    .returning(OrganizationFile.rag_file_id)
                 )
             )
         except SQLAlchemyError as e:
@@ -71,22 +71,21 @@ async def handle_organization_file_uploads(
     for file_id, file_dto in zip(file_ids, file_dtos, strict=True):
         request.app.emit("parse_and_index_file", file_id=file_id, file_dto=file_dto)
 
-    return organization_files
+    return [TableIdResponse(id=str(rag_file_id)) for rag_file_id in organization_files]
 
 
 @get("/organizations/{organization_id:uuid}/files")
 async def retrieve_organization_files(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
-) -> list[OrganizationFile]:
+) -> list[TableIdResponse]:
     async with session_maker() as session:
-        return list(
-            await session.scalars(
-                select(OrganizationFile)
-                .options(selectinload(OrganizationFile.rag_file))
-                .where(OrganizationFile.funding_organization_id == organization_id)
+        return [
+            TableIdResponse(id=str(rag_file_id))
+            for rag_file_id in await session.scalars(
+                select(OrganizationFile.rag_file_id).where(OrganizationFile.funding_organization_id == organization_id)
             )
-        )
+        ]
 
 
 @delete("/organizations/{organization_id:uuid}/files/{file_id:uuid}")

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any
 
@@ -6,16 +7,16 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api_types import (
+from src.api.api_types import (
     UpdateWorkspaceRequestBody,
 )
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
 from tests.conftest import TestingClientType
-from tests.factories import CreateWorkspaceRequestBodyFactory, WorkspaceFactory
+from tests.factories import CreateWorkspaceRequestBodyFactory, GrantApplicationFactory, WorkspaceFactory
 
 
-async def test_create_workspace_api_request_success(
+async def test_create_workspace_success(
     test_client: TestingClientType,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
@@ -26,7 +27,7 @@ async def test_create_workspace_api_request_success(
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
     response_body = response.json()
     assert response_body["id"]
 
@@ -38,7 +39,7 @@ async def test_create_workspace_api_request_success(
         assert workspace.logo_url == request_body["logo_url"]
 
 
-async def test_create_workspace_api_request_failure(
+async def test_create_workspace_failure(
     test_client: TestingClientType,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
@@ -48,10 +49,10 @@ async def test_create_workspace_api_request_failure(
         json={},
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
-async def test_retrieve_workspaces_api_request(
+async def test_retrieve_workspaces(
     test_client: TestingClientType,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
@@ -116,6 +117,76 @@ async def test_retrieve_workspaces_api_request(
     assert all(value["id"] != str(workspace_without_user_access.id) for value in values)
 
 
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
+async def test_retrieve_workspace_success(
+    test_client: TestingClientType,
+    firebase_uid: str,
+    workspace: Workspace,
+    async_session_maker: async_sessionmaker[Any],
+    user_role: UserRoleEnum,
+) -> None:
+    grant_app1 = GrantApplicationFactory.build(
+        workspace_id=workspace.id,
+        title="Application 1",
+        completed_at=datetime.now(UTC),
+    )
+    grant_app2 = GrantApplicationFactory.build(
+        workspace_id=workspace.id,
+        title="Application 2",
+        completed_at=None,
+    )
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": user_role.value}
+            )
+        )
+
+        session.add(grant_app1)
+        session.add(grant_app2)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response_data = response.json()
+    assert response_data["id"] == str(workspace.id)
+    assert response_data["name"] == workspace.name
+    assert response_data["description"] == workspace.description
+    assert response_data["logo_url"] == workspace.logo_url
+    assert response_data["role"] == user_role.value
+
+    grant_applications = response_data["grant_applications"]
+    assert len(grant_applications) == 2
+
+    app_ids = {str(grant_app1.id), str(grant_app2.id)}
+    response_app_ids = {app["id"] for app in grant_applications}
+    assert app_ids == response_app_ids
+
+    for app in grant_applications:
+        if app["id"] == str(grant_app1.id):
+            assert app["title"] == "Application 1"
+            assert app["completed_at"] is not None
+        elif app["id"] == str(grant_app2.id):
+            assert app["title"] == "Application 2"
+            assert app["completed_at"] is None
+
+
+async def test_retrieve_workspace_unauthorized(
+    test_client: TestingClientType,
+    workspace: Workspace,
+) -> None:
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}",
+        headers={"Authorization": "Bearer invalid_token"},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+
+
 @pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN))
 @pytest.mark.parametrize(
     "request_body, attrs",
@@ -131,7 +202,7 @@ async def test_retrieve_workspaces_api_request(
         ),
     ),
 )
-async def test_update_workspace_api_request_success(
+async def test_update_workspace_success(
     test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
@@ -152,7 +223,7 @@ async def test_update_workspace_api_request_success(
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.text
 
     async with async_session_maker() as session, session.begin():
         workspace = await session.scalar(select(Workspace).where(Workspace.id == workspace.id))
@@ -161,7 +232,7 @@ async def test_update_workspace_api_request_success(
         assert getattr(workspace, attr) == request_body[attr]  # type: ignore[literal-required]
 
 
-async def test_update_workspace_api_request_failure_unauthorized(
+async def test_update_workspace_failure_unauthorized(
     test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
@@ -179,10 +250,10 @@ async def test_update_workspace_api_request_failure_unauthorized(
         json=UpdateWorkspaceRequestBody(name="new_name"),
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
-async def test_delete_workspace_api_request_success(
+async def test_delete_workspace_success(
     test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
@@ -199,7 +270,7 @@ async def test_delete_workspace_api_request_success(
         f"/workspaces/{workspace.id}",
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     with pytest.raises(NoResultFound):
         async with async_session_maker() as session, session.begin():
@@ -207,7 +278,7 @@ async def test_delete_workspace_api_request_success(
 
 
 @pytest.mark.parametrize("user_role", (UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
-async def test_delete_workspace_api_request_failure_unauthorized(
+async def test_delete_workspace_failure_unauthorized(
     test_client: TestingClientType,
     firebase_uid: str,
     workspace: Workspace,
@@ -225,4 +296,4 @@ async def test_delete_workspace_api_request_failure_unauthorized(
         f"/workspaces/{workspace.id}",
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text

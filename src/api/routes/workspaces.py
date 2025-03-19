@@ -2,18 +2,20 @@ from typing import Any, cast
 from uuid import UUID
 
 from litestar import delete, get, patch, post
-from litestar.exceptions import NotFoundException
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from src.api_types import (
+from src.api.api_types import (
+    APIRequest,
+    BaseApplicationResponse,
     CreateWorkspaceRequestBody,
     TableIdResponse,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,
+    WorkspaceResponse,
 )
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
@@ -25,9 +27,9 @@ logger = get_logger(__name__)
 
 @post("/workspaces")
 async def handle_create_workspace(
-    auth: str, data: CreateWorkspaceRequestBody, session_maker: async_sessionmaker[Any]
+    request: APIRequest, data: CreateWorkspaceRequestBody, session_maker: async_sessionmaker[Any]
 ) -> TableIdResponse:
-    logger.info("Creating workspace by user", uid=auth)
+    logger.info("Creating workspace by user", uid=request.auth)
     async with session_maker() as session, session.begin():
         try:
             workspace = await session.scalar(insert(Workspace).values(data).returning(Workspace))
@@ -35,7 +37,7 @@ async def handle_create_workspace(
                 insert(WorkspaceUser).values(
                     {
                         "workspace_id": workspace.id,
-                        "firebase_uid": auth,
+                        "firebase_uid": request.auth,
                         "role": UserRoleEnum.OWNER.value,
                     }
                 )
@@ -52,15 +54,17 @@ async def handle_create_workspace(
 
 
 @get("/workspaces")
-async def handle_retrieve_workspaces(auth: str, session_maker: async_sessionmaker[Any]) -> list[WorkspaceBaseResponse]:
-    logger.info("Retrieving workspaces for user", uid=auth)
+async def handle_retrieve_workspaces(
+    request: APIRequest, session_maker: async_sessionmaker[Any]
+) -> list[WorkspaceBaseResponse]:
+    logger.info("Retrieving workspaces for user", uid=request.auth)
     async with session_maker() as session:
         workspaces = list(
             await session.scalars(
                 select(Workspace)
                 .options(selectinload(Workspace.workspace_users))
                 .join(WorkspaceUser)
-                .where(WorkspaceUser.firebase_uid == auth)
+                .where(WorkspaceUser.firebase_uid == request.auth)
             )
         )
 
@@ -78,7 +82,7 @@ async def handle_retrieve_workspaces(auth: str, session_maker: async_sessionmake
 
 @patch("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN])
 async def handle_update_workspace(
-    data: UpdateWorkspaceRequestBody, user: UserRoleEnum, workspace_id: UUID, session_maker: async_sessionmaker[Any]
+    request: APIRequest, data: UpdateWorkspaceRequestBody, workspace_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> WorkspaceBaseResponse:
     logger.info("Updating workspace", workspace_id=workspace_id)
     async with session_maker() as session, session.begin():
@@ -97,24 +101,35 @@ async def handle_update_workspace(
         name=workspace.name,
         description=workspace.description,
         logo_url=workspace.logo_url,
-        role=user,
+        role=cast("UserRoleEnum", request.user),
     )
 
 
 @get("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER])
-async def handle_retrieve_workspace(workspace_id: UUID, session_maker: async_sessionmaker[Any]) -> Workspace:
+async def handle_retrieve_workspace(
+    request: APIRequest, workspace_id: UUID, session_maker: async_sessionmaker[Any]
+) -> WorkspaceResponse:
     logger.info("Retrieving workspace", workspace_id=workspace_id)
     async with session_maker() as session, session.begin():
-        try:
-            result = await session.scalar(
-                select(Workspace)
-                .options(selectinload(Workspace.grant_applications))
-                .where(Workspace.id == workspace_id)
+        workspace = await session.scalar(
+            select(Workspace).options(selectinload(Workspace.grant_applications)).where(Workspace.id == workspace_id)
+        )
+
+    return WorkspaceResponse(
+        id=str(workspace.id),
+        name=workspace.name,
+        description=workspace.description,
+        logo_url=workspace.logo_url,
+        role=cast("UserRoleEnum", request.user),
+        grant_applications=[
+            BaseApplicationResponse(
+                id=str(grant_application.id),
+                title=grant_application.title,
+                completed_at=grant_application.completed_at.isoformat() if grant_application.completed_at else None,
             )
-            return cast("Workspace", result)
-        except SQLAlchemyError as e:
-            logger.error("Error retrieving workspace", exc_info=e)
-            raise NotFoundException from e
+            for grant_application in workspace.grant_applications
+        ],
+    )
 
 
 @delete("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER])

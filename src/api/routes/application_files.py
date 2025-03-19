@@ -13,7 +13,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from src.api_types import APIRequest
+from src.api.api_types import APIRequest, TableIdResponse
 from src.db.enums import FileIndexingStatusEnum, UserRoleEnum
 from src.db.tables import GrantApplicationFile, RagFile
 from src.exceptions import DatabaseError
@@ -32,7 +32,7 @@ async def handle_application_file_uploads(
     data: Annotated[dict[str, UploadFile], Body(media_type=RequestEncodingType.MULTI_PART)],
     application_id: UUID,
     session_maker: async_sessionmaker[Any],
-) -> list[GrantApplicationFile]:
+) -> list[TableIdResponse]:
     if not data:
         raise ValidationException("No files were uploaded")
 
@@ -61,7 +61,7 @@ async def handle_application_file_uploads(
                 await session.scalars(
                     insert(GrantApplicationFile)
                     .values([{"grant_application_id": application_id, "rag_file_id": file_id} for file_id in file_ids])
-                    .returning(GrantApplicationFile)
+                    .returning(GrantApplicationFile.rag_file_id)
                 )
             )
         except SQLAlchemyError as e:
@@ -72,7 +72,7 @@ async def handle_application_file_uploads(
     for file_id, file_dto in zip(file_ids, file_dtos, strict=True):
         request.app.emit("parse_and_index_file", file_id=file_id, file_dto=file_dto)
 
-    return application_files
+    return [TableIdResponse(id=str(rag_file_id)) for rag_file_id in application_files]
 
 
 @get(
@@ -81,19 +81,20 @@ async def handle_application_file_uploads(
 )
 async def retrieve_application_files(
     application_id: UUID, session_maker: async_sessionmaker[Any]
-) -> list[GrantApplicationFile]:
+) -> list[TableIdResponse]:
     async with session_maker() as session:
-        return list(
-            await session.scalars(
-                select(GrantApplicationFile)
-                .options(selectinload(GrantApplicationFile.rag_file))
-                .where(GrantApplicationFile.grant_application_id == application_id)
+        return [
+            TableIdResponse(id=str(rag_file_id))
+            for rag_file_id in await session.scalars(
+                select(GrantApplicationFile.rag_file_id).where(
+                    GrantApplicationFile.grant_application_id == application_id
+                )
             )
-        )
+        ]
 
 
 @delete(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/files",
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/files/{file_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
 )
 async def handle_delete_application_file(

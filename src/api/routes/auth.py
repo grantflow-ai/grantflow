@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from litestar import get, post
 
-from src.api_types import LoginRequestBody, LoginResponse, OTPResponse
+from src.api.api_types import LoginRequestBody, LoginResponse, OTPResponse
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
 from src.utils.logger import get_logger

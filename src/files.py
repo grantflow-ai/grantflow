@@ -7,6 +7,7 @@ from pathvalidate import sanitize_filename
 from src.exceptions import ValidationError
 
 SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP = {
+    "md": "text/markdown",
     "bmp": "image/bmp",
     "csv": "text/csv",
     "doc": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -67,7 +68,7 @@ class FileDTO:
         file = file[0] if isinstance(file, list) else file
         ext = filename.split(".")[-1]
 
-        if mime_type := (guess_type(filename)[0] or SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP.get(ext)):
+        if mime_type := (SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP.get(ext) or guess_type(filename)[0]):
             filename = sanitize_filename(filename)
             content = await file.read()
             return cls(content=content, filename=filename, mime_type=mime_type)
