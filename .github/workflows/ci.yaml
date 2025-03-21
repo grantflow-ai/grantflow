@@ -88,7 +88,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install Dependencies
-        run: pnpm install -r
+        run: cd frontend && pnpm install
 
       - name: Run Tests
         run: cd frontend && pnpm run test

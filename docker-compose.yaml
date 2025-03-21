@@ -33,11 +33,14 @@ services:
         build:
             context: ./frontend
             dockerfile: Dockerfile
+            target: install
         ports:
             - "3000:3000"
         volumes:
             - ./frontend:/app:cached
-            - /app/node_modules
+        environment:
+            NEXT_PUBLIC_API_URL: http://backend:8000
+        command: "pnpm dev"
         depends_on:
             - backend
 
