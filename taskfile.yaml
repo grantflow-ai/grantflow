@@ -26,6 +26,16 @@ tasks:
         cmds:
             - uv run python -m pytest {{.CLI_ARGS}}
 
+    backend:install:
+        cmds:
+            - uv sync --all-packages --dev
+
+    backend:update:
+        cmds:
+            - uv sync --upgrade --all-packages
+            - uv run uv-bump --pyproject-toml ./pyproject.toml
+            - uv run uv-bump --pyproject-toml ./backend/pyproject.toml
+            - task: install-backend
     # Frontend tasks
     frontend:dev:
         dir: frontend
@@ -42,32 +52,31 @@ tasks:
         cmds:
             - pnpm test {{.CLI_ARGS}}
 
+    frontend:install:
+        dir: frontend
+        cmds:
+            - pnpm install
+
+    frontend:update:
+        dir: frontend
+        cmds:
+            - pnpm up --latest
+
     # Monorepo tasks
-    install-frontend:
-        cmds:
-            - pnpm install -r
-
-    update-frontend:
-        cmds:
-            - pnpm up -r --latest
-
-    install-backend:
-        cmds:
-            - uv sync --all-packages --dev
-
-    update-backend:
-        cmds:
-            - uv sync --upgrade --all-packages
-            - uv run uv-bump --pyproject-toml ./pyproject.toml
-            - uv run uv-bump --pyproject-toml ./backend/pyproject.toml
-            - task: install-backend
 
     setup:
         desc: Setup the project dependencies
         cmds:
             - pre-commit install && pre-commit install --hook-type commit-msg && pre-commit install-hooks
-            - task: install-frontend
-            - task: install-backend
+            - task: frontend:install
+            - task: backend:install
+
+    update:
+        desc: Update the project dependencies
+        cmds:
+            - task: frontend:update
+            - task: backend:update
+            - pre-commit autoupdate
 
     db:up:
         desc: Bring up the local database

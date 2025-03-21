@@ -71,7 +71,7 @@ repos:
       hooks:
           - id: eslint
             name: eslint
-            entry: pnpm eslint --fix --max-warnings 0
+            entry: cd frontend && pnpm eslint --fix --max-warnings 0
             language: system
             files: ^frontend/.*\.(js|ts|mjs|mts|cjs|cts)$
             require_serial: false
