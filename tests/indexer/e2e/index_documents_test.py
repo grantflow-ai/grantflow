@@ -1,20 +1,20 @@
 import logging
-from json import dumps, loads
+from json import loads
 from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import Application, ApplicationFile, ApplicationVector
+from src.db.tables import GrantApplication, GrantApplicationFile
 from src.indexer.chunking import chunk_text
 from src.indexer.indexing import index_documents
-from tests.conftest import RESULTS_FOLDER, TEST_DATA_SOURCES
+from src.utils.serialization import serialize
+from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:
-    from src.indexer.extraction import OCROutput
+    from azure.ai.documentintelligence.models import AnalyzeResult
 
 
 @pytest.mark.skipif(
@@ -26,8 +26,8 @@ async def test_index_documents(
     logger: logging.Logger,
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
-    application: Application,
-    application_file: ApplicationFile,
+    grant_application: GrantApplication,
+    grant_application_file: GrantApplicationFile,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings")
 
@@ -36,35 +36,19 @@ async def test_index_documents(
     extraction_result = RESULTS_FOLDER / f"parse_{data_file.name}_data_test_result.{ext}"
     assert extraction_result.exists(), f"Expected file {extraction_result} to exist"
 
-    content: str | OCROutput = extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
-    chunks = chunk_text(text=content, mime_type="text/markdown")
+    content: str | AnalyzeResult = (
+        extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
+    )
+    chunks = chunk_text(text=content, mime_type="text/plain" if data_file.name.endswith(".pdf") else "text/markdown")
 
-    await index_documents(
+    vector_dtos = await index_documents(
         chunks=chunks,
-        file_id=str(application_file.id),
-        application_id=str(application.id),
+        file_id=str(grant_application_file.rag_file_id),
     )
 
-    async with async_session_maker() as session, session.begin():
-        stmt = select(ApplicationVector).where(ApplicationVector.file_id == application_file.id)
-        db_vectors = list(await session.scalars(stmt))
+    index_results = RESULTS_FOLDER / f"index_{data_file.name}_documents_test_result.json"
 
-    assert len(db_vectors) == len(chunks)
-
-    index_results = RESULTS_FOLDER / f"parse_{data_file.name}_indexed_documents.json"
-    content = dumps(
-        [
-            {
-                "embedding": vector.embedding.tolist(),
-                "content": vector.content,
-                "chunk_index": vector.chunk_index,
-                "element_type": vector.element_type,
-                "page_number": vector.page_number,
-            }
-            for vector in db_vectors
-        ]
-    )
     if not index_results.exists():
-        index_results.write_text(content)
+        index_results.write_bytes(serialize(vector_dtos))
     else:
-        assert content == index_results.read_text()
+        assert serialize(vector_dtos) == index_results.read_bytes()

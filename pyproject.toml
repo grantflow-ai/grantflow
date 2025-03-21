@@ -1,142 +1,127 @@
 [project]
-name = "backend-functions"
+name = "grantflow-backend"
 version = "0.1.0"
-description = "Azure Functions"
-authors = [{ name = "Na'aman Hirschfeld", email = "nhirschfeld@gmail.com" }]
-requires-python = "==3.12.*"
+description = "GrantFlow Backend"
 readme = "README.md"
 license = { text = "UNLICENSED" }
 
+authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
+requires-python = "==3.12.*"
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
 dependencies = [
-    "aiohttp>=3.11.10",
-    "anyio>=4.6.2.post1",
-    "asyncpg>=0.30.0",
-    "azure-ai-documentintelligence>=1.0.0b4",
-    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
-    "firebase-admin>=6.6.0",
-    "google-cloud-aiplatform>=1.73.0",
-    "greenlet>=3.1.1",
-    "inflection>=0.5.1",
-    "msgspec>=0.18.6",
-    "pathvalidate>=3.2.1",
-    "pgvector>=0.3.6",
-    "pyjwt>=2.10.1",
-    "pypandoc>=1.14",
-    "sanic[ext]>=24.6.0",
-    "semantic-text-splitter>=0.18.0",
-    "spacy>=3.8.2",
-    "sqlalchemy>=2.0.36",
-    "tenacity>=8.3.0",
-    "uvicorn>=0.32.1",
-    "structlog>=24.4.0",
+  "aiohttp>=3.11.14",
+  "anthropic[vertex]>=0.49.0",
+  "anyio>=4.8.0",
+  "asyncpg>=0.30.0",
+  "azure-ai-documentintelligence>=1.0.1",
+  "crawl4ai>=0.5.0.post4",
+  "en-core-web-sm",
+  "firebase-admin>=6.7.0",
+  "google-cloud-aiplatform>=1.84.0",
+  "greenlet>=3.1.1",
+  "kreuzberg>=2.1.2",
+  "litestar>=2.15.1",
+  "msgspec>=0.19.0",
+  "pathvalidate>=3.2.3",
+  "pgvector>=0.4.0",
+  "prompt-template>=1.2.0",
+  "pyjwt>=2.10.1",
+  "rank-bm25>=0.2.2",
+  "semantic-text-splitter>=0.24.1",
+  "sentence-transformers[onnx]>=3.4.1",
+  "spacy>=3.8.4",
+  "sqlalchemy>=2.0.39",
+  "structlog>=25.2.0",
+  "tenacity>=9.0.0",
+  "uvicorn>=0.34.0",
 ]
 
-[tool.pdm]
-distribution = false
+[dependency-groups]
+dev = [
+  "atlas-provider-sqlalchemy>=0.2.4",
+  "covdefaults>=2.3.0",
+  "faker>=37.0.1",
+  "huggingface-hub[cli]>=0.29.1",
+  "mypy>=1.15.0",
+  "polyfactory>=2.19.0",
+  "pre-commit>=4.1.0",
+  "pytest>=8.3.5",
+  "pytest-asyncio>=0.25.3",
+  "pytest-cov>=6.0.0",
+  "pytest-mock>=3.14.0",
+  "pytest-timeout>=2.3.1",
+  "python-dotenv>=1.0.1",
+  "ruff>=0.11.0",
+]
 
-[tool.pdm.scripts]
-setup = { composite = [
-    "brew install ariga/tap/atlas pandoc pre-commit",
-    "pre-commit install --install-hooks",
-    "pre-commit install --hook-type commit-msg",
-    "pdm install",
-] }
-start.cmd = "sanic src.main:app --dev"
-lint.cmd = "pre-commit run --all-files"
-test.cmd = "pytest"
-test.env = { "PYTHONPATH" = "." }
-coverage.cmd = "pytest --disable-warnings --cov --cov-report xml"
-coverage.env = { "PYTHONPATH" = "." }
-local-db = "docker compose up db --detach"
-migrate.cmd = "atlas migrate apply --env sqlalchemy"
-migrate.env =  { "PYTHONPATH" = "." }
-create-migration.cmd = "atlas migrate diff --env sqlalchemy"
-create-migration.env = { "PYTHONPATH" = "." }
-seed.cmd = "pdm run python -m scripts.seed_db"
-seed.env = { "PYTHONPATH" = "." }
-
-# linters configuration below
 [tool.ruff]
-line-length = 120
 target-version = "py312"
-lint.select = ["ALL"]
+line-length = 120
+src = [ "src", "tests" ]
+
+format.docstring-code-line-length = 120
+format.docstring-code-format = true
+lint.select = [ "ALL" ]
 lint.ignore = [
-    "ANN401",   # Dynamically typed ANY
-    "ASYNC110", # Use Event instead of sleep in async loop
-    "COM812",   # Conflicts with formatter
-    "D100",     # Missing docstring in public module
-    "D104",     # Missing docstring in public package
-    "D107",     # Missing docstring in __init__
-    "D205",     # 1 blank line required between summary line and description
-    "E501",     # Line too long, handled by ruff format
-    "EM",       # Exception messages,
-    "FBT",      # Boolean-typed positional argument in function definition
-    "FIX",      # We allow todo and fixme comments
-    "ISC001",   # Conflicts with formatter
-    "PD011",    # Creates false positives
-    "PGH003",   # Required specific mypy ignores
-    "PLR2004",  # Magic variables, we allow them
-    "S104",     # Disallows using '0.0.0.0' as a host
-    "TD",       # We allow todo and fixme comments
-    "TRY",      # Try except block, rules are too strict
+  "ANN401",   # Dynamically typed ANY
+  "ASYNC110", # Use Event instead of sleep in async loop
+  "COM812",   # Conflicts with formatter
+  "D",        # Doc strings
+  "E501",     # Line too long, handled by ruff format
+  "EM",       # Exception messages,
+  "FBT",      # Boolean-typed positional argument in function definition
+  "FIX",      # We allow todo and fixme comments
+  "ISC001",   # Conflicts with formatter
+  "PD011",    # Creates false positives
+  "PGH003",   # Required specific mypy ignores
+  "PLR2004",  # Magic variables, we allow them
+  "S104",     # Disallows using '0.0.0.0' as a host
+  "TD",       # We allow todo and fixme comments
+  "TRY",      # Try except block, rules are too strict
 ]
-src = ["src", "tests"]
+lint.per-file-ignores."tests/**/*.*" = [ "ARG001", "D", "N815", "PT006", "PT007", "PT013", "RUF012", "S" ]
+lint.isort.known-first-party = [ "src", "tests" ]
+lint.mccabe.max-complexity = 25
+lint.pydocstyle.convention = "google"
+lint.pylint.max-args = 12
+lint.pylint.max-branches = 25
 
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.*" = ["S", "D", "PT006", "PT007", "PT013", "ARG001", "RUF012"]
+lint.pylint.max-returns = 10
+lint.pylint.max-statements = 100
 
-[tool.ruff.format]
-docstring-code-format = true
-docstring-code-line-length = 120
+[tool.pyproject-fmt]
+keep_full_version = true
+max_supported_python = "3.12"
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+filterwarnings = [
+  "ignore::DeprecationWarning:pkg_resources.*",
+  "ignore::DeprecationWarning:google.*",
+  "ignore::DeprecationWarning:websockets.*",
+  "ignore::pydantic.PydanticDeprecatedSince20",
+  "ignore::DeprecationWarning:fake_http_header.*",
+  "ignore::DeprecationWarning:importlib.resources.*",
+  "ignore::DeprecationWarning:tracerite.*",
+]
 
-[tool.ruff.lint.isort]
-known-first-party = ["src", "tests"]
+[tool.coverage.run]
+omit = [ "tests/*" ]
+plugins = [ "covdefaults" ]
+source = [ "src" ]
 
-[tool.ruff.lint.pylint]
-max-args = 12
-max-returns= 10
+[tool.coverage.report]
+exclude_lines = [ 'if TYPE_CHECKING:' ]
+fail_under = 80
 
 [tool.mypy]
-packages = ["src", "tests"]
+packages = [ "src", "tests" ]
 python_version = "3.12"
-plugins = []
 disable_error_code = 'import-untyped'
 implicit_reexport = false
 show_error_codes = true
 strict = true
 
-[tool.coverage.run]
-omit = ["tests/*"]
-plugins = ["covdefaults"]
-source = ["src"]
-
-[tool.coverage.report]
-exclude_lines = ['if TYPE_CHECKING:']
-fail_under = 100
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "session"
-
-[dependency-groups]
-dev = [
-    "atlas-provider-sqlalchemy>=0.2.3",
-    "covdefaults>=2.3.0",
-    "faker>=24.11.0",
-    "mypy>=1.10.0",
-    "polyfactory>=2.16.2",
-    "pytest-asyncio>=0.23.6",
-    "pytest-cov>=5.0.0",
-    "pytest-logger>=1.1.1",
-    "pytest-mock>=3.14.0",
-    "pytest-timeout>=2.3.1",
-    "pytest>=8.1.1",
-    "python-dotenv>=1.0.1",
-    "ruff>=0.4.0",
-    "sanic-testing>=24.6.0",
-    "testcontainers>=4.8.2",
-    "pre-commit>=4.0.1",
-]
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
