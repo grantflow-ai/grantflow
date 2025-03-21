@@ -53,11 +53,14 @@ tasks:
 
     install-backend:
         cmds:
-            - uv sync --all-packages
+            - uv sync --all-packages --dev
 
     update-backend:
         cmds:
-            - uv run scripts/update_dependencies.py
+            - uv sync --upgrade --all-packages
+            - uv run uv-bump --pyproject-toml ./pyproject.toml
+            - uv run uv-bump --pyproject-toml ./backend/pyproject.toml
+            - task: install-backend
 
     setup:
         desc: Setup the project dependencies

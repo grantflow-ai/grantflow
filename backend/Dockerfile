@@ -8,15 +8,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 FROM base AS model-download
-WORKDIR /models/
-RUN pip install --no-cache-dir "huggingface-hub[cli]"
+COPY pyproject.toml ./
+RUN pip install "huggingface-hub[cli]" hf-transfer --no-cache-dir
 RUN huggingface-cli download sentence-transformers/all-MiniLM-L12-v2
 
 FROM base AS install
 WORKDIR /app/
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
-
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
@@ -25,11 +24,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM base AS app
 WORKDIR /app/
-
 COPY --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
 COPY --from=install /app/.venv/ /app/.venv
 COPY src src
-
 ENV PATH="/app/.venv/bin:$PATH"
 RUN playwright install chromium --with-deps
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser && \
