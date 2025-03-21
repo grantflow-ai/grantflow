@@ -53,8 +53,7 @@
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/react": "^16.2.0",
 		"@testing-library/user-event": "^14.6.1",
-		"@trumpet/eslint-config-next": "^1.7.0",
-		"@types/node": "^22.13.10",
+		"@types/node": "^22.13.11",
 		"@types/prismjs": "^1.26.5",
 		"@types/react": "19.0.12",
 		"@types/react-dom": "19.0.4",
@@ -70,6 +69,9 @@
 		"tailwindcss-animate": "^1.0.7",
 		"vite-tsconfig-paths": "^5.1.4",
 		"vitest": "^3.0.9"
+	},
+	"engines": {
+		"node": ">=22.0.0"
 	},
 	"packageManager": "pnpm@9.15.1+sha512.1acb565e6193efbebda772702950469150cf12bcc764262e7587e71d19dc98a423dff9536e57ea44c49bdf790ff694e83c27be5faa23d67e0c033b583be4bfcf"
 }

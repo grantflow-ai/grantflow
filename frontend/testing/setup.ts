@@ -5,12 +5,14 @@ import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers"
 import * as matchers from "@testing-library/jest-dom/matchers";
 
 declare module "vitest" {
+	// @ts-ignore
 	type Assertion<T> = TestingLibraryMatchers<T, void>;
 }
 
 expect.extend(matchers);
 
 beforeAll(() => {
+	// @ts-ignore
 	globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 });
 
