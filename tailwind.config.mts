@@ -2,9 +2,9 @@ import type { Config } from "tailwindcss";
 
 const config = {
 	content: ["./src/**/*.{ts,tsx}", "./gen/**/*.{ts,tsx}"],
-	darkMode: ["class"],
+	darkMode: "class",
 	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	plugins: [require("tailwindcss-animate"), require("tailwind-scrollbar-hide")],
+	plugins: [require("tailwindcss-animate")],
 	prefix: "",
 	theme: {
 		container: {

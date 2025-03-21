@@ -9,7 +9,7 @@ vi.mock("@/components/navbar", () => ({
 	Navbar: () => <div data-testid="navbar">Navbar</div>,
 }));
 
-vi.mock("gen/ui/sonner", () => ({
+vi.mock("@/components/ui/sonner", () => ({
 	Toaster: () => <div data-testid="toaster">Toaster</div>,
 }));
 

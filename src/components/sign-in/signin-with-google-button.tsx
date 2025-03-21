@@ -1,5 +1,5 @@
 import { SiGoogle } from "@icons-pack/react-simple-icons";
-import { Button } from "gen/ui/button";
+import { Button } from "@/components/ui/button";
 
 export function SigninWithGoogleButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => Promise<void> }) {
 	return (
