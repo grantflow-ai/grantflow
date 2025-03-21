@@ -1,0 +1,58 @@
+import { Button } from "@/components/ui/button";
+import { FileTextIcon, X } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatBytes } from "@/utils/format";
+
+export function FileCard({ file, handleRemoveFile }: { file: File; handleRemoveFile: () => void }) {
+	return (
+		<div
+			className="relative flex items-center justify-between gap-4 rounded-lg border bg-card p-4 text-card-foreground shadow-sm transition-all hover:shadow-md"
+			data-testid={`file-card-${file.name}`}
+		>
+			<div className="flex items-center gap-3">
+				<FileTextIcon
+					aria-hidden="true"
+					className="h-8 w-8 text-muted-foreground"
+					data-testid="file-preview-icon"
+				/>
+				<div className="flex flex-col">
+					<span className="font-medium truncate max-w-[200px]" data-testid={`file-name-display-${file.name}`}>
+						{file.name}
+					</span>
+					<span className="text-xs text-muted-foreground" data-testid="file-size">
+						{formatBytes(file.size)}
+					</span>
+				</div>
+			</div>
+			<Button
+				aria-label={`Remove ${file.name}`}
+				className="absolute top-1 right-1"
+				data-testid="remove-file-button"
+				onClick={handleRemoveFile}
+				size="icon"
+				variant="ghost"
+			>
+				<X className="h-4 w-4" />
+				<span className="sr-only">Remove file</span>
+			</Button>
+		</div>
+	);
+}
+
+export function FilesDisplay({ files, onFileRemoved }: { files: File[]; onFileRemoved: (file: File) => void }) {
+	return files.length ? (
+		<ScrollArea className="h-[200px] w-full rounded-md border" data-testid="files-scroll-area">
+			<div className="p-4 space-y-2" data-testid="files-display">
+				{files.map((file, index) => (
+					<FileCard
+						file={file}
+						handleRemoveFile={() => {
+							onFileRemoved(file);
+						}}
+						key={file.name + index.toString()}
+					/>
+				))}
+			</div>
+		</ScrollArea>
+	) : null;
+}
