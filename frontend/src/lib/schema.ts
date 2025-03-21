@@ -4,7 +4,6 @@ export const MIN_LENGTH = 25;
 
 export const MIN_TITLE_LENGTH = 10;
 
-// newGrantApplicationForm
 export const newGrantApplicationSchema = z
 	.object({
 		title: z.string().min(10, "Title must be at least 10 characters long"),
@@ -30,7 +29,6 @@ export const newGrantApplicationSchema = z
 	);
 export type NewGrantApplicationFormValues = z.infer<typeof newGrantApplicationSchema>;
 
-// newGrantWizardForm
 export const researchTaskSchema = z.object({
 	description: z.string().optional(),
 	number: z.number(),

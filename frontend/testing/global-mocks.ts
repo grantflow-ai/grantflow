@@ -46,7 +46,6 @@ vi.mock("sonner", async (importOriginal) => {
 
 export { mockRedirect, mockToast, mockUsePathname };
 
-// see: https://github.com/jsdom/jsdom/issues/3294
 export const mockShowModal = vi.fn();
 export const mockShow = vi.fn();
 export const mockClose = vi.fn();

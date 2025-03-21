@@ -1,0 +1,40 @@
+# Version control
+.git
+.github
+
+# Development tools
+.vscode/
+.idea/
+
+# Python files
+**/__pycache__/
+**/*.py[cod]
+**/*.so
+**/*.egg
+**/*.egg-info/
+**/.pytest_cache
+**/.coverage
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Node.js files
+**/node_modules/
+**/.next/
+**/out/
+**/.turbo
+
+# Environment files
+**/.env
+**/.env.*
+
+# Test files
+**/tests/
+**/test_data/
+
+# Documentation
+**/*.md
+
+# Root level files
+/.pre-commit-config.yaml
+/.commitlintrc
+/docker-compose.yaml

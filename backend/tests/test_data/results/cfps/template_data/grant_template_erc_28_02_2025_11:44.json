@@ -1,484 +1,461 @@
 [
-  {
-    "depends_on": [],
-    "generation_instructions": "The abstract should provide a concise and compelling overview of the proposed project, highlighting the innovation potential of the ERC-funded research and its commercial viability. It must be written in English and should not exceed 2000 characters (approximately 285 words). The abstract should clearly state the project's objectives, the approach and methodology to be used, and the expected outcomes, including potential market applications. It should also emphasize the potential impact of the project, its relevance to the ERC Proof of Concept Grant, and its potential for commercial success. Avoid including any confidential information in the abstract. Ensure the abstract is identical to the text in the administrative form. The abstract serves as the first impression of your project, so clarity, conciseness, and a persuasive tone are crucial.",
-    "id": "abstract",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "ERC",
-      "Proof of Concept",
-      "Innovation",
-      "Research",
-      "Technology",
-      "Project Summary",
-      "Objectives",
-      "Methodology",
-      "Outcomes",
-      "Impact",
-      "Commercialization",
-      "Market Potential"
-    ],
-    "max_words": 285,
-    "order": 1,
-    "parent_id": null,
-    "search_queries": [
-      "ERC Proof of Concept abstract examples",
-      "Innovation project abstract",
-      "Technology transfer project summary",
-      "Research commercialization abstract",
-      "Impactful research abstract examples",
-      "Commercial viability of research",
-      "Market potential of new technologies"
-    ],
-    "title": "Abstract",
-    "topics": [
-      "Project Overview",
-      "Innovation Potential",
-      "Expected Outcomes",
-      "Project Impact",
-      "Commercial Viability"
-    ]
-  },
-  {
-    "id": "section_1a",
-    "order": 2,
-    "parent_id": null,
-    "title": "Section 1a: The idea – Breakthrough Innovation potential"
-  },
-  {
-    "depends_on": [],
-    "generation_instructions": "This section requires a brief but comprehensive description of the core idea that will be taken to proof of concept. Clearly articulate the underlying technology or research finding that forms the basis of the innovation. Emphasize the novelty and originality of the idea, highlighting its scientific basis and technical specifications. Provide enough technical detail to allow reviewers to understand the concept without overwhelming them. Explain the potential applications of the idea and the problem it solves. Briefly touch upon the feasibility of bringing the idea to fruition. This section sets the stage for demonstrating the breakthrough innovation potential and high-risk/high-gain aspects in the subsequent sections. Avoid jargon and clearly define any technical terms. Focus on the 'what' and 'why' of the idea. Maintain a clear and concise writing style, using visuals where appropriate to illustrate complex concepts.",
-    "id": "idea_description",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Innovation",
-      "Concept",
-      "Technology",
-      "Research",
-      "Novelty",
-      "Feasibility",
-      "Market",
-      "Application",
-      "Prototype",
-      "Development",
-      "Scientific Discovery",
-      "Technical Specification",
-      "ERC Proof of Concept",
-      "Cutting-edge research"
-    ],
-    "max_words": 1000,
-    "order": 3,
-    "parent_id": "section_1a",
-    "search_queries": [
-      "Breakthrough innovation examples",
-      "Proof of concept idea generation",
-      "Technology commercialization strategies",
-      "Novel research applications",
-      "Feasibility studies for new technologies",
-      "Scientific basis of innovation",
-      "Technical specifications for prototypes",
-      "ERC Proof of Concept projects",
-      "Examples of commercially viable research"
-    ],
-    "title": "1a.i. Brief description of the idea to be taken to proof of concept",
-    "topics": [
-      "Core Idea",
-      "Technical Description",
-      "Innovation",
-      "Potential Applications",
-      "Scientific Basis"
-    ]
-  },
-  {
-    "depends_on": [
-      "idea_description"
-    ],
-    "generation_instructions": "This section requires a compelling demonstration of the breakthrough innovation potential of the idea. Clearly articulate how the idea represents a significant advancement over existing technologies or approaches. Quantify the potential impact of the innovation, considering factors such as market size, competitive advantage, disruptive potential, and scalability. Provide evidence to support claims of breakthrough innovation, such as published research, patent filings, or expert opinions. Explain how the innovation addresses an unmet need or solves a significant problem. Discuss the scalability of the innovation and its potential for widespread adoption and commercialization. Avoid vague or unsubstantiated claims. Focus on the 'how' and 'why' the idea is truly innovative. Adopt a persuasive and confident tone, highlighting the unique value proposition of the innovation.",
-    "id": "innovation_potential",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Breakthrough",
-      "Innovation",
-      "Impact",
-      "Market",
-      "Advantage",
-      "Competition",
-      "Novelty",
-      "Disruptive",
-      "Technology",
-      "Advancement",
-      "Scalability",
-      "Commercialization",
-      "ERC Proof of Concept",
-      "Value Proposition"
-    ],
-    "max_words": 1000,
-    "order": 4,
-    "parent_id": "section_1a",
-    "search_queries": [
-      "Market analysis for disruptive technologies",
-      "Competitive advantage strategies",
-      "Scalability assessment for innovations",
-      "Quantifying innovation impact",
-      "Breakthrough technology examples",
-      "Commercialization strategies for research",
-      "Value proposition development",
-      "ERC Proof of Concept success stories",
-      "Disruptive innovation market analysis"
-    ],
-    "title": "1a.ii. Demonstration of Breakthrough Innovation Potential",
-    "topics": [
-      "Market Analysis",
-      "Competitive Advantage",
-      "Disruptive Potential",
-      "Scalability",
-      "Commercialization Strategy"
-    ]
-  },
-  {
-    "depends_on": [
-      "idea_description",
-      "innovation_potential"
-    ],
-    "generation_instructions": "This section requires a clear demonstration of the high-risk/high-gain nature of the idea. Identify the key risks and uncertainties associated with the project, including technical, market, and regulatory risks. Quantify the potential gains if the project is successful, considering factors such as economic impact, social benefits, and scientific advancements. Explain why the potential gains justify the risks involved. Describe the strategies that will be used to mitigate the risks. Provide a realistic assessment of the feasibility of achieving the project's objectives. Avoid downplaying the risks or overstating the potential gains. Focus on the 'what if' scenarios and the potential upside if the risks are successfully managed. Adopt a balanced and realistic tone, acknowledging the challenges while emphasizing the potential rewards.",
-    "id": "high_risk_gain",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Risk",
-      "Reward",
-      "Uncertainty",
-      "Potential",
-      "Impact",
-      "Feasibility",
-      "Challenges",
-      "Mitigation",
-      "High-Gain",
-      "Breakthrough",
-      "Market Risk",
-      "Technical Risk",
-      "ERC Proof of Concept",
-      "Risk-Reward Analysis"
-    ],
-    "max_words": 1000,
-    "order": 5,
-    "parent_id": "section_1a",
-    "search_queries": [
-      "Risk assessment methodologies",
-      "Quantifying potential gains from research",
-      "Risk mitigation strategies for technology projects",
-      "Feasibility analysis techniques",
-      "High-risk high-reward research examples",
-      "Market risk assessment",
-      "Technical risk mitigation",
-      "ERC Proof of Concept risk management",
-      "Risk-benefit analysis in research"
-    ],
-    "title": "1a.iii. Demonstration of the high-risk/high-gain idea",
-    "topics": [
-      "Risk Assessment",
-      "Potential Benefits",
-      "Mitigation Strategies",
-      "Feasibility Analysis",
-      "Risk-Reward Ratio"
-    ]
-  },
-  {
-    "id": "section_1b",
-    "order": 6,
-    "parent_id": null,
-    "title": "Section 1b: Approach and Methodology"
-  },
-  {
-    "depends_on": [
-      "idea_description"
-    ],
-    "generation_instructions": "This section requires a detailed outline of the approach and methodology that will be used to explore the innovation potential of the ERC-funded research. Describe the specific experiments, simulations, or analyses that will be conducted. Explain the rationale behind the chosen methodology and why it is appropriate for the project's objectives. Provide a clear timeline for the project, including key milestones and deliverables. Discuss the methods that will be used to validate the results and ensure statistical significance. Address any potential challenges or limitations of the methodology and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'how' the project will be executed and the 'why' the chosen approach is the most effective. Use a clear and concise writing style, providing sufficient detail to allow reviewers to assess the rigor of the methodology.",
-    "id": "approach_methodology",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Methodology",
-      "Approach",
-      "Experiment",
-      "Design",
-      "Analysis",
-      "Validation",
-      "Testing",
-      "Proof of Concept",
-      "Innovation",
-      "Research",
-      "Statistical Analysis",
-      "Data Collection",
-      "ERC Proof of Concept",
-      "Experimental Design",
-      "Analytical Techniques"
-    ],
-    "max_words": 2000,
-    "order": 7,
-    "parent_id": "section_1b",
-    "search_queries": [
-      "Experimental design methodologies",
-      "Data analysis techniques for research",
-      "Validation methods for new technologies",
-      "Project timeline development",
-      "Proof of concept methodologies",
-      "Statistical analysis in research",
-      "Data collection methods",
-      "ERC Proof of Concept methodology examples",
-      "Analytical techniques in research"
-    ],
-    "title": "1b.i. Outline the approach and methodology to explore the innovation potential of your ERC-funded research",
-    "topics": [
-      "Experimental Design",
-      "Data Analysis",
-      "Validation Methods",
-      "Project Timeline",
-      "Statistical Significance"
-    ]
-  },
-  {
-    "depends_on": [
-      "approach_methodology"
-    ],
-    "generation_instructions": "This section requires a detailed description of the specific activities that will be undertaken during the project. Break down the project into manageable tasks and deliverables. Provide a clear timeline for each activity, including start and end dates. Describe the resources that will be required for each activity. Explain how progress will be monitored and reported. Address any potential challenges or risks associated with each activity and how they will be mitigated. Avoid vague or generic descriptions. Focus on the 'what' and 'when' of each activity and how it contributes to the overall project objectives. Use bullet points or tables to enhance readability and clarity. Emphasize quality control measures to ensure the reliability of the results.",
-    "id": "activities",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Tasks",
-      "Deliverables",
-      "Milestones",
-      "Timeline",
-      "Work Packages",
-      "Progress",
-      "Reporting",
-      "Management",
-      "Coordination",
-      "Execution",
-      "Resource Allocation",
-      "Quality Control",
-      "ERC Proof of Concept",
-      "Project Management"
-    ],
-    "max_words": 2000,
-    "order": 8,
-    "parent_id": "section_1b",
-    "search_queries": [
-      "Project management methodologies",
-      "Task breakdown techniques",
-      "Deliverable schedule development",
-      "Progress monitoring systems",
-      "Risk management strategies for projects",
-      "Resource allocation strategies",
-      "Quality control in research",
-      "ERC Proof of Concept project activities",
-      "Project execution strategies"
-    ],
-    "title": "1b.ii. Describe the activities",
-    "topics": [
-      "Task Breakdown",
-      "Deliverable Schedule",
-      "Progress Monitoring",
-      "Reporting Mechanisms",
-      "Quality Assurance"
-    ]
-  },
-  {
-    "id": "proof_of_concept_plan",
-    "order": 9,
-    "parent_id": "section_1b",
-    "title": "1b.iii. Plan of the proof of concept - Description of the Action"
-  },
-  {
-    "depends_on": [
-      "activities",
-      "approach_methodology"
-    ],
-    "generation_instructions": "This section requires a detailed description of the action and timescale, presented as a comprehensive work plan. The work plan should include a Gantt chart or similar visual representation of the project timeline, clearly indicating the start and end dates for each task, as well as key milestones and deliverables. Describe the dependencies between tasks and how they will be managed. Explain how resources will be allocated to each task. Address any potential contingencies and how they will be handled. The work plan should be realistic and achievable, demonstrating a clear understanding of the project's scope and complexity. Avoid overly optimistic or unrealistic timelines. Focus on the 'how' and 'when' of each task and how it contributes to the overall project objectives. Include a critical path analysis to identify the most important tasks and potential bottlenecks. Ensure the Gantt chart is clear and easy to understand.",
-    "id": "work_plan",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": true,
-    "keywords": [
-      "Gantt Chart",
-      "Timeline",
-      "Milestones",
-      "Deliverables",
-      "Tasks",
-      "Activities",
-      "Schedule",
-      "Dependencies",
-      "Resources",
-      "Management",
-      "Critical Path",
-      "Contingency Plans",
-      "ERC Proof of Concept",
-      "Project Scheduling"
-    ],
-    "max_words": 2000,
-    "order": 10,
-    "parent_id": "proof_of_concept_plan",
-    "search_queries": [
-      "Gantt chart templates",
-      "Project timeline development tools",
-      "Resource allocation strategies",
-      "Contingency planning techniques",
-      "Project management best practices",
-      "Critical path analysis",
-      "Project scheduling software",
-      "ERC Proof of Concept work plan examples",
-      "Project risk assessment tools"
-    ],
-    "title": "Description of the Action and timescale – Work Plan",
-    "topics": [
-      "Project Schedule",
-      "Task Dependencies",
-      "Resource Allocation",
-      "Contingency Planning",
-      "Critical Path Analysis"
-    ]
-  },
-  {
-    "depends_on": [
-      "work_plan",
-      "activities"
-    ],
-    "generation_instructions": "This section requires a detailed description of the resources that will be required to successfully complete the project. Provide a clear breakdown of the budget, including personnel costs, equipment costs, consumables costs, travel costs, and other expenses. Justify the need for each resource and explain how it will be used to achieve the project's objectives. Describe the equipment, infrastructure, and facilities that will be required. Explain how personnel will be allocated to the project and their roles and responsibilities. Address any potential resource constraints and how they will be addressed. Avoid vague or unsubstantiated requests. Focus on the 'what' and 'why' of each resource and how it contributes to the overall project objectives. Include a cost-effectiveness analysis to demonstrate the value for money of the proposed resources.",
-    "id": "resources",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Budget",
-      "Equipment",
-      "Personnel",
-      "Infrastructure",
-      "Facilities",
-      "Software",
-      "Consumables",
-      "Travel",
-      "Training",
-      "Support",
-      "Cost Justification",
-      "Budget Allocation",
-      "ERC Proof of Concept",
-      "Resource Management"
-    ],
-    "max_words": 900,
-    "order": 11,
-    "parent_id": "proof_of_concept_plan",
-    "search_queries": [
-      "Budget justification examples",
-      "Equipment procurement strategies",
-      "Personnel allocation techniques",
-      "Infrastructure planning for research projects",
-      "Resource management best practices",
-      "Cost-effectiveness analysis methods",
-      "Budget allocation strategies",
-      "ERC Proof of Concept budget examples",
-      "Research funding resource allocation"
-    ],
-    "title": "Description of the resources",
-    "topics": [
-      "Budget Justification",
-      "Equipment Needs",
-      "Personnel Allocation",
-      "Infrastructure Requirements",
-      "Cost-Effectiveness Analysis"
-    ]
-  },
-  {
-    "depends_on": [],
-    "generation_instructions": "This section requires a detailed description of the project team, including the Principal Investigator (PI) and all other key personnel. Highlight the expertise and experience of each team member and their qualifications for their respective roles. Clearly define the roles and responsibilities of each team member. Explain the management structure of the team and how it will ensure effective communication and collaboration. Address any potential gaps in expertise and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'who' and 'why' of each team member and how they contribute to the overall project objectives. Emphasize the PI's strategic lead and project management capabilities. Highlight the team's commitment to diversity and inclusion.",
-    "id": "team_description",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Principal Investigator",
-      "Researchers",
-      "Engineers",
-      "Technicians",
-      "Consultants",
-      "Expertise",
-      "Experience",
-      "Qualifications",
-      "Roles",
-      "Responsibilities",
-      "Collaboration",
-      "Diversity",
-      "ERC Proof of Concept",
-      "Team Building"
-    ],
-    "max_words": 900,
-    "order": 12,
-    "parent_id": "proof_of_concept_plan",
-    "search_queries": [
-      "Principal investigator responsibilities",
-      "Research team management strategies",
-      "Expertise identification for research projects",
-      "Collaboration techniques for research teams",
-      "Team building strategies for research projects",
-      "Diversity and inclusion in research teams",
-      "Conflict resolution in research teams",
-      "ERC Proof of Concept team composition",
-      "Effective research team structures"
-    ],
-    "title": "Description of the team (including the PI)",
-    "topics": [
-      "Team Expertise",
-      "Roles and Responsibilities",
-      "Management Structure",
-      "Collaboration Strategies",
-      "Team Diversity"
-    ]
-  },
-  {
-    "depends_on": [
-      "team_description"
-    ],
-    "generation_instructions": "This section requires a clear articulation of the Principal Investigator's (PI) strategic lead and project management capabilities. Highlight the PI's leadership qualities, strategic vision, and management skills. Explain how the PI will provide direction and guidance to the project team. Describe the PI's decision-making process and how they will ensure that the project stays on track. Explain how the PI will coordinate the activities of the team and communicate effectively with stakeholders. Address any potential challenges to the PI's leadership and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'how' and 'why' the PI is the right person to lead the project and ensure its success. Emphasize the PI's mentorship capabilities and their ability to delegate tasks effectively.",
-    "id": "strategic_lead",
-    "is_clinical_trial": false,
-    "is_detailed_workplan": false,
-    "keywords": [
-      "Leadership",
-      "Vision",
-      "Strategy",
-      "Management",
-      "Decision-making",
-      "Coordination",
-      "Communication",
-      "Motivation",
-      "Problem-solving",
-      "Risk Management",
-      "Mentorship",
-      "Delegation",
-      "ERC Proof of Concept",
-      "Project Leadership"
-    ],
-    "max_words": 315,
-    "order": 13,
-    "parent_id": null,
-    "search_queries": [
-      "Leadership qualities for research projects",
-      "Strategic vision development",
-      "Project management skills for researchers",
-      "Decision-making processes in research",
-      "Communication strategies for research teams",
-      "Mentorship in research",
-      "Delegation techniques for project managers",
-      "ERC Proof of Concept leadership",
-      "PI strategic leadership in research"
-    ],
-    "title": "The Strategic Lead",
-    "topics": [
-      "Leadership Qualities",
-      "Strategic Vision",
-      "Management Skills",
-      "Decision-Making Process",
-      "Mentorship Capabilities"
-    ]
-  }
+	{
+		"depends_on": [],
+		"generation_instructions": "The abstract should provide a concise and compelling overview of the proposed project, highlighting the innovation potential of the ERC-funded research and its commercial viability. It must be written in English and should not exceed 2000 characters (approximately 285 words). The abstract should clearly state the project's objectives, the approach and methodology to be used, and the expected outcomes, including potential market applications. It should also emphasize the potential impact of the project, its relevance to the ERC Proof of Concept Grant, and its potential for commercial success. Avoid including any confidential information in the abstract. Ensure the abstract is identical to the text in the administrative form. The abstract serves as the first impression of your project, so clarity, conciseness, and a persuasive tone are crucial.",
+		"id": "abstract",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"ERC",
+			"Proof of Concept",
+			"Innovation",
+			"Research",
+			"Technology",
+			"Project Summary",
+			"Objectives",
+			"Methodology",
+			"Outcomes",
+			"Impact",
+			"Commercialization",
+			"Market Potential"
+		],
+		"max_words": 285,
+		"order": 1,
+		"parent_id": null,
+		"search_queries": [
+			"ERC Proof of Concept abstract examples",
+			"Innovation project abstract",
+			"Technology transfer project summary",
+			"Research commercialization abstract",
+			"Impactful research abstract examples",
+			"Commercial viability of research",
+			"Market potential of new technologies"
+		],
+		"title": "Abstract",
+		"topics": [
+			"Project Overview",
+			"Innovation Potential",
+			"Expected Outcomes",
+			"Project Impact",
+			"Commercial Viability"
+		]
+	},
+	{
+		"id": "section_1a",
+		"order": 2,
+		"parent_id": null,
+		"title": "Section 1a: The idea – Breakthrough Innovation potential"
+	},
+	{
+		"depends_on": [],
+		"generation_instructions": "This section requires a brief but comprehensive description of the core idea that will be taken to proof of concept. Clearly articulate the underlying technology or research finding that forms the basis of the innovation. Emphasize the novelty and originality of the idea, highlighting its scientific basis and technical specifications. Provide enough technical detail to allow reviewers to understand the concept without overwhelming them. Explain the potential applications of the idea and the problem it solves. Briefly touch upon the feasibility of bringing the idea to fruition. This section sets the stage for demonstrating the breakthrough innovation potential and high-risk/high-gain aspects in the subsequent sections. Avoid jargon and clearly define any technical terms. Focus on the 'what' and 'why' of the idea. Maintain a clear and concise writing style, using visuals where appropriate to illustrate complex concepts.",
+		"id": "idea_description",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Innovation",
+			"Concept",
+			"Technology",
+			"Research",
+			"Novelty",
+			"Feasibility",
+			"Market",
+			"Application",
+			"Prototype",
+			"Development",
+			"Scientific Discovery",
+			"Technical Specification",
+			"ERC Proof of Concept",
+			"Cutting-edge research"
+		],
+		"max_words": 1000,
+		"order": 3,
+		"parent_id": "section_1a",
+		"search_queries": [
+			"Breakthrough innovation examples",
+			"Proof of concept idea generation",
+			"Technology commercialization strategies",
+			"Novel research applications",
+			"Feasibility studies for new technologies",
+			"Scientific basis of innovation",
+			"Technical specifications for prototypes",
+			"ERC Proof of Concept projects",
+			"Examples of commercially viable research"
+		],
+		"title": "1a.i. Brief description of the idea to be taken to proof of concept",
+		"topics": ["Core Idea", "Technical Description", "Innovation", "Potential Applications", "Scientific Basis"]
+	},
+	{
+		"depends_on": ["idea_description"],
+		"generation_instructions": "This section requires a compelling demonstration of the breakthrough innovation potential of the idea. Clearly articulate how the idea represents a significant advancement over existing technologies or approaches. Quantify the potential impact of the innovation, considering factors such as market size, competitive advantage, disruptive potential, and scalability. Provide evidence to support claims of breakthrough innovation, such as published research, patent filings, or expert opinions. Explain how the innovation addresses an unmet need or solves a significant problem. Discuss the scalability of the innovation and its potential for widespread adoption and commercialization. Avoid vague or unsubstantiated claims. Focus on the 'how' and 'why' the idea is truly innovative. Adopt a persuasive and confident tone, highlighting the unique value proposition of the innovation.",
+		"id": "innovation_potential",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Breakthrough",
+			"Innovation",
+			"Impact",
+			"Market",
+			"Advantage",
+			"Competition",
+			"Novelty",
+			"Disruptive",
+			"Technology",
+			"Advancement",
+			"Scalability",
+			"Commercialization",
+			"ERC Proof of Concept",
+			"Value Proposition"
+		],
+		"max_words": 1000,
+		"order": 4,
+		"parent_id": "section_1a",
+		"search_queries": [
+			"Market analysis for disruptive technologies",
+			"Competitive advantage strategies",
+			"Scalability assessment for innovations",
+			"Quantifying innovation impact",
+			"Breakthrough technology examples",
+			"Commercialization strategies for research",
+			"Value proposition development",
+			"ERC Proof of Concept success stories",
+			"Disruptive innovation market analysis"
+		],
+		"title": "1a.ii. Demonstration of Breakthrough Innovation Potential",
+		"topics": [
+			"Market Analysis",
+			"Competitive Advantage",
+			"Disruptive Potential",
+			"Scalability",
+			"Commercialization Strategy"
+		]
+	},
+	{
+		"depends_on": ["idea_description", "innovation_potential"],
+		"generation_instructions": "This section requires a clear demonstration of the high-risk/high-gain nature of the idea. Identify the key risks and uncertainties associated with the project, including technical, market, and regulatory risks. Quantify the potential gains if the project is successful, considering factors such as economic impact, social benefits, and scientific advancements. Explain why the potential gains justify the risks involved. Describe the strategies that will be used to mitigate the risks. Provide a realistic assessment of the feasibility of achieving the project's objectives. Avoid downplaying the risks or overstating the potential gains. Focus on the 'what if' scenarios and the potential upside if the risks are successfully managed. Adopt a balanced and realistic tone, acknowledging the challenges while emphasizing the potential rewards.",
+		"id": "high_risk_gain",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Risk",
+			"Reward",
+			"Uncertainty",
+			"Potential",
+			"Impact",
+			"Feasibility",
+			"Challenges",
+			"Mitigation",
+			"High-Gain",
+			"Breakthrough",
+			"Market Risk",
+			"Technical Risk",
+			"ERC Proof of Concept",
+			"Risk-Reward Analysis"
+		],
+		"max_words": 1000,
+		"order": 5,
+		"parent_id": "section_1a",
+		"search_queries": [
+			"Risk assessment methodologies",
+			"Quantifying potential gains from research",
+			"Risk mitigation strategies for technology projects",
+			"Feasibility analysis techniques",
+			"High-risk high-reward research examples",
+			"Market risk assessment",
+			"Technical risk mitigation",
+			"ERC Proof of Concept risk management",
+			"Risk-benefit analysis in research"
+		],
+		"title": "1a.iii. Demonstration of the high-risk/high-gain idea",
+		"topics": [
+			"Risk Assessment",
+			"Potential Benefits",
+			"Mitigation Strategies",
+			"Feasibility Analysis",
+			"Risk-Reward Ratio"
+		]
+	},
+	{
+		"id": "section_1b",
+		"order": 6,
+		"parent_id": null,
+		"title": "Section 1b: Approach and Methodology"
+	},
+	{
+		"depends_on": ["idea_description"],
+		"generation_instructions": "This section requires a detailed outline of the approach and methodology that will be used to explore the innovation potential of the ERC-funded research. Describe the specific experiments, simulations, or analyses that will be conducted. Explain the rationale behind the chosen methodology and why it is appropriate for the project's objectives. Provide a clear timeline for the project, including key milestones and deliverables. Discuss the methods that will be used to validate the results and ensure statistical significance. Address any potential challenges or limitations of the methodology and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'how' the project will be executed and the 'why' the chosen approach is the most effective. Use a clear and concise writing style, providing sufficient detail to allow reviewers to assess the rigor of the methodology.",
+		"id": "approach_methodology",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Methodology",
+			"Approach",
+			"Experiment",
+			"Design",
+			"Analysis",
+			"Validation",
+			"Testing",
+			"Proof of Concept",
+			"Innovation",
+			"Research",
+			"Statistical Analysis",
+			"Data Collection",
+			"ERC Proof of Concept",
+			"Experimental Design",
+			"Analytical Techniques"
+		],
+		"max_words": 2000,
+		"order": 7,
+		"parent_id": "section_1b",
+		"search_queries": [
+			"Experimental design methodologies",
+			"Data analysis techniques for research",
+			"Validation methods for new technologies",
+			"Project timeline development",
+			"Proof of concept methodologies",
+			"Statistical analysis in research",
+			"Data collection methods",
+			"ERC Proof of Concept methodology examples",
+			"Analytical techniques in research"
+		],
+		"title": "1b.i. Outline the approach and methodology to explore the innovation potential of your ERC-funded research",
+		"topics": [
+			"Experimental Design",
+			"Data Analysis",
+			"Validation Methods",
+			"Project Timeline",
+			"Statistical Significance"
+		]
+	},
+	{
+		"depends_on": ["approach_methodology"],
+		"generation_instructions": "This section requires a detailed description of the specific activities that will be undertaken during the project. Break down the project into manageable tasks and deliverables. Provide a clear timeline for each activity, including start and end dates. Describe the resources that will be required for each activity. Explain how progress will be monitored and reported. Address any potential challenges or risks associated with each activity and how they will be mitigated. Avoid vague or generic descriptions. Focus on the 'what' and 'when' of each activity and how it contributes to the overall project objectives. Use bullet points or tables to enhance readability and clarity. Emphasize quality control measures to ensure the reliability of the results.",
+		"id": "activities",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Tasks",
+			"Deliverables",
+			"Milestones",
+			"Timeline",
+			"Work Packages",
+			"Progress",
+			"Reporting",
+			"Management",
+			"Coordination",
+			"Execution",
+			"Resource Allocation",
+			"Quality Control",
+			"ERC Proof of Concept",
+			"Project Management"
+		],
+		"max_words": 2000,
+		"order": 8,
+		"parent_id": "section_1b",
+		"search_queries": [
+			"Project management methodologies",
+			"Task breakdown techniques",
+			"Deliverable schedule development",
+			"Progress monitoring systems",
+			"Risk management strategies for projects",
+			"Resource allocation strategies",
+			"Quality control in research",
+			"ERC Proof of Concept project activities",
+			"Project execution strategies"
+		],
+		"title": "1b.ii. Describe the activities",
+		"topics": [
+			"Task Breakdown",
+			"Deliverable Schedule",
+			"Progress Monitoring",
+			"Reporting Mechanisms",
+			"Quality Assurance"
+		]
+	},
+	{
+		"id": "proof_of_concept_plan",
+		"order": 9,
+		"parent_id": "section_1b",
+		"title": "1b.iii. Plan of the proof of concept - Description of the Action"
+	},
+	{
+		"depends_on": ["activities", "approach_methodology"],
+		"generation_instructions": "This section requires a detailed description of the action and timescale, presented as a comprehensive work plan. The work plan should include a Gantt chart or similar visual representation of the project timeline, clearly indicating the start and end dates for each task, as well as key milestones and deliverables. Describe the dependencies between tasks and how they will be managed. Explain how resources will be allocated to each task. Address any potential contingencies and how they will be handled. The work plan should be realistic and achievable, demonstrating a clear understanding of the project's scope and complexity. Avoid overly optimistic or unrealistic timelines. Focus on the 'how' and 'when' of each task and how it contributes to the overall project objectives. Include a critical path analysis to identify the most important tasks and potential bottlenecks. Ensure the Gantt chart is clear and easy to understand.",
+		"id": "work_plan",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": true,
+		"keywords": [
+			"Gantt Chart",
+			"Timeline",
+			"Milestones",
+			"Deliverables",
+			"Tasks",
+			"Activities",
+			"Schedule",
+			"Dependencies",
+			"Resources",
+			"Management",
+			"Critical Path",
+			"Contingency Plans",
+			"ERC Proof of Concept",
+			"Project Scheduling"
+		],
+		"max_words": 2000,
+		"order": 10,
+		"parent_id": "proof_of_concept_plan",
+		"search_queries": [
+			"Gantt chart templates",
+			"Project timeline development tools",
+			"Resource allocation strategies",
+			"Contingency planning techniques",
+			"Project management best practices",
+			"Critical path analysis",
+			"Project scheduling software",
+			"ERC Proof of Concept work plan examples",
+			"Project risk assessment tools"
+		],
+		"title": "Description of the Action and timescale – Work Plan",
+		"topics": [
+			"Project Schedule",
+			"Task Dependencies",
+			"Resource Allocation",
+			"Contingency Planning",
+			"Critical Path Analysis"
+		]
+	},
+	{
+		"depends_on": ["work_plan", "activities"],
+		"generation_instructions": "This section requires a detailed description of the resources that will be required to successfully complete the project. Provide a clear breakdown of the budget, including personnel costs, equipment costs, consumables costs, travel costs, and other expenses. Justify the need for each resource and explain how it will be used to achieve the project's objectives. Describe the equipment, infrastructure, and facilities that will be required. Explain how personnel will be allocated to the project and their roles and responsibilities. Address any potential resource constraints and how they will be addressed. Avoid vague or unsubstantiated requests. Focus on the 'what' and 'why' of each resource and how it contributes to the overall project objectives. Include a cost-effectiveness analysis to demonstrate the value for money of the proposed resources.",
+		"id": "resources",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Budget",
+			"Equipment",
+			"Personnel",
+			"Infrastructure",
+			"Facilities",
+			"Software",
+			"Consumables",
+			"Travel",
+			"Training",
+			"Support",
+			"Cost Justification",
+			"Budget Allocation",
+			"ERC Proof of Concept",
+			"Resource Management"
+		],
+		"max_words": 900,
+		"order": 11,
+		"parent_id": "proof_of_concept_plan",
+		"search_queries": [
+			"Budget justification examples",
+			"Equipment procurement strategies",
+			"Personnel allocation techniques",
+			"Infrastructure planning for research projects",
+			"Resource management best practices",
+			"Cost-effectiveness analysis methods",
+			"Budget allocation strategies",
+			"ERC Proof of Concept budget examples",
+			"Research funding resource allocation"
+		],
+		"title": "Description of the resources",
+		"topics": [
+			"Budget Justification",
+			"Equipment Needs",
+			"Personnel Allocation",
+			"Infrastructure Requirements",
+			"Cost-Effectiveness Analysis"
+		]
+	},
+	{
+		"depends_on": [],
+		"generation_instructions": "This section requires a detailed description of the project team, including the Principal Investigator (PI) and all other key personnel. Highlight the expertise and experience of each team member and their qualifications for their respective roles. Clearly define the roles and responsibilities of each team member. Explain the management structure of the team and how it will ensure effective communication and collaboration. Address any potential gaps in expertise and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'who' and 'why' of each team member and how they contribute to the overall project objectives. Emphasize the PI's strategic lead and project management capabilities. Highlight the team's commitment to diversity and inclusion.",
+		"id": "team_description",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Principal Investigator",
+			"Researchers",
+			"Engineers",
+			"Technicians",
+			"Consultants",
+			"Expertise",
+			"Experience",
+			"Qualifications",
+			"Roles",
+			"Responsibilities",
+			"Collaboration",
+			"Diversity",
+			"ERC Proof of Concept",
+			"Team Building"
+		],
+		"max_words": 900,
+		"order": 12,
+		"parent_id": "proof_of_concept_plan",
+		"search_queries": [
+			"Principal investigator responsibilities",
+			"Research team management strategies",
+			"Expertise identification for research projects",
+			"Collaboration techniques for research teams",
+			"Team building strategies for research projects",
+			"Diversity and inclusion in research teams",
+			"Conflict resolution in research teams",
+			"ERC Proof of Concept team composition",
+			"Effective research team structures"
+		],
+		"title": "Description of the team (including the PI)",
+		"topics": [
+			"Team Expertise",
+			"Roles and Responsibilities",
+			"Management Structure",
+			"Collaboration Strategies",
+			"Team Diversity"
+		]
+	},
+	{
+		"depends_on": ["team_description"],
+		"generation_instructions": "This section requires a clear articulation of the Principal Investigator's (PI) strategic lead and project management capabilities. Highlight the PI's leadership qualities, strategic vision, and management skills. Explain how the PI will provide direction and guidance to the project team. Describe the PI's decision-making process and how they will ensure that the project stays on track. Explain how the PI will coordinate the activities of the team and communicate effectively with stakeholders. Address any potential challenges to the PI's leadership and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'how' and 'why' the PI is the right person to lead the project and ensure its success. Emphasize the PI's mentorship capabilities and their ability to delegate tasks effectively.",
+		"id": "strategic_lead",
+		"is_clinical_trial": false,
+		"is_detailed_workplan": false,
+		"keywords": [
+			"Leadership",
+			"Vision",
+			"Strategy",
+			"Management",
+			"Decision-making",
+			"Coordination",
+			"Communication",
+			"Motivation",
+			"Problem-solving",
+			"Risk Management",
+			"Mentorship",
+			"Delegation",
+			"ERC Proof of Concept",
+			"Project Leadership"
+		],
+		"max_words": 315,
+		"order": 13,
+		"parent_id": null,
+		"search_queries": [
+			"Leadership qualities for research projects",
+			"Strategic vision development",
+			"Project management skills for researchers",
+			"Decision-making processes in research",
+			"Communication strategies for research teams",
+			"Mentorship in research",
+			"Delegation techniques for project managers",
+			"ERC Proof of Concept leadership",
+			"PI strategic leadership in research"
+		],
+		"title": "The Strategic Lead",
+		"topics": [
+			"Leadership Qualities",
+			"Strategic Vision",
+			"Management Skills",
+			"Decision-Making Process",
+			"Mentorship Capabilities"
+		]
+	}
 ]

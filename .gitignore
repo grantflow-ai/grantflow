@@ -1,0 +1,41 @@
+# General
+.DS_Store
+.env
+.env.*
+*.log
+.coverage
+
+# Python (backend)
+**/__pycache__/
+*.py[cod]
+*$py.class
+.venv
+.mypy_cache
+.ruff_cache
+coverage.*
+.coverage*
+requirements.txt
+**/http-client.private.env.json
+.pytest_cache
+
+# Node.js (frontend)
+node_modules/
+.next/
+.vercel/
+.turbo/
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# IDE and editor files
+.idea/
+.vscode/
+*.suo
+*.user
+*.iml
+.run/
+
+# Build artifacts
+*.pem

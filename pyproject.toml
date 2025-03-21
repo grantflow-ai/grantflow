@@ -1,0 +1,102 @@
+[project]
+name = "grantflow"
+version = "0.1.0"
+description = "GrantFlow Monorepo"
+readme = "README.md"
+license = { text = "UNLICENSED" }
+
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[dependency-groups]
+dev = [
+    "atlas-provider-sqlalchemy>=0.2.4",
+    "covdefaults>=2.3.0",
+    "faker>=37.0.1",
+    "huggingface-hub[cli]>=0.29.3",
+    "mypy>=1.15.0",
+    "polyfactory>=2.19.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.25.3",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-timeout>=2.3.1",
+    "python-dotenv>=1.0.1",
+    "ruff>=0.11.1",
+]
+
+[tool.uv.workspace]
+members = ["backend"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+src = [ "backend/src", "backend/tests" ]
+
+format.docstring-code-line-length = 120
+format.docstring-code-format = true
+lint.select = [ "ALL" ]
+lint.ignore = [
+  "ANN401",   # Dynamically typed ANY
+  "ASYNC110", # Use Event instead of sleep in async loop
+  "COM812",   # Conflicts with formatter
+  "D",        # Doc strings
+  "E501",     # Line too long, handled by ruff format
+  "EM",       # Exception messages,
+  "FBT",      # Boolean-typed positional argument in function definition
+  "FIX",      # We allow todo and fixme comments
+  "ISC001",   # Conflicts with formatter
+  "PD011",    # Creates false positives
+  "PGH003",   # Required specific mypy ignores
+  "PLR2004",  # Magic variables, we allow them
+  "S104",     # Disallows using '0.0.0.0' as a host
+  "TD",       # We allow todo and fixme comments
+  "TRY",      # Try except block, rules are too strict
+]
+lint.per-file-ignores."backend/tests/**/*.*" = [ "ARG001", "D", "N815", "PT006", "PT007", "PT013", "RUF012", "S" ]
+lint.isort.known-first-party = [ "src", "tests" ]
+lint.mccabe.max-complexity = 25
+lint.pydocstyle.convention = "google"
+lint.pylint.max-args = 12
+lint.pylint.max-branches = 25
+lint.pylint.max-returns = 10
+lint.pylint.max-statements = 100
+
+[tool.pyproject-fmt]
+keep_full_version = true
+max_supported_python = "3.12"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+filterwarnings = [
+  "ignore::DeprecationWarning:pkg_resources.*",
+  "ignore::DeprecationWarning:google.*",
+  "ignore::DeprecationWarning:websockets.*",
+  "ignore::pydantic.PydanticDeprecatedSince20",
+  "ignore::DeprecationWarning:fake_http_header.*",
+  "ignore::DeprecationWarning:importlib.resources.*",
+  "ignore::DeprecationWarning:tracerite.*",
+]
+
+[tool.coverage.run]
+omit = [ "backend/tests/*" ]
+plugins = [ "covdefaults" ]
+source = [ "backend/src" ]
+
+[tool.coverage.report]
+exclude_lines = [ 'if TYPE_CHECKING:' ]
+fail_under = 80
+
+[tool.mypy]
+packages = [ "backend/src", "backend/tests" ]
+python_version = "3.12"
+disable_error_code = 'import-untyped'
+implicit_reexport = false
+show_error_codes = true
+strict = true
