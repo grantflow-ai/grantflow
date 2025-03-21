@@ -1,53 +1,42 @@
-from enum import StrEnum
-from itertools import chain
+from typing import Final
 
-from vertexai.language_models import TextEmbeddingInput
+from sentence_transformers import SentenceTransformer
 
-from src.constants import EMBEDDING_DIMENSIONS
-from src.exceptions import ExternalOperationError
-from src.utils.ai import get_embeddings_client
-from src.utils.logging import get_logger
-from src.utils.retry import with_exponential_backoff_retry
+from src.utils.logger import get_logger
+from src.utils.ref import Ref
+from src.utils.sync import run_sync
 
 logger = get_logger(__name__)
+embedding_model_ref = Ref[SentenceTransformer]()
+
+EMBEDDING_MODEL_NAME: Final[str] = "sentence-transformers/all-MiniLM-L12-v2"
 
 
-class TaskType(StrEnum):
-    """The type of task for which embeddings are to be generated."""
+def get_embedding_model() -> SentenceTransformer:
+    """Get the embedding model.
 
-    RetrievalDocument = "RETRIEVAL_DOCUMENT"
-    RetrievalQuery = "RETRIEVAL_QUERY"
+    Returns:
+        The embedding model.
+    """
+    if embedding_model_ref.value is None:
+        model = SentenceTransformer(EMBEDDING_MODEL_NAME, device="cpu")
+        embedding_model_ref.value = model
+
+    return embedding_model_ref.value
 
 
-@with_exponential_backoff_retry(ExternalOperationError)
-async def generate_embeddings(
-    inputs: str | list[str], task: TaskType, output_dimensionality: int = EMBEDDING_DIMENSIONS
-) -> list[float]:
+async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
     """Generate embeddings for the given text using the specified model.
 
     Args:
         inputs: The text for which embeddings are to be created or a list thereof.
-        task: The task for which the embeddings are to be created.
-        output_dimensionality: The dimensionality of the output embeddings.
-
-    Raises:
-        ExternalOperationError: If an error occurs during the operation.
 
     Returns:
         The embeddings for the given text or None if an error occurred.
     """
-    client = get_embeddings_client()
-
     if not isinstance(inputs, list):
         inputs = [inputs]
 
-    try:
-        embeddings = await client.get_embeddings_async(
-            [TextEmbeddingInput(text, task.value) for text in inputs],
-            output_dimensionality=output_dimensionality,
-        )
-        logger.info("Successfully generated embeddings")
-        return list(chain(*[embedding.values for embedding in embeddings]))
-    except ValueError as e:
-        logger.error("Failed to get embeddings due to an API error.", exec_info=e)
-        raise ExternalOperationError(message="Failed to get embeddings", context=str(e)) from e
+    model = await run_sync(get_embedding_model)
+
+    return [[float(x) for x in embedding] for embedding in model.encode(inputs)]

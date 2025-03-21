@@ -1,51 +1,100 @@
-from random import uniform
 from typing import Any, cast
 
 from faker import Faker
+from numpy.random import default_rng
 from pgvector.utils import Vector
 from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from sqlalchemy import Column
 
-from src.api_types import (
-    ApplicationBaseResponse,
+from src.api.api_types import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
-    ApplicationFileResponse,
-    ApplicationFullResponse,
-    ApplicationIdResponse,
-    CfpResponse,
     CreateApplicationRequestBody,
-    CreateResearchAimRequestBody,
-    CreateResearchTaskRequestBody,
+    CreateOrganizationRequestBody,
     CreateWorkspaceRequestBody,
     LoginRequestBody,
     LoginResponse,
     OTPResponse,
-    ResearchAimResponse,
-    ResearchTaskResponse,
+    TableIdResponse,
     UpdateApplicationRequestBody,
-    UpdateResearchAimRequestBody,
-    UpdateResearchTaskRequestBody,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,
-    WorkspaceFullResponse,
-    WorkspaceIdResponse,
 )
 from src.constants import EMBEDDING_DIMENSIONS
+from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from src.db.tables import (
-    Application,
-    ApplicationFile,
-    ApplicationVector,
     FundingOrganization,
-    GrantCfp,
-    ResearchAim,
-    ResearchTask,
+    GrantApplication,
+    GrantApplicationFile,
+    GrantTemplate,
+    OrganizationFile,
+    RagFile,
+    TextVector,
     Workspace,
     WorkspaceUser,
 )
 
 faker = Faker()
+rng = default_rng()
+
+
+class GrantElementFactory(TypedDictFactory[GrantElement]):
+    __model__ = GrantElement
+    id = faker.uuid4()
+    order = 1
+    title = faker.sentence()
+    parent_id = None
+
+
+class GrantSectionFactory(TypedDictFactory[GrantLongFormSection]):
+    __model__ = GrantLongFormSection
+    is_research_plan = False
+    parent_id = None
+    order = 1
+    keywords = ["methodology", "design", "analysis"]
+    topics = ["background_context", "methodology"]
+    max_words = 3000
+    search_queries = ["query1", "query2", "query3"]
+    depends_on: list[str] = []
+
+
+class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
+    __model__ = GrantTemplate
+    grant_sections = [
+        GrantSectionFactory.build(
+            title="Executive Summary", description="A brief overview of the research proposal", order=1
+        ),
+        GrantSectionFactory.build(
+            title="Significance", description="The importance and potential impact of the research", order=2
+        ),
+        GrantSectionFactory.build(
+            title="Innovation", description="Novel aspects and innovative approaches of the research", order=3
+        ),
+    ]
+
+
+class FileFactory(SQLAlchemyFactory[RagFile]):
+    __model__ = RagFile
+
+
+class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
+    __model__ = OrganizationFile
+
+
+class TextVectorFactory(SQLAlchemyFactory[TextVector]):
+    __model__ = TextVector
+    embedding = rng.random(EMBEDDING_DIMENSIONS).tolist()
+
+    @classmethod
+    def get_type_from_column(cls, column: Column[Any]) -> type:
+        if column.name == "embedding":
+            return cast("type", Vector)
+        return super().get_type_from_column(column)
+
+
+class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
+    __model__ = FundingOrganization
 
 
 class WorkspaceFactory(SQLAlchemyFactory[Workspace]):
@@ -56,44 +105,20 @@ class WorkspaceUserFactory(SQLAlchemyFactory[WorkspaceUser]):
     __model__ = WorkspaceUser
 
 
-class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
-    __model__ = FundingOrganization
+class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
+    __model__ = GrantApplication
 
 
-class GrantCfpFactory(SQLAlchemyFactory[GrantCfp]):
-    __model__ = GrantCfp
-
-
-class ApplicationFactory(SQLAlchemyFactory[Application]):
-    __model__ = Application
-
-
-class ApplicationFileFactory(SQLAlchemyFactory[ApplicationFile]):
-    __model__ = ApplicationFile
-
-
-class ResearchAimFactory(SQLAlchemyFactory[ResearchAim]):
-    __model__ = ResearchAim
-
-
-class ResearchTaskFactory(SQLAlchemyFactory[ResearchTask]):
-    __model__ = ResearchTask
-
-
-class ApplicationVectorFactory(SQLAlchemyFactory[ApplicationVector]):
-    __model__ = ApplicationVector
-
-    embedding = [uniform(-1, 1) for _ in range(EMBEDDING_DIMENSIONS)]
-
-    @classmethod
-    def get_type_from_column(cls, column: Column[Any]) -> type:
-        if column.name == "embedding":
-            return cast(type, Vector)
-        return super().get_type_from_column(column)
+class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationFile]):
+    __model__ = GrantApplicationFile
 
 
 class CreateApplicationRequestBodyFactory(TypedDictFactory[CreateApplicationRequestBody]):
     __model__ = CreateApplicationRequestBody
+
+
+class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):
+    __model__ = CreateOrganizationRequestBody
 
 
 class CreateWorkspaceRequestBodyFactory(TypedDictFactory[CreateWorkspaceRequestBody]):
@@ -104,61 +129,30 @@ class UpdateWorkspaceRequestBodyFactory(TypedDictFactory[UpdateWorkspaceRequestB
     __model__ = UpdateWorkspaceRequestBody
 
 
-class CreateResearchTaskRequestBodyFactory(TypedDictFactory[CreateResearchTaskRequestBody]):
-    __model__ = CreateResearchTaskRequestBody
-
-
-class CreateResearchAimRequestBodyFactory(TypedDictFactory[CreateResearchAimRequestBody]):
-    __model__ = CreateResearchAimRequestBody
-
-
 class UpdateApplicationRequestBodyFactory(TypedDictFactory[UpdateApplicationRequestBody]):
     __model__ = UpdateApplicationRequestBody
-
-
-class UpdateResearchTaskRequestBodyFactory(TypedDictFactory[UpdateResearchTaskRequestBody]):
-    __model__ = UpdateResearchTaskRequestBody
-
-
-class UpdateResearchAimRequestBodyFactory(TypedDictFactory[UpdateResearchAimRequestBody]):
-    __model__ = UpdateResearchAimRequestBody
 
 
 class LoginRequestBodyFactory(TypedDictFactory[LoginRequestBody]):
     __model__ = LoginRequestBody
 
 
-# API Response Factories
-class WorkspaceIdResponseFactory(TypedDictFactory[WorkspaceIdResponse]):
-    __model__ = WorkspaceIdResponse
+class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
+    __model__ = ResearchObjective
 
 
-class CfpResponseFactory(TypedDictFactory[CfpResponse]):
-    __model__ = CfpResponse
+class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
+    __model__ = ResearchTask
+
+    keywords = ["methodology", "design", "analysis"]
+    topics = ["background_context", "methodology"]
+    max_words = 3000
+    search_queries = ["query1", "query2", "query3"]
+    depends_on: list[str] = []
 
 
-class ResearchTaskResponseFactory(TypedDictFactory[ResearchTaskResponse]):
-    __model__ = ResearchTaskResponse
-
-
-class ResearchAimResponseFactory(TypedDictFactory[ResearchAimResponse]):
-    __model__ = ResearchAimResponse
-
-
-class ApplicationIdResponseFactory(TypedDictFactory[ApplicationIdResponse]):
-    __model__ = ApplicationIdResponse
-
-
-class ApplicationFileResponseFactory(TypedDictFactory[ApplicationFileResponse]):
-    __model__ = ApplicationFileResponse
-
-
-class ApplicationBaseResponseFactory(TypedDictFactory[ApplicationBaseResponse]):
-    __model__ = ApplicationBaseResponse
-
-
-class ApplicationFullResponseFactory(TypedDictFactory[ApplicationFullResponse]):
-    __model__ = ApplicationFullResponse
+class TableIdResponseFactory(TypedDictFactory[TableIdResponse]):
+    __model__ = TableIdResponse
 
 
 class ApplicationDraftProcessingResponseFactory(TypedDictFactory[ApplicationDraftProcessingResponse]):
@@ -171,10 +165,6 @@ class ApplicationDraftCompleteResponseFactory(TypedDictFactory[ApplicationDraftC
 
 class WorkspaceBaseResponseFactory(TypedDictFactory[WorkspaceBaseResponse]):
     __model__ = WorkspaceBaseResponse
-
-
-class WorkspaceFullResponseFactory(TypedDictFactory[WorkspaceFullResponse]):
-    __model__ = WorkspaceFullResponse
 
 
 class OTPResponseFactory(TypedDictFactory[OTPResponse]):

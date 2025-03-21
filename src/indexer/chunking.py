@@ -1,10 +1,17 @@
+"""Module for chunking document content from Azure Document Intelligence output."""
+
+from collections.abc import Mapping
+from itertools import chain
 from typing import Final
 
+from azure.ai.documentintelligence.models import (
+    AnalyzeResult,
+    DocumentPage,
+)
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
-from src.indexer.dto import Chunk
-from src.indexer.extraction import BoundingRegion, OCROutput
-from src.utils.logging import get_logger
+from src.db.json_objects import Chunk
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,94 +20,74 @@ OVERLAP_CHARACTERS: Final[int] = 200
 
 
 def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
-    """Get the splitter based on the MIME type.
+    """Get the appropriate text splitter based on the MIME type.
 
     Args:
         mime_type: The MIME type of the text.
 
     Returns:
-        MarkdownSplitter | TextSplitter: The splitter to use.
+        The splitter to use.
     """
     if mime_type == "text/markdown":
         return MarkdownSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
     return TextSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
 
 
-def chunk_ocr_output(extracted_data: OCROutput, splitter: MarkdownSplitter | TextSplitter) -> list[Chunk]:
-    """Parse the OCR output and chunk the text into smaller pieces.
+def extract_page_content(page: DocumentPage) -> str:
+    """Extract content from a page, handling both lines and words.
 
     Args:
-        extracted_data: The extracted data from the file.
-        splitter: The splitter to use for chunking the text.
+        page: Page object from OCR output
 
     Returns:
-        list[Chunk]: The list of chunks.
+        Extracted text content with preserved line breaks
     """
-    chunks: list[Chunk] = []
-    for page in extracted_data.get("pages", []):
-        page_number = page.get("pageNumber", None)
-        if lines := page.get("lines"):
-            contents = "\n".join([line["content"] for line in lines])
-        else:
-            words_with_breaks = []
-            previous_offset = None
+    if lines := page.get("lines"):
+        return "\n".join(line["content"] for line in lines)
 
-            for word in page["words"]:
-                span = word["span"]
-                if previous_offset is not None and span["offset"] > previous_offset:
-                    # Add a line break if there's a gap between spans
-                    words_with_breaks.append("\n")
+    words_with_breaks: list[str] = []
+    previous_offset: int | None = None
 
-                words_with_breaks.append(word["content"])
-                previous_offset = span["offset"] + span["length"]
+    for word in page.get("words") or []:
+        span = word.get("span") or {}
+        current_offset = span.get("offset", 0)
 
-            contents = " ".join(words_with_breaks).replace(" \n ", "\n")
+        if previous_offset is not None and current_offset > previous_offset + 10:
+            words_with_breaks.append("\n")
 
-        chunks.extend(
-            Chunk(content=chunk, page_number=page_number, element_type="page", index=0)
-            for chunk in splitter.chunks(contents)
-        )
+        words_with_breaks.append(word["content"])
+        previous_offset = current_offset + (span.get("length") or 0)
 
-    for table in extracted_data.get("tables", []):
-        bounding_regions: list[BoundingRegion] = table.get("boundingRegions", [])
-        page_numbers = list(
-            filter(lambda x: x is not None, [region.get("pageNumber", None) for region in bounding_regions])
-        )
-        page_number = page_numbers[0] if page_numbers else None
-        cells = table.get("cells", [])
-        content_matrix: list[list[str]] = []
+    return " ".join(words_with_breaks).replace(" \n ", "\n")
 
-        for cell in cells:
-            row = cell.get("rowIndex", 0)
-            col = cell.get("columnIndex", 0)
-            content = cell.get("content", "")
 
-            while len(content_matrix) <= row:
-                content_matrix.append([])
+def process_page_chunks(
+    page: DocumentPage,
+    splitter: MarkdownSplitter | TextSplitter,
+) -> list[Chunk]:
+    """Process a page into chunks.
 
-            while len(content_matrix[row]) <= col:
-                content_matrix[row].append("")
+    Args:
+        page: Page object from OCR output
+        splitter: Text splitter instance
 
-            content_matrix[row][col] = content
+    Returns:
+        List of chunks with preserved context
+    """
+    contents = extract_page_content(page)
 
-        table_content = "\n".join("\t".join(cell for cell in row) for row in content_matrix)
-        chunks.extend(
-            Chunk(content=chunk, page_number=page_number, element_type="table", index=0)
-            for chunk in splitter.chunks(table_content)
-        )
+    chunks = []
+    for text_chunk in splitter.chunks(contents):
+        chunk: Chunk = {"content": text_chunk}
+        if page_number := page.get("pageNumber"):
+            chunk["page_number"] = page_number
 
-    chunks = chunks or [
-        Chunk(content=chunk, page_number=None, element_type=None, index=0)
-        for chunk in splitter.chunks(extracted_data["content"])
-    ]
-
-    for index, chunk in enumerate(chunks):
-        chunk["index"] = index
+        chunks.append(chunk)
 
     return chunks
 
 
-def chunk_text(*, text: str | OCROutput, mime_type: str) -> list[Chunk]:
+def chunk_text(*, text: str | AnalyzeResult, mime_type: str) -> list[Chunk]:
     """Chunk the text into smaller pieces.
 
     Args:
@@ -108,14 +95,34 @@ def chunk_text(*, text: str | OCROutput, mime_type: str) -> list[Chunk]:
         mime_type: The MIME type of the text.
 
     Returns:
-        list[Chunk]: The list of chunks.
+        The list of chunks.
     """
     splitter = get_splitter(mime_type)
 
-    if isinstance(text, dict):
+    if isinstance(text, (Mapping | dict)):
         return chunk_ocr_output(text, splitter)
 
-    return [
-        Chunk(content=chunk, page_number=None, element_type=None, index=index)
-        for index, chunk in enumerate(splitter.chunks(text))
-    ]
+    return [Chunk(content=chunk) for index, chunk in enumerate(splitter.chunks(text))]
+
+
+def chunk_ocr_output(
+    extracted_data: AnalyzeResult,
+    splitter: MarkdownSplitter | TextSplitter,
+) -> list[Chunk]:
+    """Parse the OCR output and chunk the text into smaller pieces with preserved context.
+
+    Args:
+        extracted_data: The extracted data from the file
+        splitter: The splitter to use for chunking the text
+
+    Returns:
+        List of enriched chunks with semantic context
+    """
+    chunks: list[Chunk] = list(
+        chain(*[process_page_chunks(page, splitter) for page in extracted_data.get("pages", [])])
+    )
+
+    if not chunks and "content" in extracted_data:
+        chunks = [Chunk(content=text_chunk) for text_chunk in splitter.chunks(extracted_data["content"])]
+
+    return chunks

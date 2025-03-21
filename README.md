@@ -1,4 +1,4 @@
-# Backend Services
+# Grantflow Backend
 
 ## Prerequisites
 
@@ -7,62 +7,29 @@ committed to GitHub.
 
 ## Installation
 
-Make sure to be running a Python 3.12 shell.
-
-1. It's recommended to use [pyenv](https://github.com/pyenv/pyenv) to manage python versions. For example:
+1. Install UV on your system (see: https://docs.astral.sh/uv/getting-started/installation):
 
    ```shell
-   brew install pyenv
-   pyenv install 3.12
-   pyenv local 3.12
+   brew install uv
    ```
 
-2. Install PDM globally - you can either install it via brew (recommended) or pipx:
+2. Inside the repository, execute the sync command:
 
    ```shell
-   brew install pdm
+   uv sync
    ```
 
-2. Inside the repository, execute the setup command:
-
-   ```shell
-   task setup
-   ```
-
-   This command will install the necessary dependencies on the machine and use PDM to create a virtual environment under
+   This command will install the necessary dependencies on the machine and use UV to create a virtual environment under
    the `.venv` folder, which is git ignored, and install the dependencies inside it.
 
-### PDM Scripts
+3. Install pre-commit:
 
-PDM includes several scripts for convenience. You can see the available scripts in the
-[pyproject.toml file](./pyproject.toml) under `[tool.pdm.scripts]`.
+   ```shell
+   brew install pre-commit
+   ```
 
-For example, you can run the following command to start the functions framework:
+4. Install the pre-commit hooks:
 
-#### Start
-
-```shell
-pdm run start
-```
-
-This will run the PDM script called `start`, which you can see defined in the [pyproject.toml file](./pyproject.toml)
-
-### Test
-
-To execute testing run:
-
-```shell
-pdm run test
-```
-
-Which will run pytest
-
-### Lint
-
-To execute all the linters and formatters run:
-
-```shell
-pdm run lint
-```
-
-Which will run [pre-commit](https://pre-commit.com)
+   ```shell
+   pre-commit install && pre-commit install --hook-type commit-msg
+   ```
