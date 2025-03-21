@@ -6,8 +6,6 @@ This Proof of Concept project addresses the environmental challenges of traditio
 
 ## Section 1a: The idea – Breakthrough Innovation potential
 
-
-
 ### 1a.i. Brief description of the idea to be taken to proof of concept
 
 The environmental impact of traditional drug and macromolecule-drug conjugate (ADC) synthesis, heavily reliant on organic solvents, poses significant sustainability challenges. This proof-of-concept (PoC) project addresses this problem by employing biomolecular condensates as dynamic, tunable, organic solvent-free reaction systems for green drug synthesis. The proposed solution leverages liquid-liquid phase separation (LLPS) to create sustainable, biocompatible microenvironments that enhance reaction efficiency. This is achieved through precise control over reactant recruitment and catalytic activity within the condensates, eliminating the need for organic solvents and reducing waste generation. The value proposition lies in providing a sustainable and efficient alternative to traditional organic solvent-based methods, aligning with green chemistry principles.
@@ -36,8 +34,6 @@ Despite these challenges, the potential rewards justify pursuing this high-risk 
 
 ## Section 1b: Approach and Methodology
 
-
-
 ### 1b.i. Outline the approach and methodology to explore the innovation potential of your ERC-funded research
 
 The approach to exploring the innovation potential of our ERC-funded research involves a comprehensive market analysis, strategic innovation pathway selection, and focused research objectives. The initial market analysis will assess the pharmaceutical industry's green synthesis sector, estimating market size, growth projections, and commercial opportunities for solvent-free drug synthesis. Our chosen innovation pathway is a combination of patenting key peptide sequences and subsequent licensing agreements with pharmaceutical companies, deemed most appropriate due to the potential for broad applicability of our technology. This approach represents a paradigm shift from traditional solvent-based methods, offering key competitive advantages including reduced environmental impact, enhanced biocompatibility, and increased reaction efficiency.
@@ -65,8 +61,6 @@ IPR strategy: We will pursue patent development for novel peptide sequences and 
 Market landscape and potential end users: Our commercialization plan focuses on partnering with pharmaceutical companies seeking sustainable and efficient drug synthesis methods. The intended user base includes pharmaceutical manufacturers, biotech companies, and research institutions. We plan to establish a commercial entity to market and license our technology, potentially through joint ventures or strategic alliances. **[MISSING INFORMATION: Specific details of potential partnerships]**
 
 ### 1b.iii. Plan of the proof of concept - Description of the Action
-
-
 
 #### Description of the Action and timescale – Work Plan
 
@@ -304,69 +298,16 @@ Missing Information:
 
 #### Description of the resources
 
-Missing Information:
-	- Specific person-month allocations for each task/objective
-	- Task leader names/roles for each objective
-	- Detailed list of required equipment and materials, including whether existing or new purchases needed
-	- Duration (in months) for each task/objective
-	- External service provider details and partnership requirements
-	- Laboratory space and infrastructure requirements
-	- Technical staff and support personnel needs
-	- Specific instrumentation requirements for microscopy and analytical work
-	- Computing resources and software requirements
-	- Training needs and associated personnel time
-	- Laboratory consumables and supplies specifications
-	- Equipment maintenance and service requirements
-	- Facility access requirements (e.g., microscopy core, analytical facilities)
-	- Travel requirements for collaboration and dissemination activities
+Missing Information: - Specific person-month allocations for each task/objective - Task leader names/roles for each objective - Detailed list of required equipment and materials, including whether existing or new purchases needed - Duration (in months) for each task/objective - External service provider details and partnership requirements - Laboratory space and infrastructure requirements - Technical staff and support personnel needs - Specific instrumentation requirements for microscopy and analytical work - Computing resources and software requirements - Training needs and associated personnel time - Laboratory consumables and supplies specifications - Equipment maintenance and service requirements - Facility access requirements (e.g., microscopy core, analytical facilities) - Travel requirements for collaboration and dissemination activities
 
 #### Description of the team (including the PI)
 
-Missing Information:
-	- Complete team composition beyond the PI - names and positions of other key personnel
-	- Detailed qualifications and expertise of team members other than the PI
-	- Specific roles and responsibilities for each team member
-	- Team management structure and reporting relationships
-	- Communication and collaboration protocols/strategies
-	- Current expertise gaps in the team and planned solutions
-	- Team's diversity statistics and inclusion initiatives
-	- PI's project management experience and track record
-	- Details of any external collaborators or consultants
-	- Team member time commitments and availability
-	- Previous collaborative experience among team members
-	- Training and development plans for team members
+Missing Information: - Complete team composition beyond the PI - names and positions of other key personnel - Detailed qualifications and expertise of team members other than the PI - Specific roles and responsibilities for each team member - Team management structure and reporting relationships - Communication and collaboration protocols/strategies - Current expertise gaps in the team and planned solutions - Team's diversity statistics and inclusion initiatives - PI's project management experience and track record - Details of any external collaborators or consultants - Team member time commitments and availability - Previous collaborative experience among team members - Training and development plans for team members
 
 ## The Strategic Lead
 
-Missing Information:
-	- PI's specific leadership experience and track record in managing research teams
-	- Details of PI's previous project management successes and outcomes
-	- PI's specific approach to decision-making and examples of strategic decisions
-	- PI's communication and stakeholder management strategy
-	- PI's experience in mentoring and developing team members
-	- PI's method for task delegation and team coordination
-	- Specific examples of how the PI has handled research challenges in the past
-	- PI's experience in managing similar-scale projects
-	- PI's approach to risk management and contingency planning
-	- Details of PI's strategic vision for this specific project beyond technical aspects
-	- PI's plan for ensuring team cohesion and motivation
-	- PI's specific qualifications in project management or leadership training
+Missing Information: - PI's specific leadership experience and track record in managing research teams - Details of PI's previous project management successes and outcomes - PI's specific approach to decision-making and examples of strategic decisions - PI's communication and stakeholder management strategy - PI's experience in mentoring and developing team members - PI's method for task delegation and team coordination - Specific examples of how the PI has handled research challenges in the past - PI's experience in managing similar-scale projects - PI's approach to risk management and contingency planning - Details of PI's strategic vision for this specific project beyond technical aspects - PI's plan for ensuring team cohesion and motivation - PI's specific qualifications in project management or leadership training
 
 ## The Project Management
 
-Missing Information:
-	- Complete organizational structure including roles, reporting lines, and decision-making authority levels
-	- Specific decision-making protocols and approval processes for project changes
-	- Detailed risk assessment matrix with probability and impact ratings for identified scientific/technical risks
-	- Specific mitigation strategies for each identified technical risk
-	- Complete contingency plans for personnel changes including succession planning
-	- Emergency response procedures and chain of command during critical events
-	- Backup procedures for critical project components and facilities
-	- Project timeline dependencies and critical path analysis
-	- Communication protocols and frequency of project status updates
-	- Quality control measures and oversight mechanisms
-	- Resource allocation procedures and budget management protocols
-	- Specific metrics for monitoring project progress and success
-	- Documentation requirements and version control procedures
-	- Stakeholder management plan and communication channels
-	- Change management procedures and approval workflows
+Missing Information: - Complete organizational structure including roles, reporting lines, and decision-making authority levels - Specific decision-making protocols and approval processes for project changes - Detailed risk assessment matrix with probability and impact ratings for identified scientific/technical risks - Specific mitigation strategies for each identified technical risk - Complete contingency plans for personnel changes including succession planning - Emergency response procedures and chain of command during critical events - Backup procedures for critical project components and facilities - Project timeline dependencies and critical path analysis - Communication protocols and frequency of project status updates - Quality control measures and oversight mechanisms - Resource allocation procedures and budget management protocols - Specific metrics for monitoring project progress and success - Documentation requirements and version control procedures - Stakeholder management plan and communication channels - Change management procedures and approval workflows

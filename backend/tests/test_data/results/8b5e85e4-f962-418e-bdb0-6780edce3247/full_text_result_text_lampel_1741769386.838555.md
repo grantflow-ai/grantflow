@@ -68,125 +68,67 @@ The project comprises four objectives with defined deliverables and timelines, m
 
 **Objective 1: Develop and optimize conditions for antibody-drug conjugate click reactions as model systems**
 
-* **Task 1.1: Develop and optimize reaction conditions of two click reaction models involving formation of antibody-drug conjugates.**
-* **Activities:** Design and synthesize amphipathic peptide sequences with aromatic (10-40%) and charged residues for optimal click reaction microenvironments. Investigate charge distribution patterns and hydrophobic/hydrophilic ratios (0.5-2.0). Key parameters: critical phase separation concentration (0.1-5 mg/mL) and temperature sensitivity (4-40°C). Optimize reaction conditions by varying temperature and pH**[MISSING INFORMATION: Specific temperature and pH ranges to be investigated for click reactions in condensate environment]**. Monitor reactions via HPLC-MS.
-* **Timeline:** Months 1-3
-* **Deliverables:** Optimized ADC click reaction protocols, standardized parameters, quantitative success criteria.
-* **Quality Control:** Validate conditions through independent experiments, assess reproducibility via coefficient of variation.
+- **Task 1.1: Develop and optimize reaction conditions of two click reaction models involving formation of antibody-drug conjugates.**
+- **Activities:** Design and synthesize amphipathic peptide sequences with aromatic (10-40%) and charged residues for optimal click reaction microenvironments. Investigate charge distribution patterns and hydrophobic/hydrophilic ratios (0.5-2.0). Key parameters: critical phase separation concentration (0.1-5 mg/mL) and temperature sensitivity (4-40°C). Optimize reaction conditions by varying temperature and pH**[MISSING INFORMATION: Specific temperature and pH ranges to be investigated for click reactions in condensate environment]**. Monitor reactions via HPLC-MS.
+- **Timeline:** Months 1-3
+- **Deliverables:** Optimized ADC click reaction protocols, standardized parameters, quantitative success criteria.
+- **Quality Control:** Validate conditions through independent experiments, assess reproducibility via coefficient of variation.
 
-* **Task 1.2: Develop and optimize conditions for LLPS and condensate formation.**
-* **Activities:** Optimize peptide sequences for LLPS behavior, investigating aromatic content (10-40%), charge patterns, and hydrophobic/hydrophilic ratios (0.5-2.0). Characterize condensates using fluorescence microscopy, FRAP, and turbidity measurements. Assess stability at**[MISSING INFORMATION: specific pH range]** and**[MISSING INFORMATION: salt concentration range]**.
-* **Timeline:** Months 4-6
-* **Deliverables:** Optimized LLPS conditions, condensate characterization data, peer-reviewed publication.**Objective 2: Characterize reactant and product encapsulation efficiency**
+- **Task 1.2: Develop and optimize conditions for LLPS and condensate formation.**
+- **Activities:** Optimize peptide sequences for LLPS behavior, investigating aromatic content (10-40%), charge patterns, and hydrophobic/hydrophilic ratios (0.5-2.0). Characterize condensates using fluorescence microscopy, FRAP, and turbidity measurements. Assess stability at**[MISSING INFORMATION: specific pH range]** and**[MISSING INFORMATION: salt concentration range]**.
+- **Timeline:** Months 4-6
+- **Deliverables:** Optimized LLPS conditions, condensate characterization data, peer-reviewed publication.**Objective 2: Characterize reactant and product encapsulation efficiency**
 
-* **Task 2.1: Analyze encapsulation efficiency (EE) in condensates.**
-* **Activities:** Quantify EE using fluorescence correlation spectroscopy and multi-angle dynamic light scattering (0.1-5 mg/mL peptide range). Examine peptide sequence effects on molecular retention.
-* **Timeline:** Months 7-9
-* **Deliverables:** EE report, partition coefficients, standard operating procedures.
+- **Task 2.1: Analyze encapsulation efficiency (EE) in condensates.**
+- **Activities:** Quantify EE using fluorescence correlation spectroscopy and multi-angle dynamic light scattering (0.1-5 mg/mL peptide range). Examine peptide sequence effects on molecular retention.
+- **Timeline:** Months 7-9
+- **Deliverables:** EE report, partition coefficients, standard operating procedures.
 
-* **Task 2.2: Optimize reactant EE through peptide composition.**
-* **Activities:** Modify aromatic residue positioning (10-40%), π-π stacking, and charge patterns. Vary temperature (4-40°C), ionic strength**[MISSING INFORMATION: specific salt concentration range]**, and pH**[MISSING INFORMATION: specific pH optimization range]**. Develop machine learning models for sequence design.
-* **Timeline:** Months 10-12
-* **Deliverables:** Optimized peptide design protocols, predictive models.
+- **Task 2.2: Optimize reactant EE through peptide composition.**
+- **Activities:** Modify aromatic residue positioning (10-40%), π-π stacking, and charge patterns. Vary temperature (4-40°C), ionic strength**[MISSING INFORMATION: specific salt concentration range]**, and pH**[MISSING INFORMATION: specific pH optimization range]**. Develop machine learning models for sequence design.
+- **Timeline:** Months 10-12
+- **Deliverables:** Optimized peptide design protocols, predictive models.
 
-* **Task 2.3: Optimize product EE for phase separation.**
-* **Activities:** Optimize conditions for product exclusion post-reaction, enabling separation via centrifugation.
-* **Timeline:** Months 13-15
-* **Deliverables:** Product exclusion protocols, phase distribution metrics.**Objective 3: Characterize reaction kinetics within condensates**
+- **Task 2.3: Optimize product EE for phase separation.**
+- **Activities:** Optimize conditions for product exclusion post-reaction, enabling separation via centrifugation.
+- **Timeline:** Months 13-15
+- **Deliverables:** Product exclusion protocols, phase distribution metrics.**Objective 3: Characterize reaction kinetics within condensates**
 
-* **Task 3.1: Quantitative kinetics analysis.**
-* **Activities:** Track phase-specific kinetics at**[MISSING INFORMATION: specific temporal resolution]**. Determine Michaelis-Menten parameters (0.1-5 mg/mL peptide) using stopped-flow measurements. Model modified pseudo-first-order kinetics.
-* **Timeline:** Months 16-18
-* **Deliverables:** Kinetics analysis report, mathematical models, patent application.
+- **Task 3.1: Quantitative kinetics analysis.**
+- **Activities:** Track phase-specific kinetics at**[MISSING INFORMATION: specific temporal resolution]**. Determine Michaelis-Menten parameters (0.1-5 mg/mL peptide) using stopped-flow measurements. Model modified pseudo-first-order kinetics.
+- **Timeline:** Months 16-18
+- **Deliverables:** Kinetics analysis report, mathematical models, patent application.
 
-* **Task 3.2: Microscopy analysis of product localization.**
-* **Activities:** Visualize reactant/product distribution using confocal microscopy.
-* **Timeline:** Months 19-21
-* **Deliverables:** Spatial distribution analysis, microscopy documentation.
+- **Task 3.2: Microscopy analysis of product localization.**
+- **Activities:** Visualize reactant/product distribution using confocal microscopy.
+- **Timeline:** Months 19-21
+- **Deliverables:** Spatial distribution analysis, microscopy documentation.
 
-* **Task 3.3: Optimize condensate reactor composition.**
-* **Activities:** Optimize aromatic residue ratios (10-40%), charge patterns, and reaction conditions. Monitor via HPLC-MS/NMR. Vary temperature (4-40°C), catalyst loading**[MISSING INFORMATION: specific catalyst concentration range]**, and reactant partitioning.
-* **Timeline:** Months 22-24
-* **Deliverables:** Reactor optimization report, efficiency metrics.**Objective 4: Evaluate system sustainability and scalability**
+- **Task 3.3: Optimize condensate reactor composition.**
+- **Activities:** Optimize aromatic residue ratios (10-40%), charge patterns, and reaction conditions. Monitor via HPLC-MS/NMR. Vary temperature (4-40°C), catalyst loading**[MISSING INFORMATION: specific catalyst concentration range]**, and reactant partitioning.
+- **Timeline:** Months 22-24
+- **Deliverables:** Reactor optimization report, efficiency metrics.**Objective 4: Evaluate system sustainability and scalability**
 
-* **Task 4.1: Analyze multi-cycle performance.**
-* **Activities:** Assess condensate integrity and reaction efficiency over multiple cycles.
-* **Timeline:** Months 16-18
-* **Deliverables:** Sustainability report, cycle performance data.
+- **Task 4.1: Analyze multi-cycle performance.**
+- **Activities:** Assess condensate integrity and reaction efficiency over multiple cycles.
+- **Timeline:** Months 16-18
+- **Deliverables:** Sustainability report, cycle performance data.
 
-* **Task 4.2: Scale-up analysis (mL-L range).**
-* **Activities:** Evaluate condensate formation and reaction performance at larger scales.
-* **Timeline:** Months 19-21
-* **Deliverables:** Scale-up performance report, process optimization guidelines.### 1b.iii. Plan of the proof of concept - Description of the Action
+- **Task 4.2: Scale-up analysis (mL-L range).**
+- **Activities:** Evaluate condensate formation and reaction performance at larger scales.
+- **Timeline:** Months 19-21
+- **Deliverables:** Scale-up performance report, process optimization guidelines.### 1b.iii. Plan of the proof of concept - Description of the Action
 
 #### Description of the Action and timescale – Work Plan#### Description of the resources
 
-Missing Information:
-	- Detailed personnel costs including salary ranges, FTE allocations, and role-specific compensation
-	- Specific equipment costs and specifications for required analytical instruments (HPLC-MS, NMR, fluorescence microscopes, etc.)
-	- Consumables budget breakdown including reagents, peptide synthesis materials, and laboratory supplies
-	- Travel budget requirements for conferences, collaborator meetings, or field work
-	- Infrastructure costs including laboratory space requirements and facility modifications
-	- Training and support costs for personnel and equipment maintenance
-	- Detailed cost-effectiveness analysis comparing the proposed approach to traditional methods
-	- Equipment maintenance and service contract costs
-	- Software licensing and computational resource costs for machine learning and data analysis
-	- Overhead and indirect cost calculations
-	- Budget allocation timeline aligned with the 24-month project schedule
-	- Specific facility requirements for scaled-up operations (mL to L range)
-	- Safety equipment and compliance costs
-	- Contingency budget allocations for risk mitigation#### Description of the team (including the PI)
+Missing Information: - Detailed personnel costs including salary ranges, FTE allocations, and role-specific compensation - Specific equipment costs and specifications for required analytical instruments (HPLC-MS, NMR, fluorescence microscopes, etc.) - Consumables budget breakdown including reagents, peptide synthesis materials, and laboratory supplies - Travel budget requirements for conferences, collaborator meetings, or field work - Infrastructure costs including laboratory space requirements and facility modifications - Training and support costs for personnel and equipment maintenance - Detailed cost-effectiveness analysis comparing the proposed approach to traditional methods - Equipment maintenance and service contract costs - Software licensing and computational resource costs for machine learning and data analysis - Overhead and indirect cost calculations - Budget allocation timeline aligned with the 24-month project schedule - Specific facility requirements for scaled-up operations (mL to L range) - Safety equipment and compliance costs - Contingency budget allocations for risk mitigation#### Description of the team (including the PI)
 
-Missing Information:
-	- Details about key personnel beyond the PI (names, titles, qualifications)
-	- Specific roles and responsibilities of each team member
-	- Team management structure and reporting relationships
-	- Communication and collaboration protocols/strategies
-	- Current expertise gaps in the team and planned mitigation approaches
-	- Team's diversity statistics and inclusion initiatives
-	- PI's project management experience and capabilities
-	- Distribution of work across team members
-	- Team member time commitments and availability
-	- Previous collaboration history among team members
-	- Support staff and technical personnel details
-	- External collaborators or consultants (if any)
-	- Team member training and development plans
-	- Organizational structure and decision-making processes
+Missing Information: - Details about key personnel beyond the PI (names, titles, qualifications) - Specific roles and responsibilities of each team member - Team management structure and reporting relationships - Communication and collaboration protocols/strategies - Current expertise gaps in the team and planned mitigation approaches - Team's diversity statistics and inclusion initiatives - PI's project management experience and capabilities - Distribution of work across team members - Team member time commitments and availability - Previous collaboration history among team members - Support staff and technical personnel details - External collaborators or consultants (if any) - Team member training and development plans - Organizational structure and decision-making processes
 
 ## The Strategic Lead
 
-Missing Information:
-	- PI's previous leadership experience and track record in managing research teams
-	- Specific examples of PI's successful project management in past research initiatives
-	- PI's strategic vision for this particular project including specific goals and milestones
-	- Details of the PI's planned decision-making framework and governance structure
-	- PI's proposed communication plan and stakeholder engagement strategy
-	- Specific mentorship programs or initiatives the PI has led or plans to implement
-	- PI's experience in managing and mitigating project risks
-	- Previous examples of successful team coordination by the PI
-	- PI's track record in securing and managing research funding
-	- Specific delegation strategies and task allocation framework planned for this project
-	- PI's approach to performance monitoring and team development
-	- PI's experience in managing diverse research teams
-	- Concrete examples of the PI's problem-solving abilities in previous projects
-	- PI's plan for ensuring research quality and maintaining scientific rigor
+Missing Information: - PI's previous leadership experience and track record in managing research teams - Specific examples of PI's successful project management in past research initiatives - PI's strategic vision for this particular project including specific goals and milestones - Details of the PI's planned decision-making framework and governance structure - PI's proposed communication plan and stakeholder engagement strategy - Specific mentorship programs or initiatives the PI has led or plans to implement - PI's experience in managing and mitigating project risks - Previous examples of successful team coordination by the PI - PI's track record in securing and managing research funding - Specific delegation strategies and task allocation framework planned for this project - PI's approach to performance monitoring and team development - PI's experience in managing diverse research teams - Concrete examples of the PI's problem-solving abilities in previous projects - PI's plan for ensuring research quality and maintaining scientific rigor
 
 ## The Project Management
 
-Missing Information:
-	- Detailed organizational structure including roles, responsibilities, and reporting relationships
-	- Specific decision-making processes and protocols for different types of project decisions
-	- Risk assessment matrix or framework identifying likelihood and impact of potential risks
-	- Specific scientific/technical risks relevant to the condensate-based synthesis approach
-	- Detailed contingency plans for personnel changes including succession planning
-	- Emergency response procedures and protocols for different types of incidents
-	- Backup procedures for critical project components and processes
-	- Communication protocols and channels for different stakeholder groups
-	- Project timeline and milestone decision points
-	- Quality control and oversight mechanisms
-	- Resource allocation and management procedures
-	- Specific facility access requirements and backup facility plans
-	- Project monitoring and reporting procedures
-	- Change management protocols
-	- Stakeholder management and communication strategy
-	- Project governance structure and oversight committees
+Missing Information: - Detailed organizational structure including roles, responsibilities, and reporting relationships - Specific decision-making processes and protocols for different types of project decisions - Risk assessment matrix or framework identifying likelihood and impact of potential risks - Specific scientific/technical risks relevant to the condensate-based synthesis approach - Detailed contingency plans for personnel changes including succession planning - Emergency response procedures and protocols for different types of incidents - Backup procedures for critical project components and processes - Communication protocols and channels for different stakeholder groups - Project timeline and milestone decision points - Quality control and oversight mechanisms - Resource allocation and management procedures - Specific facility access requirements and backup facility plans - Project monitoring and reporting procedures - Change management protocols - Stakeholder management and communication strategy - Project governance structure and oversight committees

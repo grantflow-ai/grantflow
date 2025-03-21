@@ -1,5 +1,4 @@
 export interface Env {
-	// shared
 	NEXT_PUBLIC_BACKEND_API_BASE_URL: string;
 	NEXT_PUBLIC_DEBUG?: boolean;
 	NEXT_PUBLIC_FIREBASE_API_KEY: string;
@@ -11,6 +10,6 @@ export interface Env {
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: string;
 
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: string;
-	// client only
+
 	NEXT_PUBLIC_SITE_URL: string;
 }

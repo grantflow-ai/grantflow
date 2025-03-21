@@ -1,7 +1,6 @@
 import { getEnv } from "@/utils/env";
 
 describe("getEnv (client side)", () => {
-	// we cannot test the server side because the env is not available when window is defined
 	it("should return valid environment variables", () => {
 		const env = getEnv();
 

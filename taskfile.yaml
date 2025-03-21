@@ -1,0 +1,84 @@
+version: "3"
+
+tasks:
+    # Backend tasks
+    backend:migrate:
+        dir: backend
+        cmds:
+            - task: db:up
+            - sleep 2
+            - PYTHONPATH=. uv run atlas migrate apply --env sqlalchemy
+
+    backend:create-migration:
+        dir: backend
+        cmds:
+            - task: db:up
+            - sleep 2
+            - PYTHONPATH=. uv run atlas migrate diff --env sqlalchemy {{.CLI_ARGS}}
+
+    backend:api-specs:
+        dir: backend
+        cmds:
+            - uv run litestar --app src.api.main:app schema typescript
+
+    backend:test:
+        dir: backend
+        cmds:
+            - uv run python -m pytest {{.CLI_ARGS}}
+
+    # Frontend tasks
+    frontend:dev:
+        dir: frontend
+        cmds:
+            - pnpm run dev
+
+    frontend:build:
+        dir: frontend
+        cmds:
+            - pnpm run build
+
+    frontend:test:
+        dir: frontend
+        cmds:
+            - pnpm test {{.CLI_ARGS}}
+
+    # Monorepo tasks
+    install-frontend:
+        cmds:
+            - pnpm install -r
+
+    update-frontend:
+        cmds:
+            - pnpm up -r --latest
+
+    install-backend:
+        dir: backend
+        cmds:
+            - uv sync
+
+    update-backend:
+        dir: backend
+        cmds:
+            - uv run scripts/update_dependencies.py
+
+    setup:
+        desc: Setup the project dependencies
+        cmds:
+            - pre-commit install && pre-commit install --hook-type commit-msg && pre-commit install-hooks
+            - task: install-frontend
+            - task: install-backend
+
+    db:up:
+        desc: Bring up the local database
+        cmds:
+            - docker compose stop && docker compose up db --detach
+
+    db:down:
+        desc: Tear down the local database
+        cmds:
+            - docker compose down db
+
+    lint:
+        desc: Lint the project
+        cmds:
+            - pre-commit run --show-diff-on-failure --color=always --all-files

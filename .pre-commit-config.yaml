@@ -1,0 +1,91 @@
+repos:
+    # Git commit linting
+    - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+      rev: "v9.22.0"
+      hooks:
+          - id: commitlint
+            stages: [commit-msg]
+            additional_dependencies: ["@commitlint/config-conventional"]
+
+    # Shared
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v5.0.0
+      hooks:
+          - id: trailing-whitespace
+          - id: end-of-file-fixer
+          - id: check-yaml
+          - id: check-toml
+          - id: check-json
+          - id: check-case-conflict
+          - id: name-tests-test
+            args:
+                - --pytest
+            files: ^backend/tests
+            exclude: ^backend/tests/factories|^backend/tests/test_utils|^backend/tests/completion.py|^backend/tests/test_data|^backend/tests
+
+    - repo: https://github.com/JoC0de/pre-commit-prettier
+      rev: v3.5.3
+      hooks:
+          - id: prettier
+            exclude: ^.idea|^backend/migrations|^.git
+
+    - repo: https://github.com/codespell-project/codespell
+      rev: v2.4.1
+      hooks:
+          - id: codespell
+            exclude: ^backend/tests
+            additional_dependencies: ["tomli"]
+
+    # Backend
+    - repo: https://github.com/Goldziher/uncomment
+      rev: v1.0.4
+      hooks:
+          - id: uncomment
+
+    - repo: https://github.com/tox-dev/pyproject-fmt
+      rev: v2.5.1
+      hooks:
+          - id: pyproject-fmt
+            files: ^pyproject.toml
+            additional_dependencies: ["tomli"]
+
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.11.1
+      hooks:
+          - id: ruff
+            args: [--fix, --unsafe-fixes]
+            files: ^backend/
+          - id: ruff-format
+            files: ^backend/
+
+    - repo: local
+      hooks:
+          - id: mypy
+            name: mypy
+            entry: uv run mypy
+            require_serial: true
+            language: system
+            types: [python]
+            files: ^backend/
+
+    # Frontend
+    - repo: https://github.com/thibaudcolas/pre-commit-stylelint
+      rev: "v16.16.0"
+      hooks:
+          - id: stylelint
+            files: ^frontend/
+            additional_dependencies:
+                - stylelint
+                - stylelint-config-standard
+
+    - repo: https://github.com/pre-commit/mirrors-eslint
+      rev: "v9.22.0"
+      hooks:
+          - id: eslint
+            files: ^frontend/
+            types: [file]
+            additional_dependencies:
+                - eslint
+                - typescript-eslint
+                - "@trumpet/eslint-config-next"
+                - eslint-config-prettier

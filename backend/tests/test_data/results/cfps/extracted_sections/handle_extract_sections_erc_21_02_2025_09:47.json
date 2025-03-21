@@ -1,64 +1,64 @@
 [
-  {
-    "id": "abstract",
-    "title": "Abstract",
-    "parent_id": null,
-    "is_long_form": true,
-    "is_detailed_workplan": false,
-    "is_title_only": false,
-    "is_clinical_trial": false
-  },
-  {
-    "id": "section_1",
-    "title": "Section 1: The Idea",
-    "parent_id": null,
-    "is_long_form": true,
-    "is_title_only": false,
-    "is_clinical_trial": false
-  },
-  {
-    "id": "section_1a",
-    "title": "Section 1a: The Strategic Lead - Breakthrough Innovation potential",
-    "parent_id": "section_1",
-    "is_long_form": true,
-    "is_detailed_workplan": false,
-    "is_title_only": false,
-    "is_clinical_trial": false
-  },
-  {
-    "id": "section_1b",
-    "title": "Section 1b: Approach and Methodology",
-    "parent_id": "section_1",
-    "is_long_form": true,
-    "is_detailed_workplan": false,
-    "is_title_only": false,
-    "is_clinical_trial": false
-  },
-  {
-    "id": "section_1c",
-    "title": "Section 1c: Principal Investigator- strategic lead and project management",
-    "parent_id": "section_1",
-    "is_long_form": true,
-    "is_detailed_workplan": false,
-    "is_title_only": false,
-    "is_clinical_trial": false
-  },
-  {
-    "id": "action_description",
-    "title": "Action Description and Project Plan",
-    "parent_id": "section_1",
-    "is_long_form": true,
-    "is_detailed_workplan": true,
-    "is_title_only": false,
-    "is_clinical_trial": false
-  },
-  {
-    "id": "team_description",
-    "title": "Description of the Team",
-    "parent_id": "section_1",
-    "is_long_form": true,
-    "is_detailed_workplan": false,
-    "is_title_only": false,
-    "is_clinical_trial": false
-  }
+	{
+		"id": "abstract",
+		"title": "Abstract",
+		"parent_id": null,
+		"is_long_form": true,
+		"is_detailed_workplan": false,
+		"is_title_only": false,
+		"is_clinical_trial": false
+	},
+	{
+		"id": "section_1",
+		"title": "Section 1: The Idea",
+		"parent_id": null,
+		"is_long_form": true,
+		"is_title_only": false,
+		"is_clinical_trial": false
+	},
+	{
+		"id": "section_1a",
+		"title": "Section 1a: The Strategic Lead - Breakthrough Innovation potential",
+		"parent_id": "section_1",
+		"is_long_form": true,
+		"is_detailed_workplan": false,
+		"is_title_only": false,
+		"is_clinical_trial": false
+	},
+	{
+		"id": "section_1b",
+		"title": "Section 1b: Approach and Methodology",
+		"parent_id": "section_1",
+		"is_long_form": true,
+		"is_detailed_workplan": false,
+		"is_title_only": false,
+		"is_clinical_trial": false
+	},
+	{
+		"id": "section_1c",
+		"title": "Section 1c: Principal Investigator- strategic lead and project management",
+		"parent_id": "section_1",
+		"is_long_form": true,
+		"is_detailed_workplan": false,
+		"is_title_only": false,
+		"is_clinical_trial": false
+	},
+	{
+		"id": "action_description",
+		"title": "Action Description and Project Plan",
+		"parent_id": "section_1",
+		"is_long_form": true,
+		"is_detailed_workplan": true,
+		"is_title_only": false,
+		"is_clinical_trial": false
+	},
+	{
+		"id": "team_description",
+		"title": "Description of the Team",
+		"parent_id": "section_1",
+		"is_long_form": true,
+		"is_detailed_workplan": false,
+		"is_title_only": false,
+		"is_clinical_trial": false
+	}
 ]

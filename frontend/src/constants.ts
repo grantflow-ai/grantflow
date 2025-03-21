@@ -1,46 +1,46 @@
 /* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 
 export enum Dimensions {
-	Eight = 32, // 2rem
-	Eighty = 320, // 20rem
-	Eleven = 44, // 2.75rem
-	FiftySix = 224, // 14rem
-	FiftyTwo = 208, // 13rem
-	Five = 20, // 1.25rem
-	Forty = 160, // 10rem
-	FortyEight = 192, // 12rem
-	FortyFour = 176, // 11rem
-	Four = 16, // 1rem
-	Fourteen = 56, // 3.5rem
-	Half = 2, // 0.125rem
+	Eight = 32,
+	Eighty = 320,
+	Eleven = 44,
+	FiftySix = 224,
+	FiftyTwo = 208,
+	Five = 20,
+	Forty = 160,
+	FortyEight = 192,
+	FortyFour = 176,
+	Four = 16,
+	Fourteen = 56,
+	Half = 2,
 	HalfPixel = 0.5,
-	Nine = 36, // 2.25rem
-	NinetySix = 384, // 24rem
-	One = 4, // 0.25rem
-	OneAndHalf = 6, // 0.375rem
-	// standard values
+	Nine = 36,
+	NinetySix = 384,
+	One = 4,
+	OneAndHalf = 6,
+
 	OnePixel = 1,
-	Quarter = 1, // 0.0625rem
+	Quarter = 1,
 	Rem = 16,
-	Seven = 28, // 1.75rem
-	SeventyTwo = 288, // 18rem
-	Six = 24, // 1.5rem
-	Sixteen = 64, // 4rem
-	Sixty = 240, // 15rem
-	SixtyFour = 256, // 16rem
-	Ten = 40, // 2.5rem
-	ThirtySix = 144, // 9rem
-	ThirtyTwo = 128, // 8rem
-	Three = 12, // 0.75rem
-	ThreeAndHalf = 14, // 0.875rem
-	Twelve = 48, // 3rem
-	Twenty = 80, // 5rem
-	TwentyEight = 112, // 7rem
-	TwentyFour = 96, // 6rem
-	Two = 8, // 0.5rem
-	TwoAndHalf = 10, // 0.625rem
-	// tailwind values
-	Zero = 0, // 0rem
+	Seven = 28,
+	SeventyTwo = 288,
+	Six = 24,
+	Sixteen = 64,
+	Sixty = 240,
+	SixtyFour = 256,
+	Ten = 40,
+	ThirtySix = 144,
+	ThirtyTwo = 128,
+	Three = 12,
+	ThreeAndHalf = 14,
+	Twelve = 48,
+	Twenty = 80,
+	TwentyEight = 112,
+	TwentyFour = 96,
+	Two = 8,
+	TwoAndHalf = 10,
+
+	Zero = 0,
 }
 export const ONE_MINUTE_IN_MS = 60 * 1000;
 export const FIVE_SECONDS = 5 * 1000;

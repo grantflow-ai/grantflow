@@ -49,6 +49,6 @@ export async function withErrorToast<T>({
 	} catch (error) {
 		logError({ error, identifier });
 		redirectWithToastParams({ message, path, type: "error" });
-		throw error; // this should never happen - the redirect should prevent the function from continuing by throwing
+		throw error;
 	}
 }

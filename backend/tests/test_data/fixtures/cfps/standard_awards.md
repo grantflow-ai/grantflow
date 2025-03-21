@@ -95,7 +95,7 @@ grant in the Standard Award program at a time.
   academic research institution, or at a for-profit including start-up
   and biotech institution
 
-***All grant funding is subject to the availability of funds.***
+**_All grant funding is subject to the availability of funds._**
 
 **[TERMS AND CONDITIONS]{.underline}**
 
@@ -430,8 +430,8 @@ only. No special characters or formatting. Specific Aims do not need to
 be reiterated in the research plan document. 
 
 > **NOTE:** You may attach a graphic representation (schematic, Gantt
-                                            > chart, or timeline) of Specific Aims and Benchmark Accomplishments in
-                                            > Section 13 (Research plan and supporting Attachments).
+> chart, or timeline) of Specific Aims and Benchmark Accomplishments in
+> Section 13 (Research plan and supporting Attachments).
 
 **Relevance of Proposed Research to Alzheimer's disease**
 
@@ -662,21 +662,21 @@ use of vertebrate animals in research.
 
 **[Research Plan and Supporting Attachments]{.underline}**
 
-**Research Plan (required):** Limit **(***A-C) 3500 words*
+**Research Plan (required):** Limit **(\***A-C) 3500 words\*
 
-A.  **Background and Significance.** Briefly summarize the background to
+A. **Background and Significance.** Briefly summarize the background to
 the present proposal, critically evaluate existing knowledge, and
 specifically identify the gaps that the project is intended to fill.
 Concisely describe the importance of the proposed research by
 relating the specific aims to the objectives.
 
-B.  **Preliminary Studies.** Use this section to provide an account of
+B. **Preliminary Studies.** Use this section to provide an account of
 the principal investigator\'s preliminary studies pertinent to the
 application and/or any other information that will help to establish
 the experience and competence of the investigator to pursue the
 proposed project.
 
-C.  **Experimental Design and Methods**. Outline the experimental design
+C. **Experimental Design and Methods**. Outline the experimental design
 and the procedures that will be used to accomplish the specific aims
 of the project. Include the means by which the data will be
 collected, analyzed, and interpreted, power calculations, and
@@ -747,8 +747,8 @@ publications or manuscripts. Please use the naming convention
 (LASTNAME_ADR_Standard \_FY25_appendix.PDF) for your appendix file,
 where "LASTNAME" is replaced with the surname of the PI on the proposal.
 
-Up to five relevant papers or manuscripts *published or accepted for
-publication* in refereed journals may be included, if necessary. The
+Up to five relevant papers or manuscripts _published or accepted for
+publication_ in refereed journals may be included, if necessary. The
 papers or manuscripts should be the PI's own work or that of a Co-PI or
 Collaborator named on this proposal. Although up to 5 reprints are
 allowable, these should all be contained in a single PDF file for
@@ -757,7 +757,7 @@ submission.
 Reviewers are not required to consider appendix information. If the
 information that you wish to submit is essential to an evaluation of the
 application, incorporate it within the Research Proposal. **The Appendix
-is *not* to be used for circumventing the page limitations in the
+is _not_ to be used for circumventing the page limitations in the
 Research Proposal.**
 
 **Multimedia Files**
@@ -811,7 +811,7 @@ responsibility for the scientific conduct of the project and to provide
 the required scientific and financial progress reports if a grant is
 awarded as a result of this application.
 
-** **
+\*\* \*\*
 
 **Institutional Official Signature**
 
