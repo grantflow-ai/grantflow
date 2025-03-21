@@ -1,0 +1,5 @@
+.vscode/
+.idea/
+.github/
+tests/
+migrations/

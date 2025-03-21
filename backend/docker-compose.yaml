@@ -1,0 +1,27 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: always
+    environment:
+      POSTGRES_DB: grantflow
+      POSTGRES_USER: grantflow
+      POSTGRES_PASSWORD: grantflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: postgresql+asyncpg://grantflow:grantflow@db:5432/grantflow
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src:cached
+    command: "uvicorn src.main:app --host 0.0.0.0 --log-level info --reload"
+volumes:
+  postgres_data:
