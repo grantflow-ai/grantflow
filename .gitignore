@@ -30,12 +30,9 @@ coverage/
 *.tsbuildinfo
 
 # IDE and editor files
-.idea/
-.vscode/
 *.suo
 *.user
 *.iml
-.run/
 
 # Build artifacts
 *.pem
