@@ -1,0 +1,28 @@
+{
+	"name": "grantflow-monorepo",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"preinstall": "npx only-allow pnpm"
+	},
+	"devDependencies": {
+		"@trumpet/eslint-config-next": "^1.7.0",
+		"eslint": "^9.22.0",
+		"eslint-config-prettier": "^10.1.1",
+		"prettier": "^3.5.3",
+		"typescript": "^5.8.2",
+		"typescript-eslint": "^8.27.0"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"pnpm": {
+		"peerDependencyRules": {
+			"allowAny": [
+				"eslint",
+				"react",
+				"react-dom"
+			]
+		}
+	}
+}

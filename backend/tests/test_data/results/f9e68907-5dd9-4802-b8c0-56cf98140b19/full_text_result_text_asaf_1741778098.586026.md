@@ -8,13 +8,13 @@ This ERC Proof of Concept project aims to revolutionize ultra-long DNA synthesis
 
 ### 1a.i. Brief description of the idea to be taken to proof of concept
 
-The proposed PoC project addresses the critical bottleneck in synthetic biology caused by the limitations in current DNA synthesis technologies. The inability to efficiently and cost-effectively produce long, accurate DNA sequences impedes research and development across various fields, including synthetic biology, genomics, gene therapy, and bioengineering. Our solution leverages the natural DNA concatemerization process in *C. elegans* to create a novel "cloning machine" for synthesizing and amplifying ultra-long DNA sequences (1-3 Mb). This in-vermis approach bypasses the limitations of traditional chemical and enzymatic methods, offering a single-step, scalable, and cost-effective alternative. Potential applications include the construction of entire genomes, complex synthetic pathways, and long DNA sequences for personalized medicine and DNA-based data storage. The value proposition lies in significantly reducing the cost and time associated with long DNA synthesis, making it more accessible to researchers and accelerating innovation.
+The proposed PoC project addresses the critical bottleneck in synthetic biology caused by the limitations in current DNA synthesis technologies. The inability to efficiently and cost-effectively produce long, accurate DNA sequences impedes research and development across various fields, including synthetic biology, genomics, gene therapy, and bioengineering. Our solution leverages the natural DNA concatemerization process in _C. elegans_ to create a novel "cloning machine" for synthesizing and amplifying ultra-long DNA sequences (1-3 Mb). This in-vermis approach bypasses the limitations of traditional chemical and enzymatic methods, offering a single-step, scalable, and cost-effective alternative. Potential applications include the construction of entire genomes, complex synthetic pathways, and long DNA sequences for personalized medicine and DNA-based data storage. The value proposition lies in significantly reducing the cost and time associated with long DNA synthesis, making it more accessible to researchers and accelerating innovation.
 
-This project builds directly on the scientific basis established by the original ERC-funded project, which provided deep insights into *C. elegans* genomics, molecular biology, and heredity. The innovative aspect is the harnessing of the worm's natural ability to form extrachromosomal arrays (ECAs) from injected DNA. Preliminary data demonstrates that ECAs can be formed from diverse DNA sequences, and modifying DNA repair pathways influences the process. This foundation allows us to optimize ECA formation for controlled, megabase-scale DNA synthesis. Our team's expertise in *C. elegans* biology, genetics, epigenetics, and AI uniquely positions us to develop this revolutionary technology.
+This project builds directly on the scientific basis established by the original ERC-funded project, which provided deep insights into _C. elegans_ genomics, molecular biology, and heredity. The innovative aspect is the harnessing of the worm's natural ability to form extrachromosomal arrays (ECAs) from injected DNA. Preliminary data demonstrates that ECAs can be formed from diverse DNA sequences, and modifying DNA repair pathways influences the process. This foundation allows us to optimize ECA formation for controlled, megabase-scale DNA synthesis. Our team's expertise in _C. elegans_ biology, genetics, epigenetics, and AI uniquely positions us to develop this revolutionary technology.
 
 ### 1a.ii. Demonstration of Breakthrough Innovation Potential
 
-The in-vermis DNA synthesis technology represents a breakthrough innovation with disruptive potential across multiple sectors. Current DNA synthesis methods, particularly for long sequences, are expensive and inefficient, costing approximately $0.10 per base pair and scaling to millions of dollars for entire genomes. Our technology aims to reduce this cost to <$0.01/bp, offering a tenfold reduction in price and significantly accelerating research timelines. This cost reduction is achieved by leveraging the natural DNA concatemerization process in *C. elegans*, bypassing the limitations of traditional chemical and enzymatic methods.
+The in-vermis DNA synthesis technology represents a breakthrough innovation with disruptive potential across multiple sectors. Current DNA synthesis methods, particularly for long sequences, are expensive and inefficient, costing approximately $0.10 per base pair and scaling to millions of dollars for entire genomes. Our technology aims to reduce this cost to <$0.01/bp, offering a tenfold reduction in price and significantly accelerating research timelines. This cost reduction is achieved by leveraging the natural DNA concatemerization process in _C. elegans_, bypassing the limitations of traditional chemical and enzymatic methods.
 
 The value proposition is clear: researchers gain access to affordable, ultra-long DNA sequences (1-3 Mb) synthesized in a single step. This contrasts sharply with existing solutions like Gibson assembly and microarray-based synthesis, which require multiple steps, specialized equipment, and are limited in sequence length. Our approach offers a unique advantage by utilizing an in vivo system, reducing the need for complex laboratory procedures and specialized expertise. The scalability of this technology is supported by automated microinjection systems and advances in long-read sequencing, enabling high-throughput DNA synthesis with a projected throughput rate of **[MISSING INFORMATION: Specific details on throughput rate and scalability metrics]**.
 
@@ -22,13 +22,11 @@ Compared to competing products, such as traditional chemical synthesis and enzym
 
 ### 1a.iii. Demonstration of the high-risk/high-gain idea
 
-The in-vermis DNA synthesis technology, while holding immense promise, faces several technical and market risks. A primary technical challenge lies in precisely controlling ECA formation and stability. While preliminary data demonstrates ECA formation in NHEJ-deficient mutants, achieving consistent, predictable concatemerization of specific DNA sequences requires further optimization. This includes identifying optimal homology lengths and understanding the influence of DNA repair mechanisms. Mitigation strategies involve systematic characterization of ECA formation through long-read sequencing and AI-driven design of injection parameters. Another technical barrier is the efficient extraction and purification of ECAs from *C. elegans* without compromising their integrity. This necessitates the development of specialized extraction protocols and quality control metrics.
+The in-vermis DNA synthesis technology, while holding immense promise, faces several technical and market risks. A primary technical challenge lies in precisely controlling ECA formation and stability. While preliminary data demonstrates ECA formation in NHEJ-deficient mutants, achieving consistent, predictable concatemerization of specific DNA sequences requires further optimization. This includes identifying optimal homology lengths and understanding the influence of DNA repair mechanisms. Mitigation strategies involve systematic characterization of ECA formation through long-read sequencing and AI-driven design of injection parameters. Another technical barrier is the efficient extraction and purification of ECAs from _C. elegans_ without compromising their integrity. This necessitates the development of specialized extraction protocols and quality control metrics.
 
 Market uncertainties also pose a risk. While the potential market size for synthetic biology is substantial, the adoption of this novel technology depends on demonstrating its reliability, scalability, and cost-effectiveness compared to existing methods. Overcoming regulatory hurdles for genome-scale applications is another challenge, requiring adherence to **[MISSING INFORMATION: FDA/regulatory pathway]**. Mitigation strategies include securing patents on novel technical features, establishing partnerships with biotechnology companies for pilot studies, and adhering to regulatory pathways for genome-scale applications. The risk-reward ratio is highly favorable, as the potential benefits of low-cost, ultra-long DNA synthesis outweigh the challenges. Successful implementation would represent a breakthrough innovation with transformative impact across multiple sectors, justifying the high-risk endeavor.
 
 ## Section 1b: Approach and Methodology
-
-
 
 ### 1b.i. Outline the approach and methodology to explore the innovation potential of your ERC-funded research
 
@@ -38,22 +36,20 @@ Our research objectives are:
 
 1. Optimize ECA formation for controlled megabase-scale DNA synthesis.
 2. Elucidate DNA repair pathway contributions to ECA formation.
-3. Develop an integrated system for ultra-long DNA synthesis utilizing *C. elegans*.
+3. Develop an integrated system for ultra-long DNA synthesis utilizing _C. elegans_.
 4. Validate the commercial potential of the in-vermis DNA synthesis platform.
 
 Our commercial strategy involves securing IP protection, establishing strategic partnerships with biotech companies, and exploring the formation of a spinout company to commercialize the technology. We aim to deliver 1-2 Mb sequences at <$0.01/bp, significantly undercutting the current $0.10/bp market price.
 
 ### 1b.ii. Describe the activities
 
-To explore the commercial potential of our ERC-funded research, we will address the DNA synthesis bottleneck in synthetic biology. To optimize ECA formation for controlled megabase-scale DNA synthesis, we will: 1) Identify optimal homology length for ECA formation; 2) Sequence the successful recombination products; and 3) Increase the number of homologous subunits with the optimal overlap length. To elucidate DNA repair pathway contributions to ECA formation, we are using systematic mutation studies in *C. elegans*, leveraging preliminary NHEJ-deficient mutant data to optimize homology-directed repair protocols. To develop an integrated system for ultra-long DNA synthesis utilizing *C. elegans*, we are combining AI-driven design, automated gonad microinjection, and homology-directed repair with 200-400bp overlaps in lig-4 NHEJ-deficient mutants to generate 1-3Mb constructs at sub-$0.10/bp. The feasibility of this project is supported by strong preliminary data demonstrating the applicability of our methods to begin deciphering the mechanisms shaping the formation of ECAs. We have successfully used long read sequencing technologies to sequence arrays of different compositions. We characterized arrays of increasing complexity, starting with arrays that are made of a repetitive single short DNA sequence, moved on towards arrays that are made of two different DNA sequences, and finally successfully sequenced and assembled an array which is made of 43 different DNA plasmids. Importantly, we conducted array formation experiments using mutants defective in non-homologous end joining (NHEJ) and found that these worms are capable of producing stable ECA. **[FIGURE X: A schematic representation of ECA formation in wild-type and NHEJ-deficient C. elegans would be helpful here]**.** [FIGURE Y: Long-read sequencing data showing the assembly of a 43-plasmid ECA would be helpful here]**.** [FIGURE Z: A graph comparing ECA formation efficiency in wild-type and NHEJ-deficient strains would be helpful here]**.
+To explore the commercial potential of our ERC-funded research, we will address the DNA synthesis bottleneck in synthetic biology. To optimize ECA formation for controlled megabase-scale DNA synthesis, we will: 1) Identify optimal homology length for ECA formation; 2) Sequence the successful recombination products; and 3) Increase the number of homologous subunits with the optimal overlap length. To elucidate DNA repair pathway contributions to ECA formation, we are using systematic mutation studies in _C. elegans_, leveraging preliminary NHEJ-deficient mutant data to optimize homology-directed repair protocols. To develop an integrated system for ultra-long DNA synthesis utilizing _C. elegans_, we are combining AI-driven design, automated gonad microinjection, and homology-directed repair with 200-400bp overlaps in lig-4 NHEJ-deficient mutants to generate 1-3Mb constructs at sub-$0.10/bp. The feasibility of this project is supported by strong preliminary data demonstrating the applicability of our methods to begin deciphering the mechanisms shaping the formation of ECAs. We have successfully used long read sequencing technologies to sequence arrays of different compositions. We characterized arrays of increasing complexity, starting with arrays that are made of a repetitive single short DNA sequence, moved on towards arrays that are made of two different DNA sequences, and finally successfully sequenced and assembled an array which is made of 43 different DNA plasmids. Importantly, we conducted array formation experiments using mutants defective in non-homologous end joining (NHEJ) and found that these worms are capable of producing stable ECA. **[FIGURE X: A schematic representation of ECA formation in wild-type and NHEJ-deficient C. elegans would be helpful here]**.** [FIGURE Y: Long-read sequencing data showing the assembly of a 43-plasmid ECA would be helpful here]**.** [FIGURE Z: A graph comparing ECA formation efficiency in wild-type and NHEJ-deficient strains would be helpful here]**.
 
 IPR strategy: Our innovation pathway focuses on patenting and strategic licensing agreements to maximize technology transfer with our university. We will secure IP protection for our in-vermis DNA synthesis platform and establish strategic partnerships with biotech companies. We are exploring the formation of a spinout company to commercialize the technology. **[MISSING INFORMATION: Specific details about existing patents in DNA synthesis technology that could affect freedom to operate]**.
 
 Market landscape and potential end users: Our commercialization strategy targets the $1.2M/genome synthetic biology market through in-vermis DNA synthesis, delivering 1-2 Mb sequences at <$0.01/bp versus current $0.10/bp methods. Strategic execution encompasses IP protection, biotech partnerships, and **[MISSING INFORMATION: FDA/regulatory pathway]** compliance for genome-scale applications. Potential end users include synthetic biology companies, genomics research labs, and personalized medicine developers.
 
 ### 1b.iii. Plan of the proof of concept - Description of the Action
-
-
 
 #### Description of the Action and timescale – Work Plan
 
@@ -145,7 +141,7 @@ Missing Information:
 
 Objective 1, led by the Principal Investigator, will require 6 person-months of effort from a Postdoctoral Researcher for conducting microinjections and molecular analyses, utilizing existing microinjection systems and sequencing equipment. The expected duration is 12 months.
 
-Objective 2, led by the Senior Geneticist, will require 4 person-months from a Research Technician for performing CRISPR-Cas9 mutagenesis and strain construction. This objective will utilize existing CRISPR-Cas9 reagents and *C. elegans* strains, with an expected duration of 12 months.
+Objective 2, led by the Senior Geneticist, will require 4 person-months from a Research Technician for performing CRISPR-Cas9 mutagenesis and strain construction. This objective will utilize existing CRISPR-Cas9 reagents and _C. elegans_ strains, with an expected duration of 12 months.
 
 Objective 3, led by the AI Specialist, will require 8 person-months from a Bioinformatician for developing the AI-driven injection parameter prediction software. This task will require access to high-performance computing resources and utilize existing software development tools. The expected duration is 12 months. Additionally, this objective will require access to a robotic injection system (outsource). **[MISSING INFORMATION: Specific details regarding the robotic injection system, including maintenance and calibration requirements]**.
 
@@ -153,31 +149,12 @@ Objective 4, led by the Commercialization Manager, will require 2 person-months 
 
 #### Description of the team (including the PI)
 
-Missing Information:
-	- Principal Investigator's name and specific credentials
-	- Names and titles of key team members
-	- Specific roles and responsibilities for each team member
-	- Team management structure and reporting relationships
-	- Concrete diversity and inclusion information
+Missing Information: - Principal Investigator's name and specific credentials - Names and titles of key team members - Specific roles and responsibilities for each team member - Team management structure and reporting relationships - Concrete diversity and inclusion information
 
 ## The Strategic Lead
 
-Missing Information:
-	- Principal Investigator's name and specific credentials
-	- PI's relevant leadership experience and track record
-	- PI's specific management approach and style for this project
-	- PI's concrete strategic vision for the DNA synthesis project
-	- PI's previous mentorship experience and success stories
-	- PI's specific decision-making framework for project challenges
-	- PI's planned communication and coordination methods with stakeholders
+Missing Information: - Principal Investigator's name and specific credentials - PI's relevant leadership experience and track record - PI's specific management approach and style for this project - PI's concrete strategic vision for the DNA synthesis project - PI's previous mentorship experience and success stories - PI's specific decision-making framework for project challenges - PI's planned communication and coordination methods with stakeholders
 
 ## The Project Management
 
-Missing Information:
-	- Project management hierarchy and reporting structure
-	- Specific decision-making protocols and authority levels
-	- Key project milestones and timeline checkpoints
-	- Risk assessment matrix with specific technical risks identified
-	- Concrete contingency plans for personnel changes
-	- Communication protocols between team members and stakeholders
-	- Project progress monitoring and evaluation procedures
+Missing Information: - Project management hierarchy and reporting structure - Specific decision-making protocols and authority levels - Key project milestones and timeline checkpoints - Risk assessment matrix with specific technical risks identified - Concrete contingency plans for personnel changes - Communication protocols between team members and stakeholders - Project progress monitoring and evaluation procedures

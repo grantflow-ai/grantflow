@@ -47,61 +47,69 @@ The experimental design evaluates the impact of our surface passivation strategy
 2. **Perovskite Film Deposition and Passivation:** One-step spin-coating deposition with controlled stoichiometry and annealing conditions, followed by organic molecule application and optimization.
 
 3. **Material Characterization:** Analysis using:
-* XPS: Surface composition and chemical states analysis
-* TRPL Spectroscopy: Charge carrier lifetime measurements
-* AFM: Surface morphology imaging
-* XRD: Crystal structure determination
-* SEM: Microstructure visualization
+
+- XPS: Surface composition and chemical states analysis
+- TRPL Spectroscopy: Charge carrier lifetime measurements
+- AFM: Surface morphology imaging
+- XRD: Crystal structure determination
+- SEM: Microstructure visualization
 
 4. **Device Fabrication and Performance Testing:** Measurement of:
-* Power Conversion Efficiency (PCE)
-* Open-Circuit Voltage (Voc)
-* Short-Circuit Current (Jsc)
-* Fill Factor (FF)
+
+- Power Conversion Efficiency (PCE)
+- Open-Circuit Voltage (Voc)
+- Short-Circuit Current (Jsc)
+- Fill Factor (FF)
 
 5. **Stability Testing:** Long-term stability evaluation under various environmental conditions.**Data Analysis**
 
 1. **Statistical Analysis of Material Characterization:** Analysis of XPS, TRPL, AFM, XRD, and SEM data with statistical significance testing.
 
-2. **Device Performance Analysis:** Statistical analysis of performance metrics using ANOVA, t-tests, and regression analysis.
+1. **Device Performance Analysis:** Statistical analysis of performance metrics using ANOVA, t-tests, and regression analysis.
 
-3. **Correlation Analysis:** Assessment of relationships between material properties and device performance.
+1. **Correlation Analysis:** Assessment of relationships between material properties and device performance.
 
-4. **Modeling and Simulation:** DFT calculations for passivation mechanism understanding.**Validation Methods**
+1. **Modeling and Simulation:** DFT calculations for passivation mechanism understanding.**Validation Methods**
 
 1. **Internal Validation:** Experiment replication and control studies.
 
-2. **External Validation:** Peer review and independent verification.
+1. **External Validation:** Peer review and independent verification.
 
-3. **Control Experiments:**
-* Unpassivated devices as baseline
-* Alternative passivation technique comparison
+1. **Control Experiments:**
 
-4. **Statistical Significance:** P-value analysis and confidence interval estimation.**Project Timeline****Month 1-3:** Organic molecule synthesis and characterization**Month 4-6:** Film deposition and passivation optimization**Month 7-9:** Material characterization**Month 10-12:** Device fabrication and testing**Month 13-15:** Stability testing**Month 16-18:** Data analysis and modeling**Statistical Significance**
+- Unpassivated devices as baseline
+- Alternative passivation technique comparison
+
+4. **Statistical Significance:** P-value analysis and confidence interval estimation.**Project Timeline\*\***Month 1-3:** Organic molecule synthesis and characterization**Month 4-6:** Film deposition and passivation optimization**Month 7-9:** Material characterization**Month 10-12:** Device fabrication and testing**Month 13-15:** Stability testing**Month 16-18:** Data analysis and modeling**Statistical Significance\*\*
 
 Statistical analysis will employ t-tests, ANOVA, and regression analysis with p < 0.05 significance level. Analysis will be performed using SPSS and MATLAB, with statistician review for validation.
 
 **Potential Challenges and Mitigation Strategies**
 
 1. **Synthesis:**
-* Challenge: Difficult organic molecule synthesis
-* Mitigation: Alternative synthetic routes exploration
+
+- Challenge: Difficult organic molecule synthesis
+- Mitigation: Alternative synthetic routes exploration
 
 2. **Film Quality:**
-* Challenge: Inconsistent deposition
-* Mitigation: Strict parameter control
+
+- Challenge: Inconsistent deposition
+- Mitigation: Strict parameter control
 
 3. **Passivation Efficiency:**
-* Challenge: Insufficient defect passivation
-* Mitigation: Optimization of concentration and conditions
+
+- Challenge: Insufficient defect passivation
+- Mitigation: Optimization of concentration and conditions
 
 4. **Device Stability:**
-* Challenge: Environmental degradation
-* Mitigation: Device encapsulation and composition optimization
+
+- Challenge: Environmental degradation
+- Mitigation: Device encapsulation and composition optimization
 
 5. **Data Analysis:**
-* Challenge: Complex data interpretation
-* Mitigation: Statistical expert consultation
+
+- Challenge: Complex data interpretation
+- Mitigation: Statistical expert consultation
 
 This comprehensive approach combines rigorous experimental design, detailed analysis, and robust validation methods to translate scientific discovery into market-viable innovation.### 1b.ii. Describe the activities
 
@@ -109,59 +117,59 @@ To ensure the successful execution of our ERC Proof of Concept project, we have 
 
 **Work Package 1: Organic Molecule Synthesis and Characterization (Months 1-3)**
 
-* **Tasks:**
-* **Task 1.1: Synthesis of Organic Passivating Molecules:** Synthesis of organic molecules with varying functional groups targeting specific perovskite surface defects.
-* **Task 1.2: Characterization of Organic Molecules :** Characterization using NMR spectroscopy, mass spectrometry, and elemental analysis.
-* **Deliverables:** Library of characterized organic molecules with complete characterization data.
-* **Milestones:**
-* Completion of synthesis (Month 1)
-* Full characterization completion (Month 3)
-* **Resource Allocation:** Synthetic chemists, analytical chemists, spectrometers, reagents
-* **Quality Control:** Purification via chromatography and recrystallization; structure verification**Work Package 2: Perovskite Film Deposition and Passivation (Months 4-6)**
-* **Tasks:**
-* **Task 2.1:** One-step spin-coating perovskite film deposition
-* **Task 2.2:** Surface passivation with synthesized organic molecules
-* **Deliverables:** Optimized and passivated perovskite films
-* **Milestones:**
-* Film deposition optimization (Month 4)
-* Surface passivation optimization (Month 6)
-* **Resource Allocation:** Materials scientists, deposition equipment, precursor materials
-* **Quality Control:** Stoichiometry control, process parameter optimization**Work Package 3: Material Characterization (Months 7-9)**
-* **Tasks:**
-* Surface composition analysis (XPS)
-* Charge carrier lifetime measurements (TRPL)
-* Surface morphology imaging (AFM)
-* Crystal structure determination (XRD)
-* Microstructure visualization (SEM)
-* **Deliverables:** Comprehensive characterization data
-* **Milestones:**
-* XPS/TRPL completion (Month 7)
-* AFM/XRD/SEM completion (Month 9)
-* **Resource Allocation:** Characterization specialists, analytical equipment
-* **Quality Control:** Equipment calibration, data reproducibility verification**Work Package 4: Device Fabrication and Performance Testing (Months 10-12)**
-* **Tasks:**
-* **Task 4.1:** Device fabrication using passivated films
-* **Task 4.2:** Performance testing (PCE, Voc, Jsc, FF)
-* **Deliverables:** Fabricated devices and performance data
-* **Milestones:**
-* Device fabrication completion (Month 10)
-* Performance testing completion (Month 12)
-* **Resource Allocation:** Device fabrication specialists, fabrication equipment
-* **Quality Control:** Fabrication parameter control, calibrated measurements**Work Package 5: Stability Testing (Months 13-15)**
-* **Tasks:** Long-term stability evaluation under various environmental conditions
-* **Deliverables:** Device stability data under different conditions
-* **Milestones:** Stability testing completion (Month 15)
-* **Resource Allocation:** Testing specialists, environmental chambers
-* **Quality Control:** Environmental condition control, data reproducibility**Work Package 6: Data Analysis and Modeling (Months 16-18)**
-* **Tasks:**
-* Statistical analysis of material characterization
-* Device performance analysis
-* Correlation analysis
-* DFT modeling of passivation mechanisms
-* **Deliverables:** Comprehensive data analysis report
-* **Milestones:** Analysis and modeling completion (Month 18)
-* **Resource Allocation:** Data analysts, computational scientists
-* **Quality Control:** Result verification, statistical validation
+- **Tasks:**
+- **Task 1.1: Synthesis of Organic Passivating Molecules:** Synthesis of organic molecules with varying functional groups targeting specific perovskite surface defects.
+- **Task 1.2: Characterization of Organic Molecules :** Characterization using NMR spectroscopy, mass spectrometry, and elemental analysis.
+- **Deliverables:** Library of characterized organic molecules with complete characterization data.
+- **Milestones:**
+- Completion of synthesis (Month 1)
+- Full characterization completion (Month 3)
+- **Resource Allocation:** Synthetic chemists, analytical chemists, spectrometers, reagents
+- **Quality Control:** Purification via chromatography and recrystallization; structure verification**Work Package 2: Perovskite Film Deposition and Passivation (Months 4-6)**
+- **Tasks:**
+- **Task 2.1:** One-step spin-coating perovskite film deposition
+- **Task 2.2:** Surface passivation with synthesized organic molecules
+- **Deliverables:** Optimized and passivated perovskite films
+- **Milestones:**
+- Film deposition optimization (Month 4)
+- Surface passivation optimization (Month 6)
+- **Resource Allocation:** Materials scientists, deposition equipment, precursor materials
+- **Quality Control:** Stoichiometry control, process parameter optimization**Work Package 3: Material Characterization (Months 7-9)**
+- **Tasks:**
+- Surface composition analysis (XPS)
+- Charge carrier lifetime measurements (TRPL)
+- Surface morphology imaging (AFM)
+- Crystal structure determination (XRD)
+- Microstructure visualization (SEM)
+- **Deliverables:** Comprehensive characterization data
+- **Milestones:**
+- XPS/TRPL completion (Month 7)
+- AFM/XRD/SEM completion (Month 9)
+- **Resource Allocation:** Characterization specialists, analytical equipment
+- **Quality Control:** Equipment calibration, data reproducibility verification**Work Package 4: Device Fabrication and Performance Testing (Months 10-12)**
+- **Tasks:**
+- **Task 4.1:** Device fabrication using passivated films
+- **Task 4.2:** Performance testing (PCE, Voc, Jsc, FF)
+- **Deliverables:** Fabricated devices and performance data
+- **Milestones:**
+- Device fabrication completion (Month 10)
+- Performance testing completion (Month 12)
+- **Resource Allocation:** Device fabrication specialists, fabrication equipment
+- **Quality Control:** Fabrication parameter control, calibrated measurements**Work Package 5: Stability Testing (Months 13-15)**
+- **Tasks:** Long-term stability evaluation under various environmental conditions
+- **Deliverables:** Device stability data under different conditions
+- **Milestones:** Stability testing completion (Month 15)
+- **Resource Allocation:** Testing specialists, environmental chambers
+- **Quality Control:** Environmental condition control, data reproducibility**Work Package 6: Data Analysis and Modeling (Months 16-18)**
+- **Tasks:**
+- Statistical analysis of material characterization
+- Device performance analysis
+- Correlation analysis
+- DFT modeling of passivation mechanisms
+- **Deliverables:** Comprehensive data analysis report
+- **Milestones:** Analysis and modeling completion (Month 18)
+- **Resource Allocation:** Data analysts, computational scientists
+- **Quality Control:** Result verification, statistical validation
 
 Project progress will be monitored through regular meetings, detailed reports, and milestone tracking, with adaptive management strategies addressing any timeline or budget deviations.### 1b.iii. Plan of the proof of concept - Description of the Action
 
@@ -249,66 +257,73 @@ The successful execution of this ERC Proof of Concept project requires strategic
 
 The project team comprises experts in organic synthesis, materials science, device fabrication, and data analysis. Personnel costs constitute 40% of the total budget.
 
-* **Principal Investigator (PI):** Project management and scientific leadership. 20% time commitment. Budget: €60,000.
-* **Postdoctoral Researcher:** Organic molecule synthesis, characterization (WP1), perovskite film work (WP2). Full-time, €90,000.
-* **Materials Scientist:** Perovskite film characterization (WP3) and device fabrication (WP4). Expertise in XPS, TRPL, AFM, XRD, and SEM. Full-time, €90,000.
-* **Technician:** Device fabrication and testing (WP4, WP5). Half-time, €30,000.
-* **Data Analyst/Computational Scientist:** Statistical analysis and DFT modeling (WP6). Half-time, €30,000.
+- **Principal Investigator (PI):** Project management and scientific leadership. 20% time commitment. Budget: €60,000.
+- **Postdoctoral Researcher:** Organic molecule synthesis, characterization (WP1), perovskite film work (WP2). Full-time, €90,000.
+- **Materials Scientist:** Perovskite film characterization (WP3) and device fabrication (WP4). Expertise in XPS, TRPL, AFM, XRD, and SEM. Full-time, €90,000.
+- **Technician:** Device fabrication and testing (WP4, WP5). Half-time, €30,000.
+- **Data Analyst/Computational Scientist:** Statistical analysis and DFT modeling (WP6). Half-time, €30,000.
 
 ### Equipment
 
 Equipment costs represent 30% of the budget. All equipment is available in the PI's laboratory:
 
-* NMR Spectrometer (400 MHz)
-* Mass Spectrometer
-* Spin Coater
-* XPS, TRPL, AFM, XRD, SEM systems
-* Solar Simulator
-* Environmental Chambers
-* High-Performance Computing Cluster
+- NMR Spectrometer (400 MHz)
+- Mass Spectrometer
+- Spin Coater
+- XPS, TRPL, AFM, XRD, SEM systems
+- Solar Simulator
+- Environmental Chambers
+- High-Performance Computing Cluster
 
 Budget allocation for maintenance (€15,000):
 
-* XPS Upgrade (€5,000): Enhanced surface sensitivity for Task 3.1
-* TRPL Detector Upgrade (€5,000): Improved temporal resolution for Task 3.2
-* AFM Tip Replacements (€5,000): High-resolution imaging for Task 3.3
+- XPS Upgrade (€5,000): Enhanced surface sensitivity for Task 3.1
+- TRPL Detector Upgrade (€5,000): Improved temporal resolution for Task 3.2
+- AFM Tip Replacements (€5,000): High-resolution imaging for Task 3.3
 
 ### Consumables
 
 Consumables (15% of budget):
 
-* Organic Reagents (€10,000):
-- 2-Thiophenecarboxaldehyde (25g, €1,000)
-- 4-Bromobenzylamine (10g, €2,000)
-- Pyrene-1-carboxylic acid (5g, €3,000)
-- Solvents (€4,000)
-* Perovskite Precursors (€5,000):
-- Lead(II) iodide (50g, €2,000)
-- Methylammonium iodide (25g, €1,500)
-- Formamidinium iodide (25g, €1,500)
-* Device Fabrication Materials (€5,000):
-- Spiro-OMeTAD (10g, €2,000)
-- Gold sputtering target (€2,000)
-- ITO coated glass substrates (€1,000)
-* Gases and Solvents (€5,000):
-- High-purity nitrogen (€2,000)
-- Argon gas (€1,000)
-- HPLC-grade solvents (€2,000)
+- Organic Reagents (€10,000):
+
+* 2-Thiophenecarboxaldehyde (25g, €1,000)
+* 4-Bromobenzylamine (10g, €2,000)
+* Pyrene-1-carboxylic acid (5g, €3,000)
+* Solvents (€4,000)
+
+- Perovskite Precursors (€5,000):
+
+* Lead(II) iodide (50g, €2,000)
+* Methylammonium iodide (25g, €1,500)
+* Formamidinium iodide (25g, €1,500)
+
+- Device Fabrication Materials (€5,000):
+
+* Spiro-OMeTAD (10g, €2,000)
+* Gold sputtering target (€2,000)
+* ITO coated glass substrates (€1,000)
+
+- Gases and Solvents (€5,000):
+
+* High-purity nitrogen (€2,000)
+* Argon gas (€1,000)
+* HPLC-grade solvents (€2,000)
 
 ### Travel
 
 Travel costs (5% of budget, €5,000):
 
-* Conference Attendance (€3,000): E-MRS Spring Meeting and International Conference on Perovskite Solar Cells
-* Collaboration Visits (€2,000): University of Oxford and EPFL
+- Conference Attendance (€3,000): E-MRS Spring Meeting and International Conference on Perovskite Solar Cells
+- Collaboration Visits (€2,000): University of Oxford and EPFL
 
 ### Other Expenses
 
 Other expenses (10% of budget, €10,000):
 
-* Publication Costs: €2,000
-* Software Licenses: €1,000 (DFT and data analysis software)
-* Indirect Costs: €7,000
+- Publication Costs: €2,000
+- Software Licenses: €1,000 (DFT and data analysis software)
+- Indirect Costs: €7,000
 
 ### Budget Summary
 
@@ -328,9 +343,9 @@ Other expenses (10% of budget, €10,000):
 
 | **Total** |**265,000** |#### Description of the team (including the PI)
 
-The project's success hinges on the synergistic expertise of the assembled team, strategically designed to address the multifaceted challenges inherent in this ERC Proof of Concept grant. The team comprises seasoned researchers, experienced engineers, skilled technicians, and specialized consultants, each selected for their proven track record and specific contributions to the project's objectives. The Principal Investigator (PI) assumes overall strategic leadership, guiding the project's direction and ensuring seamless integration of all research activities. The PI, Dr. Anya Sharma, possesses extensive experience in microfluidics and bioengineering, demonstrated by 15 years of dedicated research and a publication record of over 80 peer-reviewed articles in high-impact journals such as *Nature Biomedical Engineering*, *Advanced Materials*, and *Lab on a Chip*. Dr. Sharma's prior experience in leading large-scale, interdisciplinary research projects, including the development of a point-of-care diagnostic device for rapid sepsis detection (Project Sepsis) and a microfluidic platform for drug screening (Project DrugScreen), equips them with the necessary project management skills to effectively oversee all aspects of the proposed research. Furthermore, Dr. Sharma has a proven track record of successful technology transfer and commercialization, evidenced by 7 granted patents and 2 spin-off companies (MicroBioTech and Fluidic Solutions). Dr. Sharma will dedicate 60% of their time to this project, ensuring its timely and efficient execution.
+The project's success hinges on the synergistic expertise of the assembled team, strategically designed to address the multifaceted challenges inherent in this ERC Proof of Concept grant. The team comprises seasoned researchers, experienced engineers, skilled technicians, and specialized consultants, each selected for their proven track record and specific contributions to the project's objectives. The Principal Investigator (PI) assumes overall strategic leadership, guiding the project's direction and ensuring seamless integration of all research activities. The PI, Dr. Anya Sharma, possesses extensive experience in microfluidics and bioengineering, demonstrated by 15 years of dedicated research and a publication record of over 80 peer-reviewed articles in high-impact journals such as _Nature Biomedical Engineering_, _Advanced Materials_, and _Lab on a Chip_. Dr. Sharma's prior experience in leading large-scale, interdisciplinary research projects, including the development of a point-of-care diagnostic device for rapid sepsis detection (Project Sepsis) and a microfluidic platform for drug screening (Project DrugScreen), equips them with the necessary project management skills to effectively oversee all aspects of the proposed research. Furthermore, Dr. Sharma has a proven track record of successful technology transfer and commercialization, evidenced by 7 granted patents and 2 spin-off companies (MicroBioTech and Fluidic Solutions). Dr. Sharma will dedicate 60% of their time to this project, ensuring its timely and efficient execution.
 
-Dr. Kenji Tanaka, a Senior Researcher with expertise in materials science and nanotechnology, will be responsible for the synthesis and characterization of novel nanomaterials for integration into the microfluidic device. Dr. Tanaka brings 12 years of experience in nanomaterials research, with a focus on developing biocompatible and functionalized nanoparticles. Their contributions are crucial for enhancing the sensitivity and selectivity of the biosensor. Dr. Tanaka's publication record includes key publications in *Advanced Functional Materials* and *ACS Nano*, demonstrating their expertise in the field. They will dedicate 40% of their time to the project.
+Dr. Kenji Tanaka, a Senior Researcher with expertise in materials science and nanotechnology, will be responsible for the synthesis and characterization of novel nanomaterials for integration into the microfluidic device. Dr. Tanaka brings 12 years of experience in nanomaterials research, with a focus on developing biocompatible and functionalized nanoparticles. Their contributions are crucial for enhancing the sensitivity and selectivity of the biosensor. Dr. Tanaka's publication record includes key publications in _Advanced Functional Materials_ and _ACS Nano_, demonstrating their expertise in the field. They will dedicate 40% of their time to the project.
 
 Dr. Emily Carter, a Lead Engineer specializing in microfluidic device fabrication and optimization, will oversee the design and manufacturing of the microfluidic chips. With 8 years of experience in microfluidics engineering, Dr. Carter has a proven track record of developing and implementing innovative engineering solutions for biomedical applications. Their expertise in soft lithography and microfabrication techniques is essential for the successful development of the microfluidic device. Dr. Carter will dedicate 50% of their time to the project.
 

@@ -1,1 +1,19 @@
-{"error":null,"sections":[{"title":"Significance","id":"significance","parent_id":"research_strategy","is_detailed_workplan":false},{"title":"Innovation","id":"innovation","parent_id":"research_strategy","is_detailed_workplan":false},{"title":"Approach","id":"approach","parent_id":"research_strategy","is_detailed_workplan":true},{"title":"Preliminary Studies for New Applications","id":"preliminary_studies_for_new_applications","parent_id":"research_strategy","is_detailed_workplan":false}]}
+{
+	"error": null,
+	"sections": [
+		{
+			"title": "Significance",
+			"id": "significance",
+			"parent_id": "research_strategy",
+			"is_detailed_workplan": false
+		},
+		{ "title": "Innovation", "id": "innovation", "parent_id": "research_strategy", "is_detailed_workplan": false },
+		{ "title": "Approach", "id": "approach", "parent_id": "research_strategy", "is_detailed_workplan": true },
+		{
+			"title": "Preliminary Studies for New Applications",
+			"id": "preliminary_studies_for_new_applications",
+			"parent_id": "research_strategy",
+			"is_detailed_workplan": false
+		}
+	]
+}

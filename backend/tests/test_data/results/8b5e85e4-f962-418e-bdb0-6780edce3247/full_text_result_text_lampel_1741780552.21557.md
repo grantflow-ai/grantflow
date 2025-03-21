@@ -227,34 +227,12 @@ Task 5.1, led by the Principal Investigator, will require 1 person-month for imp
 
 #### Description of the team (including the PI)
 
-Missing Information:
-	- PI's name and current position/affiliation
-	- Names and roles of other team members
-	- Specific management structure and reporting relationships
-	- Team size and composition details
-	- Information about team diversity and inclusion practices
+Missing Information: - PI's name and current position/affiliation - Names and roles of other team members - Specific management structure and reporting relationships - Team size and composition details - Information about team diversity and inclusion practices
 
 ## The Strategic Lead
 
-Missing Information:
-	- PI's name and current position/title
-	- PI's specific leadership experience and track record in managing research teams
-	- PI's previous project management successes and outcomes
-	- PI's mentorship history and achievements
-	- PI's proposed communication and coordination strategy for this project
-	- PI's specific approach to risk management and decision-making
-	- Details about PI's experience in stakeholder management
-	- PI's proposed methods for tracking project progress and ensuring deliverables
+Missing Information: - PI's name and current position/title - PI's specific leadership experience and track record in managing research teams - PI's previous project management successes and outcomes - PI's mentorship history and achievements - PI's proposed communication and coordination strategy for this project - PI's specific approach to risk management and decision-making - Details about PI's experience in stakeholder management - PI's proposed methods for tracking project progress and ensuring deliverables
 
 ## The Project Management
 
-Missing Information:
-	- Project organizational structure and hierarchy details
-	- Decision-making processes and protocols
-	- Key project milestones and timeline
-	- Risk management framework and specific identified risks
-	- Communication channels and reporting structure
-	- Project monitoring and control procedures
-	- Resource allocation and management approach
-	- Contingency plans for key identified risks
-	- Emergency response protocols and procedures
+Missing Information: - Project organizational structure and hierarchy details - Decision-making processes and protocols - Key project milestones and timeline - Risk management framework and specific identified risks - Communication channels and reporting structure - Project monitoring and control procedures - Resource allocation and management approach - Contingency plans for key identified risks - Emergency response protocols and procedures
