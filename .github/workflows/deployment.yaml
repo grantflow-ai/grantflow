@@ -6,7 +6,6 @@ on:
       - main
 
 jobs:
-  # Backend deployment
   deploy-backend:
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +31,6 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.CONTAINER_REGISTRY }}/grantflow/backend:buildcache
           cache-to: type=registry,ref=${{ secrets.CONTAINER_REGISTRY }}/grantflow/backend:buildcache,mode=max
 
-  # Frontend deployment
   deploy-frontend:
     runs-on: ubuntu-latest
     steps:
@@ -42,14 +40,18 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4.1.0
-        id: pnpm-install
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
-      - name: Install Dependencies
-        run: cd frontend && pnpm install
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
 
       - name: Build
         run: cd frontend && pnpm run build

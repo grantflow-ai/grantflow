@@ -21,6 +21,7 @@ dev = [
   "huggingface-hub[cli]>=0.29.3",
   "mypy>=1.15.0",
   "polyfactory>=2.19.0",
+  "pre-commit>=4.2.0",
   "pytest>=8.3.5",
   "pytest-asyncio>=0.25.3",
   "pytest-cov>=6.0.0",
