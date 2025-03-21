@@ -25,7 +25,7 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-@post("/workspaces")
+@post("/workspaces", operation_id="CreateWorkspace")
 async def handle_create_workspace(
     request: APIRequest, data: CreateWorkspaceRequestBody, session_maker: async_sessionmaker[Any]
 ) -> TableIdResponse:
@@ -53,7 +53,7 @@ async def handle_create_workspace(
     )
 
 
-@get("/workspaces")
+@get("/workspaces", operation_id="ListWorkspaces")
 async def handle_retrieve_workspaces(
     request: APIRequest, session_maker: async_sessionmaker[Any]
 ) -> list[WorkspaceBaseResponse]:
@@ -80,7 +80,11 @@ async def handle_retrieve_workspaces(
     ]
 
 
-@patch("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN])
+@patch(
+    "/workspaces/{workspace_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+    operation_id="UpdateWorkspace",
+)
 async def handle_update_workspace(
     request: APIRequest, data: UpdateWorkspaceRequestBody, workspace_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> WorkspaceBaseResponse:
@@ -105,7 +109,11 @@ async def handle_update_workspace(
     )
 
 
-@get("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER])
+@get(
+    "/workspaces/{workspace_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="GetWorkspace",
+)
 async def handle_retrieve_workspace(
     request: APIRequest, workspace_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> WorkspaceResponse:
@@ -132,7 +140,7 @@ async def handle_retrieve_workspace(
     )
 
 
-@delete("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER])
+@delete("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER], operation_id="DeleteWorkspace")
 async def handle_delete_workspace(workspace_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     logger.info("Deleting workspace", workspace_id=workspace_id)
     async with session_maker() as session, session.begin():

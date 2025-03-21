@@ -1,14 +1,14 @@
 "use client";
 import { getApplicationText } from "@/actions/api";
 import { Loader } from "@/components/loader";
-import { ApplicationDraftResponse, GrantApplication } from "@/types/api-types";
+import { API } from "@/types/api-types";
 import { useEffect, useState } from "react";
 
 export function ApplicationWorkspace({
 	application,
 	workspaceId,
 }: {
-	application: GrantApplication;
+	application: API.GetApplication.Http200.ResponseBody;
 	workspaceId: string;
 }) {
 	const [draftText, setDraftText] = useState(application.text);
@@ -37,7 +37,7 @@ export function ApplicationWorkspace({
 }
 
 async function pollDraft(workspaceId: string, applicationId: string) {
-	let applicationDraftResponse: ApplicationDraftResponse | null = null;
+	let applicationDraftResponse: API.GetApplicationContent.Http200.ResponseBody | null = null;
 
 	while (applicationDraftResponse?.status !== "complete") {
 		await new Promise((resolve) => setTimeout(resolve, 1000 * 10));

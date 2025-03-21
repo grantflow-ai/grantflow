@@ -10,14 +10,14 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-@post("/login")
+@post("/login", operation_id="Login")
 async def handle_login(data: LoginRequestBody) -> LoginResponse:
     decoded_token = await verify_id_token(data["id_token"])
     jwt = create_jwt(decoded_token["uid"])
     return LoginResponse(jwt_token=jwt)
 
 
-@get("/otp")
+@get("/otp", operation_id="GenerateOtp")
 async def handle_create_otp(auth: str) -> OTPResponse:
     # TODO: we need to add a second layer of security here
     otp = create_jwt(firebase_uid=auth, ttl=timedelta(hours=1))

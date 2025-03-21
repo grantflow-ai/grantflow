@@ -16,7 +16,7 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-@post("/organizations")
+@post("/organizations", operation_id="CreateOrganization")
 async def handle_create_organization(
     data: CreateOrganizationRequestBody, session_maker: async_sessionmaker[Any]
 ) -> FundingOrganizationResponse:
@@ -36,7 +36,7 @@ async def handle_create_organization(
     )
 
 
-@get("/organizations")
+@get("/organizations", operation_id="ListOrganizations")
 async def handle_retrieve_organizations(session_maker: async_sessionmaker[Any]) -> list[FundingOrganizationResponse]:
     async with session_maker() as session:
         return [
@@ -49,7 +49,7 @@ async def handle_retrieve_organizations(session_maker: async_sessionmaker[Any]) 
         ]
 
 
-@patch("/organizations/{organization_id:uuid}")
+@patch("/organizations/{organization_id:uuid}", operation_id="UpdateOrganization")
 async def handle_update_organization(
     data: CreateOrganizationRequestBody, organization_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> FundingOrganizationResponse:
@@ -77,7 +77,7 @@ async def handle_update_organization(
     )
 
 
-@delete("/organizations/{organization_id:uuid}")
+@delete("/organizations/{organization_id:uuid}", operation_id="DeleteOrganization")
 async def handle_delete_organization(organization_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     async with session_maker() as session, session.begin():
         try:

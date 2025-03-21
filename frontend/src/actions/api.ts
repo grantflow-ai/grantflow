@@ -2,20 +2,7 @@
 
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
-import {
-	ApplicationDraftResponse,
-	CreateWorkspaceRequestBody,
-	GrantApplication,
-	GrantApplicationFile,
-	LoginRequestBody,
-	LoginResponse,
-	OTPResponse,
-	TableIdResponse,
-	UpdateApplicationRequestBody,
-	UpdateWorkspaceRequestBody,
-	Workspace,
-	WorkspaceBaseResponse,
-} from "@/types/api-types";
+import { API } from "@/types/api-types";
 import { getClient } from "@/utils/api-client";
 import { getEnv } from "@/utils/env";
 import { HTTPError } from "ky";
@@ -80,21 +67,21 @@ export async function createApplication(workspaceId: string, data: FormData) {
 	return withAuthRedirect(
 		getClient()
 			.post(`workspaces/${workspaceId}/applications`, { body: data, headers: await createAuthHeaders() })
-			.json<TableIdResponse>(),
+			.json<API.CreateApplication.Http201.ResponseBody>(),
 	);
 }
 
 /**
  * Creates a new workspace by sending a POST request with the specified data.
  *
- * @param {CreateWorkspaceRequestBody} data - The request body containing the necessary information to create a workspace.
+ * @param {API.CreateWorkspace.RequestBody} data - The request body containing the necessary information to create a workspace.
  * @return A promise that resolves to the response containing the ID of the created workspace.
  */
-export async function createWorkspace(data: CreateWorkspaceRequestBody) {
+export async function createWorkspace(data: API.CreateWorkspace.RequestBody) {
 	return withAuthRedirect(
 		getClient()
 			.post("workspaces", { headers: await createAuthHeaders(), json: data })
-			.json<TableIdResponse>(),
+			.json<API.CreateWorkspace.Http201.ResponseBody>(),
 	);
 }
 
@@ -152,7 +139,7 @@ export async function getApplication(workspaceId: string, applicationId: string)
 	return withAuthRedirect(
 		getClient()
 			.get(`workspaces/${workspaceId}/applications/${applicationId}`, { headers: await createAuthHeaders() })
-			.json<GrantApplication>(),
+			.json<API.GetApplication.Http200.ResponseBody>(),
 	);
 }
 
@@ -169,7 +156,7 @@ export async function getApplicationFiles(workspaceId: string, applicationId: st
 			.get(`workspaces/${workspaceId}/applications/${applicationId}/files`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<GrantApplicationFile[]>(),
+			.json<API.ListApplicationFiles.Http200.ResponseBody[]>(),
 	);
 }
 
@@ -186,7 +173,7 @@ export async function getApplicationText(workspaceId: string, applicationId: str
 			.get(`workspaces/${workspaceId}/applications/${applicationId}/content`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<ApplicationDraftResponse>(),
+			.json<API.GetApplicationContent.Http200.ResponseBody>(),
 	);
 }
 
@@ -199,7 +186,7 @@ export async function getOtp() {
 	return withAuthRedirect(
 		getClient()
 			.get("otp", { headers: await createAuthHeaders() })
-			.json<OTPResponse>(),
+			.json<API.GenerateOtp.Http200.ResponseBody>(),
 	);
 }
 
@@ -213,7 +200,7 @@ export async function getWorkspace(workspaceId: string) {
 	return withAuthRedirect(
 		getClient()
 			.get(`workspaces/${workspaceId}`, { headers: await createAuthHeaders() })
-			.json<Workspace>(),
+			.json<API.GetWorkspace.Http200.ResponseBody>(),
 	);
 }
 
@@ -226,7 +213,7 @@ export async function getWorkspaces() {
 	return withAuthRedirect(
 		getClient()
 			.get("workspaces", { headers: await createAuthHeaders() })
-			.json<WorkspaceBaseResponse[]>(),
+			.json<API.ListWorkspaces.Http200.ResponseBody>(),
 	);
 }
 
@@ -238,9 +225,11 @@ export async function getWorkspaces() {
  */
 export async function login(idToken: string) {
 	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
-	const requestBody: LoginRequestBody = { id_token: idToken };
+	const requestBody: API.Login.RequestBody = { id_token: idToken };
 
-	const { jwt_token } = await getClient().post(loginUrl, { json: requestBody }).json<LoginResponse>();
+	const { jwt_token } = await getClient()
+		.post(loginUrl, { json: requestBody })
+		.json<API.Login.Http201.ResponseBody>();
 
 	const cookieStore = await cookies();
 	cookieStore.set({
@@ -260,13 +249,13 @@ export async function login(idToken: string) {
  *
  * @param workspaceId - The unique identifier of the workspace where the application resides.
  * @param applicationId - The unique identifier of the application to update.
- * @param {UpdateApplicationRequestBody} data - The request body containing the updated application details.
+ * @param {API.UpdateApplication.RequestBody} data - The request body containing the updated application details.
  * @return A promise that resolves with the updated application details.
  */
 export async function updateApplication(
 	workspaceId: string,
 	applicationId: string,
-	data: UpdateApplicationRequestBody,
+	data: API.UpdateApplication.RequestBody,
 ) {
 	return withAuthRedirect(
 		getClient()
@@ -274,7 +263,7 @@ export async function updateApplication(
 				headers: await createAuthHeaders(),
 				json: data,
 			})
-			.json<GrantApplication>(),
+			.json<API.UpdateApplication.Http200.ResponseBody>(),
 	);
 }
 
@@ -288,11 +277,11 @@ export async function updateApplication(
  * @param data - The new data to update the workspace with.
  * @return A promise that resolves to the response containing the updated workspace details.
  */
-export async function updateWorkspace(workspaceId: string, data: UpdateWorkspaceRequestBody) {
+export async function updateWorkspace(workspaceId: string, data: API.UpdateWorkspace.RequestBody) {
 	return withAuthRedirect(
 		getClient()
 			.patch(`workspaces/${workspaceId}`, { headers: await createAuthHeaders(), json: data })
-			.json<WorkspaceBaseResponse>(),
+			.json<API.UpdateWorkspace.Http200.ResponseBody>(),
 	);
 }
 
@@ -311,6 +300,6 @@ export async function uploadApplicationFiles(workspaceId: string, applicationId:
 				body: formData,
 				headers: await createAuthHeaders(),
 			})
-			.json<GrantApplicationFile[]>(),
+			.json<API.UploadApplicationFiles.Http201.ResponseBody[]>(),
 	);
 }

@@ -5,6 +5,7 @@ export default [
 	...eslintConfigTrumpet,
 	eslintConfigPrettier,
 	{
+		ignore: ["src/types/api-types.ts"], // this file is generated
 		rules: {
 			"no-console": "off",
 		},

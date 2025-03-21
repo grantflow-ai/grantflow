@@ -1,6 +1,6 @@
 "use client";
 import { PagePath } from "@/enums";
-import { GrantApplication } from "@/types/api-types";
+import { API } from "@/types/api-types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight, FileText } from "lucide-react";
@@ -10,7 +10,7 @@ export function GrantApplicationCard({
 	application,
 	workspaceId,
 }: {
-	application: GrantApplication;
+	application: API.GetWorkspace.Http200.ResponseBody["grant_applications"][0];
 	workspaceId: string;
 }) {
 	const url = PagePath.APPLICATION_DETAIL.toString()
