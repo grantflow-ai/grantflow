@@ -35,17 +35,7 @@ Reach out to the team to get copies of these files.
 We use [Taskfile](https://taskfile.dev) to simplify common development tasks. After installing Task, you can run:
 
 ```bash
-# Install dependencies for both frontend and backend
 task setup
-
-# Start the database
-task db:up
-
-# Apply database migrations
-task backend:migrate
-
-# Seed the database with initial data
-task db:seed
 ```
 
 ### Frontend Development
@@ -73,6 +63,15 @@ task frontend:update
 ### Backend Development
 
 ```bash
+# Start the database
+task db:up
+
+# Apply database migrations
+task backend:migrate
+
+# Seed the database with initial data
+task db:seed
+
 # Run backend tests
 task backend:test
 
@@ -81,9 +80,6 @@ task backend:test -- tests/path/to/test.py -v
 
 # Create a new database migration
 task backend:create-migration
-
-# Generate TypeScript API specifications
-task backend:api-specs
 
 # Install backend dependencies only
 task backend:install
