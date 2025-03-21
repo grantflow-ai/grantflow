@@ -4,7 +4,7 @@ import { PagePath } from "@/enums";
 import process from "node:process";
 import { beforeEach, vi } from "vitest";
 
-const { mockRedirect, mockToast, mockUsePathname, mockUseRouter } = vi.hoisted(() => {
+const { mockRedirect, mockToast, mockUsePathname, mockUseRouter, mockUseSearchParams } = vi.hoisted(() => {
 	const mockToast = vi.fn();
 	Reflect.set(mockToast, "error", vi.fn());
 	Reflect.set(mockToast, "success", vi.fn());
@@ -21,6 +21,12 @@ const { mockRedirect, mockToast, mockUsePathname, mockUseRouter } = vi.hoisted((
 			refresh: vi.fn(),
 			replace: vi.fn(),
 		})),
+		mockUseSearchParams: vi.fn().mockImplementation(() => ({
+			get: vi.fn().mockReturnValue(null),
+			getAll: vi.fn().mockReturnValue([]),
+			has: vi.fn().mockReturnValue(false),
+			toString: vi.fn().mockReturnValue(""),
+		})),
 	};
 });
 
@@ -33,6 +39,7 @@ vi.mock("next/navigation", async (importOriginal) => {
 		redirect: mockRedirect,
 		usePathname: mockUsePathname,
 		useRouter: mockUseRouter,
+		useSearchParams: mockUseSearchParams,
 	};
 });
 
@@ -44,7 +51,7 @@ vi.mock("sonner", async (importOriginal) => {
 	};
 });
 
-export { mockRedirect, mockToast, mockUsePathname };
+export { mockRedirect, mockToast, mockUsePathname, mockUseSearchParams };
 
 export const mockShowModal = vi.fn();
 export const mockShow = vi.fn();
@@ -63,7 +70,7 @@ export const mockEnv = {
 	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: "72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
-	NEXT_PUBLIC_SITE_URL: "https://app.acmetech.io",
+	NEXT_PUBLIC_SITE_URL: "https://example.com",
 } satisfies Env;
 
 beforeAll(() => {

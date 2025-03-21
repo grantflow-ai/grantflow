@@ -1,5 +1,6 @@
 name: Deployment
 
+# Workflow disabled temporarily
 on:
   push:
     branches:
@@ -7,6 +8,8 @@ on:
 
 jobs:
   deploy-backend:
+    # Job disabled temporarily
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,6 +35,8 @@ jobs:
           cache-to: type=registry,ref=${{ secrets.CONTAINER_REGISTRY }}/grantflow/backend:buildcache,mode=max
 
   deploy-frontend:
+    # Job disabled temporarily
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
