@@ -7,7 +7,7 @@ import { Wizard } from "@/components/workspaces/detail/applications/new/wizard";
 import { logError } from "@/utils/logging";
 import { toast } from "sonner";
 import { createApplication, updateApplication, uploadApplicationFiles } from "@/actions/api";
-import { CreateApplicationRequestBody } from "@/types/api-types";
+import { API } from "@/types/api-types";
 
 export default function NewApplicationWizardContainer({ workspaceId }: { workspaceId: string }) {
 	const [showWizard, setShowWizard] = useState(false);
@@ -25,7 +25,7 @@ export default function NewApplicationWizardContainer({ workspaceId }: { workspa
 				JSON.stringify({
 					cfp_url: data.cfpUrl,
 					title: data.title,
-				} satisfies CreateApplicationRequestBody),
+				} satisfies API.CreateApplication.RequestBody),
 			);
 			const { id } = await createApplication(workspaceId, formData);
 			setShowWizard(true);
@@ -46,8 +46,9 @@ export default function NewApplicationWizardContainer({ workspaceId }: { workspa
 			await uploadApplicationFiles(workspaceId, applicationId, formData);
 
 			await updateApplication(workspaceId, applicationId, {
+				title: applicationTitle,
 				research_objectives,
-			});
+			} as API.UpdateApplication.RequestBody);
 		} catch (error) {
 			logError({ error, identifier: "newApplicationWizard" });
 			toast.error("An error occurred while updating the application.");

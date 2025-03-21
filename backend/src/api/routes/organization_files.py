@@ -23,7 +23,7 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-@post("/organizations/{organization_id:uuid}/files")
+@post("/organizations/{organization_id:uuid}/files", operation_id="UploadOrganizationFiles")
 async def handle_organization_file_uploads(
     data: Annotated[dict[str, UploadFile], Body(media_type=RequestEncodingType.MULTI_PART)],
     organization_id: UUID,
@@ -74,7 +74,7 @@ async def handle_organization_file_uploads(
     return [TableIdResponse(id=str(rag_file_id)) for rag_file_id in organization_files]
 
 
-@get("/organizations/{organization_id:uuid}/files")
+@get("/organizations/{organization_id:uuid}/files", operation_id="ListOrganizationFiles")
 async def retrieve_organization_files(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
@@ -88,7 +88,7 @@ async def retrieve_organization_files(
         ]
 
 
-@delete("/organizations/{organization_id:uuid}/files/{file_id:uuid}")
+@delete("/organizations/{organization_id:uuid}/files/{file_id:uuid}", operation_id="DeleteOrganizationFile")
 async def handle_delete_organization_file(
     organization_id: UUID,
     file_id: UUID,

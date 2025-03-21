@@ -1,15 +1,16 @@
 import { PagePath } from "@/enums";
-import { UserRole, WorkspaceBaseResponse } from "@/types/api-types";
+import { API } from "@/types/api-types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-export function WorkspaceCard({ workspace }: { workspace: WorkspaceBaseResponse }) {
+export function WorkspaceCard({ workspace }: { workspace: API.ListWorkspaces.Http200.ResponseBody[0] }) {
+	type UserRole = "ADMIN" | "MEMBER" | "OWNER";
 	const roleColors: Record<UserRole, string> = {
-		[UserRole.ADMIN]: "bg-secondary/20 text-secondary-foreground hover:bg-secondary/30",
-		[UserRole.MEMBER]: "bg-accent/20 text-accent-foreground hover:bg-accent/30",
-		[UserRole.OWNER]: "bg-primary/10 text-primary hover:bg-primary/20",
+		ADMIN: "bg-secondary/20 text-secondary-foreground hover:bg-secondary/30",
+		MEMBER: "bg-accent/20 text-accent-foreground hover:bg-accent/30",
+		OWNER: "bg-primary/10 text-primary hover:bg-primary/20",
 	};
 
 	const url = PagePath.WORKSPACE_DETAIL.toString().replace(":workspaceId", workspace.id);

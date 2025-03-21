@@ -1,11 +1,4 @@
-import {
-	ApplicationDetailsForm,
-	GrantApplication,
-	ResearchObjective,
-	ResearchTask,
-	UserRole,
-	Workspace,
-} from "@/types/api-types";
+import { API } from "@/types/api-types";
 import { UserInfo } from "firebase/auth";
 import { Factory } from "interface-forge";
 
@@ -18,16 +11,16 @@ export const UserInfoFactory = new Factory<UserInfo>((factory) => ({
 	uid: factory.string.uuid(),
 }));
 
-export const WorkspaceFactory = new Factory<Workspace>((factory) => ({
+export const WorkspaceFactory = new Factory<API.GetWorkspace.Http200.ResponseBody>((factory) => ({
 	description: factory.helpers.arrayElement([null, factory.lorem.sentence()]),
 	grant_applications: GrantApplicationFactory.batch(3),
 	id: factory.string.uuid(),
 	logo_url: factory.helpers.arrayElement([null, factory.image.avatar()]),
 	name: factory.lorem.sentence(),
-	role: factory.helpers.arrayElement([UserRole.MEMBER, UserRole.ADMIN, UserRole.OWNER]),
+	role: factory.helpers.arrayElement(["MEMBER", "ADMIN", "OWNER"]),
 }));
 
-const ApplicationDetailsFactory = new Factory<ApplicationDetailsForm>((factory) => ({
+const ApplicationDetailsFactory = new Factory<Record<string, string>>((factory) => ({
 	background_context: factory.lorem.paragraphs(),
 	hypothesis: factory.lorem.paragraph(),
 	impact: factory.lorem.paragraphs(),
@@ -41,7 +34,7 @@ const ApplicationDetailsFactory = new Factory<ApplicationDetailsForm>((factory) 
 	team_excellence: factory.lorem.paragraphs(),
 }));
 
-export const GrantApplicationFactory = new Factory<GrantApplication>((factory) => ({
+export const GrantApplicationFactory = new Factory<API.GetApplication.Http200.ResponseBody>((factory) => ({
 	completed_at: factory.helpers.arrayElement([null, factory.date.recent().toISOString()]),
 	details: ApplicationDetailsFactory.build(),
 	grant_template: null,
@@ -50,16 +43,33 @@ export const GrantApplicationFactory = new Factory<GrantApplication>((factory) =
 	text: factory.helpers.arrayElement([null, factory.lorem.paragraphs()]),
 	title: factory.lorem.sentence(),
 	workspace_id: factory.string.uuid(),
+	form_inputs: ApplicationDetailsFactory.build(),
 }));
 
-export const ResearchTaskFactory = new Factory<ResearchTask>((factory, i) => ({
+export const ResearchTaskFactory = new Factory<{
+	description?: string;
+	number: number;
+	relationships?: string[];
+	title: string;
+}>((factory, i) => ({
 	description: factory.helpers.maybe(() => factory.lorem.sentence()),
 	number: i + 1,
 	relationships: factory.helpers.maybe(() => factory.lorem.words().split(" ")),
 	title: factory.lorem.words(),
 }));
 
-export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory, i) => ({
+export const ResearchObjectiveFactory = new Factory<{
+	description?: string;
+	number: number;
+	relationships?: string[];
+	research_tasks: {
+		description?: string;
+		number: number;
+		relationships?: string[];
+		title: string;
+	}[];
+	title: string;
+}>((factory, i) => ({
 	description: factory.helpers.maybe(() => factory.lorem.sentence()),
 	number: i + 1,
 	relationships: factory.helpers.maybe(() => factory.lorem.words().split(" ")),

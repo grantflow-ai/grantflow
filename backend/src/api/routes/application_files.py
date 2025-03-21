@@ -26,6 +26,7 @@ logger = get_logger(__name__)
 @post(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/files",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="UploadApplicationFiles",
 )
 async def handle_application_file_uploads(
     request: APIRequest,
@@ -78,6 +79,7 @@ async def handle_application_file_uploads(
 @get(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/files",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="ListApplicationFiles",
 )
 async def retrieve_application_files(
     application_id: UUID, session_maker: async_sessionmaker[Any]
@@ -96,6 +98,7 @@ async def retrieve_application_files(
 @delete(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/files/{file_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="DeleteApplicationFile",
 )
 async def handle_delete_application_file(
     application_id: UUID, file_id: UUID, session_maker: async_sessionmaker[Any]

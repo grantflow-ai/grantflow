@@ -35,5 +35,13 @@
 	"[json]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-	"typescript.tsdk": "frontend/node_modules/typescript/lib"
+	"typescript.tsdk": "frontend/node_modules/typescript/lib",
+	"typescript.enableProjectDiagnostics": true,
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
+	"eslint.workingDirectories": ["./frontend"],
+	"eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+	"eslint.run": "onType",
+	"eslint.alwaysShowStatus": true,
+	"eslint.format.enable": true,
+	"eslint.lintTask.enable": true
 }
