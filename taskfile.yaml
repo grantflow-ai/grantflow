@@ -16,11 +16,6 @@ tasks:
             - sleep 2
             - PYTHONPATH=. uv run atlas migrate diff --env sqlalchemy {{.CLI_ARGS}}
 
-    backend:api-specs:
-        dir: backend
-        cmds:
-            - uv run litestar --app src.api.main:app schema typescript
-
     backend:test:
         dir: backend
         cmds:
@@ -36,6 +31,7 @@ tasks:
             - uv run uv-bump --pyproject-toml ./pyproject.toml
             - uv run uv-bump --pyproject-toml ./backend/pyproject.toml
             - task: install-backend
+
     # Frontend tasks
     frontend:dev:
         dir: frontend
@@ -62,8 +58,15 @@ tasks:
         cmds:
             - pnpm up --latest
 
-    # Monorepo tasks
+    # Code Generation tasks
+    backend:api-specs:
+        cmds:
+            - cd backend && uv run litestar --app src.api.main:app schema typescript
+            - mv api-specs.ts ../frontend/src/types/api-types.ts
+            - cd ..
+            - task: lint
 
+    # Monorepo tasks
     setup:
         desc: Setup the project dependencies
         cmds:

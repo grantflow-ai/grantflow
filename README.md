@@ -17,7 +17,7 @@ This monorepo contains both the frontend and backend code for the GrantFlow.AI p
 - Docker and Docker Compose (for local development with containers)
 - UV package manager for Python dependencies
 - PNPM for JavaScript/TypeScript dependencies
-- Task (taskfile runner) - https://taskfile.dev
+- Task (taskfile runner) - <https://taskfile.dev>
 
 ## Getting Started
 

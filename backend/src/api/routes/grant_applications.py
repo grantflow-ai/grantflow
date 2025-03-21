@@ -54,6 +54,7 @@ async def _get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | No
 @post(
     "/workspaces/{workspace_id:uuid}/applications",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="CreateApplication",
 )
 async def handle_create_application(
     data: Annotated[CreateApplicationRequestBody, Body(media_type=RequestEncodingType.MULTI_PART)],
@@ -93,6 +94,7 @@ async def handle_create_application(
 @get(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="GetApplication",
 )
 async def handle_retrieve_application(
     workspace_id: UUID,
@@ -126,6 +128,7 @@ async def handle_retrieve_application(
 @patch(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="UpdateApplication",
 )
 async def handle_update_application(
     data: UpdateApplicationRequestBody, application_id: UUID, session_maker: async_sessionmaker[Any]
@@ -158,6 +161,7 @@ async def handle_update_application(
 @delete(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="DeleteApplication",
 )
 async def handle_delete_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     logger.info("Deleting application", application_id=application_id)
@@ -175,6 +179,7 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
 @get(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/content",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="GetApplicationContent",
 )
 async def handle_retrieve_application_text(
     application_id: UUID, session_maker: async_sessionmaker[Any]
