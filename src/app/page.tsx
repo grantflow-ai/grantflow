@@ -3,7 +3,7 @@
 
 import { Footer } from "@/components/footer";
 import { NavHeader } from "@/components/landing-page/nav-header";
-import { Card, CardContent, CardHeader, CardTitle } from "gen/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Lock, Users } from "lucide-react";
 
 const locales = {
