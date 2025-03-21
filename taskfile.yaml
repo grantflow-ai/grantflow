@@ -11,3 +11,6 @@ tasks:
     cmds:
       - uv run scripts/update_dependencies.py
       - pre-commit autoupdate
+  api-specs:
+    cmds:
+      - uv run litestar --app src.api.main:app schema typescript
