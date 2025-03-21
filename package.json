@@ -3,10 +3,11 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"preinstall": "npx only-allow pnpm"
+		"preinstall": "npx only-allow pnpm",
+		"eslint": "eslint"
 	},
 	"devDependencies": {
-		"@trumpet/eslint-config-next": "^1.7.0",
+		"@trumpet/eslint-config-next": "^1.9.0",
 		"eslint": "^9.22.0",
 		"eslint-config-prettier": "^10.1.1",
 		"prettier": "^3.5.3",
