@@ -52,12 +52,10 @@ tasks:
             - pnpm up -r --latest
 
     install-backend:
-        dir: backend
         cmds:
-            - uv sync
+            - uv sync --all-packages
 
     update-backend:
-        dir: backend
         cmds:
             - uv run scripts/update_dependencies.py
 
@@ -77,6 +75,13 @@ tasks:
         desc: Tear down the local database
         cmds:
             - docker compose down db
+
+    db:seed:
+        dir: backend
+        cmds:
+            - task: db:up
+            - sleep 2
+            - uv run scripts/seed_db.py
 
     lint:
         desc: Lint the project
