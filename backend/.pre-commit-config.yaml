@@ -1,0 +1,55 @@
+default_language_version:
+  python: python3.12
+repos:
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: "v9.22.0"
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ["@commitlint/config-conventional"]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: name-tests-test
+        args:
+          - --pytest
+        exclude: factories|test_utils|completion.py|test_data|utils
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-case-conflict
+  - repo: https://github.com/Goldziher/uncomment
+    rev: v1.0.4
+    hooks:
+      - id: uncomment
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: "v3.5.3"
+    hooks:
+      - id: prettier
+        exclude: ^tests|^.idea|^migrations|^.git
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "v2.5.1"
+    hooks:
+      - id: pyproject-fmt
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.0
+    hooks:
+      - id: ruff
+        args: [--fix, --unsafe-fixes]
+      - id: ruff-format
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        exclude: ^tests|^scripts
+        additional_dependencies:
+          - tomli
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        require_serial: true
+        language: system
+        types: [python]

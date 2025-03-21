@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.insyncwithfoo.pyright.configurations.Local">
+    <option name="diagnosticMode" value="WORKSPACE" />
+    <option name="executable" value=".venv/bin/basedpyright" />
+    <option name="languageServerExecutable" value=".venv/bin/basedpyright-langserver" />
+    <option name="runningMode" value="LSP" />
+  </component>
+</project>
