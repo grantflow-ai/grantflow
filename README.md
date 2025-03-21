@@ -43,6 +43,9 @@ task db:up
 
 # Apply database migrations
 task backend:migrate
+
+# Seed the database with initial data
+task db:seed
 ```
 
 ### Frontend Development
@@ -54,8 +57,17 @@ task frontend:dev
 # Run frontend tests
 task frontend:test
 
+# Run frontend tests without watch mode
+task frontend:test -- --run
+
 # Build the frontend for production
 task frontend:build
+
+# Install frontend dependencies only
+task frontend:install
+
+# Update frontend dependencies
+task frontend:update
 ```
 
 ### Backend Development
@@ -64,11 +76,20 @@ task frontend:build
 # Run backend tests
 task backend:test
 
+# Run specific backend tests
+task backend:test -- tests/path/to/test.py -v
+
 # Create a new database migration
 task backend:create-migration
 
 # Generate TypeScript API specifications
 task backend:api-specs
+
+# Install backend dependencies only
+task backend:install
+
+# Update backend dependencies
+task backend:update
 ```
 
 ## Using Docker Compose
@@ -110,6 +131,9 @@ task lint
 
 # Or directly with pre-commit
 pre-commit run --all-files
+
+# Update project dependencies
+task update
 ```
 
 ### Backend Details
