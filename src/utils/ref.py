@@ -1,4 +1,7 @@
-class Ref[T]:
+from typing import Any
+
+
+class Ref[T: Any]:
     """A reference to a value that can be mutated."""
 
     value: T | None = None

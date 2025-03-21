@@ -1,24 +1,27 @@
-from json import dumps
 from typing import Any
 
 
 class BackendError(Exception):
     """Raised when an internal error occurs."""
 
-    context: dict[str, Any] | str | None
+    context: Any
     """The context of the error."""
 
-    def __init__(self, message: str, context: dict[str, Any] | str | None = None) -> None:
+    def __init__(self, message: str, context: Any = None) -> None:
         self.context = context
         super().__init__(message)
 
     def __str__(self) -> str:
         """Return a string representation of the exception."""
-        return f"{self.__class__.__name__}: {super().__str__()}\n\nContext: {dumps(self.context, indent=2)}"
+        from src.utils.serialization import serialize
+
+        ctx = f"\n\nContext: {serialize(self.context).decode()}" if self.context else ""
+
+        return f"{self.__class__.__name__}: {super().__str__()}{ctx}"
 
     def __repr__(self) -> str:
         """Return a string representation of the exception."""
-        return f"{self.__class__.__name__}({super().__repr__()})\n\nContext: {dumps(self.context, indent=2)}"
+        return self.__str__()
 
 
 class FileParsingError(BackendError):
@@ -29,12 +32,16 @@ class ExternalOperationError(BackendError):
     """Raised when an HTTP request to a remote system fails."""
 
 
-class MissingEnvVariableError(ValueError):
-    """Raised when an environment variable is unset."""
-
-
 class ValidationError(BackendError):
     """Raised when a validation error occurs."""
+
+
+class InsufficientContextError(BackendError):
+    """Raised when a insufficient input error occurs."""
+
+
+class EvaluationError(BackendError):
+    """Raised when an LLM response's evaluation fails."""
 
 
 class SerializationError(BackendError):
@@ -47,3 +54,7 @@ class DeserializationError(BackendError):
 
 class DatabaseError(BackendError):
     """Raised when an error occurs during database operations."""
+
+
+class RagError(BackendError):
+    """Raised when an error occurs during RAG operations."""

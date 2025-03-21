@@ -1,0 +1,107 @@
+[
+  {
+    "id": "part_a",
+    "title": "Administrative Form (Part A)",
+    "parent_id": null,
+    "is_long_form": false,
+    "is_title_only": false
+  },
+  {
+    "id": "part_b",
+    "title": "Proposal (Part B)",
+    "parent_id": null,
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "abstract",
+    "title": "Abstract",
+    "parent_id": "part_b",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1a",
+    "title": "Section 1a: The Idea - Breakthrough Innovation Potential",
+    "parent_id": "part_b",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1a_i",
+    "title": "The Problem and the Solution",
+    "parent_id": "section_1a",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1a_ii",
+    "title": "Demonstration of Breakthrough Innovation Potential",
+    "parent_id": "section_1a",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1a_iii",
+    "title": "Demonstration of the High-Risk/High-Gain Idea",
+    "parent_id": "section_1a",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1b",
+    "title": "Section 1b: Approach and Methodology",
+    "parent_id": "part_b",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1b_i",
+    "title": "Approach and Methodology to Explore Innovation Potential",
+    "parent_id": "section_1b",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1b_ii",
+    "title": "Activities Exploring Pathway Towards Innovation",
+    "parent_id": "section_1b",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "section_1c",
+    "title": "Section 1c: The Principal Investigator - Strategic Lead and Project Management",
+    "parent_id": "part_b",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "strategic_lead",
+    "title": "The Strategic Lead",
+    "parent_id": "section_1c",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "project_management",
+    "title": "The Project Management",
+    "parent_id": "section_1c",
+    "is_long_form": true,
+    "is_title_only": false
+  },
+  {
+    "id": "risk_mitigation",
+    "title": "Risk Mitigation Table",
+    "parent_id": "section_1c",
+    "is_long_form": false,
+    "is_title_only": false
+  },
+  {
+    "id": "supporting_docs",
+    "title": "Supporting Documentation",
+    "parent_id": "part_b",
+    "is_long_form": false,
+    "is_title_only": false
+  }
+]

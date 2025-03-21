@@ -1,23 +1,15 @@
 import logging
-from json import loads
+from datetime import UTC, datetime
 from os import environ
 from typing import Any
 
 import pytest
-from anyio import Path
-from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.tables import ApplicationFile, ApplicationVector
 from src.rag.retrieval import retrieve_documents
-
-SEARCH_QUERIES = [
-    "Staphylococcus aureus vaccine insights and antibody response mechanisms",
-    "Facilities and equipment used in S. aureus research at UCSD and Vanderbilt",
-    "Research strategy and experimental aims for staphylococcal vaccine development",
-    "Funding details and key personnel for NIH R01 project by George Liu",
-    "Preliminary findings and hypotheses on S. aureus vaccine failures",
-]
+from src.utils.db import retrieve_application
+from src.utils.serialization import serialize
+from tests.test_utils import RESULTS_FOLDER
 
 
 @pytest.mark.skipif(
@@ -26,32 +18,33 @@ SEARCH_QUERIES = [
 )
 async def test_document_retrieval(
     logger: logging.Logger,
-    application_file: ApplicationFile,
     async_session_maker: async_sessionmaker[Any],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     logger.info("Running end-to-end test for documents retrieval")
-    embeddings_data = loads(await (Path(__file__).parent / "data" / "embeddings_data.json").read_text())
-    async with async_session_maker() as session, session.begin():
-        stmt = insert(ApplicationVector).values(
-            [
-                {
-                    "application_id": application_file.application_id,
-                    "file_id": application_file.id,
-                    "chunk_index": vector["chunk_index"],
-                    "content": vector["content"],
-                    "element_type": vector["element_type"],
-                    "embedding": vector["embedding"],
-                    "page_number": vector["page_number"],
-                }
-                for vector in embeddings_data
-            ]
-        )
-        await session.execute(stmt)
-        await session.commit()
 
-    logger.info("Inserted embeddings data into the database")
-    results = await retrieve_documents(
-        application_id=str(application_file.application_id),
-        search_queries=SEARCH_QUERIES,
+    application = await retrieve_application(
+        application_id=melanoma_alliance_full_application_id, session_maker=async_session_maker
     )
-    assert len(results) == 10
+
+    results = await retrieve_documents(
+        rerank=True,
+        application_id=melanoma_alliance_full_application_id,
+        task_description=f"""
+            The task is to test the RAG pipeline by testing that retrieval works.
+
+            Here is the content of the grant application:
+
+            {serialize(application).decode()}
+            """,
+    )
+    assert len(results) == 25
+
+    assert all(isinstance(result, str) for result in results)
+
+    retrival_results = (
+        RESULTS_FOLDER
+        / melanoma_alliance_full_application_id
+        / f"retrieval_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    )
+    retrival_results.write_bytes(serialize(results))

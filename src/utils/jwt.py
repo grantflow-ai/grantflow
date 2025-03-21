@@ -3,10 +3,10 @@ from secrets import token_hex
 from typing import cast
 
 from jwt import InvalidTokenError
-from sanic import Unauthorized
+from litestar.exceptions import NotAuthorizedException
 
 from src.utils.env import get_env
-from src.utils.logging import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -45,7 +45,7 @@ def verify_jwt_token(token: str) -> str:
         token: The token to verify.
 
     Raises:
-        Unauthorized: If the cookie is invalid
+        NotAuthorizedException: If the cookie is invalid
 
     Returns:
         The user ID.
@@ -54,11 +54,11 @@ def verify_jwt_token(token: str) -> str:
 
     try:
         decoded_token = decode(jwt=token, key=get_env("JWT_SECRET"), algorithms=["HS256"])
-        return cast(str, decoded_token["sub"])
+        return cast("str", decoded_token["sub"])
     except (
         ValueError,
         KeyError,
         InvalidTokenError,
     ) as e:
         logger.warning("Error verifying jwt.", exec_info=e)
-        raise Unauthorized("Invalid jwt") from e
+        raise NotAuthorizedException("Invalid jwt") from e
