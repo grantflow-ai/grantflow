@@ -36,6 +36,39 @@ repos:
             exclude: ^backend/tests
             additional_dependencies: ["tomli"]
 
+    # Frontend
+    - repo: https://github.com/pre-commit/mirrors-eslint
+      rev: v9.23.0
+      hooks:
+          - id: eslint
+            files: \.[jt]sx?$
+            types: [file]
+            args: ["--fix", "--max-warnings=0", "--no-warn-ignored"]
+            additional_dependencies:
+                [
+                    "@eslint/compat",
+                    "@eslint/eslintrc",
+                    "@eslint/js",
+                    "@next/eslint-plugin-next",
+                    "eslint",
+                    "eslint-plugin-jsx-a11y",
+                    "eslint-plugin-markdown",
+                    "eslint-plugin-n",
+                    "eslint-plugin-perfectionist",
+                    "eslint-plugin-promise",
+                    "eslint-plugin-react",
+                    "eslint-plugin-react-hooks",
+                    "eslint-plugin-react-perf",
+                    "eslint-plugin-unicorn",
+                    "eslint-plugin-unused-imports",
+                    "eslint-plugin-vitest",
+                    "globals",
+                    "next",
+                    "react",
+                    "typescript",
+                    "typescript-eslint",
+                ]
+
     # Backend
     - repo: https://github.com/Goldziher/uncomment
       rev: v1.0.4
@@ -67,11 +100,3 @@ repos:
             language: system
             types: [python]
             files: ^backend/
-    - repo: local
-      hooks:
-          - id: eslint
-            name: eslint
-            entry: bash -c 'cd frontend && pnpm run eslint --fix --max-warnings 0 "$@"' --
-            language: system
-            files: ^frontend/.*\.(js|ts|mjs|mts|cjs|cts)$
-            require_serial: true
