@@ -1,5 +1,6 @@
 from datetime import datetime
-from uuid import UUID
+from typing import Any
+from uuid import UUID, uuid4
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -16,12 +17,56 @@ from sqlalchemy import (
 from sqlalchemy import (
     UUID as SA_UUID,
 )
-from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, Relationship, class_mapper, mapped_column, relationship
+from sqlalchemy.orm.exc import DetachedInstanceError
+from sqlalchemy.sql.functions import now
 
 from src.constants import EMBEDDING_DIMENSIONS
-from src.db.base import Base, BaseWithUUIDPK
 from src.db.enums import FileIndexingStatusEnum, UserRoleEnum
 from src.db.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
+
+
+class Base(DeclarativeBase):
+    """Base class for all tables."""
+
+    __abstract__ = True
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now(), index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now(), onupdate=now())
+
+    def _get_relationship_value(self, key: str) -> Any:
+        try:
+            value = getattr(self, key)
+            if isinstance(value, list):
+                return [item.to_dict() for item in value]
+            return value.to_dict()
+        except (DetachedInstanceError, AttributeError):
+            return None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the model's columns to a dictionary.
+
+        Returns:
+            A dictionary containing the model's columns.
+        """
+        mapper = class_mapper(self.__class__)
+        column_values = {
+            column.key: getattr(self, column.key)
+            for column in mapper.columns
+            if column.key not in {"metadata", "registry"}
+        }
+        relationship_values = {
+            relationship.key: self._get_relationship_value(relationship.key) for relationship in mapper.relationships
+        }
+        return {**column_values, **{k: v for k, v in relationship_values.items() if v is not None}}
+
+
+class BaseWithUUIDPK(Base):
+    """Base class for all tables with UUID primary keys."""
+
+    __abstract__ = True
+
+    id: Mapped[UUID] = mapped_column(SA_UUID(), primary_key=True, insert_default=uuid4)
 
 
 class Workspace(BaseWithUUIDPK):

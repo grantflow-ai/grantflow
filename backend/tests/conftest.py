@@ -24,10 +24,10 @@ from structlog import configure
 from structlog.testing import LogCapture
 from vertexai.generative_models import GenerativeModel
 
-from src.db.base import Base
 from src.db.connection import engine_ref, get_session_maker
 from src.db.json_objects import ResearchObjective, ResearchTask
 from src.db.tables import (
+    Base,
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
@@ -207,7 +207,7 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
         """)
     )
 
-    migrations_path = AsyncPath(__file__).parent.parent / "migrations"
+    migrations_path = AsyncPath(__file__).parent.parent / "alembic" / "migrations"
     async for file in migrations_path.glob("*.sql"):
         sql = await file.read_text()
         await test_conn.execute(sql)
