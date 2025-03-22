@@ -9,11 +9,13 @@ For detailed information on specific modules, refer to their dedicated documenta
 
 ## Repository Structure
 
+- `/` - Root directory, contains shared configuration
+- `/.github` - GitHub CI/CD workflows
+- `/.run` - Shared intellij run configurations
+- `/.idea` - Shared intellij configurations
+- `/.vscode` - Shared vscode configurations
 - [`/backend`](./backend/README.md) - Python backend service powered by Litestar
 - [`/frontend`](./frontend/README.md) - NextJS frontend application
-- `taskfile.yaml` - Task runner configuration for common development commands
-- `docker-compose.yaml` - Configuration for local development environment
-- `.pre-commit-config.yaml` - Code quality checks configuration
 
 ## Prerequisites
 
