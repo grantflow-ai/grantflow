@@ -1,7 +1,6 @@
 # General
 .DS_Store
 .env
-.env.*
 *.log
 .coverage
 
