@@ -86,7 +86,6 @@ task update
 ### Database
 
 We are using Postgresql 17 with pgvector.
-We manage migrations using Atlas, which you should install on your system.
 We also use docker-compose to manage our local development environment.
 
 Available Commands:
@@ -98,10 +97,10 @@ task db:up
 # Tear down the database
 task db:down
 
-# Apply database migrations (requires atlas, does not require db:up)
+# Apply database migrations (does not require db:up)
 task db:migrate
 
-# Create a new database migration (requires atlas, does not require db:up)
+# Create a new database migration (does not require db:up)
 task db:create-migration -- <migration_name>
 
 # Seed the database with initial data

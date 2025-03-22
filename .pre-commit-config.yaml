@@ -27,7 +27,7 @@ repos:
       rev: v3.5.3
       hooks:
           - id: prettier
-            exclude: ^.idea|^backend/migrations|^.git
+            exclude: ^.idea|^backend/alembic|^.git
 
     - repo: https://github.com/codespell-project/codespell
       rev: v2.4.1
