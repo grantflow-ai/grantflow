@@ -11,7 +11,7 @@ The backend follows a modular architecture:
   /api               # API routes and endpoints
     /routes          # Route handlers for different resources
     middleware.py    # API middleware
-    main.py          # Application entry point
+    main.py          # API entry point
   /db                # Database models and connection
     tables.py        # SQLAlchemy models
     base.py          # Base model definitions
