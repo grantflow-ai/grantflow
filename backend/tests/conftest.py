@@ -8,7 +8,6 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from anyio import Path as AsyncPath
 from anyio import run_process, sleep
 from asyncpg import connect
 from dotenv import load_dotenv
@@ -19,15 +18,15 @@ from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
 from scripts.seed_db import seed_db
 from sqlalchemy import NullPool, select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from structlog import configure
 from structlog.testing import LogCapture
 from vertexai.generative_models import GenerativeModel
 
-from src.db.base import Base
 from src.db.connection import engine_ref, get_session_maker
 from src.db.json_objects import ResearchObjective, ResearchTask
 from src.db.tables import (
+    Base,
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
@@ -207,11 +206,6 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
         """)
     )
 
-    migrations_path = AsyncPath(__file__).parent.parent / "migrations"
-    async for file in migrations_path.glob("*.sql"):
-        sql = await file.read_text()
-        await test_conn.execute(sql)
-
     await test_conn.close()
 
     yield connection_string.replace("postgresql://", "postgresql+asyncpg://")
@@ -220,8 +214,15 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
 
 
 @pytest.fixture(scope="session")
-async def async_session_maker(db_connection_string: str) -> async_sessionmaker[Any]:
+async def async_db_engine(db_connection_string: str) -> AsyncEngine:
     engine_ref.value = create_async_engine(db_connection_string, echo=False, poolclass=NullPool)
+    async with engine_ref.value.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    return engine_ref.value
+
+
+@pytest.fixture(scope="session")
+async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmaker[Any]:
     return get_session_maker()
 
 

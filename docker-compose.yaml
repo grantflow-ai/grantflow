@@ -3,14 +3,19 @@ services:
         image: pgvector/pgvector:pg17
         restart: always
         environment:
-            POSTGRES_DB: grantflow
-            POSTGRES_USER: grantflow
-            POSTGRES_PASSWORD: grantflow
+            POSTGRES_USER: local
+            POSTGRES_PASSWORD: local
+            POSTGRES_DB: local
         ports:
             - "5432:5432"
         volumes:
-            - postgres_data:/var/lib/postgresql/data
+            #- data:/var/lib/postgresql/data
             - ./backend/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "local", "-d", "local"]
+            interval: 1s
+            timeout: 5s
+            retries: 10
 
     backend:
         build:
@@ -19,7 +24,7 @@ services:
             platforms:
                 - "linux/x86_64" # needed due to spaCy build issues on max linux
         environment:
-            DATABASE_CONNECTION_STRING: postgresql+asyncpg://grantflow:grantflow@db:5432/grantflow
+            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
         env_file:
             - ./backend/.env
         ports:
@@ -28,7 +33,8 @@ services:
             - ./backend/src:/app/src:cached
         command: "uvicorn src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
-            - db
+            db:
+                condition: service_healthy
 
     frontend:
         build:
@@ -47,6 +53,3 @@ services:
         command: "pnpm dev"
         depends_on:
             - backend
-
-volumes:
-    postgres_data:
