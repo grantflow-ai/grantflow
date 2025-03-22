@@ -15,7 +15,6 @@ classifiers = [
 
 [dependency-groups]
 dev = [
-  "atlas-provider-sqlalchemy>=0.2.4",
   "mypy>=1.15.0",
   "pre-commit>=4.2.0",
   "ruff>=0.11.1",
@@ -47,6 +46,7 @@ lint.ignore = [
   "TD",       # We allow todo and fixme comments
   "TRY",      # Try except block, rules are too strict
 ]
+lint.per-file-ignores."backend/alembic/**/*.*" = [ "INP001" ]
 lint.per-file-ignores."backend/tests/**/*.*" = [ "ARG001", "D", "N815", "PT006", "PT007", "PT013", "RUF012", "S" ]
 lint.isort.known-first-party = [ "src", "tests" ]
 lint.mccabe.max-complexity = 25
