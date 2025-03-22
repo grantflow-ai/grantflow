@@ -6,10 +6,20 @@ data "external_schema" "sqlalchemy" {
   ]
 }
 
+data "composite_schema" "app" {
+  schema {
+    url = "file://schema.sql"
+  }
+  schema "public" {
+    url = data.external_schema.sqlalchemy.url
+  }
+}
+
 env "sqlalchemy" {
-  src = data.external_schema.sqlalchemy.url
-  url = "postgresql://grantflow:grantflow@localhost:5432/grantflow?search_path=public&sslmode=disable"
-  dev = "postgresql://grantflow:grantflow@localhost:5432/grantflow?search_path=public&sslmode=disable"
+  url = "postgresql://grantflow:grantflow@0.0.0.0:5432/grantflow?search_path=public&sslmode=disable"
+  dev = "docker://pgvector/pg17/dev"
+  src = data.composite_schema.app.url
+
   migration {
     dir = "file://migrations"
   }
