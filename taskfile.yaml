@@ -143,7 +143,7 @@ tasks:
         cmds:
             - task: db:up
             - sleep 2
-            - uv run atlas migrate --env sqlalchemy {{.CLI_ARGS}}
+            - uv run atlas migrate apply --env sqlalchemy
 
     db:create-migration:
         desc: Generate a new database migration from schema changes
