@@ -62,7 +62,7 @@ repos:
       hooks:
           - id: mypy
             name: mypy
-            entry: cd backend && uv run mypy
+            entry: uv run --project backend mypy
             require_serial: true
             language: system
             types: [python]
@@ -71,7 +71,7 @@ repos:
       hooks:
           - id: eslint
             name: eslint
-            entry: cd frontend && pnpm eslint --fix --max-warnings 0
+            entry: bash -c 'cd frontend && pnpm run eslint --fix --max-warnings 0 "$@"' --
             language: system
             files: ^frontend/.*\.(js|ts|mjs|mts|cjs|cts)$
-            require_serial: false
+            require_serial: true

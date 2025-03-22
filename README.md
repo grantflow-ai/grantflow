@@ -32,7 +32,7 @@ Make sure to install all of these on your system.
 
 ## Getting Started
 
-Begin by installing Task and pre-commit on your system. Then verify the installation by listing available commands:
+Begin by installing system dependencies mentioned above. Then verify the installation of taskfile by listing available commands:
 
 ```bash
 task --list
