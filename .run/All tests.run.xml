@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Unit Tests" type="tests" factoryName="py.test">
-    <module name="backend" />
+  <configuration default="false" name="All tests" type="tests" factoryName="py.test">
+    <module name="GrantFlow.AI" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
