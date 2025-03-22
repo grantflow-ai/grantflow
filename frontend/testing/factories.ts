@@ -37,13 +37,13 @@ const ApplicationDetailsFactory = new Factory<Record<string, string>>((factory) 
 export const GrantApplicationFactory = new Factory<API.GetApplication.Http200.ResponseBody>((factory) => ({
 	completed_at: factory.helpers.arrayElement([null, factory.date.recent().toISOString()]),
 	details: ApplicationDetailsFactory.build(),
+	form_inputs: ApplicationDetailsFactory.build(),
 	grant_template: null,
 	id: factory.string.uuid(),
 	research_objectives: ResearchObjectiveFactory.batch(3),
 	text: factory.helpers.arrayElement([null, factory.lorem.paragraphs()]),
 	title: factory.lorem.sentence(),
 	workspace_id: factory.string.uuid(),
-	form_inputs: ApplicationDetailsFactory.build(),
 }));
 
 export const ResearchTaskFactory = new Factory<{

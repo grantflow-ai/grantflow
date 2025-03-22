@@ -46,8 +46,8 @@ export default function NewApplicationWizardContainer({ workspaceId }: { workspa
 			await uploadApplicationFiles(workspaceId, applicationId, formData);
 
 			await updateApplication(workspaceId, applicationId, {
-				title: applicationTitle,
 				research_objectives,
+				title: applicationTitle,
 			} as API.UpdateApplication.RequestBody);
 		} catch (error) {
 			logError({ error, identifier: "newApplicationWizard" });
