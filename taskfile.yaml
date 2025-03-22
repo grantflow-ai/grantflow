@@ -1,104 +1,188 @@
 version: "3"
 
+vars:
+    BACKEND_DIR: backend
+    FRONTEND_DIR: frontend
+
 tasks:
-    # Backend tasks
-    backend:migrate:
-        dir: backend
-        cmds:
-            - task: db:up
-            - sleep 2
-            - PYTHONPATH=. uv run atlas migrate apply --env sqlalchemy
-
-    backend:create-migration:
-        dir: backend
-        cmds:
-            - task: db:up
-            - sleep 2
-            - PYTHONPATH=. uv run atlas migrate diff --env sqlalchemy {{.CLI_ARGS}}
-
-    backend:test:
-        dir: backend
-        cmds:
-            - uv run python -m pytest {{.CLI_ARGS}}
-
-    backend:install:
-        cmds:
-            - uv sync --all-packages --dev
-
-    backend:update:
-        cmds:
-            - uv sync --upgrade --all-packages
-            - uv run uv-bump --pyproject-toml ./pyproject.toml
-            - uv run uv-bump --pyproject-toml ./backend/pyproject.toml
-            - task: install-backend
-
-    # Frontend tasks
-    frontend:dev:
-        dir: frontend
-        cmds:
-            - pnpm run dev
-
-    frontend:build:
-        dir: frontend
-        cmds:
-            - pnpm run build
-
-    frontend:test:
-        dir: frontend
-        cmds:
-            - pnpm test {{.CLI_ARGS}}
-
-    frontend:install:
-        dir: frontend
-        cmds:
-            - pnpm install
-
-    frontend:update:
-        dir: frontend
-        cmds:
-            - pnpm up --latest
-
-    # Code Generation tasks
-    backend:api-specs:
-        cmds:
-            - cd backend && uv run litestar --app src.api.main:app schema typescript
-            - mv api-specs.ts ../frontend/src/types/api-types.ts
-            - cd ..
-            - task: lint
-
-    # Monorepo tasks
     setup:
-        desc: Setup the project dependencies
+        desc: First-time setup - install all dependencies and pre-commit hooks
         cmds:
             - pre-commit install && pre-commit install --hook-type commit-msg && pre-commit install-hooks
             - task: frontend:install
             - task: backend:install
 
     update:
-        desc: Update the project dependencies
+        desc: Update all dependencies and pre-commit hooks
         cmds:
             - task: frontend:update
             - task: backend:update
             - pre-commit autoupdate
 
-    db:up:
-        desc: Bring up the local database
-        cmds:
-            - docker compose stop && docker compose up db --detach
-
-    db:down:
-        desc: Tear down the local database
-        cmds:
-            - docker compose down db
-
-    db:seed:
-        dir: backend
+    dev:
+        desc: Start both frontend and backend development servers
         cmds:
             - task: db:up
-            - sleep 2
-            - uv run scripts/seed_db.py
+            - cmd: task backend:dev
+              start: true
+            - cmd: task frontend:dev
+              start: true
 
     lint:
-        desc: Lint the project
+        desc: Run all linters and formatters
         cmds:
             - pre-commit run --show-diff-on-failure --color=always --all-files
+
+    test:
+        desc: Run all tests for the entire project
+        cmds:
+            - task: backend:test
+            - task: frontend:test
+        backend:dev:
+            desc: Start the backend development server with hot-reload enabled
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - task: db:up
+                - uv run uvicorn src.api.main:app --reload --log-level info
+
+        backend:test:
+            desc: Run backend tests (use CLI_ARGS for specific test paths or options)
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - uv run python -m pytest {{.CLI_ARGS}}
+
+        backend:test:e2e:
+            desc: Run backend end-to-end tests with database integration
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - E2E_TESTS=true uv run python -m pytest tests/indexer/e2e tests/rag/e2e {{.CLI_ARGS}}
+
+        backend:install:
+            desc: Install backend dependencies using uv
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - uv sync --all-packages --dev
+
+        backend:update:
+            desc: Update backend dependencies to latest versions
+            cmds:
+                - uv sync --upgrade --all-packages
+                - uv run uv-bump --pyproject-toml ./pyproject.toml
+                - uv run uv-bump --pyproject-toml ./backend/pyproject.toml
+                - task: backend:install
+
+        backend:api-specs:
+            desc: Generate TypeScript API types from backend and sync to frontend
+            cmds:
+                - cd {{.BACKEND_DIR}} && uv run litestar --app src.api.main:app schema typescript
+                - mv api-specs.ts ../{{.FRONTEND_DIR}}/src/types/api-types.ts
+                - cd ..
+                - task: lint
+
+        backend:typecheck:
+            desc: Run mypy type checking on backend code
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - uv run mypy src
+
+        backend:lint:
+            desc: Run Ruff linter on backend code
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - uv run ruff check src tests {{.CLI_ARGS}}
+
+        backend:format:
+            desc: Format backend code with Ruff
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - uv run ruff format src tests {{.CLI_ARGS}}
+
+        backend:check:
+            desc: Run linting and type checking for backend
+            cmds:
+                - task: backend:lint
+                - task: backend:typecheck
+
+        frontend:dev:
+            desc: Start the frontend development server
+            dir: "{{.FRONTEND_DIR}}"
+            cmds:
+                - pnpm run dev
+
+        frontend:build:
+            desc: Build the frontend for production
+            dir: "{{.FRONTEND_DIR}}"
+            cmds:
+                - pnpm run build
+
+        frontend:test:
+            desc: Run frontend tests (use CLI_ARGS for specific test patterns)
+            dir: "{{.FRONTEND_DIR}}"
+            cmds:
+                - pnpm test {{.CLI_ARGS}}
+
+        frontend:install:
+            desc: Install frontend dependencies using pnpm
+            dir: "{{.FRONTEND_DIR}}"
+            cmds:
+                - pnpm install
+
+        frontend:update:
+            desc: Update frontend dependencies to latest versions
+            dir: "{{.FRONTEND_DIR}}"
+            cmds:
+                - pnpm up --latest
+
+        frontend:lint:
+            desc: Run ESLint on frontend code
+            dir: "{{.FRONTEND_DIR}}"
+            cmds:
+                - pnpm run eslint
+
+        frontend:typecheck:
+            desc: Run TypeScript type checking with tsc
+            dir: "{{.FRONTEND_DIR}}"
+            cmds:
+                - pnpm exec tsc --noEmit
+
+        db:up:
+            desc: Start the local PostgreSQL database container
+            cmds:
+                - docker compose stop && docker compose up db --detach
+
+        db:down:
+            desc: Stop and remove the local database container
+            cmds:
+                - docker compose down db
+
+        db:migrate:
+            desc: Apply all pending database migrations
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - task: db:up
+                - sleep 2
+                - uv run atlas migrate --env sqlalchemy {{.CLI_ARGS}}
+
+        db:create-migration:
+            desc: Generate a new database migration from schema changes
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - task: db:up
+                - sleep 2
+                - PYTHONPATH=. uv run atlas migrate diff --env sqlalchemy {{.CLI_ARGS}}
+
+        db:reset:
+            desc: Reset database (caution - destroys all data)
+            cmds:
+                - task: db:down
+                - task: db:up
+                - task: db:migrate
+                - task: db:seed
+
+        db:seed:
+            desc: Populate database with initial seed data
+            dir: "{{.BACKEND_DIR}}"
+            cmds:
+                - task: db:up
+                - sleep 2
+                - uv run scripts/seed_db.py
