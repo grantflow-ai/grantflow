@@ -226,3 +226,45 @@ pre-commit run --all-files
 # Update project dependencies
 task update
 ```
+
+## Commit Conventions
+
+This project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification for creating clear and structured commit messages. We enforce this using [commitlint](https://commitlint.js.org/).
+
+### Commit Message Format
+
+Each commit message consists of a **header**, an optional **body**, and an optional **footer**:
+
+```
+<type>(<scope>): <subject>
+<BLANK LINE>
+<body>
+<BLANK LINE>
+<footer>
+```
+
+#### Types
+
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code (white-space, formatting, etc)
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `build`: Changes that affect the build system or external dependencies
+- `ci`: Changes to our CI configuration files and scripts
+- `chore`: Other changes that don't modify src or test files
+
+#### Examples
+
+```
+feat(frontend): add workspace creation wizard
+fix(backend): resolve issue with document indexing
+docs: update API documentation
+refactor(api): simplify authentication flow
+```
+
+### Pre-commit Hooks
+
+Our pre-commit hooks will automatically check your commit messages against these conventions. If your commit message doesn't follow the convention, the commit will be rejected.
