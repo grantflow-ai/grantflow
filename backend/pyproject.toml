@@ -33,6 +33,7 @@ dependencies = [
   "sqlalchemy>=2.0.39",
   "structlog>=25.2.0",
   "tenacity>=9.0.0",
+  "torch==2.2.2", # pinned version for Apple Intel CPU
   "uvicorn[standard]>=0.34.0",
 ]
 
