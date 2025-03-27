@@ -42,7 +42,7 @@ tasks:
     backend:dev:
         desc: Start the backend development server with hot-reload enabled
         dir: "{{.BACKEND_DIR}}"
-        dotenv: "{{.BACKEND_DIR}}/.env"
+        dotenv: ["{{.BACKEND_DIR}}/.env"]
         cmds:
             - task: db:up
             - PYTHONPATH=. uv run uvicorn src.api.main:app --reload --log-level info
@@ -50,14 +50,14 @@ tasks:
     backend:test:
         desc: Run backend tests (use CLI_ARGS for specific test paths or options)
         dir: "{{.BACKEND_DIR}}"
-        dotenv: "{{.BACKEND_DIR}}/.env"
+        dotenv: ["{{.BACKEND_DIR}}/.env"]
         cmds:
             - PYTHONPATH=. uv run python -m pytest {{.CLI_ARGS}}
 
     backend:test:e2e:
         desc: Run backend end-to-end tests with database integration
         dir: "{{.BACKEND_DIR}}"
-        dotenv: "{{.BACKEND_DIR}}/.env"
+        dotenv: ["{{.BACKEND_DIR}}/.env"]
         cmds:
             - PYTHONPATH=. E2E_TESTS=true uv run python -m pytest tests/indexer/e2e tests/rag/e2e {{.CLI_ARGS}}
 
@@ -77,7 +77,7 @@ tasks:
 
     backend:api-specs:
         desc: Generate TypeScript API types from backend and sync to frontend
-        dotenv: "{{.BACKEND_DIR}}/.env"
+        dotenv: ["{{.BACKEND_DIR}}/.env"]
         cmds:
             - cd {{.BACKEND_DIR}} &&  PYTHONPATH=. uv run litestar --app src.api.main:app schema typescript
             - mv api-specs.ts ../{{.FRONTEND_DIR}}/src/types/api-types.ts
@@ -93,21 +93,21 @@ tasks:
     frontend:dev:
         desc: Start the frontend development server
         dir: "{{.FRONTEND_DIR}}"
-        dotenv: "{{.FRONTEND_DIR}}/.env"
+        dotenv: ["{{.FRONTEND_DIR}}/.env"]
         cmds:
             - pnpm run dev
 
     frontend:build:
         desc: Build the frontend for production
         dir: "{{.FRONTEND_DIR}}"
-        dotenv: "{{.FRONTEND_DIR}}/.env"
+        dotenv: ["{{.FRONTEND_DIR}}/.env"]
         cmds:
             - pnpm run build
 
     frontend:test:
         desc: Run frontend tests (use CLI_ARGS for specific test patterns)
         dir: "{{.FRONTEND_DIR}}"
-        dotenv: "{{.FRONTEND_DIR}}/.env"
+        dotenv: ["{{.FRONTEND_DIR}}/.env"]
         cmds:
             - pnpm test --run {{.CLI_ARGS}}
 
