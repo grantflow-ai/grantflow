@@ -1,28 +1,25 @@
+from asyncio import sleep
 from typing import Annotated, Any
 from uuid import UUID
 
-from litestar import delete, get, patch, post
+from litestar import delete, patch, post, websocket
 from litestar.datastructures import UploadFile
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import ValidationException
 from litestar.params import Body
 from sqlalchemy import delete as sa_delete
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
 
 from src.api.api_types import (
     APIRequest,
-    ApplicationDraftCompleteResponse,
-    ApplicationDraftProcessingResponse,
-    ApplicationResponse,
+    APIWebsocket,
     BaseApplicationResponse,
     CreateApplicationRequestBody,
-    FundingOrganizationResponse,
-    GrantTemplateResponse,
     TableIdResponse,
     UpdateApplicationRequestBody,
+    WebSocketJsonMessage,
 )
 from src.db.enums import UserRoleEnum
 from src.db.tables import GrantApplication
@@ -91,40 +88,6 @@ async def handle_create_application(
     return TableIdResponse(id=str(application_id))
 
 
-@get(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
-    operation_id="GetApplication",
-)
-async def handle_retrieve_application(
-    workspace_id: UUID,
-    application_id: UUID,
-    session_maker: async_sessionmaker[Any],
-) -> ApplicationResponse:
-    logger.info("Retrieving applications for workspace", workspace_id=workspace_id)
-    application = await retrieve_application(session_maker=session_maker, application_id=application_id)
-    return ApplicationResponse(
-        id=str(application.id),
-        title=application.title,
-        completed_at=application.completed_at.isoformat() if application.completed_at else None,
-        text=application.text,
-        form_inputs=application.form_inputs,
-        research_objectives=application.research_objectives,
-        grant_template=GrantTemplateResponse(
-            grant_sections=application.grant_template.grant_sections,
-            funding_organization=FundingOrganizationResponse(
-                id=str(application.grant_template.funding_organization.id),
-                full_name=application.grant_template.funding_organization.full_name,
-                abbreviation=application.grant_template.funding_organization.abbreviation,
-            )
-            if application.grant_template.funding_organization
-            else None,
-        )
-        if application.grant_template
-        else None,
-    )
-
-
 @patch(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
@@ -176,24 +139,26 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
             raise DatabaseError("Error deleting application", context=str(e)) from e
 
 
-@get(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/content",
+@websocket(
+    [
+        "/workspaces/{workspace_id:uuid}/applications/new",  # for creating a new application ~keep
+        "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",  # for interacting with an existing application ~keep
+    ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
-    operation_id="GetApplicationContent",
+    operation_id="GrantApplicationWebsocket",
 )
-async def handle_retrieve_application_text(
-    application_id: UUID, session_maker: async_sessionmaker[Any]
-) -> ApplicationDraftCompleteResponse | ApplicationDraftProcessingResponse:
-    logger.info("handling polling request for application", application_id=application_id)
-    async with session_maker() as session:
-        grant_application: GrantApplication = await session.scalar(
-            select(GrantApplication)
-            .options(selectinload(GrantApplication.grant_template))
-            .where(GrantApplication.id == application_id)
-            .where(GrantApplication.text.is_not(None))
-        )
-
-    if grant_application and grant_application.text:
-        return ApplicationDraftCompleteResponse(id=str(application_id), status="complete", text=grant_application.text)
-
-    return ApplicationDraftProcessingResponse(id=str(application_id), status="generating")
+async def handle_application_websocket(
+    session_maker: async_sessionmaker[Any],
+    socket: APIWebsocket,
+    workspace_id: UUID,
+    application_id: UUID | None = None,
+) -> None:
+    logger.info("Retrieving applications for workspace", workspace_id=workspace_id)
+    await socket.accept()
+    await socket.send_text("Connected")
+    if application_id:
+        application = await retrieve_application(session_maker=session_maker, application_id=application_id)
+        await socket.send_json(WebSocketJsonMessage(type="application", content=application))
+    while True:
+        await socket.send_text("Waiting for updates...")
+        await sleep(10)
