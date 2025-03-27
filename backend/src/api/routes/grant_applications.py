@@ -83,7 +83,7 @@ async def handle_create_application(
             raise DatabaseError("Error creating application", context=str(e)) from e
 
     request.app.emit(
-        "handle_generate_grant_template",
+        "grant_template_generation_pipeline_handler",
         application_id=application_id,
         cfp_content=cfp_content,
     )

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { NewGrantApplicationFormValues, NewGrantWizardFormValues } from "@/lib/schema";
+import { NewGrantApplicationFormValues, NewGrantWizardFormValues } from "@/schema";
 import { NewGrantApplicationModal } from "@/components/workspaces/detail/applications/new/new-grant-application-modal";
 import { Wizard } from "@/components/workspaces/detail/applications/new/wizard";
 import { logError } from "@/utils/logging";
@@ -16,18 +16,11 @@ export default function NewApplicationWizardContainer({ workspaceId }: { workspa
 
 	const handleNewGrantApplication = async (data: NewGrantApplicationFormValues) => {
 		try {
-			const formData = new FormData();
-			if (data.cfpFile) {
-				formData.set("cfp_file", data.cfpFile);
-			}
-			formData.set(
-				"data",
-				JSON.stringify({
-					cfp_url: data.cfpUrl,
-					title: data.title,
-				} satisfies API.CreateApplication.RequestBody),
-			);
-			const { id } = await createApplication(workspaceId, formData);
+			const { id } = await createApplication(workspaceId, {
+				cfp_file: data.cfpFile as string | undefined,
+				cfp_url: data.cfpUrl,
+				title: data.title,
+			});
 			setShowWizard(true);
 			setApplicationTitle(data.title);
 			setApplicationId(id);

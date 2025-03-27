@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export const MIN_LENGTH = 25;
-
 export const MIN_TITLE_LENGTH = 10;
 
 export const newGrantApplicationSchema = z

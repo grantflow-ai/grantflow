@@ -1,7 +1,6 @@
 "use client";
 
 import { ThemeToggle } from "@/components/theme-toggle";
-import { cn } from "@/lib/utils";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -43,15 +42,10 @@ export function Navbar() {
 
 	return (
 		<nav
-			className={cn(
-				"w-full",
-				"border-b border-gray-200 dark:border-gray-700",
-				"bg-white dark:bg-secondary",
-				"transition-all duration-200",
-			)}
+			className="w-full border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-secondary transition-all duration-200"
 			data-testid="navbar"
 		>
-			<div className="flex justify-between items-center h-16 w-full container px-4" data-testid="navbar-actions">
+			<div className="flex justify-between items-center h-16 w-full px-4" data-testid="navbar-actions">
 				<Breadcrumbs pathname={pathname} />
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>
