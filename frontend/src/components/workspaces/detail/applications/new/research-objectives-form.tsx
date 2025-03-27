@@ -1,7 +1,7 @@
 "use client";
 
 import { useFieldArray } from "react-hook-form";
-import { MIN_TITLE_LENGTH, NewGrantWizardFormValues } from "@/lib/schema";
+import { MIN_TITLE_LENGTH, NewGrantWizardFormValues } from "@/schema";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";

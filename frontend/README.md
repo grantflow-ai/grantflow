@@ -15,7 +15,6 @@ The frontend follows a modern Next.js App Router architecture:
     /landing-page    # Components for landing page
     /sign-in         # Authentication components
     /workspaces      # Workspace related components
-  /hooks         # Custom React hooks
   /lib           # Shared utilities and schemas
   /styles        # Global styles
   /types         # TypeScript type definitions

@@ -14,7 +14,7 @@ const nextConfig = {
 
 if (process.env.NODE_ENV === "development") {
 	// workaround, see: https://github.com/vercel/next.js/discussions/55987 ~keep
-
+	// @ts-expect-error, issue with turbopack ~keep
 	nextConfig.outputFileTracingRoot = path.join(__dirname, "../");
 }
 

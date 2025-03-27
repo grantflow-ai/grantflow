@@ -9,7 +9,7 @@ import { ResearchObjectivesForm } from "./research-objectives-form";
 import { ResearchPlanForm } from "./research-plan-form";
 import { Stepper } from "@/components/stepper";
 import { Toaster } from "sonner";
-import { newGrantWizardForm, NewGrantWizardFormValues } from "@/lib/schema";
+import { newGrantWizardForm, NewGrantWizardFormValues } from "@/schema";
 import { toast } from "sonner";
 
 const stepTitles = ["Research Objectives", "Knowledge Base", "Research Plan"];

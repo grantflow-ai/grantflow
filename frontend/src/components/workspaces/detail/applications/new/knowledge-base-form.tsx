@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { FileUploader } from "@/components/file-uploader";
 import { FilesDisplay } from "@/components/files-display";
 import { UseFormReturn } from "react-hook-form";
-import { NewGrantWizardFormValues } from "@/lib/schema";
+import { NewGrantWizardFormValues } from "@/schema";
 
 export function KnowledgeBaseForm({ form }: { form: UseFormReturn<NewGrantWizardFormValues> }) {
 	const handleFilesAdded = (newFiles: File[]) => {
