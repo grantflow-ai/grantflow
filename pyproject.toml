@@ -12,6 +12,9 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
+dependencies = [
+  "numpy<2.0",
+]
 
 [dependency-groups]
 dev = [
