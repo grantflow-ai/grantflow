@@ -45,7 +45,7 @@ tasks:
         dotenv: ["{{.BACKEND_DIR}}/.env"]
         cmds:
             - task: db:up
-            - PYTHONPATH=. uv run uvicorn src.api.main:app --reload --log-level info
+            - PYTHONPATH=. uv run uvicorn src.api.main:app --reload --log-level info --env-file .env
 
     backend:test:
         desc: Run backend tests (use CLI_ARGS for specific test paths or options)
