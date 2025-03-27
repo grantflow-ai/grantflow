@@ -43,19 +43,19 @@ tasks:
         dir: "{{.BACKEND_DIR}}"
         cmds:
             - task: db:up
-            - uv run uvicorn src.api.main:app --reload --log-level info
+            - PYTHONPATH=. uv run uvicorn src.api.main:app --reload --log-level info
 
     backend:test:
         desc: Run backend tests (use CLI_ARGS for specific test paths or options)
         dir: "{{.BACKEND_DIR}}"
         cmds:
-            - uv run python -m pytest {{.CLI_ARGS}}
+            - PYTHONPATH=. uv run python -m pytest {{.CLI_ARGS}}
 
     backend:test:e2e:
         desc: Run backend end-to-end tests with database integration
         dir: "{{.BACKEND_DIR}}"
         cmds:
-            - E2E_TESTS=true uv run python -m pytest tests/indexer/e2e tests/rag/e2e {{.CLI_ARGS}}
+            - PYTHONPATH=. E2E_TESTS=true uv run python -m pytest tests/indexer/e2e tests/rag/e2e {{.CLI_ARGS}}
 
     backend:install:
         desc: Install backend dependencies using uv
@@ -74,7 +74,7 @@ tasks:
     backend:api-specs:
         desc: Generate TypeScript API types from backend and sync to frontend
         cmds:
-            - cd {{.BACKEND_DIR}} && uv run litestar --app src.api.main:app schema typescript
+            - cd {{.BACKEND_DIR}} &&  PYTHONPATH=. uv run litestar --app src.api.main:app schema typescript
             - mv api-specs.ts ../{{.FRONTEND_DIR}}/src/types/api-types.ts
             - cd ..
             - task: lint
@@ -167,4 +167,4 @@ tasks:
         cmds:
             - task: db:up
             - sleep 2
-            - uv run scripts/seed_db.py
+            - PYTHONPATH=. uv run scripts/seed_db.py
