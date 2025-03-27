@@ -1,6 +1,6 @@
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Generic, Literal, NotRequired, TypedDict, TypeVar
 
-from litestar import Request
+from litestar import Request, WebSocket
 from litestar.datastructures import State, UploadFile
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -12,7 +12,15 @@ class APIRequestState(State):
     session_maker: async_sessionmaker[Any]
 
 
+T = TypeVar("T")
+
 APIRequest = Request[UserRoleEnum | None, str | None, APIRequestState]
+APIWebsocket = WebSocket[UserRoleEnum | None, str | None, APIRequestState]
+
+
+class WebSocketJsonMessage(TypedDict, Generic[T]):
+    type: str
+    content: T
 
 
 class TableIdResponse(TypedDict):
