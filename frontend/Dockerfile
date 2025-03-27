@@ -9,7 +9,7 @@ RUN pnpm install --frozen-lockfile
 FROM install AS build
 WORKDIR /app/
 COPY src src
-COPY next.config.ts tailwind.config.mts tsconfig.json postcss.config.mjs next-env.d.ts ./
+COPY next.config.ts tsconfig.json postcss.config.mjs next-env.d.ts ./
 RUN mkdir -p public
 RUN pnpm run build
 
