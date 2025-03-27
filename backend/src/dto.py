@@ -8,7 +8,7 @@ class APIError(TypedDict):
 
     message: str
     """The error message."""
-    details: NotRequired[str]
+    detail: NotRequired[str]
     """The error details."""
 
 

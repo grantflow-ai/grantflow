@@ -63,10 +63,15 @@ const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
  * @param data - The form data to be submitted for the creation of the application.
  * @return A promise that resolves to the ID of the newly created application.
  */
-export async function createApplication(workspaceId: string, data: FormData) {
+export async function createApplication(workspaceId: string, data: API.CreateApplication.RequestBody) {
+	const body = new FormData();
+	for (const [key, value] of Object.entries(data)) {
+		body.append(key, value);
+	}
+
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/applications`, { body: data, headers: await createAuthHeaders() })
+			.post(`workspaces/${workspaceId}/applications`, { body, headers: await createAuthHeaders() })
 			.json<API.CreateApplication.Http201.ResponseBody>(),
 	);
 }

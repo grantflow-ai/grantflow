@@ -57,7 +57,7 @@ export default async function LandingPage() {
 	return (
 		<div className="flex flex-col">
 			<NavHeader />
-			<div className="flex-grow container">
+			<div className="flex-grow">
 				<section className="bg-background pt-10 md:pt-16" data-testid="heading-section">
 					<div className="container mx-auto px-4 text-center">
 						<h1

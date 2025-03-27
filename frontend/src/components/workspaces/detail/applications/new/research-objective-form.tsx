@@ -1,4 +1,4 @@
-import { MIN_TITLE_LENGTH, NewGrantWizardFormValues } from "@/lib/schema";
+import { MIN_TITLE_LENGTH, NewGrantWizardFormValues } from "@/schema";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

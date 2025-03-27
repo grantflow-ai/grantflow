@@ -8,7 +8,6 @@ from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.di import Provide
 from litestar.events import listener
-from litestar.exceptions import HTTPException
 from litestar.handlers import HTTPRouteHandler
 from litestar.logging import StructLoggingConfig
 from litestar.response import Response
@@ -53,7 +52,8 @@ from src.db.connection import get_session_maker
 from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError
 from src.indexer.files import parse_and_index_file
-from src.rag.grant_template.determine_longform_metadata import handle_generate_grant_template
+from src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
+from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from src.utils.ai import init_llm_connection
 from src.utils.firebase import get_firebase_app
 from src.utils.logger import get_logger
@@ -91,34 +91,32 @@ api_routes: list[HTTPRouteHandler] = [
 
 session_maker_provider = Provide(get_session_maker, sync_to_thread=True)
 parse_and_index_file_listener = listener("parse_and_index_file")(parse_and_index_file)
-handle_generate_grant_template_listener = listener("handle_generate_grant_template")(handle_generate_grant_template)
+grant_template_generation_pipeline_handler_listener = listener("grant_template_generation_pipeline_handler")(
+    grant_template_generation_pipeline_handler
+)
+grant_application_text_generation_pipeline_handler_listener = listener(
+    "grant_application_text_generation_pipeline_handler"
+)(grant_application_text_generation_pipeline_handler)
 
 
 def handle_exception(_: APIRequest, exception: Exception) -> Response[Any]:
-    if isinstance(exception, DeserializationError):
-        logger.error("Failed to deserialize the request body", exec_info=exception)
-        message = "Failed to deserialize the request body"
-        status_code: int = HTTPStatus.BAD_REQUEST
-    elif isinstance(exception, BackendError):
-        logger.error("An unexpected backend error occurred.", exec_info=exception)
-        message = "An unexpected backend error occurred"
-        status_code = HTTPStatus.INTERNAL_SERVER_ERROR
-    elif isinstance(exception, HTTPException):
-        message = str(exception)
-        status_code = exception.status_code
-    elif isinstance(exception, SQLAlchemyError):
+    if isinstance(exception, SQLAlchemyError):
         logger.error("An unexpected sqlalchemy error occurred", exc_name=type(exception).__name__, exec_info=exception)
         message = "An unexpected database error occurred"
         status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+    elif isinstance(exception, DeserializationError):
+        logger.error("Failed to deserialize the request body", exec_info=exception)
+        message = "Failed to deserialize the request body"
+        status_code = HTTPStatus.BAD_REQUEST
     else:
-        logger.error("An unexpected error occurred", exc_name=type(exception).__name__, exec_info=exception)
-        message = "An unexpected error occurred"
+        logger.error("An unexpected backend error occurred.", exec_info=exception)
+        message = "An unexpected backend error occurred"
         status_code = HTTPStatus.INTERNAL_SERVER_ERROR
 
     return Response(
         content=APIError(
             message=message,
-            details=str(exception),
+            detail=str(exception),
         ),
         status_code=status_code,
     )
@@ -149,9 +147,14 @@ app = Litestar(
     ),
     on_startup=[before_server_start],
     middleware=[AuthMiddleware],
-    exception_handlers={Exception: handle_exception},
+    exception_handlers={SQLAlchemyError: handle_exception, BackendError: handle_exception},
     dependencies={"session_maker": session_maker_provider},
-    logging_config=StructLoggingConfig(),
+    logging_config=StructLoggingConfig(log_exceptions="always"),
+    listeners=[
+        parse_and_index_file_listener,
+        grant_template_generation_pipeline_handler_listener,
+        grant_application_text_generation_pipeline_handler_listener,
+    ],
 )
 
 if __name__ == "__main__":  # pragma: no cover

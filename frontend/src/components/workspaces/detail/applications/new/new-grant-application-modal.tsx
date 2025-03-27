@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NewGrantApplicationFormValues } from "@/lib/schema";
+import { NewGrantApplicationFormValues } from "@/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { NewApplicationForm } from "./new-application-form";

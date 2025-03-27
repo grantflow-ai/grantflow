@@ -74,6 +74,7 @@ repos:
       rev: v1.0.4
       hooks:
           - id: uncomment
+            exclude: ^frontend/next-env.d.ts
 
     - repo: https://github.com/tox-dev/pyproject-fmt
       rev: v2.5.1
