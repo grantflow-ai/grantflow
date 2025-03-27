@@ -8,7 +8,7 @@ from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.di import Provide
 from litestar.events import listener
-from litestar.handlers import HTTPRouteHandler
+from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from litestar.logging import StructLoggingConfig
 from litestar.response import Response
 from sqlalchemy import text
@@ -29,10 +29,9 @@ from src.api.routes.funding_organizations import (
     handle_update_organization,
 )
 from src.api.routes.grant_applications import (
+    handle_application_websocket,
     handle_create_application,
     handle_delete_application,
-    handle_retrieve_application,
-    handle_retrieve_application_text,
     handle_update_application,
 )
 from src.api.routes.health import health_check
@@ -63,8 +62,9 @@ logger = get_logger(__name__)
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 
-api_routes: list[HTTPRouteHandler] = [
+api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_application_file_uploads,
+    handle_application_websocket,
     handle_create_application,
     handle_create_organization,
     handle_create_otp,
@@ -76,8 +76,6 @@ api_routes: list[HTTPRouteHandler] = [
     handle_delete_workspace,
     handle_login,
     handle_organization_file_uploads,
-    handle_retrieve_application,
-    handle_retrieve_application_text,
     handle_retrieve_organizations,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
@@ -122,11 +120,11 @@ def handle_exception(_: APIRequest, exception: Exception) -> Response[Any]:
     )
 
 
-async def before_server_start(app: Litestar) -> None:
+async def before_server_start(app_instance: Litestar) -> None:
     get_firebase_app()
     init_llm_connection()
 
-    session_maker = app.state.session_maker = get_session_maker()
+    session_maker = app_instance.state.session_maker = get_session_maker()
     try:
         async with session_maker() as session:
             await session.execute(text("SELECT 1"))
