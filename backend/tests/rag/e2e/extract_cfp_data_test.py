@@ -4,7 +4,7 @@ from os import environ
 
 import pytest
 
-from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
+from src.rag.grant_template.extract_cfp_data import CFP_WORD_COUNT_THRESHOLD, handle_extract_cfp_data
 from src.utils.serialization import serialize
 from tests.test_utils import FIXTURES_FOLDER, RESULTS_FOLDER
 
@@ -130,4 +130,51 @@ async def test_extract_cfp_data_erc(
         folder.mkdir(parents=True, exist_ok=True)
 
     results_file = folder / f"extract_cfp_data_erc_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file.write_bytes(serialize(result))
+
+
+@pytest.mark.skipif(
+    not environ.get("E2E_TESTS"),
+    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
+)
+async def test_extract_cfp_data_short_content(
+    logger: logging.Logger,
+    organization_mapping: dict[str, dict[str, str]],
+) -> None:
+    logger.info("Running end-to-end test for extracting CFP data with short content")
+    start_time = datetime.now(UTC)
+
+    cfp_content_file = FIXTURES_FOLDER / "cfps" / "erc.md"
+    assert cfp_content_file.exists(), "CFP content file does not exist"
+
+    short_cfp_content = " ".join(
+        cfp_content_file.read_text().replace("\n", " ").split(" ")[: CFP_WORD_COUNT_THRESHOLD - 1]
+    )
+
+    result = await handle_extract_cfp_data(
+        cfp_content=short_cfp_content,
+        organization_mapping=organization_mapping,
+    )
+
+    elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
+    assert elapsed_time < 30
+
+    assert isinstance(result["organization_id"], (str | type(None)))
+    assert isinstance(result["content"], list)
+    assert isinstance(result["cfp_subject"], str)
+
+    # TODO: assert content meant to be returned as a single item
+    assert len(result["content"]) == 1
+    assert result["content"][0] == short_cfp_content
+
+    # TODO: check for when orga
+    assert result["organization_id"] is None
+
+    assert len(result["cfp_subject"]) > 0
+
+    folder = RESULTS_FOLDER / "cfps" / "extracted_data"
+    if not folder.exists():
+        folder.mkdir(parents=True, exist_ok=True)
+
+    results_file = folder / f"extract_cfp_data_short_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
     results_file.write_bytes(serialize(result))

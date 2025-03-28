@@ -22,6 +22,8 @@ class ExtractedCFPData(TypedDict):
     """Error message if applicable."""
 
 
+# TODO: assert realistic threshold
+CFP_WORD_COUNT_THRESHOLD: Final[int] = 500
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
 You are a specialized system designed to analyze and extract information from STEM funding opportunity announcements (CFPs).
 """
@@ -162,6 +164,17 @@ async def handle_extract_cfp_data(
     Returns:
         The extracted CFP data.
     """
+    word_count = len(cfp_content.split())
+    if word_count < CFP_WORD_COUNT_THRESHOLD:
+        # TODO: assert correct logic here
+        organization_id = None
+        # TODO: assert if error should
+        return {
+            "organization_id": organization_id,
+            "content": [cfp_content],
+            "cfp_subject": "Raw CFP content, no extraction performed (word count below threshold)",
+            "error": None,
+        }
     return await with_prompt_evaluation(
         prompt_identifier="extract_cfp_data",
         prompt_handler=extract_cfp_data,
