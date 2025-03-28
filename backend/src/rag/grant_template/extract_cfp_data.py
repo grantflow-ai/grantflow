@@ -22,10 +22,12 @@ class ExtractedCFPData(TypedDict):
     """Error message if applicable."""
 
 
-# TODO: assert realistic threshold
 CFP_WORD_COUNT_THRESHOLD: Final[int] = 500
+
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
 You are a specialized system designed to analyze and extract information from STEM funding opportunity announcements (CFPs).
+Your primary goal is to maintain the structural integrity of the CFP while extracting all relevant requirements and guidelines.
+Focus on preserving the hierarchical organization and explicit requirements of the document.
 """
 
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -33,7 +35,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     template="""
     # CFP Data Extraction
 
-    Your task is the analyze and extract the most relevant application guidelines and requirements from the following funding opportunity announcement:
+    Your task is to analyze and extract the most relevant application guidelines and requirements from the following funding opportunity announcement while maintaining its structural integrity:
 
     ## Sources
 
@@ -44,7 +46,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     </cfp_content>
 
     ### Organization Mapping
-    The following JSON object is maps organization IDs (in our database) to their names and abbreviations:
+    The following JSON object maps organization IDs (in our database) to their names and abbreviations:
 
     <organization_mapping>
     ${organization_mapping}
@@ -57,42 +59,72 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - If an explicit mention is found, return the corresponding organization ID.
        - If no match is found, return `null` for `organization_id`.
 
-    2. **Core Requirements Extraction**
-       - Identify **explicit grant requirements**, including:
-         - Required sections (if stated)
-         - Page limits and formatting rules
-         - Eligibility criteria
-         - Evaluation criteria
-         - Required submission components (e.g., budget, research plan)
+    2. **Formatting Requirements**
+       - Extract all explicit formatting requirements including:
+         - Font specifications (type, size)
+         - Margin requirements
+         - Line spacing rules
+         - Page limits and exclusions
+       - Present these as separate, clear statements
 
-    3. **Administrative Details Filtering**
+    3. **Structural Analysis**
+       - Identify and preserve the hierarchical structure of the CFP
+       - For each section:
+         - Include the full section title with page limits (if specified)
+         - Add "- Title only" for main sections
+         - Include subsection titles without "- Title only"
+         - Subsection: Do not include description of the section, only the title summarized to highlight the main topic of the section
+       - Maintain the exact numbering scheme (e.g., "1a.i", "1b.ii")
+       - Preserve the original section order
+
+    4. **Requirements Extraction**
+       - Extract all explicit requirements including:
+         - Character limits (e.g., for abstracts)
+         - Language requirements
+         - Content restrictions
+         - Supporting documentation needs
+       - Present these as clear, concise statements
+
+    5. **CFP Subject Identification**
+       - Generate a comprehensive summary that captures:
+         - The type of funding opportunity
+         - The target audience/researchers
+         - The key objectives and expected outcomes
+         - The scope and scale of the project
+         - Any specific focus areas or themes
+       - Ensure the summary is rich in domain-specific details
+    6. **Administrative Details Filtering**
        - Retain only **application-related** details that impact **submission format**.
        - **Exclude** general grant submission instructions (e.g., Grants.gov steps, eRA Commons login).
        - URLS and external references.
        - Forms, addresses, beuracratic details etc.
 
-    4. **CFP Subject Identification**
-       - Generate a **concise summary** of the CFP's subject matter.
-       - Ensure the summary is **rich in domain-specific entities** (e.g., funding areas, research disciplines, technical methodologies, application domains).
-       - The summary should capture the **types of projects and researchers the CFP is targeting**.
-
     ## Output Format:
     ```jsonc
     {
-        "organization_id": "UUID from mapping", // null if the organization is not found in the mapping or can't be identified
-        "content": ["extracted text", "extracted text"], // can be empty if error
+        "organization_id": "UUID from mapping", // null if not found
+        "content": [
+            "Formatting requirement 1",
+            "Formatting requirement 2",
+            "Section title with page limit - Title only",
+            "Subsection title",
+            "Explicit requirement",
+            "Supporting documentation requirement"
+        ],
         "cfp_subject": {"type": "string"}, // can be empty if error
-        "error": null, // or error message if the information is too scarce or ambiguous
+        "error": null // or error message if extraction fails
     }
     ```
 
     ## Guidelines:
-    - Extract only explicit instructions related to submission requirements.
-    - You can rephrase and summarize as required, but ensure the core meaning and any explicit requirements are preserved.
-    - Ensure the extracted content is free from unrelated details such as general program descriptions, funding allocations, or review criteria.
-    - Deduplicate the extracted content and reduce unnecessary repetition, you can rephrase, summarize and combine similar points.
-    - Remove all links (URLs) from the extracted content and any extracted content that is primarily a reference to another source (e.g. "see x for guidelines")
-    - Remove any unnecessary language from the output - assume the output is meant for machine processing.
+    - Preserve the exact hierarchical structure of the CFP
+    - Include all explicit requirements and constraints
+    - Maintain section relationships and dependencies
+    - Present each requirement as a separate, clear statement
+    - Use "- Title only" for main sections but not subsections
+    - Ensure the extracted content is machine-processable while maintaining readability
+    - Remove only truly administrative details (URL, reference)
+    - Rephrase and/or summarize as required while preserving the core meaning and any explicit requirements
     """,
 )
 
@@ -147,8 +179,8 @@ async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:
         validator=validate_cfp_extraction,
         messages=task_description,
         system_prompt=EXTRACT_CFP_DATA_SYSTEM_PROMPT,
-        temperature=1.3,
-        top_p=0.97,
+        temperature=0.7,
+        top_p=0.95,
     )
 
 
