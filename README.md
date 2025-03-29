@@ -57,6 +57,25 @@ task setup
 
 At this point it's recommended you migrate and seed the database (see the [Database](#database) section).
 
+### Windows Setup (WSL)
+
+> ⚠️ Windows has path compatibility issues (e.g., filenames containing `:` are not supported), which may cause Git operations to fail when working directly on the Windows file system.
+
+### Recommended: Use WSL for Development
+
+We recommend using [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install) to create a Linux-native development environment on Windows.
+
+WSL provides full compatibility with the tooling used in this monorepo (Node.js, Python, Docker, etc.) and avoids common filesystem issues on Windows.
+
+### Installing Ubuntu on WSL
+
+We suggest installing the latest **Ubuntu LTS** release (e.g., Ubuntu 22.04) for best compatibility and support.
+
+Follow the official Ubuntu WSL guide here:
+👉 [Develop on Ubuntu with WSL](https://documentation.ubuntu.com/wsl/en/latest/tutorials/develop-with-ubuntu-wsl/)
+
+Once WSL and Ubuntu are installed and configured, your environment is ready to mount and develop the repository using the instructions in the [Getting Started](#getting-started) section.
+
 ## Local Development
 
 ### Quick Start
