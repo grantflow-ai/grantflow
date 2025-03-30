@@ -6,7 +6,7 @@ export default defineConfig({
 	plugins: [tsconfigPaths(), react()],
 	test: {
 		coverage: {
-			exclude: ["**/*.spec.*", "**/*.d.ts", "src/types/*"],
+			exclude: ["**/*.spec.*", "**/*.d.ts", "src/types/*", "src/components/ui/*"],
 			include: ["src"],
 		},
 		environment: "jsdom",
