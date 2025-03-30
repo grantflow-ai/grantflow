@@ -59,7 +59,7 @@ async def test_create_application(
     assert grant_application.title == "abc"
 
     signal_calls = [
-        call for call in signal_dispatch_mock.mock_calls if call.args[0] == "handle_generate_grant_template"
+        call for call in signal_dispatch_mock.mock_calls if call.args[0] == "grant_template_generation_pipeline_handler"
     ]
     assert len(signal_calls) == 1
 
