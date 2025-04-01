@@ -11,11 +11,10 @@ const clientRef = new Ref<KyInstance>();
  * @returns - The API client instance.
  */
 export function getClient(): KyInstance {
-	if (!clientRef.value) {
-		clientRef.value = ky.create({
-			prefixUrl: getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
-			timeout: ONE_MINUTE_IN_MS * 10,
-		});
-	}
+	clientRef.value ??= ky.create({
+		prefixUrl: getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
+		timeout: ONE_MINUTE_IN_MS * 10,
+	});
+
 	return clientRef.value;
 }
