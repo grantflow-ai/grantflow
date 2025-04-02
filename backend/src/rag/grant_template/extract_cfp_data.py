@@ -28,6 +28,7 @@ class ExtractedCFPData(ExtractedCFPDataBase):
 
 
 CFP_WORD_COUNT_THRESHOLD: Final[int] = 500
+TEMPERATURE: Final[float] = 0.2
 
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
 You are a specialized system designed to analyze and extract information from STEM funding opportunity announcements (CFPs).
@@ -121,15 +122,19 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     }
     ```
 
-    ## Guidelines:
+    ## Guidelines - Do NOT skip any step:
     - Preserve the exact hierarchical structure of the CFP
-    - Include all explicit requirements and constraints
+    - Include, summarize, and **group** all explicit requirements and constraints while representing each requirement as a separate, clear statement
     - Maintain section relationships and dependencies
-    - Present each requirement as a separate, clear statement
-    - Use "- Title only" for main sections but not subsections
+    - For each section title add "- Title only" if it is a main section
+    - Keep section and subsection names unchanged
+    - Section are not to be divided into multiple sections
+    - **Important**: Subsections per section are to be grouped, summarized, and presented as a single statement
     - Ensure the extracted content is machine-processable while maintaining readability
-    - Remove only truly administrative details (URL, reference)
-    - Rephrase and/or summarize as required while preserving the core meaning and any explicit requirements
+    - **Important**: Remove only truly administrative details (URL, reference)
+    - The core meaning MUST be maintained and no other information should be added or removed
+    - Skip repeated escape sequences in your output (such as \n or \r)
+    - If there is content in a language other than English, make sure to translate it to English before processing the input
     """,
 )
 
@@ -242,7 +247,7 @@ async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:
         validator=validate_cfp_extraction,
         messages=task_description,
         system_prompt=EXTRACT_CFP_DATA_SYSTEM_PROMPT,
-        temperature=0.7,
+        temperature=TEMPERATURE,
         top_p=0.95,
     )
 
@@ -263,7 +268,7 @@ async def extract_cfp_data_short_content(task_description: str, **_: Any) -> Ext
         response_schema=cfp_extraction_schema_short_content,
         messages=task_description,
         system_prompt=EXTRACT_CFP_DATA_SYSTEM_PROMPT,
-        temperature=0.7,
+        temperature=TEMPERATURE,
         top_p=0.95,
     )
 
