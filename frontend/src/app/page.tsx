@@ -2,7 +2,7 @@
 "use server";
 
 import { Footer } from "@/components/footer";
-import { NavHeader } from "@/components/landing-page/nav-header";
+import { NavHeader2 } from "@/components/landing-page/nav-header-2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Lock, Users } from "lucide-react";
 
@@ -56,7 +56,7 @@ const locales = {
 export default async function LandingPage() {
 	return (
 		<div className="flex flex-col">
-			<NavHeader />
+			<NavHeader2 />
 			<div className="flex-grow">
 				<section className="bg-background pt-10 md:pt-16" data-testid="heading-section">
 					<div className="container mx-auto px-4 text-center">
@@ -163,7 +163,6 @@ export default async function LandingPage() {
 					</div>
 				</section>
 			</div>
-
 			<Footer />
 		</div>
 	);
