@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 		<html lang="en" suppressHydrationWarning>
 			<head>
 				<link href="https://use.typekit.net/get1yhn.css" rel="stylesheet" />
-				<link href="/favicon.ico" rel="icon" sizes="any" />
+				<link href="/favicon.svg" rel="icon" sizes="any" type="image/svg+xml" />
 			</head>
 			<body
 				className={cn(
