@@ -2,6 +2,7 @@
 "use server";
 
 import { Footer } from "@/components/footer";
+import { HeroBanner } from "@/components/hero-banner/hero-banner";
 import { NavHeader2 } from "@/components/landing-page/nav-header-2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Lock, Users } from "lucide-react";
@@ -57,6 +58,7 @@ export default async function LandingPage() {
 	return (
 		<div className="flex flex-col">
 			<NavHeader2 />
+			<HeroBanner />
 			<div className="flex-grow">
 				<section className="bg-background pt-10 md:pt-16" data-testid="heading-section">
 					<div className="container mx-auto px-4 text-center">

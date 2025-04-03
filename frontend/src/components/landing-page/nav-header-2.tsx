@@ -1,11 +1,11 @@
 import { Logo } from "@/components/logo";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import { CalendarPlus2 } from "lucide-react";
 
 export function NavHeader2() {
 	return (
 		<header
-			className="sticky top-0 z-50 flex justify-between items-center pe-30 ps-24 border-b border-b-gray-400/20"
+			className="sticky top-0 z-40 bg-background flex justify-between items-center pe-30 ps-24 border-b border-b-gray-400/20"
 			data-testid="nav-header"
 		>
 			<Logo className="h-26" />
