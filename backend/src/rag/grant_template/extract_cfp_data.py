@@ -1,5 +1,6 @@
 from typing import Any, Final, NotRequired, TypedDict
 
+from src.constants import REASONING_MODEL
 from src.exceptions import InsufficientContextError, ValidationError
 from src.rag.completion import handle_completions_request
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
@@ -99,6 +100,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
          - The scope and scale of the project
          - Any specific focus areas or themes
        - Ensure the summary is rich in domain-specific details
+
     6. **Administrative Details Filtering**
        - Aggressively remove any content that does not directly impact submission format or requirements
        - Retain only **application-related** details that impact **submission format**.
@@ -161,6 +163,7 @@ EXTRACT_CFP_DATA_SHORT_CONTENT_USER_PROMPT: Final[PromptTemplate] = PromptTempla
        - Identify which organization, if any, from the provided **organization mapping** the CFP announcement belongs to.
        - If an explicit mention is found, return the corresponding organization ID.
        - If no match is found, return `null` for `organization_id`.
+
     2. **CFP Subject Identification**
        - Generate a comprehensive summary that captures:
          - The type of funding opportunity
@@ -174,7 +177,7 @@ EXTRACT_CFP_DATA_SHORT_CONTENT_USER_PROMPT: Final[PromptTemplate] = PromptTempla
     ```jsonc
     {
         "organization_id": "UUID from mapping", // null if not found
-        "cfp_subject": {"type": "string"}, // can be empty if error
+        "cfp_subject": "...",
         "error": null // or error message if extraction fails
     }
     ```
@@ -249,6 +252,7 @@ async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:
         messages=task_description,
         system_prompt=EXTRACT_CFP_DATA_SYSTEM_PROMPT,
         temperature=TEMPERATURE,
+        model=REASONING_MODEL,
         top_p=0.95,
     )
 
