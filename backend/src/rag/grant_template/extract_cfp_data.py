@@ -89,7 +89,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
          - Language requirements
          - Content restrictions
          - Supporting documentation needs
-       - Present these as clear, concise statements
+       - Present these as clear, concise, grouped statements
 
     5. **CFP Subject Identification**
        - Generate a comprehensive summary that captures:
@@ -100,6 +100,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
          - Any specific focus areas or themes
        - Ensure the summary is rich in domain-specific details
     6. **Administrative Details Filtering**
+       - Aggressively remove any content that does not directly impact submission format or requirements
        - Retain only **application-related** details that impact **submission format**.
        - **Exclude** general grant submission instructions (e.g., Grants.gov steps, eRA Commons login).
        - URLS and external references.
@@ -129,7 +130,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - For each section title add "- Title only" if it is a main section
     - Keep section and subsection names unchanged
     - Section are not to be divided into multiple sections
-    - **Important**: Subsections per section are to be grouped, summarized, and presented as a single statement
+    - **Important**: Summarize and group short and connected subsections - Present them in a single, clear statement
     - Ensure the extracted content is machine-processable while maintaining readability
     - **Important**: Remove only truly administrative details (URL, reference)
     - The core meaning MUST be maintained and no other information should be added or removed
