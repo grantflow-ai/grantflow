@@ -9,7 +9,8 @@ export function NavHeader() {
 
 	return (
 		<header
-			className="sticky top-0 z-40 bg-background flex justify-between items-center pe-30 ps-24 border-b border-b-gray-400/20"
+			/* non-sticky header*/ /* add these attributes to make it "sticky top-0" */
+			className="z-40 bg-background flex justify-between items-center px-30 border-b border-b-gray-400/20"
 			data-testid="nav-header"
 		>
 			<Logo className="h-26" />
