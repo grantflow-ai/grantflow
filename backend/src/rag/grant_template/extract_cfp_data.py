@@ -16,7 +16,7 @@ class Content(TypedDict):
 
 
 class ExtractedCFPData(TypedDict):
-    """Represents extracted CFP data for organization and subject."""
+    """Represents extracted CFP data."""
 
     organization_id: str | None
     """Organization identifier."""
@@ -25,7 +25,7 @@ class ExtractedCFPData(TypedDict):
     cfp_subject: str
     """CFP subject."""
     content: list[Content]
-    """Array of dictionaries containing extracted sections' titles and content."""
+    """Array of Contents."""
 
 
 TEMPERATURE: Final[float] = 0.2
@@ -115,7 +115,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
             {"title": "Formatting requirement", "content": ["requirement 1", "requirement 2"]},
             {"title": "Section title", "content": ["Subsection 1", "Subsection 2"]},
             {"Explicit requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
-            {Supporting documentation requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
+            {"Supporting documentation requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
         ],
         "cfp_subject": "...", // can be empty if error
         "error": null // or error message if extraction fails
