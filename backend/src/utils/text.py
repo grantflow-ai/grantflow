@@ -22,7 +22,6 @@ def count_words(text: str) -> int:
 
 CHARS_PER_TOKEN: Final[float] = 4.0
 
-
 SINGLE_QUOTE_PATTERN = re_compile(r"[\u2018\u2019]")
 DOUBLE_QUOTE_PATTERN = re_compile(r"[\u201C\u201D\u201F]")
 DASH_PATTERN = re_compile(r"[\u2013\u2014\u2015]")
@@ -242,3 +241,10 @@ async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
         return int(response.total_tokens)
     except (ValueError, KeyError, AttributeError):
         return estimate_token_count(text)
+
+
+def concat_extracted_cfp_content(extracted_result_content: list[str]) -> str:
+    extracted_content_all: str = ""
+    for content in extracted_result_content:
+        extracted_content_all += content
+    return extracted_content_all

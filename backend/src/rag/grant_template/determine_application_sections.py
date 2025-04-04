@@ -8,6 +8,7 @@ from src.db.tables import FundingOrganization
 from src.exceptions import InsufficientContextError, ValidationError
 from src.patterns import SNAKE_CASE_PATTERN
 from src.rag.completion import handle_completions_request
+from src.rag.grant_template.extract_cfp_data import Content
 from src.rag.grant_template.utils import detect_cycle
 from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from src.rag.retrieval import retrieve_documents
@@ -17,6 +18,7 @@ from src.utils.logger import get_logger
 from src.utils.prompt_template import PromptTemplate
 from src.utils.ref import Ref
 from src.utils.sync import run_sync
+from src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
 ref = Ref[SentenceTransformer]()
@@ -689,7 +691,7 @@ evaluation_criteria = [
 
 
 async def handle_extract_sections(
-    cfp_content: str, cfp_subject: str, organization: FundingOrganization | None = None
+    cfp_content: list[Content], cfp_subject: str, organization: FundingOrganization | None = None
 ) -> list[ExtractedSectionDTO]:
     """Extract and classify sections from grant application materials.
 
@@ -701,9 +703,10 @@ async def handle_extract_sections(
     Returns:
         Classified sections with their relationships and metadata
     """
+    content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         cfp_subject=cfp_subject,
-        cfp_content=cfp_content,
+        cfp_content=concat_extracted_cfp_content(content_list),
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
