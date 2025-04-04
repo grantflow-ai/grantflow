@@ -19,7 +19,7 @@ def get_embedding_model() -> SentenceTransformer:
         The embedding model.
     """
     if embedding_model_ref.value is None:
-        model = SentenceTransformer(EMBEDDING_MODEL_NAME, device="cpu")  # type: ignore[call-overload]
+        model = SentenceTransformer(EMBEDDING_MODEL_NAME, device="cpu")
         embedding_model_ref.value = model
 
     return embedding_model_ref.value

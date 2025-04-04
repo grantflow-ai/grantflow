@@ -27,7 +27,7 @@ async def test_handle_generate_grant_template_melanoma_alliance(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -58,7 +58,7 @@ async def test_handle_generate_grant_template_standard_aware(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -90,7 +90,7 @@ async def test_handle_generate_grant_template_nih(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=nih_organization
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=nih_organization
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -120,7 +120,7 @@ async def test_handle_generate_grant_template_ics(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -152,7 +152,7 @@ async def test_handle_generate_grant_template_erc(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -191,7 +191,7 @@ async def test_handle_generate_grant_template(
     start_time = datetime.now(tz=UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=nih_organization
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=nih_organization
     )
 
     elapsed_time = (datetime.now(tz=UTC) - start_time).total_seconds()

@@ -10,7 +10,12 @@ from src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 
-class ExtractedCFPDataBase(TypedDict):
+class Content(TypedDict):
+    title: str
+    subtitles: list[str]
+
+
+class ExtractedCFPData(TypedDict):
     """Represents extracted CFP data for organization and subject."""
 
     organization_id: str | None
@@ -19,16 +24,10 @@ class ExtractedCFPDataBase(TypedDict):
     """Error message if applicable."""
     cfp_subject: str
     """CFP subject."""
+    content: list[Content]
+    """Array of dictionaries containing extracted sections' titles and content."""
 
 
-class ExtractedCFPData(ExtractedCFPDataBase):
-    """Adds content to parent class"""
-
-    content: list[str]
-    """Array of extracted content strings."""
-
-
-CFP_WORD_COUNT_THRESHOLD: Final[int] = 500
 TEMPERATURE: Final[float] = 0.2
 
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
@@ -106,21 +105,19 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - Retain only **application-related** details that impact **submission format**.
        - **Exclude** general grant submission instructions (e.g., Grants.gov steps, eRA Commons login).
        - URLS and external references.
-       - Forms, addresses, beuracratic details etc.
+       - Forms, addresses, bureaucratic details etc.
 
     ## Output Format:
     ```jsonc
     {
         "organization_id": "UUID from mapping", // null if not found
         "content": [
-            "Formatting requirement 1",
-            "Formatting requirement 2",
-            "Section title with page limit - Title only",
-            "Subsection title",
-            "Explicit requirement",
-            "Supporting documentation requirement"
+            {"title": "Formatting requirement", "content": ["requirement 1", "requirement 2"]},
+            {"title": "Section title", "content": ["Subsection 1", "Subsection 2"]},
+            {"Explicit requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
+            {Supporting documentation requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
         ],
-        "cfp_subject": {"type": "string"}, // can be empty if error
+        "cfp_subject": "...", // can be empty if error
         "error": null // or error message if extraction fails
     }
     ```
@@ -132,7 +129,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - For each section title add "- Title only" if it is a main section
     - Keep section and subsection names unchanged
     - Section are not to be divided into multiple sections
-    - **Important**: Summarize and group short and connected subsections - Present them in a single, clear statement
+    - **Important**: For each section extract subsections and present each in a single, clear statement
     - Ensure the extracted content is machine-processable while maintaining readability
     - **Important**: Remove only truly administrative details (URL, reference)
     - The core meaning MUST be maintained and no other information should be added or removed
@@ -141,74 +138,25 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     """,
 )
 
-EXTRACT_CFP_DATA_SHORT_CONTENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="extract_cfp_data_short_content",
-    template="""
-    # CFP Data Short Content Extraction
-
-    Your task is to identify the organization the CFP belongs to from the following funding opportunity announcement:
-
-    ## Sources
-
-    ### Organization Mapping
-    The following JSON object maps organization IDs (in our database) to their names and abbreviations:
-
-    <organization_mapping>
-    ${organization_mapping}
-    </organization_mapping>
-
-    ## Extraction Steps:
-
-    1. **Determine Organization**
-       - Identify which organization, if any, from the provided **organization mapping** the CFP announcement belongs to.
-       - If an explicit mention is found, return the corresponding organization ID.
-       - If no match is found, return `null` for `organization_id`.
-
-    2. **CFP Subject Identification**
-       - Generate a comprehensive summary that captures:
-         - The type of funding opportunity
-         - The target audience/researchers
-         - The key objectives and expected outcomes
-         - The scope and scale of the project
-         - Any specific focus areas or themes
-       - Ensure the summary is rich in domain-specific details
-
-    ## Output Format:
-    ```jsonc
-    {
-        "organization_id": "UUID from mapping", // null if not found
-        "cfp_subject": "...",
-        "error": null // or error message if extraction fails
-    }
-    ```
-
-    ## Guidelines:
-    - Preserve the exact hierarchical structure of the CFP
-    - Ensure the extracted content is machine-processable while maintaining readability
-    - Remove only truly administrative details (URL, reference)
-    - Rephrase and/or summarize as required while preserving the core meaning and any explicit requirements
-    """,
-)
-
 cfp_extraction_schema = {
     "type": "object",
     "properties": {
         "organization_id": {"type": "string", "nullable": True},
-        "content": {"type": "array", "items": {"type": "string"}},
         "cfp_subject": {"type": "string"},
+        "content": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "nullable": False},
+                    "subtitles": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                },
+                "required": ["title", "subtitles"],
+            },
+        },
         "error": {"type": "string", "nullable": True},
     },
     "required": ["organization_id", "cfp_subject", "content"],
-}
-
-cfp_extraction_schema_short_content = {
-    "type": "object",
-    "properties": {
-        "organization_id": {"type": "string", "nullable": True},
-        "cfp_subject": {"type": "string"},
-        "error": {"type": "string", "nullable": True},
-    },
-    "required": ["organization_id", "cfp_subject"],
 }
 
 
@@ -257,27 +205,6 @@ async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:
     )
 
 
-async def extract_cfp_data_short_content(task_description: str, **_: Any) -> ExtractedCFPDataBase:
-    """Extract the data from a short CFP text -- ignores section extraction.
-
-    Args:
-        task_description: The task description.
-        **_: Additional keyword arguments (unused)
-
-    Returns:
-        The extracted CFP data.
-    """
-    return await handle_completions_request(
-        prompt_identifier="extract_cfp_data_short_content",
-        response_type=ExtractedCFPDataBase,
-        response_schema=cfp_extraction_schema_short_content,
-        messages=task_description,
-        system_prompt=EXTRACT_CFP_DATA_SYSTEM_PROMPT,
-        temperature=TEMPERATURE,
-        top_p=0.95,
-    )
-
-
 async def handle_extract_cfp_data(
     *, cfp_content: str, organization_mapping: dict[str, dict[str, str]]
 ) -> ExtractedCFPData:
@@ -290,56 +217,33 @@ async def handle_extract_cfp_data(
     Returns:
         The extracted CFP data.
     """
-    short_cfp_no_content_extraction = len(cfp_content.split()) < CFP_WORD_COUNT_THRESHOLD
-
-    if short_cfp_no_content_extraction:
-        prompt_identifier = "extract_cfp_data_short_content"
-        prompt_handler = extract_cfp_data_short_content
-        prompt = EXTRACT_CFP_DATA_SHORT_CONTENT_USER_PROMPT.to_string(organization_mapping=organization_mapping)
-        evaluation_criteria = [
-            EvaluationCriterion(
-                name="Correctness",
-                evaluation_instructions="""
-                Assess whether the organization id is extracted correctly.
-                """,
-            ),
-        ]
-    else:
-        prompt_identifier = "extract_cfp_data"
-        prompt_handler = extract_cfp_data
-        prompt = EXTRACT_CFP_DATA_USER_PROMPT.to_string(
+    return await with_prompt_evaluation(
+        prompt_identifier="extract_cfp_data",
+        prompt_handler=extract_cfp_data,
+        prompt=EXTRACT_CFP_DATA_USER_PROMPT.to_string(
             cfp_content=cfp_content, organization_mapping=organization_mapping
-        )
-        evaluation_criteria = [
+        ),
+        increment=5,
+        retries=5,
+        passing_score=90,
+        criteria=[
             EvaluationCriterion(
                 name="Correctness",
                 evaluation_instructions="""
-                Assess whether extracted content correctly reflects the explicit grant requirements, avoiding extraneous administrative details.
-                """,
+            Assess whether extracted content correctly reflects the explicit grant requirements, avoiding extraneous administrative details.
+            """,
             ),
             EvaluationCriterion(
                 name="Structural Completeness",
                 evaluation_instructions="""
-                Ensure extracted content includes necessary structural details such as required sections, page limits, and evaluation criteria.
-                """,
+            Ensure extracted content includes necessary structural details such as required sections, page limits, and evaluation criteria.
+            """,
             ),
             EvaluationCriterion(
                 name="Filtering Accuracy",
                 evaluation_instructions="""
-                Validate that unnecessary general instructions (e.g., Grants.gov, eRA Commons, URLs) are removed while keeping essential information.
-                """,
+            Validate that unnecessary general instructions (e.g., Grants.gov, eRA Commons, URLs) are removed while keeping essential information.
+            """,
             ),
-        ]
-    result = await with_prompt_evaluation(
-        prompt_identifier=prompt_identifier,
-        prompt_handler=prompt_handler,
-        prompt=prompt,
-        increment=5,
-        retries=5,
-        passing_score=90,
-        criteria=evaluation_criteria,
+        ],
     )
-    if short_cfp_no_content_extraction:
-        return ExtractedCFPData(**result, content=[cfp_content])
-
-    return result  # type: ignore[return-value]

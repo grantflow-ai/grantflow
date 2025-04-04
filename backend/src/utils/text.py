@@ -4,6 +4,7 @@ from re import compile as re_compile
 from typing import Final
 
 from src.constants import ANTHROPIC_SONNET_MODEL
+from src.rag.grant_template.extract_cfp_data import Content
 from src.utils.ai import get_google_ai_client
 from src.utils.nlp import get_spacy_model, get_word_count
 
@@ -21,7 +22,6 @@ def count_words(text: str) -> int:
 
 
 CHARS_PER_TOKEN: Final[float] = 4.0
-
 
 SINGLE_QUOTE_PATTERN = re_compile(r"[\u2018\u2019]")
 DOUBLE_QUOTE_PATTERN = re_compile(r"[\u201C\u201D\u201F]")
@@ -242,3 +242,11 @@ async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
         return int(response.total_tokens)
     except (ValueError, KeyError, AttributeError):
         return estimate_token_count(text)
+
+
+def concat_extracted_cfp_content(extracted_result_content: list[Content]) -> str:
+    extracted_content_all: str = ""
+    for content in extracted_result_content:
+        subtitles_joined: str = "...".join(content["subtitles"])
+        extracted_content_all += f"{content['title']}: {subtitles_joined}"
+    return extracted_content_all
