@@ -2,8 +2,8 @@
 "use server";
 
 import { Footer } from "@/components/footer";
-import { HeroBanner } from "@/components/hero-banner/hero-banner";
-import { NavHeader2 } from "@/components/landing-page/nav-header-2";
+import { HeroBanner } from "@/components/landing-page/hero-banner";
+import { NavHeader } from "@/components/landing-page/nav-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Lock, Users } from "lucide-react";
 
@@ -57,7 +57,7 @@ const locales = {
 export default async function LandingPage() {
 	return (
 		<div className="flex flex-col">
-			<NavHeader2 />
+			<NavHeader />
 			<HeroBanner />
 			<div className="flex-grow">
 				<section className="bg-background pt-10 md:pt-16" data-testid="heading-section">

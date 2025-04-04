@@ -1,30 +1,26 @@
 import { Logo } from "@/components/logo";
-import { PagePath } from "@/enums";
-import { getEnv } from "@/utils/env";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+// import { PagePath } from "@/enums";
+// import { getEnv } from "@/utils/env";
+import { CalendarPlus2 } from "lucide-react";
 
 export function NavHeader() {
-	const loginPageUrl = new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
+	// const loginPageUrl = new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
+
 	return (
-		<div className="sticky top-0 z-50 w-full" data-testid="nav-header">
-			<div className="backdrop-blur-md bg-background/60 w-full">
-				<div className="flex justify-between items-center px-4 md:px-8 py-4">
-					<div className="logo-container">
-						<div className="w-[120px] h-[40px] flex items-center justify-center">
-							<Logo />
-						</div>
-					</div>
-					<div className="flex items-center gap-4">
-						<p className="text-sm text-foreground hidden md:block">Have early access?</p>
-						<Link
-							className="bg-primary/10 border border-primary/20 rounded-md shadow-sm px-4 py-2 text-sm text-foreground hover:bg-primary/20 transition-colors"
-							href={loginPageUrl}
-						>
-							Login
-						</Link>
-					</div>
-				</div>
+		<header
+			className="sticky top-0 z-40 bg-background flex justify-between items-center pe-30 ps-24 border-b border-b-gray-400/20"
+			data-testid="nav-header"
+		>
+			<Logo className="h-26" />
+			<div className="flex gap-3">
+				<Button variant="link">Solutions</Button>
+				<Button variant="ghost">About us</Button>
+				<Button>
+					<CalendarPlus2 className="h-4" />
+					Schedule a Demo
+				</Button>
 			</div>
-		</div>
+		</header>
 	);
 }
