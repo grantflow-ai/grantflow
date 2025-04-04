@@ -22,6 +22,23 @@ jobs:
         with:
           python-version-file: "pyproject.toml"
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            frontend/pnpm-lock.yaml
+
+      - name: Install Dependencies
+        run: pnpm install -r
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
@@ -86,10 +103,12 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            frontend/pnpm-lock.yaml
 
       - name: Install Dependencies
-        run: cd frontend && pnpm install
+        run: pnpm install -r
 
       - name: Run Tests
         run: cd frontend && pnpm run test
