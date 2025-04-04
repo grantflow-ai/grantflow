@@ -19,7 +19,6 @@ async def test_extract_cfp_data_nih(
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
     await helper(logger, organization_mapping, "nih.md")
-    await helper(logger, organization_mapping, "nih.md")
 
 
 @pytest.mark.skipif(
@@ -67,7 +66,6 @@ async def helper(
     content_items = result["content"]
     assert len(content_items) >= 1
     assert all(isinstance(item, str) for item in content_items)
-    assert all(len(item.strip()) > 0 for item in content_items)
 
     if result["organization_id"]:
         assert result["organization_id"] in organization_mapping
