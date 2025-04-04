@@ -4,7 +4,6 @@ from re import compile as re_compile
 from typing import Final
 
 from src.constants import ANTHROPIC_SONNET_MODEL
-from src.rag.grant_template.extract_cfp_data import Content
 from src.utils.ai import get_google_ai_client
 from src.utils.nlp import get_spacy_model, get_word_count
 
@@ -244,9 +243,8 @@ async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
         return estimate_token_count(text)
 
 
-def concat_extracted_cfp_content(extracted_result_content: list[Content]) -> str:
+def concat_extracted_cfp_content(extracted_result_content: list[str]) -> str:
     extracted_content_all: str = ""
     for content in extracted_result_content:
-        subtitles_joined: str = "...".join(content["subtitles"])
-        extracted_content_all += f"{content['title']}: {subtitles_joined}"
+        extracted_content_all += content
     return extracted_content_all

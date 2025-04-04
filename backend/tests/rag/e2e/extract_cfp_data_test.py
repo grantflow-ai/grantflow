@@ -14,36 +14,15 @@ from tests.test_utils import FIXTURES_FOLDER, RESULTS_FOLDER
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
-async def test_extract_cfp_data_nih(
-    logger: logging.Logger,
-    organization_mapping: dict[str, dict[str, str]],
-) -> None:
-    await helper(logger, organization_mapping, "nih.md")
-
-
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "nih.md",
+        "ics.md",
+        "erc.md",
+    ],
 )
-async def test_extract_cfp_data_israeli_chief_scientist(
-    logger: logging.Logger,
-    organization_mapping: dict[str, dict[str, str]],
-) -> None:
-    await helper(logger, organization_mapping, "ics.md")
-
-
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
-async def test_extract_cfp_data_erc(
-    logger: logging.Logger,
-    organization_mapping: dict[str, dict[str, str]],
-) -> None:
-    await helper(logger, organization_mapping, "erc.md")
-
-
-async def helper(
+async def test_extract_cfp_data(
     logger: logging.Logger,
     organization_mapping: dict[str, dict[str, str]],
     filename: str,
@@ -65,7 +44,6 @@ async def helper(
 
     content_items = result["content"]
     assert len(content_items) >= 1
-    assert all(isinstance(item, str) for item in content_items)
 
     if result["organization_id"]:
         assert result["organization_id"] in organization_mapping

@@ -703,9 +703,10 @@ async def handle_extract_sections(
     Returns:
         Classified sections with their relationships and metadata
     """
+    content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         cfp_subject=cfp_subject,
-        cfp_content=concat_extracted_cfp_content(cfp_content),
+        cfp_content=concat_extracted_cfp_content(content_list),
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 

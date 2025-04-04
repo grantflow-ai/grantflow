@@ -39,8 +39,9 @@ async def extract_and_enrich_sections(
         organization=organization,
     )
 
+    content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     section_metadata = await handle_generate_grant_template(
-        cfp_content=concat_extracted_cfp_content(cfp_content),
+        cfp_content=concat_extracted_cfp_content(content_list),
         cfp_subject=cfp_subject,
         organization=organization,
         long_form_sections=[s for s in sections if not s.get("is_title_only")],
