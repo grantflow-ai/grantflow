@@ -25,9 +25,7 @@ async def test_extract_sections_melanoma_alliance_cfp(
     logger.info("Running end-to-end test for extracting sections from CFP data")
     start_time = datetime.now(UTC)
 
-    sections = await handle_extract_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"]
-    )
+    sections = await handle_extract_sections(cfp_content=result["content"], cfp_subject=result["cfp_subject"])
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 180
@@ -60,7 +58,7 @@ async def test_extract_sections_erc_cfp(
     start_time = datetime.now(UTC)
 
     sections = await handle_extract_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=erc_organization
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=erc_organization
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -90,9 +88,7 @@ async def test_extract_sections_standard_awards_cfp(
     logger.info("Running end-to-end test for extracting sections from CFP data")
     start_time = datetime.now(UTC)
 
-    sections = await handle_extract_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"]
-    )
+    sections = await handle_extract_sections(cfp_content=result["content"], cfp_subject=result["cfp_subject"])
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 180
@@ -125,7 +121,7 @@ async def test_extract_sections_nih_cfp(
     start_time = datetime.now(UTC)
 
     sections = await handle_extract_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"], organization=nih_organization
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=nih_organization
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -154,9 +150,7 @@ async def test_extract_sections_ics_cfp(
     logger.info("Running end-to-end test for extracting sections from CFP data")
     start_time = datetime.now(UTC)
 
-    sections = await handle_extract_sections(
-        cfp_content="...".join(result["content"]), cfp_subject=result["cfp_subject"]
-    )
+    sections = await handle_extract_sections(cfp_content=result["content"], cfp_subject=result["cfp_subject"])
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
     assert elapsed_time < 180
