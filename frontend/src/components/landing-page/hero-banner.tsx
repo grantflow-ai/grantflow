@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { CalendarPlus2 } from "lucide-react";
 import { HTMLProps } from "react";
+import { GradientBackground } from "./gradient-bg";
 
 export function HeroBanner() {
 	return (
 		<section className="relative">
-			<div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_bottom_right,var(--primary)_0%,transparent_70%)] opacity-70" />
+			<GradientBackground className="absolute inset-0 z-10" />
 			<HeroPattern
 				aria-hidden="true"
 				className="absolute right-0 bottom-0 z-20 h-full w-auto"

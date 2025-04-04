@@ -2,6 +2,7 @@
 "use server";
 
 import { Footer } from "@/components/footer";
+import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { NavHeader } from "@/components/landing-page/nav-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,7 @@ export default async function LandingPage() {
 		<div className="flex flex-col">
 			<NavHeader />
 			<HeroBanner />
+			<BenefitsSection />
 			<div className="flex-grow">
 				<section className="bg-background pt-10 md:pt-16" data-testid="heading-section">
 					<div className="container mx-auto px-4 text-center">
