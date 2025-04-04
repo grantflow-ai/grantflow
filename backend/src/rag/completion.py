@@ -12,6 +12,8 @@ from google.cloud.exceptions import TooManyRequests
 from vertexai.generative_models import (  # type: ignore[import-untyped]
     Content,
     GenerationConfig,
+    HarmBlockThreshold,
+    HarmCategory,
     Part,
 )
 
@@ -161,6 +163,12 @@ async def make_google_completions_request[T](
             parts=[message if isinstance(message, Part) else Part.from_text(message) for message in messages],
         )
     ]
+    safety_settings = {
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+    }
     response = await client.generate_content_async(
         contents=contents,
         generation_config=GenerationConfig(
@@ -171,6 +179,7 @@ async def make_google_completions_request[T](
             top_k=top_k,
             candidate_count=candidate_count,
         ),
+        safety_settings=safety_settings,
     )
     if not candidate_count:
         return deserialize(response.text, response_type)

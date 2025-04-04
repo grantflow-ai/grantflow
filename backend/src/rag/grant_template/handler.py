@@ -10,14 +10,15 @@ from src.db.tables import FundingOrganization, GrantTemplate
 from src.exceptions import DatabaseError
 from src.rag.grant_template.determine_application_sections import handle_extract_sections
 from src.rag.grant_template.determine_longform_metadata import handle_generate_grant_template
-from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
+from src.rag.grant_template.extract_cfp_data import Content, handle_extract_cfp_data
 from src.utils.logger import get_logger
+from src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
 
 
 async def extract_and_enrich_sections(
-    cfp_content: str,
+    cfp_content: list[Content],
     cfp_subject: str,
     organization: FundingOrganization | None,
 ) -> list[GrantElement | GrantLongFormSection]:
@@ -31,14 +32,16 @@ async def extract_and_enrich_sections(
     Returns:
         The extracted and enriched sections.
     """
+
     sections = await handle_extract_sections(
         cfp_content=cfp_content,
         cfp_subject=cfp_subject,
         organization=organization,
     )
 
+    content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     section_metadata = await handle_generate_grant_template(
-        cfp_content=cfp_content,
+        cfp_content=concat_extracted_cfp_content(content_list),
         cfp_subject=cfp_subject,
         organization=organization,
         long_form_sections=[s for s in sections if not s.get("is_title_only")],
@@ -118,9 +121,8 @@ async def grant_template_generation_pipeline_handler(
     )
 
     logger.info("Extracted CFP data")
-
     grant_sections = await extract_and_enrich_sections(
-        cfp_content="...".join(extraction_result["content"]),
+        cfp_content=extraction_result["content"],
         cfp_subject=extraction_result["cfp_subject"],
         organization=organization,
     )
