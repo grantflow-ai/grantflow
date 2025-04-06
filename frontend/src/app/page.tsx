@@ -4,14 +4,14 @@
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
-import { GradientBackground } from "@/components/landing-page/gradient-bg";
+import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { NavHeader } from "@/components/landing-page/nav-header";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 import { LinkedIn } from "@/components/linkedin-icon";
 import { LogoDark } from "@/components/logo-dark";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus2 } from "lucide-react";
+import { IconCalendar, IconGoAhead } from "@/components/landing-page/icons";
 
 export default async function LandingPage() {
 	return (
@@ -42,9 +42,12 @@ function CTASection() {
 						more funds with GrantFlow.
 					</p>
 				</div>
-				<Button className="mx-4 shrink-0 p-4 text-base">Try for free &gt;</Button>
+				<Button className="mx-4 shrink-0 p-4 text-base">
+					Try for free
+					<IconGoAhead />
+				</Button>
 				<Button className="shrink-0 bg-transparent text-base rounded" variant="outline">
-					<CalendarPlus2 className="h-4" />
+					<IconCalendar />
 					Schedule a Demo
 				</Button>
 			</div>
@@ -71,7 +74,7 @@ function Footer() {
 						</li>
 					</ul>
 				</nav>
-				<LinkedIn className="h-8 w-8" />
+				<LinkedIn className="size-8" />
 			</div>
 		</footer>
 	);

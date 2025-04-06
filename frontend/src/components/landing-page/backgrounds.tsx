@@ -1,6 +1,18 @@
+import { cn } from "@/lib/utils";
+import { HTMLAttributes } from "react";
 import { HTMLProps } from "react";
 
-//use white background in the container before placing this component
+export function GradientBackground({ className }: HTMLAttributes<HTMLDivElement>) {
+	return (
+		<div
+			className={cn(
+				"bg-[radial-gradient(ellipse_at_bottom_right,var(--primary)_0%,transparent_70%)] opacity-70",
+				className,
+			)}
+		></div>
+	);
+}
+
 export function PatternedBackground({ ...props }: HTMLProps<SVGSVGElement>) {
 	return (
 		<svg fill="none" viewBox="0 0 1440 1024" xmlns="http://www.w3.org/2000/svg" {...props}>

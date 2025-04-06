@@ -18,6 +18,7 @@ requirements.txt
 .pytest_cache
 
 # Node.js (frontend)
+/frontend/src/assets/placeholders/
 node_modules/
 .next/
 .vercel/
