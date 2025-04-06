@@ -1,13 +1,12 @@
-import { LucideIcon, MessageCirclePlus, MessageCircleQuestion, MonitorCheck, Zap } from "lucide-react";
-import { GradientBackground } from "./gradient-bg";
+import { GradientBackground } from "./backgrounds";
 import { WaitlistForm } from "./waitlist-form";
-
-interface EarlyAccessBenefitsProps {
-	backgroundColor?: string;
-	badgeIcon: LucideIcon;
-	description: string;
-	heading: string;
-}
+import {
+	IconEarlyAccessBenefit1,
+	IconEarlyAccessBenefit2,
+	IconEarlyAccessBenefit3,
+	IconEarlyAccessBenefit4,
+} from "./icons";
+import React from "react";
 
 export function EarlyAccessSection() {
 	return (
@@ -34,6 +33,29 @@ export function EarlyAccessSection() {
 }
 
 function BenefitsAndWaitlistForm() {
+	const earlyAccessBenefits = [
+		{
+			description: "Be the first to explore ur most advanced, AI-powered tools.",
+			heading: "Exclusive Features",
+			icon: IconEarlyAccessBenefit1,
+		},
+		{
+			description: "Your feedback will directly shape how Grantflow evolves.",
+			heading: "Influence the Future",
+			icon: IconEarlyAccessBenefit2,
+		},
+		{
+			description: "Get dedicated onboarding and hands-on assistance from our team.",
+			heading: "Priority Support",
+			icon: IconEarlyAccessBenefit3,
+		},
+		{
+			description: "Create and generate your first full grant application for FREE!",
+			heading: "Free Application",
+			icon: IconEarlyAccessBenefit4,
+		},
+	];
+
 	return (
 		<div className="flex bg-violet-300/20 rounded mt-8 px-10 py-7">
 			<section className="flex-1" id="early-access-form-and-benefits">
@@ -41,48 +63,37 @@ function BenefitsAndWaitlistForm() {
 					Exclusive Early Access Benefits:
 				</h3>
 				<ul className="flex flex-wrap justify-start mt-8 p-4 gap-10">
-					<li>
-						<EarlyAccessBenefitsCard
-							badgeIcon={MonitorCheck}
-							description="Be the first to explore ur most advanced, AI-powered tools."
-							heading="Exclusive Features"
-						/>
-					</li>
-					<li>
-						<EarlyAccessBenefitsCard
-							badgeIcon={MessageCirclePlus}
-							description="Your feedback will directly shape how Grantflow evolves."
-							heading="Influence the Future"
-						/>
-					</li>
-					<li>
-						<EarlyAccessBenefitsCard
-							badgeIcon={MessageCircleQuestion}
-							description="Get dedicated onboarding and hands-on assistance from our team."
-							heading="Priority Support"
-						/>
-					</li>
-					<li>
-						<EarlyAccessBenefitsCard
-							badgeIcon={Zap}
-							description="Create and generate your first full grant application for FREE!"
-							heading="Free Application"
-						/>
-					</li>
+					{earlyAccessBenefits.map((benefits, index) => (
+						<li key={index}>
+							<EarlyAccessBenefitsCard
+								BadgeIcon={benefits.icon}
+								description={benefits.description}
+								heading={benefits.heading}
+							/>
+						</li>
+					))}
 				</ul>
 			</section>
 			<aside aria-label="waitlist-form" className="shrink-0 py-2 ps-4 my-6 text-2xl">
-				<h3 className="font-heading ">Join GrantFlow Waitlist</h3>
+				<h3 className="font-heading ">Join GrantFlow.ai Waitlist</h3>
 				<WaitlistForm />
 			</aside>
 		</div>
 	);
 }
 
-function EarlyAccessBenefitsCard({ badgeIcon: Icon, description, heading }: EarlyAccessBenefitsProps) {
+function EarlyAccessBenefitsCard({
+	BadgeIcon,
+	description,
+	heading,
+}: {
+	BadgeIcon: React.FC<React.SVGProps<SVGSVGElement>>;
+	description: string;
+	heading: string;
+}) {
 	return (
 		<article className="w-[9rem] shrink-0" id="early-access-benefits-card">
-			<Icon className="size-4 stroke-2 " />
+			<BadgeIcon className="size-5" />
 			<h3 className="font-heading mt-2 mb-1">{heading}</h3>
 			<p className="font-light leading-tight text-sm">{description}</p>
 		</article>

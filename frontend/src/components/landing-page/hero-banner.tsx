@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { CalendarPlus2 } from "lucide-react";
 import { HTMLProps } from "react";
-import { GradientBackground } from "./gradient-bg";
+import { GradientBackground } from "./backgrounds";
+import { IconCalendar, IconGoAhead } from "./icons";
 
 export function HeroBanner() {
 	return (
@@ -15,9 +15,12 @@ export function HeroBanner() {
 			<div className="relative z-30 flex flex-col max-w-xl p-10 m-20">
 				<h1 className="font-heading text-7xl">Where Research Meets Funding, Seamlessly.</h1>
 				<div className="flex mt-8 gap-4">
-					<Button>Try for free &gt;</Button>
+					<Button>
+						Try for free
+						<IconGoAhead />
+					</Button>
 					<Button variant="outline">
-						<CalendarPlus2 className="h-4" />
+						<IconCalendar />
 						Schedule a Demo
 					</Button>
 				</div>

@@ -1,5 +1,5 @@
 import { LucideIcon, Timer, Users } from "lucide-react";
-import { PatternedBackground } from "./patterned-bg";
+import { PatternedBackground } from "./backgrounds";
 import { cn } from "@/lib/utils";
 import React, { HTMLAttributes } from "react";
 
@@ -7,14 +7,24 @@ const benefitsSectionHeader2 = "font-heading text-stone-800 text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
 const benefitsCardBorder = "border-2 border-primary/70 rounded";
 
-interface BenefitsCardProps {
-	badge: string;
-	badgeIcon: LucideIcon;
-	description: string;
-	heading: string;
-}
-
 export function BenefitsSection() {
+	const benefits = [
+		{
+			badge: "Save time!",
+			badgeIcon: Timer,
+			description:
+				"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. The grant writing process is not only time-consuming—it pulls your focus away from advancing groundbreaking research. Add the coordination with students, administrators, and co-investigators, and the complexity multiplies.",
+			heading: "More Time on Grant Writing, Less on Research?",
+		},
+		{
+			badge: "Collaborate smarter!",
+			badgeIcon: Users,
+			description:
+				"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
+			heading: "One Place for Your Entire Grant Team",
+		},
+	];
+
 	return (
 		<section aria-labelledby="benefits-section" className="relative w-full bg-white">
 			<PatternedBackground aria-hidden="true" className="absolute inset-0 z-0 w-full h-auto" />
@@ -28,18 +38,15 @@ export function BenefitsSection() {
 					lifting, so you can focus on your research.
 				</p>
 				<div className="grid grid-cols-2 gap-6 w-full items-start text-start my-8">
-					<BenefitsCard
-						badge="Save time!"
-						badgeIcon={Timer}
-						description="As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. The grant writing process is not only time-consuming—it pulls your focus away from advancing groundbreaking research. Add the coordination with students, administrators, and co-investigators, and the complexity multiplies."
-						heading="More Time on Grant Writing, Less on Research?"
-					/>
-					<BenefitsCard
-						badge="Collaborate smarter!"
-						badgeIcon={Users}
-						description="Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos."
-						heading="One Place for Your Entire Grant Team"
-					/>
+					{benefits.map((benefit, index) => (
+						<BenefitsCard
+							badge={benefit.badge}
+							badgeIcon={benefit.badgeIcon}
+							description={benefit.description}
+							heading={benefit.heading}
+							key={index}
+						/>
+					))}
 					<HowItWorksCard className="col-span-2" />
 				</div>
 			</div>
@@ -47,7 +54,17 @@ export function BenefitsSection() {
 	);
 }
 
-function BenefitsCard({ badge, badgeIcon: Icon, description, heading }: BenefitsCardProps) {
+function BenefitsCard({
+	badge,
+	badgeIcon: Icon,
+	description,
+	heading,
+}: {
+	badge: string;
+	badgeIcon: LucideIcon;
+	description: string;
+	heading: string;
+}) {
 	return (
 		<article className={cn("size-full text-stone-800 py-7 px-5", benefitsCardBackground, benefitsCardBorder)}>
 			<div className="inline-flex items-center bg-background rounded-2xl px-2 text-white gap-1">
@@ -61,6 +78,29 @@ function BenefitsCard({ badge, badgeIcon: Icon, description, heading }: Benefits
 }
 
 function HowItWorksCard({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+	const stepByStepProcess = {
+		step1: (
+			<>
+				Describe Your <br /> Research
+			</>
+		),
+		step2: (
+			<>
+				Upload Your Research <br /> Database
+			</>
+		),
+		step3: (
+			<>
+				Invite Your Colleagues <br /> to Work With You
+			</>
+		),
+		step4: (
+			<>
+				Generate Your <br /> Proposal with AI
+			</>
+		),
+	};
+
 	return (
 		<div
 			className={cn(
@@ -73,34 +113,9 @@ function HowItWorksCard({ className, ...props }: HTMLAttributes<HTMLDivElement>)
 		>
 			<h2 className={cn(benefitsSectionHeader2, "font-bold m-4")}>How It Works?</h2>
 			<div className="grid grid-cols-4 my-8 p-2 gap-x-20">
-				<TimelineStep
-					label={
-						<>
-							Describe Your <br /> Research
-						</>
-					}
-				/>
-				<TimelineStep
-					label={
-						<>
-							Upload Your Research <br /> Database
-						</>
-					}
-				/>
-				<TimelineStep
-					label={
-						<>
-							Invite Your Colleagues <br /> to Work With You
-						</>
-					}
-				/>
-				<TimelineStep
-					label={
-						<>
-							Generate Your <br /> Proposal with AI
-						</>
-					}
-				/>
+				{Object.entries(stepByStepProcess).map(([, content], index) => (
+					<TimelineStep key={index} label={content} />
+				))}
 			</div>
 		</div>
 	);

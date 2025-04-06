@@ -1,15 +1,10 @@
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-// import { PagePath } from "@/enums";
-// import { getEnv } from "@/utils/env";
-import { CalendarPlus2 } from "lucide-react";
+import { IconCalendar } from "./icons";
 
 export function NavHeader() {
-	// const loginPageUrl = new URL(PagePath.SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
-
 	return (
 		<header
-			/* non-sticky header*/ /* add these attributes to make it "sticky top-0" */
 			className="z-40 bg-background flex justify-between items-center px-30 border-b border-b-gray-400/20"
 			data-testid="nav-header"
 		>
@@ -18,7 +13,7 @@ export function NavHeader() {
 				<Button variant="link">Solutions</Button>
 				<Button variant="ghost">About us</Button>
 				<Button>
-					<CalendarPlus2 className="h-4" />
+					<IconCalendar />
 					Schedule a Demo
 				</Button>
 			</div>
