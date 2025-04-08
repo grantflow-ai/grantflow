@@ -29,27 +29,32 @@ export default async function LandingPage() {
 }
 
 function CTASection() {
+	const content = {
+		description:
+			"Join leading research teams who are saving time, improving collaboration, and securing more funds with GrantFlow.ai.",
+		heading: "Ready to Transform Your Grant Writing Process?",
+	};
+
 	return (
 		<section aria-labelledby="cta-section" className="relative">
 			<GradientBackground className="absolute inset-0 z-0" />
-			<div className="relative z-10 flex items-center py-20 px-30">
-				<div className="flex flex-col flex-1 text-white">
+			<div className="relative z-10 flex w-full items-center justify-between py-20 px-30">
+				<div className="flex flex-col w-fit text-white">
 					<h2 className="font-heading text-3xl" id="cta-heading">
-						Ready to Transform Your Grant Writing Process?
+						{content.heading}
 					</h2>
-					<p className="mt-2 text-base font-light">
-						Join leading research teams who are saving time, improving collaboration, and <br /> securing
-						more funds with GrantFlow.
-					</p>
+					<p className="max-w-lg mt-3 text-base font-light leading-tight">{content.description}</p>
 				</div>
-				<Button className="mx-4 shrink-0 p-4 text-base">
-					Try for free
-					<IconGoAhead />
-				</Button>
-				<Button className="shrink-0 bg-transparent text-base rounded" variant="outline">
-					<IconCalendar />
-					Schedule a Demo
-				</Button>
+				<div className="space-x-4">
+					<Button className="shrink-0 p-4 text-base">
+						Try for free
+						<IconGoAhead />
+					</Button>
+					<Button className="shrink-0 bg-transparent text-base rounded" variant="outline">
+						<IconCalendar />
+						Schedule a Demo
+					</Button>
+				</div>
 			</div>
 		</section>
 	);

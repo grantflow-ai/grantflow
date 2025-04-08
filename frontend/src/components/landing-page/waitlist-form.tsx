@@ -3,7 +3,7 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Control, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -30,49 +30,78 @@ export function WaitlistForm() {
 	return (
 		<Form {...form}>
 			<form className="space-y-1" onSubmit={form.handleSubmit(onSubmit)}>
-				<FormField
-					control={form.control}
-					key="email"
+				<WaitListFormItem
+					formControl={form.control}
+					id="email"
+					label="Email address"
 					name="email"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel className="font-heading font-light mb-2">Email address</FormLabel>
-							<FormControl>
-								<Input
-									placeholder="Type your email address"
-									type="email"
-									{...field}
-									className="bg-white rounded p-2 w-full placeholder:text-neutral-400"
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
+					placeholder="Type your email address"
+					type="email"
 				/>
 
-				<FormField
-					control={form.control}
-					key="name"
+				<WaitListFormItem
+					formControl={form.control}
+					id="name"
+					label="Name"
 					name="name"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel className="font-heading font-light">Name</FormLabel>
-							<FormControl>
-								<Input
-									placeholder="Type your full name"
-									type="text"
-									{...field}
-									className="bg-white rounded p-2 w-full placeholder:text-neutral-400"
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
+					placeholder="Type your full name"
+					type="text"
 				/>
 				<div className="flex justify-end mt-8 px-2">
-					<Button type="submit">Join now</Button>
+					<Button className="font-light text-base px-1" type="submit">
+						Join now
+					</Button>
 				</div>
 			</form>
 		</Form>
+	);
+}
+
+function WaitListFormItem({
+	formControl,
+	id,
+	label,
+	name,
+	placeholder,
+	type,
+}: {
+	formControl: Control<
+		{
+			email: string;
+			name: string;
+		},
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		any,
+		{
+			email: string;
+			name: string;
+		}
+	>;
+	id: string;
+	label: string;
+	name: string;
+	placeholder: string;
+	type: string;
+}) {
+	return (
+		<FormField
+			control={formControl}
+			key={id}
+			name={name === "email" ? "email" : "name"}
+			render={({ field }) => (
+				<FormItem>
+					<FormLabel className="font-heading font-light text-[0.95rem]">{label}</FormLabel>
+					<FormControl className="mt-2 w-[17rem]">
+						<Input
+							placeholder={placeholder}
+							type={type}
+							{...field}
+							className="bg-white rounded-sm p-3 placeholder:font-light placeholder:text-[1.05rem] placeholder:text-slate-500"
+						/>
+					</FormControl>
+					<FormMessage />
+				</FormItem>
+			)}
+		/>
 	);
 }
