@@ -3,42 +3,51 @@ import { PatternedBackground } from "./backgrounds";
 import { cn } from "@/lib/utils";
 import React, { HTMLAttributes } from "react";
 
-const benefitsSectionHeader2 = "font-heading text-stone-800 text-4xl";
+const benefitsCardHeader = "font-heading font-medium text-stone-800 text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
 const benefitsCardBorder = "border-2 border-primary/70 rounded";
 
 export function BenefitsSection() {
-	const benefits = [
-		{
-			badge: "Save time!",
-			badgeIcon: Timer,
-			description:
-				"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. The grant writing process is not only time-consuming—it pulls your focus away from advancing groundbreaking research. Add the coordination with students, administrators, and co-investigators, and the complexity multiplies.",
-			heading: "More Time on Grant Writing, Less on Research?",
+	const content = {
+		benefits: [
+			{
+				badge: "Save time!",
+				badgeIcon: Timer,
+				description:
+					"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. Much of the grant writing process is not only time-consuming, it pulls your focus away from advancing groundbreaking research. GrantFlow.ai seamlessly converts your documents into proposal drafts, freeing you to focus solely on highlighting what makes your research innovative.",
+				heading: "More Time on Grant Writing, Less on Research?",
+			},
+			{
+				badge: "Collaborate smarter!",
+				badgeIcon: Users,
+				description:
+					"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
+				heading: "One Place for Your Entire Grant Team",
+			},
+		],
+		description:
+			"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. From generating draft proposals in one quick session instead of weeks to managing documents effortlessly, our AI does the heavy lifting, so you can focus on your research.",
+		heading: "Simplify Grant Applications with AI-Powered tools",
+		stepByStepProcess: {
+			step1: "Describe Your Research",
+			step2: "Upload Your Research Database",
+			step3: "Invite Your Colleagues to Work With You",
+			step4: "Generate Your Proposal with AI",
 		},
-		{
-			badge: "Collaborate smarter!",
-			badgeIcon: Users,
-			description:
-				"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
-			heading: "One Place for Your Entire Grant Team",
-		},
-	];
+	};
 
 	return (
 		<section aria-labelledby="benefits-section" className="relative w-full bg-white">
 			<PatternedBackground aria-hidden="true" className="absolute inset-0 z-0 w-full h-auto" />
 			<div className="relative z-10 flex flex-col items-center text-center pt-20 pb-15 px-30">
-				<h2 className={benefitsSectionHeader2} id="benefits-heading">
-					Simplify Grant Applications with AI-Powered tools
+				<h2 className={benefitsCardHeader} id="benefits-heading">
+					{content.heading}
 				</h2>
 				<p className="m-3 text-xl text-stone-800" id="benefits-description">
-					GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow.
-					From generating polished proposals to managing documents effortlessly, our AI does the heavy
-					lifting, so you can focus on your research.
+					{content.description}
 				</p>
 				<div className="grid grid-cols-2 gap-6 w-full items-start text-start my-8">
-					{benefits.map((benefit, index) => (
+					{content.benefits.map((benefit, index) => (
 						<BenefitsCard
 							badge={benefit.badge}
 							badgeIcon={benefit.badgeIcon}
@@ -47,7 +56,7 @@ export function BenefitsSection() {
 							key={index}
 						/>
 					))}
-					<HowItWorksCard className="col-span-2" />
+					<HowItWorksCard className="col-span-2" heading="How It Works?" steps={content.stepByStepProcess} />
 				</div>
 			</div>
 		</section>
@@ -71,36 +80,21 @@ function BenefitsCard({
 				<Icon className="size-3" />
 				<span className="font-button font-light align-bottom text-sm">{badge}</span>
 			</div>
-			<h3 className="font-heading font-bold text-2xl my-2">{heading}</h3>
-			<p className="leading-tight">{description}</p>
+			<h3 className="font-heading font-semibold text-2xl my-2">{heading}</h3>
+			<p className="leading-tight max-w-xl">{description}</p>
 		</article>
 	);
 }
 
-function HowItWorksCard({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-	const stepByStepProcess = {
-		step1: (
-			<>
-				Describe Your <br /> Research
-			</>
-		),
-		step2: (
-			<>
-				Upload Your Research <br /> Database
-			</>
-		),
-		step3: (
-			<>
-				Invite Your Colleagues <br /> to Work With You
-			</>
-		),
-		step4: (
-			<>
-				Generate Your <br /> Proposal with AI
-			</>
-		),
-	};
-
+function HowItWorksCard({
+	className,
+	heading,
+	steps,
+	...props
+}: {
+	heading: string;
+	steps: { step1: string; step2: string; step3: string; step4: string };
+} & HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
 			className={cn(
@@ -111,9 +105,9 @@ function HowItWorksCard({ className, ...props }: HTMLAttributes<HTMLDivElement>)
 			)}
 			{...props}
 		>
-			<h2 className={cn(benefitsSectionHeader2, "font-bold m-4")}>How It Works?</h2>
+			<h2 className={cn(benefitsCardHeader, "font-bold m-4")}>{heading}</h2>
 			<div className="grid grid-cols-4 my-8 p-2 gap-x-20">
-				{Object.entries(stepByStepProcess).map(([, content], index) => (
+				{Object.entries(steps).map(([, content], index) => (
 					<TimelineStep key={index} label={content} />
 				))}
 			</div>

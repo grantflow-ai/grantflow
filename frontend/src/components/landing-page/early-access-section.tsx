@@ -9,6 +9,13 @@ import {
 import React from "react";
 
 export function EarlyAccessSection() {
+	const content = {
+		badge: "Early Access Registration Now Open!",
+		description:
+			"Be among the first to experience GrantFlow.ai. Sign up now to unlock exclusive features, provide valuable feedback, and enjoy priority support.",
+		heading: "Save Time, Amplify Your Impact.",
+	};
+
 	return (
 		<section aria-labelledby="early-access-section" className="relative">
 			<GradientBackground className="absolute inset-0 z-0" />
@@ -17,14 +24,13 @@ export function EarlyAccessSection() {
 					className="max-w-fit bg-white rounded-full px-2 pt-[0.125rem] text-background text-sm"
 					id="early-access-badge"
 				>
-					Early Access Registration Now Open!
+					{content.badge}
 				</div>
-				<h2 className="font-heading text-4xl mt-4" id="early-access-heading">
-					Save Time, Amplify Your Impact.
+				<h2 className="font-heading text-4xl mt-3" id="early-access-heading">
+					{content.heading}
 				</h2>
-				<p className="mt-1 font-light" id="early-access-description">
-					Be amongst the first to experience GrantFlow. Sign up now to unlock exclusive features, provide
-					valuable features, and enjoy priority support.
+				<p className="mt-1 antialiased text-white/80" id="early-access-description">
+					{content.description}
 				</p>
 				<BenefitsAndWaitlistForm />
 			</div>
@@ -33,37 +39,41 @@ export function EarlyAccessSection() {
 }
 
 function BenefitsAndWaitlistForm() {
-	const earlyAccessBenefits = [
-		{
-			description: "Be the first to explore ur most advanced, AI-powered tools.",
-			heading: "Exclusive Features",
-			icon: IconEarlyAccessBenefit1,
-		},
-		{
-			description: "Your feedback will directly shape how Grantflow evolves.",
-			heading: "Influence the Future",
-			icon: IconEarlyAccessBenefit2,
-		},
-		{
-			description: "Get dedicated onboarding and hands-on assistance from our team.",
-			heading: "Priority Support",
-			icon: IconEarlyAccessBenefit3,
-		},
-		{
-			description: "Create and generate your first full grant application for FREE!",
-			heading: "Free Application",
-			icon: IconEarlyAccessBenefit4,
-		},
-	];
+	const content = {
+		earlyAccessBenefits: [
+			{
+				description: "Be the first to explore our most advanced, AI-powered tools.",
+				heading: "Exclusive Features",
+				icon: IconEarlyAccessBenefit1,
+			},
+			{
+				description: "Your feedback will directly shape how GrantFlow.ai evolves.",
+				heading: "Influence the Future",
+				icon: IconEarlyAccessBenefit2,
+			},
+			{
+				description: "Get dedicated onboarding and hands-on assistance from our team.",
+				heading: "Priority Support",
+				icon: IconEarlyAccessBenefit3,
+			},
+			{
+				description: "Create and generate your first full grant application for FREE!",
+				heading: "Free Application",
+				icon: IconEarlyAccessBenefit4,
+			},
+		],
+		formHeading: "Join GrantFlow.ai Waitlist",
+		listHeading: "Exclusive Early Access Benefits:",
+	};
 
 	return (
-		<div className="flex bg-violet-300/20 rounded mt-8 px-10 py-7">
+		<div className="flex bg-violet-200/15 rounded mt-7 px-11 py-7">
 			<section className="flex-1" id="early-access-form-and-benefits">
-				<h3 className="font-heading text-3xl" id="benefits-list-header">
-					Exclusive Early Access Benefits:
+				<h3 className="font-heading text-[1.75rem]" id="benefits-list-header">
+					{content.listHeading}
 				</h3>
-				<ul className="flex flex-wrap justify-start mt-8 p-4 gap-10">
-					{earlyAccessBenefits.map((benefits, index) => (
+				<ul className="flex flex-wrap justify-start mt-7 p-3 gap-12">
+					{content.earlyAccessBenefits.map((benefits, index) => (
 						<li key={index}>
 							<EarlyAccessBenefitsCard
 								BadgeIcon={benefits.icon}
@@ -74,8 +84,8 @@ function BenefitsAndWaitlistForm() {
 					))}
 				</ul>
 			</section>
-			<aside aria-label="waitlist-form" className="shrink-0 py-2 ps-4 my-6 text-2xl">
-				<h3 className="font-heading ">Join GrantFlow.ai Waitlist</h3>
+			<aside aria-label="waitlist-form" className="shrink-0 text-2xl">
+				<h3 className="font-heading ">{content.formHeading}</h3>
 				<WaitlistForm />
 			</aside>
 		</div>
@@ -92,7 +102,7 @@ function EarlyAccessBenefitsCard({
 	heading: string;
 }) {
 	return (
-		<article className="w-[9rem] shrink-0" id="early-access-benefits-card">
+		<article className="max-w-[8.5rem] shrink-0" id="early-access-benefits-card">
 			<BadgeIcon className="size-5" />
 			<h3 className="font-heading mt-2 mb-1">{heading}</h3>
 			<p className="font-light leading-tight text-sm">{description}</p>
