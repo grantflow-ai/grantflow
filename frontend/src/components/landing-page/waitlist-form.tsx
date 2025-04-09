@@ -5,9 +5,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 import { z } from "zod";
+import { AppButton } from "@/components/app-button";
 
 const waitlistSchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
@@ -48,9 +48,9 @@ export function WaitlistForm() {
 					type="text"
 				/>
 				<div className="flex justify-end mt-8 px-2">
-					<Button className="font-light text-base px-1" type="submit">
+					<AppButton className="text-base" type="submit">
 						Join now
-					</Button>
+					</AppButton>
 				</div>
 			</form>
 		</Form>

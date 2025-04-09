@@ -17,7 +17,7 @@ export const fontSora = Sora({
 	display: "swap",
 	subsets: ["latin"],
 	variable: "--font-button",
-	weight: ["100", "200", "300", "400"],
+	weight: ["100", "200", "300", "400", "500"],
 });
 
 export const fontSourceSans = Source_Sans_3({
