@@ -7,47 +7,47 @@ const benefitsCardHeader = "font-heading font-medium text-stone-800 text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
 const benefitsCardBorder = "border-2 border-primary/70 rounded";
 
-export function BenefitsSection() {
-	const content = {
-		benefits: [
-			{
-				badge: "Save time!",
-				badgeIcon: Timer,
-				description:
-					"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. Much of the grant writing process is not only time-consuming, it pulls your focus away from advancing groundbreaking research. GrantFlow.ai seamlessly converts your documents into proposal drafts, freeing you to focus solely on highlighting what makes your research innovative.",
-				heading: "More Time on Grant Writing, Less on Research?",
-			},
-			{
-				badge: "Collaborate smarter!",
-				badgeIcon: Users,
-				description:
-					"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
-				heading: "One Place for Your Entire Grant Team",
-			},
-		],
-		description:
-			"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. From generating draft proposals in one quick session instead of weeks to managing documents effortlessly, our AI does the heavy lifting, so you can focus on your research.",
-		heading: "Simplify Grant Applications with AI-Powered tools",
-		stepByStepProcess: {
-			step1: "Describe Your Research",
-			step2: "Upload Your Research Database",
-			step3: "Invite Your Colleagues to Work With You",
-			step4: "Generate Your Proposal with AI",
+const CONTENT = {
+	benefits: [
+		{
+			badge: "Save time!",
+			badgeIcon: Timer,
+			description:
+				"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. Much of the grant writing process is not only time-consuming, it pulls your focus away from advancing groundbreaking research. GrantFlow.ai seamlessly converts your documents into proposal drafts, freeing you to focus solely on highlighting what makes your research innovative.",
+			heading: "More Time on Grant Writing, Less on Research?",
 		},
-	};
+		{
+			badge: "Collaborate smarter!",
+			badgeIcon: Users,
+			description:
+				"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
+			heading: "One Place for Your Entire Grant Team",
+		},
+	],
+	description:
+		"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. From generating draft proposals in one quick session instead of weeks to managing documents effortlessly, our AI does the heavy lifting, so you can focus on your research.",
+	heading: "Simplify Grant Applications with AI-Powered tools",
+	stepByStepProcess: {
+		step1: "Describe Your Research",
+		step2: "Upload Your Research Database",
+		step3: "Invite Your Colleagues to Work With You",
+		step4: "Generate Your Proposal with AI",
+	},
+};
 
+export function BenefitsSection() {
 	return (
 		<section aria-labelledby="benefits-section" className="relative w-full bg-white">
 			<PatternedBackground aria-hidden="true" className="absolute inset-0 z-0 w-full h-auto" />
 			<div className="relative z-10 flex flex-col items-center text-center pt-20 pb-15 px-30">
 				<h2 className={benefitsCardHeader} id="benefits-heading">
-					{content.heading}
+					{CONTENT.heading}
 				</h2>
 				<p className="m-3 text-xl text-stone-800" id="benefits-description">
-					{content.description}
+					{CONTENT.description}
 				</p>
 				<div className="grid grid-cols-2 gap-6 w-full items-start text-start my-8">
-					{content.benefits.map((benefit, index) => (
+					{CONTENT.benefits.map((benefit, index) => (
 						<BenefitsCard
 							badge={benefit.badge}
 							badgeIcon={benefit.badgeIcon}
@@ -56,7 +56,7 @@ export function BenefitsSection() {
 							key={index}
 						/>
 					))}
-					<HowItWorksCard className="col-span-2" heading="How It Works?" steps={content.stepByStepProcess} />
+					<HowItWorksCard className="col-span-2" heading="How It Works?" steps={CONTENT.stepByStepProcess} />
 				</div>
 			</div>
 		</section>
