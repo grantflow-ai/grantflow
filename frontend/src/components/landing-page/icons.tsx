@@ -1,12 +1,12 @@
 import { HTMLProps } from "react";
 
-export function IconCalendar({ ...props }: HTMLProps<SVGSVGElement>) {
+export function IconCalendar({ height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
-			fill="#FFFFFF"
-			height="24px"
+			fill="currentColor"
+			height={height}
 			viewBox="0 -960 960 960"
-			width="24px"
+			width={width}
 			xmlns="http://www.w3.org/2000/svg"
 			{...props}
 		>
@@ -75,13 +75,13 @@ export function IconEarlyAccessBenefit4({ ...props }: HTMLProps<SVGSVGElement>) 
 	);
 }
 
-export function IconGoAhead({ ...props }: HTMLProps<SVGSVGElement>) {
+export function IconGoAhead({ height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
-			fill="#FFFFFF"
-			height="24px"
+			fill="currentColor"
+			height={height}
 			viewBox="0 -960 960 960"
-			width="24px"
+			width={width}
 			xmlns="http://www.w3.org/2000/svg"
 			{...props}
 		>

@@ -8,10 +8,10 @@ import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { NavHeader } from "@/components/landing-page/nav-header";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
-import { LinkedIn } from "@/components/linkedin-icon";
-import { LogoDark } from "@/components/logo-dark";
-import { Button } from "@/components/ui/button";
+import { LinkedIn } from "@/components/social-icons";
 import { IconCalendar, IconGoAhead } from "@/components/landing-page/icons";
+import { LogoDark } from "@/components/logo";
+import { AppButton } from "@/components/app-button";
 
 export default async function LandingPage() {
 	return (
@@ -40,20 +40,18 @@ function CTASection() {
 			<GradientBackground className="absolute inset-0 z-0" />
 			<div className="relative z-10 flex w-full items-center justify-between py-20 px-30">
 				<div className="flex flex-col w-fit text-white">
-					<h2 className="font-heading text-3xl" id="cta-heading">
+					<h2 className="font-heading text-[1.775rem] leading-[1]" id="cta-heading">
 						{content.heading}
 					</h2>
-					<p className="max-w-lg mt-3 text-base font-light leading-tight">{content.description}</p>
+					<p className="max-w-lg mt-4 text-base font-light leading-tight">{content.description}</p>
 				</div>
-				<div className="space-x-4">
-					<Button className="shrink-0 p-4 text-base">
-						Try for free
-						<IconGoAhead />
-					</Button>
-					<Button className="shrink-0 bg-transparent text-base rounded" variant="outline">
-						<IconCalendar />
+				<div className="flex gap-6 items-center">
+					<AppButton rightIcon={<IconGoAhead />} size="lg">
+						Try For Free
+					</AppButton>
+					<AppButton leftIcon={<IconCalendar />} size="lg" theme="light" variant="secondary">
 						Schedule a Demo
-					</Button>
+					</AppButton>
 				</div>
 			</div>
 		</section>
@@ -63,19 +61,15 @@ function CTASection() {
 function Footer() {
 	return (
 		<footer aria-labelledby="site-footer" className="bg-white relative z-0">
-			<div className="flex justify-between items-center px-8 pt-4 mb-10">
-				<LogoDark className="h-16 w-52" />
+			<div className="flex justify-between items-center px-8 my-6">
+				<LogoDark className="h-15.5" height="250" width="250" />
 				<nav aria-label="footer-navigation">
 					<ul className="flex gap-6 text-primary font-button">
 						<li>
-							<a className="hover:underline" href="/terms">
-								Terms of Use
-							</a>
+							<AppButton variant="link">Terms of Use</AppButton>
 						</li>
 						<li>
-							<a className="hover:underline" href="/privacy-policy">
-								Privacy Policy
-							</a>
+							<AppButton variant="link">Privacy Policy</AppButton>
 						</li>
 					</ul>
 				</nav>
