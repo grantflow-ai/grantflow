@@ -6,7 +6,7 @@ export function GradientBackground({ className }: HTMLAttributes<HTMLDivElement>
 	return (
 		<div
 			className={cn(
-				"bg-[radial-gradient(ellipse_at_bottom_right,var(--primary)_0%,transparent_70%)] opacity-70",
+				"bg-[radial-gradient(60%_100%_at_100%_80%,var(--primary)_0%,transparent_100%)] opacity-70",
 				className,
 			)}
 		></div>
