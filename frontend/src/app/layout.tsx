@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 import { ToastListener } from "@/components/toast-listener";
 import { getEnv } from "@/utils/env";
-import { fontSans } from "@/utils/fonts";
+import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
@@ -29,10 +29,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 		<html lang="en" suppressHydrationWarning>
 			<head>
 				<link href="https://use.typekit.net/get1yhn.css" rel="stylesheet" />
-				<link href="/favicon.ico" rel="icon" sizes="any" />
+				<link href="/favicon.svg" rel="icon" sizes="any" type="image/svg+xml" />
 			</head>
-			<body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
-				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
+			<body
+				className={cn(
+					"min-h-screen bg-background font-body antialiased",
+					fontCabin.variable,
+					fontSourceSans.variable,
+					fontSora.variable,
+				)}
+			>
+				<ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
 					<main
 						className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"
 						data-testid="main-container"
