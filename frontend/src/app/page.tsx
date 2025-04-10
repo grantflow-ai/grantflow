@@ -1,170 +1,80 @@
 /* eslint-disable @typescript-eslint/require-await */
 "use server";
 
-import { Footer } from "@/components/footer";
+import { BenefitsSection } from "@/components/landing-page/benefits-section";
+import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
+import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
+import { GradientBackground } from "@/components/landing-page/backgrounds";
+import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { NavHeader } from "@/components/landing-page/nav-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Lock, Users } from "lucide-react";
-
-const locales = {
-	featuresSection: {
-		card1: {
-			content:
-				"Your entire team can participate in the application process, ensuring everyone from administrators to researchers can contribute efficiently.",
-			title: "Collaborative Tools",
-		},
-		card2: {
-			content:
-				"Create proposals that meet the specific guidelines of major funding bodies like NIH, NSF, and ERC, with AI assistance fine-tuned for technical and cutting-edge research language.",
-			title: "Customizable Proposals",
-		},
-		card3: {
-			content: "Discover relevant grants, track progress, and ensure compliance, all within a single platform.",
-			title: "Grant Discovery & Tracking",
-		},
-		subtitle: "Tailored for the Complex Needs of Principal Investigators",
-		title: "Why GrantFlow.ai?",
-	},
-	headingSection: {
-		subtitle: "Supercharge your grant writing",
-		title: "GrantFlow.ai",
-	},
-	problemAndSolutionSection: {
-		card1: {
-			content:
-				"As a PI, you need to balance running a lab, publishing research, and securing funding for future studies. The complex and time-consuming grant writing process can drain your focus from leading groundbreaking research. Collaborating with students, administrators, and other researchers adds another layer of complexity.",
-			subtitle: "More Time on Grant Writing, Less on Research?",
-			title: "The Challenge for Principal Investigators",
-		},
-		card2: {
-			content:
-				"GrantFlow.ai provides a comprehensive platform designed to streamline the grant application writing process:",
-			list: {
-				item1: 'Collaborative Workspace: Our "Grant Studio" allows seamless collaboration.',
-				item2: "AI-Driven Support: Leverage advanced AI to accelerate writing and refine proposals.",
-				item3: "Security & Compliance: Ensures data privacy and adheres to industry standards.",
-			},
-			subtitle: "A Collaborative Platform Built for Researchers",
-			title: "Our Solution",
-		},
-		subtitle:
-			"GrantFlow.ai transforms the complex grant application process into a streamlined, collaborative experience. Manage all aspects of grant writing with your team in one shared workspace.",
-		title: "Simplify Grant Applications with a Collaborative Workspace",
-	},
-};
+import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
+import { LinkedIn } from "@/components/social-icons";
+import { IconCalendar, IconGoAhead } from "@/components/landing-page/icons";
+import { LogoDark } from "@/components/logo";
+import { AppButton } from "@/components/app-button";
 
 export default async function LandingPage() {
 	return (
 		<div className="flex flex-col">
 			<NavHeader />
-			<div className="flex-grow">
-				<section className="bg-background pt-10 md:pt-16" data-testid="heading-section">
-					<div className="container mx-auto px-4 text-center">
-						<h1
-							className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up text-primary"
-							data-testid="heading-title"
-						>
-							{locales.headingSection.title}
-						</h1>
-						<p className="text-xl md:text-2xl mb-8 text-foreground" data-testid="heading-subtitle">
-							{locales.headingSection.subtitle}
-						</p>
-					</div>
-				</section>
-
-				<section className="py-16 md:py-24 bg-background" data-testid="problem-solution-section" id="features">
-					<div className="container mx-auto px-4">
-						<h2
-							className="text-3xl md:text-4xl font-bold mb-8 text-center text-primary"
-							data-testid="problem-solution-title"
-						>
-							{locales.problemAndSolutionSection.title}
-						</h2>
-						<p
-							className="text-xl text-center mb-12 max-w-3xl mx-auto text-muted-foreground"
-							data-testid="problem-solution-subtitle"
-						>
-							{locales.problemAndSolutionSection.subtitle}
-						</p>
-						<div className="grid md:grid-cols-2 gap-8">
-							<Card className="transition-all duration-300 hover:shadow-lg" data-testid="card-1">
-								<CardHeader>
-									<CardTitle className="text-primary">
-										{locales.problemAndSolutionSection.card1.title}
-									</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<h3 className="text-xl font-semibold mb-4 text-accent-foreground">
-										{locales.problemAndSolutionSection.card1.subtitle}
-									</h3>
-									<p>{locales.problemAndSolutionSection.card1.content}</p>
-								</CardContent>
-							</Card>
-							<Card className="transition-all duration-300 hover:shadow-lg" data-testid="card-2">
-								<CardHeader>
-									<CardTitle className="text-primary">
-										{locales.problemAndSolutionSection.card2.title}
-									</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<h3 className="text-xl font-semibold mb-4 text-accent-foreground">
-										{locales.problemAndSolutionSection.card2.subtitle}
-									</h3>
-									<p>{locales.problemAndSolutionSection.card2.content}</p>
-									<ul className="mt-4 space-y-4">
-										<li className="flex items-start" data-testid="card2-item1">
-											<Users className="mr-3 h-6 w-6 text-primary" />
-											<span>{locales.problemAndSolutionSection.card2.list.item1}</span>
-										</li>
-										<li className="flex items-start" data-testid="card2-item2">
-											<FileText className="mr-3 h-6 w-6 text-primary" />
-											<span>{locales.problemAndSolutionSection.card2.list.item2}</span>
-										</li>
-										<li className="flex items-start" data-testid="card2-item3">
-											<Lock className="mr-3 h-6 w-6 text-primary" />
-											<span>{locales.problemAndSolutionSection.card2.list.item3}</span>
-										</li>
-									</ul>
-								</CardContent>
-							</Card>
-						</div>
-					</div>
-				</section>
-
-				<section className="py-16 md:py-24 bg-muted" data-testid="features-section">
-					<div className="container mx-auto px-4">
-						<h2
-							className="text-3xl md:text-4xl font-bold mb-8 text-center text-primary"
-							data-testid="features-title"
-						>
-							{locales.featuresSection.title}
-						</h2>
-						<h3 className="text-xl text-center mb-12 text-muted-foreground" data-testid="features-subtitle">
-							{locales.featuresSection.subtitle}
-						</h3>
-						<div className="grid md:grid-cols-3 gap-8">
-							{[
-								locales.featuresSection.card1,
-								locales.featuresSection.card2,
-								locales.featuresSection.card3,
-							].map((card, index) => (
-								<Card
-									className="transition-all duration-300 hover:shadow-lg"
-									data-testid={`feature-card-${index + 1}`}
-									key={index}
-								>
-									<CardHeader>
-										<CardTitle className="text-primary">{card.title}</CardTitle>
-									</CardHeader>
-									<CardContent>{card.content}</CardContent>
-								</Card>
-							))}
-						</div>
-					</div>
-				</section>
-			</div>
-
+			<HeroBanner />
+			<BenefitsSection />
+			<EarlyAccessSection />
+			<TestimonialsSection />
+			<CoreFeaturesSection />
+			<CTASection />
 			<Footer />
 		</div>
+	);
+}
+
+function CTASection() {
+	const content = {
+		description:
+			"Join leading research teams who are saving time, improving collaboration, and securing more funds with GrantFlow.ai.",
+		heading: "Ready to Transform Your Grant Writing Process?",
+	};
+
+	return (
+		<section aria-labelledby="cta-section" className="relative">
+			<GradientBackground className="absolute inset-0 z-0" />
+			<div className="relative z-10 flex w-full items-center justify-between py-20 px-30">
+				<div className="flex flex-col w-fit text-white">
+					<h2 className="font-heading text-[1.775rem] leading-[1]" id="cta-heading">
+						{content.heading}
+					</h2>
+					<p className="max-w-lg mt-4 text-base font-light leading-tight">{content.description}</p>
+				</div>
+				<div className="flex gap-6 items-center">
+					<AppButton rightIcon={<IconGoAhead />} size="lg">
+						Try For Free
+					</AppButton>
+					<AppButton leftIcon={<IconCalendar />} size="lg" theme="light" variant="secondary">
+						Schedule a Demo
+					</AppButton>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+function Footer() {
+	return (
+		<footer aria-labelledby="site-footer" className="bg-white relative z-0">
+			<div className="flex justify-between items-center px-8 my-6">
+				<LogoDark className="h-15.5" height="250" width="250" />
+				<nav aria-label="footer-navigation">
+					<ul className="flex gap-6 text-primary font-button">
+						<li>
+							<AppButton variant="link">Terms of Use</AppButton>
+						</li>
+						<li>
+							<AppButton variant="link">Privacy Policy</AppButton>
+						</li>
+					</ul>
+				</nav>
+				<LinkedIn className="size-8" />
+			</div>
+		</footer>
 	);
 }

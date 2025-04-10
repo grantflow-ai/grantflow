@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { fontSans } from "@/utils/fonts";
+import { fontSora } from "@/utils/fonts";
 import { render, screen } from "@testing-library/react";
 
 import RootLayout from "./layout";
@@ -12,7 +12,9 @@ vi.mock("@/components/ui/sonner", () => ({
 }));
 
 vi.mock("@/utils/fonts", () => ({
-	fontSans: { variable: "font-sans" },
+	fontCabin: { variable: "font-cabin" },
+	fontSora: { variable: "font-sora" },
+	fontSourceSans: { variable: "font-source-sans" },
 }));
 
 vi.mock("@/utils/env", () => ({
@@ -65,8 +67,8 @@ describe("RootLayout", () => {
 		render(RootLayout({ children: "Test Content" }));
 
 		const body = screen.getByText("Test Content").closest("body");
-		expect(body).toHaveClass("min-h-screen bg-background font-sans antialiased");
-		expect(body).toHaveClass(fontSans.variable);
+		expect(body).toHaveClass("min-h-screen bg-background antialiased font-sora");
+		expect(body).toHaveClass(fontSora.variable);
 	});
 
 	it("renders children within the main container", async () => {
@@ -76,6 +78,7 @@ describe("RootLayout", () => {
 		expect(mainContainer).toHaveTextContent("Test Content");
 		expect(mainContainer).toHaveClass("md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)]");
 	});
+
 	it("sets the correct lang attribute on the html element", async () => {
 		// In the test environment, the container doesn't include the html element
 		// We'll just verify the component renders without errors
