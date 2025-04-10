@@ -1,6 +1,6 @@
 import { HTMLProps } from "react";
 import { GradientBackground } from "./backgrounds";
-import { IconCalendar, IconGoAhead } from "./icons";
+import { IconGoAhead } from "./icons";
 import { AppButton } from "@/components/app-button";
 
 export function HeroBanner() {
@@ -17,11 +17,11 @@ export function HeroBanner() {
 					Where Research Meets Funding, Seamlessly.
 				</h1>
 				<div className="flex mt-8 gap-6 items-center">
+					<AppButton size="lg" theme="light" variant="secondary">
+						Contact us
+					</AppButton>
 					<AppButton rightIcon={<IconGoAhead />} size="lg">
 						Try For Free
-					</AppButton>
-					<AppButton leftIcon={<IconCalendar />} size="lg" theme="light" variant="secondary">
-						Schedule a Demo
 					</AppButton>
 				</div>
 			</div>

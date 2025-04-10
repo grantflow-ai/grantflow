@@ -1,5 +1,5 @@
 import { Logo } from "@/components/logo";
-import { IconCalendar } from "./icons";
+import { IconGoAhead } from "@/components/landing-page/icons";
 import { AppButton } from "@/components/app-button";
 
 export function NavHeader() {
@@ -11,12 +11,11 @@ export function NavHeader() {
 			<Logo className="h-27" height="250" width="250" />
 			<div className="flex gap-6 items-center">
 				<AppButton size="lg" theme="light" variant="link">
-					Solutions
-				</AppButton>
-				<AppButton size="lg" theme="light" variant="link">
 					About us
 				</AppButton>
-				<AppButton leftIcon={<IconCalendar />}>Schedule a Demo</AppButton>
+				<AppButton rightIcon={<IconGoAhead />} size="lg">
+					Try For Free
+				</AppButton>
 			</div>
 		</header>
 	);

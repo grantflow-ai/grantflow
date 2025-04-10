@@ -1,7 +1,7 @@
-import { LucideIcon, Timer, Users } from "lucide-react";
 import { PatternedBackground } from "./backgrounds";
 import { cn } from "@/lib/utils";
 import React, { HTMLAttributes } from "react";
+import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
 
 const benefitsCardHeader = "font-heading font-medium text-stone-800 text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
@@ -11,14 +11,14 @@ const CONTENT = {
 	benefits: [
 		{
 			badge: "Save time!",
-			badgeIcon: Timer,
+			badgeIcon: IconBenefitFirst,
 			description:
 				"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. Much of the grant writing process is not only time-consuming, it pulls your focus away from advancing groundbreaking research. GrantFlow.ai seamlessly converts your documents into proposal drafts, freeing you to focus solely on highlighting what makes your research innovative.",
 			heading: "More Time on Grant Writing, Less on Research?",
 		},
 		{
 			badge: "Collaborate smarter!",
-			badgeIcon: Users,
+			badgeIcon: IconBenefitSecond,
 			description:
 				"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
 			heading: "One Place for Your Entire Grant Team",
@@ -65,19 +65,19 @@ export function BenefitsSection() {
 
 function BenefitsCard({
 	badge,
-	badgeIcon: Icon,
+	badgeIcon: BadgeIcon,
 	description,
 	heading,
 }: {
 	badge: string;
-	badgeIcon: LucideIcon;
+	badgeIcon: React.FC<React.SVGProps<SVGSVGElement>>;
 	description: string;
 	heading: string;
 }) {
 	return (
 		<article className={cn("size-full text-stone-800 py-7 px-5", benefitsCardBackground, benefitsCardBorder)}>
 			<div className="inline-flex items-center bg-background rounded-2xl px-2 text-white gap-1">
-				<Icon className="size-3" />
+				<BadgeIcon />
 				<span className="font-button font-light align-bottom text-sm">{badge}</span>
 			</div>
 			<h3 className="font-heading font-semibold text-2xl my-2">{heading}</h3>
