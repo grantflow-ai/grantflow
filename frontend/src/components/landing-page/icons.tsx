@@ -45,6 +45,22 @@ export function IconCalendar({ height = 15, width = 15, ...props }: HTMLProps<SV
 	);
 }
 
+export function IconCancel({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			className={className}
+			fill="currentColor"
+			height={height}
+			viewBox="0 -960 960 960"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+		</svg>
+	);
+}
+
 export function IconEarlyAccessBenefit1({ ...props }: HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
@@ -116,6 +132,22 @@ export function IconGoAhead({ height = 15, width = 15, ...props }: HTMLProps<SVG
 			{...props}
 		>
 			<path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+		</svg>
+	);
+}
+
+export function IconHamburger({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			className={className}
+			fill="currentColor"
+			height={height}
+			viewBox="0 -960 960 960"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
 		</svg>
 	);
 }
