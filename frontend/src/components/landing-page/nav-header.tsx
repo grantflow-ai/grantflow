@@ -6,12 +6,14 @@ import { AppButton } from "@/components/app-button";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 
+const BREAKPOINT_MD = 768;
+
 export function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 	useEffect(() => {
 		const handleResize = () => {
-			if (window.innerWidth >= 768 && isMobileMenuOpen) {
+			if (window.innerWidth >= BREAKPOINT_MD && isMobileMenuOpen) {
 				setIsMobileMenuOpen(false);
 			}
 		};
