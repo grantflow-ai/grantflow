@@ -15,38 +15,38 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.api_types import APIRequest
-from src.api.middleware import AuthMiddleware
-from src.api.routes.application_files import (
+from src.api.http.application_files import (
     handle_application_file_uploads,
     handle_delete_application_file,
     retrieve_application_files,
 )
-from src.api.routes.auth import handle_create_otp, handle_login
-from src.api.routes.funding_organizations import (
+from src.api.http.auth import handle_create_otp, handle_login
+from src.api.http.funding_organizations import (
     handle_create_organization,
     handle_delete_organization,
     handle_retrieve_organizations,
     handle_update_organization,
 )
-from src.api.routes.grant_applications import (
-    handle_application_websocket,
+from src.api.http.grant_applications import (
     handle_create_application,
     handle_delete_application,
     handle_update_application,
 )
-from src.api.routes.health import health_check
-from src.api.routes.organization_files import (
+from src.api.http.health import health_check
+from src.api.http.organization_files import (
     handle_delete_organization_file,
     handle_organization_file_uploads,
     retrieve_organization_files,
 )
-from src.api.routes.workspaces import (
+from src.api.http.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
+from src.api.middleware import AuthMiddleware
+from src.api.sockets.grant_applications import handle_application_websocket
 from src.db.connection import get_session_maker
 from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError
