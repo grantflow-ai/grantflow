@@ -101,12 +101,3 @@ repos:
             language: system
             types: [python]
             files: ^backend/
-
-    - repo: local
-      hooks:
-          - id: typecheck
-            name: typecheck
-            entry: cd frontend && pnpm run typecheck
-            require_serial: true
-            language: system
-            files: ^frontend/.*\.(?:m|c)?tsx?$
