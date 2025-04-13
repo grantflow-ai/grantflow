@@ -19,6 +19,7 @@ requirements.txt
 
 # Node.js (frontend)
 node_modules/
+.eslintcache
 .next/
 .vercel/
 .turbo/

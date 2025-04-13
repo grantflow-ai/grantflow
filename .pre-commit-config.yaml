@@ -43,7 +43,7 @@ repos:
           - id: eslint
             files: \.[jt]sx?$
             types: [file]
-            args: ["--fix", "--max-warnings=0", "--no-warn-ignored"]
+            args: ["--fix", "--max-warnings=0", "--no-warn-ignored", "--cache"]
             additional_dependencies:
                 [
                     "@eslint/compat",
@@ -101,3 +101,12 @@ repos:
             language: system
             types: [python]
             files: ^backend/
+
+    - repo: local
+      hooks:
+          - id: typecheck
+            name: typecheck
+            entry: cd frontend && pnpm run typecheck
+            require_serial: true
+            language: system
+            files: ^frontend/.*\.(?:m|c)?tsx?$
