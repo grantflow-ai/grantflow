@@ -11,7 +11,7 @@ from src.db.tables import FundingOrganization
 from tests.conftest import TestingClientType
 
 if TYPE_CHECKING:
-    from src.api.api_types import CreateOrganizationRequestBody
+    from src.api.http.funding_organizations import CreateOrganizationRequestBody
 
 
 async def test_create_organization_api_request_success(

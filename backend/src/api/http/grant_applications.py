@@ -1,27 +1,20 @@
-from typing import Annotated, Any
+from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
-from litestar import delete, patch, post
+from litestar import delete, patch
 from litestar.datastructures import UploadFile
-from litestar.enums import RequestEncodingType
 from litestar.exceptions import ValidationException
-from litestar.params import Body
 from sqlalchemy import delete as sa_delete
-from sqlalchemy import insert, update
+from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import (
-    APIRequest,
-    BaseApplicationResponse,
-    CreateApplicationRequestBody,
-    TableIdResponse,
-    UpdateApplicationRequestBody,
-)
+from src.api.api_types import TableIdResponse
+from src.api.http.funding_organizations import FundingOrganizationResponse
 from src.db.enums import UserRoleEnum
+from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication
 from src.exceptions import DatabaseError
-from src.files import FileDTO
 from src.utils.db import retrieve_application
 from src.utils.logger import get_logger
 
@@ -30,59 +23,73 @@ logger = get_logger(__name__)
 PROCESSING_SLEEP_INTERVAL = 15  # seconds ~keep
 
 
-async def _get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
-    from src.utils.extraction import extract_file_content, extract_webpage_content
+class CreateApplicationRequestBody(TypedDict):
+    """The request body for creating an application."""
 
-    if cfp_file_upload:
-        file = await FileDTO.from_file(filename=cfp_file_upload.filename, file=cfp_file_upload)
-        output, _ = await extract_file_content(
-            content=file.content,
-            mime_type=file.mime_type,
-        )
-        return output if isinstance(output, str) else output["content"]
-    if cfp_url:
-        return await extract_webpage_content(url=cfp_url)
-    raise ValidationException("Either one file or a CFP URL is required")
+    title: str
+    """The title of the application."""
+    cfp_url: NotRequired[str]
+    """Grant CFP URL."""
+    cfp_file: NotRequired[UploadFile]
+    """Grant CFP file."""
 
 
-@post(
-    "/workspaces/{workspace_id:uuid}/applications",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
-    operation_id="CreateApplication",
-)
-async def handle_create_application(
-    data: Annotated[CreateApplicationRequestBody, Body(media_type=RequestEncodingType.MULTI_PART)],
-    request: APIRequest,
-    workspace_id: UUID,
-    session_maker: async_sessionmaker[Any],
-) -> TableIdResponse:
-    logger.info("Creating application for workspace", workspace_id=workspace_id)
+class UpdateApplicationRequestBody(TypedDict):
+    """The request body for updating an application."""
 
-    cfp_content = await _get_cfp_content(
-        cfp_file_upload=data.get("cfp_file"),
-        cfp_url=data.get("cfp_url"),
-    )
+    title: NotRequired[str]
+    """The title of the application."""
+    research_objectives: NotRequired[list[ResearchObjective]]
+    """The research objectives of the application."""
 
-    async with session_maker() as session, session.begin():
-        try:
-            application_id = await session.scalar(
-                insert(GrantApplication)
-                .values({"workspace_id": workspace_id, "title": data["title"]})
-                .returning(GrantApplication.id)
-            )
-            await session.commit()
-        except SQLAlchemyError as e:
-            await session.rollback()
-            logger.error("Error creating application", exc_info=e)
-            raise DatabaseError("Error creating application", context=str(e)) from e
 
-    request.app.emit(
-        "grant_template_generation_pipeline_handler",
-        application_id=application_id,
-        cfp_content=cfp_content,
-    )
+class ApplicationDraftProcessingResponse(TypedDict):
+    """The response schema for an application draft in processing state."""
 
-    return TableIdResponse(id=str(application_id))
+    id: str
+    """The ID of the grant application draft."""
+    status: Literal["generating"]
+    """The status of the grant application draft."""
+
+
+class ApplicationDraftCompleteResponse(TypedDict):
+    """The response schema for a completed application draft."""
+
+    id: str
+    """The ID of the grant application draft."""
+    status: Literal["complete"]
+    """The status of the grant application draft."""
+    text: str
+
+
+class BaseApplicationResponse(TableIdResponse):
+    """Base response for retrieving applications."""
+
+    title: str
+    """The title of the grant application draft."""
+    completed_at: str | None
+    """The completed date of the grant application draft."""
+
+
+class GrantTemplateResponse(TypedDict):
+    """Response for retrieving a grant template."""
+
+    grant_sections: list[GrantLongFormSection | GrantElement]
+    """The name of the grant template."""
+    funding_organization: FundingOrganizationResponse | None
+    """The funding organization of the grant template."""
+
+
+class ApplicationResponse(BaseApplicationResponse):
+    """Response for retrieving an application."""
+
+    form_inputs: dict[str, str] | None
+    """The form inputs of the application."""
+    research_objectives: list[ResearchObjective] | None
+    """The research objectives of the application."""
+    text: str | None
+    """The text content of the application."""
+    grant_template: GrantTemplateResponse | None
 
 
 @patch(
