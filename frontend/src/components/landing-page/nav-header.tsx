@@ -31,14 +31,14 @@ export function NavHeader() {
 		`}
 			data-testid="nav-header"
 		>
-			<div className="flex justify-between items-center px-3 sm:px-4 md:px-10 lg:px-20 xl:px-30 border-b border-b-gray-400/20">
+			<div className="flex justify-between items-center px-4 md:px-10 lg:px-20 xl:px-30 border-b border-b-gray-400/20">
 				<Logo
-					className={`h-11 xs:h-12 sm:h-13 md:h-14 lg:h-15 xl:h-16 my-1 md:my-2 lg:my-4 xl:my-6 w-auto transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-0" : "opacity-100"}`}
+					className={`h-12 sm:h-13 md:h-14 lg:h-15 xl:h-16 my-1 md:my-2 lg:my-4 xl:my-6 w-auto transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-0" : "opacity-100"}`}
 					height="auto"
 					width="auto"
 				/>
 				<LogoDark
-					className={`absolute h-11 xs:h-12 sm:h-13 md:h-14 lg:h-15 xl:h-16 my-1 md:my-2 lg:my-4 xl:my-6 w-auto transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
+					className={`absolute h-12 sm:h-13 md:h-14 lg:h-15 xl:h-16 my-1 md:my-2 lg:my-4 xl:my-6 w-auto transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
 					height="auto"
 					width="auto"
 				/>

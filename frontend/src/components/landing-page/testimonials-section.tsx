@@ -25,20 +25,23 @@ const CONTENT = {
 export function TestimonialsSection() {
 	return (
 		<section aria-labelledby="testimonials-section" className="relative w-full text-stone-800 bg-gray-100">
-			<div className="flex flex-col pt-20 pb-4 px-30 space-y-2">
-				<h2 className="font-heading text-4xl font-medium" id="testimonials-heading">
+			<div className="flex flex-col pt-8 md:pt-12 lg:pt-16 xl:pt-20 pb-20 xl:pb-4 px-8 md:px-10 lg:px-20 xl:px-30 space-y-2">
+				<h2 className="font-heading text-3xl md:text-4xl font-medium" id="testimonials-heading">
 					{CONTENT.heading}
 				</h2>
-				<p className="mx-1">{CONTENT.subtitle}</p>
-				<div className="grid grid-cols-3 place-items-start m-16">
+				<p className="mx-1 text-xl md:text-lg lg:text-base">{CONTENT.subtitle}</p>
+				<div className="grid grid-cols-1 lg:grid-cols-3 place-items-center lg:place-items-start gap-12 md:gap-8 lg:gap-0 mt-8 xl:m-16">
 					{CONTENT.testimonials.map((testimonial, i) => (
-						<article className="flex flex-col items-center text-center w-xs h-full" key={i}>
+						<article
+							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full"
+							key={i}
+						>
 							<Image
 								alt={`${Image.name}'s photo`}
-								className="rounded-full size-[9rem]"
+								className="rounded-full size-[6rem] md:size-[7rem] lg:size-[8rem] xl:size-[9rem]"
 								src={testimonial.image}
 							/>
-							<blockquote className="mt-6 font-semibold leading-tight">
+							<blockquote className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base">
 								&quot;{testimonial.quote}&quot;
 							</blockquote>
 						</article>

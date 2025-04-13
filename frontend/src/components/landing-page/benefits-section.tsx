@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import React, { HTMLAttributes } from "react";
 import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
 
-const benefitsCardHeader = "font-heading font-medium text-stone-800 text-4xl";
+const benefitsCardHeader = "font-heading font-medium text-stone-800 text-3xl md:text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
 const benefitsCardBorder = "border-2 border-primary/70 rounded";
 
@@ -39,14 +39,14 @@ export function BenefitsSection() {
 	return (
 		<section aria-labelledby="benefits-section" className="relative w-full bg-white">
 			<PatternedBackground aria-hidden="true" className="absolute inset-0 z-0 w-full h-auto" />
-			<div className="relative z-10 flex flex-col items-center text-center pt-20 pb-15 px-30">
+			<div className="relative z-10 flex flex-col items-center text-center pt-8 md:pt-12 lg:pt-16 xl:pt-20 pb-15 px-4 md:px-10 lg:px-20 xl:px-30">
 				<h2 className={benefitsCardHeader} id="benefits-heading">
 					{CONTENT.heading}
 				</h2>
 				<p className="m-3 text-xl text-stone-800" id="benefits-description">
 					{CONTENT.description}
 				</p>
-				<div className="grid grid-cols-2 gap-6 w-full items-start text-start my-8">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full items-start text-start my-8">
 					{CONTENT.benefits.map((benefit, index) => (
 						<BenefitsCard
 							badge={benefit.badge}
@@ -56,7 +56,11 @@ export function BenefitsSection() {
 							key={index}
 						/>
 					))}
-					<HowItWorksCard className="col-span-2" heading="How It Works?" steps={CONTENT.stepByStepProcess} />
+					<HowItWorksCard
+						className="col-span-1 md:col-span-2"
+						heading="How It Works?"
+						steps={CONTENT.stepByStepProcess}
+					/>
 				</div>
 			</div>
 		</section>
@@ -75,13 +79,15 @@ function BenefitsCard({
 	heading: string;
 }) {
 	return (
-		<article className={cn("size-full text-stone-800 py-7 px-5", benefitsCardBackground, benefitsCardBorder)}>
+		<article
+			className={cn("size-full text-stone-800 py-7 px-6 md:px-5", benefitsCardBackground, benefitsCardBorder)}
+		>
 			<div className="inline-flex items-center bg-background rounded-2xl px-2 text-white gap-1">
-				<BadgeIcon />
-				<span className="font-button font-light align-bottom text-sm">{badge}</span>
+				<BadgeIcon className="size-5 md:size-4" />
+				<span className="font-button font-light align-bottom md:text-sm">{badge}</span>
 			</div>
-			<h3 className="font-heading font-semibold text-2xl my-2">{heading}</h3>
-			<p className="leading-tight max-w-xl">{description}</p>
+			<h3 className="font-heading font-semibold text-2xl my-3 md:my-2">{heading}</h3>
+			<p className="leading-tight max-w-xl text-xl md:text-base">{description}</p>
 		</article>
 	);
 }
@@ -98,15 +104,15 @@ function HowItWorksCard({
 	return (
 		<div
 			className={cn(
-				"w-full h-auto p-10 flex flex-col items-center justify-center",
+				"w-full h-auto flex px-10 py-6 md:py-10 flex-col items-center justify-center",
 				className,
 				benefitsCardBackground,
 				benefitsCardBorder,
 			)}
 			{...props}
 		>
-			<h2 className={cn(benefitsCardHeader, "font-bold m-4")}>{heading}</h2>
-			<div className="grid grid-cols-4 my-8 p-2 gap-x-20">
+			<h2 className={cn(benefitsCardHeader, "font-bold md:m-4")}>{heading}</h2>
+			<div className="grid grid-cols-1 md:grid-cols-4 my-8 p-2 gap-x-20">
 				{Object.entries(steps).map(([, content], index) => (
 					<TimelineStep key={index} label={content} />
 				))}
@@ -125,7 +131,7 @@ function StepIndicator() {
 
 function TimelineStep({ label }: { label: React.ReactNode }) {
 	return (
-		<div className="flex flex-col items-center justify-center">
+		<div className="flex md:flex-col items-center justify-center">
 			<StepIndicator />
 			<p className="font-heading font-bold text-background text-center text-2xl mt-6">{label}</p>
 		</div>
