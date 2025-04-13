@@ -7,9 +7,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import (
-    UpdateWorkspaceRequestBody,
-)
+from src.api.http.workspaces import UpdateWorkspaceRequestBody
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
 from tests.conftest import TestingClientType

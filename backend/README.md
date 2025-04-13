@@ -9,7 +9,8 @@ The backend follows a modular architecture:
 ```
 /src
   /api               # API routes and endpoints
-    /routes          # Route handlers for different resources
+    /http            # HTTP route handlers for different resources
+    /sockets         # Websockets handlers for different resources
     middleware.py    # API middleware
     main.py          # API entry point
   /db                # Database models and connection
