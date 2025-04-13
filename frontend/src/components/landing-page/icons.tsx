@@ -1,8 +1,9 @@
 import { HTMLProps } from "react";
 
-export function IconBenefitFirst({ height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconBenefitFirst({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			className={className}
 			fill="currentColor"
 			height={height}
 			viewBox="0 -960 960 960"
@@ -15,9 +16,10 @@ export function IconBenefitFirst({ height = 15, width = 15, ...props }: HTMLProp
 	);
 }
 
-export function IconBenefitSecond({ height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconBenefitSecond({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			className={className}
 			fill="currentColor"
 			height={height}
 			viewBox="0 -960 960 960"

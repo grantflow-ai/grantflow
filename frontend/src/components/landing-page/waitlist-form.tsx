@@ -29,7 +29,7 @@ export function WaitlistForm() {
 
 	return (
 		<Form {...form}>
-			<form className="space-y-1" onSubmit={form.handleSubmit(onSubmit)}>
+			<form className="space-y-2 md:space-y-1 mt-4 md:mt-0" onSubmit={form.handleSubmit(onSubmit)}>
 				<WaitListFormItem
 					formControl={form.control}
 					id="email"
@@ -90,13 +90,13 @@ function WaitListFormItem({
 			name={name === "email" ? "email" : "name"}
 			render={({ field }) => (
 				<FormItem>
-					<FormLabel className="font-heading font-light text-[0.95rem]">{label}</FormLabel>
-					<FormControl className="mt-2 w-[17rem]">
+					<FormLabel className="font-heading font-light text-xl md:text-[0.95rem]">{label}</FormLabel>
+					<FormControl className="mt-2 w-full h-auto md:w-[17rem]">
 						<Input
 							placeholder={placeholder}
 							type={type}
 							{...field}
-							className="bg-white rounded-sm p-3 placeholder:font-light placeholder:text-[1.05rem] placeholder:text-slate-500"
+							className="bg-white rounded-sm p-3 md:placeholder:font-light placeholder:text-lg md:placeholder:text-[1.05rem] placeholder:text-slate-500/70 md:placeholder:text-slate-500"
 						/>
 					</FormControl>
 					<FormMessage />
