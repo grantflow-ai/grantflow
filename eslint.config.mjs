@@ -12,4 +12,10 @@ export default [
 			"no-console": "off",
 		},
 	},
+	{
+		files: ["**/*.spec.*"],
+		rules: {
+			"react-perf/jsx-no-new-array-as-prop": "off",
+		},
+	},
 ];
