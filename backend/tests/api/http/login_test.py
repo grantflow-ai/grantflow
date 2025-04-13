@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from pytest_mock import MockerFixture
 
-from src.api.api_types import LoginRequestBody
+from src.api.http.auth import LoginRequestBody
 from tests.conftest import TestingClientType
 
 
