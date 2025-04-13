@@ -1,4 +1,4 @@
-from typing import Any, Generic, Literal, TypedDict, TypeVar
+from typing import Any, Generic, Literal, NotRequired, TypedDict, TypeVar
 from uuid import UUID
 
 from litestar import websocket
@@ -28,8 +28,30 @@ class ErrorMessage(TypedDict, Generic[T]):
     """The type of the message."""
     content: str
     """The content of the message."""
-    context: dict[str, Any] | None
+    context: NotRequired[dict[str, Any]]
     """A dictionary containing additional information about the error."""
+
+
+class DataMessage(TypedDict, Generic[T]):
+    """A message sent over a WebSocket connection."""
+
+    type: Literal["data"]
+    """The type of the message."""
+    event: str
+    """The event that triggered the message."""
+    content: T
+    """The content of the message."""
+    message: NotRequired[str]
+    """A dictionary containing additional information about the data."""
+
+
+class InfoMessage(TypedDict, Generic[T]):
+    """A message sent over a WebSocket connection."""
+
+    type: Literal["text"]
+    """The type of the message."""
+    content: str
+    """The content of the message."""
 
 
 async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
@@ -48,7 +70,10 @@ async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | Non
 
 
 async def notify_error(socket: APIWebsocket, message: str, context: dict[str, Any] | None = None) -> None:
-    await socket.send_json(ErrorMessage(type="error", content=message, context=context))
+    msg = ErrorMessage(type="error", content=message)
+    if context:
+        msg["context"] = context
+    await socket.send_json(msg)
 
 
 @websocket(
@@ -68,8 +93,6 @@ async def handle_application_websocket(
     await socket.accept()
 
     if not application_id:
-        # TODO: create a new application
-
         async with session_maker() as session, session.begin():
             try:
                 application_id = await session.scalar(
@@ -85,4 +108,13 @@ async def handle_application_websocket(
 
                 raise DatabaseError("Error creating application", context=str(e)) from e
 
-    await socket.send_json({"type": "connected", "application_id": str(application_id)})
+        await socket.send_json(
+            DataMessage(
+                type="data",
+                event="application_created",
+                content={"application_id": str(application_id)},
+                message="Application created successfully",
+            ),
+        )
+
+    await socket.close()
