@@ -38,7 +38,7 @@ export function EmailSigninForm({
 	});
 
 	return (
-		<div data-testid="email-signin-form">
+		<div data-testid="email-signin-form-container">
 			<Form {...form}>
 				<form className="mb-4" data-testid="email-signin-form" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField

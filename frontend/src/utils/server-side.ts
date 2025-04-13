@@ -7,7 +7,6 @@ import { redirect } from "next/navigation";
  *
  * @param url The URL to redirect to.
  * @param type The type of toast to show.
- * @param content The content of the toast.
  *
  * @throw A NextRedirect error
  */

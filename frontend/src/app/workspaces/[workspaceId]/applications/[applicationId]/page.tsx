@@ -1,8 +1,5 @@
 "use server";
 
-import { getApplication } from "@/actions/api";
-import { ApplicationWorkspace } from "@/components/workspaces/detail/applications/detail/application-workspace";
-
 export default async function ApplicationDetailPage({
 	params,
 }: {
@@ -10,7 +7,11 @@ export default async function ApplicationDetailPage({
 }) {
 	const { applicationId, workspaceId } = await params;
 
-	const application = await getApplication(workspaceId, applicationId);
-
-	return <ApplicationWorkspace application={application} workspaceId={workspaceId} />;
+	return (
+		<div className="flex-grow container mx-auto px-4 py-8">
+			<span>
+				Placeholder {workspaceId}:{applicationId}
+			</span>
+		</div>
+	);
 }
