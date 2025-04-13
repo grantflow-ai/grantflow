@@ -8,13 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.db.enums import FileIndexingStatusEnum, UserRoleEnum
+from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import (
     GrantApplication,
     GrantApplicationFile,
     RagFile,
     Workspace,
-    WorkspaceUser,
 )
 from tests.conftest import TestingClientType
 
@@ -36,15 +35,10 @@ async def test_upload_application_files_success(
     test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
-    firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
     signal_dispatch_mock: AsyncMock,
+    workspace_member_user: None,
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
-        session.add(workspace_user)
-        await session.commit()
-
     test_files = {
         "test1.txt": b"Test content 1",
         "test2.txt": b"Test content 2",
@@ -102,14 +96,8 @@ async def test_upload_application_files_no_files(
     test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
-    firebase_uid: str,
-    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
-        session.add(workspace_user)
-        await session.commit()
-
     response = await test_client.post(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files",
         files={},
@@ -124,14 +112,8 @@ async def test_retrieve_application_files_success(
     workspace: Workspace,
     grant_application: GrantApplication,
     application_file: GrantApplicationFile,
-    firebase_uid: str,
-    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
-        session.add(workspace_user)
-        await session.commit()
-
     response = await test_client.get(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files",
         headers={"Authorization": "Bearer some_token"},
@@ -161,14 +143,9 @@ async def test_delete_application_file_success(
     workspace: Workspace,
     grant_application: GrantApplication,
     application_file: GrantApplicationFile,
-    firebase_uid: str,
+    workspace_member_user: None,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
-        session.add(workspace_user)
-        await session.commit()
-
     response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/{application_file.rag_file_id}",
         headers={"Authorization": "Bearer some_token"},
@@ -195,6 +172,7 @@ async def test_delete_application_file_unauthorized(
     workspace: Workspace,
     grant_application: GrantApplication,
     application_file: GrantApplicationFile,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/{application_file.rag_file_id}",
@@ -208,14 +186,9 @@ async def test_delete_application_file_not_found(
     test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
-    firebase_uid: str,
+    workspace_member_user: None,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
-        session.add(workspace_user)
-        await session.commit()
-
     response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/{UUID('00000000-0000-0000-0000-000000000000')}",
         headers={"Authorization": "Bearer some_token"},

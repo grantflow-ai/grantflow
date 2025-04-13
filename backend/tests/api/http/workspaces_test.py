@@ -118,11 +118,18 @@ async def test_retrieve_workspaces(
 @pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
 async def test_retrieve_workspace_success(
     test_client: TestingClientType,
-    firebase_uid: str,
     workspace: Workspace,
-    async_session_maker: async_sessionmaker[Any],
     user_role: UserRoleEnum,
+    request: pytest.FixtureRequest,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    if user_role == UserRoleEnum.OWNER:
+        request.getfixturevalue("workspace_owner_user")
+    elif user_role == UserRoleEnum.ADMIN:
+        request.getfixturevalue("workspace_admin_user")
+    else:
+        request.getfixturevalue("workspace_member_user")
+
     grant_app1 = GrantApplicationFactory.build(
         workspace_id=workspace.id,
         title="Application 1",
@@ -135,12 +142,6 @@ async def test_retrieve_workspace_success(
     )
 
     async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": user_role.value}
-            )
-        )
-
         session.add(grant_app1)
         session.add(grant_app2)
         await session.commit()
@@ -177,6 +178,7 @@ async def test_retrieve_workspace_success(
 async def test_retrieve_workspace_unauthorized(
     test_client: TestingClientType,
     workspace: Workspace,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.get(
         f"/workspaces/{workspace.id}",
@@ -202,19 +204,17 @@ async def test_retrieve_workspace_unauthorized(
 )
 async def test_update_workspace_success(
     test_client: TestingClientType,
-    firebase_uid: str,
     workspace: Workspace,
-    async_session_maker: async_sessionmaker[Any],
     user_role: UserRoleEnum,
     request_body: UpdateWorkspaceRequestBody,
     attrs: tuple[str, ...],
+    request: pytest.FixtureRequest,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": user_role.value}
-            )
-        )
+    if user_role == UserRoleEnum.OWNER:
+        request.getfixturevalue("workspace_owner_user")
+    else:
+        request.getfixturevalue("workspace_admin_user")
 
     response = await test_client.patch(
         f"/workspaces/{workspace.id}",
@@ -232,17 +232,10 @@ async def test_update_workspace_success(
 
 async def test_update_workspace_failure_unauthorized(
     test_client: TestingClientType,
-    firebase_uid: str,
     workspace: Workspace,
+    workspace_member_user: None,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
-            )
-        )
-
     response = await test_client.patch(
         f"/workspaces/{workspace.id}",
         json=UpdateWorkspaceRequestBody(name="new_name"),
@@ -253,17 +246,10 @@ async def test_update_workspace_failure_unauthorized(
 
 async def test_delete_workspace_success(
     test_client: TestingClientType,
-    firebase_uid: str,
     workspace: Workspace,
+    workspace_owner_user: None,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.OWNER.value}
-            )
-        )
-
     response = await test_client.delete(
         f"/workspaces/{workspace.id}",
         headers={"Authorization": "Bearer some_token"},
@@ -278,17 +264,15 @@ async def test_delete_workspace_success(
 @pytest.mark.parametrize("user_role", (UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
 async def test_delete_workspace_failure_unauthorized(
     test_client: TestingClientType,
-    firebase_uid: str,
     workspace: Workspace,
-    async_session_maker: async_sessionmaker[Any],
     user_role: UserRoleEnum,
+    request: pytest.FixtureRequest,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": user_role.value}
-            )
-        )
+    if user_role == UserRoleEnum.ADMIN:
+        request.getfixturevalue("workspace_admin_user")
+    else:
+        request.getfixturevalue("workspace_member_user")
 
     response = await test_client.delete(
         f"/workspaces/{workspace.id}",

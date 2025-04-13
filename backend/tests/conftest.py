@@ -275,6 +275,26 @@ async def workspace_member_user(
 
 
 @pytest.fixture
+async def workspace_admin_user(
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, workspace: Workspace
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
+        session.add(workspace_user)
+        await session.commit()
+
+
+@pytest.fixture
+async def workspace_owner_user(
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, workspace: Workspace
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
+        session.add(workspace_user)
+        await session.commit()
+
+
+@pytest.fixture
 async def file(async_session_maker: async_sessionmaker[Any]) -> RagFile:
     file_data = FileFactory.build()
     async with async_session_maker() as session, session.begin():

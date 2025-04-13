@@ -2,15 +2,13 @@ from http import HTTPStatus
 from typing import Any, Final
 from uuid import UUID
 
-from sqlalchemy import insert, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.api.http.grant_applications import UpdateApplicationRequestBody
-from src.db.enums import UserRoleEnum
 from src.db.tables import (
     GrantApplication,
     Workspace,
-    WorkspaceUser,
 )
 from tests.conftest import TestingClientType
 
@@ -20,17 +18,10 @@ TEST_CFP_URL: Final[str] = "https://grants.nih.gov/grants/guide/rfa-files/RFA-DC
 async def test_update_application_success(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
-    firebase_uid: str,
     workspace: Workspace,
     grant_application: GrantApplication,
+    workspace_member_user: None,
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
-            )
-        )
-
     update_data = UpdateApplicationRequestBody(title="Updated Title")
 
     response = await test_client.patch(
@@ -69,18 +60,10 @@ async def test_update_application_unauthorized(
 
 async def test_update_application_bad_request(
     test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    firebase_uid: str,
     workspace: Workspace,
     grant_application: GrantApplication,
+    workspace_member_user: None,
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
-            )
-        )
-
     response = await test_client.patch(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         json={},
@@ -92,18 +75,11 @@ async def test_update_application_bad_request(
 
 async def test_delete_application_success(
     test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    firebase_uid: str,
     workspace: Workspace,
     grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
 ) -> None:
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                {"workspace_id": workspace.id, "firebase_uid": firebase_uid, "role": UserRoleEnum.MEMBER.value}
-            )
-        )
-
     response = await test_client.delete(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
