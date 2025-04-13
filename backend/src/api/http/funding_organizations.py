@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
 from litestar import delete, get, patch, post
@@ -8,12 +8,35 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import CreateOrganizationRequestBody, FundingOrganizationResponse
 from src.db.tables import FundingOrganization
 from src.exceptions import DatabaseError
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class CreateOrganizationRequestBody(TypedDict):
+    """The request body for creating a funding organization."""
+
+    full_name: str
+    abbreviation: str | None
+
+
+class UpdateOrganizationRequestBody(TypedDict):
+    """The request body for updating a funding organization."""
+
+    full_name: NotRequired[str]
+    abbreviation: NotRequired[str | None]
+
+
+class FundingOrganizationResponse(TypedDict):
+    """The response schema for a funding organization."""
+
+    id: str
+    """The ID of the funding organization."""
+    full_name: str
+    """The full name of the funding organization."""
+    abbreviation: str | None
 
 
 @post("/organizations", operation_id="CreateOrganization")
@@ -51,7 +74,7 @@ async def handle_retrieve_organizations(session_maker: async_sessionmaker[Any]) 
 
 @patch("/organizations/{organization_id:uuid}", operation_id="UpdateOrganization")
 async def handle_update_organization(
-    data: CreateOrganizationRequestBody, organization_id: UUID, session_maker: async_sessionmaker[Any]
+    data: UpdateOrganizationRequestBody, organization_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> FundingOrganizationResponse:
     if not data:
         raise ValidationException("Request body is empty")

@@ -28,7 +28,6 @@ from src.api.http.funding_organizations import (
     handle_update_organization,
 )
 from src.api.http.grant_applications import (
-    handle_create_application,
     handle_delete_application,
     handle_update_application,
 )
@@ -65,7 +64,6 @@ logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_application_file_uploads,
     handle_application_websocket,
-    handle_create_application,
     handle_create_organization,
     handle_create_otp,
     handle_create_workspace,
