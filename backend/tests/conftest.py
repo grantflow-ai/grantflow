@@ -24,6 +24,7 @@ from structlog.testing import LogCapture
 from vertexai.generative_models import GenerativeModel
 
 from src.db.connection import engine_ref, get_session_maker
+from src.db.enums import UserRoleEnum
 from src.db.json_objects import ResearchObjective, ResearchTask
 from src.db.tables import (
     Base,
@@ -37,6 +38,7 @@ from src.db.tables import (
 )
 from src.utils.ai import init_ref
 from src.utils.firebase import firebase_app_ref
+from src.utils.jwt import create_jwt
 from tests.factories import (
     FileFactory,
     FundingOrganizationFactory,
@@ -148,6 +150,11 @@ async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGene
             yield client
 
 
+@pytest.fixture
+def otp_code(firebase_uid: str) -> str:
+    return create_jwt(firebase_uid)
+
+
 @pytest.fixture(scope="session")
 def logger() -> Logger:
     return getLogger("e2e")
@@ -255,6 +262,16 @@ async def workspace_user(async_session_maker: async_sessionmaker[Any], workspace
         session.add(user_data)
         await session.commit()
     return user_data
+
+
+@pytest.fixture
+async def workspace_member_user(
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, workspace: Workspace
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
+        session.add(workspace_user)
+        await session.commit()
 
 
 @pytest.fixture
