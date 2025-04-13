@@ -1,3 +1,0 @@
-### Health Check
-GET {{server_host}}/health
-Accept: text/plain
