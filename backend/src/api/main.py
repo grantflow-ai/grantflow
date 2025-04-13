@@ -8,46 +8,44 @@ from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.di import Provide
 from litestar.events import listener
-from litestar.handlers import HTTPRouteHandler
+from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from litestar.logging import StructLoggingConfig
 from litestar.response import Response
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.api_types import APIRequest
-from src.api.middleware import AuthMiddleware
-from src.api.routes.application_files import (
+from src.api.http.application_files import (
     handle_application_file_uploads,
     handle_delete_application_file,
     retrieve_application_files,
 )
-from src.api.routes.auth import handle_create_otp, handle_login
-from src.api.routes.funding_organizations import (
+from src.api.http.auth import handle_create_otp, handle_login
+from src.api.http.funding_organizations import (
     handle_create_organization,
     handle_delete_organization,
     handle_retrieve_organizations,
     handle_update_organization,
 )
-from src.api.routes.grant_applications import (
-    handle_create_application,
+from src.api.http.grant_applications import (
     handle_delete_application,
-    handle_retrieve_application,
-    handle_retrieve_application_text,
     handle_update_application,
 )
-from src.api.routes.health import health_check
-from src.api.routes.organization_files import (
+from src.api.http.health import health_check
+from src.api.http.organization_files import (
     handle_delete_organization_file,
     handle_organization_file_uploads,
     retrieve_organization_files,
 )
-from src.api.routes.workspaces import (
+from src.api.http.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
+from src.api.middleware import AuthMiddleware
+from src.api.sockets.grant_applications import handle_application_websocket
 from src.db.connection import get_session_maker
 from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError
@@ -63,9 +61,9 @@ logger = get_logger(__name__)
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 
-api_routes: list[HTTPRouteHandler] = [
+api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_application_file_uploads,
-    handle_create_application,
+    handle_application_websocket,
     handle_create_organization,
     handle_create_otp,
     handle_create_workspace,
@@ -76,8 +74,6 @@ api_routes: list[HTTPRouteHandler] = [
     handle_delete_workspace,
     handle_login,
     handle_organization_file_uploads,
-    handle_retrieve_application,
-    handle_retrieve_application_text,
     handle_retrieve_organizations,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
@@ -122,11 +118,11 @@ def handle_exception(_: APIRequest, exception: Exception) -> Response[Any]:
     )
 
 
-async def before_server_start(app: Litestar) -> None:
+async def before_server_start(app_instance: Litestar) -> None:
     get_firebase_app()
     init_llm_connection()
 
-    session_maker = app.state.session_maker = get_session_maker()
+    session_maker = app_instance.state.session_maker = get_session_maker()
     try:
         async with session_maker() as session:
             await session.execute(text("SELECT 1"))
