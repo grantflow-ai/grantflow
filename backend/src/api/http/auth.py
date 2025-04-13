@@ -1,13 +1,34 @@
 from datetime import timedelta
+from typing import TypedDict
 
 from litestar import get, post
 
-from src.api.api_types import LoginRequestBody, LoginResponse, OTPResponse
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class OTPResponse(TypedDict):
+    """The response body for the OTP endpoint."""
+
+    otp: str
+    """The otp identifying the user."""
+
+
+class LoginRequestBody(TypedDict):
+    """The request body for the login endpoint."""
+
+    id_token: str
+    """The ID token from Firebase."""
+
+
+class LoginResponse(TypedDict):
+    """The response body for the login endpoint."""
+
+    jwt_token: str
+    """The JWT token identifying the user."""
 
 
 @post("/login", operation_id="Login")
