@@ -8,10 +8,10 @@ import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { NavHeader } from "@/components/landing-page/nav-header";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
-import { LinkedIn } from "@/components/social-icons";
 import { IconGoAhead } from "@/components/landing-page/icons";
 import { LogoDark } from "@/components/logo";
 import { AppButton } from "@/components/app-button";
+import { LinkedIn } from "@/components/landing-page/social-icons";
 
 const CONTENT_CTA_SECTION = {
 	description:
