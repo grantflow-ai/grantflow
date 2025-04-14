@@ -1,3 +1,4 @@
+import { HTMLProps } from "react";
 import { PatternedBackground } from "./backgrounds";
 
 const CORE_FEATURES = [
@@ -27,20 +28,48 @@ export function CoreFeaturesSection() {
 	return (
 		<section aria-labelledby="core-features-section" className="relative w-full bg-white">
 			<PatternedBackground aria-hidden="true" className="absolute inset-0 z-0 w-full h-auto" />
-			<div className="flex flex-col items-center text-center py-10 px-30 relative z-10 text-stone-800">
-				<h2 className="font-heading text-4xl font-medium my-10" id="core-features-heading">
+			<div className="relative z-10 flex flex-col items-center text-center py-10 px-8 md:px-10 lg:px-20 xl:px-30 text-stone-800">
+				<h2
+					className="font-heading text-3xl md:text-4xl font-medium my-3 md:my-5 lg:my-8 xl-my-10"
+					id="core-features-heading"
+				>
 					Core Features Designed for Researchers
 				</h2>
-				<div className="grid grid-cols-2 justify-center text-start py-4 px-26 m-12 gap-12">
+				<div className="md:hidden relative w-full flex text-start py-6 overflow-x-auto snap-x snap-mandatory gap-12">
 					{CORE_FEATURES.map((feature, index) => (
-						<article id="feature-item" key={index}>
-							<div className="w-0 h-0 border-l-10 border-r-10 border-b-16 border-l-transparent border-r-transparent border-b-background shadow-sm" />
-							<h3 className="font-heading font-medium text-2xl my-3">{feature.title}</h3>
-							<p className="leading-tight text-sm">{feature.description}</p>
-						</article>
+						<FeatureArticle
+							className="flex-none snap-center w-[22rem]"
+							featureDescription={feature.description}
+							featureTitle={feature.title}
+							key={index}
+						/>
+					))}
+				</div>
+				<div className="hidden md:grid md:grid-cols-2 justify-center text-start py-4 px-10 lg:px-26 m-8 lg:m-12 gap-12">
+					{CORE_FEATURES.map((feature, index) => (
+						<FeatureArticle
+							featureDescription={feature.description}
+							featureTitle={feature.title}
+							key={index}
+						/>
 					))}
 				</div>
 			</div>
 		</section>
+	);
+}
+
+function FeatureArticle({
+	className,
+	featureDescription,
+	featureTitle,
+	...props
+}: { featureDescription: string; featureTitle: string } & HTMLProps<HTMLElement>) {
+	return (
+		<article className={className} id="feature-item" {...props}>
+			<div className="w-0 h-0 border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-l-transparent border-r-transparent border-b-background shadow-sm" />
+			<h3 className="font-heading font-medium text-2xl my-5 md:my-3">{featureTitle}</h3>
+			<p className="md:leading-tight text-lg md:text-sm">{featureDescription}</p>
+		</article>
 	);
 }
