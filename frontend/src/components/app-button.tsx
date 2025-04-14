@@ -6,7 +6,7 @@ import React, { cloneElement, HTMLProps, isValidElement, ReactNode } from "react
 const appButtonVariants = cva("font-button font-light text-md rounded-sm hover:bg-transparent", {
 	compoundVariants: [
 		{
-			className: "border-white",
+			className: "border-white text-white",
 			theme: "light",
 			variant: "secondary",
 		},
