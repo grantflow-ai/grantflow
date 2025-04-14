@@ -120,15 +120,35 @@ async def test_retrieve_workspace_success(
     test_client: TestingClientType,
     workspace: Workspace,
     user_role: UserRoleEnum,
-    request: pytest.FixtureRequest,
+    firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    if user_role == UserRoleEnum.OWNER:
-        request.getfixturevalue("workspace_owner_user")
-    elif user_role == UserRoleEnum.ADMIN:
-        request.getfixturevalue("workspace_admin_user")
-    else:
-        request.getfixturevalue("workspace_member_user")
+    async with async_session_maker() as session, session.begin():
+        if user_role == UserRoleEnum.OWNER:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.OWNER.value,
+                )
+            )
+        elif user_role == UserRoleEnum.ADMIN:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.ADMIN.value,
+                )
+            )
+        else:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.MEMBER.value,
+                )
+            )
+        await session.commit()
 
     grant_app1 = GrantApplicationFactory.build(
         workspace_id=workspace.id,
@@ -208,13 +228,27 @@ async def test_update_workspace_success(
     user_role: UserRoleEnum,
     request_body: UpdateWorkspaceRequestBody,
     attrs: tuple[str, ...],
-    request: pytest.FixtureRequest,
+    firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    if user_role == UserRoleEnum.OWNER:
-        request.getfixturevalue("workspace_owner_user")
-    else:
-        request.getfixturevalue("workspace_admin_user")
+    async with async_session_maker() as session, session.begin():
+        if user_role == UserRoleEnum.OWNER:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.OWNER.value,
+                )
+            )
+        else:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.ADMIN.value,
+                )
+            )
+        await session.commit()
 
     response = await test_client.patch(
         f"/workspaces/{workspace.id}",
@@ -266,13 +300,27 @@ async def test_delete_workspace_failure_unauthorized(
     test_client: TestingClientType,
     workspace: Workspace,
     user_role: UserRoleEnum,
-    request: pytest.FixtureRequest,
+    firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    if user_role == UserRoleEnum.ADMIN:
-        request.getfixturevalue("workspace_admin_user")
-    else:
-        request.getfixturevalue("workspace_member_user")
+    async with async_session_maker() as session, session.begin():
+        if user_role == UserRoleEnum.ADMIN:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.ADMIN.value,
+                )
+            )
+        else:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.MEMBER.value,
+                )
+            )
+        await session.commit()
 
     response = await test_client.delete(
         f"/workspaces/{workspace.id}",
