@@ -735,7 +735,7 @@ grpc = [
 
 [[package]]
 name = "google-api-python-client"
-version = "2.166.0"
+version = "2.167.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core" },
@@ -744,9 +744,9 @@ dependencies = [
     { name = "httplib2" },
     { name = "uritemplate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/c9/eac7b4e843039f0a54a563c2328d43de6f02e426a11b6a7e378996f667db/google_api_python_client-2.166.0.tar.gz", hash = "sha256:b8cf843bd9d736c134aef76cf1dc7a47c9283a2ef24267b97207b9dd43b30ef7", size = 12680525 }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/d1/3a23d5b4b967f08aebbfe76e2651416869a765791fbc42f4b78774f48137/google_api_python_client-2.167.0.tar.gz", hash = "sha256:a458d402572e1c2caf9db090d8e7b270f43ff326bd9349c731a86b19910e3995", size = 12725129 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/44/ae1528a6ca296d89704c8febb72b3e263c28b4e50ab29b9202df7a0f273d/google_api_python_client-2.166.0-py2.py3-none-any.whl", hash = "sha256:dd8cc74d9fc18538ab05cbd2e93cb4f82382f910c5f6945db06c91f1deae6e45", size = 13190078 },
+    { url = "https://files.pythonhosted.org/packages/53/12/4a5322bf1d044114ce59736bb2c260d8d3f843cbedbaa34b553dcad8d9da/google_api_python_client-2.167.0-py2.py3-none-any.whl", hash = "sha256:ce25290cc229505d770ca5c8d03850e0ae87d8e998fc6dd743ecece018baa396", size = 13235609 },
 ]
 
 [[package]]
@@ -906,14 +906,14 @@ wheels = [
 
 [[package]]
 name = "googleapis-common-protos"
-version = "1.69.2"
+version = "1.70.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1b/d7/ee9d56af4e6dbe958562b5020f46263c8a4628e7952070241fc0e9b182ae/googleapis_common_protos-1.69.2.tar.gz", hash = "sha256:3e1b904a27a33c821b4b749fd31d334c0c9c30e6113023d495e48979a3dc9c5f", size = 144496 }
+sdist = { url = "https://files.pythonhosted.org/packages/39/24/33db22342cf4a2ea27c9955e6713140fedd51e8b141b5ce5260897020f1a/googleapis_common_protos-1.70.0.tar.gz", hash = "sha256:0e1b44e0ea153e6594f9f394fef15193a68aaaea2d843f83e2742717ca753257", size = 145903 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/53/d35476d547a286506f0a6a634ccf1e5d288fffd53d48f0bd5fef61d68684/googleapis_common_protos-1.69.2-py3-none-any.whl", hash = "sha256:0b30452ff9c7a27d80bfc5718954063e8ab53dd3697093d3bc99581f5fd24212", size = 293215 },
+    { url = "https://files.pythonhosted.org/packages/86/f1/62a193f0227cf15a920390abe675f386dec35f7ae3ffe6da582d3ade42c7/googleapis_common_protos-1.70.0-py3-none-any.whl", hash = "sha256:b8bfcca8c25a2bb253e0e0b0adaf8c00773e5e6af6fd92397576680b807e0fd8", size = 294530 },
 ]
 
 [package.optional-dependencies]
@@ -3209,15 +3209,15 @@ source = { git = "https://github.com/zundertj/uv-bump#3991c3290c50791db1f18021b0
 
 [[package]]
 name = "uvicorn"
-version = "0.34.0"
+version = "0.34.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "h11" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/4d/938bd85e5bf2edeec766267a5015ad969730bb91e31b44021dfe8b22df6c/uvicorn-0.34.0.tar.gz", hash = "sha256:404051050cd7e905de2c9a7e61790943440b3416f49cb409f965d9dcd0fa73e9", size = 76568 }
+sdist = { url = "https://files.pythonhosted.org/packages/86/37/dd92f1f9cedb5eaf74d9999044306e06abe65344ff197864175dbbd91871/uvicorn-0.34.1.tar.gz", hash = "sha256:af981725fc4b7ffc5cb3b0e9eda6258a90c4b52cb2a83ce567ae0a7ae1757afc", size = 76755 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/14/33a3a1352cfa71812a3a21e8c9bfb83f60b0011f5e36f2b1399d51928209/uvicorn-0.34.0-py3-none-any.whl", hash = "sha256:023dc038422502fa28a09c7a30bf2b6991512da7dcdb8fd35fe57cfc154126f4", size = 62315 },
+    { url = "https://files.pythonhosted.org/packages/5f/38/a5801450940a858c102a7ad9e6150146a25406a119851c993148d56ab041/uvicorn-0.34.1-py3-none-any.whl", hash = "sha256:984c3a8c7ca18ebaad15995ee7401179212c59521e67bfc390c07fa2b8d2e065", size = 62404 },
 ]
 
 [package.optional-dependencies]
