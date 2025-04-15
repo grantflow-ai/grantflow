@@ -26,8 +26,10 @@ const CORE_FEATURES = [
 
 export function CoreFeaturesSection() {
 	return (
-		<section aria-labelledby="core-features-section" className="relative w-full bg-white">
-			<PatternedBackground aria-hidden="true" className="absolute inset-0 z-0 w-full h-auto" />
+		<section aria-labelledby="core-features-section" className="relative w-full bg-white overflow-hidden">
+			<div className="absolute inset-0 flex items-center justify-center">
+				<PatternedBackground aria-hidden="true" className="absolute w-full h-full object-cover object-center" />
+			</div>
 			<div className="relative z-10 flex flex-col items-center text-center py-10 px-8 md:px-10 lg:px-20 xl:px-30 text-stone-800">
 				<h2
 					className="font-heading text-3xl md:text-4xl font-medium my-3 md:my-5 lg:my-8 xl-my-10"
@@ -67,7 +69,7 @@ function FeatureArticle({
 }: { featureDescription: string; featureTitle: string } & HTMLProps<HTMLElement>) {
 	return (
 		<article className={className} id="feature-item" {...props}>
-			<div className="w-0 h-0 border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-l-transparent border-r-transparent border-b-background shadow-sm" />
+			<div className="w-0 h-0 border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-l-transparent border-r-transparent border-b-background" />
 			<h3 className="font-heading font-medium text-2xl my-5 md:my-3">{featureTitle}</h3>
 			<p className="md:leading-tight text-lg md:text-sm">{featureDescription}</p>
 		</article>
