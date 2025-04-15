@@ -2,10 +2,16 @@ import type { Env } from "@/types/env-types";
 
 import { PagePath } from "@/enums";
 import process from "node:process";
-import { beforeEach, vi } from "vitest";
+import { beforeEach, Mock, vi } from "vitest";
+import { toast } from "sonner";
 
 const { mockRedirect, mockToast, mockUsePathname, mockUseRouter, mockUseSearchParams } = vi.hoisted(() => {
-	const mockToast = vi.fn();
+	const mockToast = vi.fn() as {
+		error: Mock;
+		info: Mock;
+		promise: Mock;
+		success: Mock;
+	} & Mock<typeof toast>;
 	Reflect.set(mockToast, "error", vi.fn());
 	Reflect.set(mockToast, "success", vi.fn());
 	Reflect.set(mockToast, "info", vi.fn());
