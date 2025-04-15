@@ -2,6 +2,7 @@ import { HTMLProps } from "react";
 import { GradientBackground } from "./backgrounds";
 import { IconGoAhead } from "./icons";
 import { AppButton } from "@/components/app-button";
+import { ScrollButton } from "@/components/scroll-button";
 
 export function HeroBanner() {
 	return (
@@ -20,9 +21,9 @@ export function HeroBanner() {
 					<AppButton size="lg" theme="light" variant="secondary">
 						Contact us
 					</AppButton>
-					<AppButton rightIcon={<IconGoAhead />} size="lg">
+					<ScrollButton rightIcon={<IconGoAhead />} selector="waitlist" size="lg">
 						Try For Free
-					</AppButton>
+					</ScrollButton>
 				</div>
 			</div>
 		</section>
