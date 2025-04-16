@@ -6,7 +6,7 @@ from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
 from sqlalchemy import select
 
-from src.api.api_types import APIRequestState
+from src.common_types import APIRequestState
 from src.db.tables import WorkspaceUser
 from src.utils.env import get_env
 from src.utils.jwt import verify_jwt_token

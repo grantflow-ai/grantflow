@@ -2,6 +2,7 @@ import logging
 from datetime import UTC, datetime
 from os import environ
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -27,7 +28,7 @@ async def test_handle_generate_grant_template_melanoma_alliance(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None, message_handler=AsyncMock()
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -58,7 +59,7 @@ async def test_handle_generate_grant_template_standard_aware(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None, message_handler=AsyncMock()
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -90,7 +91,10 @@ async def test_handle_generate_grant_template_nih(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=nih_organization
+        cfp_content=result["content"],
+        cfp_subject=result["cfp_subject"],
+        organization=nih_organization,
+        message_handler=AsyncMock(),
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -120,7 +124,7 @@ async def test_handle_generate_grant_template_ics(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None, message_handler=AsyncMock()
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -152,7 +156,7 @@ async def test_handle_generate_grant_template_erc(
     start_time = datetime.now(UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None
+        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None, message_handler=AsyncMock()
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -189,7 +193,10 @@ async def test_handle_generate_grant_template(
     start_time = datetime.now(tz=UTC)
 
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=nih_organization
+        cfp_content=result["content"],
+        cfp_subject=result["cfp_subject"],
+        organization=nih_organization,
+        message_handler=AsyncMock(),
     )
 
     elapsed_time = (datetime.now(tz=UTC) - start_time).total_seconds()
@@ -197,7 +204,8 @@ async def test_handle_generate_grant_template(
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
 
     folder = RESULTS_FOLDER / "cfps" / "template_data"
-    folder.mkdir(parents=True, exist_ok=True)
+    if not folder.exists():
+        folder.mkdir(parents=True, exist_ok=True)
 
-    results_file = folder / f"{source_file_name}_{datetime.now(tz=UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = folder / f"grant_template_{source_file_name}_{datetime.now(tz=UTC).strftime('%d_%m_%Y_%H:%M')}.json"
     results_file.write_bytes(serialize(sections))

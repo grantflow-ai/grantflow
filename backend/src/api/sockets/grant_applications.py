@@ -1,4 +1,4 @@
-from typing import Any, Generic, Literal, NotRequired, TypedDict, TypeVar
+from typing import Any
 from uuid import UUID
 
 from litestar import websocket
@@ -8,35 +8,16 @@ from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import APIWebsocket
+from src.common_types import APIWebsocket
 from src.db.enums import UserRoleEnum
 from src.db.tables import GrantApplication
+from src.dto import WebsocketMessage
 from src.exceptions import DatabaseError
 from src.files import FileDTO
+from src.utils.env import get_env
 from src.utils.logger import get_logger
 
-M = str
-T = TypeVar("T")
-
 logger = get_logger(__name__)
-
-
-class ErrorMessage(TypedDict, Generic[T]):
-    type: Literal["error"]
-    content: str
-    context: NotRequired[dict[str, Any]]
-
-
-class DataMessage(TypedDict, Generic[T]):
-    type: Literal["data"]
-    event: str
-    content: T
-    message: NotRequired[str]
-
-
-class InfoMessage(TypedDict, Generic[T]):
-    type: Literal["text"]
-    content: str
 
 
 async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
@@ -54,11 +35,20 @@ async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | Non
     raise ValidationException("Either one file or a CFP URL is required")
 
 
-async def notify_error(socket: APIWebsocket, message: str, context: dict[str, Any] | None = None) -> None:
-    msg = ErrorMessage(type="error", content=message)
-    if context:
-        msg["context"] = context
-    await socket.send_json(msg)
+class MessageHandler:
+    """We pass this wrapper to dependent code, encapsulating the socket and the send_json method."""
+
+    __slots__ = ("_debug", "_socket")
+
+    def __init__(self, socket: APIWebsocket) -> None:
+        self._socket = socket
+        self._debug = get_env("DEBUG", raise_on_missing=False)
+
+    async def send_message(self, message: WebsocketMessage) -> None:
+        if message.type == "debug" and not self._debug:
+            return
+
+        await self._socket.send_json(message)
 
 
 @websocket(
@@ -76,30 +66,37 @@ async def handle_application_websocket(
     application_id: UUID | None = None,
 ) -> None:
     await socket.accept()
+    try:
+        handler = MessageHandler(socket)
 
-    if not application_id:
-        async with session_maker() as session, session.begin():
-            try:
-                application_id = await session.scalar(
-                    insert(GrantApplication)
-                    .values({"workspace_id": workspace_id, "title": ""})
-                    .returning(GrantApplication.id)
-                )
-                await session.commit()
-            except SQLAlchemyError as e:
-                await session.rollback()
-                logger.error("Error creating application", exc_info=e)
-                await notify_error(socket, "Error creating application")
+        if not application_id:
+            async with session_maker() as session, session.begin():
+                try:
+                    application_id = await session.scalar(
+                        insert(GrantApplication)
+                        .values({"workspace_id": workspace_id, "title": ""})
+                        .returning(GrantApplication.id)
+                    )
+                    await session.commit()
+                except SQLAlchemyError as e:
+                    await session.rollback()
+                    logger.error("Error creating application", exc_info=e)
+                    await handler.send_message(
+                        WebsocketMessage(
+                            type="error",
+                            event="application_creation_failed",
+                            content="Database error",
+                        )
+                    )
 
-                raise DatabaseError("Error creating application", context=str(e)) from e
+                    raise DatabaseError("Error creating application", context=str(e)) from e
 
-        await socket.send_json(
-            DataMessage(
-                type="data",
-                event="application_created",
-                content={"application_id": str(application_id)},
-                message="Application created successfully",
-            ),
-        )
-
-    await socket.close()
+            await handler.send_message(
+                WebsocketMessage(
+                    type="data",
+                    event="application_creation_success",
+                    content={"application_id": str(application_id)},
+                ),
+            )
+    finally:
+        await socket.close()
