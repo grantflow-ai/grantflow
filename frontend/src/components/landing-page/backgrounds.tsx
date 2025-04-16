@@ -2,20 +2,42 @@ import { cn } from "@/lib/utils";
 import { HTMLAttributes } from "react";
 import { HTMLProps } from "react";
 
-export function GradientBackground({ className }: HTMLAttributes<HTMLDivElement>) {
+const MAP_GRADIENT_CENTER = {
+	"bottom-left": { centerX: "0%", centerY: "80%" },
+	"bottom-right": { centerX: "100%", centerY: "80%" },
+	"top-left": { centerX: "0%", centerY: "0%" },
+	"top-right": { centerX: "100%", centerY: "0%" },
+};
+
+function GradientBackground({
+	className,
+	position = "bottom-right",
+	...rest
+}: {
+	position?: "bottom-left" | "bottom-right" | "top-left" | "top-right";
+} & HTMLAttributes<HTMLDivElement>) {
+	const { centerX, centerY } = MAP_GRADIENT_CENTER[position];
+
 	return (
 		<div
-			className={cn(
-				"bg-[radial-gradient(60%_100%_at_100%_80%,var(--primary)_0%,transparent_100%)] opacity-70",
-				className,
-			)}
+			className={cn("opacity-70", className)}
+			style={{
+				background: `radial-gradient(60% 100% at ${centerX} ${centerY}, var(--primary) 0%, transparent 100%)`,
+			}}
+			{...rest}
 		></div>
 	);
 }
 
-export function PatternedBackground({ ...props }: HTMLProps<SVGSVGElement>) {
+function PatternedBackground({ ...props }: HTMLProps<SVGSVGElement>) {
 	return (
-		<svg fill="none" viewBox="0 0 1440 1024" xmlns="http://www.w3.org/2000/svg" {...props}>
+		<svg
+			fill="none"
+			preserveAspectRatio="xMidYMid slice"
+			viewBox="0 0 1440 1024"
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
 			<path
 				d="M5.04894 4.75H0.951062L3 1.4717L5.04894 4.75Z"
 				stroke="#1E13F8"
@@ -37717,3 +37739,5 @@ export function PatternedBackground({ ...props }: HTMLProps<SVGSVGElement>) {
 		</svg>
 	);
 }
+
+export { GradientBackground, PatternedBackground };

@@ -1,28 +1,24 @@
+import Sarah from "@/assets/placeholders/sarah-chen.png";
+import Michael from "@/assets/placeholders/michael.png";
+import Jamie from "@/assets/placeholders/jamie.png";
 import Image from "next/image";
 
-const CONTENT: {
-	heading: string;
-	subtitle: string;
-	testimonials: {
-		image: string;
-		quote: string;
-	}[];
-} = {
+const CONTENT = {
 	heading: "Why Researchers Join GrantFlow.ai?",
 	subtitle: "Inspired by real research challenges",
 	testimonials: [
-		// {
-		// 	image: Sarah,
-		// 	quote: "Balancing research, publishing, and endless grant writing pulls us in too many directions. A tool like GrantFlow.ai could finally give researchers the time to lead, not just apply.",
-		// },
-		// {
-		// 	image: Michael,
-		// 	quote: "Managing collaborators, timelines, and documents across institutions is a constant challenge. A structured platform like GrantFlow is exactly what our field needs.",
-		// },
-		// {
-		// 	image: Jamie,
-		// 	quote: "Writing grant proposals from scratch, again and again, isn’t sustainable. The idea of AI support tailored to researchers is long overdue and incredibly promising.",
-		// },
+		{
+			image: Sarah,
+			quote: "Balancing research, publishing, and endless grant writing pulls us in too many directions. A tool like GrantFlow.ai could finally give researchers the time to lead, not just apply.",
+		},
+		{
+			image: Michael,
+			quote: "Managing collaborators, timelines, and documents across institutions is a constant challenge. A structured platform like GrantFlow is exactly what our field needs.",
+		},
+		{
+			image: Jamie,
+			quote: "Writing grant proposals from scratch, again and again, isn’t sustainable. The idea of AI support tailored to researchers is long overdue and incredibly promising.",
+		},
 	],
 };
 

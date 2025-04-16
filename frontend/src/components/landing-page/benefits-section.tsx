@@ -37,16 +37,18 @@ const CONTENT = {
 
 export function BenefitsSection() {
 	return (
-		<section aria-labelledby="benefits-section" className="relative w-full bg-white">
-			<PatternedBackground aria-hidden="true" className="absolute inset-0 z-0 w-full h-auto" />
-			<div className="relative z-10 flex flex-col items-center text-center pt-8 md:pt-12 lg:pt-16 xl:pt-20 pb-15 px-4 md:px-10 lg:px-20 xl:px-30">
+		<section aria-labelledby="benefits-section" className="relative w-full bg-white overflow-hidden">
+			<div className="absolute inset-0 flex items-center justify-center">
+				<PatternedBackground aria-hidden="true" className="absolute w-full h-full object-cover object-center" />
+			</div>
+			<div className="relative z-10 flex flex-col items-center text-center pt-8 md:pt-12 lg:pt-16 xl:pt-20 pb-5 px-4 md:px-10 lg:px-20 xl:px-30">
 				<h2 className={benefitsCardHeader} id="benefits-heading">
 					{CONTENT.heading}
 				</h2>
 				<p className="m-3 text-xl text-stone-800" id="benefits-description">
 					{CONTENT.description}
 				</p>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full items-start text-start my-8">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 md:gap-x-6 lg:gap-x-10 xl:gap-x-20 w-full items-start text-start my-8">
 					{CONTENT.benefits.map((benefit, index) => (
 						<BenefitsCard
 							badge={benefit.badge}
@@ -82,7 +84,7 @@ function BenefitsCard({
 		<article
 			className={cn("size-full text-stone-800 py-7 px-6 md:px-5", benefitsCardBackground, benefitsCardBorder)}
 		>
-			<div className="inline-flex items-center bg-background rounded-2xl px-2 text-white gap-1">
+			<div className="inline-flex items-center bg-background rounded-2xl px-2.5 py-0.5 text-white gap-1">
 				<BadgeIcon className="size-5 md:size-4" />
 				<span className="font-button font-light align-bottom md:text-sm">{badge}</span>
 			</div>
@@ -112,7 +114,9 @@ function HowItWorksCard({
 			{...props}
 		>
 			<h2 className={cn(benefitsCardHeader, "font-bold md:m-4")}>{heading}</h2>
-			<div className="grid grid-cols-1 md:grid-cols-4 my-8 p-2 gap-x-20">
+			<div className="grid grid-cols-1 md:grid-cols-4 w-full my-8 p-2 gap-y-12 md:gap-x-20 relative">
+				<div className="md:hidden absolute left-5 top-4 bottom-0 border-l-2 border-dashed border-background/30 h-7/8 z-0" />
+				<div className="hidden md:block absolute top-5.5 md:left-17 lg:left-23 xl:left-28 right-0 h-[0.15rem] border-t-2 border-dashed border-background/30 md:w-[calc(100%-8.5rem)] lg:w-[calc(100%-11.5rem)] xl:w-[calc(100%-14rem)] z-0" />
 				{Object.entries(steps).map(([, content], index) => (
 					<TimelineStep key={index} label={content} />
 				))}
@@ -131,9 +135,11 @@ function StepIndicator() {
 
 function TimelineStep({ label }: { label: React.ReactNode }) {
 	return (
-		<div className="flex md:flex-col items-center justify-center">
-			<StepIndicator />
-			<p className="font-heading font-bold text-background text-center text-2xl mt-6">{label}</p>
+		<div className="flex flex-row md:flex-col items-center text-start md:text-center">
+			<div className="flex place-items-center me-6 md:me-0 md:mb-6 relative z-10">
+				<StepIndicator />
+			</div>
+			<p className="font-heading font-bold text-background text-2xl">{label}</p>
 		</div>
 	);
 }
