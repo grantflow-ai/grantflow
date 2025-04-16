@@ -7,7 +7,6 @@ import { EarlyAccessSection } from "@/components/landing-page/early-access-secti
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { NavHeader } from "@/components/landing-page/nav-header";
-import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 import { IconGoAhead } from "@/components/landing-page/icons";
 import { LogoDark } from "@/components/logo";
 import { AppButton } from "@/components/app-button";
@@ -28,7 +27,7 @@ export default async function LandingPage() {
 			<HeroBanner />
 			<BenefitsSection />
 			<EarlyAccessSection />
-			<TestimonialsSection />
+			{/* <TestimonialsSection /> */}
 			<CoreFeaturesSection />
 			<CTASection />
 			<Footer />
