@@ -7,11 +7,12 @@ import { EarlyAccessSection } from "@/components/landing-page/early-access-secti
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { NavHeader } from "@/components/landing-page/nav-header";
-import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 import { IconGoAhead } from "@/components/landing-page/icons";
 import { LogoDark } from "@/components/logo";
 import { AppButton } from "@/components/app-button";
 import { LinkedIn } from "@/components/landing-page/social-icons";
+import { ScrollButton } from "@/components/scroll-button";
+import { IconLink } from "@/components/link-button";
 
 const CONTENT_CTA_SECTION = {
 	description:
@@ -26,7 +27,7 @@ export default async function LandingPage() {
 			<HeroBanner />
 			<BenefitsSection />
 			<EarlyAccessSection />
-			<TestimonialsSection />
+			{/* <TestimonialsSection /> */}
 			<CoreFeaturesSection />
 			<CTASection />
 			<Footer />
@@ -51,9 +52,9 @@ function CTASection() {
 					<AppButton size="lg" theme="light" variant="secondary">
 						Contact us
 					</AppButton>
-					<AppButton rightIcon={<IconGoAhead />} size="lg">
+					<ScrollButton rightIcon={<IconGoAhead />} selector="waitlist" size="lg">
 						Try For Free
-					</AppButton>
+					</ScrollButton>
 				</div>
 			</div>
 		</section>
@@ -85,7 +86,10 @@ function Footer() {
 				</nav>
 				<div className="flex w-full justify-between items-center">
 					<LogoDark className="h-15.5" height="200" width="200" />
-					<LinkedIn className="size-9.5" />
+					<IconLink
+						href="https://www.linkedin.com/company/grantflowai/"
+						icon={<LinkedIn className="size-9.5" />}
+					></IconLink>
 				</div>
 			</div>
 			<div className="hidden md:flex md:flex-row justify-between items-center px-8 mx-2 my-6">
@@ -103,7 +107,10 @@ function Footer() {
 						</li>
 					</ul>
 				</nav>
-				<LinkedIn className="size-8" />
+				<IconLink
+					href="https://www.linkedin.com/company/grantflowai/"
+					icon={<LinkedIn className="size-9.5" />}
+				></IconLink>
 			</div>
 		</footer>
 	);
