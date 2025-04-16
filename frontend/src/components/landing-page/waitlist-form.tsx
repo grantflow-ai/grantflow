@@ -24,7 +24,8 @@ export function WaitlistForm() {
 	});
 
 	function onSubmit(values: z.infer<typeof waitlistSchema>) {
-		console.log("Form submitted:", values);
+		// TODO implement me
+		return values;
 	}
 
 	return (
