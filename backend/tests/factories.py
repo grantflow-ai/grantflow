@@ -7,7 +7,6 @@ from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from sqlalchemy import Column
 
-from src.api.api_types import TableIdResponse
 from src.api.http.auth import LoginRequestBody, LoginResponse, OTPResponse
 from src.api.http.funding_organizations import CreateOrganizationRequestBody
 from src.api.http.grant_applications import (
@@ -17,6 +16,7 @@ from src.api.http.grant_applications import (
     UpdateApplicationRequestBody,
 )
 from src.api.http.workspaces import CreateWorkspaceRequestBody, UpdateWorkspaceRequestBody, WorkspaceBaseResponse
+from src.common_types import TableIdResponse
 from src.constants import EMBEDDING_DIMENSIONS
 from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from src.db.tables import (
