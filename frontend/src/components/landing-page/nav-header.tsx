@@ -4,7 +4,8 @@ import { Logo, LogoDark } from "@/components/logo";
 import { IconCancel, IconGoAhead, IconHamburger } from "@/components/landing-page/icons";
 import { AppButton } from "@/components/app-button";
 import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
+import { ScrollButton } from "@/components/scroll-button";
 
 const BREAKPOINT_MD = 768;
 
@@ -48,9 +49,9 @@ export function NavHeader() {
 					<AppButton size="lg" theme="light" variant="link">
 						About us
 					</AppButton>
-					<AppButton rightIcon={<IconGoAhead />} size="lg">
+					<ScrollButton rightIcon={<IconGoAhead />} selector="waitlist" size="lg">
 						Try For Free
-					</AppButton>
+					</ScrollButton>
 				</div>
 				<Button
 					aria-label={isMobileMenuOpen ? "Close Navigation Menu" : "Open Navigation Menu"}

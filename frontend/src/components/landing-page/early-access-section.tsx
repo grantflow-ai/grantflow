@@ -44,8 +44,9 @@ const CONTENT_BENEFITS = {
 
 export function EarlyAccessSection() {
 	return (
-		<section aria-labelledby="early-access-section" className="relative">
-			<GradientBackground className="absolute inset-0 z-0" />
+		<section aria-labelledby="early-access-section" className="relative" id="waitlist">
+			<GradientBackground className="hidden md:block md:absolute inset-0 z-0" />
+			<GradientBackground className="absolute md:hidden inset-0 z-0" position="bottom-left" />
 			<div className="relative z-10 flex flex-col py-10 md:py-12 lg:py-15 xl:py-20 px-4 md:px-10 lg:px-20 xl:px-30">
 				<div
 					className="max-w-fit bg-white rounded-full px-2 pt-[0.125rem] text-background text-lg md:text-sm"

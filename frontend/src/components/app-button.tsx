@@ -45,7 +45,9 @@ const ICON_DIMENSIONS_MAP = {
 	sm: { height: 13, width: 13 },
 };
 
-interface AppButtonProps extends Omit<ShadcnButtonProps, "size" | "variant">, VariantProps<typeof appButtonVariants> {
+export interface AppButtonProps
+	extends Omit<ShadcnButtonProps, "size" | "variant">,
+		VariantProps<typeof appButtonVariants> {
 	leftIcon?: ReactNode;
 	rightIcon?: ReactNode;
 	size?: "lg" | "md" | "sm";
