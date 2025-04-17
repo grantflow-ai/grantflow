@@ -12,10 +12,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-/**
- * Handles the email sign-in completion flow after user clicks the email link.
- * Validates the email link, completes the sign-in process, and redirects the user.
- */
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
 

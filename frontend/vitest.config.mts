@@ -12,7 +12,7 @@ export default defineConfig({
 		environment: "jsdom",
 		globals: true,
 		onConsoleLog(log) {
-			// suppress errors and warning that spam the console during tests
+			// suppress errors and warning that spam the console during tests ~keep
 			if (log.includes("Error: Not implemented: HTMLFormElement.prototype.requestSubmit")) {
 				return false;
 			}
