@@ -22,17 +22,6 @@ async def extract_and_enrich_sections(
     cfp_subject: str,
     organization: FundingOrganization | None,
 ) -> list[GrantElement | GrantLongFormSection]:
-    """Extract and enrich the sections from the grant CFP content.
-
-    Args:
-        cfp_content: The content of the grant CFP.
-        cfp_subject: The subject of the grant CFP.
-        organization: The funding organization.
-
-    Returns:
-        The extracted and enriched sections.
-    """
-
     sections = await handle_extract_sections(
         cfp_content=cfp_content,
         cfp_subject=cfp_subject,
@@ -87,18 +76,6 @@ async def grant_template_generation_pipeline_handler(
     application_id: str | UUID,
     cfp_content: str,
 ) -> GrantTemplate:
-    """Generate a new grant template from user uploaded instructions.
-
-    Args:
-        application_id: The application ID.
-        cfp_content: The extracted content of a grant CFP.
-
-    Raises:
-        DatabaseError: If there was an issue generating the grant template in the database.
-
-    Returns:
-        The generated grant template.
-    """
     session_maker = get_session_maker()
     logger.info("Starting grant template generation pipeline")
 

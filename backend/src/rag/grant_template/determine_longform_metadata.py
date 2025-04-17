@@ -173,46 +173,23 @@ grant_template_generation_json_schema: Final = {
 
 
 class SectionMetadata(TypedDict):
-    """Metadata for a grant template section."""
-
     id: str
-    """The ID of the section."""
     keywords: list[str]
-    """Grounding keywords."""
     topics: list[str]
-    """Textual topics."""
     generation_instructions: str
-    """Section generation instruction."""
     depends_on: list[str]
-    """Dependencies, if any."""
     max_words: int
-    """Word limit."""
     search_queries: list[str]
-    """3-10 queries."""
 
 
 class TemplateSectionsResponse(TypedDict):
-    """Response from the tool for generating grant template sections."""
-
     sections: list[SectionMetadata]
-    """List of generated grant template sections."""
     error: NotRequired[str | None]
-    """Error message if any."""
 
 
 def validate_template_sections(
     response: TemplateSectionsResponse, *, input_sections: list[ExtractedSectionDTO]
 ) -> None:
-    """Validate the generated grant template sections.
-
-    Args:
-        response: The generated template sections
-        input_sections: The pre-structured input sections
-
-    Raises:
-        ValidationError: If the response is invalid
-        InsufficientContextError: If the response is missing sections
-    """
     if error := response.get("error"):  # occasionally, the model suffers a stroke and returns "null" as a string
         raise InsufficientContextError(
             error,
@@ -377,15 +354,6 @@ def validate_template_sections(
 async def generate_grant_template(
     task_description: str, *, input_sections: list[ExtractedSectionDTO]
 ) -> TemplateSectionsResponse:
-    """Generate a grant template from a given task description.
-
-    Args:
-        task_description: The task description.
-        input_sections: The extracted sections.
-
-    Returns:
-        The extracted sections.
-    """
     return await handle_completions_request(
         prompt_identifier="grant_template_extraction",
         messages=task_description,
@@ -470,17 +438,6 @@ async def handle_generate_grant_template(
     organization: FundingOrganization | None,
     long_form_sections: list[ExtractedSectionDTO],
 ) -> list[SectionMetadata]:
-    """Generate a complete grant template including format and section configurations.
-
-    Args:
-        cfp_content: The content of the grant CFP.
-        cfp_subject: The subject of the grant CFP.
-        organization: The funding organization.
-        long_form_sections: The extracted long-form sections.
-
-    Returns:
-        Complete grant template configuration including format and sections
-    """
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         cfp_content=cfp_content,
         cfp_subject=cfp_subject,

@@ -2,7 +2,6 @@ import { render } from "@testing-library/react";
 import { ToastListener } from "./toast-listener";
 import { toast } from "sonner";
 
-// Mock the required modules
 vi.mock("next/navigation", () => ({
 	usePathname: vi.fn().mockReturnValue("/"),
 	useRouter: vi.fn().mockReturnValue({
@@ -116,5 +115,4 @@ describe("ToastListener", () => {
 	});
 });
 
-// Import these after the mocks to avoid circular references
 import { useRouter, useSearchParams } from "next/navigation";

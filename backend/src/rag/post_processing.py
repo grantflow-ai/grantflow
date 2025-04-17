@@ -35,8 +35,6 @@ BOILERPLATE_PATTERNS: Final[list[str]] = [
 
 
 class SentenceInfo(TypedDict):
-    """Information about a sentence for ranking and filtering."""
-
     text: str
     processed_text: str
     content_word_ratio: float
@@ -45,13 +43,6 @@ class SentenceInfo(TypedDict):
 
 
 class BM25Ranker:
-    """Precomputes BM25 scores for faster retrieval.
-
-    Args:
-        sentences: List of sentences to rank
-        nlp: spaCy NLP model for tokenization
-    """
-
     def __init__(self, sentences: list[str], nlp: Language) -> None:
         self.sentences = sentences
         tokenized_corpus = [
@@ -61,15 +52,6 @@ class BM25Ranker:
         self.bm25 = BM25Okapi(tokenized_corpus)
 
     def rank(self, query: str, nlp: Language) -> dict[str, float]:
-        """Rank sentences based on BM25 relevance to query.
-
-        Args:
-            query: Query to rank against
-            nlp: spaCy NLP model for tokenization
-
-        Returns:
-            Dictionary mapping sentences to their BM25 scores
-        """
         tokenized_query = [token.text.lower() for token in nlp(query) if not token.is_punct and not token.is_space]
         scores = self.bm25.get_scores(tokenized_query)
         max_score = max(scores) if len(scores) > 0 else 1
@@ -86,25 +68,6 @@ async def post_process_documents(
     query: str,
     task_description: str,
 ) -> list[str]:
-    """Post-process retrieved documents to reduce token count and rerank.
-
-    This function:
-    1. Deduplicates similar sentences across documents
-    2. Removes stopwords and low-value content from sentences
-    3. Filters out boilerplate text and redundant phrases
-    4. Applies reranking using BM25 and semantic similarity
-    5. Trims the result to fit within the max token limit
-
-    Args:
-        documents: The retrieved documents to post-process
-        max_tokens: Maximum token count for the combined documents
-        model: The model to use for token counting
-        query: The original query used for retrieval
-        task_description: The task description
-
-    Returns:
-        List of post-processed document contents
-    """
     if not documents:
         return []
 
@@ -175,14 +138,6 @@ async def post_process_documents(
 
 
 async def _process_sentence(*, sent: Span) -> str:
-    """Process a sentence to remove stopwords and keep only meaningful content.
-
-    Args:
-        sent: spaCy sentence
-
-    Returns:
-        Processed text with stopwords removed
-    """
     content_tokens = [
         token.text
         for token in sent
@@ -197,27 +152,11 @@ async def _process_sentence(*, sent: Span) -> str:
 
 
 def _is_boilerplate(text: str) -> bool:
-    """Check if text contains boilerplate phrases.
-
-    Args:
-        text: Text to check
-
-    Returns:
-        True if text contains boilerplate phrases
-    """
     text_lower = text.lower()
     return any(pattern in text_lower for pattern in BOILERPLATE_PATTERNS)
 
 
 async def deduplicate_sentences(sentences: list[str]) -> list[str]:
-    """Remove similar sentences efficiently using batch embedding.
-
-    Args:
-        sentences: List of sentences to deduplicate
-
-    Returns:
-        List of deduplicated sentences
-    """
     if len(sentences) <= 1:
         return sentences
 
@@ -267,15 +206,6 @@ async def deduplicate_sentences(sentences: list[str]) -> list[str]:
 
 
 async def apply_bm25_ranking(sentences: list[str], query: str) -> dict[str, float]:
-    """Rank sentences using BM25 algorithm.
-
-    Args:
-        sentences: List of sentences to rank
-        query: Query to rank against
-
-    Returns:
-        Dictionary mapping sentences to their BM25 scores
-    """
     nlp = get_spacy_model()
 
     ranker = BM25Ranker(sentences, nlp)
@@ -283,15 +213,6 @@ async def apply_bm25_ranking(sentences: list[str], query: str) -> dict[str, floa
 
 
 async def apply_semantic_ranking(sentences: list[str], query: str) -> dict[str, float]:
-    """Ranks sentences based on similarity to query, using batch encoding.
-
-    Args:
-        sentences: List of sentences to rank
-        query: Query to rank against
-
-    Returns:
-        Dictionary mapping sentences to their semantic similarity scores
-    """
     if not sentences:
         return {}
 
@@ -313,17 +234,6 @@ async def apply_semantic_ranking(sentences: list[str], query: str) -> dict[str, 
 async def parse_documents(
     *, original_docs: list[DocumentDTO], sentence_infos: list[SentenceInfo], max_tokens: int, model: str
 ) -> list[str]:
-    """Reconstructs readable, coherent documents from ranked sentences.
-
-    Args:
-        original_docs: The original documents
-        sentence_infos: Sentences with relevance info sorted by relevance
-        max_tokens: Maximum total token count
-        model: The model to use for token counting
-
-    Returns:
-        List of processed document contents as strings
-    """
     doc_contents: dict[int, list[str]] = {i: [] for i in range(len(original_docs))}
     token_count = 0
 

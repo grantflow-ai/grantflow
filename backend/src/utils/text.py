@@ -9,14 +9,6 @@ from src.utils.nlp import get_spacy_model, get_word_count
 
 
 def count_words(text: str) -> int:
-    """Count the number of words in a text string.
-
-    Args:
-        text: The text to count words for
-
-    Returns:
-        The number of words in the text
-    """
     return len(text.split())
 
 
@@ -32,14 +24,6 @@ LIST_ITEM_PATTERN = re_compile(r"^\s*(?:[*+-]|\d+\.)\s+\S+")
 
 
 def concatenate_segments_with_spacy_coherence(segments: list[str]) -> str:
-    """Concatenate text segments while ensuring coherence between sentences using spaCy.
-
-    Args:
-        segments: The text segments to concatenate.
-
-    Returns:
-        The concatenated text.
-    """
     nlp = get_spacy_model()
 
     concatenated_text: list[str] = []
@@ -65,14 +49,6 @@ def concatenate_segments_with_spacy_coherence(segments: list[str]) -> str:
 
 
 def normalize_punctuation(text: str) -> str:
-    """Normalize Unicode punctuation in text to ASCII equivalents.
-
-    Args:
-        text: The text to normalize.
-
-    Returns:
-        The normalized text.
-    """
     text = SINGLE_QUOTE_PATTERN.sub("'", text)
     text = DOUBLE_QUOTE_PATTERN.sub('"', text)
     text = DASH_PATTERN.sub("-", text)
@@ -80,14 +56,6 @@ def normalize_punctuation(text: str) -> str:
 
 
 def normalize_markdown(markdown_string: str) -> str:
-    """Normalize Markdown text to improve readability and consistency.
-
-    Args:
-        markdown_string: The Markdown-formatted text to normalize.
-
-    Returns:
-        The normalized Markdown text.
-    """
     if not markdown_string.strip():
         return ""
 
@@ -98,19 +66,16 @@ def normalize_markdown(markdown_string: str) -> str:
 
 
 def _fix_broken_bold(markdown_string: str) -> str:
-    """Fix broken bold Markdown patterns."""
     if "**" in markdown_string:
         markdown_string = BROKEN_MARKDOWN_BOLD_PATTERN.sub(r"\1\2**", markdown_string)
     return markdown_string
 
 
 def _split_and_strip_lines(markdown_string: str) -> list[str]:
-    """Split the Markdown string into stripped lines."""
     return [line.strip() for line in markdown_string.splitlines()]
 
 
 def _process_lines(lines: list[str]) -> list[str]:
-    """Process lines to normalize headers, list items, and general content."""
     normalized_lines: list[str] = []
     current_list_items: list[str] = []
 
@@ -140,7 +105,6 @@ def _process_lines(lines: list[str]) -> list[str]:
 
 
 def _handle_empty_line(normalized_lines: list[str], current_list_items: list[str]) -> None:
-    """Handle an empty line during processing."""
     if current_list_items:
         normalized_lines.extend(current_list_items)
         current_list_items.clear()
@@ -149,12 +113,10 @@ def _handle_empty_line(normalized_lines: list[str], current_list_items: list[str
 
 
 def _normalize_line(line: str) -> str:
-    """Normalize a single line by applying punctuation normalization."""
     return " ".join(normalize_punctuation(word) for word in line.split())
 
 
 def _handle_header(normalized_lines: list[str], current_list_items: list[str], normalized_line: str) -> None:
-    """Handle a header line during processing."""
     if current_list_items:
         normalized_lines.extend(current_list_items)
         current_list_items.clear()
@@ -167,7 +129,6 @@ def _handle_header(normalized_lines: list[str], current_list_items: list[str], n
 def _handle_regular_line(
     normalized_lines: list[str], current_list_items: list[str], normalized_line: str, i: int, lines: list[str]
 ) -> None:
-    """Handle a regular line during processing."""
     if current_list_items:
         normalized_lines.extend(current_list_items)
         normalized_lines.append("")
@@ -178,7 +139,6 @@ def _handle_regular_line(
 
 
 def _finalize_normalized_lines(normalized_lines: list[str]) -> str:
-    """Finalize the normalized lines by removing trailing blank lines."""
     result: list[str] = []
     for line in normalized_lines:
         if line or (result and result[-1]):
@@ -194,12 +154,6 @@ def estimate_token_count(text: str) -> int:
 
     This uses character count and word count to approximate token count.
     It's less accurate than the API but doesn't count against rate limits.
-
-    Args:
-        text: The text to estimate tokens for
-
-    Returns:
-        Estimated token count
     """
     if not text:
         return 0
@@ -221,13 +175,6 @@ async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
 
     Uses a fast local estimation for Anthropic models to avoid rate limits.
     Uses Google AI client for other models.
-
-    Args:
-        text: The text to count tokens for
-        model: The model to use for counting tokens
-
-    Returns:
-        The number of tokens in the text
     """
     if not text:
         return 0

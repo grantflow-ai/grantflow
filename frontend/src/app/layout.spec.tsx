@@ -5,8 +5,6 @@ import { render, screen } from "@testing-library/react";
 
 import RootLayout from "./layout";
 
-// Navbar is not used in the layout component
-
 vi.mock("@/components/ui/sonner", () => ({
 	Toaster: () => <div data-testid="toaster">Toaster</div>,
 }));
@@ -80,8 +78,6 @@ describe("RootLayout", () => {
 	});
 
 	it("sets the correct lang attribute on the html element", async () => {
-		// In the test environment, the container doesn't include the html element
-		// We'll just verify the component renders without errors
 		render(RootLayout({ children: "Test Content" }));
 		expect(screen.getByTestId("main-container")).toBeInTheDocument();
 	});

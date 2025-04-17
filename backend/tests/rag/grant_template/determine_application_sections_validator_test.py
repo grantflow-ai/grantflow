@@ -66,8 +66,6 @@ def test_validate_unique_ids() -> None:
 
 
 def test_validate_order_values() -> None:
-    """Test validation of order values."""
-
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
@@ -141,7 +139,6 @@ def test_validate_workplan_children() -> None:
 
 
 def test_workplan_must_be_longform() -> None:
-    """Test that workplan sections must be marked as long-form."""
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
@@ -154,7 +151,6 @@ def test_workplan_must_be_longform() -> None:
 
 
 def test_short_section_title() -> None:
-    """Test validation of short section titles."""
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
@@ -167,7 +163,6 @@ def test_short_section_title() -> None:
 
 
 def test_duplicate_section_titles() -> None:
-    """Test validation of duplicate section titles."""
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
@@ -219,8 +214,6 @@ def test_validate_circular_dependencies() -> None:
 
 
 def test_exactly_one_workplan_section() -> None:
-    """Test that exactly one section must be marked as workplan."""
-
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {

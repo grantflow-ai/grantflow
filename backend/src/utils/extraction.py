@@ -21,18 +21,6 @@ logger = get_logger(__name__)
 
 
 async def extract_with_azure_document_intelligence(file_content: bytes, mime_type: str) -> AnalyzeResult:
-    """Extract text from a document using the Azure Document Intelligence prebuilt-layout model.
-
-    Args:
-        file_content: The content of the document.
-        mime_type: The mime type of the document.
-
-    Raises:
-        FileParsingError: If an error occurs during the extraction.
-
-    Returns:
-        The extracted text from the document.
-    """
     client = DocumentIntelligenceClient(
         endpoint=get_env("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"),
         credential=AzureKeyCredential(get_env("AZURE_DOCUMENT_INTELLIGENCE_KEY")),
@@ -61,19 +49,6 @@ async def extract_with_azure_document_intelligence(file_content: bytes, mime_typ
 async def extract_file_content(
     *, content: bytes, mime_type: str, use_azure: bool = False
 ) -> tuple[str | AnalyzeResult, str]:
-    """Extract the textual content from a given byte string representing a file's contents.
-
-    Args:
-        content: The content to extract.
-        mime_type: The mime type of the content.
-        use_azure: Whether to use Azure Document Intelligence for extraction.
-
-    Raises:
-        ValidationError: If the mime type is not supported.
-
-    Returns:
-        The extracted content and the mime type of the content.
-    """
     try:
         if use_azure:
             return await extract_with_azure_document_intelligence(
@@ -95,17 +70,6 @@ async def extract_file_content(
 
 @with_exponential_backoff_retry(ExternalOperationError, max_retries=3)
 async def extract_webpage_content(url: str) -> str:
-    """Extract the content from a webpage as markdown.
-
-    Args:
-        url: The URL of the webpage to extract content from.
-
-    Raises:
-        ExternalOperationError: If the operation failed.
-
-    Returns:
-        The markdown content of the webpage.
-    """
     try:
         async with AsyncWebCrawler(verbose=True) as crawler:
             result = await crawler.arun(url=url)

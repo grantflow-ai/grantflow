@@ -118,27 +118,12 @@ relationships_schema = {
 
 
 class RelationshipsDTO(TypedDict):
-    """DTO for relationships between research objectives and tasks."""
-
     relationships: list[tuple[str, str, str]]
-    """List of relationships where each tuple contains (source_id, target_id, description)."""
 
 
 def validate_relationships_response(
     response: RelationshipsDTO, *, research_objectives: list[ResearchObjective] | None
 ) -> None:
-    """Validate the relationships' response.
-
-    Args:
-         response: The response to validate.
-         research_objectives: The input research objectives.
-
-    Raises:
-          ValidationError: If the response is invalid.
-
-    Returns:
-          None
-    """
     if "relationships" not in response:
         raise ValidationError("Missing relationships in response", context=response)
 
@@ -235,15 +220,6 @@ async def extract_relationships_generation(
     *,
     research_objectives: list[ResearchObjective] | None = None,
 ) -> RelationshipsDTO:
-    """Extract relationships between objectives and tasks.
-
-    Args:
-        task_description: The task description for the work plan.
-        research_objectives: The input research objectives.
-
-    Returns:
-        The relationships between objectives and tasks.
-    """
     return await handle_completions_request(
         prompt_identifier="plan_relationships",
         messages=task_description,
@@ -334,17 +310,6 @@ async def handle_extract_relationships(
     research_objectives: list[ResearchObjective],
     form_inputs: dict[str, str],
 ) -> dict[str, list[tuple[str, str]]]:
-    """Generate relationships between objectives and tasks.
-
-    Args:
-        application_id: The ID of the grant application.
-        grant_section: The grant section for the work plan.
-        research_objectives: The research objectives.
-        form_inputs: The user inputs.
-
-    Returns:
-        The relationships between objectives and tasks.
-    """
     prompt = EXTRACT_RELATIONSHIPS_USER_PROMPT.substitute(
         research_objectives=[
             {
