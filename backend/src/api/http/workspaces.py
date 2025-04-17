@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import APIRequest, TableIdResponse
+from src.common_types import APIRequest, TableIdResponse
 from src.db.enums import UserRoleEnum
 from src.db.tables import Workspace, WorkspaceUser
 from src.exceptions import DatabaseError

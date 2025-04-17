@@ -2,6 +2,7 @@ import logging
 from datetime import UTC, datetime
 from os import environ
 from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -135,6 +136,7 @@ async def test_generate_erc_application_for_lampel(
 
     text, section_texts = await grant_application_text_generation_pipeline_handler(
         application_id=grant_application_id,
+        message_handler=AsyncMock(),
     )
 
     result_folder = RESULTS_FOLDER / grant_application_id

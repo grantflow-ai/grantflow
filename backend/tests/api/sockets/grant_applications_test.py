@@ -22,11 +22,10 @@ async def test_grant_application_websocket_create_application_default(
         data = ws.receive_json()
 
     assert data["type"] == "data"
-    assert data["event"] == "application_created"
+    assert data["event"] == "application_creation_success"
 
     assert "content" in data
     assert "application_id" in data["content"]
-    assert data.get("message") == "Application created successfully"
 
 
 async def test_grant_application_websocket_create_application_unauthorized_error_no_otp(
