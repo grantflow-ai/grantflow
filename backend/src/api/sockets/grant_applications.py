@@ -22,36 +22,21 @@ logger = get_logger(__name__)
 
 
 class ErrorMessage(TypedDict, Generic[T]):
-    """A message sent over a WebSocket connection."""
-
     type: Literal["error"]
-    """The type of the message."""
     content: str
-    """The content of the message."""
     context: NotRequired[dict[str, Any]]
-    """A dictionary containing additional information about the error."""
 
 
 class DataMessage(TypedDict, Generic[T]):
-    """A message sent over a WebSocket connection."""
-
     type: Literal["data"]
-    """The type of the message."""
     event: str
-    """The event that triggered the message."""
     content: T
-    """The content of the message."""
     message: NotRequired[str]
-    """A dictionary containing additional information about the data."""
 
 
 class InfoMessage(TypedDict, Generic[T]):
-    """A message sent over a WebSocket connection."""
-
     type: Literal["text"]
-    """The type of the message."""
     content: str
-    """The content of the message."""
 
 
 async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:

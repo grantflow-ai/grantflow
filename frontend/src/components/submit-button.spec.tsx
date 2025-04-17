@@ -41,8 +41,6 @@ describe("SubmitButton", () => {
 		const button = screen.getByTestId("form-button");
 		expect(button).toBeDisabled();
 		expect(button).toHaveAttribute("data-custom", "test-value");
-		// The variant is applied as a class through the buttonVariants function
-		// which transforms "outline" to the appropriate Tailwind classes
 		expect(button).toHaveClass("border");
 		expect(button).toHaveClass("border-input");
 		expect(button).toHaveClass("bg-background");

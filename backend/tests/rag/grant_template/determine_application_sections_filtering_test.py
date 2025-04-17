@@ -148,20 +148,17 @@ SECTION_OUTPOUT: ExtractedSections = {
 
 
 async def test_section_filtering() -> None:
-    """Test basic filtering functionality."""
     result = await filter_extracted_sections(sections=SECTION_OUTPOUT["sections"])
     assert len(result) > 0
     assert any(s.get("is_detailed_workplan") for s in result)
 
 
 async def test_section_filtering_empty_input() -> None:
-    """Test handling of empty input."""
     result = await filter_extracted_sections(sections=[])
     assert result == []
 
 
 async def test_section_filtering_always_keeps_workplan() -> None:
-    """Test that workplan sections are always kept regardless of title."""
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Methods",
@@ -178,7 +175,6 @@ async def test_section_filtering_always_keeps_workplan() -> None:
 
 
 async def test_section_filtering_keeps_long_form_parents() -> None:
-    """Test that non-long-form sections are kept if they have long-form children."""
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Research Plan",
@@ -203,7 +199,6 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
 
 
 async def test_section_filtering_removes_non_long_form() -> None:
-    """Test that non-long-form sections without long-form children are removed."""
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Workplan",
@@ -228,7 +223,6 @@ async def test_section_filtering_removes_non_long_form() -> None:
 
 
 async def test_section_filtering_threshold() -> None:
-    """Test that similarity threshold affects which sections are kept."""
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Research Methods Section",
@@ -247,7 +241,6 @@ async def test_section_filtering_threshold() -> None:
 
 
 async def test_adaptive_threshold_preserves_workplan() -> None:
-    """Test that the adaptive threshold preserves the workplan section."""
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Methods",
@@ -265,7 +258,6 @@ async def test_adaptive_threshold_preserves_workplan() -> None:
 
 
 async def test_maintain_hierarchy_integrity() -> None:
-    """Test that hierarchy integrity is maintained after filtering."""
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Research Plan",
