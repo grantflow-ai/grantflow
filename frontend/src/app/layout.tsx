@@ -12,13 +12,23 @@ import { ThemeProvider } from "next-themes";
 import { ReactNode, Suspense } from "react";
 
 export const metadata = {
-	description: "AI powered grant writing",
+	description:
+		"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. Try it for free!",
 	metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
 	openGraph: {
-		description: "AI powered grant writing",
+		description:
+			"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. Try it for free!",
 		emails: ["naaman@grantflow.ai", "asaf@grantflow.ai"],
+		images: [
+			{
+				alt: "GrantFlow.AI Preview Image",
+				height: 630,
+				url: "/og-image.svg",
+				width: 1200,
+			},
+		],
 		siteName: "GrantFlow.AI",
-		title: "GrantFlow.AI",
+		title: "Ready to Focus on Research, Not Paperwork?",
 		url: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
 	},
 	title: "GrantFlow.AI",
