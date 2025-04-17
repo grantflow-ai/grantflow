@@ -48,30 +48,18 @@ EVALUATION_PROMPT = PromptTemplate(
 
 @dataclass
 class EvaluationCriterion:
-    """Structured score and reasoning for a single evaluation criterion."""
-
     name: str
-    """The name of the evaluation criterion."""
     evaluation_instructions: str
-    """Instructions for evaluating the criterion."""
     weight: float = 1.0
-    """The weight of the criterion in the overall evaluation."""
 
 
 class EvaluationScore(TypedDict):
-    """Structured score and reasoning for a single evaluation criterion."""
-
     score: int
-    """The score assigned to the output."""
     instructions: str
-    """Instructions for improving the output."""
 
 
 class EvaluationToolResponse(TypedDict):
-    """Comprehensive evaluation response."""
-
     criteria: dict[str, EvaluationScore]
-    """Structured scores and reasoning for each evaluation criterion."""
 
 
 score_object_schema = {
@@ -84,16 +72,6 @@ score_object_schema = {
 async def evaluate_prompt_output(
     *, criteria: list[EvaluationCriterion], prompt: str, model_output: str | dict[str, Any]
 ) -> EvaluationToolResponse:
-    """Generate an evaluation prompt for assessing the quality of a language model output.
-
-    Args:
-        criteria: The evaluation criteria to use.
-        prompt: The prompt given to the language model.
-        model_output: The generated output from the language model.
-
-    Returns:
-        The evaluation result object.
-    """
     criteria_text = """
     ## Evaluation Criteria
     """
@@ -179,24 +157,6 @@ async def with_prompt_evaluation[T, **P](
     criteria: list[EvaluationCriterion],
     **kwargs: Any,
 ) -> T:
-    """Evaluate the output of a language model against a set of criteria and provide feedback.
-
-    Args:
-        prompt_identifier: The identifier for the prompt.
-        passing_score: The minimum score required to pass the evaluation.
-        prompt: The prompt used to generate the output.
-        prompt_handler: The handler for generating the output.
-        retries: The number of retries allowed.
-        increment: The increment for temperature in retries.
-        criteria: The evaluation criteria to use.
-        **kwargs: Additional keyword arguments.
-
-    Raises:
-        EvaluationError: If the output does not meet the evaluation criteria after the maximum number of retries.
-
-    Returns:
-        The evaluated output.
-    """
     current_prompt = str(prompt)
     iteration = 1
     min_passing_score: float = passing_score

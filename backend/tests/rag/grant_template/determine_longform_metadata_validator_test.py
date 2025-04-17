@@ -19,7 +19,6 @@ def create_extracted_section(
     is_title_only: bool | None = None,
     is_clinical_trial: bool | None = None,
 ) -> ExtractedSectionDTO:
-    """Create a test section for use in tests."""
     return {
         "id": section_id,
         "title": title,
@@ -42,7 +41,6 @@ def create_section_metadata(
     max_words: int = 500,
     search_queries: list[str] | None = None,
 ) -> SectionMetadata:
-    """Create a test section metadata for use in tests."""
     return {
         "id": section_id,
         "keywords": keywords or ["keyword1", "keyword2", "keyword3"],
@@ -55,7 +53,6 @@ def create_section_metadata(
 
 
 def test_validate_empty_sections() -> None:
-    """Test validation of empty sections."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
     with pytest.raises(ValidationError) as validation_exc:
@@ -68,7 +65,6 @@ def test_validate_empty_sections() -> None:
 
 
 def test_validate_section_mismatch() -> None:
-    """Test validation of section ID mismatch."""
     input_sections = [
         create_extracted_section(section_id="section_one", is_detailed_workplan=True),
         create_extracted_section(section_id="section_two"),
@@ -98,7 +94,6 @@ def test_validate_section_mismatch() -> None:
 
 
 def test_validate_keywords() -> None:
-    """Test validation of keywords."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
     with pytest.raises(ValidationError) as exc:
@@ -123,7 +118,6 @@ def test_validate_keywords() -> None:
 
 
 def test_validate_topics() -> None:
-    """Test validation of topics."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
     with pytest.raises(ValidationError) as exc:
@@ -148,7 +142,6 @@ def test_validate_topics() -> None:
 
 
 def test_validate_generation_instructions() -> None:
-    """Test validation of generation instructions."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
     with pytest.raises(ValidationError) as exc:
@@ -176,7 +169,6 @@ def test_validate_generation_instructions() -> None:
 
 
 def test_validate_search_queries() -> None:
-    """Test validation of search queries."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
     with pytest.raises(ValidationError) as exc:
@@ -201,7 +193,6 @@ def test_validate_search_queries() -> None:
 
 
 def test_validate_dependencies() -> None:
-    """Test validation of dependencies."""
     input_sections = [
         create_extracted_section(section_id="section_one"),
         create_extracted_section(section_id="section_two", is_detailed_workplan=True),
@@ -243,7 +234,6 @@ def test_validate_dependencies() -> None:
 
 
 def test_validate_word_count() -> None:
-    """Test validation of word count."""
     input_sections = [create_extracted_section(section_id="section_one", is_detailed_workplan=True)]
 
     with pytest.raises(ValidationError) as exc:
@@ -279,7 +269,6 @@ def test_validate_word_count() -> None:
 
 
 def test_validate_workplan_word_count() -> None:
-    """Test validation of workplan word count."""
     input_sections = [
         create_extracted_section(section_id="workplan_section", is_detailed_workplan=True),
         create_extracted_section(section_id="other_section"),
@@ -309,7 +298,6 @@ def test_validate_workplan_word_count() -> None:
 
 
 def test_validate_total_word_count() -> None:
-    """Test validation of total word count."""
     input_sections = [
         create_extracted_section(section_id="section_one", is_detailed_workplan=False),
         create_extracted_section(section_id="section_two", is_detailed_workplan=False),

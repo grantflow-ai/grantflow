@@ -38,33 +38,16 @@ SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP = {
 
 @dataclass
 class FileDTO:
-    """DTO for a file."""
-
     content: bytes
-    """The content of the file."""
     filename: str
-    """The name of the file."""
     mime_type: str
 
     @property
     def size(self) -> int:
-        """The size of the file."""
         return len(self.content)
 
     @classmethod
     async def from_file(cls, file: UploadFile | list[UploadFile], filename: str) -> "FileDTO":
-        """Create a FileDTO from a Litestar UploadFile object.
-
-        Args:
-            file: The Litestar UploadFile object or list of UploadFile objects.
-            filename: The name of the file.
-
-        Raises:
-            ValidationError: If the mime type of the file could not be determined.
-
-        Returns:
-            The FileDTO object.
-        """
         file = file[0] if isinstance(file, list) else file
         ext = filename.split(".")[-1]
 

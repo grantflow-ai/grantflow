@@ -5,18 +5,6 @@ def detect_cycle(
     path: set[str] | None = None,
     path_list: list[str] | None = None,
 ) -> set[str]:
-    """Detect cycles in a directed graph using DFS and return cycle nodes.
-
-    Args:
-        graph: Adjacency list representation of graph.
-        start: Current node being visited.
-        visited: Set of all visited nodes.
-        path: Set of nodes in current DFS path.
-        path_list: List to track the current path for cycle detection.
-
-    Returns:
-        set[str]: Set of nodes in the cycle if detected, empty set otherwise.
-    """
     if visited is None:
         visited = set()
 

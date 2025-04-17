@@ -6,27 +6,10 @@ from src.rag.grant_template.utils import detect_cycle
 
 
 def is_grant_long_form_section(section: GrantElement | GrantLongFormSection) -> TypeGuard[GrantLongFormSection]:
-    """Type guard to check if a section is a GrantLongFormSection.
-
-    Args:
-        section: The section to check.
-
-    Returns:
-        Whether the section is a GrantLongFormSection.
-    """
     return "depends_on" in section
 
 
 def create_dependencies_text(depends_on: list[str], texts: dict[str, str]) -> dict[str, str]:
-    """Create the dependencies text.
-
-    Args:
-        depends_on: The dependencies.
-        texts: The texts.
-
-    Returns:
-        The dependencies text.
-    """
     if not depends_on:
         return {}
 
@@ -39,22 +22,6 @@ def create_dependencies_text(depends_on: list[str], texts: dict[str, str]) -> di
 
 
 def create_generation_groups(sections: list[GrantLongFormSection]) -> list[list[GrantLongFormSection]]:
-    """Create the groups for LLM generation.
-
-        - First group has no dependencies
-        - Second group has dependencies in the first group
-        - Third group has dependencies in the second or first group
-        - ... ad infinitum
-
-    Args:
-        sections: The sections.
-
-    Raises:
-        ValidationError: If a circular dependency is detected or if a section is missing in the dependencies.
-
-    Returns:
-        The generation groups.
-    """
     groups: list[list[GrantLongFormSection]] = []
     generated = set[str]()
 
@@ -106,16 +73,10 @@ def create_generation_groups(sections: list[GrantLongFormSection]) -> list[list[
 
 
 class TreeNode(TypedDict):
-    """Tree node data."""
-
     order: int
-    """The order of the element relative to its parents."""
     title: str
-    """The title of the section."""
     text: str | None
-    """The text of the section."""
     children: list["TreeNode"]
-    """The children of the section."""
 
 
 def map_to_tree(
@@ -124,16 +85,6 @@ def map_to_tree(
     section_texts: dict[str, str],
     sections: list[GrantElement | GrantLongFormSection],
 ) -> list[TreeNode]:
-    """Map the sections to a tree structure.
-
-    Args:
-        parent_id: The parent ID.
-        section_texts: The section texts.
-        sections: The sections.
-
-    Returns:
-        The tree structure.
-    """
     return sorted(
         [
             TreeNode(
@@ -150,15 +101,6 @@ def map_to_tree(
 
 
 def create_text_recursively(node: TreeNode, *, depth: int = 2) -> str:
-    """Create the text recursively.
-
-    Args:
-        node: The node.
-        depth: The depth of the node.
-
-    Returns:
-        The text.
-    """
     title_prefix = "#" * min(depth, 6)
     text = f"{title_prefix} {node['title']}\n\n"
 
@@ -174,15 +116,5 @@ def create_text_recursively(node: TreeNode, *, depth: int = 2) -> str:
 def generate_application_text(
     title: str, grant_sections: list[GrantElement | GrantLongFormSection], section_texts: dict[str, str]
 ) -> str:
-    """Generate the application text.
-
-    Args:
-        title: The title of the grant application.
-        grant_sections: The grant sections.
-        section_texts: The section texts.
-
-    Returns:
-        The generated application text.
-    """
     tree = map_to_tree(sections=grant_sections, section_texts=section_texts)
     return "\n\n".join([f"# {title}", *[create_text_recursively(node) for node in tree]])

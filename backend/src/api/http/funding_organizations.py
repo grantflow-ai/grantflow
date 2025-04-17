@@ -16,26 +16,18 @@ logger = get_logger(__name__)
 
 
 class CreateOrganizationRequestBody(TypedDict):
-    """The request body for creating a funding organization."""
-
     full_name: str
     abbreviation: str | None
 
 
 class UpdateOrganizationRequestBody(TypedDict):
-    """The request body for updating a funding organization."""
-
     full_name: NotRequired[str]
     abbreviation: NotRequired[str | None]
 
 
 class FundingOrganizationResponse(TypedDict):
-    """The response schema for a funding organization."""
-
     id: str
-    """The ID of the funding organization."""
     full_name: str
-    """The full name of the funding organization."""
     abbreviation: str | None
 
 
