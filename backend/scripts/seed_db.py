@@ -12,7 +12,6 @@ from src.utils.serialization import deserialize
 
 
 async def seed_db() -> None:
-    """Seed the database with test data."""
     load_dotenv()
     session_maker = get_session_maker()
 

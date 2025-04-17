@@ -18,54 +18,31 @@ logger = get_logger(__name__)
 
 
 class CreateWorkspaceRequestBody(TypedDict):
-    """The request body for creating a workspace."""
-
     name: str
-    """The name of the workspace."""
     description: str | None
-    """The description of the workspace."""
     logo_url: NotRequired[str | None]
-    """The URL of the workspace logo."""
 
 
 class UpdateWorkspaceRequestBody(TypedDict):
-    """The request body for updating a workspace."""
-
     name: NotRequired[str]
-    """The name of the workspace."""
     description: NotRequired[str | None]
-    """The description of the workspace."""
     logo_url: NotRequired[str | None]
-    """The URL of the workspace logo."""
 
 
 class WorkspaceBaseResponse(TableIdResponse):
-    """Base response for retrieving workspaces."""
-
     name: str
-    """The name of the workspace."""
     description: str | None
-    """The description of the workspace."""
     logo_url: str | None
-    """The URL of the workspace logo."""
     role: UserRoleEnum
-    """The role of the user in the workspace."""
 
 
 class WorkspaceResponse(WorkspaceBaseResponse):
-    """Response for retrieving a workspace."""
-
     grant_applications: list["BaseApplicationResponse"]
-    """The grant applications in the workspace"""
 
 
 class BaseApplicationResponse(TableIdResponse):
-    """Base response for retrieving applications."""
-
     title: str
-    """The title of the grant application draft."""
     completed_at: str | None
-    """The completed date of the grant application draft."""
 
 
 @post("/workspaces", operation_id="CreateWorkspace")

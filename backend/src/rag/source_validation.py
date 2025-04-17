@@ -93,13 +93,8 @@ VALIDATE_SOURCES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 
 class SourceValidationResult(TypedDict):
-    """Result of source validation."""
-
     percentage_available: float
-    """Percentage of required information that is available in the sources (0-100)."""
-
     missing_information: list[str]
-    """List of strings describing discrete missing pieces of information."""
 
 
 source_validation_schema = {
@@ -113,14 +108,6 @@ source_validation_schema = {
 
 
 def validate_source_validation_response(response: SourceValidationResult) -> None:
-    """Validate the source validation response.
-
-    Args:
-        response: The response to validate.
-
-    Raises:
-        ValidationError: If the response is invalid.
-    """
     if "percentage_available" not in response:
         raise ValidationError("Missing 'percentage_available' field in response", context=response)
 
@@ -181,19 +168,6 @@ async def handle_source_validation(
     max_length: int,
     **sources: Any,
 ) -> str | None:
-    """Validate whether the sources contain sufficient information to complete the task.
-
-    Args:
-        task_description: The description of the task to be completed.
-        minimum_percentage: The minimum percentage of required information that must be available
-                           for the sources to be considered sufficient. Defaults to 75.0.
-        max_length: The maximum length of the expected text.
-        **sources: The available sources of information.
-
-    Returns:
-        A formatted markdown string listing missing information if the percentage of available
-        information is below the minimum threshold, or None if the sources are sufficient.
-    """
     logger.debug(
         "Validating sources for task.",
         task_description_length=len(task_description),

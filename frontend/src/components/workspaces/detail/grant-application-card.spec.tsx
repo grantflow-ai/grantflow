@@ -63,8 +63,5 @@ describe("GrantApplicationCard", () => {
 		const card = screen.getByTestId(`application-draft-link-${mockApplication.id}`).firstChild;
 		expect(card).toHaveClass("hover:shadow-md");
 		expect(card).toHaveClass("hover:bg-muted/50");
-
-		// Skip testing the chevron icon's specific classes as they're applied dynamically
-		// and are difficult to test in this environment
 	});
 });

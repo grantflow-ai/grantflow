@@ -75,32 +75,19 @@ DIVERSE_SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 
 class QueryInfo(TypedDict):
-    """Information about a generated query."""
-
     text: str
-    """The query text."""
     type: str
-    """The type of query (factual, conceptual, procedural, comparative)."""
     aspect: str
-    """Brief description of what aspect this query covers."""
 
 
 class DiverseQueryResponse(TypedDict):
-    """Response with diverse query information."""
-
     queries: list[QueryInfo]
-    """The generated search queries with metadata."""
 
 
 class QueryResult(TypedDict):
-    """Result of query generation with metadata."""
-
     query: str
-    """The query text."""
     type: NotRequired[str]
-    """The type of query (factual, conceptual, procedural, comparative)."""
     aspect: NotRequired[str]
-    """Description of what aspect this query covers."""
 
 
 response_schema = {
@@ -126,18 +113,9 @@ response_schema = {
 
 
 SIMILARITY_THRESHOLD: Final[float] = 0.85
-"""Threshold for semantic similarity above which queries are considered duplicates."""
 
 
 async def deduplicate_queries(queries: list[str]) -> list[str]:
-    """Remove semantically similar queries using embeddings.
-
-    Args:
-        queries: List of queries to deduplicate
-
-    Returns:
-        List of deduplicated queries
-    """
     if len(queries) <= 1:
         return queries
 
@@ -173,16 +151,6 @@ async def deduplicate_queries(queries: list[str]) -> list[str]:
 
 
 async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **kwargs: Any) -> list[str]:
-    """Generate an optimized set of diverse search queries for retrieval.
-
-    Args:
-        user_prompt: The description of the next task in the RAG pipeline.
-        **kwargs: Additional kwargs to inject into the template. If provided these are lists of strings, which
-            should be regarded as keywords and other related metadata.
-
-    Returns:
-        The generated search queries, deduplicated and diversified.
-    """
     messages = [DIVERSE_SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
     if kwargs:
         messages.append(

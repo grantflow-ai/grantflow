@@ -5,14 +5,12 @@ class BackendError(Exception):
     """Raised when an internal error occurs."""
 
     context: Any
-    """The context of the error."""
 
     def __init__(self, message: str, context: Any = None) -> None:
         self.context = context
         super().__init__(message)
 
     def __str__(self) -> str:
-        """Return a string representation of the exception."""
         from src.utils.serialization import serialize
 
         ctx = f"\n\nContext: {serialize(self.context).decode()}" if self.context else ""
@@ -20,7 +18,6 @@ class BackendError(Exception):
         return f"{self.__class__.__name__}: {super().__str__()}{ctx}"
 
     def __repr__(self) -> str:
-        """Return a string representation of the exception."""
         return self.__str__()
 
 

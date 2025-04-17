@@ -180,8 +180,6 @@ async def test_handle_generate_grant_template(
     organization_mapping: dict[str, dict[str, str]],
     source_file_name: str,
 ) -> None:
-    """Validates generated grant templates against synthetic data."""
-
     result = await get_extracted_section_data(
         source_file_name=f"{source_file_name}.md",
         organization_mapping=organization_mapping,
