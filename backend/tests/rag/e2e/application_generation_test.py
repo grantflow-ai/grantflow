@@ -2,6 +2,7 @@ import logging
 from datetime import UTC, datetime
 from os import environ
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -24,6 +25,7 @@ async def test_generate_full_application_text(
 
     text, section_texts = await grant_application_text_generation_pipeline_handler(
         application_id=melanoma_alliance_full_application_id,
+        message_handler=AsyncMock(),
     )
 
     result_folder = RESULTS_FOLDER / melanoma_alliance_full_application_id
