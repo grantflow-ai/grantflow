@@ -14,7 +14,6 @@ from litestar.response import Response
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.api.api_types import APIRequest
 from src.api.http.application_files import (
     handle_application_file_uploads,
     handle_delete_application_file,
@@ -46,6 +45,7 @@ from src.api.http.workspaces import (
 )
 from src.api.middleware import AuthMiddleware
 from src.api.sockets.grant_applications import handle_application_websocket
+from src.common_types import APIRequest
 from src.db.connection import get_session_maker
 from src.dto import APIError
 from src.exceptions import BackendError, DeserializationError

@@ -9,8 +9,8 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.api.api_types import TableIdResponse
 from src.api.http.funding_organizations import FundingOrganizationResponse
+from src.common_types import TableIdResponse
 from src.db.enums import UserRoleEnum
 from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication
