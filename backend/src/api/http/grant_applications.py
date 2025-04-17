@@ -24,71 +24,41 @@ PROCESSING_SLEEP_INTERVAL = 15  # seconds ~keep
 
 
 class CreateApplicationRequestBody(TypedDict):
-    """The request body for creating an application."""
-
     title: str
-    """The title of the application."""
     cfp_url: NotRequired[str]
-    """Grant CFP URL."""
     cfp_file: NotRequired[UploadFile]
-    """Grant CFP file."""
 
 
 class UpdateApplicationRequestBody(TypedDict):
-    """The request body for updating an application."""
-
     title: NotRequired[str]
-    """The title of the application."""
     research_objectives: NotRequired[list[ResearchObjective]]
-    """The research objectives of the application."""
 
 
 class ApplicationDraftProcessingResponse(TypedDict):
-    """The response schema for an application draft in processing state."""
-
     id: str
-    """The ID of the grant application draft."""
     status: Literal["generating"]
-    """The status of the grant application draft."""
 
 
 class ApplicationDraftCompleteResponse(TypedDict):
-    """The response schema for a completed application draft."""
-
     id: str
-    """The ID of the grant application draft."""
     status: Literal["complete"]
-    """The status of the grant application draft."""
     text: str
 
 
 class BaseApplicationResponse(TableIdResponse):
-    """Base response for retrieving applications."""
-
     title: str
-    """The title of the grant application draft."""
     completed_at: str | None
-    """The completed date of the grant application draft."""
 
 
 class GrantTemplateResponse(TypedDict):
-    """Response for retrieving a grant template."""
-
     grant_sections: list[GrantLongFormSection | GrantElement]
-    """The name of the grant template."""
     funding_organization: FundingOrganizationResponse | None
-    """The funding organization of the grant template."""
 
 
 class ApplicationResponse(BaseApplicationResponse):
-    """Response for retrieving an application."""
-
     form_inputs: dict[str, str] | None
-    """The form inputs of the application."""
     research_objectives: list[ResearchObjective] | None
-    """The research objectives of the application."""
     text: str | None
-    """The text content of the application."""
     grant_template: GrantTemplateResponse | None
 
 
