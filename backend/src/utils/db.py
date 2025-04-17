@@ -18,19 +18,6 @@ async def check_exists_files_being_indexed(
     organization_id: UUID | str | None = None,
     session_maker: async_sessionmaker[Any],
 ) -> bool:
-    """Check if there are files being indexed for the given application.
-
-    Args:
-        application_id: The application ID, required if organization_id is not provided.
-        organization_id: The organization ID, required if application_id is not provided.
-        session_maker: The session maker.
-
-    Raises:
-        ValidationError: If neither application_id nor organization_id is provided.
-
-    Returns:
-        Whether there are files being indexed.
-    """
     if not application_id and not organization_id:
         raise ValidationError("Either application_id or organization_id must be provided.")
 
@@ -59,18 +46,6 @@ async def check_exists_files_being_indexed(
 async def retrieve_application(
     *, application_id: UUID | str, session_maker: async_sessionmaker[Any]
 ) -> GrantApplication:
-    """Retrieve a GrantApplication by ID.
-
-    Args:
-        application_id: The application ID.
-        session_maker: The session maker.
-
-    Raises:
-        NotFound: If the application is not found.
-
-    Returns:
-        The GrantApplication.
-    """
     async with session_maker() as session:
         try:
             result = await session.execute(

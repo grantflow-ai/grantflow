@@ -18,8 +18,6 @@ def create_research_objective(*, tasks: list[dict[str, str]] | None = None) -> R
 
 
 def test_validate_no_research_objectives() -> None:
-    """Test validation when no research objectives are provided."""
-
     with pytest.raises(ValidationError) as exc:
         validate_relationships_response({"relationships": []}, research_objectives=None)
     assert "Relationships array is empty" in str(exc.value)
@@ -31,7 +29,6 @@ def test_validate_no_research_objectives() -> None:
 
 
 def test_validate_with_research_objectives() -> None:
-    """Test validation with research objectives."""
     objectives = [
         create_research_objective(tasks=[{"title": "Task 1"}, {"title": "Task 2"}]),
         create_research_objective(tasks=[{"title": "Task 1"}]),
@@ -43,7 +40,6 @@ def test_validate_with_research_objectives() -> None:
 
 
 def test_validate_relationship_format() -> None:
-    """Test validation of relationship format."""
     objectives = [create_research_objective(tasks=[{"title": "Task 1"}])]
 
     with pytest.raises(ValidationError) as exc:
@@ -55,7 +51,6 @@ def test_validate_relationship_format() -> None:
 
 
 def test_validate_relationship_ids() -> None:
-    """Test validation of relationship IDs."""
     objectives = [
         create_research_objective(tasks=[{"title": "Task 1"}]),
         create_research_objective(tasks=[{"title": "Task 1"}]),
@@ -86,7 +81,6 @@ def test_validate_relationship_ids() -> None:
 
 
 def test_validate_relationship_description() -> None:
-    """Test validation of relationship description."""
     objectives = [create_research_objective(tasks=[{"title": "Task 1"}])]
 
     with pytest.raises(ValidationError) as exc:
@@ -105,7 +99,6 @@ def test_validate_relationship_description() -> None:
 
 
 def test_validate_self_relationships() -> None:
-    """Test validation of self-relationships."""
     objectives = [create_research_objective(tasks=[{"title": "Task 1"}])]
 
     with pytest.raises(ValidationError) as exc:
@@ -124,7 +117,6 @@ def test_validate_self_relationships() -> None:
 
 
 def test_validate_duplicate_relationships() -> None:
-    """Test validation of duplicate relationships."""
     objectives = [
         create_research_objective(tasks=[{"title": "Task 1"}]),
         create_research_objective(tasks=[{"title": "Task 1"}]),
@@ -164,7 +156,6 @@ def test_validate_duplicate_relationships() -> None:
 
 
 def test_validate_valid_relationships() -> None:
-    """Test validation of valid relationships."""
     objectives = [
         create_research_objective(tasks=[{"title": "Task 1"}, {"title": "Task 2"}]),
         create_research_objective(tasks=[{"title": "Task 1"}]),

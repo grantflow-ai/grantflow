@@ -32,17 +32,6 @@ async def generate_work_plan_text(
     form_inputs: dict[str, str],
     research_objectives: list[ResearchObjective],
 ) -> str:
-    """Generate the work plan text for a grant application.
-
-    Args:
-        application_id: The ID of the grant application.
-        work_plan_section: The work plan section.
-        form_inputs: The form inputs for the grant application.
-        research_objectives: The research objectives for the grant application.
-
-    Returns:
-        The generated work plan text.
-    """
     relationships = await handle_extract_relationships(
         application_id=application_id,
         research_objectives=research_objectives,
@@ -139,17 +128,6 @@ async def generate_grant_section_texts(
     grant_sections: list[GrantElement | GrantLongFormSection],
     research_objectives: list[ResearchObjective],
 ) -> dict[str, str]:
-    """Generate the grant section texts for a grant application.
-
-    Args:
-        application_id: The ID of the grant application.
-        form_inputs: The form inputs for the grant application.
-        grant_sections: The grant sections.
-        research_objectives: The research objectives for the grant application.
-
-    Returns:
-        The generated section texts.
-    """
     section_texts: dict[str, str] = {}
 
     workplan_section = next(
@@ -197,18 +175,6 @@ async def generate_grant_section_texts(
 
 
 async def grant_application_text_generation_pipeline_handler(application_id: str) -> tuple[str, dict[str, str]]:
-    """Handles the generation of a grant application text.
-
-    Args:
-        application_id: The ID of the grant application.
-
-    Raises:
-        DatabaseError: If the grant application text could not be updated.
-        ValidationError: If the grant application does not have a grant template or research objectives.
-
-    Returns:
-        The generated grant application text.
-    """
     session_maker = get_session_maker()
     grant_application = await retrieve_application(application_id=application_id, session_maker=session_maker)
     if not grant_application.grant_template or not grant_application.research_objectives:

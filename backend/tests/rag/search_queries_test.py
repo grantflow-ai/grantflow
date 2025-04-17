@@ -8,10 +8,7 @@ from src.rag.search_queries import handle_create_search_queries
 
 
 class MockQueryResponse(TypedDict):
-    """Mock response for testing."""
-
     queries: list[dict[str, str]] | list[str]
-    """The queries returned by the mock."""
 
 
 @pytest.fixture

@@ -19,34 +19,9 @@ ADMIN_PATHS = {"organizations"}
 
 
 class AuthMiddleware(AbstractAuthenticationMiddleware):
-    """Middleware class responsible for handling authentication in an ASGI application."""
-
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
-        """Authenticates incoming requests based on the route access level, headers, and query
-        parameters. This method checks for the presence of an authorization header or query
-        parameters to determine if the request is authorized. Depending on the endpoint the
-        request targets, different authentication mechanisms may apply, including bearer
-        tokens, OTP, or an admin access code.
-
-        Authentication for public paths does not require credentials. Admin paths require a
-        specific admin access code. Bearer tokens or OTPs are verified through JWT token
-        validation before granting access.
-
-        Args:
-            connection: The incoming connection object
-                representing the HTTP request received by the server. This parameter provides
-                access to headers, query parameters, HTTP method, and URL path.
-
-        Returns:
-            The result of the authentication process, encapsulating the
-                information of the authenticated user and any associated authentication details.
-
-        Raises:
-            NotAuthorizedException: If the request does not meet the necessary authentication
-                requirement, the exception is raised to indicate unauthorized access.
-        """
         if (isinstance(ASGIConnection, Request) and connection.method == "OPTIONS") or any(
             connection.url.path == f"/{path}" for path in PUBLIC_PATHS
         ):

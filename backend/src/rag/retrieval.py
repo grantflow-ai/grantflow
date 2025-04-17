@@ -91,42 +91,24 @@ RETRIEVAL_OPTIMIZATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 
 class RetrievalAssessment(TypedDict):
-    """Assessment of retrieval quality."""
-
     relevance_score: float
-    """Relevance score (0-10)."""
     comprehensiveness_score: float
-    """Comprehensiveness score (0-10)."""
     diversity_score: float
-    """Diversity score (0-10)."""
     depth_score: float
-    """Depth score (0-10)."""
     freshness_score: float
-    """Freshness score (0-10)."""
     overall_score: float
-    """Overall score (average of all scores)."""
     explanation: str
-    """Explanation of the quality assessment."""
 
 
 class RetrievalOptimization(TypedDict):
-    """Optimization recommendations for retrieval."""
-
     information_gaps: list[str]
-    """Specific missing information types or aspects."""
     improved_queries: list[str]
-    """List of targeted queries to fill identified gaps."""
     query_strategies: str
-    """Recommendations for improving future queries."""
 
 
 class RetrievalQualityResponse(TypedDict):
-    """Response from retrieval quality assessment and optimization."""
-
     assessment: RetrievalAssessment
-    """Assessment of retrieval quality."""
     optimization: RetrievalOptimization
-    """Optimization recommendations for retrieval."""
 
 
 retrieval_quality_schema: Final[dict[str, Any]] = {
@@ -176,19 +158,6 @@ async def retrieve_vectors_for_embedding(
     limit: int = MAX_RESULTS,
     organization_id: str | None = None,
 ) -> list[TextVector]:
-    """Retrieve vectors from the vector store based on the given embedding.
-
-    Args:
-        application_id: The application ID, required if organization_id is not provided.
-        embeddings: The embeddings matrix to compare against.
-        file_table_cls: The file table class.
-        iteration: The iteration count
-        limit: The maximum number of results to return.
-        organization_id: The organization ID, required if application_id is not provided.
-
-    Returns:
-        The retrieved vectors.
-    """
     session_maker = get_session_maker()
 
     max_threshold = 1.0
@@ -235,17 +204,6 @@ async def handle_retrieval(
     organization_id: str | None = None,
     search_queries: list[str],
 ) -> list[TextVector]:
-    """Retrieve documents from the vector store.
-
-    Args:
-        application_id: The application ID, required if organization_id is not provided.
-        max_results: The maximum number of results to retrieve.
-        organization_id: The organization ID, required if application_id is not provided.
-        search_queries: The search queries.
-
-    Returns:
-        The retrieved documents.
-    """
     query_embeddings = await generate_embeddings(search_queries)
     file_table_cls = GrantApplicationFile if application_id else OrganizationFile
 
@@ -274,25 +232,6 @@ async def retrieve_documents(
     with_guided_retrieval: bool = False,
     **kwargs: Any,
 ) -> list[str]:
-    """Retrieve documents from the vector store with quality optimization.
-
-    Args:
-        application_id: The application ID, required if organization_id is not provided.
-        max_results: The maximum number of results to retrieve.
-        max_tokens: Maximum token count when post-processing.
-        model: The model to use for token counting.
-        organization_id: The organization ID, required if application_id is not provided.
-        search_queries: The search queries.
-        task_description: The task description.
-        with_guided_retrieval: Whether to use guided retrieval optimization.
-        **kwargs: Additional keyword arguments.
-
-    Raises:
-        ValueError: If neither application_id nor organization_id is provided.
-
-    Returns:
-        List of document content strings.
-    """
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
 

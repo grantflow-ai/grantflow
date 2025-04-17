@@ -27,8 +27,6 @@ from src.db.json_objects import Chunk, GrantElement, GrantLongFormSection, Resea
 
 
 class Base(DeclarativeBase):
-    """Base class for all tables."""
-
     __abstract__ = True
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now(), index=True)
@@ -44,11 +42,6 @@ class Base(DeclarativeBase):
             return None
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize the model's columns to a dictionary.
-
-        Returns:
-            A dictionary containing the model's columns.
-        """
         mapper = class_mapper(self.__class__)
         column_values = {
             column.key: getattr(self, column.key)
@@ -62,16 +55,12 @@ class Base(DeclarativeBase):
 
 
 class BaseWithUUIDPK(Base):
-    """Base class for all tables with UUID primary keys."""
-
     __abstract__ = True
 
     id: Mapped[UUID] = mapped_column(SA_UUID(), primary_key=True, insert_default=uuid4)
 
 
 class Workspace(BaseWithUUIDPK):
-    """Workspace configuration."""
-
     __tablename__ = "workspaces"
 
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -87,8 +76,6 @@ class Workspace(BaseWithUUIDPK):
 
 
 class WorkspaceUser(Base):
-    """Workspace user association."""
-
     __tablename__ = "workspace_users"
 
     firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -102,8 +89,6 @@ class WorkspaceUser(Base):
 
 
 class RagFile(BaseWithUUIDPK):
-    """File storage and processing table."""
-
     __tablename__ = "rag_files"
 
     filename: Mapped[str] = mapped_column(String(255))
@@ -120,8 +105,6 @@ class RagFile(BaseWithUUIDPK):
 
 
 class TextVector(BaseWithUUIDPK):
-    """Text embedding vectors table."""
-
     __tablename__ = "text_vectors"
 
     chunk: Mapped[Chunk] = mapped_column(JSON)
@@ -142,8 +125,6 @@ class TextVector(BaseWithUUIDPK):
 
 
 class FundingOrganization(BaseWithUUIDPK):
-    """Funding organization configuration."""
-
     __tablename__ = "funding_organizations"
 
     full_name: Mapped[str] = mapped_column(String(255), unique=True)
@@ -158,8 +139,6 @@ class FundingOrganization(BaseWithUUIDPK):
 
 
 class OrganizationFile(Base):
-    """Organization file association table."""
-
     __tablename__ = "organization_files"
 
     rag_file_id: Mapped[UUID] = mapped_column(
@@ -176,8 +155,6 @@ class OrganizationFile(Base):
 
 
 class GrantApplication(BaseWithUUIDPK):
-    """Grant application configuration."""
-
     __tablename__ = "grant_applications"
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
@@ -198,8 +175,6 @@ class GrantApplication(BaseWithUUIDPK):
 
 
 class GrantApplicationFile(Base):
-    """Grant application file association."""
-
     __tablename__ = "grant_application_files"
 
     rag_file_id: Mapped[UUID] = mapped_column(
@@ -216,8 +191,6 @@ class GrantApplicationFile(Base):
 
 
 class GrantTemplate(BaseWithUUIDPK):
-    """Grant template configuration."""
-
     __tablename__ = "grant_templates"
 
     grant_sections: Mapped[list[GrantLongFormSection | GrantElement]] = mapped_column(JSON)

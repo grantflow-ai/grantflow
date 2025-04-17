@@ -165,42 +165,20 @@ research_objective_enrichment_schema = {
 
 
 class EnrichmentDataDTO(TypedDict):
-    """DTO for enrichment data."""
-
     instructions: str
-    """Detailed instructions for text generation."""
     description: str
-    """Detailed description of the research objective."""
     guiding_questions: list[str]
-    """Guiding questions for the objective."""
     search_queries: list[str]
-    """Search queries for the objective."""
 
 
 class ObjectiveEnrichmentDTO(TypedDict):
-    """DTO for enrichment of a specific objective and its tasks."""
-
     research_objective: EnrichmentDataDTO
-    """The enriched objective."""
     research_tasks: list[EnrichmentDataDTO]
-    """The enriched tasks for this objective."""
 
 
 def validate_enrichment_response(
     response: ObjectiveEnrichmentDTO, *, input_objective: ResearchObjective | None
 ) -> None:
-    """Validate the enrichment response.
-
-    Args:
-        response: The response to validate.
-        input_objective: The input objective.
-
-    Raises:
-        ValidationError: If the response is invalid.
-
-    Returns:
-          None
-    """
     if "research_objective" not in response:
         raise ValidationError("Missing objective in response", context=response)
 
@@ -281,15 +259,6 @@ async def enrich_objective_generation(
     *,
     input_objective: ResearchObjective | None = None,
 ) -> ObjectiveEnrichmentDTO:
-    """Enrich a specific objective and its tasks.
-
-    Args:
-        task_description: The task description for the objective enrichment.
-        input_objective: The input objective with tasks to enrich.
-
-    Returns:
-        The enriched objective and tasks.
-    """
     return await handle_completions_request(
         prompt_identifier="enrich_objective",
         messages=task_description,
@@ -379,20 +348,6 @@ async def handle_enrich_objective(
     research_objective: ResearchObjective,
     form_inputs: dict[str, str],
 ) -> ObjectiveEnrichmentDTO:
-    """Generate a detailed plan for the work plan section using a two-step process.
-
-    First, determine the relationships between objectives and tasks.
-    Then, for each objective, enrich it and its tasks with detailed information.
-
-    Args:
-        application_id: The ID of the grant application.
-        grant_section: The grant section for the work plan.
-        research_objective: The research objective to enrich.
-        form_inputs: The user inputs.
-
-    Returns:
-        The work plan dto.
-    """
     enrichment_prompt = ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT.substitute(
         objective_and_tasks=research_objective,
         keywords=grant_section["keywords"],

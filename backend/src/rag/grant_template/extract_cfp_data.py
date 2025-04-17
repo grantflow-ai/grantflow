@@ -16,16 +16,10 @@ class Content(TypedDict):
 
 
 class ExtractedCFPData(TypedDict):
-    """Represents extracted CFP data."""
-
     organization_id: str | None
-    """Organization identifier."""
     error: NotRequired[str | None]
-    """Error message if applicable."""
     cfp_subject: str
-    """CFP subject."""
     content: list[Content]
-    """Array of Contents."""
 
 
 TEMPERATURE: Final[float] = 0.2
@@ -161,7 +155,6 @@ cfp_extraction_schema = {
 
 
 def validate_cfp_extraction(response: ExtractedCFPData) -> None:
-    """Validate the extracted CFP data."""
     if not response["content"]:
         if error := response.get("error"):
             raise InsufficientContextError(
@@ -183,15 +176,6 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
 
 
 async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:
-    """Extract the data from a CFP text.
-
-    Args:
-        task_description: The task description.
-        **_: Additional keyword arguments (unused)
-
-    Returns:
-        The extracted CFP data.
-    """
     return await handle_completions_request(
         prompt_identifier="extract_cfp_data",
         response_type=ExtractedCFPData,
@@ -208,15 +192,6 @@ async def extract_cfp_data(task_description: str, **_: Any) -> ExtractedCFPData:
 async def handle_extract_cfp_data(
     *, cfp_content: str, organization_mapping: dict[str, dict[str, str]]
 ) -> ExtractedCFPData:
-    """Extract the data from a CFP text.
-
-    Args:
-        cfp_content: The CFP content.
-        organization_mapping: The organization mapping.
-
-    Returns:
-        The extracted CFP data.
-    """
     return await with_prompt_evaluation(
         prompt_identifier="extract_cfp_data",
         prompt_handler=extract_cfp_data,

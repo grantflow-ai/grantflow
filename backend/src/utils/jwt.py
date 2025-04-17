@@ -12,15 +12,6 @@ logger = get_logger(__name__)
 
 
 def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
-    """Create a session jwt token from a firebase user ID.
-
-    Args:
-        firebase_uid: The firebase user ID.
-        ttl: The time to live for the token.
-
-    Returns:
-        The session cookie.
-    """
     from jwt import encode
 
     payload = {
@@ -39,17 +30,6 @@ def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
 
 
 def verify_jwt_token(token: str) -> str:
-    """Verify a JWT token.
-
-    Args:
-        token: The token to verify.
-
-    Raises:
-        NotAuthorizedException: If the cookie is invalid
-
-    Returns:
-        The user ID.
-    """
     from jwt import decode
 
     try:
