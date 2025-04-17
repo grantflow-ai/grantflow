@@ -70,12 +70,6 @@ repos:
                 ]
 
     # Backend
-    - repo: https://github.com/Goldziher/uncomment
-      rev: v1.0.4
-      hooks:
-          - id: uncomment
-            exclude: ^frontend/next-env.d.ts
-
     - repo: https://github.com/tox-dev/pyproject-fmt
       rev: v2.5.1
       hooks:
@@ -84,7 +78,7 @@ repos:
             additional_dependencies: ["tomli"]
 
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.11.5
+      rev: v0.11.6
       hooks:
           - id: ruff
             args: [--fix, --unsafe-fixes]

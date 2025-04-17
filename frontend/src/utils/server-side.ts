@@ -2,14 +2,6 @@ import { PagePath } from "@/enums";
 import { logError } from "@/utils/logging";
 import { redirect } from "next/navigation";
 
-/**
- * Redirect to a URL with toast parameters.
- *
- * @param url The URL to redirect to.
- * @param type The type of toast to show.
- *
- * @throw A NextRedirect error
- */
 export function redirectWithToastParams({
 	message,
 	path,
@@ -22,16 +14,6 @@ export function redirectWithToastParams({
 	redirect(`${path}?toastType=${type}&toastContent=${message}`);
 }
 
-/**
- * Wraps a promise in a try/catch block that logs an error and redirects to a URL with toast parameters if the promise rejects.
- *
- * @param value The promise to wrap.
- * @param path The URL to redirect to.
- * @param message The message to show in the toast.
- * @param identifier An identifier for the error.
- *
- * @returns The resolved value of the promise.
- */
 export async function withErrorToast<T>({
 	identifier,
 	message,
