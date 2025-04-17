@@ -107,6 +107,71 @@ pre-commit run --all-files
     - Uses pytest-asyncio
     - Async fixtures for database operations
 
+### Database Testing Patterns
+
+#### Test Database Setup
+
+- Uses an async SQLAlchemy engine and session maker provided as fixtures
+- Database is set up with a temporary PostgreSQL container for each test session
+- Database schema is created using SQLAlchemy's metadata.create_all
+- Fixtures in conftest.py provide database objects needed for tests
+
+#### Common Database Testing Patterns
+
+1. **Creating Test Data**:
+
+    ```python
+    async with async_session_maker() as session, session.begin():
+        session.add(test_object)
+        # or
+        await session.execute(insert(Table).values(...))
+        await session.commit()
+    ```
+
+2. **Verifying API Changes**:
+
+    ```python
+    async with async_session_maker() as session:
+        result = await session.scalar(select(Table).where(Table.id == object_id))
+        assert result.field == expected_value
+    ```
+
+3. **Checking Deletion**:
+    ```python
+    with pytest.raises(NoResultFound):
+        async with async_session_maker() as session, session.begin():
+            await session.get_one(Table, object_id)
+    ```
+
+#### Test Fixtures
+
+- Standard objects like `workspace`, `grant_application`, `funding_organization` defined as async fixtures
+- User role fixtures (`workspace_member_user`, `workspace_admin_user`, `workspace_owner_user`) set up appropriate permissions
+- Fixtures handle database cleanup after tests
+
+#### Factory Pattern
+
+- `factories.py` provides factories for both SQLAlchemy models and TypedDict objects
+- `SQLAlchemyFactory` creates database model instances
+- `TypedDictFactory` creates DTO objects for API requests/responses
+- Factory methods like `.build()` and `.batch()` are used to create test data
+
+#### Database Transaction Management
+
+- Tests use async context managers with explicit transaction control
+- Transactions are committed explicitly in test code
+- Tests rely on database cleanup fixture to reset state between tests
+
+#### Available Fixtures
+
+- **CFP Fixtures**: Raw markdown files, extracted data, and sections in `/tests/test_data/fixtures/cfps/`
+- **Grant Template Fixtures**: Examples in directories like `/43b4aed5-8549-461f-9290-5ee9a630ac9a/grant_template.json`
+- **Application Files Fixtures**: Various RAG-indexed files and documents
+- **Organization Files Fixtures**: Organization-specific files in `/tests/test_data/fixtures/organization_files/`
+- **Results Fixtures**: Generated outputs in `/tests/test_data/results/`
+- **Source Files**: Original source files in `/tests/test_data/sources/`
+- **Synthetic Data**: Generated template data in `/tests/test_data/synthetic/template_data/`
+
 ### Code Style Conventions
 
 - **Formatting**: 120 character line length; Google docstring format
