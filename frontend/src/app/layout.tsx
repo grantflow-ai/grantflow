@@ -23,7 +23,7 @@ export const metadata = {
 			{
 				alt: "GrantFlow.AI Preview Image",
 				height: 630,
-				url: "/og-image.svg",
+				url: "/og-image.png",
 				width: 1200,
 			},
 		],
