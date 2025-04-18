@@ -15,7 +15,7 @@ export const metadata = {
 	alternates: {
 		canonical: "/",
 	},
-	authors: [{ name: "Na'aman Hirschfeld" }],
+	authors: [{ name: "GrantFlow.AI" }],
 	description:
 		"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. Try it for free!",
 	formatDetection: {
