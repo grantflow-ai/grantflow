@@ -23,7 +23,7 @@ services:
         ports:
             - "6379:6379"
         healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
+            test: ["CMD", "valkey-cli", "ping"]
             interval: 1s
             timeout: 5s
             retries: 10
