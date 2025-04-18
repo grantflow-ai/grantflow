@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication, GrantTemplate
+from src.dto import WebsocketErrorMessage
 from src.exceptions import BackendError, ValidationError
 from src.rag.grant_application.handler import (
     generate_grant_section_texts,
@@ -583,10 +584,9 @@ async def test_pipeline_handler_database_error(
 ) -> None:
     """Test database error handling in the pipeline handler."""
     # Simplify the test to focus on error message handling
-    from src.dto import WebsocketMessage
 
     # Create a WebsocketMessage with database error info
-    error_message = WebsocketMessage(
+    error_message = WebsocketErrorMessage(
         type="error",
         event="database_error",
         content="Failed to update grant application text.",

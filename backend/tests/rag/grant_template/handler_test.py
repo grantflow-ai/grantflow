@@ -214,7 +214,6 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
     assert metadata_message_found, "Expected message about generating metadata was not found"
 
     # Check for grant elements and long form sections by structure instead of isinstance
-    [s for s in result if "keywords" not in s]
     long_form_sections = [s for s in result if "keywords" in s]
 
     # All sections should be long-form sections in this test
