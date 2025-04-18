@@ -13,15 +13,6 @@ def with_retry[**P, R](
     *exc: type[Exception],
     max_retries: int = 3,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Retry decorator for retrying a function multiple times.
-
-    Args:
-        *exc: The exception types to retry on.
-        max_retries: The maximum number of retries.
-
-    Returns:
-        A decorator that retries the function multiple times.
-    """
     return cast(
         "Callable[[Callable[P, R]], Callable[P, R]]",
         retry(
@@ -38,18 +29,6 @@ def with_exponential_backoff_retry[**P, R](
     max_wait: int = 60,
     jitter: int = 5,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Retry decorator for retrying a function multiple times with exponential backoff.
-
-    Args:
-        *exc: The exception types to retry on.
-        max_retries: The maximum number of retries.
-        initial_wait: The initial wait time in seconds.
-        max_wait: The maximum wait time in seconds.
-        jitter: The jitter to apply to the wait time.
-
-    Returns:
-        A decorator that retries the function multiple times with exponential backoff.
-    """
     return cast(
         "Callable[[Callable[P, R]], Callable[P, R]]",
         retry(

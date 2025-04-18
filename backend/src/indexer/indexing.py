@@ -17,19 +17,6 @@ async def create_vector_dto(
     chunk: Chunk,
     rag_file_id: str,
 ) -> VectorDTO:
-    """Process a single chunked element.
-
-    Args:
-        chunk: The chunked element.
-        rag_file_id: The ID of the file from which the chunk is derived.
-
-    Raises:
-        ExternalOperationError: If an error occurs during the operation.
-
-    Returns:
-        VectorDTO
-
-    """
     embedding = await generate_embeddings([chunk["content"]])
 
     if len(embedding) != 1:
@@ -48,15 +35,6 @@ async def index_documents(
     chunks: list[Chunk],
     file_id: str,
 ) -> list[VectorDTO]:
-    """Create embeddings for the given chunks.
-
-    Args:
-        chunks: The list of chunks to index.
-        file_id: The ID of the file from which the chunks are derived.
-
-    Returns:
-        The list of documents to index.
-    """
     data: list[VectorDTO] = []
     for i in range(0, len(chunks), CHUNKS_BATCH_SIZE):
         results = await gather(

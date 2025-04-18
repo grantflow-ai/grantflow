@@ -72,22 +72,10 @@ select_best_response_json_schema = {
 
 
 class BestResponseSelection(TypedDict):
-    """The best response selection response."""
-
     best_response: int
-    """The best response."""
 
 
 def validate_select_best_response(tool_response: BestResponseSelection, *, candidates: dict[int, Any]) -> None:
-    """Validate the best response selection.
-
-    Args:
-        tool_response: The tool response.
-        candidates: The candidates.
-
-    Raises:
-        ValidationError: If the selected response is not in the candidates.
-    """
     if tool_response["best_response"] not in candidates:
         raise ValidationError("The selected response id is not in a key in the candidates object.")
 
@@ -96,15 +84,6 @@ async def select_best_response[T](
     candidates: dict[int, T],
     prompt: str | PromptTemplate,
 ) -> T:
-    """Select the best response from a list of candidates.
-
-    Args:
-        candidates: The list of candidates.
-        prompt: The prompt.
-
-    Returns:
-        The best response.
-    """
     response = await handle_completions_request(
         prompt_identifier="select_best_response_use_prompt",
         response_type=BestResponseSelection,
@@ -135,23 +114,6 @@ async def make_google_completions_request[T](
     top_k: int | None = None,
     candidate_count: int | None = None,
 ) -> T:
-    """Make a completions request to the model.
-
-    Args:
-        model: The model to use for the generation.
-        prompt_identifier: The identifier of the prompt.
-        response_type: The response type.
-        system_prompt: The system prompt.
-        response_schema: The response schema.
-        messages: The messages to send to the model.
-        temperature: The temperature.
-        top_p: The top-p value.
-        top_k: The top-k value.
-        candidate_count: The candidate count.
-
-    Returns:
-        The generated text.
-    """
     client = get_google_ai_client(prompt_identifier=prompt_identifier, system_instructions=system_prompt, model=model)
 
     if not isinstance(messages, list):
@@ -204,24 +166,6 @@ async def make_anthropic_completions_request[T](
     top_p: float | None = None,
     user_prompt: str,
 ) -> T:
-    """Make a completions request to the model.
-
-    Args:
-        model: The model to use for the generation.
-        response_schema: The response schema.
-        response_type: The response type.
-        system_prompt: The system prompt.
-        temperature: The temperature.
-        top_k: The top-k value.
-        top_p: The top-p value.
-        user_prompt: The user prompt.
-
-    Raises:
-        ValidationError: If the response is invalid.
-
-    Returns:
-        The generated text.
-    """
     anthropic_client = get_anthropic_client()
 
     response = await anthropic_client.messages.create(
@@ -253,17 +197,6 @@ async def make_anthropic_completions_request[T](
 
 
 def format_error_for_llm(error: Exception) -> str:
-    """Format an error for consumption by LLMs.
-
-    Provides a consistent, structured format for errors that need to be
-    presented to an LLM for correction.
-
-    Args:
-        error: The exception to format.
-
-    Returns:
-        A formatted error message suitable for LLM consumption.
-    """
     if isinstance(error, ValidationError):
         context_str = ""
         if hasattr(error, "context") and error.context:
@@ -303,29 +236,6 @@ async def handle_completions_request[T](
     top_k: int | None = None,
     candidate_count: int | None = None,
 ) -> T:
-    """Handle a completions request to the model.
-
-    Args:
-        max_attempts: The maximum number of attempts to make.
-        messages: The messages to send to the model.
-        model: The model to use for the generation.
-        prompt_identifier: The identifier of the prompt.
-        response_schema: The response schema.
-        response_type: The response type.
-        system_prompt: The system prompt.
-        validator: Custom validator function for the response.
-        temperature: The temperature.
-        top_p: The top-p value.
-        top_k: The top-k value.
-        candidate_count: The candidate count.
-
-    Raises:
-        RagError: If the response is invalid.
-        BackendError: If the user prompt is not a string.
-
-    Returns:
-        The generated text.
-    """
     attempts = 0
 
     response: T | None = None

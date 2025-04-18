@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any, Final
+from unittest.mock import AsyncMock
 
 from anyio import Path as AsyncPath
 from sqlalchemy import select
@@ -38,7 +39,7 @@ def _file_path_generator(folder: Path) -> Generator[Path, None, None]:
 SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
 RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
 FIXTURES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "fixtures"
-SYNTHETHIC_DATA_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "synthethic"
+SYNTHETIC_DATA_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "synthetic"
 TEST_DATA_SOURCES: Generator[Path, None, None] = _file_path_generator(SOURCES_FOLDER / "application_sources")
 TEST_DATA_RESULTS: Generator[Path, None, None] = _file_path_generator(RESULTS_FOLDER)
 CFP_FIXTURES: Generator[Path, None, None] = _file_path_generator(FIXTURES_FOLDER / "cfps")
@@ -268,8 +269,12 @@ async def ensure_grant_template(
 ) -> None:
     grant_template_file = data_fixture_folder / "grant_template.json"
     if not grant_template_file.exists():
+        mock_message_handler = AsyncMock()
+
         await grant_template_generation_pipeline_handler(
-            cfp_content=cfp_content_file.read_text(), application_id=application_id
+            cfp_content=cfp_content_file.read_text(),
+            application_id=application_id,
+            message_handler=mock_message_handler,
         )
         async with async_session_maker() as session:
             grant_template = await session.scalar(

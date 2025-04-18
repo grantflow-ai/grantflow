@@ -62,14 +62,6 @@ for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects
 
 
 def pytest_collection_modifyitems(items: list[Any]) -> None:
-    """Ensure that all async tests are marked with the asyncio marker.
-
-    Args:
-        items: List of test
-
-    Returns:
-        None
-    """
     pytest_asyncio_tests = (item for item in items if is_async_test(item))
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
@@ -167,13 +159,6 @@ def mock_admin_code(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture(scope="session")
 async def db_connection_string() -> AsyncGenerator[str, None]:
-    """
-    Creates a temporary PostgreSQL database for testing, applies migrations,
-    yields the connection string, and then cleans up the database.
-
-    Notes:
-        - we were using TestContainers for this purpose, but they have issues support mac docker
-    """
     container_name = "test_postgres_container"
 
     with socket(AF_INET, SOCK_STREAM) as s:

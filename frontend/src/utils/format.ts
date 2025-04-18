@@ -1,8 +1,5 @@
 /**
- * Format bytes to human readable string
- * @param bytes - The bytes to format
- * @returns The formatted bytes as a string
- * @throws Error if bytes is negative
+ * Format a number bytes to human readable string (e.g. 5kb)
  */
 export function formatBytes(bytes: number): string {
 	if (bytes < 0) {

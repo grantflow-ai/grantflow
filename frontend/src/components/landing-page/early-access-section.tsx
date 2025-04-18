@@ -77,7 +77,6 @@ function BenefitsAndWaitlistForm() {
 					{CONTENT_BENEFITS.listHeading}
 				</h3>
 				<ul className="flex flex-wrap justify-start mt-7 py-3 ps-3 md:p-3 gap-4 gap-y-12 md:gap-12">
-					{/*grid grid-cols-2 md:grid-cols-4  */}
 					{CONTENT_BENEFITS.earlyAccessBenefits.map((benefits, index) => (
 						<li
 							className="w-[calc(50%-1rem)] sm:w-[calc(45%-1rem)] md:w-[calc(40%-1rem)] lg:w-[calc(30%-1rem)] xl:w-[calc(20%-1rem)]"
