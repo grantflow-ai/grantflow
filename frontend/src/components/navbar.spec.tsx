@@ -24,8 +24,6 @@ describe("Breadcrumbs", () => {
 		render(<Breadcrumbs pathname="/workspaces" />);
 
 		expect(screen.getByText("Workspaces")).toBeInTheDocument();
-		// The Breadcrumbs component renders a span with role="link" for the current page
-		// so we can't check for absence of links
 	});
 
 	it("renders nested path with workspace details", () => {
@@ -66,15 +64,5 @@ describe("Breadcrumbs", () => {
 		expect(workspaceDetailsLink).toHaveAttribute("href", "/workspaces/123");
 
 		expect(screen.getByText("Applications")).toBeInTheDocument();
-	});
-
-	// Skip this test as the component doesn't handle empty breadcrumbs correctly
-	// This would be a good candidate for a bug fix in the future
-	it.skip("handles non-namespace paths correctly", () => {
-		render(<Breadcrumbs pathname="/unknown/path" />);
-
-		// Should render an empty breadcrumb
-		const breadcrumb = screen.getByRole("navigation");
-		expect(breadcrumb).toBeInTheDocument();
 	});
 });

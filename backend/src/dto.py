@@ -1,32 +1,38 @@
-from typing import NotRequired, TypedDict
+from dataclasses import dataclass
+from typing import Any, Literal, NotRequired, TypedDict
 
 from src.db.json_objects import Chunk
 
 
 class APIError(TypedDict):
-    """DTO for an API error."""
-
     message: str
-    """The error message."""
     detail: NotRequired[str]
-    """The error details."""
 
 
 class VectorDTO(TypedDict):
-    """DTO for embeddings and metadata."""
-
     embedding: list[float]
-    """The embeddings of the content."""
     rag_file_id: str
-    """The ID of the file from which the content is derived."""
     chunk: Chunk
-    """The chunk of text from which the embeddings are generated."""
 
 
 class GrantSectionDTO(TypedDict):
-    """DTO for a grant section."""
-
     name: str
-    """The name of the section."""
     content: str
-    """The content of the section."""
+
+
+@dataclass
+class WebsocketMessage:
+    """A message sent over a WebSocket connection."""
+
+    type: Literal["data", "error", "info", "debug"]
+    """The type of the message."""
+    content: dict[str, Any] | str
+    """The content of the message."""
+    event: str
+    """The event that triggered the message."""
+    context: dict[str, Any] | str | None = None
+    """Additional context."""
+
+    def __post_init__(self) -> None:
+        if self.type == "data" and isinstance(self.content, str):
+            raise ValueError("Content must be a dictionary when type is 'data'")

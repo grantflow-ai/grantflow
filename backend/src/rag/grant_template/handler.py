@@ -4,10 +4,12 @@ from uuid import UUID
 from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.common_types import MessageHandler
 from src.db.connection import get_session_maker
 from src.db.json_objects import GrantElement, GrantLongFormSection
 from src.db.tables import FundingOrganization, GrantTemplate
-from src.exceptions import DatabaseError
+from src.dto import WebsocketMessage
+from src.exceptions import BackendError, DatabaseError
 from src.rag.grant_template.determine_application_sections import handle_extract_sections
 from src.rag.grant_template.determine_longform_metadata import handle_generate_grant_template
 from src.rag.grant_template.extract_cfp_data import Content, handle_extract_cfp_data
@@ -21,30 +23,57 @@ async def extract_and_enrich_sections(
     cfp_content: list[Content],
     cfp_subject: str,
     organization: FundingOrganization | None,
+    message_handler: MessageHandler,
 ) -> list[GrantElement | GrantLongFormSection]:
-    """Extract and enrich the sections from the grant CFP content.
-
-    Args:
-        cfp_content: The content of the grant CFP.
-        cfp_subject: The subject of the grant CFP.
-        organization: The funding organization.
-
-    Returns:
-        The extracted and enriched sections.
-    """
-
+    await message_handler(
+        WebsocketMessage(
+            type="info",
+            event="grant_template_extraction",
+            content="Extracting grant application sections from CFP content...",
+        )
+    )
     sections = await handle_extract_sections(
         cfp_content=cfp_content,
         cfp_subject=cfp_subject,
         organization=organization,
     )
 
+    await message_handler(
+        WebsocketMessage(
+            type="data",
+            event="sections_extracted",
+            content={
+                "section_count": len(sections),
+                "organization": organization.full_name if organization else None,
+            },
+        )
+    )
+
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
+
+    await message_handler(
+        WebsocketMessage(
+            type="info",
+            event="grant_template_metadata",
+            content="Generating metadata for grant template sections...",
+        )
+    )
+
     section_metadata = await handle_generate_grant_template(
         cfp_content=concat_extracted_cfp_content(content_list),
         cfp_subject=cfp_subject,
         organization=organization,
         long_form_sections=[s for s in sections if not s.get("is_title_only")],
+    )
+
+    await message_handler(
+        WebsocketMessage(
+            type="data",
+            event="metadata_generated",
+            content={
+                "metadata_count": len(section_metadata),
+            },
+        )
     )
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
@@ -83,50 +112,91 @@ async def extract_and_enrich_sections(
 
 
 async def grant_template_generation_pipeline_handler(
-    *,
-    application_id: str | UUID,
-    cfp_content: str,
+    *, application_id: str | UUID, cfp_content: str, message_handler: MessageHandler
 ) -> GrantTemplate:
-    """Generate a new grant template from user uploaded instructions.
-
-    Args:
-        application_id: The application ID.
-        cfp_content: The extracted content of a grant CFP.
-
-    Raises:
-        DatabaseError: If there was an issue generating the grant template in the database.
-
-    Returns:
-        The generated grant template.
-    """
     session_maker = get_session_maker()
     logger.info("Starting grant template generation pipeline")
 
-    async with session_maker() as session:
-        funding_organizations = list(
-            await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc()))
+    await message_handler(
+        WebsocketMessage(
+            type="info",
+            event="grant_template_generation_started",
+            content="Starting grant template generation pipeline...",
+        )
+    )
+
+    try:
+        async with session_maker() as session:
+            funding_organizations = list(
+                await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc()))
+            )
+
+        organization_mapping = {
+            str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
+        }
+
+        await message_handler(
+            WebsocketMessage(
+                type="info",
+                event="extracting_cfp_data",
+                content="Extracting data from CFP content...",
+            )
         )
 
-    organization_mapping = {
-        str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
-    }
+        extraction_result = await handle_extract_cfp_data(
+            cfp_content=cfp_content, organization_mapping=organization_mapping
+        )
 
-    extraction_result = await handle_extract_cfp_data(
-        cfp_content=cfp_content, organization_mapping=organization_mapping
-    )
-    organization = (
-        next(org for org in funding_organizations if org.id == extraction_result["organization_id"])
-        if extraction_result["organization_id"]
-        else None
-    )
+        organization = (
+            next(org for org in funding_organizations if org.id == extraction_result["organization_id"])
+            if extraction_result["organization_id"]
+            else None
+        )
 
-    logger.info("Extracted CFP data")
-    grant_sections = await extract_and_enrich_sections(
-        cfp_content=extraction_result["content"],
-        cfp_subject=extraction_result["cfp_subject"],
-        organization=organization,
-    )
-    logger.info("Extracted grant template sections")
+        org_name = organization.full_name if organization else "Unknown"
+
+        await message_handler(
+            WebsocketMessage(
+                type="data",
+                event="cfp_data_extracted",
+                content={
+                    "organization": org_name,
+                    "cfp_subject": extraction_result["cfp_subject"],
+                    "content_sections": len(extraction_result["content"]),
+                },
+            )
+        )
+
+        logger.info("Extracted CFP data")
+
+        grant_sections = await extract_and_enrich_sections(
+            cfp_content=extraction_result["content"],
+            cfp_subject=extraction_result["cfp_subject"],
+            organization=organization,
+            message_handler=message_handler,
+        )
+
+        logger.info("Extracted grant template sections")
+
+        await message_handler(
+            WebsocketMessage(
+                type="info",
+                event="saving_grant_template",
+                content="Saving grant template to database...",
+            )
+        )
+
+    except BackendError as e:
+        logger.error("Backend error in grant template generation pipeline", error=e)
+        await message_handler(
+            WebsocketMessage(
+                type="error",
+                event="pipeline_error",
+                content=f"Error in grant template generation: {e!s}",
+                context={"error_type": e.__class__.__name__, **e.context},
+            )
+        )
+        raise
 
     async with session_maker() as session, session.begin():
         try:
@@ -142,8 +212,29 @@ async def grant_template_generation_pipeline_handler(
                 .returning(GrantTemplate)
             )
             await session.commit()
+
+            await message_handler(
+                WebsocketMessage(
+                    type="data",
+                    event="grant_template_created",
+                    content={
+                        "template_id": str(grant_template.id),
+                        "section_count": len(grant_sections),
+                        "organization": org_name,
+                    },
+                )
+            )
+
             return cast("GrantTemplate", grant_template)
         except SQLAlchemyError as e:
             logger.error("Error generating grant template", error=e)
             await session.rollback()
+            await message_handler(
+                WebsocketMessage(
+                    type="error",
+                    event="database_error",
+                    content="Error generating grant template",
+                    context={"error": str(e)},
+                )
+            )
             raise DatabaseError("Error generating grant template", context=str(e)) from e

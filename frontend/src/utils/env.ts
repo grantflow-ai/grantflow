@@ -5,10 +5,6 @@ import { z } from "zod";
 
 const envRef: { value: null | Readonly<Env> } = { value: null };
 
-/**
- * Parse and validate the environment variables.
- * @returns - An object literal with the environment variables.
- */
 export function getEnv(): Env {
 	envRef.value ??= createEnv({
 		client: {
