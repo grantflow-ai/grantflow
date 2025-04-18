@@ -142,17 +142,6 @@ async def handle_work_plan_component_generation(
     max_words: int,
     **kwargs: Any,
 ) -> str:
-    """Generate the text for a given work plan component.
-
-    Args:
-        prompt: The prompt to use for generating the component text.
-        min_words: The minimum number of words to generate.
-        max_words: The maximum number of words to generate.
-        **kwargs: Additional keyword arguments for the generation process.
-
-    Returns:
-        The generated component text.
-    """
     return await generate_long_form_text(
         max_words=max_words,
         min_words=min_words,
@@ -170,17 +159,6 @@ async def generate_work_plan_component_text(
     user_inputs: dict[str, str],
     work_plan_text: str,
 ) -> str:
-    """Generate the text for a given work plan component.
-
-    Args:
-        application_id: The ID of the application.
-        component: The work plan component for which to generate text.
-        user_inputs: The user inputs for the application.
-        work_plan_text: The text of the work plan section.
-
-    Returns:
-        The generated work plan component text.
-    """
     logger.debug("Generating text for work plan component.", component=component)
 
     object_type_specific_guidance = (

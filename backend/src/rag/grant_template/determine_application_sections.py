@@ -26,7 +26,6 @@ exclude_embeddings_ref = Ref[list[float]]()
 
 
 async def get_exclude_embeddings() -> list[float]:
-    """Get the embeddings to exclude."""
     if exclude_embeddings_ref.value is None:
         model = await run_sync(get_embedding_model)
         tensor = model.encode(EXCLUDE_CATEGORIES, convert_to_tensor=True, device="cpu")
@@ -306,45 +305,22 @@ section_extraction_json_schema = {
 
 
 class ExtractedSectionDTO(TypedDict):
-    """Represents a single section in the grant application."""
-
     title: str
-    """The title of the section."""
     id: str
-    """The unique identifier of the section."""
     order: int
-    """The order of the section in the grant application."""
     parent_id: NotRequired[str | None]
-    """The parent section ID if this section is a sub-section."""
     is_detailed_workplan: NotRequired[bool | None]
-    """Whether the section is the work plan."""
     is_title_only: NotRequired[bool | None]
-    """Whether the section contains only a title."""
     is_clinical_trial: NotRequired[bool | None]
-    """Whether the section is a clinical trial section."""
     is_long_form: bool
-    """Whether the section is a long form section."""
 
 
 class ExtractedSections(TypedDict):
-    """Container for all extracted sections."""
-
     sections: list[ExtractedSectionDTO]
-    """List of sections, empty if insufficient information."""
     error: NotRequired[str | None]
-    """Error message if applicable, null if no error."""
 
 
 def validate_section_extraction(response: ExtractedSections) -> None:
-    """Validate the extracted sections structure.
-
-    Args:
-        response: The extracted sections to validate.
-
-    Raises:
-        ValidationError: If the response is invalid.
-        InsufficientContextError: If no sections were extracted.
-    """
     if (
         error := response.get("error")
     ) and error != "null":  # occasionally, the model suffers a stroke and returns "null" as a string ~keep
@@ -459,17 +435,6 @@ def _should_keep_section(
     threshold: float,
     exclude_embeddings: list[float],
 ) -> bool:
-    """Check if a section should be kept based on its semantic similarity to excluded categories.
-
-    Args:
-        section: Extracted section to check
-        sections: List of all extracted sections
-        threshold: Maximum allowed similarity score (0-1)
-        exclude_embeddings: List of embeddings for excluded categories
-
-    Returns:
-        bool: True if the section should be kept, False if it's too similar to excluded categories
-    """
     if section.get("is_detailed_workplan"):
         return True
 
@@ -506,19 +471,6 @@ def _should_keep_section(
 async def filter_extracted_sections(
     sections: list[ExtractedSectionDTO], initial_threshold: float = 0.7
 ) -> list[ExtractedSectionDTO]:
-    """Filter sections based on semantic similarity to excluded categories.
-
-    Uses an adaptive threshold that gradually increases if no detailed workplan
-    sections are found in the filtered results. This ensures we don't accidentally
-    filter out critical sections.
-
-    Args:
-        sections: List of extracted sections to filter
-        initial_threshold: Initial similarity threshold (0.1-0.9)
-
-    Returns:
-        List of sections that passed the similarity threshold check
-    """
     exclude_embeddings = await get_exclude_embeddings()
     threshold = initial_threshold
     max_threshold = 0.9
@@ -558,14 +510,6 @@ async def filter_extracted_sections(
 
 
 def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[ExtractedSectionDTO]:
-    """Ensure filtered sections maintain valid parent-child relationships.
-
-    Args:
-        sections: The filtered sections
-
-    Returns:
-        Sections with fixed parent relationships and consecutive ordering
-    """
     valid_ids = {s["id"] for s in sections}
 
     for section in sections:
@@ -580,15 +524,6 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
 
 
 async def extract_sections(task_description: str, **_: Any) -> ExtractedSections:
-    """Extract and classify sections from grant application materials.
-
-    Args:
-        task_description: Description of the task to be performed
-        **_: Additional keyword arguments (unused)
-
-    Returns:
-        Classified sections with their relationships and metadata
-    """
     return await handle_completions_request(
         prompt_identifier="section_extraction",
         model=ANTHROPIC_SONNET_MODEL,
@@ -693,16 +628,6 @@ evaluation_criteria = [
 async def handle_extract_sections(
     cfp_content: list[Content], cfp_subject: str, organization: FundingOrganization | None = None
 ) -> list[ExtractedSectionDTO]:
-    """Extract and classify sections from grant application materials.
-
-    Args:
-        cfp_content: Content of the call for proposals
-        cfp_subject: Subject of the call for proposals
-        organization: The funding organization
-
-    Returns:
-        Classified sections with their relationships and metadata
-    """
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         cfp_subject=cfp_subject,

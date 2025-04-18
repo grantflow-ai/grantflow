@@ -3,7 +3,6 @@ import { useTheme } from "next-themes";
 
 import { ThemeToggle } from "./theme-toggle";
 
-// Mock the next-themes module
 vi.mock("next-themes", () => ({
 	useTheme: vi.fn(),
 }));

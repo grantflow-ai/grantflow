@@ -144,12 +144,8 @@ LONG_FORM_SCHEMA = {
 
 
 class LongFormToolResponse(TypedDict):
-    """The response from the long-form text generation."""
-
     text: str
-    """The generated text."""
     is_complete: bool
-    """Whether the text is complete or not."""
 
 
 async def handle_long_form_text_generation(
@@ -162,23 +158,6 @@ async def handle_long_form_text_generation(
     model: str = GENERATION_MODEL,
     **sources: Any,
 ) -> str:
-    """Generate the long-form text for a given prompt.
-
-    Args:
-        max_words: The maximum number of words to generate.
-        min_words: The minimum number of words to generate.
-        prompt_identifier: The identifier of the entity to generate text for.
-        task_description: The description of the task.
-        max_api_calls: Maximum number of API calls to make for text generation.
-        model: The model to use for text generation.
-        **sources: Additional keyword arguments for the generation process.
-            These are passed directly to the prompt template and may include
-            retrieved documents, reference sources, or other context needed
-            for text generation.
-
-    Returns:
-        The generated long-form text.
-    """
     result = ""
 
     api_call_num = 1
@@ -272,23 +251,6 @@ async def generate_long_form_text(
     model: str = GENERATION_MODEL,
     **sources: Any,
 ) -> str:
-    """Generate long-form text.
-
-    Args:
-        max_words: The maximum number of words to generate.
-        min_words: The minimum number of words to generate.
-        prompt_identifier: The identifier of the entity to generate text for.
-        task_description: The description of the task.
-        max_api_calls: Maximum number of API calls to make for text generation.
-        model: The model to use for text generation.
-        **sources: Additional keyword arguments to pass to the prompt handler.
-            These are passed directly to the prompt template and may include
-            retrieved documents, reference sources, or other context needed
-            for text generation.
-
-    Returns:
-        The generated text.
-    """
     logger.info(
         "Starting long-form text generation",
         prompt_identifier=prompt_identifier,

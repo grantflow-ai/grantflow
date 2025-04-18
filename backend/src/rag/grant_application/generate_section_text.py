@@ -110,17 +110,6 @@ async def handle_section_text_generation(
     max_words: int,
     **kwargs: Any,
 ) -> str:
-    """Generate the text for a given grant section.
-
-    Args:
-        prompt: The prompt to use for generating the section text.
-        min_words: The minimum number of words to generate.
-        max_words: The maximum number of words to generate.
-        **kwargs: Additional keyword arguments for the generation process
-
-    Returns:
-        The generated section text.
-    """
     return await generate_long_form_text(
         max_words=max_words,
         min_words=min_words,
@@ -138,18 +127,6 @@ async def generate_section_text(
     user_inputs: dict[str, str],
     workplan_text: str,
 ) -> str:
-    """Generate the text for a given grant section.
-
-    Args:
-        application_id: The ID of the application.
-        dependencies: The dependencies of the grant section.
-        grant_section: The grant section for which to generate text.
-        user_inputs: The user inputs.
-        workplan_text: The text of the work plan section.
-
-    Returns:
-        The generated section text.
-    """
     logger.debug("Generating section text.", grant_section=grant_section)
 
     prompt = GENERATE_SECTION_TEXT_USER_PROMPT.to_string(

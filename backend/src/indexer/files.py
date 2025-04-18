@@ -19,18 +19,6 @@ async def parse_and_index_file(
     file_dto: FileDTO,
     file_id: str,
 ) -> None:
-    """Parse and index the given file.
-
-    Args:
-        file_dto: The file to parse and index.
-        file_id: The ID of the file in the database.
-
-    Raises:
-        DatabaseError: If there was an issue inserting the vectors into the database.
-
-    Returns:
-        None
-    """
     session_maker = get_session_maker()
     try:
         extracted_text, mime_type = await extract_file_content(

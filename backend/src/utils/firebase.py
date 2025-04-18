@@ -17,11 +17,6 @@ firebase_app_ref = Ref[App]()
 
 
 def get_firebase_app() -> App:
-    """Get the Firebase app.
-
-    Returns:
-        The Firebase app.
-    """
     if firebase_app_ref.value is None:
         from firebase_admin import initialize_app
 
@@ -34,17 +29,6 @@ def get_firebase_app() -> App:
 
 
 async def verify_id_token(id_token: str) -> dict[str, Any]:
-    """Verify a firebase ID token.
-
-    Args:
-        id_token: The ID token to verify.
-
-    Raises:
-        NotAuthorizedException: If the token is invalid
-
-    Returns:
-        The firebase user ID if the token is valid, otherwise None.
-    """
     from firebase_admin.auth import verify_id_token as firebase_verify_id_token
 
     handler = as_async_callable(firebase_verify_id_token)

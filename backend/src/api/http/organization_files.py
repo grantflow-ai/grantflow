@@ -13,7 +13,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from src.api.api_types import APIRequest, TableIdResponse
+from src.common_types import APIRequest, TableIdResponse
 from src.db.enums import FileIndexingStatusEnum
 from src.db.tables import OrganizationFile, RagFile
 from src.exceptions import DatabaseError
