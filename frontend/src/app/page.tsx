@@ -13,6 +13,7 @@ import { AppButton } from "@/components/app-button";
 import { LinkedIn } from "@/components/landing-page/social-icons";
 import { ScrollButton } from "@/components/scroll-button";
 import { IconLink } from "@/components/link-button";
+import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 
 const CONTENT_CTA_SECTION = {
 	description:
@@ -27,8 +28,8 @@ export default async function LandingPage() {
 			<HeroBanner />
 			<BenefitsSection />
 			<EarlyAccessSection />
-			{}
 			<CoreFeaturesSection />
+			<TestimonialsSection />
 			<CTASection />
 			<Footer />
 		</div>
