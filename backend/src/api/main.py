@@ -11,6 +11,8 @@ from litestar.events import listener
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from litestar.logging import StructLoggingConfig
 from litestar.response import Response
+from litestar.stores.registry import StoreRegistry
+from litestar.stores.valkey import ValkeyStore
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -53,6 +55,7 @@ from src.indexer.files import parse_and_index_file
 from src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from src.utils.ai import init_llm_connection
+from src.utils.env import get_env
 from src.utils.firebase import get_firebase_app
 from src.utils.logger import get_logger
 
@@ -133,6 +136,13 @@ async def before_server_start(app_instance: Litestar) -> None:
         sys.exit(1)
 
 
+def valkey_store_factory(name: str) -> ValkeyStore:
+    """We use valkey (a Redis fork) as a key-value store for caching chat behaviour."""
+    connection_string = get_env("VALKEY_CONNECTION_STRING")
+
+    return ValkeyStore.with_client(url=connection_string, namespace=name)
+
+
 app = Litestar(
     route_handlers=api_routes,
     cors_config=CORSConfig(
@@ -151,6 +161,7 @@ app = Litestar(
         grant_template_generation_pipeline_handler_listener,
         grant_application_text_generation_pipeline_handler_listener,
     ],
+    stores=StoreRegistry(default_factory=valkey_store_factory),
 )
 
 if __name__ == "__main__":  # pragma: no cover
