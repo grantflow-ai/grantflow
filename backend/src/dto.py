@@ -24,7 +24,7 @@ class GrantSectionDTO(TypedDict):
 class WebsocketMessage:
     """A message sent over a WebSocket connection."""
 
-    type: Literal["data", "error", "info", "debug"]
+    type: Literal["data", "error", "info"]
     """The type of the message."""
     content: dict[str, Any] | str
     """The content of the message."""
@@ -36,3 +36,5 @@ class WebsocketMessage:
     def __post_init__(self) -> None:
         if self.type == "data" and isinstance(self.content, str):
             raise ValueError("Content must be a dictionary when type is 'data'")
+        if self.type in ("error", "info", "debug") and not isinstance(self.content, str):
+            raise ValueError("Content must be a string when type is 'error' or 'info'")

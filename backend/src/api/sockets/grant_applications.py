@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from litestar import websocket
@@ -12,10 +12,11 @@ from src.common_types import APIWebsocket
 from src.db.enums import UserRoleEnum
 from src.db.tables import GrantApplication
 from src.dto import WebsocketMessage
-from src.exceptions import DatabaseError
+from src.exceptions import BackendError, DatabaseError
 from src.files import FileDTO
 from src.utils.env import get_env
 from src.utils.logger import get_logger
+from src.utils.serialization import deserialize
 
 logger = get_logger(__name__)
 
@@ -45,10 +46,34 @@ class MessageHandler:
         self._debug = get_env("DEBUG", raise_on_missing=False)
 
     async def send_message(self, message: WebsocketMessage) -> None:
-        if message.type == "debug" and not self._debug:
-            return
-
         await self._socket.send_json(message)
+
+
+async def handle_create_application(workspace_id: UUID, session_maker: async_sessionmaker[Any]) -> UUID:
+    async with session_maker() as session, session.begin():
+        try:
+            application_id = await session.scalar(
+                insert(GrantApplication)
+                .values({"workspace_id": workspace_id, "title": ""})
+                .returning(GrantApplication.id)
+            )
+            await session.commit()
+            return cast("UUID", application_id)
+
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error creating application", exc_info=e)
+            raise DatabaseError("Error creating application", context=str(e)) from e
+
+
+async def handle_user_data_message(
+    application_id: UUID,
+    event_type: str,
+    data: dict[str, Any],
+    context: dict[str, Any] | str | None,
+    handler: MessageHandler,
+) -> None:
+    pass
 
 
 @websocket(
@@ -66,31 +91,11 @@ async def handle_application_websocket(
     application_id: UUID | None = None,
 ) -> None:
     await socket.accept()
+    handler = MessageHandler(socket)
+
     try:
-        handler = MessageHandler(socket)
-
         if not application_id:
-            async with session_maker() as session, session.begin():
-                try:
-                    application_id = await session.scalar(
-                        insert(GrantApplication)
-                        .values({"workspace_id": workspace_id, "title": ""})
-                        .returning(GrantApplication.id)
-                    )
-                    await session.commit()
-                except SQLAlchemyError as e:
-                    await session.rollback()
-                    logger.error("Error creating application", exc_info=e)
-                    await handler.send_message(
-                        WebsocketMessage(
-                            type="error",
-                            event="application_creation_failed",
-                            content="Database error",
-                        )
-                    )
-
-                    raise DatabaseError("Error creating application", context=str(e)) from e
-
+            application_id = await handle_create_application(workspace_id=workspace_id, session_maker=session_maker)
             await handler.send_message(
                 WebsocketMessage(
                     type="data",
@@ -98,5 +103,37 @@ async def handle_application_websocket(
                     content={"application_id": str(application_id)},
                 ),
             )
+
+        while True:
+            data = await socket.receive_data(mode="text")
+            message = deserialize(data, WebsocketMessage)
+            if message.type != "data":
+                await handler.send_message(
+                    WebsocketMessage(
+                        type="error",
+                        event="invalid_message_type",
+                        content="Invalid message type",
+                    )
+                )
+                continue
+
+            await handle_user_data_message(
+                event_type=message.event,
+                data=cast("dict[str, Any]", message.content),
+                context=message.context,
+                handler=handler,
+                application_id=application_id,
+            )
+    except BackendError as e:
+        logger.error("Backend error in grant application websocket", error=e)
+        await handler.send_message(
+            WebsocketMessage(
+                type="error",
+                event="pipeline_error",
+                content=f"Error in grant application websocket: {e!s}",
+                context={"error_type": e.__class__.__name__, **e.context},
+            )
+        )
+
     finally:
         await socket.close()
