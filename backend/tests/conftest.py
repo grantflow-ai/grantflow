@@ -70,7 +70,7 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 @pytest.fixture(autouse=True)
 def stub_env() -> None:
-    load_dotenv()  # we use a real env file for E2E tests, but its not always present ~keep
+    load_dotenv()  # we use a real env file for E2E tests, but it's not always present ~keep
     os.environ["TOKENIZERS_PARALLELISM"] = (
         "false"  # we don't want to run tokenizers in parallel due to pytest limitations ~keep
     )
@@ -117,12 +117,17 @@ def mock_generative_model() -> Generator[Mock, Any, None]:
 
 
 @pytest.fixture(scope="session")
-async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[TestingClientType, None]:
+async def test_client(
+    async_session_maker: async_sessionmaker[Any], valkey_connection_string: str
+) -> AsyncGenerator[TestingClientType, None]:
     firebase_uid = "a" * 128
 
     firebase_app_ref.value = Mock()
 
     init_ref.value = True
+
+    # Set up the Valkey connection string in environment
+    os.environ["VALKEY_CONNECTION_STRING"] = valkey_connection_string
 
     with (
         patch("src.api.main.before_server_start"),
@@ -202,6 +207,47 @@ async def db_connection_string() -> AsyncGenerator[str, None]:
 
     yield connection_string.replace("postgresql://", "postgresql+asyncpg://")
 
+    await run_process(["docker", "rm", "-f", container_name], check=False)
+
+
+@pytest.fixture(scope="session")
+async def valkey_connection_string() -> AsyncGenerator[str, None]:
+    container_name = "test_valkey_container"
+
+    with socket(AF_INET, SOCK_STREAM) as s:
+        s.bind(("", 0))
+        local_port = s.getsockname()[1]
+
+    # Clean up any existing container
+    await run_process(["docker", "rm", "-f", container_name], check=False)
+
+    # Start a valkey container
+    await run_process(
+        [
+            "docker",
+            "run",
+            "--name",
+            container_name,
+            "-p",
+            f"{local_port}:6379",
+            "-d",
+            "valkey/valkey:latest",
+        ]
+    )
+
+    # Wait for the container to start
+    await sleep(3)
+
+    connection_string = f"redis://0.0.0.0:{local_port}/0"
+
+    # Test connection by connecting to the container
+    test_command = ["docker", "exec", container_name, "redis-cli", "ping"]
+    process_result = await run_process(test_command)
+    assert process_result.stdout.strip().decode("utf-8") == "PONG", "Valkey container is not responding to PING"
+
+    yield connection_string
+
+    # Clean up
     await run_process(["docker", "rm", "-f", container_name], check=False)
 
 

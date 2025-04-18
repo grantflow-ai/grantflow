@@ -163,7 +163,8 @@ task frontend:typecheck
 ### Backend Development
 
 You can develop the backend using either docker or using your local environment. If you are developing locally, make sure
-to adjust the value for `DATABASE_CONNECTION_STRING` in the `.env` file to point at your local database.
+to adjust the value for `DATABASE_CONNECTION_STRING` in the `.env` file to point at your local database. The same goes for
+running a local valkey server for local development (adjust `VALKEY_CONNECTION_STRING`).
 
 ```bash
 # Start the backend server with hot reload
