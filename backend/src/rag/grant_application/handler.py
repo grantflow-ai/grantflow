@@ -7,7 +7,7 @@ from src.common_types import MessageHandler
 from src.db.connection import get_session_maker
 from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from src.db.tables import GrantApplication
-from src.dto import WebsocketMessage
+from src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
 from src.exceptions import BackendError, DatabaseError, ValidationError
 from src.rag.grant_application.dto import ResearchComponentGenerationDTO
 from src.rag.grant_application.enrich_research_objective import handle_enrich_objective
@@ -36,7 +36,7 @@ async def generate_work_plan_text(
     message_handler: MessageHandler,
 ) -> str:
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="extracting_relationships",
             content="Extracting relationships between research objectives and tasks...",
@@ -50,7 +50,7 @@ async def generate_work_plan_text(
     )
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="enriching_objectives",
             content="Enriching research objectives with additional context...",
@@ -70,7 +70,7 @@ async def generate_work_plan_text(
     )
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketDataMessage(
             type="data",
             event="objectives_enriched",
             content={
@@ -120,7 +120,7 @@ async def generate_work_plan_text(
     work_plan_text = ""
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="generating_workplan",
             content="Generating work plan text for research objectives and tasks...",
@@ -135,7 +135,7 @@ async def generate_work_plan_text(
         tasks: list[ResearchComponentGenerationDTO] = [t for t in dtos if t["number"].startswith(f"{count}.")]
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="generating_objective",
                 content=f"Generating text for Objective {objective['number']}: {objective['title']}...",
@@ -152,7 +152,7 @@ async def generate_work_plan_text(
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{research_objective_text}"
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="generating_tasks",
                 content=f"Generating text for {len(tasks)} tasks under Objective {objective['number']}...",
@@ -175,7 +175,7 @@ async def generate_work_plan_text(
             work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketDataMessage(
                 type="data",
                 event="objective_completed",
                 content={
@@ -188,7 +188,7 @@ async def generate_work_plan_text(
         )
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketDataMessage(
             type="data",
             event="workplan_completed",
             content={
@@ -262,7 +262,7 @@ async def grant_application_text_generation_pipeline_handler(
     logger.info("Starting grant application text generation pipeline", application_id=application_id)
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="grant_application_generation_started",
             content="Starting grant application text generation pipeline...",
@@ -274,7 +274,7 @@ async def grant_application_text_generation_pipeline_handler(
         error_message = "Grant application does not have a grant template or research objectives."
         logger.error(error_message, application_id=application_id)
         await message_handler(
-            WebsocketMessage(
+            WebsocketErrorMessage(
                 type="error",
                 event="validation_error",
                 content=error_message,
@@ -296,7 +296,7 @@ async def grant_application_text_generation_pipeline_handler(
 
     try:
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="validating_template",
                 content="Validating grant template structure...",
@@ -315,7 +315,7 @@ async def grant_application_text_generation_pipeline_handler(
             error_message = "Grant template does not have a detailed work plan section."
             logger.error(error_message, application_id=application_id)
             await message_handler(
-                WebsocketMessage(
+                WebsocketErrorMessage(
                     type="error",
                     event="validation_error",
                     content=error_message,
@@ -349,7 +349,7 @@ async def grant_application_text_generation_pipeline_handler(
             )
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketDataMessage(
                 type="data",
                 event="template_validated",
                 content={
@@ -360,7 +360,7 @@ async def grant_application_text_generation_pipeline_handler(
         )
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="generating_section_texts",
                 content="Generating text for all grant sections...",
@@ -376,7 +376,7 @@ async def grant_application_text_generation_pipeline_handler(
         )
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketDataMessage(
                 type="data",
                 event="section_texts_generated",
                 content={
@@ -387,7 +387,7 @@ async def grant_application_text_generation_pipeline_handler(
         )
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="assembling_application",
                 content="Assembling complete grant application text...",
@@ -401,7 +401,7 @@ async def grant_application_text_generation_pipeline_handler(
         )
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="saving_application",
                 content="Saving grant application text to database...",
@@ -410,7 +410,7 @@ async def grant_application_text_generation_pipeline_handler(
     except BackendError as e:
         logger.error("Failed to generate grant application text.", application_id=application_id, error=e)
         await message_handler(
-            WebsocketMessage(
+            WebsocketErrorMessage(
                 type="error",
                 event="generation_error",
                 content=f"Failed to generate grant application text: {e!s}",
@@ -426,7 +426,7 @@ async def grant_application_text_generation_pipeline_handler(
             )
 
             await message_handler(
-                WebsocketMessage(
+                WebsocketDataMessage(
                     type="data",
                     event="application_saved",
                     content={
@@ -439,7 +439,7 @@ async def grant_application_text_generation_pipeline_handler(
         except SQLAlchemyError as e:
             logger.error("Failed to update grant application text.", application_id=application_id, error=e)
             await message_handler(
-                WebsocketMessage(
+                WebsocketErrorMessage(
                     type="error",
                     event="database_error",
                     content="Failed to update grant application text.",
@@ -449,7 +449,7 @@ async def grant_application_text_generation_pipeline_handler(
             raise DatabaseError("Failed to update grant application text.", context=str(e)) from e
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="grant_application_generation_completed",
             content="Grant application text generation completed successfully.",
