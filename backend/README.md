@@ -241,30 +241,30 @@ A generated grant application stores final text and is linked to both the templa
 
 ##### `GrantApplication` Table
 
-| Column Name           | Type                             | Nullable | Description                                   |
-| --------------------- | -------------------------------- | -------- | --------------------------------------------- |
-| `id`                  | `UUID` (PK)                      | No       | Primary key, inherited from `BaseWithUUIDPK`  |
-| `completed_at`        | `datetime (timezone=True)`       | Yes      | Timestamp when generation was completed       |
-| `form_inputs`         | `JSON (dict[str, str])`          | Yes      | User-submitted input values for the grant     |
-| `research_objectives` | `JSON (list[ResearchObjective])` | Yes      | Structured list of research objectives        |
-| `text`                | `Text`                           | Yes      | Final generated grant application text        |
-| `title`               | `String(255)`                    | No       | Title of the grant application                |
-| `workspace_id`        | `UUID (FK)`                      | No       | Foreign key to the associated `workspaces.id` |
+| Column Name           | Type                             | Description                                   |
+|-----------------------|----------------------------------|-----------------------------------------------|
+| `id`                  | `UUID` (PK)                      | Primary key, inherited from `BaseWithUUIDPK`  |
+| `completed_at`        | `datetime (timezone=True)`       | Timestamp when generation was completed       |
+| `form_inputs`         | `JSON (dict[str, str])`          | User-submitted input values for the grant     |
+| `research_objectives` | `JSON (list[ResearchObjective])` | Structured list of research objectives        |
+| `text`                | `Text`                           | Final generated grant application text        |
+| `title`               | `String(255)`                    | Title of the grant application                |
+| `workspace_id`        | `UUID (FK)`                      | Foreign key to the associated `workspaces.id` |
 
 ##### Relationships
 
 | Relationship Name         | Related Model          | Type        | Description                                               |
-| ------------------------- | ---------------------- | ----------- | --------------------------------------------------------- |
+|---------------------------|------------------------|-------------|-----------------------------------------------------------|
 | `grant_application_files` | `GrantApplicationFile` | One-to-Many | Files attached to this grant application (cascade delete) |
 | `grant_template`          | `GrantTemplate`        | One-to-One  | Associated grant template (cascade delete)                |
 | `workspace`               | `Workspace`            | Many-to-One | The workspace this grant application belongs to           |
 
 ##### `GrantApplicationFiles` Table
 
-| Column Name            | Type        | Nullable | Description                                                   |
-| ---------------------- | ----------- | -------- | ------------------------------------------------------------- |
-| `rag_file_id`          | `UUID (PK)` | No       | Foreign key to `rag_files.id` (part of composite PK)          |
-| `grant_application_id` | `UUID (PK)` | No       | Foreign key to `grant_applications.id` (part of composite PK) |
+| Column Name            | Type         | Description                                                   |
+| ---------------------- |--------------| ------------------------------------------------------------- |
+| `rag_file_id`          | `UUID (PK)`  | Foreign key to `rag_files.id` (part of composite PK)          |
+| `grant_application_id` | `UUID (PK)`  | Foreign key to `grant_applications.id` (part of composite PK) |
 
 ##### Relationships
 
