@@ -18,12 +18,12 @@ export const metadata = {
 	openGraph: {
 		description:
 			"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. Try it for free!",
-		emails: ["naaman@grantflow.ai", "asaf@grantflow.ai"],
+		emails: ["admin@grantflow.ai"],
 		images: [
 			{
 				alt: "GrantFlow.AI Preview Image",
 				height: 630,
-				url: "/og-image.svg",
+				url: "/og-image.png",
 				width: 1200,
 			},
 		],
