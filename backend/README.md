@@ -242,7 +242,7 @@ A generated grant application stores final text and is linked to both the templa
 ##### `GrantApplication` Table
 
 | Column Name           | Type                             | Description                                   |
-|-----------------------|----------------------------------|-----------------------------------------------|
+| --------------------- | -------------------------------- | --------------------------------------------- |
 | `id`                  | `UUID` (PK)                      | Primary key, inherited from `BaseWithUUIDPK`  |
 | `completed_at`        | `datetime (timezone=True)`       | Timestamp when generation was completed       |
 | `form_inputs`         | `JSON (dict[str, str])`          | User-submitted input values for the grant     |
@@ -254,17 +254,17 @@ A generated grant application stores final text and is linked to both the templa
 ##### Relationships
 
 | Relationship Name         | Related Model          | Type        | Description                                               |
-|---------------------------|------------------------|-------------|-----------------------------------------------------------|
+| ------------------------- | ---------------------- | ----------- | --------------------------------------------------------- |
 | `grant_application_files` | `GrantApplicationFile` | One-to-Many | Files attached to this grant application (cascade delete) |
 | `grant_template`          | `GrantTemplate`        | One-to-One  | Associated grant template (cascade delete)                |
 | `workspace`               | `Workspace`            | Many-to-One | The workspace this grant application belongs to           |
 
 ##### `GrantApplicationFiles` Table
 
-| Column Name            | Type         | Description                                                   |
-| ---------------------- |--------------| ------------------------------------------------------------- |
-| `rag_file_id`          | `UUID (PK)`  | Foreign key to `rag_files.id` (part of composite PK)          |
-| `grant_application_id` | `UUID (PK)`  | Foreign key to `grant_applications.id` (part of composite PK) |
+| Column Name            | Type        | Description                                                   |
+| ---------------------- | ----------- | ------------------------------------------------------------- |
+| `rag_file_id`          | `UUID (PK)` | Foreign key to `rag_files.id` (part of composite PK)          |
+| `grant_application_id` | `UUID (PK)` | Foreign key to `grant_applications.id` (part of composite PK) |
 
 ##### Relationships
 
