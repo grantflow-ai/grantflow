@@ -7,7 +7,7 @@ from litestar.datastructures import UploadFile
 from litestar.exceptions import ValidationException
 from litestar.status_codes import WS_1006_ABNORMAL_CLOSURE
 from litestar.stores.valkey import ValkeyStore
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.sql.functions import now
@@ -15,7 +15,7 @@ from sqlalchemy.sql.functions import now
 from src.common_types import APIWebsocket, WebsocketMessage
 from src.db.enums import ApplicationStatusEnum, UserRoleEnum
 from src.db.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
-from src.db.tables import GrantApplication, GrantTemplate
+from src.db.tables import GrantApplication, GrantApplicationFile, GrantTemplate
 from src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
 from src.exceptions import BackendError, DatabaseError
 from src.files import FileDTO
@@ -39,6 +39,7 @@ EVENT_APPLICATION_SETUP_SUCCESS: Final[str] = "application_setup_success"
 EVENT_APPLICATION_STATUS_UPDATE: Final[str] = "application_status_update"
 EVENT_TEMPLATE_GENERATION_SUCCESS: Final[str] = "template_generation_success"
 EVENT_TEMPLATE_UPDATE_SUCCESS: Final[str] = "template_update_success"
+EVENT_KNOWLEDGE_BASE_SUCCESS: Final[str] = "knowledge_base_success"
 EVENT_RESEARCH_PLAN_SUCCESS: Final[str] = "research_plan_success"
 EVENT_RESEARCH_DEEP_DIVE_SUCCESS: Final[str] = "research_deep_dive_success"
 EVENT_GENERATION_STARTED: Final[str] = "generation_started"
@@ -517,6 +518,48 @@ async def handle_cancel_application(
     )
 
 
+async def handle_knowledge_base(
+    *,
+    application_id: UUID,
+    data: dict[str, Any],
+    session_maker: async_sessionmaker[Any],
+    handler: MessageHandler,
+    store: ValkeyStore,
+) -> None:
+    async with session_maker() as session, session.begin():
+        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == application_id))
+
+        if not application:
+            raise ValidationException(f"Application with ID {application_id} not found")
+
+        file_count = await session.scalar(
+            select(func.count())
+            .select_from(GrantApplicationFile)
+            .where(GrantApplicationFile.grant_application_id == application_id)
+        )
+
+        if file_count == 0:
+            raise ValidationException("At least one file must be uploaded before proceeding")
+
+        completed_steps = await store_wizard_state(
+            store=store,
+            current_step=EVENT_KNOWLEDGE_BASE,
+        )
+
+        await session.commit()
+
+    application = await retrieve_application(application_id=application_id, session_maker=session_maker)
+
+    await handler.send_message(
+        WebsocketDataMessage(
+            type="data",
+            event=EVENT_KNOWLEDGE_BASE_SUCCESS,
+            content=prepare_wizard_response(application=application, completed_steps=completed_steps),
+            message="Knowledge base files validated successfully",
+        ),
+    )
+
+
 async def handle_user_data_message(
     *,
     application_id: UUID,
@@ -532,6 +575,14 @@ async def handle_user_data_message(
         )
     elif event_type == EVENT_TEMPLATE_REVIEW:
         await handle_template_review(
+            application_id=application_id,
+            data=data,
+            session_maker=session_maker,
+            handler=handler,
+            store=store,
+        )
+    elif event_type == EVENT_KNOWLEDGE_BASE:
+        await handle_knowledge_base(
             application_id=application_id,
             data=data,
             session_maker=session_maker,
