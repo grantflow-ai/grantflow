@@ -15,15 +15,15 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 
 	return (
 		<div className="mx-auto px-4 py-8">
-			<div className="flex justify-between items-center mb-6">
+			<div className="mb-6 flex items-center justify-between">
 				<h1 className="text-2xl font-bold">{workspace.name}</h1>
 				<Button asChild size="sm">
 					<Link href={createApplicationUrl}>New Application</Link>
 				</Button>
 			</div>
-			<div className="border rounded-lg p-6 bg-card">
+			<div className="bg-card rounded-lg border p-6">
 				{workspace.grant_applications.length > 0 ? (
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						{workspace.grant_applications.map((application) => (
 							<GrantApplicationCard
 								application={application}
@@ -33,7 +33,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 						))}
 					</div>
 				) : (
-					<div className="text-center py-12">
+					<div className="py-12 text-center">
 						<p className="text-muted-foreground">This workspace doesn&#39;t have any applications yet.</p>
 						<Button asChild className="mt-4" size="sm">
 							<Link href={createApplicationUrl}>Create New Application</Link>

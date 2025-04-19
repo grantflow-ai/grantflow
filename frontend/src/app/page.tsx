@@ -27,7 +27,7 @@ export default async function LandingPage() {
 			<HeroBanner />
 			<BenefitsSection />
 			<EarlyAccessSection />
-			{/* <TestimonialsSection /> */}
+			{}
 			<CoreFeaturesSection />
 			<CTASection />
 			<Footer />
@@ -39,16 +39,16 @@ function CTASection() {
 	return (
 		<section aria-labelledby="cta-section" className="relative">
 			<GradientBackground className="absolute inset-0 z-0" />
-			<div className="relative z-10 flex flex-col md:flex-row w-full items-center justify-between py-8 md:py-10 lg:py-20 px-6 md:px-10 lg:px-20 xl:px-30 gap-10">
-				<div className="flex flex-1 flex-col w-fit text-white">
-					<h2 className="font-heading text-2xl md:text-[1.775rem] md:leading-[1]" id="cta-heading">
+			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center justify-between gap-10 px-6 py-8 md:flex-row md:p-10 lg:p-20">
+				<div className="flex w-fit flex-1 flex-col text-white">
+					<h2 className="font-heading text-2xl md:text-[1.775rem] md:leading-none" id="cta-heading">
 						{CONTENT_CTA_SECTION.heading}
 					</h2>
-					<p className="max-w-lg mt-4 text-xl md:text-base md:font-light leading-tight">
+					<p className="mt-4 max-w-lg text-xl leading-tight md:text-base md:font-light">
 						{CONTENT_CTA_SECTION.description}
 					</p>
 				</div>
-				<div className="w-full md:w-auto flex flex-row-reverse md:flex-row gap-6 justify-between md:justify-end items-center">
+				<div className="flex w-full flex-row-reverse items-center justify-between gap-6 md:w-auto md:flex-row md:justify-end">
 					<AppButton size="lg" theme="light" variant="secondary">
 						Contact us
 					</AppButton>
@@ -63,10 +63,10 @@ function CTASection() {
 
 function Footer() {
 	return (
-		<footer aria-labelledby="site-footer" className="bg-white relative z-0">
-			<div className="md:hidden flex flex-col px-6 py-2">
+		<footer aria-labelledby="site-footer" className="relative z-0 bg-white">
+			<div className="flex flex-col px-6 py-2 md:hidden">
 				<nav aria-label="footer-navigation">
-					<ul className="flex flex-col items-end gap-5 my-2 text-primary font-button">
+					<ul className="text-primary font-button my-2 flex flex-col items-end gap-5">
 						<li>
 							<AppButton className="text-lg" size="lg" variant="link">
 								Terms of Use
@@ -84,7 +84,7 @@ function Footer() {
 						</li>
 					</ul>
 				</nav>
-				<div className="flex w-full justify-between items-center">
+				<div className="flex w-full items-center justify-between">
 					<LogoDark className="h-15.5" height="200" width="200" />
 					<IconLink
 						href="https://www.linkedin.com/company/grantflowai/"
@@ -92,10 +92,10 @@ function Footer() {
 					></IconLink>
 				</div>
 			</div>
-			<div className="hidden md:flex md:flex-row justify-between items-center px-8 mx-2 my-6">
+			<div className="mx-2 my-6 hidden items-center justify-between px-8 md:flex md:flex-row">
 				<LogoDark className="h-15.5" height="250" width="250" />
 				<nav aria-label="footer-navigation">
-					<ul className="flex gap-5 text-primary font-button">
+					<ul className="text-primary font-button flex gap-5">
 						<li>
 							<AppButton variant="link">Terms of Use</AppButton>
 						</li>

@@ -1,6 +1,6 @@
-/**
- * Format a number bytes to human readable string (e.g. 5kb)
- */
+
+
+
 export function formatBytes(bytes: number): string {
 	if (bytes < 0) {
 		throw new Error("Bytes cannot be negative");

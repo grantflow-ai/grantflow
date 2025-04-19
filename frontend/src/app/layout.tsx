@@ -68,7 +68,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			>
 				<ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
 					<main
-						className="md:min-h[calc(100dvh-5rem)] min-h-[calc(100dvh-4rem)] m-auto"
+						className="md:min-h[calc(100dvh-5rem)] m-auto min-h-[calc(100dvh-4rem)]"
 						data-testid="main-container"
 					>
 						{children}

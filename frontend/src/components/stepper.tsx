@@ -11,7 +11,7 @@ export function Stepper({ currentStep, onStepClick, steps }: StepperProps) {
 				{steps.map((title, index) => (
 					<button
 						aria-current={currentStep === index ? "step" : undefined}
-						className={`flex flex-col items-center flex-1 ${index === steps.length - 1 ? "" : "mr-1"}`}
+						className={`flex flex-1 flex-col items-center ${index === steps.length - 1 ? "" : "mr-1"}`}
 						data-testid={`step-button-${index}`}
 						key={index}
 						onClick={() => {
@@ -21,12 +21,12 @@ export function Stepper({ currentStep, onStepClick, steps }: StepperProps) {
 						<div
 							className={`h-2 w-full ${
 								index <= currentStep ? "bg-primary" : "bg-muted"
-							} rounded-[calc(var(--radius)/2)] mb-2 transition-colors`}
+							} mb-2 rounded-[calc(var(--radius)/2)] transition-colors`}
 							data-testid={`step-indicator-${index}`}
 						/>
 						<span
 							className={`text-sm ${
-								index === currentStep ? "font-bold text-primary" : "text-muted-foreground"
+								index === currentStep ? "text-primary font-bold" : "text-muted-foreground"
 							} transition-colors`}
 						>
 							{title}

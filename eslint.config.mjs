@@ -13,6 +13,7 @@ import eslintPluginVitest from "eslint-plugin-vitest";
 import globals from "globals";
 import eslintTS from "typescript-eslint";
 import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
+import eslintPluginTailwind from "eslint-plugin-tailwindcss";
 
 const compat = new FlatCompat();
 
@@ -27,6 +28,7 @@ export default [
 	eslintPluginReact.configs.flat.recommended,
 	reactPerfPlugin.configs.flat.recommended,
 	eslintPluginJsxA11y.flatConfigs.recommended,
+	...eslintPluginTailwind.configs["flat/recommended"],
 	...compat.extends("plugin:react-hooks/recommended"),
 	...compat.extends("plugin:@next/next/core-web-vitals"),
 	{
@@ -40,7 +42,7 @@ export default [
 				ecmaFeatures: { jsx: true },
 				ecmaVersion: 2025,
 				parser: "@typescript-eslint/parser",
-				project: true,
+				project: ["./frontend/tsconfig.json"],
 			},
 		},
 		plugins: {
