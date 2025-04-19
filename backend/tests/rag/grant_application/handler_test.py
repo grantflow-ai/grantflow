@@ -22,17 +22,14 @@ from tests.factories import (
 
 @pytest.fixture
 def mock_message_handler() -> AsyncMock:
-    """Create a mock message handler for testing."""
-
     async def handler(message: Any) -> None:
-        """Mock async message handler function."""
+        pass
 
     return AsyncMock(side_effect=handler)
 
 
 @pytest.fixture
 def mock_research_objectives() -> list[ResearchObjective]:
-    """Create mock research objectives with tasks."""
     return [
         {
             "number": 1,
@@ -67,7 +64,6 @@ def mock_research_objectives() -> list[ResearchObjective]:
 
 @pytest.fixture
 def mock_enrichment_response() -> dict[str, Any]:
-    """Create a mock enrichment response for research objectives."""
     return {
         "research_objective": {
             "description": "This objective focuses on developing novel biomarkers for early cancer detection.",
@@ -94,7 +90,6 @@ def mock_enrichment_response() -> dict[str, Any]:
 
 @pytest.fixture
 def mock_relationships() -> dict[str, list[tuple[str, str, str]]]:
-    """Create mock relationships between research objectives and tasks."""
     return {
         "1": [
             (
@@ -118,7 +113,6 @@ def mock_relationships() -> dict[str, list[tuple[str, str, str]]]:
 
 @pytest.fixture
 def mock_work_plan_component_text() -> str:
-    """Create mock work plan component text."""
     return """
     This research component will focus on developing novel biomarkers for early cancer detection.
     We will employ cutting-edge proteomics approaches to identify candidate biomarkers that
@@ -129,7 +123,6 @@ def mock_work_plan_component_text() -> str:
 
 @pytest.fixture
 def mock_section_text() -> str:
-    """Create mock section text."""
     return """
     # Research Plan
 
@@ -145,7 +138,6 @@ def mock_section_text() -> str:
 
 @pytest.fixture
 def mock_grant_sections() -> list[GrantElement | GrantLongFormSection]:
-    """Create mock grant sections."""
     return [
         {  # type: ignore[typeddict-unknown-key]
             "id": "abstract",
@@ -194,14 +186,11 @@ def mock_grant_sections() -> list[GrantElement | GrantLongFormSection]:
 
 @pytest.fixture
 async def test_application(async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
-    """Create a test grant application with research objectives and grant template."""
     async with async_session_maker() as session:
-        # First create a workspace
         workspace = WorkspaceFactory.build()
         session.add(workspace)
         await session.flush()
 
-        # Create the application with the workspace_id
         application = GrantApplicationFactory.build(
             title="Novel Biomarkers for Early Cancer Detection",
             workspace_id=workspace.id,
@@ -214,7 +203,6 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
         session.add(application)
         await session.flush()
 
-        # Add grant template with sections
         template = GrantTemplate(
             grant_application_id=application.id,
             grant_sections=[
@@ -264,7 +252,6 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
         )
         session.add(template)
 
-        # Add research objectives
         application.research_objectives = [
             {
                 "number": 1,
@@ -310,13 +297,10 @@ async def test_generate_work_plan_text_with_mocked_llm(
     mock_work_plan_component_text: str,
     mock_grant_sections: list[GrantElement | GrantLongFormSection],
 ) -> None:
-    """Test the generate_work_plan_text function with mocked LLM calls."""
-    # Get the workplan section
     workplan_section = next(
         s for s in mock_grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
     )
 
-    # Mock the LLM function calls
     with (
         patch("src.rag.grant_application.handler.handle_extract_relationships", return_value=mock_relationships),
         patch("src.rag.grant_application.handler.handle_enrich_objective", return_value=mock_enrichment_response),
@@ -325,7 +309,6 @@ async def test_generate_work_plan_text_with_mocked_llm(
             return_value=mock_work_plan_component_text,
         ),
     ):
-        # Call the function
         result = await generate_work_plan_text(
             application_id="test-app-id",
             work_plan_section=workplan_section,
@@ -334,14 +317,11 @@ async def test_generate_work_plan_text_with_mocked_llm(
             message_handler=mock_message_handler,
         )
 
-    # Verify the result is a non-empty string
     assert isinstance(result, str)
     assert len(result) > 0
 
-    # Check that message handler was called
     assert mock_message_handler.call_count > 0
 
-    # Verify message handler was called with expected messages by checking attributes
     extracting_relationships_found = False
     enriching_objectives_found = False
     objectives_enriched_found = False
@@ -350,7 +330,6 @@ async def test_generate_work_plan_text_with_mocked_llm(
     for call in mock_message_handler.call_args_list:
         message = call[0][0]
 
-        # Check for extracting relationships message
         if (
             hasattr(message, "type")
             and message.type == "info"
@@ -361,7 +340,6 @@ async def test_generate_work_plan_text_with_mocked_llm(
         ):
             extracting_relationships_found = True
 
-        # Check for enriching objectives message
         elif (
             hasattr(message, "type")
             and message.type == "info"
@@ -372,7 +350,6 @@ async def test_generate_work_plan_text_with_mocked_llm(
         ):
             enriching_objectives_found = True
 
-        # Check for objectives enriched data message
         elif (
             hasattr(message, "type")
             and message.type == "data"
@@ -383,7 +360,6 @@ async def test_generate_work_plan_text_with_mocked_llm(
         ):
             objectives_enriched_found = True
 
-        # Check for workplan completed data message
         elif (
             hasattr(message, "type")
             and message.type == "data"
@@ -407,13 +383,10 @@ async def test_generate_grant_section_texts_with_mocked_llm(
     mock_grant_sections: list[GrantElement | GrantLongFormSection],
     mock_section_text: str,
 ) -> None:
-    """Test the generate_grant_section_texts function with mocked LLM calls."""
-    # Mock the LLM function calls
     with (
         patch("src.rag.grant_application.handler.generate_work_plan_text", return_value=mock_section_text),
         patch("src.rag.grant_application.handler.generate_section_text", return_value=mock_section_text),
     ):
-        # Call the function
         result = await generate_grant_section_texts(
             application_id="test-app-id",
             form_inputs={"project_summary": "Test project summary"},
@@ -422,11 +395,9 @@ async def test_generate_grant_section_texts_with_mocked_llm(
             message_handler=mock_message_handler,
         )
 
-    # Verify the result is a dictionary with the expected keys
     assert isinstance(result, dict)
     assert len(result) == len(mock_grant_sections)
 
-    # All sections should have text
     for section in mock_grant_sections:
         assert section["id"] in result
         assert isinstance(result[section["id"]], str)
@@ -439,15 +410,12 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
     test_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test the grant_application_text_generation_pipeline_handler function with mocked LLM calls."""
-    # Mock section texts
     section_texts = {
         "abstract": "This is the abstract text.",
         "research_plan": "This is the research plan text.",
         "impact": "This is the impact text.",
     }
 
-    # Mock the application text
     application_text = """
     # Novel Biomarkers for Early Cancer Detection
 
@@ -461,25 +429,20 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
     This is the impact text.
     """
 
-    # Mock the LLM function calls
     with (
         patch("src.rag.grant_application.handler.generate_grant_section_texts", return_value=section_texts),
         patch("src.rag.grant_application.handler.generate_application_text", return_value=application_text),
     ):
-        # Call the function
         result_text, result_sections = await grant_application_text_generation_pipeline_handler(
             application_id=str(test_application.id),
             message_handler=mock_message_handler,
         )
 
-    # Verify the results
     assert result_text == application_text
     assert result_sections == section_texts
 
-    # Check that message handler was called
     assert mock_message_handler.call_count > 0
 
-    # Verify the application was updated in the database
     async with async_session_maker() as session:
         updated_application = await session.get(GrantApplication, test_application.id)
         assert updated_application.text == application_text
@@ -490,15 +453,11 @@ async def test_pipeline_handler_validation_error(
     mock_message_handler: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test validation error handling in the pipeline handler."""
-    # Create an application without a grant template or research objectives
     async with async_session_maker() as session:
-        # Create a workspace first
         workspace = WorkspaceFactory.build()
         session.add(workspace)
         await session.flush()
 
-        # Create application without template or objectives
         application = GrantApplicationFactory.build(
             title="Incomplete Application",
             workspace_id=workspace.id,
@@ -507,17 +466,14 @@ async def test_pipeline_handler_validation_error(
         await session.commit()
         application_id = str(application.id)
 
-    # Call the function and expect a ValidationError
     with pytest.raises(ValidationError):
         await grant_application_text_generation_pipeline_handler(
             application_id=application_id,
             message_handler=mock_message_handler,
         )
 
-    # Check that message handler was called
     assert mock_message_handler.call_count > 0
 
-    # Check for error message
     error_message_found = False
     for call in mock_message_handler.call_args_list:
         message = call[0][0]
@@ -540,8 +496,6 @@ async def test_pipeline_handler_backend_error(
     mock_message_handler: AsyncMock,
     test_application: GrantApplication,
 ) -> None:
-    """Test backend error handling in the pipeline handler."""
-    # Mock generate_grant_section_texts to raise a BackendError
     error_message = "Test backend error"
     with (
         patch(
@@ -555,10 +509,8 @@ async def test_pipeline_handler_backend_error(
             message_handler=mock_message_handler,
         )
 
-    # Check that message handler was called
     assert mock_message_handler.call_count > 0
 
-    # Check for error message
     error_message_found = False
     for call in mock_message_handler.call_args_list:
         message = call[0][0]
@@ -582,10 +534,6 @@ async def test_pipeline_handler_database_error(
     mock_message_handler: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test database error handling in the pipeline handler."""
-    # Simplify the test to focus on error message handling
-
-    # Create a WebsocketMessage with database error info
     error_message = WebsocketErrorMessage(
         type="error",
         event="database_error",
@@ -593,13 +541,10 @@ async def test_pipeline_handler_database_error(
         context={"error": "Database error"},
     )
 
-    # Call the message handler with the error message
     await mock_message_handler(error_message)
 
-    # Check that the message handler was called
     assert mock_message_handler.call_count > 0
 
-    # Verify the message was sent correctly
     database_error_found = False
     for call in mock_message_handler.call_args_list:
         message = call[0][0]
