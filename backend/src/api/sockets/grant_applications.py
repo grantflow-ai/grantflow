@@ -5,6 +5,7 @@ from uuid import UUID
 from litestar import websocket
 from litestar.datastructures import UploadFile
 from litestar.exceptions import ValidationException
+from litestar.status_codes import WS_1006_ABNORMAL_CLOSURE
 from litestar.stores.valkey import ValkeyStore
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -571,8 +572,8 @@ async def handle_user_data_message(
 
 @websocket(
     [
-        "/workspaces/{workspace_id:uuid}/applications/new",
         "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+        "/workspaces/{workspace_id:uuid}/applications/new",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="GrantApplicationWebsocket",
@@ -608,7 +609,7 @@ async def handle_application_websocket(
 
         while data := await socket.receive_json():
             if data.get("type") == "data":
-                message = cast("WebsocketDataMessage", data)
+                message = WebsocketDataMessage(**data)
                 await handle_user_data_message(
                     event_type=message.event,
                     data=message.content,
@@ -617,6 +618,10 @@ async def handle_application_websocket(
                     session_maker=session_maker,
                     store=store,
                 )
+    except ValidationException as e:
+        await socket.close(
+            code=WS_1006_ABNORMAL_CLOSURE, reason=f"WebSocket disconnected due to an validation error {e!s}"
+        )
     except BackendError as e:
         logger.error("Backend error in grant application websocket", error=e)
         await handler.send_message(
@@ -627,7 +632,3 @@ async def handle_application_websocket(
                 context={"error_type": e.__class__.__name__, **e.context},
             )
         )
-
-    finally:
-        await socket.close()
-        logger.info("Grant application websocket closed", application_id=application_id)
