@@ -175,8 +175,6 @@ class LoginResponseFactory(TypedDictFactory[LoginResponse]):
 
 
 class ExtractedSectionDTOFactory(TypedDictFactory[ExtractedSectionDTO]):
-    """Factory for creating ExtractedSectionDTO objects."""
-
     __model__ = ExtractedSectionDTO
     title = faker.sentence()
     is_long_form = True
@@ -192,8 +190,6 @@ class ExtractedSectionDTOFactory(TypedDictFactory[ExtractedSectionDTO]):
 
 
 class SectionMetadataFactory(TypedDictFactory[SectionMetadata]):
-    """Factory for creating SectionMetadata objects."""
-
     __model__ = SectionMetadata
 
     @classmethod
@@ -221,8 +217,6 @@ class SectionMetadataFactory(TypedDictFactory[SectionMetadata]):
 
 
 class CfpContentFactory(TypedDictFactory[Content]):
-    """Factory for creating Content objects."""
-
     __model__ = Content
     title = faker.sentence(nb_words=3)
 
@@ -232,16 +226,12 @@ class CfpContentFactory(TypedDictFactory[Content]):
 
 
 class ExtractedCfpData(TypedDict):
-    """Type for extracted CFP data."""
-
     organization_id: str
     cfp_subject: str
     content: list[Content]
 
 
 class ExtractedCfpDataFactory(TypedDictFactory[ExtractedCfpData]):
-    """Factory for creating extracted CFP data."""
-
     __model__ = ExtractedCfpData
     organization_id = faker.uuid4
     cfp_subject = faker.sentence

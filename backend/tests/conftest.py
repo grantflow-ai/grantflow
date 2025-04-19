@@ -126,7 +126,6 @@ async def test_client(
 
     init_ref.value = True
 
-    # Set up the Valkey connection string in environment
     os.environ["VALKEY_CONNECTION_STRING"] = valkey_connection_string
 
     with (
@@ -218,10 +217,8 @@ async def valkey_connection_string() -> AsyncGenerator[str, None]:
         s.bind(("", 0))
         local_port = s.getsockname()[1]
 
-    # Clean up any existing container
     await run_process(["docker", "rm", "-f", container_name], check=False)
 
-    # Start a valkey container
     await run_process(
         [
             "docker",
@@ -235,19 +232,16 @@ async def valkey_connection_string() -> AsyncGenerator[str, None]:
         ]
     )
 
-    # Wait for the container to start
     await sleep(3)
 
     connection_string = f"redis://0.0.0.0:{local_port}/0"
 
-    # Test connection by connecting to the container
     test_command = ["docker", "exec", container_name, "redis-cli", "ping"]
     process_result = await run_process(test_command)
     assert process_result.stdout.strip().decode("utf-8") == "PONG", "Valkey container is not responding to PING"
 
     yield connection_string
 
-    # Clean up
     await run_process(["docker", "rm", "-f", container_name], check=False)
 
 
