@@ -2,10 +2,11 @@ from collections.abc import Generator
 from datetime import UTC, datetime
 from os import environ
 from typing import Any, cast
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
+from litestar.datastructures import UploadFile
 from litestar.exceptions import ValidationException, WebSocketDisconnect
 from litestar.testing import TestClient
 from sqlalchemy import insert, select
@@ -27,7 +28,13 @@ from src.api.sockets.grant_applications import (
     EVENT_RESEARCH_PLAN_SUCCESS,
     EVENT_TEMPLATE_REVIEW,
     EVENT_TEMPLATE_UPDATE_SUCCESS,
+    ApplicationSetupInput,
     MessageHandler,
+    ResearchDeepDiveInput,
+    ResearchObjectiveInput,
+    ResearchPlanInput,
+    ResearchTask,
+    TemplateReviewInput,
     prepare_wizard_response,
 )
 from src.db.enums import ApplicationStatusEnum, FileIndexingStatusEnum
@@ -779,3 +786,157 @@ def test_prepare_wizard_response() -> None:
     response_with_steps = prepare_wizard_response(application, ["step1", "step2"])
     assert "completed_steps" in response_with_steps
     assert response_with_steps["completed_steps"] == ["step1", "step2"]
+
+
+def test_valid_input_with_file() -> None:
+    mock_file = MagicMock(spec=UploadFile)
+    mock_file.filename = "test.pdf"
+
+    input_data = ApplicationSetupInput(
+        title="Test Application",
+        cfp_file=mock_file,
+    )
+    assert input_data.title == "Test Application"
+    assert input_data.cfp_file == mock_file
+    assert input_data.cfp_url is None
+
+
+def test_valid_input_with_url() -> None:
+    input_data = ApplicationSetupInput(
+        title="Test Application",
+        cfp_url="https://example.com/cfp",
+    )
+    assert input_data.title == "Test Application"
+    assert input_data.cfp_file is None
+    assert input_data.cfp_url == "https://example.com/cfp"
+
+
+def test_validation_error_no_title() -> None:
+    with pytest.raises(ValidationException, match="Application title is required"):
+        ApplicationSetupInput(
+            title="",
+            cfp_url="https://example.com/cfp",
+        )
+
+
+def test_validation_error_no_cfp() -> None:
+    with pytest.raises(ValidationException, match="Either a CFP file or URL is required"):
+        ApplicationSetupInput(
+            title="Test Application",
+        )
+
+
+def test_valid_task() -> None:
+    task = ResearchTask(
+        title="Research Task With Valid Length",
+        description="Task description",
+    )
+    assert task.title == "Research Task With Valid Length"
+    assert task.description == "Task description"
+
+
+def test_validation_error_short_title() -> None:
+    with pytest.raises(ValidationException, match="Each task must have a title of at least 10 characters"):
+        ResearchTask(
+            title="Too Short",
+        )
+
+
+def test_validation_error_empty_title() -> None:
+    with pytest.raises(ValidationException, match="Each task must have a title of at least 10 characters"):
+        ResearchTask(
+            title="",
+        )
+
+
+def test_valid_objective() -> None:
+    task = ResearchTask(
+        title="Research Task With Valid Length",
+        description="Task description",
+    )
+    objective = ResearchObjectiveInput(
+        title="Research Objective With Valid Length",
+        description="Objective description",
+        research_tasks=[task],
+    )
+    assert objective.title == "Research Objective With Valid Length"
+    assert objective.description == "Objective description"
+    assert len(objective.research_tasks) == 1
+    assert objective.research_tasks[0] == task
+
+
+def test_validation_error_research_task_short_title() -> None:
+    task = ResearchTask(
+        title="Research Task With Valid Length",
+    )
+    with pytest.raises(ValidationException, match="Each objective must have a title of at least 10 characters"):
+        ResearchObjectiveInput(
+            title="Short",
+            research_tasks=[task],
+        )
+
+
+def test_validation_error_no_tasks() -> None:
+    with pytest.raises(ValidationException, match="Each objective must have at least one research task"):
+        ResearchObjectiveInput(
+            title="Research Objective With Valid Length",
+            research_tasks=[],
+        )
+
+
+def test_valid_plan() -> None:
+    task = ResearchTask(
+        title="Research Task With Valid Length",
+    )
+    objective = ResearchObjectiveInput(
+        title="Research Objective With Valid Length",
+        research_tasks=[task],
+    )
+    plan = ResearchPlanInput(
+        research_objectives=[objective],
+    )
+    assert len(plan.research_objectives) == 1
+    assert plan.research_objectives[0] == objective
+
+
+def test_validation_error_no_objectives() -> None:
+    with pytest.raises(ValidationException, match="At least one research objective is required"):
+        ResearchPlanInput(
+            research_objectives=[],
+        )
+
+
+def test_valid_template() -> None:
+    template = TemplateReviewInput(
+        grant_template={"grant_sections": [{"title": "Test Section"}]},
+        funding_organization_id="org-123",
+    )
+    assert template.grant_template == {"grant_sections": [{"title": "Test Section"}]}
+    assert template.funding_organization_id == "org-123"
+
+
+def test_validation_error_no_template() -> None:
+    with pytest.raises(ValidationException, match="Grant template data is required"):
+        TemplateReviewInput(
+            grant_template={},
+            funding_organization_id="org-123",
+        )
+
+
+def test_optional_funding_organization() -> None:
+    template = TemplateReviewInput(
+        grant_template={"grant_sections": [{"title": "Test Section"}]},
+    )
+    assert template.grant_template == {"grant_sections": [{"title": "Test Section"}]}
+    assert template.funding_organization_id is None
+
+
+def test_default_empty_dict() -> None:
+    deep_dive = ResearchDeepDiveInput()
+    assert deep_dive.research_deep_dive == {}
+
+
+def test_with_data() -> None:
+    data = {"significance": "Research significance", "innovation": "Innovation details"}
+    deep_dive = ResearchDeepDiveInput(research_deep_dive=data)
+    assert deep_dive.research_deep_dive == data
