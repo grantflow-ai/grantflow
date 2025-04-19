@@ -1,160 +1,127 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { PagePath } from "@/enums";
-import useWebSocket, { ReadyState } from "react-use-websocket";
-import { getEnv } from "@/utils/env";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { WizardProvider } from "@/components/wizard/wizard-provider";
+import { useWizardStore } from "@/store/wizard-store";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { getOtp } from "@/actions/api";
+import { Loader2 } from "lucide-react";
 
-interface ChatMessage {
-	data: {
-		content: string;
-		duration: number;
-	};
-	text: string;
-	type: string;
-}
-
-const connectionStatusMap = {
-	[ReadyState.CLOSED]: "Closed",
-	[ReadyState.CLOSING]: "Closing",
-	[ReadyState.CONNECTING]: "Connecting",
-	[ReadyState.OPEN]: "Open",
-	[ReadyState.UNINSTANTIATED]: "Uninstantiated",
-};
-
-const connectionStatusColorMap = {
-	[ReadyState.CLOSED]: "bg-red-500",
-	[ReadyState.CLOSING]: "bg-orange-500",
-	[ReadyState.CONNECTING]: "bg-yellow-500",
-	[ReadyState.OPEN]: "bg-green-500",
-	[ReadyState.UNINSTANTIATED]: "bg-gray-500",
-};
-
-export default function ApplicationDetailPage() {
+/**
+ * New application wizard page component
+ */
+export default function NewApplicationPage() {
 	const params = useParams();
-	const router = useRouter();
+	const workspaceId = params.workspaceId as string;
 
-	const workspaceId = params.workspaceId as string | undefined;
-	const applicationId = params.applicationId as string | undefined;
+	// Get data from store
+	const { applicationData, applicationId, completedSteps, error, isLoading } = useWizardStore((state: any) => ({
+		applicationData: state.applicationData,
+		applicationId: state.applicationId,
+		completedSteps: state.completedSteps,
+		error: state.error,
+		isLoading: state.isLoading,
+	}));
 
-	const [messageHistory, setMessageHistory] = useState<ChatMessage[]>([]);
-	const [inputMessage, setInputMessage] = useState<string>("");
-
-	const chatContainerRef = useRef<HTMLDivElement>(null);
-
-	const getSocketUrl = useCallback(async () => {
-		const response = await getOtp();
-		return new URL(
-			`workspaces/${workspaceId}/applications/${applicationId}?otp=${response.otp}`,
-			getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
-		).toString();
-	}, [workspaceId, applicationId]);
-
-	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<ChatMessage>(getSocketUrl);
-
-	useEffect(() => {
-		setMessageHistory((prev) => [...prev, lastJsonMessage]);
-	}, [lastJsonMessage]);
-
-	useEffect(() => {
-		if (chatContainerRef.current) {
-			chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-		}
-	}, [messageHistory]);
-
-	const handleSendMessage = useCallback(() => {
-		if (inputMessage.trim()) {
-			sendMessage(inputMessage);
-			setInputMessage("");
-		}
-	}, [inputMessage, sendMessage]);
-
-	if (!workspaceId || !applicationId) {
-		router.replace(PagePath.WORKSPACES);
-		return null;
+	if (!workspaceId) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<div className="rounded-md bg-red-50 p-4">
+					<p className="text-red-800">Workspace ID is required</p>
+					<Link className="mt-2 inline-block text-blue-600 hover:underline" href={PagePath.WORKSPACES}>
+						Go back to workspaces
+					</Link>
+				</div>
+			</div>
+		);
 	}
 
-	const connectionStatus = connectionStatusMap[readyState];
-	const connectionStatusColor = connectionStatusColorMap[readyState];
-
 	return (
-		<div className="flex flex-col h-screen max-h-screen" data-testid="chat-room">
-			<div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
-				<h1 className="text-2xl font-bold">WebSocket Chat</h1>
-				<Badge
-					className={`${connectionStatusColor} text-white`}
-					data-testid="connection-status"
-					variant="outline"
-				>
-					{connectionStatus}
-				</Badge>
-			</div>
-			<ScrollArea className="flex-grow p-4" data-testid="chat-messages">
-				{messageHistory.map((message, index) => (
-					<div className="mb-4" key={index}>
-						{message.type === "notification" && (
-							<p className="text-muted-foreground italic" data-testid="notification-message">
-								{message.text}
-							</p>
-						)}
-						{message.type === "error" && (
-							<p className="text-destructive font-semibold" data-testid="error-message">
-								{message.text}
-							</p>
-						)}
-						{message.type === "content" && (
-							<div className="bg-secondary p-4 rounded-lg" data-testid="content-message">
-								<ScrollArea className="h-[200px] w-full">{message.data.content}</ScrollArea>
-								<p className="text-sm text-muted-foreground mt-2">
-									Duration: {message.data.duration} seconds
+		<WizardProvider workspaceId={workspaceId}>
+			<div className="container mx-auto p-6">
+				<h1 className="mb-6 text-2xl font-bold">New Grant Application Wizard</h1>
+
+				{error && (
+					<div className="mb-6 rounded-md bg-red-50 p-4">
+						<p className="text-red-800">{error}</p>
+					</div>
+				)}
+
+				{/* Application ID placeholder */}
+				{applicationId && (
+					<div className="mb-4 rounded-md bg-blue-50 p-4">
+						<p className="text-sm text-blue-800">Application ID: {applicationId}</p>
+					</div>
+				)}
+
+				{/* Loading indicator */}
+				{isLoading && (
+					<div className="mb-6 flex items-center rounded-md bg-blue-50 p-4">
+						<Loader2 className="mr-2 size-5 animate-spin text-blue-600" />
+						<p className="text-blue-800">Processing your request...</p>
+					</div>
+				)}
+
+				{/* Completed steps indicator */}
+				{completedSteps.length > 0 && (
+					<div className="mb-6">
+						<h2 className="text-md mb-2 font-semibold">Completed Steps:</h2>
+						<div className="flex flex-wrap gap-2">
+							{completedSteps.map((step: any) => (
+								<span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-800" key={step}>
+									{step}
+								</span>
+							))}
+						</div>
+					</div>
+				)}
+
+				{/* Application data preview */}
+				{applicationData && (
+					<div className="mb-6 rounded-md border p-4">
+						<h2 className="mb-2 text-lg font-bold">Application Data Preview</h2>
+						<p>
+							<strong>Title:</strong> {applicationData.title || "Untitled"}
+						</p>
+						<p>
+							<strong>Status:</strong> {applicationData.status}
+						</p>
+
+						{applicationData.grant_template && (
+							<div className="mt-4">
+								<h3 className="text-md font-semibold">Grant Template</h3>
+								<p>
+									<strong>Template ID:</strong> {applicationData.grant_template.id}
 								</p>
-								<div className="mt-2 flex justify-end space-x-2">
-									<Button
-										aria-label="Copy content"
-										data-testid="copy-button"
-										onClick={() => {
-											void navigator.clipboard.writeText(message.data.content);
-										}}
-										size="sm"
-										variant="outline"
-									>
-										Copy
-									</Button>
-								</div>
+								<p>
+									<strong>Sections:</strong> {applicationData.grant_template.grant_sections.length}
+								</p>
+							</div>
+						)}
+
+						{applicationData.research_objectives && applicationData.research_objectives.length > 0 && (
+							<div className="mt-4">
+								<h3 className="text-md font-semibold">Research Objectives</h3>
+								<p>
+									<strong>Count:</strong> {applicationData.research_objectives.length}
+								</p>
 							</div>
 						)}
 					</div>
-				))}
-			</ScrollArea>
-			<div className="p-4 bg-background">
-				<div className="flex space-x-2">
-					<Input
-						aria-label="Type a message"
-						className="flex-grow"
-						data-testid="message-input"
-						onChange={(e) => {
-							setInputMessage(e.target.value);
-						}}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") {
-								handleSendMessage();
-							}
-						}}
-						placeholder="Type a message..."
-						type="text"
-						value={inputMessage}
-					/>
-					<Button aria-label="Send message" data-testid="send-button" onClick={handleSendMessage}>
-						Send
-					</Button>
+				)}
+
+				{/* Placeholder for actual wizard steps */}
+				<div className="rounded-md bg-gray-100 p-6 text-center">
+					<p className="mb-4 text-gray-600">Wizard steps will be implemented here</p>
+
+					{applicationId && (
+						<Link href={`/workspaces/${workspaceId}/applications/${applicationId}`}>
+							<Button variant="outline">Go to application details</Button>
+						</Link>
+					)}
 				</div>
 			</div>
-		</div>
+		</WizardProvider>
 	);
 }

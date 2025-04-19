@@ -59,9 +59,9 @@ export default function SignIn() {
 
 	return (
 		<div className="container mx-auto px-4 py-8 md:py-16" data-testid="firebase-login-container">
-			<Card className="max-w-md mx-auto">
+			<Card className="mx-auto max-w-md">
 				<CardHeader>
-					<CardTitle className="text-2xl font-bold text-center" data-testid="auth-page-title">
+					<CardTitle className="text-center text-2xl font-bold" data-testid="auth-page-title">
 						Welcome to GrantFlow.AI
 					</CardTitle>
 					<CardDescription className="text-center" data-testid="auth-page-description">

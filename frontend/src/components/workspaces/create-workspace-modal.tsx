@@ -18,7 +18,7 @@ export function CreateWorkspaceModal() {
 		<Dialog onOpenChange={setIsOpen} open={isOpen}>
 			<DialogTrigger asChild={true}>
 				<Button className="flex items-center gap-1" data-testid="create-workspace-button" size="sm">
-					<PlusCircle className="h-3.5 w-3.5" />
+					<PlusCircle className="size-3.5" />
 					<span>New Workspace</span>
 				</Button>
 			</DialogTrigger>

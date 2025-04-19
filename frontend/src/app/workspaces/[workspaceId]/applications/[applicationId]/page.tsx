@@ -84,8 +84,8 @@ export default function ApplicationDetailPage() {
 	const connectionStatusColor = connectionStatusColorMap[readyState];
 
 	return (
-		<div className="flex flex-col h-screen max-h-screen" data-testid="chat-room">
-			<div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
+		<div className="flex h-screen max-h-screen flex-col" data-testid="chat-room">
+			<div className="bg-primary text-primary-foreground flex items-center justify-between p-4">
 				<h1 className="text-2xl font-bold">WebSocket Chat</h1>
 				<Badge
 					className={`${connectionStatusColor} text-white`}
@@ -95,7 +95,7 @@ export default function ApplicationDetailPage() {
 					{connectionStatus}
 				</Badge>
 			</div>
-			<ScrollArea className="flex-grow p-4" data-testid="chat-messages">
+			<ScrollArea className="grow p-4" data-testid="chat-messages">
 				{messageHistory.map((message, index) => (
 					<div className="mb-4" key={index}>
 						{message.type === "notification" && (
@@ -109,9 +109,9 @@ export default function ApplicationDetailPage() {
 							</p>
 						)}
 						{message.type === "content" && (
-							<div className="bg-secondary p-4 rounded-lg" data-testid="content-message">
+							<div className="bg-secondary rounded-lg p-4" data-testid="content-message">
 								<ScrollArea className="h-[200px] w-full">{message.data.content}</ScrollArea>
-								<p className="text-sm text-muted-foreground mt-2">
+								<p className="text-muted-foreground mt-2 text-sm">
 									Duration: {message.data.duration} seconds
 								</p>
 								<div className="mt-2 flex justify-end space-x-2">
@@ -132,11 +132,11 @@ export default function ApplicationDetailPage() {
 					</div>
 				))}
 			</ScrollArea>
-			<div className="p-4 bg-background">
+			<div className="bg-background p-4">
 				<div className="flex space-x-2">
 					<Input
 						aria-label="Type a message"
-						className="flex-grow"
+						className="grow"
 						data-testid="message-input"
 						onChange={(e) => {
 							setInputMessage(e.target.value);

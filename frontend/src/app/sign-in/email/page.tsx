@@ -47,12 +47,12 @@ export default function FinalizeEmailLogin() {
 
 	return (
 		<div
-			className="flex items-center justify-center min-h-screen bg-background"
+			className="bg-background flex min-h-screen items-center justify-center"
 			data-testid="finish-email-signin-container"
 		>
-			<div className="text-center space-y-4">
-				<Loader2 className="w-8 h-8 animate-spin mx-auto" />
-				<p className="text-sm text-muted-foreground">Completing sign in...</p>
+			<div className="space-y-4 text-center">
+				<Loader2 className="mx-auto size-8 animate-spin" />
+				<p className="text-muted-foreground text-sm">Completing sign in...</p>
 			</div>
 		</div>
 	);

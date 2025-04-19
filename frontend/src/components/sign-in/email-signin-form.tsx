@@ -69,7 +69,7 @@ export function EmailSigninForm({
 						)}
 					/>
 					<SubmitButton
-						className="mt-4 mb-2 w-full"
+						className="mb-2 mt-4 w-full"
 						data-testid="email-signin-form-submit-button"
 						disabled={!form.formState.isValid}
 						isLoading={isLoading}

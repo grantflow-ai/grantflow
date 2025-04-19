@@ -42,10 +42,10 @@ export function Navbar() {
 
 	return (
 		<nav
-			className="w-full border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-secondary transition-all duration-200"
+			className="dark:bg-secondary w-full border-b border-gray-200 bg-white transition-all duration-200 dark:border-gray-700"
 			data-testid="navbar"
 		>
-			<div className="flex justify-between items-center h-16 w-full px-4" data-testid="navbar-actions">
+			<div className="flex h-16 w-full items-center justify-between px-4" data-testid="navbar-actions">
 				<Breadcrumbs pathname={pathname} />
 				<ThemeToggle data-testid="navbar-theme-toggle" />
 			</div>

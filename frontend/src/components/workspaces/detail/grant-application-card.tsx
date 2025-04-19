@@ -19,26 +19,26 @@ export function GrantApplicationCard({
 
 	return (
 		<Link className="block" data-testid={`application-draft-link-${application.id}`} href={url}>
-			<Card className="group overflow-hidden transition-all duration-300 hover:shadow-md hover:bg-muted/50">
+			<Card className="hover:bg-muted/50 group overflow-hidden transition-all duration-300 hover:shadow-md">
 				<CardContent className="p-4">
 					<div className="flex items-start justify-between gap-4">
-						<div className="flex-grow">
-							<h3 className="font-semibold text-base mb-1 line-clamp-1 flex items-center space-x-2">
-								<FileText className="h-5 w-5 text-primary" />
+						<div className="grow">
+							<h3 className="mb-1 line-clamp-1 flex items-center space-x-2 text-base font-semibold">
+								<FileText className="text-primary size-5" />
 								<span>{application.title}</span>
 							</h3>
 						</div>
 						{application.completed_at && (
 							<Badge
-								className="bg-secondary/50 text-secondary-foreground px-2 py-0.5 text-xs font-medium uppercase whitespace-nowrap"
+								className="bg-secondary/50 text-secondary-foreground whitespace-nowrap px-2 py-0.5 text-xs font-medium uppercase"
 								variant="secondary"
 							>
 								{application.completed_at}
 							</Badge>
 						)}
 					</div>
-					<div className="flex items-center justify-end mt-2">
-						<ChevronRight className="h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:translate-x-1 group-hover:text-foreground" />
+					<div className="mt-2 flex items-center justify-end">
+						<ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 transition-all duration-300 group-hover:translate-x-1" />
 					</div>
 				</CardContent>
 			</Card>

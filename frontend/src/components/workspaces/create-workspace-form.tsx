@@ -35,7 +35,7 @@ export function CreateWorkspaceForm({ closeModal }: { closeModal: (workspaceId?:
 	};
 
 	return (
-		<Card className="w-full max-w-2xl mx-auto">
+		<Card className="mx-auto w-full max-w-2xl">
 			<CardContent className="p-6">
 				<Form {...form}>
 					<form
@@ -69,7 +69,7 @@ export function CreateWorkspaceForm({ closeModal }: { closeModal: (workspaceId?:
 									<FormControl>
 										<Textarea
 											{...field}
-											className="w-full min-h-[100px]"
+											className="min-h-[100px] w-full"
 											data-testid="create-workspace-description-textarea"
 											placeholder="Workspace Description"
 										/>

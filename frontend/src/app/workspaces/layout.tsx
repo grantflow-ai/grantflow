@@ -3,9 +3,9 @@ import { ReactNode } from "react";
 
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
 	return (
-		<div className="flex flex-col justify-center min-h-screen bg-background">
+		<div className="bg-background flex min-h-screen flex-col justify-center">
 			<Navbar />
-			<div className="flex-grow">{children}</div>
+			<div className="grow">{children}</div>
 		</div>
 	);
 }
