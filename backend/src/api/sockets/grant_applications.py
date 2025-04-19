@@ -409,7 +409,6 @@ async def handle_research_plan(
 ) -> None:
     raw_objectives = data.get("research_objectives", [])
 
-    # Convert raw data to properly validated objects
     research_tasks_list = []
     for objective in raw_objectives:
         tasks = [
@@ -594,7 +593,6 @@ async def handle_cancel_application(
 async def handle_knowledge_base(
     *,
     application_id: UUID,
-    data: dict[str, Any],  # noqa: ARG001 - Unused but kept for consistent interface
     session_maker: async_sessionmaker[Any],
     handler: MessageHandler,
     store: ValkeyStore,
@@ -657,7 +655,6 @@ async def handle_user_data_message(
     elif event_type == EVENT_KNOWLEDGE_BASE:
         await handle_knowledge_base(
             application_id=application_id,
-            data=data,
             session_maker=session_maker,
             handler=handler,
             store=store,
