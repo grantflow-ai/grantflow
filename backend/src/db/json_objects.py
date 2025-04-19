@@ -42,3 +42,15 @@ class GrantLongFormSection(GrantElement):
     max_words: int
     search_queries: list[str]
     topics: list[str]
+
+
+class ResearchDeepDiveData(TypedDict):
+    background_context: NotRequired[str]
+    hypothesis: NotRequired[str]
+    rationale: NotRequired[str]
+    novelty_and_innovation: NotRequired[str]
+    team_excellence: NotRequired[str]
+    preliminary_data: NotRequired[str]
+    research_feasibility: NotRequired[str]
+    impact: NotRequired[str]
+    scientific_infrastructure: NotRequired[str]
