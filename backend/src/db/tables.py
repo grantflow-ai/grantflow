@@ -22,7 +22,7 @@ from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.functions import now
 
 from src.constants import EMBEDDING_DIMENSIONS
-from src.db.enums import FileIndexingStatusEnum, UserRoleEnum
+from src.db.enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
 from src.db.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
 
 
@@ -48,9 +48,7 @@ class Base(DeclarativeBase):
             for column in mapper.columns
             if column.key not in {"metadata", "registry"}
         }
-        relationship_values = {
-            relationship.key: self._get_relationship_value(relationship.key) for relationship in mapper.relationships
-        }
+        relationship_values = {r.key: self._get_relationship_value(r.key) for r in mapper.relationships}
         return {**column_values, **{k: v for k, v in relationship_values.items() if v is not None}}
 
 
@@ -160,6 +158,9 @@ class GrantApplication(BaseWithUUIDPK):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     form_inputs: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
     research_objectives: Mapped[list[ResearchObjective] | None] = mapped_column(JSON, nullable=True)
+    status: Mapped[ApplicationStatusEnum] = mapped_column(
+        Enum(ApplicationStatusEnum), default=ApplicationStatusEnum.DRAFT, index=True
+    )
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
     title: Mapped[str] = mapped_column(String(255))
 
