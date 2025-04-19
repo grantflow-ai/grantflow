@@ -23,17 +23,14 @@ from tests.test_utils import FIXTURES_FOLDER
 
 @pytest.fixture
 def mock_message_handler() -> MessageHandler:
-    """Create a mock message handler for testing."""
-
     async def handler(message: Any) -> None:
-        """Mock async message handler function."""
+        pass
 
     return AsyncMock(side_effect=handler)
 
 
 @pytest.fixture
 def mock_extracted_sections() -> list[ExtractedSectionDTO]:
-    """Mock the extracted sections."""
     return [
         {
             "id": "abstract",
@@ -70,7 +67,6 @@ def mock_extracted_sections() -> list[ExtractedSectionDTO]:
 
 @pytest.fixture
 def mock_section_metadata() -> list[SectionMetadata]:
-    """Mock the section metadata."""
     return [
         {
             "id": "abstract",
@@ -106,7 +102,6 @@ def mock_section_metadata() -> list[SectionMetadata]:
 def mock_extracted_cfp_data(
     funding_organization: FundingOrganization, nih_organization: FundingOrganization
 ) -> dict[str, Any]:
-    """Mock the extracted CFP data."""
     return {
         "organization_id": str(nih_organization.id),
         "cfp_subject": "Test CFP Subject",
@@ -120,19 +115,16 @@ def mock_extracted_cfp_data(
 
 @pytest.fixture
 def sample_cfp_content() -> list[Content]:
-    """Create a sample CFP content for testing using the factory."""
     return CfpContentFactory.batch(size=3)
 
 
 @pytest.fixture
 def cfp_subject() -> str:
-    """Create a sample CFP subject."""
     return "Test grant for researching innovative approaches to healthcare"
 
 
 @pytest.fixture
 async def cfp_file_content() -> str:
-    """Load a real CFP file content from fixtures."""
     cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
     assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
     return cfp_content_file.read_text()
@@ -140,7 +132,6 @@ async def cfp_file_content() -> str:
 
 @pytest.fixture
 async def test_application(async_session_maker: async_sessionmaker[Any], workspace: Any) -> GrantApplication:
-    """Create a test grant application."""
     application = GrantApplicationFactory.build(
         workspace_id=workspace.id,
         title="Test Application for Handler Test",
@@ -177,13 +168,10 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
-    """Test the extract_and_enrich_sections function with mocked LLM calls."""
-    # Mock LLM function calls
     with (
         patch("src.rag.grant_template.handler.handle_extract_sections", return_value=mock_extracted_sections),
         patch("src.rag.grant_template.handler.handle_generate_grant_template", return_value=mock_section_metadata),
     ):
-        # Call the function
         result = await extract_and_enrich_sections(
             cfp_content=sample_cfp_content,
             cfp_subject=cfp_subject,
@@ -191,13 +179,10 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
             message_handler=mock_message_handler,
         )
 
-    # Verify result structure
     assert len(result) == 3
 
-    # Check message handler was called - we can't directly assert the exact format due to WebsocketMessage
     assert mock_message_handler.call_count > 0  # type: ignore[attr-defined]
 
-    # We need to iterate through call_args to verify message content, since we're dealing with WebsocketMessage objects
     metadata_message_found = False
     for call in mock_message_handler.call_args_list:  # type: ignore[attr-defined]
         message = call[0][0]
@@ -213,14 +198,10 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
             break
     assert metadata_message_found, "Expected message about generating metadata was not found"
 
-    # Check for grant elements and long form sections by structure instead of isinstance
-    [s for s in result if "keywords" not in s]
     long_form_sections = [s for s in result if "keywords" in s]
 
-    # All sections should be long-form sections in this test
     assert len(long_form_sections) == 3
 
-    # Check long form sections have expected fields - using dictionary access for TypedDict
     for section in long_form_sections:
         assert "keywords" in section
         assert "topics" in section
@@ -229,14 +210,12 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
         assert "max_words" in section
         assert "search_queries" in section
 
-        # Check data types
         assert isinstance(section["keywords"], list)  # type: ignore[typeddict-item]
         assert isinstance(section["topics"], list)  # type: ignore[typeddict-item]
         assert isinstance(section["generation_instructions"], str)  # type: ignore[typeddict-item]
         assert isinstance(section["max_words"], int)  # type: ignore[typeddict-item]
         assert isinstance(section["search_queries"], list)  # type: ignore[typeddict-item]
 
-    # Verify exactly one section is marked as a detailed workplan
     workplan_sections = [s for s in long_form_sections if s.get("is_detailed_workplan")]
     assert len(workplan_sections) == 1, "Exactly one section should be marked as a detailed workplan"
     assert workplan_sections[0]["id"] == "research_plan"
@@ -254,25 +233,20 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     mock_section_metadata: list[SectionMetadata],
     mock_extracted_cfp_data: dict[str, Any],
 ) -> None:
-    """Test the grant_template_generation_pipeline_handler function with mocked LLM calls."""
-    # Mock LLM function calls and organization lookup
     with (
         patch("src.rag.grant_template.handler.handle_extract_cfp_data", return_value=mock_extracted_cfp_data),
         patch("src.rag.grant_template.handler.handle_extract_sections", return_value=mock_extracted_sections),
         patch("src.rag.grant_template.handler.handle_generate_grant_template", return_value=mock_section_metadata),
-        # Mock finding the funding organization
         patch("src.rag.grant_template.handler.next", return_value=nih_organization),
     ):
-        # Run the pipeline
         result = await grant_template_generation_pipeline_handler(
             application_id=str(test_application.id),
             cfp_content=cfp_file_content,
             message_handler=mock_message_handler,
         )
 
-    # Verify the result is a GrantTemplate
     assert isinstance(result, GrantTemplate)
-    # Convert UUID to string for comparison if needed
+
     if isinstance(result.grant_application_id, UUID):
         assert str(result.grant_application_id) == str(test_application.id)
     else:
@@ -280,19 +254,16 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     assert result.grant_sections is not None
     assert len(result.grant_sections) == 3
 
-    # Verify it was saved to the database
     async with async_session_maker() as session:
         db_result = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == result.id))
         assert db_result is not None
-        # Convert UUID to string for comparison if needed
+
         if isinstance(db_result.grant_application_id, UUID):
             assert str(db_result.grant_application_id) == str(test_application.id)
         else:
             assert db_result.grant_application_id == str(test_application.id)
         assert len(db_result.grant_sections) == 3
 
-    # Verify message handler was called with appropriate events by checking message attributes
-    # Check for template generation message
     template_generation_message_found = False
     extract_cfp_data_message_found = False
     cfp_data_extracted_message_found = False
@@ -346,8 +317,6 @@ async def test_pipeline_handler_error_handling(
     mock_message_handler: MessageHandler,
     test_application: GrantApplication,
 ) -> None:
-    """Test error handling in the pipeline handler."""
-    # Mock extract_cfp_data to raise a Backend Error
     error_message = "Test backend error"
     with (
         patch(
@@ -362,10 +331,8 @@ async def test_pipeline_handler_error_handling(
             message_handler=mock_message_handler,
         )
 
-    # Verify message handler was called at least once
     assert mock_message_handler.call_count > 0  # type: ignore[attr-defined]
 
-    # Verify error message was sent by checking message attributes
     error_message_found = False
 
     for call in mock_message_handler.call_args_list:  # type: ignore[attr-defined]
@@ -400,32 +367,26 @@ async def test_idempotent_template_generation(
     mock_section_metadata: list[SectionMetadata],
     mock_extracted_cfp_data: dict[str, Any],
 ) -> None:
-    """Test that calling the pipeline again creates a new template and doesn't conflict."""
     with (
         patch("src.rag.grant_template.handler.handle_extract_cfp_data", return_value=mock_extracted_cfp_data),
         patch("src.rag.grant_template.handler.handle_extract_sections", return_value=mock_extracted_sections),
         patch("src.rag.grant_template.handler.handle_generate_grant_template", return_value=mock_section_metadata),
-        # Mock finding the funding organization
         patch("src.rag.grant_template.handler.next", return_value=nih_organization),
     ):
-        # First call to create a template
         result1 = await grant_template_generation_pipeline_handler(
             application_id=str(test_application.id),
             cfp_content=cfp_file_content,
             message_handler=mock_message_handler,
         )
 
-        # Second call should create a different template
         result2 = await grant_template_generation_pipeline_handler(
             application_id=str(test_application.id),
             cfp_content=cfp_file_content,
             message_handler=mock_message_handler,
         )
 
-    # Verify we got different templates
     assert result1.id != result2.id
 
-    # Both should be in the database
     async with async_session_maker() as session:
         templates = await session.scalars(
             select(GrantTemplate).where(GrantTemplate.grant_application_id == str(test_application.id))
@@ -446,8 +407,6 @@ async def test_extract_and_enrich_with_title_only_sections(
     nih_organization: FundingOrganization,
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
-    """Test extract_and_enrich_sections with title-only sections."""
-    # Create a mock that includes a title-only section
     mixed_sections = [
         ExtractedSectionDTOFactory.build(
             id="parent_section",
@@ -459,7 +418,6 @@ async def test_extract_and_enrich_with_title_only_sections(
             is_title_only=True,
             is_clinical_trial=None,
         ),
-        # Add children sections
         ExtractedSectionDTOFactory.build(
             id="abstract",
             title="Abstract",
@@ -503,17 +461,13 @@ async def test_extract_and_enrich_with_title_only_sections(
             message_handler=mock_message_handler,
         )
 
-    # Verify result structure
     assert len(result) == 4
 
-    # Check for grant elements (title-only) and long form sections by structure
     title_only_sections = [s for s in result if "keywords" not in s]
     long_form_sections = [s for s in result if "keywords" in s]
 
-    # Should have one title-only section
     assert len(title_only_sections) == 1
     assert title_only_sections[0]["id"] == "parent_section"
     assert title_only_sections[0]["title"] == "Parent Section"
 
-    # Should have three long-form sections
     assert len(long_form_sections) == 3
