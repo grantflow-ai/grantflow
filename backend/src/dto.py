@@ -40,3 +40,4 @@ class WebsocketDataMessage:
     event: str
     type: Literal["data"]
     content: dict[str, Any]
+    message: str | None = None
