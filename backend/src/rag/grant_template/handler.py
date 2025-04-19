@@ -8,7 +8,7 @@ from src.common_types import MessageHandler
 from src.db.connection import get_session_maker
 from src.db.json_objects import GrantElement, GrantLongFormSection
 from src.db.tables import FundingOrganization, GrantTemplate
-from src.dto import WebsocketMessage
+from src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
 from src.exceptions import BackendError, DatabaseError
 from src.rag.grant_template.determine_application_sections import handle_extract_sections
 from src.rag.grant_template.determine_longform_metadata import handle_generate_grant_template
@@ -26,7 +26,7 @@ async def extract_and_enrich_sections(
     message_handler: MessageHandler,
 ) -> list[GrantElement | GrantLongFormSection]:
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="grant_template_extraction",
             content="Extracting grant application sections from CFP content...",
@@ -39,7 +39,7 @@ async def extract_and_enrich_sections(
     )
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketDataMessage(
             type="data",
             event="sections_extracted",
             content={
@@ -52,7 +52,7 @@ async def extract_and_enrich_sections(
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="grant_template_metadata",
             content="Generating metadata for grant template sections...",
@@ -67,7 +67,7 @@ async def extract_and_enrich_sections(
     )
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketDataMessage(
             type="data",
             event="metadata_generated",
             content={
@@ -118,7 +118,7 @@ async def grant_template_generation_pipeline_handler(
     logger.info("Starting grant template generation pipeline")
 
     await message_handler(
-        WebsocketMessage(
+        WebsocketInfoMessage(
             type="info",
             event="grant_template_generation_started",
             content="Starting grant template generation pipeline...",
@@ -136,7 +136,7 @@ async def grant_template_generation_pipeline_handler(
         }
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="extracting_cfp_data",
                 content="Extracting data from CFP content...",
@@ -156,7 +156,7 @@ async def grant_template_generation_pipeline_handler(
         org_name = organization.full_name if organization else "Unknown"
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketDataMessage(
                 type="data",
                 event="cfp_data_extracted",
                 content={
@@ -179,7 +179,7 @@ async def grant_template_generation_pipeline_handler(
         logger.info("Extracted grant template sections")
 
         await message_handler(
-            WebsocketMessage(
+            WebsocketInfoMessage(
                 type="info",
                 event="saving_grant_template",
                 content="Saving grant template to database...",
@@ -189,7 +189,7 @@ async def grant_template_generation_pipeline_handler(
     except BackendError as e:
         logger.error("Backend error in grant template generation pipeline", error=e)
         await message_handler(
-            WebsocketMessage(
+            WebsocketErrorMessage(
                 type="error",
                 event="pipeline_error",
                 content=f"Error in grant template generation: {e!s}",
@@ -214,7 +214,7 @@ async def grant_template_generation_pipeline_handler(
             await session.commit()
 
             await message_handler(
-                WebsocketMessage(
+                WebsocketDataMessage(
                     type="data",
                     event="grant_template_created",
                     content={
@@ -230,7 +230,7 @@ async def grant_template_generation_pipeline_handler(
             logger.error("Error generating grant template", error=e)
             await session.rollback()
             await message_handler(
-                WebsocketMessage(
+                WebsocketErrorMessage(
                     type="error",
                     event="database_error",
                     content="Error generating grant template",

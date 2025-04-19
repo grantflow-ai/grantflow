@@ -1,14 +1,12 @@
 from collections.abc import Callable, Coroutine
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import Any, TypedDict
 
 from litestar import Request, WebSocket
 from litestar.datastructures import State
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.db.enums import UserRoleEnum
-
-if TYPE_CHECKING:
-    from src.dto import WebsocketMessage
+from src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
 
 
 class APIRequestState(State):
@@ -25,4 +23,5 @@ class TableIdResponse(TypedDict):
     id: str
 
 
-MessageHandler = Callable[["WebsocketMessage"], Coroutine[None, None, None]]
+WebsocketMessage = WebsocketInfoMessage | WebsocketErrorMessage | WebsocketDataMessage
+MessageHandler = Callable[[WebsocketMessage], Coroutine[None, None, None]]
