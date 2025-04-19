@@ -6,33 +6,33 @@ import { formatBytes } from "@/utils/format";
 export function FileCard({ file, handleRemoveFile }: { file: File; handleRemoveFile: () => void }) {
 	return (
 		<div
-			className="relative flex items-center justify-between gap-4 rounded-lg border bg-card p-4 text-card-foreground shadow-sm transition-all hover:shadow-md"
+			className="bg-card text-card-foreground relative flex items-center justify-between gap-4 rounded-lg border p-4 shadow-sm transition-all hover:shadow-md"
 			data-testid={`file-card-${file.name}`}
 		>
 			<div className="flex items-center gap-3">
 				<FileTextIcon
 					aria-hidden="true"
-					className="h-8 w-8 text-muted-foreground"
+					className="text-muted-foreground size-8"
 					data-testid="file-preview-icon"
 				/>
 				<div className="flex flex-col">
-					<span className="font-medium truncate max-w-[200px]" data-testid={`file-name-display-${file.name}`}>
+					<span className="max-w-[200px] truncate font-medium" data-testid={`file-name-display-${file.name}`}>
 						{file.name}
 					</span>
-					<span className="text-xs text-muted-foreground" data-testid="file-size">
+					<span className="text-muted-foreground text-xs" data-testid="file-size">
 						{formatBytes(file.size)}
 					</span>
 				</div>
 			</div>
 			<Button
 				aria-label={`Remove ${file.name}`}
-				className="absolute top-1 right-1"
+				className="absolute right-1 top-1"
 				data-testid="remove-file-button"
 				onClick={handleRemoveFile}
 				size="icon"
 				variant="ghost"
 			>
-				<X className="h-4 w-4" />
+				<X className="size-4" />
 				<span className="sr-only">Remove file</span>
 			</Button>
 		</div>
@@ -42,7 +42,7 @@ export function FileCard({ file, handleRemoveFile }: { file: File; handleRemoveF
 export function FilesDisplay({ files, onFileRemoved }: { files: File[]; onFileRemoved: (file: File) => void }) {
 	return files.length ? (
 		<ScrollArea className="h-[200px] w-full rounded-md border" data-testid="files-scroll-area">
-			<div className="p-4 space-y-2" data-testid="files-display">
+			<div className="space-y-2 p-4" data-testid="files-display">
 				{files.map((file, index) => (
 					<FileCard
 						file={file}

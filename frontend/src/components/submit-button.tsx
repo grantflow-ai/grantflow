@@ -14,7 +14,7 @@ export function SubmitButton({ children, className = "", isLoading, ...props }: 
 			type="submit"
 			{...props}
 		>
-			{isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : children}
+			{isLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : children}
 		</Button>
 	);
 }

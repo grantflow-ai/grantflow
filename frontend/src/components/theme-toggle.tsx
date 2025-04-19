@@ -15,8 +15,8 @@ export function ThemeToggle() {
 			}}
 			variant="ghost"
 		>
-			<SunIcon className="dark:hidden h-4 w-4" data-testid="theme-toggle-sun-icon" />
-			<MoonIcon className="hidden dark:block bg-inherit h-4 w-4" data-testid="theme-toggle-moon-icon" />
+			<SunIcon className="size-4 dark:hidden" data-testid="theme-toggle-sun-icon" />
+			<MoonIcon className="hidden size-4 bg-inherit dark:block" data-testid="theme-toggle-moon-icon" />
 			<span className="sr-only" data-testid="theme-toggle-sr-text">
 				Toggle theme
 			</span>

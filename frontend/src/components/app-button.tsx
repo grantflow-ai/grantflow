@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import React, { cloneElement, HTMLProps, isValidElement, ReactNode } from "react";
 
-const appButtonVariants = cva("font-button font-light text-md rounded-sm hover:bg-transparent", {
+const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:bg-transparent", {
 	compoundVariants: [
 		{
 			className: "border-white text-white",
@@ -11,7 +11,7 @@ const appButtonVariants = cva("font-button font-light text-md rounded-sm hover:b
 			variant: "secondary",
 		},
 		{
-			className: "text-xl px-0 h-0",
+			className: "h-0 px-0 text-xl",
 			size: "lg",
 			variant: "link",
 		},
@@ -25,16 +25,16 @@ const appButtonVariants = cva("font-button font-light text-md rounded-sm hover:b
 		size: {
 			lg: "h-9.5 px-4",
 			md: "h-7.5 px-3",
-			sm: "text-sm h-6 px-2",
+			sm: "h-6 px-2 text-sm",
 		},
 		theme: {
 			dark: "",
 			light: "text-white",
 		},
 		variant: {
-			link: "font-normal bg-transparent rounded-none hover:text-slate-500 hover:no-underline",
+			link: "rounded-none bg-transparent font-normal hover:text-slate-500 hover:no-underline",
 			primary: "hover:bg-slate-500",
-			secondary: "bg-transparent border text-primary border-primary hover:text-slate-500 hover:border-slate-500",
+			secondary: "text-primary border-primary border bg-transparent hover:border-slate-500 hover:text-slate-500",
 		},
 	},
 });

@@ -26,28 +26,28 @@ const CORE_FEATURES = [
 
 export function CoreFeaturesSection() {
 	return (
-		<section aria-labelledby="core-features-section" className="relative w-full bg-white overflow-hidden">
+		<section aria-labelledby="core-features-section" className="relative w-full overflow-hidden bg-white">
 			<div className="absolute inset-0 flex items-center justify-center">
-				<PatternedBackground aria-hidden="true" className="absolute w-full h-full object-cover object-center" />
+				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
 			</div>
-			<div className="relative z-10 flex flex-col items-center text-center py-10 px-8 md:px-10 lg:px-20 xl:px-30 text-stone-800">
+			<div className="xl:px-30 relative z-10 flex flex-col items-center px-8 py-10 text-center text-stone-800 md:px-10 lg:px-20">
 				<h2
-					className="font-heading text-3xl md:text-4xl font-medium my-3 md:my-5 lg:my-8 xl-my-10"
+					className="font-heading xl-my-10 my-3 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
 					id="core-features-heading"
 				>
 					Core Features Designed for Researchers
 				</h2>
-				<div className="md:hidden relative w-full flex text-start py-6 overflow-x-auto snap-x snap-mandatory gap-12">
+				<div className="relative flex w-full snap-x snap-mandatory gap-12 overflow-x-auto py-6 text-start md:hidden">
 					{CORE_FEATURES.map((feature, index) => (
 						<FeatureArticle
-							className="flex-none snap-center w-[22rem]"
+							className="w-[22rem] flex-none snap-center"
 							featureDescription={feature.description}
 							featureTitle={feature.title}
 							key={index}
 						/>
 					))}
 				</div>
-				<div className="hidden md:grid md:grid-cols-2 justify-center text-start py-4 px-10 lg:px-26 m-8 lg:m-12 gap-12">
+				<div className="lg:px-26 m-8 hidden justify-center gap-12 px-10 py-4 text-start md:grid md:grid-cols-2 lg:m-12">
 					{CORE_FEATURES.map((feature, index) => (
 						<FeatureArticle
 							featureDescription={feature.description}
@@ -69,9 +69,9 @@ function FeatureArticle({
 }: { featureDescription: string; featureTitle: string } & HTMLProps<HTMLElement>) {
 	return (
 		<article className={className} id="feature-item" {...props}>
-			<div className="w-0 h-0 border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-l-transparent border-r-transparent border-b-background" />
-			<h3 className="font-heading font-medium text-2xl my-5 md:my-3">{featureTitle}</h3>
-			<p className="md:leading-tight text-lg md:text-sm">{featureDescription}</p>
+			<div className="border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-b-background size-0 border-x-transparent" />
+			<h3 className="font-heading my-5 text-2xl font-medium md:my-3">{featureTitle}</h3>
+			<p className="text-lg md:text-sm md:leading-tight">{featureDescription}</p>
 		</article>
 	);
 }

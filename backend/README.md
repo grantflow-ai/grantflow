@@ -133,6 +133,69 @@ uv run python -m pytest --cov=src
     - Prefer functional approach over OOP
     - Use TypedDict for data transfer objects
 
+## WebSocket Architecture
+
+### Grant Application Wizard WebSocket
+
+The Grant Application Wizard is implemented using a step-by-step WebSocket interface that allows users to progressively build a grant application.
+
+**WebSocket Endpoints:**
+
+- `/workspaces/{workspace_id:uuid}/applications/new` - Creates a new application
+- `/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}` - Resumes an existing application
+
+**Implemented Wizard Steps:**
+
+1. **Application Setup**
+
+    - Collects application title and CFP file/URL
+    - Validates input requirements
+    - Updates application status from DRAFT to IN_PROGRESS
+    - Triggers grant template generation pipeline
+
+2. **Template Review**
+
+    - Persists updates to the grant template
+    - Associates a funding organization
+    - Tracks step completion
+
+3. **Knowledge Base**
+
+    - Validates that files have been uploaded
+    - Ensures at least one file exists before proceeding
+
+4. **Research Plan**
+
+    - Collects and validates research objectives and tasks
+    - Enforces structured input requirements
+    - Persists JSON data to the database
+
+5. **Research Deep Dive**
+
+    - Collects structured form responses
+    - Merges new responses with existing data
+    - Tracks completion of this step
+
+6. **Application Generation**
+
+    - Triggers RAG-based generation
+    - Provides real-time status updates
+    - Updates application to COMPLETED on success
+
+7. **Cancellation**
+    - Provides ability to delete draft applications
+    - Cascades delete to all related entities
+
+**WebSocket Events:**
+
+- The frontend sends event messages to trigger actions
+- The backend responds with success/failure events
+- Progress updates are streamed during long-running operations
+
+The wizard tracks completed steps using ValkeyStore, allowing for persistent session state with an 8-week expiration.
+
+See the [Grant Application Wizard Architecture diagram](../diagrams/grant_application_wizard.md) for a detailed view of the interaction flow.
+
 ## RAG Architecture
 
 The RAG system is designed to assist in generating grant applications:
