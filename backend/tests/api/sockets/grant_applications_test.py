@@ -19,6 +19,8 @@ from src.api.sockets.grant_applications import (
     EVENT_CANCEL_APPLICATION,
     EVENT_GENERATE_APPLICATION,
     EVENT_GENERATION_COMPLETE,
+    EVENT_KNOWLEDGE_BASE,
+    EVENT_KNOWLEDGE_BASE_SUCCESS,
     EVENT_RESEARCH_DEEP_DIVE,
     EVENT_RESEARCH_DEEP_DIVE_SUCCESS,
     EVENT_RESEARCH_PLAN,
@@ -28,8 +30,16 @@ from src.api.sockets.grant_applications import (
     MessageHandler,
     prepare_wizard_response,
 )
-from src.db.enums import ApplicationStatusEnum
-from src.db.tables import FundingOrganization, GrantApplication, GrantTemplate, Workspace, WorkspaceUser
+from src.db.enums import ApplicationStatusEnum, FileIndexingStatusEnum
+from src.db.tables import (
+    FundingOrganization,
+    GrantApplication,
+    GrantApplicationFile,
+    GrantTemplate,
+    RagFile,
+    Workspace,
+    WorkspaceUser,
+)
 from src.dto import WebsocketDataMessage
 
 
@@ -49,6 +59,35 @@ async def application(workspace: Workspace, async_session_maker: async_sessionma
 
         result = await session.scalar(select(GrantApplication).where(GrantApplication.id == application_id))
         return cast("GrantApplication", result)
+
+
+@pytest.fixture
+async def application_with_file(
+    application: GrantApplication, async_session_maker: async_sessionmaker[Any]
+) -> tuple[GrantApplication, UUID]:
+    file_id = uuid4()
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagFile).values(
+                id=file_id,
+                filename="test_file.pdf",
+                mime_type="application/pdf",
+                size=1024,
+                indexing_status=FileIndexingStatusEnum.FINISHED,
+            )
+        )
+
+        await session.execute(
+            insert(GrantApplicationFile).values(
+                rag_file_id=file_id,
+                grant_application_id=application.id,
+            )
+        )
+
+        await session.commit()
+
+    return application, file_id
 
 
 @pytest.fixture
@@ -474,6 +513,58 @@ async def test_research_plan_validation_error_short_title(
         client.websocket_connect(f"/workspaces/{workspace.id}/applications/{application.id}?otp={otp_code}") as ws,
     ):
         ws.send_json(plan_data)
+        ws.receive_json()
+
+
+async def test_knowledge_base(
+    async_session_maker: async_sessionmaker[Any],
+    workspace: Workspace,
+    application_with_file: tuple[GrantApplication, UUID],
+    otp_code: str,
+    workspace_member_user: WorkspaceUser,
+    sync_test_client: TestClient[Any],
+) -> None:
+    application, file_id = application_with_file
+
+    knowledge_base_data = {
+        "type": "data",
+        "event": EVENT_KNOWLEDGE_BASE,
+        "content": {},
+    }
+
+    with (
+        sync_test_client as client,
+        client.websocket_connect(f"/workspaces/{workspace.id}/applications/{application.id}?otp={otp_code}") as ws,
+    ):
+        ws.send_json(knowledge_base_data)
+        response = ws.receive_json()
+
+    assert response["type"] == "data"
+    assert response["event"] == EVENT_KNOWLEDGE_BASE_SUCCESS
+
+    assert "completed_steps" in response["content"]
+    assert EVENT_KNOWLEDGE_BASE in response["content"]["completed_steps"]
+
+
+async def test_knowledge_base_validation_error_no_files(
+    workspace: Workspace,
+    application: GrantApplication,
+    otp_code: str,
+    workspace_member_user: WorkspaceUser,
+    sync_test_client: TestClient[Any],
+) -> None:
+    knowledge_base_data = {
+        "type": "data",
+        "event": EVENT_KNOWLEDGE_BASE,
+        "content": {},
+    }
+
+    client = sync_test_client
+    with (
+        pytest.raises(WebSocketDisconnect, match="At least one file must be uploaded before proceeding"),
+        client.websocket_connect(f"/workspaces/{workspace.id}/applications/{application.id}?otp={otp_code}") as ws,
+    ):
+        ws.send_json(knowledge_base_data)
         ws.receive_json()
 
 
