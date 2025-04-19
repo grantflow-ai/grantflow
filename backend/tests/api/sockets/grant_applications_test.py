@@ -529,7 +529,7 @@ async def test_knowledge_base(
     knowledge_base_data = {
         "type": "data",
         "event": EVENT_KNOWLEDGE_BASE,
-        "content": {},
+        "content": {},  # No content needed, it just validates files exist
     }
 
     with (
@@ -542,13 +542,14 @@ async def test_knowledge_base(
     assert response["type"] == "data"
     assert response["event"] == EVENT_KNOWLEDGE_BASE_SUCCESS
 
+    # Verify completed steps includes knowledge_base
     assert "completed_steps" in response["content"]
     assert EVENT_KNOWLEDGE_BASE in response["content"]["completed_steps"]
 
 
 async def test_knowledge_base_validation_error_no_files(
     workspace: Workspace,
-    application: GrantApplication,
+    application: GrantApplication,  # Using application without files
     otp_code: str,
     workspace_member_user: WorkspaceUser,
     sync_test_client: TestClient[Any],

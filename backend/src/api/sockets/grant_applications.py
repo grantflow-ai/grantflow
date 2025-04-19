@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Final, NotRequired, TypedDict, cast
 from uuid import UUID
@@ -84,6 +85,67 @@ class ApplicationResponseDTO(TypedDict):
 class ApplicationWizardResponseDTO(TypedDict):
     data: ApplicationResponseDTO
     completed_steps: NotRequired[list[str]]
+
+
+@dataclass
+class ApplicationSetupInput:
+    title: str
+    cfp_file: UploadFile | None = None
+    cfp_url: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.title:
+            raise ValidationException("Application title is required")
+        if not self.cfp_file and not self.cfp_url:
+            raise ValidationException("Either a CFP file or URL is required")
+
+
+@dataclass
+class ResearchTask:
+    title: str
+    description: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.title or len(self.title) < 10:
+            raise ValidationException("Each task must have a title of at least 10 characters")
+
+
+@dataclass
+class ResearchObjectiveInput:
+    title: str
+    description: str | None = None
+    research_tasks: list[ResearchTask] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.title or len(self.title) < 10:
+            raise ValidationException("Each objective must have a title of at least 10 characters")
+
+        if not self.research_tasks or len(self.research_tasks) == 0:
+            raise ValidationException("Each objective must have at least one research task")
+
+
+@dataclass
+class ResearchPlanInput:
+    research_objectives: list[ResearchObjectiveInput]
+
+    def __post_init__(self) -> None:
+        if not self.research_objectives or len(self.research_objectives) == 0:
+            raise ValidationException("At least one research objective is required")
+
+
+@dataclass
+class TemplateReviewInput:
+    grant_template: dict[str, Any]
+    funding_organization_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.grant_template:
+            raise ValidationException("Grant template data is required")
+
+
+@dataclass
+class ResearchDeepDiveInput:
+    research_deep_dive: dict[str, str] = field(default_factory=dict)
 
 
 logger = get_logger(__name__)
@@ -209,15 +271,11 @@ async def handle_application_setup(
     handler: MessageHandler,
     store: ValkeyStore,
 ) -> None:
-    title = data.get("title")
-    cfp_file = data.get("cfp_file")
-    cfp_url = data.get("cfp_url")
-
-    if not title:
-        raise ValidationException("Application title is required")
-
-    if not cfp_file and not cfp_url:
-        raise ValidationException("Either a CFP file or URL is required")
+    setup_input = ApplicationSetupInput(
+        title=data.get("title", ""),
+        cfp_file=data.get("cfp_file"),
+        cfp_url=data.get("cfp_url"),
+    )
 
     async with session_maker() as session, session.begin():
         application = await session.scalar(select(GrantApplication).where(GrantApplication.id == application_id))
@@ -234,7 +292,7 @@ async def handle_application_setup(
             update(GrantApplication)
             .where(GrantApplication.id == application_id)
             .values(
-                title=title,
+                title=setup_input.title,
                 status=ApplicationStatusEnum.IN_PROGRESS,
             )
         )
@@ -248,7 +306,7 @@ async def handle_application_setup(
             type="data",
             event=EVENT_APPLICATION_SETUP_SUCCESS,
             content=prepare_wizard_response(application=application, completed_steps=completed_steps),  # type: ignore
-            message=f"Application '{title}' updated successfully",
+            message=f"Application '{setup_input.title}' updated successfully",
         ),
     )
 
@@ -261,7 +319,7 @@ async def handle_application_setup(
         ),
     )
 
-    cfp_content = await get_cfp_content(cfp_file_upload=cfp_file, cfp_url=cfp_url)
+    cfp_content = await get_cfp_content(cfp_file_upload=setup_input.cfp_file, cfp_url=setup_input.cfp_url)
 
     await grant_template_generation_pipeline_handler(
         application_id=str(application_id),
@@ -289,11 +347,10 @@ async def handle_template_review(
     handler: MessageHandler,
     store: ValkeyStore,
 ) -> None:
-    template_data = data.get("grant_template")
-    funding_org_id = data.get("funding_organization_id")
-
-    if not template_data:
-        raise ValidationException("Grant template data is required")
+    template_input = TemplateReviewInput(
+        grant_template=data.get("grant_template", {}),
+        funding_organization_id=data.get("funding_organization_id"),
+    )
 
     async with session_maker() as session, session.begin():
         application = await session.scalar(select(GrantApplication).where(GrantApplication.id == application_id))
@@ -310,16 +367,16 @@ async def handle_template_review(
                 update(GrantTemplate)
                 .where(GrantTemplate.id == existing_template.id)
                 .values(
-                    grant_sections=template_data.get("grant_sections", []),
-                    funding_organization_id=funding_org_id,
+                    grant_sections=template_input.grant_template.get("grant_sections", []),
+                    funding_organization_id=template_input.funding_organization_id,
                 )
             )
         else:
             await session.execute(
                 insert(GrantTemplate).values(
                     grant_application_id=application_id,
-                    funding_organization_id=funding_org_id,
-                    grant_sections=template_data.get("grant_sections", []),
+                    funding_organization_id=template_input.funding_organization_id,
+                    grant_sections=template_input.grant_template.get("grant_sections", []),
                 )
             )
 
@@ -350,25 +407,41 @@ async def handle_research_plan(
     handler: MessageHandler,
     store: ValkeyStore,
 ) -> None:
-    research_objectives = data.get("research_objectives")
+    raw_objectives = data.get("research_objectives", [])
 
-    if not research_objectives:
-        raise ValidationException("Research objectives are required")
+    # Convert raw data to properly validated objects
+    research_tasks_list = []
+    for objective in raw_objectives:
+        tasks = [
+            ResearchTask(
+                title=task.get("title", ""),
+                description=task.get("description"),
+            )
+            for task in objective.get("research_tasks", [])
+        ]
+        research_tasks_list.append(
+            ResearchObjectiveInput(
+                title=objective.get("title", ""),
+                description=objective.get("description"),
+                research_tasks=tasks,
+            )
+        )
 
-    if not isinstance(research_objectives, list) or len(research_objectives) == 0:
-        raise ValidationException("At least one research objective is required")
+    plan_input = ResearchPlanInput(research_objectives=research_tasks_list)
 
-    for objective in research_objectives:
-        if not objective.get("title") or len(objective.get("title", "")) < 10:
-            raise ValidationException("Each objective must have a title of at least 10 characters")
+    objectives_for_db = []
+    for objective in plan_input.research_objectives:
+        tasks_for_db = []
+        for task in objective.research_tasks:
+            task_dict = {"title": task.title}
+            if task.description:
+                task_dict["description"] = task.description
+            tasks_for_db.append(task_dict)
 
-        tasks = objective.get("research_tasks", [])
-        if not tasks or len(tasks) == 0:
-            raise ValidationException("Each objective must have at least one research task")
-
-        for task in tasks:
-            if not task.get("title") or len(task.get("title", "")) < 10:
-                raise ValidationException("Each task must have a title of at least 10 characters")
+        objective_dict = {"title": objective.title, "research_tasks": tasks_for_db}
+        if objective.description:
+            objective_dict["description"] = objective.description
+        objectives_for_db.append(objective_dict)
 
     async with session_maker() as session, session.begin():
         application = await session.scalar(select(GrantApplication).where(GrantApplication.id == application_id))
@@ -379,7 +452,7 @@ async def handle_research_plan(
         await session.execute(
             update(GrantApplication)
             .where(GrantApplication.id == application_id)
-            .values(research_objectives=research_objectives)
+            .values(research_objectives=objectives_for_db)
         )
         completed_steps = await store_wizard_state(
             store=store,
@@ -407,7 +480,7 @@ async def handle_research_deep_dive(
     handler: MessageHandler,
     store: ValkeyStore,
 ) -> None:
-    research_deep_dive_data = data.get("research_deep_dive", {})
+    deep_dive_input = ResearchDeepDiveInput(research_deep_dive=data.get("research_deep_dive", {}))
 
     async with session_maker() as session, session.begin():
         application = await session.scalar(select(GrantApplication).where(GrantApplication.id == application_id))
@@ -416,7 +489,7 @@ async def handle_research_deep_dive(
             raise ValidationException(f"Application with ID {application_id} not found")
 
         form_inputs = application.form_inputs or {}
-        form_inputs.update(research_deep_dive_data)
+        form_inputs.update(deep_dive_input.research_deep_dive)
 
         completed_steps = await store_wizard_state(
             store=store,
@@ -521,7 +594,7 @@ async def handle_cancel_application(
 async def handle_knowledge_base(
     *,
     application_id: UUID,
-    data: dict[str, Any],
+    data: dict[str, Any],  # noqa: ARG001 - Unused but kept for consistent interface
     session_maker: async_sessionmaker[Any],
     handler: MessageHandler,
     store: ValkeyStore,
@@ -554,7 +627,7 @@ async def handle_knowledge_base(
         WebsocketDataMessage(
             type="data",
             event=EVENT_KNOWLEDGE_BASE_SUCCESS,
-            content=prepare_wizard_response(application=application, completed_steps=completed_steps),
+            content=prepare_wizard_response(application=application, completed_steps=completed_steps),  # type: ignore
             message="Knowledge base files validated successfully",
         ),
     )
