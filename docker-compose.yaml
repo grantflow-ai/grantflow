@@ -43,7 +43,7 @@ services:
             - "8000:8000"
         volumes:
             - ./backend/src:/app/src:cached
-        command: "uvicorn src.api.main:app --host 0.0.0.0 --log-level info --reload"
+        command: "granian --interface asgi src.api.main:app --reload --log-level info --host 0.0.0.0"
         depends_on:
             db:
                 condition: service_healthy

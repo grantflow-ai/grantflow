@@ -34,4 +34,4 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuse
     chmod -R u+x /app/.venv && \
     chmod -R u+x /app/src
 USER appuser
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--log-level", "info"]
+CMD ["granian", "--interface", "asgi", "src.api.main:app", "--reload", "--log-level", "info"]

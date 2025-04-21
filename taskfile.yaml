@@ -39,15 +39,13 @@ tasks:
         cmds:
             - task: backend:test
             - task: frontend:test
-
     backend:dev:
         desc: Start the backend development server with hot-reload enabled
         dir: "{{.BACKEND_DIR}}"
         dotenv: ["{{.BACKEND_DIR}}/.env"]
         cmds:
             - task: db:up
-            - PYTHONPATH=. uv run uvicorn src.api.main:app --reload --log-level info --env-file .env
-
+            - "PYTHONPATH=. uv run granian --interface asgi src.api.main:app --reload --log-level info"
     backend:test:
         desc: Run backend tests (use CLI_ARGS for specific test paths or options)
         dir: "{{.BACKEND_DIR}}"

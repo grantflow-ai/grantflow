@@ -13,6 +13,7 @@ from litestar.logging import StructLoggingConfig
 from litestar.response import Response
 from litestar.stores.registry import StoreRegistry
 from litestar.stores.valkey import ValkeyStore
+from litestar_granian import GranianPlugin
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -161,6 +162,7 @@ app = Litestar(
         grant_template_generation_pipeline_handler_listener,
         grant_application_text_generation_pipeline_handler_listener,
     ],
+    plugins=[GranianPlugin()],
     stores=StoreRegistry(default_factory=valkey_store_factory),
 )
 
