@@ -45,7 +45,7 @@ tasks:
         dotenv: ["{{.BACKEND_DIR}}/.env"]
         cmds:
             - task: db:up
-            - "PYTHONPATH=. uv run granian --interface asgi src.api.main:app --reload --log-level info"
+            - "PYTHONPATH=. uv run litestar --app  src.api.main:app run"
     backend:test:
         desc: Run backend tests (use CLI_ARGS for specific test paths or options)
         dir: "{{.BACKEND_DIR}}"
