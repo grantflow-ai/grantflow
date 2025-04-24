@@ -30,8 +30,7 @@ services:
 
     backend:
         build:
-            context: ./backend
-            dockerfile: Dockerfile
+            dockerfile: ./backend/Dockerfile
             platforms:
                 - "linux/x86_64" # needed due to spaCy build issues on mac linux
         environment:
