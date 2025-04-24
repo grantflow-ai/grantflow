@@ -30,8 +30,7 @@ services:
 
     backend:
         build:
-            context: ./backend
-            dockerfile: Dockerfile
+            dockerfile: ./backend/Dockerfile
             platforms:
                 - "linux/x86_64" # needed due to spaCy build issues on mac linux
         environment:
@@ -43,7 +42,6 @@ services:
             - "8000:8000"
         volumes:
             - ./backend/src:/app/src:cached
-        command: "litestar --app  src.api.main:app run --host 0.0.0.0"
         depends_on:
             db:
                 condition: service_healthy

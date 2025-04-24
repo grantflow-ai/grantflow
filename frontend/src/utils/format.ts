@@ -1,6 +1,3 @@
-
-
-
 export function formatBytes(bytes: number): string {
 	if (bytes < 0) {
 		throw new Error("Bytes cannot be negative");
