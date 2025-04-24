@@ -38,7 +38,7 @@ export function TestimonialsSection() {
 						>
 							<Image
 								alt={`${Image.name}'s photo`}
-								className="rounded-full size-[6rem] md:size-[7rem] lg:size-[8rem] xl:size-[9rem]"
+								className="rounded-full size-24 md:size-28 lg:size-32 xl:size-36"
 								src={testimonial.image}
 							/>
 							<blockquote className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base">
