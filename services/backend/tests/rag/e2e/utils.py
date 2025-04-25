@@ -1,7 +1,6 @@
 from packages.shared_utils.src.serialization import deserialize, serialize
 from services.backend.src.rag.grant_template.extract_cfp_data import ExtractedCFPData, handle_extract_cfp_data
-
-from tests.test_utils import FIXTURES_FOLDER
+from testing import FIXTURES_FOLDER
 
 
 async def get_extracted_section_data(

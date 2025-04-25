@@ -2,8 +2,7 @@ from http import HTTPStatus
 
 from pytest_mock import MockerFixture
 from services.backend.src.api.http.auth import LoginRequestBody
-
-from tests.conftest import TestingClientType
+from services.backend.tests.conftest import TestingClientType
 
 
 async def test_login_success(test_client: TestingClientType, mocker: MockerFixture) -> None:

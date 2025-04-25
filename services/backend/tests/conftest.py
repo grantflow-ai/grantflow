@@ -33,13 +33,7 @@ from scripts.seed_db import seed_db
 from services.backend.src.utils.ai import init_ref
 from services.backend.src.utils.firebase import firebase_app_ref
 from services.backend.src.utils.jwt import create_jwt
-from sqlalchemy import NullPool, select
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from structlog import configure
-from structlog.testing import LogCapture
-from vertexai.generative_models import GenerativeModel
-
-from tests.factories import (
+from services.backend.tests.factories import (
     FileFactory,
     FundingOrganizationFactory,
     GrantApplicationFactory,
@@ -48,11 +42,16 @@ from tests.factories import (
     WorkspaceFactory,
     WorkspaceUserFactory,
 )
-from tests.test_utils import (
-    FIXTURES_FOLDER,
+from services.backend.tests.test_utils import (
     create_grant_application_data,
     process_funding_organization,
 )
+from sqlalchemy import NullPool, select
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from structlog import configure
+from structlog.testing import LogCapture
+from testing import FIXTURES_FOLDER
+from vertexai.generative_models import GenerativeModel
 
 TestingClientType = AsyncTestClient[Litestar]
 

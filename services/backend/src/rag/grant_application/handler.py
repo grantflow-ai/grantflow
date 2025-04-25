@@ -5,7 +5,7 @@ from packages.db.src.json_objects import GrantElement, GrantLongFormSection, Res
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.sync import batched_gather
+from packages.shared_utils.src.sync import batched_gather
 from services.backend.src.common_types import MessageHandler
 from services.backend.src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
 from services.backend.src.rag.grant_application.dto import ResearchComponentGenerationDTO

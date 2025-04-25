@@ -8,8 +8,7 @@ from packages.shared_utils.src.serialization import serialize
 from services.backend.src.rag.retrieval import retrieve_documents
 from services.backend.src.utils.db import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.test_utils import RESULTS_FOLDER
+from testing import RESULTS_FOLDER
 
 
 @pytest.mark.skipif(
