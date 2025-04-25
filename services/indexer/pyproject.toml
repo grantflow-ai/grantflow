@@ -1,0 +1,22 @@
+[project]
+name = "indexer"
+version = "0.1.0"
+description = "Grantflow Indexer"
+readme = "README.md"
+license = { text = "UNLICENSED" }
+authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
+requires-python = "==3.12.*"
+
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
+dependencies = [
+  "azure-ai-documentintelligence>=1.0.1",
+  "crawl4ai>=0.6",
+  "db",
+  "kreuzberg>=2.1.2",
+  "semantic-text-splitter>=0.24.2",
+  "shared-utils",
+]
+
+[tool.uv.sources]
+db = { workspace = true }
+shared-utils = { workspace = true }
