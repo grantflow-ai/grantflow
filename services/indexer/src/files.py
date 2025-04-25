@@ -1,0 +1,67 @@
+from shared_utils.src.serialization import serialize
+from sqlalchemy import insert, update
+from sqlalchemy.exc import SQLAlchemyError
+
+from db.src.connection import get_session_maker
+from db.src.enums import FileIndexingStatusEnum
+from db.src.tables import RagFile, TextVector
+from src.chunking import chunk_text
+from src.exceptions import DatabaseError, ExternalOperationError, FileParsingError, ValidationError
+from src.extraction import (
+    extract_file_content,
+)
+from src.files import FileDTO
+from src.indexing import index_documents, logger
+
+
+async def parse_and_index_file(
+    *,
+    file_dto: FileDTO,
+    file_id: str,
+) -> None:
+    session_maker = get_session_maker()
+    try:
+        extracted_text, mime_type = await extract_file_content(
+            content=file_dto.content,
+            mime_type=file_dto.mime_type,
+        )
+        logger.info("Extracted text from file", filename=file_dto.filename)
+        chunks = chunk_text(text=extracted_text, mime_type=mime_type)
+        vectors = await index_documents(
+            chunks=chunks,
+            file_id=file_id,
+        )
+    except (FileParsingError, ExternalOperationError, ValidationError) as e:
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(RagFile).where(RagFile.id == file_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
+            )
+            await session.commit()
+
+        logger.error("Failed to parse file", filename=file_dto.filename, exec_info=e)
+    else:
+        async with session_maker() as session, session.begin():
+            try:
+                await session.execute(insert(TextVector).values(vectors))
+                await session.execute(
+                    update(RagFile)
+                    .where(RagFile.id == file_id)
+                    .values(
+                        {
+                            "indexing_status": FileIndexingStatusEnum.FINISHED,
+                            "text_content": extracted_text
+                            if isinstance(extracted_text, str)
+                            else serialize(extracted_text).decode(),
+                        }
+                    )
+                )
+                await session.commit()
+                logger.info("Successfully indexed file", filename=file_dto.filename)
+            except SQLAlchemyError as e:
+                logger.error(
+                    "Error inserting vectors.",
+                    exec_info=e,
+                    filename=file_dto.filename,
+                )
+                await session.rollback()
+                raise DatabaseError("Error inserting vectors", context=str(e)) from e

@@ -8,8 +8,7 @@
       <env name="E2E_TESTS" value="true" />
     </envs>
     <option name="SDK_HOME" value="" />
-    <option name="SDK_NAME" value="Python 3.12 (monorepo)" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend/tests/indexer/e2e" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/services/indexer/tests/e2e" />
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
