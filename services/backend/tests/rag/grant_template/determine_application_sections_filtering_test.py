@@ -1,4 +1,4 @@
-from src.rag.grant_template.determine_application_sections import (
+from services.backend.src.rag.grant_template.determine_application_sections import (
     ExtractedSectionDTO,
     ExtractedSections,
     filter_extracted_sections,

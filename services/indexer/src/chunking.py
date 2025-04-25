@@ -6,10 +6,9 @@ from azure.ai.documentintelligence.models import (
     AnalyzeResult,
     DocumentPage,
 )
+from packages.db.src.json_objects import Chunk
+from packages.shared_utils.src.logger import get_logger
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
-from shared_utils.src.logger import get_logger
-
-from db.src.json_objects import Chunk
 
 logger = get_logger(__name__)
 

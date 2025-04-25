@@ -1,29 +1,28 @@
 from asyncio import gather
 
-from shared_utils.src.logger import get_logger
-from shared_utils.src.sync import batched_gather
-from sqlalchemy import update
-from sqlalchemy.exc import SQLAlchemyError
-
-from db.src.connection import get_session_maker
-from db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
-from db.src.tables import GrantApplication
-from src.common_types import MessageHandler
-from src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
-from src.exceptions import BackendError, DatabaseError, ValidationError
-from src.rag.grant_application.dto import ResearchComponentGenerationDTO
-from src.rag.grant_application.enrich_research_objective import handle_enrich_objective
-from src.rag.grant_application.extract_relationships import handle_extract_relationships
-from src.rag.grant_application.generate_section_text import generate_section_text
-from src.rag.grant_application.generate_work_plan_text import generate_work_plan_component_text
-from src.rag.grant_application.utils import (
+from packages.db.src.connection import get_session_maker
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
+from packages.db.src.tables import GrantApplication
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
+from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.sync import batched_gather
+from services.backend.src.common_types import MessageHandler
+from services.backend.src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
+from services.backend.src.rag.grant_application.dto import ResearchComponentGenerationDTO
+from services.backend.src.rag.grant_application.enrich_research_objective import handle_enrich_objective
+from services.backend.src.rag.grant_application.extract_relationships import handle_extract_relationships
+from services.backend.src.rag.grant_application.generate_section_text import generate_section_text
+from services.backend.src.rag.grant_application.generate_work_plan_text import generate_work_plan_component_text
+from services.backend.src.rag.grant_application.utils import (
     create_dependencies_text,
     create_generation_groups,
     generate_application_text,
     is_grant_long_form_section,
 )
-from src.utils.db import retrieve_application
-from src.utils.text import normalize_markdown
+from services.backend.src.utils.db import retrieve_application
+from services.backend.src.utils.text import normalize_markdown
+from sqlalchemy import update
+from sqlalchemy.exc import SQLAlchemyError
 
 logger = get_logger(__name__)
 

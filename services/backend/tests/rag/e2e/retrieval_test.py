@@ -4,11 +4,11 @@ from os import environ
 from typing import Any
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.shared_utils.src.serialization import serialize
+from services.backend.src.rag.retrieval import retrieve_documents
+from services.backend.src.utils.db import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.rag.retrieval import retrieve_documents
-from src.utils.db import retrieve_application
 from tests.test_utils import RESULTS_FOLDER
 
 

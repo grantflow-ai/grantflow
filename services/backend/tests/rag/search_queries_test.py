@@ -3,8 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 from pytest_mock import MockerFixture
-
-from src.rag.search_queries import handle_create_search_queries
+from services.backend.src.rag.search_queries import handle_create_search_queries
 
 
 class MockQueryResponse(TypedDict):

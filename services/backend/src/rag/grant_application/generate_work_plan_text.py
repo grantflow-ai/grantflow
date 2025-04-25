@@ -1,15 +1,14 @@
 from typing import Any, Final
 
-from shared_utils.src.logger import get_logger
-
-from src.constants import ANTHROPIC_SONNET_MODEL, MIN_WORDS_RATIO
-from src.exceptions import EvaluationError
-from src.rag.grant_application.dto import ResearchComponentGenerationDTO
-from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
-from src.rag.long_form import generate_long_form_text
-from src.rag.retrieval import retrieve_documents
-from src.rag.source_validation import handle_source_validation
-from src.utils.prompt_template import PromptTemplate
+from packages.shared_utils.src.exceptions import EvaluationError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, MIN_WORDS_RATIO
+from services.backend.src.rag.grant_application.dto import ResearchComponentGenerationDTO
+from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.backend.src.rag.long_form import generate_long_form_text
+from services.backend.src.rag.retrieval import retrieve_documents
+from services.backend.src.rag.source_validation import handle_source_validation
+from services.backend.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 

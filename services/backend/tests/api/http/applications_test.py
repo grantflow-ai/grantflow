@@ -2,14 +2,14 @@ from http import HTTPStatus
 from typing import Any, Final
 from uuid import UUID
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from db.src.tables import (
+from packages.db.src.tables import (
     GrantApplication,
     Workspace,
 )
-from src.api.http.grant_applications import UpdateApplicationRequestBody
+from services.backend.src.api.http.grant_applications import UpdateApplicationRequestBody
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from tests.conftest import TestingClientType
 
 TEST_CFP_URL: Final[str] = "https://grants.nih.gov/grants/guide/rfa-files/RFA-DC-25-005.html"

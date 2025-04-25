@@ -7,9 +7,9 @@ from typing import cast
 
 import pytest
 from azure.ai.documentintelligence.models import AnalyzeResult
+from services.indexer.src.extraction import extract_file_content
+from services.indexer.src.files import FileDTO
 
-from src.files import FileDTO
-from src.utils.extraction import extract_file_content
 from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 

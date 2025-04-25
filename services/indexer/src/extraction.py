@@ -11,11 +11,10 @@ from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 from crawl4ai import AsyncWebCrawler
 from kreuzberg import KreuzbergError, extract_bytes
-from shared_utils.src.env import get_env
-from shared_utils.src.logger import get_logger
-from shared_utils.src.retry import with_exponential_backoff_retry
-
-from src.exceptions import ExternalOperationError, FileParsingError, ValidationError
+from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.retry import with_exponential_backoff_retry
+from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
+from packages.shared_utils.src.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,13 +1,13 @@
 from functools import partial
 from typing import Final, TypedDict
 
-from db.src.json_objects import GrantLongFormSection, ResearchObjective
-from src.constants import ANTHROPIC_SONNET_MODEL
-from src.exceptions import ValidationError
-from src.rag.completion import handle_completions_request
-from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
-from src.rag.retrieval import retrieve_documents
-from src.utils.prompt_template import PromptTemplate
+from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
+from packages.shared_utils.src.exceptions import ValidationError
+from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
+from services.backend.src.rag.completion import handle_completions_request
+from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.backend.src.rag.retrieval import retrieve_documents
+from services.backend.src.utils.prompt_template import PromptTemplate
 
 ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
 You are a specialized component in a RAG system dedicated to enriching STEM grant applications.

@@ -4,7 +4,7 @@ from mimetypes import guess_type
 from litestar.datastructures.upload_file import UploadFile
 from pathvalidate import sanitize_filename
 
-from src.exceptions import ValidationError
+from packages.shared_utils.src.exceptions import ValidationError
 
 SUPPORTED_FILE_EXTENSIONS_TO_MIMETYPE_MAP = {
     "md": "text/markdown",

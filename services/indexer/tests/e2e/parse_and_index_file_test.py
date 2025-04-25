@@ -3,13 +3,12 @@ from os import environ
 from typing import Any
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
+from packages.shared_utils.src.serialization import serialize
+from services.indexer.src.files import FileDTO, parse_and_index_file
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from db.src.tables import GrantApplication, GrantApplicationFile, TextVector
-from src.files import FileDTO
-from src.indexer.files import parse_and_index_file
 from tests.test_utils import RESULTS_FOLDER, SOURCES_FOLDER
 
 FILENAME = "PIC seq.pdf"

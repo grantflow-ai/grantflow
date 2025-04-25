@@ -1,16 +1,15 @@
 from asyncio import gather
 from typing import Final, TypedDict
 
+from packages.shared_utils.src.logger import get_logger
 from rank_bm25 import BM25Okapi
 from sentence_transformers import util
-from shared_utils.src.logger import get_logger
+from services.backend.src.rag.dto import DocumentDTO
+from services.backend.src.utils.embeddings import get_embedding_model
+from services.backend.src.utils.nlp import get_spacy_model
+from services.backend.src.utils.text import count_tokens
 from spacy.language import Language
 from spacy.tokens import Span
-
-from src.rag.dto import DocumentDTO
-from src.utils.embeddings import get_embedding_model
-from src.utils.nlp import get_spacy_model
-from src.utils.text import count_tokens
 
 logger = get_logger(__name__)
 

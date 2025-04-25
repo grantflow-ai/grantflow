@@ -5,10 +5,10 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.db.src.tables import FundingOrganization, GrantApplication
+from packages.shared_utils.src.serialization import serialize
+from services.backend.src.rag.grant_template.handler import extract_and_enrich_sections
 
-from db.src.tables import FundingOrganization, GrantApplication
-from src.rag.grant_template.handler import extract_and_enrich_sections
 from tests.rag.e2e.utils import get_extracted_section_data
 from tests.test_utils import RESULTS_FOLDER
 

@@ -16,7 +16,3 @@ dependencies = [
   "semantic-text-splitter>=0.24.2",
   "shared-utils",
 ]
-
-[tool.uv.sources]
-db = { workspace = true }
-shared-utils = { workspace = true }

@@ -5,15 +5,15 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.db.src.tables import FundingOrganization, Workspace
+from packages.shared_utils.src.serialization import serialize
+from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from db.src.tables import FundingOrganization, Workspace
-from src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from tests.test_utils import RESULTS_FOLDER, create_grant_application_data
 
 if TYPE_CHECKING:
-    from db.src.json_objects import ResearchObjective
+    from packages.db.src.json_objects import ResearchObjective
 
 
 @pytest.mark.timeout(60 * 30)

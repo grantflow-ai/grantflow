@@ -2,9 +2,8 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 from pytest_mock import MockFixture
-
-from src.rag.dto import DocumentDTO
-from src.rag.post_processing import (
+from services.backend.src.rag.dto import DocumentDTO
+from services.backend.src.rag.post_processing import (
     BM25Ranker,
     SentenceInfo,
     apply_bm25_ranking,

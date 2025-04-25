@@ -1,8 +1,7 @@
 import pytest
-
-from src.exceptions import InsufficientContextError, ValidationError
-from src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
-from src.rag.grant_template.determine_longform_metadata import (
+from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
+from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
+from services.backend.src.rag.grant_template.determine_longform_metadata import (
     SectionMetadata,
     validate_template_sections,
 )
