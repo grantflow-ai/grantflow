@@ -7,10 +7,9 @@ from packages.db.src.tables import (
     Workspace,
 )
 from services.backend.src.api.http.grant_applications import UpdateApplicationRequestBody
+from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.conftest import TestingClientType
 
 TEST_CFP_URL: Final[str] = "https://grants.nih.gov/grants/guide/rfa-files/RFA-DC-25-005.html"
 

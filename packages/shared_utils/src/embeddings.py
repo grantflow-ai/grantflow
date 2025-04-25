@@ -1,9 +1,10 @@
 from typing import Final
 
-from packages.shared_utils.ref import Ref
-from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.sync import run_sync
 from sentence_transformers import SentenceTransformer
+
+from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.ref import Ref
+from packages.shared_utils.src.sync import run_sync
 
 logger = get_logger(__name__)
 embedding_model_ref = Ref[SentenceTransformer]()

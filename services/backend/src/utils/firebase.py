@@ -4,11 +4,11 @@ from firebase_admin import App
 from firebase_admin.exceptions import FirebaseError
 from google.oauth2.service_account import Credentials
 from litestar.exceptions import NotAuthorizedException
-from packages.shared_utils.env import get_env
-from packages.shared_utils.ref import Ref
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
-from packages.shared_utils.sync import as_async_callable
+from packages.shared_utils.src.sync import as_async_callable
 
 logger = get_logger(__name__)
 

@@ -7,12 +7,12 @@ from packages.shared_utils.src.exceptions import (
     FileParsingError,
     ValidationError,
 )
+from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.serialization import serialize
 from services.indexer.src.chunking import chunk_text
 from services.indexer.src.extraction import (
     extract_file_content,
 )
-from services.indexer.src.files import FileDTO
 from services.indexer.src.indexing import index_documents, logger
 from sqlalchemy import insert, update
 from sqlalchemy.exc import SQLAlchemyError

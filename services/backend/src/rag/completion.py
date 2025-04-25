@@ -9,7 +9,6 @@ from anthropic.types import ToolParam, ToolUseBlock
 from google.api_core.exceptions import InternalServerError as GoogleInternalServerError
 from google.api_core.exceptions import ServiceUnavailable
 from google.cloud.exceptions import TooManyRequests
-from packages.shared_utils.retry import with_exponential_backoff_retry
 from packages.shared_utils.src.exceptions import (
     BackendError,
     DeserializationError,
@@ -18,6 +17,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.retry import with_exponential_backoff_retry
 from packages.shared_utils.src.serialization import deserialize, fix_string_json_values, serialize
 from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, CONTENT_TYPE_JSON, GENERATION_MODEL
 from services.backend.src.utils.ai import get_anthropic_client, get_google_ai_client

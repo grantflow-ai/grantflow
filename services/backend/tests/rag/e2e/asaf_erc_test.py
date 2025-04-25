@@ -8,9 +8,9 @@ import pytest
 from packages.db.src.tables import FundingOrganization, Workspace
 from packages.shared_utils.src.serialization import serialize
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
+from services.backend.tests.test_utils import create_grant_application_data
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.test_utils import RESULTS_FOLDER, create_grant_application_data
+from testing import RESULTS_FOLDER
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchObjective

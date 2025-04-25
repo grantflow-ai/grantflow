@@ -111,10 +111,6 @@ namespace_packages = true
 explicit_package_bases = true
 mypy_path = [ "." ]
 
-[[tool.mypy.overrides]]
-module = "packages.*"
-implicit_reexport = true
-
 [tool.uv.workspace]
 members = [
   "services/*",
@@ -122,6 +118,6 @@ members = [
 ]
 
 [tool.uv.sources]
-uv-bump = { git = "https://github.com/zundertj/uv-bump" }
-shared-utils = { workspace = true }
 db = { workspace = true }
+shared-utils = { workspace = true }
+uv-bump = { git = "https://github.com/zundertj/uv-bump" }

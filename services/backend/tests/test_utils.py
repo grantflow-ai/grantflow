@@ -1,7 +1,6 @@
 import asyncio
-from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Final
+from typing import Any
 from unittest.mock import AsyncMock
 
 from anyio import Path as AsyncPath
@@ -17,31 +16,16 @@ from packages.db.src.tables import (
     TextVector,
     Workspace,
 )
+from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.serialization import deserialize, serialize
-from services.backend.src.files import FileDTO
-from services.backend.src.indexer.files import parse_and_index_file
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from services.backend.src.utils.extraction import extract_file_content
+from services.indexer.src.extraction import extract_file_content
+from services.indexer.src.files import parse_and_index_file
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
-
-
-def _file_path_generator(folder: Path) -> Generator[Path, None, None]:
-    for path in folder.glob("*"):
-        if path.is_dir():
-            yield from _file_path_generator(path)
-        yield path
-
-
-SOURCES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "sources"
-RESULTS_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "results"
-FIXTURES_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "fixtures"
-SYNTHETIC_DATA_FOLDER: Final[Path] = Path(__file__).parent / "test_data" / "synthetic"
-TEST_DATA_SOURCES: Generator[Path, None, None] = _file_path_generator(SOURCES_FOLDER / "application_sources")
-TEST_DATA_RESULTS: Generator[Path, None, None] = _file_path_generator(RESULTS_FOLDER)
-CFP_FIXTURES: Generator[Path, None, None] = _file_path_generator(FIXTURES_FOLDER / "cfps")
+from testing import FIXTURES_FOLDER, SOURCES_FOLDER
 
 
 async def get_funding_organization(

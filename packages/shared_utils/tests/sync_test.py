@@ -1,6 +1,6 @@
 from functools import partial
 
-from packages.shared_utils.sync import as_async_callable
+from packages.shared_utils.src.sync import as_async_callable
 
 
 async def test_as_async_callable_no_args() -> None:

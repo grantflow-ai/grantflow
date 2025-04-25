@@ -5,11 +5,10 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import FundingOrganization, OrganizationFile, RagFile
+from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.conftest import TestingClientType
 
 
 @pytest.fixture

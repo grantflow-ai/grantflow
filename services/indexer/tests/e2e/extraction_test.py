@@ -7,10 +7,9 @@ from typing import cast
 
 import pytest
 from azure.ai.documentintelligence.models import AnalyzeResult
+from packages.shared_utils.src.files import FileDTO
 from services.indexer.src.extraction import extract_file_content
-from services.indexer.src.files import FileDTO
-
-from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
+from testing import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 
 @pytest.mark.skipif(

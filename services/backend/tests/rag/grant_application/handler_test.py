@@ -12,12 +12,11 @@ from services.backend.src.rag.grant_application.handler import (
     grant_application_text_generation_pipeline_handler,
 )
 from services.backend.src.rag.grant_application.utils import is_grant_long_form_section
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.factories import (
+from services.backend.tests.factories import (
     GrantApplicationFactory,
     WorkspaceFactory,
 )
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 @pytest.fixture

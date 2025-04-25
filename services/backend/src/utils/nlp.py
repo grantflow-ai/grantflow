@@ -1,5 +1,5 @@
-from packages.shared_utils.ref import Ref
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.ref import Ref
 from spacy.language import Language
 
 logger = get_logger(__name__)

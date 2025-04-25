@@ -1,12 +1,12 @@
 from textwrap import dedent
 from typing import Any, Final, NotRequired, TypedDict
 
+from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import serialize
 from sentence_transformers import util
 from services.backend.src.constants import EVALUATION_MODEL
 from services.backend.src.rag.completion import handle_completions_request
-from services.backend.src.utils.embeddings import get_embedding_model
 from services.backend.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)

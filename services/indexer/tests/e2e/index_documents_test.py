@@ -10,8 +10,7 @@ from packages.shared_utils.src.serialization import serialize
 from services.indexer.src.chunking import chunk_text
 from services.indexer.src.indexing import index_documents
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
+from testing import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:
     from azure.ai.documentintelligence.models import AnalyzeResult

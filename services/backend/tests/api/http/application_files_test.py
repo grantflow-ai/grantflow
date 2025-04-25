@@ -11,11 +11,10 @@ from packages.db.src.tables import (
     RagFile,
     Workspace,
 )
+from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.conftest import TestingClientType
 
 
 @pytest.fixture

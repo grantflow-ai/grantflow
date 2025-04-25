@@ -2,10 +2,10 @@ from asyncio import gather
 from typing import Final
 
 from packages.db.src.json_objects import Chunk
+from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.exceptions import ExternalOperationError
 from packages.shared_utils.src.logger import get_logger
 from services.indexer.src.dto import VectorDTO
-from services.indexer.src.utils.embeddings import generate_embeddings
 
 logger = get_logger(__name__)
 
