@@ -1,10 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Literal, NotRequired, TypedDict
-
-
-class APIError(TypedDict):
-    message: str
-    detail: NotRequired[str]
+from typing import Any, Literal, TypedDict
 
 
 class GrantSectionDTO(TypedDict):

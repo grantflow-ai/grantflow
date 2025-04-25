@@ -6,7 +6,6 @@ from typing import Any
 import uvicorn
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
-from litestar.di import Provide
 from litestar.events import listener
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from litestar.logging import StructLoggingConfig
@@ -17,6 +16,7 @@ from packages.db.src.connection import get_session_maker
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DeserializationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.server import APIError, session_maker_provider
 from services.backend.src.api.http.application_files import (
     handle_application_file_uploads,
     handle_delete_application_file,
@@ -49,7 +49,6 @@ from services.backend.src.api.http.workspaces import (
 from services.backend.src.api.middleware import AuthMiddleware
 from services.backend.src.api.sockets.grant_applications import handle_application_websocket
 from services.backend.src.common_types import APIRequest
-from services.backend.src.dto import APIError
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from services.backend.src.utils.ai import init_llm_connection
@@ -86,7 +85,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     retrieve_organization_files,
 ]
 
-session_maker_provider = Provide(get_session_maker, sync_to_thread=True)
 grant_template_generation_pipeline_handler_listener = listener("grant_template_generation_pipeline_handler")(
     grant_template_generation_pipeline_handler
 )
@@ -134,7 +132,7 @@ async def before_server_start(app_instance: Litestar) -> None:
 
 
 def valkey_store_factory(name: str) -> ValkeyStore:
-    """We use valkey (a Redis fork) as a key-value store for caching chat behaviour."""
+    """We use valkey (a Redis fork) as a key-value store for caching."""
     connection_string = get_env("VALKEY_CONNECTION_STRING")
 
     return ValkeyStore.with_client(url=connection_string, namespace=name)
