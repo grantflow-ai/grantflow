@@ -568,7 +568,7 @@ wheels = [
 [[package]]
 name = "db"
 version = "0.1.0"
-source = { virtual = "packages/db" }
+source = { editable = "packages/db" }
 dependencies = [
     { name = "shared-utils" },
     { name = "sqlalchemy" },
@@ -582,7 +582,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "shared-utils", virtual = "packages/shared_utils" },
+    { name = "shared-utils", editable = "packages/shared_utils" },
     { name = "sqlalchemy", specifier = ">=2.0.39" },
 ]
 
@@ -1042,24 +1042,24 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.14" },
-    { name = "anthropic", specifier = ">=0.49.0" },
-    { name = "asyncpg", specifier = ">=0.30.0" },
-    { name = "db", virtual = "packages/db" },
+    { name = "anthropic", specifier = ">=0.49" },
+    { name = "asyncpg", specifier = ">=0.30" },
+    { name = "db", editable = "packages/db" },
     { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
-    { name = "firebase-admin", specifier = ">=6.7.0" },
-    { name = "google-cloud-aiplatform", specifier = ">=1.85.0" },
+    { name = "firebase-admin", specifier = ">=6.7" },
+    { name = "google-cloud-aiplatform", specifier = ">=1.85" },
     { name = "greenlet", specifier = ">=3.1.1" },
     { name = "litestar", extras = ["valkey"], specifier = ">=2.15.1" },
     { name = "pathvalidate", specifier = ">=3.2.3" },
-    { name = "pgvector", specifier = ">=0.4.0" },
-    { name = "prompt-template", specifier = ">=1.2.0" },
+    { name = "pgvector", specifier = ">=0.4" },
+    { name = "prompt-template", specifier = ">=1.2" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
     { name = "sentence-transformers", extras = ["onnx"], specifier = ">=3.4.1" },
-    { name = "shared-utils", virtual = "packages/shared_utils" },
+    { name = "shared-utils", editable = "packages/shared_utils" },
     { name = "spacy", specifier = ">=3.8.4" },
     { name = "torch", specifier = ">=2.2.2" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.34.0" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
 [[package]]
@@ -1286,11 +1286,11 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "azure-ai-documentintelligence", specifier = ">=1.0.1" },
-    { name = "crawl4ai", specifier = ">=0.6.0" },
-    { name = "db", virtual = "packages/db" },
+    { name = "crawl4ai", specifier = ">=0.6" },
+    { name = "db", editable = "packages/db" },
     { name = "kreuzberg", specifier = ">=2.1.2" },
     { name = "semantic-text-splitter", specifier = ">=0.24.2" },
-    { name = "shared-utils", virtual = "packages/shared_utils" },
+    { name = "shared-utils", editable = "packages/shared_utils" },
 ]
 
 [[package]]
@@ -2884,9 +2884,10 @@ wheels = [
 [[package]]
 name = "shared-utils"
 version = "0.1.0"
-source = { virtual = "packages/shared_utils" }
+source = { editable = "packages/shared_utils" }
 dependencies = [
     { name = "anyio" },
+    { name = "litestar" },
     { name = "msgspec" },
     { name = "structlog" },
     { name = "tenacity" },
@@ -2894,10 +2895,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anyio", specifier = ">=4.9.0" },
-    { name = "msgspec", specifier = ">=0.19.0" },
-    { name = "structlog", specifier = ">=25.2.0" },
-    { name = "tenacity", specifier = ">=9.0.0" },
+    { name = "anyio", specifier = ">=4.9" },
+    { name = "litestar", specifier = ">=2.15.1" },
+    { name = "msgspec", specifier = ">=0.19" },
+    { name = "structlog", specifier = ">=25.2" },
+    { name = "tenacity", specifier = ">=9" },
 ]
 
 [[package]]

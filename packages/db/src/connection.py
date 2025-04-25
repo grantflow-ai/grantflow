@@ -1,8 +1,9 @@
 from typing import Any
 
-from shared_utils.src.env import get_env
-from shared_utils.src.ref import Ref
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+
+from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.ref import Ref
 
 session_maker_ref = Ref[async_sessionmaker[Any]]()
 engine_ref = Ref[AsyncEngine]()

@@ -1,20 +1,19 @@
 from typing import cast
 from uuid import UUID
 
-from shared_utils.src.logger import get_logger
+from packages.db.src.connection import get_session_maker
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+from packages.db.src.tables import FundingOrganization, GrantTemplate
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.common_types import MessageHandler
+from services.backend.src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
+from services.backend.src.rag.grant_template.determine_application_sections import handle_extract_sections
+from services.backend.src.rag.grant_template.determine_longform_metadata import handle_generate_grant_template
+from services.backend.src.rag.grant_template.extract_cfp_data import Content, handle_extract_cfp_data
+from services.backend.src.utils.text import concat_extracted_cfp_content
 from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
-
-from db.src.connection import get_session_maker
-from db.src.json_objects import GrantElement, GrantLongFormSection
-from db.src.tables import FundingOrganization, GrantTemplate
-from src.common_types import MessageHandler
-from src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
-from src.exceptions import BackendError, DatabaseError
-from src.rag.grant_template.determine_application_sections import handle_extract_sections
-from src.rag.grant_template.determine_longform_metadata import handle_generate_grant_template
-from src.rag.grant_template.extract_cfp_data import Content, handle_extract_cfp_data
-from src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
 

@@ -1,16 +1,15 @@
 from functools import partial
 from typing import Final, NotRequired, TypedDict
 
-from shared_utils.src.logger import get_logger
-
-from db.src.tables import FundingOrganization
-from src.exceptions import InsufficientContextError, ValidationError
-from src.rag.completion import handle_completions_request
-from src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
-from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
-from src.rag.retrieval import retrieve_documents
-from src.rag.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
-from src.utils.prompt_template import PromptTemplate
+from packages.db.src.tables import FundingOrganization
+from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.rag.completion import handle_completions_request
+from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
+from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.backend.src.rag.retrieval import retrieve_documents
+from services.backend.src.rag.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
+from services.backend.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 

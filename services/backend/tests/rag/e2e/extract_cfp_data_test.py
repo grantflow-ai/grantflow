@@ -4,9 +4,9 @@ from datetime import UTC, datetime
 from os import environ
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.shared_utils.src.serialization import serialize
+from services.backend.src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
 
-from src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
 from tests.test_utils import FIXTURES_FOLDER, RESULTS_FOLDER
 
 

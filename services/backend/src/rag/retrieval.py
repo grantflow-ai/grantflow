@@ -1,17 +1,16 @@
 from typing import Any, Final, TypedDict, cast
 
-from shared_utils.src.logger import get_logger
+from packages.db.src.connection import get_session_maker
+from packages.db.src.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
+from services.backend.src.rag.completion import handle_completions_request
+from services.backend.src.rag.dto import DocumentDTO
+from services.backend.src.rag.post_processing import post_process_documents
+from services.backend.src.rag.search_queries import handle_create_search_queries
+from services.backend.src.utils.embeddings import generate_embeddings
+from services.backend.src.utils.prompt_template import PromptTemplate
 from sqlalchemy import func, or_, select
-
-from db.src.connection import get_session_maker
-from db.src.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
-from src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
-from src.rag.completion import handle_completions_request
-from src.rag.dto import DocumentDTO
-from src.rag.post_processing import post_process_documents
-from src.rag.search_queries import handle_create_search_queries
-from src.utils.embeddings import generate_embeddings
-from src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 

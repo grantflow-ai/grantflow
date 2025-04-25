@@ -3,10 +3,10 @@ from datetime import UTC, datetime
 from os import environ
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.db.src.tables import FundingOrganization
+from packages.shared_utils.src.serialization import serialize
+from services.backend.src.rag.grant_template.determine_application_sections import handle_extract_sections
 
-from db.src.tables import FundingOrganization
-from src.rag.grant_template.determine_application_sections import handle_extract_sections
 from tests.rag.e2e.utils import get_extracted_section_data
 from tests.test_utils import RESULTS_FOLDER
 

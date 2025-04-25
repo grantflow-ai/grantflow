@@ -1,24 +1,23 @@
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
+from packages.db.src.tables import FundingOrganization
+from packages.shared_utils.ref import Ref
+from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
+from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.sync import run_sync
 from sentence_transformers import SentenceTransformer, util
-from shared_utils.src.logger import get_logger
-from shared_utils.src.ref import Ref
-from shared_utils.src.sync import run_sync
-
-from db.src.tables import FundingOrganization
-from src.constants import ANTHROPIC_SONNET_MODEL
-from src.exceptions import InsufficientContextError, ValidationError
-from src.patterns import SNAKE_CASE_PATTERN
-from src.rag.completion import handle_completions_request
-from src.rag.grant_template.extract_cfp_data import Content
-from src.rag.grant_template.utils import detect_cycle
-from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
-from src.rag.retrieval import retrieve_documents
-from src.rag.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
-from src.utils.embeddings import get_embedding_model
-from src.utils.prompt_template import PromptTemplate
-from src.utils.text import concat_extracted_cfp_content
+from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
+from services.backend.src.patterns import SNAKE_CASE_PATTERN
+from services.backend.src.rag.completion import handle_completions_request
+from services.backend.src.rag.grant_template.extract_cfp_data import Content
+from services.backend.src.rag.grant_template.utils import detect_cycle
+from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.backend.src.rag.retrieval import retrieve_documents
+from services.backend.src.rag.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
+from services.backend.src.utils.embeddings import get_embedding_model
+from services.backend.src.utils.prompt_template import PromptTemplate
+from services.backend.src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
 ref = Ref[SentenceTransformer]()

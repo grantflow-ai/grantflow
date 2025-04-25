@@ -1,9 +1,8 @@
 from typing import cast
 
 import pytest
-
-from src.exceptions import InsufficientContextError, ValidationError
-from src.rag.grant_template.determine_application_sections import (
+from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
+from services.backend.src.rag.grant_template.determine_application_sections import (
     ExtractedSectionDTO,
     ExtractedSections,
     validate_section_extraction,

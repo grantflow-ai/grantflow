@@ -102,29 +102,26 @@ exclude_lines = [ 'if TYPE_CHECKING:' ]
 fail_under = 80
 
 [tool.mypy]
-packages = [
-  "services/backend/src",
-  "services/backend/tests",
-  "services/indexer/src",
-  "services/indexer/tests",
-  "packages/db/src",
-  "packages/db/tests",
-  "packages/shared_utils/src",
-  "packages/shared_utils/tests",
-]
 python_version = "3.12"
 disable_error_code = 'import-untyped'
 implicit_reexport = false
 show_error_codes = true
 strict = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = [ "." ]
+
+[[tool.mypy.overrides]]
+module = "packages.*"
+implicit_reexport = true
 
 [tool.uv.workspace]
 members = [
-  "services/backend",
-  "services/indexer",
-  "packages/db",
-  "packages/shared_utils",
+  "services/*",
+  "packages/*",
 ]
 
 [tool.uv.sources]
 uv-bump = { git = "https://github.com/zundertj/uv-bump" }
+shared-utils = { workspace = true }
+db = { workspace = true }

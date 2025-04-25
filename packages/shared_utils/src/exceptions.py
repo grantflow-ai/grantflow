@@ -11,7 +11,7 @@ class BackendError(Exception):
         super().__init__(message)
 
     def __str__(self) -> str:
-        from shared_utils.src.serialization import serialize
+        from packages.shared_utils.src.serialization import serialize
 
         ctx = f"\n\nContext: {serialize(self.context).decode()}" if self.context else ""
 

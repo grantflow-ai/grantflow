@@ -2,18 +2,18 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
-from db.src.tables import GrantApplication, GrantTemplate
-from src.dto import WebsocketErrorMessage
-from src.exceptions import BackendError, ValidationError
-from src.rag.grant_application.handler import (
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
+from packages.db.src.tables import GrantApplication, GrantTemplate
+from packages.shared_utils.src.exceptions import BackendError, ValidationError
+from services.backend.src.dto import WebsocketErrorMessage
+from services.backend.src.rag.grant_application.handler import (
     generate_grant_section_texts,
     generate_work_plan_text,
     grant_application_text_generation_pipeline_handler,
 )
-from src.rag.grant_application.utils import is_grant_long_form_section
+from services.backend.src.rag.grant_application.utils import is_grant_long_form_section
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from tests.factories import (
     GrantApplicationFactory,
     WorkspaceFactory,

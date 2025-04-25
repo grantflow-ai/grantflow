@@ -2,10 +2,9 @@ from datetime import timedelta
 from typing import TypedDict
 
 from litestar import get, post
-from shared_utils.src.firebase import verify_id_token
-from shared_utils.src.logger import get_logger
-
-from src.utils.jwt import create_jwt
+from packages.shared_utils.src.firebase import verify_id_token
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.utils.jwt import create_jwt
 
 logger = get_logger(__name__)
 

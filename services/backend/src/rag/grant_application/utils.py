@@ -1,8 +1,8 @@
 from typing import TypedDict, TypeGuard
 
-from db.src.json_objects import GrantElement, GrantLongFormSection
-from src.exceptions import ValidationError
-from src.rag.grant_template.utils import detect_cycle
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+from packages.shared_utils.src.exceptions import ValidationError
+from services.backend.src.rag.grant_template.utils import detect_cycle
 
 
 def is_grant_long_form_section(section: GrantElement | GrantLongFormSection) -> TypeGuard[GrantLongFormSection]:

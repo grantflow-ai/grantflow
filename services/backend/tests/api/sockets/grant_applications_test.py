@@ -9,11 +9,8 @@ import pytest
 from litestar.datastructures import UploadFile
 from litestar.exceptions import ValidationException, WebSocketDisconnect
 from litestar.testing import TestClient
-from sqlalchemy import insert, select
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum
-from db.src.tables import (
+from packages.db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum
+from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
@@ -22,8 +19,8 @@ from db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
-from src.api.main import app
-from src.api.sockets.grant_applications import (
+from services.backend.src.api.main import app
+from services.backend.src.api.sockets.grant_applications import (
     EVENT_APPLICATION_CANCELLED,
     EVENT_APPLICATION_CREATED,
     EVENT_APPLICATION_SETUP,
@@ -47,7 +44,9 @@ from src.api.sockets.grant_applications import (
     TemplateReviewInput,
     prepare_wizard_response,
 )
-from src.dto import WebsocketDataMessage
+from services.backend.src.dto import WebsocketDataMessage
+from sqlalchemy import insert, select
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 @pytest.fixture
@@ -164,7 +163,7 @@ async def test_grant_application_websocket_create_application_unauthorized_error
 
 
 async def test_get_cfp_content_validation_error() -> None:
-    from src.api.sockets.grant_applications import get_cfp_content
+    from services.backend.src.api.sockets.grant_applications import get_cfp_content
 
     with pytest.raises(ValidationException) as exc_info:
         await get_cfp_content(None, None)
@@ -743,8 +742,7 @@ async def test_store_wizard_state(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     from litestar.stores.valkey import ValkeyStore
-
-    from src.api.sockets.grant_applications import store_wizard_state
+    from services.backend.src.api.sockets.grant_applications import store_wizard_state
 
     mock_store = AsyncMock(spec=ValkeyStore)
     mock_store.get.return_value = None
@@ -755,7 +753,7 @@ async def test_store_wizard_state(
 
     mock_store.set.assert_called_once()
 
-    from shared_utils.src.serialization import serialize
+    from packages.shared_utils.src.serialization import serialize
 
     mock_store.get.return_value = serialize([EVENT_APPLICATION_SETUP])
 

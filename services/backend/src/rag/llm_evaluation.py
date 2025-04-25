@@ -4,12 +4,11 @@ from json import dumps
 from textwrap import dedent
 from typing import Any, Final, TypedDict, cast
 
-from shared_utils.src.logger import get_logger
-
-from src.constants import EVALUATION_MODEL
-from src.exceptions import EvaluationError
-from src.rag.completion import make_google_completions_request
-from src.utils.prompt_template import PromptTemplate
+from packages.shared_utils.src.exceptions import EvaluationError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.constants import EVALUATION_MODEL
+from services.backend.src.rag.completion import make_google_completions_request
+from services.backend.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 

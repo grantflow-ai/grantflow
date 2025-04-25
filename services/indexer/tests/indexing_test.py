@@ -1,4 +1,5 @@
-from src.indexer.indexing import create_vector_dto
+from services.indexer.src.indexing import create_vector_dto
+
 from tests.indexer.factories import ChunkFactory
 
 

@@ -4,17 +4,17 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from db.src.enums import FileIndexingStatusEnum
-from db.src.tables import (
+from packages.db.src.enums import FileIndexingStatusEnum
+from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationFile,
     RagFile,
     Workspace,
 )
+from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from tests.conftest import TestingClientType
 
 

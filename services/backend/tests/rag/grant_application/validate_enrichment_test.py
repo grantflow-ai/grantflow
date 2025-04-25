@@ -1,10 +1,9 @@
 from typing import Any
 
 import pytest
-
-from db.src.json_objects import ResearchObjective
-from src.exceptions import ValidationError
-from src.rag.grant_application.enrich_research_objective import (
+from packages.db.src.json_objects import ResearchObjective
+from packages.shared_utils.src.exceptions import ValidationError
+from services.backend.src.rag.grant_application.enrich_research_objective import (
     EnrichmentDataDTO,
     ObjectiveEnrichmentDTO,
     validate_enrichment_response,

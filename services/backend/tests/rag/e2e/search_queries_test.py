@@ -3,9 +3,9 @@ from os import environ
 
 import pytest
 from anyio import Path
-from shared_utils.src.serialization import serialize
+from packages.shared_utils.src.serialization import serialize
+from services.backend.src.rag.search_queries import handle_create_search_queries
 
-from src.rag.search_queries import handle_create_search_queries
 from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 

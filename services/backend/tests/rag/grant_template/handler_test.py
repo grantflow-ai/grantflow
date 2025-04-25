@@ -3,20 +3,20 @@ from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from db.src.json_objects import ResearchObjective, ResearchTask
-from db.src.tables import FundingOrganization, GrantApplication, GrantTemplate
-from src.common_types import MessageHandler
-from src.exceptions import BackendError
-from src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
-from src.rag.grant_template.determine_longform_metadata import SectionMetadata
-from src.rag.grant_template.extract_cfp_data import Content
-from src.rag.grant_template.handler import (
+from packages.db.src.json_objects import ResearchObjective, ResearchTask
+from packages.db.src.tables import FundingOrganization, GrantApplication, GrantTemplate
+from packages.shared_utils.src.exceptions import BackendError
+from services.backend.src.common_types import MessageHandler
+from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
+from services.backend.src.rag.grant_template.determine_longform_metadata import SectionMetadata
+from services.backend.src.rag.grant_template.extract_cfp_data import Content
+from services.backend.src.rag.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from tests.factories import CfpContentFactory, ExtractedSectionDTOFactory, GrantApplicationFactory
 from tests.test_utils import FIXTURES_FOLDER
 

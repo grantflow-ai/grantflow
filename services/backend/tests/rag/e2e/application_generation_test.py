@@ -5,10 +5,10 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.shared_utils.src.serialization import serialize
+from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from tests.test_utils import RESULTS_FOLDER
 
 

@@ -4,12 +4,10 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from anthropic.types import ToolUseBlock
 from google.cloud.exceptions import TooManyRequests
+from packages.shared_utils.src.exceptions import ValidationError
 from pytest_mock import MockerFixture
-from vertexai.generative_models import Part
-
-from src.constants import ANTHROPIC_SONNET_MODEL
-from src.exceptions import ValidationError
-from src.rag.completion import (
+from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
+from services.backend.src.rag.completion import (
     BestResponseSelection,
     handle_completions_request,
     make_anthropic_completions_request,
@@ -17,6 +15,7 @@ from src.rag.completion import (
     select_best_response,
     validate_select_best_response,
 )
+from vertexai.generative_models import Part
 
 
 @pytest.fixture
@@ -216,7 +215,7 @@ async def test_handle_completions_request_deserialization_error(mock_google_api_
     mock_google_api_response.text = "invalid json"
     response_schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
 
-    from src.exceptions import RagError
+    from packages.shared_utils.src.exceptions import RagError
 
     with pytest.raises(RagError, match="Failed to generate text after 3 attempts"):
         await handle_completions_request(

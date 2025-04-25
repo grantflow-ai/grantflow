@@ -1,11 +1,10 @@
 from unittest.mock import MagicMock, Mock
 
 import pytest
+from packages.db.src.tables import OrganizationFile, TextVector
+from packages.shared_utils.src.exceptions import EvaluationError
 from pytest_mock import MockFixture
-
-from db.src.tables import OrganizationFile, TextVector
-from src.exceptions import EvaluationError
-from src.rag.retrieval import (
+from services.backend.src.rag.retrieval import (
     handle_retrieval,
     retrieve_documents,
 )

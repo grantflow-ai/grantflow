@@ -1,7 +1,7 @@
 from typing import final
 
+from packages.shared_utils.src.serialization import serialize
 from prompt_template import PromptTemplate as BasePromptTemplate
-from shared_utils.src.serialization import serialize
 
 
 @final

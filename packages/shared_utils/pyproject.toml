@@ -1,3 +1,8 @@
+[build-system]
+build-backend = "hatchling.build"
+
+requires = [ "hatchling" ]
+
 [project]
 name = "shared-utils"
 version = "0.1.0"
@@ -7,9 +12,17 @@ license = { text = "UNLICENSED" }
 authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
 requires-python = "==3.12.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
+
 dependencies = [
   "anyio>=4.9",
+  "litestar>=2.15.1",
   "msgspec>=0.19",
   "structlog>=25.2",
   "tenacity>=9",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src" ]
+
+[tool.hatch.build.targets.sdist]
+packages = [ "src" ]
