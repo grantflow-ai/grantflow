@@ -7,7 +7,6 @@ from packages.shared_utils.src.exceptions import (
     FileParsingError,
     ValidationError,
 )
-from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.serialization import serialize
 from services.indexer.src.chunking import chunk_text
 from services.indexer.src.extraction import (
@@ -20,16 +19,18 @@ from sqlalchemy.exc import SQLAlchemyError
 
 async def parse_and_index_file(
     *,
-    file_dto: FileDTO,
+    content: bytes,
     file_id: str,
+    filename: str,
+    mime_type: str,
 ) -> None:
     session_maker = get_session_maker()
     try:
         extracted_text, mime_type = await extract_file_content(
-            content=file_dto.content,
-            mime_type=file_dto.mime_type,
+            content=content,
+            mime_type=mime_type,
         )
-        logger.info("Extracted text from file", filename=file_dto.filename)
+        logger.info("Extracted text from file", filename=filename)
         chunks = chunk_text(text=extracted_text, mime_type=mime_type)
         vectors = await index_documents(
             chunks=chunks,
@@ -42,7 +43,7 @@ async def parse_and_index_file(
             )
             await session.commit()
 
-        logger.error("Failed to parse file", filename=file_dto.filename, exec_info=e)
+        logger.error("Failed to parse file", filename=filename, exec_info=e)
     else:
         async with session_maker() as session, session.begin():
             try:
@@ -60,12 +61,12 @@ async def parse_and_index_file(
                     )
                 )
                 await session.commit()
-                logger.info("Successfully indexed file", filename=file_dto.filename)
+                logger.info("Successfully indexed file", filename=filename)
             except SQLAlchemyError as e:
                 logger.error(
                     "Error inserting vectors.",
                     exec_info=e,
-                    filename=file_dto.filename,
+                    filename=filename,
                 )
                 await session.rollback()
                 raise DatabaseError("Error inserting vectors", context=str(e)) from e

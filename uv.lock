@@ -882,6 +882,22 @@ wheels = [
 ]
 
 [[package]]
+name = "google-cloud-eventarc"
+version = "1.15.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "grpc-google-iam-v1" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5d/25/f38c5deef3ee3f1dbc8c0f5603c5df937cd5e3690cc24ae1c36835dddf30/google_cloud_eventarc-1.15.2.tar.gz", hash = "sha256:5b8dabfcbdc04bacc71e4176ba7538f936255ed3b723e9aa0cbb38b6f9123526", size = 176480, upload_time = "2025-03-17T11:32:20.8Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/e4/8dd66f13bc6dd060c1af1b3e8563afa2e8a642738b5de40cbd9708f86bf6/google_cloud_eventarc-1.15.2-py3-none-any.whl", hash = "sha256:c12e97fc72af2958e79493e51ee1f60b1b66640ffa6744d054504354b6446e61", size = 132404, upload_time = "2025-03-17T11:32:19.51Z" },
+]
+
+[[package]]
 name = "google-cloud-firestore"
 version = "2.20.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1276,6 +1292,8 @@ dependencies = [
     { name = "azure-ai-documentintelligence" },
     { name = "crawl4ai" },
     { name = "db" },
+    { name = "google-cloud-eventarc" },
+    { name = "google-cloud-storage" },
     { name = "kreuzberg" },
     { name = "semantic-text-splitter" },
     { name = "shared-utils" },
@@ -1286,6 +1304,8 @@ requires-dist = [
     { name = "azure-ai-documentintelligence", specifier = ">=1.0.1" },
     { name = "crawl4ai", specifier = ">=0.6" },
     { name = "db", editable = "packages/db" },
+    { name = "google-cloud-eventarc", specifier = ">=1.15.2" },
+    { name = "google-cloud-storage", extras = ["async"], specifier = ">=2.19" },
     { name = "kreuzberg", specifier = ">=2.1.2" },
     { name = "semantic-text-splitter", specifier = ">=0.24.2" },
     { name = "shared-utils", editable = "packages/shared_utils" },

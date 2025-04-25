@@ -8,19 +8,15 @@ from services.backend.src.dto import WebsocketDataMessage, WebsocketErrorMessage
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
+class TableIdResponse(TypedDict):
+    id: str
+
+
 class APIRequestState(State):
     session_maker: async_sessionmaker[Any]
 
 
 APIRequest = Request[UserRoleEnum | None, str | None, APIRequestState]
-
-
 APIWebsocket = WebSocket[UserRoleEnum | None, str | None, APIRequestState]
-
-
-class TableIdResponse(TypedDict):
-    id: str
-
-
 WebsocketMessage = WebsocketInfoMessage | WebsocketErrorMessage | WebsocketDataMessage
 MessageHandler = Callable[[WebsocketMessage], Coroutine[None, None, None]]
