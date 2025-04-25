@@ -4,13 +4,12 @@ from litestar import Request
 from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
-from shared_utils.src.env import get_env
-from shared_utils.src.logger import get_logger
+from packages.db.src.tables import WorkspaceUser
+from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.common_types import APIRequestState
+from services.backend.src.utils.jwt import verify_jwt_token
 from sqlalchemy import select
-
-from db.src.tables import WorkspaceUser
-from src.common_types import APIRequestState
-from src.utils.jwt import verify_jwt_token
 
 logger = get_logger(__name__)
 

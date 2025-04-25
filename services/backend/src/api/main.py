@@ -13,51 +13,50 @@ from litestar.logging import StructLoggingConfig
 from litestar.response import Response
 from litestar.stores.registry import StoreRegistry
 from litestar.stores.valkey import ValkeyStore
-from shared_utils.src.env import get_env
-from shared_utils.src.logger import get_logger
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-
-from db.src.connection import get_session_maker
-from src.api.http.application_files import (
+from packages.db.src.connection import get_session_maker
+from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.exceptions import BackendError, DeserializationError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.api.http.application_files import (
     handle_application_file_uploads,
     handle_delete_application_file,
     retrieve_application_files,
 )
-from src.api.http.auth import handle_create_otp, handle_login
-from src.api.http.funding_organizations import (
+from services.backend.src.api.http.auth import handle_create_otp, handle_login
+from services.backend.src.api.http.funding_organizations import (
     handle_create_organization,
     handle_delete_organization,
     handle_retrieve_organizations,
     handle_update_organization,
 )
-from src.api.http.grant_applications import (
+from services.backend.src.api.http.grant_applications import (
     handle_delete_application,
     handle_update_application,
 )
-from src.api.http.health import health_check
-from src.api.http.organization_files import (
+from services.backend.src.api.http.health import health_check
+from services.backend.src.api.http.organization_files import (
     handle_delete_organization_file,
     handle_organization_file_uploads,
     retrieve_organization_files,
 )
-from src.api.http.workspaces import (
+from services.backend.src.api.http.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
-from src.api.middleware import AuthMiddleware
-from src.api.sockets.grant_applications import handle_application_websocket
-from src.common_types import APIRequest
-from src.dto import APIError
-from src.exceptions import BackendError, DeserializationError
-from src.indexer.files import parse_and_index_file
-from src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
-from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from src.utils.ai import init_llm_connection
-from src.utils.firebase import get_firebase_app
+from services.backend.src.api.middleware import AuthMiddleware
+from services.backend.src.api.sockets.grant_applications import handle_application_websocket
+from services.backend.src.common_types import APIRequest
+from services.backend.src.dto import APIError
+from services.backend.src.indexer.files import parse_and_index_file
+from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
+from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
+from services.backend.src.utils.ai import init_llm_connection
+from services.backend.src.utils.firebase import get_firebase_app
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 logger = get_logger(__name__)
 

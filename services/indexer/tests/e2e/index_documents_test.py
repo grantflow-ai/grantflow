@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from shared_utils.src.serialization import serialize
+from packages.db.src.tables import GrantApplication, GrantApplicationFile
+from packages.shared_utils.src.serialization import serialize
+from services.indexer.src.chunking import chunk_text
+from services.indexer.src.indexing import index_documents
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from db.src.tables import GrantApplication, GrantApplicationFile
-from src.indexer.chunking import chunk_text
-from src.indexer.indexing import index_documents
 from tests.test_utils import RESULTS_FOLDER, TEST_DATA_SOURCES
 
 if TYPE_CHECKING:

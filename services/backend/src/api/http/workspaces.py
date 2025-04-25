@@ -2,17 +2,16 @@ from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
 from litestar import delete, get, patch, post
-from shared_utils.src.logger import get_logger
+from packages.db.src.enums import UserRoleEnum
+from packages.db.src.tables import Workspace, WorkspaceUser
+from packages.shared_utils.src.exceptions import DatabaseError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.common_types import APIRequest, TableIdResponse
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
-
-from db.src.enums import UserRoleEnum
-from db.src.tables import Workspace, WorkspaceUser
-from src.common_types import APIRequest, TableIdResponse
-from src.exceptions import DatabaseError
 
 logger = get_logger(__name__)
 

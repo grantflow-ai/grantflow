@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Literal, NotRequired, TypedDict
 
-from db.src.json_objects import Chunk
+from packages.db.src.json_objects import Chunk
 
 
 class APIError(TypedDict):

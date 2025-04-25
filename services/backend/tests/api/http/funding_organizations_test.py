@@ -3,15 +3,15 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
+from packages.db.src.tables import FundingOrganization
 from sqlalchemy import delete, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from db.src.tables import FundingOrganization
 from tests.conftest import TestingClientType
 
 if TYPE_CHECKING:
-    from src.api.http.funding_organizations import CreateOrganizationRequestBody
+    from services.backend.src.api.http.funding_organizations import CreateOrganizationRequestBody
 
 
 async def test_create_organization_api_request_success(

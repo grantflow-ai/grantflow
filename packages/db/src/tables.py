@@ -21,9 +21,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Relationship, class_mapper, 
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.functions import now
 
-from src.constants import EMBEDDING_DIMENSIONS
-from src.db.enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
-from src.db.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
+from .constants import EMBEDDING_DIMENSIONS
+from .enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
+from .json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
 
 
 class Base(DeclarativeBase):

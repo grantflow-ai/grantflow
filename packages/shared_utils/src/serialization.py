@@ -8,7 +8,7 @@ from msgspec import MsgspecError
 from msgspec.json import decode, encode
 from pydantic import BaseModel
 
-from src.exceptions import DeserializationError, SerializationError
+from packages.shared_utils.src.exceptions import DeserializationError, SerializationError
 
 
 def decode_hook(target: Any, value: dict[str, Any]) -> Any:

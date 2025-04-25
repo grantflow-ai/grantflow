@@ -6,9 +6,8 @@ import pytest
 from litestar.app import Litestar
 from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
-
-from db.src.enums import UserRoleEnum
-from src.api.middleware import ADMIN_PATHS, PUBLIC_PATHS, AuthMiddleware
+from packages.db.src.enums import UserRoleEnum
+from services.backend.src.api.middleware import ADMIN_PATHS, PUBLIC_PATHS, AuthMiddleware
 
 if TYPE_CHECKING:
     from litestar.middleware import AuthenticationResult

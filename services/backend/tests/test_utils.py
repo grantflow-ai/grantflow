@@ -5,15 +5,9 @@ from typing import Any, Final
 from unittest.mock import AsyncMock
 
 from anyio import Path as AsyncPath
-from shared_utils.src.serialization import deserialize, serialize
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
-
-from db.src.enums import FileIndexingStatusEnum
-from db.src.json_objects import ResearchObjective
-from db.src.tables import (
+from packages.db.src.enums import FileIndexingStatusEnum
+from packages.db.src.json_objects import ResearchObjective
+from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
@@ -23,10 +17,15 @@ from db.src.tables import (
     TextVector,
     Workspace,
 )
-from src.files import FileDTO
-from src.indexer.files import parse_and_index_file
-from src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from src.utils.extraction import extract_file_content
+from packages.shared_utils.src.serialization import deserialize, serialize
+from services.backend.src.files import FileDTO
+from services.backend.src.indexer.files import parse_and_index_file
+from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
+from services.backend.src.utils.extraction import extract_file_content
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 
 def _file_path_generator(folder: Path) -> Generator[Path, None, None]:

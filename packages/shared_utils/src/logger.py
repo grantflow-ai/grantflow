@@ -1,10 +1,11 @@
 import logging
 from typing import cast
 
-from shared_utils.src.env import get_env
-from shared_utils.src.ref import Ref
-from shared_utils.src.serialization import serialize
 from structlog.typing import FilteringBoundLogger
+
+from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.ref import Ref
+from packages.shared_utils.src.serialization import serialize
 
 configured_ref = Ref[bool]()
 

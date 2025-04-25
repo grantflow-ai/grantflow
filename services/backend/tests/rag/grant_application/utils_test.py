@@ -1,10 +1,9 @@
 from typing import cast
 
 import pytest
-
-from db.src.json_objects import GrantElement, GrantLongFormSection
-from src.exceptions import ValidationError
-from src.rag.grant_application.utils import (
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+from packages.shared_utils.src.exceptions import ValidationError
+from services.backend.src.rag.grant_application.utils import (
     TreeNode,
     create_dependencies_text,
     create_generation_groups,
@@ -12,6 +11,7 @@ from src.rag.grant_application.utils import (
     generate_application_text,
     map_to_tree,
 )
+
 from tests.factories import GrantSectionFactory
 
 SAMPLE_TEXTS = {

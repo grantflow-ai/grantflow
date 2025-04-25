@@ -1,6 +1,6 @@
 from typing import Final
 
-from shared_utils.src.env import get_env
+from packages.shared_utils.src.env import get_env
 
 CONTENT_TYPE_JSON: Final[str] = "application/json"
 CONTENT_TYPE_TEXT: Final[str] = "text/plain"

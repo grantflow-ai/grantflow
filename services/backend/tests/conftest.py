@@ -14,19 +14,10 @@ from dotenv import load_dotenv
 from faker import Faker
 from litestar import Litestar
 from litestar.testing import AsyncTestClient
-from pytest_asyncio import is_async_test
-from pytest_mock import MockerFixture
-from scripts.seed_db import seed_db
-from sqlalchemy import NullPool, select
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from structlog import configure
-from structlog.testing import LogCapture
-from vertexai.generative_models import GenerativeModel
-
-from db.src.connection import engine_ref, get_session_maker
-from db.src.enums import UserRoleEnum
-from db.src.json_objects import ResearchObjective, ResearchTask
-from db.src.tables import (
+from packages.db.src.connection import engine_ref, get_session_maker
+from packages.db.src.enums import UserRoleEnum
+from packages.db.src.json_objects import ResearchObjective, ResearchTask
+from packages.db.src.tables import (
     Base,
     FundingOrganization,
     GrantApplication,
@@ -36,9 +27,18 @@ from db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
-from src.utils.ai import init_ref
-from src.utils.firebase import firebase_app_ref
-from src.utils.jwt import create_jwt
+from pytest_asyncio import is_async_test
+from pytest_mock import MockerFixture
+from scripts.seed_db import seed_db
+from services.backend.src.utils.ai import init_ref
+from services.backend.src.utils.firebase import firebase_app_ref
+from services.backend.src.utils.jwt import create_jwt
+from sqlalchemy import NullPool, select
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from structlog import configure
+from structlog.testing import LogCapture
+from vertexai.generative_models import GenerativeModel
+
 from tests.factories import (
     FileFactory,
     FundingOrganizationFactory,
@@ -137,7 +137,7 @@ async def test_client(
         patch("src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),
         patch("firebase_admin.initialize_app", return_value=Mock()),
     ):
-        from src.api.main import app
+        from services.backend.src.api.main import app
 
         # this is usually happening in the `before_server_start` hook, which we are patching above ~keep
         app.state.session_maker = async_session_maker

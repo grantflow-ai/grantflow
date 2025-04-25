@@ -3,12 +3,11 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from shared_utils.src.serialization import deserialize
+from packages.db.src.connection import get_session_maker
+from packages.db.src.tables import FundingOrganization
+from packages.shared_utils.src.serialization import deserialize
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.exc import SQLAlchemyError
-
-from db.src.connection import get_session_maker
-from db.src.tables import FundingOrganization
 
 
 async def seed_db() -> None:

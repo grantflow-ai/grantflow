@@ -3,9 +3,9 @@ from functools import lru_cache
 from re import compile as re_compile
 from typing import Final
 
-from src.constants import ANTHROPIC_SONNET_MODEL
-from src.utils.ai import get_google_ai_client
-from src.utils.nlp import get_spacy_model, get_word_count
+from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
+from services.backend.src.utils.ai import get_google_ai_client
+from services.backend.src.utils.nlp import get_spacy_model, get_word_count
 
 
 def count_words(text: str) -> int:

@@ -1,6 +1,6 @@
 from typing import Final
 
-from src.utils.prompt_template import PromptTemplate
+from services.backend.src.utils.prompt_template import PromptTemplate
 
 ORGANIZATION_GUIDELINES_FRAGMENT: Final[PromptTemplate] = PromptTemplate(
     name="organization_fragment",

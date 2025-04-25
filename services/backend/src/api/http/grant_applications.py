@@ -4,19 +4,18 @@ from uuid import UUID
 from litestar import delete, patch
 from litestar.datastructures import UploadFile
 from litestar.exceptions import ValidationException
-from shared_utils.src.logger import get_logger
+from packages.db.src.enums import UserRoleEnum
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
+from packages.db.src.tables import GrantApplication
+from packages.shared_utils.src.exceptions import DatabaseError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.api.http.funding_organizations import FundingOrganizationResponse
+from services.backend.src.common_types import TableIdResponse
+from services.backend.src.utils.db import retrieve_application
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from db.src.enums import UserRoleEnum
-from db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
-from db.src.tables import GrantApplication
-from src.api.http.funding_organizations import FundingOrganizationResponse
-from src.common_types import TableIdResponse
-from src.exceptions import DatabaseError
-from src.utils.db import retrieve_application
 
 logger = get_logger(__name__)
 

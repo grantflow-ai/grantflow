@@ -1,12 +1,11 @@
 from typing import Any, Final, NotRequired, TypedDict
 
-from shared_utils.src.logger import get_logger
-
-from src.constants import REASONING_MODEL
-from src.exceptions import InsufficientContextError, ValidationError
-from src.rag.completion import handle_completions_request
-from src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
-from src.utils.prompt_template import PromptTemplate
+from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
+from packages.shared_utils.src.logger import get_logger
+from services.backend.src.constants import REASONING_MODEL
+from services.backend.src.rag.completion import handle_completions_request
+from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.backend.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 

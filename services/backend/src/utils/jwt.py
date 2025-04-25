@@ -4,8 +4,8 @@ from typing import cast
 
 from jwt import InvalidTokenError
 from litestar.exceptions import NotAuthorizedException
-from shared_utils.src.env import get_env
-from shared_utils.src.logger import get_logger
+from packages.shared_utils.env import get_env
+from packages.shared_utils.src.logger import get_logger
 
 logger = get_logger(__name__)
 

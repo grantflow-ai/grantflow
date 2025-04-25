@@ -1,7 +1,6 @@
-from packages.db.src.constants import EMBEDDING_DIMENSIONS
 from pytest_mock import MockerFixture
-
-from src.utils.embeddings import embedding_model_ref, generate_embeddings
+from services.backend.src.tables import EMBEDDING_DIMENSIONS
+from services.backend.src.utils.embeddings import embedding_model_ref, generate_embeddings
 
 
 async def test_generate_embeddings(mocker: MockerFixture) -> None:

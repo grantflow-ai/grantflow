@@ -2,14 +2,8 @@ from typing import Any, TypedDict, cast
 
 from faker import Faker
 from numpy.random import default_rng
-from packages.db.src.constants import EMBEDDING_DIMENSIONS
-from pgvector.utils import Vector
-from polyfactory.factories import TypedDictFactory
-from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
-from sqlalchemy import Column
-
-from db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
-from db.src.tables import (
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
+from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
@@ -20,19 +14,28 @@ from db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
-from src.api.http.auth import LoginRequestBody, LoginResponse, OTPResponse
-from src.api.http.funding_organizations import CreateOrganizationRequestBody
-from src.api.http.grant_applications import (
+from pgvector.utils import Vector
+from polyfactory.factories import TypedDictFactory
+from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
+from services.backend.src.api.http.auth import LoginRequestBody, LoginResponse, OTPResponse
+from services.backend.src.api.http.funding_organizations import CreateOrganizationRequestBody
+from services.backend.src.api.http.grant_applications import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
     CreateApplicationRequestBody,
     UpdateApplicationRequestBody,
 )
-from src.api.http.workspaces import CreateWorkspaceRequestBody, UpdateWorkspaceRequestBody, WorkspaceBaseResponse
-from src.common_types import TableIdResponse
-from src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
-from src.rag.grant_template.determine_longform_metadata import SectionMetadata
-from src.rag.grant_template.extract_cfp_data import Content
+from services.backend.src.api.http.workspaces import (
+    CreateWorkspaceRequestBody,
+    UpdateWorkspaceRequestBody,
+    WorkspaceBaseResponse,
+)
+from services.backend.src.common_types import TableIdResponse
+from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
+from services.backend.src.rag.grant_template.determine_longform_metadata import SectionMetadata
+from services.backend.src.rag.grant_template.extract_cfp_data import Content
+from services.backend.src.tables import EMBEDDING_DIMENSIONS
+from sqlalchemy import Column
 
 faker = Faker()
 rng = default_rng()
