@@ -8,7 +8,7 @@
       <env name="E2E_TESTS" value="true" />
     </envs>
     <option name="SDK_HOME" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend/tests/rag/e2e" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/services/backend/tests/rag/e2e" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
@@ -16,7 +16,7 @@
     <option name="_new_keywords" value="&quot;&quot;" />
     <option name="_new_parameters" value="&quot;&quot;" />
     <option name="_new_additionalArguments" value="&quot;&quot;" />
-    <option name="_new_target" value="&quot;extract_cfp_data_test.test_extract_cfp_data_erc&quot;" />
+    <option name="_new_target" value="&quot;tests.rag.e2e.extract_cfp_data_test&quot;" />
     <option name="_new_targetType" value="&quot;PYTHON&quot;" />
     <method v="2" />
   </configuration>

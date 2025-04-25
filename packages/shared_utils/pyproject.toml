@@ -1,0 +1,15 @@
+[project]
+name = "shared-utils"
+version = "0.1.0"
+description = "Shared utilities for GrantFlow"
+readme = "README.md"
+license = { text = "UNLICENSED" }
+authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
+requires-python = "==3.12.*"
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
+dependencies = [
+  "anyio>=4.9",
+  "msgspec>=0.19",
+  "structlog>=25.2",
+  "tenacity>=9",
+]
