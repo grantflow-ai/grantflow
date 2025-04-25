@@ -3,10 +3,11 @@ from typing import Any, TypedDict
 
 import pytest
 from msgspec import DecodeError, EncodeError
-from packages.shared_utils.src.exceptions import DeserializationError, SerializationError
-from packages.shared_utils.src.serialization import decode_hook, deserialize, encode_hook, serialize
 from pydantic import BaseModel
 from pytest_mock import MockFixture
+
+from packages.shared_utils.src.exceptions import DeserializationError, SerializationError
+from packages.shared_utils.src.serialization import decode_hook, deserialize, encode_hook, serialize
 
 
 class TestModel(BaseModel):

@@ -10,9 +10,9 @@ from litestar.params import Body
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import OrganizationFile, RagFile
 from packages.shared_utils.src.exceptions import DatabaseError
+from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.common_types import APIRequest, TableIdResponse
-from services.backend.src.files import FileDTO
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError

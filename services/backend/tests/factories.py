@@ -2,6 +2,7 @@ from typing import Any, TypedDict, cast
 
 from faker import Faker
 from numpy.random import default_rng
+from packages.db.src.constants import EMBEDDING_DIMENSIONS
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     FundingOrganization,
@@ -34,7 +35,6 @@ from services.backend.src.common_types import TableIdResponse
 from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.backend.src.rag.grant_template.determine_longform_metadata import SectionMetadata
 from services.backend.src.rag.grant_template.extract_cfp_data import Content
-from services.backend.src.tables import EMBEDDING_DIMENSIONS
 from sqlalchemy import Column
 
 faker = Faker()

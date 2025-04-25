@@ -33,7 +33,7 @@ repos:
       rev: v2.4.1
       hooks:
           - id: codespell
-            exclude: ^(packages|services)/[a-zA-Z0-9_-]+/tests
+            exclude: ^(packages|services)/[a-zA-Z0-9_-]+/tests|test_data
             additional_dependencies: ["tomli"]
 
     # Frontend

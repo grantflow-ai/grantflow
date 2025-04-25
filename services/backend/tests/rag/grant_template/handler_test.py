@@ -14,11 +14,10 @@ from services.backend.src.rag.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
 )
+from services.backend.tests.factories import CfpContentFactory, ExtractedSectionDTOFactory, GrantApplicationFactory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.factories import CfpContentFactory, ExtractedSectionDTOFactory, GrantApplicationFactory
-from tests.test_utils import FIXTURES_FOLDER
+from testing import FIXTURES_FOLDER
 
 
 @pytest.fixture

@@ -1032,7 +1032,6 @@ dependencies = [
     { name = "prompt-template" },
     { name = "pyjwt" },
     { name = "rank-bm25" },
-    { name = "sentence-transformers", extra = ["onnx"] },
     { name = "shared-utils" },
     { name = "spacy" },
     { name = "torch" },
@@ -1055,7 +1054,6 @@ requires-dist = [
     { name = "prompt-template", specifier = ">=1.2" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
-    { name = "sentence-transformers", extras = ["onnx"], specifier = ">=3.4.1" },
     { name = "shared-utils", editable = "packages/shared_utils" },
     { name = "spacy", specifier = ">=3.8.4" },
     { name = "torch", specifier = ">=2.2.2" },
@@ -2889,6 +2887,7 @@ dependencies = [
     { name = "anyio" },
     { name = "litestar" },
     { name = "msgspec" },
+    { name = "sentence-transformers", extra = ["onnx"] },
     { name = "structlog" },
     { name = "tenacity" },
 ]
@@ -2898,6 +2897,7 @@ requires-dist = [
     { name = "anyio", specifier = ">=4.9" },
     { name = "litestar", specifier = ">=2.15.1" },
     { name = "msgspec", specifier = ">=0.19" },
+    { name = "sentence-transformers", extras = ["onnx"], specifier = ">=3.4.1" },
     { name = "structlog", specifier = ">=25.2" },
     { name = "tenacity", specifier = ">=9" },
 ]

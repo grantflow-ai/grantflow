@@ -11,8 +11,7 @@ from services.backend.src.rag.grant_application.utils import (
     generate_application_text,
     map_to_tree,
 )
-
-from tests.factories import GrantSectionFactory
+from services.backend.tests.factories import GrantSectionFactory
 
 SAMPLE_TEXTS = {
     "abstract": "This is an abstract.",

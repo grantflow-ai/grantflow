@@ -23,7 +23,6 @@ dependencies = [
   "prompt-template>=1.2",
   "pyjwt>=2.10.1",
   "rank-bm25>=0.2.2",
-  "sentence-transformers[onnx]>=3.4.1",
   "shared-utils",
   "spacy>=3.8.4",
   "torch>=2.2.2",

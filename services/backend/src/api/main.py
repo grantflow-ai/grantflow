@@ -50,7 +50,6 @@ from services.backend.src.api.middleware import AuthMiddleware
 from services.backend.src.api.sockets.grant_applications import handle_application_websocket
 from services.backend.src.common_types import APIRequest
 from services.backend.src.dto import APIError
-from services.backend.src.indexer.files import parse_and_index_file
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from services.backend.src.utils.ai import init_llm_connection
@@ -88,7 +87,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
 ]
 
 session_maker_provider = Provide(get_session_maker, sync_to_thread=True)
-parse_and_index_file_listener = listener("parse_and_index_file")(parse_and_index_file)
 grant_template_generation_pipeline_handler_listener = listener("grant_template_generation_pipeline_handler")(
     grant_template_generation_pipeline_handler
 )
@@ -156,7 +154,6 @@ app = Litestar(
     dependencies={"session_maker": session_maker_provider},
     logging_config=StructLoggingConfig(log_exceptions="always"),
     listeners=[
-        parse_and_index_file_listener,
         grant_template_generation_pipeline_handler_listener,
         grant_application_text_generation_pipeline_handler_listener,
     ],

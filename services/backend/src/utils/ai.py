@@ -3,8 +3,8 @@ from typing import Any
 from anthropic import AsyncAnthropic
 from google.cloud.aiplatform import init
 from google.oauth2.service_account import Credentials
-from packages.shared_utils.env import get_env
-from packages.shared_utils.ref import Ref
+from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 from vertexai.generative_models import GenerativeModel
 

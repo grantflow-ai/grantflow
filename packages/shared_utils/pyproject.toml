@@ -17,6 +17,7 @@ dependencies = [
   "anyio>=4.9",
   "litestar>=2.15.1",
   "msgspec>=0.19",
+  "sentence-transformers[onnx]>=3.4.1",
   "structlog>=25.2",
   "tenacity>=9",
 ]

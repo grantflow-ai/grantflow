@@ -4,11 +4,10 @@ from unittest.mock import Mock
 
 import pytest
 from packages.db.src.tables import FundingOrganization
+from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import delete, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.conftest import TestingClientType
 
 if TYPE_CHECKING:
     from services.backend.src.api.http.funding_organizations import CreateOrganizationRequestBody

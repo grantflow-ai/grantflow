@@ -5,14 +5,13 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from azure.core.exceptions import HttpResponseError
 from packages.shared_utils.src.exceptions import FileParsingError, ValidationError
-from tenacity import RetryError, wait_none
-
-from indexer.src.extraction import (
+from services.indexer.src.extraction import (
     extract_file_content,
     extract_webpage_content,
     extract_with_azure_document_intelligence,
 )
-from tests.test_utils import TEST_DATA_SOURCES
+from tenacity import RetryError, wait_none
+from testing import TEST_DATA_SOURCES
 
 
 @pytest.fixture

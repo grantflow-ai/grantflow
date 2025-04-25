@@ -8,8 +8,7 @@ import pytest
 from packages.shared_utils.src.serialization import serialize
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.test_utils import RESULTS_FOLDER
+from testing import RESULTS_FOLDER
 
 
 @pytest.mark.timeout(60 * 30)

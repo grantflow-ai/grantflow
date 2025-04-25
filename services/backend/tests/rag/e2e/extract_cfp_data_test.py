@@ -6,8 +6,7 @@ from os import environ
 import pytest
 from packages.shared_utils.src.serialization import serialize
 from services.backend.src.rag.grant_template.extract_cfp_data import handle_extract_cfp_data
-
-from tests.test_utils import FIXTURES_FOLDER, RESULTS_FOLDER
+from testing import FIXTURES_FOLDER, RESULTS_FOLDER
 
 
 @pytest.mark.skipif(

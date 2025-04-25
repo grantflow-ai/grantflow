@@ -4,12 +4,12 @@ from typing import Any
 
 import pytest
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
+from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.serialization import serialize
-from services.indexer.src.files import FileDTO, parse_and_index_file
+from services.indexer.src.files import parse_and_index_file
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from tests.test_utils import RESULTS_FOLDER, SOURCES_FOLDER
+from testing import RESULTS_FOLDER, SOURCES_FOLDER
 
 FILENAME = "PIC seq.pdf"
 SMALL_PDF_TEST_FILE = SOURCES_FOLDER / FILENAME

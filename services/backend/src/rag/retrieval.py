@@ -2,13 +2,13 @@ from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
 from packages.db.src.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
+from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from services.backend.src.rag.completion import handle_completions_request
 from services.backend.src.rag.dto import DocumentDTO
 from services.backend.src.rag.post_processing import post_process_documents
 from services.backend.src.rag.search_queries import handle_create_search_queries
-from services.backend.src.utils.embeddings import generate_embeddings
 from services.backend.src.utils.prompt_template import PromptTemplate
 from sqlalchemy import func, or_, select
 

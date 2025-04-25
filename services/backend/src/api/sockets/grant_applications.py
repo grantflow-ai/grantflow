@@ -13,11 +13,11 @@ from packages.db.src.json_objects import GrantElement, GrantLongFormSection, Res
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, GrantTemplate
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
+from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import deserialize, serialize
 from services.backend.src.common_types import APIWebsocket, WebsocketMessage
 from services.backend.src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
-from services.backend.src.files import FileDTO
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from services.backend.src.utils.db import retrieve_application
@@ -209,7 +209,7 @@ def prepare_wizard_response(
 
 
 async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
-    from services.backend.src.utils.extraction import extract_file_content, extract_webpage_content
+    from services.indexer.src.extraction import extract_file_content, extract_webpage_content
 
     if cfp_file_upload:
         file = await FileDTO.from_file(filename=cfp_file_upload.filename, file=cfp_file_upload)
