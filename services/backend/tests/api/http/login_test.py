@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from pytest_mock import MockerFixture
-from services.backend.src.api.http.auth import LoginRequestBody
+from services.backend.src.api.routes.auth import LoginRequestBody
 from services.backend.tests.conftest import TestingClientType
 
 

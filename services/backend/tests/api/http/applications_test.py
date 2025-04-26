@@ -6,7 +6,7 @@ from packages.db.src.tables import (
     GrantApplication,
     Workspace,
 )
-from services.backend.src.api.http.grant_applications import UpdateApplicationRequestBody
+from services.backend.src.api.routes.grant_applications import UpdateApplicationRequestBody
 from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker

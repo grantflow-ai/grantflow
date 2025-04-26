@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Workspace, WorkspaceUser
-from services.backend.src.api.http.workspaces import UpdateWorkspaceRequestBody
+from services.backend.src.api.routes.workspaces import UpdateWorkspaceRequestBody
 from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
