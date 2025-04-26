@@ -1,24 +1,14 @@
-import logging
 import os
 from collections.abc import AsyncGenerator, Generator
-from logging import Logger, getLogger
-from socket import AF_INET, SOCK_STREAM, socket
-from textwrap import dedent
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from anyio import run_process, sleep
-from asyncpg import connect
-from dotenv import load_dotenv
-from faker import Faker
 from litestar import Litestar
 from litestar.testing import AsyncTestClient
-from packages.db.src.connection import engine_ref, get_session_maker
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.json_objects import ResearchObjective, ResearchTask
 from packages.db.src.tables import (
-    Base,
     FundingOrganization,
     GrantApplication,
     GrantApplicationFile,
@@ -27,13 +17,18 @@ from packages.db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
-from pytest_asyncio import is_async_test
 from pytest_mock import MockerFixture
-from scripts.seed_db import seed_db
 from services.backend.src.utils.ai import init_ref
 from services.backend.src.utils.firebase import firebase_app_ref
 from services.backend.src.utils.jwt import create_jwt
-from services.backend.tests.factories import (
+from services.backend.tests.test_utils import (
+    create_grant_application_data,
+    process_funding_organization,
+)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing import FIXTURES_FOLDER
+from testing.factories import (
     FileFactory,
     FundingOrganizationFactory,
     GrantApplicationFactory,
@@ -42,63 +37,11 @@ from services.backend.tests.factories import (
     WorkspaceFactory,
     WorkspaceUserFactory,
 )
-from services.backend.tests.test_utils import (
-    create_grant_application_data,
-    process_funding_organization,
-)
-from sqlalchemy import NullPool, select
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from structlog import configure
-from structlog.testing import LogCapture
-from testing import FIXTURES_FOLDER
 from vertexai.generative_models import GenerativeModel
 
+pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.valkey_test_plugin"]
+
 TestingClientType = AsyncTestClient[Litestar]
-
-for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
-    logging.getLogger(logger_name).setLevel(logging.WARNING)
-    logging.getLogger(logger_name).propagate = False
-
-
-def pytest_collection_modifyitems(items: list[Any]) -> None:
-    pytest_asyncio_tests = (item for item in items if is_async_test(item))
-    session_scope_marker = pytest.mark.asyncio(loop_scope="session")
-    for async_test in pytest_asyncio_tests:
-        async_test.add_marker(session_scope_marker, append=False)
-
-
-@pytest.fixture(autouse=True)
-def stub_env() -> None:
-    load_dotenv()  # we use a real env file for E2E tests, but it's not always present ~keep
-    os.environ["TOKENIZERS_PARALLELISM"] = (
-        "false"  # we don't want to run tokenizers in parallel due to pytest limitations ~keep
-    )
-
-    mock_creds = '{"type":"service_account","project_id":"grantflow","private_key_id":"abc","private_key":"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC+0J+xaF97Kqhq\\naahY04lj7dO+xyZHMKt3NXy0FSvpNUscx9UB8UVh9D/QvJ0zgfRo9G0kfEpmKE86\\nRFd9tCW2ytnMbdi7XRF9eSVJXjpGh/5pXvhakb/6+BHJoFriYeYU/QHWesIDr0An\\nDG5H9pLGXBzGJ34rGfPmVseh3xKdnZzcPvdjNj6OMbNpwxkwFJupRB9I3pvYIjQw\\nEH1ca5JYrAYwm6jspO6liZKVQCuqTvkWQZdG8SEHtoaIXJyDgvT20vTmlV5Ktzxt\\n9F3MHDncqNFTmAIQvOe+Lq14gWkEznBhZ8y/tgmVEC//RZyHySI3GPSQZg8nQwKZ\\nlAq7p4UDAgMBAAECggEABxHVZS1iddLSV6PT1VMvXpROZRtBxzZ1atE4FiGVQbQm\\nKbh+hDh1TOvQjPiMX7E12KXsJeaJ5JFvqaHH+ZOsmyvrAp0kV1NfqMPiMULrpIKZ\\nzx0qvIBDOCh5kFWXwgxnFzgG0JkVXq2a6lG9FVGSZbKVLmDXFPCKpQgohL2A71Xl\\n25AfWXSYXX5WH3cE/UCtxwtBpVoYOopPgwJh1wN9TUKuOqzP6/3+SgQMBExNIT2s\\nDPzqJ49bjPpQiPBOZOxJWIYYTdUi/YpQVTZ3vGytpUAKgcKS0SMqEVCRWqMzOxqH\\no27pUcvCWUvB99v77HsJQUwWCrOSsKK5L7vDG/1aOQKBgQDu8RH6QMi9BnNYCc4E\\nRTbBQeNNZkRpD4h43PynIJM0YhBXULD+LE4h/27nAEOu+5iFW/LkwxoMcf30UhXN\\n3OjtjfMzR7FcLuTQQzGbIa0xEbvk0VE0JPu8/lZnzVeuehvC6mKqIQtv4jDGrpVU\\nkJB8axrLQTUMnbKTHdz+/UhxCQKBgQDMO5EMCUY9LMzTD1R+BK4r3qrFqKJGp1wd\\nLVcUvLZv5A3mzFKrHyeATw6NCMp4iSDcNCwQCuFUjYYYmmc68AE0GkU5JOSi3Xw9\\noOtRQKHpFN1p01FpuZ/h99qrnCLjQkF4ooJOa2ixrBGWfxCLSNAFrRJEYpSsKS+U\\nWKHRMWRiuwKBgDdfn0PChFhzQZjTVJPRwj+vc7jJcpnm2eSH4qb5KD3OB3/JTLZ6\\nxJ6w7mIPSADZGO4IX12O+FdEQeakiWKsR9VBBdRwQDnVEYqrcGqddIv27RTrBV3I\\nXJOSKyVQwGEVRITFbZXVwVDj2fIVndfng+RFBiQ+5pZ7KR0A9D+A1RhpAoGBAMSm\\nUjrDnaz6RiaRguBpWqS9QzJmFbhxcl7hRa7lrqWzBhHjvBwE9OkTqMJ7TYBw6bMc\\nxO3lXDxIhTqNw0Y7MsZZdO96NvuB3Z2FHH7Vw/CcPA0jzUgqqwJcyBZIkl8nx0HN\\nZ/qQ5jLIiCzI+ixoZsZJYpxkxZgcDTjGK7n45D/bAoGAB1ALGisNkA8OR35oMedk\\n9NwsnksdOz0DHcuHE7APDiCNkGVp2x0ZrGRBV6x+qy6hgYFLNB+kDxNtWvyDkiLO\\nDC5XUA4mPF4btHgvVG3/5NpVJZGU2r9M07zHYyCdFCBFX93+EKMNYFLtC75Cj3A+\\nrQVqm5nZC/+90P2uFCFnO5c=\\n-----END PRIVATE KEY-----\\n","client_email":"x@grantflow.iam.gserviceaccount.com","client_id":"1000000000","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"","universe_domain":"googleapis.com"}'
-    os.environ.setdefault("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
-    os.environ.setdefault("LLM_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
-    os.environ.setdefault("JWT_SECRET", "abc123")
-    os.environ.setdefault("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT", "https://test.com")
-    os.environ.setdefault("AZURE_DOCUMENT_INTELLIGENCE_KEY", "abc123")
-    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "grantflow")
-    os.environ.setdefault("GOOGLE_CLOUD_REGION", "us-central1")
-    os.environ.setdefault("ADMIN_ACCESS_CODE", "123456")
-    os.environ.setdefault("ANTHROPIC_API_KEY", "sd-ant-api03-ABC123")
-
-
-@pytest.fixture(scope="session")
-def faker() -> Faker:
-    return Faker()
-
-
-@pytest.fixture
-def log_output() -> LogCapture:
-    return LogCapture()
-
-
-@pytest.fixture(autouse=True)
-def configure_structlog(log_output: LogCapture) -> None:
-    configure(processors=[log_output])
 
 
 @pytest.fixture
@@ -128,12 +71,12 @@ async def test_client(
     os.environ["VALKEY_CONNECTION_STRING"] = valkey_connection_string
 
     with (
-        patch("src.api.main.before_server_start"),
-        patch("src.utils.ai.get_vertex_credentials", return_value=Mock()),
-        patch("src.utils.ai.init", return_value=None),
+        patch("services.backend.src.api.main.before_server_start"),
+        patch("services.backend.src.utils.ai.get_vertex_credentials", return_value=Mock()),
+        patch("services.backend.src.utils.ai.init", return_value=None),
         patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
         patch("jwt.decode", return_value={"sub": firebase_uid}),
-        patch("src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),
+        patch("services.backend.src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),
         patch("firebase_admin.initialize_app", return_value=Mock()),
     ):
         from services.backend.src.api.main import app
@@ -150,124 +93,9 @@ def otp_code(firebase_uid: str) -> str:
     return create_jwt(firebase_uid)
 
 
-@pytest.fixture(scope="session")
-def logger() -> Logger:
-    return getLogger("e2e")
-
-
 @pytest.fixture
 def mock_admin_code(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ADMIN_ACCESS_CODE", "test-admin-code")
-
-
-@pytest.fixture(scope="session")
-async def db_connection_string() -> AsyncGenerator[str, None]:
-    container_name = "test_postgres_container"
-
-    with socket(AF_INET, SOCK_STREAM) as s:
-        s.bind(("", 0))
-        local_port = s.getsockname()[1]
-
-    await run_process(["docker", "rm", "-f", container_name], check=False)
-
-    await run_process(
-        [
-            "docker",
-            "run",
-            "--name",
-            container_name,
-            "-e",
-            "POSTGRES_USER=test_user",
-            "-e",
-            "POSTGRES_PASSWORD=test_password",
-            "-e",
-            "POSTGRES_DB=test_db",
-            "-p",
-            f"{local_port}:5432",
-            "-d",
-            "pgvector/pgvector:pg17",
-        ]
-    )
-
-    await sleep(3)
-
-    connection_string = f"postgresql://test_user:test_password@0.0.0.0:{local_port}/test_db"
-    test_conn = await connect(connection_string)
-
-    await test_conn.execute(
-        dedent("""
-        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-        CREATE EXTENSION IF NOT EXISTS vector;
-        """)
-    )
-
-    await test_conn.close()
-
-    yield connection_string.replace("postgresql://", "postgresql+asyncpg://")
-
-    await run_process(["docker", "rm", "-f", container_name], check=False)
-
-
-@pytest.fixture(scope="session")
-async def valkey_connection_string() -> AsyncGenerator[str, None]:
-    container_name = "test_valkey_container"
-
-    with socket(AF_INET, SOCK_STREAM) as s:
-        s.bind(("", 0))
-        local_port = s.getsockname()[1]
-
-    await run_process(["docker", "rm", "-f", container_name], check=False)
-
-    await run_process(
-        [
-            "docker",
-            "run",
-            "--name",
-            container_name,
-            "-p",
-            f"{local_port}:6379",
-            "-d",
-            "valkey/valkey:latest",
-        ]
-    )
-
-    await sleep(3)
-
-    connection_string = f"redis://0.0.0.0:{local_port}/0"
-
-    test_command = ["docker", "exec", container_name, "redis-cli", "ping"]
-    process_result = await run_process(test_command)
-    assert process_result.stdout.strip().decode("utf-8") == "PONG", "Valkey container is not responding to PING"
-
-    yield connection_string
-
-    await run_process(["docker", "rm", "-f", container_name], check=False)
-
-
-@pytest.fixture(scope="session")
-async def async_db_engine(db_connection_string: str) -> AsyncEngine:
-    engine_ref.value = create_async_engine(db_connection_string, echo=False, poolclass=NullPool)
-    async with engine_ref.value.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    return engine_ref.value
-
-
-@pytest.fixture(scope="session")
-async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmaker[Any]:
-    return get_session_maker()
-
-
-@pytest.fixture(autouse=True)
-async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
-    await seed_db()
-
-
-@pytest.fixture(autouse=True)
-async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
-    async with async_session_maker() as session:
-        for table in reversed(Base.metadata.sorted_tables):
-            await session.execute(table.delete())
-        await session.commit()
 
 
 @pytest.fixture
@@ -482,7 +310,9 @@ async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
     assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
 
     contents = cfp_content_file.read_text()
-    return mocker.patch("src.utils.extraction.extract_webpage_content", new_callable=AsyncMock, return_value=contents)
+    return mocker.patch(
+        "services.indexer.src.extraction.extract_webpage_content", new_callable=AsyncMock, return_value=contents
+    )
 
 
 @pytest.fixture

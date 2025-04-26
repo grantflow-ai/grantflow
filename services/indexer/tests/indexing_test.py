@@ -1,6 +1,5 @@
 from services.indexer.src.indexing import create_vector_dto
-
-from tests.indexer.factories import ChunkFactory
+from testing.factories import ChunkFactory
 
 
 async def test_create_vector_dto() -> None:

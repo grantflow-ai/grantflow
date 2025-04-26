@@ -59,13 +59,13 @@ def app() -> MagicMock:
 
 @pytest.fixture
 def mock_verify_jwt_token() -> Generator[MagicMock, None, None]:
-    with patch("src.api.middleware.verify_jwt_token") as mock:
+    with patch("services.backend.src.api.middleware.verify_jwt_token") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_get_env() -> Generator[MagicMock, None, None]:
-    with patch("src.api.middleware.get_env") as mock:
+    with patch("services.backend.src.api.middleware.get_env") as mock:
         mock.return_value = "test-admin-code"
         yield mock
 

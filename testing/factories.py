@@ -3,7 +3,7 @@ from typing import Any, TypedDict, cast
 from faker import Faker
 from numpy.random import default_rng
 from packages.db.src.constants import EMBEDDING_DIMENSIONS
-from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
+from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
@@ -242,3 +242,7 @@ class ExtractedCfpDataFactory(TypedDictFactory[ExtractedCfpData]):
     @classmethod
     def content(cls) -> list[Content]:
         return [CfpContentFactory.build() for _ in range(3)]
+
+
+class ChunkFactory(TypedDictFactory[Chunk]):
+    __model__ = Chunk

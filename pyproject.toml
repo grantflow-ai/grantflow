@@ -113,8 +113,10 @@ mypy_path = [ "." ]
 
 [tool.uv.workspace]
 members = [
-  "services/*",
-  "packages/*",
+  "services/backend",
+  "services/indexer",
+  "packages/db",
+  "packages/shared_utils",
 ]
 
 [tool.uv.sources]

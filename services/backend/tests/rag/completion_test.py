@@ -23,7 +23,7 @@ def mock_google_api_response(mocker: MockerFixture) -> Mock:
     client = AsyncMock()
     response = Mock()
     client.generate_content_async.return_value = response
-    mocker.patch("src.rag.completion.get_google_ai_client", return_value=client)
+    mocker.patch("services.backend.src.rag.completion.get_google_ai_client", return_value=client)
     return response
 
 
@@ -32,7 +32,7 @@ def mock_anthropic_api_response(mocker: MockerFixture) -> Mock:
     client = AsyncMock()
     response = Mock()
     client.messages.create.return_value = response
-    mocker.patch("src.rag.completion.get_anthropic_client", return_value=client)
+    mocker.patch("services.backend.src.rag.completion.get_anthropic_client", return_value=client)
     return response
 
 

@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 from packages.db.src.json_objects import GrantLongFormSection
-from services.backend.tests.factories import GrantSectionFactory
+from testing.factories import GrantSectionFactory
 
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
 

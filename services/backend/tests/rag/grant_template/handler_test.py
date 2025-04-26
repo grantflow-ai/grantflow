@@ -14,10 +14,10 @@ from services.backend.src.rag.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
 )
-from services.backend.tests.factories import CfpContentFactory, ExtractedSectionDTOFactory, GrantApplicationFactory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
+from testing.factories import CfpContentFactory, ExtractedSectionDTOFactory, GrantApplicationFactory
 
 
 @pytest.fixture
@@ -168,8 +168,14 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
     with (
-        patch("src.rag.grant_template.handler.handle_extract_sections", return_value=mock_extracted_sections),
-        patch("src.rag.grant_template.handler.handle_generate_grant_template", return_value=mock_section_metadata),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_extract_sections",
+            return_value=mock_extracted_sections,
+        ),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_generate_grant_template",
+            return_value=mock_section_metadata,
+        ),
     ):
         result = await extract_and_enrich_sections(
             cfp_content=sample_cfp_content,
@@ -233,10 +239,19 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     mock_extracted_cfp_data: dict[str, Any],
 ) -> None:
     with (
-        patch("src.rag.grant_template.handler.handle_extract_cfp_data", return_value=mock_extracted_cfp_data),
-        patch("src.rag.grant_template.handler.handle_extract_sections", return_value=mock_extracted_sections),
-        patch("src.rag.grant_template.handler.handle_generate_grant_template", return_value=mock_section_metadata),
-        patch("src.rag.grant_template.handler.next", return_value=nih_organization),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_extract_cfp_data",
+            return_value=mock_extracted_cfp_data,
+        ),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_extract_sections",
+            return_value=mock_extracted_sections,
+        ),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_generate_grant_template",
+            return_value=mock_section_metadata,
+        ),
+        patch("services.backend.src.rag.grant_template.handler.next", return_value=nih_organization),
     ):
         result = await grant_template_generation_pipeline_handler(
             application_id=str(test_application.id),
@@ -319,7 +334,7 @@ async def test_pipeline_handler_error_handling(
     error_message = "Test backend error"
     with (
         patch(
-            "src.rag.grant_template.handler.handle_extract_cfp_data",
+            "services.backend.src.rag.grant_template.handler.handle_extract_cfp_data",
             side_effect=BackendError(error_message, context={"test": "context"}),
         ),
         pytest.raises(BackendError),
@@ -367,10 +382,19 @@ async def test_idempotent_template_generation(
     mock_extracted_cfp_data: dict[str, Any],
 ) -> None:
     with (
-        patch("src.rag.grant_template.handler.handle_extract_cfp_data", return_value=mock_extracted_cfp_data),
-        patch("src.rag.grant_template.handler.handle_extract_sections", return_value=mock_extracted_sections),
-        patch("src.rag.grant_template.handler.handle_generate_grant_template", return_value=mock_section_metadata),
-        patch("src.rag.grant_template.handler.next", return_value=nih_organization),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_extract_cfp_data",
+            return_value=mock_extracted_cfp_data,
+        ),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_extract_sections",
+            return_value=mock_extracted_sections,
+        ),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_generate_grant_template",
+            return_value=mock_section_metadata,
+        ),
+        patch("services.backend.src.rag.grant_template.handler.next", return_value=nih_organization),
     ):
         result1 = await grant_template_generation_pipeline_handler(
             application_id=str(test_application.id),
@@ -450,8 +474,11 @@ async def test_extract_and_enrich_with_title_only_sections(
     ]
 
     with (
-        patch("src.rag.grant_template.handler.handle_extract_sections", return_value=mixed_sections),
-        patch("src.rag.grant_template.handler.handle_generate_grant_template", return_value=mock_section_metadata),
+        patch("services.backend.src.rag.grant_template.handler.handle_extract_sections", return_value=mixed_sections),
+        patch(
+            "services.backend.src.rag.grant_template.handler.handle_generate_grant_template",
+            return_value=mock_section_metadata,
+        ),
     ):
         result = await extract_and_enrich_sections(
             cfp_content=sample_cfp_content,
