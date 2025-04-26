@@ -74,6 +74,8 @@ class FileIndexingRequest(TypedDict):
 
     parent_type: Literal["grant_application", "organization"]
 
+    bucket_name: str
+
 
 class FileIndexingResponse(TypedDict):
     message: str
@@ -97,6 +99,8 @@ async def handle_file_indexing(
                             "mime_type": data["mime_type"],
                             "size": data["size"],
                             "indexing_status": FileIndexingStatusEnum.INDEXING,
+                            "bucket_name": data["bucket_name"],
+                            "object_path": data["file_path"],
                         }
                     ]
                 )
@@ -127,7 +131,7 @@ async def handle_file_indexing(
             raise DatabaseError("Error creating file record", context=str(e)) from e
 
     try:
-        content = await download_blob(data["file_path"])
+        content = await download_blob(data["file_path"], data["bucket_name"])
         await parse_and_index_file(
             content=content,
             file_id=str(file_id),

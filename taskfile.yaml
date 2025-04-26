@@ -54,10 +54,8 @@ tasks:
         desc: Start the local PostgreSQL database container if not already running
         cmds:
             - |
-                if [ "$(docker ps -q -f name=db)" ]; then
-                  echo "Database is already running, skipping restart"
-                else
-                  docker compose stop db && docker compose up db --detach
+                if [ -z "$(docker ps -q -f name=db)" ]; then
+                  docker compose up db --detach
                 fi
 
     db:down:
@@ -66,21 +64,20 @@ tasks:
             - docker compose down db
 
     db:migrate:
-        desc: Start database and apply all pending migrations
-        dir: "{{.PACKAGES_DIR}}/db"
+        desc: Apply database migrations using Alembic
         cmds:
+            - PYTHONPATH=. uv run alembic --config ./packages/db/alembic.ini upgrade head
+        deps:
             - task: db:up
-            - sleep 2
-            - PYTHONPATH=. uv run alembic upgrade head
 
     db:create-migration:
         desc: Generate a new database migration from schema changes
-        dir: "{{.PACKAGES_DIR}}/db"
         cmds:
             - task: db:up
             - sleep 2
-            - PYTHONPATH=. uv run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
-
+            - PYTHONPATH=. uv run alembic --config ./packages/db/alembic.ini revision --autogenerate -m "{{.CLI_ARGS}}"
+        deps:
+            - task: db:up
     db:seed:
         desc: Populate database with initial seed data
         cmds:
