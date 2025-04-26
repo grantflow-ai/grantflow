@@ -4,7 +4,6 @@ from typing import Any
 
 import pytest
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
-from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.serialization import serialize
 from services.indexer.src.files import parse_and_index_file
 from sqlalchemy import select
@@ -27,14 +26,10 @@ async def test_parse_application_file(
 ) -> None:
     logger.info("Running end-to-end test for parse_and_index_file")
 
-    file_dto = FileDTO(
+    await parse_and_index_file(
         content=SMALL_PDF_TEST_FILE.read_bytes(),
         filename="test.pdf",
         mime_type="application/pdf",
-    )
-
-    await parse_and_index_file(
-        file_dto=file_dto,
         file_id=str(grant_application_file.rag_file_id),
     )
 

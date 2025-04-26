@@ -1,7 +1,8 @@
 import logging
 import sys
 from http import HTTPStatus
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
+from uuid import UUID
 
 from litestar import Litestar, Response, post
 from litestar.config.cors import CORSConfig
@@ -9,7 +10,7 @@ from litestar.connection.request import Request
 from litestar.logging import StructLoggingConfig
 from packages.db.src.connection import get_session_maker
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import RagFile
+from packages.db.src.tables import GrantApplicationFile, OrganizationFile, RagFile
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, DeserializationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import APIError, session_maker_provider
@@ -25,7 +26,7 @@ logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 
 
-def handle_exception(_: Request, exception: Exception) -> Response[Any]:
+def handle_exception(_: Request[Any, Any, Any], exception: Exception) -> Response[Any]:
     if isinstance(exception, SQLAlchemyError):
         logger.error("An unexpected sqlalchemy error occurred", exc_name=type(exception).__name__, exec_info=exception)
         message = "An unexpected database error occurred"
@@ -61,27 +62,23 @@ async def before_server_start(app_instance: Litestar) -> None:
 
 
 class FileIndexingRequest(TypedDict):
-    """Request to process a GCS file for indexing."""
-
-    bucket: str
-    """GCS bucket name containing the file."""
     file_path: str
-    """Path to the file within the bucket."""
+
     mime_type: str
-    """MIME type of the file."""
+
     filename: str
-    """Original filename."""
+
     size: int
-    """File size in bytes."""
+
+    parent_id: UUID
+
+    parent_type: Literal["grant_application", "organization"]
 
 
 class FileIndexingResponse(TypedDict):
-    """Response for file indexing request."""
-
     message: str
-    """Message indicating the result of the operation."""
+
     file_id: str
-    """ID of the indexed file."""
 
 
 @post("/")
@@ -89,16 +86,6 @@ async def handle_file_indexing(
     data: FileIndexingRequest,
     session_maker: async_sessionmaker[Any],
 ) -> FileIndexingResponse:
-    """Process a GCS file for indexing.
-
-    This endpoint is designed to be triggered by GCP Eventarc when files are uploaded.
-    It downloads the file from GCS, updates the database record, and processes the file
-    for indexing.
-    """
-    logger.info(
-        "Received file indexing request", bucket=data["bucket"], file_path=data["file_path"], filename=data["filename"]
-    )
-
     async with session_maker() as session, session.begin():
         try:
             file_id = await session.scalar(
@@ -115,14 +102,23 @@ async def handle_file_indexing(
                 )
                 .returning(RagFile.id)
             )
-            logger.info("Created new file record", file_id=file_id)
+            parent_table = GrantApplicationFile if data["parent_type"] == "grant_application" else OrganizationFile
+            await session.execute(
+                insert(parent_table).values(
+                    {
+                        "rag_file_id": file_id,
+                        "parent_id": data["parent_id"],
+                    }
+                )
+            )
+            logger.info("Created new file record", file_id=file_id, parent_id=data["parent_id"])
         except SQLAlchemyError as e:
             logger.error("Error creating file record", exc_info=e)
             await session.rollback()
             raise DatabaseError("Error creating file record", context=str(e)) from e
 
     try:
-        content = await download_blob(data["bucket"], data["file_path"])
+        content = await download_blob(data["file_path"])
         await parse_and_index_file(
             content=content,
             file_id=str(file_id),
