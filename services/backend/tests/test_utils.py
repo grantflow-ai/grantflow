@@ -169,7 +169,6 @@ async def parse_source_file(
                     else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     "size": len(file_content),
                     "indexing_status": FileIndexingStatusEnum.FINISHED,
-                    "bucket_name": "test_bucket",
                 }
             )
             .returning(RagFile.id)
