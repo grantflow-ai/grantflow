@@ -50,19 +50,29 @@ def get_bucket() -> Bucket:
     return bucket_ref.value
 
 
-async def download_blob(blob_name: str) -> bytes:
+async def download_blob(blob_name: str, bucket_name: str = "") -> bytes:
     try:
-        bucket = await run_sync(get_bucket)
+        if bucket_name:
+            storage_client = get_storage_client()
+            bucket = storage_client.bucket(bucket_name)
+        else:
+            bucket = await run_sync(get_bucket)
+
         blob = bucket.blob(blob_name)
         content = await run_sync(blob.download_as_bytes)
-        logger.info("Downloaded blob", blob_name=blob_name)
+        logger.info(
+            "Downloaded blob",
+            blob_name=blob_name,
+            bucket_name=bucket_name or get_env("GCS_BUCKET", fallback="grantflow-uploads"),
+        )
         return cast("bytes", content)
     except ClientError as e:
-        logger.error("Failed to download blob", blob_name=blob_name, exc_info=e)
+        logger.error("Failed to download blob", blob_name=blob_name, bucket_name=bucket_name, exc_info=e)
         raise ExternalOperationError(
             "Failed to download blob",
             context={
                 "blob_name": blob_name,
+                "bucket_name": bucket_name,
                 "error": str(e),
             },
         ) from e

@@ -13,6 +13,7 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy import (
     UUID as SA_UUID,
@@ -89,6 +90,8 @@ class WorkspaceUser(Base):
 class RagFile(BaseWithUUIDPK):
     __tablename__ = "rag_files"
 
+    bucket_name: Mapped[str] = mapped_column(String(255))
+    object_path: Mapped[str] = mapped_column(String(255))
     filename: Mapped[str] = mapped_column(String(255))
     indexing_status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum), index=True)
     mime_type: Mapped[str] = mapped_column(String(255))
@@ -99,7 +102,10 @@ class RagFile(BaseWithUUIDPK):
         "TextVector", back_populates="rag_file", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (CheckConstraint("size >= 0", name="check_positive_file_size"),)
+    __table_args__ = (
+        CheckConstraint("size >= 0", name="check_positive_file_size"),
+        UniqueConstraint("bucket_name", "object_path", name="uq_bucket_object"),
+    )
 
 
 class TextVector(BaseWithUUIDPK):

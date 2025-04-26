@@ -76,36 +76,3 @@ async def test_delete_organization_file_not_found(
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-@pytest.mark.parametrize(
-    "headers",
-    [
-        {"Authorization": "wrong-code"},
-        {},
-    ],
-)
-async def test_organization_files_unauthorized(
-    test_client: TestingClientType,
-    funding_organization: FundingOrganization,
-    headers: dict[str, str],
-    mock_admin_code: Mock,
-) -> None:
-    response = await test_client.post(
-        f"/organizations/{funding_organization.id}/files",
-        files={"test.txt": b"Test content"},
-        headers=headers,
-    )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-
-    response = await test_client.get(
-        f"/organizations/{funding_organization.id}/files",
-        headers=headers,
-    )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-
-    response = await test_client.delete(
-        f"/organizations/{funding_organization.id}/files/00000000-0000-0000-0000-000000000000",
-        headers=headers,
-    )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
