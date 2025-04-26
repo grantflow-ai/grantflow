@@ -69,12 +69,6 @@ jobs:
         with:
           python-version-file: "pyproject.toml"
 
-      - name: Cache and Install APT Packages (Linux)
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: tesseract-ocr pandoc
-          version: 1.0
-
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
@@ -92,6 +86,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache and Install APT Packages (Linux)
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: tesseract-ocr pandoc
+          version: 1.0
 
       - name: Set up Python
         uses: actions/setup-python@v5
