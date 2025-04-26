@@ -10,7 +10,7 @@ services:
             - "5432:5432"
         volumes:
             - data:/var/lib/postgresql/data
-            - ./backend/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
+            - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
         healthcheck:
             test: ["CMD", "pg_isready", "-U", "local", "-d", "local"]
             interval: 1s
@@ -30,18 +30,36 @@ services:
 
     backend:
         build:
-            dockerfile: ./backend/Dockerfile
+            dockerfile: ./services/backend/Dockerfile
             platforms:
-                - "linux/x86_64" # needed due to spaCy build issues on mac linux
+                - "linux/x86_64" # needed due to spaCy build issues on Mac linux
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             VALKEY_CONNECTION_STRING: redis://valkey:6379/0
         env_file:
-            - ./backend/.env
+            - ./services/backend/.env
         ports:
             - "8000:8000"
         volumes:
-            - ./backend/src:/app/src:cached
+            - ./services/backend/src:/app/src:cached
+        command: "uvicorn src.api.main:app --host 0.0.0.0 --log-level info --reload"
+        depends_on:
+            db:
+                condition: service_healthy
+            valkey:
+                condition: service_healthy
+
+    indexer:
+        build:
+            dockerfile: ./services/indexer/Dockerfile
+        environment:
+            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+        env_file:
+            - ./services/indexer/.env
+        ports:
+            - "8001:8000"
+        volumes:
+            - ./services/indexer/src:/app/src:cached
         command: "uvicorn src.api.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:

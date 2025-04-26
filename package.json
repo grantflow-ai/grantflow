@@ -5,14 +5,14 @@
 	"devDependencies": {
 		"@eslint/compat": "^1.2.8",
 		"@eslint/eslintrc": "^3.3.1",
-		"@eslint/js": "^9.25.0",
+		"@eslint/js": "^9.25.1",
 		"@next/eslint-plugin-next": "^15.3.1",
-		"eslint": "^9.25.0",
+		"eslint": "^9.25.1",
 		"eslint-config-prettier": "^10.1.2",
 		"eslint-plugin-jsx-a11y": "^6.10.2",
 		"eslint-plugin-markdown": "^5.1.0",
 		"eslint-plugin-n": "17.17.0",
-		"eslint-plugin-perfectionist": "^4.11.0",
+		"eslint-plugin-perfectionist": "^4.12.3",
 		"eslint-plugin-promise": "7.2.1",
 		"eslint-plugin-react": "^7.37.5",
 		"eslint-plugin-react-hooks": "^5.2.0",
@@ -23,7 +23,7 @@
 		"eslint-plugin-vitest": "^0.5.4",
 		"globals": "^16.0.0",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.30.1"
+		"typescript-eslint": "^8.31.0"
 	},
 	"engines": {
 		"node": ">=22.0.0"
