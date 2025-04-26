@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import cast
 from uuid import UUID
 
@@ -154,6 +155,12 @@ async def grant_template_generation_pipeline_handler(
 
         org_name = organization.full_name if organization else "Unknown"
 
+        submission_date = (
+            datetime.strptime(extraction_result["submission_date"], "%Y-%m-%d").date()  # noqa: DTZ007
+            if extraction_result["submission_date"]
+            else None
+        )
+
         await message_handler(
             WebsocketDataMessage(
                 type="data",
@@ -162,6 +169,7 @@ async def grant_template_generation_pipeline_handler(
                     "organization": org_name,
                     "cfp_subject": extraction_result["cfp_subject"],
                     "content_sections": len(extraction_result["content"]),
+                    "submission_date": submission_date,
                 },
             )
         )
@@ -205,6 +213,7 @@ async def grant_template_generation_pipeline_handler(
                     {
                         "funding_organization_id": extraction_result["organization_id"],
                         "grant_application_id": application_id,
+                        "submission_date": submission_date,
                         "grant_sections": grant_sections,
                     }
                 )

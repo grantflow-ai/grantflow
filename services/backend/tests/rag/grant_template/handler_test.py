@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
@@ -109,6 +110,7 @@ def mock_extracted_cfp_data(
             {"title": "Research Plan", "subtitles": ["Methods", "Analysis"]},
             {"title": "Evaluation", "subtitles": ["Metrics", "Timeline"]},
         ],
+        "submission_date": "2025-04-26",
     }
 
 
@@ -267,6 +269,7 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
         assert result.grant_application_id == str(test_application.id)
     assert result.grant_sections is not None
     assert len(result.grant_sections) == 3
+    assert result.submission_date == date(2025, 4, 26)
 
     async with async_session_maker() as session:
         db_result = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == result.id))
@@ -277,6 +280,7 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
         else:
             assert db_result.grant_application_id == str(test_application.id)
         assert len(db_result.grant_sections) == 3
+        assert db_result.submission_date == date(2025, 4, 26)
 
     template_generation_message_found = False
     extract_cfp_data_message_found = False
@@ -318,6 +322,7 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
                 "organization" in cfp_data_content
                 and "cfp_subject" in cfp_data_content
                 and "content_sections" in cfp_data_content
+                and "submission_date" in cfp_data_content
             ):
                 cfp_data_extracted_message_found = True
 
@@ -409,6 +414,8 @@ async def test_idempotent_template_generation(
         )
 
     assert result1.id != result2.id
+    assert result1.submission_date == result2.submission_date
+    assert result1.submission_date == date(2025, 4, 26)
 
     async with async_session_maker() as session:
         templates = await session.scalars(
