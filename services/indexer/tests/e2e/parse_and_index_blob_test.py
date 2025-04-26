@@ -31,7 +31,7 @@ async def test_parse_and_index_blob(
     blob = storage_bucket.blob(FILENAME)
     blob.upload_from_filename(str(SMALL_PDF_TEST_FILE))
 
-    content = await download_blob(FILENAME)
+    content = await download_blob(FILENAME, storage_bucket.name)
     await parse_and_index_file(
         content=content,
         filename=FILENAME,

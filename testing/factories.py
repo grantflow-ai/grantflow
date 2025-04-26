@@ -78,6 +78,8 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
 
 class FileFactory(SQLAlchemyFactory[RagFile]):
     __model__ = RagFile
+    bucket_name = "test-bucket"
+    object_path = "test-file-path"
 
 
 class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
