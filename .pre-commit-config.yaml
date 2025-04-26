@@ -20,20 +20,20 @@ repos:
           - id: name-tests-test
             args:
                 - --pytest
-            files: ^backend/tests
-            exclude: ^backend/tests/factories|^backend/tests/test_utils|^backend/tests/completion.py|^backend/tests/test_data|^backend/tests
+            files: ^(packages|services)/[a-zA-Z0-9_-]+/tests
+            exclude: completion|utils|test_utils
 
     - repo: https://github.com/JoC0de/pre-commit-prettier
       rev: v3.5.3
       hooks:
           - id: prettier
-            exclude: ^.idea|^backend/alembic|^.git
+            exclude: ^.idea|^packages/db/alembic|^.git
 
     - repo: https://github.com/codespell-project/codespell
       rev: v2.4.1
       hooks:
           - id: codespell
-            exclude: ^backend/tests
+            exclude: ^(packages|services)/[a-zA-Z0-9_-]+/tests|test_data
             additional_dependencies: ["tomli"]
 
     # Frontend
@@ -73,24 +73,24 @@ repos:
       rev: v2.5.1
       hooks:
           - id: pyproject-fmt
-            files: ^pyproject.toml
+            files: .*pyproject\.toml$
             additional_dependencies: ["tomli"]
 
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.11.6
+      rev: v0.11.7
       hooks:
           - id: ruff
             args: [--fix, --unsafe-fixes]
-            files: ^backend/
+            files: ^(packages|services)/[a-zA-Z0-9_-]+/
           - id: ruff-format
-            files: ^backend/
+            files: ^(packages|services)/[a-zA-Z0-9_-]+/
 
     - repo: local
       hooks:
           - id: mypy
             name: mypy
-            entry: uv run --project backend mypy
+            entry: uv run mypy
             require_serial: true
             language: system
             types: [python]
-            files: ^backend/
+            files: ^(packages|services)/[a-zA-Z0-9_-]+/
