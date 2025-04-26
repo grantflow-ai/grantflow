@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 env:
   DOCKER_REGISTRY: us-east1-docker-docker.pkg.dev
@@ -12,6 +15,10 @@ env:
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
     strategy:
       matrix:
         service: [ backend, indexer ]
@@ -19,22 +26,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          project_id: grantflow
+          service_account: githubactions@grantflow.iam.gserviceaccount.com
+          workload_identity_provider: projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
           registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build and push Backend
+
+      - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
           push: true
           context: .
           file: services/${{ matrix.service }}/Dockerfile
-          cache-from: type=registry,ref=us-east1-docker/grantflow/grantflow/backend:buildcache
-          cache-to: type=registry,ref=us-east1-docker/grantflow/grantflow/backend:buildcache,mode=max
-          tags: ${{ env.DOCKER_REGISTRY }}/grantflow/backend:latest,${{ env.DOCKER_REGISTRY }}/grantflow/backend:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/grantflow/${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/grantflow/${{ matrix.service }}:buildcache,mode=max
+          tags: ${{ env.DOCKER_REGISTRY }}/grantflow/${{ matrix.service }}:latest,${{ env.DOCKER_REGISTRY }}/grantflow/${{ matrix.service }}:${{ github.sha }}
