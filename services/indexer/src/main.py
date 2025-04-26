@@ -102,15 +102,24 @@ async def handle_file_indexing(
                 )
                 .returning(RagFile.id)
             )
-            parent_table = GrantApplicationFile if data["parent_type"] == "grant_application" else OrganizationFile
-            await session.execute(
-                insert(parent_table).values(
-                    {
-                        "rag_file_id": file_id,
-                        "parent_id": data["parent_id"],
-                    }
+            if data["parent_type"] == "grant_application":
+                await session.execute(
+                    insert(GrantApplicationFile).values(
+                        {
+                            "rag_file_id": file_id,
+                            "grant_application_id": data["parent_id"],
+                        }
+                    )
                 )
-            )
+            else:
+                await session.execute(
+                    insert(OrganizationFile).values(
+                        {
+                            "rag_file_id": file_id,
+                            "funding_organization_id": data["parent_id"],
+                        }
+                    )
+                )
             logger.info("Created new file record", file_id=file_id, parent_id=data["parent_id"])
         except SQLAlchemyError as e:
             logger.error("Error creating file record", exc_info=e)

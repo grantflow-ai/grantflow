@@ -18,7 +18,6 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import APIError, session_maker_provider
 from services.backend.src.api.middleware import AuthMiddleware
 from services.backend.src.api.routes.application_files import (
-    handle_application_file_uploads,
     handle_delete_application_file,
     retrieve_application_files,
 )
@@ -36,7 +35,6 @@ from services.backend.src.api.routes.grant_applications import (
 from services.backend.src.api.routes.health import health_check
 from services.backend.src.api.routes.organization_files import (
     handle_delete_organization_file,
-    handle_organization_file_uploads,
     retrieve_organization_files,
 )
 from services.backend.src.api.routes.workspaces import (
@@ -61,7 +59,6 @@ logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 
 api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
-    handle_application_file_uploads,
     handle_application_websocket,
     handle_create_organization,
     handle_create_otp,
@@ -72,7 +69,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_delete_organization_file,
     handle_delete_workspace,
     handle_login,
-    handle_organization_file_uploads,
     handle_retrieve_organizations,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
