@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
 from google.cloud.exceptions import ClientError
 from google.cloud.storage import Bucket
@@ -14,43 +15,53 @@ from packages.shared_utils.src.sync import run_sync
 logger = get_logger(__name__)
 
 storage_client_ref = Ref[storage.Client]()
-bucket_cache: dict[str, Bucket] = {}
+bucket_ref = Ref[Bucket]()
 
 
-def get_storage_credentials() -> Credentials:
+def get_credentials() -> Credentials:
+    if get_env("STORAGE_EMULATOR_HOST", fallback=""):
+        return cast("Credentials", AnonymousCredentials())  # type: ignore[no-untyped-call]
     credentials = deserialize(get_env("GCS_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
-    return Credentials.from_service_account_info(credentials)  # type: ignore[no-any-return,no-untyped-call]
+    return cast("Credentials", Credentials.from_service_account_info(credentials))  # type: ignore[no-untyped-call]
 
 
 def get_storage_client() -> storage.Client:
-    if not storage_client_ref.value:
-        storage_client_ref.value = storage.Client(
-            credentials=get_storage_credentials(),
-            project=get_env("GOOGLE_CLOUD_PROJECT"),
-        )
+    if storage_client_ref.value:
+        return storage_client_ref.value
+
+    storage_client_ref.value = storage.Client(
+        credentials=get_credentials(),
+        project=get_env("GOOGLE_CLOUD_PROJECT"),
+    )
+
     return storage_client_ref.value
 
 
-def get_bucket(bucket_name: str) -> Bucket:
-    if bucket_name not in bucket_cache:
+def get_bucket() -> Bucket:
+    if not bucket_ref.value:
         storage_client = get_storage_client()
-        bucket_cache[bucket_name] = storage_client.bucket(bucket_name)
-    return bucket_cache[bucket_name]
+        bucket = storage_client.bucket(get_env("GCS_BUCKET", fallback="grantflow-uploads"))
+
+        if not bucket.exists():
+            bucket.create()
+
+        bucket_ref.value = bucket
+
+    return bucket_ref.value
 
 
-async def download_blob(bucket_name: str, blob_name: str) -> bytes:
+async def download_blob(blob_name: str) -> bytes:
     try:
-        bucket = await run_sync(get_bucket, bucket_name)
+        bucket = await run_sync(get_bucket)
         blob = bucket.blob(blob_name)
         content = await run_sync(blob.download_as_bytes)
-        logger.info("Downloaded blob", bucket_name=bucket_name, blob_name=blob_name)
+        logger.info("Downloaded blob", blob_name=blob_name)
         return cast("bytes", content)
     except ClientError as e:
-        logger.error("Failed to download blob", bucket_name=bucket_name, blob_name=blob_name, exc_info=e)
+        logger.error("Failed to download blob", blob_name=blob_name, exc_info=e)
         raise ExternalOperationError(
             "Failed to download blob",
             context={
-                "bucket_name": bucket_name,
                 "blob_name": blob_name,
                 "error": str(e),
             },

@@ -16,7 +16,6 @@ from packages.db.src.tables import (
     TextVector,
     Workspace,
 )
-from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.serialization import deserialize, serialize
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from services.indexer.src.extraction import extract_file_content
@@ -153,22 +152,17 @@ async def parse_source_file(
         raise ValueError("Either application_id or organization_id must be provided")
 
     file_content = await AsyncPath(source_file).read_bytes()
-    file_dto = FileDTO(
-        content=file_content,
-        filename=source_file.name,
-        mime_type="application/pdf"
-        if source_file.suffix == ".pdf"
-        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    )
 
     async with async_session_maker() as session:
         file_id = await session.scalar(
             insert(RagFile)
             .values(
                 {
-                    "filename": file_dto.filename,
-                    "mime_type": file_dto.mime_type,
-                    "size": file_dto.size,
+                    "filename": source_file.name,
+                    "mime_type": "application/pdf"
+                    if source_file.suffix == ".pdf"
+                    else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "size": len(file_content),
                     "indexing_status": FileIndexingStatusEnum.FINISHED,
                 }
             )
@@ -181,7 +175,14 @@ async def parse_source_file(
         )
         await session.commit()
 
-    await parse_and_index_file(file_dto=file_dto, file_id=str(file_id))
+    await parse_and_index_file(
+        filename=source_file.name,
+        content=file_content,
+        mime_type="application/pdf"
+        if source_file.suffix == ".pdf"
+        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        file_id=str(file_id),
+    )
 
     async with async_session_maker() as session:
         if application_id:
@@ -218,18 +219,20 @@ async def create_funding_application(
 ) -> str:
     application_id: str
     async with async_session_maker() as session:
-        application_id = await session.scalar(
-            insert(GrantApplication)
-            .values(
-                {
-                    "id": fixture_id,
-                    "workspace_id": workspace_id,
-                    "title": title,
-                    "research_objectives": research_objectives,
-                    "form_inputs": form_inputs,
-                }
+        application_id = str(
+            await session.scalar(
+                insert(GrantApplication)
+                .values(
+                    {
+                        "id": fixture_id,
+                        "workspace_id": workspace_id,
+                        "title": title,
+                        "research_objectives": research_objectives,
+                        "form_inputs": form_inputs,
+                    }
+                )
+                .returning(GrantApplication.id)
             )
-            .returning(GrantApplication.id)
         )
         await session.commit()
     return application_id

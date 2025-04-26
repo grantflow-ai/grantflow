@@ -131,7 +131,6 @@ async def before_server_start(app_instance: Litestar) -> None:
 
 
 def valkey_store_factory(name: str) -> ValkeyStore:
-    """We use valkey (a Redis fork) as a key-value store for caching."""
     connection_string = get_env("VALKEY_CONNECTION_STRING")
 
     return ValkeyStore.with_client(url=connection_string, namespace=name)
