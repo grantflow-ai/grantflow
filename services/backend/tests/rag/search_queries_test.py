@@ -21,9 +21,9 @@ def mock_handle_completions_request(mocker: MockerFixture) -> Mock:
             ]
         }
 
-    mock = mocker.patch("src.rag.search_queries.handle_completions_request", side_effect=mock_response)
+    mock = mocker.patch("services.backend.src.rag.search_queries.handle_completions_request", side_effect=mock_response)
 
-    mocker.patch("src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
+    mocker.patch("services.backend.src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
     return mock
 
 
@@ -51,8 +51,8 @@ async def test_handle_create_search_queries_max_queries(mocker: MockerFixture) -
     async def mock_response(*args: str, **kwargs: str) -> MockQueryResponse:
         return {"queries": [{"text": f"query{i}", "type": "factual", "aspect": f"aspect{i}"} for i in range(15)]}
 
-    mocker.patch("src.rag.search_queries.handle_completions_request", side_effect=mock_response)
-    mocker.patch("src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
+    mocker.patch("services.backend.src.rag.search_queries.handle_completions_request", side_effect=mock_response)
+    mocker.patch("services.backend.src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
 
     result = await handle_create_search_queries(user_prompt="test prompt")
     assert len(result) == 10
@@ -71,11 +71,11 @@ async def test_handle_create_search_queries_retries_until_minimum(mocker: Mocker
     ]
 
     mock_completions = mocker.patch(
-        "src.rag.search_queries.handle_completions_request",
+        "services.backend.src.rag.search_queries.handle_completions_request",
         side_effect=list(responses),
     )
 
-    mocker.patch("src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
+    mocker.patch("services.backend.src.rag.search_queries.deduplicate_queries", side_effect=lambda x: x)
 
     result = await handle_create_search_queries(user_prompt="test prompt")
 

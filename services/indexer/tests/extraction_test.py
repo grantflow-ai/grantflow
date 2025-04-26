@@ -16,7 +16,7 @@ from testing import TEST_DATA_SOURCES
 
 @pytest.fixture
 def mock_document_intelligence_client() -> Generator[AsyncMock, None, None]:
-    with patch("src.utils.extraction.DocumentIntelligenceClient") as mock_client:
+    with patch("services.indexer.src.extraction.DocumentIntelligenceClient") as mock_client:
         instance = AsyncMock()
         mock_client.return_value = instance
         mock_poller = AsyncMock()
@@ -29,7 +29,7 @@ def mock_document_intelligence_client() -> Generator[AsyncMock, None, None]:
 
 @pytest.fixture
 def mock_web_crawler() -> Generator[AsyncMock, None, None]:
-    with patch("src.utils.extraction.AsyncWebCrawler") as mock_crawler:
+    with patch("services.indexer.src.extraction.AsyncWebCrawler") as mock_crawler:
         instance = AsyncMock()
         mock_crawler.return_value.__aenter__.return_value = instance
         instance.arun.return_value.markdown = "mocked markdown"

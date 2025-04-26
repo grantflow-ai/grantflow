@@ -7,14 +7,14 @@ from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Workspace, WorkspaceUser
 from services.backend.src.api.http.workspaces import UpdateWorkspaceRequestBody
 from services.backend.tests.conftest import TestingClientType
-from services.backend.tests.factories import (
+from sqlalchemy import insert, select
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.factories import (
     CreateWorkspaceRequestBodyFactory,
     GrantApplicationFactory,
     WorkspaceFactory,
 )
-from sqlalchemy import insert, select
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 async def test_create_workspace_success(

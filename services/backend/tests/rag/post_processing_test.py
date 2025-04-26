@@ -88,7 +88,7 @@ async def test_bm25_ranker(mocker: MockFixture) -> None:
     mock_bm25 = mocker.patch.object(BM25Ranker, "rank")
     mock_bm25.return_value = {"apple banana": 0.8, "orange grape": 0.2, "apple orange": 0.6}
 
-    mocker.patch("src.rag.post_processing.get_spacy_model", return_value=mock_nlp)
+    mocker.patch("services.backend.src.rag.post_processing.get_spacy_model", return_value=mock_nlp)
 
     result = await apply_bm25_ranking(sentences, query)
 
@@ -114,7 +114,7 @@ async def test_apply_semantic_ranking(mocker: MockFixture) -> None:
     mock_cos_sim.return_value = mocker.MagicMock()
     mock_cos_sim.return_value.squeeze.return_value.tolist.return_value = similarities
 
-    mocker.patch("src.rag.post_processing.get_embedding_model", return_value=mock_model)
+    mocker.patch("services.backend.src.rag.post_processing.get_embedding_model", return_value=mock_model)
 
     result = await apply_semantic_ranking(sentences, query)
 
@@ -128,7 +128,7 @@ async def test_apply_semantic_ranking(mocker: MockFixture) -> None:
 async def test_parse_documents(
     sample_documents: list[DocumentDTO], sample_sentence_infos: list[SentenceInfo], mocker: MockFixture
 ) -> None:
-    mock_count_tokens = mocker.patch("src.rag.post_processing.count_tokens")
+    mock_count_tokens = mocker.patch("services.backend.src.rag.post_processing.count_tokens")
     mock_count_tokens.side_effect = lambda text, **_: len(text.split())
 
     result = await parse_documents(
@@ -149,26 +149,26 @@ async def test_post_process_documents_empty_input() -> None:
 
 
 async def test_post_process_documents_integration(sample_documents: list[DocumentDTO], mocker: MockFixture) -> None:
-    mock_process_sentence = mocker.patch("src.rag.post_processing._process_sentence")
+    mock_process_sentence = mocker.patch("services.backend.src.rag.post_processing._process_sentence")
     mock_process_sentence.return_value = "Processed text"
 
-    mock_deduplicate = mocker.patch("src.rag.post_processing.deduplicate_sentences")
+    mock_deduplicate = mocker.patch("services.backend.src.rag.post_processing.deduplicate_sentences")
     mock_deduplicate.return_value = ["Sentence 1", "Sentence 2"]
 
-    mock_bm25_ranker = mocker.patch("src.rag.post_processing.BM25Ranker")
+    mock_bm25_ranker = mocker.patch("services.backend.src.rag.post_processing.BM25Ranker")
     mock_bm25_ranker.return_value.rank.return_value = {"Processed text": 0.8}
 
-    mock_semantic = mocker.patch("src.rag.post_processing.apply_semantic_ranking")
+    mock_semantic = mocker.patch("services.backend.src.rag.post_processing.apply_semantic_ranking")
     mock_semantic.return_value = {"Sentence 1": 0.7, "Sentence 2": 0.6}
 
-    mock_parse = mocker.patch("src.rag.post_processing.parse_documents")
+    mock_parse = mocker.patch("services.backend.src.rag.post_processing.parse_documents")
     processed_docs = ["Processed content 1", "Processed content 2"]
     mock_parse.return_value = processed_docs
 
-    mock_count_tokens = mocker.patch("src.rag.post_processing.count_tokens")
+    mock_count_tokens = mocker.patch("services.backend.src.rag.post_processing.count_tokens")
     mock_count_tokens.return_value = 10
 
-    mock_nlp = mocker.patch("src.rag.post_processing.get_spacy_model")
+    mock_nlp = mocker.patch("services.backend.src.rag.post_processing.get_spacy_model")
 
     mock_token = mocker.MagicMock()
     mock_token.is_alpha = True
