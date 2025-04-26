@@ -4,8 +4,9 @@ from http import HTTPStatus
 from typing import Any, TypedDict
 
 import uvicorn
-from litestar import Litestar, Request, Response, post
+from litestar import Litestar, Response, post
 from litestar.config.cors import CORSConfig
+from litestar.connection.request import Request
 from litestar.logging import StructLoggingConfig
 from packages.db.src.connection import get_session_maker
 from packages.db.src.enums import FileIndexingStatusEnum
@@ -25,7 +26,7 @@ logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 
 
-def handle_exception(_: Request[Any], exception: Exception) -> Response[Any]:
+def handle_exception(_: Request, exception: Exception) -> Response[Any]:
     if isinstance(exception, SQLAlchemyError):
         logger.error("An unexpected sqlalchemy error occurred", exc_name=type(exception).__name__, exec_info=exception)
         message = "An unexpected database error occurred"

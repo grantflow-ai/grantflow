@@ -1,7 +1,5 @@
-from typing import cast
-
 import pytest
-from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+from packages.db.src.json_objects import GrantLongFormSection
 from packages.shared_utils.src.exceptions import ValidationError
 from services.backend.src.rag.grant_application.utils import (
     TreeNode,
@@ -11,7 +9,7 @@ from services.backend.src.rag.grant_application.utils import (
     generate_application_text,
     map_to_tree,
 )
-from services.backend.tests.factories import GrantSectionFactory
+from testing.factories import GrantSectionFactory
 
 SAMPLE_TEXTS = {
     "abstract": "This is an abstract.",
@@ -427,9 +425,7 @@ def test_generate_application_text() -> None:
     }
     title = "Developing AI solutions for cancer"
 
-    text = generate_application_text(
-        title, cast("list[GrantLongFormSection | GrantElement]", grant_sections), section_texts
-    )
+    text = generate_application_text(title, grant_sections, section_texts)  # type: ignore[arg-type]
 
     assert (
         text

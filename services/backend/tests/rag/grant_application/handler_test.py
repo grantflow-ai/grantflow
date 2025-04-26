@@ -12,11 +12,11 @@ from services.backend.src.rag.grant_application.handler import (
     grant_application_text_generation_pipeline_handler,
 )
 from services.backend.src.rag.grant_application.utils import is_grant_long_form_section
-from services.backend.tests.factories import (
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.factories import (
     GrantApplicationFactory,
     WorkspaceFactory,
 )
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 @pytest.fixture
@@ -301,10 +301,16 @@ async def test_generate_work_plan_text_with_mocked_llm(
     )
 
     with (
-        patch("src.rag.grant_application.handler.handle_extract_relationships", return_value=mock_relationships),
-        patch("src.rag.grant_application.handler.handle_enrich_objective", return_value=mock_enrichment_response),
         patch(
-            "src.rag.grant_application.handler.generate_work_plan_component_text",
+            "services.backend.src.rag.grant_application.handler.handle_extract_relationships",
+            return_value=mock_relationships,
+        ),
+        patch(
+            "services.backend.src.rag.grant_application.handler.handle_enrich_objective",
+            return_value=mock_enrichment_response,
+        ),
+        patch(
+            "services.backend.src.rag.grant_application.handler.generate_work_plan_component_text",
             return_value=mock_work_plan_component_text,
         ),
     ):
@@ -383,8 +389,12 @@ async def test_generate_grant_section_texts_with_mocked_llm(
     mock_section_text: str,
 ) -> None:
     with (
-        patch("src.rag.grant_application.handler.generate_work_plan_text", return_value=mock_section_text),
-        patch("src.rag.grant_application.handler.generate_section_text", return_value=mock_section_text),
+        patch(
+            "services.backend.src.rag.grant_application.handler.generate_work_plan_text", return_value=mock_section_text
+        ),
+        patch(
+            "services.backend.src.rag.grant_application.handler.generate_section_text", return_value=mock_section_text
+        ),
     ):
         result = await generate_grant_section_texts(
             application_id="test-app-id",
@@ -429,8 +439,14 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
     """
 
     with (
-        patch("src.rag.grant_application.handler.generate_grant_section_texts", return_value=section_texts),
-        patch("src.rag.grant_application.handler.generate_application_text", return_value=application_text),
+        patch(
+            "services.backend.src.rag.grant_application.handler.generate_grant_section_texts",
+            return_value=section_texts,
+        ),
+        patch(
+            "services.backend.src.rag.grant_application.handler.generate_application_text",
+            return_value=application_text,
+        ),
     ):
         result_text, result_sections = await grant_application_text_generation_pipeline_handler(
             application_id=str(test_application.id),
@@ -498,7 +514,7 @@ async def test_pipeline_handler_backend_error(
     error_message = "Test backend error"
     with (
         patch(
-            "src.rag.grant_application.handler.generate_grant_section_texts",
+            "services.backend.src.rag.grant_application.handler.generate_grant_section_texts",
             side_effect=BackendError(error_message, context={"test": "context"}),
         ),
         pytest.raises(BackendError),

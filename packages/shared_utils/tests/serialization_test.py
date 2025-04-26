@@ -91,7 +91,7 @@ def test_deserialize_success() -> None:
 
 def test_deserialize_decode_error(mocker: MockFixture) -> None:
     mocker.patch(
-        "src.utils.serialization.decode",
+        "packages.shared_utils.src.serialization.decode",
         side_effect=DecodeError("Failed to decode"),
     )
     with (
@@ -114,7 +114,7 @@ def test_serialize_with_kwargs() -> None:
 
 def test_serialize_encode_error(mocker: MockFixture) -> None:
     mocker.patch(
-        "src.utils.serialization.encode",
+        "packages.shared_utils.src.serialization.encode",
         side_effect=EncodeError("Failed to encode"),
     )
     with (
