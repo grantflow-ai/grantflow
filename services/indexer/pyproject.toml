@@ -13,7 +13,7 @@ dependencies = [
   "crawl4ai>=0.6",
   "db",
   "google-cloud-eventarc>=1.15.2",
-  "google-cloud-storage[async]>=2.19",
+  "google-cloud-storage>=2.19",
   "kreuzberg>=2.1.2",
   "semantic-text-splitter>=0.24.2",
   "shared-utils",

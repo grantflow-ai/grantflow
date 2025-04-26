@@ -22,16 +22,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 COPY pyproject.toml uv.lock ./
-COPY backend/pyproject.toml backend/pyproject.toml
+COPY services/backend/pyproject.toml services/backend/pyproject.toml
+COPY packages packages
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --all-packages --locked --no-editable --no-dev --compile-bytecode
+    uv sync --all-packages --no-editable --no-dev --compile-bytecode
 
 FROM base AS app
 WORKDIR /app/
 COPY --chown=appuser:appuser --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
 COPY --chown=appuser:appuser --from=playwright-download /root/.cache/ms-playwright/ /root/.cache/ms-playwright/
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
-COPY --chown=appuser:appuser backend/src/ src/
+COPY --chown=appuser:appuser services/backend/src/ src/
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH"
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--log-level", "info"]

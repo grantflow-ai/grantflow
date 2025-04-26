@@ -31,9 +31,6 @@
 **/tests/
 **/test_data/
 
-# Documentation
-**/*.md
-
 # Root level files
 /.pre-commit-config.yaml
 /.commitlintrc
