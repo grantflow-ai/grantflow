@@ -29,9 +29,10 @@ tasks:
             - pre-commit run --show-diff-on-failure --color=always --all-files
 
     dev:
-        desc: Start all services in development mode (database, backend, indexer, and frontend)
+        desc: Start all services in development mode (database, GCS emulator, backend, indexer, and frontend)
         deps:
             - task: db:up
+            - task: gcs:up
         cmds:
             - task: _dev:services
 
@@ -114,7 +115,7 @@ tasks:
             - pnpm test run
 
     # Backend Commands
-    
+
     backend-services:install:
         desc: Install services dependencies using uv
         cmds:

@@ -28,6 +28,20 @@ services:
             timeout: 5s
             retries: 10
 
+    gcs-emulator:
+        image: fsouza/fake-gcs-server:latest
+        restart: always
+        ports:
+            - "4443:4443"
+        volumes:
+            - gcs-data:/storage
+        command: ["-scheme", "http", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
+        healthcheck:
+            test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:4443"]
+            interval: 1s
+            timeout: 5s
+            retries: 10
+
     backend:
         build:
             dockerfile: ./services/backend/Dockerfile
@@ -54,17 +68,23 @@ services:
             dockerfile: ./services/indexer/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+            GOOGLE_CLOUD_PROJECT: grantflow-dev
+            GOOGLE_CLOUD_REGION: us-central1
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+            GCS_BUCKET: grantflow-uploads
         env_file:
             - ./services/indexer/.env
         ports:
             - "8001:8000"
         volumes:
             - ./services/indexer/src:/app/src:cached
-        command: "uvicorn src.api.main:app --host 0.0.0.0 --log-level info --reload"
+        command: "uvicorn src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
                 condition: service_healthy
             valkey:
+                condition: service_healthy
+            gcs-emulator:
                 condition: service_healthy
 
     frontend:
@@ -87,3 +107,4 @@ services:
 
 volumes:
     data:
+    gcs-data:
