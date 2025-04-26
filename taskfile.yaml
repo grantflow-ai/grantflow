@@ -2,25 +2,22 @@ version: "3"
 
 vars:
     FRONTEND_DIR: frontend
-    SERVICES_DIR: services
-    PACKAGES_DIR: packages
-
-# Main User-Facing Commands
 
 tasks:
+    # Repo Commands
     setup:
         desc: Initial project setup - installs all dependencies and git pre-commit hooks
         cmds:
             - pre-commit install && pre-commit install --hook-type commit-msg && pre-commit install-hooks
             - task: frontend:install
-            - task: backend-services:install
-            - task: backend-services:install-playwright
+            - task: backend:install
+            - task: backend:install-playwright
 
     update:
         desc: Update all dependencies (frontend and backend) and pre-commit hooks to latest versions
         cmds:
             - task: frontend:update
-            - task: backend-services:update
+            - task: backend:update
             - pre-commit autoupdate
 
     lint:
@@ -38,13 +35,13 @@ tasks:
 
     test:
         desc: Run all tests (backend services, packages, and frontend)
-        cmds:
-            - task: backend-services:test
+        deps:
+            - task: backend:test
             - task: frontend:test
 
     test:e2e:
         desc: Run all end-to-end tests
-        cmds:
+        deps:
             - task: service:backend:test:e2e
             - task: service:indexer:test:e2e
 
@@ -113,17 +110,17 @@ tasks:
 
     # Backend Commands
 
-    backend-services:install:
+    backend:install:
         desc: Install services dependencies using uv
         cmds:
             - uv sync --all-packages --dev
 
-    backend-services:install-playwright:
+    backend:install-playwright:
         desc: Install Playwright dependencies
         cmds:
             - uv run playwright install
 
-    backend-services:update:
+    backend:update:
         desc: Update backend dependencies to latest versions
         cmds:
             - uv sync --upgrade --all-packages
@@ -132,11 +129,11 @@ tasks:
             - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
             - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
             - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
-            - task: backend-services:install
+            - task: backend:install
 
-    backend-services:test:
+    backend:test:
         desc: Run all backend tests (services and shared packages)
-        cmds:
+        deps:
             - task: service:backend:test
             - task: service:indexer:test
             - task: packages:test

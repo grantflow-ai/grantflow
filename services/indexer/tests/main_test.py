@@ -40,6 +40,8 @@ async def test_handle_file_indexing_success(
         "size": 12345,
         "parent_id": str(grant_application.id),
         "parent_type": "grant_application",
+        "bucket_name": "test-bucket",
+        "object_path": "test-file-path",
     }
 
     response = await test_client.post("/", json=file_data)
@@ -58,7 +60,7 @@ async def test_handle_file_indexing_success(
         assert file.size == 12345
         assert file.indexing_status == FileIndexingStatusEnum.INDEXING
 
-    mock_download_blob.assert_awaited_once_with("test-files/document.pdf")
+    mock_download_blob.assert_awaited_once_with("test-files/document.pdf", "test-bucket")
     mock_parse_and_index_file.assert_awaited_once()
     assert mock_parse_and_index_file.call_args[1]["file_id"] == file_id
     assert mock_parse_and_index_file.call_args[1]["filename"] == "document.pdf"
@@ -79,6 +81,8 @@ async def test_handle_file_indexing_success_organization(
         "size": 54321,
         "parent_id": str(funding_organization.id),
         "parent_type": "organization",
+        "bucket_name": "test-bucket",
+        "object_path": "test-file-path",
     }
 
     response = await test_client.post("/", json=file_data)
@@ -97,7 +101,7 @@ async def test_handle_file_indexing_success_organization(
         assert file.size == 54321
         assert file.indexing_status == FileIndexingStatusEnum.INDEXING
 
-    mock_download_blob.assert_awaited_once_with("test-files/document2.pdf")
+    mock_download_blob.assert_awaited_once_with("test-files/document2.pdf", "test-bucket")
     mock_parse_and_index_file.assert_awaited_once()
     assert mock_parse_and_index_file.call_args[1]["file_id"] == file_id
     assert mock_parse_and_index_file.call_args[1]["filename"] == "document2.pdf"
@@ -116,6 +120,8 @@ async def test_handle_file_indexing_download_error(
         "size": 12345,
         "parent_id": "123e4567-e89b-12d3-a456-426614174000",
         "parent_type": "grant_application",
+        "bucket_name": "test-bucket",
+        "object_path": "test-file-path",
     }
     mock_download_blob.side_effect = Exception("Failed to download blob")
 
@@ -139,6 +145,8 @@ async def test_handle_file_indexing_parsing_error(
         "size": 12345,
         "parent_id": "123e4567-e89b-12d3-a456-426614174000",
         "parent_type": "grant_application",
+        "bucket_name": "test-bucket",
+        "object_path": "test-file-path",
     }
     mock_parse_and_index_file.side_effect = Exception("Failed to parse and index file")
 
@@ -170,6 +178,8 @@ async def test_handle_database_error(
         "size": 12345,
         "parent_id": "123e4567-e89b-12d3-a456-426614174000",
         "parent_type": "grant_application",
+        "bucket_name": "test-bucket",
+        "object_path": "test-file-path",
     }
 
     with patch("sqlalchemy.insert") as mock_insert:

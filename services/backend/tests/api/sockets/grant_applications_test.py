@@ -81,6 +81,8 @@ async def application_with_file(
                 mime_type="application/pdf",
                 size=1024,
                 indexing_status=FileIndexingStatusEnum.FINISHED,
+                bucket_name="test-bucket",
+                object_path="test-file-path",
             )
         )
 
