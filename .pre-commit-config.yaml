@@ -20,8 +20,8 @@ repos:
           - id: name-tests-test
             args:
                 - --pytest
-            files: ^(packages|services)/tests
-            exclude: factories|test_utils|test_data|completion
+            files: ^(packages|services)/[a-zA-Z0-9_-]+/tests
+            exclude: completion|utils|test_utils
 
     - repo: https://github.com/JoC0de/pre-commit-prettier
       rev: v3.5.3

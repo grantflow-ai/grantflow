@@ -11,16 +11,15 @@ from litestar.stores.valkey import ValkeyStore
 from packages.db.src.enums import ApplicationStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, GrantTemplate
+from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
-from packages.shared_utils.src.files import FileDTO
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import deserialize, serialize
 from services.backend.src.common_types import APIWebsocket, WebsocketMessage
 from services.backend.src.dto import WebsocketDataMessage, WebsocketErrorMessage, WebsocketInfoMessage
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from services.backend.src.utils.db import retrieve_application
 from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -212,10 +211,9 @@ async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | Non
     from services.indexer.src.extraction import extract_file_content, extract_webpage_content
 
     if cfp_file_upload:
-        file = await FileDTO.from_file(filename=cfp_file_upload.filename, file=cfp_file_upload)
         output, _ = await extract_file_content(
-            content=file.content,
-            mime_type=file.mime_type,
+            content=await cfp_file_upload.read(),
+            mime_type=cfp_file_upload.content_type,
         )
         return output if isinstance(output, str) else output["content"]
     if cfp_url:

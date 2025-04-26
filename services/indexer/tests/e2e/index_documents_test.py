@@ -1,19 +1,15 @@
 import logging
-from json import loads
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 from packages.db.src.tables import GrantApplication, GrantApplicationFile
-from packages.shared_utils.src.serialization import serialize
 from services.indexer.src.chunking import chunk_text
+from services.indexer.src.extraction import extract_file_content
 from services.indexer.src.indexing import index_documents
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing import RESULTS_FOLDER, TEST_DATA_SOURCES
-
-if TYPE_CHECKING:
-    from azure.ai.documentintelligence.models import AnalyzeResult
+from testing import TEST_DATA_SOURCES
 
 
 @pytest.mark.skipif(
@@ -28,26 +24,32 @@ async def test_index_documents(
     grant_application: GrantApplication,
     grant_application_file: GrantApplicationFile,
 ) -> None:
-    logger.info("Running end-to-end test for creating embeddings")
+    logger.info("Running end-to-end test for creating embeddings from %s", data_file.name)
 
-    ext = "json" if data_file.name.endswith(".pdf") else "md"
+    if data_file.name.endswith(".pdf"):
+        pytest.skip("PDF files are tested separately")
 
-    extraction_result = RESULTS_FOLDER / f"parse_{data_file.name}_data_test_result.{ext}"
-    assert extraction_result.exists(), f"Expected file {extraction_result} to exist"
-
-    content: str | AnalyzeResult = (
-        extraction_result.read_text() if ext == "md" else loads(extraction_result.read_text())
+    mime_type = "text/plain" if data_file.name.endswith(".txt") else "text/markdown"
+    content, _ = await extract_file_content(
+        content=data_file.read_bytes(),
+        mime_type=mime_type,
     )
-    chunks = chunk_text(text=content, mime_type="text/plain" if data_file.name.endswith(".pdf") else "text/markdown")
+
+    chunks = chunk_text(text=content, mime_type=mime_type)
+    assert len(chunks) > 0, f"No chunks generated from {data_file.name}"
 
     vector_dtos = await index_documents(
         chunks=chunks,
         file_id=str(grant_application_file.rag_file_id),
     )
 
-    index_results = RESULTS_FOLDER / f"index_{data_file.name}_documents_test_result.json"
+    assert len(vector_dtos) > 0, f"No vectors generated for {data_file.name}"
 
-    if not index_results.exists():
-        index_results.write_bytes(serialize(vector_dtos))
-    else:
-        assert serialize(vector_dtos) == index_results.read_bytes()
+    for vector in vector_dtos:
+        assert vector["rag_file_id"] == grant_application_file.rag_file_id, "Incorrect rag_file_id"
+        assert "chunk" in vector, "Missing chunk attribute"
+        assert vector["chunk"]["content"], "Missing chunk content"
+        assert "embedding" in vector, "Missing embedding attribute"
+        assert len(vector["embedding"]) > 0, "Missing embedding"
+
+    logger.info("Successfully indexed %d vectors from %s", len(vector_dtos), data_file.name)

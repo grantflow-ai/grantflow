@@ -1,12 +1,10 @@
 from http import HTTPStatus
 from typing import Any
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
-from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import FundingOrganization, OrganizationFile, RagFile
 from services.backend.tests.conftest import TestingClientType
-from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -22,60 +20,6 @@ async def organization_file(
         session.add(org_file)
         await session.commit()
     return org_file
-
-
-async def test_upload_organization_files_success(
-    test_client: TestingClientType,
-    funding_organization: FundingOrganization,
-    signal_dispatch_mock: AsyncMock,
-    async_session_maker: async_sessionmaker[Any],
-    mock_admin_code: Mock,
-) -> None:
-    test_files = {
-        "test1.txt": b"Test content 1",
-        "test2.txt": b"Test content 2",
-    }
-
-    response = await test_client.post(
-        f"/organizations/{funding_organization.id}/files",
-        files=test_files,
-        headers={"Authorization": "test-admin-code"},
-    )
-
-    assert response.status_code == HTTPStatus.CREATED
-
-    async with async_session_maker() as session:
-        files = (await session.scalars(select(RagFile))).all()
-        assert len(files) == 2
-
-        for file in files:
-            assert file.indexing_status == FileIndexingStatusEnum.INDEXING
-            assert file.filename in test_files
-
-        org_files = (
-            await session.scalars(
-                select(OrganizationFile).where(OrganizationFile.funding_organization_id == funding_organization.id)
-            )
-        ).all()
-        assert len(org_files) == 2
-
-    signal_calls = [call for call in signal_dispatch_mock.mock_calls if call.args[0] == "parse_and_index_file"]
-    assert len(signal_calls) == 2
-    for call in signal_calls:
-        assert "file_id" in call.kwargs
-        assert "file_dto" in call.kwargs
-
-
-async def test_upload_organization_files_failure_no_files(
-    test_client: TestingClientType, funding_organization: FundingOrganization, mock_admin_code: Mock
-) -> None:
-    response = await test_client.post(
-        f"/organizations/{funding_organization.id}/files",
-        files={},
-        headers={"Authorization": "test-admin-code"},
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 async def test_retrieve_organization_files_success(

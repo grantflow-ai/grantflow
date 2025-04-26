@@ -33,7 +33,7 @@ async def gcs_emulator_host() -> AsyncGenerator[str, None]:
             "-d",
             "fsouza/fake-gcs-server:latest",
             "-scheme",
-            "http",
+            "routes",
             "-port",
             "4443",
             "-public-host",

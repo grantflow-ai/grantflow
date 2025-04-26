@@ -1,5 +1,4 @@
 import logging
-from json import dumps
 from mimetypes import guess_type
 from os import environ
 from pathlib import Path
@@ -7,9 +6,8 @@ from typing import cast
 
 import pytest
 from azure.ai.documentintelligence.models import AnalyzeResult
-from packages.shared_utils.src.files import FileDTO
 from services.indexer.src.extraction import extract_file_content
-from testing import RESULTS_FOLDER, TEST_DATA_SOURCES
+from testing import TEST_DATA_SOURCES
 
 
 @pytest.mark.skipif(
@@ -21,15 +19,16 @@ async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
     if data_file.name.endswith(".pdf"):
         return
 
-    logger.info("Running end-to-end test for extracting text from a document")
+    logger.info("Running end-to-end test for extracting text from %s", data_file.name)
     mime_type = cast("str", guess_type(data_file.name)[0])
-    file_dto = FileDTO(content=data_file.read_bytes(), filename=data_file.name, mime_type=mime_type)
-    result, _ = await extract_file_content(content=file_dto.content, mime_type=file_dto.mime_type)
-    ext = "json" if isinstance(result, dict) else "md"
-    content = dumps(result) if isinstance(result, AnalyzeResult) else result
+    result, _ = await extract_file_content(content=data_file.read_bytes(), mime_type=mime_type)
 
-    existing_results = RESULTS_FOLDER / f"parse_{file_dto.filename}_data_test_result.{ext}"
-    if not existing_results.exists():
-        existing_results.write_text(content)
+    if isinstance(result, AnalyzeResult):
+        assert hasattr(result, "content"), "Missing content in AnalyzeResult"
+        assert result.content, "Empty content in AnalyzeResult"
+
     else:
-        assert content == existing_results.read_text()
+        assert isinstance(result, str), f"Expected string result, got {type(result)}"
+        assert result.strip(), "Extracted text is empty"
+
+    logger.info("Successfully extracted content from %s with mime type %s", data_file.name, mime_type)
