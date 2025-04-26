@@ -84,8 +84,7 @@ jobs:
         run: uv sync --all-packages --dev
 
       - name: Test Backend
-        run: uv run python -m pytest tests -v
-        working-directory: services/backend
+        run: PYTHONPATH=. uv run pytest services/backend/tests -v
 
   indexer-test:
     runs-on: ubuntu-latest
@@ -108,8 +107,8 @@ jobs:
         run: uv sync --all-packages --dev
 
       - name: Test Indexer
-        run: uv run python -m pytest tests -v
-        working-directory: services/indexer
+        run: PYTHONPATH=. uv run pytest services/indexer/tests -v
+
 
   db-test:
     runs-on: ubuntu-latest
@@ -132,8 +131,7 @@ jobs:
         run: uv sync --all-packages --dev
 
       - name: Test DB Package
-        run: uv run python -m pytest tests -v
-        working-directory: packages/db
+        run: PYTHONPATH=. uv run pytest packages/db/tests -v
 
   shared-utils-test:
     runs-on: ubuntu-latest
@@ -156,8 +154,7 @@ jobs:
         run: uv sync --all-packages --dev
 
       - name: Test Shared Utils Package
-        run: uv run python -m pytest tests -v
-        working-directory: packages/shared_utils
+        run: PYTHONPATH=. uv run pytest packages/shared_utils/tests -v
 
   frontend-test:
     runs-on: ubuntu-latest
