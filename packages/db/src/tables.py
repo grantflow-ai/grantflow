@@ -182,7 +182,7 @@ class GrantApplicationFile(Base):
         SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
     )
     grant_application_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True, server_default=None
     )
 
     rag_file: Relationship[RagFile] = relationship("RagFile")

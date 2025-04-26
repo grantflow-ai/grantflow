@@ -2,6 +2,9 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
+from sqlalchemy import insert
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
@@ -10,10 +13,8 @@ from packages.db.src.tables import (
     OrganizationFile,
     RagFile,
 )
+from packages.db.src.utils import check_exists_files_being_indexed
 from packages.shared_utils.src.exceptions import ValidationError
-from services.backend.src.utils.db import check_exists_files_being_indexed
-from sqlalchemy import insert
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 async def test_check_exists_files_being_indexed_application_success(

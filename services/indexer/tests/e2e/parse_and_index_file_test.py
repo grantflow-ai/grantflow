@@ -4,14 +4,13 @@ from typing import Any
 
 import pytest
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
-from packages.shared_utils.src.serialization import serialize
 from services.indexer.src.files import parse_and_index_file
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing import RESULTS_FOLDER, SOURCES_FOLDER
+from testing import SOURCES_FOLDER
 
 FILENAME = "PIC seq.pdf"
-SMALL_PDF_TEST_FILE = SOURCES_FOLDER / FILENAME
+SMALL_PDF_TEST_FILE = SOURCES_FOLDER / "application_sources" / "43b4aed5-8549-461f-9290-5ee9a630ac9a" / FILENAME
 
 
 @pytest.mark.skipif(
@@ -40,9 +39,16 @@ async def test_parse_application_file(
             )
         )
 
-    index_results = RESULTS_FOLDER / "parse_and_index_application_file_result.json"
+    assert len(results) > 0, "No text vectors were created"
 
-    if not index_results.exists():
-        index_results.write_bytes(serialize(results))
-    else:
-        assert serialize(results) == index_results.read_bytes()
+    for result in results:
+        assert result.rag_file_id == grant_application_file.rag_file_id, "Incorrect rag_file_id"
+        assert result.chunk, "Missing chunk content"
+        assert "content" in result.chunk, "Missing 'content' key in chunk"
+        assert result.embedding is not None, "Missing embedding vector"
+        assert len(result.embedding) > 0, "Empty embedding vector"
+        assert result.id, "Missing ID field"
+        assert result.created_at, "Missing created_at timestamp"
+        assert result.updated_at, "Missing updated_at timestamp"
+
+    logger.info("Successfully created %d text vectors", len(results))

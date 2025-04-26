@@ -35,7 +35,7 @@ services:
             - "4443:4443"
         volumes:
             - gcs-data:/storage
-        command: ["-scheme", "http", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
+        command: ["-scheme", "routes", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
         healthcheck:
             test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:4443"]
             interval: 1s

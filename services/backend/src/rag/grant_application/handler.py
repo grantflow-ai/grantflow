@@ -3,6 +3,7 @@ from asyncio import gather
 from packages.db.src.connection import get_session_maker
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from packages.db.src.tables import GrantApplication
+from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
@@ -19,7 +20,6 @@ from services.backend.src.rag.grant_application.utils import (
     generate_application_text,
     is_grant_long_form_section,
 )
-from services.backend.src.utils.db import retrieve_application
 from services.backend.src.utils.text import normalize_markdown
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
