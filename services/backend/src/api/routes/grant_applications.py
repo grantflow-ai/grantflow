@@ -9,7 +9,7 @@ from packages.db.src.json_objects import GrantElement, GrantLongFormSection, Res
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.api.http.funding_organizations import FundingOrganizationResponse
+from services.backend.src.api.routes.funding_organizations import FundingOrganizationResponse
 from services.backend.src.common_types import TableIdResponse
 from services.backend.src.utils.db import retrieve_application
 from sqlalchemy import delete as sa_delete

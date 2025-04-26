@@ -18,15 +18,15 @@ from packages.db.src.tables import (
 from pgvector.utils import Vector
 from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
-from services.backend.src.api.http.auth import LoginRequestBody, LoginResponse, OTPResponse
-from services.backend.src.api.http.funding_organizations import CreateOrganizationRequestBody
-from services.backend.src.api.http.grant_applications import (
+from services.backend.src.api.routes.auth import LoginRequestBody, LoginResponse, OTPResponse
+from services.backend.src.api.routes.funding_organizations import CreateOrganizationRequestBody
+from services.backend.src.api.routes.grant_applications import (
     ApplicationDraftCompleteResponse,
     ApplicationDraftProcessingResponse,
     CreateApplicationRequestBody,
     UpdateApplicationRequestBody,
 )
-from services.backend.src.api.http.workspaces import (
+from services.backend.src.api.routes.workspaces import (
     CreateWorkspaceRequestBody,
     UpdateWorkspaceRequestBody,
     WorkspaceBaseResponse,

@@ -3,7 +3,6 @@ import sys
 from http import HTTPStatus
 from typing import Any, TypedDict
 
-import uvicorn
 from litestar import Litestar, Response, post
 from litestar.config.cors import CORSConfig
 from litestar.connection.request import Request
@@ -159,6 +158,3 @@ app = Litestar(
     dependencies={"session_maker": session_maker_provider},
     logging_config=StructLoggingConfig(log_exceptions="always"),
 )
-
-if __name__ == "__main__":  # pragma: no cover
-    uvicorn.run(app, host="0.0.0.0", log_level="debug")
