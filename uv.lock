@@ -443,7 +443,7 @@ wheels = [
 
 [[package]]
 name = "crawl4ai"
-version = "0.6.1"
+version = "0.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -476,9 +476,9 @@ dependencies = [
     { name = "tf-playwright-stealth" },
     { name = "xxhash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/0f/f658b7606e24a5827565b1f8c93ca5cb05b7952f2b350c4adc23e2b40e82/crawl4ai-0.6.1.tar.gz", hash = "sha256:f38405da2358a44ba87a2c55d57e3ac92ed5a6454a7116d4a7b7337a6684d5a7", size = 291064, upload_time = "2025-04-24T10:37:36.711Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/9d/0f63b4f8ea487843b33a6da4b1ffff9e77dc4eee32cd25fb8bb52f3e6e04/crawl4ai-0.6.2.tar.gz", hash = "sha256:f52acee539500ec5fc8edbb7d3a3378a1b26f79017a52117bd10673a90a0f562", size = 291051, upload_time = "2025-04-26T13:10:23.809Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/12/a59cc40f4fe7e377426a71d7ca4a296d83bf07a0e7952fd1400d85346bfd/crawl4ai-0.6.1-py3-none-any.whl", hash = "sha256:9dfff9cb81d1ee13a0698440ed17335b17994476d62b4396fa7a7e815ef20608", size = 287253, upload_time = "2025-04-24T10:37:34.954Z" },
+    { url = "https://files.pythonhosted.org/packages/de/35/a604b5bc889c23f0960823092a75241fe81d1c7ae0762c5277583da08c5b/crawl4ai-0.6.2-py3-none-any.whl", hash = "sha256:f52ae16081afcd4b398c023fb9c9c8d31c592047bade4a97054a82c2271c54e6", size = 287248, upload_time = "2025-04-26T13:10:21.594Z" },
 ]
 
 [[package]]
@@ -570,6 +570,9 @@ name = "db"
 version = "0.1.0"
 source = { editable = "packages/db" }
 dependencies = [
+    { name = "asyncpg" },
+    { name = "greenlet" },
+    { name = "pgvector" },
     { name = "shared-utils" },
     { name = "sqlalchemy" },
 ]
@@ -582,6 +585,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "asyncpg", specifier = ">=0.30" },
+    { name = "greenlet", specifier = ">=3.1.1" },
+    { name = "pgvector", specifier = ">=0.4" },
     { name = "shared-utils", editable = "packages/shared_utils" },
     { name = "sqlalchemy", specifier = ">=2.0.39" },
 ]
@@ -1036,15 +1042,12 @@ source = { virtual = "services/backend" }
 dependencies = [
     { name = "aiohttp" },
     { name = "anthropic" },
-    { name = "asyncpg" },
     { name = "db" },
     { name = "en-core-web-sm" },
     { name = "firebase-admin" },
     { name = "google-cloud-aiplatform" },
-    { name = "greenlet" },
     { name = "litestar", extra = ["valkey"] },
     { name = "pathvalidate" },
-    { name = "pgvector" },
     { name = "prompt-template" },
     { name = "pyjwt" },
     { name = "rank-bm25" },
@@ -1058,15 +1061,12 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.14" },
     { name = "anthropic", specifier = ">=0.49" },
-    { name = "asyncpg", specifier = ">=0.30" },
     { name = "db", editable = "packages/db" },
     { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "firebase-admin", specifier = ">=6.7" },
     { name = "google-cloud-aiplatform", specifier = ">=1.85" },
-    { name = "greenlet", specifier = ">=3.1.1" },
     { name = "litestar", extras = ["valkey"], specifier = ">=2.15.1" },
     { name = "pathvalidate", specifier = ">=3.2.3" },
-    { name = "pgvector", specifier = ">=0.4" },
     { name = "prompt-template", specifier = ">=1.2" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
@@ -1295,8 +1295,10 @@ dependencies = [
     { name = "google-cloud-eventarc" },
     { name = "google-cloud-storage" },
     { name = "kreuzberg" },
+    { name = "litestar" },
     { name = "semantic-text-splitter" },
     { name = "shared-utils" },
+    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
@@ -1307,8 +1309,10 @@ requires-dist = [
     { name = "google-cloud-eventarc", specifier = ">=1.15.2" },
     { name = "google-cloud-storage", specifier = ">=2.19" },
     { name = "kreuzberg", specifier = ">=2.1.2" },
+    { name = "litestar", specifier = ">=2.15.1" },
     { name = "semantic-text-splitter", specifier = ">=0.24.2" },
     { name = "shared-utils", editable = "packages/shared_utils" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
 [[package]]
