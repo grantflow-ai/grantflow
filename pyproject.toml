@@ -15,8 +15,17 @@ classifiers = [
 
 [dependency-groups]
 dev = [
+  "covdefaults>=2.3.0",
+  "faker>=37.0.1",
   "mypy>=1.15.0",
+  "polyfactory>=2.19.0",
   "pre-commit>=4.2.0",
+  "pytest>=8.3.5",
+  "pytest-asyncio>=0.25.3",
+  "pytest-cov>=6.0.0",
+  "pytest-mock>=3.14.0",
+  "pytest-timeout>=2.3.1",
+  "python-dotenv>=1.0.1",
   "ruff>=0.11.1",
   "uv-bump",
 ]
@@ -24,7 +33,7 @@ dev = [
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-src = [ "backend/src", "backend/tests" ]
+src = [ "packages/**/src", "packages/**/tests", "services/**/src", "services/**/tests" ]
 
 format.docstring-code-line-length = 120
 format.docstring-code-format = true
@@ -46,8 +55,7 @@ lint.ignore = [
   "TD",       # We allow todo and fixme comments
   "TRY",      # Try except block, rules are too strict
 ]
-lint.per-file-ignores."backend/alembic/**/*.*" = [ "INP001" ]
-lint.per-file-ignores."backend/tests/**/*.*" = [
+lint.per-file-ignores."**/tests/**/*.*" = [
   "ARG001",
   "D",
   "N815",
@@ -58,6 +66,7 @@ lint.per-file-ignores."backend/tests/**/*.*" = [
   "RUF012",
   "S",
 ]
+lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
 lint.isort.known-first-party = [ "src", "tests" ]
 lint.mccabe.max-complexity = 25
 lint.pydocstyle.convention = "google"
@@ -84,24 +93,33 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-omit = [ "backend/tests/*" ]
 plugins = [ "covdefaults" ]
-source = [ "backend/src" ]
+omit = [ "services/**/tests/*", "packages/**/tests/*" ]
+source = [ "services/**/src", "packages/**/src" ]
 
 [tool.coverage.report]
 exclude_lines = [ 'if TYPE_CHECKING:' ]
 fail_under = 80
 
 [tool.mypy]
-packages = [ "backend/src", "backend/tests" ]
 python_version = "3.12"
 disable_error_code = 'import-untyped'
 implicit_reexport = false
 show_error_codes = true
 strict = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = [ "." ]
 
 [tool.uv.workspace]
-members = [ "backend" ]
+members = [
+  "services/backend",
+  "services/indexer",
+  "packages/db",
+  "packages/shared_utils",
+]
 
 [tool.uv.sources]
+db = { workspace = true }
+shared-utils = { workspace = true }
 uv-bump = { git = "https://github.com/zundertj/uv-bump" }
