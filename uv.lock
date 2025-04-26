@@ -1403,7 +1403,7 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.1.3"
+version = "3.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1414,9 +1414,9 @@ dependencies = [
     { name = "python-calamine" },
     { name = "python-pptx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/96/6a/b54e0d25032ef3d7857789e705922dc9932a1beac19a56e3a577363d5af0/kreuzberg-3.1.3.tar.gz", hash = "sha256:ddca00c2fa1d1dea45fe2d1854feace1a93bc044a603c8f0455b3e2a7a4c506f", size = 38855, upload_time = "2025-04-10T09:38:07.668Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/67/9f1b9a563119828f85f3fd0d09a9298b17884886a11d83dd2878926df186/kreuzberg-3.1.4.tar.gz", hash = "sha256:9f3cf37a4e3589829e54f20f23861f48fd6b6eaf8d98e98e049de14d70bc0b06", size = 39593, upload_time = "2025-04-26T14:45:37.262Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/a4/01aa1fea0ef0156ddecf3658d7863414037d03dfb9b0cf2345dfb37ac8f2/kreuzberg-3.1.3-py3-none-any.whl", hash = "sha256:e724a5179756bc6cb1d1941f3c1c75a5d00e472dc55532ba934af4252b3ee9d4", size = 47486, upload_time = "2025-04-10T09:38:06.527Z" },
+    { url = "https://files.pythonhosted.org/packages/74/8c/a04c671daa8d3fc9b5f4084430a53f9d90b2a702795e73bd14fe8502b51d/kreuzberg-3.1.4-py3-none-any.whl", hash = "sha256:3089ecb402447ebe5aeb88a1990912e326c78638b0011357eb6121a003c50003", size = 48209, upload_time = "2025-04-26T14:45:35.425Z" },
 ]
 
 [[package]]
