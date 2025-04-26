@@ -76,9 +76,14 @@ async def process_organization_files(
     async with async_session_maker() as session, session.begin():
         for organization_file in data_fixture_folder.glob("*.json"):
             data = deserialize(organization_file.read_bytes(), dict[str, Any])
+
             rag_file_data = data.pop("rag_file")
             rag_file_id = data.pop("rag_file_id")
+
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
+
+            rag_file_data["bucket_name"] = "test_bucket"
+            rag_file_data["object_path"] = "test_path"
 
             await session.execute(
                 insert(RagFile)
