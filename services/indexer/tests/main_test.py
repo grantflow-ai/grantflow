@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 @pytest.fixture
-async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[AsyncTestClient, None]:
+async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[AsyncTestClient[Any], None]:
     """Create a test client for testing the API."""
     app.state.session_maker = async_session_maker
     async with AsyncTestClient(app=app) as client:
@@ -38,7 +38,7 @@ def mock_parse_and_index_file() -> Generator[AsyncMock, None, None]:
 
 
 async def test_handle_file_indexing_success(
-    test_client: AsyncTestClient,
+    test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_and_index_file: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
@@ -82,7 +82,7 @@ async def test_handle_file_indexing_success(
 
 
 async def test_handle_file_indexing_download_error(
-    test_client: AsyncTestClient,
+    test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -114,7 +114,7 @@ async def test_handle_file_indexing_download_error(
 
 
 async def test_handle_file_indexing_parsing_error(
-    test_client: AsyncTestClient,
+    test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_and_index_file: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
@@ -147,7 +147,7 @@ async def test_handle_file_indexing_parsing_error(
 
 
 async def test_handle_file_indexing_bad_request(
-    test_client: AsyncTestClient,
+    test_client: AsyncTestClient[Any],
 ) -> None:
     """Test file indexing API with invalid request data."""
     # Missing required fields
@@ -162,7 +162,7 @@ async def test_handle_file_indexing_bad_request(
 
 
 async def test_handle_database_error(
-    test_client: AsyncTestClient,
+    test_client: AsyncTestClient[Any],
 ) -> None:
     """Test handling of database errors during file indexing."""
     # Arrange

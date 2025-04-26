@@ -13,16 +13,6 @@ The backend follows a modular architecture:
     /sockets         # Websockets handlers for different resources
     middleware.py    # API middleware
     main.py          # API entry point
-  /db                # Database models and connection
-    tables.py        # SQLAlchemy models
-    base.py          # Base model definitions
-    connection.py    # Database connection handling
-    enums.py         # Enumeration types
-    json_objects.py  # JSON object definitions
-  /indexer           # Document indexing functionality
-    chunking.py      # Text chunking for indexing
-    files.py         # File handling for indexing
-    indexing.py      # Core indexing functionality
   /rag               # Retrieval Augmented Generation
     /grant_application # Grant application RAG functionality
     /grant_template  # Grant template RAG functionality
@@ -31,23 +21,21 @@ The backend follows a modular architecture:
   /utils             # Utility functions
     ai.py            # AI service integration
     db.py            # Database utilities
-    embeddings.py    # Vector embedding utilities
     firebase.py      # Firebase authentication
     jwt.py           # JWT token handling
-    serialization.py # Data serialization
 ```
 
 ## Tech Stack
 
 - **Litestar**: Fast ASGI web framework
-- **SQLAlchemy**: ORM for database access
+- **SQLAlchemy**: ORM for database access (via packages/db)
 - **asyncpg**: Asynchronous PostgreSQL driver
 - **pgvector**: Vector search extension for PostgreSQL
 - **AI Services**:
     - Google Cloud AI (Vertex AI) for LLM integration
     - Anthropic Claude for LLM integration
 - **Firebase**: Authentication
-- **msgspec**: High-performance serialization
+- **msgspec**: High-performance serialization (via packages/shared_utils)
 - **structlog**: Structured logging
 - **spaCy**: Natural language processing
 
@@ -77,11 +65,11 @@ The backend uses TypedDict for DTOs instead of Pydantic:
 
 - **TypedDicts**: Located in `src/dto.py`, `src/rag/dto.py`, and `src/api/api_types.py`
 - **NotRequired**: Used for optional fields with complete docstrings
-- **msgspec**: Used for high-performance serialization in `src/utils/serialization.py`
+- **msgspec**: Used for high-performance serialization (imported from shared_utils)
 
 ### Database Models
 
-SQLAlchemy models are defined in `src/db/tables.py`:
+SQLAlchemy models are imported from the db package:
 
 - **Workspaces**: Research workspaces for organizing grant applications
 - **GrantApplications**: Grant application data and metadata
@@ -194,13 +182,13 @@ The Grant Application Wizard is implemented using a step-by-step WebSocket inter
 
 The wizard tracks completed steps using ValkeyStore, allowing for persistent session state with an 8-week expiration.
 
-See the [Grant Application Wizard Architecture diagram](../diagrams/grant_application_wizard.md) for a detailed view of the interaction flow.
+See the [Grant Application Wizard Architecture diagram](../../diagrams/grant_application_wizard.md) for a detailed view of the interaction flow.
 
 ## RAG Architecture
 
 The RAG system is designed to assist in generating grant applications:
 
-1. **Document Indexing**: Process and index relevant documents
+1. **Document Indexing**: Process and index relevant documents via the indexer service
 2. **Query Generation**: Create targeted queries for document retrieval
 3. **Retrieval**: Fetch the most relevant document chunks
 4. **Generation**: Use LLMs to generate high-quality content
@@ -220,7 +208,7 @@ Then there are two separate workflows: **Grant Template Generation** and **Grant
 
 ### Grant Template Generation
 
-<img src="../diagrams/generation_template.svg" width="800" height="800"  alt="template_generation"/>
+See the [Grant Template Generation diagram](../../diagrams/grant_template_generation.md) for a detailed view of the pipeline.
 
 This is the first step in the overall generation process.
 A grant application cannot be generated without a grant template.
@@ -261,7 +249,7 @@ A grant template is associated with a grant application and (optionally) a fundi
 
 ### Grant Application Generation
 
-<img src="../diagrams/generation_application.svg" width="800" height="800"  alt="template_generation"/>
+See the [Grant Application Generation diagram](../../diagrams/grant_application_generation.md) for a detailed view of the pipeline.
 
 This is the second and final stage of the grant-writing pipeline.
 A grant application cannot be generated without a complete and valid grant template and user-provided research objectives.
@@ -335,42 +323,3 @@ A generated grant application stores final text and is linked to both the templa
 | ------------------- | ------------------ | ----------- | ---------------------------------------------- |
 | `rag_file`          | `RagFile`          | Many-to-One | The file included in the application context   |
 | `grant_application` | `GrantApplication` | Many-to-One | The grant application this file is attached to |
-
-[//]: # "# template generation diagram"
-[//]: # "flowchart TD"
-[//]: # 'A["Start: grant_template_generation_pipeline_handler"] --> B["Extract CFP Data"]'
-[//]: # 'B --> C{"Organization Found?"} & M["Error: CFP Extraction"]'
-[//]: # 'C -- Yes --> D["Fetch Organization Metadata"]'
-[//]: # 'C -- No --> E["Proceed Without Organization Context"]'
-[//]: # 'D --> F["Extract & Enrich Sections"]'
-[//]: # "E --> F"
-[//]: # 'F --> G["Extract Grant Sections from CFP"]'
-[//]: # 'G --> H["Generate Metadata for Long-Form Sections"] & N["Error: Section Extraction"]'
-[//]: # 'H --> I["Combine Structure + Metadata"] & O["Error: Metadata Generation"]'
-[//]: # 'I --> J["Create GrantTemplate Object"]'
-[//]: # 'J --> K["Insert GrantTemplate into DB"]'
-[//]: # 'K --> L["Return GrantTemplate"] & P["Error: Database Insertion"]'
-[//]: # "M:::error"
-[//]: # "N:::error"
-[//]: # "O:::error"
-[//]: # "P:::error"
-[//]: # "# application generation diagram"
-[//]: # "flowchart TD"
-[//]: # 'A["Start: grant_application_text_generation_pipeline_handler"] --> B["Retrieve Grant Application"]'
-[//]: # 'B --> C["Validate Grant Template & Research Objectives"] & Z2["Error: Missing Application or Template"]'
-[//]: # 'C --> D{"Workplan Section Present?"} & Z3["Error: Invalid Template Structure"]'
-[//]: # 'D -- Yes --> E["Generate Work Plan Text"]'
-[//]: # 'E --> F["Extract Relationships"]'
-[//]: # 'F --> G["Enrich Objectives and Tasks"]'
-[//]: # 'G --> H["Generate Text for Objectives and Tasks"]'
-[//]: # 'H --> I["Build Workplan Text"]'
-[//]: # 'D -- No --> Z1["Error: Missing Workplan Section"]'
-[//]: # 'I --> J["Generate Other Grant Section Texts"]'
-[//]: # 'J --> K["Assemble Full Application Text"] & Z4["Error: Section Generation Failed"]'
-[//]: # 'K --> L["Save Application Text to DB"]'
-[//]: # 'L --> M["Return Application Text"] & Z5["Error: Database Write Failure"]'
-[//]: # "Z2:::error"
-[//]: # "Z3:::error"
-[//]: # "Z1:::error"
-[//]: # "Z4:::error"
-[//]: # "Z5:::error"

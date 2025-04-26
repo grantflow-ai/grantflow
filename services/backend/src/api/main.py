@@ -3,7 +3,6 @@ import sys
 from http import HTTPStatus
 from typing import Any
 
-import uvicorn
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.events import listener
@@ -17,36 +16,36 @@ from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DeserializationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import APIError, session_maker_provider
-from services.backend.src.api.http.application_files import (
+from services.backend.src.api.middleware import AuthMiddleware
+from services.backend.src.api.routes.application_files import (
     handle_application_file_uploads,
     handle_delete_application_file,
     retrieve_application_files,
 )
-from services.backend.src.api.http.auth import handle_create_otp, handle_login
-from services.backend.src.api.http.funding_organizations import (
+from services.backend.src.api.routes.auth import handle_create_otp, handle_login
+from services.backend.src.api.routes.funding_organizations import (
     handle_create_organization,
     handle_delete_organization,
     handle_retrieve_organizations,
     handle_update_organization,
 )
-from services.backend.src.api.http.grant_applications import (
+from services.backend.src.api.routes.grant_applications import (
     handle_delete_application,
     handle_update_application,
 )
-from services.backend.src.api.http.health import health_check
-from services.backend.src.api.http.organization_files import (
+from services.backend.src.api.routes.health import health_check
+from services.backend.src.api.routes.organization_files import (
     handle_delete_organization_file,
     handle_organization_file_uploads,
     retrieve_organization_files,
 )
-from services.backend.src.api.http.workspaces import (
+from services.backend.src.api.routes.workspaces import (
     handle_create_workspace,
     handle_delete_workspace,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
     handle_update_workspace,
 )
-from services.backend.src.api.middleware import AuthMiddleware
 from services.backend.src.api.sockets.grant_applications import handle_application_websocket
 from services.backend.src.common_types import APIRequest
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
@@ -157,6 +156,3 @@ app = Litestar(
     ],
     stores=StoreRegistry(default_factory=valkey_store_factory),
 )
-
-if __name__ == "__main__":  # pragma: no cover
-    uvicorn.run(app, host="0.0.0.0", log_level="debug")

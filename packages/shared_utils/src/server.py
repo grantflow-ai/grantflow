@@ -10,4 +10,4 @@ class APIError(TypedDict):
     detail: NotRequired[str]
 
 
-session_maker_provider = Provide(get_session_maker)
+session_maker_provider = Provide(get_session_maker, sync_to_thread=False)

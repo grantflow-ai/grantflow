@@ -10,7 +10,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 if TYPE_CHECKING:
-    from services.backend.src.api.http.funding_organizations import CreateOrganizationRequestBody
+    from services.backend.src.api.routes.funding_organizations import CreateOrganizationRequestBody
 
 
 async def test_create_organization_api_request_success(
