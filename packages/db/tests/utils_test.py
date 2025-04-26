@@ -32,6 +32,8 @@ async def test_check_exists_files_being_indexed_application_success(
                     "mime_type": "text/plain",
                     "size": 100,
                     "indexing_status": FileIndexingStatusEnum.INDEXING,
+                    "bucket_name": "test-bucket",
+                    "object_path": "test-file-path",
                 }
             )
         )
@@ -70,6 +72,8 @@ async def test_check_exists_files_being_indexed_application_non_indexing_status(
                     "mime_type": "text/plain",
                     "size": 100,
                     "indexing_status": indexing_status,
+                    "bucket_name": "test-bucket",
+                    "object_path": "test-file-path",
                 }
             )
         )
@@ -114,6 +118,8 @@ async def test_check_exists_files_being_indexed_organization_success(
                     "mime_type": "text/plain",
                     "size": 100,
                     "indexing_status": FileIndexingStatusEnum.INDEXING,
+                    "bucket_name": "test-bucket",
+                    "object_path": "test-file-path",
                 }
             )
         )
@@ -152,6 +158,8 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
                     "mime_type": "text/plain",
                     "size": 100,
                     "indexing_status": indexing_status,
+                    "bucket_name": "test-bucket",
+                    "object_path": "test-file-path",
                 }
             )
         )

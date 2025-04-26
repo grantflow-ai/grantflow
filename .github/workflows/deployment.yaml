@@ -1,16 +1,20 @@
 name: Deployment
 
-# Workflow disabled temporarily
 on:
   push:
     branches:
       - main
 
+env:
+  DOCKER_REGISTRY: us-east1-docker-docker.pkg.dev
+
+
 jobs:
   deploy-backend:
-    # Job disabled temporarily
-    if: ${{ false }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [ backend, indexer ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,15 +25,16 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.CONTAINER_REGISTRY }}
+          registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Build and push Backend
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
           push: true
-          tags: ${{ secrets.CONTAINER_REGISTRY }}/grantflow/backend:latest,${{ secrets.CONTAINER_REGISTRY }}/grantflow/backend:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.CONTAINER_REGISTRY }}/grantflow/backend:buildcache
-          cache-to: type=registry,ref=${{ secrets.CONTAINER_REGISTRY }}/grantflow/backend:buildcache,mode=max
+          context: .
+          file: services/${{ matrix.service }}/Dockerfile
+          cache-from: type=registry,ref=us-east1-docker/grantflow/grantflow/backend:buildcache
+          cache-to: type=registry,ref=us-east1-docker/grantflow/grantflow/backend:buildcache,mode=max
+          tags: ${{ env.DOCKER_REGISTRY }}/grantflow/backend:latest,${{ env.DOCKER_REGISTRY }}/grantflow/backend:${{ github.sha }}

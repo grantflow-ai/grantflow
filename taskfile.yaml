@@ -2,12 +2,9 @@ version: "3"
 
 vars:
     FRONTEND_DIR: frontend
-    SERVICES_DIR: services
-    PACKAGES_DIR: packages
-
-# Main User-Facing Commands
 
 tasks:
+    # Repo Commands
     setup:
         desc: Initial project setup - installs all dependencies and git pre-commit hooks
         cmds:
@@ -38,13 +35,13 @@ tasks:
 
     test:
         desc: Run all tests (backend services, packages, and frontend)
-        cmds:
+        deps:
             - task: backend:test
             - task: frontend:test
 
     test:e2e:
         desc: Run all end-to-end tests
-        cmds:
+        deps:
             - task: service:backend:test:e2e
             - task: service:indexer:test:e2e
 
@@ -136,7 +133,7 @@ tasks:
 
     backend:test:
         desc: Run all backend tests (services and shared packages)
-        cmds:
+        deps:
             - task: service:backend:test
             - task: service:indexer:test
             - task: packages:test
