@@ -15,7 +15,12 @@ import eslintTS from "typescript-eslint";
 import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
 import eslintPluginTailwind from "eslint-plugin-tailwindcss";
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 const compat = new FlatCompat();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default [
 	eslintJS.configs.recommended,
@@ -43,6 +48,7 @@ export default [
 				ecmaVersion: 2025,
 				parser: "@typescript-eslint/parser",
 				project: ["./frontend/tsconfig.json"],
+				tsconfigRootDir: path.resolve(__dirname),
 			},
 		},
 		plugins: {
@@ -110,6 +116,7 @@ export default [
 			"unicorn/no-array-callback-reference": "off",
 			"unicorn/no-array-for-each": "off",
 			"unicorn/no-array-reduce": "off",
+			"unicorn/no-nested-ternary": "off",
 			"unicorn/no-null": "off",
 			"unicorn/no-process-exit": "off",
 			"unicorn/no-useless-undefined": "off",
