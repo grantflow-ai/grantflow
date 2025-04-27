@@ -97,15 +97,16 @@ export function WaitlistForm() {
 					placeholder="Type your full name"
 					type="text"
 				/>
+
 				<div className="flex justify-end mt-4 px-2">
 					<AppButton className="text-base" type="submit">
 						Join now
 					</AppButton>
 				</div>
 
-				<div className="h-12 mt-2">
+				<div className="h-12 mt-2 w-full relative">
 					<p
-						className={`transition-opacity duration-200
+						className={`absolute inset-0 transition-opacity duration-200 text-wrap
 						${formState.status === "idle" ? "opacity-0" : "opacity-100"}
 						${formState.status === "success" ? "text-success" : formState.status === "error" ? "text-error" : "text-gray-50"}
 					`}

@@ -91,8 +91,8 @@ function BenefitsAndWaitlistForm() {
 					))}
 				</ul>
 			</section>
-			<aside aria-label="waitlist-form" className="me-7 shrink-0 text-2xl md:me-0">
-				<h3 className="font-heading ">{CONTENT_BENEFITS.formHeading}</h3>
+			<aside aria-label="waitlist-form" className="me-7 shrink-0 md:me-0">
+				<h3 className="font-heading text-2xl">{CONTENT_BENEFITS.formHeading}</h3>
 				<WaitlistForm />
 			</aside>
 		</div>
