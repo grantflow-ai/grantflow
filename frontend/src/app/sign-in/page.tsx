@@ -1,6 +1,6 @@
 "use client";
 
-import { login } from "@/actions/api";
+import { login } from "@/actions/login";
 import { SeparatorWithText } from "@/components/separator-with-text";
 import { EmailSigninForm } from "@/components/sign-in/email-signin-form";
 import { SigninWithGoogleButton } from "@/components/sign-in/signin-with-google-button";

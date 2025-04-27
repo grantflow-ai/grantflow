@@ -1,30 +1,4 @@
 export namespace API {
-	export namespace CreateApplication {
-		export namespace Http201 {
-			export type ResponseBody = {
-				id: string;
-			};
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			workspace_id: string;
-		}
-
-		export type RequestBody = {
-			cfp_file?: string;
-			cfp_url?: string;
-			title: string;
-		};
-	}
-
 	export namespace CreateOrganization {
 		export namespace Http201 {
 			export type ResponseBody = {
@@ -184,101 +158,6 @@ export namespace API {
 		}
 	}
 
-	export namespace GetApplication {
-		export namespace Http200 {
-			export type ResponseBody = {
-				completed_at: null | string;
-				form_inputs: null | {};
-				grant_template: null | {
-					funding_organization: null | {
-						abbreviation: null | string;
-						full_name: string;
-						id: string;
-					};
-					grant_sections: (
-						| {
-								depends_on: string[];
-								generation_instructions: string;
-								id: string;
-								is_clinical_trial: boolean | null;
-								is_detailed_workplan: boolean | null;
-								keywords: string[];
-								max_words: number;
-								order: number;
-								parent_id: null | string;
-								search_queries: string[];
-								title: string;
-								topics: string[];
-						  }
-						| {
-								id: string;
-								order: number;
-								parent_id: null | string;
-								title: string;
-						  }
-					)[];
-				};
-				id: string;
-				research_objectives:
-					| null
-					| {
-							description?: string;
-							number: number;
-							research_tasks: {
-								description?: string;
-								number: number;
-								relationships?: {}[];
-								title: string;
-							}[];
-							title: string;
-					  }[];
-				text: null | string;
-				title: string;
-			};
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			application_id: string;
-			workspace_id: string;
-		}
-	}
-
-	export namespace GetApplicationContent {
-		export namespace Http200 {
-			export type ResponseBody =
-				| {
-						id: string;
-						status: "complete";
-						text: string;
-				  }
-				| {
-						id: string;
-						status: "generating";
-				  };
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			application_id: string;
-			workspace_id: string;
-		}
-	}
-
 	export namespace GetWorkspace {
 		export namespace Http200 {
 			export type ResponseBody = {
@@ -397,44 +276,6 @@ export namespace API {
 		};
 	}
 
-	export namespace UpdateApplication {
-		export namespace Http200 {
-			export type ResponseBody = {
-				completed_at: null | string;
-				id: string;
-				title: string;
-			};
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			application_id: string;
-			workspace_id: string;
-		}
-
-		export type RequestBody = {
-			research_objectives: {
-				description?: string;
-				number: number;
-				research_tasks: {
-					description?: string;
-					number: number;
-					relationships?: {}[];
-					title: string;
-				}[];
-				title: string;
-			}[];
-			title: string;
-		};
-	}
-
 	export namespace UpdateOrganization {
 		export namespace Http200 {
 			export type ResponseBody = {
@@ -489,55 +330,6 @@ export namespace API {
 			description: null | string;
 			logo_url: null | string;
 			name: string;
-		};
-	}
-
-	export namespace UploadApplicationFiles {
-		export namespace Http201 {
-			export type ResponseBody = {
-				id: string;
-			}[];
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			application_id: string;
-			workspace_id: string;
-		}
-
-		export type RequestBody = {
-			files: string[];
-		};
-	}
-
-	export namespace UploadOrganizationFiles {
-		export namespace Http201 {
-			export type ResponseBody = {
-				id: string;
-			}[];
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			organization_id: string;
-		}
-
-		export type RequestBody = {
-			files: string[];
 		};
 	}
 }

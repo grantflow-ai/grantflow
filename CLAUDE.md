@@ -240,7 +240,6 @@ The backend is now split into multiple services and packages for better separati
 ### Testing Strategy
 
 - Use Vitest for unit and component testing
-- Create factory functions in `/testing/factories.ts` for test data
 
 ### Code Style Conventions
 
