@@ -162,4 +162,5 @@ def grant_template_data(grant_sections: list[GrantLongFormSection]) -> dict[str,
         "grant_sections": grant_sections,
         "grant_application_id": str(GRANT_APPLICATION_ID),
         "funding_organization_id": None,
+        "submission_date": "2025-04-26",
     }
