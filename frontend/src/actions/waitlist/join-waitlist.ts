@@ -35,73 +35,35 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 	}
 
 	try {
-		let audienceId;
-		try {
-			const { data, error } = await resend.audiences.list();
-			if (error) {
-				logError({
-					error: "the audience could not be fetched",
-					identifier: "waitlist-signup-unknown-error",
-				});
-			} else if (data && data.data.length > 0) {
-				audienceId = data.data[0].id;
-			}
-		} catch {
-			logError({
-				error: "the contact could not be added to the audience",
-				identifier: "waitlist-signup-unknown-error",
-			});
-		}
+		const audienceId = await getAudienceId();
 
 		if (audienceId) {
-			try {
-				const { error } = await resend.contacts.create({
-					audienceId,
-					email: formData.email,
-					firstName: formData.name.split(" ")[0],
-					lastName: formData.name.split(" ").slice(1).join(" "),
-					unsubscribed: true,
-				});
-				if (error) {
-					logError({
-						error: `the contact could not be added to the audience: ${error.message}`,
-						identifier: "waitlist-signup-unknown-error",
-					});
-				}
-			} catch {
+			const { error } = await resend.contacts.create({
+				audienceId,
+				email: formData.email,
+				firstName: formData.name.split(" ")[0],
+				lastName: formData.name.split(" ").slice(1).join(" "),
+				unsubscribed: false,
+			});
+
+			if (error) {
 				logError({
-					error: "the contact could not be added to the audience",
-					identifier: "waitlist-signup-unknown-error",
+					error: `the contact could not be added to the audience: ${error.message}`,
+					identifier: "waitlist-signup-error",
 				});
 			}
 		}
 
-		const { error } = await resend.emails.send({
-			from: "Na'aman from GrantFlow.ai <onboarding@resend.dev>",
-			html: getWaitlistEmailTemplateHtml(formData.name),
-			subject: "Confirmation: You’ve Joined the GrantFlow Waitlist",
-			text: waitlistEmailTemplateText(formData.name),
-			to: formData.email,
-		});
-
-		if (error) {
-			const errorCode: ServerResponseCode =
-				error.name === "rate_limit_exceeded" ? "RATE_LIMITED" : "SERVER_ERROR";
-
-			return {
-				code: errorCode,
-				success: false,
-			};
-		}
+		const emailDeliveryResponse = await sendConfirmationEmail(formData);
 
 		return {
-			code: "SUCCESS",
-			success: true,
+			code: emailDeliveryResponse,
+			success: emailDeliveryResponse === "SUCCESS",
 		};
 	} catch {
 		logError({
 			error: "An unknown error occurred",
-			identifier: "waitlist-signup-unknown-error",
+			identifier: "waitlist-signup-error",
 		});
 
 		return {
@@ -109,4 +71,34 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 			success: false,
 		};
 	}
+}
+
+async function getAudienceId(): Promise<string | undefined> {
+	const { data: responseData, error } = await resend.audiences.list();
+
+	if (responseData) {
+		const {
+			data: [{ id }],
+		} = responseData;
+		return id;
+	}
+
+	logError({
+		error: error?.message ?? "the audience could not be fetched",
+		identifier: "waitlist-signup-error",
+	});
+
+	return;
+}
+
+async function sendConfirmationEmail(formData: { email: string; name: string }): Promise<ServerResponseCode> {
+	const { error } = await resend.emails.send({
+		from: "Na'aman from GrantFlow.ai <onboarding@resend.dev>",
+		html: getWaitlistEmailTemplateHtml(formData.name),
+		subject: "Confirmation: You’ve Joined the GrantFlow Waitlist",
+		text: waitlistEmailTemplateText(formData.name),
+		to: formData.email,
+	});
+
+	return error ? (error.name === "rate_limit_exceeded" ? "RATE_LIMITED" : "SERVER_ERROR") : "SUCCESS";
 }
