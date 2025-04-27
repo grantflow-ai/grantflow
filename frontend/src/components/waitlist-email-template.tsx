@@ -11,7 +11,7 @@ const emailColors = {
 	textPrimary: "#232D36",
 };
 
-export function getWaitlistEmailTemplateHtml(username: string) {
+export function getWaitlistEmailTemplateHtml(username: null | string): string {
 	const bulletItem = (text: string) => `
     <tr>
         <td width="5" style="vertical-align: top; padding-top: 7px;">
@@ -63,7 +63,7 @@ export function getWaitlistEmailTemplateHtml(username: string) {
                         <!-- Salutation -->
                         <tr>
                           <td style="font-weight: 600; padding-bottom: 15px;">
-                            Dear ${username},
+                            Dear ${username?.trim() ? username : "Researcher"},
                           </td>
                         </tr>
 
@@ -139,9 +139,9 @@ export function getWaitlistEmailTemplateHtml(username: string) {
     `;
 }
 
-export const waitlistEmailTemplateText = (username: string) => {
+export const waitlistEmailTemplateText = (username: null | string) => {
 	return `
-    Dear ${username},
+    Dear ${username?.trim() ? username : "Researcher"},
 
 	Thank you for joining the waitlist for GrantFlow.ai. Your interest in our platform is greatly appreciated.
 

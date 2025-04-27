@@ -191,7 +191,10 @@ function WaitListFormItem({
 						/>
 					</FormControl>
 					<div className="min-h-5 text-end">
-						<FormMessage className="text-sm text-error" />
+						<FormMessage
+							className="text-sm text-error"
+							data-testid={name === "email" ? "email-error" : "name-error"}
+						/>
 					</div>
 				</FormItem>
 			)}
