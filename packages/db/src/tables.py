@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -7,6 +7,7 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     CheckConstraint,
+    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -208,6 +209,8 @@ class GrantTemplate(BaseWithUUIDPK):
     funding_organization_id: Mapped[UUID | None] = mapped_column(
         SA_UUID(), ForeignKey("funding_organizations.id", ondelete="SET NULL"), nullable=True
     )
+
+    submission_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     grant_application: Relationship[GrantApplication] = relationship(
         "GrantApplication", back_populates="grant_template"
