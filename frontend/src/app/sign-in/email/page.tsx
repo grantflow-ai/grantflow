@@ -1,6 +1,6 @@
 "use client";
 
-import { login } from "@/actions/api";
+import { login } from "@/actions/login";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
 import { getFirebaseAuth } from "@/utils/firebase";

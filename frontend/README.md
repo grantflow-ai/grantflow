@@ -104,7 +104,6 @@ The project uses Vitest for testing with React Testing Library. Test files are c
 - **Test Environment**: jsdom
 - **Testing Libraries**: React Testing Library, Jest DOM matchers
 - **Test Files**: Located alongside the components they test
-- **Test Data**: Generated using factory functions in `/testing/factories.ts`
 
 ### Running Tests
 
