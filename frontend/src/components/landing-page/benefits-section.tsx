@@ -41,14 +41,14 @@ export function BenefitsSection() {
 			<div className="absolute inset-0 flex items-center justify-center">
 				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
 			</div>
-			<div className="xl:px-30 relative z-10 flex flex-col items-center px-4 pb-5 pt-8 text-center md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pt-20">
+			<div className="xl:px-30 relative z-10 flex flex-col items-center px-4 pb-15 pt-8 text-center md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pt-20">
 				<h2 className={benefitsCardHeader} id="benefits-heading">
 					{CONTENT.heading}
 				</h2>
 				<p className="m-3 text-xl text-stone-800" id="benefits-description">
 					{CONTENT.description}
 				</p>
-				<div className="my-8 grid w-full grid-cols-1 items-start gap-y-8 text-start md:grid-cols-2 md:gap-x-6 lg:gap-x-10 xl:gap-x-20">
+				<div className="my-8 grid w-full grid-cols-1 items-start gap-y-8 text-start md:grid-cols-2 md:gap-x-10">
 					{CONTENT.benefits.map((benefit, index) => (
 						<BenefitsCard
 							badge={benefit.badge}
@@ -115,8 +115,8 @@ function HowItWorksCard({
 		>
 			<h2 className={cn(benefitsCardHeader, "font-bold md:m-4")}>{heading}</h2>
 			<div className="relative my-8 grid w-full grid-cols-1 gap-y-12 p-2 md:grid-cols-4 md:gap-x-20">
-				<div className="border-background/30 h-7/8 absolute bottom-0 left-5 top-4 z-0 border-l-2 border-dashed md:hidden" />
-				<div className="top-5.5 md:left-17 lg:left-23 border-background/30 absolute right-0 z-0 hidden h-[0.15rem] border-t-2 border-dashed md:block md:w-[calc(100%-8.5rem)] lg:w-[calc(100%-11.5rem)] xl:left-28 xl:w-[calc(100%-14rem)]" />
+				<div className="md:hidden border-background/15 h-7/8 absolute bottom-0 left-5 top-4 z-0 border-l-2 border-dashed" />
+				<div className="absolute right-0 z-0 hidden top-5 border-background/15 h-[0.15rem] border-t-2 border-dashed md:block md:left-18 md:w-[calc(100%-9.5rem)] lg:left-25 lg:w-[calc(100%-12.5rem)] xl:left-29 xl:w-[calc(100%-15rem)]" />
 				{Object.entries(steps).map(([, content], index) => (
 					<TimelineStep key={index} label={content} />
 				))}
