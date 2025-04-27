@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getOtp } from "@/actions/api";
+import { getOtp } from "@/actions/otp";
 
 interface ChatMessage {
 	data: {

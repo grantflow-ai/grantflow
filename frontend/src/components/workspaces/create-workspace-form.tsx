@@ -1,4 +1,4 @@
-import { createWorkspace } from "@/actions/api";
+import { createWorkspace } from "@/actions/workspace";
 import { SubmitButton } from "@/components/submit-button";
 import { logError } from "@/utils/logging";
 import { zodResolver } from "@hookform/resolvers/zod";

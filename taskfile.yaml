@@ -45,6 +45,12 @@ tasks:
             - task: service:backend:test:e2e
             - task: service:indexer:test:e2e
 
+    generate:api-types:
+        desc: Generate TypeScript from backend API
+        cmds:
+            - PYTHONPATH=. uv run litestar --app services.backend.src.api.main:app schema typescript --output frontend/src/types/api-types.ts
+            - task: lint
+
     # Database Commands
 
     db:up:
