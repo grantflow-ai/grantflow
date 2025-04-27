@@ -11,7 +11,7 @@ const emailColors = {
 	textPrimary: "#232D36",
 };
 
-export function getWaitlistEmailTemplateHtml(username: string) {
+export function getWaitlistEmailTemplateHtml(username: null | string): string {
 	const bulletItem = (text: string) => `
     <tr>
         <td width="5" style="vertical-align: top; padding-top: 7px;">
@@ -63,7 +63,7 @@ export function getWaitlistEmailTemplateHtml(username: string) {
                         <!-- Salutation -->
                         <tr>
                           <td style="font-weight: 600; padding-bottom: 15px;">
-                            Dear ${username},
+                            Dear ${username?.trim() ? username : "Researcher"},
                           </td>
                         </tr>
 
@@ -139,20 +139,20 @@ export function getWaitlistEmailTemplateHtml(username: string) {
     `;
 }
 
-export const waitlistEmailTemplateText = (username: string) => {
+export const waitlistEmailTemplateText = (username: null | string) => {
 	return `
-    Dear ${username},
+    Dear ${username?.trim() ? username : "Researcher"},
 
-	Thank you for joining the waitlist for GrantFlow.ai. Your interest in our platform is greatly appreciated.
+    Thank you for joining the waitlist for GrantFlow.ai. Your interest in our platform is greatly appreciated.
 
-	GrantFlow.ai is designed to streamline the research funding process. As a waitlist member, you will receive:
-	- Early access to the platform
-	- Product updates and development insights
-	- Priority notifications about our launch and special offers
+    GrantFlow.ai is designed to streamline the research funding process. As a waitlist member, you will receive:
+    - Early access to the platform
+    - Product updates and development insights
+    - Priority notifications about our launch and special offers
 
-	We look forward to keeping you informed as we move closer to release. Should you have any questions or feedback in the meantime, please don't hesitate to reply to this message.
+    We look forward to keeping you informed as we move closer to release. Should you have any questions or feedback in the meantime, please don't hesitate to reply to this message.
 
-	Warm regards,
-	GrantFlow.ai team
+    Warm regards,
+    GrantFlow.ai team
     `;
 };
