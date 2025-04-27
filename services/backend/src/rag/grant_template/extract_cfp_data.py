@@ -19,6 +19,7 @@ class ExtractedCFPData(TypedDict):
     organization_id: str | None
     error: NotRequired[str | None]
     cfp_subject: str
+    submission_date: str | None
     content: list[Content]
 
 
@@ -101,6 +102,14 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - URLS and external references.
        - Forms, addresses, bureaucratic details etc.
 
+    7. **Submission Date Extraction**
+       - Identify the final full application submission deadline explicitly mentioned in the CFP content.
+       - Only extract a date if it specifies a day, month, and year (no vague dates like "July 2025").
+       - If multiple dates are mentioned:
+         - Prefer the earliest final submission deadline for application submission (not internal reviews, LOIs, drafts, etc.).
+       - Accept dates in any format (e.g., "July 1, 2025", "07/01/2025", "2025-07-01"), but standardize the output to the YYYY-MM-DD format.
+       - If no explicit submission date is found, return null.
+
     ## Output Format:
     ```jsonc
     {
@@ -112,6 +121,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
             {"Supporting documentation requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
         ],
         "cfp_subject": "...", // can be empty if error
+        "submission_date": "2025-04-26", // null if not found
         "error": null // or error message if extraction fails
     }
     ```
@@ -148,9 +158,10 @@ cfp_extraction_schema = {
                 "required": ["title", "subtitles"],
             },
         },
+        "submission_date": {"type": "string", "nullable": True},
         "error": {"type": "string", "nullable": True},
     },
-    "required": ["organization_id", "cfp_subject", "content"],
+    "required": ["organization_id", "cfp_subject", "content", "submission_date"],
 }
 
 
