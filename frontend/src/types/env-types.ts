@@ -11,5 +11,7 @@ export interface Env {
 
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: string;
 
+	NEXT_PUBLIC_RESEND_API_KEY_FULL_ACCESS: string;
+
 	NEXT_PUBLIC_SITE_URL: string;
 }
