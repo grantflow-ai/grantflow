@@ -31,6 +31,8 @@ For detailed information on specific modules, refer to their dedicated documenta
 - [PNPM](https://pnpm.io/): package manager for JavaScript/TypeScript dependencies
 - [Task](https://taskfile.dev): taskfile runner
 - [pre-commit](https://pre-commit.com/): Linting and formatting tool
+- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install): for managing cloud resources and secrets
+- [Firebase CLI](https://firebase.google.com/docs/cli): for Firebase deployments and secret access
 
 Make sure to install all of these on your system.
 

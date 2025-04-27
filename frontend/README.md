@@ -40,13 +40,25 @@ The frontend follows a modern Next.js App Router architecture:
 
 - Node.js 22 or higher
 - pnpm (package manager)
+- Google Cloud SDK (gcloud CLI)
+- Firebase CLI
 
 ### Environment Setup
 
-Create a `.env` file by copying the `.env.example` file:
+For local development, create a `.env` file by copying the `.env.example` file:
 
 ```bash
 cp .env.example .env
+```
+
+For production deployments, environment variables are managed using Google Secret Manager and Firebase App Hosting:
+
+```bash
+# Adding a new environment variable to Secret Manager
+gcloud secrets create SECRET_NAME --data-file=- <<< "secret-value"
+
+# Granting Firebase App Hosting access to the secret
+firebase apphosting:secrets:grantaccess SECRET_NAME --backend monorepo
 ```
 
 ## Working with Components
