@@ -30,7 +30,6 @@ from services.backend.src.api.routes.funding_organizations import (
 )
 from services.backend.src.api.routes.grant_applications import (
     handle_delete_application,
-    handle_update_application,
 )
 from services.backend.src.api.routes.health import health_check
 from services.backend.src.api.routes.organization_files import (
@@ -72,7 +71,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_organizations,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
-    handle_update_application,
     handle_update_organization,
     handle_update_workspace,
     health_check,

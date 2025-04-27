@@ -1,5 +1,5 @@
 "use server";
-import { getWorkspaces } from "@/actions/api";
+import { getWorkspaces } from "@/actions/workspace";
 import { CreateWorkspaceModal } from "@/components/workspaces/create-workspace-modal";
 import { WorkspaceCard } from "@/components/workspaces/workspace-card";
 

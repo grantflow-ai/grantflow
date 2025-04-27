@@ -1,6 +1,6 @@
 "use server";
 
-import { getWorkspace } from "@/actions/api";
+import { getWorkspace } from "@/actions/workspace";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
 import { Button } from "@/components/ui/button";

@@ -5,36 +5,46 @@ import process from "node:process";
 import { beforeEach, Mock, vi } from "vitest";
 import { toast } from "sonner";
 
-const { mockRedirect, mockToast, mockUsePathname, mockUseRouter, mockUseSearchParams } = vi.hoisted(() => {
-	const mockToast = vi.fn() as {
-		error: Mock;
-		info: Mock;
-		promise: Mock;
-		success: Mock;
-	} & Mock<typeof toast>;
-	Reflect.set(mockToast, "error", vi.fn());
-	Reflect.set(mockToast, "success", vi.fn());
-	Reflect.set(mockToast, "info", vi.fn());
-	Reflect.set(mockToast, "promise", vi.fn());
+const { mockCookies, mockRedirect, mockSetCookie, mockToast, mockUsePathname, mockUseRouter, mockUseSearchParams } =
+	vi.hoisted(() => {
+		const mockToast = vi.fn() as {
+			error: Mock;
+			info: Mock;
+			promise: Mock;
+			success: Mock;
+		} & Mock<typeof toast>;
+		Reflect.set(mockToast, "error", vi.fn());
+		Reflect.set(mockToast, "success", vi.fn());
+		Reflect.set(mockToast, "info", vi.fn());
+		Reflect.set(mockToast, "promise", vi.fn());
 
-	return {
-		mockRedirect: vi.fn(),
-		mockRefresh: vi.fn(),
-		mockToast,
-		mockUsePathname: vi.fn(),
-		mockUseRouter: vi.fn().mockImplementation(() => ({
-			push: vi.fn(),
-			refresh: vi.fn(),
-			replace: vi.fn(),
-		})),
-		mockUseSearchParams: vi.fn().mockImplementation(() => ({
-			get: vi.fn().mockReturnValue(null),
-			getAll: vi.fn().mockReturnValue([]),
-			has: vi.fn().mockReturnValue(false),
-			toString: vi.fn().mockReturnValue(""),
-		})),
-	};
-});
+		const mockSetCookie = vi.fn();
+		const mockCookies = vi.fn().mockImplementation(() =>
+			Promise.resolve({
+				set: mockSetCookie,
+			}),
+		);
+
+		return {
+			mockCookies,
+			mockRedirect: vi.fn(),
+			mockRefresh: vi.fn(),
+			mockSetCookie,
+			mockToast,
+			mockUsePathname: vi.fn(),
+			mockUseRouter: vi.fn().mockImplementation(() => ({
+				push: vi.fn(),
+				refresh: vi.fn(),
+				replace: vi.fn(),
+			})),
+			mockUseSearchParams: vi.fn().mockImplementation(() => ({
+				get: vi.fn().mockReturnValue(null),
+				getAll: vi.fn().mockReturnValue([]),
+				has: vi.fn().mockReturnValue(false),
+				toString: vi.fn().mockReturnValue(""),
+			})),
+		};
+	});
 
 vi.mock("next/navigation", async (importOriginal) => {
 	const original = await importOriginal();
@@ -49,6 +59,10 @@ vi.mock("next/navigation", async (importOriginal) => {
 	};
 });
 
+vi.mock("next/headers", () => ({
+	cookies: mockCookies,
+}));
+
 vi.mock("sonner", async (importOriginal) => {
 	const original = await importOriginal();
 	return {
@@ -57,7 +71,7 @@ vi.mock("sonner", async (importOriginal) => {
 	};
 });
 
-export { mockRedirect, mockToast, mockUsePathname, mockUseSearchParams };
+export { mockCookies, mockRedirect, mockSetCookie, mockToast, mockUsePathname, mockUseSearchParams };
 
 export const mockShowModal = vi.fn();
 export const mockShow = vi.fn();
@@ -93,6 +107,7 @@ beforeEach(() => {
 	mockShowModal.mockReset();
 	mockToast.mockReset();
 	mockUsePathname.mockReset().mockReturnValue(PagePath.ROOT);
+	mockSetCookie.mockReset();
 	mockFetch.mockReset().mockResolvedValue({
 		json: () => Promise.resolve({}),
 		ok: true,
