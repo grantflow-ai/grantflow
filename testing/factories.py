@@ -20,12 +20,6 @@ from polyfactory.factories import TypedDictFactory
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from services.backend.src.api.routes.auth import LoginRequestBody, LoginResponse, OTPResponse
 from services.backend.src.api.routes.funding_organizations import CreateOrganizationRequestBody
-from services.backend.src.api.routes.grant_applications import (
-    ApplicationDraftCompleteResponse,
-    ApplicationDraftProcessingResponse,
-    CreateApplicationRequestBody,
-    UpdateApplicationRequestBody,
-)
 from services.backend.src.api.routes.workspaces import (
     CreateWorkspaceRequestBody,
     UpdateWorkspaceRequestBody,
@@ -115,10 +109,6 @@ class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationFile]):
     __model__ = GrantApplicationFile
 
 
-class CreateApplicationRequestBodyFactory(TypedDictFactory[CreateApplicationRequestBody]):
-    __model__ = CreateApplicationRequestBody
-
-
 class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):
     __model__ = CreateOrganizationRequestBody
 
@@ -129,10 +119,6 @@ class CreateWorkspaceRequestBodyFactory(TypedDictFactory[CreateWorkspaceRequestB
 
 class UpdateWorkspaceRequestBodyFactory(TypedDictFactory[UpdateWorkspaceRequestBody]):
     __model__ = UpdateWorkspaceRequestBody
-
-
-class UpdateApplicationRequestBodyFactory(TypedDictFactory[UpdateApplicationRequestBody]):
-    __model__ = UpdateApplicationRequestBody
 
 
 class LoginRequestBodyFactory(TypedDictFactory[LoginRequestBody]):
@@ -155,14 +141,6 @@ class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
 
 class TableIdResponseFactory(TypedDictFactory[TableIdResponse]):
     __model__ = TableIdResponse
-
-
-class ApplicationDraftProcessingResponseFactory(TypedDictFactory[ApplicationDraftProcessingResponse]):
-    __model__ = ApplicationDraftProcessingResponse
-
-
-class ApplicationDraftCompleteResponseFactory(TypedDictFactory[ApplicationDraftCompleteResponse]):
-    __model__ = ApplicationDraftCompleteResponse
 
 
 class WorkspaceBaseResponseFactory(TypedDictFactory[WorkspaceBaseResponse]):
