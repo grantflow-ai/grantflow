@@ -10,7 +10,7 @@ services:
             - "5432:5432"
         volumes:
             - data:/var/lib/postgresql/data
-            - ./backend/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
+            - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
         healthcheck:
             test: ["CMD", "pg_isready", "-U", "local", "-d", "local"]
             interval: 1s
@@ -28,26 +28,63 @@ services:
             timeout: 5s
             retries: 10
 
+    gcs-emulator:
+        image: fsouza/fake-gcs-server:latest
+        restart: always
+        ports:
+            - "4443:4443"
+        volumes:
+            - gcs-data:/storage
+        command: ["-scheme", "routes", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
+        healthcheck:
+            test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:4443"]
+            interval: 1s
+            timeout: 5s
+            retries: 10
+
     backend:
         build:
-            context: ./backend
-            dockerfile: Dockerfile
+            dockerfile: ./services/backend/Dockerfile
             platforms:
-                - "linux/x86_64" # needed due to spaCy build issues on mac linux
+                - "linux/x86_64" # needed due to spaCy build issues on Mac linux
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             VALKEY_CONNECTION_STRING: redis://valkey:6379/0
         env_file:
-            - ./backend/.env
+            - ./services/backend/.env
         ports:
             - "8000:8000"
         volumes:
-            - ./backend/src:/app/src:cached
+            - ./services/backend/src:/app/src:cached
         command: "uvicorn src.api.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
                 condition: service_healthy
             valkey:
+                condition: service_healthy
+
+    indexer:
+        build:
+            dockerfile: ./services/indexer/Dockerfile
+        environment:
+            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+            GOOGLE_CLOUD_PROJECT: grantflow-dev
+            GOOGLE_CLOUD_REGION: us-central1
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+            GCS_BUCKET: grantflow-uploads
+        env_file:
+            - ./services/indexer/.env
+        ports:
+            - "8001:8000"
+        volumes:
+            - ./services/indexer/src:/app/src:cached
+        command: "uvicorn src.main:app --host 0.0.0.0 --log-level info --reload"
+        depends_on:
+            db:
+                condition: service_healthy
+            valkey:
+                condition: service_healthy
+            gcs-emulator:
                 condition: service_healthy
 
     frontend:
@@ -70,3 +107,4 @@ services:
 
 volumes:
     data:
+    gcs-data:

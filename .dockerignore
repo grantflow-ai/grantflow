@@ -31,10 +31,29 @@
 **/tests/
 **/test_data/
 
-# Documentation
-**/*.md
-
 # Root level files
 /.pre-commit-config.yaml
 /.commitlintrc
 /docker-compose.yaml
+
+# Caches
+**/.cache/
+**/.venv/
+**/venv/
+**/pip-wheel-metadata/
+**/__pypackages__/
+
+# Distribution builds
+**/dist/
+**/build/
+**/*.whl
+**/*.tar.gz
+
+# Coverage and reports
+**/coverage.xml
+**/htmlcov/
+**/reports/
+
+# Misc
+**/.DS_Store
+**/*.log

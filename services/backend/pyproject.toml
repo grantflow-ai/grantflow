@@ -1,0 +1,30 @@
+[project]
+name = "grantflow-backend"
+version = "0.1.0"
+description = "GrantFlow Backend"
+readme = "README.md"
+license = { text = "UNLICENSED" }
+authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
+requires-python = "==3.12.*"
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
+
+dependencies = [
+  "aiohttp>=3.11.14",
+  "anthropic>=0.49",
+  "db",
+  "en-core-web-sm",
+  "firebase-admin>=6.7",
+  "google-cloud-aiplatform>=1.85",
+  "litestar[valkey]>=2.15.1",
+  "pathvalidate>=3.2.3",
+  "prompt-template>=1.2",
+  "pyjwt>=2.10.1",
+  "rank-bm25>=0.2.2",
+  "shared-utils",
+  "spacy>=3.8.4",
+  "torch>=2.2.2",
+  "uvicorn[standard]>=0.34",
+]
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }

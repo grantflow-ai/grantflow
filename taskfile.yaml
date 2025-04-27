@@ -1,12 +1,12 @@
 version: "3"
 
 vars:
-    BACKEND_DIR: backend
     FRONTEND_DIR: frontend
 
 tasks:
+    # Repo Commands
     setup:
-        desc: First-time setup - install all dependencies and pre-commit hooks
+        desc: Initial project setup - installs all dependencies and git pre-commit hooks
         cmds:
             - pre-commit install && pre-commit install --hook-type commit-msg && pre-commit install-hooks
             - task: frontend:install
@@ -14,63 +14,109 @@ tasks:
             - task: backend:install-playwright
 
     update:
-        desc: Update all dependencies and pre-commit hooks
+        desc: Update all dependencies (frontend and backend) and pre-commit hooks to latest versions
         cmds:
             - task: frontend:update
             - task: backend:update
             - pre-commit autoupdate
-
-    dev:
-        desc: Start both frontend and backend development servers
-        cmds:
-            - task: db:up
-            - cmd: task backend:dev
-              start: true
-            - cmd: task frontend:dev
-              start: true
 
     lint:
         desc: Run all linters and formatters
         cmds:
             - pre-commit run --show-diff-on-failure --color=always --all-files
 
-    test:
-        desc: Run all tests for the entire project
+    dev:
+        desc: Start all services in development mode (database, GCS emulator, backend, indexer, and frontend)
+        deps:
+            - task: db:up
+            - task: gcs:up
         cmds:
+            - task: _dev:services
+
+    test:
+        desc: Run all tests (backend services, packages, and frontend)
+        deps:
             - task: backend:test
             - task: frontend:test
 
-    backend:dev:
-        desc: Start the backend development server with hot-reload enabled
-        dir: "{{.BACKEND_DIR}}"
-        dotenv: ["{{.BACKEND_DIR}}/.env"]
+    test:e2e:
+        desc: Run all end-to-end tests
+        deps:
+            - task: service:backend:test:e2e
+            - task: service:indexer:test:e2e
+
+    # Database Commands
+
+    db:up:
+        desc: Start the local PostgreSQL database container if not already running
+        cmds:
+            - |
+                if [ -z "$(docker ps -q -f name=db)" ]; then
+                  docker compose up db --detach
+                fi
+
+    db:down:
+        desc: Stop and remove the local database container
+        cmds:
+            - docker compose down db
+
+    db:migrate:
+        desc: Apply database migrations using Alembic
+        cmds:
+            - PYTHONPATH=. uv run alembic --config ./packages/db/alembic.ini upgrade head
+        deps:
+            - task: db:up
+
+    db:create-migration:
+        desc: Generate a new database migration from schema changes
         cmds:
             - task: db:up
-            - PYTHONPATH=. uv run uvicorn src.api.main:app --reload --log-level info --env-file .env
-
-    backend:test:
-        desc: Run backend tests (use CLI_ARGS for specific test paths or options)
-        dir: "{{.BACKEND_DIR}}"
-        dotenv: ["{{.BACKEND_DIR}}/.env"]
+            - sleep 2
+            - PYTHONPATH=. uv run alembic --config ./packages/db/alembic.ini revision --autogenerate -m "{{.CLI_ARGS}}"
+        deps:
+            - task: db:up
+    db:seed:
+        desc: Populate database with initial seed data
         cmds:
-            - PYTHONPATH=. uv run python -m pytest {{.CLI_ARGS}}
+            - task: db:up
+            - sleep 2
+            - PYTHONPATH=. uv run scripts/seed_db.py
 
-    backend:test:e2e:
-        desc: Run backend end-to-end tests with database integration
-        dir: "{{.BACKEND_DIR}}"
-        dotenv: ["{{.BACKEND_DIR}}/.env"]
+    # Frontend Commands
+
+    frontend:install:
+        desc: Install frontend dependencies using pnpm
         cmds:
-            - PYTHONPATH=. E2E_TESTS=true uv run python -m pytest tests/indexer/e2e tests/rag/e2e {{.CLI_ARGS}}
+            - pnpm install -r
+
+    frontend:update:
+        desc: Update frontend dependencies to latest versions
+        cmds:
+            - pnpm up -r --latest
+
+    frontend:dev:
+        desc: Start the frontend development server
+        dir: "{{.FRONTEND_DIR}}"
+        dotenv: [".env"]
+        cmds:
+            - pnpm dev
+
+    frontend:test:
+        desc: Run frontend tests (non-interactive mode)
+        dir: "{{.FRONTEND_DIR}}"
+        dotenv: [".env"]
+        cmds:
+            - pnpm test run
+
+    # Backend Commands
 
     backend:install:
-        desc: Install backend dependencies using uv
-        dir: "{{.BACKEND_DIR}}"
+        desc: Install services dependencies using uv
         cmds:
             - uv sync --all-packages --dev
 
     backend:install-playwright:
-        desc: Install the playwright dependencies
-        dir: "{{.BACKEND_DIR}}"
+        desc: Install Playwright dependencies
         cmds:
             - uv run playwright install
 
@@ -79,107 +125,80 @@ tasks:
         cmds:
             - uv sync --upgrade --all-packages
             - uv run uv-bump --pyproject-toml ./pyproject.toml
-            - uv run uv-bump --pyproject-toml ./backend/pyproject.toml
+            - uv run uv-bump --pyproject-toml ./services/backend/pyproject.toml
+            - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
+            - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
+            - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
             - task: backend:install
 
-    backend:api-specs:
-        desc: Generate TypeScript API types from backend and sync to frontend
-        dotenv: ["{{.BACKEND_DIR}}/.env"]
-        cmds:
-            - cd {{.BACKEND_DIR}} &&  PYTHONPATH=. uv run litestar --app src.api.main:app schema typescript
-            - mv api-specs.ts ../{{.FRONTEND_DIR}}/src/types/api-types.ts
-            - cd ..
-            - task: lint
+    backend:test:
+        desc: Run all backend tests (services and shared packages)
+        deps:
+            - task: service:backend:test
+            - task: service:indexer:test
+            - task: packages:test
 
-    backend:typecheck:
-        desc: Run mypy type checking on backend code
-        dir: "{{.BACKEND_DIR}}"
-        cmds:
-            - uv run mypy src
-
-    frontend:dev:
-        desc: Start the frontend development server
-        dir: "{{.FRONTEND_DIR}}"
-        dotenv: ["{{.FRONTEND_DIR}}/.env"]
-        cmds:
-            - pnpm run dev
-
-    frontend:build:
-        desc: Build the frontend for production
-        dir: "{{.FRONTEND_DIR}}"
-        dotenv: ["{{.FRONTEND_DIR}}/.env"]
-        cmds:
-            - pnpm run build
-
-    frontend:test:
-        desc: Run frontend tests (use CLI_ARGS for specific test patterns)
-        dir: "{{.FRONTEND_DIR}}"
-        dotenv: ["{{.FRONTEND_DIR}}/.env"]
-        cmds:
-            - pnpm test --run {{.CLI_ARGS}}
-
-    frontend:install:
-        desc: Install frontend dependencies using pnpm
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm install
-
-    frontend:update:
-        desc: Update frontend dependencies to latest versions
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm up --latest
-
-    frontend:lint:
-        desc: Run ESLint on frontend code
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm run eslint
-
-    frontend:typecheck:
-        desc: Run TypeScript type checking with tsc
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm exec tsc --noEmit
-
-    db:up:
-        desc: Start the local PostgreSQL database container
-        cmds:
-            - docker compose stop && docker compose up db --detach
-
-    db:down:
-        desc: Stop and remove the local database container
-        cmds:
-            - docker compose down db
-
-    db:migrate:
-        desc: Apply all pending database migrations
-        dir: "{{.BACKEND_DIR}}"
-        cmds:
+    service:backend:dev:
+        desc: Start the backend API service in development mode with hot-reloading
+        deps:
             - task: db:up
-            - sleep 2
-            - PYTHONPATH=. uv run alembic upgrade head
-
-    db:create-migration:
-        desc: Generate a new database migration from schema changes
-        dir: "{{.BACKEND_DIR}}"
+        dotenv: ["services/backend/.env"]
         cmds:
-            - task: db:up
-            - sleep 2
-            - PYTHONPATH=. uv run alembic revision -m "{{.CLI_ARGS}}"
+            - PYTHONPATH=. uv run uvicorn services.backend.src.api.main:app --host 0.0.0.0 --port 8000 --log-level debug --reload --reload-dir services/backend/src
 
-    db:reset:
-        desc: Reset database (caution - destroys all data)
-        cmds:
-            - task: db:down
+    service:indexer:dev:
+        desc: Start the indexer service in development mode with hot-reloading
+        deps:
             - task: db:up
-            - task: db:migrate
-            - task: db:seed
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - PYTHONPATH=. uv run uvicorn services.indexer.src.main:app --host 0.0.0.0 --port 8001 --log-level debug --reload --reload-dir services/indexer/src
 
-    db:seed:
-        desc: Populate database with initial seed data
-        dir: "{{.BACKEND_DIR}}"
+    service:backend:test:
+        desc: Run backend service tests with detailed output
+        dotenv: ["services/backend/.env"]
         cmds:
-            - task: db:up
-            - sleep 2
-            - PYTHONPATH=. uv run scripts/seed_db.py
+            - PYTHONPATH=. uv run pytest services/backend/tests -v
+
+    service:backend:test:e2e:
+        desc: Run backend service end-to-end tests
+        dotenv: ["services/backend/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH=. uv run pytest services/backend/tests -v
+
+    service:indexer:test:
+        desc: Run indexer service tests with detailed output
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - PYTHONPATH=. uv run pytest services/indexer/tests -v
+
+    service:indexer:test:e2e:
+        desc: Run indexer service end-to-end tests
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH=. uv run pytest services/indexer/tests -v
+
+    packages:test:
+        desc: Run all shared packages tests
+        cmds:
+            - task: package:db:test
+            - task: package:shared-utils:test
+
+    package:db:test:
+        desc: Run database package tests with detailed output
+        cmds:
+            - PYTHONPATH=. uv run pytest packages/db/tests -v
+
+    package:shared-utils:test:
+        desc: Run shared utility package tests with detailed output
+        cmds:
+            - PYTHONPATH=. uv run pytest packages/shared_utils/tests -v
+
+    # Internal Tasks
+
+    _dev:services:
+        internal: true
+        deps:
+            - task: service:backend:dev
+            - task: service:indexer:dev
+            - task: frontend:dev
