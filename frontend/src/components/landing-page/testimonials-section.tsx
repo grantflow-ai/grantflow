@@ -1,6 +1,6 @@
-import Sarah from "@/assets/placeholders/sarah-chen.png";
-import Michael from "@/assets/placeholders/michael.png";
-import Jamie from "@/assets/placeholders/jamie.png";
+import User1 from "@/assets/user-image-1.png";
+import User2 from "@/assets/user-image-2.png";
+import User3 from "@/assets/user-image-3.png";
 import Image from "next/image";
 
 const CONTENT = {
@@ -8,15 +8,15 @@ const CONTENT = {
 	subtitle: "Inspired by real research challenges",
 	testimonials: [
 		{
-			image: Sarah,
+			image: User1,
 			quote: "Balancing research, publishing, and endless grant writing pulls us in too many directions. A tool like GrantFlow.ai could finally give researchers the time to lead, not just apply.",
 		},
 		{
-			image: Michael,
+			image: User2,
 			quote: "Managing collaborators, timelines, and documents across institutions is a constant challenge. A structured platform like GrantFlow is exactly what our field needs.",
 		},
 		{
-			image: Jamie,
+			image: User3,
 			quote: "Writing grant proposals from scratch, again and again, isn’t sustainable. The idea of AI support tailored to researchers is long overdue and incredibly promising.",
 		},
 	],
