@@ -5,6 +5,7 @@ from google.cloud import storage
 from google.cloud.exceptions import ClientError
 from google.cloud.storage import Bucket
 from google.oauth2.service_account import Credentials
+
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import ExternalOperationError
 from packages.shared_utils.src.logger import get_logger
@@ -40,7 +41,7 @@ def get_storage_client() -> storage.Client:
 def get_bucket() -> Bucket:
     if not bucket_ref.value:
         storage_client = get_storage_client()
-        bucket = storage_client.bucket(get_env("GCS_BUCKET", fallback="grantflow-uploads"))
+        bucket = storage_client.bucket(get_env("GCS_BUCKET_NAME", fallback="grantflow-uploads"))
 
         if not bucket.exists():
             bucket.create()
@@ -63,7 +64,7 @@ async def download_blob(blob_name: str, bucket_name: str = "") -> bytes:
         logger.info(
             "Downloaded blob",
             blob_name=blob_name,
-            bucket_name=bucket_name or get_env("GCS_BUCKET", fallback="grantflow-uploads"),
+            bucket_name=bucket_name or get_env("GCS_BUCKET_NAME", fallback="grantflow-uploads"),
         )
         return cast("bytes", content)
     except ClientError as e:

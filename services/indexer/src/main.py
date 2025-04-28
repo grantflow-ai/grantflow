@@ -12,10 +12,10 @@ from packages.db.src.connection import get_session_maker
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import GrantApplicationFile, OrganizationFile, RagFile
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, DeserializationError
+from packages.shared_utils.src.gcs import download_blob
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import APIError, session_maker_provider
 from services.indexer.src.files import parse_and_index_file
-from services.indexer.src.gcs import download_blob
 from sqlalchemy import insert, text, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
