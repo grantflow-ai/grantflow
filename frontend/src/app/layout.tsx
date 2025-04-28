@@ -42,7 +42,7 @@ export const metadata = {
 		type: "website",
 		url: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
 	},
-	publisher: "Vercel",
+	publisher: "GrantFlow.ai",
 	referrer: "origin-when-cross-origin",
 	robots: {
 		follow: true,
