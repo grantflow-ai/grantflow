@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 from google.cloud import storage
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
+from packages.shared_utils.src.gcs import download_blob
 from services.indexer.src.files import parse_and_index_file
-from services.indexer.src.gcs import download_blob
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
