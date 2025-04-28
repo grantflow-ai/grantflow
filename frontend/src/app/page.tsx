@@ -83,11 +83,15 @@ export default async function LandingPage() {
 
 function CTASection() {
 	return (
-		<section aria-labelledby="cta-section" className="relative">
+		<section aria-label="cta-section" className="relative" data-testid="cta-section">
 			<GradientBackground className="absolute inset-0 z-0" />
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center justify-between gap-10 px-6 py-8 md:flex-row md:p-10 lg:p-20">
 				<div className="flex w-fit flex-1 flex-col text-white">
-					<h2 className="font-heading text-2xl md:text-[1.775rem] md:leading-none" id="cta-heading">
+					<h2
+						aria-label="cta-heading"
+						className="font-heading text-2xl md:text-[1.775rem] md:leading-none"
+						id="cta-heading"
+					>
 						{CONTENT_CTA_SECTION.heading}
 					</h2>
 					<p className="mt-4 max-w-lg text-xl leading-tight md:text-base md:font-light">
@@ -109,7 +113,7 @@ function CTASection() {
 
 function Footer() {
 	return (
-		<footer aria-labelledby="site-footer" className="relative z-0 bg-white" id="site-footer">
+		<footer aria-label="site-footer" className="relative z-0 bg-white" data-testid="site-footer" id="site-footer">
 			<div className="md:hidden flex flex-col px-6 py-2">
 				<nav aria-label="footer-navigation">
 					<FooterLinks isMobile />
