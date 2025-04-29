@@ -1,8 +1,8 @@
 from typing import Any, Final
 
 from packages.db.src.json_objects import GrantLongFormSection
-from packages.shared_utils.src.constants import MIN_WORDS_RATIO
 from packages.shared_utils.src.logger import get_logger
+from services.backend.src.constants import MIN_WORDS_RATIO
 from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.backend.src.rag.long_form import generate_long_form_text
 from services.backend.src.rag.retrieval import retrieve_documents
