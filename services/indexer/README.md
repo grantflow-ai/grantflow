@@ -60,13 +60,3 @@ For local development:
 1. Ensure the database is running: `task db:up`
 2. Install dependencies: `uv sync`
 3. Run the service: `PYTHONPATH=. uvicorn src.main:app --reload`
-
-## Integration with Backend Service
-
-The indexer service is called by the main backend service when:
-
-- Users upload files to grant applications
-- PDF documents are uploaded as CFPs
-- Organization files are added to the system
-
-Document chunks are stored in the shared database and can be retrieved by the RAG components of the backend service.
