@@ -11,6 +11,7 @@ from litestar.logging import StructLoggingConfig
 from packages.db.src.connection import get_session_maker
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import GrantApplicationFile, OrganizationFile, RagFile
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, DeserializationError
 from packages.shared_utils.src.gcs import download_blob
 from packages.shared_utils.src.logger import get_logger
@@ -63,23 +64,15 @@ async def before_server_start(app_instance: Litestar) -> None:
 
 class FileIndexingRequest(TypedDict):
     file_path: str
-
     mime_type: str
-
     filename: str
-
     size: int
-
     parent_id: UUID
-
     parent_type: Literal["grant_application", "organization"]
-
-    bucket_name: str
 
 
 class FileIndexingResponse(TypedDict):
     message: str
-
     file_id: str
 
 
@@ -88,6 +81,7 @@ async def handle_file_indexing(
     data: FileIndexingRequest,
     session_maker: async_sessionmaker[Any],
 ) -> FileIndexingResponse:
+    bucket_name = get_env("GCS_BUCKET_NAME", fallback="grantflow-uploads")
     async with session_maker() as session, session.begin():
         try:
             file_id = await session.scalar(
@@ -99,7 +93,7 @@ async def handle_file_indexing(
                             "mime_type": data["mime_type"],
                             "size": data["size"],
                             "indexing_status": FileIndexingStatusEnum.INDEXING,
-                            "bucket_name": data["bucket_name"],
+                            "bucket_name": bucket_name,
                             "object_path": data["file_path"],
                         }
                     ]
@@ -131,7 +125,7 @@ async def handle_file_indexing(
             raise DatabaseError("Error creating file record", context=str(e)) from e
 
     try:
-        content = await download_blob(data["file_path"], data["bucket_name"])
+        content = await download_blob(data["file_path"])
         await parse_and_index_file(
             content=content,
             file_id=str(file_id),
