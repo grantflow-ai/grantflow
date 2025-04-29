@@ -6,8 +6,8 @@ from uuid import uuid4
 import pytest
 from anyio import run_process, sleep
 from google.cloud import storage
+from packages.shared_utils.src.gcs import bucket_ref, storage_client_ref
 from packages.shared_utils.src.logger import get_logger
-from services.indexer.src.gcs import bucket_ref, storage_client_ref
 
 logger = get_logger(__name__)
 
@@ -47,7 +47,7 @@ async def gcs_emulator_host() -> AsyncGenerator[str, None]:
 
     emulator_host = f"http://localhost:{local_port}"
     os.environ["STORAGE_EMULATOR_HOST"] = emulator_host
-    os.environ["GCS_BUCKET"] = "test-bucket"
+    os.environ["GCS_BUCKET_NAME"] = "test-bucket"
     os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
 
     storage_client_ref.value = None
@@ -60,7 +60,7 @@ async def gcs_emulator_host() -> AsyncGenerator[str, None]:
 
 @pytest.fixture
 async def storage_client(gcs_emulator_host: str) -> storage.Client:
-    from services.indexer.src.gcs import get_storage_client
+    from packages.shared_utils.src.gcs import get_storage_client
 
     storage_client_ref.value = None
     bucket_ref.value = None
@@ -70,7 +70,7 @@ async def storage_client(gcs_emulator_host: str) -> storage.Client:
 
 @pytest.fixture
 async def storage_bucket(storage_client: storage.Client) -> storage.Bucket:
-    from services.indexer.src.gcs import get_bucket
+    from packages.shared_utils.src.gcs import get_bucket
 
     bucket_ref.value = None
 
