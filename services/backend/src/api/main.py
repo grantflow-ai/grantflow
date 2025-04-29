@@ -18,6 +18,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import APIError, session_maker_provider
 from services.backend.src.api.middleware import AuthMiddleware
 from services.backend.src.api.routes.application_files import (
+    handle_create_upload_url,
     handle_delete_application_file,
     retrieve_application_files,
 )
@@ -62,6 +63,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_organization,
     handle_create_otp,
     handle_create_workspace,
+    handle_create_upload_url,
     handle_delete_application,
     handle_delete_application_file,
     handle_delete_organization,
