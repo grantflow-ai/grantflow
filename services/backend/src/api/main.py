@@ -1,21 +1,18 @@
 import logging
 import sys
-from http import HTTPStatus
-from typing import Any
 
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.events import listener
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from litestar.logging import StructLoggingConfig
-from litestar.response import Response
 from litestar.stores.registry import StoreRegistry
 from litestar.stores.valkey import ValkeyStore
 from packages.db.src.connection import get_session_maker
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import BackendError, DeserializationError
+from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.server import APIError, session_maker_provider
+from packages.shared_utils.src.server import create_exception_handler, session_maker_provider
 from services.backend.src.api.middleware import AuthMiddleware
 from services.backend.src.api.routes.application_files import (
     handle_create_upload_url,
@@ -45,7 +42,6 @@ from services.backend.src.api.routes.workspaces import (
     handle_update_workspace,
 )
 from services.backend.src.api.sockets.grant_applications import handle_application_websocket
-from services.backend.src.common_types import APIRequest
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from services.backend.src.utils.ai import init_llm_connection
@@ -88,27 +84,7 @@ grant_application_text_generation_pipeline_handler_listener = listener(
 )(grant_application_text_generation_pipeline_handler)
 
 
-def handle_exception(_: APIRequest, exception: Exception) -> Response[Any]:
-    if isinstance(exception, SQLAlchemyError):
-        logger.error("An unexpected sqlalchemy error occurred", exc_name=type(exception).__name__, exec_info=exception)
-        message = "An unexpected database error occurred"
-        status_code = HTTPStatus.INTERNAL_SERVER_ERROR
-    elif isinstance(exception, DeserializationError):
-        logger.error("Failed to deserialize the request body", exec_info=exception)
-        message = "Failed to deserialize the request body"
-        status_code = HTTPStatus.BAD_REQUEST
-    else:
-        logger.error("An unexpected backend error occurred.", exec_info=exception)
-        message = "An unexpected backend error occurred"
-        status_code = HTTPStatus.INTERNAL_SERVER_ERROR
-
-    return Response(
-        content=APIError(
-            message=message,
-            detail=str(exception),
-        ),
-        status_code=status_code,
-    )
+exception_handler = create_exception_handler(logger)
 
 
 async def before_server_start(app_instance: Litestar) -> None:
@@ -142,7 +118,7 @@ app = Litestar(
     ),
     on_startup=[before_server_start],
     middleware=[AuthMiddleware],
-    exception_handlers={SQLAlchemyError: handle_exception, BackendError: handle_exception},
+    exception_handlers={SQLAlchemyError: exception_handler, BackendError: exception_handler},
     dependencies={"session_maker": session_maker_provider},
     logging_config=StructLoggingConfig(log_exceptions="always"),
     listeners=[
