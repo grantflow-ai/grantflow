@@ -22,6 +22,31 @@ export namespace API {
 		};
 	}
 
+	export namespace CreateUploadUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				url: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: string;
+			workspace_id: string;
+		}
+
+		export interface QueryParameters {
+			blob_name: string;
+		}
+	}
+
 	export namespace CreateWorkspace {
 		export namespace Http201 {
 			export type ResponseBody = {
