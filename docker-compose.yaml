@@ -71,7 +71,7 @@ services:
             GOOGLE_CLOUD_PROJECT: grantflow-dev
             GOOGLE_CLOUD_REGION: us-central1
             STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
-            GCS_BUCKET: grantflow-uploads
+            GCS_BUCKET_NAME: grantflow-uploads
         env_file:
             - ./services/indexer/.env
         ports:
