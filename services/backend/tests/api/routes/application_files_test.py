@@ -160,17 +160,13 @@ async def test_create_upload_url_unauthorized(
         return_value="https://storage.googleapis.com/test-bucket/test-signed-url",
     )
 
-    # Test file name
     test_blob_name = "test_document.pdf"
 
-    # Make the API request without authentication
     response = await test_client.post(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/files/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer some_token"},
     )
 
-    # Verify response
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
-    # Verify the mock was not called
     mock_create_url.assert_not_called()

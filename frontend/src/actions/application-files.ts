@@ -1,6 +1,20 @@
 import { API } from "@/types/api-types";
 import { createAuthHeaders, getClient, withAuthRedirect } from "@/utils/api";
 
+export async function createUploadUrl(
+	workspaceId: string,
+	applicationId: string,
+	fileName: string,
+): Promise<API.CreateUploadUrl.Http201.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications/${applicationId}/files/upload-url?blob_name=${fileName}`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.CreateUploadUrl.Http201.ResponseBody>(),
+	);
+}
+
 export async function deleteApplicationFile(workspaceId: string, applicationId: string, fileId: string) {
 	await withAuthRedirect(
 		getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}/files/${fileId}`, {
