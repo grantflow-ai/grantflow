@@ -12,8 +12,6 @@ dependencies = [
   "azure-ai-documentintelligence>=1.0.1",
   "crawl4ai>=0.6",
   "db",
-  "google-cloud-eventarc>=1.15.2",
-  "google-cloud-storage>=2.19",
   "kreuzberg>=2.1.2",
   "litestar>=2.15.1",
   "semantic-text-splitter>=0.24.2",

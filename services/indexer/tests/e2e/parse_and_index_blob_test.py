@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 from google.cloud import storage
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
+from packages.shared_utils.src.gcs import download_blob
 from services.indexer.src.files import parse_and_index_file
-from services.indexer.src.gcs import download_blob
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
@@ -31,7 +31,7 @@ async def test_parse_and_index_blob(
     blob = storage_bucket.blob(FILENAME)
     blob.upload_from_filename(str(SMALL_PDF_TEST_FILE))
 
-    content = await download_blob(FILENAME, storage_bucket.name)
+    content = await download_blob(FILENAME)
     await parse_and_index_file(
         content=content,
         filename=FILENAME,
