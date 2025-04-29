@@ -1,11 +1,12 @@
-from typing import Any
+from typing import Any, TypedDict
 from uuid import UUID
 
-from litestar import delete, get
+from litestar import delete, get, post
 from litestar.exceptions import NotFoundException
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import GrantApplicationFile, RagFile
 from packages.shared_utils.src.exceptions import DatabaseError
+from packages.shared_utils.src.gcs import create_signed_upload_url
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.common_types import TableIdResponse
 from sqlalchemy import delete as sa_delete
@@ -15,6 +16,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 logger = get_logger(__name__)
+
+
+class UploadUrlResponse(TypedDict):
+    url: str
 
 
 @get(
@@ -63,3 +68,21 @@ async def handle_delete_application_file(
             logger.error("Error deleting application file", exc_info=e)
             await session.rollback()
             raise DatabaseError("Error deleting application file", context=str(e)) from e
+
+
+@post(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/files/upload-url",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="CreateUploadUrl",
+)
+async def handle_create_upload_url(
+    workspace_id: UUID,
+    application_id: UUID,
+    blob_name: str,  # this is a query parameter ~keep
+) -> UploadUrlResponse:
+    url = await create_signed_upload_url(
+        workspace_id=str(workspace_id),
+        application_id=str(application_id),
+        blob_name=blob_name,
+    )
+    return UploadUrlResponse(url=url)
