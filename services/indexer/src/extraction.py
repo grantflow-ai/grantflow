@@ -9,12 +9,10 @@ from azure.ai.documentintelligence.models import (
 )
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
-from crawl4ai import AsyncWebCrawler
 from kreuzberg import KreuzbergError, extract_bytes
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
+from packages.shared_utils.src.exceptions import FileParsingError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.retry import with_exponential_backoff_retry
 
 logger = get_logger(__name__)
 
@@ -65,13 +63,3 @@ async def extract_file_content(
                 "error": str(e),
             },
         ) from e
-
-
-@with_exponential_backoff_retry(ExternalOperationError, max_retries=3)
-async def extract_webpage_content(url: str) -> str:
-    try:
-        async with AsyncWebCrawler(verbose=True) as crawler:
-            result = await crawler.arun(url=url)
-            return cast("str", result.markdown)
-    except ValueError as e:
-        raise ExternalOperationError("Failed to get markdown from URL") from e
