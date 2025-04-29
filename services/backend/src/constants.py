@@ -6,3 +6,4 @@ EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.0-
 GENERATION_MODEL: Final[str] = get_env("GENERATION_MODEL", fallback="gemini-2.0-flash-001")
 ANTHROPIC_SONNET_MODEL: Final[str] = get_env("ANTHROPIC_SONNET_MODEL", fallback="claude-3-5-sonnet-latest")
 REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-2.5-pro-exp-03-25")
+MIN_WORDS_RATIO: Final[float] = 0.8
