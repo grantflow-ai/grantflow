@@ -23,9 +23,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Relationship, class_mapper, 
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.functions import now
 
-from .constants import EMBEDDING_DIMENSIONS
-from .enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
-from .json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
+from packages.db.src.constants import EMBEDDING_DIMENSIONS
+from packages.db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
+from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
 
 
 class Base(DeclarativeBase):
@@ -138,7 +138,7 @@ class FundingOrganization(BaseWithUUIDPK):
     grant_templates: Relationship[list["GrantTemplate"]] = relationship(
         "GrantTemplate", back_populates="funding_organization"
     )
-    organization_files: Relationship[list["OrganizationFile"]] = relationship(
+    files: Relationship[list["OrganizationFile"]] = relationship(
         "OrganizationFile", back_populates="funding_organization", cascade="all, delete-orphan"
     )
 
@@ -155,7 +155,7 @@ class OrganizationFile(Base):
 
     rag_file: Relationship["RagFile"] = relationship("RagFile")
     funding_organization: Relationship["FundingOrganization"] = relationship(
-        "FundingOrganization", back_populates="organization_files"
+        "FundingOrganization", back_populates="files"
     )
 
 
@@ -173,7 +173,7 @@ class GrantApplication(BaseWithUUIDPK):
 
     workspace_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
 
-    grant_application_files: Relationship[list["GrantApplicationFile"]] = relationship(
+    files: Relationship[list["GrantApplicationFile"]] = relationship(
         "GrantApplicationFile", back_populates="grant_application", cascade="all, delete-orphan"
     )
     grant_template: Relationship["GrantTemplate | None"] = relationship(
@@ -193,9 +193,7 @@ class GrantApplicationFile(Base):
     )
 
     rag_file: Relationship[RagFile] = relationship("RagFile")
-    grant_application: Relationship[GrantApplication] = relationship(
-        "GrantApplication", back_populates="grant_application_files"
-    )
+    grant_application: Relationship[GrantApplication] = relationship("GrantApplication", back_populates="files")
 
 
 class GrantTemplate(BaseWithUUIDPK):
@@ -218,3 +216,20 @@ class GrantTemplate(BaseWithUUIDPK):
     funding_organization: Relationship[FundingOrganization | None] = relationship(
         "FundingOrganization", back_populates="grant_templates"
     )
+    files: Relationship[list["GrantTemplateFile"]] = relationship(
+        "GrantTemplateFile", back_populates="grant_template", cascade="all, delete-orphan"
+    )
+
+
+class GrantTemplateFile(Base):
+    __tablename__ = "grant_template_files"
+
+    rag_file_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
+    )
+    grant_template_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("grant_template.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    rag_file: Relationship["RagFile"] = relationship("RagFile")
+    grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="files")

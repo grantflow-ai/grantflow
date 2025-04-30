@@ -12,7 +12,6 @@ dependencies = [
   "azure-ai-documentintelligence>=1.0.1",
   "db",
   "kreuzberg>=2.1.2",
-  "litestar>=2.15.1",
   "semantic-text-splitter>=0.24.2",
   "shared-utils",
   "uvicorn[standard]>=0.34",
