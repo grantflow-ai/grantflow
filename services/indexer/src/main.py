@@ -33,6 +33,9 @@ async def handle_file_indexing(
     session_maker: async_sessionmaker[Any],
 ) -> FileIndexingResponse:
     try:
+        # parent_type is one of "grant_application", "funding_organization", or "grant_template"
+        # parent_id is a UUID string of the parent entity
+        # the filename is a discrete filename with extension
         parent_type, parent_id, filename = data["file_path"].split("/")
         file_extension = filename.split(".")[-1]
         mime_type = EXT_TO_MIME_TYPE[file_extension]
