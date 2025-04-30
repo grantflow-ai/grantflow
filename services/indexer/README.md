@@ -46,6 +46,12 @@ The indexer service exposes endpoints for:
 - Managing document collections
 - Retrieving document metadata
 
+## Integration
+
+The service integrates with:
+
+- [GCS Notifier Function](../../functions/gcs_notifier/README.md): Notifies the indexer when new files are uploaded to GCS
+
 ## Testing
 
 The service includes unit tests and end-to-end tests for document processing:
