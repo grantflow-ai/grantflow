@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [ backend, indexer ]
+        service: [ backend, indexer, crawler ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
