@@ -9,10 +9,6 @@ FROM base AS model-download
 RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer
 RUN huggingface-cli download sentence-transformers/all-MiniLM-L12-v2
 
-FROM base AS playwright-download
-RUN pip install --no-cache-dir playwright && \
-    playwright install chromium --with-deps
-
 FROM base AS install
 WORKDIR /app/
 ENV UV_LINK_MODE=copy
@@ -30,7 +26,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM base AS app
 WORKDIR /app/
 COPY --chown=appuser:appuser --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
-COPY --chown=appuser:appuser --from=playwright-download /root/.cache/ms-playwright/ /root/.cache/ms-playwright/
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/backend/src/ src/
 ENV PYTHONUNBUFFERED=1 \
