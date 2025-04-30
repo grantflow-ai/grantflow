@@ -118,6 +118,7 @@ members = [
   "services/indexer",
   "packages/db",
   "packages/shared_utils",
+  "functions/gcs-file-notifier",
 ]
 
 [tool.uv.sources]
