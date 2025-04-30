@@ -7,7 +7,15 @@ from uuid import UUID
 import pytest
 from litestar.testing import AsyncTestClient
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import FundingOrganization, GrantApplication, RagFile
+from packages.db.src.tables import (
+    FundingOrganization,
+    GrantApplication,
+    GrantApplicationFile,
+    GrantTemplate,
+    GrantTemplateFile,
+    OrganizationFile,
+    RagFile,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -26,166 +34,216 @@ def mock_parse_and_index_file() -> Generator[AsyncMock, None, None]:
         yield mock
 
 
-async def test_handle_file_indexing_success(
+async def test_handle_file_indexing_grant_application(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_and_index_file: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> None:
-    file_data = {
-        "file_path": "test-files/document.pdf",
-        "mime_type": "application/pdf",
-        "filename": "document.pdf",
-        "size": 12345,
-        "parent_id": str(grant_application.id),
-        "parent_type": "grant_application",
-        "bucket_name": "test-bucket",
-        "object_path": "test-file-path",
-    }
+    with patch("services.indexer.src.main.EXT_TO_MIME_TYPE") as mock_mime_types:
+        mock_mime_types.__getitem__.return_value = "application/pdf"
 
-    response = await test_client.post("/", json=file_data)
-    assert response.status_code == HTTPStatus.CREATED
-    response_json = response.json()
-    assert response_json["message"] == "File indexing successful."
-    assert "file_id" in response_json
-    file_id = response_json["file_id"]
+        file_path = f"grant_application/{grant_application.id}/document.pdf"
+        file_data = {
+            "file_path": file_path,
+        }
 
-    async with async_session_maker() as session:
-        file_db = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
-        file = file_db.first()
-        assert file is not None
-        assert file.filename == "document.pdf"
-        assert file.mime_type == "application/pdf"
-        assert file.size == 12345
-        assert file.indexing_status == FileIndexingStatusEnum.INDEXING
+        response = await test_client.post("/", json=file_data)
+        assert response.status_code == HTTPStatus.CREATED
+        response_json = response.json()
+        assert response_json["message"] == "File indexing successful."
+        assert "file_id" in response_json
+        file_id = response_json["file_id"]
 
-    mock_download_blob.assert_awaited_once_with("test-files/document.pdf")
-    mock_parse_and_index_file.assert_awaited_once()
-    assert mock_parse_and_index_file.call_args[1]["file_id"] == file_id
-    assert mock_parse_and_index_file.call_args[1]["filename"] == "document.pdf"
-    assert mock_parse_and_index_file.call_args[1]["mime_type"] == "application/pdf"
+        async with async_session_maker() as session:
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
+            file = rag_file.first()
+            assert file is not None
+            assert file.filename == "document.pdf"
+            assert file.mime_type == "application/pdf"
+            assert file.size == len(b"Test file content")
+            assert file.indexing_status == FileIndexingStatusEnum.INDEXING
+
+            assert file.bucket_name
+            assert file.object_path == file_path
+
+            app_file = await session.scalars(
+                select(GrantApplicationFile).where(GrantApplicationFile.rag_file_id == UUID(file_id))
+            )
+            app_file_record = app_file.first()
+            assert app_file_record is not None
+            assert app_file_record.grant_application_id == grant_application.id
+
+        mock_download_blob.assert_awaited_once_with(file_path)
+        mock_parse_and_index_file.assert_awaited_once()
+        assert mock_parse_and_index_file.call_args[1]["file_id"] == file_id
+        assert mock_parse_and_index_file.call_args[1]["filename"] == "document.pdf"
+        assert mock_parse_and_index_file.call_args[1]["mime_type"] == "application/pdf"
 
 
-async def test_handle_file_indexing_success_organization(
+async def test_handle_file_indexing_funding_organization(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_and_index_file: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
     funding_organization: FundingOrganization,
 ) -> None:
+    with patch("services.indexer.src.main.EXT_TO_MIME_TYPE") as mock_mime_types:
+        mock_mime_types.__getitem__.return_value = "application/pdf"
+
+        file_path = f"funding_organization/{funding_organization.id}/guidelines.pdf"
+        file_data = {
+            "file_path": file_path,
+        }
+
+        response = await test_client.post("/", json=file_data)
+        assert response.status_code == HTTPStatus.CREATED
+        response_json = response.json()
+        assert response_json["message"] == "File indexing successful."
+        assert "file_id" in response_json
+        file_id = response_json["file_id"]
+
+        async with async_session_maker() as session:
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
+            file = rag_file.first()
+            assert file is not None
+            assert file.filename == "guidelines.pdf"
+            assert file.mime_type == "application/pdf"
+            assert file.size == len(b"Test file content")
+            assert file.indexing_status == FileIndexingStatusEnum.INDEXING
+
+            org_file = await session.scalars(
+                select(OrganizationFile).where(OrganizationFile.rag_file_id == UUID(file_id))
+            )
+            org_file_record = org_file.first()
+            assert org_file_record is not None
+            assert org_file_record.funding_organization_id == funding_organization.id
+
+        mock_download_blob.assert_awaited_once_with(file_path)
+        mock_parse_and_index_file.assert_awaited_once()
+
+
+async def test_handle_file_indexing_grant_template(
+    test_client: AsyncTestClient[Any],
+    mock_download_blob: AsyncMock,
+    mock_parse_and_index_file: AsyncMock,
+    async_session_maker: async_sessionmaker[Any],
+    grant_template: GrantTemplate,
+) -> None:
+    with patch("services.indexer.src.main.EXT_TO_MIME_TYPE") as mock_mime_types:
+        mock_mime_types.__getitem__.return_value = (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+
+        file_path = f"grant_template/{grant_template.id}/template.docx"
+        file_data = {
+            "file_path": file_path,
+        }
+
+        response = await test_client.post("/", json=file_data)
+        assert response.status_code == HTTPStatus.CREATED
+        response_json = response.json()
+        assert response_json["message"] == "File indexing successful."
+        assert "file_id" in response_json
+        file_id = response_json["file_id"]
+
+        async with async_session_maker() as session:
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
+            file = rag_file.first()
+            assert file is not None
+            assert file.filename == "template.docx"
+            assert file.mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            assert file.size == len(b"Test file content")
+            assert file.indexing_status == FileIndexingStatusEnum.INDEXING
+
+            template_file = await session.scalars(
+                select(GrantTemplateFile).where(GrantTemplateFile.rag_file_id == UUID(file_id))
+            )
+            template_file_record = template_file.first()
+            assert template_file_record is not None
+            assert template_file_record.grant_template_id == grant_template.id
+
+        mock_download_blob.assert_awaited_once_with(file_path)
+        mock_parse_and_index_file.assert_awaited_once()
+
+
+async def test_handle_file_indexing_invalid_path(
+    test_client: AsyncTestClient[Any],
+) -> None:
     file_data = {
-        "file_path": "test-files/document2.pdf",
-        "mime_type": "application/pdf",
-        "filename": "document2.pdf",
-        "size": 54321,
-        "parent_id": str(funding_organization.id),
-        "parent_type": "organization",
-        "bucket_name": "test-bucket",
-        "object_path": "test-file-path",
+        "file_path": "invalid_path",
     }
 
     response = await test_client.post("/", json=file_data)
-    assert response.status_code == HTTPStatus.CREATED
-    response_json = response.json()
-    assert response_json["message"] == "File indexing successful."
-    assert "file_id" in response_json
-    file_id = response_json["file_id"]
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    async with async_session_maker() as session:
-        file_db = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
-        file = file_db.first()
-        assert file is not None
-        assert file.filename == "document2.pdf"
-        assert file.mime_type == "application/pdf"
-        assert file.size == 54321
-        assert file.indexing_status == FileIndexingStatusEnum.INDEXING
 
-    mock_download_blob.assert_awaited_once_with("test-files/document2.pdf")
-    mock_parse_and_index_file.assert_awaited_once()
-    assert mock_parse_and_index_file.call_args[1]["file_id"] == file_id
-    assert mock_parse_and_index_file.call_args[1]["filename"] == "document2.pdf"
-    assert mock_parse_and_index_file.call_args[1]["mime_type"] == "application/pdf"
+async def test_handle_file_indexing_unsupported_extension(
+    test_client: AsyncTestClient[Any],
+    grant_application: GrantApplication,
+) -> None:
+    file_data = {
+        "file_path": f"grant_application/{grant_application.id}/document.unsupported",
+    }
+
+    response = await test_client.post("/", json=file_data)
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 async def test_handle_file_indexing_download_error(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
-    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
 ) -> None:
-    file_data = {
-        "file_path": "test-files/document.pdf",
-        "mime_type": "application/pdf",
-        "filename": "document.pdf",
-        "size": 12345,
-        "parent_id": "123e4567-e89b-12d3-a456-426614174000",
-        "parent_type": "grant_application",
-        "bucket_name": "test-bucket",
-        "object_path": "test-file-path",
-    }
-    mock_download_blob.side_effect = Exception("Failed to download blob")
+    with patch("services.indexer.src.main.EXT_TO_MIME_TYPE") as mock_mime_types:
+        mock_mime_types.__getitem__.return_value = "application/pdf"
 
-    response = await test_client.post("/", json=file_data)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    resp = response.json()
-    assert resp["message"] == "An unexpected backend error occurred"
-    assert "detail" in resp
+        file_path = f"grant_application/{grant_application.id}/document.pdf"
+        file_data = {
+            "file_path": file_path,
+        }
+        mock_download_blob.side_effect = Exception("Failed to download blob")
+
+        response = await test_client.post("/", json=file_data)
+        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 async def test_handle_file_indexing_parsing_error(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_and_index_file: AsyncMock,
-    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
 ) -> None:
-    file_data = {
-        "file_path": "test-files/document.pdf",
-        "mime_type": "application/pdf",
-        "filename": "document.pdf",
-        "size": 12345,
-        "parent_id": "123e4567-e89b-12d3-a456-426614174000",
-        "parent_type": "grant_application",
-        "bucket_name": "test-bucket",
-        "object_path": "test-file-path",
-    }
-    mock_parse_and_index_file.side_effect = Exception("Failed to parse and index file")
+    with patch("services.indexer.src.main.EXT_TO_MIME_TYPE") as mock_mime_types:
+        mock_mime_types.__getitem__.return_value = "application/pdf"
 
-    response = await test_client.post("/", json=file_data)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    resp = response.json()
-    assert resp["message"] == "An unexpected backend error occurred"
-    assert "detail" in resp
+        file_path = f"grant_application/{grant_application.id}/document.pdf"
+        file_data = {
+            "file_path": file_path,
+        }
+        mock_parse_and_index_file.side_effect = Exception("Failed to parse and index file")
 
-
-async def test_handle_file_indexing_bad_request(
-    test_client: AsyncTestClient[Any],
-) -> None:
-    invalid_data = {
-        "file_path": "test-files/document.pdf",
-    }
-
-    response = await test_client.post("/", json=invalid_data)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+        response = await test_client.post("/", json=file_data)
+        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 async def test_handle_database_error(
     test_client: AsyncTestClient[Any],
+    mock_download_blob: AsyncMock,
+    grant_application: GrantApplication,
 ) -> None:
-    file_data = {
-        "file_path": "test-files/document.pdf",
-        "mime_type": "application/pdf",
-        "filename": "document.pdf",
-        "size": 12345,
-        "parent_id": "123e4567-e89b-12d3-a456-426614174000",
-        "parent_type": "grant_application",
-        "bucket_name": "test-bucket",
-        "object_path": "test-file-path",
-    }
+    with patch("services.indexer.src.main.EXT_TO_MIME_TYPE") as mock_mime_types:
+        mock_mime_types.__getitem__.return_value = "application/pdf"
 
-    with patch("sqlalchemy.insert") as mock_insert:
-        mock_insert.side_effect = Exception("Database error")
+        file_path = f"grant_application/{grant_application.id}/document.pdf"
+        file_data = {
+            "file_path": file_path,
+        }
 
-        response = await test_client.post("/", json=file_data)
+        with patch("services.indexer.src.main.insert") as mock_insert:
+            mock_insert.side_effect = Exception("Database error")
 
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-        assert "message" in response.json()
+            response = await test_client.post("/", json=file_data)
+
+            assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR

@@ -25,7 +25,7 @@ class APIError(TypedDict):
 session_maker_provider = Provide(get_session_maker, sync_to_thread=False)
 
 
-def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler[Any]:
+def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler:  # type: ignore[type-arg]
     def handle_exception(_: Request[Any, Any, Any], exception: Exception) -> Response[Any]:
         if isinstance(exception, SQLAlchemyError):
             logger.error(
