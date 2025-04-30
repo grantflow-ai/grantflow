@@ -1,7 +1,11 @@
+"use client";
+
 import User1 from "@/assets/user-image-1.png";
 import User2 from "@/assets/user-image-2.png";
 import User3 from "@/assets/user-image-3.png";
 import Image from "next/image";
+import { ScrollFadeElement } from "./scroll-fade-element";
+import { motion } from "motion/react";
 
 const CONTENT = {
 	heading: "Why Researchers Join GrantFlow.ai?",
@@ -22,29 +26,66 @@ const CONTENT = {
 	],
 };
 
+const articleVariants = {
+	hidden: { opacity: 0 },
+	visible: {
+		opacity: 1,
+		transition: {
+			staggerChildren: 0.4,
+			when: "beforeChildren",
+		},
+	},
+};
+
+const textVariants = {
+	hidden: {
+		opacity: 0,
+		y: 20,
+	},
+	visible: {
+		opacity: 1,
+		transition: {
+			duration: 0.8,
+			ease: "easeInOut",
+		},
+		y: 0,
+	},
+};
+
 export function TestimonialsSection() {
 	return (
 		<section aria-labelledby="testimonials-section" className="relative w-full text-stone-800 bg-gray-100">
 			<div className="flex flex-col pt-8 md:pt-12 lg:pt-16 xl:pt-20 pb-20 xl:pb-4 px-8 md:px-10 lg:px-20 xl:px-30 space-y-2">
-				<h2 className="font-heading text-3xl md:text-4xl font-medium" id="testimonials-heading">
-					{CONTENT.heading}
-				</h2>
-				<p className="mx-1 text-xl md:text-lg lg:text-base">{CONTENT.subtitle}</p>
+				<ScrollFadeElement className="w-full mx-auto">
+					<h2 className="font-heading text-3xl md:text-4xl font-medium" id="testimonials-heading">
+						{CONTENT.heading}
+					</h2>
+				</ScrollFadeElement>
+				<ScrollFadeElement className="w-full mx-auto" delay={0.1}>
+					<p className="mx-1 text-xl md:text-lg lg:text-base">{CONTENT.subtitle}</p>
+				</ScrollFadeElement>
 				<div className="grid grid-cols-1 lg:grid-cols-3 place-items-center lg:place-items-start gap-12 md:gap-8 lg:gap-0 mt-8 xl:m-16">
 					{CONTENT.testimonials.map((testimonial, i) => (
-						<article
+						<motion.article
 							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full"
+							initial="hidden"
 							key={i}
+							variants={articleVariants}
+							viewport={{ amount: 0.3, once: true }}
+							whileInView="visible"
 						>
 							<Image
 								alt={`${Image.name}'s photo`}
 								className="rounded-full size-24 md:size-28 lg:size-32 xl:size-36"
 								src={testimonial.image}
 							/>
-							<blockquote className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base">
+							<motion.blockquote
+								className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base"
+								variants={textVariants}
+							>
 								&quot;{testimonial.quote}&quot;
-							</blockquote>
-						</article>
+							</motion.blockquote>
+						</motion.article>
 					))}
 				</div>
 			</div>
