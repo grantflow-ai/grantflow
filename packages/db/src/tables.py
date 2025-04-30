@@ -228,7 +228,7 @@ class GrantTemplateFile(Base):
         SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
     )
     grant_template_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_template.id", ondelete="CASCADE"), primary_key=True
+        SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), primary_key=True
     )
 
     rag_file: Relationship["RagFile"] = relationship("RagFile")
