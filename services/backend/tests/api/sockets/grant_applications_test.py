@@ -49,6 +49,15 @@ from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
+@pytest.fixture(autouse=True)
+def mock_server_start() -> Generator[None, None, None]:
+    with (
+        patch("services.backend.src.api.main.get_firebase_app"),
+        patch("services.backend.src.api.main.init_llm_connection"),
+    ):
+        yield
+
+
 @pytest.fixture
 async def application(workspace: Workspace, async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
     application_id = uuid4()
