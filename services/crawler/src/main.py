@@ -17,7 +17,7 @@ class CrawlingResponse(TypedDict):
 
 
 @post("/{workspace_id:uuid}/{application_id:uuid}/crawl")
-async def handle_url_crawling(
+async def handle_url_crawling(  # type: ignore[empty-body]
     data: CrawlingRequest,
 ) -> CrawlingResponse:
     pass
