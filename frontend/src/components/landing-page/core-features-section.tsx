@@ -77,7 +77,7 @@ const textVariants = {
 
 export function CoreFeaturesSection() {
 	return (
-		<section aria-labelledby="core-features-section" className="relative w-full overflow-hidden bg-white">
+		<section aria-label="core-features-section" className="relative w-full overflow-hidden bg-white">
 			<div className="absolute inset-0 flex items-center justify-center">
 				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
 			</div>
