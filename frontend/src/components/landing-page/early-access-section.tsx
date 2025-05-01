@@ -166,7 +166,7 @@ const formContainerVariants = {
 export function EarlyAccessSection() {
 	return (
 		<motion.section
-			aria-labelledby="early-access-section"
+			aria-label="early-access-section"
 			className="relative"
 			id="waitlist"
 			initial="hidden"
