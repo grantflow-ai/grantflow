@@ -1,6 +1,6 @@
 from packages.db.src.connection import get_session_maker
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import RagFile, TextVector
+from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.exceptions import (
     DatabaseError,
     ExternalOperationError,
@@ -39,7 +39,7 @@ async def parse_and_index_file(
     except (FileParsingError, ExternalOperationError, ValidationError) as e:
         async with session_maker() as session, session.begin():
             await session.execute(
-                update(RagFile).where(RagFile.id == file_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
+                update(RagSource).where(RagSource.id == file_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
             )
             await session.commit()
 
@@ -49,8 +49,8 @@ async def parse_and_index_file(
             try:
                 await session.execute(insert(TextVector).values(vectors))
                 await session.execute(
-                    update(RagFile)
-                    .where(RagFile.id == file_id)
+                    update(RagSource)
+                    .where(RagSource.id == file_id)
                     .values(
                         {
                             "indexing_status": FileIndexingStatusEnum.FINISHED,

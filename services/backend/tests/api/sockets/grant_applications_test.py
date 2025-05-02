@@ -15,7 +15,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationFile,
     GrantTemplate,
-    RagFile,
+    RagSource,
     Workspace,
     WorkspaceUser,
 )
@@ -84,7 +84,7 @@ async def application_with_file(
 
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(RagFile).values(
+            insert(RagSource).values(
                 id=file_id,
                 filename="test_file.pdf",
                 mime_type="application/pdf",

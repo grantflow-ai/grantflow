@@ -1,7 +1,7 @@
 from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
-from packages.db.src.tables import GrantApplicationFile, OrganizationFile, RagFile, TextVector
+from packages.db.src.tables import GrantApplicationFile, OrganizationFile, RagSource, TextVector
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
@@ -167,8 +167,8 @@ async def retrieve_vectors_for_embedding(
         result = list(
             await session.scalars(
                 select(TextVector)
-                .join(RagFile, TextVector.rag_file_id == RagFile.id)
-                .join(file_table_cls, RagFile.id == file_table_cls.rag_file_id)
+                .join(RagSource, TextVector.rag_source_id == RagSource.id)
+                .join(file_table_cls, RagSource.id == file_table_cls.rag_file_id)
                 .where(
                     file_table_cls.grant_application_id == application_id
                     if hasattr(file_table_cls, "grant_application_id")

@@ -18,7 +18,7 @@ on:
       - 'package.json'
 
 jobs:
-  frontend-test:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -45,7 +45,7 @@ jobs:
       - name: Run Tests
         run: cd frontend && pnpm run test
 
-  frontend-typecheck:
+  typecheck:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -72,7 +72,7 @@ jobs:
       - name: Type Check
         run: cd frontend && pnpm run typecheck
 
-  frontend-build:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
