@@ -3,7 +3,7 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-from packages.db.src.tables import FundingOrganization, OrganizationFile, RagFile
+from packages.db.src.tables import FundingOrganization, OrganizationFile, RagSource
 from services.backend.tests.conftest import TestingClientType
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 async def organization_file(
     async_session_maker: async_sessionmaker[Any],
     funding_organization: FundingOrganization,
-    file: RagFile,
+    file: RagSource,
 ) -> OrganizationFile:
     org_file = OrganizationFile(funding_organization_id=funding_organization.id, rag_file_id=file.id)
     async with async_session_maker() as session, session.begin():
@@ -55,7 +55,7 @@ async def test_delete_organization_file_success(
 
     async with async_session_maker() as session:
         with pytest.raises(NoResultFound):
-            await session.get_one(RagFile, organization_file.rag_file_id)
+            await session.get_one(RagSource, organization_file.rag_file_id)
 
         with pytest.raises(NoResultFound):
             await session.get_one(

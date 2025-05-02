@@ -11,7 +11,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationFile,
     OrganizationFile,
-    RagFile,
+    RagSource,
 )
 from packages.db.src.utils import check_exists_files_being_indexed
 from packages.shared_utils.src.exceptions import ValidationError
@@ -25,7 +25,7 @@ async def test_check_exists_files_being_indexed_application_success(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(RagFile).values(
+            insert(RagSource).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
@@ -65,7 +65,7 @@ async def test_check_exists_files_being_indexed_application_non_indexing_status(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(RagFile).values(
+            insert(RagSource).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
@@ -111,7 +111,7 @@ async def test_check_exists_files_being_indexed_organization_success(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(RagFile).values(
+            insert(RagSource).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
@@ -151,7 +151,7 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(RagFile).values(
+            insert(RagSource).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",

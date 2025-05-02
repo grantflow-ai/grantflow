@@ -3,7 +3,7 @@ from uuid import UUID
 
 from litestar import delete, get
 from litestar.exceptions import NotFoundException
-from packages.db.src.tables import OrganizationFile, RagFile
+from packages.db.src.tables import OrganizationFile, RagSource
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.common_types import TableIdResponse
@@ -46,7 +46,7 @@ async def handle_delete_organization_file(
                 )
             )
             result.scalar_one()
-            await session.execute(sa_delete(RagFile).where(RagFile.id == file_id))
+            await session.execute(sa_delete(RagSource).where(RagSource.id == file_id))
             await session.commit()
         except NoResultFound as e:
             raise NotFoundException from e

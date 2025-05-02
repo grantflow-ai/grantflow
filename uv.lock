@@ -4,6 +4,7 @@ requires-python = "==3.12.*"
 
 [manifest]
 members = [
+    "crawler",
     "db",
     "gcs-notifier",
     "grantflow",
@@ -504,6 +505,23 @@ wheels = [
 ]
 
 [[package]]
+name = "crawler"
+version = "0.1.0"
+source = { virtual = "services/crawler" }
+dependencies = [
+    { name = "crawl4ai" },
+    { name = "shared-utils" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "crawl4ai", specifier = ">=0.6" },
+    { name = "shared-utils", editable = "packages/shared_utils" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
+]
+
+[[package]]
 name = "cryptography"
 version = "44.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -847,7 +865,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cloudevents", specifier = ">=1.11.0" },
+    { name = "cloudevents", specifier = ">=1.11" },
     { name = "functions-framework", specifier = ">=3.8.2" },
     { name = "httpx", specifier = ">=0.28.1" },
 ]
@@ -1370,10 +1388,8 @@ version = "0.1.0"
 source = { virtual = "services/indexer" }
 dependencies = [
     { name = "azure-ai-documentintelligence" },
-    { name = "crawl4ai" },
     { name = "db" },
     { name = "kreuzberg" },
-    { name = "litestar" },
     { name = "semantic-text-splitter" },
     { name = "shared-utils" },
     { name = "uvicorn", extra = ["standard"] },
@@ -1382,10 +1398,8 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "azure-ai-documentintelligence", specifier = ">=1.0.1" },
-    { name = "crawl4ai", specifier = ">=0.6" },
     { name = "db", editable = "packages/db" },
     { name = "kreuzberg", specifier = ">=2.1.2" },
-    { name = "litestar", specifier = ">=2.15.1" },
     { name = "semantic-text-splitter", specifier = ">=0.24.2" },
     { name = "shared-utils", editable = "packages/shared_utils" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },

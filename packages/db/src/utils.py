@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import GrantApplication, GrantApplicationFile, GrantTemplate, OrganizationFile, RagFile
+from packages.db.src.tables import GrantApplication, GrantApplicationFile, GrantTemplate, OrganizationFile, RagSource
 from packages.shared_utils.src.exceptions import ValidationError
 
 
@@ -30,13 +30,13 @@ async def check_exists_files_being_indexed(
                 select(
                     exists(
                         select(file_table_cls)
-                        .join(RagFile, RagFile.id == file_table_cls.rag_file_id)
+                        .join(RagSource, RagSource.id == file_table_cls.rag_file_id)
                         .where(
                             file_table_cls.grant_application_id == application_id
                             if hasattr(file_table_cls, "grant_application_id")
                             else file_table_cls.funding_organization_id == organization_id
                         )
-                        .where(RagFile.indexing_status == FileIndexingStatusEnum.INDEXING)
+                        .where(RagSource.indexing_status == FileIndexingStatusEnum.INDEXING)
                     )
                 )
             ),

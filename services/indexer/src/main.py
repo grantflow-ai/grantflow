@@ -4,7 +4,7 @@ from kreuzberg._mime_types import EXT_TO_MIME_TYPE
 from litestar import post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import GrantApplicationFile, GrantTemplateFile, OrganizationFile, RagFile
+from packages.db.src.tables import GrantApplicationFile, GrantTemplateFile, OrganizationFile, RagSource
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import download_blob
@@ -54,7 +54,7 @@ async def handle_file_indexing(
     async with session_maker() as session, session.begin():
         try:
             file_id = await session.scalar(
-                insert(RagFile)
+                insert(RagSource)
                 .values(
                     [
                         {
@@ -67,7 +67,7 @@ async def handle_file_indexing(
                         }
                     ]
                 )
-                .returning(RagFile.id)
+                .returning(RagSource.id)
             )
             if parent_type == "grant_application":
                 await session.execute(

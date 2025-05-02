@@ -10,7 +10,7 @@ from packages.db.src.tables import (
     GrantApplicationFile,
     GrantTemplate,
     OrganizationFile,
-    RagFile,
+    RagSource,
     TextVector,
     Workspace,
     WorkspaceUser,
@@ -70,8 +70,8 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     ]
 
 
-class FileFactory(SQLAlchemyFactory[RagFile]):
-    __model__ = RagFile
+class FileFactory(SQLAlchemyFactory[RagSource]):
+    __model__ = RagSource
 
 
 class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
