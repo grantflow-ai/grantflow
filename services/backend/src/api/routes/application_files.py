@@ -4,7 +4,7 @@ from uuid import UUID
 from litestar import delete, get, post
 from litestar.exceptions import NotFoundException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import GrantApplicationFile, RagFile
+from packages.db.src.tables import GrantApplicationFile, RagSource
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import create_signed_upload_url
 from packages.shared_utils.src.logger import get_logger
@@ -60,7 +60,7 @@ async def handle_delete_application_file(
                 )
             )
             result.scalar_one()
-            await session.execute(sa_delete(RagFile).where(RagFile.id == file_id))
+            await session.execute(sa_delete(RagSource).where(RagSource.id == file_id))
             await session.commit()
         except NoResultFound as e:
             raise NotFoundException from e
