@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { fontSora } from "@/utils/fonts";
 import { render, screen } from "@testing-library/react";
 
-import RootLayout from "./layout";
+import RootLayout from "@/app/layout";
 
 vi.mock("@/components/ui/sonner", () => ({
 	Toaster: () => <div data-testid="toaster">Toaster</div>,

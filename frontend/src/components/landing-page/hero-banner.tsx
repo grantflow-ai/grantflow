@@ -1,6 +1,5 @@
-import { HTMLProps } from "react";
-import { AnimatedGradientBackground } from "./backgrounds";
-import { IconGoAhead } from "./icons";
+import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
+import { IconGoAhead } from "@/components/landing-page/icons";
 import { AppButton } from "@/components/app-button";
 import { ScrollButton } from "@/components/scroll-button";
 
@@ -30,7 +29,7 @@ export function HeroBanner() {
 	);
 }
 
-function HeroPattern({ ...props }: HTMLProps<SVGSVGElement>) {
+function HeroPattern({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="none"
