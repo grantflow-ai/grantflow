@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { AppButton } from "./app-button";
+import { AppButton } from "@/components/app-button";
 import { ArrowRight, User } from "lucide-react";
 
 describe("AppButton", () => {

@@ -1,7 +1,7 @@
 import { Button, buttonVariants, type ButtonProps as ShadcnButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
-import React, { cloneElement, HTMLProps, isValidElement, ReactNode } from "react";
+import React from "react";
 
 const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:bg-transparent", {
 	compoundVariants: [
@@ -48,8 +48,8 @@ const ICON_DIMENSIONS_MAP = {
 export interface AppButtonProps
 	extends Omit<ShadcnButtonProps, "size" | "variant">,
 		VariantProps<typeof appButtonVariants> {
-	leftIcon?: ReactNode;
-	rightIcon?: ReactNode;
+	leftIcon?: React.ReactNode;
+	rightIcon?: React.ReactNode;
 	size?: "lg" | "md" | "sm";
 	theme?: "dark" | "light";
 	variant?: "link" | "primary" | "secondary";
@@ -85,13 +85,17 @@ export function AppButton({
 	);
 }
 
-function resizedIcon(icon: ReactNode, dimens: { height: number; width: number }, keepIconSize = false): ReactNode {
+function resizedIcon(
+	icon: React.ReactNode,
+	dimens: { height: number; width: number },
+	keepIconSize = false,
+): React.ReactNode {
 	if (!icon || keepIconSize) {
 		return icon;
 	}
 
-	if (isValidElement(icon)) {
-		return cloneElement(icon as React.ReactElement<HTMLProps<SVGSVGElement>>, {
+	if (React.isValidElement(icon)) {
+		return React.cloneElement(icon as React.ReactElement<React.HTMLProps<SVGSVGElement>>, {
 			height: dimens.height,
 			width: dimens.width,
 		});

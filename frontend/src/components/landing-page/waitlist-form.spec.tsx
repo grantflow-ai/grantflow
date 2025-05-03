@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { WaitlistForm } from "./waitlist-form";
+import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 import userEvent from "@testing-library/user-event";
-import React from "react";
 
 vi.mock("@/actions/waitlist/join-waitlist", () => ({
 	addToWaitlist: vi.fn(),
