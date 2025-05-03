@@ -38,7 +38,7 @@ repos:
 
     # Frontend
     - repo: https://github.com/pre-commit/mirrors-eslint
-      rev: v9.25.1
+      rev: v9.26.0
       hooks:
           - id: eslint
             files: \.[jt]sx?$
@@ -77,7 +77,7 @@ repos:
             additional_dependencies: ["tomli"]
 
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.11.7
+      rev: v0.11.8
       hooks:
           - id: ruff
             args: [--fix, --unsafe-fixes]
