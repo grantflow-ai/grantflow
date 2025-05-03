@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await */
 "use server";
 
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
@@ -66,6 +65,8 @@ const FooterLinks = ({ isMobile = false }) => {
 	);
 };
 
+// page components are Server Components by default and need to be async to properly handle server-side operations
+// eslint-disable-next-line @typescript-eslint/require-await
 export default async function LandingPage() {
 	return (
 		<div className="flex flex-col">

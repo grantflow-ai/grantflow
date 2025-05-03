@@ -1,11 +1,9 @@
-"use client";
-
 import User1 from "@/assets/user-image-1.png";
 import User2 from "@/assets/user-image-2.png";
 import User3 from "@/assets/user-image-3.png";
 import Image from "next/image";
-import { ScrollFadeElement } from "./scroll-fade-element";
-import { motion } from "motion/react";
+import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
+import { MotionArticle, MotionBlockquote } from "@/components/landing-page/motion-components";
 
 const CONTENT = {
 	heading: "Why Researchers Join GrantFlow.ai?",
@@ -66,7 +64,7 @@ export function TestimonialsSection() {
 				</ScrollFadeElement>
 				<div className="grid grid-cols-1 lg:grid-cols-3 place-items-center lg:place-items-start gap-12 md:gap-8 lg:gap-0 mt-8 xl:m-16">
 					{CONTENT.testimonials.map((testimonial, i) => (
-						<motion.article
+						<MotionArticle
 							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full"
 							initial="hidden"
 							key={i}
@@ -79,13 +77,13 @@ export function TestimonialsSection() {
 								className="rounded-full size-24 md:size-28 lg:size-32 xl:size-36"
 								src={testimonial.image}
 							/>
-							<motion.blockquote
+							<MotionBlockquote
 								className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base"
 								variants={textVariants}
 							>
 								&quot;{testimonial.quote}&quot;
-							</motion.blockquote>
-						</motion.article>
+							</MotionBlockquote>
+						</MotionArticle>
 					))}
 				</div>
 			</div>

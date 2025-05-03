@@ -1,10 +1,9 @@
 import { PatternedBackground } from "./backgrounds";
 import { cn } from "@/lib/utils";
-import React from "react";
 import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
-import { ScrollFadeElement } from "./scroll-fade-element";
-import { ScaleElement } from "./scale-element";
-import { HowItWorksCard } from "./howitworks-card";
+import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
+import { ScaleElement } from "@/components/landing-page/scale-element";
+import { HowItWorksCard } from "@/components/landing-page/howitworks-card";
 
 const benefitsCardHeader = "font-heading font-medium text-stone-800 text-3xl md:text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
