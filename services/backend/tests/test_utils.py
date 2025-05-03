@@ -12,7 +12,7 @@ from packages.db.src.tables import (
     GrantApplicationFile,
     GrantTemplate,
     OrganizationFile,
-    RagSource,
+    RagFile,
     TextVector,
     Workspace,
 )
@@ -86,7 +86,7 @@ async def process_organization_files(
             rag_file_data["object_path"] = "test_path"
 
             await session.execute(
-                insert(RagSource)
+                insert(RagFile)
                 .values(
                     {
                         "id": rag_file_id,
@@ -160,7 +160,7 @@ async def parse_source_file(
 
     async with async_session_maker() as session:
         file_id = await session.scalar(
-            insert(RagSource)
+            insert(RagFile)
             .values(
                 {
                     "filename": source_file.name,
@@ -171,7 +171,7 @@ async def parse_source_file(
                     "indexing_status": FileIndexingStatusEnum.FINISHED,
                 }
             )
-            .returning(RagSource.id)
+            .returning(RagFile.id)
         )
         await session.execute(
             insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_file_id": file_id}])
@@ -193,14 +193,14 @@ async def parse_source_file(
         if application_id:
             stmt = (
                 select(GrantApplicationFile)
-                .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagSource.text_vectors))
+                .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
                 .where(GrantApplicationFile.rag_file_id == file_id)
                 .where(GrantApplicationFile.grant_application_id == application_id)
             )
         else:
             stmt = (
                 select(OrganizationFile)  # type: ignore[assignment]
-                .options(selectinload(OrganizationFile.rag_file).selectinload(RagSource.text_vectors))
+                .options(selectinload(OrganizationFile.rag_file).selectinload(RagFile.text_vectors))
                 .where(OrganizationFile.rag_file_id == file_id)
                 .where(OrganizationFile.funding_organization_id == organization_id)
             )
@@ -309,7 +309,7 @@ async def process_application_files(
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
 
             await session.execute(
-                insert(RagSource)
+                insert(RagFile)
                 .values(
                     {
                         "id": rag_file_id,

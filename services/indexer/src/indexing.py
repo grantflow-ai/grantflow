@@ -15,7 +15,7 @@ CHUNKS_BATCH_SIZE: Final[int] = 30
 async def create_vector_dto(
     *,
     chunk: Chunk,
-    rag_file_id: str,
+    rag_source_id: str,
 ) -> VectorDTO:
     embedding = await generate_embeddings([chunk["content"]])
 
@@ -26,7 +26,7 @@ async def create_vector_dto(
     return VectorDTO(
         chunk=chunk,
         embedding=embedding[0],
-        rag_file_id=rag_file_id,
+        rag_source_id=rag_source_id,
     )
 
 
@@ -41,7 +41,7 @@ async def index_documents(
             *[
                 create_vector_dto(
                     chunk=chunk,
-                    rag_file_id=file_id,
+                    rag_source_id=file_id,
                 )
                 for chunk in chunks[i : i + CHUNKS_BATCH_SIZE]
             ]

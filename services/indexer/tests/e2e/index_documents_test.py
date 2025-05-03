@@ -46,7 +46,7 @@ async def test_index_documents(
     assert len(vector_dtos) > 0, f"No vectors generated for {data_file.name}"
 
     for vector in vector_dtos:
-        assert vector["rag_file_id"] == grant_application_file.rag_file_id, "Incorrect rag_file_id"
+        assert vector["rag_source_id"] == grant_application_file.rag_file_id, "Incorrect rag_file_id"
         assert "chunk" in vector, "Missing chunk attribute"
         assert vector["chunk"]["content"], "Missing chunk content"
         assert "embedding" in vector, "Missing embedding attribute"
