@@ -1,10 +1,10 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import React from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 
 export const ScrollFadeElement: React.FC<{
-	children: ReactNode;
+	children: React.ReactNode;
 	className?: string;
 	delay?: number;
 	threshold?: number;

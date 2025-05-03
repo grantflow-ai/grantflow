@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { HeroBanner } from "./hero-banner";
+import { HeroBanner } from "@/components/landing-page/hero-banner";
 
-vi.mock("./backgrounds", () => ({
+vi.mock("./backgrounds-animated", () => ({
 	AnimatedGradientBackground: vi
 		.fn()
 		.mockImplementation(({ className }) => (

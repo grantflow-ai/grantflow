@@ -1,6 +1,5 @@
 "use client";
 
-import { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 
@@ -85,7 +84,7 @@ export function HowItWorksCard({
 	headerStyle: string;
 	heading: string;
 	steps: { step1: string; step2: string; step3: string; step4: string };
-} & HTMLAttributes<HTMLDivElement>) {
+} & React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<motion.div
 			className={cn("w-full h-auto flex px-10 py-6 md:py-10 flex-col items-center justify-center", className)}

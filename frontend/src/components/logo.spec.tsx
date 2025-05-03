@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import { Logo } from "./logo";
+import { Logo } from "@/components/logo";
 
 describe("Logo Component", () => {
 	it("renders correctly crashing", () => {
