@@ -1,38 +1,30 @@
-# General
+*$py.class
+**/__pycache__/
+**/http-client.private.env.json
+*.iml
+*.log
+*.pem
+*.py[cod]
+*.suo
+*.tsbuildinfo
+*.user
+.claude/
+.coverage
+.coverage*
 .DS_Store
 .env
-*.log
-.coverage
-
-# Python (backend)
-**/__pycache__/
-*.py[cod]
-*$py.class
-.venv
-.mypy_cache
-.ruff_cache
-coverage.*
-.coverage*
-requirements.txt
-**/http-client.private.env.json
-.pytest_cache
-
-# Node.js (frontend)
-node_modules/
 .eslintcache
+.mypy_cache
 .next/
-.vercel/
+.pytest_cache
+.ruff_cache
 .turbo/
-dist/
+.venv
+.vercel/
 build/
-out/
+coverage.*
 coverage/
-*.tsbuildinfo
-
-# IDE and editor files
-*.suo
-*.user
-*.iml
-
-# Build artifacts
-*.pem
+dist/
+node_modules/
+out/
+requirements.txt

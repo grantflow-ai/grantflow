@@ -1,5 +1,6 @@
 import { API } from "@/types/api-types";
-import { createAuthHeaders, getClient, withAuthRedirect } from "@/utils/api";
+import { getClient } from "@/utils/api";
+import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 export async function createWorkspace(data: API.CreateWorkspace.RequestBody) {
 	return withAuthRedirect(
