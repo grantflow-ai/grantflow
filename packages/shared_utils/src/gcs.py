@@ -114,3 +114,25 @@ async def create_signed_upload_url(
                 "error": str(e),
             },
         ) from e
+
+
+async def upload_blob(blob_path: str, content: bytes) -> None:
+    try:
+        bucket = await run_sync(get_bucket)
+        blob = bucket.blob(blob_path)
+
+        await run_sync(lambda: blob.upload_from_string(content))
+
+        logger.info(
+            "Uploaded blob",
+            blob_path=blob_path,
+        )
+    except ClientError as e:
+        logger.error("Failed to upload blob", blob_path=blob_path, exc_info=e)
+        raise ExternalOperationError(
+            "Failed to upload blob",
+            context={
+                "blob_path": blob_path,
+                "error": str(e),
+            },
+        ) from e

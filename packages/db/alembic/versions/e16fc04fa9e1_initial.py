@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 4d61dad92d0f
+Revision ID: e16fc04fa9e1
 Revises:
-Create Date: 2025-04-26 16:11:47.145845
+Create Date: 2025-05-02 14:30:03.186695
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "4d61dad92d0f"
+revision: str = "e16fc04fa9e1"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -37,25 +37,19 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_funding_organizations_created_at"), "funding_organizations", ["created_at"], unique=False)
     op.create_table(
-        "rag_files",
-        sa.Column("bucket_name", sa.String(length=255), nullable=False),
-        sa.Column("object_path", sa.String(length=255), nullable=False),
-        sa.Column("filename", sa.String(length=255), nullable=False),
+        "rag_sources",
         sa.Column(
             "indexing_status", sa.Enum("INDEXING", "FINISHED", "FAILED", name="fileindexingstatusenum"), nullable=False
         ),
-        sa.Column("mime_type", sa.String(length=255), nullable=False),
-        sa.Column("size", sa.BigInteger(), nullable=False),
         sa.Column("text_content", sa.Text(), nullable=True),
+        sa.Column("type", sa.String(length=50), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.CheckConstraint("size >= 0", name="check_positive_file_size"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("bucket_name", "object_path", name="uq_bucket_object"),
     )
-    op.create_index(op.f("ix_rag_files_created_at"), "rag_files", ["created_at"], unique=False)
-    op.create_index(op.f("ix_rag_files_indexing_status"), "rag_files", ["indexing_status"], unique=False)
+    op.create_index(op.f("ix_rag_sources_created_at"), "rag_sources", ["created_at"], unique=False)
+    op.create_index(op.f("ix_rag_sources_indexing_status"), "rag_sources", ["indexing_status"], unique=False)
     op.create_table(
         "workspaces",
         sa.Column("description", sa.Text(), nullable=True),
@@ -92,25 +86,37 @@ def upgrade() -> None:
     op.create_index(op.f("ix_grant_applications_status"), "grant_applications", ["status"], unique=False)
     op.create_index(op.f("ix_grant_applications_workspace_id"), "grant_applications", ["workspace_id"], unique=False)
     op.create_table(
-        "organization_files",
-        sa.Column("rag_file_id", sa.UUID(), nullable=False),
-        sa.Column("funding_organization_id", sa.UUID(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["funding_organization_id"], ["funding_organizations.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["rag_file_id"], ["rag_files.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("rag_file_id", "funding_organization_id"),
+        "rag_files",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("bucket_name", sa.String(length=255), nullable=False),
+        sa.Column("object_path", sa.String(length=255), nullable=False),
+        sa.Column("filename", sa.String(length=255), nullable=False),
+        sa.Column("mime_type", sa.String(length=255), nullable=False),
+        sa.Column("size", sa.BigInteger(), nullable=False),
+        sa.CheckConstraint("size >= 0", name="check_positive_file_size"),
+        sa.ForeignKeyConstraint(["id"], ["rag_sources.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("bucket_name", "object_path", name="uq_bucket_object"),
     )
-    op.create_index(op.f("ix_organization_files_created_at"), "organization_files", ["created_at"], unique=False)
+    op.create_table(
+        "rag_urls",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("url", sa.Text(), nullable=False),
+        sa.Column("title", sa.String(length=255), nullable=True),
+        sa.Column("description", sa.Text(), nullable=True),
+        sa.ForeignKeyConstraint(["id"], ["rag_sources.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("url"),
+    )
     op.create_table(
         "text_vectors",
         sa.Column("chunk", sa.JSON(), nullable=False),
         sa.Column("embedding", pgvector.sqlalchemy.vector.VECTOR(dim=384), nullable=False),
-        sa.Column("rag_file_id", sa.UUID(), nullable=False),
+        sa.Column("rag_source_id", sa.UUID(), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["rag_file_id"], ["rag_files.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["rag_source_id"], ["rag_sources.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
@@ -123,7 +129,7 @@ def upgrade() -> None:
         postgresql_ops={"embedding": "vector_cosine_ops", "iterative_scan": "strict_order"},
     )
     op.create_index(op.f("ix_text_vectors_created_at"), "text_vectors", ["created_at"], unique=False)
-    op.create_index(op.f("ix_text_vectors_rag_file_id"), "text_vectors", ["rag_file_id"], unique=False)
+    op.create_index(op.f("ix_text_vectors_rag_source_id"), "text_vectors", ["rag_source_id"], unique=False)
     op.create_table(
         "workspace_users",
         sa.Column("firebase_uid", sa.String(length=128), nullable=False),
@@ -149,10 +155,24 @@ def upgrade() -> None:
         op.f("ix_grant_application_files_created_at"), "grant_application_files", ["created_at"], unique=False
     )
     op.create_table(
+        "grant_application_urls",
+        sa.Column("rag_url_id", sa.UUID(), nullable=False),
+        sa.Column("grant_application_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["grant_application_id"], ["grant_applications.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["rag_url_id"], ["rag_urls.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_url_id", "grant_application_id"),
+    )
+    op.create_index(
+        op.f("ix_grant_application_urls_created_at"), "grant_application_urls", ["created_at"], unique=False
+    )
+    op.create_table(
         "grant_templates",
         sa.Column("grant_sections", sa.JSON(), nullable=False),
         sa.Column("grant_application_id", sa.UUID(), nullable=False),
         sa.Column("funding_organization_id", sa.UUID(), nullable=True),
+        sa.Column("submission_date", sa.Date(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -164,20 +184,74 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_grant_templates_grant_application_id"), "grant_templates", ["grant_application_id"], unique=False
     )
+    op.create_table(
+        "organization_files",
+        sa.Column("rag_file_id", sa.UUID(), nullable=False),
+        sa.Column("funding_organization_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["funding_organization_id"], ["funding_organizations.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["rag_file_id"], ["rag_files.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_file_id", "funding_organization_id"),
+    )
+    op.create_index(op.f("ix_organization_files_created_at"), "organization_files", ["created_at"], unique=False)
+    op.create_table(
+        "organization_urls",
+        sa.Column("rag_url_id", sa.UUID(), nullable=False),
+        sa.Column("funding_organization_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["funding_organization_id"], ["funding_organizations.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["rag_url_id"], ["rag_urls.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_url_id", "funding_organization_id"),
+    )
+    op.create_index(op.f("ix_organization_urls_created_at"), "organization_urls", ["created_at"], unique=False)
+    op.create_table(
+        "grant_template_files",
+        sa.Column("rag_file_id", sa.UUID(), nullable=False),
+        sa.Column("grant_template_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["grant_template_id"], ["grant_templates.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["rag_file_id"], ["rag_files.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_file_id", "grant_template_id"),
+    )
+    op.create_index(op.f("ix_grant_template_files_created_at"), "grant_template_files", ["created_at"], unique=False)
+    op.create_table(
+        "grant_template_urls",
+        sa.Column("rag_url_id", sa.UUID(), nullable=False),
+        sa.Column("grant_template_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["grant_template_id"], ["grant_templates.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["rag_url_id"], ["rag_urls.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_url_id", "grant_template_id"),
+    )
+    op.create_index(op.f("ix_grant_template_urls_created_at"), "grant_template_urls", ["created_at"], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f("ix_grant_template_urls_created_at"), table_name="grant_template_urls")
+    op.drop_table("grant_template_urls")
+    op.drop_index(op.f("ix_grant_template_files_created_at"), table_name="grant_template_files")
+    op.drop_table("grant_template_files")
+    op.drop_index(op.f("ix_organization_urls_created_at"), table_name="organization_urls")
+    op.drop_table("organization_urls")
+    op.drop_index(op.f("ix_organization_files_created_at"), table_name="organization_files")
+    op.drop_table("organization_files")
     op.drop_index(op.f("ix_grant_templates_grant_application_id"), table_name="grant_templates")
     op.drop_index(op.f("ix_grant_templates_created_at"), table_name="grant_templates")
     op.drop_table("grant_templates")
+    op.drop_index(op.f("ix_grant_application_urls_created_at"), table_name="grant_application_urls")
+    op.drop_table("grant_application_urls")
     op.drop_index(op.f("ix_grant_application_files_created_at"), table_name="grant_application_files")
     op.drop_table("grant_application_files")
     op.drop_index(op.f("ix_workspace_users_created_at"), table_name="workspace_users")
     op.drop_table("workspace_users")
-    op.drop_index(op.f("ix_text_vectors_rag_file_id"), table_name="text_vectors")
+    op.drop_index(op.f("ix_text_vectors_rag_source_id"), table_name="text_vectors")
     op.drop_index(op.f("ix_text_vectors_created_at"), table_name="text_vectors")
     op.drop_index(
         "idx_text_vectors_embedding",
@@ -187,8 +261,8 @@ def downgrade() -> None:
         postgresql_ops={"embedding": "vector_cosine_ops", "iterative_scan": "strict_order"},
     )
     op.drop_table("text_vectors")
-    op.drop_index(op.f("ix_organization_files_created_at"), table_name="organization_files")
-    op.drop_table("organization_files")
+    op.drop_table("rag_urls")
+    op.drop_table("rag_files")
     op.drop_index(op.f("ix_grant_applications_workspace_id"), table_name="grant_applications")
     op.drop_index(op.f("ix_grant_applications_status"), table_name="grant_applications")
     op.drop_index(op.f("ix_grant_applications_created_at"), table_name="grant_applications")
@@ -197,9 +271,9 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_workspaces_name"), table_name="workspaces")
     op.drop_index(op.f("ix_workspaces_created_at"), table_name="workspaces")
     op.drop_table("workspaces")
-    op.drop_index(op.f("ix_rag_files_indexing_status"), table_name="rag_files")
-    op.drop_index(op.f("ix_rag_files_created_at"), table_name="rag_files")
-    op.drop_table("rag_files")
+    op.drop_index(op.f("ix_rag_sources_indexing_status"), table_name="rag_sources")
+    op.drop_index(op.f("ix_rag_sources_created_at"), table_name="rag_sources")
+    op.drop_table("rag_sources")
     op.drop_index(op.f("ix_funding_organizations_created_at"), table_name="funding_organizations")
     op.drop_index(op.f("ix_funding_organizations_abbreviation"), table_name="funding_organizations")
     op.drop_table("funding_organizations")

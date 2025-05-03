@@ -88,14 +88,10 @@ class ApplicationWizardResponseDTO(TypedDict):
 @dataclass
 class ApplicationSetupInput:
     title: str
-    cfp_file: UploadFile | None = None
-    cfp_url: str | None = None
 
     def __post_init__(self) -> None:
         if not self.title:
             raise ValidationException("Application title is required")
-        if not self.cfp_file and not self.cfp_url:
-            raise ValidationException("Either a CFP file or URL is required")
 
 
 @dataclass
@@ -208,7 +204,7 @@ def prepare_wizard_response(
 
 
 async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
-    from services.indexer.src.extraction import extract_file_content, extract_webpage_content
+    from services.indexer.src.extraction import extract_file_content
 
     if cfp_file_upload:
         output, _ = await extract_file_content(
@@ -217,7 +213,8 @@ async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | Non
         )
         return output if isinstance(output, str) else output["content"]
     if cfp_url:
-        return await extract_webpage_content(url=cfp_url)
+        # TODO:
+        pass
     raise ValidationException("Either one file or a CFP URL is required")
 
 
@@ -270,8 +267,6 @@ async def handle_application_setup(
 ) -> None:
     setup_input = ApplicationSetupInput(
         title=data.get("title", ""),
-        cfp_file=data.get("cfp_file"),
-        cfp_url=data.get("cfp_url"),
     )
 
     async with session_maker() as session, session.begin():
@@ -316,11 +311,9 @@ async def handle_application_setup(
         ),
     )
 
-    cfp_content = await get_cfp_content(cfp_file_upload=setup_input.cfp_file, cfp_url=setup_input.cfp_url)
-
     await grant_template_generation_pipeline_handler(
         application_id=str(application_id),
-        cfp_content=cfp_content,
+        cfp_content="",  # TODO: reimplement once crawling is done
         message_handler=handler.send_message,
     )
 

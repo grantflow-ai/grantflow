@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import GrantApplication, GrantApplicationFile, GrantTemplate, OrganizationFile, RagFile
+from packages.db.src.tables import (
+    GrantApplication,
+    GrantApplicationFile,
+    GrantTemplate,
+    OrganizationFile,
+    RagFile,
+)
 from packages.shared_utils.src.exceptions import ValidationError
 
 

@@ -1,0 +1,15 @@
+[project]
+name = "crawler"
+version = "0.1.0"
+description = "Grantflow Crawler"
+readme = "README.md"
+license = { text = "UNLICENSED" }
+authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
+requires-python = "==3.12.*"
+
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
+dependencies = [
+  "crawl4ai>=0.6",
+  "shared-utils",
+  "uvicorn[standard]>=0.34",
+]
