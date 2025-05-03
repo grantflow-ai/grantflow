@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { TestimonialsSection } from "./testimonials-section";
+import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 
 vi.mock("@/assets/user-image-1.png", () => ({
 	default: "/mocked-user-image-1.png",

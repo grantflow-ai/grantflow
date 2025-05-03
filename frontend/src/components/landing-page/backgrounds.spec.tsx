@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { AnimatedGradientBackground, GradientBackground } from "./backgrounds";
+import { GradientBackground } from "@/components/landing-page/backgrounds";
 
 describe("Background Components", () => {
 	describe("GradientBackground Component", () => {
@@ -33,28 +33,6 @@ describe("Background Components", () => {
 			const updatedStyle = globalThis.getComputedStyle(element);
 			expect(updatedStyle.background).toContain("radial-gradient");
 			expect(updatedStyle.background).toContain("0%");
-		});
-	});
-
-	describe("AnimatedGradientBackground", () => {
-		it("renders with correct default classes", () => {
-			render(<AnimatedGradientBackground data-testid="animated-background" />);
-			const element = screen.getByTestId("animated-background");
-			expect(element.className).toContain("opacity-70");
-			expect(element.className).toContain("relative");
-		});
-
-		it("accepts and applies custom className", () => {
-			render(<AnimatedGradientBackground className="custom-class" data-testid="animated-background" />);
-			const element = screen.getByTestId("animated-background");
-			expect(element.className).toContain("custom-class");
-			expect(element.className).toContain("opacity-70");
-		});
-
-		it("renders without crashing", () => {
-			expect(() => {
-				render(<AnimatedGradientBackground />);
-			}).not.toThrow();
 		});
 	});
 });

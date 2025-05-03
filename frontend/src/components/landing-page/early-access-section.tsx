@@ -1,15 +1,21 @@
-"use client";
-
-import { GradientBackground } from "./backgrounds";
-import { WaitlistForm } from "./waitlist-form";
+import { GradientBackground } from "@/components/landing-page/backgrounds";
+import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 import {
 	IconEarlyAccessBenefit1,
 	IconEarlyAccessBenefit2,
 	IconEarlyAccessBenefit3,
 	IconEarlyAccessBenefit4,
-} from "./icons";
-import React from "react";
-import { motion } from "motion/react";
+} from "@/components/landing-page/icons";
+import {
+	MotionAside,
+	MotionDiv,
+	MotionHeading2,
+	MotionHeading3,
+	MotionListItem,
+	MotionParagraph,
+	MotionSection,
+	MotionUnorderedList,
+} from "@/components/landing-page/motion-components";
 
 const SECTION_HEADERS = {
 	badge: "Early Access Registration Now Open!",
@@ -165,7 +171,7 @@ const formContainerVariants = {
 
 export function EarlyAccessSection() {
 	return (
-		<motion.section
+		<MotionSection
 			aria-label="early-access-section"
 			className="relative"
 			id="waitlist"
@@ -177,57 +183,57 @@ export function EarlyAccessSection() {
 			<GradientBackground className="inset-0 z-0 hidden md:absolute md:block" />
 			<GradientBackground className="absolute inset-0 z-0 md:hidden" position="bottom-left" />
 			<div className="lg:py-15 xl:px-30 relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 xl:py-20">
-				<motion.div
+				<MotionDiv
 					className="text-background max-w-fit rounded-full bg-white px-2 pt-0.5 text-lg md:text-sm"
 					id="early-access-badge"
 					variants={badgeVariants}
 				>
 					{SECTION_HEADERS.badge}
-				</motion.div>
-				<motion.h2
+				</MotionDiv>
+				<MotionHeading2
 					className="font-heading leading-14 mt-4 text-5xl md:mt-3 md:text-4xl md:leading-10"
 					id="early-access-heading"
 					variants={textVariants}
 				>
 					{SECTION_HEADERS.heading}
-				</motion.h2>
-				<motion.p
+				</MotionHeading2>
+				<MotionParagraph
 					className="mt-1 text-xl antialiased md:text-white/80"
 					id="early-access-description"
 					variants={textVariants}
 				>
 					{SECTION_HEADERS.description}
-				</motion.p>
+				</MotionParagraph>
 				<BenefitsAndWaitlistForm />
 			</div>
-		</motion.section>
+		</MotionSection>
 	);
 }
 
 function BenefitsAndWaitlistForm() {
 	return (
-		<motion.div
+		<MotionDiv
 			className="mt-10 flex flex-col gap-8 rounded bg-violet-200/15 py-7 ps-7 md:mt-7 md:flex-row md:gap-12 md:px-11 md:pe-7"
 			variants={contentContainerVariants}
 		>
-			<motion.section
+			<MotionSection
 				className="flex-1 justify-start"
 				id="early-access-form-and-benefits"
 				variants={benefitsContainerVariants}
 			>
-				<motion.h3
+				<MotionHeading3
 					className="font-heading text-[1.5rem] md:text-[1.75rem]"
 					id="benefits-list-header"
 					variants={textVariants}
 				>
 					{CONTENT_BENEFITS.listHeading}
-				</motion.h3>
-				<motion.ul
+				</MotionHeading3>
+				<MotionUnorderedList
 					className="mt-7 flex flex-wrap justify-start gap-4 gap-y-12 py-3 ps-3 md:gap-12 md:p-3"
 					variants={benefitsContainerVariants}
 				>
 					{CONTENT_BENEFITS.earlyAccessBenefits.map((benefits, index) => (
-						<motion.li
+						<MotionListItem
 							className="w-[calc(50%-1rem)] sm:w-[calc(45%-1rem)] md:w-[calc(40%-1rem)] lg:w-[calc(30%-1rem)] xl:w-[calc(20%-1rem)]"
 							custom={index}
 							key={index}
@@ -238,17 +244,17 @@ function BenefitsAndWaitlistForm() {
 								description={benefits.description}
 								heading={benefits.heading}
 							/>
-						</motion.li>
+						</MotionListItem>
 					))}
-				</motion.ul>
-			</motion.section>
-			<motion.aside aria-label="waitlist-form" className="me-7 shrink-0 md:me-0" variants={formContainerVariants}>
-				<motion.h3 className="font-heading text-2xl" variants={textVariants}>
+				</MotionUnorderedList>
+			</MotionSection>
+			<MotionAside aria-label="waitlist-form" className="me-7 shrink-0 md:me-0" variants={formContainerVariants}>
+				<MotionHeading3 className="font-heading text-2xl" variants={textVariants}>
 					{CONTENT_BENEFITS.formHeading}
-				</motion.h3>
+				</MotionHeading3>
 				<WaitlistForm />
-			</motion.aside>
-		</motion.div>
+			</MotionAside>
+		</MotionDiv>
 	);
 }
 
@@ -263,18 +269,18 @@ function EarlyAccessBenefitsCard({
 }) {
 	return (
 		<article id="early-access-benefits-card">
-			<motion.div variants={benefitIconVariants}>
+			<MotionDiv variants={benefitIconVariants}>
 				<BadgeIcon className="size-6 md:size-5" />
-			</motion.div>
-			<motion.h3 className="font-heading mb-1 mt-4 text-xl md:mt-2 md:text-base" variants={textVariants}>
+			</MotionDiv>
+			<MotionHeading3 className="font-heading mb-1 mt-4 text-xl md:mt-2 md:text-base" variants={textVariants}>
 				{heading}
-			</motion.h3>
-			<motion.p
+			</MotionHeading3>
+			<MotionParagraph
 				className="text-lg leading-tight text-white/80 md:text-sm md:font-light md:text-white"
 				variants={textVariants}
 			>
 				{description}
-			</motion.p>
+			</MotionParagraph>
 		</article>
 	);
 }

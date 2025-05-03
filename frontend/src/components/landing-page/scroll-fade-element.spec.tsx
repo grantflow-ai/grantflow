@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import React, { ReactNode, RefObject } from "react";
 
 const mockScrollYProgress = { get: () => 0.3, onChange: vi.fn() };
 const mockUseScroll = vi.fn().mockReturnValue({ scrollYProgress: mockScrollYProgress });
@@ -16,9 +15,9 @@ vi.mock("motion/react", () => {
 				transition,
 			}: {
 				[key: string]: any;
-				children: ReactNode;
+				children: React.ReactNode;
 				className?: string;
-				ref?: RefObject<HTMLDivElement>;
+				ref?: React.RefObject<HTMLDivElement>;
 				style?: {
 					[key: string]: any;
 					opacity?: any;
@@ -43,7 +42,7 @@ vi.mock("motion/react", () => {
 				</div>
 			),
 		},
-		useScroll: (args: { offset: [string, string]; target: RefObject<HTMLElement> }) => {
+		useScroll: (args: { offset: [string, string]; target: React.RefObject<HTMLElement> }) => {
 			mockUseScroll(args);
 			return { scrollYProgress: mockScrollYProgress };
 		},

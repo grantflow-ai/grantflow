@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { EarlyAccessSection } from "./early-access-section";
+import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 
 vi.mock("motion/react", async () => {
 	const actual = vi.importActual("motion/react");

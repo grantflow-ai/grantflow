@@ -1,6 +1,4 @@
-import { HTMLProps } from "react";
-
-export function IconBenefitFirst({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconBenefitFirst({ className, height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			className={className}
@@ -16,7 +14,7 @@ export function IconBenefitFirst({ className, height = 15, width = 15, ...props 
 	);
 }
 
-export function IconBenefitSecond({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconBenefitSecond({ className, height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			className={className}
@@ -32,7 +30,7 @@ export function IconBenefitSecond({ className, height = 15, width = 15, ...props
 	);
 }
 
-export function IconCalendar({ height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconCalendar({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="currentColor"
@@ -47,7 +45,7 @@ export function IconCalendar({ height = 15, width = 15, ...props }: HTMLProps<SV
 	);
 }
 
-export function IconCancel({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconCancel({ className, height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			className={className}
@@ -63,7 +61,7 @@ export function IconCancel({ className, height = 15, width = 15, ...props }: HTM
 	);
 }
 
-export function IconEarlyAccessBenefit1({ ...props }: HTMLProps<SVGSVGElement>) {
+export function IconEarlyAccessBenefit1({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="#FFFFFF"
@@ -78,7 +76,7 @@ export function IconEarlyAccessBenefit1({ ...props }: HTMLProps<SVGSVGElement>) 
 	);
 }
 
-export function IconEarlyAccessBenefit2({ ...props }: HTMLProps<SVGSVGElement>) {
+export function IconEarlyAccessBenefit2({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="#FFFFFF"
@@ -93,7 +91,7 @@ export function IconEarlyAccessBenefit2({ ...props }: HTMLProps<SVGSVGElement>) 
 	);
 }
 
-export function IconEarlyAccessBenefit3({ ...props }: HTMLProps<SVGSVGElement>) {
+export function IconEarlyAccessBenefit3({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="#FFFFFF"
@@ -108,7 +106,7 @@ export function IconEarlyAccessBenefit3({ ...props }: HTMLProps<SVGSVGElement>) 
 	);
 }
 
-export function IconEarlyAccessBenefit4({ ...props }: HTMLProps<SVGSVGElement>) {
+export function IconEarlyAccessBenefit4({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="#FFFFFF"
@@ -123,7 +121,7 @@ export function IconEarlyAccessBenefit4({ ...props }: HTMLProps<SVGSVGElement>) 
 	);
 }
 
-export function IconGoAhead({ height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconGoAhead({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="currentColor"
@@ -138,7 +136,7 @@ export function IconGoAhead({ height = 15, width = 15, ...props }: HTMLProps<SVG
 	);
 }
 
-export function IconHamburger({ className, height = 15, width = 15, ...props }: HTMLProps<SVGSVGElement>) {
+export function IconHamburger({ className, height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			className={className}

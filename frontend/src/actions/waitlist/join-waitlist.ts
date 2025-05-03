@@ -1,7 +1,7 @@
 "use server";
 
 import { Resend } from "resend";
-import { waitlistSchema } from "./waitlist-validation-schema";
+import { waitlistSchema } from "@/actions/waitlist/waitlist-validation-schema";
 import { z } from "zod";
 import { logError } from "@/utils/logging";
 import { getWaitlistEmailTemplateHtml, waitlistEmailTemplateText } from "@/components/waitlist-email-template";

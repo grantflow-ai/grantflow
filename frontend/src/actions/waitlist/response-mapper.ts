@@ -1,4 +1,4 @@
-import { ServerResponseCode } from "./join-waitlist";
+import { ServerResponseCode } from "@/actions/waitlist/join-waitlist";
 
 const responseMessages: Record<ServerResponseCode, string> = {
 	ALREADY_REGISTERED: "This email is already on our waitlist. We'll be in touch soon!",

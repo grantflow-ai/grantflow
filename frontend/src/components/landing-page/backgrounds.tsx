@@ -1,9 +1,4 @@
-"use client";
-
 import { cn } from "@/lib/utils";
-import { HTMLAttributes } from "react";
-import { HTMLProps } from "react";
-import { motion } from "motion/react";
 
 const MAP_GRADIENT_CENTER = {
 	"bottom-left": { centerX: "0%", centerY: "80%" },
@@ -12,41 +7,13 @@ const MAP_GRADIENT_CENTER = {
 	"top-right": { centerX: "100%", centerY: "0%" },
 };
 
-const gradientPath = [
-	`radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 100% 0%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 50% 0%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 0% 0%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 0% 100%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 50% 100%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)`,
-];
-
-function AnimatedGradientBackground({ className }: HTMLAttributes<HTMLDivElement>) {
-	return (
-		<motion.div
-			animate={{ background: gradientPath }}
-			className={cn("opacity-70 relative", className)}
-			data-testid="animated-background"
-			initial={{ background: gradientPath[0] }}
-			transition={{
-				duration: 25,
-				ease: "linear",
-				repeat: Infinity,
-				repeatType: "loop",
-				times: [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1],
-			}}
-		></motion.div>
-	);
-}
-
 function GradientBackground({
 	className,
 	position = "bottom-right",
 	...rest
 }: {
 	position?: "bottom-left" | "bottom-right" | "top-left" | "top-right";
-} & HTMLAttributes<HTMLDivElement>) {
+} & React.HTMLAttributes<HTMLDivElement>) {
 	const { centerX, centerY } = MAP_GRADIENT_CENTER[position];
 
 	return (
@@ -60,7 +27,7 @@ function GradientBackground({
 	);
 }
 
-function PatternedBackground({ ...props }: HTMLProps<SVGSVGElement>) {
+function PatternedBackground({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
 			fill="none"
@@ -37771,4 +37738,4 @@ function PatternedBackground({ ...props }: HTMLProps<SVGSVGElement>) {
 	);
 }
 
-export { AnimatedGradientBackground, GradientBackground, PatternedBackground };
+export { GradientBackground, PatternedBackground };
