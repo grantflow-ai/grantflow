@@ -14,93 +14,100 @@ vi.mock("@/utils/api", async () => {
 	const actual = await vi.importActual("@/utils/api");
 	return {
 		...actual,
-		createAuthHeaders: () => mockCreateAuthHeaders(),
 		getClient: () => ({
 			delete: mockDelete,
 			get: mockGet,
 			patch: mockPatch,
 			post: mockPost,
 		}),
+	};
+});
+
+vi.mock("@/utils/server-side", async () => {
+	const actual = await vi.importActual("@/utils/server-side");
+	return {
+		...actual,
+		createAuthHeaders: () => mockCreateAuthHeaders(),
 		withAuthRedirect: (promise: Promise<any>) => mockWithAuthRedirect(promise),
 	};
 });
 
-describe("Workspace Actions", () => {
-	const mockWorkspaceId = "mock-workspace-id";
-	const mockAuthHeaders = { Authorization: "Bearer mock-token" };
+const mockWorkspaceId = "mock-workspace-id";
+const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
-	const mockCreateWorkspaceResponse: API.CreateWorkspace.Http201.ResponseBody = {
-		id: mockWorkspaceId,
-	};
+const mockCreateWorkspaceResponse: API.CreateWorkspace.Http201.ResponseBody = {
+	id: mockWorkspaceId,
+};
 
-	const mockGetWorkspaceResponse: API.GetWorkspace.Http200.ResponseBody = {
+const mockGetWorkspaceResponse: API.GetWorkspace.Http200.ResponseBody = {
+	description: "Test Description",
+	grant_applications: [
+		{
+			completed_at: null,
+			id: "app-1",
+			title: "Application 1",
+		},
+	],
+	id: mockWorkspaceId,
+	logo_url: "https://example.com/logo.png",
+	name: "Test Workspace",
+	role: "OWNER",
+};
+
+const mockGetWorkspacesResponse: API.ListWorkspaces.Http200.ResponseBody = [
+	{
 		description: "Test Description",
-		grant_applications: [
-			{
-				completed_at: null,
-				id: "app-1",
-				title: "Application 1",
-			},
-		],
 		id: mockWorkspaceId,
 		logo_url: "https://example.com/logo.png",
 		name: "Test Workspace",
 		role: "OWNER",
-	};
+	},
+	{
+		description: null,
+		id: "workspace-2",
+		logo_url: null,
+		name: "Another Workspace",
+		role: "MEMBER",
+	},
+];
 
-	const mockGetWorkspacesResponse: API.ListWorkspaces.Http200.ResponseBody = [
-		{
-			description: "Test Description",
-			id: mockWorkspaceId,
-			logo_url: "https://example.com/logo.png",
-			name: "Test Workspace",
-			role: "OWNER",
-		},
-		{
-			description: null,
-			id: "workspace-2",
-			logo_url: null,
-			name: "Another Workspace",
-			role: "MEMBER",
-		},
-	];
+const mockUpdateWorkspaceResponse: API.UpdateWorkspace.Http200.ResponseBody = {
+	description: "Updated Description",
+	id: mockWorkspaceId,
+	logo_url: "https://example.com/updated-logo.png",
+	name: "Updated Workspace",
+	role: "OWNER",
+};
 
-	const mockUpdateWorkspaceResponse: API.UpdateWorkspace.Http200.ResponseBody = {
-		description: "Updated Description",
-		id: mockWorkspaceId,
-		logo_url: "https://example.com/updated-logo.png",
-		name: "Updated Workspace",
-		role: "OWNER",
-	};
+beforeEach(() => {
+	vi.clearAllMocks();
 
-	beforeEach(() => {
-		vi.clearAllMocks();
+	mockCreateAuthHeaders.mockResolvedValue(mockAuthHeaders);
 
-		mockCreateAuthHeaders.mockResolvedValue(mockAuthHeaders);
+	mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
 
-		mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
-
-		mockPost.mockReturnValue({
-			json: vi.fn().mockResolvedValue(mockCreateWorkspaceResponse),
-		});
-
-		mockGet.mockReturnValue({
-			json: vi.fn().mockImplementation(() => {
-				return Promise.resolve(mockGetWorkspaceResponse);
-			}),
-		});
-
-		mockPatch.mockReturnValue({
-			json: vi.fn().mockResolvedValue(mockUpdateWorkspaceResponse),
-		});
-
-		mockDelete.mockResolvedValue(undefined);
+	mockPost.mockReturnValue({
+		json: vi.fn().mockResolvedValue(mockCreateWorkspaceResponse),
 	});
 
-	afterEach(() => {
-		vi.resetAllMocks();
+	mockGet.mockReturnValue({
+		json: vi.fn().mockImplementation(() => {
+			return Promise.resolve(mockGetWorkspaceResponse);
+		}),
 	});
 
+	mockPatch.mockReturnValue({
+		json: vi.fn().mockResolvedValue(mockUpdateWorkspaceResponse),
+	});
+
+	mockDelete.mockResolvedValue(undefined);
+});
+
+afterEach(() => {
+	vi.resetAllMocks();
+});
+
+describe("Workspace Actions", () => {
 	describe("createWorkspace", () => {
 		it("should call the API with correct parameters", async () => {
 			const workspaceData: API.CreateWorkspace.RequestBody = {

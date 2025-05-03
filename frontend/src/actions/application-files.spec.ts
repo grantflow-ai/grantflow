@@ -12,12 +12,19 @@ vi.mock("@/utils/api", async () => {
 	const actual = await vi.importActual("@/utils/api");
 	return {
 		...actual,
-		createAuthHeaders: () => mockCreateAuthHeaders(),
 		getClient: () => ({
 			delete: mockDelete,
 			get: mockGet,
 			post: mockPost,
 		}),
+	};
+});
+
+vi.mock("@/utils/server-side", async () => {
+	const actual = await vi.importActual("@/utils/server-side");
+	return {
+		...actual,
+		createAuthHeaders: () => mockCreateAuthHeaders(),
 		withAuthRedirect: (promise: Promise<any>) => mockWithAuthRedirect(promise),
 	};
 });
