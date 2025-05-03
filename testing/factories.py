@@ -72,6 +72,7 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
 
 class FileFactory(SQLAlchemyFactory[RagFile]):
     __model__ = RagFile
+    type = "rag_file"  # Set polymorphic identity explicitly
 
 
 class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
