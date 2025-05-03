@@ -1,5 +1,5 @@
 import { HTMLProps } from "react";
-import { GradientBackground } from "./backgrounds";
+import { AnimatedGradientBackground } from "./backgrounds";
 import { IconGoAhead } from "./icons";
 import { AppButton } from "@/components/app-button";
 import { ScrollButton } from "@/components/scroll-button";
@@ -7,7 +7,7 @@ import { ScrollButton } from "@/components/scroll-button";
 export function HeroBanner() {
 	return (
 		<section className="relative">
-			<GradientBackground className="absolute inset-0 z-10" />
+			<AnimatedGradientBackground className="absolute inset-0 z-10" />
 			<HeroPattern
 				aria-hidden="true"
 				className="absolute bottom-0 right-0 z-20 h-4/5 w-[70%] md:h-[90%] md:w-auto lg:h-full"
