@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'packages/**'
+      - 'services/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
 
 env:
   DOCKER_REGISTRY: us-east1-docker-docker.pkg.dev
