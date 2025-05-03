@@ -6,6 +6,7 @@ on:
       - main
       - development
     paths:
+      - 'functions/**'
       - 'packages/**'
       - 'services/**'
       - 'pyproject.toml'
@@ -14,15 +15,19 @@ on:
     branches:
       - main
     paths:
+      - 'functions/**'
       - 'packages/**'
       - 'services/**'
       - 'pyproject.toml'
       - 'uv.lock'
 
 jobs:
-  backend-test:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        target: [ backend, indexer, crawler,db, shared_utils, gcs_notifier ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,80 +45,23 @@ jobs:
       - name: Install Dependencies
         run: uv sync --all-packages --dev
 
-      - name: Test Backend
-        run: PYTHONPATH=. uv run pytest services/backend/tests -v
-
-  indexer-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cache and Install APT Packages (Linux)
+      - name: Cache and Install APT Packages
+        if: ${{ matrix.target == 'indexer' }}
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: tesseract-ocr pandoc
           version: 1.0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "pyproject.toml"
+      - name: Install Playwright Chromium
+        if: ${{ matrix.target == 'crawler' }}
+        run: uv run playwright install chromium --with-deps
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-
-      - name: Install Dependencies
-        run: uv sync --all-packages --dev
-
-      - name: Test Indexer
-        run: PYTHONPATH=. uv run pytest services/indexer/tests -v
-
-  db-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "pyproject.toml"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-
-      - name: Install Dependencies
-        run: uv sync --all-packages --dev
-
-      - name: Test DB Package
-        run: PYTHONPATH=. uv run pytest packages/db/tests -v
-
-  shared-utils-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "pyproject.toml"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-
-      - name: Install Dependencies
-        run: uv sync --all-packages --dev
-
-      - name: Test Shared Utils Package
-        run: PYTHONPATH=. uv run pytest packages/shared_utils/tests -v
+      - name: Run Tests for Modified Services
+        if: ${{ contains(github.event.pull_request.changed_files, format('services/{0}/', matrix.target)) || contains(github.event.pull_request.changed_files, format('packages/{0}/', matrix.target)) || contains(github.event.pull_request.changed_files, format('functions/{0}/', matrix.target)) }}
+        run: |
+          if [[ "${{ matrix.target }}" == "shared_utils" || "${{ matrix.target }}" == "db" ]]; then
+            PYTHONPATH=. uv run pytest packages/${{ matrix.target }}/tests -v
+          elif [[ "${{ matrix.target }}" == "gcs_notifier" ]]; then
+            PYTHONPATH=. uv run pytest functions/${{ matrix.target }}/tests -v
+          else
+            PYTHONPATH=. uv run pytest services/${{ matrix.target }}/tests -v

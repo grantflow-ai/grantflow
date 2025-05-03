@@ -19,6 +19,7 @@ from packages.shared_utils.src.gcs import (
     get_credentials,
     get_storage_client,
     storage_client_ref,
+    upload_blob,
 )
 
 
@@ -291,4 +292,48 @@ async def test_create_signed_upload_url_error(mock_env_vars: None, mock_bucket: 
 
     assert "Failed to create signed upload URL" in str(exc_info.value)
     assert exc_info.value.context["blob_path"] == expected_blob_path
+    assert "Test error" in exc_info.value.context["error"]
+
+
+@pytest.mark.asyncio
+async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) -> None:
+    blob_path = "workspaces/workspace-123/test-file.pdf"
+    content = b"test content"
+
+    mock_blob = MagicMock()
+    mock_bucket.blob.return_value = mock_blob
+
+    with (
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch("packages.shared_utils.src.gcs.run_sync", side_effect=lambda f, *args: f(*args) if callable(f) else f),
+    ):
+        mock_get_bucket.return_value = mock_bucket
+
+        await upload_blob(blob_path, content)
+
+        mock_bucket.blob.assert_called_once_with(blob_path)
+        mock_blob.upload_from_string.assert_called_once_with(content)
+
+
+@pytest.mark.asyncio
+async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
+    blob_path = "workspaces/workspace-123/test-file.pdf"
+    content = b"test content"
+
+    mock_blob = MagicMock()
+    mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
+    mock_blob.upload_from_string.side_effect = mock_error
+    mock_bucket.blob.return_value = mock_blob
+
+    with (
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch("packages.shared_utils.src.gcs.run_sync", side_effect=lambda f, *args: f(*args) if callable(f) else f),
+        pytest.raises(ExternalOperationError) as exc_info,
+    ):
+        mock_get_bucket.return_value = mock_bucket
+
+        await upload_blob(blob_path, content)
+
+    assert "Failed to upload blob" in str(exc_info.value)
+    assert exc_info.value.context["blob_path"] == blob_path
     assert "Test error" in exc_info.value.context["error"]
