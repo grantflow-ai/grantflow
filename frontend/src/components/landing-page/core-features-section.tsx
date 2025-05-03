@@ -1,5 +1,9 @@
+"use client";
+
 import { HTMLProps } from "react";
 import { PatternedBackground } from "./backgrounds";
+import { ScrollFadeElement } from "./scroll-fade-element";
+import { motion } from "motion/react";
 
 const CORE_FEATURES = [
 	{
@@ -24,19 +28,68 @@ const CORE_FEATURES = [
 	},
 ];
 
+const featureArticleVariants = {
+	hidden: {
+		opacity: 0,
+		y: 20,
+	},
+	visible: {
+		opacity: 1,
+		transition: {
+			duration: 0.4,
+			ease: "easeInOut",
+			staggerChildren: 0.2,
+			when: "beforeChildren",
+		},
+		y: 0,
+	},
+};
+
+const featureIconVariants = {
+	hidden: {
+		opacity: 0,
+		scale: 0.8,
+	},
+	visible: {
+		opacity: 1,
+		scale: 1,
+		transition: {
+			duration: 0.4,
+			ease: "easeInOut",
+		},
+	},
+};
+
+const textVariants = {
+	hidden: {
+		opacity: 0,
+		y: 20,
+	},
+	visible: {
+		opacity: 1,
+		transition: {
+			duration: 0.8,
+			ease: "easeInOut",
+		},
+		y: 0,
+	},
+};
+
 export function CoreFeaturesSection() {
 	return (
-		<section aria-labelledby="core-features-section" className="relative w-full overflow-hidden bg-white">
+		<section aria-label="core-features-section" className="relative w-full overflow-hidden bg-white">
 			<div className="absolute inset-0 flex items-center justify-center">
 				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
 			</div>
 			<div className="xl:px-30 relative z-10 flex flex-col items-center px-8 py-10 text-center text-stone-800 md:px-10 lg:px-20">
-				<h2
-					className="font-heading xl-my-10 my-3 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
-					id="core-features-heading"
-				>
-					Core Features Designed for Researchers
-				</h2>
+				<ScrollFadeElement className="mx-auto">
+					<h2
+						className="font-heading xl-my-10 my-3 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
+						id="core-features-heading"
+					>
+						Core Features Designed for Researchers
+					</h2>
+				</ScrollFadeElement>
 				<div className="relative flex w-full snap-x snap-mandatory gap-12 overflow-x-auto py-6 text-start md:hidden">
 					{CORE_FEATURES.map((feature, index) => (
 						<FeatureArticle
@@ -49,7 +102,7 @@ export function CoreFeaturesSection() {
 				</div>
 				<div className="lg:px-26 m-8 hidden justify-center gap-12 px-10 py-4 text-start md:grid md:grid-cols-2 lg:m-12">
 					{CORE_FEATURES.map((feature, index) => (
-						<FeatureArticle
+						<AnimatedFeatureArticle
 							featureDescription={feature.description}
 							featureTitle={feature.title}
 							key={index}
@@ -58,6 +111,34 @@ export function CoreFeaturesSection() {
 				</div>
 			</div>
 		</section>
+	);
+}
+
+function AnimatedFeatureArticle({
+	className,
+	featureDescription,
+	featureTitle,
+}: { featureDescription: string; featureTitle: string } & HTMLProps<HTMLElement>) {
+	return (
+		<motion.article
+			className={className}
+			id="feature-item"
+			initial="hidden"
+			variants={featureArticleVariants}
+			viewport={{ amount: 0.3, once: true }}
+			whileInView="visible"
+		>
+			<motion.div
+				className="border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-b-background size-0 border-x-transparent"
+				variants={featureIconVariants}
+			/>
+			<motion.h3 className="font-heading my-5 text-2xl font-medium md:my-3" variants={textVariants}>
+				{featureTitle}
+			</motion.h3>
+			<motion.p className="text-lg md:text-sm md:leading-tight" variants={textVariants}>
+				{featureDescription}
+			</motion.p>
+		</motion.article>
 	);
 }
 
