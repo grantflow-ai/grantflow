@@ -48,6 +48,8 @@ async def parse_and_index_file(
         async with session_maker() as session, session.begin():
             try:
                 await session.execute(insert(TextVector).values(vectors))
+                # Update the base class columns on RagSource, not RagFile
+                # RagSource contains indexing_status and text_content columns
                 await session.execute(
                     update(RagSource)
                     .where(RagSource.id == file_id)

@@ -4,7 +4,7 @@ from kreuzberg._mime_types import EXT_TO_MIME_TYPE
 from litestar import post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import GrantApplicationFile, GrantTemplateFile, OrganizationFile, RagSource
+from packages.db.src.tables import GrantApplicationFile, GrantTemplateFile, OrganizationFile, RagFile, RagSource
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import download_blob
@@ -53,21 +53,36 @@ async def handle_file_indexing(
 
     async with session_maker() as session, session.begin():
         try:
-            file_id = await session.scalar(
+            # First create the base RagSource record
+            source_id = await session.scalar(
                 insert(RagSource)
                 .values(
                     [
                         {
+                            "indexing_status": FileIndexingStatusEnum.INDEXING,
+                            "type": "rag_file",  # Set polymorphic identity
+                        }
+                    ]
+                )
+                .returning(RagSource.id)
+            )
+
+            # Then create the RagFile record with the same ID
+            file_id = await session.scalar(
+                insert(RagFile)
+                .values(
+                    [
+                        {
+                            "id": source_id,  # Use the same ID as the RagSource
                             "filename": filename,
                             "mime_type": mime_type,
                             "size": len(content),
-                            "indexing_status": FileIndexingStatusEnum.INDEXING,
                             "bucket_name": bucket_name,
                             "object_path": data["file_path"],
                         }
                     ]
                 )
-                .returning(RagSource.id)
+                .returning(RagFile.id)
             )
             if parent_type == "grant_application":
                 await session.execute(
