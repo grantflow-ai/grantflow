@@ -1,8 +1,14 @@
+"use server";
+
 import { PagePath } from "@/enums";
 import { logError } from "@/utils/logging";
+import { SESSION_COOKIE } from "@/constants";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { HTTPError } from "ky";
 
-export function redirectWithToastParams({
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function redirectWithToastParams({
 	message,
 	path,
 	type,
@@ -29,7 +35,26 @@ export async function withErrorToast<T>({
 		return await value;
 	} catch (error) {
 		logError({ error, identifier });
-		redirectWithToastParams({ message, path, type: "error" });
+		await redirectWithToastParams({ message, path, type: "error" });
 		throw error;
 	}
 }
+
+export const createAuthHeaders = async () => {
+	const cookieStore = await cookies();
+	const cookie = cookieStore.get(SESSION_COOKIE);
+	if (!cookie?.value) {
+		redirect(PagePath.SIGNIN);
+	}
+	return { Authorization: `Bearer ${cookie.value}` };
+};
+export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
+	try {
+		return await promise;
+	} catch (error) {
+		if (error instanceof HTTPError && error.response.status === 401) {
+			redirect(PagePath.SIGNIN);
+		}
+		throw error;
+	}
+};
