@@ -1,5 +1,5 @@
 import { mockEnv } from "::testing/global-mocks";
-import { getWaitlistEmailTemplateHtml, waitlistEmailTemplateText } from "./waitlist-email-template";
+import { getWaitlistEmailTemplateHtml, waitlistEmailTemplateText } from "@/components/waitlist-email-template";
 import { getEnv } from "@/utils/env";
 
 vi.mock("@/utils/env", () => ({

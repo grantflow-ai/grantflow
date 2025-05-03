@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logError } from "@/utils/logging";
-import { addToWaitlist } from "./join-waitlist";
+import { addToWaitlist } from "@/actions/waitlist//join-waitlist";
 import { Resend } from "resend";
 
 vi.mock("resend", () => {

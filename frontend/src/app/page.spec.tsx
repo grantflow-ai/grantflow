@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import LandingPage from "./page";
-import { ReactNode } from "react";
+import LandingPage from "@/app/page";
 
 vi.mock("@/components/landing-page/backgrounds", () => ({
 	GradientBackground: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
@@ -117,7 +116,7 @@ vi.mock("@/components/scroll-button", () => ({
 	}: {
 		children?: React.ReactNode;
 		onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-		rightIcon?: ReactNode;
+		rightIcon?: React.ReactNode;
 		selector: string;
 		size?: "lg" | "md" | "sm";
 	}) => (

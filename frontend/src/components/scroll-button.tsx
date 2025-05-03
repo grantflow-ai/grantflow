@@ -1,7 +1,7 @@
 "use client";
 
 import { AppButton, AppButtonProps } from "@/components/app-button";
-import { useCallback } from "react";
+import React from "react";
 
 export function ScrollButton({
 	children,
@@ -14,7 +14,7 @@ export function ScrollButton({
 	selector: string;
 	smooth?: boolean;
 } & AppButtonProps) {
-	const handleScroll = useCallback(
+	const handleScroll = React.useCallback(
 		(e: React.MouseEvent) => {
 			e.preventDefault();
 

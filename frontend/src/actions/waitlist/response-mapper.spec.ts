@@ -1,5 +1,5 @@
-import { ServerResponseCode } from "./join-waitlist";
-import { getUserMessage } from "./response-mapper";
+import { ServerResponseCode } from "@/actions/waitlist/join-waitlist";
+import { getUserMessage } from "@/actions/waitlist/response-mapper";
 
 describe("response-mapper", () => {
 	it("should handle all possible enum values and ensure all codes have messages", () => {
