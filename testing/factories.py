@@ -10,7 +10,7 @@ from packages.db.src.tables import (
     GrantApplicationFile,
     GrantTemplate,
     OrganizationFile,
-    RagSource,
+    RagFile,
     TextVector,
     Workspace,
     WorkspaceUser,
@@ -70,8 +70,9 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     ]
 
 
-class FileFactory(SQLAlchemyFactory[RagSource]):
-    __model__ = RagSource
+class FileFactory(SQLAlchemyFactory[RagFile]):
+    __model__ = RagFile
+    type = "rag_file"  # Set polymorphic identity explicitly
 
 
 class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):

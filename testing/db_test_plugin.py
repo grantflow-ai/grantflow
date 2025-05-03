@@ -16,7 +16,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationFile,
     GrantTemplate,
-    RagSource,
+    RagFile,
     Workspace,
     WorkspaceUser,
 )
@@ -181,7 +181,7 @@ async def workspace_owner_user(
 
 
 @pytest.fixture
-async def file(async_session_maker: async_sessionmaker[Any]) -> RagSource:
+async def file(async_session_maker: async_sessionmaker[Any]) -> RagFile:
     file_data = FileFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
@@ -211,7 +211,7 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], worksp
 
 @pytest.fixture
 async def grant_application_file(
-    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, file: RagSource
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, file: RagFile
 ) -> GrantApplicationFile:
     file_data = GrantApplicationFileFactory.build(grant_application_id=grant_application.id, rag_file_id=file.id)
     async with async_session_maker() as session, session.begin():

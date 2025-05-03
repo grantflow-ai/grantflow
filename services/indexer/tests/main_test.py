@@ -14,7 +14,7 @@ from packages.db.src.tables import (
     GrantTemplate,
     GrantTemplateFile,
     OrganizationFile,
-    RagSource,
+    RagFile,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -57,7 +57,7 @@ async def test_handle_file_indexing_grant_application(
         file_id = response_json["file_id"]
 
         async with async_session_maker() as session:
-            rag_file = await session.scalars(select(RagSource).where(RagSource.id == UUID(file_id)))
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
             file = rag_file.first()
             assert file is not None
             assert file.filename == "document.pdf"
@@ -105,7 +105,7 @@ async def test_handle_file_indexing_funding_organization(
         file_id = response_json["file_id"]
 
         async with async_session_maker() as session:
-            rag_file = await session.scalars(select(RagSource).where(RagSource.id == UUID(file_id)))
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
             file = rag_file.first()
             assert file is not None
             assert file.filename == "guidelines.pdf"
@@ -149,7 +149,7 @@ async def test_handle_file_indexing_grant_template(
         file_id = response_json["file_id"]
 
         async with async_session_maker() as session:
-            rag_file = await session.scalars(select(RagSource).where(RagSource.id == UUID(file_id)))
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
             file = rag_file.first()
             assert file is not None
             assert file.filename == "template.docx"

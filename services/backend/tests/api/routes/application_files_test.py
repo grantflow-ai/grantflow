@@ -6,7 +6,7 @@ import pytest
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationFile,
-    RagSource,
+    RagFile,
     Workspace,
 )
 from pytest_mock import MockerFixture
@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 async def application_file(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    file: RagSource,
+    file: RagFile,
 ) -> GrantApplicationFile:
     app_file = GrantApplicationFile(grant_application_id=grant_application.id, rag_file_id=file.id)
     async with async_session_maker() as session, session.begin():
@@ -76,7 +76,7 @@ async def test_delete_application_file_success(
 
     async with async_session_maker() as session:
         with pytest.raises(NoResultFound):
-            await session.get_one(RagSource, application_file.rag_file_id)
+            await session.get_one(RagFile, application_file.rag_file_id)
 
         with pytest.raises(NoResultFound):
             await session.get_one(
