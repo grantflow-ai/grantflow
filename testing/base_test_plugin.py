@@ -19,8 +19,6 @@ def stub_env() -> None:
     os.environ.setdefault("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
     os.environ.setdefault("LLM_SERVICE_ACCOUNT_CREDENTIALS", mock_creds)
     os.environ.setdefault("JWT_SECRET", "abc123")
-    os.environ.setdefault("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT", "https://test.com")
-    os.environ.setdefault("AZURE_DOCUMENT_INTELLIGENCE_KEY", "abc123")
     os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "grantflow")
     os.environ.setdefault("GOOGLE_CLOUD_REGION", "us-central1")
     os.environ.setdefault("ADMIN_ACCESS_CODE", "123456")
