@@ -8,7 +8,7 @@ from packages.db.src.tables import GrantApplicationFile, RagFile
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import create_signed_upload_url
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.common_types import TableIdResponse
+from services.backend.src.common_types import UploadedFileResponse
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -29,14 +29,21 @@ class UploadUrlResponse(TypedDict):
 )
 async def retrieve_application_files(
     application_id: UUID, session_maker: async_sessionmaker[Any]
-) -> list[TableIdResponse]:
+) -> list[UploadedFileResponse]:
     async with session_maker() as session:
         return [
-            TableIdResponse(id=str(rag_file_id))
+            UploadedFileResponse(
+                file_id=str(rag_file_id),
+                filename=rag_file_id.filename,
+                size=rag_file_id.size,
+                mime_type=rag_file_id.mime_type,
+                indexing_status=rag_file_id.indexing_status,
+                created_at=rag_file_id.created_at.isoformat(),
+            )
             for rag_file_id in await session.scalars(
-                select(GrantApplicationFile.rag_file_id).where(
-                    GrantApplicationFile.grant_application_id == application_id
-                )
+                select(RagFile)
+                .join(GrantApplicationFile)
+                .where(GrantApplicationFile.grant_application_id == application_id)
             )
         ]
 

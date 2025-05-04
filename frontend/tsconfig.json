@@ -49,6 +49,7 @@
 		"*.mjs",
 		"*.mts",
 		"*.ts",
-		".next/types/**/*.ts"
+		".next/types/**/*.ts",
+		".storybook/*.ts"
 	]
 }

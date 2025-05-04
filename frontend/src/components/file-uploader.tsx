@@ -6,56 +6,38 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/utils/format";
 
-const DEFAULT_FILE_ACCEPTS = {
+const FILE_ACCEPTS = {
 	"application/csv": [".csv"],
 	"application/latex": [".latex"],
 	"application/pdf": [".pdf"],
 	"application/rtf": [".rtf"],
 	"application/vnd.oasis.opendocument.text": [".odt"],
-	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".ppt", ".pptx"],
-	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xls", ".xlsx"],
-	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".doc", ".docx"],
-	"application/x-csv": [".csv"],
-	"application/x-latex": [".latex"],
-	"application/x-rtf": [".rtf"],
-	"application/x-vnd.oasis.opendocument.text": [".odt"],
-	"image/bmp": [".bmp"],
-	"image/gif": [".gif"],
-	"image/heif": [".heif"],
-	"image/jpeg": [".jpeg", ".jpg"],
-	"image/png": [".png"],
-	"image/tiff": [".tiff"],
+	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
 	"text/csv": [".csv"],
 	"text/latex": [".latex"],
 	"text/markdown": [".md"],
 	"text/plain": [".txt"],
 	"text/rst": [".rst"],
 	"text/rtf": [".rtf"],
-	"text/tab-separated-values": [".tsv"],
-	"text/x-csv": [".csv"],
-	"text/x-latex": [".latex"],
-	"text/x-rst": [".rst"],
-	"text/x-tsv": [".tsv"],
 };
 
-const DEFAULT_MAX_SIZE = 20 * 1024 * 1024;
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
 const DEFAULT_MAX_FILES = Infinity;
 
 export function FileUploader({
-	accept = DEFAULT_FILE_ACCEPTS,
 	currentFileCount = 0,
 	fieldName,
 	isDropZone = false,
 	maxFileCount = DEFAULT_MAX_FILES,
-	maxSize = DEFAULT_MAX_SIZE,
 	onFilesAdded,
 }: {
-	accept?: Record<string, string[]>;
 	currentFileCount?: number;
 	fieldName: string;
 	isDropZone?: boolean;
 	maxFileCount?: number;
-	maxSize?: number;
 	onFilesAdded: (files: File[]) => void;
 }) {
 	const validateFileUploads = useCallback(
@@ -67,15 +49,17 @@ export function FileUploader({
 			}
 
 			for (const file of newFileUploads) {
-				if (file.size > maxSize) {
-					toast.error(`File ${file.name} is too large. The max size per file is ${formatBytes(maxSize)}`);
+				if (file.size > MAX_FILE_SIZE) {
+					toast.error(
+						`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE)}`,
+					);
 					return false;
 				}
 			}
 
 			return true;
 		},
-		[currentFileCount, maxFileCount, maxSize],
+		[currentFileCount, maxFileCount],
 	);
 
 	const handleFilesAdded = useCallback(
@@ -95,9 +79,9 @@ export function FileUploader({
 	);
 
 	const { getInputProps, getRootProps, isDragActive } = useDropzone({
-		accept,
+		accept: FILE_ACCEPTS,
 		disabled: currentFileCount >= maxFileCount,
-		maxSize,
+		maxSize: MAX_FILE_SIZE,
 		onDrop,
 	});
 
@@ -129,7 +113,7 @@ export function FileUploader({
 	return (
 		<div className="relative">
 			<input
-				accept={Object.keys(accept).join(", ")}
+				accept={Object.keys(FILE_ACCEPTS).join(", ")}
 				className="sr-only"
 				data-testid="file-input"
 				disabled={currentFileCount >= maxFileCount}
