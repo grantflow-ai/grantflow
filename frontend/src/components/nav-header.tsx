@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo, LogoDark } from "@/components/logo";
-import { IconCancel, IconGoAhead, IconHamburger } from "@/components/landing-page/icons";
+import { IconCalendar, IconCancel, IconHamburger } from "@/components/landing-page/icons";
 import { AppButton } from "@/components/app-button";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -52,9 +52,9 @@ export function NavHeader() {
 				</Link>
 				<div className="hidden items-center gap-6 md:flex">
 					<AppButton size="lg" theme="light" variant="link">
-						About us
+						<Link href="/about">About Us</Link>
 					</AppButton>
-					<ScrollButton rightIcon={<IconGoAhead />} selector="waitlist" size="lg">
+					<ScrollButton rightIcon={<IconCalendar />} selector="waitlist" size="lg">
 						Try For Free
 					</ScrollButton>
 				</div>

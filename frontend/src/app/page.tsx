@@ -5,15 +5,10 @@ import { CoreFeaturesSection } from "@/components/landing-page/core-features-sec
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
-import { NavHeader } from "@/components/landing-page/nav-header";
 import { IconGoAhead } from "@/components/landing-page/icons";
-import { LogoDark } from "@/components/logo";
 import { AppButton } from "@/components/app-button";
 import { ScrollButton } from "@/components/scroll-button";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
-import Image from "next/image";
-import linkedInIcon from "@/assets/linkedin-icon.png";
-import Link from "next/link";
 
 const CONTENT_CTA_SECTION = {
 	description:
@@ -21,63 +16,17 @@ const CONTENT_CTA_SECTION = {
 	heading: "Ready to Transform Your Grant Writing Process?",
 };
 
-const LinkedInLink = () => {
-	return (
-		<a
-			aria-label="LinkedIn Icon"
-			href="https://www.linkedin.com/company/grantflowai/"
-			rel="noopener noreferrer"
-			target="_blank"
-		>
-			<Image alt="LinkedIn" className="size-9.5" height={38} src={linkedInIcon} width={38} />
-		</a>
-	);
-};
-
-const FooterLinks = ({ isMobile = false }) => {
-	return (
-		<ul className={`text-primary font-button flex gap-5 ${isMobile ? "flex-col items-end my-1" : ""}`}>
-			<li>
-				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline`}
-					href={""}
-				>
-					Terms of Use
-				</Link>
-			</li>
-			<li>
-				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline`}
-					href={""}
-				>
-					Privacy Policy
-				</Link>
-			</li>
-			<li>
-				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline`}
-					href={""}
-				>
-					Imprint
-				</Link>
-			</li>
-		</ul>
-	);
-};
-
 // page components are Server Components by default and need to be async to properly handle server-side operations
 // eslint-disable-next-line @typescript-eslint/require-await
 export default async function LandingPage() {
 	return (
 		<div className="flex flex-col">
-			<NavHeader />
 			<HeroBanner />
 			<BenefitsSection />
 			<EarlyAccessSection />
 			<CoreFeaturesSection />
 			<TestimonialsSection />
 			<CTASection />
-			<Footer />
 		</div>
 	);
 }
@@ -109,32 +58,5 @@ function CTASection() {
 				</div>
 			</div>
 		</section>
-	);
-}
-
-function Footer() {
-	return (
-		<footer aria-label="site-footer" className="relative z-0 bg-white" data-testid="site-footer" id="site-footer">
-			<div className="md:hidden flex flex-col px-6 py-2">
-				<nav aria-label="footer-navigation">
-					<FooterLinks isMobile />
-				</nav>
-				<div className="flex w-full items-center justify-between">
-					<Link aria-label="Go to homepage" href="/">
-						<LogoDark className="h-15.5" height="250" width="250" />
-					</Link>
-					<LinkedInLink />
-				</div>
-			</div>
-			<div className="hidden md:flex md:flex-row items-center justify-between mx-2 my-6 px-8">
-				<Link aria-label="Go to homepage" href="/">
-					<LogoDark className="h-15.5" height="250" width="250" />
-				</Link>
-				<nav aria-label="footer-navigation">
-					<FooterLinks />
-				</nav>
-				<LinkedInLink />
-			</div>
-		</footer>
 	);
 }
