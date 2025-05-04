@@ -42,8 +42,15 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install Dependencies
-        run: uv sync --all-packages --all-extras --dev
+      - name: Install Dependencies for Target
+        # important: we install the specific target to ensure that the dependencies are installed correctly ~keep
+        run: |
+          if [[ "${{ matrix.target }}" == "shared_utils" || "${{ matrix.target }}" == "db" ]]; then
+            uv sync --package packages/${{ matrix.target }} --all-extras --dev
+          elif [[ "${{ matrix.target }}" == "gcs_notifier" ]]; then
+            uv sync --package functions/${{ matrix.target }} --all-extras --dev
+          else
+            uv sync --package services/${{ matrix.target }} --all-extras --dev
 
       - name: Cache and Install APT Packages
         if: ${{ matrix.target == 'indexer' }}
