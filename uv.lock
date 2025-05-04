@@ -4,11 +4,11 @@ requires-python = "==3.12.*"
 
 [manifest]
 members = [
+    "backend",
     "crawler",
     "db",
     "gcs-notifier",
     "grantflow",
-    "grantflow-backend",
     "indexer",
     "shared-utils",
 ]
@@ -166,6 +166,47 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5a/b0/1367933a8532ee6ff8d63537de4f1177af4bff9f3e829baf7331f595bb24/attrs-25.3.0.tar.gz", hash = "sha256:75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b", size = 812032, upload_time = "2025-03-13T11:10:22.779Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/06/bb80f5f86020c4551da315d78b3ab75e8228f89f0162f2c3a819e407941a/attrs-25.3.0-py3-none-any.whl", hash = "sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3", size = 63815, upload_time = "2025-03-13T11:10:21.14Z" },
+]
+
+[[package]]
+name = "backend"
+version = "0.1.0"
+source = { virtual = "services/backend" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "anthropic" },
+    { name = "db" },
+    { name = "en-core-web-sm" },
+    { name = "firebase-admin" },
+    { name = "google-cloud-aiplatform" },
+    { name = "litestar", extra = ["valkey"] },
+    { name = "pathvalidate" },
+    { name = "prompt-template" },
+    { name = "pyjwt" },
+    { name = "rank-bm25" },
+    { name = "shared-utils", extra = ["embeddings"] },
+    { name = "spacy" },
+    { name = "torch" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.11.14" },
+    { name = "anthropic", specifier = ">=0.49" },
+    { name = "db", editable = "packages/db" },
+    { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
+    { name = "firebase-admin", specifier = ">=6.7" },
+    { name = "google-cloud-aiplatform", specifier = ">=1.85" },
+    { name = "litestar", extras = ["valkey"], specifier = ">=2.15.1" },
+    { name = "pathvalidate", specifier = ">=3.2.3" },
+    { name = "prompt-template", specifier = ">=1.2" },
+    { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "rank-bm25", specifier = ">=0.2.2" },
+    { name = "shared-utils", extras = ["embeddings"], editable = "packages/shared_utils" },
+    { name = "spacy", specifier = ">=3.8.4" },
+    { name = "torch", specifier = ">=2.2.2" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
 [[package]]
@@ -1093,47 +1134,6 @@ dev = [
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "ruff", specifier = ">=0.11.1" },
     { name = "uv-bump", git = "https://github.com/zundertj/uv-bump" },
-]
-
-[[package]]
-name = "grantflow-backend"
-version = "0.1.0"
-source = { virtual = "services/backend" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "anthropic" },
-    { name = "db" },
-    { name = "en-core-web-sm" },
-    { name = "firebase-admin" },
-    { name = "google-cloud-aiplatform" },
-    { name = "litestar", extra = ["valkey"] },
-    { name = "pathvalidate" },
-    { name = "prompt-template" },
-    { name = "pyjwt" },
-    { name = "rank-bm25" },
-    { name = "shared-utils", extra = ["embeddings"] },
-    { name = "spacy" },
-    { name = "torch" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = ">=3.11.14" },
-    { name = "anthropic", specifier = ">=0.49" },
-    { name = "db", editable = "packages/db" },
-    { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
-    { name = "firebase-admin", specifier = ">=6.7" },
-    { name = "google-cloud-aiplatform", specifier = ">=1.85" },
-    { name = "litestar", extras = ["valkey"], specifier = ">=2.15.1" },
-    { name = "pathvalidate", specifier = ">=3.2.3" },
-    { name = "prompt-template", specifier = ">=1.2" },
-    { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "rank-bm25", specifier = ">=0.2.2" },
-    { name = "shared-utils", extras = ["embeddings"], editable = "packages/shared_utils" },
-    { name = "spacy", specifier = ">=3.8.4" },
-    { name = "torch", specifier = ">=2.2.2" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
 [[package]]
