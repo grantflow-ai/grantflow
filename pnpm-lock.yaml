@@ -49,6 +49,9 @@ importers:
             eslint-plugin-react-perf:
                 specifier: ^3.3.3
                 version: 3.3.3(eslint@9.26.0(jiti@2.4.2))
+            eslint-plugin-storybook:
+                specifier: ^0.12.0
+                version: 0.12.0(eslint@9.26.0(jiti@2.4.2))(typescript@5.8.3)
             eslint-plugin-tailwindcss:
                 specifier: ^3.18.0
                 version: 3.18.0(tailwindcss@3.4.17)
@@ -712,6 +715,12 @@ packages:
             }
         cpu: [x64]
         os: [win32]
+
+    "@storybook/csf@0.1.13":
+        resolution:
+            {
+                integrity: sha512-7xOOwCLGB3ebM87eemep89MYRFTko+D8qE7EdAAq74lgdqRR5cOUtYWJLjO2dLtP94nqoOdHJo6MdLLKzg412Q==,
+            }
 
     "@types/estree@1.0.7":
         resolution:
@@ -1748,6 +1757,15 @@ packages:
         engines: { node: ">=4" }
         peerDependencies:
             eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
+
+    eslint-plugin-storybook@0.12.0:
+        resolution:
+            {
+                integrity: sha512-Lg5I0+npTgiYgZ4KSvGWGDFZi3eOCNJPaWX0c9rTEEXC5wvooOClsP9ZtbI4hhFKyKgYR877KiJxbRTSJq9gWA==,
+            }
+        engines: { node: ">= 18" }
+        peerDependencies:
+            eslint: ">=8"
 
     eslint-plugin-tailwindcss@3.18.0:
         resolution:
@@ -3911,6 +3929,13 @@ packages:
         peerDependencies:
             typescript: ">=4.8.4"
 
+    ts-dedent@2.2.0:
+        resolution:
+            {
+                integrity: sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==,
+            }
+        engines: { node: ">=6.10" }
+
     ts-interface-checker@0.1.13:
         resolution:
             {
@@ -3929,6 +3954,13 @@ packages:
                 integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==,
             }
         engines: { node: ">= 0.8.0" }
+
+    type-fest@2.19.0:
+        resolution:
+            {
+                integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==,
+            }
+        engines: { node: ">=12.20" }
 
     type-is@2.0.1:
         resolution:
@@ -4576,6 +4608,10 @@ snapshots:
 
     "@rollup/rollup-win32-x64-msvc@4.40.1":
         optional: true
+
+    "@storybook/csf@0.1.13":
+        dependencies:
+            type-fest: 2.19.0
 
     "@types/estree@1.0.7": {}
 
@@ -5366,6 +5402,16 @@ snapshots:
             semver: 6.3.1
             string.prototype.matchall: 4.0.12
             string.prototype.repeat: 1.0.0
+
+    eslint-plugin-storybook@0.12.0(eslint@9.26.0(jiti@2.4.2))(typescript@5.8.3):
+        dependencies:
+            "@storybook/csf": 0.1.13
+            "@typescript-eslint/utils": 8.31.1(eslint@9.26.0(jiti@2.4.2))(typescript@5.8.3)
+            eslint: 9.26.0(jiti@2.4.2)
+            ts-dedent: 2.2.0
+        transitivePeerDependencies:
+            - supports-color
+            - typescript
 
     eslint-plugin-tailwindcss@3.18.0(tailwindcss@3.4.17):
         dependencies:
@@ -6793,6 +6839,8 @@ snapshots:
         dependencies:
             typescript: 5.8.3
 
+    ts-dedent@2.2.0: {}
+
     ts-interface-checker@0.1.13: {}
 
     tslib@1.14.1:
@@ -6801,6 +6849,8 @@ snapshots:
     type-check@0.4.0:
         dependencies:
             prelude-ls: 1.2.1
+
+    type-fest@2.19.0: {}
 
     type-is@2.0.1:
         dependencies:

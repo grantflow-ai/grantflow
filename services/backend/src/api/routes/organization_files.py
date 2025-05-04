@@ -6,7 +6,7 @@ from litestar.exceptions import NotFoundException
 from packages.db.src.tables import OrganizationFile, RagFile
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.common_types import TableIdResponse
+from services.backend.src.common_types import UploadedFileResponse
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -20,12 +20,21 @@ logger = get_logger(__name__)
 async def retrieve_organization_files(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
-) -> list[TableIdResponse]:
+) -> list[UploadedFileResponse]:
     async with session_maker() as session:
         return [
-            TableIdResponse(id=str(rag_file_id))
+            UploadedFileResponse(
+                file_id=str(rag_file_id),
+                filename=rag_file_id.filename,
+                size=rag_file_id.size,
+                mime_type=rag_file_id.mime_type,
+                indexing_status=rag_file_id.indexing_status,
+                created_at=rag_file_id.created_at.isoformat(),
+            )
             for rag_file_id in await session.scalars(
-                select(OrganizationFile.rag_file_id).where(OrganizationFile.funding_organization_id == organization_id)
+                select(RagFile)
+                .join(OrganizationFile)
+                .where(OrganizationFile.funding_organization_id == organization_id)
             )
         ]
 

@@ -69,9 +69,9 @@ describe("FileUploader", () => {
 		});
 
 		it("shows error toast when file is too large", async () => {
-			render(<FileUploader fieldName="test-field" maxSize={1000} onFilesAdded={mockOnFilesAdded} />);
+			render(<FileUploader fieldName="test-field" onFilesAdded={mockOnFilesAdded} />);
 
-			const file = new File(["test content".repeat(1000)], "large.pdf", { type: "application/pdf" });
+			const file = new File(["test content".repeat(10_000_000)], "large.pdf", { type: "application/pdf" });
 			const input = screen.getByTestId("file-input");
 
 			await userEvent.upload(input, file);
