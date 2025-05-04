@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from azure.ai.documentintelligence.models import AnalyzeResult
 from services.indexer.src.extraction import extract_file_content
 from testing import TEST_DATA_SOURCES
 
@@ -23,12 +22,7 @@ async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
     mime_type = cast("str", guess_type(data_file.name)[0])
     result, _ = await extract_file_content(content=data_file.read_bytes(), mime_type=mime_type)
 
-    if isinstance(result, AnalyzeResult):
-        assert hasattr(result, "content"), "Missing content in AnalyzeResult"
-        assert result.content, "Empty content in AnalyzeResult"
-
-    else:
-        assert isinstance(result, str), f"Expected string result, got {type(result)}"
-        assert result.strip(), "Extracted text is empty"
+    assert isinstance(result, str), f"Expected string result, got {type(result)}"
+    assert result.strip(), "Extracted text is empty"
 
     logger.info("Successfully extracted content from %s with mime type %s", data_file.name, mime_type)

@@ -15,12 +15,20 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 
 dependencies = [
   "anyio>=4.9",
-  "google-cloud-storage>=2.19",
   "litestar>=2.15.1",
   "msgspec>=0.19",
-  "sentence-transformers[onnx]>=3.4.1",
   "structlog>=25.2",
   "tenacity>=9",
+]
+
+optional-dependencies.chunking = [
+  "semantic-text-splitter>=0.24.2",
+]
+optional-dependencies.embeddings = [
+  "sentence-transformers[onnx]>=3.4.1",
+]
+optional-dependencies.gcs = [
+  "google-cloud-storage>=2.19",
 ]
 
 [tool.hatch.build.targets.wheel]

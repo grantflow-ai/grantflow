@@ -32,7 +32,7 @@ We use [Task](https://taskfile.dev) as our task runner to standardize commands a
 task setup
 
 # Backend dependencies for all services/packages
-uv sync --all-packages --dev
+uv sync --all-packages --all-extras --dev
 
 # Frontend-specific dependencies
 cd frontend && pnpm install
