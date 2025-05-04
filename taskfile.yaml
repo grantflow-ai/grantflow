@@ -119,7 +119,7 @@ tasks:
     backend:install:
         desc: Install services dependencies using uv
         cmds:
-            - uv sync --all-packages --dev
+            - uv sync --all-packages --all-extras --dev
 
     backend:install-playwright:
         desc: Install Playwright dependencies
@@ -129,7 +129,7 @@ tasks:
     backend:update:
         desc: Update backend dependencies to latest versions
         cmds:
-            - uv sync --upgrade --all-packages
+            - uv sync --upgrade --all-packages --all-extras
             - uv run uv-bump --pyproject-toml ./pyproject.toml
             - uv run uv-bump --pyproject-toml ./services/backend/pyproject.toml
             - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml

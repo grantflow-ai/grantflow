@@ -3,7 +3,7 @@ from os import environ
 from typing import Any
 
 import pytest
-from google.cloud import storage  # type: ignore[import-untyped]
+from google.cloud import storage
 from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
 from packages.shared_utils.src.gcs import download_blob
 from services.indexer.src.files import parse_and_index_file

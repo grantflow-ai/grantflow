@@ -1,6 +1,7 @@
 from packages.db.src.connection import get_session_maker
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import RagSource, TextVector
+from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.exceptions import (
     DatabaseError,
     ExternalOperationError,
@@ -8,7 +9,6 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.serialization import serialize
-from services.indexer.src.chunking import chunk_text
 from services.indexer.src.extraction import (
     extract_file_content,
 )
