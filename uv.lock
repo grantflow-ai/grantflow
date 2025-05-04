@@ -169,34 +169,6 @@ wheels = [
 ]
 
 [[package]]
-name = "azure-ai-documentintelligence"
-version = "1.0.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "azure-core" },
-    { name = "isodate" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/44/7b/8115cd713e2caa5e44def85f2b7ebd02a74ae74d7113ba20bdd41fd6dd80/azure_ai_documentintelligence-1.0.2.tar.gz", hash = "sha256:4d75a2513f2839365ebabc0e0e1772f5601b3a8c9a71e75da12440da13b63484", size = 170940, upload_time = "2025-03-27T02:46:20.606Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/75/c9ec040f23082f54ffb1977ff8f364c2d21c79a640a13d1c1809e7fd6b1a/azure_ai_documentintelligence-1.0.2-py3-none-any.whl", hash = "sha256:e1fb446abbdeccc9759d897898a0fe13141ed29f9ad11fc705f951925822ed59", size = 106005, upload_time = "2025-03-27T02:46:22.356Z" },
-]
-
-[[package]]
-name = "azure-core"
-version = "1.34.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-    { name = "six" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/29/ff7a519a315e41c85bab92a7478c6acd1cf0b14353139a08caee4c691f77/azure_core-1.34.0.tar.gz", hash = "sha256:bdb544989f246a0ad1c85d72eeb45f2f835afdcbc5b45e43f0dbde7461c81ece", size = 297999, upload_time = "2025-05-01T23:17:27.59Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/9e/5c87b49f65bb16571599bc789857d0ded2f53014d3392bc88a5d1f3ad779/azure_core-1.34.0-py3-none-any.whl", hash = "sha256:0615d3b756beccdb6624d1c0ae97284f38b78fb59a2a9839bf927c66fbbdddd6", size = 207409, upload_time = "2025-05-01T23:17:29.818Z" },
-]
-
-[[package]]
 name = "beautifulsoup4"
 version = "4.13.4"
 source = { registry = "https://pypi.org/simple" }
@@ -510,14 +482,16 @@ version = "0.1.0"
 source = { virtual = "services/crawler" }
 dependencies = [
     { name = "crawl4ai" },
-    { name = "shared-utils" },
+    { name = "db" },
+    { name = "shared-utils", extra = ["chunking", "embeddings", "gcs"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "crawl4ai", specifier = ">=0.6" },
-    { name = "shared-utils", editable = "packages/shared_utils" },
+    { name = "db", editable = "packages/db" },
+    { name = "shared-utils", extras = ["chunking", "embeddings", "gcs"], editable = "packages/shared_utils" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
@@ -1137,7 +1111,7 @@ dependencies = [
     { name = "prompt-template" },
     { name = "pyjwt" },
     { name = "rank-bm25" },
-    { name = "shared-utils" },
+    { name = "shared-utils", extra = ["embeddings"] },
     { name = "spacy" },
     { name = "torch" },
     { name = "uvicorn", extra = ["standard"] },
@@ -1156,7 +1130,7 @@ requires-dist = [
     { name = "prompt-template", specifier = ">=1.2" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
-    { name = "shared-utils", editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["embeddings"], editable = "packages/shared_utils" },
     { name = "spacy", specifier = ">=3.8.4" },
     { name = "torch", specifier = ">=2.2.2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
@@ -1387,21 +1361,17 @@ name = "indexer"
 version = "0.1.0"
 source = { virtual = "services/indexer" }
 dependencies = [
-    { name = "azure-ai-documentintelligence" },
     { name = "db" },
     { name = "kreuzberg" },
-    { name = "semantic-text-splitter" },
-    { name = "shared-utils" },
+    { name = "shared-utils", extra = ["chunking", "embeddings", "gcs"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "azure-ai-documentintelligence", specifier = ">=1.0.1" },
     { name = "db", editable = "packages/db" },
     { name = "kreuzberg", specifier = ">=2.1.2" },
-    { name = "semantic-text-splitter", specifier = ">=0.24.2" },
-    { name = "shared-utils", editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["chunking", "embeddings", "gcs"], editable = "packages/shared_utils" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
@@ -1412,15 +1382,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7", size = 4793, upload_time = "2025-03-19T20:09:59.721Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760", size = 6050, upload_time = "2025-03-19T20:10:01.071Z" },
-]
-
-[[package]]
-name = "isodate"
-version = "0.7.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/54/4d/e940025e2ce31a8ce1202635910747e5a87cc3a6a6bb2d00973375014749/isodate-0.7.2.tar.gz", hash = "sha256:4cd1aa0f43ca76f4a6c6c0292a85f40b35ec2e43e315b59f06e6d32171a953e6", size = 29705, upload_time = "2024-10-08T23:04:11.5Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/aa/0aca39a37d3c7eb941ba736ede56d689e7be91cab5d9ca846bde3999eba6/isodate-0.7.2-py3-none-any.whl", hash = "sha256:28009937d8031054830160fce6d409ed342816b543597cece116d966c6d99e15", size = 22320, upload_time = "2024-10-08T23:04:09.501Z" },
 ]
 
 [[package]]
@@ -1466,11 +1427,11 @@ wheels = [
 
 [[package]]
 name = "joblib"
-version = "1.4.2"
+version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/64/33/60135848598c076ce4b231e1b1895170f45fbcaeaa2c9d5e38b04db70c35/joblib-1.4.2.tar.gz", hash = "sha256:2382c5816b2636fbd20a09e0f4e9dad4736765fdfb7dca582943b9c1366b3f0e", size = 2116621, upload_time = "2024-05-02T12:15:05.765Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/08/8bd4a0250247861420a040b33ccf42f43c426ac91d99405374ef117e5872/joblib-1.5.0.tar.gz", hash = "sha256:d8757f955389a3dd7a23152e43bc297c2e0c2d3060056dad0feefc88a06939b5", size = 330234, upload_time = "2025-05-03T21:09:39.553Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/29/df4b9b42f2be0b623cbd5e2140cafcaa2bef0759a00b7b70104dcfe2fb51/joblib-1.4.2-py3-none-any.whl", hash = "sha256:06d478d5674cbc267e7496a410ee875abd68e4340feff4490bcb7afb88060ae6", size = 301817, upload_time = "2024-05-02T12:15:00.765Z" },
+    { url = "https://files.pythonhosted.org/packages/da/d3/13ee227a148af1c693654932b8b0b02ed64af5e1f7406d56b088b57574cd/joblib-1.5.0-py3-none-any.whl", hash = "sha256:206144b320246485b712fc8cc51f017de58225fa8b414a1fe1764a7231aca491", size = 307682, upload_time = "2025-05-03T21:09:37.892Z" },
 ]
 
 [[package]]
@@ -1567,7 +1528,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.67.6"
+version = "1.68.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1582,9 +1543,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/26/a07aa0c7a622e89b34dd26ae4c17fda398e1664fefa71379015656744546/litellm-1.67.6.tar.gz", hash = "sha256:8cd23db10463a02bb5a64fb69b243d97879ecf4075fe38740f8c4b93f3f770a6", size = 7308919, upload_time = "2025-05-02T19:26:07.058Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/22/138545b646303ca3f4841b69613c697b9d696322a1386083bb70bcbba60b/litellm-1.68.0.tar.gz", hash = "sha256:9fb24643db84dfda339b64bafca505a2eef857477afbc6e98fb56512c24dbbfa", size = 7314051, upload_time = "2025-05-04T05:41:48.081Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/bf/27fe677b5c6631d40d14620983e521239e7e1360cb7c8ab4111f35971f56/litellm-1.67.6-py3-none-any.whl", hash = "sha256:3c3fb31e9e6e51d8d0eb2da4df1538a3924c2d8e1201775358678f79b1625966", size = 7677070, upload_time = "2025-05-02T19:26:04.005Z" },
+    { url = "https://files.pythonhosted.org/packages/10/af/1e344bc8aee41445272e677d802b774b1f8b34bdc3bb5697ba30f0fb5d52/litellm-1.68.0-py3-none-any.whl", hash = "sha256:3bca38848b1a5236b11aa6b70afa4393b60880198c939e582273f51a542d4759", size = 7684460, upload_time = "2025-05-04T05:41:44.78Z" },
 ]
 
 [[package]]
@@ -3011,24 +2972,35 @@ version = "0.1.0"
 source = { editable = "packages/shared_utils" }
 dependencies = [
     { name = "anyio" },
-    { name = "google-cloud-storage" },
     { name = "litestar" },
     { name = "msgspec" },
-    { name = "sentence-transformers", extra = ["onnx"] },
     { name = "structlog" },
     { name = "tenacity" },
+]
+
+[package.optional-dependencies]
+chunking = [
+    { name = "semantic-text-splitter" },
+]
+embeddings = [
+    { name = "sentence-transformers", extra = ["onnx"] },
+]
+gcs = [
+    { name = "google-cloud-storage" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "anyio", specifier = ">=4.9" },
-    { name = "google-cloud-storage", specifier = ">=2.19" },
+    { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.19" },
     { name = "litestar", specifier = ">=2.15.1" },
     { name = "msgspec", specifier = ">=0.19" },
-    { name = "sentence-transformers", extras = ["onnx"], specifier = ">=3.4.1" },
+    { name = "semantic-text-splitter", marker = "extra == 'chunking'", specifier = ">=0.24.2" },
+    { name = "sentence-transformers", extras = ["onnx"], marker = "extra == 'embeddings'", specifier = ">=3.4.1" },
     { name = "structlog", specifier = ">=25.2" },
     { name = "tenacity", specifier = ">=9" },
 ]
+provides-extras = ["chunking", "embeddings", "gcs"]
 
 [[package]]
 name = "shellingham"

@@ -10,6 +10,7 @@ requires-python = "==3.12.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
 dependencies = [
   "crawl4ai>=0.6",
-  "shared-utils",
+  "db",
+  "shared-utils[chunking,embeddings,gcs]",
   "uvicorn[standard]>=0.34",
 ]

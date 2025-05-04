@@ -9,10 +9,8 @@ requires-python = "==3.12.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
 
 dependencies = [
-  "azure-ai-documentintelligence>=1.0.1",
   "db",
   "kreuzberg>=2.1.2",
-  "semantic-text-splitter>=0.24.2",
-  "shared-utils",
+  "shared-utils[chunking,embeddings,gcs]",
   "uvicorn[standard]>=0.34",
 ]

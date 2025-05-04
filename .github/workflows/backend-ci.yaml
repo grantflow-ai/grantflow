@@ -43,7 +43,7 @@ jobs:
           enable-cache: true
 
       - name: Install Dependencies
-        run: uv sync --all-packages --dev
+        run: uv sync --all-packages --all-extras --dev
 
       - name: Cache and Install APT Packages
         if: ${{ matrix.target == 'indexer' }}

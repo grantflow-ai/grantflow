@@ -31,5 +31,4 @@ The function integrates with:
 
 For local development:
 
-1. Install dependencies: `uv sync`
-2. Test the function with the Functions Framework: `functions-framework --target=process_gcs_event --signature-type=cloudevent`
+Test the function with the Functions Framework: `functions-framework --target=process_gcs_event --signature-type=cloudevent`
