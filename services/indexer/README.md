@@ -64,5 +64,4 @@ The service includes unit tests and end-to-end tests for document processing:
 For local development:
 
 1. Ensure the database is running: `task db:up`
-2. Install dependencies: `uv sync`
-3. Run the service: `PYTHONPATH=. uvicorn src.main:app --reload`
+2. Run the service: `PYTHONPATH=. uvicorn src.main:app --reload`

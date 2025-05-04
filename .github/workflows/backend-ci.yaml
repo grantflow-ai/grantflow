@@ -42,8 +42,9 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install Dependencies
-        run: uv sync --all-packages --dev
+      - name: Install Dependencies for Target
+        # important: we install the specific target to ensure that the dependencies are installed correctly ~keep
+        run: uv sync --package ${{ matrix.target }} --all-extras --dev
 
       - name: Cache and Install APT Packages
         if: ${{ matrix.target == 'indexer' }}
@@ -65,3 +66,4 @@ jobs:
             PYTHONPATH=. uv run pytest functions/${{ matrix.target }}/tests -v
           else
             PYTHONPATH=. uv run pytest services/${{ matrix.target }}/tests -v
+          fi
