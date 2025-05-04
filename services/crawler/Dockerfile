@@ -13,7 +13,7 @@ COPY pyproject.toml uv.lock ./
 COPY services/crawler/pyproject.toml services/crawler/pyproject.toml
 COPY packages packages
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --all-packages --no-editable --no-dev --compile-bytecode
+    uv sync --all-packages --all-extras --no-editable --no-dev --compile-bytecode
 
 FROM base AS playwright-download
 RUN pip install --no-cache-dir playwright && \

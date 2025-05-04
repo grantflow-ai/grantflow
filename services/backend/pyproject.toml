@@ -1,5 +1,5 @@
 [project]
-name = "grantflow-backend"
+name = "backend"
 version = "0.1.0"
 description = "GrantFlow Backend"
 readme = "README.md"
@@ -20,7 +20,7 @@ dependencies = [
   "prompt-template>=1.2",
   "pyjwt>=2.10.1",
   "rank-bm25>=0.2.2",
-  "shared-utils",
+  "shared-utils[embeddings]",
   "spacy>=3.8.4",
   "torch>=2.2.2",
   "uvicorn[standard]>=0.34",

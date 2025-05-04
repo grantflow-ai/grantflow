@@ -21,7 +21,7 @@ COPY pyproject.toml uv.lock ./
 COPY services/backend/pyproject.toml services/backend/pyproject.toml
 COPY packages packages
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --all-packages --no-editable --no-dev --compile-bytecode
+    uv sync --all-packages --all-extras --no-editable --no-dev --compile-bytecode
 
 FROM base AS app
 WORKDIR /app/

@@ -1,28 +1,11 @@
-from collections.abc import Generator
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from azure.core.exceptions import HttpResponseError
-from packages.shared_utils.src.exceptions import FileParsingError, ValidationError
+from packages.shared_utils.src.exceptions import FileParsingError
 from services.indexer.src.extraction import (
     extract_file_content,
-    extract_with_azure_document_intelligence,
 )
 from testing import TEST_DATA_SOURCES
-
-
-@pytest.fixture
-def mock_document_intelligence_client() -> Generator[AsyncMock, None, None]:
-    with patch("services.indexer.src.extraction.DocumentIntelligenceClient") as mock_client:
-        instance = AsyncMock()
-        mock_client.return_value = instance
-        mock_poller = AsyncMock()
-        instance.begin_analyze_document.return_value = mock_poller
-        mock_result = Mock()
-        mock_result.as_dict.return_value = {"content": "mocked content"}
-        mock_poller.result.return_value = mock_result
-        yield instance
 
 
 async def test_extract_plain_text() -> None:
@@ -60,32 +43,6 @@ async def test_extract_csv() -> None:
     assert output_mime_type == "text/markdown"
 
 
-async def test_extract_pdf_with_azure(mock_document_intelligence_client: AsyncMock) -> None:
-    content = b"PDF content"
-    mime_type = "application/pdf"
-
-    result, output_mime_type = await extract_file_content(content=content, mime_type=mime_type, use_azure=True)
-
-    assert isinstance(result, dict)
-    assert result["content"] == "mocked content"
-    assert output_mime_type == "text/markdown"
-    mock_document_intelligence_client.begin_analyze_document.assert_called_once()
-    mock_document_intelligence_client.close.assert_called_once()
-
-
-async def test_extract_docx_with_azure(mock_document_intelligence_client: AsyncMock) -> None:
-    content = b"DOCX content"
-    mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-    result, output_mime_type = await extract_file_content(content=content, mime_type=mime_type, use_azure=True)
-
-    assert isinstance(result, dict)
-    assert result["content"] == "mocked content"
-    assert output_mime_type == "text/markdown"
-    mock_document_intelligence_client.begin_analyze_document.assert_called_once()
-    mock_document_intelligence_client.close.assert_called_once()
-
-
 @pytest.mark.parametrize("document", TEST_DATA_SOURCES)
 async def test_extract_with_kreuzberg(document: Path) -> None:
     content = document.read_bytes()
@@ -101,16 +58,9 @@ async def test_extract_with_kreuzberg(document: Path) -> None:
     assert output_mime_type == "text/markdown" if mime_type != "application/pdf" else "text/plain"
 
 
-async def test_extract_with_azure_error(mock_document_intelligence_client: AsyncMock) -> None:
-    mock_document_intelligence_client.begin_analyze_document.side_effect = HttpResponseError(message="API Error")
-
-    with pytest.raises(FileParsingError):
-        await extract_with_azure_document_intelligence(b"content", "application/pdf")
-
-
 async def test_extract_unsupported_mime_type() -> None:
     content = b"Some content"
     mime_type = "application/unsupported"
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(FileParsingError):
         await extract_file_content(content=content, mime_type=mime_type)
