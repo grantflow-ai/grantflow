@@ -1,5 +1,5 @@
 import { FlatCompat } from "@eslint/eslintrc";
-
+import eslintPluginStorybook from "eslint-plugin-storybook";
 import eslintJS from "@eslint/js";
 import eslintPluginMarkdown from "eslint-plugin-markdown";
 import eslintPluginNode from "eslint-plugin-n";
@@ -33,10 +33,12 @@ export default [
 	eslintPluginReact.configs.flat.recommended,
 	reactPerfPlugin.configs.flat.recommended,
 	eslintPluginJsxA11y.flatConfigs.recommended,
+	...eslintPluginStorybook.configs["flat/recommended"],
 	...eslintPluginTailwind.configs["flat/recommended"],
 	...compat.extends("plugin:react-hooks/recommended"),
 	...compat.extends("plugin:@next/next/core-web-vitals"),
 	{
+		ignores: ["!.storybook"],
 		languageOptions: {
 			globals: {
 				...globals.browser,
@@ -141,7 +143,7 @@ export default [
 	},
 	{
 		files: ["**/*.tsx"],
-		ignores: ["**/coverage", "**/gen"],
+		ignores: ["**/coverage"],
 		rules: {
 			"@typescript-eslint/no-misused-promises": "off",
 		},

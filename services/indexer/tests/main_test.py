@@ -69,7 +69,7 @@ async def test_handle_file_indexing_grant_application(
             assert file.object_path == file_path
 
             app_file = await session.scalars(
-                select(GrantApplicationFile).where(GrantApplicationFile.rag_file_id == UUID(file_id))
+                select(GrantApplicationFile).where(GrantApplicationFile.rag_source_id == UUID(file_id))
             )
             app_file_record = app_file.first()
             assert app_file_record is not None
@@ -114,7 +114,7 @@ async def test_handle_file_indexing_funding_organization(
             assert file.indexing_status == FileIndexingStatusEnum.INDEXING
 
             org_file = await session.scalars(
-                select(OrganizationFile).where(OrganizationFile.rag_file_id == UUID(file_id))
+                select(OrganizationFile).where(OrganizationFile.rag_source_id == UUID(file_id))
             )
             org_file_record = org_file.first()
             assert org_file_record is not None
@@ -158,7 +158,7 @@ async def test_handle_file_indexing_grant_template(
             assert file.indexing_status == FileIndexingStatusEnum.INDEXING
 
             template_file = await session.scalars(
-                select(GrantTemplateFile).where(GrantTemplateFile.rag_file_id == UUID(file_id))
+                select(GrantTemplateFile).where(GrantTemplateFile.rag_source_id == UUID(file_id))
             )
             template_file_record = template_file.first()
             assert template_file_record is not None
