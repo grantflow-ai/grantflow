@@ -7,15 +7,11 @@ on:
       - development
     paths:
       - 'frontend/**'
-      - 'pnpm-lock.yaml'
-      - 'package.json'
   push:
     branches:
       - main
     paths:
       - 'frontend/**'
-      - 'pnpm-lock.yaml'
-      - 'package.json'
 
 jobs:
   test:

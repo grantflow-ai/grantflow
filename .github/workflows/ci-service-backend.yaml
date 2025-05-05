@@ -7,13 +7,13 @@ on:
       - development*
     paths:
       - 'packages/**'
-      - 'services/backend'
+      - 'services/backend/**'
   push:
     branches:
       - main
     paths:
       - 'packages/**'
-      - 'services/backend'
+      - 'services/backend/**'
 
 jobs:
   test:
