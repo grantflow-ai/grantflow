@@ -179,7 +179,7 @@ class FundingOrganization(BaseWithUUIDPK):
 class OrganizationFile(Base):
     __tablename__ = "organization_files"
 
-    rag_file_id: Mapped[UUID] = mapped_column(
+    rag_source_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
     )
     funding_organization_id: Mapped[UUID] = mapped_column(
@@ -235,7 +235,7 @@ class GrantApplication(BaseWithUUIDPK):
 class GrantApplicationFile(Base):
     __tablename__ = "grant_application_files"
 
-    rag_file_id: Mapped[UUID] = mapped_column(
+    rag_source_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
     )
     grant_application_id: Mapped[UUID] = mapped_column(
@@ -289,7 +289,7 @@ class GrantTemplate(BaseWithUUIDPK):
 class GrantTemplateFile(Base):
     __tablename__ = "grant_template_files"
 
-    rag_file_id: Mapped[UUID] = mapped_column(
+    rag_source_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
     )
     grant_template_id: Mapped[UUID] = mapped_column(

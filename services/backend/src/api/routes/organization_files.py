@@ -6,7 +6,7 @@ from litestar.exceptions import NotFoundException
 from packages.db.src.tables import OrganizationFile, RagFile
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.common_types import TableIdResponse
+from services.backend.src.common_types import UploadedFileResponse
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -20,12 +20,21 @@ logger = get_logger(__name__)
 async def retrieve_organization_files(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
-) -> list[TableIdResponse]:
+) -> list[UploadedFileResponse]:
     async with session_maker() as session:
         return [
-            TableIdResponse(id=str(rag_file_id))
-            for rag_file_id in await session.scalars(
-                select(OrganizationFile.rag_file_id).where(OrganizationFile.funding_organization_id == organization_id)
+            UploadedFileResponse(
+                id=str(rag_file.id),
+                filename=rag_file.filename,
+                size=rag_file.size,
+                mime_type=rag_file.mime_type,
+                indexing_status=rag_file.indexing_status,
+                created_at=rag_file.created_at.isoformat(),
+            )
+            for rag_file in await session.scalars(
+                select(RagFile)
+                .join(OrganizationFile)
+                .where(OrganizationFile.funding_organization_id == organization_id)
             )
         ]
 
@@ -42,7 +51,8 @@ async def handle_delete_organization_file(
                 select(OrganizationFile)
                 .options(selectinload(OrganizationFile.rag_file))
                 .where(
-                    OrganizationFile.funding_organization_id == organization_id, OrganizationFile.rag_file_id == file_id
+                    OrganizationFile.funding_organization_id == organization_id,
+                    OrganizationFile.rag_source_id == file_id,
                 )
             )
             result.scalar_one()
