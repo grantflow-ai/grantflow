@@ -63,7 +63,7 @@ async def handle_delete_application_file(
                 .options(selectinload(GrantApplicationFile.rag_file))
                 .where(
                     GrantApplicationFile.grant_application_id == application_id,
-                    GrantApplicationFile.rag_file_id == file_id,
+                    GrantApplicationFile.rag_source_id == file_id,
                 )
             )
             result.scalar_one()

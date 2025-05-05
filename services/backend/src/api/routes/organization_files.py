@@ -51,7 +51,8 @@ async def handle_delete_organization_file(
                 select(OrganizationFile)
                 .options(selectinload(OrganizationFile.rag_file))
                 .where(
-                    OrganizationFile.funding_organization_id == organization_id, OrganizationFile.rag_file_id == file_id
+                    OrganizationFile.funding_organization_id == organization_id,
+                    OrganizationFile.rag_source_id == file_id,
                 )
             )
             result.scalar_one()

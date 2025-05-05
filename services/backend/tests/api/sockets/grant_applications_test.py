@@ -16,6 +16,7 @@ from packages.db.src.tables import (
     GrantApplicationFile,
     GrantTemplate,
     RagFile,
+    RagSource,
     Workspace,
     WorkspaceUser,
 )
@@ -84,12 +85,18 @@ async def application_with_file(
 
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                id=file_id,
+                indexing_status=FileIndexingStatusEnum.FINISHED,
+                type="rag_file",
+            )
+        )
+        await session.execute(
             insert(RagFile).values(
                 id=file_id,
                 filename="test_file.pdf",
                 mime_type="application/pdf",
                 size=1024,
-                indexing_status=FileIndexingStatusEnum.FINISHED,
                 bucket_name="test-bucket",
                 object_path="test-file-path",
             )
@@ -97,7 +104,7 @@ async def application_with_file(
 
         await session.execute(
             insert(GrantApplicationFile).values(
-                rag_file_id=file_id,
+                rag_source_id=file_id,
                 grant_application_id=application.id,
             )
         )

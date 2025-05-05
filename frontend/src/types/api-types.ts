@@ -222,8 +222,8 @@ export namespace API {
 		export namespace Http200 {
 			export type ResponseBody = {
 				created_at: string;
-				file_id: string;
 				filename: string;
+				id: string;
 				indexing_status: "FAILED" | "FINISHED" | "INDEXING";
 				mime_type: string;
 				size: number;
@@ -248,8 +248,8 @@ export namespace API {
 		export namespace Http200 {
 			export type ResponseBody = {
 				created_at: string;
-				file_id: string;
 				filename: string;
+				id: string;
 				indexing_status: "FAILED" | "FINISHED" | "INDEXING";
 				mime_type: string;
 				size: number;
