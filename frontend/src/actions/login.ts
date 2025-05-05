@@ -6,7 +6,7 @@ import { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getEnv } from "../utils/env";
+import { getEnv } from "@/utils/env";
 
 export async function login(idToken: string) {
 	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);

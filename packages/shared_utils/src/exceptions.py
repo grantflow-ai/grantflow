@@ -34,7 +34,7 @@ class ValidationError(BackendError):
 
 
 class InsufficientContextError(BackendError):
-    """Raised when a insufficient input error occurs."""
+    """Raised when an insufficient input error occurs."""
 
 
 class EvaluationError(BackendError):
