@@ -13,7 +13,7 @@ class TableIdResponse(TypedDict):
 
 
 class UploadedFileResponse(TypedDict):
-    file_id: str
+    id: str
     filename: str
     size: int
     mime_type: str
