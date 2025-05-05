@@ -1,0 +1,28 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/**/src/**'
+      - 'services/backend/src/**'
+
+env:
+  DOCKER_REGISTRY: us-east1-docker-docker.pkg.dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy service
+        uses: ./.github/actions/deploy-service
+        with:
+          service-name: backend
+          image-tag: ${{ github.sha }}

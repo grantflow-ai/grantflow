@@ -7,13 +7,13 @@ on:
       - development*
     paths:
       - 'packages/**'
-      - 'services/indexer'
+      - 'services/indexer/**'
   push:
     branches:
       - main
     paths:
       - 'packages/**'
-      - 'services/indexer'
+      - 'services/indexer/**'
 
 jobs:
   test:

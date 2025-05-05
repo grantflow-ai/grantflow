@@ -5,22 +5,6 @@ inputs:
   service-name:
     description: 'Name of the service to deploy'
     required: true
-  project-id:
-    description: 'Google Cloud project ID'
-    required: true
-    default: 'grantflow'
-  service-account:
-    description: 'Google Cloud service account'
-    required: true
-    default: 'githubactions@grantflow.iam.gserviceaccount.com'
-  workload-identity-provider:
-    description: 'Google Cloud workload identity provider'
-    required: true
-    default: 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool'
-  docker-registry:
-    description: 'Docker registry URL'
-    required: true
-    default: 'us-east1-docker-docker.pkg.dev'
   image-tag:
     description: 'Git SHA or other tag for the image'
     required: true
@@ -35,9 +19,9 @@ runs:
       uses: google-github-actions/auth@v2
       with:
         token_format: access_token
-        project_id: ${{ inputs.project-id }}
-        service_account: ${{ inputs.service-account }}
-        workload_identity_provider: ${{ inputs.workload-identity-provider }}
+        project_id: grantflow
+        service_account: githubactions@grantflow.iam.gserviceaccount.com
+        workload_identity_provider: projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -47,7 +31,7 @@ runs:
       with:
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
-        registry: ${{ inputs.docker-registry }}
+        registry: us-east1-docker-docker.pkg.dev
 
     - name: Build and push ${{ inputs.service-name }}
       uses: docker/build-push-action@v6
@@ -55,6 +39,6 @@ runs:
         push: true
         context: ${{ github.workspace }}
         file: services/${{ inputs.service-name }}/Dockerfile
-        cache-from: type=registry,ref=${{ inputs.docker-registry }}/grantflow/${{ inputs.service-name }}:buildcache
-        cache-to: type=registry,ref=${{ inputs.docker-registry }}/grantflow/${{ inputs.service-name }}:buildcache,mode=max
-        tags: ${{ inputs.docker-registry }}/grantflow/${{ inputs.service-name }}:latest,${{ inputs.docker-registry }}/grantflow/${{ inputs.service-name }}:${{ inputs.image-tag }}
+        cache-from: type=registry,ref=us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:buildcache
+        cache-to: type=registry,ref=us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:buildcache,mode=max
+        tags: us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:latest,us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:${{ inputs.image-tag }}
