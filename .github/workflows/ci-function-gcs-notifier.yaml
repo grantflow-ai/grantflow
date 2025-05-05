@@ -1,0 +1,27 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - development*
+    paths:
+      - 'functions/gcs_notifier'
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/gcs_notifier'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Tests
+        uses: ./.github/actions/run-python-tests
+        with:
+            target: ./packages/db
