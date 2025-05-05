@@ -221,7 +221,12 @@ export namespace API {
 	export namespace ListApplicationFiles {
 		export namespace Http200 {
 			export type ResponseBody = {
+				created_at: string;
+				filename: string;
 				id: string;
+				indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+				mime_type: string;
+				size: number;
 			}[];
 		}
 
@@ -242,7 +247,12 @@ export namespace API {
 	export namespace ListOrganizationFiles {
 		export namespace Http200 {
 			export type ResponseBody = {
+				created_at: string;
+				filename: string;
 				id: string;
+				indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+				mime_type: string;
+				size: number;
 			}[];
 		}
 

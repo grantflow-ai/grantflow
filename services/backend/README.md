@@ -314,7 +314,7 @@ A generated grant application stores final text and is linked to both the templa
 
 | Column Name            | Type        | Description                                                   |
 | ---------------------- | ----------- | ------------------------------------------------------------- |
-| `rag_file_id`          | `UUID (PK)` | Foreign key to `rag_files.id` (part of composite PK)          |
+| `rag_source_id`        | `UUID (PK)` | Foreign key to `rag_files.id` (part of composite PK)          |
 | `grant_application_id` | `UUID (PK)` | Foreign key to `grant_applications.id` (part of composite PK) |
 
 ##### Relationships

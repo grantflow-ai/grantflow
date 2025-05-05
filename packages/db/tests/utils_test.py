@@ -41,7 +41,7 @@ async def test_check_exists_files_being_indexed_application_success(
             insert(GrantApplicationFile).values(
                 {
                     "grant_application_id": grant_application.id,
-                    "rag_file_id": file_id,
+                    "rag_source_id": file_id,
                 }
             )
         )
@@ -81,7 +81,7 @@ async def test_check_exists_files_being_indexed_application_non_indexing_status(
             insert(GrantApplicationFile).values(
                 {
                     "grant_application_id": grant_application.id,
-                    "rag_file_id": file_id,
+                    "rag_source_id": file_id,
                 }
             )
         )
@@ -127,7 +127,7 @@ async def test_check_exists_files_being_indexed_organization_success(
             insert(OrganizationFile).values(
                 {
                     "funding_organization_id": funding_organization.id,
-                    "rag_file_id": file_id,
+                    "rag_source_id": file_id,
                 }
             )
         )
@@ -167,7 +167,7 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
             insert(OrganizationFile).values(
                 {
                     "funding_organization_id": funding_organization.id,
-                    "rag_file_id": file_id,
+                    "rag_source_id": file_id,
                 }
             )
         )
