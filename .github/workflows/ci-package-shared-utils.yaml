@@ -6,12 +6,12 @@ on:
       - main
       - development*
     paths:
-      - 'packages/shared_utils'
+      - 'packages/shared_utils/**'
   push:
     branches:
       - main
     paths:
-      - 'packages/shared_utils'
+      - 'packages/shared_utils/**'
 
 jobs:
   test:
