@@ -38,7 +38,7 @@ export default [
 	...compat.extends("plugin:react-hooks/recommended"),
 	...compat.extends("plugin:@next/next/core-web-vitals"),
 	{
-		ignores: ["!.storybook", "eslint.config.mjs"],
+		ignores: ["!.storybook"],
 		languageOptions: {
 			globals: {
 				...globals.browser,

@@ -1,6 +1,10 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
+FROM base AS model-download
+RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer
+RUN huggingface-cli download sentence-transformers/all-MiniLM-L12-v2
+
 FROM base AS install
 WORKDIR /app/
 ENV UV_LINK_MODE=copy
@@ -17,6 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM base AS app
 WORKDIR /app/
+COPY --chown=appuser:appuser --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/indexer/src/ src/
 ENV PYTHONUNBUFFERED=1 \
