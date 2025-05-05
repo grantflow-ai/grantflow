@@ -6,12 +6,12 @@ on:
       - main
       - development*
     paths:
-      - 'functions/gcs_notifier'
+      - 'functions/gcs_notifier/**'
   push:
     branches:
       - main
     paths:
-      - 'functions/gcs_notifier'
+      - 'functions/gcs_notifier/**'
 
 jobs:
   test:

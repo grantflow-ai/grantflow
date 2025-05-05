@@ -7,13 +7,13 @@ on:
       - development*
     paths:
       - 'packages/**'
-      - 'services/crawler'
+      - 'services/crawler/**'
   push:
     branches:
       - main
     paths:
       - 'packages/**'
-      - 'services/crawler'
+      - 'services/crawler/**'
 
 jobs:
   test:
