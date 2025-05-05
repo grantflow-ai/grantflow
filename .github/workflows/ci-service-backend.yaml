@@ -1,0 +1,29 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - development*
+    paths:
+      - 'packages/**'
+      - 'services/backend'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
+      - 'services/backend'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Tests
+        uses: ./.github/actions/run-python-tests
+        with:
+            target: ./services/backend

@@ -1,0 +1,36 @@
+name: 'Run Backend Tests'
+description: 'Set up environment and run tests for a specific backend target'
+
+inputs:
+  target:
+    description: 'Target to test (backend, indexer, crawler, db, shared_utils, gcs_notifier)'
+    required: true
+  chromium:
+    description: 'Run tests with headless Chrome'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: "pyproject.toml"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+
+    - name: Install Dependencies for Target
+      shell: bash
+      run: uv sync --package ${{ inputs.target }} --all-extras --dev
+
+    - name: Install Playwright Chromium
+      if: ${{ inputs.chromium }}
+      shell: bash
+      run: uv run playwright install chromium --with-deps
+
+    - name: Run Tests
+      shell: bash
+      run: PYTHONPATH=. uv run pytest ${{ inputs.target }}/tests -v
