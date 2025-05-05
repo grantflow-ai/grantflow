@@ -29,20 +29,20 @@ async def test_parse_application_file(
         content=SMALL_PDF_TEST_FILE.read_bytes(),
         filename="test.pdf",
         mime_type="application/pdf",
-        file_id=str(grant_application_file.rag_file_id),
+        file_id=str(grant_application_file.rag_source_id),
     )
 
     async with async_session_maker() as session:
         results = list(
             await session.scalars(
-                select(TextVector).where(TextVector.rag_source_id == grant_application_file.rag_file_id)
+                select(TextVector).where(TextVector.rag_source_id == grant_application_file.rag_source_id)
             )
         )
 
     assert len(results) > 0, "No text vectors were created"
 
     for result in results:
-        assert result.rag_source_id == grant_application_file.rag_file_id, "Incorrect rag_file_id"
+        assert result.rag_source_id == grant_application_file.rag_source_id, "Incorrect rag_source_id"
         assert result.chunk, "Missing chunk content"
         assert "content" in result.chunk, "Missing 'content' key in chunk"
         assert result.embedding is not None, "Missing embedding vector"

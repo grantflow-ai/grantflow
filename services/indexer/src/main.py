@@ -88,7 +88,7 @@ async def handle_file_indexing(
                 await session.execute(
                     insert(GrantApplicationFile).values(
                         {
-                            "rag_file_id": file_id,
+                            "rag_source_id": file_id,
                             "grant_application_id": parent_id,
                         }
                     )
@@ -97,7 +97,7 @@ async def handle_file_indexing(
                 await session.execute(
                     insert(OrganizationFile).values(
                         {
-                            "rag_file_id": file_id,
+                            "rag_source_id": file_id,
                             "funding_organization_id": parent_id,
                         }
                     )
@@ -106,7 +106,7 @@ async def handle_file_indexing(
                 await session.execute(
                     insert(GrantTemplateFile).values(
                         {
-                            "rag_file_id": file_id,
+                            "rag_source_id": file_id,
                             "grant_template_id": parent_id,
                         }
                     )
