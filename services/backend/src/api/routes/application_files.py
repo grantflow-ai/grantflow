@@ -33,14 +33,14 @@ async def retrieve_application_files(
     async with session_maker() as session:
         return [
             UploadedFileResponse(
-                file_id=str(rag_file_id),
-                filename=rag_file_id.filename,
-                size=rag_file_id.size,
-                mime_type=rag_file_id.mime_type,
-                indexing_status=rag_file_id.indexing_status,
-                created_at=rag_file_id.created_at.isoformat(),
+                id=str(rag_file.id),
+                filename=rag_file.filename,
+                size=rag_file.size,
+                mime_type=rag_file.mime_type,
+                indexing_status=rag_file.indexing_status,
+                created_at=rag_file.created_at.isoformat(),
             )
-            for rag_file_id in await session.scalars(
+            for rag_file in await session.scalars(
                 select(RagFile)
                 .join(GrantApplicationFile)
                 .where(GrantApplicationFile.grant_application_id == application_id)

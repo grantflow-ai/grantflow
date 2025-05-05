@@ -33,6 +33,7 @@ async def test_retrieve_application_files_success(
     workspace: Workspace,
     grant_application: GrantApplication,
     application_file: GrantApplicationFile,
+    file: RagFile,
     workspace_member_user: None,
 ) -> None:
     response = await test_client.get(
@@ -44,6 +45,10 @@ async def test_retrieve_application_files_success(
     files = response.json()
     assert len(files) == 1
     assert files[0]["id"] == str(application_file.rag_file_id)
+    assert files[0]["filename"] == file.filename
+    assert files[0]["size"] == file.size
+    assert files[0]["mime_type"] == file.mime_type
+    assert files[0]["indexing_status"] == file.indexing_status.value
 
 
 async def test_retrieve_application_files_unauthorized(

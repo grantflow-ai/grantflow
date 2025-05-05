@@ -37,6 +37,10 @@ async def test_retrieve_organization_files_success(
     files = response.json()
     assert len(files) == 1
     assert files[0]["id"] == str(organization_file.rag_file_id)
+    assert files[0]["filename"] == organization_file.rag_file.filename
+    assert files[0]["size"] == organization_file.rag_file.size
+    assert files[0]["mime_type"] == organization_file.rag_file.mime_type
+    assert files[0]["indexing_status"] == organization_file.rag_file.indexing_status.value
 
 
 async def test_delete_organization_file_success(
@@ -76,3 +80,5 @@ async def test_delete_organization_file_not_found(
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+    assert response.json() == {"detail": "File not found"}
