@@ -6,12 +6,12 @@ on:
       - main
       - development*
     paths:
-      - 'packages/db'
+      - 'packages/db/**'
   push:
     branches:
       - main
     paths:
-      - 'packages/db'
+      - 'packages/db/**'
 
 jobs:
   test:
