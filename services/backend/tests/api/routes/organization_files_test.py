@@ -15,7 +15,7 @@ async def organization_file(
     funding_organization: FundingOrganization,
     file: RagFile,
 ) -> OrganizationFile:
-    org_file = OrganizationFile(funding_organization_id=funding_organization.id, rag_file_id=file.id)
+    org_file = OrganizationFile(funding_organization_id=funding_organization.id, rag_source_id=file.id)
     async with async_session_maker() as session, session.begin():
         session.add(org_file)
         await session.commit()
@@ -26,6 +26,7 @@ async def test_retrieve_organization_files_success(
     test_client: TestingClientType,
     funding_organization: FundingOrganization,
     organization_file: OrganizationFile,
+    file: RagFile,
     mock_admin_code: Mock,
 ) -> None:
     response = await test_client.get(
@@ -36,11 +37,11 @@ async def test_retrieve_organization_files_success(
     assert response.status_code == HTTPStatus.OK
     files = response.json()
     assert len(files) == 1
-    assert files[0]["id"] == str(organization_file.rag_file_id)
-    assert files[0]["filename"] == organization_file.rag_file.filename
-    assert files[0]["size"] == organization_file.rag_file.size
-    assert files[0]["mime_type"] == organization_file.rag_file.mime_type
-    assert files[0]["indexing_status"] == organization_file.rag_file.indexing_status.value
+    assert files[0]["id"] == str(organization_file.rag_source_id)
+    assert files[0]["filename"] == file.filename
+    assert files[0]["size"] == file.size
+    assert files[0]["mime_type"] == file.mime_type
+    assert files[0]["indexing_status"] == file.indexing_status.value
 
 
 async def test_delete_organization_file_success(
@@ -51,7 +52,7 @@ async def test_delete_organization_file_success(
     mock_admin_code: Mock,
 ) -> None:
     response = await test_client.delete(
-        f"/organizations/{funding_organization.id}/files/{organization_file.rag_file_id}",
+        f"/organizations/{funding_organization.id}/files/{organization_file.rag_source_id}",
         headers={"Authorization": "test-admin-code"},
     )
 
@@ -59,14 +60,14 @@ async def test_delete_organization_file_success(
 
     async with async_session_maker() as session:
         with pytest.raises(NoResultFound):
-            await session.get_one(RagFile, organization_file.rag_file_id)
+            await session.get_one(RagFile, organization_file.rag_source_id)
 
         with pytest.raises(NoResultFound):
             await session.get_one(
                 OrganizationFile,
                 {
                     "funding_organization_id": funding_organization.id,
-                    "rag_file_id": organization_file.rag_file_id,
+                    "rag_source_id": organization_file.rag_source_id,
                 },
             )
 
@@ -81,4 +82,4 @@ async def test_delete_organization_file_not_found(
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
-    assert response.json() == {"detail": "File not found"}
+    assert response.json() == {"detail": "Not Found", "status_code": HTTPStatus.NOT_FOUND.value}

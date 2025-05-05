@@ -36,7 +36,7 @@ async def check_exists_files_being_indexed(
                 select(
                     exists(
                         select(file_table_cls)
-                        .join(RagFile, RagFile.id == file_table_cls.rag_file_id)
+                        .join(RagFile, RagFile.id == file_table_cls.rag_source_id)
                         .where(
                             file_table_cls.grant_application_id == application_id
                             if hasattr(file_table_cls, "grant_application_id")
