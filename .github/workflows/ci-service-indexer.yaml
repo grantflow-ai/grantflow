@@ -1,0 +1,35 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - development*
+    paths:
+      - 'packages/**'
+      - 'services/indexer'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
+      - 'services/indexer'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache and Install APT Packages
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: tesseract-ocr pandoc
+          version: 1.0
+
+      - name: Run Tests
+        uses: ./.github/actions/run-python-tests
+        with:
+            target: ./services/indexer
