@@ -1,7 +1,16 @@
+import { LegalPageContainer } from "@/components/info-legal-page-components";
+
 export default function AboutPage() {
 	return (
-		<div className="container mx-auto py-10">
+		<LegalPageContainer
+			background="dark"
+			childrenSpan="parent"
+			headingLevel="h1"
+			isTextCentered
+			textColor="text-white"
+			title="About GrantFlow.ai"
+		>
 			<h1>About Us</h1>
-		</div>
+		</LegalPageContainer>
 	);
 }
