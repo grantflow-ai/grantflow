@@ -96,7 +96,7 @@ export function FileUploader({
 				)}
 				data-testid="file-dropzone"
 			>
-				<input {...getInputProps()} />
+				<input {...getInputProps()} data-testid="file-input" />
 				<Upload className="text-muted-foreground mx-auto size-12" />
 				<p className="text-muted-foreground mt-2 text-sm">
 					Drag &#39;n&#39; drop files here, or click to select files
