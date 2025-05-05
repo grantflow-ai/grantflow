@@ -1,5 +1,11 @@
 services:
     db:
+        profiles:
+            - all
+            - backend-services
+            - indexer
+            - crawler
+            - backend
         image: pgvector/pgvector:pg17
         restart: always
         environment:
@@ -18,6 +24,10 @@ services:
             retries: 10
 
     valkey:
+        profiles:
+            - all
+            - backend-services
+            - backend
         image: valkey/valkey:latest
         restart: always
         ports:
@@ -29,6 +39,12 @@ services:
             retries: 10
 
     gcs-emulator:
+        profiles:
+            - all
+            - backend-services
+            - indexer
+            - crawler
+            - backend
         image: fsouza/fake-gcs-server:latest
         restart: always
         ports:
@@ -43,6 +59,10 @@ services:
             retries: 10
 
     backend:
+        profiles:
+            - all
+            - backend-services
+            - backend
         build:
             dockerfile: ./services/backend/Dockerfile
             platforms:
@@ -62,8 +82,14 @@ services:
                 condition: service_healthy
             valkey:
                 condition: service_healthy
+            gcs-emulator:
+                condition: service_healthy
 
     indexer:
+        profiles:
+            - all
+            - backend-services
+            - indexer
         build:
             dockerfile: ./services/indexer/Dockerfile
         environment:
@@ -82,12 +108,39 @@ services:
         depends_on:
             db:
                 condition: service_healthy
-            valkey:
+            gcs-emulator:
+                condition: service_healthy
+
+    crawler:
+        profiles:
+            - all
+            - backend-services
+            - crawler
+        build:
+            dockerfile: ./services/crawler/Dockerfile
+        environment:
+            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+            GOOGLE_CLOUD_PROJECT: grantflow-dev
+            GOOGLE_CLOUD_REGION: us-central1
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+            GCS_BUCKET_NAME: grantflow-uploads
+        env_file:
+            - ./services/crawler/.env
+        ports:
+            - "8001:8000"
+        volumes:
+            - ./services/crawler/src:/app/src:cached
+        command: "uvicorn src.main:app --host 0.0.0.0 --log-level info --reload"
+        depends_on:
+            db:
                 condition: service_healthy
             gcs-emulator:
                 condition: service_healthy
 
     frontend:
+        profiles:
+            - all
+            - frontend
         build:
             context: ./frontend
             dockerfile: Dockerfile

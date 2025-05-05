@@ -44,6 +44,7 @@ tasks:
         deps:
             - task: service:backend:test:e2e
             - task: service:indexer:test:e2e
+            - task: service:crawler:test:e2e
 
     generate:api-types:
         desc: Generate TypeScript from backend API
@@ -133,6 +134,7 @@ tasks:
             - uv run uv-bump --pyproject-toml ./pyproject.toml
             - uv run uv-bump --pyproject-toml ./services/backend/pyproject.toml
             - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
+            - uv run uv-bump --pyproject-toml ./services/crawler/pyproject.toml
             - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
             - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
             - task: backend:install
@@ -142,6 +144,7 @@ tasks:
         deps:
             - task: service:backend:test
             - task: service:indexer:test
+            - task: service:crawler:test
             - task: packages:test
 
     service:backend:dev:
@@ -184,6 +187,26 @@ tasks:
         cmds:
             - E2E_TESTS=1 PYTHONPATH=. uv run pytest services/indexer/tests -v
 
+    service:crawler:dev:
+        desc: Start the crawler service in development mode with hot-reloading
+        deps:
+            - task: db:up
+        dotenv: ["services/crawler/.env"]
+        cmds:
+            - PYTHONPATH=. uv run uvicorn services.crawler.src.main:app --host 0.0.0.0 --port 8002 --log-level debug --reload --reload-dir services/crawler/src
+
+    service:crawler:test:
+        desc: Run crawler service tests with detailed output
+        dotenv: ["services/crawler/.env"]
+        cmds:
+            - PYTHONPATH=. uv run pytest services/crawler/tests -v
+
+    service:crawler:test:e2e:
+        desc: Run crawler service end-to-end tests
+        dotenv: ["services/crawler/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH=. uv run pytest services/crawler/tests -v
+
     packages:test:
         desc: Run all shared packages tests
         cmds:
@@ -207,4 +230,5 @@ tasks:
         deps:
             - task: service:backend:dev
             - task: service:indexer:dev
+            - task: service:crawler:dev
             - task: frontend:dev

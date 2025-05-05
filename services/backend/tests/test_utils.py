@@ -13,6 +13,7 @@ from packages.db.src.tables import (
     GrantTemplate,
     OrganizationFile,
     RagFile,
+    RagSource,
     TextVector,
     Workspace,
 )
@@ -78,7 +79,10 @@ async def process_organization_files(
             data = deserialize(organization_file.read_bytes(), dict[str, Any])
 
             rag_file_data = data.pop("rag_file")
-            rag_file_id = data.pop("rag_file_id")
+            rag_source_id = data.pop("rag_source_id")
+
+            indexing_status = rag_file_data.pop("indexing_status")
+            text_content = rag_file_data.pop("text_content", "")
 
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
 
@@ -86,10 +90,22 @@ async def process_organization_files(
             rag_file_data["object_path"] = "test_path"
 
             await session.execute(
+                insert(RagSource)
+                .values(
+                    {
+                        "id": rag_source_id,
+                        "type": "rag_file",
+                        "text_content": text_content,
+                        "indexing_status": indexing_status,
+                    }
+                )
+                .on_conflict_do_nothing(index_elements=["id"])
+            )
+            await session.execute(
                 insert(RagFile)
                 .values(
                     {
-                        "id": rag_file_id,
+                        "id": rag_source_id,
                         **{
                             k: v
                             for k, v in rag_file_data.items()
@@ -104,10 +120,10 @@ async def process_organization_files(
                 .values(
                     {
                         "funding_organization_id": funding_organization.id,
-                        "rag_file_id": rag_file_id,
+                        "rag_source_id": rag_source_id,
                     }
                 )
-                .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_file_id"])
+                .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_source_id"])
             )
             await session.execute(
                 insert(TextVector)
@@ -174,9 +190,11 @@ async def parse_source_file(
             .returning(RagFile.id)
         )
         await session.execute(
-            insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_file_id": file_id}])
+            insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_source_id": file_id}])
             if application_id
-            else insert(OrganizationFile).values([{"funding_organization_id": organization_id, "rag_file_id": file_id}])
+            else insert(OrganizationFile).values(
+                [{"funding_organization_id": organization_id, "rag_source_id": file_id}]
+            )
         )
         await session.commit()
 
@@ -194,14 +212,14 @@ async def parse_source_file(
             stmt = (
                 select(GrantApplicationFile)
                 .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
-                .where(GrantApplicationFile.rag_file_id == file_id)
+                .where(GrantApplicationFile.rag_source_id == file_id)
                 .where(GrantApplicationFile.grant_application_id == application_id)
             )
         else:
             stmt = (
                 select(OrganizationFile)  # type: ignore[assignment]
                 .options(selectinload(OrganizationFile.rag_file).selectinload(RagFile.text_vectors))
-                .where(OrganizationFile.rag_file_id == file_id)
+                .where(OrganizationFile.rag_source_id == file_id)
                 .where(OrganizationFile.funding_organization_id == organization_id)
             )
 
@@ -305,14 +323,14 @@ async def process_application_files(
         for application_file in application_files_fixtures_dir.glob("*.json"):
             data = deserialize(application_file.read_bytes(), dict[str, Any])
             rag_file_data = data.pop("rag_file")
-            rag_file_id = data.pop("rag_file_id")
+            rag_source_id = data.pop("rag_source_id")
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
 
             await session.execute(
                 insert(RagFile)
                 .values(
                     {
-                        "id": rag_file_id,
+                        "id": rag_source_id,
                         **{
                             k: v
                             for k, v in rag_file_data.items()
@@ -324,8 +342,8 @@ async def process_application_files(
             )
             await session.execute(
                 insert(GrantApplicationFile)
-                .values({"grant_application_id": application_id, "rag_file_id": rag_file_id})
-                .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_file_id"])
+                .values({"grant_application_id": application_id, "rag_source_id": rag_source_id})
+                .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_source_id"])
             )
             await session.execute(
                 insert(TextVector).values(
