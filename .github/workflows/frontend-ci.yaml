@@ -21,6 +21,19 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_FIREBASE_API_KEY: mock-api-key
+      NEXT_PUBLIC_FIREBASE_APP_ID: mock-app-id
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: mock-auth-domain
+      NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: mock-measurement-id
+      NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: mock-sender-id
+      NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: mock-tenant-id
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: mock-project-id
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: mock-storage-bucket
+      NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_RESEND_API_KEY_FULL_ACCESS: mock-resend-key
+      NEXT_PUBLIC_DEBUG: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
