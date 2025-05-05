@@ -46,16 +46,16 @@ export const MockedWithInitialFiles: Story = {
 		initialFiles: [
 			{
 				created_at: "2023-01-01T00:00:00Z",
-				file_id: "file-1",
 				filename: "document1.pdf",
+				id: "file-1",
 				indexing_status: "FINISHED" as const,
 				mime_type: "application/pdf",
 				size: 1024 * 50,
 			},
 			{
 				created_at: "2023-01-01T00:00:00Z",
-				file_id: "file-2",
 				filename: "document2.docx",
+				id: "file-2",
 				indexing_status: "FINISHED" as const,
 				mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 				size: 1024 * 100,
@@ -90,8 +90,8 @@ export const MockedWithLimitReached: Story = {
 			.fill(null)
 			.map((_, i) => ({
 				created_at: "2023-01-01T00:00:00Z",
-				file_id: `file-${i}`,
 				filename: `document${i}.pdf`,
+				id: `file-${i}`,
 				indexing_status: "FINISHED" as const,
 				mime_type: "application/pdf",
 				size: 1024 * 50,
@@ -153,16 +153,16 @@ export const IntegrationWithInitialFiles: Story = {
 		initialFiles: [
 			{
 				created_at: "2023-01-01T00:00:00Z",
-				file_id: "file-1",
 				filename: "document1.pdf",
+				id: "file-1",
 				indexing_status: "FINISHED" as const,
 				mime_type: "application/pdf",
 				size: 1024 * 50,
 			},
 			{
 				created_at: "2023-01-01T00:00:00Z",
-				file_id: "file-2",
 				filename: "document2.docx",
+				id: "file-2",
 				indexing_status: "FINISHED" as const,
 				mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 				size: 1024 * 100,

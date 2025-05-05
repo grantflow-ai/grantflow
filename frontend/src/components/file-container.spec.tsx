@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { FileContainer } from "./file-container";
 import { createUploadUrl } from "@/actions/application-files";
-import { mockToast } from "../../testing/global-mocks";
+import { mockToast } from "::testing/global-mocks";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("@/actions/application-files", () => ({
 	createUploadUrl: vi.fn(),
@@ -30,16 +31,16 @@ describe("FileContainer", () => {
 		const initialFiles = [
 			{
 				created_at: "2023-01-01T00:00:00Z",
-				file_id: "file-1",
 				filename: "existing.pdf",
+				id: "file-1",
 				indexing_status: "FINISHED" as const,
 				mime_type: "application/pdf",
 				size: 1024,
 			},
 			{
 				created_at: "2023-01-01T00:00:00Z",
-				file_id: "file-2",
 				filename: "existing2.docx",
+				id: "file-2",
 				indexing_status: "FINISHED" as const,
 				mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 				size: 2048,
@@ -67,14 +68,17 @@ describe("FileContainer", () => {
 	});
 
 	it("uploads files when added", async () => {
+		const user = userEvent.setup();
 		render(<FileContainer applicationId={mockApplicationId} workspaceId={mockWorkspaceId} />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const input = screen.getByTestId("file-input");
 
-		fireEvent.change(input, { target: { files: [file] } });
+		await user.upload(input, file);
 
-		expect(createUploadUrl).toHaveBeenCalledWith(mockWorkspaceId, mockApplicationId, "test.pdf");
+		await waitFor(() => {
+			expect(createUploadUrl).toHaveBeenCalledWith(mockWorkspaceId, mockApplicationId, "test.pdf");
+		});
 
 		await waitFor(() => {
 			expect(fetch).toHaveBeenCalledWith("https://example.com/upload", {
@@ -92,6 +96,7 @@ describe("FileContainer", () => {
 	});
 
 	it("shows an error toast when upload fails", async () => {
+		const user = userEvent.setup();
 		vi.mocked(fetch).mockResolvedValue({
 			ok: false,
 		} as Response);
@@ -101,7 +106,7 @@ describe("FileContainer", () => {
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const input = screen.getByTestId("file-input");
 
-		fireEvent.change(input, { target: { files: [file] } });
+		await user.upload(input, file);
 
 		await waitFor(() => {
 			expect(mockToast.error).toHaveBeenCalledWith("Failed to upload file. Please try again.");
@@ -109,12 +114,13 @@ describe("FileContainer", () => {
 	});
 
 	it("displays files after they are uploaded", async () => {
+		const user = userEvent.setup();
 		render(<FileContainer applicationId={mockApplicationId} workspaceId={mockWorkspaceId} />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const input = screen.getByTestId("file-input");
 
-		fireEvent.change(input, { target: { files: [file] } });
+		await user.upload(input, file);
 
 		await waitFor(() => {
 			expect(screen.getByTestId(`file-card-${file.name}`)).toBeInTheDocument();
@@ -122,19 +128,20 @@ describe("FileContainer", () => {
 	});
 
 	it("removes files when delete button is clicked", async () => {
+		const user = userEvent.setup();
 		render(<FileContainer applicationId={mockApplicationId} workspaceId={mockWorkspaceId} />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const input = screen.getByTestId("file-input");
 
-		fireEvent.change(input, { target: { files: [file] } });
+		await user.upload(input, file);
 
 		await waitFor(() => {
 			expect(screen.getByTestId(`file-card-${file.name}`)).toBeInTheDocument();
 		});
 
 		const removeButton = screen.getByTestId("remove-file-button");
-		fireEvent.click(removeButton);
+		await user.click(removeButton);
 
 		await waitFor(() => {
 			expect(screen.queryByTestId(`file-card-${file.name}`)).not.toBeInTheDocument();

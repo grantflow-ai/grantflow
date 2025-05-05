@@ -36,7 +36,7 @@ export function FileContainer({
 				});
 
 				const fileWithId = file as FileWithId;
-				fileWithId.id = serverFile.file_id;
+				fileWithId.id = serverFile.id;
 
 				return fileWithId;
 			});
