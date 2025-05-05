@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { FileUploader } from "./file-uploader";
-import { mockToast } from "../../testing/global-mocks";
+import { mockToast } from "::testing/global-mocks";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("react-dropzone", () => ({
@@ -69,12 +69,20 @@ describe("FileUploader", () => {
 		});
 
 		it("shows error toast when file is too large", async () => {
-			render(<FileUploader fieldName="test-field" maxSize={1000} onFilesAdded={mockOnFilesAdded} />);
+			render(<FileUploader fieldName="test-field" onFilesAdded={mockOnFilesAdded} />);
 
-			const file = new File(["test content".repeat(1000)], "large.pdf", { type: "application/pdf" });
+			const mockLargeFile = new File(["test content".repeat(1000)], "large.pdf", {
+				type: "application/pdf",
+			});
+
+			Object.defineProperty(mockLargeFile, "size", {
+				value: 101 * 1024 * 1024, // 101MB
+				writable: false,
+			});
+
 			const input = screen.getByTestId("file-input");
 
-			await userEvent.upload(input, file);
+			await userEvent.upload(input, mockLargeFile);
 
 			expect(mockToast.error).toHaveBeenCalled();
 			expect(mockOnFilesAdded).not.toHaveBeenCalled();

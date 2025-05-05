@@ -168,7 +168,7 @@ async def retrieve_vectors_for_embedding(
             await session.scalars(
                 select(TextVector)
                 .join(RagSource, TextVector.rag_source_id == RagSource.id)
-                .join(file_table_cls, RagSource.id == file_table_cls.rag_file_id)
+                .join(file_table_cls, RagSource.id == file_table_cls.rag_source_id)
                 .where(
                     file_table_cls.grant_application_id == application_id
                     if hasattr(file_table_cls, "grant_application_id")

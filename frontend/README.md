@@ -28,6 +28,7 @@ The frontend follows a modern Next.js App Router architecture:
 - **TypeScript**: Type-safe JavaScript
 - **shadcn/ui**: Component library based on Radix UI primitives
 - **Tailwind CSS**: Utility-first CSS framework
+- **Storybook**: UI component development and documentation
 - **Vitest**: Testing framework
 - **Firebase**: Authentication
 - **React Hook Form**: Form validation and handling
@@ -129,6 +130,75 @@ pnpm test:watch
 
 The frontend communicates with the backend API using server actions. API types are defined in `/src/types/api-types.ts`.
 
+## Storybook
+
+Storybook is used for developing and documenting UI components in isolation.
+
+### Running Storybook
+
+Start the Storybook development server:
+
+```bash
+pnpm storybook
+```
+
+Build Storybook for static deployment:
+
+```bash
+pnpm build-storybook
+```
+
+### Creating Stories
+
+Story files are co-located with their respective components using the `.stories.tsx` extension:
+
+```
+/components
+  /my-component
+    my-component.tsx
+    my-component.spec.tsx
+    my-component.stories.tsx
+```
+
+Basic story structure:
+
+```tsx
+import type { Meta, StoryObj } from "@storybook/react";
+import { MyComponent } from "./my-component";
+
+const meta: Meta<typeof MyComponent> = {
+	title: "Components/MyComponent",
+	component: MyComponent,
+	parameters: {
+		layout: "centered",
+	},
+	tags: ["autodocs"],
+};
+
+export default meta;
+type Story = StoryObj<typeof MyComponent>;
+
+export const Default: Story = {
+	args: {
+		// Component props here
+	},
+};
+
+export const Variant: Story = {
+	args: {
+		// Variant props here
+	},
+};
+```
+
+### Best Practices for Stories
+
+1. Create multiple stories for different component states
+2. Use args to make stories interactive
+3. Provide documentation using JSDoc comments
+4. Use controls to demonstrate component flexibility
+5. Add relevant design information in the component's docs
+
 ## Best Practices
 
 1. **TypeScript**: Use proper type definitions for all components and functions
@@ -137,3 +207,4 @@ The frontend communicates with the backend API using server actions. API types a
 4. **Testing**: Write tests for critical functionality and components
 5. **Directory Structure**: Follow the established directory structure for consistency
 6. **Styling**: Use Tailwind CSS classes for styling, maintaining theme consistency
+7. **Storybook**: Create stories for all reusable components to document usage and variants
