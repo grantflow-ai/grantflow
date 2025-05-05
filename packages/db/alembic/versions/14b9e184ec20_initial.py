@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: e16fc04fa9e1
+Revision ID: 14b9e184ec20
 Revises:
-Create Date: 2025-05-02 14:30:03.186695
+Create Date: 2025-05-05 09:12:19.030741
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "e16fc04fa9e1"
+revision: str = "14b9e184ec20"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -143,13 +143,13 @@ def upgrade() -> None:
     op.create_index(op.f("ix_workspace_users_created_at"), "workspace_users", ["created_at"], unique=False)
     op.create_table(
         "grant_application_files",
-        sa.Column("rag_file_id", sa.UUID(), nullable=False),
+        sa.Column("rag_source_id", sa.UUID(), nullable=False),
         sa.Column("grant_application_id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["grant_application_id"], ["grant_applications.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["rag_file_id"], ["rag_files.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("rag_file_id", "grant_application_id"),
+        sa.ForeignKeyConstraint(["rag_source_id"], ["rag_files.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_source_id", "grant_application_id"),
     )
     op.create_index(
         op.f("ix_grant_application_files_created_at"), "grant_application_files", ["created_at"], unique=False
@@ -186,13 +186,13 @@ def upgrade() -> None:
     )
     op.create_table(
         "organization_files",
-        sa.Column("rag_file_id", sa.UUID(), nullable=False),
+        sa.Column("rag_source_id", sa.UUID(), nullable=False),
         sa.Column("funding_organization_id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["funding_organization_id"], ["funding_organizations.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["rag_file_id"], ["rag_files.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("rag_file_id", "funding_organization_id"),
+        sa.ForeignKeyConstraint(["rag_source_id"], ["rag_files.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_source_id", "funding_organization_id"),
     )
     op.create_index(op.f("ix_organization_files_created_at"), "organization_files", ["created_at"], unique=False)
     op.create_table(
@@ -208,13 +208,13 @@ def upgrade() -> None:
     op.create_index(op.f("ix_organization_urls_created_at"), "organization_urls", ["created_at"], unique=False)
     op.create_table(
         "grant_template_files",
-        sa.Column("rag_file_id", sa.UUID(), nullable=False),
+        sa.Column("rag_source_id", sa.UUID(), nullable=False),
         sa.Column("grant_template_id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["grant_template_id"], ["grant_templates.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["rag_file_id"], ["rag_files.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("rag_file_id", "grant_template_id"),
+        sa.ForeignKeyConstraint(["rag_source_id"], ["rag_files.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("rag_source_id", "grant_template_id"),
     )
     op.create_index(op.f("ix_grant_template_files_created_at"), "grant_template_files", ["created_at"], unique=False)
     op.create_table(

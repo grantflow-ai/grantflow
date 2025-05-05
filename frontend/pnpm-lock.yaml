@@ -39,7 +39,7 @@ importers:
                 version: 1.2.0(@types/react@19.1.2)(react@19.1.0)
             "@t3-oss/env-nextjs":
                 specifier: ^0.13.4
-                version: 0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.3)
+                version: 0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.4)
             "@vercel/analytics":
                 specifier: ^1.5.0
                 version: 1.5.0(next@15.3.1(@babel/core@7.27.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
@@ -92,12 +92,9 @@ importers:
                 specifier: ^3.2.0
                 version: 3.2.0
             zod:
-                specifier: ^3.24.3
-                version: 3.24.3
+                specifier: ^3.24.4
+                version: 3.24.4
         devDependencies:
-            "@chromatic-com/storybook":
-                specifier: ^3.2.6
-                version: 3.2.6(react@19.1.0)(storybook@8.6.12(prettier@3.5.3))
             "@faker-js/faker":
                 specifier: ^9.7.0
                 version: 9.7.0
@@ -371,15 +368,6 @@ packages:
                 integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==,
             }
         engines: { node: ">=18" }
-
-    "@chromatic-com/storybook@3.2.6":
-        resolution:
-            {
-                integrity: sha512-FDmn5Ry2DzQdik+eq2sp/kJMMT36Ewe7ONXUXM2Izd97c7r6R/QyGli8eyh/F0iyqVvbLveNYFyF0dBOJNwLqw==,
-            }
-        engines: { node: ">=16.0.0", yarn: ">=1.22.18" }
-        peerDependencies:
-            storybook: ^8.2.0 || ^8.3.0-0 || ^8.4.0-0 || ^8.5.0-0 || ^8.6.0-0
 
     "@csstools/color-helpers@5.0.2":
         resolution:
@@ -3164,10 +3152,10 @@ packages:
             }
         engines: { node: ">=10" }
 
-    caniuse-lite@1.0.30001716:
+    caniuse-lite@1.0.30001717:
         resolution:
             {
-                integrity: sha512-49/c1+x3Kwz7ZIWt+4DvK3aMJy9oYXXG6/97JKsnjdCk/6n9vVyWL8NAwVt95Lwt9eigI10Hl782kDfZUUlRXw==,
+                integrity: sha512-auPpttCq6BDEG8ZAuHJIplGw6GODhjw+/11e7IjpnYCxZcW/ONgPs0KVBJ0d1bY3e2+7PRe5RCLyP+PfwVgkYw==,
             }
 
     chai@5.2.0:
@@ -3197,21 +3185,6 @@ packages:
                 integrity: sha512-OAlb+T7V4Op9OwdkjmguYRqncdlx5JiofwOAUkmTF+jNdHwzTaTs4sRAGpzLF3oOz5xAyDGrPgeIDFQmDOTiJw==,
             }
         engines: { node: ">= 16" }
-
-    chromatic@11.28.2:
-        resolution:
-            {
-                integrity: sha512-aCmUPcZUs4/p9zRZdMreOoO/5JqO2DiJC3md1/vRx8dlMRcmR/YI5ZbgXZcai2absVR+6hsXZ5XiPxV2sboTuQ==,
-            }
-        hasBin: true
-        peerDependencies:
-            "@chromatic-com/cypress": ^0.*.* || ^1.0.0
-            "@chromatic-com/playwright": ^0.*.* || ^1.0.0
-        peerDependenciesMeta:
-            "@chromatic-com/cypress":
-                optional: true
-            "@chromatic-com/playwright":
-                optional: true
 
     class-variance-authority@0.7.1:
         resolution:
@@ -3639,13 +3612,6 @@ packages:
                 integrity: sha512-QgXo+mXTe8ljeqUFaX3QVHc5osSItJ/Km+xpocx0aSqWGMSCf6qYs/VnzZgS864Pjn5iceMRFigeAV7AfTlaig==,
             }
         engines: { node: ">= 12" }
-
-    filesize@10.1.6:
-        resolution:
-            {
-                integrity: sha512-sJslQKU2uM33qH5nqewAwVB2QgR6w1aMNsYUp3aN5rMRyXEwJGmZvaWzeJFNTOXWlHQyBFCWrdj3fV/fsTOX8w==,
-            }
-        engines: { node: ">= 10.4.0" }
 
     fill-range@7.1.1:
         resolution:
@@ -4160,12 +4126,6 @@ packages:
             }
         engines: { node: ">=6" }
         hasBin: true
-
-    jsonfile@6.1.0:
-        resolution:
-            {
-                integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==,
-            }
 
     kleur@3.0.3:
         resolution:
@@ -4793,15 +4753,6 @@ packages:
                 integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==,
             }
         engines: { node: ">=6" }
-
-    react-confetti@6.4.0:
-        resolution:
-            {
-                integrity: sha512-5MdGUcqxrTU26I2EU7ltkWPwxvucQTuqMm8dUz72z2YMqTD6s9vMcDUysk7n9jnC+lXuCPeJJ7Knf98VEYE9Rg==,
-            }
-        engines: { node: ">=16" }
-        peerDependencies:
-            react: ^16.3.0 || ^17.0.1 || ^18.0.0 || ^19.0.0
 
     react-docgen-typescript@2.2.2:
         resolution:
@@ -5449,12 +5400,6 @@ packages:
                 integrity: sha512-9O4k1at9pMQff9EAcCEuy1UNO43JmaPQvq+0lwza9Y0BQ6LB38NiMj+qHqjoQf40355MX+gs6wtlR6H9WsSXFg==,
             }
 
-    tween-functions@1.2.0:
-        resolution:
-            {
-                integrity: sha512-PZBtLYcCLtEcjL14Fzb1gSxPBeL7nWvGhO5ZFPGqziCcr8uvHp0NDmdjBchp6KHL+tExcg0m3NISmKxhU394dA==,
-            }
-
     typescript@5.8.3:
         resolution:
             {
@@ -5468,13 +5413,6 @@ packages:
             {
                 integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==,
             }
-
-    universalify@2.0.1:
-        resolution:
-            {
-                integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==,
-            }
-        engines: { node: ">= 10.0.0" }
 
     unplugin@1.16.1:
         resolution:
@@ -5823,10 +5761,10 @@ packages:
             }
         engines: { node: ">=10" }
 
-    zod@3.24.3:
+    zod@3.24.4:
         resolution:
             {
-                integrity: sha512-HhY1oqzWCQWuUqvBFnsyrtZRhyPeR7SUGv+C4+MsisMuVfSPx8HpwWqH8tRahSlt6M3PiFAcoeFhZAqIXTxoSg==,
+                integrity: sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg==,
             }
 
 snapshots:
@@ -5966,19 +5904,6 @@ snapshots:
             "@babel/helper-validator-identifier": 7.27.1
 
     "@bcoe/v8-coverage@1.0.2": {}
-
-    "@chromatic-com/storybook@3.2.6(react@19.1.0)(storybook@8.6.12(prettier@3.5.3))":
-        dependencies:
-            chromatic: 11.28.2
-            filesize: 10.1.6
-            jsonfile: 6.1.0
-            react-confetti: 6.4.0(react@19.1.0)
-            storybook: 8.6.12(prettier@3.5.3)
-            strip-ansi: 7.1.0
-        transitivePeerDependencies:
-            - "@chromatic-com/cypress"
-            - "@chromatic-com/playwright"
-            - react
 
     "@csstools/color-helpers@5.0.2": {}
 
@@ -7247,19 +7172,19 @@ snapshots:
         dependencies:
             tslib: 2.8.1
 
-    "@t3-oss/env-core@0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.3)":
+    "@t3-oss/env-core@0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.4)":
         dependencies:
             arktype: 2.1.20
         optionalDependencies:
             typescript: 5.8.3
-            zod: 3.24.3
+            zod: 3.24.4
 
-    "@t3-oss/env-nextjs@0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.3)":
+    "@t3-oss/env-nextjs@0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.4)":
         dependencies:
-            "@t3-oss/env-core": 0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.3)
+            "@t3-oss/env-core": 0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.4)
         optionalDependencies:
             typescript: 5.8.3
-            zod: 3.24.3
+            zod: 3.24.4
         transitivePeerDependencies:
             - arktype
 
@@ -7662,7 +7587,7 @@ snapshots:
 
     browserslist@4.24.5:
         dependencies:
-            caniuse-lite: 1.0.30001716
+            caniuse-lite: 1.0.30001717
             electron-to-chromium: 1.5.149
             node-releases: 2.0.19
             update-browserslist-db: 1.1.3(browserslist@4.24.5)
@@ -7699,7 +7624,7 @@ snapshots:
 
     camelcase@6.3.0: {}
 
-    caniuse-lite@1.0.30001716: {}
+    caniuse-lite@1.0.30001717: {}
 
     chai@5.2.0:
         dependencies:
@@ -7720,8 +7645,6 @@ snapshots:
             supports-color: 7.2.0
 
     check-error@2.1.1: {}
-
-    chromatic@11.28.2: {}
 
     class-variance-authority@0.7.1:
         dependencies:
@@ -7981,8 +7904,6 @@ snapshots:
     file-selector@2.1.2:
         dependencies:
             tslib: 2.8.1
-
-    filesize@10.1.6: {}
 
     fill-range@7.1.1:
         dependencies:
@@ -8319,12 +8240,6 @@ snapshots:
 
     json5@2.2.3: {}
 
-    jsonfile@6.1.0:
-        dependencies:
-            universalify: 2.0.1
-        optionalDependencies:
-            graceful-fs: 4.2.11
-
     kleur@3.0.3: {}
 
     ky@1.8.1: {}
@@ -8496,7 +8411,7 @@ snapshots:
             "@swc/counter": 0.1.3
             "@swc/helpers": 0.5.15
             busboy: 1.6.0
-            caniuse-lite: 1.0.30001716
+            caniuse-lite: 1.0.30001717
             postcss: 8.4.31
             react: 19.1.0
             react-dom: 19.1.0(react@19.1.0)
@@ -8651,11 +8566,6 @@ snapshots:
             long: 5.3.2
 
     punycode@2.3.1: {}
-
-    react-confetti@6.4.0(react@19.1.0):
-        dependencies:
-            react: 19.1.0
-            tween-functions: 1.2.0
 
     react-docgen-typescript@2.2.2(typescript@5.8.3):
         dependencies:
@@ -9070,13 +8980,9 @@ snapshots:
 
     tw-animate-css@1.2.9: {}
 
-    tween-functions@1.2.0: {}
-
     typescript@5.8.3: {}
 
     undici-types@6.21.0: {}
-
-    universalify@2.0.1: {}
 
     unplugin@1.16.1:
         dependencies:
@@ -9316,4 +9222,4 @@ snapshots:
 
     yocto-queue@0.1.0: {}
 
-    zod@3.24.3: {}
+    zod@3.24.4: {}
