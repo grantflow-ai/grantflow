@@ -6,6 +6,7 @@ For detailed information on specific modules, refer to their dedicated documenta
 
 - [Backend Documentation](./services/backend/README.md) - API architecture, RAG components, and WebSocket flows
 - [Indexer Documentation](./services/indexer/README.md) - Document processing and indexing service
+- [Crawler Documentation](./services/crawler/README.md) - Website crawling and document extraction service
 - [Frontend Documentation](./frontend/README.md) - project structure, components, and UI development
 - [Database Package](./packages/db/README.md) - shared database models and migrations
 - [Shared Utilities](./packages/shared_utils/README.md) - common utilities used across services
@@ -19,6 +20,7 @@ For detailed information on specific modules, refer to their dedicated documenta
 - `/.vscode` - Shared vscode configurations
 - [`/services/backend`](./services/backend/README.md) - Main Python API service powered by Litestar
 - [`/services/indexer`](./services/indexer/README.md) - Document indexing and extraction service
+- [`/services/crawler`](./services/crawler/README.md) - Website crawling and document extraction service
 - [`/functions/gcs_notifier`](./functions/gcs_notifier/README.md) - GCS event notification Cloud Function
 - [`/packages/db`](./packages/db/README.md) - Shared database models and migrations
 - [`/packages/shared_utils`](./packages/shared_utils/README.md) - Common utilities shared across services
@@ -100,9 +102,48 @@ task db:create-migration -- <migration_name>
 task db:seed
 ```
 
+### Docker Compose Commands
+
+Our docker-compose.yaml uses profiles to organize services into logical groups. This allows you to run only the services you need for a specific task.
+
+```bash
+# Start all services
+docker compose --profile all up -d
+
+# Start only backend-related services (backend, db, valkey, gcs-emulator)
+docker compose --profile backend up -d
+
+# Start only indexer-related services (indexer, db, gcs-emulator)
+docker compose --profile indexer up -d
+
+# Start only crawler-related services (crawler, db, gcs-emulator)
+docker compose --profile crawler up -d
+
+# Start only frontend services
+docker compose --profile frontend up -d
+
+# Start only database and supporting services for backend development
+docker compose --profile backend-services up -d
+
+# Stop all running services
+docker compose down
+
+# View logs for a specific service
+docker compose logs -f backend
+```
+
+Available profiles:
+
+- `all`: All services
+- `backend`: Backend API service and its dependencies
+- `indexer`: Indexer service and its dependencies
+- `crawler`: Crawler service and its dependencies
+- `frontend`: Frontend service
+- `backend-services`: Common backend dependencies (db, valkey, gcs-emulator)
+
 ### Service-Specific Development
 
-You can also start individual services:
+You can also start individual services using Task:
 
 ```bash
 # Start just the backend service
