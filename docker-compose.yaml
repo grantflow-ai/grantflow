@@ -41,6 +41,7 @@ services:
     gcs-emulator:
         profiles:
             - all
+            - gcs
             - backend-services
             - indexer
             - crawler
