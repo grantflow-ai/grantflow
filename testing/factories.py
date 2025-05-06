@@ -7,9 +7,9 @@ from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSecti
 from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
-    GrantApplicationFile,
+    GrantApplicationRagSource,
     GrantTemplate,
-    OrganizationFile,
+    OrganizationRagSource,
     RagFile,
     TextVector,
     Workspace,
@@ -75,8 +75,8 @@ class FileFactory(SQLAlchemyFactory[RagFile]):
     type = "rag_file"  # Set polymorphic identity explicitly
 
 
-class OrganizationFileFactory(SQLAlchemyFactory[OrganizationFile]):
-    __model__ = OrganizationFile
+class OrganizationFileFactory(SQLAlchemyFactory[OrganizationRagSource]):
+    __model__ = OrganizationRagSource
 
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
@@ -106,8 +106,8 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __model__ = GrantApplication
 
 
-class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationFile]):
-    __model__ = GrantApplicationFile
+class GrantApplicationFileFactory(SQLAlchemyFactory[GrantApplicationRagSource]):
+    __model__ = GrantApplicationRagSource
 
 
 class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):

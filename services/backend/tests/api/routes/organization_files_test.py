@@ -3,7 +3,7 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-from packages.db.src.tables import FundingOrganization, OrganizationFile, RagFile
+from packages.db.src.tables import FundingOrganization, OrganizationRagSource, RagFile
 from services.backend.tests.conftest import TestingClientType
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -14,8 +14,8 @@ async def organization_file(
     async_session_maker: async_sessionmaker[Any],
     funding_organization: FundingOrganization,
     file: RagFile,
-) -> OrganizationFile:
-    org_file = OrganizationFile(funding_organization_id=funding_organization.id, rag_source_id=file.id)
+) -> OrganizationRagSource:
+    org_file = OrganizationRagSource(funding_organization_id=funding_organization.id, rag_source_id=file.id)
     async with async_session_maker() as session, session.begin():
         session.add(org_file)
         await session.commit()
@@ -25,7 +25,7 @@ async def organization_file(
 async def test_retrieve_organization_files_success(
     test_client: TestingClientType,
     funding_organization: FundingOrganization,
-    organization_file: OrganizationFile,
+    organization_file: OrganizationRagSource,
     file: RagFile,
     mock_admin_code: Mock,
 ) -> None:
@@ -47,7 +47,7 @@ async def test_retrieve_organization_files_success(
 async def test_delete_organization_file_success(
     test_client: TestingClientType,
     funding_organization: FundingOrganization,
-    organization_file: OrganizationFile,
+    organization_file: OrganizationRagSource,
     async_session_maker: async_sessionmaker[Any],
     mock_admin_code: Mock,
 ) -> None:
@@ -64,7 +64,7 @@ async def test_delete_organization_file_success(
 
         with pytest.raises(NoResultFound):
             await session.get_one(
-                OrganizationFile,
+                OrganizationRagSource,
                 {
                     "funding_organization_id": funding_organization.id,
                     "rag_source_id": organization_file.rag_source_id,

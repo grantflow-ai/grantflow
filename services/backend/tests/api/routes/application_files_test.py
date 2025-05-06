@@ -5,7 +5,7 @@ from uuid import UUID
 import pytest
 from packages.db.src.tables import (
     GrantApplication,
-    GrantApplicationFile,
+    GrantApplicationRagSource,
     RagFile,
     Workspace,
 )
@@ -20,8 +20,8 @@ async def application_file(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
     file: RagFile,
-) -> GrantApplicationFile:
-    app_file = GrantApplicationFile(grant_application_id=grant_application.id, rag_source_id=file.id)
+) -> GrantApplicationRagSource:
+    app_file = GrantApplicationRagSource(grant_application_id=grant_application.id, rag_source_id=file.id)
     async with async_session_maker() as session, session.begin():
         session.add(app_file)
         await session.commit()
@@ -32,7 +32,7 @@ async def test_retrieve_application_files_success(
     test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
-    application_file: GrantApplicationFile,
+    application_file: GrantApplicationRagSource,
     file: RagFile,
     workspace_member_user: None,
 ) -> None:
@@ -68,7 +68,7 @@ async def test_delete_application_file_success(
     test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
-    application_file: GrantApplicationFile,
+    application_file: GrantApplicationRagSource,
     workspace_member_user: None,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -85,7 +85,7 @@ async def test_delete_application_file_success(
 
         with pytest.raises(NoResultFound):
             await session.get_one(
-                GrantApplicationFile,
+                GrantApplicationRagSource,
                 {
                     "grant_application_id": grant_application.id,
                     "rag_source_id": application_file.rag_source_id,
@@ -97,7 +97,7 @@ async def test_delete_application_file_unauthorized(
     test_client: TestingClientType,
     workspace: Workspace,
     grant_application: GrantApplication,
-    application_file: GrantApplicationFile,
+    application_file: GrantApplicationRagSource,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(

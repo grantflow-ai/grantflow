@@ -10,7 +10,7 @@ from litestar.status_codes import WS_1006_ABNORMAL_CLOSURE
 from litestar.stores.valkey import ValkeyStore
 from packages.db.src.enums import ApplicationStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
-from packages.db.src.tables import GrantApplication, GrantApplicationFile, GrantTemplate
+from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, GrantTemplate
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
@@ -595,8 +595,8 @@ async def handle_knowledge_base(
 
         file_count = await session.scalar(
             select(func.count())
-            .select_from(GrantApplicationFile)
-            .where(GrantApplicationFile.grant_application_id == application_id)
+            .select_from(GrantApplicationRagSource)
+            .where(GrantApplicationRagSource.grant_application_id == application_id)
         )
 
         if file_count == 0:
