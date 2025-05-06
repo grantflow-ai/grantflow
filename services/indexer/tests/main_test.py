@@ -10,10 +10,10 @@ from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
-    GrantApplicationFile,
+    GrantApplicationRagSource,
     GrantTemplate,
-    GrantTemplateFile,
-    OrganizationFile,
+    GrantTemplateRagSource,
+    OrganizationRagSource,
     RagFile,
 )
 from sqlalchemy import select
@@ -53,11 +53,11 @@ async def test_handle_file_indexing_grant_application(
         assert response.status_code == HTTPStatus.CREATED
         response_json = response.json()
         assert response_json["message"] == "File indexing successful."
-        assert "file_id" in response_json
-        file_id = response_json["file_id"]
+        assert "source_id" in response_json
+        source_id = response_json["source_id"]
 
         async with async_session_maker() as session:
-            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(source_id)))
             file = rag_file.first()
             assert file is not None
             assert file.filename == "document.pdf"
@@ -69,7 +69,7 @@ async def test_handle_file_indexing_grant_application(
             assert file.object_path == file_path
 
             app_file = await session.scalars(
-                select(GrantApplicationFile).where(GrantApplicationFile.rag_source_id == UUID(file_id))
+                select(GrantApplicationRagSource).where(GrantApplicationRagSource.rag_source_id == UUID(source_id))
             )
             app_file_record = app_file.first()
             assert app_file_record is not None
@@ -77,7 +77,7 @@ async def test_handle_file_indexing_grant_application(
 
         mock_download_blob.assert_awaited_once_with(file_path)
         mock_parse_and_index_file.assert_awaited_once()
-        assert mock_parse_and_index_file.call_args[1]["file_id"] == file_id
+        assert mock_parse_and_index_file.call_args[1]["source_id"] == source_id
         assert mock_parse_and_index_file.call_args[1]["filename"] == "document.pdf"
         assert mock_parse_and_index_file.call_args[1]["mime_type"] == "application/pdf"
 
@@ -101,11 +101,11 @@ async def test_handle_file_indexing_funding_organization(
         assert response.status_code == HTTPStatus.CREATED
         response_json = response.json()
         assert response_json["message"] == "File indexing successful."
-        assert "file_id" in response_json
-        file_id = response_json["file_id"]
+        assert "source_id" in response_json
+        source_id = response_json["source_id"]
 
         async with async_session_maker() as session:
-            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(source_id)))
             file = rag_file.first()
             assert file is not None
             assert file.filename == "guidelines.pdf"
@@ -114,7 +114,7 @@ async def test_handle_file_indexing_funding_organization(
             assert file.indexing_status == FileIndexingStatusEnum.INDEXING
 
             org_file = await session.scalars(
-                select(OrganizationFile).where(OrganizationFile.rag_source_id == UUID(file_id))
+                select(OrganizationRagSource).where(OrganizationRagSource.rag_source_id == UUID(source_id))
             )
             org_file_record = org_file.first()
             assert org_file_record is not None
@@ -145,11 +145,11 @@ async def test_handle_file_indexing_grant_template(
         assert response.status_code == HTTPStatus.CREATED
         response_json = response.json()
         assert response_json["message"] == "File indexing successful."
-        assert "file_id" in response_json
-        file_id = response_json["file_id"]
+        assert "source_id" in response_json
+        source_id = response_json["source_id"]
 
         async with async_session_maker() as session:
-            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(file_id)))
+            rag_file = await session.scalars(select(RagFile).where(RagFile.id == UUID(source_id)))
             file = rag_file.first()
             assert file is not None
             assert file.filename == "template.docx"
@@ -158,7 +158,7 @@ async def test_handle_file_indexing_grant_template(
             assert file.indexing_status == FileIndexingStatusEnum.INDEXING
 
             template_file = await session.scalars(
-                select(GrantTemplateFile).where(GrantTemplateFile.rag_source_id == UUID(file_id))
+                select(GrantTemplateRagSource).where(GrantTemplateRagSource.rag_source_id == UUID(source_id))
             )
             template_file_record = template_file.first()
             assert template_file_record is not None

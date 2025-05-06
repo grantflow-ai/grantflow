@@ -17,29 +17,33 @@ from sqlalchemy import insert, update
 from sqlalchemy.exc import SQLAlchemyError
 
 
-async def parse_and_index_file(
+async def process_source(
     *,
     content: bytes,
-    file_id: str,
-    filename: str,
+    source_id: str,
+    filename: str | None,
     mime_type: str,
 ) -> None:
     session_maker = get_session_maker()
     try:
-        extracted_text, mime_type = await extract_file_content(
-            content=content,
-            mime_type=mime_type,
-        )
-        logger.info("Extracted text from file", filename=filename)
+        if filename:
+            extracted_text, mime_type = await extract_file_content(
+                content=content,
+                mime_type=mime_type,
+            )
+            logger.info("Extracted text from file", filename=filename)
+        else:
+            extracted_text = content.decode()
+
         chunks = chunk_text(text=extracted_text, mime_type=mime_type)
         vectors = await index_documents(
             chunks=chunks,
-            file_id=file_id,
+            source_id=source_id,
         )
     except (FileParsingError, ExternalOperationError, ValidationError) as e:
         async with session_maker() as session, session.begin():
             await session.execute(
-                update(RagSource).where(RagSource.id == file_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
+                update(RagSource).where(RagSource.id == source_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
             )
             await session.commit()
 
@@ -48,11 +52,9 @@ async def parse_and_index_file(
         async with session_maker() as session, session.begin():
             try:
                 await session.execute(insert(TextVector).values(vectors))
-                # Update the base class columns on RagSource, not RagFile
-                # RagSource contains indexing_status and text_content columns
                 await session.execute(
                     update(RagSource)
-                    .where(RagSource.id == file_id)
+                    .where(RagSource.id == source_id)
                     .values(
                         {
                             "indexing_status": FileIndexingStatusEnum.FINISHED,

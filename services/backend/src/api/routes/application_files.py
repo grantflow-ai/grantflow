@@ -4,7 +4,7 @@ from uuid import UUID
 from litestar import delete, get, post
 from litestar.exceptions import NotFoundException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import GrantApplicationFile, RagFile
+from packages.db.src.tables import GrantApplicationRagSource, RagFile
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import create_signed_upload_url
 from packages.shared_utils.src.logger import get_logger
@@ -42,8 +42,8 @@ async def retrieve_application_files(
             )
             for rag_file in await session.scalars(
                 select(RagFile)
-                .join(GrantApplicationFile)
-                .where(GrantApplicationFile.grant_application_id == application_id)
+                .join(GrantApplicationRagSource)
+                .where(GrantApplicationRagSource.grant_application_id == application_id)
             )
         ]
 
@@ -59,11 +59,11 @@ async def handle_delete_application_file(
     async with session_maker() as session, session.begin():
         try:
             result = await session.execute(
-                select(GrantApplicationFile)
-                .options(selectinload(GrantApplicationFile.rag_file))
+                select(GrantApplicationRagSource)
+                .options(selectinload(GrantApplicationRagSource.rag_source))
                 .where(
-                    GrantApplicationFile.grant_application_id == application_id,
-                    GrantApplicationFile.rag_source_id == file_id,
+                    GrantApplicationRagSource.grant_application_id == application_id,
+                    GrantApplicationRagSource.rag_source_id == file_id,
                 )
             )
             result.scalar_one()
