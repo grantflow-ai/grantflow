@@ -1,10 +1,4 @@
-import { Cabin, Inter as FontSans, Sora, Source_Sans_3 } from "next/font/google";
-
-export const fontSans = FontSans({
-	display: "swap",
-	subsets: ["latin"],
-	variable: "--font-sans",
-});
+import { Cabin, Sora, Source_Sans_3 } from "next/font/google";
 
 export const fontCabin = Cabin({
 	display: "swap",
@@ -24,4 +18,5 @@ export const fontSourceSans = Source_Sans_3({
 	display: "swap",
 	subsets: ["latin"],
 	variable: "--font-body",
+	weight: ["400", "500", "600"],
 });
