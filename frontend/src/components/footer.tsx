@@ -21,7 +21,7 @@ const FooterLinks = ({ isMobile = false }) => {
 		<ul className={`text-primary font-button flex gap-5 ${isMobile ? "flex-col items-end my-1" : ""}`}>
 			<li>
 				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline`}
+					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline focus:outline-none focus:ring-2 focus:ring-primary`}
 					href="/terms"
 				>
 					Terms of Use
@@ -29,7 +29,7 @@ const FooterLinks = ({ isMobile = false }) => {
 			</li>
 			<li>
 				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline`}
+					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline focus:outline-none focus:ring-2 focus:ring-primary`}
 					href="/privacy"
 				>
 					Privacy Policy
@@ -37,7 +37,7 @@ const FooterLinks = ({ isMobile = false }) => {
 			</li>
 			<li>
 				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline`}
+					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline focus:outline-none focus:ring-2 focus:ring-primary`}
 					href="/imprint"
 				>
 					Imprint
