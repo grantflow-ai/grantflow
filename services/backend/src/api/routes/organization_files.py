@@ -3,7 +3,7 @@ from uuid import UUID
 
 from litestar import delete, get
 from litestar.exceptions import NotFoundException
-from packages.db.src.tables import OrganizationFile, RagFile
+from packages.db.src.tables import OrganizationRagSource, RagFile
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.common_types import UploadedFileResponse
@@ -33,8 +33,8 @@ async def retrieve_organization_files(
             )
             for rag_file in await session.scalars(
                 select(RagFile)
-                .join(OrganizationFile)
-                .where(OrganizationFile.funding_organization_id == organization_id)
+                .join(OrganizationRagSource)
+                .where(OrganizationRagSource.funding_organization_id == organization_id)
             )
         ]
 
@@ -48,11 +48,11 @@ async def handle_delete_organization_file(
     async with session_maker() as session, session.begin():
         try:
             result = await session.execute(
-                select(OrganizationFile)
-                .options(selectinload(OrganizationFile.rag_file))
+                select(OrganizationRagSource)
+                .options(selectinload(OrganizationRagSource.rag_source))
                 .where(
-                    OrganizationFile.funding_organization_id == organization_id,
-                    OrganizationFile.rag_source_id == file_id,
+                    OrganizationRagSource.funding_organization_id == organization_id,
+                    OrganizationRagSource.rag_source_id == file_id,
                 )
             )
             result.scalar_one()
