@@ -9,9 +9,6 @@ vi.mock("@/components/landing-page/backgrounds", () => ({
 	),
 }));
 
-vi.mock("@/components/landing-page/nav-header", () => ({
-	NavHeader: () => <div data-testid="mock-nav-header" />,
-}));
 vi.mock("@/components/landing-page/hero-banner", () => ({
 	HeroBanner: () => <div data-testid="mock-hero-banner" />,
 }));
@@ -131,7 +128,6 @@ describe("LandingPage", () => {
 	it("renders all major sections", async () => {
 		const { container } = render(await LandingPage());
 
-		expect(screen.getByTestId("mock-nav-header")).toBeDefined();
 		expect(screen.getByTestId("mock-hero-banner")).toBeDefined();
 		expect(screen.getByTestId("mock-benefits-section")).toBeDefined();
 		expect(screen.getByTestId("mock-early-access-section")).toBeDefined();
@@ -139,7 +135,6 @@ describe("LandingPage", () => {
 		expect(screen.getByTestId("mock-testimonials-section")).toBeDefined();
 
 		expect(screen.getByTestId("cta-section")).toBeDefined();
-		expect(screen.getByTestId("site-footer")).toBeDefined();
 
 		expect(container).toBeDefined();
 	});
@@ -188,43 +183,6 @@ describe("LandingPage", () => {
 	});
 });
 
-describe("Footer", () => {
-	describe("Responsive rendering", () => {
-		beforeEach(async () => {
-			render(await LandingPage());
-		});
-
-		it("renders mobile footer for small screens", () => {
-			globalThis.innerWidth = 500;
-			globalThis.dispatchEvent(new Event("resize"));
-
-			const mobileFooter = screen.getByTestId("site-footer").querySelector(".md\\:hidden");
-			expect(mobileFooter).toBeDefined();
-
-			const mobileLinks = screen.getAllByText(/Terms of Use|Privacy Policy|Imprint/);
-
-			const hasMobileClass = mobileLinks.some((link) => {
-				const anchor = link.closest("a");
-				return anchor?.className.includes("text-lg");
-			});
-
-			expect(hasMobileClass).toBe(true);
-		});
-
-		it("renders desktop footer for larger screens", () => {
-			globalThis.innerWidth = 1024;
-			globalThis.dispatchEvent(new Event("resize"));
-
-			const desktopFooter = screen.getByTestId("site-footer").querySelector(".md\\:flex");
-			expect(desktopFooter).toBeDefined();
-
-			const desktopNav = screen.getByTestId("site-footer");
-			const isInDesktopLayout = desktopNav.closest(".md\\:flex");
-			expect(isInDesktopLayout).toBeDefined();
-		});
-	});
-});
-
 describe("Accessibility", () => {
 	beforeEach(async () => {
 		render(await LandingPage());
@@ -232,11 +190,6 @@ describe("Accessibility", () => {
 
 	it("sections have proper ARIA labels", async () => {
 		expect(screen.getByLabelText("cta-section")).toBeDefined();
-		expect(screen.getByLabelText("site-footer")).toBeDefined();
-		expect(screen.getAllByLabelText("footer-navigation")[0]).toBeDefined();
-
-		expect(screen.getAllByLabelText("LinkedIn Icon")[0]).toBeDefined();
-		expect(screen.getAllByLabelText("Go to homepage")[0]).toBeDefined();
 	});
 
 	it("has proper heading hierarchy", async () => {
@@ -250,16 +203,5 @@ describe("Accessibility", () => {
 
 	it("uses semantic HTML structure", async () => {
 		expect(screen.getByLabelText("cta-section").tagName).toBe("SECTION");
-		expect(screen.getByLabelText("site-footer").tagName).toBe("FOOTER");
-
-		const footerNavigations = screen.getAllByLabelText("footer-navigation");
-		expect(footerNavigations[0].tagName).toBe("NAV");
-
-		const [footerNavigation] = footerNavigations;
-		const ulElement = footerNavigation.querySelector("ul");
-		expect(ulElement).toBeDefined();
-
-		const listItems = ulElement?.querySelectorAll("li");
-		expect(listItems?.length).toBeGreaterThan(0);
 	});
 });
