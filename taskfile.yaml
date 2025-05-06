@@ -26,10 +26,11 @@ tasks:
             - pre-commit run --show-diff-on-failure --color=always --all-files
 
     dev:
-        desc: Start all services in development mode (database, GCS emulator, backend, indexer, and frontend)
+        desc: Start all services in development mode (database, Pub/Sub emulator, backend, indexer, and frontend)
         deps:
             - task: db:up
-            - task: gcs:up
+            - task: emulator:gcs:up
+            - task: emulator:pubsub:up
         cmds:
             - task: _dev:services
 
@@ -89,6 +90,17 @@ tasks:
             - sleep 2
             - PYTHONPATH=. uv run scripts/seed_db.py
 
+    # Emulator Commands
+
+    emulator:pubsub:up:
+        desc: Start the Google Cloud Pub/Sub emulator for local development
+        cmds:
+            - gcloud beta emulators pubsub start --project=grantflow
+
+    emulator:gcs:up:
+        desc: Start the Google Cloud Storage emulator for local development
+        cmds:
+            - docker compose --profile gcs up
     # Frontend Commands
 
     frontend:install:
@@ -224,7 +236,6 @@ tasks:
             - PYTHONPATH=. uv run pytest packages/shared_utils/tests -v
 
     # Internal Tasks
-
     _dev:services:
         internal: true
         deps:

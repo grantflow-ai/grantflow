@@ -31,12 +31,13 @@ For detailed information on specific modules, refer to their dedicated documenta
 - Node.js 22 or higher
 - Python 3.12
 - Docker and Docker Compose
-- [UV](https://github.com/astral-sh/uv): package manager for Python dependencies
-- [PNPM](https://pnpm.io/): package manager for JavaScript/TypeScript dependencies
-- [Task](https://taskfile.dev): taskfile runner
+- [UV](https://github.com/astral-sh/uv): Package manager for Python dependencies
+- [PNPM](https://pnpm.io/): Package manager for JavaScript/TypeScript dependencies
+- [Task](https://taskfile.dev): Taskfile runner
 - [pre-commit](https://pre-commit.com/): Linting and formatting tool
-- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install): for managing cloud resources and secrets
-- [Firebase CLI](https://firebase.google.com/docs/cli): for Firebase deployments and secret access
+- [GCloud CLI](https://cloud.google.com/sdk/docs/install): For GCP management
+- [GCloud CLI Pub/Sub Emulator](https://cloud.google.com/pubsub/docs/emulator): For local development
+- [Firebase CLI](https://firebase.google.com/docs/cli): For Firebase and secret access (required for both frontend and backend development)
 
 Make sure to install all of these on your system.
 
