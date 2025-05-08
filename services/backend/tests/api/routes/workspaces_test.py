@@ -11,10 +11,11 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
-    CreateWorkspaceRequestBodyFactory,
     GrantApplicationFactory,
     WorkspaceFactory,
 )
+
+from tests.factories import CreateWorkspaceRequestBodyFactory
 
 
 async def test_create_workspace_success(
