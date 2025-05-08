@@ -5,9 +5,9 @@ from litestar import post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
+    FundingOrganizationRagSource,
     GrantApplicationRagSource,
     GrantTemplateRagSource,
-    OrganizationRagSource,
     RagFile,
     RagSource,
 )
@@ -162,7 +162,7 @@ async def handle_file_indexing(
                 )
             elif parent_type == "funding_organization":
                 await session.execute(
-                    insert(OrganizationRagSource).values(
+                    insert(FundingOrganizationRagSource).values(
                         {
                             "rag_source_id": source_id,
                             "funding_organization_id": parent_id,

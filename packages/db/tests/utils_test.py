@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
-    OrganizationRagSource,
     RagFile,
 )
 from packages.db.src.utils import check_exists_files_being_indexed
@@ -124,7 +124,7 @@ async def test_check_exists_files_being_indexed_organization_success(
             )
         )
         await session.execute(
-            insert(OrganizationRagSource).values(
+            insert(FundingOrganizationRagSource).values(
                 {
                     "funding_organization_id": funding_organization.id,
                     "rag_source_id": file_id,
@@ -164,7 +164,7 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
             )
         )
         await session.execute(
-            insert(OrganizationRagSource).values(
+            insert(FundingOrganizationRagSource).values(
                 {
                     "funding_organization_id": funding_organization.id,
                     "rag_source_id": file_id,

@@ -88,7 +88,7 @@ async def application_with_file(
             insert(RagSource).values(
                 id=file_id,
                 indexing_status=FileIndexingStatusEnum.FINISHED,
-                type="rag_file",
+                source_type="rag_file",
             )
         )
         await session.execute(

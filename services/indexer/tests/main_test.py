@@ -8,11 +8,11 @@ from litestar.testing import AsyncTestClient
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
     GrantTemplateRagSource,
-    OrganizationRagSource,
     RagFile,
     RagSource,
 )
@@ -115,7 +115,7 @@ async def test_handle_file_indexing_funding_organization(
             assert source is not None
 
             org_file = await session.scalars(
-                select(OrganizationRagSource).where(OrganizationRagSource.rag_source_id == source.id)
+                select(FundingOrganizationRagSource).where(FundingOrganizationRagSource.rag_source_id == source.id)
             )
             org_file_record = org_file.first()
             assert org_file_record is not None
