@@ -94,7 +94,7 @@ async def process_organization_files(
                 .values(
                     {
                         "id": rag_source_id,
-                        "type": "rag_file",
+                        "source_type": "rag_file",
                         "text_content": text_content,
                         "indexing_status": indexing_status,
                     }

@@ -77,7 +77,7 @@ async def test_delete_application_file_success(
         headers={"Authorization": "Bearer some_token"},
     )
 
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
         with pytest.raises(NoResultFound):
