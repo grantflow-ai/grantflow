@@ -1,4 +1,4 @@
-name: Backend CI
+name: DB Package CI
 
 on:
   pull_request:

@@ -1,9 +1,8 @@
 import logging
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from socket import AF_INET, SOCK_STREAM, socket
 from textwrap import dedent
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 from anyio import run_process, sleep
@@ -20,12 +19,10 @@ from packages.db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
-from packages.shared_utils.src.ai import init_ref
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
 from sqlalchemy import NullPool, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from vertexai.generative_models import GenerativeModel
 
 from testing.factories import (
     FileFactory,
@@ -47,15 +44,6 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
         async_test.add_marker(session_scope_marker, append=False)
-
-
-@pytest.fixture
-def mock_generative_model() -> Generator[Mock, Any, None]:
-    init_ref.value = True
-    with patch("vertexai.generative_models.GenerativeModel") as mock:
-        mock_instance = Mock(spec=GenerativeModel)
-        mock.return_value = mock_instance
-        yield mock
 
 
 @pytest.fixture(scope="session")
@@ -115,12 +103,12 @@ async def async_db_engine(db_connection_string: str) -> AsyncEngine:
 
 
 @pytest.fixture(scope="session")
-async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmaker[Any]:
+async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmaker[Any]:  # noqa: ARG001
     return get_session_maker()
 
 
 @pytest.fixture(autouse=True)
-async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
+async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:  # noqa: ARG001
     await seed_db()
 
 
