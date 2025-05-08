@@ -2,6 +2,7 @@ from litestar.events import listener
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from litestar.stores.registry import StoreRegistry
 from litestar.stores.valkey import ValkeyStore
+from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import create_litestar_app
@@ -36,7 +37,6 @@ from services.backend.src.api.routes.workspaces import (
 from services.backend.src.api.sockets.grant_applications import handle_application_websocket
 from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from services.backend.src.utils.ai import init_llm_connection
 from services.backend.src.utils.firebase import get_firebase_app
 
 logger = get_logger(__name__)

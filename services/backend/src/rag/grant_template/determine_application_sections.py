@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
 from packages.db.src.tables import FundingOrganization
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -9,7 +10,6 @@ from packages.shared_utils.src.patterns import SNAKE_CASE_PATTERN
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import SentenceTransformer, util
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
 from services.backend.src.rag.completion import handle_completions_request
 from services.backend.src.rag.grant_template.extract_cfp_data import Content
 from services.backend.src.rag.grant_template.utils import detect_cycle

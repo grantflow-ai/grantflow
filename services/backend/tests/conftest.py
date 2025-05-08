@@ -11,8 +11,8 @@ from packages.db.src.tables import (
     FundingOrganization,
     Workspace,
 )
+from packages.shared_utils.src.ai import init_ref
 from pytest_mock import MockerFixture
-from services.backend.src.utils.ai import init_ref
 from services.backend.src.utils.firebase import firebase_app_ref
 from services.backend.src.utils.jwt import create_jwt
 from services.backend.tests.test_utils import (
