@@ -55,8 +55,7 @@ describe("LegalPageContainer", () => {
 				.getByRole("heading", { name: "Spacing Test" })
 				.closest("div.w-full.min-h-screen.z-20");
 
-			expect(mainContainer).toHaveClass("py-20");
-			expect(mainContainer).toHaveClass("px-30");
+			expect(mainContainer).toHaveClass("py-8 px-16 md:py-12 md:px-20 xl:py-16 xl:px-24 lg:py-20 lg:px-30");
 
 			const heading = screen.getByRole("heading", { name: "Spacing Test" });
 			expect(heading).toHaveClass("mb-6");
@@ -105,7 +104,7 @@ describe("LegalPageContainer", () => {
 
 			const heading = screen.getByText("H1 Title");
 			expect(heading.tagName).toBe("H1");
-			expect(heading).toHaveClass("text-[4.25rem]", "font-normal");
+			expect(heading).toHaveClass("text-5xl", "md:text-[4.25rem]", "font-normal");
 		});
 
 		it("centers text when isTextCentered is true", () => {
@@ -205,6 +204,81 @@ describe("LegalPageContainer", () => {
 
 		const contentContainer = screen.getByText("Semantic Structure").parentElement;
 		expect(contentContainer).toHaveClass("z-30");
+	});
+
+	describe("Responsive Design", () => {
+		beforeEach(() => {
+			window.innerWidth = 1024;
+		});
+
+		describe("correct padding and font size for different screen sizes", () => {
+			it("applies correct responsive heading styles for h1", () => {
+				render(
+					<LegalPageContainer headingLevel="h1" title="Responsive H1">
+						Content
+					</LegalPageContainer>,
+				);
+
+				const heading = screen.getByText("Responsive H1");
+
+				expect(heading).toHaveClass("text-5xl");
+				expect(heading).toHaveClass("font-normal");
+
+				expect(heading).toHaveClass("md:text-[4.25rem]");
+			});
+
+			it("applies correct responsive padding on small screens", () => {
+				window.innerWidth = 375;
+
+				render(<LegalPageContainer title="Mobile View">Content</LegalPageContainer>);
+
+				const mainContainer = screen
+					.getByRole("heading", { name: "Mobile View" })
+					.closest("div.w-full.min-h-screen.z-20");
+
+				expect(mainContainer).toHaveClass("py-8");
+				expect(mainContainer).toHaveClass("px-16");
+			});
+
+			it("applies correct responsive padding on medium screens", () => {
+				window.innerWidth = 768;
+
+				render(<LegalPageContainer title="Tablet View">Content</LegalPageContainer>);
+
+				const mainContainer = screen
+					.getByRole("heading", { name: "Tablet View" })
+					.closest("div.w-full.min-h-screen.z-20");
+
+				expect(mainContainer).toHaveClass("md:py-12");
+				expect(mainContainer).toHaveClass("md:px-20");
+			});
+
+			it("applies correct responsive padding on large screens", () => {
+				window.innerWidth = 1024;
+
+				render(<LegalPageContainer title="Desktop View">Content</LegalPageContainer>);
+
+				const mainContainer = screen
+					.getByRole("heading", { name: "Desktop View" })
+					.closest("div.w-full.min-h-screen.z-20");
+
+				expect(mainContainer).toHaveClass("lg:py-20");
+				expect(mainContainer).toHaveClass("lg:px-30");
+			});
+
+			it("applies correct responsive padding on extra large screens", () => {
+				window.innerWidth = 1280;
+
+				render(<LegalPageContainer title="XL View">Content</LegalPageContainer>);
+
+				const mainContainer = screen
+					.getByRole("heading", { name: "XL View" })
+					.closest("div.w-full.min-h-screen.z-20");
+
+				expect(mainContainer).toHaveClass("xl:py-16");
+				expect(mainContainer).toHaveClass("xl:px-24");
+			});
+		});
 	});
 });
 

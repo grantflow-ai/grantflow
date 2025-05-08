@@ -169,4 +169,19 @@ describe("AboutPage", () => {
 		expect(foundersList).toHaveClass("grid-cols-1");
 		expect(foundersList?.className).toMatch(/md:grid-cols-3/);
 	});
+
+	it("has proper section headings with responsive font sizes", () => {
+		const whatWeDoHeading = screen.getByText("What We Do?");
+		const teamHeading = screen.getByText("About GrantFlow.ai Team");
+		const whyMattersHeading = screen.getByText("Why It Matters?");
+
+		expect(whatWeDoHeading).toBeInTheDocument();
+		expect(teamHeading).toBeInTheDocument();
+		expect(whyMattersHeading).toBeInTheDocument();
+
+		[whatWeDoHeading, teamHeading, whyMattersHeading].forEach((heading) => {
+			expect(heading).toHaveClass("text-3xl");
+			expect(heading).toHaveClass("md:text-4xl");
+		});
+	});
 });
