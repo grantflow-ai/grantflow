@@ -20,9 +20,9 @@ from packages.db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
+from packages.shared_utils.src.ai import init_ref
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
-from services.backend.src.utils.ai import init_ref
 from sqlalchemy import NullPool, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from vertexai.generative_models import GenerativeModel

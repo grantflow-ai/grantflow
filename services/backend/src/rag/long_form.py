@@ -1,8 +1,8 @@
 from time import time
 from typing import Any, Final, TypedDict
 
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from services.backend.src.rag.completion import handle_completions_request
 from services.backend.src.utils.prompt_template import PromptTemplate
 from services.backend.src.utils.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown

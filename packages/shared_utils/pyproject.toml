@@ -21,6 +21,11 @@ dependencies = [
   "tenacity>=9",
 ]
 
+optional-dependencies.ai = [
+  "anthropic>=0.49",
+  "google-cloud-aiplatform>=1.85",
+  "prompt-template>=1.2",
+]
 optional-dependencies.chunking = [
   "semantic-text-splitter>=0.24.2",
 ]
@@ -30,9 +35,18 @@ optional-dependencies.embeddings = [
 optional-dependencies.gcs = [
   "google-cloud-storage>=2.19",
 ]
+optional-dependencies.nlp = [
+  "en-core-web-sm",
+  "rank-bm25>=0.2.2",
+  "spacy>=3.8.4",
+  "torch>=2.2.2",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "src" ]
 
 [tool.hatch.build.targets.sdist]
 packages = [ "src" ]
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
