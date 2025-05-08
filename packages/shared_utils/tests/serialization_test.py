@@ -1,16 +1,17 @@
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, TypedDict
+from typing import TypedDict
 
 import pytest
 from msgspec import DecodeError, EncodeError
-from pydantic import BaseModel
 from pytest_mock import MockFixture
 
 from packages.shared_utils.src.exceptions import DeserializationError, SerializationError
-from packages.shared_utils.src.serialization import decode_hook, deserialize, encode_hook, serialize
+from packages.shared_utils.src.serialization import deserialize, encode_hook, serialize
 
 
-class TestModel(BaseModel):
+@dataclass
+class TestModel:
     name: str
     value: int
 
@@ -20,7 +21,8 @@ class TestEnum(Enum):
     B = "b"
 
 
-class TestModelWithEnum(BaseModel):
+@dataclass
+class TestModelWithEnum:
     enum_field: TestEnum
 
 
@@ -29,20 +31,7 @@ class TestDict(TypedDict):
     value: int
 
 
-def test_decode_hook_pydantic_model() -> None:
-    data: dict[str, Any] = {"name": "test", "value": 42}
-    result = decode_hook(TestModel, data)
-    assert isinstance(result, TestModel)
-    assert result.name == "test"
-    assert result.value == 42
-
-
-def test_decode_hook_unsupported_type() -> None:
-    with pytest.raises(TypeError, match="Unsupported type"):
-        decode_hook(str, {"value": "test"})
-
-
-def test_encode_hook_pydantic_model() -> None:
+def test_encode_hook_dataclass_model() -> None:
     model = TestModel(name="test", value=42)
     result = encode_hook(model)
     assert result == {"name": "test", "value": 42}
