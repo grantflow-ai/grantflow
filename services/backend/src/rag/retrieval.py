@@ -2,9 +2,9 @@ from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
 from packages.db.src.tables import GrantApplicationRagSource, OrganizationRagSource, RagSource, TextVector
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from services.backend.src.rag.completion import handle_completions_request
 from services.backend.src.rag.dto import DocumentDTO
 from services.backend.src.rag.post_processing import post_process_documents

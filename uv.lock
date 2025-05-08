@@ -174,17 +174,10 @@ source = { virtual = "services/backend" }
 dependencies = [
     { name = "aiohttp" },
     { name = "db" },
-    { name = "en-core-web-sm" },
     { name = "firebase-admin" },
-    { name = "google-cloud-aiplatform" },
     { name = "litestar", extra = ["valkey"] },
-    { name = "pathvalidate" },
-    { name = "prompt-template" },
     { name = "pyjwt" },
-    { name = "rank-bm25" },
-    { name = "shared-utils", extra = ["embeddings"] },
-    { name = "spacy" },
-    { name = "torch" },
+    { name = "shared-utils", extra = ["ai", "embeddings", "nlp"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -192,17 +185,10 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.14" },
     { name = "db", editable = "packages/db" },
-    { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "firebase-admin", specifier = ">=6.7" },
-    { name = "google-cloud-aiplatform", specifier = ">=1.85" },
     { name = "litestar", extras = ["valkey"], specifier = ">=2.15.1" },
-    { name = "pathvalidate", specifier = ">=3.2.3" },
-    { name = "prompt-template", specifier = ">=1.2" },
     { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "rank-bm25", specifier = ">=0.2.2" },
-    { name = "shared-utils", extras = ["embeddings"], editable = "packages/shared_utils" },
-    { name = "spacy", specifier = ">=3.8.4" },
-    { name = "torch", specifier = ">=2.2.2" },
+    { name = "shared-utils", extras = ["ai", "embeddings", "nlp"], editable = "packages/shared_utils" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
@@ -600,7 +586,6 @@ name = "db"
 version = "0.1.0"
 source = { editable = "packages/db" }
 dependencies = [
-    { name = "anthropic" },
     { name = "asyncpg" },
     { name = "greenlet" },
     { name = "pgvector" },
@@ -616,7 +601,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", specifier = ">=0.49" },
     { name = "asyncpg", specifier = ">=0.30" },
     { name = "greenlet", specifier = ">=3.1.1" },
     { name = "pgvector", specifier = ">=0.4" },
@@ -2045,15 +2029,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pathvalidate"
-version = "3.2.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/92/87/c7a2f51cc62df0495acb0ed2533a7c74cc895e569a1b020ee5f6e9fa4e21/pathvalidate-3.2.3.tar.gz", hash = "sha256:59b5b9278e30382d6d213497623043ebe63f10e29055be4419a9c04c721739cb", size = 61717, upload-time = "2025-01-03T14:06:42.789Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/14/c5a0e1a947909810fc4c043b84cac472b70e438148d34f5393be1bac663f/pathvalidate-3.2.3-py3-none-any.whl", hash = "sha256:5eaf0562e345d4b6d0c0239d0f690c3bd84d2a9a3c4c73b99ea667401b27bee1", size = 24130, upload-time = "2025-01-03T14:06:39.568Z" },
-]
-
-[[package]]
 name = "pgvector"
 version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2908,6 +2883,11 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+ai = [
+    { name = "anthropic" },
+    { name = "google-cloud-aiplatform" },
+    { name = "prompt-template" },
+]
 chunking = [
     { name = "semantic-text-splitter" },
 ]
@@ -2917,19 +2897,32 @@ embeddings = [
 gcs = [
     { name = "google-cloud-storage" },
 ]
+nlp = [
+    { name = "en-core-web-sm" },
+    { name = "rank-bm25" },
+    { name = "spacy" },
+    { name = "torch" },
+]
 
 [package.metadata]
 requires-dist = [
+    { name = "anthropic", marker = "extra == 'ai'", specifier = ">=0.49" },
     { name = "anyio", specifier = ">=4.9" },
+    { name = "en-core-web-sm", marker = "extra == 'nlp'", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
+    { name = "google-cloud-aiplatform", marker = "extra == 'ai'", specifier = ">=1.85" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.19" },
     { name = "litestar", specifier = ">=2.15.1" },
     { name = "msgspec", specifier = ">=0.19" },
+    { name = "prompt-template", marker = "extra == 'ai'", specifier = ">=1.2" },
+    { name = "rank-bm25", marker = "extra == 'nlp'", specifier = ">=0.2.2" },
     { name = "semantic-text-splitter", marker = "extra == 'chunking'", specifier = ">=0.24.2" },
     { name = "sentence-transformers", extras = ["onnx"], marker = "extra == 'embeddings'", specifier = ">=3.4.1" },
+    { name = "spacy", marker = "extra == 'nlp'", specifier = ">=3.8.4" },
     { name = "structlog", specifier = ">=25.2" },
     { name = "tenacity", specifier = ">=9" },
+    { name = "torch", marker = "extra == 'nlp'", specifier = ">=2.2.2" },
 ]
-provides-extras = ["chunking", "embeddings", "gcs"]
+provides-extras = ["ai", "chunking", "embeddings", "gcs", "nlp"]
 
 [[package]]
 name = "shellingham"

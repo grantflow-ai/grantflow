@@ -2,8 +2,8 @@ from functools import partial
 from typing import Final, TypedDict
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
 from services.backend.src.rag.completion import handle_completions_request
 from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.backend.src.rag.retrieval import retrieve_documents
