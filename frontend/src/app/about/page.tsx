@@ -41,7 +41,7 @@ export default function AboutPage() {
 			backgroundStack={
 				<>
 					<div
-						className="absolute z-10 inset-0 size-full overflow-hidden"
+						className="absolute z-10 inset-0 size-full overflow-hidden pointer-events-none"
 						style={{
 							background: `radial-gradient(ellipse at center, var(--primary) 0%, transparent 75%)`,
 							contain: "strict",
