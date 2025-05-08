@@ -7,7 +7,7 @@ import Naaman from "@/assets/na_aman.png";
 import Tirza from "@/assets/tirza.png";
 import { BrandPattern } from "@/components/brand-pattern";
 
-const subHeadingClasses = "font-heading font-medium text-4xl";
+const subHeadingClasses = "font-heading font-medium text-3xl md:text-4xl";
 
 const toolkitItems = [
 	{
@@ -41,7 +41,7 @@ export default function AboutPage() {
 			backgroundStack={
 				<>
 					<div
-						className="absolute z-10 inset-0 size-full overflow-hidden"
+						className="absolute z-10 inset-0 size-full overflow-hidden pointer-events-none"
 						style={{
 							background: `radial-gradient(ellipse at center, var(--primary) 0%, transparent 75%)`,
 							contain: "strict",
@@ -67,7 +67,7 @@ export default function AboutPage() {
 		>
 			<div className="flex flex-col items-center w-full min-h-screen relative">
 				<div className="w-full max-w-198">
-					<p className="mb-20 leading-tight">
+					<p className="text-lg md:text-base mb-20 leading-tight">
 						GrantFlow.ai is a tool designed to support researchers through one of the most time-consuming
 						parts of their work: applying for grants. Researchers today spend a large part of their time on
 						funding-related documentation, most of it could otherwise be invested in research and
@@ -90,7 +90,7 @@ export default function AboutPage() {
 				<div className="w-full max-w-220 py-20">
 					<div className="w-full rounded bg-violet-200/15 p-11">
 						<h2 className={cn(subHeadingClasses, "mb-3")}>About GrantFlow.ai Team</h2>
-						<p className="px-20 leading-tight">
+						<p className="md:px-12 lg:px-16 xl:px-20 leading-tight">
 							GrantFlow.ai was founded by a team of professionals with experience in STEM research,
 							engineering, and product development:
 						</p>
