@@ -33,4 +33,9 @@ runs:
 
     - name: Run Tests
       shell: bash
-      run: PYTHONPATH=. uv run pytest ${{ inputs.target }}/tests -v
+      run: |
+        if [[ "${{ inputs.target }}" == "db" || "${{ inputs.target }}" == "shared_utils" ]]; then
+          PYTHONPATH=. uv run pytest packages/${{ inputs.target }} -v
+        else
+          PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
+        fi
