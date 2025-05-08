@@ -2,6 +2,7 @@ import { LogoDark } from "@/components/logo";
 import Image from "next/image";
 import linkedInIcon from "@/assets/linkedin-icon.png";
 import Link from "next/link";
+import { FooterLinks } from "@/components/footer-links";
 
 const LinkedInLink = () => {
 	return (
@@ -16,36 +17,20 @@ const LinkedInLink = () => {
 	);
 };
 
-const FooterLinks = ({ isMobile = false }) => {
-	return (
-		<ul className={`text-primary font-button flex gap-5 ${isMobile ? "flex-col items-end my-1" : ""}`}>
-			<li>
-				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline focus:outline-none focus:ring-2 focus:ring-primary`}
-					href="/terms"
-				>
-					Terms of Use
-				</Link>
-			</li>
-			<li>
-				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline focus:outline-none focus:ring-2 focus:ring-primary`}
-					href="/privacy"
-				>
-					Privacy Policy
-				</Link>
-			</li>
-			<li>
-				<Link
-					className={`text-primary ${isMobile ? "text-lg" : ""} hover:text-slate-500 hover:no-underline focus:outline-none focus:ring-2 focus:ring-primary`}
-					href="/imprint"
-				>
-					Imprint
-				</Link>
-			</li>
-		</ul>
-	);
-};
+const links = [
+	{
+		href: "/terms",
+		label: "Terms of Use",
+	},
+	{
+		href: "/privacy",
+		label: "Privacy Policy",
+	},
+	{
+		href: "/imprint",
+		label: "Imprint",
+	},
+];
 
 export function Footer() {
 	return (
@@ -57,7 +42,7 @@ export function Footer() {
 		>
 			<div className="md:hidden flex flex-col px-6 py-2">
 				<nav aria-label="footer-navigation">
-					<FooterLinks isMobile />
+					<FooterLinks isMobile links={links} />
 				</nav>
 				<div className="flex w-full items-center justify-between">
 					<Link aria-label="Go to homepage" href="/">
@@ -71,7 +56,7 @@ export function Footer() {
 					<LogoDark className="h-15.5" height="250" width="250" />
 				</Link>
 				<nav aria-label="footer-navigation">
-					<FooterLinks />
+					<FooterLinks links={links} />
 				</nav>
 				<LinkedInLink />
 			</div>

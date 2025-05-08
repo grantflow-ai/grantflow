@@ -9,7 +9,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
-import { ReactNode, Suspense } from "react";
+import { Suspense } from "react";
 import { NavHeader } from "@/components/nav-header";
 import { Footer } from "@/components/footer";
 
@@ -53,7 +53,7 @@ export const metadata = {
 	title: "GrantFlow.AI",
 } satisfies Metadata;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
@@ -71,7 +71,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				<ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
 					<NavHeader />
 					<main
-						className="md:min-h[calc(100dvh-5rem)] m-auto min-h-[calc(100dvh-4rem)]"
+						className="md:min-h-[calc(100dvh-5rem)] m-auto min-h-[calc(100dvh-4rem)]"
 						data-testid="main-container"
 					>
 						{children}
