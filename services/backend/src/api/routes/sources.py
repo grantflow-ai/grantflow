@@ -3,6 +3,9 @@ from uuid import UUID
 
 from litestar import delete, get, post
 from litestar.exceptions import NotFoundException
+from litestar.handlers import HTTPRouteHandler
+from litestar.types import Method, OperationIDCreator
+from litestar.types.internal_types import PathParameterDefinition
 from packages.db.src.enums import FileIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
     FundingOrganizationRagSource,
@@ -50,14 +53,25 @@ class UploadUrlResponse(TypedDict):
     url: str
 
 
+def _create_operation_id_creator(key: str) -> OperationIDCreator:
+    def _create_operation_id(_: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]) -> str:
+        if "applications" in paths:
+            return key.format(value="GrantApplication")
+        if "templates" in paths:
+            return key.format(value="GrantTemplate")
+        return key.format(value="FundingOrganization")
+
+    return _create_operation_id
+
+
 @get(
     [
         "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources",
-        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources",
+        "/workspaces/{workspace_id:uuid}/templates/{template_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
-    operation_id="ListRagSources",
+    operation_id=_create_operation_id_creator("Retrieve{value}RagSources"),
 )
 async def handle_retrieve_rag_sources(
     application_id: UUID | None,
@@ -120,11 +134,11 @@ async def handle_retrieve_rag_sources(
 @delete(
     [
         "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
-        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
+        "/workspaces/{workspace_id:uuid}/templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
-    operation_id="DeleteRagSource",
+    operation_id=_create_operation_id_creator("Delete{value}RagSource"),
 )
 async def handle_delete_rag_source(
     application_id: UUID | None,
@@ -169,11 +183,11 @@ async def handle_delete_rag_source(
 @post(
     [
         "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
-        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
+        "/workspaces/{workspace_id:uuid}/templates/{template_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
-    operation_id="CreateUploadUrl",
+    operation_id=_create_operation_id_creator("Create{value}RagSourceUploadUrl"),
 )
 async def handle_create_upload_url(
     application_id: UUID | None,
