@@ -118,7 +118,6 @@ members = [
   "services/indexer",
   "packages/db",
   "packages/shared_utils",
-  "functions/gcs_notifier",
 ]
 
 [tool.uv.sources]
