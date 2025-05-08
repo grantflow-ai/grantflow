@@ -21,19 +21,16 @@ async def process_source(
     *,
     content: bytes,
     source_id: str,
-    filename: str | None,
+    filename: str,
     mime_type: str,
 ) -> None:
     session_maker = get_session_maker()
     try:
-        if filename:
-            extracted_text, mime_type = await extract_file_content(
-                content=content,
-                mime_type=mime_type,
-            )
-            logger.info("Extracted text from file", filename=filename)
-        else:
-            extracted_text = content.decode()
+        extracted_text, mime_type = await extract_file_content(
+            content=content,
+            mime_type=mime_type,
+        )
+        logger.info("Extracted text from file", filename=filename)
 
         chunks = chunk_text(text=extracted_text, mime_type=mime_type)
         vectors = await index_documents(
