@@ -34,7 +34,7 @@ async def test_retrieve_organization_files_success(
         headers={"Authorization": "test-admin-code"},
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, response.text
     files = response.json()
     assert len(files) == 1
     assert files[0]["id"] == str(organization_file.rag_source_id)
@@ -56,7 +56,7 @@ async def test_delete_organization_file_success(
         headers={"Authorization": "test-admin-code"},
     )
 
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
         with pytest.raises(NoResultFound):

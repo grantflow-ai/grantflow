@@ -67,8 +67,8 @@ async def test_client(
 
     with (
         patch("services.backend.src.api.main.before_server_start"),
-        patch("services.backend.src.utils.ai.get_vertex_credentials", return_value=Mock()),
-        patch("services.backend.src.utils.ai.init", return_value=None),
+        patch("packages.shared_utils.src.ai.get_vertex_credentials", return_value=Mock()),
+        patch("packages.shared_utils.src.ai.init", return_value=None),
         patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
         patch("jwt.decode", return_value={"sub": firebase_uid}),
         patch("services.backend.src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),
