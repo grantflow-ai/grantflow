@@ -86,7 +86,6 @@ filterwarnings = [
   "ignore::DeprecationWarning:pkg_resources.*",
   "ignore::DeprecationWarning:google.*",
   "ignore::DeprecationWarning:websockets.*",
-  "ignore::pydantic.PydanticDeprecatedSince20",
   "ignore::DeprecationWarning:fake_http_header.*",
   "ignore::DeprecationWarning:importlib.resources.*",
   "ignore::DeprecationWarning:tracerite.*",
