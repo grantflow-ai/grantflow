@@ -14,6 +14,6 @@ dependencies = [
   "firebase-admin>=6.7",
   "litestar[valkey]>=2.15.1",
   "pyjwt>=2.10.1",
-  "shared-utils[ai,embeddings,nlp]",
+  "shared-utils[ai,embeddings,gcs,nlp]",
   "uvicorn[standard]>=0.34",
 ]

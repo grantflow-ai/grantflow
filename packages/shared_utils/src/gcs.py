@@ -76,15 +76,45 @@ async def download_blob(blob_name: str) -> bytes:
         ) from e
 
 
-async def create_signed_upload_url(
-    workspace_id: str,
+def construct_object_uri(
+    *,
     application_id: str | None,
     blob_name: str,
+    organization_id: str | None,
+    template_id: str | None,
+    workspace_id: str | None,
 ) -> str:
-    blob_path = (
-        f"workspaces/{workspace_id}/applications/{application_id}/{blob_name}"
-        if application_id
-        else f"workspaces/{workspace_id}/{blob_name}"
+    components = []
+    if workspace_id:
+        components.append(f"workspaces/{workspace_id}")
+
+        if application_id:
+            components.append(f"grant_applications/{application_id}")
+
+        if template_id:
+            components.append(f"grant_templates/{template_id}")
+
+    else:
+        components.append(f"organizations/{organization_id}")
+
+    components.append(blob_name)
+
+    return "/".join(components)
+
+
+async def create_signed_upload_url(
+    application_id: str | None,
+    blob_name: str,
+    organization_id: str | None,
+    template_id: str | None,
+    workspace_id: str | None,
+) -> str:
+    blob_path = construct_object_uri(
+        application_id=application_id,
+        blob_name=blob_name,
+        organization_id=organization_id,
+        template_id=template_id,
+        workspace_id=workspace_id,
     )
     try:
         bucket = await run_sync(get_bucket)

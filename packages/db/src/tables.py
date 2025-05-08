@@ -167,17 +167,19 @@ class FundingOrganization(BaseWithUUIDPK):
     grant_templates: Relationship[list["GrantTemplate"]] = relationship(
         "GrantTemplate", back_populates="funding_organization"
     )
-    rag_sources: Relationship[list["OrganizationRagSource"]] = relationship(
-        "OrganizationRagSource",
+    rag_sources: Relationship[list["FundingOrganizationRagSource"]] = relationship(
+        "FundingOrganizationRagSource",
         back_populates="funding_organization",
         cascade="all, delete-orphan",
     )
 
 
-class OrganizationRagSource(Base):
-    __tablename__ = "organization_rag_sources"
+class FundingOrganizationRagSource(Base):
+    __tablename__ = "funding_organization_rag_sources"
 
-    rag_source_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), index=True)
+    rag_source_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True
+    )
     funding_organization_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), primary_key=True
     )
@@ -214,11 +216,12 @@ class GrantApplication(BaseWithUUIDPK):
 class GrantApplicationRagSource(Base):
     __tablename__ = "grant_application_rag_sources"
 
-    id: Mapped[UUID] = mapped_column(SA_UUID(), primary_key=True, insert_default=uuid4)
     grant_application_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True
     )
-    rag_source_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), index=True)
+    rag_source_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True
+    )
 
     grant_application: Relationship["GrantApplication"] = relationship("GrantApplication", back_populates="rag_sources")
     rag_source: Relationship["RagSource"] = relationship("RagSource")

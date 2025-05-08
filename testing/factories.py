@@ -6,10 +6,10 @@ from packages.db.src.constants import EMBEDDING_DIMENSIONS
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
-    OrganizationRagSource,
     RagFile,
     TextVector,
     Workspace,
@@ -61,11 +61,11 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
 
 class FileFactory(SQLAlchemyFactory[RagFile]):
     __model__ = RagFile
-    type = "rag_file"  # Set polymorphic identity explicitly
+    source_type = "rag_file"  # Set polymorphic identity explicitly
 
 
-class OrganizationFileFactory(SQLAlchemyFactory[OrganizationRagSource]):
-    __model__ = OrganizationRagSource
+class OrganizationFileFactory(SQLAlchemyFactory[FundingOrganizationRagSource]):
+    __model__ = FundingOrganizationRagSource
 
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
