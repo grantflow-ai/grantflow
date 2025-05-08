@@ -177,7 +177,7 @@ dependencies = [
     { name = "firebase-admin" },
     { name = "litestar", extra = ["valkey"] },
     { name = "pyjwt" },
-    { name = "shared-utils", extra = ["ai", "embeddings", "nlp"] },
+    { name = "shared-utils", extra = ["ai", "embeddings", "gcs", "nlp"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -188,7 +188,7 @@ requires-dist = [
     { name = "firebase-admin", specifier = ">=6.7" },
     { name = "litestar", extras = ["valkey"], specifier = ">=2.15.1" },
     { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "shared-utils", extras = ["ai", "embeddings", "nlp"], editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["ai", "embeddings", "gcs", "nlp"], editable = "packages/shared_utils" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 

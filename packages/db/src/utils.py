@@ -9,10 +9,10 @@ from sqlalchemy.orm import selectinload
 
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
+    FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
-    OrganizationRagSource,
     RagFile,
 )
 from packages.shared_utils.src.exceptions import ValidationError
@@ -27,7 +27,7 @@ async def check_exists_files_being_indexed(
     if not application_id and not organization_id:
         raise ValidationError("Either application_id or organization_id must be provided.")
 
-    file_table_cls = GrantApplicationRagSource if application_id else OrganizationRagSource
+    file_table_cls = GrantApplicationRagSource if application_id else FundingOrganizationRagSource
 
     async with session_maker() as session:
         return cast(

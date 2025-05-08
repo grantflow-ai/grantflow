@@ -8,10 +8,10 @@ from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import (
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
-    OrganizationRagSource,
     RagFile,
     RagSource,
     TextVector,
@@ -116,7 +116,7 @@ async def process_organization_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(OrganizationRagSource)
+                insert(FundingOrganizationRagSource)
                 .values(
                     {
                         "funding_organization_id": funding_organization.id,
@@ -194,7 +194,7 @@ async def parse_source_file(
                 [{"grant_application_id": application_id, "rag_source_id": file_id}]
             )
             if application_id
-            else insert(OrganizationRagSource).values(
+            else insert(FundingOrganizationRagSource).values(
                 [{"funding_organization_id": organization_id, "rag_source_id": file_id}]
             )
         )
@@ -219,10 +219,10 @@ async def parse_source_file(
             )
         else:
             stmt = (
-                select(OrganizationRagSource)  # type: ignore[assignment]
-                .options(selectinload(OrganizationRagSource.rag_source).selectinload(RagFile.text_vectors))
-                .where(OrganizationRagSource.rag_source_id == file_id)
-                .where(OrganizationRagSource.funding_organization_id == organization_id)
+                select(FundingOrganizationRagSource)  # type: ignore[assignment]
+                .options(selectinload(FundingOrganizationRagSource.rag_source).selectinload(RagFile.text_vectors))
+                .where(FundingOrganizationRagSource.rag_source_id == file_id)
+                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
             )
 
         file_datum = await session.scalar(stmt)
