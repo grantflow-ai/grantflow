@@ -589,3 +589,66 @@ def test_construct_and_parse_round_trip_grant_template() -> None:
     assert result["parent_id"] == template_id
     assert result["workspace_id"] == workspace_id
     assert result["filename"] == blob_name
+
+
+def test_construct_object_uri_missing_ids() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        construct_object_uri(
+            workspace_id=None,
+            application_id=None,
+            template_id=None,
+            organization_id=None,
+            blob_name="test-file.pdf",
+        )
+
+    assert "Either workspace_id or organization_id must be provided" in str(exc_info.value)
+    assert exc_info.value.context["workspace_id"] is None
+    assert exc_info.value.context["organization_id"] is None
+
+
+def test_construct_object_uri_workspace_without_app_or_template() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        construct_object_uri(
+            workspace_id="ws-123",
+            application_id=None,
+            template_id=None,
+            organization_id=None,
+            blob_name="test-file.pdf",
+        )
+
+    assert "Either application_id or template_id must be provided if workspace_id is provided" in str(exc_info.value)
+    assert exc_info.value.context["workspace_id"] == "ws-123"
+    assert exc_info.value.context["application_id"] is None
+    assert exc_info.value.context["template_id"] is None
+
+
+def test_construct_object_uri_app_without_workspace() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        construct_object_uri(
+            workspace_id=None,
+            application_id="app-456",
+            template_id=None,
+            organization_id=None,
+            blob_name="test-file.pdf",
+        )
+
+    assert "workspace_id must be provided if application_id or template_id is provided" in str(exc_info.value)
+    assert exc_info.value.context["workspace_id"] is None
+    assert exc_info.value.context["application_id"] == "app-456"
+    assert exc_info.value.context["template_id"] is None
+
+
+def test_construct_object_uri_template_without_workspace() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        construct_object_uri(
+            workspace_id=None,
+            application_id=None,
+            template_id="temp-789",
+            organization_id=None,
+            blob_name="test-file.pdf",
+        )
+
+    assert "workspace_id must be provided if application_id or template_id is provided" in str(exc_info.value)
+    assert exc_info.value.context["workspace_id"] is None
+    assert exc_info.value.context["application_id"] is None
+    assert exc_info.value.context["template_id"] == "temp-789"

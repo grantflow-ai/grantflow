@@ -45,7 +45,7 @@ class GrantSectionFactory(TypedDictFactory[GrantLongFormSection]):
     topics = Use(lambda: ["background_context", "methodology"])
     max_words = 3000
     search_queries = Use(lambda: ["query1", "query2", "query3"])
-    depends_on: list[str] = Use(list)
+    depends_on: list[str] = Use(list)  # type: ignore[assignment]
 
 
 class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
@@ -128,7 +128,7 @@ class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
     topics = Use(lambda: ["background_context", "methodology"])
     max_words = 3000
     search_queries = Use(lambda: ["query1", "query2", "query3"])
-    depends_on: list[str] = Use(list)
+    depends_on: list[str] = Use(list)  # type: ignore[assignment]
 
 
 class ChunkFactory(TypedDictFactory[Chunk]):

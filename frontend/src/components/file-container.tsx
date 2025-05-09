@@ -9,7 +9,7 @@ import { API } from "@/types/api-types";
 
 interface FileContainerProps {
 	applicationId: string;
-	initialFiles?: API.ListApplicationFiles.Http200.ResponseBody;
+	initialFiles?: Extract<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[number], { filename: string }>[];
 	maxFileCount?: number;
 	workspaceId: string;
 }

@@ -6,13 +6,13 @@ export async function createUploadUrl(
 	workspaceId: string,
 	applicationId: string,
 	fileName: string,
-): Promise<API.CreateUploadUrl.Http201.ResponseBody> {
+): Promise<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
 			.post(`workspaces/${workspaceId}/applications/${applicationId}/files/upload-url?blob_name=${fileName}`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.CreateUploadUrl.Http201.ResponseBody>(),
+			.json<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody>(),
 	);
 }
 
@@ -30,6 +30,6 @@ export async function getApplicationFiles(workspaceId: string, applicationId: st
 			.get(`workspaces/${workspaceId}/applications/${applicationId}/files`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.ListApplicationFiles.Http200.ResponseBody[]>(),
+			.json<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[]>(),
 	);
 }
