@@ -32,6 +32,9 @@ optional-dependencies.chunking = [
 optional-dependencies.embeddings = [
   "sentence-transformers[onnx]>=3.4.1",
 ]
+optional-dependencies.extraction = [
+  "kreuzberg>=2.1.2",
+]
 optional-dependencies.gcs = [
   "google-cloud-storage>=2.19",
 ]
