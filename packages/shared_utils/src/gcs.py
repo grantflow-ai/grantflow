@@ -92,11 +92,31 @@ def construct_object_uri(
     workspace_id: str | None,
 ) -> str:
     if workspace_id and not (application_id or template_id):
-        raise ValueError("Either application_id or template_id must be provided if workspace_id is provided")
+        raise ValidationError(
+            "Either application_id or template_id must be provided if workspace_id is provided",
+            context={
+                "workspace_id": workspace_id,
+                "application_id": application_id,
+                "template_id": template_id,
+            },
+        )
     if (application_id or template_id) and not workspace_id:
-        raise ValueError("workspace_id must be provided if application_id or template_id is provided")
+        raise ValidationError(
+            "workspace_id must be provided if application_id or template_id is provided",
+            context={
+                "workspace_id": workspace_id,
+                "application_id": application_id,
+                "template_id": template_id,
+            },
+        )
     if not workspace_id and not organization_id:
-        raise ValueError("Either workspace_id or organization_id must be provided")
+        raise ValidationError(
+            "Either workspace_id or organization_id must be provided",
+            context={
+                "workspace_id": workspace_id,
+                "organization_id": organization_id,
+            },
+        )
 
     components = []
     if workspace_id:
@@ -109,7 +129,14 @@ def construct_object_uri(
             components.append(f"grant_template/{template_id}")
 
         else:
-            raise ValueError("Either application_id or template_id must be provided")
+            raise ValidationError(
+                "Either application_id or template_id must be provided",
+                context={
+                    "workspace_id": workspace_id,
+                    "application_id": application_id,
+                    "template_id": template_id,
+                },
+            )
 
     else:
         components.append(f"funding_organization/{organization_id}")
