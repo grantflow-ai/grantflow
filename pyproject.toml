@@ -66,6 +66,17 @@ lint.per-file-ignores."**/tests/**/*.*" = [
   "RUF012",
   "S",
 ]
+lint.per-file-ignores."testing/**/*.*" = [
+  "ARG001",
+  "D",
+  "N815",
+  "PT006",
+  "PT007",
+  "PT012",
+  "PT013",
+  "RUF012",
+  "S",
+]
 lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
 lint.isort.known-first-party = [ "src", "tests" ]
 lint.mccabe.max-complexity = 25
