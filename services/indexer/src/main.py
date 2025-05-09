@@ -1,8 +1,7 @@
-from typing import Any, Literal, TypedDict, cast
+from typing import Any, Literal, TypedDict
 
 from kreuzberg._mime_types import EXT_TO_MIME_TYPE
 from litestar import post
-from litestar.exceptions import ValidationException
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganizationRagSource,
@@ -13,7 +12,7 @@ from packages.db.src.tables import (
 )
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
-from packages.shared_utils.src.gcs import download_blob
+from packages.shared_utils.src.gcs import download_blob, parse_object_uri
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import create_litestar_app
 from services.indexer.src.processing import process_source
@@ -77,19 +76,15 @@ async def handle_pubsub_message(
 ) -> FileIndexingRequest:
     if gcs_notification := get_gcs_notification_data(event):
         try:
-            # parent_type is one of "grant_application", "funding_organization", or "grant_template"
-            # parent_id is a UUID string of the parent entity
-            # the filename is a discrete filename with extension
-            parent_type, parent_id, filename = gcs_notification["object_name"].split("/")
-            file_extension = filename.split(".")[-1]
+            parse_result = parse_object_uri(object_path=gcs_notification["object_name"])
+            file_extension = parse_result["filename"].split(".")[-1]
             mime_type = EXT_TO_MIME_TYPE[file_extension]
-        except ValueError as e:
-            raise ValidationException(
-                "Invalid file path format. Expected format: <parent_type>/<parent_id>/<filename>.<extension>",
-            ) from e
-        except KeyError as e:
-            raise ValidationException(
-                f"Unsupported file extension: {gcs_notification['object_name'].split('.')[-1]}. Supported extensions are: {', '.join(EXT_TO_MIME_TYPE.keys())}",
+        except (KeyError, IndexError) as e:
+            raise ValidationError(
+                "Invalid file extension or object path format.",
+                context={
+                    "object_path": gcs_notification["object_name"],
+                },
             ) from e
 
         content = await download_blob(gcs_notification["object_name"])
@@ -97,11 +92,11 @@ async def handle_pubsub_message(
         return FileIndexingRequest(
             bucket_name=bucket_name,
             content=content,
-            filename=filename,
+            filename=parse_result["filename"],
             mime_type=mime_type,
             object_path=gcs_notification["object_name"],
-            parent_id=parent_id,
-            parent_type=cast("Literal['grant_application', 'funding_organization', 'grant_template']", parent_type),
+            parent_id=parse_result["parent_id"],
+            parent_type=parse_result["parent_type"],
             size=len(content),
         )
     raise ValidationError(
