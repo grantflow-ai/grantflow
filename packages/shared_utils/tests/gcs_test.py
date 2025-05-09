@@ -13,6 +13,7 @@ from packages.shared_utils.src.constants import ONE_MINUTE_SECONDS
 from packages.shared_utils.src.exceptions import ExternalOperationError
 from packages.shared_utils.src.gcs import (
     bucket_ref,
+    construct_object_uri,
     create_signed_upload_url,
     download_blob,
     get_bucket,
@@ -212,12 +213,68 @@ async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) 
     assert "Test error" in exc_info.value.context["error"]
 
 
+def test_construct_object_uri_workspace_application() -> None:
+    workspace_id = "workspace-123"
+    application_id = "app-456"
+    blob_name = "test-file.pdf"
+    template_id = None
+    organization_id = None
+
+    uri = construct_object_uri(
+        workspace_id=workspace_id,
+        application_id=application_id,
+        blob_name=blob_name,
+        template_id=template_id,
+        organization_id=organization_id,
+    )
+
+    assert uri == f"workspaces/{workspace_id}/grant_applications/{application_id}/{blob_name}"
+
+
+def test_construct_object_uri_workspace_template() -> None:
+    workspace_id = "workspace-123"
+    application_id = None
+    blob_name = "test-file.pdf"
+    template_id = "template-789"
+    organization_id = None
+
+    uri = construct_object_uri(
+        workspace_id=workspace_id,
+        application_id=application_id,
+        blob_name=blob_name,
+        template_id=template_id,
+        organization_id=organization_id,
+    )
+
+    assert uri == f"workspaces/{workspace_id}/grant_templates/{template_id}/{blob_name}"
+
+
+def test_construct_object_uri_organization() -> None:
+    workspace_id = None
+    application_id = None
+    blob_name = "test-file.pdf"
+    template_id = None
+    organization_id = "org-789"
+
+    uri = construct_object_uri(
+        workspace_id=workspace_id,
+        application_id=application_id,
+        blob_name=blob_name,
+        template_id=template_id,
+        organization_id=organization_id,
+    )
+
+    assert uri == f"organizations/{organization_id}/{blob_name}"
+
+
 @pytest.mark.asyncio
 async def test_create_signed_upload_url_with_application_id(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     workspace_id = "workspace-123"
     application_id = "app-456"
     blob_name = "test-file.pdf"
-    expected_blob_path = f"workspaces/{workspace_id}/applications/{application_id}/{blob_name}"
+    template_id = None
+    organization_id = None
+    expected_blob_path = f"workspaces/{workspace_id}/grant_applications/{application_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
@@ -230,7 +287,13 @@ async def test_create_signed_upload_url_with_application_id(mock_env_vars: None,
     ):
         mock_get_bucket.return_value = mock_bucket
 
-        url = await create_signed_upload_url(workspace_id, application_id, blob_name)
+        url = await create_signed_upload_url(
+            application_id=application_id,
+            blob_name=blob_name,
+            organization_id=organization_id,
+            template_id=template_id,
+            workspace_id=workspace_id,
+        )
 
         mock_bucket.blob.assert_called_once_with(expected_blob_path)
         mock_blob.generate_signed_url.assert_called_once_with(
@@ -242,10 +305,13 @@ async def test_create_signed_upload_url_with_application_id(mock_env_vars: None,
 
 
 @pytest.mark.asyncio
-async def test_create_signed_upload_url_without_application_id(mock_env_vars: None, mock_bucket: MagicMock) -> None:
+async def test_create_signed_upload_url_with_template_id(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     workspace_id = "workspace-123"
+    template_id = "template-789"
     blob_name = "test-file.pdf"
-    expected_blob_path = f"workspaces/{workspace_id}/{blob_name}"
+    application_id = None
+    organization_id = None
+    expected_blob_path = f"workspaces/{workspace_id}/grant_templates/{template_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
@@ -258,7 +324,50 @@ async def test_create_signed_upload_url_without_application_id(mock_env_vars: No
     ):
         mock_get_bucket.return_value = mock_bucket
 
-        url = await create_signed_upload_url(workspace_id, None, blob_name)
+        url = await create_signed_upload_url(
+            application_id=application_id,
+            blob_name=blob_name,
+            organization_id=organization_id,
+            template_id=template_id,
+            workspace_id=workspace_id,
+        )
+
+        mock_bucket.blob.assert_called_once_with(expected_blob_path)
+        mock_blob.generate_signed_url.assert_called_once_with(
+            version="v4",
+            expiration=ONE_MINUTE_SECONDS * 5,
+            method="PUT",
+        )
+        assert url == expected_signed_url
+
+
+@pytest.mark.asyncio
+async def test_create_signed_upload_url_with_organization_id(mock_env_vars: None, mock_bucket: MagicMock) -> None:
+    organization_id = "org-789"
+    blob_name = "test-file.pdf"
+    application_id = None
+    template_id = None
+    workspace_id = None
+    expected_blob_path = f"organizations/{organization_id}/{blob_name}"
+    expected_signed_url = "https://storage.googleapis.com/signed-url"
+
+    mock_blob = MagicMock()
+    mock_blob.generate_signed_url.return_value = expected_signed_url
+    mock_bucket.blob.return_value = mock_blob
+
+    with (
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch("packages.shared_utils.src.gcs.run_sync", side_effect=lambda f, *args: f(*args) if callable(f) else f),
+    ):
+        mock_get_bucket.return_value = mock_bucket
+
+        url = await create_signed_upload_url(
+            application_id=application_id,
+            blob_name=blob_name,
+            organization_id=organization_id,
+            template_id=template_id,
+            workspace_id=workspace_id,
+        )
 
         mock_bucket.blob.assert_called_once_with(expected_blob_path)
         mock_blob.generate_signed_url.assert_called_once_with(
@@ -274,7 +383,9 @@ async def test_create_signed_upload_url_error(mock_env_vars: None, mock_bucket: 
     workspace_id = "workspace-123"
     application_id = "app-456"
     blob_name = "test-file.pdf"
-    expected_blob_path = f"workspaces/{workspace_id}/applications/{application_id}/{blob_name}"
+    template_id = None
+    organization_id = None
+    expected_blob_path = f"workspaces/{workspace_id}/grant_applications/{application_id}/{blob_name}"
 
     mock_blob = MagicMock()
     mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
@@ -288,7 +399,13 @@ async def test_create_signed_upload_url_error(mock_env_vars: None, mock_bucket: 
     ):
         mock_get_bucket.return_value = mock_bucket
 
-        await create_signed_upload_url(workspace_id, application_id, blob_name)
+        await create_signed_upload_url(
+            application_id=application_id,
+            blob_name=blob_name,
+            organization_id=organization_id,
+            template_id=template_id,
+            workspace_id=workspace_id,
+        )
 
     assert "Failed to create signed upload URL" in str(exc_info.value)
     assert exc_info.value.context["blob_path"] == expected_blob_path
