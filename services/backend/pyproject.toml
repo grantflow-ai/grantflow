@@ -17,3 +17,8 @@ dependencies = [
   "shared-utils[ai,embeddings,gcs,nlp]",
   "uvicorn[standard]>=0.34",
 ]
+
+[dependency-groups]
+dev = [
+  "kreuzberg>=2.1.2",
+]
