@@ -12,6 +12,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationRagSource,
     RagFile,
+    RagSource,
 )
 from packages.db.src.utils import check_exists_files_being_indexed
 from packages.shared_utils.src.exceptions import ValidationError
@@ -25,13 +26,22 @@ async def test_check_exists_files_being_indexed_application_success(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                }
+            )
+        )
+
+        await session.execute(
             insert(RagFile).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }
@@ -65,13 +75,22 @@ async def test_check_exists_files_being_indexed_application_non_indexing_status(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": indexing_status,
+                }
+            )
+        )
+
+        await session.execute(
             insert(RagFile).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": indexing_status,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }
@@ -111,13 +130,22 @@ async def test_check_exists_files_being_indexed_organization_success(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                }
+            )
+        )
+
+        await session.execute(
             insert(RagFile).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }
@@ -151,13 +179,22 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": indexing_status,
+                }
+            )
+        )
+
+        await session.execute(
             insert(RagFile).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": indexing_status,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }

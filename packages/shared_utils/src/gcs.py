@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, Literal, NotRequired, TypedDict, cast
 
 from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
@@ -8,7 +8,7 @@ from google.oauth2.service_account import Credentials
 
 from packages.shared_utils.src.constants import ONE_MINUTE_SECONDS
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import ExternalOperationError
+from packages.shared_utils.src.exceptions import ExternalOperationError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
@@ -18,6 +18,13 @@ logger = get_logger(__name__)
 
 storage_client_ref = Ref[storage.Client]()
 bucket_ref = Ref[Bucket]()
+
+
+class URIParseResult(TypedDict):
+    parent_type: Literal["grant_application", "funding_organization", "grant_template"]
+    workspace_id: NotRequired[str]
+    parent_id: str
+    filename: str
 
 
 def get_credentials() -> Credentials:
@@ -84,22 +91,93 @@ def construct_object_uri(
     template_id: str | None,
     workspace_id: str | None,
 ) -> str:
+    if workspace_id and not (application_id or template_id):
+        raise ValueError("Either application_id or template_id must be provided if workspace_id is provided")
+    if (application_id or template_id) and not workspace_id:
+        raise ValueError("workspace_id must be provided if application_id or template_id is provided")
+    if not workspace_id and not organization_id:
+        raise ValueError("Either workspace_id or organization_id must be provided")
+
     components = []
     if workspace_id:
-        components.append(f"workspaces/{workspace_id}")
+        components.append(f"workspace/{workspace_id}")
 
         if application_id:
-            components.append(f"grant_applications/{application_id}")
+            components.append(f"grant_application/{application_id}")
 
-        if template_id:
-            components.append(f"grant_templates/{template_id}")
+        elif template_id:
+            components.append(f"grant_template/{template_id}")
+
+        else:
+            raise ValueError("Either application_id or template_id must be provided")
 
     else:
-        components.append(f"organizations/{organization_id}")
+        components.append(f"funding_organization/{organization_id}")
 
     components.append(blob_name)
 
     return "/".join(components)
+
+
+def parse_object_uri(
+    *,
+    object_path: str,
+) -> URIParseResult:
+    components = object_path.split("/")
+
+    if len(components) == 3:
+        parent_type, parent_id, filename = components
+
+        if parent_type != "funding_organization":
+            raise ValidationError(
+                "Invalid object path format. Expected format: funding_organization/<organization_id>/<filename>.<extension>",
+                context={
+                    "object_path": object_path,
+                },
+            )
+
+        return URIParseResult(
+            parent_type="funding_organization",
+            parent_id=components[1],
+            filename=components[2],
+        )
+    if len(components) == 5:
+        top_level, workspace_id, parent_type, parent_id, filename = components
+        if top_level != "workspace":
+            raise ValidationError(
+                "Invalid object path format. Expected format: workspace/<workspace_id>/<parent_type>/<parent_id>/<filename>.<extension>",
+                context={
+                    "object_path": object_path,
+                },
+            )
+
+        if parent_type == "grant_application":
+            return URIParseResult(
+                parent_type="grant_application",
+                workspace_id=workspace_id,
+                parent_id=parent_id,
+                filename=filename,
+            )
+        if parent_type == "grant_template":
+            return URIParseResult(
+                parent_type="grant_template",
+                workspace_id=workspace_id,
+                parent_id=parent_id,
+                filename=filename,
+            )
+        raise ValidationError(
+            "Invalid object path format. Expected format: workspace/<workspace_id>/<parent_type>/<parent_id>/<filename>.<extension>",
+            context={
+                "object_path": object_path,
+            },
+        )
+
+    raise ValidationError(
+        "Invalid object path format. Expected format: funding_organization/<organization_id>/<filename>.<extension> or workspace/<workspace_id>/<parent_type>/<parent_id>/<filename>.<extension>",
+        context={
+            "object_path": object_path,
+        },
+    )
 
 
 async def create_signed_upload_url(
