@@ -22,6 +22,12 @@ runs:
       with:
         enable-cache: true
 
+    - name: Cache and Install APT Packages
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: tesseract-ocr pandoc
+        version: 1.0
+
     - name: Install Dependencies for Target
       shell: bash
       run: uv sync --package ${{ inputs.target }} --all-extras --dev
