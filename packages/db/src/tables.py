@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pgvector.sqlalchemy import Vector
@@ -103,7 +103,7 @@ class RagSource(BaseWithUUIDPK):
         "polymorphic_on": "source_type",
     }
 
-    source_type: Mapped[str] = mapped_column(String(50))
+    source_type: Mapped[Literal["rag_file", "rag_url"]] = mapped_column(String(50))
 
 
 class RagFile(RagSource):

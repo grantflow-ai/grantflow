@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypedDict, cast
+from typing import Any, TypedDict
 from uuid import UUID
 
 from litestar import delete, get, post
@@ -11,7 +11,9 @@ from packages.db.src.tables import (
     FundingOrganizationRagSource,
     GrantApplicationRagSource,
     GrantTemplateRagSource,
+    RagFile,
     RagSource,
+    RagUrl,
 )
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import create_signed_upload_url
@@ -20,13 +22,7 @@ from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-if TYPE_CHECKING:
-    from packages.db.src.tables import (
-        RagFile,
-        RagUrl,
-    )
-
+from sqlalchemy.orm import with_polymorphic
 
 logger = get_logger(__name__)
 
@@ -57,7 +53,7 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
     def _create_operation_id(_: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]) -> str:
         if "applications" in paths:
             return key.format(value="GrantApplication")
-        if "templates" in paths:
+        if "grant_templates" in paths:
             return key.format(value="GrantTemplate")
         return key.format(value="FundingOrganization")
 
@@ -67,64 +63,64 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
 @get(
     [
         "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources",
-        "/workspaces/{workspace_id:uuid}/templates/{template_id:uuid}/sources",
+        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id=_create_operation_id_creator("Retrieve{value}RagSources"),
 )
 async def handle_retrieve_rag_sources(
-    application_id: UUID | None,
-    organization_id: UUID | None,
     session_maker: async_sessionmaker[Any],
-    template_id: UUID | None,
+    application_id: UUID | None = None,
+    organization_id: UUID | None = None,
+    template_id: UUID | None = None,
 ) -> list[RagFileResponse | RagUrlResponse]:
     async with session_maker() as session:
+        rag_poly = with_polymorphic(RagSource, [RagFile, RagUrl])
+
         if application_id:
-            statement = (
-                select(RagSource)
-                .join(GrantApplicationRagSource)
+            stmt = (
+                select(rag_poly)
+                .join(GrantApplicationRagSource, GrantApplicationRagSource.rag_source_id == rag_poly.id)
                 .where(GrantApplicationRagSource.grant_application_id == application_id)
             )
         elif template_id:
-            statement = (
-                select(RagSource)
-                .join(GrantTemplateRagSource)
+            stmt = (
+                select(rag_poly)
+                .join(GrantTemplateRagSource, GrantTemplateRagSource.rag_source_id == rag_poly.id)
                 .where(GrantTemplateRagSource.grant_template_id == template_id)
             )
         else:
-            statement = (
-                select(RagSource)
-                .join(FundingOrganizationRagSource)
+            stmt = (
+                select(rag_poly)
+                .join(FundingOrganizationRagSource, FundingOrganizationRagSource.rag_source_id == rag_poly.id)
                 .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
             )
 
-        results = await session.scalars(statement)
+        results = await session.scalars(stmt)
         ret: list[RagFileResponse | RagUrlResponse] = []
 
         for result in results:
-            if hasattr(result, "filename"):
-                rag_file = cast("RagFile", result)
+            if isinstance(result, RagFile):
                 ret.append(
                     RagFileResponse(
-                        id=str(rag_file.id),
-                        filename=rag_file.filename,
-                        size=rag_file.size,
-                        mime_type=rag_file.mime_type,
-                        indexing_status=rag_file.indexing_status,
-                        created_at=rag_file.created_at.isoformat(),
+                        id=str(result.id),
+                        filename=result.filename,
+                        size=result.size,
+                        mime_type=result.mime_type,
+                        indexing_status=result.indexing_status,
+                        created_at=result.created_at.isoformat(),
                     )
                 )
-            else:
-                rag_url = cast("RagUrl", result)
+            elif isinstance(result, RagUrl):
                 ret.append(
                     RagUrlResponse(
-                        id=str(rag_url.id),
-                        title=rag_url.title,
-                        url=rag_url.url,
-                        description=rag_url.description,
-                        indexing_status=rag_url.indexing_status,
-                        created_at=rag_url.created_at.isoformat(),
+                        id=str(result.id),
+                        title=result.title,
+                        url=result.url,
+                        description=result.description,
+                        indexing_status=result.indexing_status,
+                        created_at=result.created_at.isoformat(),
                     )
                 )
 
@@ -134,18 +130,18 @@ async def handle_retrieve_rag_sources(
 @delete(
     [
         "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
-        "/workspaces/{workspace_id:uuid}/templates/{template_id:uuid}/sources/{source_id:uuid}",
+        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id=_create_operation_id_creator("Delete{value}RagSource"),
 )
 async def handle_delete_rag_source(
-    application_id: UUID | None,
-    organization_id: UUID | None,
     session_maker: async_sessionmaker[Any],
     source_id: UUID,
-    template_id: UUID | None,
+    application_id: UUID | None = None,
+    organization_id: UUID | None = None,
+    template_id: UUID | None = None,
 ) -> None:
     async with session_maker() as session, session.begin():
         if application_id:
@@ -183,18 +179,18 @@ async def handle_delete_rag_source(
 @post(
     [
         "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
-        "/workspaces/{workspace_id:uuid}/templates/{template_id:uuid}/sources/upload-url",
+        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id=_create_operation_id_creator("Create{value}RagSourceUploadUrl"),
 )
 async def handle_create_upload_url(
-    application_id: UUID | None,
-    organization_id: UUID | None,
-    template_id: UUID | None,
-    workspace_id: UUID | None,
-    blob_name: str,  # this is a query parameter ~keep
+    blob_name: str,
+    application_id: UUID | None = None,
+    organization_id: UUID | None = None,
+    template_id: UUID | None = None,
+    workspace_id: UUID | None = None,
 ) -> UploadUrlResponse:
     url = await create_signed_upload_url(
         workspace_id=str(workspace_id) if workspace_id else None,
