@@ -66,6 +66,7 @@ lint.per-file-ignores."**/tests/**/*.*" = [
   "RUF012",
   "S",
 ]
+lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",
   "D",
@@ -77,7 +78,6 @@ lint.per-file-ignores."testing/**/*.*" = [
   "RUF012",
   "S",
 ]
-lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
 lint.isort.known-first-party = [ "src", "tests" ]
 lint.mccabe.max-complexity = 25
 lint.pydocstyle.convention = "google"

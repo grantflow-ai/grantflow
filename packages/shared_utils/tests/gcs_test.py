@@ -10,7 +10,7 @@ from google.cloud.exceptions import ClientError
 from google.cloud.storage import Bucket
 
 from packages.shared_utils.src.constants import ONE_MINUTE_SECONDS
-from packages.shared_utils.src.exceptions import ExternalOperationError
+from packages.shared_utils.src.exceptions import ExternalOperationError, ValidationError
 from packages.shared_utils.src.gcs import (
     bucket_ref,
     construct_object_uri,
@@ -19,6 +19,7 @@ from packages.shared_utils.src.gcs import (
     get_bucket,
     get_credentials,
     get_storage_client,
+    parse_object_uri,
     storage_client_ref,
     upload_blob,
 )
@@ -95,7 +96,6 @@ def test_get_storage_client(mock_env_vars: None) -> None:
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
 
-        # First call should create a new client
         client1 = get_storage_client()
         mock_client_class.assert_called_once_with(
             credentials=mock_credentials,
@@ -103,7 +103,6 @@ def test_get_storage_client(mock_env_vars: None) -> None:
         )
         assert client1 == mock_client
 
-        # Second call should return the cached client
         mock_client_class.reset_mock()
         client2 = get_storage_client()
         mock_client_class.assert_not_called()
@@ -159,11 +158,9 @@ def test_get_bucket_caches_bucket(mock_env_vars: None, mock_storage_client: Magi
     ):
         mock_get_client.return_value = mock_storage_client
 
-        # First call should get the bucket
         bucket1 = get_bucket()
         assert bucket1 == mock_bucket
 
-        # Second call should return cached bucket
         mock_storage_client.reset_mock()
         bucket2 = get_bucket()
         mock_storage_client.bucket.assert_not_called()
@@ -228,7 +225,7 @@ def test_construct_object_uri_workspace_application() -> None:
         organization_id=organization_id,
     )
 
-    assert uri == f"workspaces/{workspace_id}/grant_applications/{application_id}/{blob_name}"
+    assert uri == f"workspace/{workspace_id}/grant_application/{application_id}/{blob_name}"
 
 
 def test_construct_object_uri_workspace_template() -> None:
@@ -246,7 +243,7 @@ def test_construct_object_uri_workspace_template() -> None:
         organization_id=organization_id,
     )
 
-    assert uri == f"workspaces/{workspace_id}/grant_templates/{template_id}/{blob_name}"
+    assert uri == f"workspace/{workspace_id}/grant_template/{template_id}/{blob_name}"
 
 
 def test_construct_object_uri_organization() -> None:
@@ -264,7 +261,7 @@ def test_construct_object_uri_organization() -> None:
         organization_id=organization_id,
     )
 
-    assert uri == f"organizations/{organization_id}/{blob_name}"
+    assert uri == f"funding_organization/{organization_id}/{blob_name}"
 
 
 @pytest.mark.asyncio
@@ -274,7 +271,7 @@ async def test_create_signed_upload_url_with_application_id(mock_env_vars: None,
     blob_name = "test-file.pdf"
     template_id = None
     organization_id = None
-    expected_blob_path = f"workspaces/{workspace_id}/grant_applications/{application_id}/{blob_name}"
+    expected_blob_path = f"workspace/{workspace_id}/grant_application/{application_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
@@ -311,7 +308,7 @@ async def test_create_signed_upload_url_with_template_id(mock_env_vars: None, mo
     blob_name = "test-file.pdf"
     application_id = None
     organization_id = None
-    expected_blob_path = f"workspaces/{workspace_id}/grant_templates/{template_id}/{blob_name}"
+    expected_blob_path = f"workspace/{workspace_id}/grant_template/{template_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
@@ -348,7 +345,7 @@ async def test_create_signed_upload_url_with_organization_id(mock_env_vars: None
     application_id = None
     template_id = None
     workspace_id = None
-    expected_blob_path = f"organizations/{organization_id}/{blob_name}"
+    expected_blob_path = f"funding_organization/{organization_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
@@ -385,7 +382,7 @@ async def test_create_signed_upload_url_error(mock_env_vars: None, mock_bucket: 
     blob_name = "test-file.pdf"
     template_id = None
     organization_id = None
-    expected_blob_path = f"workspaces/{workspace_id}/grant_applications/{application_id}/{blob_name}"
+    expected_blob_path = f"workspace/{workspace_id}/grant_application/{application_id}/{blob_name}"
 
     mock_blob = MagicMock()
     mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
@@ -414,7 +411,7 @@ async def test_create_signed_upload_url_error(mock_env_vars: None, mock_bucket: 
 
 @pytest.mark.asyncio
 async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) -> None:
-    blob_path = "workspaces/workspace-123/test-file.pdf"
+    blob_path = "workspace/workspace-123/test-file.pdf"
     content = b"test content"
 
     mock_blob = MagicMock()
@@ -434,7 +431,7 @@ async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) 
 
 @pytest.mark.asyncio
 async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
-    blob_path = "workspaces/workspace-123/test-file.pdf"
+    blob_path = "workspace/workspace-123/test-file.pdf"
     content = b"test content"
 
     mock_blob = MagicMock()
@@ -454,3 +451,141 @@ async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) ->
     assert "Failed to upload blob" in str(exc_info.value)
     assert exc_info.value.context["blob_path"] == blob_path
     assert "Test error" in exc_info.value.context["error"]
+
+
+def test_parse_object_uri_funding_organization() -> None:
+    object_path = "funding_organization/org-123/test-file.pdf"
+
+    result = parse_object_uri(object_path=object_path)
+
+    assert isinstance(result, dict)
+    assert result["parent_type"] == "funding_organization"
+    assert result["parent_id"] == "org-123"
+    assert result["filename"] == "test-file.pdf"
+    assert "workspace_id" not in result
+
+
+def test_parse_object_uri_grant_application() -> None:
+    object_path = "workspace/ws-123/grant_application/app-456/test-file.pdf"
+
+    result = parse_object_uri(object_path=object_path)
+
+    assert isinstance(result, dict)
+    assert result["parent_type"] == "grant_application"
+    assert result["workspace_id"] == "ws-123"
+    assert result["parent_id"] == "app-456"
+    assert result["filename"] == "test-file.pdf"
+
+
+def test_parse_object_uri_grant_template() -> None:
+    object_path = "workspace/ws-123/grant_template/temp-789/test-file.pdf"
+
+    result = parse_object_uri(object_path=object_path)
+
+    assert isinstance(result, dict)
+    assert result["parent_type"] == "grant_template"
+    assert result["workspace_id"] == "ws-123"
+    assert result["parent_id"] == "temp-789"
+    assert result["filename"] == "test-file.pdf"
+
+
+def test_parse_object_uri_invalid_parent_type() -> None:
+    object_path = "workspace/ws-123/invalid_type/temp-789/test-file.pdf"
+
+    with pytest.raises(ValidationError) as exc_info:
+        parse_object_uri(object_path=object_path)
+
+    assert "Invalid object path format" in str(exc_info.value)
+    assert exc_info.value.context["object_path"] == object_path
+
+
+def test_parse_object_uri_invalid_top_level() -> None:
+    object_path = "invalid/ws-123/grant_template/temp-789/test-file.pdf"
+
+    with pytest.raises(ValidationError) as exc_info:
+        parse_object_uri(object_path=object_path)
+
+    assert "Invalid object path format" in str(exc_info.value)
+    assert exc_info.value.context["object_path"] == object_path
+
+
+def test_parse_object_uri_invalid_organization_type() -> None:
+    object_path = "invalid_org/org-123/test-file.pdf"
+
+    with pytest.raises(ValidationError) as exc_info:
+        parse_object_uri(object_path=object_path)
+
+    assert "Invalid object path format" in str(exc_info.value)
+    assert exc_info.value.context["object_path"] == object_path
+
+
+def test_parse_object_uri_invalid_component_count() -> None:
+    object_path = "funding_organization/org-123"
+
+    with pytest.raises(ValidationError) as exc_info:
+        parse_object_uri(object_path=object_path)
+
+    assert "Invalid object path format" in str(exc_info.value)
+    assert exc_info.value.context["object_path"] == object_path
+
+
+def test_construct_and_parse_round_trip_funding_organization() -> None:
+    organization_id = "org-123"
+    blob_name = "test-file.pdf"
+
+    uri = construct_object_uri(
+        workspace_id=None,
+        application_id=None,
+        template_id=None,
+        organization_id=organization_id,
+        blob_name=blob_name,
+    )
+
+    result = parse_object_uri(object_path=uri)
+
+    assert result["parent_type"] == "funding_organization"
+    assert result["parent_id"] == organization_id
+    assert result["filename"] == blob_name
+    assert "workspace_id" not in result
+
+
+def test_construct_and_parse_round_trip_grant_application() -> None:
+    workspace_id = "ws-123"
+    application_id = "app-456"
+    blob_name = "test-file.pdf"
+
+    uri = construct_object_uri(
+        workspace_id=workspace_id,
+        application_id=application_id,
+        template_id=None,
+        organization_id=None,
+        blob_name=blob_name,
+    )
+
+    result = parse_object_uri(object_path=uri)
+
+    assert result["parent_type"] == "grant_application"
+    assert result["parent_id"] == application_id
+    assert result["workspace_id"] == workspace_id
+    assert result["filename"] == blob_name
+
+
+def test_construct_and_parse_round_trip_grant_template() -> None:
+    workspace_id = "ws-123"
+    template_id = "temp-789"
+    blob_name = "test-file.pdf"
+
+    uri = construct_object_uri(
+        workspace_id=workspace_id,
+        application_id=None,
+        template_id=template_id,
+        organization_id=None,
+        blob_name=blob_name,
+    )
+
+    result = parse_object_uri(object_path=uri)
+
+    assert result["parent_type"] == "grant_template"
+    assert result["parent_id"] == template_id
+    assert result["workspace_id"] == workspace_id
+    assert result["filename"] == blob_name
