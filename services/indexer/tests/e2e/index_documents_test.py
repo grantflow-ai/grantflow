@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
 from packages.shared_utils.src.chunking import chunk_text
-from services.indexer.src.extraction import extract_file_content
+from packages.shared_utils.src.extraction import extract_file_content
 from services.indexer.src.indexing import index_documents
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import TEST_DATA_SOURCES

@@ -8,10 +8,10 @@ from packages.shared_utils.src.exceptions import (
     FileParsingError,
     ValidationError,
 )
-from packages.shared_utils.src.serialization import serialize
-from services.indexer.src.extraction import (
+from packages.shared_utils.src.extraction import (
     extract_file_content,
 )
+from packages.shared_utils.src.serialization import serialize
 from services.indexer.src.indexing import index_documents, logger
 from sqlalchemy import insert, update
 from sqlalchemy.exc import SQLAlchemyError

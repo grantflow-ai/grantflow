@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from services.indexer.src.extraction import extract_file_content
+from packages.shared_utils.src.extraction import extract_file_content
 from testing import TEST_DATA_SOURCES
 
 

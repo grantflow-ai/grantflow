@@ -204,7 +204,7 @@ def prepare_wizard_response(
 
 
 async def get_cfp_content(cfp_file_upload: UploadFile | None, cfp_url: str | None) -> str:
-    from services.indexer.src.extraction import extract_file_content
+    from packages.shared_utils.src.extraction import extract_file_content
 
     if cfp_file_upload:
         output, _ = await extract_file_content(

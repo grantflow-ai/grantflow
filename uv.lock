@@ -183,7 +183,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "kreuzberg" },
+    { name = "shared-utils", extra = ["ai", "chunking", "embeddings", "extraction", "gcs", "nlp"] },
 ]
 
 [package.metadata]
@@ -198,7 +198,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "kreuzberg", specifier = ">=2.1.2" }]
+dev = [{ name = "shared-utils", extras = ["ai", "chunking", "embeddings", "extraction", "gcs", "nlp"], editable = "packages/shared_utils" }]
 
 [[package]]
 name = "beautifulsoup4"
@@ -1292,16 +1292,14 @@ version = "0.1.0"
 source = { virtual = "services/indexer" }
 dependencies = [
     { name = "db" },
-    { name = "kreuzberg" },
-    { name = "shared-utils", extra = ["chunking", "embeddings", "gcs"] },
+    { name = "shared-utils", extra = ["chunking", "embeddings", "extraction", "gcs"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "db", editable = "packages/db" },
-    { name = "kreuzberg", specifier = ">=2.1.2" },
-    { name = "shared-utils", extras = ["chunking", "embeddings", "gcs"], editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["chunking", "embeddings", "extraction", "gcs"], editable = "packages/shared_utils" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
@@ -2902,6 +2900,9 @@ chunking = [
 embeddings = [
     { name = "sentence-transformers", extra = ["onnx"] },
 ]
+extraction = [
+    { name = "kreuzberg" },
+]
 gcs = [
     { name = "google-cloud-storage" },
 ]
@@ -2919,6 +2920,7 @@ requires-dist = [
     { name = "en-core-web-sm", marker = "extra == 'nlp'", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "google-cloud-aiplatform", marker = "extra == 'ai'", specifier = ">=1.85" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.19" },
+    { name = "kreuzberg", marker = "extra == 'extraction'", specifier = ">=2.1.2" },
     { name = "litestar", specifier = ">=2.15.1" },
     { name = "msgspec", specifier = ">=0.19" },
     { name = "prompt-template", marker = "extra == 'ai'", specifier = ">=1.2" },
@@ -2930,7 +2932,7 @@ requires-dist = [
     { name = "tenacity", specifier = ">=9" },
     { name = "torch", marker = "extra == 'nlp'", specifier = ">=2.2.2" },
 ]
-provides-extras = ["ai", "chunking", "embeddings", "gcs", "nlp"]
+provides-extras = ["ai", "chunking", "embeddings", "extraction", "gcs", "nlp"]
 
 [[package]]
 name = "shellingham"
