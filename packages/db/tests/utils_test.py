@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
@@ -29,7 +30,7 @@ async def test_check_exists_files_being_indexed_application_success(
             insert(RagSource).values(
                 {
                     "id": file_id,
-                    "source_type": "rag_file",
+                    "source_type": RAG_FILE,
                     "indexing_status": FileIndexingStatusEnum.INDEXING,
                 }
             )
@@ -78,7 +79,7 @@ async def test_check_exists_files_being_indexed_application_non_indexing_status(
             insert(RagSource).values(
                 {
                     "id": file_id,
-                    "source_type": "rag_file",
+                    "source_type": RAG_FILE,
                     "indexing_status": indexing_status,
                 }
             )
@@ -133,7 +134,7 @@ async def test_check_exists_files_being_indexed_organization_success(
             insert(RagSource).values(
                 {
                     "id": file_id,
-                    "source_type": "rag_file",
+                    "source_type": RAG_FILE,
                     "indexing_status": FileIndexingStatusEnum.INDEXING,
                 }
             )
@@ -182,7 +183,7 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
             insert(RagSource).values(
                 {
                     "id": file_id,
-                    "source_type": "rag_file",
+                    "source_type": RAG_FILE,
                     "indexing_status": indexing_status,
                 }
             )

@@ -25,6 +25,10 @@ class FileParsingError(BackendError):
     """Raised when an error occurs during parsing."""
 
 
+class UrlParsingError(BackendError):
+    """Raised when an error occurs during parsing."""
+
+
 class ExternalOperationError(BackendError):
     """Raised when an HTTP request to a remote system fails."""
 

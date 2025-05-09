@@ -23,7 +23,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Relationship, class_mapper, 
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.functions import now
 
-from packages.db.src.constants import EMBEDDING_DIMENSIONS
+from packages.db.src.constants import EMBEDDING_DIMENSIONS, RAG_FILE, RAG_URL
 from packages.db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
 
@@ -121,7 +121,7 @@ class RagFile(RagSource):
     )
 
     __mapper_args__ = {  # noqa: RUF012
-        "polymorphic_identity": "rag_file",
+        "polymorphic_identity": RAG_FILE,
     }
 
 
@@ -134,7 +134,7 @@ class RagUrl(RagSource):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __mapper_args__ = {  # noqa: RUF012
-        "polymorphic_identity": "rag_url",
+        "polymorphic_identity": RAG_URL,
     }
 
 

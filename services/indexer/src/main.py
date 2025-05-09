@@ -2,6 +2,7 @@ from typing import Any, Literal, TypedDict
 
 from kreuzberg._mime_types import EXT_TO_MIME_TYPE
 from litestar import post
+from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganizationRagSource,
@@ -117,6 +118,7 @@ async def handle_file_indexing(
     parent_id = message.pop("parent_id")  # type: ignore[misc]
     parent_type = message.pop("parent_type")  # type: ignore[misc]
     content = message.pop("content")  # type: ignore[misc]
+
     async with session_maker() as session, session.begin():
         try:
             source_id = await session.scalar(
@@ -126,7 +128,7 @@ async def handle_file_indexing(
                         {
                             "indexing_status": FileIndexingStatusEnum.INDEXING,
                             "text_content": "",
-                            "source_type": "rag_file",  # Set polymorphic identity ~keep
+                            "source_type": RAG_FILE,  # Set polymorphic identity ~keep
                         }
                     ]
                 )

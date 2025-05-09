@@ -9,6 +9,7 @@ import pytest
 from litestar.datastructures import UploadFile
 from litestar.exceptions import ValidationException, WebSocketDisconnect
 from litestar.testing import TestClient
+from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
@@ -88,7 +89,7 @@ async def application_with_file(
             insert(RagSource).values(
                 id=file_id,
                 indexing_status=FileIndexingStatusEnum.FINISHED,
-                source_type="rag_file",
+                source_type=RAG_FILE,
             )
         )
         await session.execute(
