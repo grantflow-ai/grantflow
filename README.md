@@ -10,6 +10,7 @@ For detailed information on specific modules, refer to their dedicated documenta
 - [Frontend Documentation](./frontend/README.md) - project structure, components, and UI development
 - [Database Package](./packages/db/README.md) - shared database models and migrations
 - [Shared Utilities](./packages/shared_utils/README.md) - common utilities used across services
+- [Architecture Diagrams](./diagrams/README.md) - system architecture and data model diagrams
 
 ## Repository Structure
 
@@ -17,6 +18,7 @@ For detailed information on specific modules, refer to their dedicated documenta
 - `/.github` - GitHub CI/CD workflows
 - `/.idea` - Shared intellij configurations
 - `/.vscode` - Shared vscode configurations
+- [`/diagrams`](./diagrams/README.md) - Architecture and data model diagrams
 - [`/services/backend`](./services/backend/README.md) - Main Python API service powered by Litestar
 - [`/services/indexer`](./services/indexer/README.md) - Document indexing and extraction service
 - [`/services/crawler`](./services/crawler/README.md) - Website crawling and document extraction service
