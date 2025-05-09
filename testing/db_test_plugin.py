@@ -12,10 +12,13 @@ from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import (
     Base,
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
+    GrantTemplateRagSource,
     RagFile,
+    RagUrl,
     Workspace,
     WorkspaceUser,
 )
@@ -25,11 +28,14 @@ from sqlalchemy import NullPool, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 from testing.factories import (
-    FileFactory,
     FundingOrganizationFactory,
+    FundingOrganizationSourceFactory,
     GrantApplicationFactory,
-    GrantApplicationFileFactory,
+    GrantApplicationSourceFactory,
     GrantTemplateFactory,
+    GrantTemplateSourceFactory,
+    RagFileFactory,
+    RagUrlFactory,
     WorkspaceFactory,
     WorkspaceUserFactory,
 )
@@ -103,12 +109,12 @@ async def async_db_engine(db_connection_string: str) -> AsyncEngine:
 
 
 @pytest.fixture(scope="session")
-async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmaker[Any]:  # noqa: ARG001
+async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmaker[Any]:
     return get_session_maker()
 
 
 @pytest.fixture(autouse=True)
-async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:  # noqa: ARG001
+async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
     await seed_db()
 
 
@@ -169,12 +175,21 @@ async def workspace_owner_user(
 
 
 @pytest.fixture
-async def file(async_session_maker: async_sessionmaker[Any]) -> RagFile:
-    file_data = FileFactory.build()
+async def rag_file(async_session_maker: async_sessionmaker[Any]) -> RagFile:
+    file_data = RagFileFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
     return file_data
+
+
+@pytest.fixture
+async def rag_url(async_session_maker: async_sessionmaker[Any]) -> RagUrl:
+    url_data = RagUrlFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(url_data)
+        await session.commit()
+    return url_data
 
 
 @pytest.fixture
@@ -184,6 +199,32 @@ async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> 
         session.add(org_data)
         await session.commit()
     return org_data
+
+
+@pytest.fixture
+async def funding_organization_file(
+    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_file: RagFile
+) -> FundingOrganizationRagSource:
+    data = FundingOrganizationSourceFactory.build(
+        funding_organization_id=funding_organization.id, rag_source_id=rag_file.id
+    )
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data
+
+
+@pytest.fixture
+async def funding_organization_url(
+    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_url: RagUrl
+) -> FundingOrganizationRagSource:
+    data = FundingOrganizationSourceFactory.build(
+        funding_organization_id=funding_organization.id, rag_source_id=rag_url.id
+    )
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data
 
 
 @pytest.fixture
@@ -199,9 +240,22 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], worksp
 
 @pytest.fixture
 async def grant_application_file(
-    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, file: RagFile
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_file: RagFile
 ) -> GrantApplicationRagSource:
-    file_data = GrantApplicationFileFactory.build(grant_application_id=grant_application.id, rag_source_id=file.id)
+    file_data = GrantApplicationSourceFactory.build(
+        grant_application_id=grant_application.id, rag_source_id=rag_file.id
+    )
+    async with async_session_maker() as session, session.begin():
+        session.add(file_data)
+        await session.commit()
+    return file_data
+
+
+@pytest.fixture
+async def grant_application_url(
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_url: RagUrl
+) -> GrantApplicationRagSource:
+    file_data = GrantApplicationSourceFactory.build(grant_application_id=grant_application.id, rag_source_id=rag_url.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -324,3 +378,25 @@ async def grant_template(
         await session.commit()
 
     return grant_template_data
+
+
+@pytest.fixture
+async def grant_template_file(
+    async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_file: RagFile
+) -> GrantTemplateRagSource:
+    data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_file.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data
+
+
+@pytest.fixture
+async def grant_template_url(
+    async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_url: RagUrl
+) -> GrantTemplateRagSource:
+    data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_url.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data
