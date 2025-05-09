@@ -1,4 +1,4 @@
-name: Backend CI
+name: Backend Service CI
 
 on:
   pull_request:
@@ -26,4 +26,4 @@ jobs:
       - name: Run Tests
         uses: ./.github/actions/run-python-tests
         with:
-            target: ./services/backend
+            target: backend

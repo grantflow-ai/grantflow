@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { FileContainer } from "./file-container";
-import { createUploadUrl } from "@/actions/application-files";
 import { mockToast } from "::testing/global-mocks";
 import userEvent from "@testing-library/user-event";
+import { createApplicationSourceUploadUrl } from "@/actions/sources";
 
-vi.mock("@/actions/application-files", () => ({
-	createUploadUrl: vi.fn(),
-	deleteApplicationFile: vi.fn(),
+vi.mock("@/actions/sources", () => ({
+	createApplicationSourceUploadUrl: vi.fn(),
+	deleteApplicationSource: vi.fn(),
 }));
 
 globalThis.fetch = vi.fn();
@@ -18,7 +18,7 @@ describe("FileContainer", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		vi.mocked(createUploadUrl).mockResolvedValue({
+		vi.mocked(createApplicationSourceUploadUrl).mockResolvedValue({
 			url: "https://example.com/upload",
 		});
 
@@ -77,7 +77,11 @@ describe("FileContainer", () => {
 		await user.upload(input, file);
 
 		await waitFor(() => {
-			expect(createUploadUrl).toHaveBeenCalledWith(mockWorkspaceId, mockApplicationId, "test.pdf");
+			expect(createApplicationSourceUploadUrl).toHaveBeenCalledWith(
+				mockWorkspaceId,
+				mockApplicationId,
+				"test.pdf",
+			);
 		});
 
 		await waitFor(() => {

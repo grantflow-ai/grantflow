@@ -1,43 +1,34 @@
+from dataclasses import asdict, is_dataclass
 from enum import Enum
-from functools import partial
-from inspect import isclass
 from json import JSONDecodeError, loads
 from typing import Any
 
 from msgspec import MsgspecError
 from msgspec.json import decode, encode
-from pydantic import BaseModel
 
 from packages.shared_utils.src.exceptions import DeserializationError, SerializationError
 
 
-def decode_hook(target: Any, value: dict[str, Any]) -> Any:
-    if isclass(target) and issubclass(target, BaseModel):
-        return target(**value)
-
-    raise TypeError(f"Unsupported type: {type(target)!r}")
-
-
 def encode_hook(obj: Any) -> Any:
-    if isinstance(obj, BaseModel):
-        return {k: v if not isinstance(v, Enum) else v.value for (k, v) in obj.model_dump().items()}
-
     if callable(obj):
         return None
 
     if isinstance(obj, Exception):
         return {"message": str(obj), "type": type(obj).__name__}
 
-    for key in ("to_dict", "asdict", "as_dict", "model_dump", "json", "to_list", "tolist"):
+    for key in ("to_dict", "as_dict", "dict", "model_dump", "json", "to_list", "tolist"):
         if hasattr(obj, key) and callable(getattr(obj, key)):
             return getattr(obj, key)()
+
+    if is_dataclass(obj):
+        return {k: v if not isinstance(v, Enum) else v.value for (k, v) in asdict(obj).items()}  # type: ignore[arg-type]
 
     raise TypeError(f"Unsupported type: {type(obj)!r}")
 
 
 def deserialize[T](value: str | bytes, target_type: type[T]) -> T:
     try:
-        return decode(value, type=target_type, dec_hook=decode_hook, strict=False)
+        return decode(value, type=target_type, strict=False)
     except MsgspecError as e:
         raise DeserializationError(
             str(e),
@@ -63,10 +54,6 @@ def serialize(value: Any, **kwargs: Any) -> bytes:
                 "value_type": type(value).__name__,
             },
         ) from e
-
-
-decoder = partial(decode, dec_hook=decode_hook)
-encoder = partial(encode, enc_hook=encode_hook)
 
 
 def fix_string_json_values(input_data: dict[str, Any] | list[Any]) -> dict[str, Any] | list[Any]:

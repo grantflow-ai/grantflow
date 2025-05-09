@@ -3,8 +3,8 @@ from os import environ
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
-from services.indexer.src.files import parse_and_index_file
+from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, TextVector
+from services.indexer.src.processing import process_source
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
@@ -21,15 +21,15 @@ async def test_parse_application_file(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationFile,
+    grant_application_file: GrantApplicationRagSource,
 ) -> None:
     logger.info("Running end-to-end test for parse_and_index_file")
 
-    await parse_and_index_file(
+    await process_source(
         content=SMALL_PDF_TEST_FILE.read_bytes(),
         filename="test.pdf",
         mime_type="application/pdf",
-        file_id=str(grant_application_file.rag_source_id),
+        source_id=str(grant_application_file.rag_source_id),
     )
 
     async with async_session_maker() as session:

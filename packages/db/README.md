@@ -49,6 +49,8 @@ The database schema includes the following primary models:
 5. **RagFile**: Files indexed for RAG operations
 6. **GrantApplicationFile**: Mapping between applications and files
 
+For a visual representation of the database schema and entity relationships, see the [Data Model Diagram](../../diagrams/db/data-model.md).
+
 ## Database Migrations
 
 Database migrations are handled through Alembic:

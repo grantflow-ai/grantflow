@@ -33,7 +33,7 @@ async def create_vector_dto(
 async def index_documents(
     *,
     chunks: list[Chunk],
-    file_id: str,
+    source_id: str,
 ) -> list[VectorDTO]:
     data: list[VectorDTO] = []
     for i in range(0, len(chunks), CHUNKS_BATCH_SIZE):
@@ -41,7 +41,7 @@ async def index_documents(
             *[
                 create_vector_dto(
                     chunk=chunk,
-                    rag_source_id=file_id,
+                    rag_source_id=source_id,
                 )
                 for chunk in chunks[i : i + CHUNKS_BATCH_SIZE]
             ]
