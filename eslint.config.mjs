@@ -14,6 +14,8 @@ import globals from "globals";
 import eslintTS from "typescript-eslint";
 import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
 import eslintPluginTailwind from "eslint-plugin-tailwindcss";
+import eslintPluginImportX from "eslint-plugin-import-x";
+import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,6 +39,8 @@ export default [
 	...eslintPluginTailwind.configs["flat/recommended"],
 	...compat.extends("plugin:react-hooks/recommended"),
 	...compat.extends("plugin:@next/next/core-web-vitals"),
+	eslintPluginImportX.flatConfigs.recommended,
+	eslintPluginImportX.flatConfigs.typescript,
 	{
 		ignores: ["!.storybook"],
 		languageOptions: {
@@ -47,7 +51,8 @@ export default [
 			},
 			parserOptions: {
 				ecmaFeatures: { jsx: true },
-				ecmaVersion: 2025,
+				ecmaVersion: "latest",
+				sourceType: "module",
 				parser: "@typescript-eslint/parser",
 				project: ["./frontend/tsconfig.json"],
 				tsconfigRootDir: path.resolve(__dirname),
@@ -126,11 +131,18 @@ export default [
 			"unicorn/prefer-string-raw": "off",
 			"unicorn/prevent-abbreviations": "off",
 			"unused-imports/no-unused-imports": "error",
+			"import-x/no-named-as-default-member": "off",
 		},
 		settings: {
-			react: {
+			"react": {
 				version: "detect",
 			},
+			"import-x/resolver-next": [
+				createTypeScriptImportResolver({
+					alwaysTryTypes: true,
+					project: ["./frontend/tsconfig.json"],
+				}),
+			],
 		},
 	},
 	{
