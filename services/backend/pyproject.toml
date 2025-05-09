@@ -20,5 +20,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "kreuzberg>=2.1.2",
+  "shared-utils[ai,chunking,embeddings,extraction,gcs,nlp]",
 ]

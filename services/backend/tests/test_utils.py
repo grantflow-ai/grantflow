@@ -17,9 +17,9 @@ from packages.db.src.tables import (
     TextVector,
     Workspace,
 )
+from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.serialization import deserialize, serialize
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from services.indexer.src.extraction import extract_file_content
 from services.indexer.src.processing import process_source
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
