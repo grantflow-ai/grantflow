@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantApplication, GrantApplicationFile
+from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
 from packages.shared_utils.src.chunking import chunk_text
-from services.indexer.src.extraction import extract_file_content
+from packages.shared_utils.src.extraction import extract_file_content
 from services.indexer.src.indexing import index_documents
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import TEST_DATA_SOURCES
@@ -22,7 +22,7 @@ async def test_index_documents(
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationFile,
+    grant_application_file: GrantApplicationRagSource,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings from %s", data_file.name)
 
@@ -40,7 +40,7 @@ async def test_index_documents(
 
     vector_dtos = await index_documents(
         chunks=chunks,
-        file_id=str(grant_application_file.rag_source_id),
+        source_id=str(grant_application_file.rag_source_id),
     )
 
     assert len(vector_dtos) > 0, f"No vectors generated for {data_file.name}"

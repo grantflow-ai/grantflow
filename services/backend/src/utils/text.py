@@ -1,18 +1,11 @@
-import math
-from functools import lru_cache
 from re import compile as re_compile
-from typing import Final
 
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
-from services.backend.src.utils.ai import get_google_ai_client
-from services.backend.src.utils.nlp import get_spacy_model, get_word_count
+from packages.shared_utils.src.nlp import get_spacy_model
 
 
 def count_words(text: str) -> int:
     return len(text.split())
 
-
-CHARS_PER_TOKEN: Final[float] = 4.0
 
 SINGLE_QUOTE_PATTERN = re_compile(r"[\u2018\u2019]")
 DOUBLE_QUOTE_PATTERN = re_compile(r"[\u201C\u201D\u201F]")
@@ -146,48 +139,6 @@ def _finalize_normalized_lines(normalized_lines: list[str]) -> str:
     while result and not result[-1]:
         result.pop()
     return "\n".join(result)
-
-
-@lru_cache(maxsize=1000)
-def estimate_token_count(text: str) -> int:
-    """Estimate token count without making an API call.
-
-    This uses character count and word count to approximate token count.
-    It's less accurate than the API but doesn't count against rate limits.
-    """
-    if not text:
-        return 0
-
-    if len(text) < 100:
-        return math.ceil(len(text) / CHARS_PER_TOKEN)
-
-    word_count = get_word_count(text)
-    char_count = len(text)
-
-    char_tokens = char_count / CHARS_PER_TOKEN
-    word_tokens = word_count * 1.3
-
-    return math.ceil((char_tokens + word_tokens) / 2)
-
-
-async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
-    """Count the number of tokens in a text string.
-
-    Uses a fast local estimation for Anthropic models to avoid rate limits.
-    Uses Google AI client for other models.
-    """
-    if not text:
-        return 0
-
-    if ANTHROPIC_SONNET_MODEL in model:
-        return estimate_token_count(text)
-
-    try:
-        client = get_google_ai_client(prompt_identifier="", system_instructions="", model=model)
-        response = client.count_tokens(text)
-        return int(response.total_tokens)
-    except (ValueError, KeyError, AttributeError):
-        return estimate_token_count(text)
 
 
 def concat_extracted_cfp_content(extracted_result_content: list[str]) -> str:

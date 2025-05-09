@@ -39,6 +39,6 @@ runs:
         push: true
         context: ${{ github.workspace }}
         file: services/${{ inputs.service-name }}/Dockerfile
-        cache-from: type=registry,ref=us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:buildcache
-        cache-to: type=registry,ref=us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:buildcache,mode=max
-        tags: us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:latest,us-east1-docker-docker.pkg.dev/grantflow/${{ inputs.service-name }}:${{ inputs.image-tag }}
+        cache-from: type=registry,ref=us-east1-docker-docker.pkg.dev/grantflow/grantflow/${{ inputs.service-name }}:buildcache
+        cache-to: type=registry,ref=us-east1-docker-docker.pkg.dev/grantflow/grantflow/$${{ inputs.service-name }}:buildcache,mode=max
+        tags: us-east1-docker-docker.pkg.dev/grantflow/grantflow/$${{ inputs.service-name }}:latest,us-east1-docker-docker.pkg.dev/grantflow/grantflow/$${{ inputs.service-name }}:${{ inputs.image-tag }}

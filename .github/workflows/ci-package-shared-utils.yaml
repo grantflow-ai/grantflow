@@ -1,4 +1,4 @@
-name: Backend CI
+name: Shared Utils Package CI
 
 on:
   pull_request:
@@ -24,4 +24,4 @@ jobs:
       - name: Run Tests
         uses: ./.github/actions/run-python-tests
         with:
-            target: ./packages/shared_utils
+            target: shared_utils

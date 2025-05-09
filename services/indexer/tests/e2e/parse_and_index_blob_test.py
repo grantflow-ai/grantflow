@@ -4,9 +4,9 @@ from typing import Any
 
 import pytest
 from google.cloud import storage
-from packages.db.src.tables import GrantApplication, GrantApplicationFile, TextVector
+from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, TextVector
 from packages.shared_utils.src.gcs import download_blob
-from services.indexer.src.files import parse_and_index_file
+from services.indexer.src.processing import process_source
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
@@ -23,7 +23,7 @@ async def test_parse_and_index_blob(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationFile,
+    grant_application_file: GrantApplicationRagSource,
     storage_bucket: storage.Bucket,
 ) -> None:
     logger.info("Running end-to-end test for parse_and_index_blob")
@@ -32,11 +32,11 @@ async def test_parse_and_index_blob(
     blob.upload_from_filename(str(SMALL_PDF_TEST_FILE))
 
     content = await download_blob(FILENAME)
-    await parse_and_index_file(
+    await process_source(
         content=content,
         filename=FILENAME,
         mime_type="application/pdf",
-        file_id=str(grant_application_file.rag_source_id),
+        source_id=str(grant_application_file.rag_source_id),
     )
 
     async with async_session_maker() as session:

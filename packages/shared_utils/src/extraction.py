@@ -1,4 +1,5 @@
 from kreuzberg import KreuzbergError, extract_bytes
+
 from packages.shared_utils.src.exceptions import FileParsingError
 from packages.shared_utils.src.logger import get_logger
 

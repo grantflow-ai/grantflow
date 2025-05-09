@@ -1,11 +1,12 @@
 from pathlib import Path
 
 import pytest
+from testing import TEST_DATA_SOURCES
+
 from packages.shared_utils.src.exceptions import FileParsingError
-from services.indexer.src.extraction import (
+from packages.shared_utils.src.extraction import (
     extract_file_content,
 )
-from testing import TEST_DATA_SOURCES
 
 
 async def test_extract_plain_text() -> None:

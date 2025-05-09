@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pgvector.sqlalchemy import Vector
@@ -100,15 +100,14 @@ class RagSource(BaseWithUUIDPK):
 
     __mapper_args__ = {  # noqa: RUF012
         "polymorphic_identity": "rag_source",
-        "polymorphic_on": "type",
+        "polymorphic_on": "source_type",
     }
 
-    type: Mapped[str] = mapped_column(String(50))
+    source_type: Mapped[Literal["rag_file", "rag_url"]] = mapped_column(String(50))
 
 
 class RagFile(RagSource):
     __tablename__ = "rag_files"
-
     id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True)
     bucket_name: Mapped[str] = mapped_column(String(255))
     object_path: Mapped[str] = mapped_column(String(255))
@@ -168,42 +167,27 @@ class FundingOrganization(BaseWithUUIDPK):
     grant_templates: Relationship[list["GrantTemplate"]] = relationship(
         "GrantTemplate", back_populates="funding_organization"
     )
-    files: Relationship[list["OrganizationFile"]] = relationship(
-        "OrganizationFile", back_populates="funding_organization", cascade="all, delete-orphan"
-    )
-    urls: Relationship[list["OrganizationUrl"]] = relationship(
-        "OrganizationUrl", back_populates="funding_organization", cascade="all, delete-orphan"
+    rag_sources: Relationship[list["FundingOrganizationRagSource"]] = relationship(
+        "FundingOrganizationRagSource",
+        back_populates="funding_organization",
+        cascade="all, delete-orphan",
     )
 
 
-class OrganizationFile(Base):
-    __tablename__ = "organization_files"
+class FundingOrganizationRagSource(Base):
+    __tablename__ = "funding_organization_rag_sources"
 
     rag_source_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
+        SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True
     )
     funding_organization_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), primary_key=True
     )
 
-    rag_file: Relationship["RagFile"] = relationship("RagFile")
     funding_organization: Relationship["FundingOrganization"] = relationship(
-        "FundingOrganization", back_populates="files"
+        "FundingOrganization", back_populates="rag_sources"
     )
-
-
-class OrganizationUrl(Base):
-    __tablename__ = "organization_urls"
-
-    rag_url_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_urls.id", ondelete="CASCADE"), primary_key=True)
-    funding_organization_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("funding_organizations.id", ondelete="CASCADE"), primary_key=True
-    )
-
-    rag_url: Relationship["RagUrl"] = relationship("RagUrl")
-    funding_organization: Relationship["FundingOrganization"] = relationship(
-        "FundingOrganization", back_populates="urls"
-    )
+    rag_source: Relationship["RagSource"] = relationship("RagSource")
 
 
 class GrantApplication(BaseWithUUIDPK):
@@ -220,11 +204,8 @@ class GrantApplication(BaseWithUUIDPK):
 
     workspace_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
 
-    files: Relationship[list["GrantApplicationFile"]] = relationship(
-        "GrantApplicationFile", back_populates="grant_application", cascade="all, delete-orphan"
-    )
-    urls: Relationship[list["GrantApplicationUrl"]] = relationship(
-        "GrantApplicationUrl", back_populates="grant_application", cascade="all, delete-orphan"
+    rag_sources: Relationship[list["GrantApplicationRagSource"]] = relationship(
+        "GrantApplicationRagSource", back_populates="grant_application", cascade="all, delete-orphan"
     )
     grant_template: Relationship["GrantTemplate | None"] = relationship(
         "GrantTemplate", back_populates="grant_application", cascade="all, delete-orphan", uselist=False
@@ -232,30 +213,18 @@ class GrantApplication(BaseWithUUIDPK):
     workspace: Relationship[Workspace] = relationship("Workspace", back_populates="grant_applications")
 
 
-class GrantApplicationFile(Base):
-    __tablename__ = "grant_application_files"
+class GrantApplicationRagSource(Base):
+    __tablename__ = "grant_application_rag_sources"
 
+    grant_application_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True
+    )
     rag_source_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
-    )
-    grant_application_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True, server_default=None
+        SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True
     )
 
-    rag_file: Relationship[RagFile] = relationship("RagFile")
-    grant_application: Relationship[GrantApplication] = relationship("GrantApplication", back_populates="files")
-
-
-class GrantApplicationUrl(Base):
-    __tablename__ = "grant_application_urls"
-
-    rag_url_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_urls.id", ondelete="CASCADE"), primary_key=True)
-    grant_application_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), primary_key=True, server_default=None
-    )
-
-    rag_url: Relationship[RagUrl] = relationship("RagUrl")
-    grant_application: Relationship[GrantApplication] = relationship("GrantApplication", back_populates="urls")
+    grant_application: Relationship["GrantApplication"] = relationship("GrantApplication", back_populates="rag_sources")
+    rag_source: Relationship["RagSource"] = relationship("RagSource")
 
 
 class GrantTemplate(BaseWithUUIDPK):
@@ -278,35 +247,20 @@ class GrantTemplate(BaseWithUUIDPK):
     funding_organization: Relationship[FundingOrganization | None] = relationship(
         "FundingOrganization", back_populates="grant_templates"
     )
-    files: Relationship[list["GrantTemplateFile"]] = relationship(
-        "GrantTemplateFile", back_populates="grant_template", cascade="all, delete-orphan"
-    )
-    urls: Relationship[list["GrantTemplateUrl"]] = relationship(
-        "GrantTemplateUrl", back_populates="grant_template", cascade="all, delete-orphan"
+    files: Relationship[list["GrantTemplateRagSource"]] = relationship(
+        "GrantTemplateRagSource", back_populates="grant_template", cascade="all, delete-orphan"
     )
 
 
-class GrantTemplateFile(Base):
-    __tablename__ = "grant_template_files"
+class GrantTemplateRagSource(Base):
+    __tablename__ = "grant_template_rag_sources"
 
     rag_source_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("rag_files.id", ondelete="CASCADE"), primary_key=True
+        SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True
     )
     grant_template_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), primary_key=True
     )
 
-    rag_file: Relationship["RagFile"] = relationship("RagFile")
     grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="files")
-
-
-class GrantTemplateUrl(Base):
-    __tablename__ = "grant_template_urls"
-
-    rag_url_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_urls.id", ondelete="CASCADE"), primary_key=True)
-    grant_template_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), primary_key=True
-    )
-
-    rag_url: Relationship["RagUrl"] = relationship("RagUrl")
-    grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="urls")
+    rag_source: Relationship["RagSource"] = relationship("RagSource")

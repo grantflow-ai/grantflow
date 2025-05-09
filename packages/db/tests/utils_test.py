@@ -8,10 +8,11 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationFile,
-    OrganizationFile,
+    GrantApplicationRagSource,
     RagFile,
+    RagSource,
 )
 from packages.db.src.utils import check_exists_files_being_indexed
 from packages.shared_utils.src.exceptions import ValidationError
@@ -20,10 +21,20 @@ from packages.shared_utils.src.exceptions import ValidationError
 async def test_check_exists_files_being_indexed_application_success(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationFile,
+    grant_application_file: GrantApplicationRagSource,
 ) -> None:
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                }
+            )
+        )
+
         await session.execute(
             insert(RagFile).values(
                 {
@@ -31,14 +42,13 @@ async def test_check_exists_files_being_indexed_application_success(
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }
             )
         )
         await session.execute(
-            insert(GrantApplicationFile).values(
+            insert(GrantApplicationRagSource).values(
                 {
                     "grant_application_id": grant_application.id,
                     "rag_source_id": file_id,
@@ -65,20 +75,29 @@ async def test_check_exists_files_being_indexed_application_non_indexing_status(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": indexing_status,
+                }
+            )
+        )
+
+        await session.execute(
             insert(RagFile).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": indexing_status,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }
             )
         )
         await session.execute(
-            insert(GrantApplicationFile).values(
+            insert(GrantApplicationRagSource).values(
                 {
                     "grant_application_id": grant_application.id,
                     "rag_source_id": file_id,
@@ -111,20 +130,29 @@ async def test_check_exists_files_being_indexed_organization_success(
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                }
+            )
+        )
+
+        await session.execute(
             insert(RagFile).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }
             )
         )
         await session.execute(
-            insert(OrganizationFile).values(
+            insert(FundingOrganizationRagSource).values(
                 {
                     "funding_organization_id": funding_organization.id,
                     "rag_source_id": file_id,
@@ -151,20 +179,29 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": "rag_file",
+                    "indexing_status": indexing_status,
+                }
+            )
+        )
+
+        await session.execute(
             insert(RagFile).values(
                 {
                     "id": file_id,
                     "filename": "test.txt",
                     "mime_type": "text/plain",
                     "size": 100,
-                    "indexing_status": indexing_status,
                     "bucket_name": "test-bucket",
                     "object_path": "test-file-path",
                 }
             )
         )
         await session.execute(
-            insert(OrganizationFile).values(
+            insert(FundingOrganizationRagSource).values(
                 {
                     "funding_organization_id": funding_organization.id,
                     "rag_source_id": file_id,

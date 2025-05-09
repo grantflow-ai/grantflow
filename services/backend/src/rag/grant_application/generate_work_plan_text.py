@@ -1,8 +1,9 @@
 from typing import Any, Final
 
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, MIN_WORDS_RATIO
+from services.backend.src.constants import MIN_WORDS_RATIO
 from services.backend.src.rag.grant_application.dto import ResearchComponentGenerationDTO
 from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.backend.src.rag.long_form import generate_long_form_text
