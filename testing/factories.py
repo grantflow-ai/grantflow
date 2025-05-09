@@ -3,7 +3,7 @@ from typing import Any, cast
 
 from faker import Faker
 from numpy.random import default_rng
-from packages.db.src.constants import EMBEDDING_DIMENSIONS
+from packages.db.src.constants import EMBEDDING_DIMENSIONS, RAG_FILE, RAG_URL
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     FundingOrganization,
@@ -67,17 +67,17 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
 
 class RagFileFactory(SQLAlchemyFactory[RagFile]):
     __model__ = RagFile
-    source_type = "rag_file"
+    source_type = RAG_FILE
 
 
 class RagUrlFactory(SQLAlchemyFactory[RagUrl]):
     __model__ = RagUrl
-    source_type = "rag_url"
+    source_type = RAG_URL
 
 
 class GrantTemplateSourceFactory(SQLAlchemyFactory[GrantTemplateRagSource]):
     __model__ = GrantTemplateRagSource
-    source_type = choice(["rag_file", "rag_url"])
+    source_type = choice([RAG_FILE, RAG_URL])
 
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
@@ -97,7 +97,7 @@ class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
 
 class FundingOrganizationSourceFactory(SQLAlchemyFactory[FundingOrganizationRagSource]):
     __model__ = FundingOrganizationRagSource
-    source_type = choice(["rag_file", "rag_url"])
+    source_type = choice([RAG_FILE, RAG_URL])
 
 
 class WorkspaceFactory(SQLAlchemyFactory[Workspace]):
@@ -114,7 +114,7 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
 
 class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationRagSource]):
     __model__ = GrantApplicationRagSource
-    source_type = choice(["rag_file", "rag_url"])
+    source_type = choice([RAG_FILE, RAG_URL])
 
 
 class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
