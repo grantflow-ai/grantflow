@@ -13,7 +13,7 @@ from packages.db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
-    GrantApplicationFile,
+    GrantApplicationRagSource,
     GrantTemplate,
     RagFile,
     RagSource,
@@ -88,7 +88,7 @@ async def application_with_file(
             insert(RagSource).values(
                 id=file_id,
                 indexing_status=FileIndexingStatusEnum.FINISHED,
-                type="rag_file",
+                source_type="rag_file",
             )
         )
         await session.execute(
@@ -103,7 +103,7 @@ async def application_with_file(
         )
 
         await session.execute(
-            insert(GrantApplicationFile).values(
+            insert(GrantApplicationRagSource).values(
                 rag_source_id=file_id,
                 grant_application_id=application.id,
             )

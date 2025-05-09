@@ -11,8 +11,8 @@ from packages.db.src.tables import (
     FundingOrganization,
     Workspace,
 )
+from packages.shared_utils.src.ai import init_ref
 from pytest_mock import MockerFixture
-from services.backend.src.utils.ai import init_ref
 from services.backend.src.utils.firebase import firebase_app_ref
 from services.backend.src.utils.jwt import create_jwt
 from services.backend.tests.test_utils import (
@@ -67,8 +67,8 @@ async def test_client(
 
     with (
         patch("services.backend.src.api.main.before_server_start"),
-        patch("services.backend.src.utils.ai.get_vertex_credentials", return_value=Mock()),
-        patch("services.backend.src.utils.ai.init", return_value=None),
+        patch("packages.shared_utils.src.ai.get_vertex_credentials", return_value=Mock()),
+        patch("packages.shared_utils.src.ai.init", return_value=None),
         patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
         patch("jwt.decode", return_value={"sub": firebase_uid}),
         patch("services.backend.src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),

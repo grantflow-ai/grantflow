@@ -1,8 +1,8 @@
 from typing import Any, Final, TypedDict
 
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
 from services.backend.src.rag.completion import handle_completions_request
 from services.backend.src.utils.prompt_template import PromptTemplate
 

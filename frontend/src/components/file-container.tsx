@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FileUploader } from "./file-uploader";
 import { FilesDisplay } from "./files-display";
-import { createUploadUrl, deleteApplicationFile } from "@/actions/application-files";
+import { createApplicationSourceUploadUrl, deleteApplicationSource } from "@/actions/sources";
 import { API } from "@/types/api-types";
 
 interface FileContainerProps {
 	applicationId: string;
-	initialFiles?: API.ListApplicationFiles.Http200.ResponseBody;
+	initialFiles?: Extract<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[number], { filename: string }>[];
 	maxFileCount?: number;
 	workspaceId: string;
 }
@@ -47,7 +47,7 @@ export function FileContainer({
 
 	const handleUploadFile = useCallback(
 		async (file: File) => {
-			const { url } = await createUploadUrl(workspaceId, applicationId, file.name);
+			const { url } = await createApplicationSourceUploadUrl(workspaceId, applicationId, file.name);
 
 			const uploadResponse = await fetch(url, {
 				body: file,
@@ -93,7 +93,7 @@ export function FileContainer({
 				}
 
 				if (file.id) {
-					await deleteApplicationFile(workspaceId, applicationId, file.id);
+					await deleteApplicationSource(workspaceId, applicationId, file.id);
 				}
 
 				setUploadedFiles((prev) => prev.filter((f) => f.name !== fileToRemove.name));

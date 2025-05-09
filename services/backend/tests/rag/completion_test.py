@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from anthropic.types import ToolUseBlock
 from google.cloud.exceptions import TooManyRequests
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from pytest_mock import MockerFixture
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL
 from services.backend.src.rag.completion import (
     BestResponseSelection,
     handle_completions_request,

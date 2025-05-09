@@ -4,9 +4,9 @@ from json import dumps
 from textwrap import dedent
 from typing import Any, Final, TypedDict, cast
 
+from packages.shared_utils.src.ai import EVALUATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.constants import EVALUATION_MODEL
 from services.backend.src.rag.completion import make_google_completions_request
 from services.backend.src.utils.prompt_template import PromptTemplate
 

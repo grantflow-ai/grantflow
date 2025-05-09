@@ -10,7 +10,6 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 
 dependencies = [
   "db",
-  "kreuzberg>=2.1.2",
-  "shared-utils[chunking,embeddings,gcs]",
+  "shared-utils[chunking,embeddings,extraction,gcs]",
   "uvicorn[standard]>=0.34",
 ]

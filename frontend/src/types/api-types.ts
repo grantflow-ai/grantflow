@@ -1,4 +1,78 @@
 export namespace API {
+	export namespace CreateFundingOrganizationRagSourceUploadUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				url: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			organization_id: null | string;
+		}
+
+		export interface QueryParameters {
+			blob_name: string;
+		}
+	}
+
+	export namespace CreateGrantApplicationRagSourceUploadUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				url: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: null | string;
+			workspace_id: null | string;
+		}
+
+		export interface QueryParameters {
+			blob_name: string;
+		}
+	}
+
+	export namespace CreateGrantTemplateRagSourceUploadUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				url: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			template_id: null | string;
+			workspace_id: null | string;
+		}
+
+		export interface QueryParameters {
+			blob_name: string;
+		}
+	}
+
 	export namespace CreateOrganization {
 		export namespace Http201 {
 			export type ResponseBody = {
@@ -20,31 +94,6 @@ export namespace API {
 			abbreviation: null | string;
 			full_name: string;
 		};
-	}
-
-	export namespace CreateUploadUrl {
-		export namespace Http201 {
-			export type ResponseBody = {
-				url: string;
-			};
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			application_id: string;
-			workspace_id: string;
-		}
-
-		export interface QueryParameters {
-			blob_name: string;
-		}
 	}
 
 	export namespace CreateWorkspace {
@@ -88,7 +137,7 @@ export namespace API {
 		}
 	}
 
-	export namespace DeleteApplicationFile {
+	export namespace DeleteFundingOrganizationRagSource {
 		export namespace Http204 {
 			export type ResponseBody = undefined;
 		}
@@ -102,8 +151,47 @@ export namespace API {
 		}
 
 		export interface PathParameters {
-			application_id: string;
-			file_id: string;
+			organization_id: null | string;
+			source_id: string;
+		}
+	}
+
+	export namespace DeleteGrantApplicationRagSource {
+		export namespace Http204 {
+			export type ResponseBody = undefined;
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: null | string;
+			source_id: string;
+			workspace_id: string;
+		}
+	}
+
+	export namespace DeleteGrantTemplateRagSource {
+		export namespace Http204 {
+			export type ResponseBody = undefined;
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			source_id: string;
+			template_id: null | string;
 			workspace_id: string;
 		}
 	}
@@ -122,25 +210,6 @@ export namespace API {
 		}
 
 		export interface PathParameters {
-			organization_id: string;
-		}
-	}
-
-	export namespace DeleteOrganizationFile {
-		export namespace Http204 {
-			export type ResponseBody = undefined;
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			file_id: string;
 			organization_id: string;
 		}
 	}
@@ -218,57 +287,6 @@ export namespace API {
 		}
 	}
 
-	export namespace ListApplicationFiles {
-		export namespace Http200 {
-			export type ResponseBody = {
-				created_at: string;
-				filename: string;
-				id: string;
-				indexing_status: "FAILED" | "FINISHED" | "INDEXING";
-				mime_type: string;
-				size: number;
-			}[];
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			application_id: string;
-			workspace_id: string;
-		}
-	}
-
-	export namespace ListOrganizationFiles {
-		export namespace Http200 {
-			export type ResponseBody = {
-				created_at: string;
-				filename: string;
-				id: string;
-				indexing_status: "FAILED" | "FINISHED" | "INDEXING";
-				mime_type: string;
-				size: number;
-			}[];
-		}
-
-		export namespace Http400 {
-			export type ResponseBody = {
-				detail: string;
-				extra?: Record<string, unknown> | null | unknown[];
-				status_code: number;
-			};
-		}
-
-		export interface PathParameters {
-			organization_id: string;
-		}
-	}
-
 	export namespace ListOrganizations {
 		export namespace Http200 {
 			export type ResponseBody = {
@@ -309,6 +327,113 @@ export namespace API {
 		export type RequestBody = {
 			id_token: string;
 		};
+	}
+
+	export namespace RetrieveFundingOrganizationRagSources {
+		export namespace Http200 {
+			export type ResponseBody = (
+				| {
+						created_at: string;
+						description: null | string;
+						id: string;
+						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						title: null | string;
+						url: string;
+				  }
+				| {
+						created_at: string;
+						filename: string;
+						id: string;
+						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						mime_type: string;
+						size: number;
+				  }
+			)[];
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			organization_id: null | string;
+		}
+	}
+
+	export namespace RetrieveGrantApplicationRagSources {
+		export namespace Http200 {
+			export type ResponseBody = (
+				| {
+						created_at: string;
+						description: null | string;
+						id: string;
+						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						title: null | string;
+						url: string;
+				  }
+				| {
+						created_at: string;
+						filename: string;
+						id: string;
+						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						mime_type: string;
+						size: number;
+				  }
+			)[];
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: null | string;
+			workspace_id: string;
+		}
+	}
+
+	export namespace RetrieveGrantTemplateRagSources {
+		export namespace Http200 {
+			export type ResponseBody = (
+				| {
+						created_at: string;
+						description: null | string;
+						id: string;
+						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						title: null | string;
+						url: string;
+				  }
+				| {
+						created_at: string;
+						filename: string;
+						id: string;
+						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						mime_type: string;
+						size: number;
+				  }
+			)[];
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			template_id: null | string;
+			workspace_id: string;
+		}
 	}
 
 	export namespace UpdateOrganization {

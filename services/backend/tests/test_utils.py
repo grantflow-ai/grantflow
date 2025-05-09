@@ -8,19 +8,19 @@ from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import (
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationFile,
+    GrantApplicationRagSource,
     GrantTemplate,
-    OrganizationFile,
     RagFile,
     RagSource,
     TextVector,
     Workspace,
 )
+from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.serialization import deserialize, serialize
 from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
-from services.indexer.src.extraction import extract_file_content
-from services.indexer.src.files import parse_and_index_file
+from services.indexer.src.processing import process_source
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -94,7 +94,7 @@ async def process_organization_files(
                 .values(
                     {
                         "id": rag_source_id,
-                        "type": "rag_file",
+                        "source_type": "rag_file",
                         "text_content": text_content,
                         "indexing_status": indexing_status,
                     }
@@ -116,7 +116,7 @@ async def process_organization_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(OrganizationFile)
+                insert(FundingOrganizationRagSource)
                 .values(
                     {
                         "funding_organization_id": funding_organization.id,
@@ -190,37 +190,39 @@ async def parse_source_file(
             .returning(RagFile.id)
         )
         await session.execute(
-            insert(GrantApplicationFile).values([{"grant_application_id": application_id, "rag_source_id": file_id}])
+            insert(GrantApplicationRagSource).values(
+                [{"grant_application_id": application_id, "rag_source_id": file_id}]
+            )
             if application_id
-            else insert(OrganizationFile).values(
+            else insert(FundingOrganizationRagSource).values(
                 [{"funding_organization_id": organization_id, "rag_source_id": file_id}]
             )
         )
         await session.commit()
 
-    await parse_and_index_file(
+    await process_source(
         filename=source_file.name,
         content=file_content,
         mime_type="application/pdf"
         if source_file.suffix == ".pdf"
         else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        file_id=str(file_id),
+        source_id=str(file_id),
     )
 
     async with async_session_maker() as session:
         if application_id:
             stmt = (
-                select(GrantApplicationFile)
-                .options(selectinload(GrantApplicationFile.rag_file).selectinload(RagFile.text_vectors))
-                .where(GrantApplicationFile.rag_source_id == file_id)
-                .where(GrantApplicationFile.grant_application_id == application_id)
+                select(GrantApplicationRagSource)
+                .options(selectinload(GrantApplicationRagSource.rag_source).selectinload(RagFile.text_vectors))
+                .where(GrantApplicationRagSource.rag_source_id == file_id)
+                .where(GrantApplicationRagSource.grant_application_id == application_id)
             )
         else:
             stmt = (
-                select(OrganizationFile)  # type: ignore[assignment]
-                .options(selectinload(OrganizationFile.rag_file).selectinload(RagFile.text_vectors))
-                .where(OrganizationFile.rag_source_id == file_id)
-                .where(OrganizationFile.funding_organization_id == organization_id)
+                select(FundingOrganizationRagSource)  # type: ignore[assignment]
+                .options(selectinload(FundingOrganizationRagSource.rag_source).selectinload(RagFile.text_vectors))
+                .where(FundingOrganizationRagSource.rag_source_id == file_id)
+                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
             )
 
         file_datum = await session.scalar(stmt)
@@ -263,8 +265,7 @@ async def create_funding_application(
 
 async def ensure_cfp_content_exists(cfp_markdown_file: Path, cfp_source_file: Path) -> None:
     if not cfp_markdown_file.exists():
-        output, _ = await extract_file_content(content=cfp_source_file.read_bytes(), mime_type="application/pdf")
-        content: str = output if isinstance(output, str) else output.content
+        content, _ = await extract_file_content(content=cfp_source_file.read_bytes(), mime_type="application/pdf")
         cfp_markdown_file.write_text(content)
 
 
@@ -341,7 +342,7 @@ async def process_application_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(GrantApplicationFile)
+                insert(GrantApplicationRagSource)
                 .values({"grant_application_id": application_id, "rag_source_id": rag_source_id})
                 .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_source_id"])
             )

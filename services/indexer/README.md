@@ -50,7 +50,7 @@ The indexer service exposes endpoints for:
 
 The service integrates with:
 
-- [GCS Notifier Function](../../functions/gcs_notifier/README.md): Notifies the indexer when new files are uploaded to GCS
+- [GCP Pub/Sub](https://cloud.google.com/pubsub) for event notifications
 
 ## Testing
 

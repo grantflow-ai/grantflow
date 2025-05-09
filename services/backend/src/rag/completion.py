@@ -9,6 +9,12 @@ from anthropic.types import ToolParam, ToolUseBlock
 from google.api_core.exceptions import InternalServerError as GoogleInternalServerError
 from google.api_core.exceptions import ServiceUnavailable
 from google.cloud.exceptions import TooManyRequests
+from packages.shared_utils.src.ai import (
+    ANTHROPIC_SONNET_MODEL,
+    GENERATION_MODEL,
+    get_anthropic_client,
+    get_google_ai_client,
+)
 from packages.shared_utils.src.constants import CONTENT_TYPE_JSON
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -20,8 +26,6 @@ from packages.shared_utils.src.exceptions import (
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.retry import with_exponential_backoff_retry
 from packages.shared_utils.src.serialization import deserialize, fix_string_json_values, serialize
-from services.backend.src.constants import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
-from services.backend.src.utils.ai import get_anthropic_client, get_google_ai_client
 from services.backend.src.utils.prompt_template import PromptTemplate
 from vertexai.generative_models import (  # type: ignore[import-untyped]
     Content,

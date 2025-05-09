@@ -1,9 +1,8 @@
 import logging
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from socket import AF_INET, SOCK_STREAM, socket
 from textwrap import dedent
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 from anyio import run_process, sleep
@@ -13,26 +12,30 @@ from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import (
     Base,
     FundingOrganization,
+    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationFile,
+    GrantApplicationRagSource,
     GrantTemplate,
+    GrantTemplateRagSource,
     RagFile,
+    RagUrl,
     Workspace,
     WorkspaceUser,
 )
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
-from services.backend.src.utils.ai import init_ref
 from sqlalchemy import NullPool, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from vertexai.generative_models import GenerativeModel
 
 from testing.factories import (
-    FileFactory,
     FundingOrganizationFactory,
+    FundingOrganizationSourceFactory,
     GrantApplicationFactory,
-    GrantApplicationFileFactory,
+    GrantApplicationSourceFactory,
     GrantTemplateFactory,
+    GrantTemplateSourceFactory,
+    RagFileFactory,
+    RagUrlFactory,
     WorkspaceFactory,
     WorkspaceUserFactory,
 )
@@ -47,15 +50,6 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
         async_test.add_marker(session_scope_marker, append=False)
-
-
-@pytest.fixture
-def mock_generative_model() -> Generator[Mock, Any, None]:
-    init_ref.value = True
-    with patch("vertexai.generative_models.GenerativeModel") as mock:
-        mock_instance = Mock(spec=GenerativeModel)
-        mock.return_value = mock_instance
-        yield mock
 
 
 @pytest.fixture(scope="session")
@@ -181,12 +175,21 @@ async def workspace_owner_user(
 
 
 @pytest.fixture
-async def file(async_session_maker: async_sessionmaker[Any]) -> RagFile:
-    file_data = FileFactory.build()
+async def rag_file(async_session_maker: async_sessionmaker[Any]) -> RagFile:
+    file_data = RagFileFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
     return file_data
+
+
+@pytest.fixture
+async def rag_url(async_session_maker: async_sessionmaker[Any]) -> RagUrl:
+    url_data = RagUrlFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(url_data)
+        await session.commit()
+    return url_data
 
 
 @pytest.fixture
@@ -196,6 +199,32 @@ async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> 
         session.add(org_data)
         await session.commit()
     return org_data
+
+
+@pytest.fixture
+async def funding_organization_file(
+    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_file: RagFile
+) -> FundingOrganizationRagSource:
+    data = FundingOrganizationSourceFactory.build(
+        funding_organization_id=funding_organization.id, rag_source_id=rag_file.id
+    )
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data
+
+
+@pytest.fixture
+async def funding_organization_url(
+    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_url: RagUrl
+) -> FundingOrganizationRagSource:
+    data = FundingOrganizationSourceFactory.build(
+        funding_organization_id=funding_organization.id, rag_source_id=rag_url.id
+    )
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data
 
 
 @pytest.fixture
@@ -211,9 +240,22 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], worksp
 
 @pytest.fixture
 async def grant_application_file(
-    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, file: RagFile
-) -> GrantApplicationFile:
-    file_data = GrantApplicationFileFactory.build(grant_application_id=grant_application.id, rag_source_id=file.id)
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_file: RagFile
+) -> GrantApplicationRagSource:
+    file_data = GrantApplicationSourceFactory.build(
+        grant_application_id=grant_application.id, rag_source_id=rag_file.id
+    )
+    async with async_session_maker() as session, session.begin():
+        session.add(file_data)
+        await session.commit()
+    return file_data
+
+
+@pytest.fixture
+async def grant_application_url(
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_url: RagUrl
+) -> GrantApplicationRagSource:
+    file_data = GrantApplicationSourceFactory.build(grant_application_id=grant_application.id, rag_source_id=rag_url.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
         await session.commit()
@@ -336,3 +378,25 @@ async def grant_template(
         await session.commit()
 
     return grant_template_data
+
+
+@pytest.fixture
+async def grant_template_file(
+    async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_file: RagFile
+) -> GrantTemplateRagSource:
+    data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_file.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data
+
+
+@pytest.fixture
+async def grant_template_url(
+    async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_url: RagUrl
+) -> GrantTemplateRagSource:
+    data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_url.id)
+    async with async_session_maker() as session, session.begin():
+        session.add(data)
+        await session.commit()
+    return data

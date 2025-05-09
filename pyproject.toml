@@ -67,6 +67,17 @@ lint.per-file-ignores."**/tests/**/*.*" = [
   "S",
 ]
 lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
+lint.per-file-ignores."testing/**/*.*" = [
+  "ARG001",
+  "D",
+  "N815",
+  "PT006",
+  "PT007",
+  "PT012",
+  "PT013",
+  "RUF012",
+  "S",
+]
 lint.isort.known-first-party = [ "src", "tests" ]
 lint.mccabe.max-complexity = 25
 lint.pydocstyle.convention = "google"
@@ -86,7 +97,6 @@ filterwarnings = [
   "ignore::DeprecationWarning:pkg_resources.*",
   "ignore::DeprecationWarning:google.*",
   "ignore::DeprecationWarning:websockets.*",
-  "ignore::pydantic.PydanticDeprecatedSince20",
   "ignore::DeprecationWarning:fake_http_header.*",
   "ignore::DeprecationWarning:importlib.resources.*",
   "ignore::DeprecationWarning:tracerite.*",
@@ -118,7 +128,6 @@ members = [
   "services/indexer",
   "packages/db",
   "packages/shared_utils",
-  "functions/gcs_notifier",
 ]
 
 [tool.uv.sources]
