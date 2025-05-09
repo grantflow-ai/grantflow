@@ -1,4 +1,4 @@
-from typing import Any, Literal, NotRequired, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
@@ -12,6 +12,7 @@ from packages.shared_utils.src.exceptions import ExternalOperationError, Validat
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
+from packages.shared_utils.src.shared_types import ParentType
 from packages.shared_utils.src.sync import run_sync
 
 logger = get_logger(__name__)
@@ -21,7 +22,7 @@ bucket_ref = Ref[Bucket]()
 
 
 class URIParseResult(TypedDict):
-    parent_type: Literal["grant_application", "funding_organization", "grant_template"]
+    parent_type: ParentType
     workspace_id: NotRequired[str]
     parent_id: str
     filename: str

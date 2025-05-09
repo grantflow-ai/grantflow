@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 from anyio import Path as AsyncPath
+from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import FileIndexingStatusEnum
 from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import (
@@ -78,7 +79,7 @@ async def process_organization_files(
         for organization_file in data_fixture_folder.glob("*.json"):
             data = deserialize(organization_file.read_bytes(), dict[str, Any])
 
-            rag_file_data = data.pop("rag_file")
+            rag_file_data = data.pop(RAG_FILE)
             rag_source_id = data.pop("rag_source_id")
 
             indexing_status = rag_file_data.pop("indexing_status")
@@ -94,7 +95,7 @@ async def process_organization_files(
                 .values(
                     {
                         "id": rag_source_id,
-                        "source_type": "rag_file",
+                        "source_type": RAG_FILE,
                         "text_content": text_content,
                         "indexing_status": indexing_status,
                     }
@@ -323,7 +324,7 @@ async def process_application_files(
     async with async_session_maker() as session, session.begin():
         for application_file in application_files_fixtures_dir.glob("*.json"):
             data = deserialize(application_file.read_bytes(), dict[str, Any])
-            rag_file_data = data.pop("rag_file")
+            rag_file_data = data.pop(RAG_FILE)
             rag_source_id = data.pop("rag_source_id")
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
 

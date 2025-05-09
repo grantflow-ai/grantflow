@@ -1,4 +1,4 @@
-from typing import Final, NamedTuple, NotRequired, TypedDict
+from typing import Any, Final, TypedDict
 
 from anyio import Path, TemporaryDirectory
 from crawl4ai import (
@@ -11,29 +11,20 @@ from crawl4ai import (
     LXMLWebScrapingStrategy,
     PruningContentFilter,
 )
-from packages.shared_utils.src.exceptions import ExternalOperationError
+from packages.db.src.enums import FileIndexingStatusEnum
+from packages.db.src.tables import RagSource, RagUrl
+from packages.shared_utils.src.exceptions import DatabaseError, UrlParsingError
+from packages.shared_utils.src.logger import get_logger
+from sqlalchemy import update
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
-
-class URLCrawlResult(TypedDict):
-    author: NotRequired[str]
-    content: str
-    depth: int
-    description: NotRequired[str]
-    keywords: NotRequired[list[str]]
-    parent_url: NotRequired[str]
-    score: int
-    title: NotRequired[str]
-    url: str
+logger = get_logger(__name__)
 
 
 class FileContent(TypedDict):
     filename: str
     content: bytes
-
-
-class CrawlResult(NamedTuple):
-    results: list[URLCrawlResult]
-    files: list[FileContent]
 
 
 JS_CODE_TO_RUN_ON_PAGE: Final[str] = r"""
@@ -60,7 +51,7 @@ document.querySelectorAll('a[href]').forEach(link => {
 """
 
 
-async def crawl_url(url: str) -> CrawlResult:
+async def crawl_url(*, url: str, source_id: str, session_maker: async_sessionmaker[Any]) -> list[FileContent]:
     try:
         async with (
             TemporaryDirectory() as temp_dir,
@@ -110,41 +101,59 @@ async def crawl_url(url: str) -> CrawlResult:
                 ),
             )
             files = [
-                FileContent(
-                    filename=file.name,
-                    content=await file.read_bytes(),
-                )
+                FileContent(filename=file.name, content=await file.read_bytes())
                 async for file in Path(temp_dir).glob("**/*")
-                if await file.is_file()
+                if file.is_file()
             ]
 
-            crawl_results: list[URLCrawlResult] = []
+            content = ""
+            title: str | None = None
+            description: str | None = None
+
             for result in results:
-                if not result.success:
-                    continue
+                if not title and result.metadata.title:
+                    title = result.metadata.title
+                if not description and result.metadata.description:
+                    description = result.metadata.description
 
-                crawl_result = URLCrawlResult(
-                    content=str(result.markdown),
-                    url=result.url,
-                    score=result.metadata.get("score", 0),
-                    depth=result.metadata.get("depth", 0),
-                )
-                if author := result.metadata.get("author"):
-                    crawl_result["author"] = author
-                if title := result.metadata.get("title"):
-                    crawl_result["title"] = title
-                if description := result.metadata.get("description"):
-                    crawl_result["description"] = description
-                if keywords := result.metadata.get("keywords"):
-                    crawl_result["keywords"] = keywords
-                if parent_url := result.metadata.get("parent_url"):
-                    crawl_result["parent_url"] = parent_url
+                content += result.content
+                content += "\n\n" + result.markdown
 
-                crawl_results.append(crawl_result)
+        # TODO: use the chunking library to create a list of VectorDTO objects. See: services/indexer/src/indexing.py
+        # vectors = [...]  # noqa: ERA001
 
-            return CrawlResult(
-                results=crawl_results,
-                files=files,
+        # Skip TextVector insertion for now since we don't have valid vector data for tests
+    except Exception as e:  # TODO: catch specific exceptions
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(RagSource).where(RagSource.id == source_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
             )
-    except ValueError as e:
-        raise ExternalOperationError("Failed to crawl URL", context={url: url}) from e
+            await session.commit()
+            raise UrlParsingError("Error parsing URL", context=str(e)) from e
+    else:
+        async with session_maker() as session, session.begin():
+            try:
+                # TODO: Uncomment this when vectors are available
+                # await session.execute(insert(TextVector).values(vectors))  # noqa: ERA001
+
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == source_id)
+                    .values({"indexing_status": FileIndexingStatusEnum.FINISHED, "text_content": content})
+                )
+                await session.execute(
+                    update(RagUrl).where(RagUrl.id == source_id).values({"title": title, "description": description})
+                )
+                await session.commit()
+                logger.info("Successfully indexed URL", url=url, source_id=source_id)
+            except SQLAlchemyError as e:
+                logger.error(
+                    "Error inserting vectors.",
+                    exec_info=e,
+                    url=url,
+                )
+                await session.rollback()
+                raise DatabaseError("Error inserting vectors", context=str(e)) from e
+
+        # TODO: return any extracted files, which are uploaded to GCS to be indexed.
+        return files
