@@ -1,0 +1,11 @@
+# These owners will be the default owners for everything in the repo
+* @Goldziher
+
+# Frontend codebase
+/frontend/ @Goldziher @v-tan
+/package.json @Goldziher @v-tan
+
+# Backend services and packages
+/services/* @Goldziher @taihim
+/packages/* @Goldziher @taihim
+/pyproject.toml @Goldziher @taihim
