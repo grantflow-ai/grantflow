@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import RootLayout from "@/app/layout";
+import { PagePath } from "@/enums";
 
 vi.mock("@/components/nav-header", () => ({
 	NavHeader: () => <div data-testid="mock-nav-header">Nav Header</div>,
@@ -167,7 +168,7 @@ describe("RootLayout", () => {
 
 		expect(metadata.title).toBe("GrantFlow.AI");
 		expect(metadata.description).toContain("GrantFlow.ai transforms");
-		expect(metadata.alternates.canonical).toBe("/");
+		expect(metadata.alternates.canonical).toBe(PagePath.ROOT);
 
 		expect(metadata.openGraph.title).toBe("Ready to Focus on Research, Not Paperwork?");
 		expect(metadata.openGraph.type).toBe("website");

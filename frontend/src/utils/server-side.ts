@@ -44,7 +44,7 @@ export const createAuthHeaders = async () => {
 	const cookieStore = await cookies();
 	const cookie = cookieStore.get(SESSION_COOKIE);
 	if (!cookie?.value) {
-		redirect(PagePath.SIGNIN);
+		redirect(PagePath.ONBOARDING);
 	}
 	return { Authorization: `Bearer ${cookie.value}` };
 };
@@ -53,7 +53,7 @@ export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 		return await promise;
 	} catch (error) {
 		if (error instanceof HTTPError && error.response.status === 401) {
-			redirect(PagePath.SIGNIN);
+			redirect(PagePath.ONBOARDING);
 		}
 		throw error;
 	}

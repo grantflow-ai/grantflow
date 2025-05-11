@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { Footer } from "@/components/footer";
+import { PagePath } from "@/enums";
 
 vi.mock("next/image", () => ({
 	default: ({
@@ -190,21 +191,21 @@ describe("Footer Component", () => {
 
 			termsLinks.forEach((link) => {
 				const correctTermsLink = link.closest("a");
-				expect(correctTermsLink).toHaveAttribute("href", "/terms");
+				expect(correctTermsLink).toHaveAttribute("href", PagePath.TERMS);
 			});
 
 			privacyLinks.forEach((link) => {
 				const correctPrivacyLink = link.closest("a");
-				expect(correctPrivacyLink).toHaveAttribute("href", "/privacy");
+				expect(correctPrivacyLink).toHaveAttribute("href", PagePath.PRIVACY);
 			});
 
 			imprintLinks.forEach((link) => {
 				const correctImprintLink = link.closest("a");
-				expect(correctImprintLink).toHaveAttribute("href", "/imprint");
+				expect(correctImprintLink).toHaveAttribute("href", PagePath.IMPRINT);
 			});
 
 			homeLinks.forEach((homeLink) => {
-				expect(homeLink).toHaveAttribute("href", "/");
+				expect(homeLink).toHaveAttribute("href", PagePath.ROOT);
 			});
 		});
 	});

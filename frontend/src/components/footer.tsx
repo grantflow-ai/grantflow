@@ -3,6 +3,7 @@ import Image from "next/image";
 import linkedInIcon from "@/assets/linkedin-icon.png";
 import Link from "next/link";
 import { FooterLinks } from "@/components/footer-links";
+import { PagePath } from "@/enums";
 
 const LinkedInLink = () => {
 	return (
@@ -19,15 +20,15 @@ const LinkedInLink = () => {
 
 const links = [
 	{
-		href: "/terms",
+		href: PagePath.TERMS,
 		label: "Terms of Use",
 	},
 	{
-		href: "/privacy",
+		href: PagePath.PRIVACY,
 		label: "Privacy Policy",
 	},
 	{
-		href: "/imprint",
+		href: PagePath.IMPRINT,
 		label: "Imprint",
 	},
 ];
@@ -45,14 +46,14 @@ export function Footer() {
 					<FooterLinks isMobile links={links} />
 				</nav>
 				<div className="flex w-full items-center justify-between">
-					<Link aria-label="Go to homepage" href="/">
+					<Link aria-label="Go to homepage" href={PagePath.ROOT}>
 						<LogoDark className="h-15.5" height="250" width="250" />
 					</Link>
 					<LinkedInLink />
 				</div>
 			</div>
 			<div className="hidden md:flex md:flex-row items-center justify-between mx-2 my-6 px-8">
-				<Link aria-label="Go to homepage" href="/">
+				<Link aria-label="Go to homepage" href={PagePath.ROOT}>
 					<LogoDark className="h-15.5" height="250" width="250" />
 				</Link>
 				<nav aria-label="footer-navigation">
