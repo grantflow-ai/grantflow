@@ -53,8 +53,8 @@ jobs:
           push: true
           context: ${{ github.workspace }}
           file: services/${{ inputs.service-name }}/Dockerfile
-          cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ inputs.service-name }}:buildcache
-          cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ inputs.service-name }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:buildcache
+          cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:buildcache,mode=max
           tags: |
-            ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ inputs.service-name }}:latest
-            ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ inputs.service-name }}:${{ inputs.image-tag }}
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:latest
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:${{ inputs.image-tag }}
