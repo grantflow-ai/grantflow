@@ -12,7 +12,7 @@ on:
 
 jobs:
   build-and-push-dev:
-    uses: ./.github/reusable-workflows/deploy-service.yaml
+    uses: ./.github/workflows/deploy-service.yaml
     if: github.event_name == 'push'
     with:
       service-name: backend
@@ -22,7 +22,7 @@ jobs:
       id-token: write
 
   build-and-push-prod:
-    uses: ./.github/reusable-workflows/deploy-service.yaml
+    uses: ./.github/workflows/deploy-service.yaml
     if: github.event_name == 'release'
     with:
       service-name: backend
