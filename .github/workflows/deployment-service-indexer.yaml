@@ -12,33 +12,21 @@ on:
 
 jobs:
   build-and-push-dev:
-    runs-on: ubuntu-latest-m
-    timeout-minutes: 15
+    uses: ./.github/reusable-workflows/deploy-service.yaml
     if: github.event_name == 'push'
+    with:
+      service-name: indexer
+      image-tag: dev-${{ github.sha }}
     permissions:
       contents: read
       id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build and push Docker image
-        uses: ./.github/actions/deploy-service
-        with:
-          service-name: indexer
-          image-tag: dev-${{ github.sha }}
 
   build-and-push-prod:
-    runs-on: ubuntu-latest-m
-    timeout-minutes: 15
+    uses: ./.github/reusable-workflows/deploy-service.yaml
     if: github.event_name == 'release'
+    with:
+      service-name: indexer
+      image-tag: ${{ github.event.release.tag_name }}
     permissions:
       contents: read
       id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Deploy service to prod
-        uses: ./.github/actions/deploy-service
-        with:
-          service-name: indexer
-          image-tag: ${{ github.event.release.tag_name }}
