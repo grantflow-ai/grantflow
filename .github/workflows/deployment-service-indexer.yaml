@@ -12,7 +12,7 @@ on:
 
 jobs:
   build-and-push-dev:
-    runs-on: docker-runner
+    runs-on: ubuntu-latest-m
     timeout-minutes: 15
     if: github.event_name == 'push'
     permissions:
@@ -28,7 +28,7 @@ jobs:
           image-tag: dev-${{ github.sha }}
 
   build-and-push-prod:
-    runs-on: docker-runner
+    runs-on: ubuntu-latest-m
     timeout-minutes: 15
     if: github.event_name == 'release'
     permissions:
