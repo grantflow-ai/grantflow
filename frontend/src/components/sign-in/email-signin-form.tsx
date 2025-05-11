@@ -11,6 +11,7 @@ const WHITE_LISTED_EMAILS = new Set([
 	"mgrinstein@bwh.harvard.edu",
 	"naftali.kaminski@yale.edu",
 	"rotemka@ekmd.huji.ac.il",
+	"varun@grantflow.ai",
 ]);
 
 const emailSchema = z.object({
@@ -74,7 +75,7 @@ export function EmailSigninForm({
 						disabled={!form.formState.isValid}
 						isLoading={isLoading}
 					>
-						Send Magic Link
+						Start here
 					</SubmitButton>
 				</form>
 			</Form>

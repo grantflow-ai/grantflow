@@ -12,10 +12,11 @@ import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { NavHeader } from "@/components/nav-header";
 import { Footer } from "@/components/footer";
+import { PagePath } from "@/enums";
 
 export const metadata = {
 	alternates: {
-		canonical: "/",
+		canonical: PagePath.ROOT,
 	},
 	authors: [{ name: "GrantFlow.AI" }],
 	description:

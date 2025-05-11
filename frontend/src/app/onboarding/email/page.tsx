@@ -23,7 +23,7 @@ export default function FinalizeEmailLogin() {
 			const isEmailLink = isSignInWithEmailLink(auth, globalThis.location.href);
 			if (!email || !isEmailLink) {
 				toast.error("Invalid or expired sign-in link");
-				router.replace(PagePath.SIGNIN);
+				router.replace(PagePath.ONBOARDING);
 				return;
 			}
 
@@ -35,7 +35,7 @@ export default function FinalizeEmailLogin() {
 				if (!isRedirectError(error)) {
 					logError({ error, identifier: "finalizeSignIn" });
 					toast.error("Failed to sign in with email link");
-					router.replace(PagePath.SIGNIN);
+					router.replace(PagePath.ONBOARDING);
 				}
 			} finally {
 				globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);
