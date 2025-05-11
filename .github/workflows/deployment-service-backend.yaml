@@ -1,4 +1,4 @@
-name: Deploy Backend Service
+name: Build and Push (Backend)
 
 on:
   push:
@@ -7,22 +7,38 @@ on:
     paths:
       - 'packages/**/src/**'
       - 'services/backend/src/**'
-
-env:
-  DOCKER_REGISTRY: us-east1-docker-docker.pkg.dev
+  release:
+    types: [published]
 
 jobs:
-  deploy:
+  build-and-push-dev:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: github.event_name == 'push'
     permissions:
       contents: read
       id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Deploy service
+      - name: Build and push Docker image
         uses: ./.github/actions/deploy-service
         with:
           service-name: backend
-          image-tag: ${{ github.sha }}
+          image-tag: dev-${{ github.sha }}
+
+  build-and-push-prod:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'release'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy service to prod
+        uses: ./.github/actions/deploy-service
+        with:
+          service-name: backend
+          image-tag: ${{ github.event.release.tag_name }}
