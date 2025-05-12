@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { SigninWithGoogleButton } from "./signin-with-google-button";
+import { SigninWithGoogleButton } from "@/app/(default)/onboarding/page";
 
 describe("SigninWithGoogleButton", () => {
 	const mockOnClick = vi.fn().mockResolvedValue(undefined);

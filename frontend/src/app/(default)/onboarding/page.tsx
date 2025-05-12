@@ -2,8 +2,7 @@
 
 import { login } from "@/actions/login";
 import { SeparatorWithText } from "@/components/separator-with-text";
-import { EmailSigninForm } from "@/components/sign-in/email-signin-form";
-import { SigninWithGoogleButton } from "@/components/sign-in/signin-with-google-button";
+import { SigninForm } from "@/components/onboarding/signin-form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
@@ -15,9 +14,10 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { IconSocialGoogle, IconSocialOrcid } from "@/components/onboarding/icons";
 
 const googleProvider = new GoogleAuthProvider();
-const OrcidProviderId = "oidc.orcid";
+const orcidProvider = new OAuthProvider("oidc.orcid");
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
@@ -63,8 +63,6 @@ export default function SignIn() {
 		setIsLoading(true);
 
 		try {
-			const orcidProvider = new OAuthProvider(OrcidProviderId);
-
 			orcidProvider.setCustomParameters({
 				prompt: "login",
 			});
@@ -84,18 +82,21 @@ export default function SignIn() {
 	};
 
 	return (
-		<div className="container mx-auto px-4 py-8 md:py-16" data-testid="firebase-login-container">
-			<Card className="mx-auto max-w-md">
+		<div
+			className="flex size-full min-h-screen place-items-center text-center text-card-foreground"
+			data-testid="login-container"
+		>
+			<Card className="mx-auto max-w-md p-7 sm:p-9">
 				<CardHeader>
-					<CardTitle className="text-center text-2xl font-bold" data-testid="auth-page-title">
+					<CardTitle className="text-4xl font-heading font-medium" data-testid="auth-page-title">
 						Create your account
 					</CardTitle>
-					<CardDescription className="text-center" data-testid="auth-page-description">
+					<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
 						Get more funding - faster!
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
-					<EmailSigninForm
+					<SigninForm
 						isLoading={isLoading}
 						onSubmit={async ({ email }) => {
 							await handleEmailSignin(email);
@@ -122,10 +123,35 @@ export default function SignIn() {
 	);
 }
 
+export function SigninWithGoogleButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => Promise<void> }) {
+	return (
+		<section className="flex flex-col gap-2" data-testid="oauth-signin-form">
+			<Button
+				className="w-full rounded border p-1"
+				data-testid="oauth-signin-form-google-button"
+				disabled={isLoading}
+				onClick={async () => {
+					await onClick();
+				}}
+				variant="secondary"
+			>
+				<p className="flex items-center justify-center gap-3">
+					<span className="text-md bold" data-testid="oauth-signin-form-google-text">
+						Sign in with Google
+					</span>
+					<span data-testid="oauth-signin-form-google-icon">
+						<IconSocialGoogle className="size-4" />
+					</span>
+				</p>
+			</Button>
+		</section>
+	);
+}
+
 function SigninWithOrcidButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => Promise<void> }) {
 	return (
 		<Button
-			className="flex w-full items-center justify-center gap-2 bg-[#A6CE39] text-white hover:bg-[#8CB82B]"
+			className="flex w-full items-center justify-center gap-2 bg-[#A6CE39] text-white hover:bg-[#8CB82B] font-button"
 			data-testid="orcid-signin-button"
 			disabled={isLoading}
 			onClick={onClick}
@@ -135,27 +161,8 @@ function SigninWithOrcidButton({ isLoading, onClick }: { isLoading: boolean; onC
 				<div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
 			) : (
 				<>
-					<svg fill="none" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-						<path
-							d="M128 256C198.692 256 256 198.692 256 128C256 57.3075 198.692 0 128 0C57.3075 0 0 57.3075 0 128C0 198.692 57.3075 256 128 256Z"
-							fill="white"
-						/>
-						<path d="M86.2676 79.4297H74.0977V176.703H86.2676V79.4297Z" fill="#A6CE39" />
-						<path
-							d="M80.1816 66.8516C85.1758 66.8516 89.2285 62.7988 89.2285 57.8047C89.2285 52.8105 85.1758 48.7578 80.1816 48.7578C75.1875 48.7578 71.1348 52.8105 71.1348 57.8047C71.1348 62.7988 75.1875 66.8516 80.1816 66.8516Z"
-							fill="#A6CE39"
-						/>
-						<path
-							d="M127.051 79.4297H100.488V176.703H112.658V97.1484H127.051C141.582 97.1484 149.561 106.934 149.561 119.658C149.561 132.383 141.582 142.168 127.051 142.168H119.072V159.886H127.051C151.973 159.886 161.758 139.473 161.758 119.658C161.758 99.8438 151.973 79.4297 127.051 79.4297Z"
-							fill="#A6CE39"
-						/>
-						<path d="M180.879 79.4297H168.709V176.703H180.879V79.4297Z" fill="#A6CE39" />
-						<path
-							d="M174.793 66.8516C179.787 66.8516 183.84 62.7988 183.84 57.8047C183.84 52.8105 179.787 48.7578 174.793 48.7578C169.799 48.7578 165.746 52.8105 165.746 57.8047C165.746 62.7988 169.799 66.8516 174.793 66.8516Z"
-							fill="#A6CE39"
-						/>
-					</svg>
-					<span>Sign in with ORCID</span>
+					<IconSocialOrcid height={20} width={20} />
+					<span>ORCID</span>
 				</>
 			)}
 		</Button>
