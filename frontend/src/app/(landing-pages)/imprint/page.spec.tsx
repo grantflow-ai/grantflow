@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import ImprintPage from "@/app/imprint/page";
+import ImprintPage from "@/app/(landing-pages)/imprint/page";
 import { vi } from "vitest";
 
 vi.mock("@/components/info-legal-page-components", () => ({

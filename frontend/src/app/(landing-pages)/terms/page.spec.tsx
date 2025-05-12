@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import TermsPage from "@/app/terms/page";
+import TermsPage from "@/app/(landing-pages)/terms/page";
 
 vi.mock("@/components/info-legal-page-components", () => ({
 	LegalPageContainer: ({ children, title }: { children: React.ReactNode; title: string }) => (
@@ -7,6 +7,7 @@ vi.mock("@/components/info-legal-page-components", () => ({
 			{children}
 		</div>
 	),
+
 	TitledLegalSection: ({ clause, title }: { clause: React.ReactNode; title: string }) => (
 		<div data-testid="titled-section" data-title={title}>
 			{clause}
