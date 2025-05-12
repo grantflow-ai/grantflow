@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import PrivacyPolicyPage from "@/app/privacy/page";
+import PrivacyPolicyPage from "@/app/(landing-pages)/privacy/page";
 
 vi.mock("@/components/info-legal-page-components", () => ({
 	LegalPageContainer: ({ children, title }: { children: React.ReactNode; title: string }) => (
