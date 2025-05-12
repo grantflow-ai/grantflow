@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { EmailSigninForm } from "./email-signin-form";
+import { SigninForm } from "./signin-form";
 import userEvent from "@testing-library/user-event";
 import { act } from "react";
 
@@ -11,7 +11,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("renders the form correctly", () => {
-		render(<EmailSigninForm isLoading={false} onSubmit={mockOnSubmit} />);
+		render(<SigninForm isLoading={false} onSubmit={mockOnSubmit} />);
 
 		expect(screen.getByTestId("email-signin-form-container")).toBeInTheDocument();
 		expect(screen.getByLabelText("Email")).toBeInTheDocument();
@@ -20,7 +20,7 @@ describe("EmailSigninForm", () => {
 	});
 
 	it("shows loading state when isLoading is true", () => {
-		render(<EmailSigninForm isLoading={true} onSubmit={mockOnSubmit} />);
+		render(<SigninForm isLoading={true} onSubmit={mockOnSubmit} />);
 
 		const submitButton = screen.getByTestId("email-signin-form-submit-button");
 		expect(submitButton).toHaveAttribute("aria-busy", "true");
@@ -29,7 +29,7 @@ describe("EmailSigninForm", () => {
 
 	it("allows whitelisted email addresses and enables submit button", async () => {
 		const user = userEvent.setup();
-		render(<EmailSigninForm isLoading={false} onSubmit={mockOnSubmit} />);
+		render(<SigninForm isLoading={false} onSubmit={mockOnSubmit} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await user.type(emailInput, "allonwag@berkeley.edu");
@@ -45,7 +45,7 @@ describe("EmailSigninForm", () => {
 
 	it("submits the form with valid data", async () => {
 		const user = userEvent.setup();
-		render(<EmailSigninForm isLoading={false} onSubmit={mockOnSubmit} />);
+		render(<SigninForm isLoading={false} onSubmit={mockOnSubmit} />);
 
 		const emailInput = screen.getByTestId("email-signin-form-email-input");
 		await user.type(emailInput, "allonwag@berkeley.edu");
@@ -64,7 +64,7 @@ describe("EmailSigninForm", () => {
 
 	it("disables submit button when form is invalid", async () => {
 		const user = userEvent.setup();
-		render(<EmailSigninForm isLoading={false} onSubmit={mockOnSubmit} />);
+		render(<SigninForm isLoading={false} onSubmit={mockOnSubmit} />);
 
 		const submitButton = screen.getByTestId("email-signin-form-submit-button");
 		expect(submitButton).toBeDisabled();

@@ -9,7 +9,7 @@ vi.mock("./backgrounds-animated", () => ({
 		)),
 }));
 
-vi.mock("./icons", () => ({
+vi.mock("@/components/icons", () => ({
 	IconGoAhead: vi.fn().mockImplementation(() => <svg data-testid="mock-icon-go-ahead" />),
 }));
 
