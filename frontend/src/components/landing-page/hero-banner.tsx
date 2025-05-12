@@ -1,5 +1,5 @@
 import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
-import { IconGoAhead } from "@/components/landing-page/icons";
+import { IconGoAhead } from "@/components/icons";
 import { AppButton } from "@/components/app-button";
 import { BrandPattern } from "@/components/brand-pattern";
 import Link from "next/link";
