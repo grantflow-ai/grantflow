@@ -2,16 +2,10 @@ import "@/styles/globals.css";
 
 import type { Metadata } from "next";
 
-import { ToastListener } from "@/components/toast-listener";
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "next-themes";
-import { Suspense } from "react";
-import { NavHeader } from "@/components/nav-header";
-import { Footer } from "@/components/footer";
 import { PagePath } from "@/enums";
 
 export const metadata = {
@@ -69,20 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					fontSora.variable,
 				)}
 			>
-				<ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
-					<NavHeader />
-					<main
-						className="md:min-h-[calc(100dvh-5rem)] m-auto min-h-[calc(100dvh-4rem)]"
-						data-testid="main-container"
-					>
-						{children}
-					</main>
-					<Footer />
-					<Toaster />
-					<Suspense>
-						<ToastListener />
-					</Suspense>
-				</ThemeProvider>
+				{children}
 				<Analytics />
 			</body>
 		</html>
