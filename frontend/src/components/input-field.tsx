@@ -1,97 +1,99 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 
 export function AppInput({
 	className,
-	error,
-	fullWidth = false,
+	errorMessage,
 	icon,
-	iconPosition = "right",
 	label,
 	maxWords,
-	onChange,
 	showWordCount = false,
 	testId,
-	value,
+	variant = "default",
 	...props
 }: {
 	className?: string;
-	error?: boolean;
-	fullWidth?: boolean;
+	errorMessage?: string;
 	icon?: React.ReactNode;
-	iconPosition?: "left" | "right";
 	label?: string;
 	maxWords?: number;
-	onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	showWordCount?: boolean;
 	testId?: string;
-	value?: string;
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange">) {
-	const [wordCount, setWordCount] = useState(0);
+	variant?: "default" | "field";
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+	const hasError = typeof errorMessage === "string" && errorMessage.trim() !== "";
+	const [text, setText] = useState("");
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (showWordCount) {
-			const words = e.target.value.trim().split(/\s+/);
-			const count = e.target.value.trim() === "" ? 0 : words.length;
-			setWordCount(count);
-		}
-
-		if (onChange) {
-			onChange(e);
-		}
-	};
-
-	React.useEffect(() => {
-		if (showWordCount && typeof value === "string") {
-			const words = value.trim().split(/\s+/);
-			const count = value.trim() === "" ? 0 : words.length;
-			setWordCount(count);
-		}
-	}, [value, showWordCount]);
+	const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+	const formattedWordCount = wordCount < 10 ? `0${wordCount}` : `${wordCount}`;
+	const formattedMaxWords = maxWords ? (maxWords < 10 ? `0${maxWords}` : `${maxWords}`) : null;
 
 	return (
-		<div className="w-full">
-			{label && (
-				<label className="block text-start text-sm font-medium text-gray-700 mb-1" htmlFor={props.id ?? testId}>
-					{label}
-				</label>
-			)}
-
-			<div className="relative">
-				{icon && iconPosition === "left" && (
-					<div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{icon}</div>
+		<div className="w-full" {...props}>
+			<div className="flex justify-between items-center">
+				{label && (
+					<Label
+						className={`block text-start text-sm font-light text-input-label ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
+						htmlFor={props.id ?? testId}
+					>
+						{label}
+					</Label>
 				)}
 
-				<Input
-					className={cn(
-						"bg-white text-gray-600 rounded-sm p-3",
-						"md:placeholder:font-light placeholder:text-lg md:placeholder:text-[1.05rem]",
-						"placeholder:text-slate-500/70 md:placeholder:text-slate-500",
-						fullWidth ? "w-full" : "md:w-[17rem]",
-						error && "border-error focus-visible:ring-error",
-						icon && iconPosition === "left" && "pl-10",
-						icon && iconPosition === "right" && "pr-10",
-						className,
-					)}
-					data-testid={testId}
-					id={props.id ?? testId}
-					onChange={handleChange}
-					value={value}
-					{...props}
-				/>
-
-				{icon && iconPosition === "right" && (
-					<div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{icon}</div>
+				{showWordCount && (
+					<div
+						className={`text-sm text-input-label ps-4" ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
+					>
+						{formattedWordCount}
+						{formattedMaxWords ? `/${formattedMaxWords}` : ""}
+					</div>
 				)}
 			</div>
 
-			{showWordCount && (
-				<div className="text-xs text-gray-500 text-right mt-1">
-					{wordCount}
-					{maxWords ? ` / ${maxWords}` : ""} words
+			<div className="relative">
+				<Input
+					className={cn(
+						"w-full bg-white text-dark text-sm rounded-sm p-3 placeholder:text-sm",
+						props.disabled ? "placeholder:text-input-muted" : "placeholder:text-input-placeholder",
+						variant === "field" && "ring-1 ring-input-border",
+						errorMessage && "border-error",
+						icon && "pr-10",
+						"focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input",
+						"focus-visible:border focus-visible:border-primary",
+						className,
+						{ ...props },
+					)}
+					data-testid={testId}
+					disabled={props.disabled}
+					id={props.id ?? testId}
+					onChange={(e) => {
+						setText(e.target.value);
+					}}
+					placeholder={props.placeholder}
+					value={text}
+				/>
+
+				{icon && (
+					<div
+						className={cn(
+							"absolute right-3 top-1/2 -translate-y-1/2",
+							props.disabled && "text-input-muted pointer-events-none",
+						)}
+					>
+						{icon}
+					</div>
+				)}
+			</div>
+
+			{hasError && (
+				<div className="flex justify-start">
+					<span className="text-sm text-error font-light" data-testid={`${testId}-error-message`}>
+						{errorMessage}
+					</span>
 				</div>
 			)}
 		</div>
