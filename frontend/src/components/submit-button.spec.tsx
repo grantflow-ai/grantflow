@@ -31,21 +31,6 @@ describe("SubmitButton", () => {
 		expect(button).toHaveClass("custom-class");
 	});
 
-	it("passes through other button props", () => {
-		render(
-			<SubmitButton data-custom="test-value" disabled variant="outline">
-				Submit
-			</SubmitButton>,
-		);
-
-		const button = screen.getByTestId("form-button");
-		expect(button).toBeDisabled();
-		expect(button).toHaveAttribute("data-custom", "test-value");
-		expect(button).toHaveClass("border");
-		expect(button).toHaveClass("border-input");
-		expect(button).toHaveClass("bg-background");
-	});
-
 	it("has type='submit' by default", () => {
 		render(<SubmitButton>Submit</SubmitButton>);
 

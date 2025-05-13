@@ -13,11 +13,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { IconSocialGoogle, IconSocialOrcid } from "@/components/onboarding/icons";
+import { IconSocialGoogle, IconSocialOrcid, IconTick } from "@/components/onboarding/icons";
+import { AppButton } from "@/components/app-button";
+import Link from "next/link";
+import { PatternedBackground } from "@/components/landing-page/backgrounds";
+import {
+	OnboardingGradientBackgroundBottom,
+	OnboardingGradientBackgroundTop,
+	StackedHighlight,
+} from "@/components/onboarding/backgrounds";
+import { LogoDark } from "@/components/logo";
 
 const googleProvider = new GoogleAuthProvider();
 const orcidProvider = new OAuthProvider("oidc.orcid");
+
+const benefitItems = [
+	{
+		description:
+			"Get up and running quickly with intelligent tools that simplify the entire grant application process.",
+		title: "Start applying faster",
+	},
+	{
+		description:
+			"From discovery to submission, GrantFlow.ai supports labs, institutions, and independent researchers across all disciplines.",
+		title: "Support every research journey",
+	},
+	{
+		description: "Trusted by leading labs and ambitious researchers working to change the world.",
+		title: "Join a growing research community",
+	},
+];
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
@@ -83,88 +108,118 @@ export default function SignIn() {
 
 	return (
 		<div
-			className="flex size-full min-h-screen place-items-center text-center text-card-foreground"
+			className="flex size-full min-h-screen place-items-center text-center text-card-foreground relative overflow-hidden bg-white"
 			data-testid="login-container"
 		>
-			<Card className="mx-auto max-w-md p-7 sm:p-9">
-				<CardHeader>
-					<CardTitle className="text-4xl font-heading font-medium" data-testid="auth-page-title">
-						Create your account
-					</CardTitle>
-					<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
-						Get more funding - faster!
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-6">
-					<SigninForm
-						isLoading={isLoading}
-						onSubmit={async ({ email }) => {
-							await handleEmailSignin(email);
-						}}
-					/>
-					<SeparatorWithText text={"Or connect with"} />
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						<SigninWithGoogleButton
-							isLoading={isLoading}
-							onClick={async () => {
-								await handleGoogleSignin();
-							}}
+			<div className="absolute inset-0 flex items-center justify-center">
+				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
+			</div>
+
+			<OnboardingGradientBackgroundTop
+				aria-hidden="true"
+				className="absolute top-0 right-0 pointer-events-none"
+			/>
+
+			<OnboardingGradientBackgroundBottom
+				aria-hidden="true"
+				className="absolute bottom-0 left-0 pointer-events-none opacity-0"
+			/>
+
+			<div className="z-10 w-full flex flex-col md:flex-row">
+				<div className="flex flex-1 justify-end items-center relative">
+					<StackedHighlight className="z-10 absolute bottom-0 -right-1/4 pointer-events-none"></StackedHighlight>
+					<div className="z-20 w-full lg:w-4/5 xl:w-3/5 text-start">
+						<LogoDark
+							className={`sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16`}
+							height="auto"
+							width="auto"
 						/>
-						<SigninWithOrcidButton
-							isLoading={isLoading}
-							onClick={async () => {
-								await handleOrcidSignin();
-							}}
-						/>
+						<ul className="space-y-6">
+							{benefitItems.map((item, index) => (
+								<li className="flex flex-row items-start" key={index}>
+									<div className="shrink-0 flex items-center justify-center">
+										<IconTick className="mt-1 mr-2" height={14} width={14} />
+									</div>
+									<div className="">
+										<h5 className="font-heading font-semibold mb-2">{item.title}</h5>
+										<p className="text-app-gray-600 leading-tight">{item.description}</p>
+									</div>
+								</li>
+							))}
+						</ul>
 					</div>
-				</CardContent>
-			</Card>
+				</div>
+
+				<div className="z-20 flex-1 justify-start">
+					<Card className="bg-white w-full md:w-4/5 max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
+						<CardHeader>
+							<CardTitle className="text-4xl font-heading font-medium" data-testid="auth-page-title">
+								Create your account
+							</CardTitle>
+							<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
+								Get more funding - faster!
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<SigninForm
+								isLoading={isLoading}
+								onSubmit={async ({ email }) => {
+									await handleEmailSignin(email);
+								}}
+							/>
+							<SeparatorWithText className="mb-5" text={"Or connect with "} />
+							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
+								<SocialSigninButton
+									isLoading={isLoading}
+									onClick={async () => {
+										await handleGoogleSignin();
+									}}
+									platform="google"
+								/>
+								<SocialSigninButton
+									isLoading={isLoading}
+									onClick={async () => {
+										await handleOrcidSignin();
+									}}
+									platform="orcid"
+								/>
+							</div>
+							<div className="text-center">
+								<span className="text-dark">Already have an account?</span>
+								<AppButton className="text-primary" size="sm" variant="link">
+									<Link href={""}>Login</Link>
+								</AppButton>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
 		</div>
 	);
 }
 
-export function SigninWithGoogleButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => Promise<void> }) {
+export function SocialSigninButton({
+	isLoading,
+	onClick,
+	platform,
+}: {
+	isLoading: boolean;
+	onClick: () => Promise<void>;
+	platform: "google" | "orcid";
+}) {
 	return (
-		<section className="flex flex-col gap-2" data-testid="oauth-signin-form">
-			<Button
-				className="w-full rounded border p-1"
-				data-testid="oauth-signin-form-google-button"
-				disabled={isLoading}
-				onClick={async () => {
-					await onClick();
-				}}
-				variant="secondary"
-			>
-				<p className="flex items-center justify-center gap-3">
-					<span className="text-md bold" data-testid="oauth-signin-form-google-text">
-						Sign in with Google
-					</span>
-					<span data-testid="oauth-signin-form-google-icon">
-						<IconSocialGoogle className="size-4" />
-					</span>
-				</p>
-			</Button>
-		</section>
-	);
-}
-
-function SigninWithOrcidButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => Promise<void> }) {
-	return (
-		<Button
-			className="flex w-full items-center justify-center gap-2 bg-[#A6CE39] text-white hover:bg-[#8CB82B] font-button"
-			data-testid="orcid-signin-button"
+		<AppButton
+			className="border-app-gray-400 text-sm font-normal text-dark"
 			disabled={isLoading}
-			onClick={onClick}
-			variant="outline"
+			leftIcon={platform === "google" ? <IconSocialGoogle /> : <IconSocialOrcid />}
+			onClick={async () => {
+				await onClick();
+			}}
+			size="lg"
+			theme="light"
+			variant="secondary"
 		>
-			{isLoading ? (
-				<div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-			) : (
-				<>
-					<IconSocialOrcid height={20} width={20} />
-					<span>ORCID</span>
-				</>
-			)}
-		</Button>
+			{platform === "google" ? "Google" : "ORCID"}
+		</AppButton>
 	);
 }
