@@ -7,6 +7,7 @@ export enum PagePath {
 	APPLICATION_DETAIL = "/workspaces/:workspaceId/applications/:applicationId",
 	FINISH_EMAIL_SIGNIN = "/onboarding/email",
 	IMPRINT = "/imprint",
+	LOGIN = "/login",
 	NEW_APPLICATION = "/workspaces/:workspaceId/applications/new",
 	ONBOARDING = "/onboarding",
 	PRIVACY = "/privacy",
