@@ -9,11 +9,10 @@ import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { logError } from "@/utils/logging";
 import { getAdditionalUserInfo, OAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useState } from "react";
 import { toast } from "sonner";
-import { IconTick } from "@/components/onboarding/icons";
 import { AppButton } from "@/components/app-button";
 import Link from "next/link";
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
@@ -21,25 +20,10 @@ import { OnboardingGradientBackgroundTop, StackedHighlight } from "@/components/
 import { LogoDark } from "@/components/logo";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
 import { handleGoogleSignup } from "@/utils/google-signin";
+import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
+import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 
 const orcidProvider = new OAuthProvider("oidc.orcid");
-
-const benefitItems = [
-	{
-		description:
-			"Get up and running quickly with intelligent tools that simplify the entire grant application process.",
-		title: "Start applying faster",
-	},
-	{
-		description:
-			"From discovery to submission, GrantFlow.ai supports labs, institutions, and independent researchers across all disciplines.",
-		title: "Support every research journey",
-	},
-	{
-		description: "Trusted by leading labs and ambitious researchers working to change the world.",
-		title: "Join a growing research community",
-	},
-];
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
@@ -154,32 +138,13 @@ export default function SignIn() {
 							height="auto"
 							width="auto"
 						/>
-						<ul className="space-y-6">
-							{benefitItems.map((item, index) => (
-								<li className="flex flex-row items-start" key={index}>
-									<div className="shrink-0 flex items-center justify-center">
-										<IconTick className="mt-1 mr-2" height={14} width={14} />
-									</div>
-									<div className="">
-										<h5 className="font-heading font-semibold mb-2">{item.title}</h5>
-										<p className="text-app-gray-600 leading-tight">{item.description}</p>
-									</div>
-								</li>
-							))}
-						</ul>
+						<BenefitsList />
 					</div>
 				</div>
 
 				<div className="z-20 flex-1 justify-start">
 					<Card className="bg-white w-full md:w-4/5 max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
-						<CardHeader>
-							<CardTitle className="text-4xl font-heading font-medium" data-testid="auth-page-title">
-								Create your account
-							</CardTitle>
-							<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
-								Get more funding - faster!
-							</CardDescription>
-						</CardHeader>
+						<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
 						<CardContent>
 							<SigninForm
 								googleSignInError={googleSignInError}
