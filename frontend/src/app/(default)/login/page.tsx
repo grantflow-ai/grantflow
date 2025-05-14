@@ -16,14 +16,15 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AppInput } from "@/components/input-field";
 import { SubmitButton } from "@/components/submit-button";
-import { SeparatorWithText } from "@/components/separator-with-text";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AppButton } from "@/components/app-button";
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
-import Link from "next/link";
 import { IconGoAhead } from "@/components/icons";
+import { LogoDark } from "@/components/logo";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SeparatorWithText } from "@/components/separator-with-text";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
+import { AppButton } from "@/components/app-button";
+import Link from "next/link";
 
 const loginFormSchema = z.object({
 	email: z
@@ -99,57 +100,62 @@ export default function Login() {
 	};
 
 	return (
-		<div
-			className="flex size-full min-h-screen place-items-center text-center text-card-foreground relative overflow-hidden bg-white"
-			data-testid="login-container"
-		>
-			<div className="absolute inset-0 flex items-center justify-center">
+		<div className="flex flex-col min-h-screen bg-white relative overflow-hidden" data-testid="login-container">
+			<div className="absolute inset-0 z-0">
 				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
+				<OnboardingGradientBackgroundBottom
+					aria-hidden="true"
+					className="absolute bottom-0 left-0 pointer-events-none"
+				/>
 			</div>
 
-			<OnboardingGradientBackgroundBottom
-				aria-hidden="true"
-				className="absolute bottom-0 left-0 pointer-events-none"
-			/>
+			<header className="w-full bg-white p-2 md:p-4 shadow-sm z-50">
+				<LogoDark className="h-12 md:h-14" height="250" width="250" />
+			</header>
 
-			<div className="z-10 w-full flex flex-col items-center justify-center">
-				<div className="relative">
-					<Card className="z-20 bg-white w-full max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
-						<CardHeader>
-							<CardTitle className="text-3xl font-heading font-medium" data-testid="auth-page-title">
-								Welcome back!
-							</CardTitle>
-							<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
-								Log in to manage your grant workflow
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<LoginForm isLoading={isLoading} onSubmit={({ email }) => handleEmailSignin(email)} />
+			<div
+				className="grow flex size-full place-items-center text-center text-card-foreground"
+				data-testid="login-container"
+			>
+				<div className="z-10 w-full flex flex-col items-center justify-center">
+					<div className="relative">
+						<Card className="z-20 bg-white w-full max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
+							<CardHeader>
+								<CardTitle className="text-3xl font-heading font-medium" data-testid="auth-page-title">
+									Welcome back!
+								</CardTitle>
+								<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
+									Log in to manage your grant workflow
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<LoginForm isLoading={isLoading} onSubmit={({ email }) => handleEmailSignin(email)} />
 
-							<SeparatorWithText className="mb-5" text={"Or connect with "} />
+								<SeparatorWithText className="mb-5" text={"Or connect with "} />
 
-							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
-								<SocialSigninButton
-									isLoading={isLoading}
-									onClick={handleGoogleSignin}
-									platform="google"
-								/>
+								<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
+									<SocialSigninButton
+										isLoading={isLoading}
+										onClick={handleGoogleSignin}
+										platform="google"
+									/>
 
-								<SocialSigninButton
-									isLoading={isLoading}
-									onClick={handleOrcidSignin}
-									platform="orcid"
-								/>
-							</div>
+									<SocialSigninButton
+										isLoading={isLoading}
+										onClick={handleOrcidSignin}
+										platform="orcid"
+									/>
+								</div>
 
-							<div className="text-center flex items-center justify-center min-w-max">
-								<span className="text-dark whitespace-nowrap">Don&apos;t have an account yet?</span>
-								<AppButton className="text-primary" size="sm" variant="link">
-									<Link href={PagePath.ONBOARDING}>Create an Account</Link>
-								</AppButton>
-							</div>
-						</CardContent>
-					</Card>
+								<div className="text-center flex items-center justify-center min-w-max">
+									<span className="text-dark whitespace-nowrap">Don&apos;t have an account yet?</span>
+									<AppButton className="text-primary" size="sm" variant="link">
+										<Link href={PagePath.ONBOARDING}>Create an Account</Link>
+									</AppButton>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -179,6 +185,7 @@ function LoginForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (val
 										autoCorrect="off"
 										className="form-input"
 										data-testid="login-form-email-input"
+										disabled={isLoading}
 										errorMessage={form.formState.errors.email?.message}
 										id="email"
 										label="Email Address"
@@ -194,7 +201,7 @@ function LoginForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (val
 						canBeDisabled={false}
 						className="mt-3 mb-8 w-full"
 						data-testid="login-form-submit-button"
-						disabled={!form.formState.isValid}
+						disabled={!form.formState.isValid || isLoading}
 						isLoading={isLoading}
 						rightIcon={<IconGoAhead />}
 					>
