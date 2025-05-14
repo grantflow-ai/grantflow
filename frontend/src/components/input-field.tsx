@@ -89,13 +89,12 @@ export function AppInput({
 				)}
 			</div>
 
-			{hasError && (
-				<div className="flex justify-start">
-					<span className="text-sm text-error font-light" data-testid={`${testId}-error-message`}>
-						{errorMessage}
-					</span>
-				</div>
-			)}
+			<div
+				className={`text-start text-sm text-error mb-1 min-h-5 ${hasError ? "visible" : "invisible"}`}
+				data-testid={`${testId}-error`}
+			>
+				{errorMessage ?? " "}
+			</div>
 		</div>
 	);
 }

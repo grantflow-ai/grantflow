@@ -1,15 +1,28 @@
 import { SubmitButton } from "@/components/submit-button";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { IconGoAhead } from "@/components/icons";
 import { AppInput } from "@/components/input-field";
 
 const signInFormSchema = z.object({
-	email: z.string().email({ message: "Invalid email address" }),
-	firstName: z.string().min(2, { message: "First name must be at least 2 characters" }),
-	lastName: z.string().min(2, { message: "Last name must be at least 2 characters" }),
+	email: z
+		.string()
+		.min(1, { message: "Please enter your email address." })
+		.email({ message: "This email address is not valid." }),
+	firstName: z
+		.string()
+		.min(2, { message: "Please enter your first name." })
+		.regex(/^[A-Za-z\s]+$/, {
+			message: "Name must contain only letters and spaces.",
+		}),
+	lastName: z
+		.string()
+		.min(2, { message: "Please enter your last name." })
+		.regex(/^[A-Za-z\s]+$/, {
+			message: "Name must contain only letters and spaces.",
+		}),
 });
 
 export type SignInFormValues = z.infer<typeof signInFormSchema>;
@@ -18,13 +31,14 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 	const form = useForm<SignInFormValues>({
 		defaultValues: { email: "", firstName: "", lastName: "" },
 		delayError: 5,
+		mode: "onChange",
 		resolver: zodResolver(signInFormSchema),
 	});
 
 	return (
 		<div data-testid="email-signin-form-container">
 			<Form {...form}>
-				<form className="space-y-5" data-testid="email-signin-form" onSubmit={form.handleSubmit(onSubmit)}>
+				<form className="" data-testid="email-signin-form" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
 						control={form.control}
 						name="firstName"
@@ -37,6 +51,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										autoCorrect="off"
 										className="form-input"
 										data-testid="email-signin-form-firstname-input"
+										errorMessage={form.formState.errors.firstName?.message}
 										id="firstName"
 										label="First name"
 										placeholder="Type your first name"
@@ -44,14 +59,6 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										{...field}
 									></AppInput>
 								</FormControl>
-								{form.formState.errors.firstName?.message && (
-									<FormMessage
-										className="text-destructive"
-										data-testid="firstname-input-error-message"
-									>
-										{form.formState.errors.firstName.message}
-									</FormMessage>
-								)}
 							</FormItem>
 						)}
 					/>
@@ -67,6 +74,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										autoCorrect="off"
 										className="form-input"
 										data-testid="email-signin-form-lastname-input"
+										errorMessage={form.formState.errors.lastName?.message}
 										id="lastName"
 										label="Last name"
 										placeholder="Type your last name"
@@ -74,14 +82,6 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										{...field}
 									></AppInput>
 								</FormControl>
-								{form.formState.errors.lastName?.message && (
-									<FormMessage
-										className="text-destructive"
-										data-testid="lastname-input-error-message"
-									>
-										{form.formState.errors.lastName.message}
-									</FormMessage>
-								)}
 							</FormItem>
 						)}
 					/>
@@ -97,6 +97,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										autoCorrect="off"
 										className="form-input"
 										data-testid="email-signin-form-email-input"
+										errorMessage={form.formState.errors.email?.message}
 										id="email"
 										label="Email"
 										placeholder="name@example.com"
@@ -104,11 +105,6 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										{...field}
 									></AppInput>
 								</FormControl>
-								{form.formState.errors.email?.message && (
-									<FormMessage className="" data-testid="email-input-error-message">
-										{form.formState.errors.email.message}
-									</FormMessage>
-								)}
 							</FormItem>
 						)}
 					/>
@@ -116,6 +112,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 						canBeDisabled={false}
 						className="mt-3 mb-8 w-full"
 						data-testid="email-signin-form-submit-button"
+						disabled={!form.formState.isValid}
 						isLoading={isLoading}
 						rightIcon={<IconGoAhead />}
 						size="lg"

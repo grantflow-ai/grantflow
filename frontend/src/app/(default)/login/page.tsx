@@ -1,47 +1,43 @@
 "use client";
 
 import { login } from "@/actions/login";
-import { SeparatorWithText } from "@/components/separator-with-text";
-import { SigninForm } from "@/components/onboarding/signin-form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { logError } from "@/utils/logging";
 import { GoogleAuthProvider, OAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useState } from "react";
 import { toast } from "sonner";
-import { IconTick } from "@/components/onboarding/icons";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { AppInput } from "@/components/input-field";
+import { SubmitButton } from "@/components/submit-button";
+import { SeparatorWithText } from "@/components/separator-with-text";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppButton } from "@/components/app-button";
-import Link from "next/link";
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
-import { OnboardingGradientBackgroundTop, StackedHighlight } from "@/components/onboarding/backgrounds";
-import { LogoDark } from "@/components/logo";
+import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
+import Link from "next/link";
+import { IconGoAhead } from "@/components/icons";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
+
+const loginFormSchema = z.object({
+	email: z
+		.string()
+		.min(1, { message: "Please enter your email address." })
+		.email({ message: "This email address is not valid." }),
+});
+
+type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 const googleProvider = new GoogleAuthProvider();
 const orcidProvider = new OAuthProvider("oidc.orcid");
 
-const benefitItems = [
-	{
-		description:
-			"Get up and running quickly with intelligent tools that simplify the entire grant application process.",
-		title: "Start applying faster",
-	},
-	{
-		description:
-			"From discovery to submission, GrantFlow.ai supports labs, institutions, and independent researchers across all disciplines.",
-		title: "Support every research journey",
-	},
-	{
-		description: "Trusted by leading labs and ambitious researchers working to change the world.",
-		title: "Join a growing research community",
-	},
-];
-
-export default function SignIn() {
+export default function Login() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -92,7 +88,6 @@ export default function SignIn() {
 			const cred = await signInWithPopup(auth, orcidProvider);
 			const idToken = await cred.user.getIdToken();
 			await login(idToken);
-			toast.success("You are registered with us!!");
 		} catch (error) {
 			if (!isRedirectError(error)) {
 				logError({ error, identifier: "handleOrcidSignin" });
@@ -112,80 +107,101 @@ export default function SignIn() {
 				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
 			</div>
 
-			<OnboardingGradientBackgroundTop
+			<OnboardingGradientBackgroundBottom
 				aria-hidden="true"
-				className="absolute top-0 right-0 pointer-events-none"
+				className="absolute bottom-0 left-0 pointer-events-none"
 			/>
 
-			<div className="z-10 w-full flex flex-col md:flex-row">
-				<div className="flex flex-1 justify-end items-center relative">
-					<StackedHighlight className="z-10 absolute bottom-0 -right-1/4 pointer-events-none"></StackedHighlight>
-					<div className="z-20 w-full lg:w-4/5 xl:w-3/5 text-start">
-						<LogoDark
-							className={`sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16`}
-							height="auto"
-							width="auto"
-						/>
-						<ul className="space-y-6">
-							{benefitItems.map((item, index) => (
-								<li className="flex flex-row items-start" key={index}>
-									<div className="shrink-0 flex items-center justify-center">
-										<IconTick className="mt-1 mr-2" height={14} width={14} />
-									</div>
-									<div className="">
-										<h5 className="font-heading font-semibold mb-2">{item.title}</h5>
-										<p className="text-app-gray-600 leading-tight">{item.description}</p>
-									</div>
-								</li>
-							))}
-						</ul>
-					</div>
-				</div>
-
-				<div className="z-20 flex-1 justify-start">
-					<Card className="bg-white w-full md:w-4/5 max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
+			<div className="z-10 w-full flex flex-col items-center justify-center">
+				<div className="relative">
+					<Card className="z-20 bg-white w-full max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
 						<CardHeader>
-							<CardTitle className="text-4xl font-heading font-medium" data-testid="auth-page-title">
-								Create your account
+							<CardTitle className="text-3xl font-heading font-medium" data-testid="auth-page-title">
+								Welcome back!
 							</CardTitle>
 							<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
-								Get more funding - faster!
+								Log in to manage your grant workflow
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<SigninForm
-								isLoading={isLoading}
-								onSubmit={async ({ email }) => {
-									await handleEmailSignin(email);
-								}}
-							/>
+							<LoginForm isLoading={isLoading} onSubmit={({ email }) => handleEmailSignin(email)} />
+
 							<SeparatorWithText className="mb-5" text={"Or connect with "} />
+
 							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
 								<SocialSigninButton
 									isLoading={isLoading}
-									onClick={async () => {
-										await handleGoogleSignin();
-									}}
+									onClick={handleGoogleSignin}
 									platform="google"
 								/>
+
 								<SocialSigninButton
 									isLoading={isLoading}
-									onClick={async () => {
-										await handleOrcidSignin();
-									}}
+									onClick={handleOrcidSignin}
 									platform="orcid"
 								/>
 							</div>
-							<div className="text-center">
-								<span className="text-dark">Already have an account?</span>
+
+							<div className="text-center flex items-center justify-center min-w-max">
+								<span className="text-dark whitespace-nowrap">Don&apos;t have an account yet?</span>
 								<AppButton className="text-primary" size="sm" variant="link">
-									<Link href={PagePath.LOGIN}>Login</Link>
+									<Link href={PagePath.ONBOARDING}>Create an Account</Link>
 								</AppButton>
 							</div>
 						</CardContent>
 					</Card>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function LoginForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (values: LoginFormValues) => void }) {
+	const form = useForm<LoginFormValues>({
+		defaultValues: { email: "" },
+		mode: "onChange",
+		resolver: zodResolver(loginFormSchema),
+	});
+
+	return (
+		<div data-testid="login-form-container">
+			<Form {...form}>
+				<form data-testid="login-form" onSubmit={form.handleSubmit(onSubmit)}>
+					<FormField
+						control={form.control}
+						name="email"
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<AppInput
+										autoCapitalize="none"
+										autoComplete="email"
+										autoCorrect="off"
+										className="form-input"
+										data-testid="login-form-email-input"
+										errorMessage={form.formState.errors.email?.message}
+										id="email"
+										label="Email Address"
+										placeholder="name@example.com"
+										type="email"
+										{...field}
+									/>
+								</FormControl>
+							</FormItem>
+						)}
+					/>
+					<SubmitButton
+						canBeDisabled={false}
+						className="mt-3 mb-8 w-full"
+						data-testid="login-form-submit-button"
+						disabled={!form.formState.isValid}
+						isLoading={isLoading}
+						rightIcon={<IconGoAhead />}
+					>
+						Login
+					</SubmitButton>
+				</form>
+			</Form>
 		</div>
 	);
 }
