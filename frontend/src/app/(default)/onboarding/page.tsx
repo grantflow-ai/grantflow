@@ -8,7 +8,7 @@ import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { logError } from "@/utils/logging";
-import { GoogleAuthProvider, OAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
+import { getAdditionalUserInfo, OAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useState } from "react";
@@ -20,8 +20,8 @@ import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { OnboardingGradientBackgroundTop, StackedHighlight } from "@/components/onboarding/backgrounds";
 import { LogoDark } from "@/components/logo";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
+import { handleGoogleSignup } from "@/utils/google-signin";
 
-const googleProvider = new GoogleAuthProvider();
 const orcidProvider = new OAuthProvider("oidc.orcid");
 
 const benefitItems = [
@@ -44,18 +44,31 @@ const benefitItems = [
 export default function SignIn() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
+	const [googleSignInError, setGoogleSignInError] = useState<null | React.ReactNode | string>(null);
 
 	const handleGoogleSignin = async () => {
 		setIsLoading(true);
+		setGoogleSignInError(null);
 
 		try {
-			const cred = await signInWithPopup(auth, googleProvider);
-			const idToken = await cred.user.getIdToken();
-			await login(idToken);
+			const { isNewUser } = await handleGoogleSignup();
+
+			if (isNewUser) {
+				toast.success("Account created successfully!");
+			} else {
+				const errorWithLink = (
+					<>
+						This email is already registered.{" "}
+						<Link className="text-primary text-sm hover:underline" href="/login">
+							Log in instead.
+						</Link>
+					</>
+				);
+				setGoogleSignInError(errorWithLink);
+			}
 		} catch (error) {
 			if (!isRedirectError(error)) {
-				logError({ error, identifier: "handleGoogleSignin" });
-				toast.error("Sign-in failed due to an error");
+				toast.error(error instanceof Error ? error.message : "Failed to sign up");
 			}
 		} finally {
 			setIsLoading(false);
@@ -90,9 +103,24 @@ export default function SignIn() {
 			});
 
 			const cred = await signInWithPopup(auth, orcidProvider);
-			const idToken = await cred.user.getIdToken();
-			await login(idToken);
-			toast.success("You are registered with us!!");
+
+			const additionalUserInfo = getAdditionalUserInfo(cred);
+			const isNewUser = additionalUserInfo?.isNewUser ?? false;
+
+			if (isNewUser) {
+				const idToken = await cred.user.getIdToken();
+				await login(idToken);
+			} else {
+				const errorWithLink = (
+					<>
+						This email is already registered.{" "}
+						<Link className="text-primary text-sm hover:underline" href="/login">
+							Log in instead.
+						</Link>
+					</>
+				);
+				setGoogleSignInError(errorWithLink);
+			}
 		} catch (error) {
 			if (!isRedirectError(error)) {
 				logError({ error, identifier: "handleOrcidSignin" });
@@ -154,6 +182,7 @@ export default function SignIn() {
 						</CardHeader>
 						<CardContent>
 							<SigninForm
+								googleSignInError={googleSignInError}
 								isLoading={isLoading}
 								onSubmit={async ({ email }) => {
 									await handleEmailSignin(email);

@@ -6,7 +6,7 @@ import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { logError } from "@/utils/logging";
-import { GoogleAuthProvider, OAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
+import { getAdditionalUserInfo, OAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
 import { useState } from "react";
 import { toast } from "sonner";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -25,6 +25,7 @@ import { SeparatorWithText } from "@/components/separator-with-text";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
 import { AppButton } from "@/components/app-button";
 import Link from "next/link";
+import { handleGoogleLogin } from "@/utils/google-signin";
 
 const loginFormSchema = z.object({
 	email: z
@@ -35,24 +36,37 @@ const loginFormSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 
-const googleProvider = new GoogleAuthProvider();
 const orcidProvider = new OAuthProvider("oidc.orcid");
 
 export default function Login() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
+	const [googleSignInError, setGoogleSignInError] = useState<null | React.ReactNode | string>(null);
 
 	const handleGoogleSignin = async () => {
 		setIsLoading(true);
+		setGoogleSignInError(null);
 
 		try {
-			const cred = await signInWithPopup(auth, googleProvider);
-			const idToken = await cred.user.getIdToken();
-			await login(idToken);
+			const { isNewUser } = await handleGoogleLogin();
+
+			if (isNewUser) {
+				const errorWithLink = (
+					<>
+						No account found with this email.{" "}
+						<Link className="text-primary text-sm hover:underline" href="/onboarding">
+							Create an account.
+						</Link>
+					</>
+				);
+				setGoogleSignInError(errorWithLink);
+			} else {
+				toast.success("Welcome back!");
+				// await login(idToken);
+			}
 		} catch (error) {
 			if (!isRedirectError(error)) {
-				logError({ error, identifier: "handleGoogleSignin" });
-				toast.error("Sign-in failed due to an error");
+				toast.error(error instanceof Error ? error.message : "Failed to sign in");
 			}
 		} finally {
 			setIsLoading(false);
@@ -87,8 +101,24 @@ export default function Login() {
 			});
 
 			const cred = await signInWithPopup(auth, orcidProvider);
-			const idToken = await cred.user.getIdToken();
-			await login(idToken);
+
+			const additionalUserInfo = getAdditionalUserInfo(cred);
+			const isNewUser = additionalUserInfo?.isNewUser ?? false;
+
+			if (isNewUser) {
+				const errorWithLink = (
+					<>
+						No account found with this email.{" "}
+						<Link className="text-primary text-sm hover:underline" href="/onboarding">
+							Create an account.
+						</Link>
+					</>
+				);
+				setGoogleSignInError(errorWithLink);
+			} else {
+				const idToken = await cred.user.getIdToken();
+				await login(idToken);
+			}
 		} catch (error) {
 			if (!isRedirectError(error)) {
 				logError({ error, identifier: "handleOrcidSignin" });
@@ -129,7 +159,11 @@ export default function Login() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
-								<LoginForm isLoading={isLoading} onSubmit={({ email }) => handleEmailSignin(email)} />
+								<LoginForm
+									googleSignInError={googleSignInError}
+									isLoading={isLoading}
+									onSubmit={({ email }) => handleEmailSignin(email)}
+								/>
 
 								<SeparatorWithText className="mb-5" text={"Or connect with "} />
 
@@ -162,7 +196,15 @@ export default function Login() {
 	);
 }
 
-function LoginForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (values: LoginFormValues) => void }) {
+function LoginForm({
+	googleSignInError,
+	isLoading,
+	onSubmit,
+}: {
+	googleSignInError?: null | React.ReactNode | string | undefined;
+	isLoading: boolean;
+	onSubmit: (values: LoginFormValues) => void;
+}) {
 	const form = useForm<LoginFormValues>({
 		defaultValues: { email: "" },
 		mode: "onChange",
@@ -186,7 +228,7 @@ function LoginForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (val
 										className="form-input"
 										data-testid="login-form-email-input"
 										disabled={isLoading}
-										errorMessage={form.formState.errors.email?.message}
+										errorMessage={form.formState.errors.email?.message ?? googleSignInError}
 										id="email"
 										label="Email Address"
 										placeholder="name@example.com"

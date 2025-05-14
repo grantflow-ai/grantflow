@@ -17,7 +17,7 @@ export function AppInput({
 	...props
 }: {
 	className?: string;
-	errorMessage?: string;
+	errorMessage?: null | React.ReactNode | string;
 	icon?: React.ReactNode;
 	label?: string;
 	maxWords?: number;
@@ -25,7 +25,7 @@ export function AppInput({
 	testId?: string;
 	variant?: "default" | "field";
 } & React.InputHTMLAttributes<HTMLInputElement>) {
-	const hasError = typeof errorMessage === "string" && errorMessage.trim() !== "";
+	const hasError = !!errorMessage;
 	const [text, setText] = useState("");
 
 	const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
@@ -93,7 +93,7 @@ export function AppInput({
 				className={`text-start text-sm text-error mb-1 min-h-5 ${hasError ? "visible" : "invisible"}`}
 				data-testid={`${testId}-error`}
 			>
-				{errorMessage ?? " "}
+				{errorMessage}
 			</div>
 		</div>
 	);
