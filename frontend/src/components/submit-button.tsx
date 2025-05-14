@@ -7,8 +7,9 @@ export function SubmitButton({
 	children,
 	className = "",
 	isLoading,
+	rightIcon,
 	...props
-}: { canBeDisabled?: boolean; isLoading?: boolean } & AppButtonProps) {
+}: { canBeDisabled?: boolean; isLoading?: boolean; rightIcon?: React.ReactNode } & AppButtonProps) {
 	const variantClasses = canBeDisabled
 		? "disabled:text-muted-foreground disabled:bg-muted disabled:cursor-not-allowed"
 		: "";
@@ -18,10 +19,11 @@ export function SubmitButton({
 			aria-busy={isLoading}
 			className={cn("invalid:text-destructive-400 invalid:cursor-not-allowed", variantClasses, className)}
 			data-testid="form-button"
+			rightIcon={isLoading ? <Loader2 className="size-4 animate-spin" /> : rightIcon}
 			type="submit"
 			{...props}
 		>
-			{isLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : children}
+			{children}
 		</AppButton>
 	);
 }

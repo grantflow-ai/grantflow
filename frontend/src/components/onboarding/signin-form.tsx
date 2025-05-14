@@ -51,6 +51,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										autoCorrect="off"
 										className="form-input"
 										data-testid="email-signin-form-firstname-input"
+										disabled={isLoading}
 										errorMessage={form.formState.errors.firstName?.message}
 										id="firstName"
 										label="First name"
@@ -74,6 +75,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										autoCorrect="off"
 										className="form-input"
 										data-testid="email-signin-form-lastname-input"
+										disabled={isLoading}
 										errorMessage={form.formState.errors.lastName?.message}
 										id="lastName"
 										label="Last name"
@@ -97,6 +99,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										autoCorrect="off"
 										className="form-input"
 										data-testid="email-signin-form-email-input"
+										disabled={isLoading}
 										errorMessage={form.formState.errors.email?.message}
 										id="email"
 										label="Email"
@@ -112,7 +115,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 						canBeDisabled={false}
 						className="mt-3 mb-8 w-full"
 						data-testid="email-signin-form-submit-button"
-						disabled={!form.formState.isValid}
+						disabled={!form.formState.isValid || isLoading}
 						isLoading={isLoading}
 						rightIcon={<IconGoAhead />}
 						size="lg"
