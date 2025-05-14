@@ -20,12 +20,13 @@ import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
 import { IconGoAhead } from "@/components/icons";
 import { LogoDark } from "@/components/logo";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { SeparatorWithText } from "@/components/separator-with-text";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
 import { AppButton } from "@/components/app-button";
 import Link from "next/link";
 import { handleGoogleLogin } from "@/utils/google-signin";
+import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 
 const loginFormSchema = z.object({
 	email: z
@@ -48,7 +49,7 @@ export default function Login() {
 		setGoogleSignInError(null);
 
 		try {
-			const { isNewUser } = await handleGoogleLogin();
+			const { idToken, isNewUser } = await handleGoogleLogin();
 
 			if (isNewUser) {
 				const errorWithLink = (
@@ -62,7 +63,7 @@ export default function Login() {
 				setGoogleSignInError(errorWithLink);
 			} else {
 				toast.success("Welcome back!");
-				// await login(idToken);
+				await login(idToken);
 			}
 		} catch (error) {
 			if (!isRedirectError(error)) {
@@ -150,14 +151,7 @@ export default function Login() {
 				<div className="z-10 w-full flex flex-col items-center justify-center">
 					<div className="relative">
 						<Card className="z-20 bg-white w-full max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
-							<CardHeader>
-								<CardTitle className="text-3xl font-heading font-medium" data-testid="auth-page-title">
-									Welcome back!
-								</CardTitle>
-								<CardDescription className="text-app-gray-600" data-testid="auth-page-description">
-									Log in to manage your grant workflow
-								</CardDescription>
-							</CardHeader>
+							<AuthCardHeader description="Log in to manage your grant workflow" title="Welcome back!" />
 							<CardContent>
 								<LoginForm
 									googleSignInError={googleSignInError}
