@@ -27,7 +27,15 @@ const signInFormSchema = z.object({
 
 export type SignInFormValues = z.infer<typeof signInFormSchema>;
 
-export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: SubmitHandler<SignInFormValues> }) {
+export function SigninForm({
+	googleSignInError,
+	isLoading,
+	onSubmit,
+}: {
+	googleSignInError?: null | React.ReactNode | string | undefined;
+	isLoading: boolean;
+	onSubmit: SubmitHandler<SignInFormValues>;
+}) {
 	const form = useForm<SignInFormValues>({
 		defaultValues: { email: "", firstName: "", lastName: "" },
 		delayError: 5,
@@ -100,7 +108,7 @@ export function SigninForm({ isLoading, onSubmit }: { isLoading: boolean; onSubm
 										className="form-input"
 										data-testid="email-signin-form-email-input"
 										disabled={isLoading}
-										errorMessage={form.formState.errors.email?.message}
+										errorMessage={googleSignInError ?? form.formState.errors.email?.message}
 										id="email"
 										label="Email"
 										placeholder="name@example.com"
