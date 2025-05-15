@@ -1,6 +1,7 @@
 function IconSocialGoogle({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-social-google"
 			fill="none"
 			height={height}
 			viewBox="0 0 18 18"
@@ -45,6 +46,7 @@ function IconSocialGoogle({ height = 15, width = 15, ...props }: React.HTMLProps
 function IconSocialOrcid({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-social-orcid"
 			fill="none"
 			height={height}
 			viewBox="0 0 20 22"
@@ -76,6 +78,7 @@ function IconSocialOrcid({ height = 15, width = 15, ...props }: React.HTMLProps<
 function IconTick({ height = 14, width = 14, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-tick"
 			fill="none"
 			height={height}
 			viewBox="0 0 14 14"
