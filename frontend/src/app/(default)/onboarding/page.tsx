@@ -7,8 +7,7 @@ import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
-import { logError } from "@/utils/logging";
-import { getAdditionalUserInfo, OAuthProvider, sendSignInLinkToEmail, signInWithPopup } from "firebase/auth";
+import { sendSignInLinkToEmail, User } from "firebase/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useState } from "react";
@@ -19,44 +18,57 @@ import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { OnboardingGradientBackgroundTop, StackedHighlight } from "@/components/onboarding/backgrounds";
 import { LogoDark } from "@/components/logo";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
-import { handleGoogleSignup } from "@/utils/google-signin";
+import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
-
-const orcidProvider = new OAuthProvider("oidc.orcid");
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
-	const [googleSignInError, setGoogleSignInError] = useState<null | React.ReactNode | string>(null);
+	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 
-	const handleGoogleSignin = async () => {
+	const handleSocialSignUp = async (
+		provider: "google" | "orcid",
+		signupMethod: () => Promise<{ idToken: string; isNewUser: boolean; user: User }>,
+	) => {
 		setIsLoading(true);
-		setGoogleSignInError(null);
+		setSocialSignInError(null);
 
 		try {
-			const { isNewUser } = await handleGoogleSignup();
+			const { idToken, isNewUser } = await signupMethod();
 
 			if (isNewUser) {
 				toast.success("Account created successfully!");
-			} else {
-				const errorWithLink = (
-					<>
-						This email is already registered.{" "}
-						<Link className="text-primary text-sm hover:underline" href="/login">
-							Log in instead.
-						</Link>
-					</>
-				);
-				setGoogleSignInError(errorWithLink);
+				await login(idToken);
+				return;
 			}
+
+			const errorWithLink = (
+				<>
+					This email is already registered.{" "}
+					<Link className="text-primary text-sm hover:underline" href="/login">
+						Log in instead.
+					</Link>
+				</>
+			);
+			setSocialSignInError(errorWithLink);
 		} catch (error) {
 			if (!isRedirectError(error)) {
-				toast.error(error instanceof Error ? error.message : "Failed to sign up");
+				toast.error(
+					error instanceof Error ? error.message : `${provider.toUpperCase()} sign-up failed due to an error`,
+				);
 			}
 		} finally {
 			setIsLoading(false);
 		}
+	};
+
+	const handleGoogleSignin = async () => {
+		await handleSocialSignUp("google", handleGoogleSignup);
+	};
+
+	const handleOrcidSignin = async () => {
+		await handleSocialSignUp("orcid", handleOrcidSignup);
 	};
 
 	const handleEmailSignin = async (email: string) => {
@@ -73,43 +85,6 @@ export default function SignIn() {
 			toast.success("An email has been sent to your mailbox with a sign-in link.\n\nPlease check your inbox.");
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to send sign-in email");
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const handleOrcidSignin = async () => {
-		setIsLoading(true);
-
-		try {
-			orcidProvider.setCustomParameters({
-				prompt: "login",
-			});
-
-			const cred = await signInWithPopup(auth, orcidProvider);
-
-			const additionalUserInfo = getAdditionalUserInfo(cred);
-			const isNewUser = additionalUserInfo?.isNewUser ?? false;
-
-			if (isNewUser) {
-				const idToken = await cred.user.getIdToken();
-				await login(idToken);
-			} else {
-				const errorWithLink = (
-					<>
-						This email is already registered.{" "}
-						<Link className="text-primary text-sm hover:underline" href="/login">
-							Log in instead.
-						</Link>
-					</>
-				);
-				setGoogleSignInError(errorWithLink);
-			}
-		} catch (error) {
-			if (!isRedirectError(error)) {
-				logError({ error, identifier: "handleOrcidSignin" });
-				toast.error("ORCID sign-in failed due to an error");
-			}
 		} finally {
 			setIsLoading(false);
 		}
@@ -147,11 +122,11 @@ export default function SignIn() {
 						<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
 						<CardContent>
 							<SigninForm
-								googleSignInError={googleSignInError}
 								isLoading={isLoading}
 								onSubmit={async ({ email }) => {
 									await handleEmailSignin(email);
 								}}
+								socialSignInError={socialSignInError}
 							/>
 							<SeparatorWithText className="mb-5" text={"Or connect with "} />
 							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
