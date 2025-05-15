@@ -74,18 +74,12 @@ const handleAuth = async (
 		const additionalInfo = getAdditionalUserInfo(result);
 		const isNewUser = additionalInfo?.isNewUser ?? false;
 
-		if (provider instanceof GoogleAuthProvider) {
-			const credential = GoogleAuthProvider.credentialFromResult(result);
-			const idToken = credential?.idToken ?? "";
-			return {
-				idToken,
-				isNewUser,
-				user: result.user,
-			};
-		} else {
-			const idToken = await result.user.getIdToken();
-			return { idToken, isNewUser, user: result.user };
-		}
+		const idToken = await result.user.getIdToken();
+		return {
+			idToken,
+			isNewUser,
+			user: result.user,
+		};
 	} catch (error) {
 		return handleFirebaseAuthError(error, identifier);
 	}
