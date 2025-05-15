@@ -2,7 +2,7 @@ import { FirebaseError } from "firebase/app";
 import * as firebaseAuth from "firebase/auth";
 import * as nextRedirect from "next/dist/client/components/redirect-error";
 import * as firebase from "@/utils/firebase";
-import { handleGoogleLogin, handleOrcidLogin } from "./auth-providers";
+import { handleGoogleLogin, handleOrcidLogin, handleOrcidSignup } from "./auth-providers";
 
 vi.mock("firebase/auth", () => ({
 	getAdditionalUserInfo: vi.fn(() => ({
@@ -86,7 +86,7 @@ describe("auth-providers", () => {
 				providerId: null,
 			});
 
-			const result = await handleGoogleLogin();
+			const result = await handleOrcidLogin();
 
 			expect(result.isNewUser).toBe(false);
 		});
@@ -94,7 +94,7 @@ describe("auth-providers", () => {
 		it("defaults to false when getAdditionalUserInfo returns null", async () => {
 			vi.mocked(firebaseAuth.getAdditionalUserInfo).mockReturnValueOnce(null);
 
-			const result = await handleGoogleLogin();
+			const result = await handleOrcidSignup();
 
 			expect(result.isNewUser).toBe(false);
 		});
