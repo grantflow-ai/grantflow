@@ -19,7 +19,6 @@ async def test_login_new_user_creates_workspace(
 ) -> None:
     mocker.patch("jwt.encode", return_value="jwt_token")
     mocker.patch("src.utils.firebase.verify_id_token", return_value={"uid": firebase_uid})
-    mocker.patch("src.api.http.auth.get_session_maker", return_value=async_session_maker)
 
     response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
     assert response.status_code == HTTPStatus.CREATED
@@ -45,7 +44,6 @@ async def test_login_existing_user_keeps_workspace(
 ) -> None:
     mocker.patch("jwt.encode", return_value="jwt_token")
     mocker.patch("src.utils.firebase.verify_id_token", return_value={"uid": firebase_uid})
-    mocker.patch("src.api.http.auth.get_session_maker", return_value=async_session_maker)
 
     # First login to create workspace
     await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
