@@ -2,9 +2,9 @@ import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function AuthCardHeader({
 	description,
-	descriptionTestId = "auth-page-description",
+	descriptionTestId = "auth-card-description",
 	title,
-	titleTestId = "auth-page-title",
+	titleTestId = "auth-card-title",
 }: {
 	description: string;
 	descriptionTestId?: string;
@@ -12,7 +12,7 @@ export function AuthCardHeader({
 	titleTestId?: string;
 }) {
 	return (
-		<CardHeader>
+		<CardHeader data-testid="auth-card-header">
 			<CardTitle className="text-4xl font-heading font-medium" data-testid={titleTestId}>
 				{title}
 			</CardTitle>

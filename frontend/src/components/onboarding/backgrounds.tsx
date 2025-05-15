@@ -1,6 +1,14 @@
 function OnboardingGradientBackgroundBottom({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
-		<svg fill="none" height="812" viewBox="0 0 1153 812" width="1153" xmlns="http://www.w3.org/2000/svg" {...props}>
+		<svg
+			data-testid="onboarding-gradient-background-bottom"
+			fill="none"
+			height="812"
+			viewBox="0 0 1153 812"
+			width="1153"
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
 			<g filter="url(#filter0_f_1269_3172)">
 				<path
 					d="M803 797.217C803 1044.21 497.458 906.988 127.703 906.988C-242.051 906.988 -536 1044.21 -536 797.217C-536 550.226 -236.255 350 133.5 350C88.5768 621.888 803 550.226 803 797.217Z"
@@ -28,7 +36,15 @@ function OnboardingGradientBackgroundBottom({ ...props }: React.HTMLProps<SVGSVG
 
 function OnboardingGradientBackgroundTop({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
-		<svg fill="none" height="698" viewBox="0 0 964 698" width="964" xmlns="http://www.w3.org/2000/svg" {...props}>
+		<svg
+			data-testid="onboarding-gradient-background-top"
+			fill="none"
+			height="698"
+			viewBox="0 0 964 698"
+			width="964"
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
 			<g filter="url(#filter0_f_1269_2973)">
 				<path
 					d="M1224 252C1224 495.005 1013.16 360 758 360C502.844 360 300 495.005 300 252C300 8.99471 506.844 -188 762 -188C1017.16 -188 1224 8.99471 1224 252Z"
@@ -56,7 +72,15 @@ function OnboardingGradientBackgroundTop({ ...props }: React.HTMLProps<SVGSVGEle
 
 function StackedHighlight({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
-		<svg fill="none" height="600" viewBox="0 0 1169 1024" width="700" xmlns="http://www.w3.org/2000/svg" {...props}>
+		<svg
+			data-testid="stacked-highlight"
+			fill="none"
+			height="600"
+			viewBox="0 0 1169 1024"
+			width="700"
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
 			<g filter="url(#filter0_f_1269_72413)">
 				<path
 					d="M869 659.714C869 905.875 662.948 769.116 413.591 769.116C164.234 769.116 -34 905.875 -34 659.714C-34 413.553 168.143 214 417.5 214C666.857 214 869 413.553 869 659.714Z"
