@@ -2,7 +2,11 @@ from datetime import timedelta
 from typing import TypedDict
 
 from litestar import get, post
+from sqlalchemy import select
 
+from src.db.connection import get_session_maker
+from src.db.enums import UserRoleEnum
+from src.db.tables import Workspace, WorkspaceUser
 from src.utils.firebase import verify_id_token
 from src.utils.jwt import create_jwt
 from src.utils.logger import get_logger
@@ -25,7 +29,24 @@ class LoginResponse(TypedDict):
 @post("/login", operation_id="Login")
 async def handle_login(data: LoginRequestBody) -> LoginResponse:
     decoded_token = await verify_id_token(data["id_token"])
-    jwt = create_jwt(decoded_token["uid"])
+    firebase_uid = decoded_token["uid"]
+    session_maker = get_session_maker()
+    async with session_maker() as session, session.begin():
+        workspace_user = await session.scalar(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
+        if workspace_user is None:
+            # Create default workspace only if user doesn't have one
+            default_workspace = Workspace(name="default")
+            session.add(default_workspace)
+            await session.commit()
+
+            # Create a WorkspaceUser instance to link the user to the default workspace
+            workspace_user = WorkspaceUser(
+                workspace_id=default_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER
+            )
+            session.add(workspace_user)
+            await session.commit()
+
+    jwt = create_jwt(firebase_uid)
     return LoginResponse(jwt_token=jwt)
 
 
