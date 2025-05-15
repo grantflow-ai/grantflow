@@ -35,7 +35,7 @@ export default function FinalizeEmailLogin() {
 				if (!isRedirectError(error)) {
 					logError({ error, identifier: "finalizeSignIn" });
 					toast.error("Failed to sign in with email link");
-					router.replace(PagePath.ONBOARDING);
+					router.replace(PagePath.LOGIN);
 				}
 			} finally {
 				globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);
