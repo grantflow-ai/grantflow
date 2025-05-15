@@ -23,6 +23,6 @@ describe("SeparatorWithText", () => {
 
 		const text = screen.getByTestId("separator-text");
 		expect(text).toHaveClass("mx-3");
-		expect(text).toHaveClass("text-zinc-500");
+		expect(text).toHaveClass("text-app-gray-600");
 	});
 });
