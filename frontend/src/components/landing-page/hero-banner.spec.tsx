@@ -21,15 +21,6 @@ vi.mock("@/components/app-button", () => ({
 	)),
 }));
 
-vi.mock("@/components/scroll-button", () => ({
-	ScrollButton: vi.fn().mockImplementation(({ children, rightIcon, selector, size }) => (
-		<button data-selector={selector} data-size={size} data-testid="mock-scroll-button">
-			{children}
-			{rightIcon && <span data-testid="right-icon-container">{rightIcon}</span>}
-		</button>
-	)),
-}));
-
 describe("HeroBanner", () => {
 	it("renders the component with the correct structure", () => {
 		const { container } = render(<HeroBanner />);
@@ -53,31 +44,23 @@ describe("HeroBanner", () => {
 		expect(buttonsContainer).toBeInTheDocument();
 	});
 
-	it("renders the contact button with correct props", () => {
+	it("renders both AppButtons with correct props and icons", () => {
 		render(<HeroBanner />);
 
-		const contactButton = screen.getByTestId("mock-app-button");
+		const appButtons = screen.getAllByTestId("mock-app-button");
+		expect(appButtons).toHaveLength(2);
+
+		const [contactButton, startHereButton] = appButtons;
+
 		expect(contactButton).toBeInTheDocument();
 		expect(contactButton).toHaveTextContent("Contact us");
 		expect(contactButton).toHaveAttribute("data-size", "lg");
 		expect(contactButton).toHaveAttribute("data-theme", "light");
 		expect(contactButton).toHaveAttribute("data-variant", "secondary");
-	});
 
-	it("renders the try free button with correct props and icon", () => {
-		render(<HeroBanner />);
-
-		const tryFreeButton = screen.getByTestId("mock-scroll-button");
-		expect(tryFreeButton).toBeInTheDocument();
-		expect(tryFreeButton).toHaveTextContent("Try For Free");
-		expect(tryFreeButton).toHaveAttribute("data-size", "lg");
-		expect(tryFreeButton).toHaveAttribute("data-selector", "waitlist");
-
-		const iconContainer = screen.getByTestId("right-icon-container");
-		expect(iconContainer).toBeInTheDocument();
-
-		const icon = screen.getByTestId("mock-icon-go-ahead");
-		expect(icon).toBeInTheDocument();
+		expect(startHereButton).toBeInTheDocument();
+		expect(startHereButton).toHaveTextContent("Start here");
+		expect(startHereButton).toHaveAttribute("data-size", "lg");
 	});
 
 	it("renders the hero pattern SVG with correct attributes", () => {
