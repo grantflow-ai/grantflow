@@ -15,11 +15,15 @@ import { toast } from "sonner";
 import { AppButton } from "@/components/app-button";
 import Link from "next/link";
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
-import { OnboardingGradientBackgroundTop, StackedHighlight } from "@/components/onboarding/backgrounds";
-import { LogoDark } from "@/components/logo";
+import {
+	OnboardingGradientBackgroundBottom,
+	OnboardingGradientBackgroundTop,
+	StackedHighlight,
+} from "@/components/onboarding/backgrounds";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
+import { LogoDark } from "@/components/logo";
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 
 export default function SignIn() {
@@ -92,7 +96,7 @@ export default function SignIn() {
 
 	return (
 		<div
-			className="flex size-full min-h-screen place-items-center text-center text-card-foreground relative overflow-hidden bg-white"
+			className="flex size-full min-h-screen place-items-center text-center text-card-foreground p-2 relative overflow-hidden bg-white"
 			data-testid="login-container"
 		>
 			<div className="absolute inset-0 flex items-center justify-center">
@@ -101,13 +105,18 @@ export default function SignIn() {
 
 			<OnboardingGradientBackgroundTop
 				aria-hidden="true"
-				className="absolute top-0 right-0 pointer-events-none"
+				className="absolute top-0 right-0 pointer-events-none opacity-0 lg:opacity-100"
 			/>
 
-			<div className="z-10 w-full flex flex-col md:flex-row">
-				<div className="flex flex-1 justify-end items-center relative">
-					<StackedHighlight className="z-10 absolute bottom-0 -right-1/4 pointer-events-none"></StackedHighlight>
-					<div className="z-20 w-full lg:w-4/5 xl:w-3/5 text-start">
+			<OnboardingGradientBackgroundBottom
+				aria-hidden="true"
+				className="absolute bottom-0 left-0 pointer-events-none opacity-100 lg:opacity-0"
+			/>
+
+			<div className="z-10 w-full flex flex-col lg:flex-row">
+				<div className="flex flex-1 justify-center lg:justify-end items-center relative my-8 lg:my-0">
+					<div className="relative z-20 w-4/5 xl:w-3/5 text-start">
+						<StackedHighlight className="-z-10 absolute -bottom-1/2 lg:-right-1/3 pointer-events-none" />
 						<LogoDark
 							className={`sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16`}
 							height="auto"
