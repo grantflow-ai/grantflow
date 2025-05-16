@@ -81,6 +81,7 @@ const handleAuth = async (
 			user: result.user,
 		};
 	} catch (error) {
+		logError({ error, identifier });
 		return handleFirebaseAuthError(error, identifier);
 	}
 };
