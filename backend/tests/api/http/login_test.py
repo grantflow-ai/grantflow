@@ -50,8 +50,8 @@ async def test_login_existing_user_keeps_workspace(
 
     # Get the workspace ID from first login
     async with async_session_maker() as session:
-        result = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
-        workspace_user = result.one()
+        workspace_user = await session.scalar(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
+        assert workspace_user is not None
         original_workspace_id = workspace_user.workspace_id
 
     # Second login
@@ -62,6 +62,6 @@ async def test_login_existing_user_keeps_workspace(
 
     # Verify that the same workspace is maintained
     async with async_session_maker() as session:
-        workspace_user = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
+        workspace_user = await session.scalar(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
         assert workspace_user is not None
         assert workspace_user.workspace_id == original_workspace_id
