@@ -12,10 +12,6 @@ vi.mock("@/utils/fonts", () => ({
 	fontSourceSans: { variable: "font-source-sans" },
 }));
 
-vi.mock("@vercel/analytics/next", () => ({
-	Analytics: () => <div data-testid="mock-analytics">Analytics</div>,
-}));
-
 Object.defineProperty(globalThis, "matchMedia", {
 	value: vi.fn().mockImplementation((query) => ({
 		addEventListener: vi.fn(),
@@ -45,7 +41,7 @@ describe("RootLayout", () => {
 	it("renders the layout with all expected components", async () => {
 		render(RootLayout({ children: "Test Content" }));
 
-		expect(screen.getByTestId("mock-analytics")).toBeInTheDocument();
+		expect(screen.getByText("Test Content")).toBeInTheDocument();
 	});
 
 	it("applies correct classes to the body", async () => {
