@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
-import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { PagePath } from "@/enums";
 
@@ -64,7 +63,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				)}
 			>
 				{children}
-				<Analytics />
 			</body>
 		</html>
 	);

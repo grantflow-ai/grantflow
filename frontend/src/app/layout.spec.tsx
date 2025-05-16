@@ -12,10 +12,6 @@ vi.mock("@/utils/fonts", () => ({
 	fontSourceSans: { variable: "font-source-sans" },
 }));
 
-vi.mock("@vercel/analytics/next", () => ({
-	Analytics: () => <div data-testid="mock-analytics">Analytics</div>,
-}));
-
 Object.defineProperty(globalThis, "matchMedia", {
 	value: vi.fn().mockImplementation((query) => ({
 		addEventListener: vi.fn(),
