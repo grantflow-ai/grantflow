@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import Any, TypedDict
 
+import sqlalchemy.exc
 from litestar import get, post
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -30,13 +31,20 @@ class LoginResponse(TypedDict):
 async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker[Any]) -> LoginResponse:
     decoded_token = await verify_id_token(data["id_token"])
     firebase_uid = decoded_token["uid"]
-    async with session_maker() as session, session.begin():
-        workspace_user = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
-        if workspace_user is None:
+
+    async with session_maker() as session:
+        try:
+            result = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
             try:
+                workspace_user = result.one()
+            except sqlalchemy.exc.NoResultFound:
+                workspace_user = None
+
+            if workspace_user is None:
                 # Create default workspace only if user doesn't have one
                 default_workspace = Workspace(name="default")
                 session.add(default_workspace)
+                await session.flush()  # Flush to get the workspace ID
 
                 # Create a WorkspaceUser instance to link the user to the default workspace
                 workspace_user = WorkspaceUser(
@@ -44,9 +52,9 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                 )
                 session.add(workspace_user)
                 await session.commit()
-            except Exception as err:
-                await session.rollback()
-                raise Exception("Error creating default workspace") from err
+        except Exception as err:
+            await session.rollback()
+            raise Exception("Error creating default workspace") from err
 
     jwt = create_jwt(firebase_uid)
     return LoginResponse(jwt_token=jwt)
