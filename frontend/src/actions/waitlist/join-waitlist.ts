@@ -97,6 +97,8 @@ async function getAudienceId(): Promise<string | undefined> {
 }
 
 async function sendConfirmationEmail(formData: { email: string; name: string }): Promise<ServerResponseCode> {
+	await new Promise((resolve) => setTimeout(resolve, 1000));
+
 	const { error } = await resend.emails.send({
 		from:
 			process.env.NODE_ENV === "production"
