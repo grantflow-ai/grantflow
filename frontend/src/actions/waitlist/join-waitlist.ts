@@ -29,7 +29,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 	if (!validationResult.success) {
 		logError({
 			error: `Validation failed: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}`,
-			identifier: "waitlist-validation-error",
+			identifier: "addToWaitlist",
 		});
 
 		return {
@@ -53,8 +53,8 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 
 			if (error) {
 				logError({
-					error: `the contact could not be added to the audience: ${error.message}`,
-					identifier: "waitlist-signup-error",
+					error: `the contact could not be added to the audience: ${error.name}: ${error.message}`,
+					identifier: "addToWaitlist",
 				});
 			}
 		}
@@ -68,7 +68,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 	} catch {
 		logError({
 			error: "An unknown error occurred",
-			identifier: "waitlist-signup-error",
+			identifier: "addToWaitlist",
 		});
 
 		return {
@@ -89,8 +89,8 @@ async function getAudienceId(): Promise<string | undefined> {
 	}
 
 	logError({
-		error: error?.message ?? "the audience could not be fetched",
-		identifier: "waitlist-signup-error",
+		error: `the audience could not be fetched: ${error?.name ?? "unknown error"}: ${error?.message ?? "unknown error"}`,
+		identifier: "getAudienceId",
 	});
 
 	return;
@@ -112,8 +112,8 @@ async function sendConfirmationEmail(formData: { email: string; name: string }):
 
 	if (error) {
 		logError({
-			error: `the email could not be sent: ${error.message}`,
-			identifier: "waitlist-signup-error",
+			error: `the email could not be sent: ${error.name}: ${error.message}`,
+			identifier: "sendConfirmationEmail",
 		});
 	}
 
