@@ -17,7 +17,6 @@ describe("SubmitButton", () => {
 
 		const button = screen.getByTestId("form-button");
 		expect(button).toHaveAttribute("aria-busy", "true");
-		expect(button).not.toHaveTextContent("Submit");
 
 		const spinner = button.querySelector("svg");
 		expect(spinner).toBeInTheDocument();
@@ -31,25 +30,53 @@ describe("SubmitButton", () => {
 		expect(button).toHaveClass("custom-class");
 	});
 
-	it("passes through other button props", () => {
-		render(
-			<SubmitButton data-custom="test-value" disabled variant="outline">
-				Submit
-			</SubmitButton>,
-		);
-
-		const button = screen.getByTestId("form-button");
-		expect(button).toBeDisabled();
-		expect(button).toHaveAttribute("data-custom", "test-value");
-		expect(button).toHaveClass("border");
-		expect(button).toHaveClass("border-input");
-		expect(button).toHaveClass("bg-background");
-	});
-
 	it("has type='submit' by default", () => {
 		render(<SubmitButton>Submit</SubmitButton>);
 
 		const button = screen.getByTestId("form-button");
 		expect(button).toHaveAttribute("type", "submit");
+	});
+
+	it("applies disabled styling when canBeDisabled is true", () => {
+		render(<SubmitButton disabled>Submit</SubmitButton>);
+
+		const button = screen.getByTestId("form-button");
+		expect(button).toHaveClass("disabled:text-muted-foreground");
+		expect(button).toHaveClass("disabled:bg-muted");
+		expect(button).toHaveClass("disabled:cursor-not-allowed");
+	});
+
+	it("doesn't apply disabled styling when canBeDisabled is false", () => {
+		render(
+			<SubmitButton canBeDisabled={false} disabled>
+				Submit
+			</SubmitButton>,
+		);
+
+		const button = screen.getByTestId("form-button");
+		expect(button).not.toHaveClass("disabled:text-muted-foreground");
+		expect(button).not.toHaveClass("disabled:bg-muted");
+		expect(button).not.toHaveClass("disabled:cursor-not-allowed");
+	});
+
+	it("displays custom rightIcon when provided and not loading", () => {
+		const mockIcon = <span data-testid="custom-icon">Icon</span>;
+		render(<SubmitButton rightIcon={mockIcon}>Submit</SubmitButton>);
+
+		expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
+	});
+
+	it("replaces rightIcon with spinner when loading", () => {
+		const mockIcon = <span data-testid="custom-icon">Icon</span>;
+		render(
+			<SubmitButton isLoading rightIcon={mockIcon}>
+				Submit
+			</SubmitButton>,
+		);
+
+		expect(screen.queryByTestId("custom-icon")).not.toBeInTheDocument();
+		const spinner = screen.getByTestId("form-button").querySelector("svg");
+		expect(spinner).toBeInTheDocument();
+		expect(spinner).toHaveClass("animate-spin");
 	});
 });

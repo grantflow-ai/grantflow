@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollButton } from "@/components/scroll-button";
 import Link from "next/link";
+import { PagePath } from "@/enums";
 
 const BREAKPOINT_MD = 768;
 
@@ -39,14 +40,14 @@ export function NavHeader() {
 				className="flex items-center justify-between border-b border-b-gray-400/20 px-4 md:px-10 lg:px-20 xl:px-30"
 				data-testid="nav-header-container"
 			>
-				<Link aria-label="Go to homepage" href="/">
+				<Link aria-label="Go to homepage" href={PagePath.ROOT}>
 					<Logo
 						className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-0" : "opacity-100"}`}
 						height="auto"
 						width="auto"
 					/>
 				</Link>
-				<Link aria-label="Go to homepage" className="absolute" href="/">
+				<Link aria-label="Go to homepage" className="absolute" href={PagePath.ROOT}>
 					<LogoDark
 						className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
 						height="auto"
@@ -55,7 +56,7 @@ export function NavHeader() {
 				</Link>
 				<div className="hidden items-center gap-6 md:flex">
 					<AppButton aria-label="Go to About Us Page" size="lg" theme="light" variant="link">
-						<Link href="/about">About Us</Link>
+						<Link href={PagePath.ABOUT_US}>About Us</Link>
 					</AppButton>
 					<ScrollButton
 						aria-label="Go to Waitlist Form"
@@ -99,7 +100,7 @@ export function NavHeader() {
 				`}
 			>
 				<AppButton aria-label="Go to About Us Page" size="lg" variant="link">
-					<Link href="/about">About Us</Link>
+					<Link href={PagePath.ABOUT_US}>About Us</Link>
 				</AppButton>
 				<ScrollButton
 					aria-label="Go to Waitlist Form"

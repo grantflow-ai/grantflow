@@ -1,0 +1,36 @@
+import { IconTick } from "@/components/onboarding/icons";
+
+const benefitItems = [
+	{
+		description:
+			"Get up and running quickly with intelligent tools that simplify the entire grant application process.",
+		title: "Start applying faster",
+	},
+	{
+		description:
+			"From discovery to submission, GrantFlow.ai supports labs, institutions, and independent researchers across all disciplines.",
+		title: "Support every research journey",
+	},
+	{
+		description: "Trusted by leading labs and ambitious researchers working to change the world.",
+		title: "Join a growing research community",
+	},
+];
+
+export function BenefitsList({ className = "" }: { className?: string }) {
+	return (
+		<ul className={`space-y-4 ${className}`} data-testid="benefits-list">
+			{benefitItems.map((item, index) => (
+				<li className="flex flex-row items-start" key={index}>
+					<div className="shrink-0 flex items-center justify-center">
+						<IconTick className="mt-1 mr-2" height={14} width={14} />
+					</div>
+					<div className="">
+						<h5 className="font-heading font-semibold mb-2">{item.title}</h5>
+						<p className="text-app-gray-600 leading-tight">{item.description}</p>
+					</div>
+				</li>
+			))}
+		</ul>
+	);
+}

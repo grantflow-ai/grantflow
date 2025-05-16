@@ -22,3 +22,6 @@ dependencies = [
 dev = [
   "shared-utils[ai,chunking,embeddings,extraction,gcs,nlp]",
 ]
+
+[tool.codespell]
+skip = "frontend/src/components/onboarding/icons.tsx"

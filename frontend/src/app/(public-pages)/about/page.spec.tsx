@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import AboutPage from "@/app/about/page";
+import AboutPage from "@/app/(public-pages)/about/page";
 
 vi.mock("@/components/about/icons", () => ({
 	IconDraft: vi.fn().mockImplementation(() => <div data-testid="mock-icon-draft" />),
