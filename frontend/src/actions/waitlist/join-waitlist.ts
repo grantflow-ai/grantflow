@@ -27,6 +27,11 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 	const validationResult = waitlistSchema.safeParse(formData);
 
 	if (!validationResult.success) {
+		logError({
+			error: `Validation failed: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}`,
+			identifier: "waitlist-validation-error",
+		});
+
 		return {
 			code: "VALIDATION_ERROR",
 			errors: validationResult.error.flatten().fieldErrors,
@@ -93,12 +98,22 @@ async function getAudienceId(): Promise<string | undefined> {
 
 async function sendConfirmationEmail(formData: { email: string; name: string }): Promise<ServerResponseCode> {
 	const { error } = await resend.emails.send({
-		from: "Na'aman from GrantFlow.ai <onboarding@resend.dev>",
+		from:
+			process.env.NODE_ENV === "production"
+				? "noreply@grantflow.ai"
+				: "Na'aman from GrantFlow.ai <onboarding@resend.dev>",
 		html: getWaitlistEmailTemplateHtml(formData.name),
 		subject: "Confirmation: You’ve Joined the GrantFlow Waitlist",
 		text: waitlistEmailTemplateText(formData.name),
 		to: formData.email,
 	});
+
+	if (error) {
+		logError({
+			error: `the email could not be sent: ${error.message}`,
+			identifier: "waitlist-signup-error",
+		});
+	}
 
 	return error ? (error.name === "rate_limit_exceeded" ? "RATE_LIMITED" : "SERVER_ERROR") : "SUCCESS";
 }
