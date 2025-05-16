@@ -40,12 +40,10 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                 workspace_user = None
 
             if workspace_user is None:
-                # Create default workspace only if user doesn't have one
                 default_workspace = Workspace(name="default")
                 session.add(default_workspace)
-                await session.flush()  # Flush to get the workspace ID
+                await session.flush()
 
-                # Create a WorkspaceUser instance to link the user to the default workspace
                 workspace_user = WorkspaceUser(
                     workspace_id=default_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER
                 )
