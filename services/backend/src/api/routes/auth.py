@@ -1,7 +1,6 @@
 from datetime import timedelta
 from typing import Any, TypedDict
 
-import sqlalchemy.exc
 from litestar import get, post
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Workspace, WorkspaceUser
@@ -9,6 +8,7 @@ from packages.shared_utils.src.logger import get_logger
 from services.backend.src.utils.firebase import verify_id_token
 from services.backend.src.utils.jwt import create_jwt
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -36,7 +36,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             result = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
             try:
                 workspace_user = result.one()
-            except sqlalchemy.exc.NoResultFound:
+            except NoResultFound:
                 workspace_user = None
 
             if workspace_user is None:
