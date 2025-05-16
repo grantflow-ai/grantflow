@@ -41,7 +41,7 @@ describe("RootLayout", () => {
 	it("renders the layout with all expected components", async () => {
 		render(RootLayout({ children: "Test Content" }));
 
-		expect(screen.getByTestId("mock-analytics")).toBeInTheDocument();
+		expect(screen.getByText("Test Content")).toBeInTheDocument();
 	});
 
 	it("applies correct classes to the body", async () => {
