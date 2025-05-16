@@ -8,7 +8,7 @@ from packages.shared_utils.src.logger import get_logger
 from services.backend.src.utils.firebase import verify_id_token
 from services.backend.src.utils.jwt import create_jwt
 from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -49,7 +49,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                 )
                 session.add(workspace_user)
                 await session.commit()
-        except Exception as err:
+        except SQLAlchemyError as err:
             await session.rollback()
             raise Exception("Error creating default workspace") from err
 
