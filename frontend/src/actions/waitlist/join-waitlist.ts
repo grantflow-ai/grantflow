@@ -93,7 +93,10 @@ async function getAudienceId(): Promise<string | undefined> {
 
 async function sendConfirmationEmail(formData: { email: string; name: string }): Promise<ServerResponseCode> {
 	const { error } = await resend.emails.send({
-		from: "Na'aman from GrantFlow.ai <onboarding@resend.dev>",
+		from:
+			process.env.NODE_ENV === "production"
+				? "noreply@grantflow.ai"
+				: "Na'aman from GrantFlow.ai <onboarding@resend.dev>",
 		html: getWaitlistEmailTemplateHtml(formData.name),
 		subject: "Confirmation: You’ve Joined the GrantFlow Waitlist",
 		text: waitlistEmailTemplateText(formData.name),
