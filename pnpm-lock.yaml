@@ -274,10 +274,10 @@ packages:
                 integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==,
             }
 
-    "@modelcontextprotocol/sdk@1.11.2":
+    "@modelcontextprotocol/sdk@1.11.3":
         resolution:
             {
-                integrity: sha512-H9vwztj5OAqHg9GockCQC06k1natgcxWQSRpQcPJf6i5+MWBzfKkRtxGbjQf0X2ihii0ffLZCRGbYV2f2bjNCQ==,
+                integrity: sha512-rmOWVRUbUJD7iSvJugjUbFZshTAuJ48MXoZ80Osx1GM0K/H1w7rSEvmw8m6vdWxNASgtaHIhAgre4H/E9GJiYQ==,
             }
         engines: { node: ">=18" }
 
@@ -1170,10 +1170,10 @@ packages:
                 integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==,
             }
 
-    electron-to-chromium@1.5.154:
+    electron-to-chromium@1.5.155:
         resolution:
             {
-                integrity: sha512-G4VCFAyKbp1QJ+sWdXYIRYsPGvlV5sDACfCmoMFog3rjm1syLhI41WXm/swZypwCIWIm4IFLWzHY14joWMQ5Fw==,
+                integrity: sha512-ps5KcGGmwL8VaeJlvlDlu4fORQpv3+GIcF5I3f9tUKUlJ/wsysh6HU8P5L1XWRYeXfA0oJd4PyM8ds8zTFf6Ng==,
             }
 
     emoji-regex@8.0.0:
@@ -3482,12 +3482,12 @@ packages:
                 integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==,
             }
 
-    yaml@2.7.1:
+    yaml@2.8.0:
         resolution:
             {
-                integrity: sha512-10ULxpnOCQXxJvBgxsn9ptjq6uviG/htZKk9veJGhlqn3w/DxQ631zFF+nlQXLwmImeS5amR2dl2U8sg6U9jsQ==,
+                integrity: sha512-4lLa/EcQCB0cJkyts+FpIRx5G/llPxfP6VQU5KByHEhLxY3IJCH0f0Hy1MHI8sClTvsIb8qwRJ6R/ZdlDJ/leQ==,
             }
-        engines: { node: ">= 14" }
+        engines: { node: ">= 14.6" }
         hasBin: true
 
     yocto-queue@0.1.0:
@@ -3621,7 +3621,7 @@ snapshots:
             "@jridgewell/resolve-uri": 3.1.2
             "@jridgewell/sourcemap-codec": 1.5.0
 
-    "@modelcontextprotocol/sdk@1.11.2":
+    "@modelcontextprotocol/sdk@1.11.3":
         dependencies:
             content-type: 1.0.5
             cors: 2.8.5
@@ -4003,7 +4003,7 @@ snapshots:
     browserslist@4.24.5:
         dependencies:
             caniuse-lite: 1.0.30001718
-            electron-to-chromium: 1.5.154
+            electron-to-chromium: 1.5.155
             node-releases: 2.0.19
             update-browserslist-db: 1.1.3(browserslist@4.24.5)
 
@@ -4177,7 +4177,7 @@ snapshots:
 
     ee-first@1.1.1: {}
 
-    electron-to-chromium@1.5.154: {}
+    electron-to-chromium@1.5.155: {}
 
     emoji-regex@8.0.0: {}
 
@@ -4510,7 +4510,7 @@ snapshots:
             "@humanfs/node": 0.16.6
             "@humanwhocodes/module-importer": 1.0.1
             "@humanwhocodes/retry": 0.4.3
-            "@modelcontextprotocol/sdk": 1.11.2
+            "@modelcontextprotocol/sdk": 1.11.3
             "@types/estree": 1.0.7
             "@types/json-schema": 7.0.15
             ajv: 6.12.6
@@ -5242,7 +5242,7 @@ snapshots:
     postcss-load-config@4.0.2(postcss@8.5.3):
         dependencies:
             lilconfig: 3.1.3
-            yaml: 2.7.1
+            yaml: 2.8.0
         optionalDependencies:
             postcss: 8.5.3
 
@@ -5812,7 +5812,7 @@ snapshots:
 
     wrappy@1.0.2: {}
 
-    yaml@2.7.1: {}
+    yaml@2.8.0: {}
 
     yocto-queue@0.1.0: {}
 
