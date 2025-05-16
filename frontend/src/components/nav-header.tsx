@@ -1,13 +1,14 @@
 "use client";
 
 import { Logo, LogoDark } from "@/components/logo";
-import { IconCalendar, IconCancel, IconHamburger } from "@/components/landing-page/icons";
+import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
 import { AppButton } from "@/components/app-button";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollButton } from "@/components/scroll-button";
 import Link from "next/link";
 import { PagePath } from "@/enums";
+import { IconGoAhead } from "./icons";
 
 const BREAKPOINT_MD = 768;
 
@@ -60,7 +61,7 @@ export function NavHeader() {
 					</AppButton>
 					<ScrollButton
 						aria-label="Go to Waitlist Form"
-						rightIcon={<IconCalendar />}
+						rightIcon={<IconGoAhead />}
 						selector="waitlist"
 						size="lg"
 					>
@@ -104,7 +105,7 @@ export function NavHeader() {
 				</AppButton>
 				<ScrollButton
 					aria-label="Go to Waitlist Form"
-					rightIcon={<IconCalendar />}
+					rightIcon={<IconGoAhead />}
 					selector="waitlist"
 					size="lg"
 					variant="link"
