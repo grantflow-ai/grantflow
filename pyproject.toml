@@ -86,6 +86,9 @@ lint.pylint.max-branches = 25
 lint.pylint.max-returns = 10
 lint.pylint.max-statements = 100
 
+[tool.codespell]
+ignore-words-list = [ "Bu" ]
+
 [tool.pyproject-fmt]
 keep_full_version = true
 max_supported_python = "3.12"
