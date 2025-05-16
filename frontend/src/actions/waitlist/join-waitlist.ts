@@ -53,7 +53,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 
 			if (error) {
 				logError({
-					error: `the contact could not be added to the audience: ${error.message}`,
+					error: `the contact could not be added to the audience: ${error.name}: ${error.message}`,
 					identifier: "addToWaitlist",
 				});
 			}
