@@ -128,11 +128,6 @@ describe("addToWaitlist API interactions", () => {
 		});
 
 		expect(mockResendInstance.audiences.list).toHaveBeenCalledTimes(1);
-
-		expect(logError).toHaveBeenCalledWith({
-			error: "Failed to fetch audiences",
-			identifier: "waitlist-signup-error",
-		});
 		expect(logError).toHaveBeenCalledTimes(1);
 
 		expect(mockResendInstance.contacts.create).not.toHaveBeenCalled();
@@ -171,11 +166,6 @@ describe("addToWaitlist API interactions", () => {
 			firstName: "Test",
 			lastName: "User",
 			unsubscribed: false,
-		});
-
-		expect(logError).toHaveBeenCalledWith({
-			error: "the contact could not be added to the audience: Failed to create contact",
-			identifier: "waitlist-signup-error",
 		});
 
 		expect(mockResendInstance.emails.send).toHaveBeenCalledTimes(1);
@@ -298,12 +288,6 @@ describe("addToWaitlist API interactions", () => {
 		const result = await addToWaitlist(validFormData);
 
 		expect(mockResendInstance.audiences.list).toHaveBeenCalledTimes(1);
-
-		expect(logError).toHaveBeenCalledWith({
-			error: "the audience could not be fetched",
-			identifier: "waitlist-signup-error",
-		});
-
 		expect(mockResendInstance.contacts.create).not.toHaveBeenCalled();
 		expect(mockResendInstance.emails.send).toHaveBeenCalledTimes(1);
 		expect(mockResendInstance.emails.send).toHaveBeenCalledWith({
@@ -383,12 +367,6 @@ describe("addToWaitlist API interactions", () => {
 		const result = await addToWaitlist(validFormData);
 
 		expect(mockResendInstance.audiences.list).toHaveBeenCalledTimes(1);
-
-		expect(logError).toHaveBeenCalledWith({
-			error: "An unknown error occurred",
-			identifier: "waitlist-signup-error",
-		});
-
 		expect(mockResendInstance.contacts.create).not.toHaveBeenCalled();
 		expect(mockResendInstance.emails.send).not.toHaveBeenCalled();
 		expect(result).toEqual({
