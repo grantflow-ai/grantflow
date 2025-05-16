@@ -1,8 +1,9 @@
 import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
-import { IconGoAhead } from "@/components/landing-page/icons";
+import { IconGoAhead } from "@/components/icons";
 import { AppButton } from "@/components/app-button";
-import { ScrollButton } from "@/components/scroll-button";
 import { BrandPattern } from "@/components/brand-pattern";
+import Link from "next/link";
+import { PagePath } from "@/enums";
 
 export function HeroBanner() {
 	return (
@@ -21,9 +22,9 @@ export function HeroBanner() {
 					<AppButton size="lg" theme="light" variant="secondary">
 						Contact us
 					</AppButton>
-					<ScrollButton rightIcon={<IconGoAhead />} selector="waitlist" size="lg">
-						Try For Free
-					</ScrollButton>
+					<AppButton rightIcon={<IconGoAhead />} size="lg">
+						<Link href={PagePath.ONBOARDING}>Start here</Link>
+					</AppButton>
 				</div>
 			</div>
 		</section>

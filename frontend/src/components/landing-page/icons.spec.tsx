@@ -8,7 +8,6 @@ import {
 	IconEarlyAccessBenefit2,
 	IconEarlyAccessBenefit3,
 	IconEarlyAccessBenefit4,
-	IconGoAhead,
 	IconHamburger,
 } from "@/components/landing-page/icons";
 
@@ -21,7 +20,6 @@ const allIcons = [
 	{ Component: IconEarlyAccessBenefit2, hasDefaultSize: false, name: "IconEarlyAccessBenefit2" },
 	{ Component: IconEarlyAccessBenefit3, hasDefaultSize: false, name: "IconEarlyAccessBenefit3" },
 	{ Component: IconEarlyAccessBenefit4, hasDefaultSize: false, name: "IconEarlyAccessBenefit4" },
-	{ Component: IconGoAhead, hasDefaultSize: true, name: "IconGoAhead" },
 	{ Component: IconHamburger, hasDefaultSize: true, name: "IconHamburger" },
 ];
 
@@ -244,27 +242,6 @@ describe("IconEarlyAccessBenefit4", () => {
 		const icon = screen.getByTestId("test-icon");
 
 		expect(icon).toHaveAttribute("aria-label", "Benefit icon");
-	});
-});
-
-describe("IconGoAhead", () => {
-	it("renders with default props", () => {
-		render(<IconGoAhead data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
-
-		expect(icon).toBeInTheDocument();
-		expect(icon.tagName).toBe("svg");
-		expect(icon).toHaveAttribute("width", "15");
-		expect(icon).toHaveAttribute("height", "15");
-		expect(icon).toHaveAttribute("fill", "currentColor");
-	});
-
-	it("applies custom width and height", () => {
-		render(<IconGoAhead data-testid="test-icon" height={40} width={30} />);
-		const icon = screen.getByTestId("test-icon");
-
-		expect(icon).toHaveAttribute("width", "30");
-		expect(icon).toHaveAttribute("height", "40");
 	});
 });
 

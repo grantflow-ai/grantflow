@@ -59,7 +59,7 @@ describe("AppButton", () => {
 		);
 
 		let button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("hover:bg-slate-500");
+		expect(button).toHaveClass("hover:bg-accent");
 
 		rerender(
 			<AppButton data-testid="test-button" variant="secondary">

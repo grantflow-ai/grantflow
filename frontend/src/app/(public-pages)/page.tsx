@@ -5,7 +5,7 @@ import { CoreFeaturesSection } from "@/components/landing-page/core-features-sec
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
-import { IconGoAhead } from "@/components/landing-page/icons";
+import { IconGoAhead } from "@/components/icons";
 import { AppButton } from "@/components/app-button";
 import { ScrollButton } from "@/components/scroll-button";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";

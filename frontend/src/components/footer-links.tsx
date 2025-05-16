@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { AppButton } from "@/components/app-button";
 
 export function FooterLinks({
 	isMobile = false,
@@ -16,18 +17,20 @@ export function FooterLinks({
 		return pathname === href;
 	};
 
-	const getLinkClasses = (href: string) => {
-		const baseClasses = `text-primary ${isMobile ? "text-lg" : ""} hover:text-link-hover hover:no-underline focus:text-link-focus`;
-		return isActive(href) ? `${baseClasses} text-link-focus` : baseClasses;
-	};
-
 	return (
-		<ul className={`text-primary font-button flex gap-5 ${isMobile ? "flex-col items-end my-1" : ""}`}>
+		<ul className={`flex ${isMobile ? "flex-col items-end my-1" : ""} gap-5`}>
 			{links.map(({ href, label }, index) => (
 				<li key={index}>
-					<Link className={getLinkClasses(href)} href={href}>
-						{label}
-					</Link>
+					<AppButton
+						aria-label="Go to About Us Page"
+						size={isMobile ? "lg" : "md"}
+						theme="dark"
+						variant="link"
+					>
+						<Link className={isActive(href) ? "text-link-focus" : ""} href={href}>
+							{label}
+						</Link>
+					</AppButton>
 				</li>
 			))}
 		</ul>

@@ -32,9 +32,9 @@ const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:b
 			light: "text-white",
 		},
 		variant: {
-			link: "rounded-none bg-transparent font-normal hover:text-slate-500 hover:no-underline",
-			primary: "hover:bg-slate-500",
-			secondary: "text-primary border-primary border bg-transparent hover:border-slate-500 hover:text-slate-500",
+			link: "rounded-none bg-transparent font-normal hover:text-link-hover hover:no-underline",
+			primary: "hover:bg-accent",
+			secondary: "text-primary border-primary border bg-transparent hover:border-ring hover:text-ring",
 		},
 	},
 });
