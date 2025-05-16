@@ -24,7 +24,6 @@ async def test_login_new_user_creates_workspace(
     response_body = response.json()
     assert response_body["jwt_token"] == "jwt_token"
 
-    # Verify that a default workspace was created for the new user
     async with async_session_maker() as session:
         workspace_user = await session.scalar(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
         assert workspace_user is not None
@@ -44,22 +43,18 @@ async def test_login_existing_user_keeps_workspace(
     mocker.patch("jwt.encode", return_value="jwt_token")
     mocker.patch("src.utils.firebase.verify_id_token", return_value={"uid": firebase_uid})
 
-    # First login to create workspace
     await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
 
-    # Get the workspace ID from first login
     async with async_session_maker() as session:
         workspace_user = await session.scalar(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
         assert workspace_user is not None
         original_workspace_id = workspace_user.workspace_id
 
-    # Second login
     response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
     assert response.status_code == HTTPStatus.CREATED
     response_body = response.json()
     assert response_body["jwt_token"] == "jwt_token"
 
-    # Verify that the same workspace is maintained
     async with async_session_maker() as session:
         workspace_user = await session.scalar(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
         assert workspace_user is not None
