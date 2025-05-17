@@ -30,3 +30,19 @@ out/
 requirements.txt
 
 *storybook.log
+
+# Terraform
+terraform/generated/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraformrc
+terraform.rc
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+crash.*.log
