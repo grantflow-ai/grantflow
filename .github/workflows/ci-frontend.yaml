@@ -82,7 +82,7 @@ jobs:
       NEXT_PUBLIC_FIREBASE_PROJECT_ID: mock-project-id
       NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: mock-storage-bucket
       NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
-      NEXT_PUBLIC_RESEND_API_KEY_FULL_ACCESS: mock-resend-key
+      NEXT_PUBLIC_MAILGUN_API_KEY: mock-resend-key
       NEXT_PUBLIC_DEBUG: true
     steps:
       - name: Checkout
