@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 1.0.0"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 6.0"
+    }
+  }
+}
+
 # Service accounts for GitHub Actions
 resource "google_service_account" "github_actions" {
   account_id   = "githubactions"
@@ -32,16 +42,17 @@ resource "google_project_iam_member" "github_actions_artifact_registry_writer" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-resource "google_project_iam_member" "github_actions_service_account_user" {
-  project = "grantflow"
-  role    = "roles/iam.serviceAccountUser"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+# Resource-specific service account permissions instead of project-wide
+resource "google_service_account_iam_member" "github_actions_service_account_user" {
+  service_account_id = google_service_account.cloud_storage_admin.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-resource "google_project_iam_member" "github_actions_token_creator" {
-  project = "grantflow"
-  role    = "roles/iam.serviceAccountTokenCreator"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+resource "google_service_account_iam_member" "github_actions_token_creator" {
+  service_account_id = google_service_account.cloud_storage_admin.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
 # IAM bindings for Cloud Storage admin service account
@@ -64,21 +75,12 @@ resource "google_project_iam_member" "aiplatform_user" {
   member  = "serviceAccount:${google_service_account.llm_api_service_account.email}"
 }
 
-# Project owners
-resource "google_project_iam_member" "owner_naaman" {
+# Project owners - using a group instead of individual users
+resource "google_project_iam_member" "owners_group" {
   project = "grantflow"
   role    = "roles/owner"
-  member  = "user:naaman@grantflow.ai"
+  member  = "group:grantflow-admins@grantflow.ai"
 }
 
-resource "google_project_iam_member" "owner_asaf" {
-  project = "grantflow"
-  role    = "roles/owner"
-  member  = "user:asaf@grantflow.ai"
-}
-
-resource "google_project_iam_member" "owner_varun" {
-  project = "grantflow"
-  role    = "roles/owner"
-  member  = "user:varun@grantflow.ai"
-}
+# Note: Create this group in Google Workspace/Google Groups and add users there
+# This follows the security best practice of using groups instead of individual users
