@@ -53,7 +53,7 @@ export default function AboutPage() {
 					></div>
 					<BrandPattern
 						aria-hidden="true"
-						className="absolute inset-0 z-0 size-full pointer-events-none"
+						className="absolute inset-0 z-0 size-full pointer-events-none opacity-50"
 						role="presentation"
 						strokeWidth="0.1"
 					/>
@@ -124,8 +124,8 @@ export default function AboutPage() {
 					</p>
 				</div>
 				<p className="w-full max-w-198 font-semibold leading-tight">
-					GrantFlow.ai is currently in the final stage of development. If you re interested in early access,
-					you re welcome to join the waitlist and be one of the first to try it when we launch.
+					GrantFlow.ai is currently in the final stage of development. If you&apos;re interested in early
+					access, you&apos;re welcome to join the waitlist and be one of the first to try it when we launch.
 				</p>
 			</div>
 		</LegalPageContainer>
