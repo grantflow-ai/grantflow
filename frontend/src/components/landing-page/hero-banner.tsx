@@ -2,8 +2,8 @@ import { AnimatedGradientBackground } from "@/components/landing-page/background
 import { IconGoAhead } from "@/components/icons";
 import { AppButton } from "@/components/app-button";
 import { BrandPattern } from "@/components/brand-pattern";
+import { ScrollButton } from "../scroll-button";
 import Link from "next/link";
-import { PagePath } from "@/enums";
 
 export function HeroBanner() {
 	return (
@@ -20,11 +20,16 @@ export function HeroBanner() {
 				</h1>
 				<div className="mt-8 flex items-center gap-6">
 					<AppButton size="lg" theme="light" variant="secondary">
-						Contact us
+						<Link href="mailto:contact@grantflow.ai">Contact us</Link>
 					</AppButton>
-					<AppButton rightIcon={<IconGoAhead />} size="lg">
-						<Link href={PagePath.ONBOARDING}>Start here</Link>
-					</AppButton>
+					<ScrollButton
+						aria-label="Go to Waitlist Form"
+						rightIcon={<IconGoAhead />}
+						selector="waitlist"
+						size="lg"
+					>
+						Start here
+					</ScrollButton>
 				</div>
 			</div>
 		</section>

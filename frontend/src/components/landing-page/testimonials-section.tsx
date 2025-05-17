@@ -65,7 +65,7 @@ export function TestimonialsSection() {
 				<div className="grid grid-cols-1 lg:grid-cols-3 place-items-center lg:place-items-start gap-12 md:gap-8 lg:gap-0 mt-8 xl:m-16">
 					{CONTENT.testimonials.map((testimonial, i) => (
 						<MotionArticle
-							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full"
+							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full px-5 md:px-0"
 							initial="hidden"
 							key={i}
 							variants={articleVariants}

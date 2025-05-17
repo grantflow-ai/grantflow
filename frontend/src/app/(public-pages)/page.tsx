@@ -9,6 +9,7 @@ import { IconGoAhead } from "@/components/icons";
 import { AppButton } from "@/components/app-button";
 import { ScrollButton } from "@/components/scroll-button";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
+import Link from "next/link";
 
 const CONTENT_CTA_SECTION = {
 	description:
@@ -50,7 +51,7 @@ function CTASection() {
 				</div>
 				<div className="flex w-full flex-row-reverse items-center justify-between gap-6 md:w-auto md:flex-row md:justify-end">
 					<AppButton size="lg" theme="light" variant="secondary">
-						Contact us
+						<Link href="mailto:contact@grantflow.ai">Contact us</Link>
 					</AppButton>
 					<ScrollButton rightIcon={<IconGoAhead />} selector="waitlist" size="lg">
 						Try For Free

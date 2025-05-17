@@ -56,6 +56,9 @@ export function NavHeader() {
 					/>
 				</Link>
 				<div className="hidden items-center gap-6 md:flex">
+					<AppButton aria-label="Go to Home Page" size="lg" theme="light" variant="link">
+						<Link href={PagePath.ROOT}>Home</Link>
+					</AppButton>
 					<AppButton aria-label="Go to About Us Page" size="lg" theme="light" variant="link">
 						<Link href={PagePath.ABOUT_US}>About Us</Link>
 					</AppButton>
@@ -100,6 +103,9 @@ export function NavHeader() {
 				${isMobileMenuOpen ? "max-h-lg opacity-100 pointer-events-auto" : "max-h-sm opacity-0 pointer-events-none"}
 				`}
 			>
+				<AppButton aria-label="Go to Home Page" size="lg" variant="link">
+					<Link href={PagePath.ROOT}>Home</Link>
+				</AppButton>
 				<AppButton aria-label="Go to About Us Page" size="lg" variant="link">
 					<Link href={PagePath.ABOUT_US}>About Us</Link>
 				</AppButton>
