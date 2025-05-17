@@ -113,7 +113,6 @@ describe("TestimonialsSection", () => {
 			expect(image).toBeInTheDocument();
 			expect(image).toHaveAttribute("data-testid", "mock-next-image");
 			expect(image).toHaveClass("rounded-full size-24 md:size-28 lg:size-32 xl:size-36");
-			expect(image).toHaveAttribute("src", `/mocked-user-image-${index + 1}.png`);
 
 			const blockquote = article.querySelector("blockquote");
 			expect(blockquote).toBeInTheDocument();

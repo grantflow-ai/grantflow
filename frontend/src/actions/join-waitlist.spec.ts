@@ -1,6 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { addToWaitlist } from "@/actions/join-waitlist";
+import { logError } from "@/utils/logging";
+import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 
-// Create mock implementations
+const { mockClient, mockMailgun } = vi.hoisted(() => {
+	const mockClient = vi.fn();
+
+	return {
+		mockClient,
+		mockMailgun: vi.fn(() => ({ client: mockClient })),
+	};
+});
+
 vi.mock("@/utils/logging", () => ({
 	logError: vi.fn(),
 }));
@@ -16,39 +27,28 @@ vi.mock("@/components/waitlist-email-template", () => ({
 	waitlistEmailTemplateText: vi.fn().mockReturnValue("Mock text template"),
 }));
 
-// Create a spy for the Mailgun constructor
-const mockClient = vi.fn();
-const mockMailgun = vi.fn(() => ({ client: mockClient }));
-
-// Create mock API responses
-const mockLists = {
-	create: vi.fn().mockResolvedValue({ name: "waiting-list" }),
-	list: vi.fn().mockResolvedValue({ items: [] }),
-	members: {
-		createMember: vi.fn().mockResolvedValue({ member: { address: "test@example.com" } }),
-	},
-};
-
-const mockMessages = {
-	create: vi.fn().mockResolvedValue({ id: "mock-message-id", status: 200 }),
-};
-
-// Link all mocks together
-mockClient.mockReturnValue({
-	lists: mockLists,
-	messages: mockMessages,
-});
-
-// Mock mailgun.js dependency
 vi.mock("mailgun.js", () => ({
 	default: mockMailgun,
 }));
 
-// Import the module under test
-import { addToWaitlist, RESPONSE_CODES } from "@/actions/join-waitlist";
-import { logError } from "@/utils/logging";
+describe("join-waitlist actions", () => {
+	const mockLists = {
+		create: vi.fn().mockResolvedValue({ name: "waiting-list" }),
+		list: vi.fn().mockResolvedValue({ items: [] }),
+		members: {
+			createMember: vi.fn().mockResolvedValue({ member: { address: "test@example.com" } }),
+		},
+	};
 
-describe("addToWaitlist validation", () => {
+	const mockMessages = {
+		create: vi.fn().mockResolvedValue({ id: "mock-message-id", status: 200 }),
+	};
+
+	mockClient.mockReturnValue({
+		lists: mockLists,
+		messages: mockMessages,
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -61,7 +61,7 @@ describe("addToWaitlist validation", () => {
 
 		const result = await addToWaitlist(validFormData);
 
-		expect(result.code).toBe(RESPONSE_CODES.SUCCESS);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SUCCESS);
 		expect(result.errors).toBeUndefined();
 	});
 
@@ -72,7 +72,7 @@ describe("addToWaitlist validation", () => {
 
 		const result = await addToWaitlist(invalidData);
 
-		expect(result.code).toBe(RESPONSE_CODES.VALIDATION_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.VALIDATION_ERROR);
 		expect(result.errors?.email).toBeDefined();
 	});
 
@@ -83,7 +83,7 @@ describe("addToWaitlist validation", () => {
 
 		const result = await addToWaitlist(invalidData);
 
-		expect(result.code).toBe(RESPONSE_CODES.VALIDATION_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.VALIDATION_ERROR);
 		expect(result.errors?.name).toBeDefined();
 	});
 
@@ -95,7 +95,7 @@ describe("addToWaitlist validation", () => {
 
 		const result = await addToWaitlist(invalidData);
 
-		expect(result.code).toBe(RESPONSE_CODES.VALIDATION_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.VALIDATION_ERROR);
 		expect(result.errors?.email).toBeDefined();
 	});
 
@@ -107,14 +107,8 @@ describe("addToWaitlist validation", () => {
 
 		const result = await addToWaitlist(invalidData);
 
-		expect(result.code).toBe(RESPONSE_CODES.VALIDATION_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.VALIDATION_ERROR);
 		expect(result.errors).toBeDefined();
-	});
-});
-
-describe("addToWaitlist API interactions", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
 	});
 
 	it("should handle mailing list creation error", async () => {
@@ -127,7 +121,7 @@ describe("addToWaitlist API interactions", () => {
 
 		expect(mockLists.list).toHaveBeenCalledTimes(1);
 		expect(logError).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(RESPONSE_CODES.SERVER_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
 	it("should handle mailing list member creation error", async () => {
@@ -142,7 +136,7 @@ describe("addToWaitlist API interactions", () => {
 		expect(mockLists.list).toHaveBeenCalledTimes(1);
 		expect(mockLists.members.createMember).toHaveBeenCalledTimes(1);
 		expect(logError).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(RESPONSE_CODES.SERVER_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
 	it("should handle message creation error", async () => {
@@ -159,7 +153,7 @@ describe("addToWaitlist API interactions", () => {
 		expect(mockLists.members.createMember).toHaveBeenCalledTimes(1);
 		expect(mockMessages.create).toHaveBeenCalledTimes(1);
 		expect(logError).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(RESPONSE_CODES.SERVER_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
 	it("should handle message creation HTTP error", async () => {
@@ -181,7 +175,7 @@ describe("addToWaitlist API interactions", () => {
 		expect(mockLists.members.createMember).toHaveBeenCalledTimes(1);
 		expect(mockMessages.create).toHaveBeenCalledTimes(1);
 		expect(logError).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(RESPONSE_CODES.SERVER_ERROR);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
 	it("should create a new mailing list if one doesn't exist", async () => {
@@ -199,7 +193,7 @@ describe("addToWaitlist API interactions", () => {
 		expect(mockLists.create).toHaveBeenCalledTimes(1);
 		expect(mockLists.members.createMember).toHaveBeenCalledTimes(1);
 		expect(mockMessages.create).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(RESPONSE_CODES.SUCCESS);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SUCCESS);
 	});
 
 	it("should use an existing mailing list if one exists", async () => {
@@ -223,7 +217,7 @@ describe("addToWaitlist API interactions", () => {
 		expect(mockLists.create).not.toHaveBeenCalled();
 		expect(mockLists.members.createMember).toHaveBeenCalledTimes(1);
 		expect(mockMessages.create).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(RESPONSE_CODES.SUCCESS);
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SUCCESS);
 	});
 
 	it("should successfully process happy path where all APIs succeed", async () => {
@@ -260,7 +254,7 @@ describe("addToWaitlist API interactions", () => {
 		});
 
 		expect(result).toEqual({
-			code: RESPONSE_CODES.SUCCESS,
+			code: WAITING_LIST_RESPONSE_CODES.SUCCESS,
 		});
 	});
 });
