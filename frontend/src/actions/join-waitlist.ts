@@ -26,23 +26,9 @@ const getLogo = async (): Promise<{ data: Buffer; filename: string }> => {
 
 export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): Promise<{
 	code: WAITING_LIST_RESPONSE_CODES;
-	errors?: { email?: string[]; name?: string[] } | null;
+	error?: { email?: string[]; name?: string[] } | null;
 	message?: string;
 }> {
-	const validationResult = waitlistSchema.safeParse(formData);
-
-	if (!validationResult.success) {
-		logError({
-			error: `Validation failed: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}`,
-			identifier: "addToWaitlist",
-		});
-
-		return {
-			code: WAITING_LIST_RESPONSE_CODES.VALIDATION_ERROR,
-			errors: validationResult.error.flatten().fieldErrors,
-		};
-	}
-
 	const getOrCreateMailingListError = await getOrCreateMailingList();
 	if (getOrCreateMailingListError) {
 		logError({
