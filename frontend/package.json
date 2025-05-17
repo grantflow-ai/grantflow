@@ -33,6 +33,7 @@
 		"firebase": "^11.7.3",
 		"ky": "^1.8.1",
 		"lucide-react": "^0.511.0",
+		"mailgun.js": "^12.0.1",
 		"motion": "^12.12.1",
 		"next": "15.3.2",
 		"next-themes": "^0.4.6",
@@ -41,7 +42,6 @@
 		"react-dropzone": "^14.3.8",
 		"react-hook-form": "^7.56.4",
 		"react-use-websocket": "^4.13.0",
-		"resend": "^4.5.1",
 		"sonner": "^2.0.3",
 		"tailwind-merge": "^3.3.0",
 		"zod": "^3.24.4"
