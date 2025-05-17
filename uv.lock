@@ -1409,7 +1409,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.69.3"
+version = "1.70.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1424,9 +1424,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/25/2ce407b0ef7e3a2b05300336b7264ec781872c5e60e6ead7a10c9410adcd/litellm-1.69.3.tar.gz", hash = "sha256:748fe9dffea743bf683c9e28e4632c14894863e62c3fbf057560ea7324d89390", size = 7493451, upload-time = "2025-05-15T14:09:44.491Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/63/d0/49995a571fadc2e0e933fbd6ced032453edc45ef986dba199aac4744cecb/litellm-1.70.0.tar.gz", hash = "sha256:357f3891e38f23a12f0932c235ed860dc41bc5880afaee7229e6d25318652706", size = 7611957, upload-time = "2025-05-17T04:48:50.16Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/aa/c0/d1538ca18a32adb2669312342e11066e3ddb7dffdf328c1fad3027f78b3e/litellm-1.69.3-py3-none-any.whl", hash = "sha256:31f17024d06824aa8c1798e2c6ac44b69d4f721cefbc3bcd0d53a4568831075e", size = 7761394, upload-time = "2025-05-15T14:09:41.413Z" },
+    { url = "https://files.pythonhosted.org/packages/56/59/e28db726addb57a207dec6617eb0d69d7e46e701bc1e6a7d69971371c84f/litellm-1.70.0-py3-none-any.whl", hash = "sha256:7e094057b38ddb1d77f61452895835aa5d376db1850e9a1bc0342c5631d89638", size = 7877518, upload-time = "2025-05-17T04:48:46.347Z" },
 ]
 
 [[package]]
@@ -1944,7 +1944,7 @@ wheels = [
 
 [[package]]
 name = "optimum"
-version = "1.25.2"
+version = "1.25.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -1953,9 +1953,9 @@ dependencies = [
     { name = "torch" },
     { name = "transformers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/d2/8b8926793a7e1596f5bcf9a2ed9b05a41af7eb308861b82b65569df807a2/optimum-1.25.2.tar.gz", hash = "sha256:e51b5043dc41ce4c6a6015364ec0d3b71dc041144b40ea990c0415017b4891d9", size = 346861, upload-time = "2025-05-15T16:25:39.953Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/bd/cc1cb4e6d8cc2886f81775c798ffd2a9d1807474facedaa736e2e4a02912/optimum-1.25.3.tar.gz", hash = "sha256:1482d5f730bd5fb745e07915bae520ad9c4eaf02100811c287a74c117dbe3c6e", size = 345294, upload-time = "2025-05-16T14:22:43.108Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/16/c7f1b504046b7913d704f9be282ef25d28bace7acce861aef548ad8dcee2/optimum-1.25.2-py3-none-any.whl", hash = "sha256:a6e88e96ac654d65c82b78a1f0dac353f441f93dca78e35211ace86317bae086", size = 429365, upload-time = "2025-05-15T16:25:37.118Z" },
+    { url = "https://files.pythonhosted.org/packages/21/b4/5fb8f8933a259846dcb7c93016b036581627faa6c490fb403f7d4ab44870/optimum-1.25.3-py3-none-any.whl", hash = "sha256:f6f7614c1dcff0fd55362d369338a9e73b737e260a63bf2f3462af73aa7356b8", size = 429288, upload-time = "2025-05-16T14:22:40.649Z" },
 ]
 
 [package.optional-dependencies]
