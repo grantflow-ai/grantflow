@@ -12,10 +12,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
-dependencies = [
-  "mdformat>=0.7.22",
-  "trafilatura>=2.0.0",
-]
 
 [dependency-groups]
 dev = [

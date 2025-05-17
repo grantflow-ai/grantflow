@@ -432,14 +432,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anyio", specifier = ">=4.9.0" },
+    { name = "anyio", specifier = ">=4.9" },
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
     { name = "db", editable = "packages/db" },
     { name = "html-to-markdown", specifier = ">=1.3.2" },
     { name = "scikit-learn", specifier = ">=1.6.1" },
-    { name = "sentence-transformers", specifier = ">=4.1.0" },
+    { name = "sentence-transformers", specifier = ">=4.1" },
     { name = "shared-utils", extras = ["chunking", "embeddings", "gcs"], editable = "packages/shared_utils" },
-    { name = "trafilatura", specifier = ">=2.0.0" },
+    { name = "trafilatura", specifier = ">=2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 
@@ -929,10 +929,6 @@ grpc = [
 name = "grantflow"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "mdformat" },
-    { name = "trafilatura" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -952,10 +948,6 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "mdformat", specifier = ">=0.7.22" },
-    { name = "trafilatura", specifier = ">=2.0.0" },
-]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1462,18 +1454,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/82/8be4c96ffee03c5b4a034e60a31294daf481e12c7c43ab8e34a1453ee48b/MarkupSafe-3.0.2-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:ad10d3ded218f1039f11a75f8091880239651b52e9bb592ca27de44eed242a48", size = 23352, upload_time = "2024-10-18T15:21:20.971Z" },
     { url = "https://files.pythonhosted.org/packages/51/ae/97827349d3fcffee7e184bdf7f41cd6b88d9919c80f0263ba7acd1bbcb18/MarkupSafe-3.0.2-cp312-cp312-win32.whl", hash = "sha256:0f4ca02bea9a23221c0182836703cbf8930c5e9454bacce27e767509fa286a30", size = 15097, upload_time = "2024-10-18T15:21:22.646Z" },
     { url = "https://files.pythonhosted.org/packages/c1/80/a61f99dc3a936413c3ee4e1eecac96c0da5ed07ad56fd975f1a9da5bc630/MarkupSafe-3.0.2-cp312-cp312-win_amd64.whl", hash = "sha256:8e06879fc22a25ca47312fbe7c8264eb0b662f6db27cb2d3bbbc74b1df4b9b87", size = 15601, upload_time = "2024-10-18T15:21:23.499Z" },
-]
-
-[[package]]
-name = "mdformat"
-version = "0.7.22"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "markdown-it-py" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/eb/b5cbf2484411af039a3d4aeb53a5160fae25dd8c84af6a4243bc2f3fedb3/mdformat-0.7.22.tar.gz", hash = "sha256:eef84fa8f233d3162734683c2a8a6222227a229b9206872e6139658d99acb1ea", size = 34610, upload_time = "2025-01-30T18:00:51.418Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/6f/94a7344f6d634fe3563bea8b33bccedee37f2726f7807e9a58440dc91627/mdformat-0.7.22-py3-none-any.whl", hash = "sha256:61122637c9e1d9be1329054f3fa216559f0d1f722b7919b060a8c2a4ae1850e5", size = 34447, upload_time = "2025-01-30T18:00:48.708Z" },
 ]
 
 [[package]]
