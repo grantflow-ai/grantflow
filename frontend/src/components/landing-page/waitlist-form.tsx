@@ -8,10 +8,8 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { AppButton } from "@/components/app-button";
 
-import { addToWaitlist } from "@/actions/waitlist/join-waitlist";
-import { waitlistSchema } from "@/actions/waitlist/waitlist-validation-schema";
+import { addToWaitlist, RESPONSE_CODES, waitlistSchema } from "@/actions/join-waitlist";
 import { useState } from "react";
-import { getUserMessage } from "@/actions/waitlist/response-mapper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -21,6 +19,12 @@ const showToast = (type: "error" | "success", message: string, description?: str
 	} else {
 		toast.error(message, { description: description ?? "Please try again or contact support." });
 	}
+};
+
+const responseMessages: Record<RESPONSE_CODES, string> = {
+	SERVER_ERROR: "Something went wrong on our end. Please try again later.",
+	SUCCESS: "Thank you! You've successfully joined the waitlist.",
+	VALIDATION_ERROR: "Please check your information and try again.",
 };
 
 export function WaitlistForm() {
@@ -52,25 +56,16 @@ export function WaitlistForm() {
 	async function onSubmit(values: z.infer<typeof waitlistSchema>) {
 		setFormState({ message: "Sending your details...", status: "loading" });
 
-		try {
-			const result = await addToWaitlist(values);
-			const message = getUserMessage(result.code);
+		const result = await addToWaitlist(values);
+		const message = responseMessages[result.code];
 
-			if (result.success) {
-				setFormState({ message, status: "success" });
-				form.reset();
-				showToast("success", message);
-			} else if (result.errors) {
-				setFieldErrors(result.errors);
-				setFormState({ message, status: "error" });
-			} else {
-				setFormState({ message, status: "error" });
-				showToast("error", message, "Please try again or contact support.");
-			}
-		} catch {
-			const errorMessage = getUserMessage("SERVER_ERROR");
-			setFormState({ message: errorMessage, status: "error" });
-			showToast("error", errorMessage, "Please try again later.");
+		if (result.errors) {
+			setFieldErrors(result.errors);
+			setFormState({ message, status: "error" });
+		} else {
+			setFormState({ message, status: "success" });
+			form.reset();
+			showToast("success", message);
 		}
 
 		return values;
