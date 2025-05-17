@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from unittest.mock import AsyncMock, Mock, patch
+from urllib.error import URLError
 
 import pytest
 from anyio import Path
@@ -158,8 +159,6 @@ async def test_crawl_recursive(
     temp_dir: Path,
     mock_url: str,
     mock_download_page_html: AsyncMock,
-    mock_trafilatura_extract: Mock,
-    mock_convert_to_markdown: Mock,
     mock_generate_embeddings: AsyncMock,
     mock_cosine_similarity: Mock,
 ) -> None:
@@ -188,7 +187,6 @@ async def test_crawl_recursive(
     """
 
     mock_download_page_html.side_effect = None
-    mock_download_page_html.return_value = None
 
     def download_side_effect(url: str) -> str:
         if url == mock_url:
@@ -199,39 +197,15 @@ async def test_crawl_recursive(
 
     mock_download_page_html.side_effect = download_side_effect
 
-    mock_trafilatura_extract.side_effect = None
-    mock_trafilatura_extract.return_value = None
-
-    def trafilatura_side_effect(html: str) -> str:
-        if html == main_page_html:
-            return "Test Content\n\nThis is a test paragraph with some content."
-        if html == related_page_html:
-            return "Related Content\n\nThis is related content."
-        return "Unknown content"
-
-    mock_trafilatura_extract.side_effect = trafilatura_side_effect
-
-    mock_convert_to_markdown.side_effect = None
-    mock_convert_to_markdown.return_value = None
-
-    def markdown_side_effect(html: str) -> str:
-        if "Test Content" in str(html):
-            return "# Test Content\n\nThis is a test paragraph with some content."
-        if "Related Content" in str(html):
-            return "# Related Content\n\nThis is related content."
-        return "# Unknown content"
-
-    mock_convert_to_markdown.side_effect = markdown_side_effect
-
     results = await crawl(mock_url, temp_dir)
 
-    assert len(results) == 2, "Expected two results (main page and related page)"
+    assert len(results) == 2
 
-    assert results[0]["url"] == mock_url, "First result should be the main URL"
-    assert results[0]["text_content"] == "Test Content\n\nThis is a test paragraph with some content."
+    assert results[0]["url"] == mock_url
+    assert results[0]["text_content"] == "Test Content\nThis is a test paragraph with some content.\nRelated Page"
 
-    assert results[1]["url"] == second_url, "Second result should be the related URL"
-    assert results[1]["text_content"] == "Related Content\n\nThis is related content."
+    assert results[1]["url"] == second_url
+    assert results[1]["text_content"] == "Related Content\nThis is related content."
 
 
 async def test_crawl_avoids_visited_urls(
@@ -286,7 +260,7 @@ async def test_crawl_handles_download_errors(
 ) -> None:
     """Test crawl handles errors during file downloads."""
     mock_download_file.return_value = None
-    mock_download_file.side_effect = Exception("Download failed")
+    mock_download_file.side_effect = URLError("Download failed")
 
     results = await crawl(mock_url, temp_dir)
 
