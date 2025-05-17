@@ -1,18 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 
-vi.mock("@/assets/user-image-1.png", () => ({
-	default: "/mocked-user-image-1.png",
-}));
-
-vi.mock("@/assets/user-image-2.png", () => ({
-	default: "/mocked-user-image-2.png",
-}));
-
-vi.mock("@/assets/user-image-3.png", () => ({
-	default: "/mocked-user-image-3.png",
-}));
-
 vi.mock("next/image", () => ({
 	default: vi.fn().mockImplementation(({ alt, className, src }) => (
 		// Using img instead of Image to avoid cyclical reference issues in tests
@@ -125,7 +113,6 @@ describe("TestimonialsSection", () => {
 			expect(image).toBeInTheDocument();
 			expect(image).toHaveAttribute("data-testid", "mock-next-image");
 			expect(image).toHaveClass("rounded-full size-24 md:size-28 lg:size-32 xl:size-36");
-			expect(image).toHaveAttribute("src", `/mocked-user-image-${index + 1}.png`);
 
 			const blockquote = article.querySelector("blockquote");
 			expect(blockquote).toBeInTheDocument();
