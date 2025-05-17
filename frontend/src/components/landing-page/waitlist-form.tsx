@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { AppButton } from "@/components/app-button";
 
-import { addToWaitlist } from "@/actions/waitlist/join-waitlist";
-import { waitlistSchema } from "@/actions/waitlist/waitlist-validation-schema";
+import { addToWaitlist } from "@/actions/join-waitlist";
 import { useState } from "react";
-import { getUserMessage } from "@/actions/waitlist/response-mapper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { waitlistSchema } from "@/schemas/waitlist-schema";
+import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {
@@ -21,6 +21,12 @@ const showToast = (type: "error" | "success", message: string, description?: str
 	} else {
 		toast.error(message, { description: description ?? "Please try again or contact support." });
 	}
+};
+
+const responseMessages: Record<WAITING_LIST_RESPONSE_CODES, string> = {
+	SERVER_ERROR: "Something went wrong on our end. Please try again later.",
+	SUCCESS: "Thank you! You've successfully joined the waitlist.",
+	VALIDATION_ERROR: "Please check your information and try again.",
 };
 
 export function WaitlistForm() {
@@ -37,43 +43,20 @@ export function WaitlistForm() {
 		resolver: zodResolver(waitlistSchema),
 	});
 
-	const setFieldErrors = (errors?: { email?: string[]; name?: string[] } | null) => {
-		if (!errors) {
-			return;
-		}
-		if (errors.email?.[0]) {
-			form.setError("email", { message: errors.email[0] });
-		}
-		if (errors.name?.[0]) {
-			form.setError("name", { message: errors.name[0] });
-		}
-	};
-
-	async function onSubmit(values: z.infer<typeof waitlistSchema>) {
+	async function onSubmit(values: z.infer<typeof waitlistSchema>): Promise<void> {
 		setFormState({ message: "Sending your details...", status: "loading" });
 
-		try {
-			const result = await addToWaitlist(values);
-			const message = getUserMessage(result.code);
+		const result = await addToWaitlist(values);
+		const message = responseMessages[result.code];
 
-			if (result.success) {
-				setFormState({ message, status: "success" });
-				form.reset();
-				showToast("success", message);
-			} else if (result.errors) {
-				setFieldErrors(result.errors);
-				setFormState({ message, status: "error" });
-			} else {
-				setFormState({ message, status: "error" });
-				showToast("error", message, "Please try again or contact support.");
-			}
-		} catch {
-			const errorMessage = getUserMessage("SERVER_ERROR");
-			setFormState({ message: errorMessage, status: "error" });
-			showToast("error", errorMessage, "Please try again later.");
+		if (result.error) {
+			setFormState({ message, status: "error" });
+		} else {
+			setFormState({ message, status: "success" });
+			showToast("success", message);
 		}
 
-		return values;
+		form.reset();
 	}
 
 	return (
@@ -99,7 +82,11 @@ export function WaitlistForm() {
 				/>
 
 				<div className="flex justify-end mt-4 px-2">
-					<AppButton className="text-base" type="submit">
+					<AppButton
+						className="text-base"
+						disabled={!form.formState.isValid || formState.status === "loading"}
+						type="submit"
+					>
 						Join now
 					</AppButton>
 				</div>
@@ -113,26 +100,7 @@ export function WaitlistForm() {
 					>
 						{formState.status === "loading" ? (
 							<span className="flex items-center">
-								<svg
-									className="animate-spin -ml-1 mr-3 size-4"
-									fill="none"
-									viewBox="0 0 24 24"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<circle
-										className="opacity-25"
-										cx="12"
-										cy="12"
-										r="10"
-										stroke="#FFFFFF"
-										strokeWidth="4"
-									></circle>
-									<path
-										className="opacity-75"
-										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										fill="currentColor"
-									></path>
-								</svg>
+								<Spinner />
 								{formState.message}
 							</span>
 						) : (
@@ -142,6 +110,24 @@ export function WaitlistForm() {
 				</div>
 			</form>
 		</Form>
+	);
+}
+
+function Spinner() {
+	return (
+		<svg
+			className="animate-spin -ml-1 mr-3 size-4"
+			fill="none"
+			viewBox="0 0 24 24"
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			<circle className="opacity-25" cx="12" cy="12" r="10" stroke="#FFFFFF" strokeWidth="4" />
+			<path
+				className="opacity-75"
+				d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+				fill="currentColor"
+			/>
+		</svg>
 	);
 }
 
@@ -160,8 +146,7 @@ function WaitListFormItem({
 			email: string;
 			name: string;
 		},
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		any,
+		unknown,
 		{
 			email: string;
 			name: string;

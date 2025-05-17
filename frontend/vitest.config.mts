@@ -2,6 +2,12 @@ import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
+const suppressedErrors = [
+	"Error: Not implemented: HTMLFormElement.prototype.requestSubmit",
+	"(node:25503) [DEP0040]",
+	"React does not recognize the `whileInView`",
+];
+
 export default defineConfig({
 	plugins: [tsconfigPaths(), react()],
 	test: {
@@ -12,13 +18,7 @@ export default defineConfig({
 		environment: "jsdom",
 		globals: true,
 		onConsoleLog(log) {
-			// suppress errors and warning that spam the console during tests ~keep
-			if (log.includes("Error: Not implemented: HTMLFormElement.prototype.requestSubmit")) {
-				return false;
-			}
-			if (log.includes("(node:25503) [DEP0040]")) {
-				return false;
-			}
+			return !suppressedErrors.some((error) => log.includes(error));
 		},
 		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts"],
 	},
