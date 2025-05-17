@@ -4,28 +4,28 @@ import { logError } from "@/utils/logging";
 import { getWaitlistEmailTemplateHtml, waitlistEmailTemplateText } from "@/components/waitlist-email-template";
 import { getEnv } from "@/utils/env";
 import Mailgun from "mailgun.js";
-
+import { readFile } from "node:fs/promises";
 import { z } from "zod";
+import { waitlistSchema } from "@/schemas/waitlist-schema";
+import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
+import path from "node:path";
 
 const DOMAIN = "grantflow.ai";
-const WAITING_LIST_NAME = "waiting-list";
-
-export const waitlistSchema = z.object({
-	email: z.string().email("Please enter a valid email address"),
-	name: z.string().min(2, "Name must be at least 2 characters long"),
-});
+const WAITING_LIST_NAME = `waiting-list@${DOMAIN}`;
 
 const mailgun = new Mailgun(FormData);
 const client = mailgun.client({ key: getEnv().NEXT_PUBLIC_MAILGUN_API_KEY, username: "api" });
 
-export enum RESPONSE_CODES {
-	SERVER_ERROR = "SERVER_ERROR",
-	SUCCESS = "SUCCESS",
-	VALIDATION_ERROR = "VALIDATION_ERROR",
-}
+const getLogo = async (): Promise<{ data: Buffer; filename: string }> => {
+	const logo = await readFile(path.resolve(process.cwd(), "public/assets/logo-small.png"));
+	return {
+		data: logo,
+		filename: "logo.png",
+	};
+};
 
 export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): Promise<{
-	code: RESPONSE_CODES;
+	code: WAITING_LIST_RESPONSE_CODES;
 	errors?: { email?: string[]; name?: string[] } | null;
 	message?: string;
 }> {
@@ -38,7 +38,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 		});
 
 		return {
-			code: RESPONSE_CODES.VALIDATION_ERROR,
+			code: WAITING_LIST_RESPONSE_CODES.VALIDATION_ERROR,
 			errors: validationResult.error.flatten().fieldErrors,
 		};
 	}
@@ -51,7 +51,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 		});
 
 		return {
-			code: RESPONSE_CODES.SERVER_ERROR,
+			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,
 		};
 	}
 
@@ -64,7 +64,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 		});
 
 		return {
-			code: RESPONSE_CODES.SERVER_ERROR,
+			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,
 		};
 	}
 
@@ -77,12 +77,12 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 		});
 
 		return {
-			code: RESPONSE_CODES.SERVER_ERROR,
+			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,
 		};
 	}
 
 	return {
-		code: RESPONSE_CODES.SUCCESS,
+		code: WAITING_LIST_RESPONSE_CODES.SUCCESS,
 	};
 }
 
@@ -105,14 +105,14 @@ async function getOrCreateMailingList(): Promise<Error | null> {
 	try {
 		const lists = await client.lists.list();
 
-		if (lists.items.some((list) => list.name === WAITING_LIST_NAME)) {
+		if (lists.items.some((list) => list.name === WAITING_LIST_NAME.split("@")[0])) {
 			return null;
 		}
 
 		await client.lists.create({
 			address: WAITING_LIST_NAME,
 			description: "GrantFlow.ai Waiting List",
-			name: WAITING_LIST_NAME,
+			name: WAITING_LIST_NAME.split("@")[0],
 		});
 
 		return null;
@@ -122,10 +122,12 @@ async function getOrCreateMailingList(): Promise<Error | null> {
 }
 
 async function sendConfirmationEmail({ email, name }: { email: string; name: string }): Promise<Error | null> {
+	const logo = await getLogo();
 	try {
 		const response = await client.messages.create(DOMAIN, {
 			from: "noreply@grantflow.ai",
 			html: getWaitlistEmailTemplateHtml(name),
+			inline: [logo], // logo is linked to the template by specifying src="cid:<filename>" in the HTML ~keep
 			subject: "Confirmation: You've Joined the GrantFlow Waitlist",
 			text: waitlistEmailTemplateText(name),
 			to: email,

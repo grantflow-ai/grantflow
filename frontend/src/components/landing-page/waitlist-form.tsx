@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { AppButton } from "@/components/app-button";
 
-import { addToWaitlist, RESPONSE_CODES, waitlistSchema } from "@/actions/join-waitlist";
+import { addToWaitlist } from "@/actions/join-waitlist";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { waitlistSchema } from "@/schemas/waitlist-schema";
+import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {
@@ -21,7 +23,7 @@ const showToast = (type: "error" | "success", message: string, description?: str
 	}
 };
 
-const responseMessages: Record<RESPONSE_CODES, string> = {
+const responseMessages: Record<WAITING_LIST_RESPONSE_CODES, string> = {
 	SERVER_ERROR: "Something went wrong on our end. Please try again later.",
 	SUCCESS: "Thank you! You've successfully joined the waitlist.",
 	VALIDATION_ERROR: "Please check your information and try again.",
