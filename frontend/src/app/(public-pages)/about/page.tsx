@@ -1,10 +1,7 @@
 import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/about/icons";
 import { LegalPageContainer } from "@/components/info-legal-page-components";
 import { cn } from "@/lib/utils";
-import Image, { StaticImageData } from "next/image";
-import Asaf from "@/assets/asaf.png";
-import Naaman from "@/assets/na_aman.png";
-import Tirza from "@/assets/tirza.png";
+import Image from "next/image";
 import { BrandPattern } from "@/components/brand-pattern";
 
 const subHeadingClasses = "font-heading font-medium text-3xl md:text-4xl";
@@ -29,9 +26,13 @@ const toolkitItems = [
 ];
 
 const foundersDetails = [
-	{ designation: "Co founder | CEO", displayPicture: Asaf, name: "Asaf Ronel" },
-	{ designation: "Co-founder | CTO", displayPicture: Naaman, name: "Na’aman Hirschfeld" },
-	{ designation: "Co-founder | Product & UX", displayPicture: Tirza, name: "Tirza Shatz" },
+	{ designation: "Co founder | CEO", displayPicture: "/assets/founder-image-asaf.png", name: "Asaf Ronel" },
+	{ designation: "Co-founder | CTO", displayPicture: "/assets/founder-image-naaman.png", name: "Na’aman Hirschfeld" },
+	{
+		designation: "Co-founder | Product & UX",
+		displayPicture: "/assets/founder-image-tirza.png",
+		name: "Tirza Shatz",
+	},
 ];
 
 export default function AboutPage() {
@@ -138,12 +139,18 @@ function Founders({
 	name,
 }: {
 	designation: string;
-	displayPicture: StaticImageData;
+	displayPicture: string;
 	name: string;
 }) {
 	return (
 		<li className="flex flex-col items-center p-3 space-y-3">
-			<Image alt={`${name}'s photo`} className="rounded-full size-24.5" src={displayPicture} />
+			<Image
+				alt={`${name}'s photo`}
+				className="rounded-full size-24.5"
+				height={100}
+				src={displayPicture}
+				width={100}
+			/>
 			<p className="font-semibold">{designation}</p>
 			<h4 className="font-heading font-medium text-2xl">{name}</h4>
 		</li>

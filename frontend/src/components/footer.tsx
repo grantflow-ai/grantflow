@@ -1,6 +1,5 @@
 import { LogoDark } from "@/components/logo";
 import Image from "next/image";
-import linkedInIcon from "@/assets/linkedin-icon.png";
 import Link from "next/link";
 import { FooterLinks } from "@/components/footer-links";
 import { PagePath } from "@/enums";
@@ -13,7 +12,7 @@ const LinkedInLink = () => {
 			rel="noopener noreferrer"
 			target="_blank"
 		>
-			<Image alt="LinkedIn" className="size-9.5" height={38} src={linkedInIcon} width={38} />
+			<Image alt="LinkedIn" className="size-9.5" height={38} src={"/assets/linkedin-icon.png"} width={38} />
 		</a>
 	);
 };
