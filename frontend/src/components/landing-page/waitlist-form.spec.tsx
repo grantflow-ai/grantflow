@@ -181,7 +181,9 @@ describe("WaitlistForm", () => {
 		await user.type(emailInput, "test@example.com");
 		await user.type(nameInput, "John Doe");
 
+		//@ts-expect-error, mock values
 		expect(emailInput.value).toBe("test@example.com");
+		//@ts-expect-error, mock values
 		expect(nameInput.value).toBe("John Doe");
 
 		await user.click(submitButton);
@@ -191,7 +193,9 @@ describe("WaitlistForm", () => {
 		});
 
 		await waitFor(() => {
+			//@ts-expect-error, mock values
 			expect(emailInput.value).toBe("");
+			//@ts-expect-error, mock values
 			expect(nameInput.value).toBe("");
 		});
 	});
