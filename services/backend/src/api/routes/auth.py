@@ -8,7 +8,7 @@ from packages.shared_utils.src.logger import get_logger
 from services.backend.src.utils.firebase import verify_id_token
 from services.backend.src.utils.jwt import create_jwt
 from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -34,10 +34,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
     async with session_maker() as session:
         try:
             result = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
-            try:
-                workspace_user = result.one()
-            except NoResultFound:
-                workspace_user = None
+            workspace_user = result.one_or_none()
 
             if workspace_user is None:
                 default_workspace = Workspace(name="default")
