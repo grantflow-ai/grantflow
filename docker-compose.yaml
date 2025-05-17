@@ -53,11 +53,6 @@ services:
         volumes:
             - gcs-data:/storage
         command: ["-scheme", "routes", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
-        healthcheck:
-            test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:4443"]
-            interval: 1s
-            timeout: 5s
-            retries: 10
 
     backend:
         profiles:
@@ -71,19 +66,19 @@ services:
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             VALKEY_CONNECTION_STRING: redis://valkey:6379/0
+            PYTHONPATH: .
         env_file:
             - ./services/backend/.env
         ports:
             - "8000:8000"
         volumes:
-            - ./services/backend/src:/app/src:cached
-        command: "uvicorn src.api.main:app --host 0.0.0.0 --log-level info --reload"
+            - ./services/backend:/app/services/backend:cached
+            - ./packages:/app/packages:cached
+        command: "uvicorn services.backend.src.api.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
                 condition: service_healthy
             valkey:
-                condition: service_healthy
-            gcs-emulator:
                 condition: service_healthy
 
     indexer:
@@ -104,12 +99,11 @@ services:
         ports:
             - "8001:8000"
         volumes:
-            - ./services/indexer/src:/app/src:cached
-        command: "uvicorn src.main:app --host 0.0.0.0 --log-level info --reload"
+            - ./services/indexer:/app/services/indexer:cached
+            - ./packages:/app/packages:cached
+        command: "uvicorn services.indexer.src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
-                condition: service_healthy
-            gcs-emulator:
                 condition: service_healthy
 
     crawler:
@@ -128,14 +122,13 @@ services:
         env_file:
             - ./services/crawler/.env
         ports:
-            - "8001:8000"
+            - "8002:8000"
         volumes:
-            - ./services/crawler/src:/app/src:cached
-        command: "uvicorn src.main:app --host 0.0.0.0 --log-level info --reload"
+            - ./services/crawler:/app/services/crawler:cached
+            - ./packages:/app/packages:cached
+        command: "uvicorn services.crawler.src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
-                condition: service_healthy
-            gcs-emulator:
                 condition: service_healthy
 
     frontend:
