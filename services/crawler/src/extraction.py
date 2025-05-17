@@ -88,10 +88,10 @@ async def prepare_url_data(
             raw_html = await download_page_html(url)
             visited_urls.append(url)
         except (URLError, HTTPError) as e:
-            logger.error("Network error downloading page HTML: %(error)s", {"error": str(e)}, url=url)
+            logger.error("Network error downloading page HTML: {error}", error=str(e), url=url)
             raise ExternalOperationError(f"Failed to download page HTML from {url}", context=str(e)) from e
         except TimeoutError as e:
-            logger.error("Timeout when downloading page HTML: %(error)s", {"error": str(e)}, url=url)
+            logger.error("Timeout when downloading page HTML: {error}", error=str(e), url=url)
             raise ExternalOperationError(f"Timeout when downloading page from {url}", context=str(e)) from e
 
     return raw_html, visited_urls
@@ -134,31 +134,23 @@ async def extract_and_process_content(
 ) -> tuple[str, str, list[list[float]]]:
     """
     Extract and process text content from HTML.
-
-    Args:
-        url: The URL being processed
-        raw_html: HTML content
-        page_text: Plain text for the webpage if already extracted
-        main_embeddings: Embeddings if already computed
-
-    Returns:
-        Tuple of (markdown_content, page_text, main_embeddings)
     """
     if page_text is None:
         try:
             page_text = trafilatura.extract(raw_html, output_format="txt", include_comments=False)
             if page_text is None:
-                logger.warning("Failed to extract text content from %(url)s", {"url": url})
+                logger.warning("Failed to extract text content from {url}", url=url)
                 page_text = ""
         except Exception as e:
-            logger.error("Error extracting text with trafilatura: %(error)s", {"error": str(e)}, url=url)
+            logger.error("Error extracting text with trafilatura: {error}", error=str(e), url=url)
             raise UrlParsingError(f"Failed to extract text content from {url}", context=str(e)) from e
 
     if main_embeddings is None:
         try:
-            main_embeddings = await generate_embeddings([page_text])
+            content_to_embed = page_text if page_text is not None else ""
+            main_embeddings = await generate_embeddings([content_to_embed])
         except ValueError as e:
-            logger.error("Error generating embeddings: %(error)s", {"error": str(e)}, url=url)
+            logger.error("Error generating embeddings: {error}", error=str(e), url=url)
             raise ExternalOperationError(f"Failed to generate embeddings for {url}", context=str(e)) from e
 
     soup = BeautifulSoup(raw_html, "html.parser")
@@ -187,7 +179,7 @@ async def save_page_content(url: str, temp_dir: Path, markdown_content: str) -> 
         await page_path.write_text(markdown_content)
         return page_path
     except (OSError, PermissionError) as e:
-        logger.error("Error writing page content to file: %(error)s", {"error": str(e)}, url=url, file=str(page_path))
+        logger.error("Error writing page content to file: {error}", error=str(e), url=url, file=str(page_path))
         raise FileParsingError(f"Failed to write page content to file: {page_path}", context=str(e)) from e
 
 
@@ -210,7 +202,7 @@ async def download_documents(
 
     for doc_url in doc_links:
         if doc_url in downloaded_files:
-            logger.info("Already downloaded %(url)s, skipping.", {"url": doc_url})
+            logger.info("Already downloaded {url}, skipping.", url=doc_url)
             continue
 
         doc_filename = safe_filename_from_url(doc_url)
@@ -221,11 +213,11 @@ async def download_documents(
             await doc_path.write_bytes(doc_content)
             downloaded_files[doc_url] = doc_path
         except (URLError, HTTPError) as e:
-            logger.info("Network error downloading file: %(error)s", {"error": str(e)}, file_url=doc_url)
+            logger.info("Network error downloading file: {error}", error=str(e), file_url=doc_url)
         except (OSError, PermissionError) as e:
-            logger.info("File system error when saving: %(error)s", {"error": str(e)}, file_url=doc_url)
+            logger.info("File system error when saving: {error}", error=str(e), file_url=doc_url)
         except TimeoutError as e:
-            logger.info("Timeout when downloading file: %(error)s", {"error": str(e)}, file_url=doc_url)
+            logger.info("Timeout when downloading file: {error}", error=str(e), file_url=doc_url)
 
     return downloaded_files
 
@@ -250,7 +242,7 @@ async def find_relevant_links(
     for link in normal_links:
         try:
             if link in visited_urls:
-                logger.info("Already visited %(url)s, skipping.", {"url": link})
+                logger.info("Already visited {url}, skipping.", url=link)
                 continue
 
             link_html = await download_page_html(str(link))
@@ -267,13 +259,13 @@ async def find_relevant_links(
             if similarity[0][0] >= 0.58:
                 relevant_links.append((link, link_html, link_embeddings, link_text))
         except (URLError, HTTPError) as e:
-            logger.info("Network error when comparing URLs: %(error)s", {"error": str(e)}, url1=url, url2=link)
+            logger.info("Network error when comparing URLs: {error}", error=str(e), url1=url, url2=link)
         except UrlParsingError as e:
-            logger.info("Content extraction error: %(error)s", {"error": str(e)}, url1=url, url2=link)
+            logger.info("Content extraction error: {error}", error=str(e), url1=url, url2=link)
         except ExternalOperationError as e:
-            logger.info("Embedding generation error: %(error)s", {"error": str(e)}, url1=url, url2=link)
+            logger.info("Embedding generation error: {error}", error=str(e), url1=url, url2=link)
         except Exception as e:  # noqa: BLE001
-            logger.info("Unexpected error comparing URL content: %(error)s", {"error": str(e)}, url1=url, url2=link)
+            logger.info("Unexpected error comparing URL content: {error}", error=str(e), url1=url, url2=link)
 
     return relevant_links
 
@@ -455,5 +447,5 @@ async def _mark_source_as_failed(session_maker: async_sessionmaker[Any], source_
             )
             await session.commit()
         except SQLAlchemyError as e:
-            logger.error("Failed to mark source as failed: %(error)s", {"error": str(e)}, source_id=source_id)
+            logger.error("Failed to mark source as failed: {error}", error=str(e), source_id=source_id)
             await session.rollback()
