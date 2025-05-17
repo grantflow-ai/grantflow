@@ -1,18 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 
-vi.mock("@/assets/user-image-1.png", () => ({
-	default: "/mocked-user-image-1.png",
-}));
-
-vi.mock("@/assets/user-image-2.png", () => ({
-	default: "/mocked-user-image-2.png",
-}));
-
-vi.mock("@/assets/user-image-3.png", () => ({
-	default: "/mocked-user-image-3.png",
-}));
-
 vi.mock("next/image", () => ({
 	default: vi.fn().mockImplementation(({ alt, className, src }) => (
 		// Using img instead of Image to avoid cyclical reference issues in tests
