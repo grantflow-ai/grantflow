@@ -182,7 +182,7 @@ export function EarlyAccessSection() {
 		>
 			<GradientBackground className="inset-0 z-0 hidden md:absolute md:block" />
 			<GradientBackground className="absolute inset-0 z-0 md:hidden" position="bottom-left" />
-			<div className="lg:py-15 xl:px-30 relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 xl:py-20">
+			<div className="relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 lg:py-15 xl:py-20 xl:px-30">
 				<MotionDiv
 					className="text-background max-w-fit rounded-full bg-white px-2 pt-0.5 text-lg md:text-sm"
 					id="early-access-badge"

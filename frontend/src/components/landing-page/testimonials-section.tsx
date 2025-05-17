@@ -59,10 +59,10 @@ export function TestimonialsSection() {
 				<ScrollFadeElement className="w-full mx-auto" delay={0.1}>
 					<p className="mx-1 text-xl md:text-lg lg:text-base">{CONTENT.subtitle}</p>
 				</ScrollFadeElement>
-				<div className="grid grid-cols-1 lg:grid-cols-3 place-items-center lg:place-items-start gap-12 md:gap-8 lg:gap-0 mt-8 xl:m-16">
+				<div className="grid grid-cols-1 lg:grid-cols-3 place-items-center lg:place-items-start gap-12 md:gap-8 lg:gap-4 xl:gap-0 mt-8 xl:m-16">
 					{CONTENT.testimonials.map((testimonial, i) => (
 						<MotionArticle
-							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full px-5 md:px-0"
+							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full px-5 xl:px-0"
 							initial="hidden"
 							key={i}
 							variants={articleVariants}
