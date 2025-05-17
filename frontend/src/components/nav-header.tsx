@@ -9,11 +9,14 @@ import { ScrollButton } from "@/components/scroll-button";
 import Link from "next/link";
 import { PagePath } from "@/enums";
 import { IconGoAhead } from "./icons";
+import { usePathname } from "next/navigation";
 
 const BREAKPOINT_MD = 768;
 
 export function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const pathname = usePathname();
+	const isHomePage = pathname === PagePath.ROOT.toString();
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -62,14 +65,16 @@ export function NavHeader() {
 					<AppButton aria-label="Go to About Us Page" size="lg" theme="light" variant="link">
 						<Link href={PagePath.ABOUT_US}>About Us</Link>
 					</AppButton>
-					<ScrollButton
-						aria-label="Go to Waitlist Form"
-						rightIcon={<IconGoAhead />}
-						selector="waitlist"
-						size="lg"
-					>
-						Try For Free
-					</ScrollButton>
+					{isHomePage && (
+						<ScrollButton
+							aria-label="Go to Waitlist Form"
+							rightIcon={<IconGoAhead />}
+							selector="waitlist"
+							size="lg"
+						>
+							Try For Free
+						</ScrollButton>
+					)}
 				</div>
 				<Button
 					aria-label={isMobileMenuOpen ? "Close Navigation Menu" : "Open Navigation Menu"}
@@ -109,15 +114,17 @@ export function NavHeader() {
 				<AppButton aria-label="Go to About Us Page" size="lg" variant="link">
 					<Link href={PagePath.ABOUT_US}>About Us</Link>
 				</AppButton>
-				<ScrollButton
-					aria-label="Go to Waitlist Form"
-					rightIcon={<IconGoAhead />}
-					selector="waitlist"
-					size="lg"
-					variant="link"
-				>
-					Try For Free
-				</ScrollButton>
+				{isHomePage && (
+					<ScrollButton
+						aria-label="Go to Waitlist Form"
+						rightIcon={<IconGoAhead />}
+						selector="waitlist"
+						size="lg"
+						variant="link"
+					>
+						Try For Free
+					</ScrollButton>
+				)}
 			</div>
 		</header>
 	);
