@@ -1,6 +1,7 @@
 export function Logo({ height = 200, width = 200, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="logo"
 			fill="none"
 			height={height}
 			viewBox="0 0 229 57"
