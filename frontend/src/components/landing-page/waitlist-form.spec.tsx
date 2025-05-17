@@ -1,23 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 import userEvent from "@testing-library/user-event";
+import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 
-// Create mock functions outside of the vi.mock call
-const mockAddToWaitlist = vi.fn();
-const mockSuccess = vi.fn();
-const mockError = vi.fn();
+const { mockAddToWaitlist, mockError, mockSuccess } = vi.hoisted(() => {
+	return {
+		mockAddToWaitlist: vi.fn(),
+		mockError: vi.fn(),
+		mockSuccess: vi.fn(),
+	};
+});
 
-// Define mocked response codes
-const RESPONSE_CODES = {
-	SERVER_ERROR: "SERVER_ERROR",
-	SUCCESS: "SUCCESS",
-	VALIDATION_ERROR: "VALIDATION_ERROR",
-};
-
-// Mock the join-waitlist module
 vi.mock("@/actions/join-waitlist", () => ({
 	addToWaitlist: mockAddToWaitlist,
-	RESPONSE_CODES,
 	waitlistSchema: {
 		parse: vi.fn(),
 	},
@@ -133,7 +128,7 @@ describe("WaitlistForm", () => {
 
 	it("should handle successful submission", async () => {
 		mockAddToWaitlist.mockResolvedValueOnce({
-			code: RESPONSE_CODES.SUCCESS,
+			code: WAITING_LIST_RESPONSE_CODES.SUCCESS,
 		});
 
 		const user = userEvent.setup();
@@ -147,12 +142,10 @@ describe("WaitlistForm", () => {
 		await user.type(nameInput, "John Doe");
 		await user.click(submitButton);
 
-		// Wait for the form submission
 		await waitFor(() => {
 			expect(mockAddToWaitlist).toHaveBeenCalled();
 		});
 
-		// Verify the call arguments
 		expect(mockAddToWaitlist).toHaveBeenCalledWith(
 			expect.objectContaining({
 				email: "john.doe@example.com",
@@ -160,13 +153,12 @@ describe("WaitlistForm", () => {
 			}),
 		);
 
-		// Verify toast was called
 		expect(mockSuccess).toHaveBeenCalled();
 	});
 
 	it("should handle server error", async () => {
 		mockAddToWaitlist.mockResolvedValueOnce({
-			code: RESPONSE_CODES.SERVER_ERROR,
+			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,
 		});
 
 		const user = userEvent.setup();
@@ -180,18 +172,16 @@ describe("WaitlistForm", () => {
 		await user.type(nameInput, "John Doe");
 		await user.click(submitButton);
 
-		// Wait for the form submission
 		await waitFor(() => {
 			expect(mockAddToWaitlist).toHaveBeenCalled();
 		});
 
-		// Verify the error toast was called
 		expect(mockError).toHaveBeenCalled();
 	});
 
 	it("should handle validation error with field errors", async () => {
 		mockAddToWaitlist.mockResolvedValueOnce({
-			code: RESPONSE_CODES.VALIDATION_ERROR,
+			code: WAITING_LIST_RESPONSE_CODES.VALIDATION_ERROR,
 			errors: {
 				email: ["Please enter a valid email address"],
 			},
@@ -208,7 +198,6 @@ describe("WaitlistForm", () => {
 		await user.type(nameInput, "John Doe");
 		await user.click(submitButton);
 
-		// Wait for the form submission
 		await waitFor(() => {
 			expect(mockAddToWaitlist).toHaveBeenCalled();
 		});
@@ -228,12 +217,10 @@ describe("WaitlistForm", () => {
 		await user.type(nameInput, "John Doe");
 		await user.click(submitButton);
 
-		// Wait for the form submission
 		await waitFor(() => {
 			expect(mockAddToWaitlist).toHaveBeenCalled();
 		});
 
-		// Verify the error toast was called
 		expect(mockError).toHaveBeenCalled();
 	});
 });
