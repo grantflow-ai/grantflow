@@ -21,7 +21,9 @@ module "network" {
 
 # Storage Module
 module "storage" {
-  source = "./modules/storage"
+  source      = "./modules/storage"
+  bucket_name = var.storage_bucket_name
+  environment = var.environment
 }
 
 # IAM Module
