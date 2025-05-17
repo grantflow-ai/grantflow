@@ -36,7 +36,7 @@ def mock_crawl_url() -> Generator[AsyncMock, None, None]:
 @pytest.fixture(autouse=True)
 def mock_crawl_url_module() -> Generator[None, None, None]:
     """Mock the crawl_url module to prevent actual web crawling."""
-    with patch("services.crawler.src.extraction.AsyncWebCrawler"):
+    with patch("services.crawler.src.extraction.crawl"):
         yield
 
 
