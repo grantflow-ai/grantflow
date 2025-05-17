@@ -1,6 +1,3 @@
-import User1 from "@/assets/user-image-1.png";
-import User2 from "@/assets/user-image-2.png";
-import User3 from "@/assets/user-image-3.png";
 import Image from "next/image";
 import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
 import { MotionArticle, MotionBlockquote } from "@/components/landing-page/motion-components";
@@ -10,15 +7,15 @@ const CONTENT = {
 	subtitle: "Inspired by real research challenges",
 	testimonials: [
 		{
-			image: User1,
+			image: "/assets/user-image-1.png",
 			quote: "Balancing research, publishing, and endless grant writing pulls us in too many directions. A tool like GrantFlow.ai could finally give researchers the time to lead, not just apply.",
 		},
 		{
-			image: User2,
+			image: "/assets/user-image-2.png",
 			quote: "Managing collaborators, timelines, and documents across institutions is a constant challenge. A structured platform like GrantFlow is exactly what our field needs.",
 		},
 		{
-			image: User3,
+			image: "/assets/user-image-3.png",
 			quote: "Writing grant proposals from scratch, again and again, isn’t sustainable. The idea of AI support tailored to researchers is long overdue and incredibly promising.",
 		},
 	],
@@ -75,7 +72,9 @@ export function TestimonialsSection() {
 							<Image
 								alt={`${Image.name}'s photo`}
 								className="rounded-full size-24 md:size-28 lg:size-32 xl:size-36"
+								height={100}
 								src={testimonial.image}
+								width={100}
 							/>
 							<MotionBlockquote
 								className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base"
