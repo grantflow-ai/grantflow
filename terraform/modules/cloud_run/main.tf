@@ -25,6 +25,12 @@ variable "database_connection_name" {
   type        = string
 }
 
+variable "valkey_connection_string" {
+  description = "The connection string for the Valkey/Redis instance"
+  type        = string
+  sensitive   = true
+}
+
 # Backend service deployment
 resource "google_cloud_run_v2_service" "backend" {
   name     = "backend"
@@ -51,9 +57,9 @@ resource "google_cloud_run_v2_service" "backend" {
           port = 8000
         }
         initial_delay_seconds = 10
-        timeout_seconds = 5
-        period_seconds = 15
-        failure_threshold = 3
+        timeout_seconds       = 5
+        period_seconds        = 15
+        failure_threshold     = 3
       }
 
       env {
@@ -148,6 +154,11 @@ resource "google_cloud_run_v2_service" "backend" {
         }
       }
 
+      env {
+        name  = "VALKEY_CONNECTION_STRING"
+        value = var.valkey_connection_string
+      }
+
       # Mount the Cloud SQL volume
       volume_mounts {
         name       = "cloudsql"
@@ -200,9 +211,9 @@ resource "google_cloud_run_v2_service" "crawler" {
           port = 8000
         }
         initial_delay_seconds = 10
-        timeout_seconds = 5
-        period_seconds = 15
-        failure_threshold = 3
+        timeout_seconds       = 5
+        period_seconds        = 15
+        failure_threshold     = 3
       }
 
       env {
@@ -213,6 +224,11 @@ resource "google_cloud_run_v2_service" "crawler" {
       env {
         name  = "GOOGLE_CLOUD_REGION"
         value = "us-central1"
+      }
+
+      env {
+        name  = "GCS_BUCKET_NAME"
+        value = "grantflow-uploads"
       }
 
       # Database connection name for the Cloud SQL Auth Proxy
@@ -294,9 +310,9 @@ resource "google_cloud_run_v2_service" "indexer" {
           port = 8000
         }
         initial_delay_seconds = 10
-        timeout_seconds = 5
-        period_seconds = 15
-        failure_threshold = 3
+        timeout_seconds       = 5
+        period_seconds        = 15
+        failure_threshold     = 3
       }
 
       env {
@@ -307,6 +323,11 @@ resource "google_cloud_run_v2_service" "indexer" {
       env {
         name  = "GOOGLE_CLOUD_REGION"
         value = "us-central1"
+      }
+
+      env {
+        name  = "GCS_BUCKET_NAME"
+        value = "grantflow-uploads"
       }
 
       # Database connection name for the Cloud SQL Auth Proxy

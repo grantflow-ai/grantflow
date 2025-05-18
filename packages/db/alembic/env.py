@@ -1,4 +1,5 @@
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -9,6 +10,21 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 config = context.config
 
+# Set default connection string if not provided in environment
+default_connection_string = "postgresql+asyncpg://local:local@0.0.0.0:5432/local"
+db_connection_string = os.getenv("DB_CONNECTION_STRING", default_connection_string)
+
+# Ensure the postgresql+asyncpg driver is used
+if not db_connection_string.startswith("postgresql+asyncpg:"):
+    if "://" in db_connection_string:
+        # Replace any existing driver with postgresql+asyncpg
+        db_connection_string = "postgresql+asyncpg://" + db_connection_string.split("://", 1)[1]
+    else:
+        # If no driver specified, add the driver prefix
+        db_connection_string = f"postgresql+asyncpg://{db_connection_string}"
+
+# Override the sqlalchemy.url value in the alembic.ini file
+config.set_main_option("sqlalchemy.url", db_connection_string)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
