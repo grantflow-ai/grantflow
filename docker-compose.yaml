@@ -52,7 +52,7 @@ services:
             - "4443:4443"
         volumes:
             - gcs-data:/storage
-        command: ["-scheme", "routes", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
+        command: ["-scheme", "both", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
 
     backend:
         profiles:
