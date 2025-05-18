@@ -252,6 +252,7 @@ function BenefitsAndWaitlistForm() {
 			<MotionAside
 				aria-label="waitlist-form"
 				className="me-7 shrink-0 space-y-2 md:me-0"
+				id="waitlist-form-container"
 				variants={formContainerVariants}
 			>
 				<MotionHeading3 className="font-heading text-2xl" variants={textVariants}>

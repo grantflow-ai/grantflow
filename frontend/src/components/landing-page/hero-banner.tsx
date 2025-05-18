@@ -24,8 +24,10 @@ export function HeroBanner() {
 					</AppButton>
 					<ScrollButton
 						aria-label="Go to Waitlist Form"
+						desktopTargetId="waitlist"
+						mobileTargetId="waitlist-form-container"
+						offset={10}
 						rightIcon={<IconGoAhead />}
-						selector="waitlist"
 						size="lg"
 					>
 						Start here
