@@ -6,25 +6,26 @@ This directory contains Terraform configuration for managing GrantFlow's Google 
 
 The configuration is organized into modules:
 
-- `modules/network`: VPC network and subnetworks
-- `modules/storage`: GCS buckets and permissions
+- `modules/artifact_registry`: Docker container repositories
+- `modules/cloud_run`: Cloud Run services
 - `modules/iam`: Service accounts and IAM permissions
+- `modules/network`: VPC network and subnetworks
 - `modules/pubsub`: Pub/Sub topics and subscriptions
+- `modules/secret_manager`: Secret Manager secrets
+- `modules/storage`: GCS buckets and permissions
 
 ## Prerequisites
 
 - [OpenTofu](https://opentofu.org/) installed
-- GCP credentials configured via `gcloud auth login`
+- GCP credentials configured via `gcloud auth application-default login`
 - Appropriate permissions in the GCP project
 
 ## Usage
 
 ### Initialization
 
-Run the initialization script to set up Terraform:
-
 ```bash
-./init.sh
+tofu init
 ```
 
 ### Planning Changes
@@ -69,3 +70,4 @@ Terraform state is stored in the `grantflow-terraform-state` GCS bucket.
 
 - The `terraform` directory was initially populated using Terraformer
 - Configuration has been modularized for better organization and maintainability
+- Required Google Cloud APIs must be enabled before applying

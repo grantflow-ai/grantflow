@@ -35,3 +35,16 @@ module "iam" {
 module "pubsub" {
   source = "./modules/pubsub"
 }
+
+# Cloud Run Module
+module "cloud_run" {
+  source     = "./modules/cloud_run"
+  project_id = var.project_id
+  region     = var.region
+}
+
+# Secrets Module
+module "secrets" {
+  source     = "./modules/secrets"
+  project_id = var.project_id
+}
