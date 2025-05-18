@@ -3,7 +3,7 @@ import sys
 from http import HTTPStatus
 from typing import Any, NotRequired, TypedDict
 
-from litestar import Litestar, Response
+from litestar import Litestar, Response, get
 from litestar.config.cors import CORSConfig
 from litestar.connection.request import Request
 from litestar.di import Provide
@@ -53,8 +53,8 @@ def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler: 
     return handle_exception
 
 
-def create_session_maker_server_statup(logger: FilteringBoundLogger) -> LifespanHook:
-    async def session_maker_server_statup(app_instance: Litestar) -> None:
+def create_session_maker_server_startup(logger: FilteringBoundLogger) -> LifespanHook:
+    async def session_maker_server_startup(app_instance: Litestar) -> None:
         logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
         logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
 
@@ -68,14 +68,24 @@ def create_session_maker_server_statup(logger: FilteringBoundLogger) -> Lifespan
             logger.error("Failed to connect to the database.", exc_info=e)
             sys.exit(1)
 
-    return session_maker_server_statup
+    return session_maker_server_startup
+
+
+async def _health_check() -> str:
+    return "OK"
 
 
 def create_litestar_app(logger: FilteringBoundLogger, add_session_maker: bool = True, **kwargs: Any) -> Litestar:
     exception_handler = create_exception_handler(logger)
 
+    health_check = get("/health", media_type="text/plain", operation_id="HealthCheck")(_health_check)
+    if "route_handlers" in kwargs:
+        kwargs["route_handlers"].append(health_check)
+    else:
+        kwargs["route_handlers"] = [health_check]
+
     if add_session_maker:
-        session_maker_startup_hook = create_session_maker_server_statup(logger)
+        session_maker_startup_hook = create_session_maker_server_startup(logger)
         if "dependencies" in kwargs:
             kwargs["dependencies"]["session_maker"] = session_maker_provider
         else:

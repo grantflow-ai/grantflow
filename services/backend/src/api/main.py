@@ -17,7 +17,6 @@ from services.backend.src.api.routes.funding_organizations import (
 from services.backend.src.api.routes.grant_applications import (
     handle_delete_application,
 )
-from services.backend.src.api.routes.health import health_check
 from services.backend.src.api.routes.sources import (
     handle_create_upload_url,
     handle_delete_rag_source,
@@ -54,7 +53,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_workspaces,
     handle_update_organization,
     handle_update_workspace,
-    health_check,
 ]
 
 grant_template_generation_pipeline_handler_listener = listener("grant_template_generation_pipeline_handler")(
