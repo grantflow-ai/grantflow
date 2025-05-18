@@ -53,7 +53,13 @@ function CTASection() {
 					<AppButton size="lg" theme="light" variant="secondary">
 						<Link href="mailto:contact@grantflow.ai">Contact us</Link>
 					</AppButton>
-					<ScrollButton rightIcon={<IconGoAhead />} selector="waitlist" size="lg">
+					<ScrollButton
+						desktopTargetId="waitlist"
+						mobileTargetId="waitlist-form-container"
+						offset={10}
+						rightIcon={<IconGoAhead />}
+						size="lg"
+					>
 						Try For Free
 					</ScrollButton>
 				</div>

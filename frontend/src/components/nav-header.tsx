@@ -72,8 +72,8 @@ export function NavHeader() {
 					{isHomePage && (
 						<ScrollButton
 							aria-label="Go to Waitlist Form"
+							desktopTargetId="waitlist"
 							rightIcon={<IconGoAhead />}
-							selector="waitlist"
 							size="lg"
 						>
 							Try For Free
@@ -136,11 +136,12 @@ export function NavHeader() {
 				{isHomePage && (
 					<ScrollButton
 						aria-label="Go to Waitlist Form"
+						mobileTargetId="waitlist-form-container"
+						offset={80}
 						onClick={() => {
 							setIsMobileMenuOpen(false);
 						}}
 						rightIcon={<IconGoAhead />}
-						selector="waitlist"
 						size="lg"
 						variant="link"
 					>

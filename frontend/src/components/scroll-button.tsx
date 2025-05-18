@@ -1,31 +1,49 @@
 "use client";
 
 import { AppButton, AppButtonProps } from "@/components/app-button";
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+const BREAKPOINT_MD = 768;
 
 export function ScrollButton({
 	children,
+	desktopTargetId,
+	mobileTargetId,
 	offset = 0,
 	onClick,
-	selector,
 	smooth = true,
 	...buttonProps
 }: {
+	desktopTargetId?: string;
+	mobileTargetId?: string;
 	offset?: number;
 	onClick?: () => void;
-	selector: string;
 	smooth?: boolean;
 } & AppButtonProps) {
+	const [isMobile, setIsMobile] = useState(false);
+
+	useEffect(() => {
+		const checkScreenSize = () => {
+			setIsMobile(window.innerWidth < BREAKPOINT_MD);
+		};
+
+		checkScreenSize();
+
+		window.addEventListener("resize", checkScreenSize);
+
+		return () => {
+			window.removeEventListener("resize", checkScreenSize);
+		};
+	}, []);
+
 	const handleScroll = React.useCallback(
 		(e: React.MouseEvent) => {
 			e.preventDefault();
 
 			onClick?.();
 
-			const targetElement =
-				selector.startsWith("#") || selector.startsWith(".")
-					? document.querySelector(selector)
-					: (document.querySelector(`#${selector}`) ?? document.querySelector(selector));
+			const targetId = isMobile ? mobileTargetId : desktopTargetId;
+			const targetElement = document.querySelector(`#${targetId}`);
 
 			if (targetElement) {
 				const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - offset;
@@ -38,15 +56,9 @@ export function ScrollButton({
 				} else {
 					window.scrollTo(0, targetPosition);
 				}
-
-				if (selector.startsWith("#")) {
-					globalThis.history.pushState(null, "", selector);
-				} else if (!selector.startsWith(".")) {
-					globalThis.history.pushState(null, "", `#${selector}`);
-				}
 			}
 		},
-		[selector, smooth, offset, onClick],
+		[isMobile, onClick, desktopTargetId, mobileTargetId, offset, smooth],
 	);
 
 	return (
