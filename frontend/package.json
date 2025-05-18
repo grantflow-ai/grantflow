@@ -9,7 +9,7 @@
 		"typecheck": "tsc --noEmit",
 		"preinstall": "npx only-allow pnpm",
 		"start": "NODE_NO_WARNINGS=1 next start",
-		"test": "NODE_NO_WARNINGS=1 vitest",
+		"test": "NODE_NO_WARNINGS=1 vitest run",
 		"test:coverage": "NODE_NO_WARNINGS=1 pnpm run test --coverage",
 		"test:watch": "NODE_NO_WARNINGS=1 pnpm run test --watch --coverage",
 		"ui": "pnpm dlx shadcn@latest",
