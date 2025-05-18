@@ -9,12 +9,10 @@ requires-python = "==3.12.*"
 
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
 dependencies = [
-  "anyio>=4.9",
   "beautifulsoup4>=4.13.4",
   "db",
   "html-to-markdown>=1.3.2",
-  "scikit-learn>=1.6.1",
-  "sentence-transformers>=4.1",
+  "httpx>=0.28.1",
   "shared-utils[chunking,embeddings,gcs]",
   "trafilatura>=2",
   "uvicorn[standard]>=0.34",
