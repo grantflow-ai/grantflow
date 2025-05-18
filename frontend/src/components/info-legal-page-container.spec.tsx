@@ -9,9 +9,7 @@ describe("LegalPageContainer", () => {
 			expect(screen.getByText("Test Title")).toBeInTheDocument();
 			expect(screen.getByText("Test content")).toBeInTheDocument();
 
-			const mainContainer = screen
-				.getByRole("heading", { name: "Test Title" })
-				.closest("div.w-full.min-h-screen.z-20");
+			const mainContainer = screen.getByRole("heading", { name: "Test Title" }).closest("div.w-full.z-20");
 			expect(mainContainer).toHaveClass("bg-light");
 			expect(mainContainer).toHaveClass("text-black");
 		});
@@ -51,30 +49,12 @@ describe("LegalPageContainer", () => {
 		it("should render with proper spacing for readability by default", () => {
 			render(<LegalPageContainer title="Spacing Test">Content</LegalPageContainer>);
 
-			const mainContainer = screen
-				.getByRole("heading", { name: "Spacing Test" })
-				.closest("div.w-full.min-h-screen.z-20");
+			const mainContainer = screen.getByRole("heading", { name: "Spacing Test" }).closest("div.w-full.z-20");
 
 			expect(mainContainer).toHaveClass("py-8 px-16 md:py-12 md:px-20 xl:py-16 xl:px-24 lg:py-20 lg:px-30");
 
 			const heading = screen.getByRole("heading", { name: "Spacing Test" });
 			expect(heading).toHaveClass("mb-6");
-		});
-
-		it("should render a full viewport height container by default", () => {
-			render(<LegalPageContainer title="Full Height">Content</LegalPageContainer>);
-
-			const mainContainer = screen.getByRole("heading", { name: "Full Height" }).closest("div.w-full");
-			expect(mainContainer).toHaveClass("min-h-screen");
-		});
-
-		it("renders with minimum height to ensure page fills viewport", () => {
-			render(<LegalPageContainer title="Full Height">Content</LegalPageContainer>);
-
-			const mainContainer = screen
-				.getByRole("heading", { name: "Full Height" })
-				.closest("div.w-full.min-h-screen.z-20");
-			expect(mainContainer).toHaveClass("min-h-screen");
 		});
 	});
 
@@ -89,9 +69,7 @@ describe("LegalPageContainer", () => {
 			expect(screen.getByText("Title")).toBeInTheDocument();
 			expect(screen.getByText("Content")).toBeInTheDocument();
 
-			const mainContainer = screen
-				.getByRole("heading", { name: "Title" })
-				.closest("div.w-full.min-h-screen.z-20");
+			const mainContainer = screen.getByRole("heading", { name: "Title" }).closest("div.w-full.z-20");
 			expect(mainContainer).toHaveClass("bg-dark");
 		});
 
@@ -147,9 +125,7 @@ describe("LegalPageContainer", () => {
 				</LegalPageContainer>,
 			);
 
-			const mainContainer = screen
-				.getByRole("heading", { name: "Title" })
-				.closest("div.w-full.min-h-screen.z-20");
+			const mainContainer = screen.getByRole("heading", { name: "Title" }).closest("div.w-full.z-20");
 			expect(mainContainer).toHaveClass("text-red-500");
 		});
 	});
@@ -197,9 +173,7 @@ describe("LegalPageContainer", () => {
 	it("contains correct z-index layering for the content", () => {
 		render(<LegalPageContainer title="Semantic Structure">Test content</LegalPageContainer>);
 
-		const mainContainer = screen
-			.getByRole("heading", { name: "Semantic Structure" })
-			.closest("div.w-full.min-h-screen.z-20");
+		const mainContainer = screen.getByRole("heading", { name: "Semantic Structure" }).closest("div.w-full.z-20");
 		expect(mainContainer).toHaveClass("z-20");
 
 		const contentContainer = screen.getByText("Semantic Structure").parentElement;
@@ -232,9 +206,7 @@ describe("LegalPageContainer", () => {
 
 				render(<LegalPageContainer title="Mobile View">Content</LegalPageContainer>);
 
-				const mainContainer = screen
-					.getByRole("heading", { name: "Mobile View" })
-					.closest("div.w-full.min-h-screen.z-20");
+				const mainContainer = screen.getByRole("heading", { name: "Mobile View" }).closest("div.w-full.z-20");
 
 				expect(mainContainer).toHaveClass("py-8");
 				expect(mainContainer).toHaveClass("px-16");
@@ -245,9 +217,7 @@ describe("LegalPageContainer", () => {
 
 				render(<LegalPageContainer title="Tablet View">Content</LegalPageContainer>);
 
-				const mainContainer = screen
-					.getByRole("heading", { name: "Tablet View" })
-					.closest("div.w-full.min-h-screen.z-20");
+				const mainContainer = screen.getByRole("heading", { name: "Tablet View" }).closest("div.w-full.z-20");
 
 				expect(mainContainer).toHaveClass("md:py-12");
 				expect(mainContainer).toHaveClass("md:px-20");
@@ -258,9 +228,7 @@ describe("LegalPageContainer", () => {
 
 				render(<LegalPageContainer title="Desktop View">Content</LegalPageContainer>);
 
-				const mainContainer = screen
-					.getByRole("heading", { name: "Desktop View" })
-					.closest("div.w-full.min-h-screen.z-20");
+				const mainContainer = screen.getByRole("heading", { name: "Desktop View" }).closest("div.w-full.z-20");
 
 				expect(mainContainer).toHaveClass("lg:py-20");
 				expect(mainContainer).toHaveClass("lg:px-30");
@@ -271,9 +239,7 @@ describe("LegalPageContainer", () => {
 
 				render(<LegalPageContainer title="XL View">Content</LegalPageContainer>);
 
-				const mainContainer = screen
-					.getByRole("heading", { name: "XL View" })
-					.closest("div.w-full.min-h-screen.z-20");
+				const mainContainer = screen.getByRole("heading", { name: "XL View" }).closest("div.w-full.z-20");
 
 				expect(mainContainer).toHaveClass("xl:py-16");
 				expect(mainContainer).toHaveClass("xl:px-24");

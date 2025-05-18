@@ -45,16 +45,19 @@ vi.mock("next/image", () => ({
 		src: Blob | string | undefined;
 		width: number;
 	}) => (
-		// Using <img> instead of <Image> to avoid cyclical reference issues
-		// eslint-disable-next-line @next/next/no-img-element
-		<img
-			alt={alt}
+		<div
+			aria-label={alt || "Image"}
 			className={className}
+			data-alt={alt}
 			data-height={height}
 			data-src={typeof src === "string" ? src : "mocked-src"}
 			data-testid="mock-next-image"
 			data-width={width}
-			src={src}
+			role="img"
+			style={{
+				height: height ? `${height}px` : "auto",
+				width: width ? `${width}px` : "auto",
+			}}
 		/>
 	),
 }));

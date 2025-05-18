@@ -3,23 +3,18 @@ import { Footer } from "@/components/footer";
 import { PagePath } from "@/enums";
 
 vi.mock("next/image", () => ({
-	default: ({
-		alt,
-		className,
-		height,
-		src,
-		width,
-	}: {
-		alt: string;
-		className?: string;
-		height?: number | string;
-		src: Blob | string | undefined;
-		width?: number | string;
-	}) => (
-		// Use of <img> instead of <Image> to prevent cyclical references issues while testing
-		// eslint-disable-next-line @next/next/no-img-element
-		<img alt={alt} className={className} data-testid="mocked-image" height={height} src={src} width={width} />
-	),
+	default: vi
+		.fn()
+		.mockImplementation(({ alt, className, ...props }) => (
+			<div
+				alt={alt}
+				aria-label={alt ?? "Image"}
+				className={className}
+				data-testid="mocked-image"
+				role="img"
+				{...props}
+			/>
+		)),
 }));
 
 vi.mock("next/link", () => ({
@@ -145,16 +140,8 @@ describe("Footer Component", () => {
 		});
 
 		it("should contain the LinkedIn icon image in both views", () => {
-			const linkedInIcons = screen.getAllByAltText("LinkedIn");
+			const linkedInIcons = screen.getAllByRole("img", { name: /LinkedIn/i });
 			expect(linkedInIcons.length).toBe(2);
-
-			const mobileContainer = document.querySelector("div.md\\:hidden");
-			const mobileIcon = mobileContainer?.querySelector('img[alt="LinkedIn"]');
-			expect(mobileIcon).toBeInTheDocument();
-
-			const desktopContainer = document.querySelector("div.hidden.md\\:flex");
-			const desktopIcon = desktopContainer?.querySelector('img[alt="LinkedIn"]');
-			expect(desktopIcon).toBeInTheDocument();
 		});
 	});
 

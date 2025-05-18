@@ -12,7 +12,7 @@ const featureArticleVariants = {
 		transition: {
 			duration: 0.4,
 			ease: "easeInOut",
-			staggerChildren: 0.2,
+			staggerChildren: 0.1,
 			when: "beforeChildren",
 		},
 		y: 0,
@@ -42,7 +42,7 @@ const textVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			duration: 0.8,
+			duration: 0.4,
 			ease: "easeInOut",
 		},
 		y: 0,
@@ -60,7 +60,7 @@ export function AnimatedFeatureArticle({
 			id="feature-item"
 			initial="hidden"
 			variants={featureArticleVariants}
-			viewport={{ amount: 0.3, once: true }}
+			viewport={{ amount: 0.2, once: true }}
 			whileInView="visible"
 		>
 			<motion.div

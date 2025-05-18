@@ -6,10 +6,7 @@ export default function LandingPagesLayout({ children }: { children: React.React
 	return (
 		<SharedLayout>
 			<NavHeader />
-			<main
-				className="md:min-h-[calc(100dvh-5rem)] m-auto min-h-[calc(100dvh-4rem)]"
-				data-testid="main-container"
-			>
+			<main className="flex grow" data-testid="main-container">
 				{children}
 			</main>
 			<Footer />

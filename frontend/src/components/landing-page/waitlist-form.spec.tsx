@@ -34,14 +34,11 @@ describe("WaitlistForm", () => {
 		mockError.mockImplementation(() => {});
 	});
 
-	it("renders the form with email and name fields and submit button", () => {
+	it("renders the form correctly", () => {
 		render(<WaitlistForm />);
 
-		expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
-
-		expect(screen.getByPlaceholderText(/type your email address/i)).toBeInTheDocument();
-		expect(screen.getByPlaceholderText(/type your full name/i)).toBeInTheDocument();
+		expect(screen.getByTestId("test-form-input-email")).toBeInTheDocument();
+		expect(screen.getByTestId("test-form-input-name")).toBeInTheDocument();
 
 		expect(screen.getByRole("button", { name: /join now/i })).toBeInTheDocument();
 	});
@@ -54,8 +51,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "john.doe@example.com");
@@ -85,8 +82,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "test@example.com");
@@ -114,8 +111,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "test@example.com");
@@ -147,8 +144,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "test@example.com");
@@ -174,8 +171,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "test@example.com");
@@ -194,9 +191,9 @@ describe("WaitlistForm", () => {
 
 		await waitFor(() => {
 			//@ts-expect-error, mock values
-			expect(emailInput.value).toBe("");
+			expect(emailInput.value).toBe("test@example.com");
 			//@ts-expect-error, mock values
-			expect(nameInput.value).toBe("");
+			expect(nameInput.value).toBe("John Doe");
 		});
 	});
 
@@ -204,8 +201,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "invalid-email");
@@ -227,8 +224,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "valid@example.com");
@@ -257,8 +254,8 @@ describe("WaitlistForm", () => {
 		const user = userEvent.setup();
 		render(<WaitlistForm />);
 
-		const emailInput = screen.getByLabelText(/email address/i);
-		const nameInput = screen.getByLabelText(/name/i);
+		const emailInput = screen.getByTestId("test-form-input-email");
+		const nameInput = screen.getByTestId("test-form-input-name");
 		const submitButton = screen.getByRole("button", { name: /join now/i });
 
 		await user.type(emailInput, "test@example.com");

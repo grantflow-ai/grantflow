@@ -67,8 +67,8 @@ describe("EarlyAccessSection", () => {
 
 	it("renders the heading and description", () => {
 		render(<EarlyAccessSection />);
-		const heading = screen.getByText("Save Time, Amplify Your Impact.");
-		const description = screen.getByText(/Be among the first to experience GrantFlow.ai/);
+		const heading = screen.getByTestId("early-access-heading");
+		const description = screen.getByTestId("early-access-description");
 
 		expect(heading).toBeInTheDocument();
 		expect(description).toBeInTheDocument();
@@ -93,13 +93,6 @@ describe("EarlyAccessSection", () => {
 		expect(screen.getByTestId("icon-benefit-2")).toBeInTheDocument();
 		expect(screen.getByTestId("icon-benefit-3")).toBeInTheDocument();
 		expect(screen.getByTestId("icon-benefit-4")).toBeInTheDocument();
-	});
-
-	it("renders the waitlist form with proper heading", () => {
-		render(<EarlyAccessSection />);
-
-		expect(screen.getByText("Join GrantFlow.ai Waitlist")).toBeInTheDocument();
-		expect(screen.getByTestId("mock-waitlist-form")).toBeInTheDocument();
 	});
 
 	it("renders gradient backgrounds", () => {

@@ -40,14 +40,20 @@ vi.mock("@/components/brand-pattern", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: vi.fn().mockImplementation(({ alt, className, src }) => (
-		// Use of <img> instead of <Image> to prevent cyclical reference issues
-		// eslint-disable-next-line @next/next/no-img-element
-		<img
+	default: vi.fn().mockImplementation(({ alt, className, src, ...props }) => (
+		<div
 			alt={alt}
+			aria-label={alt ?? "Image"}
 			className={className}
+			data-alt={alt}
+			data-src={typeof src === "object" ? "/mocked-image-path.jpg" : src}
 			data-testid="mock-image"
-			src={typeof src === "object" ? "/mocked-image-path.jpg" : src}
+			role="img"
+			style={{
+				height: props.height ? `${props.height}px` : "auto",
+				width: props.width ? `${props.width}px` : "auto",
+			}}
+			{...props}
 		/>
 	)),
 }));
@@ -59,8 +65,17 @@ describe("AboutPage", () => {
 		render(<AboutPage />);
 	});
 
-	it("renders without crashing", () => {
-		expect(screen.getByText("About GrantFlow.ai")).toBeInTheDocument();
+	it("renders the main content section correctly", () => {
+		const container = screen.getByTestId("mock-legal-page-container");
+		expect(container).toBeInTheDocument();
+
+		expect(container).toHaveAttribute("data-title", "About GrantFlow");
+
+		const toolkitItems = screen.getAllByTestId("mock-icon-draft");
+		expect(toolkitItems.length).toBeGreaterThan(0);
+
+		const paragraphs = container.querySelectorAll("p");
+		expect(paragraphs.length).toBeGreaterThan(0);
 	});
 
 	it("displays all toolkit items", () => {
@@ -92,20 +107,14 @@ describe("AboutPage", () => {
 		expect(screen.getByText("Co-founder | CTO")).toBeInTheDocument();
 		expect(screen.getByText("Co-founder | Product & UX")).toBeInTheDocument();
 
-		const asafImage = screen.getByAltText(/Asaf Ronel/i);
+		const asafImage = screen.getByRole("img", { name: /Asaf Ronel/i });
 		expect(asafImage).toBeInTheDocument();
 
-		const naamanImage = screen.getByAltText(/Hirschfeld/i);
+		const naamanImage = screen.getByRole("img", { name: /Hirschfeld/i });
 		expect(naamanImage).toBeInTheDocument();
 
-		const tirzaImage = screen.getByAltText(/Tirza Shatz/i);
+		const tirzaImage = screen.getByRole("img", { name: /Tirza Shatz/i });
 		expect(tirzaImage).toBeInTheDocument();
-	});
-
-	it("has proper section headings for document structure", () => {
-		expect(screen.getByText("What We Do?")).toBeInTheDocument();
-		expect(screen.getByText("About GrantFlow.ai Team")).toBeInTheDocument();
-		expect(screen.getByText("Why It Matters?")).toBeInTheDocument();
 	});
 
 	it("passes correct props to LegalPageContainer", () => {
@@ -116,7 +125,7 @@ describe("AboutPage", () => {
 		expect(legalContainer).toHaveAttribute("data-heading-level", "h1");
 		expect(legalContainer).toHaveAttribute("data-text-centered", "true");
 		expect(legalContainer).toHaveAttribute("data-text-color", "text-white");
-		expect(legalContainer).toHaveAttribute("data-title", "About GrantFlow.ai");
+		expect(legalContainer).toHaveAttribute("data-title", "About GrantFlow");
 
 		const backgroundStackContainer = screen.getByTestId("background-stack-container");
 		expect(backgroundStackContainer).toBeInTheDocument();
@@ -172,14 +181,12 @@ describe("AboutPage", () => {
 
 	it("has proper section headings with responsive font sizes", () => {
 		const whatWeDoHeading = screen.getByText("What We Do?");
-		const teamHeading = screen.getByText("About GrantFlow.ai Team");
 		const whyMattersHeading = screen.getByText("Why It Matters?");
 
 		expect(whatWeDoHeading).toBeInTheDocument();
-		expect(teamHeading).toBeInTheDocument();
 		expect(whyMattersHeading).toBeInTheDocument();
 
-		[whatWeDoHeading, teamHeading, whyMattersHeading].forEach((heading) => {
+		[whatWeDoHeading, whyMattersHeading].forEach((heading) => {
 			expect(heading).toHaveClass("text-3xl");
 			expect(heading).toHaveClass("md:text-4xl");
 		});

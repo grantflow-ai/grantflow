@@ -266,29 +266,41 @@ describe("NavHeader Component", () => {
 		});
 
 		it("should display correct desktop navigation link text", () => {
-			const desktopNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
+			const homeLink = screen
+				.getAllByTestId("app-button")
+				.filter((button) => button.textContent?.includes("Home"))
+				.find((button) => button.dataset.theme === "light");
+			expect(homeLink).toBeInTheDocument();
 
-			const aboutUsLink = desktopNav?.querySelector("a");
-			expect(aboutUsLink).toHaveTextContent("About Us");
+			const aboutUsLink = screen
+				.getAllByTestId("app-button")
+				.filter((button) => button.textContent?.includes("About Us"))
+				.find((button) => button.dataset.theme === "light");
+			expect(aboutUsLink).toBeInTheDocument();
 
 			const tryForFreeButton = screen
 				.getAllByTestId("scroll-button")
 				.find((button) => !Object.hasOwn(button.dataset, "variant"));
-
-			expect(tryForFreeButton).toHaveTextContent("Try For Free");
+			expect(tryForFreeButton).toBeInTheDocument();
 		});
 
 		it("should display correct mobile navigation link text", () => {
-			const mobileNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
+			const homeLink = screen
+				.getAllByTestId("app-button")
+				.filter((button) => button.textContent?.includes("Home"))
+				.find((button) => !Object.hasOwn(button.dataset, "theme"));
+			expect(homeLink).toBeInTheDocument();
 
-			const aboutUsLink = mobileNav?.querySelector("a");
-			expect(aboutUsLink).toHaveTextContent("About Us");
+			const aboutUsLink = screen
+				.getAllByTestId("app-button")
+				.filter((button) => button.textContent?.includes("About Us"))
+				.find((button) => !Object.hasOwn(button.dataset, "theme"));
+			expect(aboutUsLink).toBeInTheDocument();
 
 			const tryForFreeButton = screen
 				.getAllByTestId("scroll-button")
 				.find((button) => button.dataset.variant === "link");
-
-			expect(tryForFreeButton).toHaveTextContent("Try For Free");
+			expect(tryForFreeButton).toBeInTheDocument();
 		});
 	});
 

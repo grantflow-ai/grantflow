@@ -37,7 +37,7 @@ export function AppInput({
 			<div className="flex justify-between items-center">
 				{label && (
 					<Label
-						className={`block text-start text-sm font-light ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
+						className={`block text-start text-xs font-light ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
 						data-testid={`${testId}-label`}
 						htmlFor={props.id ?? testId}
 					>
@@ -47,7 +47,7 @@ export function AppInput({
 
 				{showWordCount && (
 					<div
-						className={`text-sm ps-4 ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
+						className={`text-xs ps-4 ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
 						data-testid={`${testId}-word-count`}
 					>
 						{formattedWordCount}
@@ -93,7 +93,7 @@ export function AppInput({
 			</div>
 
 			<div
-				className={`text-start text-sm text-error mb-1 min-h-5 ${hasError ? "visible" : "invisible"}`}
+				className={`text-start text-sm text-error mb-1 ${hasError ? "visible" : "invisible"}`}
 				data-testid={`${testId}-error`}
 			>
 				{errorMessage}
