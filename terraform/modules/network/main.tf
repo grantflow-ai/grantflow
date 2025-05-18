@@ -8,7 +8,19 @@ terraform {
   }
 }
 
+variable "region" {
+  description = "The region for networking resources"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "project_id" {
+  description = "The Google Cloud project ID"
+  type        = string
+}
+
 resource "google_compute_network" "default" {
+  project                                   = var.project_id
   auto_create_subnetworks                   = true
   delete_default_routes_on_create           = false
   description                               = "Default network for the project"
@@ -18,10 +30,11 @@ resource "google_compute_network" "default" {
 }
 
 resource "google_compute_subnetwork" "default" {
+  project       = var.project_id
   name          = "default"
   ip_cidr_range = "10.128.0.0/20"
   network       = google_compute_network.default.id
-  region        = "us-central1"
+  region        = var.region
 
   log_config {
     aggregation_interval = "INTERVAL_5_SEC"

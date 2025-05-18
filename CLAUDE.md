@@ -17,6 +17,7 @@
 - Each service and package have their own `conftest.py` file
 - To run python tests, set the PYTHONPATH variable to the root of the monorepo. This can be done by running `export PYTHONPATH=$(pwd)` in the terminal before running the tests.
 - Add fixtures meant to be shared or reused under `./testing` as part of the pertinent test plugin
+- We use opentofu for terraform, so use `tofu` commands instead of `terraform`
 
 ## Commands
 
