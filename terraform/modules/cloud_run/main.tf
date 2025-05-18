@@ -41,6 +41,21 @@ resource "google_cloud_run_v2_service" "backend" {
         }
       }
 
+      ports {
+        container_port = 8000
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = 10
+        timeout_seconds = 5
+        period_seconds = 15
+        failure_threshold = 3
+      }
+
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
         value = "grantflow"
@@ -175,6 +190,21 @@ resource "google_cloud_run_v2_service" "crawler" {
         }
       }
 
+      ports {
+        container_port = 8000
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = 10
+        timeout_seconds = 5
+        period_seconds = 15
+        failure_threshold = 3
+      }
+
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
         value = "grantflow"
@@ -252,6 +282,21 @@ resource "google_cloud_run_v2_service" "indexer" {
           cpu    = "1000m"
           memory = "1Gi"
         }
+      }
+
+      ports {
+        container_port = 8000
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = 10
+        timeout_seconds = 5
+        period_seconds = 15
+        failure_threshold = 3
       }
 
       env {
