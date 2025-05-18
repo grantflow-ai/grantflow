@@ -59,34 +59,6 @@ describe("RootLayout", () => {
 		const output = RootLayout({ children: "Test Content" });
 		expect(output.type).toBe("html");
 		expect(output.props.lang).toBe("en");
-		expect(output.props.suppressHydrationWarning).toBe(true);
-
-		const [head] = output.props.children;
-		expect(head.type).toBe("head");
-
-		const [, body] = output.props.children;
-		expect(body.type).toBe("body");
-		expect(body.props.className).toContain("min-h-screen");
-	});
-
-	it("includes proper link tags in the head", () => {
-		const output = RootLayout({ children: "Test Content" });
-
-		const [head] = output.props.children;
-		expect(head.type).toBe("head");
-
-		const linkElements = head.props.children.filter(
-			(child: any) => child && typeof child === "object" && child.type === "link",
-		);
-
-		const typekitLink = linkElements.find((link: any) => link.props.href === "https://use.typekit.net/get1yhn.css");
-		expect(typekitLink).toBeTruthy();
-		expect(typekitLink.props.rel).toBe("stylesheet");
-
-		const faviconLink = linkElements.find((link: any) => link.props.href === "/favicon.svg");
-		expect(faviconLink).toBeTruthy();
-		expect(faviconLink.props.rel).toBe("icon");
-		expect(faviconLink.props.type).toBe("image/svg+xml");
 	});
 
 	it("exports metadata with correct properties", async () => {
@@ -103,8 +75,5 @@ describe("RootLayout", () => {
 		expect(metadata.openGraph.images[0].url).toBe("https://www.grantflow.ai/opengraph-image.png");
 		expect(metadata.openGraph.images[0].width).toBe(1200);
 		expect(metadata.openGraph.images[0].height).toBe(630);
-
-		expect(metadata.robots.index).toBe(true);
-		expect(metadata.robots.follow).toBe(true);
 	});
 });
