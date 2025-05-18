@@ -28,6 +28,7 @@ WORKDIR /app/
 COPY --chown=appuser:appuser --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/backend/src/ src/
+COPY packages packages
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH"
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--log-level", "info"]
