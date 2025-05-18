@@ -136,6 +136,11 @@ resource "google_sql_database_instance" "main" {
       value = "1000"
     }
 
+    database_flags {
+      name  = "log_temp_files"
+      value = "0"
+    }
+
     ip_configuration {
       # For security, we're limiting authorized networks to only those explicitly defined
       dynamic "authorized_networks" {
@@ -156,8 +161,8 @@ resource "google_sql_database_instance" "main" {
       # Using Google-managed CA for certificates
       server_ca_mode = "GOOGLE_MANAGED_INTERNAL_CA"
 
-      # Enforce SSL for all connections
-      ssl_mode = "ENCRYPTED_ONLY"
+      # Make SSL optional for development purposes
+      ssl_mode = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
 
       # Add private network configuration
       private_network = var.network_id
