@@ -40,20 +40,12 @@ export const metadata = {
 	},
 	publisher: "GrantFlow.ai",
 	referrer: "origin-when-cross-origin",
-	robots: {
-		follow: true,
-		index: true,
-	},
 	title: "GrantFlow.AI",
 } satisfies Metadata;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<head>
-				<link href="https://use.typekit.net/get1yhn.css" rel="stylesheet" />
-				<link href="/favicon.svg" rel="icon" sizes="any" type="image/svg+xml" />
-			</head>
 			<body
 				className={cn(
 					"min-h-screen bg-background font-body antialiased",
