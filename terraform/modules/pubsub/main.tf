@@ -8,6 +8,23 @@ terraform {
   }
 }
 
+variable "project_id" {
+  description = "The project ID to deploy to"
+  type        = string
+  default     = "grantflow"
+}
+
+variable "region" {
+  description = "The region for the Cloud Run service"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "pubsub_invoker_service_account_email" {
+  description = "Email of the service account used for Pub/Sub to invoke Cloud Run"
+  type        = string
+}
+
 resource "google_pubsub_topic" "file_indexing" {
   name = "file-indexing"
 
@@ -16,12 +33,12 @@ resource "google_pubsub_topic" "file_indexing" {
   }
 }
 
-# Optional: Add subscription if needed
+# Push subscription to trigger the indexer Cloud Run service
 resource "google_pubsub_subscription" "file_indexing_subscription" {
   name  = "file-indexing-subscription"
   topic = google_pubsub_topic.file_indexing.name
 
-  ack_deadline_seconds = 20
+  ack_deadline_seconds = 60
 
   retry_policy {
     minimum_backoff = "10s"
@@ -29,4 +46,50 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
   }
 
   enable_message_ordering = false
+
+  # Configure push to Cloud Run
+  push_config {
+    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/indexer:call"
+
+    # Authentication for the push endpoint
+    oidc_token {
+      service_account_email = var.pubsub_invoker_service_account_email
+      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/indexer"
+    }
+
+    # This attribute specifies that we have a minimum number of failed attempts before acking the message
+    attributes = {
+      "x-goog-version" = "v1"
+    }
+  }
+
+  # Configure exponential backoff for failed deliveries
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.file_indexing_dlq.name
+    max_delivery_attempts = 5
+  }
+}
+
+# Dead letter queue topic for failed message processing
+resource "google_pubsub_topic" "file_indexing_dlq" {
+  name = "file-indexing-dlq"
+
+  # Add labels for easier identification
+  labels = {
+    purpose = "dead-letter-queue"
+  }
+}
+
+# Subscription to monitor the dead letter queue
+resource "google_pubsub_subscription" "file_indexing_dlq_subscription" {
+  name  = "file-indexing-dlq-subscription"
+  topic = google_pubsub_topic.file_indexing_dlq.name
+
+  ack_deadline_seconds = 60
+
+  # Keep messages for 7 days
+  message_retention_duration = "604800s"
+
+  # Retain acknowledged messages
+  retain_acked_messages = true
 }

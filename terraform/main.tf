@@ -4,10 +4,20 @@ provider "google" {
   zone    = var.zone
 }
 
+provider "google-beta" {
+  project = var.project_id
+  region  = var.region
+  zone    = var.zone
+}
+
 terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
+      version = "~> 6.0"
+    }
+    google-beta = {
+      source  = "hashicorp/google-beta"
       version = "~> 6.0"
     }
   }
@@ -21,21 +31,34 @@ module "network" {
   region     = var.region
 }
 
-# Storage Module
+# Cloud Run Module (moved up to make the service account available)
+module "cloud_run" {
+  source                   = "./modules/cloud_run"
+  project_id               = var.project_id
+  region                   = var.region
+  database_connection_name = module.database.instance_connection_name
+  valkey_connection_string = module.memorystore.connection_string
+}
+
+# PubSub Module
+module "pubsub" {
+  source                               = "./modules/pubsub"
+  project_id                           = var.project_id
+  region                               = var.region
+  pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
+}
+
+# Storage Module - configured to send notifications to PubSub
 module "storage" {
-  source      = "./modules/storage"
-  bucket_name = var.storage_bucket_name
-  environment = var.environment
+  source              = "./modules/storage"
+  bucket_name         = var.storage_bucket_name
+  environment         = var.environment
+  file_indexing_topic = module.pubsub.file_indexing_topic_id
 }
 
 # IAM Module
 module "iam" {
   source = "./modules/iam"
-}
-
-# PubSub Module
-module "pubsub" {
-  source = "./modules/pubsub"
 }
 
 # Memorystore Module
@@ -47,14 +70,6 @@ module "memorystore" {
   depends_on = [module.network]
 }
 
-# Cloud Run Module
-module "cloud_run" {
-  source                   = "./modules/cloud_run"
-  project_id               = var.project_id
-  region                   = var.region
-  database_connection_name = module.database.instance_connection_name
-  valkey_connection_string = module.memorystore.connection_string
-}
 
 # Secrets Module
 module "secrets" {

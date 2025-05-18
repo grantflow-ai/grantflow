@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.0"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 6.0"
+    }
   }
 }
 
@@ -18,6 +22,12 @@ variable "environment" {
   description = "Environment (dev, staging, prod)"
   type        = string
   default     = "prod"
+}
+
+variable "file_indexing_topic" {
+  description = "The Pub/Sub topic for file indexing notifications"
+  type        = string
+  default     = "file-indexing"
 }
 
 resource "google_storage_bucket" "uploads" {
@@ -90,4 +100,33 @@ resource "google_storage_bucket_iam_policy" "uploads" {
   ]
 }
 POLICY
+}
+
+# Get the GCS service account to grant Pub/Sub publisher permissions
+data "google_storage_project_service_account" "gcs_account" {
+  provider = google-beta
+}
+
+# Grant the GCS service account permission to publish to the Pub/Sub topic
+resource "google_pubsub_topic_iam_binding" "gcs_pubsub_publish" {
+  provider = google-beta
+  topic    = var.file_indexing_topic
+  role     = "roles/pubsub.publisher"
+  members  = ["serviceAccount:${data.google_storage_project_service_account.gcs_account.email_address}"]
+}
+
+# Configure notifications from the bucket to the Pub/Sub topic
+resource "google_storage_notification" "file_indexing_notification" {
+  provider       = google-beta
+  bucket         = google_storage_bucket.uploads.name
+  payload_format = "JSON_API_V1"
+  topic          = var.file_indexing_topic
+  event_types    = ["OBJECT_FINALIZE"] # Only trigger when files are created/finalized
+
+  # Custom attributes to indicate this is a file creation event
+  custom_attributes = {
+    event = "file-created"
+  }
+
+  depends_on = [google_pubsub_topic_iam_binding.gcs_pubsub_publish]
 }
