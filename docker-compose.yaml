@@ -73,10 +73,10 @@ services:
             - ./services/backend/.env
         ports:
             - "8000:8000"
-        #        volumes:
-        #            - ./services/backend:/app/services/backend:cached
-        #            - ./packages:/app/packages:cached
-        command: "uvicorn services.backend.src.api.main:app --host 0.0.0.0 --log-level info --reload"
+        volumes:
+            - ./services/backend:/app/services/backend:cached
+            - ./packages:/app/packages:cached
+        command: "uvicorn services.backend.src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
                 condition: service_healthy
