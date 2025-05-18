@@ -183,6 +183,11 @@ resource "google_cloud_run_v2_service" "backend" {
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+    ]
+  }
 }
 
 # Crawler service deployment
@@ -282,6 +287,11 @@ resource "google_cloud_run_v2_service" "crawler" {
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+    ]
+  }
 }
 
 # Indexer service deployment
@@ -381,4 +391,40 @@ resource "google_cloud_run_v2_service" "indexer" {
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+    ]
+  }
+}
+
+# Create a service account for the Pub/Sub subscription to invoke the indexer
+resource "google_service_account" "pubsub_invoker" {
+  account_id   = "pubsub-invoker"
+  display_name = "Pub/Sub Invoker Service Account"
+  description  = "Service account for Pub/Sub to invoke the indexer service"
+}
+
+# Allow Pub/Sub to create authentication tokens specifically for this service account
+resource "google_service_account_iam_member" "pubsub_token_creator" {
+  service_account_id = google_service_account.pubsub_invoker.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+# Allow the Pub/Sub service account to invoke the indexer service
+resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker" {
+  location = var.region
+  name     = google_cloud_run_v2_service.indexer.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.pubsub_invoker.email}"
+}
+
+# Data source for project information
+data "google_project" "project" {}
+
+# Output the service account email for PubSub
+output "pubsub_invoker_service_account_email" {
+  value       = google_service_account.pubsub_invoker.email
+  description = "Email address of the service account used for Pub/Sub to invoke Cloud Run"
 }
