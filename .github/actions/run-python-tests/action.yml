@@ -5,9 +5,6 @@ inputs:
   target:
     description: 'Target to test (backend, indexer, crawler, db, shared_utils)'
     required: true
-  chromium:
-    description: 'Run tests with headless Chrome'
-    required: false
 
 runs:
   using: "composite"
@@ -31,11 +28,6 @@ runs:
     - name: Install Dependencies for Target
       shell: bash
       run: uv sync --package ${{ inputs.target }} --all-extras --dev
-
-    - name: Install Playwright Chromium
-      if: ${{ inputs.chromium }}
-      shell: bash
-      run: uv run playwright install chromium --with-deps
 
     - name: Run Tests
       shell: bash

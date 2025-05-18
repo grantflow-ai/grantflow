@@ -4,7 +4,6 @@ from typing import Any, TypedDict, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 
-import trafilatura
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
 from html_to_markdown import convert_to_markdown
@@ -22,12 +21,12 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from services.crawler.src.constants import CHUNKS_BATCH_SIZE, FILE_RX, MAX_DEPTH
-from services.crawler.src.html_utils import download_file, download_page_html, sanitize_html
-from services.crawler.src.utils import safe_filename_from_url
+from services.crawler.src.utils import download_file, download_page_html, safe_filename_from_url, sanitize_html
 from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy import insert, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from trafilatura import extract
 
 logger = get_logger(__name__)
 
@@ -137,7 +136,7 @@ async def extract_and_process_content(
     """
     if page_text is None:
         try:
-            page_text = trafilatura.extract(raw_html, output_format="txt", include_comments=False)
+            page_text = extract(raw_html, output_format="markdown", include_comments=False)
             if page_text is None:
                 logger.warning("Failed to extract text content from {url}", url=url)
                 page_text = ""
@@ -248,7 +247,7 @@ async def find_relevant_links(
             link_html = await download_page_html(str(link))
             visited_urls.append(str(link))
 
-            link_text = trafilatura.extract(link_html, output_format="txt", include_comments=False)
+            link_text = extract(link_html, output_format="markdown", include_comments=False)
             if link_text is not None:
                 link_embeddings = await generate_embeddings([link_text])
             else:
@@ -264,7 +263,7 @@ async def find_relevant_links(
             logger.info("Content extraction error: {error}", error=str(e), url1=url, url2=link)
         except ExternalOperationError as e:
             logger.info("Embedding generation error: {error}", error=str(e), url1=url, url2=link)
-        except Exception as e:  # noqa: BLE001
+
             logger.info("Unexpected error comparing URL content: {error}", error=str(e), url1=url, url2=link)
 
     return relevant_links
@@ -305,30 +304,22 @@ async def crawl(
     if results is None:
         results = []
 
-    # Skip already visited URLs
     if url in visited_urls and raw_html is None:
         return results
 
-    # Parse URL for base
     parsed = urlparse(url)
     base_url = f"{parsed.scheme}://{parsed.netloc}"
 
-    # Download and prepare HTML
     raw_html, visited_urls = await prepare_url_data(url, raw_html, visited_urls)
 
-    # Extract links
     doc_links, normal_links = extract_links(raw_html, base_url)
 
-    # Process content
     md_out, page_text, main_embeddings = await extract_and_process_content(url, raw_html, page_text, main_embeddings)
 
-    # Save content to file
     page_path = await save_page_content(url, temp_dir, md_out)
 
-    # Download documents
     downloaded_files = await download_documents(doc_links, temp_dir, downloaded_files)
 
-    # Create result and add to results list
     page_result: CrawlResult = {
         "url": url,
         "document_links": cast("list[str]", list(doc_links)),
@@ -338,10 +329,8 @@ async def crawl(
     }
     results.append(page_result)
 
-    # Find relevant links
     relevant_links = await find_relevant_links(url, normal_links, main_embeddings, visited_urls)
 
-    # Recursively crawl relevant links if not at max depth
     if depth < MAX_DEPTH:
         for rlink in relevant_links:
             await crawl(
@@ -395,27 +384,25 @@ async def crawl_url(*, url: str, source_id: str, session_maker: async_sessionmak
             )
             vectors.extend([result for result in results if result is not None])
 
-    # Skip TextVector insertion for now since we don't have valid vector data for tests
+    except (UrlParsingError, FileParsingError) as e:
+        async with session_maker() as session, session.begin():
+            try:
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == source_id)
+                    .values(indexing_status=FileIndexingStatusEnum.FAILED)
+                )
+                await session.commit()
+            except SQLAlchemyError:
+                logger.error("Failed to mark source as failed: {error}", error=str(e), source_id=source_id)
+                await session.rollback()
+            raise DatabaseError("Failed to mark source as failed", context=str(e)) from e
     except (URLError, HTTPError, TimeoutError) as e:
-        await _mark_source_as_failed(session_maker, source_id)
         raise ExternalOperationError(f"Network error when crawling URL: {url}", context=str(e)) from e
-    except UrlParsingError as e:
-        await _mark_source_as_failed(session_maker, source_id)
-        raise UrlParsingError("Error parsing URL content", context=str(e)) from e
-    except FileParsingError as e:
-        await _mark_source_as_failed(session_maker, source_id)
-        raise FileParsingError("Error with file operations during crawling", context=str(e)) from e
-    except ExternalOperationError as e:
-        await _mark_source_as_failed(session_maker, source_id)
-        raise ExternalOperationError("External operation error during crawling", context=str(e)) from e
-    except SQLAlchemyError as e:
-        await _mark_source_as_failed(session_maker, source_id)
-        raise DatabaseError("Database error during crawling", context=str(e)) from e
     else:
         async with session_maker() as session, session.begin():
             try:
                 await session.execute(insert(TextVector).values(vectors))
-
                 await session.execute(
                     update(RagSource)
                     .where(RagSource.id == source_id)
@@ -436,16 +423,3 @@ async def crawl_url(*, url: str, source_id: str, session_maker: async_sessionmak
                 raise DatabaseError("Error in database operation", context=str(e)) from e
 
         return files
-
-
-async def _mark_source_as_failed(session_maker: async_sessionmaker[Any], source_id: str) -> None:
-    """Mark a source as failed in the database."""
-    async with session_maker() as session, session.begin():
-        try:
-            await session.execute(
-                update(RagSource).where(RagSource.id == source_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
-            )
-            await session.commit()
-        except SQLAlchemyError as e:
-            logger.error("Failed to mark source as failed: {error}", error=str(e), source_id=source_id)
-            await session.rollback()

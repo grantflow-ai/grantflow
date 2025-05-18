@@ -94,11 +94,11 @@ async def handle_url_crawling(
                         }
                     )
                 )
-            logger.info("Created new file record", source_id=source_id, parent_type=parent_type, parent_id=parent_id)
+            logger.info("Created new url record", source_id=source_id, parent_type=parent_type, parent_id=parent_id)
         except SQLAlchemyError as e:
-            logger.error("Error creating file record", exc_info=e)
+            logger.error("Error creating url record", exc_info=e)
             await session.rollback()
-            raise DatabaseError("Error creating file record", context=str(e)) from e
+            raise DatabaseError("Error creating url record", context=str(e)) from e
 
     if files := await crawl_url(
         url=data["url"],
