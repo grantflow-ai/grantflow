@@ -78,6 +78,7 @@ export function TestimonialsSection() {
 					{CONTENT.testimonials.map((testimonial, i) => (
 						<MotionArticle
 							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full px-5 xl:px-0"
+							data-testid={`mock-motion-article`}
 							initial="hidden"
 							key={i}
 							variants={articleVariants}
@@ -87,6 +88,7 @@ export function TestimonialsSection() {
 							<MotionImage
 								alt={`${Image.name}'s photo`}
 								className="rounded-full size-24 md:size-28 lg:size-32 xl:size-36"
+								data-testid="mock-motion-image"
 								height={100}
 								src={testimonial.image}
 								variants={imageVariants}
@@ -94,6 +96,7 @@ export function TestimonialsSection() {
 							/>
 							<MotionBlockquote
 								className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base"
+								data-testid="mock-motion-blockquote"
 								variants={textVariants}
 							>
 								&quot;{testimonial.quote}&quot;
