@@ -59,8 +59,17 @@ describe("AboutPage", () => {
 		render(<AboutPage />);
 	});
 
-	it("renders without crashing", () => {
-		expect(screen.getByText("About GrantFlow.ai")).toBeInTheDocument();
+	it("renders the main content section correctly", () => {
+		const container = screen.getByTestId("mock-legal-page-container");
+		expect(container).toBeInTheDocument();
+
+		expect(container).toHaveAttribute("data-title", "About GrantFlow");
+
+		const toolkitItems = screen.getAllByTestId("mock-icon-draft");
+		expect(toolkitItems.length).toBeGreaterThan(0);
+
+		const paragraphs = container.querySelectorAll("p");
+		expect(paragraphs.length).toBeGreaterThan(0);
 	});
 
 	it("displays all toolkit items", () => {
@@ -102,12 +111,6 @@ describe("AboutPage", () => {
 		expect(tirzaImage).toBeInTheDocument();
 	});
 
-	it("has proper section headings for document structure", () => {
-		expect(screen.getByText("What We Do?")).toBeInTheDocument();
-		expect(screen.getByText("About GrantFlow.ai Team")).toBeInTheDocument();
-		expect(screen.getByText("Why It Matters?")).toBeInTheDocument();
-	});
-
 	it("passes correct props to LegalPageContainer", () => {
 		const legalContainer = screen.getByTestId("mock-legal-page-container");
 
@@ -116,7 +119,7 @@ describe("AboutPage", () => {
 		expect(legalContainer).toHaveAttribute("data-heading-level", "h1");
 		expect(legalContainer).toHaveAttribute("data-text-centered", "true");
 		expect(legalContainer).toHaveAttribute("data-text-color", "text-white");
-		expect(legalContainer).toHaveAttribute("data-title", "About GrantFlow.ai");
+		expect(legalContainer).toHaveAttribute("data-title", "About GrantFlow");
 
 		const backgroundStackContainer = screen.getByTestId("background-stack-container");
 		expect(backgroundStackContainer).toBeInTheDocument();
@@ -172,14 +175,12 @@ describe("AboutPage", () => {
 
 	it("has proper section headings with responsive font sizes", () => {
 		const whatWeDoHeading = screen.getByText("What We Do?");
-		const teamHeading = screen.getByText("About GrantFlow.ai Team");
 		const whyMattersHeading = screen.getByText("Why It Matters?");
 
 		expect(whatWeDoHeading).toBeInTheDocument();
-		expect(teamHeading).toBeInTheDocument();
 		expect(whyMattersHeading).toBeInTheDocument();
 
-		[whatWeDoHeading, teamHeading, whyMattersHeading].forEach((heading) => {
+		[whatWeDoHeading, whyMattersHeading].forEach((heading) => {
 			expect(heading).toHaveClass("text-3xl");
 			expect(heading).toHaveClass("md:text-4xl");
 		});

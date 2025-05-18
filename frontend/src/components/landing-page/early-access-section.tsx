@@ -191,6 +191,7 @@ export function EarlyAccessSection() {
 				</MotionDiv>
 				<MotionHeading2
 					className="font-heading leading-14 mt-4 text-5xl md:mt-3 md:text-4xl md:leading-10"
+					data-testid="early-access-heading"
 					id="early-access-heading"
 					variants={textVariants}
 				>
@@ -198,6 +199,7 @@ export function EarlyAccessSection() {
 				</MotionHeading2>
 				<MotionParagraph
 					className="mt-1 text-xl antialiased md:text-white/80"
+					data-testid="early-access-description"
 					id="early-access-description"
 					variants={textVariants}
 				>
