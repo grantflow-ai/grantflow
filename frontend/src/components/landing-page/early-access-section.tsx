@@ -20,7 +20,7 @@ import {
 const SECTION_HEADERS = {
 	badge: "Early Access Registration Now Open!",
 	description:
-		"Be among the first to experience GrantFlow.ai. Sign up now to unlock exclusive features, provide valuable feedback, and enjoy priority support.",
+		"Be among the first to experience GrantFlow. Sign up now to unlock exclusive features, provide valuable feedback, and enjoy priority support.",
 	heading: "Save Time, Amplify Your Impact.",
 };
 
@@ -47,7 +47,7 @@ const CONTENT_BENEFITS = {
 			icon: IconEarlyAccessBenefit4,
 		},
 	],
-	formHeading: "Join GrantFlow.ai Waitlist",
+	formHeading: "Join GrantFlow Waitlist",
 	listHeading: "Exclusive Early Access Benefits:",
 };
 
@@ -247,7 +247,11 @@ function BenefitsAndWaitlistForm() {
 					))}
 				</MotionUnorderedList>
 			</MotionSection>
-			<MotionAside aria-label="waitlist-form" className="me-7 shrink-0 md:me-0" variants={formContainerVariants}>
+			<MotionAside
+				aria-label="waitlist-form"
+				className="me-7 shrink-0 space-y-2 md:me-0"
+				variants={formContainerVariants}
+			>
 				<MotionHeading3 className="font-heading text-2xl" variants={textVariants}>
 					{CONTENT_BENEFITS.formHeading}
 				</MotionHeading3>
