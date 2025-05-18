@@ -54,7 +54,7 @@ export default function AboutPage() {
 					></div>
 					<BrandPattern
 						aria-hidden="true"
-						className="absolute inset-0 z-0 size-full pointer-events-none"
+						className="absolute inset-0 z-0 size-full pointer-events-none opacity-50"
 						role="presentation"
 						strokeWidth="0.1"
 					/>
@@ -64,20 +64,20 @@ export default function AboutPage() {
 			headingLevel="h1"
 			isTextCentered
 			textColor="text-white"
-			title="About GrantFlow.ai"
+			title="About GrantFlow"
 		>
 			<div className="flex flex-col items-center w-full min-h-screen relative">
 				<div className="w-full max-w-198">
 					<p className="text-lg md:text-base mb-20 leading-tight">
-						GrantFlow.ai is a tool designed to support researchers through one of the most time-consuming
-						parts of their work: applying for grants. Researchers today spend a large part of their time on
+						GrantFlow is a tool designed to support researchers through one of the most time-consuming parts
+						of their work: applying for grants. Researchers today spend a large part of their time on
 						funding-related documentation, most of it could otherwise be invested in research and
 						innovation. Our goal is to reduce that burden by automating key steps in the grant writing
 						process, starting with draft structuring and generation using existing documents.
 					</p>
 					<h2 className={cn(subHeadingClasses, "mb-3")}>What We Do?</h2>
 					<p>
-						<span className="font-semibold">GrantFlow.ai</span> uses AI to help researchers:
+						<span className="font-semibold">GrantFlow</span> uses AI to help researchers:
 					</p>
 					<ul className="grid grid-cols-1 md:grid-cols-4 gap-6 my-8">
 						{toolkitItems.map((item, index) => (
@@ -90,9 +90,9 @@ export default function AboutPage() {
 				</div>
 				<div className="w-full max-w-220 py-20">
 					<div className="w-full rounded bg-violet-200/15 p-11">
-						<h2 className={cn(subHeadingClasses, "mb-3")}>About GrantFlow.ai Team</h2>
+						<h2 className={cn(subHeadingClasses, "mb-3")}>About GrantFlow Team</h2>
 						<p className="md:px-12 lg:px-16 xl:px-20 leading-tight">
-							GrantFlow.ai was founded by a team of professionals with experience in STEM research,
+							GrantFlow was founded by a team of professionals with experience in STEM research,
 							engineering, and product development:
 						</p>
 						<div className="w-full items-center mt-11 py-5.5">
@@ -120,13 +120,13 @@ export default function AboutPage() {
 						is often slow, complex, and resource-intensive.{" "}
 					</p>
 					<p className="font-normal leading-tight">
-						By simplifying the grant writing process, GrantFlow.ai supports researchers in focusing on their
+						By simplifying the grant writing process, GrantFlow supports researchers in focusing on their
 						core work advancing knowledge and innovating.
 					</p>
 				</div>
 				<p className="w-full max-w-198 font-semibold leading-tight">
-					GrantFlow.ai is currently in the final stage of development. If you re interested in early access,
-					you re welcome to join the waitlist and be one of the first to try it when we launch.
+					GrantFlow is currently in the final stage of development. If you&apos;re interested in early access,
+					you&apos;re welcome to join the waitlist and be one of the first to try it when we launch.
 				</p>
 			</div>
 		</LegalPageContainer>

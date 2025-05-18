@@ -161,7 +161,7 @@ describe("Animated Feature Articles", () => {
 
 		const viewportConfig = JSON.parse(articleElement.dataset.viewport ?? "{}");
 		expect(viewportConfig).toEqual({
-			amount: 0.3,
+			amount: 0.2,
 			once: true,
 		});
 	});

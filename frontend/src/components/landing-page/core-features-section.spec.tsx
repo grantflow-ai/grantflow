@@ -93,9 +93,7 @@ describe("CoreFeaturesSection", () => {
 	it("renders all feature descriptions", () => {
 		render(<CoreFeaturesSection />);
 
-		const platformDescriptions = screen.getAllByText(
-			/GrantFlow.ai was built with researchers' unique needs in mind/,
-		);
+		const platformDescriptions = screen.getAllByText(/GrantFlow was built with researchers' unique needs in mind/);
 		const studioDescriptions = screen.getAllByText(/Organize all your research projects in one workspace/);
 		const workspaceDescriptions = screen.getAllByText(/Easily integrate feedback from collaborators/);
 		const proposalDescriptions = screen.getAllByText(/Create proposals customized to any funding opportunity/);

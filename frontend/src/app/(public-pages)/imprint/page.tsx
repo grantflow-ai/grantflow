@@ -19,7 +19,7 @@ export default function ImprintPage() {
 				</p>
 
 				<p className="mt-6">
-					GrantFlow.ai is currently in development. This site is operated for informational and early access
+					GrantFlow is currently in development. This site is operated for informational and early access
 					purposes only.
 				</p>
 			</div>

@@ -15,7 +15,7 @@ const CONTENT = {
 			badge: "Save time!",
 			badgeIcon: IconBenefitFirst,
 			description:
-				"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. Much of the grant writing process is not only time-consuming, it pulls your focus away from advancing groundbreaking research. GrantFlow.ai seamlessly converts your documents into proposal drafts, freeing you to focus solely on highlighting what makes your research innovative.",
+				"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. Much of the grant writing process is not only time-consuming, it pulls your focus away from advancing groundbreaking research. GrantFlow seamlessly converts your documents into proposal drafts, freeing you to focus solely on highlighting what makes your research innovative.",
 			heading: "More Time on Grant Writing, Less on Research?",
 		},
 		{
@@ -27,7 +27,7 @@ const CONTENT = {
 		},
 	],
 	description:
-		"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. From generating draft proposals in one quick session instead of weeks to managing documents effortlessly, our AI does the heavy lifting, so you can focus on your research.",
+		"GrantFlow transforms the complex grant application process into a fast, intelligent workflow. From generating draft proposals in one quick session instead of weeks to managing documents effortlessly, our AI does the heavy lifting, so you can focus on your research.",
 	heading: "Simplify Grant Applications with AI-Powered tools",
 	stepByStepProcess: {
 		step1: "Describe Your Research",
