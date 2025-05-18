@@ -10,6 +10,10 @@ terraform {
 
 resource "google_pubsub_topic" "file_indexing" {
   name = "file-indexing"
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Optional: Add subscription if needed

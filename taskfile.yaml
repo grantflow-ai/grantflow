@@ -229,6 +229,44 @@ tasks:
         cmds:
             - PYTHONPATH=. uv run pytest packages/shared_utils/tests -v
 
+    terraform:lint:
+        desc: Run linting tools (tflint and trivy) on terraform code
+        cmds:
+            - |
+                # Check if tflint is installed
+                if ! command -v tflint &> /dev/null; then
+                    echo "Error: tflint is not installed. Please install it from https://github.com/terraform-linters/tflint"
+                    exit 1
+                fi
+
+                # Check if trivy is installed
+                if ! command -v trivy &> /dev/null; then
+                    echo "Error: trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
+                    exit 1
+                fi
+
+                # Run tflint on terraform directory
+                echo "Running tflint on terraform directory..."
+                tflint --chdir=terraform
+
+                # Run trivy on terraform directory
+                echo "Running trivy on terraform directory..."
+                trivy config ./terraform
+
+    terraform:fmt:
+        desc: Format terraform code using tofu fmt
+        cmds:
+            - |
+                # Check if tofu is installed
+                if ! command -v tofu &> /dev/null; then
+                    echo "Error: OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+                    exit 1
+                fi
+
+                # Run tofu fmt on terraform directory
+                echo "Formatting terraform code..."
+                tofu fmt --recursive ./terraform
+
     # Internal Tasks
     _dev:services:
         internal: true

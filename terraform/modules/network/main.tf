@@ -27,6 +27,10 @@ resource "google_compute_network" "default" {
   name                                      = "default"
   network_firewall_policy_enforcement_order = "AFTER_CLASSIC_FIREWALL"
   routing_mode                              = "REGIONAL"
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 resource "google_compute_subnetwork" "default" {
@@ -40,5 +44,9 @@ resource "google_compute_subnetwork" "default" {
     aggregation_interval = "INTERVAL_5_SEC"
     flow_sampling        = 0.5
     metadata             = "INCLUDE_ALL_METADATA"
+  }
+
+  lifecycle {
+    ignore_changes = all
   }
 }
