@@ -40,14 +40,20 @@ vi.mock("@/components/brand-pattern", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: vi.fn().mockImplementation(({ alt, className, src }) => (
-		// Use of <img> instead of <Image> to prevent cyclical reference issues
-		// eslint-disable-next-line @next/next/no-img-element
-		<img
+	default: vi.fn().mockImplementation(({ alt, className, src, ...props }) => (
+		<div
 			alt={alt}
+			aria-label={alt ?? "Image"}
 			className={className}
+			data-alt={alt}
+			data-src={typeof src === "object" ? "/mocked-image-path.jpg" : src}
 			data-testid="mock-image"
-			src={typeof src === "object" ? "/mocked-image-path.jpg" : src}
+			role="img"
+			style={{
+				height: props.height ? `${props.height}px` : "auto",
+				width: props.width ? `${props.width}px` : "auto",
+			}}
+			{...props}
 		/>
 	)),
 }));
@@ -101,13 +107,13 @@ describe("AboutPage", () => {
 		expect(screen.getByText("Co-founder | CTO")).toBeInTheDocument();
 		expect(screen.getByText("Co-founder | Product & UX")).toBeInTheDocument();
 
-		const asafImage = screen.getByAltText(/Asaf Ronel/i);
+		const asafImage = screen.getByRole("img", { name: /Asaf Ronel/i });
 		expect(asafImage).toBeInTheDocument();
 
-		const naamanImage = screen.getByAltText(/Hirschfeld/i);
+		const naamanImage = screen.getByRole("img", { name: /Hirschfeld/i });
 		expect(naamanImage).toBeInTheDocument();
 
-		const tirzaImage = screen.getByAltText(/Tirza Shatz/i);
+		const tirzaImage = screen.getByRole("img", { name: /Tirza Shatz/i });
 		expect(tirzaImage).toBeInTheDocument();
 	});
 
