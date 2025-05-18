@@ -4,7 +4,7 @@ const terms = [
 	{
 		clause: (
 			<p>
-				Your privacy is important to <strong>GrantFlow.ai</strong> (&quot;GrantFlow,&quot; &quot;we,&quot;
+				Your privacy is important to <strong>GrantFlow</strong> (&quot;GrantFlow,&quot; &quot;we,&quot;
 				&quot;us,&quot; or &quot;our&quot;). This Privacy Policy outlines how we collect, use, protect, and
 				manage your personal information.
 			</p>
@@ -57,7 +57,7 @@ const terms = [
 	{
 		clause: (
 			<p>
-				GrantFlow.ai will not train or refine the AI models it uses on your personal data or uploaded content
+				GrantFlow will not train or refine the AI models it uses on your personal data or uploaded content
 				without your explicit consent.
 			</p>
 		),
@@ -90,8 +90,8 @@ const terms = [
 	{
 		clause: (
 			<p>
-				<strong>GrantFlow.ai</strong> reserves the right to update or modify this Privacy Policy at any time.
-				Any changes will be posted prominently on this page, and we encourage you to review our Privacy Policy
+				<strong>GrantFlow</strong> reserves the right to update or modify this Privacy Policy at any time. Any
+				changes will be posted prominently on this page, and we encourage you to review our Privacy Policy
 				regularly for updates.
 			</p>
 		),

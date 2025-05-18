@@ -13,7 +13,7 @@ import Link from "next/link";
 
 const CONTENT_CTA_SECTION = {
 	description:
-		"Join leading research teams who are saving time, improving collaboration, and securing more funds with GrantFlow.ai.",
+		"Join leading research teams who are saving time, improving collaboration, and securing more funds with GrantFlow.",
 	heading: "Ready to Transform Your Grant Writing Process?",
 };
 
