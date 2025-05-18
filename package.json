@@ -11,7 +11,7 @@
 		"eslint": "^9.27.0",
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-import-resolver-typescript": "^4.3.4",
-		"eslint-plugin-import-x": "^4.11.1",
+		"eslint-plugin-import-x": "^4.12.1",
 		"eslint-plugin-jsx-a11y": "^6.10.2",
 		"eslint-plugin-markdown": "^5.1.0",
 		"eslint-plugin-n": "17.18.0",

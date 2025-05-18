@@ -34,9 +34,8 @@ def mock_crawl_url() -> Generator[AsyncMock, None, None]:
 
 
 @pytest.fixture(autouse=True)
-def mock_crawl_url_module() -> Generator[None, None, None]:
-    """Mock the crawl_url module to prevent actual web crawling."""
-    with patch("services.crawler.src.extraction.AsyncWebCrawler"):
+def mock_crawl_module() -> Generator[None, None, None]:
+    with patch("services.crawler.src.extraction.crawl"):
         yield
 
 
@@ -60,16 +59,16 @@ def create_crawling_request(
     url: str = "https://example.org/docs",
     workspace_id: UUID | None = None,
 ) -> CrawlingRequest:
-    request: CrawlingRequest = {
-        "parent_id": str(parent_id),  # type: ignore[typeddict-item]
+    request = {
+        "parent_id": str(parent_id),
         "parent_type": parent_type,
         "url": url,
     }
 
     if workspace_id:
-        request["workspace_id"] = str(workspace_id)  # type: ignore[typeddict-item]
+        request["workspace_id"] = str(workspace_id)
 
-    return request
+    return request  # type: ignore
 
 
 async def test_handle_url_crawling_grant_application(
@@ -183,7 +182,9 @@ async def test_handle_url_crawling_no_files_returned(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> None:
-    with patch("services.crawler.src.main.crawl_url"):
+    with patch("services.crawler.src.main.crawl_url") as mock_crawl:
+        mock_crawl.return_value = []
+
         request = create_crawling_request(
             parent_id=grant_application.id,
             parent_type="grant_application",
@@ -193,7 +194,7 @@ async def test_handle_url_crawling_no_files_returned(
         assert response.status_code == HTTPStatus.CREATED, response.text
 
         with patch("services.crawler.src.main.upload_blob") as mock_upload:
-            assert mock_upload.await_count == 0
+            mock_upload.assert_not_called()
 
 
 async def test_handle_url_crawling_database_error(
@@ -234,19 +235,27 @@ async def test_handle_url_crawling_extraction_error(
             assert source is not None
 
 
-async def test_handle_upload_blob_is_called(
+async def test_handle_upload_blob_called_with_correct_parameters(
     test_client: AsyncTestClient[Any],
     mock_upload_blob: AsyncMock,
-    async_session_maker: async_sessionmaker[Any],
+    mock_construct_object_uri: Mock,
     grant_application: GrantApplication,
 ) -> None:
-    """Test that upload_blob is called when files are returned."""
+    workspace_id = uuid4()
     request = create_crawling_request(
         parent_id=grant_application.id,
         parent_type="grant_application",
+        workspace_id=workspace_id,
     )
 
     response = await test_client.post("/", json=request)
     assert response.status_code == HTTPStatus.CREATED
 
+    assert mock_construct_object_uri.call_count == 2
+    assert mock_construct_object_uri.call_args_list[0][1]["application_id"] == str(grant_application.id)
+    assert mock_construct_object_uri.call_args_list[0][1]["workspace_id"] == str(workspace_id)
+    assert mock_construct_object_uri.call_args_list[0][1]["organization_id"] is None
+    assert mock_construct_object_uri.call_args_list[0][1]["template_id"] is None
+
     assert mock_upload_blob.await_count == 2
+    assert mock_upload_blob.call_args_list[0][1]["blob_path"] == "test-bucket/test-path/test-file.pdf"
