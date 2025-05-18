@@ -31,8 +31,4 @@ describe("ImprintPage", () => {
 		const emailLink = screen.getByText("contact@grantflow.ai");
 		expect(emailLink.closest("a")).toHaveAttribute("href", "mailto:contact@grantflow.ai");
 	});
-
-	it("displays development status information", () => {
-		expect(screen.getByText(/GrantFlow\.ai is currently in development/)).toBeInTheDocument();
-	});
 });

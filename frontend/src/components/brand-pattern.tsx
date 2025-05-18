@@ -1,9 +1,11 @@
 export function BrandPattern({
+	className,
 	strokeWidth = "0.3",
 	...props
-}: { strokeWidth?: string } & React.HTMLProps<SVGSVGElement>) {
+}: { className?: string; strokeWidth?: string } & React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			className={className}
 			fill="none"
 			height="491"
 			preserveAspectRatio="none"

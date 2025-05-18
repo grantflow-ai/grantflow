@@ -6,7 +6,7 @@ import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articl
 const CORE_FEATURES = [
 	{
 		description:
-			"GrantFlow.ai was built with researchers' unique needs in mind, incorporating insights from dozens of grant-winning scientists. Our platform prioritizes what matters most: turning complex research into compelling proposals while streamlining collaborative workflows and adapting to specific funding agency requirements.",
+			"GrantFlow was built with researchers' unique needs in mind, incorporating insights from dozens of grant-winning scientists. Our platform prioritizes what matters most: turning complex research into compelling proposals while streamlining collaborative workflows and adapting to specific funding agency requirements.",
 		title: "A Platform Built for Researchers",
 	},
 	{
@@ -28,11 +28,11 @@ const CORE_FEATURES = [
 
 export function CoreFeaturesSection() {
 	return (
-		<section aria-label="core-features-section" className="relative w-full overflow-hidden bg-white">
-			<div className="absolute inset-0 flex items-center justify-center">
+		<section aria-label="core-features-section" className="relative w-full bg-white overflow-x-hidden">
+			<div className="absolute inset-0 overflow-hidden flex items-center justify-center">
 				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
 			</div>
-			<div className="xl:px-30 relative z-10 flex flex-col items-center px-8 py-10 text-center text-stone-800 md:px-10 lg:px-20">
+			<div className="flex flex-col w-full z-10 items-center py-10 text-center text-stone-800 px-8 md:px-10 lg:px-20 xl:px-30">
 				<ScrollFadeElement className="mx-auto">
 					<h2
 						className="font-heading xl-my-10 my-3 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
@@ -41,10 +41,12 @@ export function CoreFeaturesSection() {
 						Core Features Designed for Researchers
 					</h2>
 				</ScrollFadeElement>
-				<div className="relative flex w-full snap-x snap-mandatory gap-12 overflow-x-auto py-6 text-start md:hidden">
+				<div className="relative flex w-[calc(100vw-5rem)] snap-x snap-mandatory gap-12 overflow-x-auto py-6 text-start md:hidden">
 					{CORE_FEATURES.map((feature, index) => (
 						<FeatureArticle
-							className="w-[22rem] flex-none snap-center"
+							className={`w-88 flex-none snap-start ${index === 0 ? "ml-4" : ""} ${
+								index === CORE_FEATURES.length - 1 ? "mr-4" : ""
+							}`}
 							featureDescription={feature.description}
 							featureTitle={feature.title}
 							key={index}

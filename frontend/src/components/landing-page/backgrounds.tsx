@@ -27,9 +27,10 @@ function GradientBackground({
 	);
 }
 
-function PatternedBackground({ ...props }: React.HTMLProps<SVGSVGElement>) {
+function PatternedBackground({ className, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			className={cn("w-full h-full", className)}
 			fill="none"
 			preserveAspectRatio="xMidYMid slice"
 			viewBox="0 0 1440 1024"

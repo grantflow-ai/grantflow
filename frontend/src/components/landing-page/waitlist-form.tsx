@@ -1,9 +1,8 @@
 "use client";
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 
 import { Control, useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 
 import { z } from "zod";
 import { AppButton } from "@/components/app-button";
@@ -14,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
+import { AppInput } from "../input-field";
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {
@@ -61,27 +61,30 @@ export function WaitlistForm() {
 
 	return (
 		<Form {...form}>
-			<form className="space-y-2 md:space-y-0 mt-4 md:mt-0 pe-7 md:pe-0" onSubmit={form.handleSubmit(onSubmit)}>
+			<form className="flex flex-col md:mt-0 pe-7 md:pe-0" onSubmit={form.handleSubmit(onSubmit)}>
 				<WaitListFormItem
+					className="w-full md:w-70"
 					formControl={form.control}
 					id="email"
 					label="Email address"
 					name="email"
 					placeholder="Type your email address"
+					testId="test-form-input-email"
 					type="email"
 				/>
 
 				<WaitListFormItem
-					className="-mt-2"
+					className="w-full md:w-70 mt-3"
 					formControl={form.control}
 					id="name"
 					label="Name"
 					name="name"
 					placeholder="Type your full name"
+					testId="test-form-input-name"
 					type="text"
 				/>
 
-				<div className="flex justify-end mt-4 px-2">
+				<div className="flex justify-end px-2 mt-8">
 					<AppButton
 						className="text-base"
 						disabled={!form.formState.isValid || formState.status === "loading"}
@@ -91,7 +94,7 @@ export function WaitlistForm() {
 					</AppButton>
 				</div>
 
-				<div className="h-12 mt-2 w-full relative">
+				<div className="mt-2 w-full relative">
 					<p
 						className={`absolute inset-0 transition-opacity duration-200 text-wrap
 						${formState.status === "idle" ? "opacity-0" : "opacity-100"}
@@ -138,6 +141,7 @@ function WaitListFormItem({
 	label,
 	name,
 	placeholder,
+	testId,
 	type,
 }: {
 	className?: string;
@@ -156,6 +160,7 @@ function WaitListFormItem({
 	label: string;
 	name: string;
 	placeholder: string;
+	testId: string;
 	type: string;
 }) {
 	return (
@@ -163,25 +168,18 @@ function WaitListFormItem({
 			control={formControl}
 			key={id}
 			name={name === "email" ? "email" : "name"}
-			render={({ field, fieldState }) => (
+			render={({ field }) => (
 				<FormItem className={className}>
 					<FormLabel className="font-heading font-light text-xl md:text-base">{label}</FormLabel>
-					<FormControl className="mt-2 w-full h-auto md:w-[17rem]">
-						<Input
+					<FormControl className="w-full h-auto mt-3">
+						<AppInput
 							placeholder={placeholder}
 							type={type}
 							{...field}
-							className={`bg-white text-gray-600 rounded-sm p-3 md:placeholder:font-light placeholder:text-lg md:placeholder:text-[1.05rem] placeholder:text-slate-500/70 md:placeholder:text-slate-500 ${
-								fieldState.invalid ? "border-error focus-visible:ring-error" : ""
-							}`}
+							className={`form-input bg-white text-gray-600 rounded-sm p-3`}
+							testId={testId}
 						/>
 					</FormControl>
-					<div className="min-h-5 text-end">
-						<FormMessage
-							className="text-sm text-error"
-							data-testid={name === "email" ? "email-error" : "name-error"}
-						/>
-					</div>
 				</FormItem>
 			)}
 		/>

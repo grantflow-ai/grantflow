@@ -10,7 +10,7 @@ const containerVariants = {
 		transition: {
 			duration: 1,
 			ease: "easeInOut",
-			staggerChildren: 1,
+			staggerChildren: 0.4,
 			when: "beforeChildren",
 		},
 	},

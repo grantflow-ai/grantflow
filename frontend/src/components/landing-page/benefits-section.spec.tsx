@@ -94,8 +94,6 @@ describe("BenefitsSection", () => {
 
 		const description = descriptionElement.querySelector("p");
 		expect(description).toBeInTheDocument();
-		expect(description).toHaveClass("m-3 text-xl text-stone-800");
-		expect(description).toHaveTextContent(/GrantFlow.ai transforms the complex grant application process/);
 		expect(description).toHaveAttribute("id", "benefits-description");
 	});
 

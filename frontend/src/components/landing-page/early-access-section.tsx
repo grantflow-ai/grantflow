@@ -20,7 +20,7 @@ import {
 const SECTION_HEADERS = {
 	badge: "Early Access Registration Now Open!",
 	description:
-		"Be among the first to experience GrantFlow.ai. Sign up now to unlock exclusive features, provide valuable feedback, and enjoy priority support.",
+		"Be among the first to experience GrantFlow. Sign up now to unlock exclusive features, provide valuable feedback, and enjoy priority support.",
 	heading: "Save Time, Amplify Your Impact.",
 };
 
@@ -47,7 +47,7 @@ const CONTENT_BENEFITS = {
 			icon: IconEarlyAccessBenefit4,
 		},
 	],
-	formHeading: "Join GrantFlow.ai Waitlist",
+	formHeading: "Join GrantFlow Waitlist",
 	listHeading: "Exclusive Early Access Benefits:",
 };
 
@@ -74,7 +74,7 @@ const badgeVariants = {
 		scale: 1,
 		transition: {
 			delay: 0.2,
-			duration: 0.8,
+			duration: 0.6,
 			ease: "easeInOut",
 		},
 	},
@@ -88,7 +88,7 @@ const textVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			duration: 0.8,
+			duration: 0.4,
 			ease: "easeInOut",
 		},
 		y: 0,
@@ -100,10 +100,9 @@ const contentContainerVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			delayChildren: 0.2,
-			duration: 0.3,
+			duration: 0.2,
 			ease: "easeInOut",
-			staggerChildren: 0.3,
+			staggerChildren: 0.2,
 			when: "beforeChildren",
 		},
 	},
@@ -114,7 +113,7 @@ const benefitsContainerVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			staggerChildren: 0.4,
+			staggerChildren: 0.1,
 			when: "beforeChildren",
 		},
 	},
@@ -177,12 +176,12 @@ export function EarlyAccessSection() {
 			id="waitlist"
 			initial="hidden"
 			variants={sectionVariants}
-			viewport={{ amount: 0.2, once: true }}
+			viewport={{ amount: 0.1, once: true }}
 			whileInView="visible"
 		>
 			<GradientBackground className="inset-0 z-0 hidden md:absolute md:block" />
 			<GradientBackground className="absolute inset-0 z-0 md:hidden" position="bottom-left" />
-			<div className="lg:py-15 xl:px-30 relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 xl:py-20">
+			<div className="relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 lg:py-15 xl:py-20 xl:px-30">
 				<MotionDiv
 					className="text-background max-w-fit rounded-full bg-white px-2 pt-0.5 text-lg md:text-sm"
 					id="early-access-badge"
@@ -192,6 +191,7 @@ export function EarlyAccessSection() {
 				</MotionDiv>
 				<MotionHeading2
 					className="font-heading leading-14 mt-4 text-5xl md:mt-3 md:text-4xl md:leading-10"
+					data-testid="early-access-heading"
 					id="early-access-heading"
 					variants={textVariants}
 				>
@@ -199,6 +199,7 @@ export function EarlyAccessSection() {
 				</MotionHeading2>
 				<MotionParagraph
 					className="mt-1 text-xl antialiased md:text-white/80"
+					data-testid="early-access-description"
 					id="early-access-description"
 					variants={textVariants}
 				>
@@ -248,7 +249,11 @@ function BenefitsAndWaitlistForm() {
 					))}
 				</MotionUnorderedList>
 			</MotionSection>
-			<MotionAside aria-label="waitlist-form" className="me-7 shrink-0 md:me-0" variants={formContainerVariants}>
+			<MotionAside
+				aria-label="waitlist-form"
+				className="me-7 shrink-0 space-y-2 md:me-0"
+				variants={formContainerVariants}
+			>
 				<MotionHeading3 className="font-heading text-2xl" variants={textVariants}>
 					{CONTENT_BENEFITS.formHeading}
 				</MotionHeading3>
