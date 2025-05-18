@@ -9,34 +9,34 @@ vi.mock("next/image", () => ({
 	)),
 }));
 
-vi.mock("motion/react", () => {
+vi.mock(import("motion/react"), async (importOriginal) => {
+	const actual = await importOriginal();
 	return {
-		motion: {
-			article: vi.fn().mockImplementation(({ children, className, variants, ...props }) => (
-				<article
-					className={className}
-					data-testid="mock-motion-article"
-					data-variants={variants ? JSON.stringify(Object.keys(variants)) : undefined}
-					{...props}
-				>
-					{children}
-				</article>
-			)),
-			blockquote: vi.fn().mockImplementation(({ children, className, variants, ...props }) => (
-				<blockquote
-					className={className}
-					data-testid="mock-motion-blockquote"
-					data-variants={variants ? JSON.stringify(Object.keys(variants)) : undefined}
-					{...props}
-				>
-					{children}
-				</blockquote>
-			)),
-		},
+		...actual,
+		article: vi.fn().mockImplementation(({ children, className, variants, ...props }) => (
+			<article
+				className={className}
+				data-testid="mock-motion-article"
+				data-variants={variants ? JSON.stringify(Object.keys(variants)) : undefined}
+				{...props}
+			>
+				{children}
+			</article>
+		)),
+		blockquote: vi.fn().mockImplementation(({ children, className, variants, ...props }) => (
+			<blockquote
+				className={className}
+				data-testid="mock-motion-blockquote"
+				data-variants={variants ? JSON.stringify(Object.keys(variants)) : undefined}
+				{...props}
+			>
+				{children}
+			</blockquote>
+		)),
 	};
 });
 
-vi.mock("./scroll-fade-element", () => ({
+vi.mock("@/components/scroll-fade-element", () => ({
 	ScrollFadeElement: vi.fn().mockImplementation(({ children, className, delay }) => (
 		<div className={className} data-delay={delay} data-testid="mock-scroll-fade-element">
 			{children}

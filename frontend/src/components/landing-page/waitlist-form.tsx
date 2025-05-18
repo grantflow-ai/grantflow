@@ -69,6 +69,7 @@ export function WaitlistForm() {
 					label="Email address"
 					name="email"
 					placeholder="Type your email address"
+					testId="test-form-input-email"
 					type="email"
 				/>
 
@@ -79,6 +80,7 @@ export function WaitlistForm() {
 					label="Name"
 					name="name"
 					placeholder="Type your full name"
+					testId="test-form-input-name"
 					type="text"
 				/>
 
@@ -139,6 +141,7 @@ function WaitListFormItem({
 	label,
 	name,
 	placeholder,
+	testId,
 	type,
 }: {
 	className?: string;
@@ -157,6 +160,7 @@ function WaitListFormItem({
 	label: string;
 	name: string;
 	placeholder: string;
+	testId: string;
 	type: string;
 }) {
 	return (
@@ -173,6 +177,7 @@ function WaitListFormItem({
 							type={type}
 							{...field}
 							className={`form-input bg-white text-gray-600 rounded-sm p-3`}
+							testId={testId}
 						/>
 					</FormControl>
 				</FormItem>
