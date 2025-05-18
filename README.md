@@ -11,6 +11,7 @@ For detailed information on specific modules, refer to their dedicated documenta
 - [Database Package](./packages/db/README.md) - shared database models and migrations
 - [Shared Utilities](./packages/shared_utils/README.md) - common utilities used across services
 - [Architecture Diagrams](./diagrams/README.md) - system architecture and data model diagrams
+- [Infrastructure as Code](./terraform/README.md) - Terraform configuration for GCP infrastructure
 
 ## Repository Structure
 
@@ -35,6 +36,7 @@ For detailed information on specific modules, refer to their dedicated documenta
 - [PNPM](https://pnpm.io/): Package manager for JavaScript/TypeScript dependencies
 - [Task](https://taskfile.dev): Taskfile runner
 - [pre-commit](https://pre-commit.com/): Linting and formatting tool
+- [OpenTofu](https://opentofu.org/): Infrastructure as Code tool for managing cloud resources
 - [GCloud CLI](https://cloud.google.com/sdk/docs/install): For GCP management
 - [GCloud CLI Pub/Sub Emulator](https://cloud.google.com/pubsub/docs/emulator): For local development
 - [Firebase CLI](https://firebase.google.com/docs/cli): For Firebase and secret access (required for both frontend and backend development)

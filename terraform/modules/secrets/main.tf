@@ -19,11 +19,7 @@ resource "google_secret_manager_secret" "database_connection_string" {
   project   = var.project_id
 
   replication {
-    auto {
-      customer_managed_encryption {
-        kms_key_name = google_kms_crypto_key.secrets_key.id
-      }
-    }
+    auto {}
   }
 }
 
@@ -32,11 +28,7 @@ resource "google_secret_manager_secret" "firebase_service_account_credentials" {
   project   = var.project_id
 
   replication {
-    auto {
-      customer_managed_encryption {
-        kms_key_name = google_kms_crypto_key.secrets_key.id
-      }
-    }
+    auto {}
   }
 }
 
@@ -45,11 +37,7 @@ resource "google_secret_manager_secret" "llm_service_account_credentials" {
   project   = var.project_id
 
   replication {
-    auto {
-      customer_managed_encryption {
-        kms_key_name = google_kms_crypto_key.secrets_key.id
-      }
-    }
+    auto {}
   }
 }
 
@@ -58,11 +46,7 @@ resource "google_secret_manager_secret" "jwt_secret" {
   project   = var.project_id
 
   replication {
-    auto {
-      customer_managed_encryption {
-        kms_key_name = google_kms_crypto_key.secrets_key.id
-      }
-    }
+    auto {}
   }
 }
 
@@ -71,11 +55,7 @@ resource "google_secret_manager_secret" "admin_access_code" {
   project   = var.project_id
 
   replication {
-    auto {
-      customer_managed_encryption {
-        kms_key_name = google_kms_crypto_key.secrets_key.id
-      }
-    }
+    auto {}
   }
 }
 
@@ -84,11 +64,7 @@ resource "google_secret_manager_secret" "anthropic_api_key" {
   project   = var.project_id
 
   replication {
-    auto {
-      customer_managed_encryption {
-        kms_key_name = google_kms_crypto_key.secrets_key.id
-      }
-    }
+    auto {}
   }
 }
 
@@ -98,11 +74,7 @@ resource "google_secret_manager_secret" "gcs_service_account_credentials" {
   project   = var.project_id
 
   replication {
-    auto {
-      customer_managed_encryption {
-        kms_key_name = google_kms_crypto_key.secrets_key.id
-      }
-    }
+    auto {}
   }
 }
 
@@ -131,8 +103,7 @@ resource "google_secret_manager_secret_iam_binding" "database_connection_string_
   secret_id = google_secret_manager_secret.database_connection_string.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:service-${var.project_id}@gcp-sa-cloudrun.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }
 
@@ -142,8 +113,7 @@ resource "google_secret_manager_secret_iam_binding" "firebase_credentials_access
   secret_id = google_secret_manager_secret.firebase_service_account_credentials.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:service-${var.project_id}@gcp-sa-cloudrun.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }
 
@@ -153,8 +123,7 @@ resource "google_secret_manager_secret_iam_binding" "llm_credentials_access" {
   secret_id = google_secret_manager_secret.llm_service_account_credentials.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:service-${var.project_id}@gcp-sa-cloudrun.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }
 
@@ -164,8 +133,7 @@ resource "google_secret_manager_secret_iam_binding" "jwt_secret_access" {
   secret_id = google_secret_manager_secret.jwt_secret.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:service-${var.project_id}@gcp-sa-cloudrun.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }
 
@@ -175,8 +143,7 @@ resource "google_secret_manager_secret_iam_binding" "admin_access_code_access" {
   secret_id = google_secret_manager_secret.admin_access_code.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:service-${var.project_id}@gcp-sa-cloudrun.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }
 
@@ -186,8 +153,7 @@ resource "google_secret_manager_secret_iam_binding" "anthropic_api_key_access" {
   secret_id = google_secret_manager_secret.anthropic_api_key.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:service-${var.project_id}@gcp-sa-cloudrun.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }
 
@@ -197,7 +163,6 @@ resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
   secret_id = google_secret_manager_secret.gcs_service_account_credentials.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:service-${var.project_id}@gcp-sa-cloudrun.iam.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }

@@ -153,7 +153,7 @@ resource "google_cloud_run_v2_service" "backend" {
       min_instance_count = 0
     }
 
-    timeout = 300
+    timeout = "300s"
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -232,7 +232,7 @@ resource "google_cloud_run_v2_service" "crawler" {
       min_instance_count = 0
     }
 
-    timeout = 300
+    timeout = "300s"
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -311,7 +311,7 @@ resource "google_cloud_run_v2_service" "indexer" {
       min_instance_count = 0
     }
 
-    timeout = 300
+    timeout = "300s"
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"

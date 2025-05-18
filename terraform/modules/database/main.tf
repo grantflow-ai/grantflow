@@ -173,7 +173,7 @@ resource "google_sql_database_instance" "main" {
     }
 
     maintenance_window {
-      day          = 0
+      day          = 1
       hour         = 0
       update_track = "canary"
     }

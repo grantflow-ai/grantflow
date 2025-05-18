@@ -13,6 +13,10 @@ resource "google_service_account" "github_actions" {
   account_id   = "githubactions"
   display_name = "GitHub Actions Service Account"
   description  = "Service account for GitHub Actions CI/CD"
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Service account for Cloud Storage
@@ -20,6 +24,10 @@ resource "google_service_account" "cloud_storage_admin" {
   account_id   = "cloud-storage-admin"
   display_name = "Cloud Storage Admin"
   description  = "Service account for managing Cloud Storage"
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Service account for LLM API
@@ -27,6 +35,10 @@ resource "google_service_account" "llm_api_service_account" {
   account_id   = "llm-api-service-account"
   display_name = "LLM API Service Account"
   description  = "Service account for accessing LLM APIs"
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # IAM bindings for GitHub Actions service account
@@ -75,11 +87,11 @@ resource "google_project_iam_member" "aiplatform_user" {
   member  = "serviceAccount:${google_service_account.llm_api_service_account.email}"
 }
 
-# Project owners - using a group instead of individual users
+# Project owners - using a group
 resource "google_project_iam_member" "owners_group" {
   project = "grantflow"
   role    = "roles/owner"
-  member  = "group:grantflow-admins@grantflow.ai"
+  member  = "group:admin@grantflow.ai"
 }
 
 # Note: Create this group in Google Workspace/Google Groups and add users there
