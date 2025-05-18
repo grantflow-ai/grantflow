@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
-import { MotionArticle, MotionBlockquote } from "@/components/landing-page/motion-components";
+import { MotionArticle, MotionBlockquote, MotionImage } from "@/components/landing-page/motion-components";
 
 const CONTENT = {
 	heading: "Why Researchers Join GrantFlow.ai?",
@@ -40,7 +40,22 @@ const textVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			duration: 0.8,
+			duration: 0.4,
+			ease: "easeInOut",
+		},
+		y: 0,
+	},
+};
+
+const imageVariants = {
+	hidden: {
+		opacity: 0,
+		y: 20,
+	},
+	visible: {
+		opacity: 1,
+		transition: {
+			duration: 0.4,
 			ease: "easeInOut",
 		},
 		y: 0,
@@ -69,11 +84,12 @@ export function TestimonialsSection() {
 							viewport={{ amount: 0.3, once: true }}
 							whileInView="visible"
 						>
-							<Image
+							<MotionImage
 								alt={`${Image.name}'s photo`}
 								className="rounded-full size-24 md:size-28 lg:size-32 xl:size-36"
 								height={100}
 								src={testimonial.image}
+								variants={imageVariants}
 								width={100}
 							/>
 							<MotionBlockquote

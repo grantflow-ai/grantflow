@@ -74,7 +74,7 @@ const badgeVariants = {
 		scale: 1,
 		transition: {
 			delay: 0.2,
-			duration: 0.8,
+			duration: 0.6,
 			ease: "easeInOut",
 		},
 	},
@@ -88,7 +88,7 @@ const textVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			duration: 0.8,
+			duration: 0.4,
 			ease: "easeInOut",
 		},
 		y: 0,
@@ -100,10 +100,9 @@ const contentContainerVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			delayChildren: 0.2,
-			duration: 0.3,
+			duration: 0.2,
 			ease: "easeInOut",
-			staggerChildren: 0.3,
+			staggerChildren: 0.2,
 			when: "beforeChildren",
 		},
 	},
@@ -114,7 +113,7 @@ const benefitsContainerVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			staggerChildren: 0.4,
+			staggerChildren: 0.1,
 			when: "beforeChildren",
 		},
 	},
@@ -177,7 +176,7 @@ export function EarlyAccessSection() {
 			id="waitlist"
 			initial="hidden"
 			variants={sectionVariants}
-			viewport={{ amount: 0.2, once: true }}
+			viewport={{ amount: 0.1, once: true }}
 			whileInView="visible"
 		>
 			<GradientBackground className="inset-0 z-0 hidden md:absolute md:block" />
