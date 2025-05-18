@@ -1,0 +1,5 @@
+# we allow remote connections for now without SSL, we use IP whitelisting
+AVD-GCP-0017
+AVD-GCP-0015
+# for now we allow logging
+AVD-GCP-0021
