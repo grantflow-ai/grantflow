@@ -6,17 +6,21 @@ import React from "react";
 export function ScrollButton({
 	children,
 	offset = 0,
+	onClick,
 	selector,
 	smooth = true,
 	...buttonProps
 }: {
 	offset?: number;
+	onClick?: () => void;
 	selector: string;
 	smooth?: boolean;
 } & AppButtonProps) {
 	const handleScroll = React.useCallback(
 		(e: React.MouseEvent) => {
 			e.preventDefault();
+
+			onClick?.();
 
 			const targetElement =
 				selector.startsWith("#") || selector.startsWith(".")
@@ -42,7 +46,7 @@ export function ScrollButton({
 				}
 			}
 		},
-		[selector, smooth, offset],
+		[selector, smooth, offset, onClick],
 	);
 
 	return (
