@@ -21,7 +21,6 @@ from packages.db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
-from services.backend.src.api.main import app
 from services.backend.src.api.sockets.grant_applications import (
     EVENT_APPLICATION_CANCELLED,
     EVENT_APPLICATION_CREATED,
@@ -47,6 +46,7 @@ from services.backend.src.api.sockets.grant_applications import (
     prepare_wizard_response,
 )
 from services.backend.src.dto import WebsocketDataMessage
+from services.backend.src.main import app
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 

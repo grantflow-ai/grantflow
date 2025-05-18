@@ -5,6 +5,10 @@
 # Development tools
 .vscode/
 .idea/
+.husky/
+.eslintrc*
+.prettierrc*
+.editorconfig
 
 # Python files
 **/__pycache__/
@@ -16,34 +20,49 @@
 **/.coverage
 **/.mypy_cache/
 **/.ruff_cache/
+**/.uvenv/
+**/.venv/
+**/venv/
+**/pip-wheel-metadata/
+**/__pypackages__/
 
 # Node.js files
 **/node_modules/
 **/.next/
 **/out/
 **/.turbo
+**/.cache/
 
 # Environment files
 **/.env
 **/.env.*
+**/.envrc
 
-# Test files
+# Test files - but preserve fixtures needed for builds
 **/tests/
+!**/tests/fixtures/
 **/test_data/
+!**/test_data/fixtures/
+testing/
+!testing/fixtures/
 
-# Root level files
+# CI/CD files
+.gitlab-ci.yml
+.github/workflows/
+
+# Root level files not needed for builds
 /.pre-commit-config.yaml
 /.commitlintrc
 /docker-compose.yaml
+/.gitignore
+/*.md
+!README.md
+taskfile.yaml
+*.lock
+!uv.lock
+!pnpm-lock.yaml
 
-# Caches
-**/.cache/
-**/.venv/
-**/venv/
-**/pip-wheel-metadata/
-**/__pypackages__/
-
-# Distribution builds
+# Distribution builds that should be created during the Docker build
 **/dist/
 **/build/
 **/*.whl
@@ -53,7 +72,25 @@
 **/coverage.xml
 **/htmlcov/
 **/reports/
+**/coverage/
 
-# Misc
+# Miscellaneous
 **/.DS_Store
 **/*.log
+**/*.swp
+**/*.bak
+**/tmp/
+**/temp/
+
+# Terraform
+terraform/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Keep specific directories needed for builds
+!services/*/src/
+!services/*/pyproject.toml
+!packages/*/src/
+!packages/*/pyproject.toml

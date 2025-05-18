@@ -60,7 +60,9 @@ services:
             - backend-services
             - backend
         build:
-            dockerfile: ./services/backend/Dockerfile
+            args:
+                service_name: backend
+            dockerfile: services/Dockerfile
             platforms:
                 - "linux/x86_64" # needed due to spaCy build issues on Mac linux
         environment:
@@ -71,9 +73,9 @@ services:
             - ./services/backend/.env
         ports:
             - "8000:8000"
-        volumes:
-            - ./services/backend:/app/services/backend:cached
-            - ./packages:/app/packages:cached
+        #        volumes:
+        #            - ./services/backend:/app/services/backend:cached
+        #            - ./packages:/app/packages:cached
         command: "uvicorn services.backend.src.api.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
@@ -87,10 +89,12 @@ services:
             - backend-services
             - indexer
         build:
+            args:
+                service_name: crawler
             dockerfile: ./services/indexer/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            GOOGLE_CLOUD_PROJECT: grantflow-dev
+            GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
             STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             GCS_BUCKET_NAME: grantflow-uploads
@@ -112,10 +116,12 @@ services:
             - backend-services
             - crawler
         build:
+            args:
+                service_name: crawler
             dockerfile: ./services/crawler/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            GOOGLE_CLOUD_PROJECT: grantflow-dev
+            GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
             STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             GCS_BUCKET_NAME: grantflow-uploads

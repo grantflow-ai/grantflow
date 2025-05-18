@@ -74,7 +74,7 @@ async def test_client(
         patch("services.backend.src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),
         patch("firebase_admin.initialize_app", return_value=Mock()),
     ):
-        from services.backend.src.api.main import app
+        from services.backend.src.main import app
 
         # this is usually happening in the `before_server_start` hook, which we are patching above ~keep
         app.state.session_maker = async_session_maker
