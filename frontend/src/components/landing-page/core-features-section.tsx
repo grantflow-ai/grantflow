@@ -6,7 +6,7 @@ import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articl
 const CORE_FEATURES = [
 	{
 		description:
-			"GrantFlow.ai was built with researchers' unique needs in mind, incorporating insights from dozens of grant-winning scientists. Our platform prioritizes what matters most: turning complex research into compelling proposals while streamlining collaborative workflows and adapting to specific funding agency requirements.",
+			"GrantFlow was built with researchers' unique needs in mind, incorporating insights from dozens of grant-winning scientists. Our platform prioritizes what matters most: turning complex research into compelling proposals while streamlining collaborative workflows and adapting to specific funding agency requirements.",
 		title: "A Platform Built for Researchers",
 	},
 	{

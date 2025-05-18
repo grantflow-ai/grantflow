@@ -3,12 +3,12 @@ import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element
 import { MotionArticle, MotionBlockquote, MotionImage } from "@/components/landing-page/motion-components";
 
 const CONTENT = {
-	heading: "Why Researchers Join GrantFlow.ai?",
+	heading: "Why Researchers Join GrantFlow?",
 	subtitle: "Inspired by real research challenges",
 	testimonials: [
 		{
 			image: "/assets/user-image-1.png",
-			quote: "Balancing research, publishing, and endless grant writing pulls us in too many directions. A tool like GrantFlow.ai could finally give researchers the time to lead, not just apply.",
+			quote: "Balancing research, publishing, and endless grant writing pulls us in too many directions. A tool like GrantFlow could finally give researchers the time to lead, not just apply.",
 		},
 		{
 			image: "/assets/user-image-2.png",
