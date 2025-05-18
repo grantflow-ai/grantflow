@@ -27,3 +27,19 @@ variable "environment" {
   type        = string
   default     = "prod"
 }
+
+# Database specific variables
+variable "database_zone" {
+  description = "The zone for the Cloud SQL database"
+  type        = string
+  default     = "us-central1-c"
+}
+
+variable "database_authorized_networks" {
+  description = "List of authorized networks for database access"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
