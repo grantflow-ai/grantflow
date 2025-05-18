@@ -16,4 +16,6 @@ export const MotionBlockquote = motion.blockquote;
 export const MotionUnorderedList = motion.ul;
 export const MotionListItem = motion.li;
 
+export const MotionImage = motion.img;
+
 export const MotionAside = motion.aside;
