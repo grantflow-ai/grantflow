@@ -17,6 +17,10 @@ export function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const pathname = usePathname();
 	const isHomePage = pathname === PagePath.ROOT.toString();
+	const isTermsPage =
+		pathname === PagePath.TERMS.toString() ||
+		pathname === PagePath.PRIVACY.toString() ||
+		pathname === PagePath.IMPRINT.toString();
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -101,22 +105,40 @@ export function NavHeader() {
 				</Button>
 			</div>
 			<div
-				aria-expanded={isMobileMenuOpen ? "true" : "false"}
-				aria-hidden={isMobileMenuOpen ? "false" : "true"}
+				aria-expanded={isMobileMenuOpen}
+				aria-hidden={!isMobileMenuOpen}
 				className={`absolute inset-x-0 top-full flex flex-col gap-4 bg-white p-4 transition-all duration-300 ease-in-out sm:px-6
 				md:hidden
+				${isTermsPage && isMobileMenuOpen ? "border-b border-primary" : ""}
 				${isMobileMenuOpen ? "max-h-lg opacity-100 pointer-events-auto" : "max-h-sm opacity-0 pointer-events-none"}
 				`}
 			>
 				<AppButton aria-label="Go to Home Page" size="lg" variant="link">
-					<Link href={PagePath.ROOT}>Home</Link>
+					<Link
+						href={PagePath.ROOT}
+						onClick={() => {
+							setIsMobileMenuOpen(false);
+						}}
+					>
+						Home
+					</Link>
 				</AppButton>
 				<AppButton aria-label="Go to About Us Page" size="lg" variant="link">
-					<Link href={PagePath.ABOUT_US}>About Us</Link>
+					<Link
+						href={PagePath.ABOUT_US}
+						onClick={() => {
+							setIsMobileMenuOpen(false);
+						}}
+					>
+						About Us
+					</Link>
 				</AppButton>
 				{isHomePage && (
 					<ScrollButton
 						aria-label="Go to Waitlist Form"
+						onClick={() => {
+							setIsMobileMenuOpen(false);
+						}}
 						rightIcon={<IconGoAhead />}
 						selector="waitlist"
 						size="lg"
