@@ -16,7 +16,9 @@ terraform {
 
 # Network Module
 module "network" {
-  source = "./modules/network"
+  source     = "./modules/network"
+  project_id = var.project_id
+  region     = var.region
 }
 
 # Storage Module
@@ -38,13 +40,26 @@ module "pubsub" {
 
 # Cloud Run Module
 module "cloud_run" {
-  source     = "./modules/cloud_run"
-  project_id = var.project_id
-  region     = var.region
+  source                   = "./modules/cloud_run"
+  project_id               = var.project_id
+  region                   = var.region
+  database_connection_name = module.database.instance_connection_name
 }
 
 # Secrets Module
 module "secrets" {
   source     = "./modules/secrets"
   project_id = var.project_id
+}
+
+# Database Module
+module "database" {
+  source     = "./modules/database"
+  project_id = var.project_id
+  region     = var.region
+  zone       = var.database_zone
+  network_id = module.network.network_id
+
+  # Pass the authorized networks from variables
+  authorized_networks = var.database_authorized_networks
 }

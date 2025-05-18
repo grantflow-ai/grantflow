@@ -56,32 +56,9 @@ jobs:
           tflint_version: v0.57.0
 
       - name: Initialize TFLint
-        run: |
-          cd terraform
-          tflint --init
+        run: tflint --init
 
       - name: Run TFLint
         run: |
           cd terraform
           tflint --format compact
-
-  plan:
-    name: Plan
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [fmt, validate, tflint]
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: OpenTofu Plan
-        uses: dflook/terraform-plan@v1
-        with:
-          path: terraform
-          command: tofu
-          var_file: terraform/terraform.tfvars
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

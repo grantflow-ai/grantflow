@@ -1,4 +1,32 @@
-output "monorepo_url" {
-  value       = google_cloud_run_service.monorepo.status[0].url
-  description = "The URL of the deployed monorepo service"
+# Backend service outputs
+output "backend_url" {
+  description = "The URL of the deployed backend service"
+  value       = google_cloud_run_v2_service.backend.uri
+}
+
+output "backend_service_id" {
+  description = "The ID of the backend service"
+  value       = google_cloud_run_v2_service.backend.name
+}
+
+# Crawler service outputs
+output "crawler_url" {
+  description = "The URL of the deployed crawler service"
+  value       = google_cloud_run_v2_service.crawler.uri
+}
+
+output "crawler_service_id" {
+  description = "The ID of the crawler service"
+  value       = google_cloud_run_v2_service.crawler.name
+}
+
+# Indexer service outputs
+output "indexer_url" {
+  description = "The URL of the deployed indexer service"
+  value       = google_cloud_run_v2_service.indexer.uri
+}
+
+output "indexer_service_id" {
+  description = "The ID of the indexer service"
+  value       = google_cloud_run_v2_service.indexer.name
 }

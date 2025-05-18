@@ -94,3 +94,16 @@ repos:
             language: system
             types: [python]
             files: ^(packages|services)/[a-zA-Z0-9_-]+/
+
+    - repo: https://github.com/antonbabenko/pre-commit-terraform
+      rev: "v1.99.0"
+      hooks:
+          - id: terraform_fmt
+            args:
+                - --args=-recursive
+                - --args=-write=true
+          - id: terraform_tflint
+            args:
+                - --args=--fix
+          - id: terraform_validate
+          - id: terraform_trivy
