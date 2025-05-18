@@ -41,3 +41,19 @@ output "database_ip_address" {
   description = "The IP address of the database instance"
   value       = module.database.instance_ip_address
 }
+
+# Memorystore Outputs
+output "valkey_host" {
+  description = "The hostname of the Valkey instance"
+  value       = module.memorystore.host
+}
+
+output "valkey_port" {
+  description = "The port of the Valkey instance"
+  value       = module.memorystore.port
+}
+
+output "valkey_instance_id" {
+  description = "The ID of the Valkey instance"
+  value       = module.memorystore.instance_id
+}

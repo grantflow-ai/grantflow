@@ -38,12 +38,22 @@ module "pubsub" {
   source = "./modules/pubsub"
 }
 
+# Memorystore Module
+module "memorystore" {
+  source     = "./modules/memorystore"
+  project_id = var.project_id
+  region     = var.region
+  network_id = module.network.network_id
+  depends_on = [module.network]
+}
+
 # Cloud Run Module
 module "cloud_run" {
   source                   = "./modules/cloud_run"
   project_id               = var.project_id
   region                   = var.region
   database_connection_name = module.database.instance_connection_name
+  valkey_connection_string = module.memorystore.connection_string
 }
 
 # Secrets Module
