@@ -1,4 +1,4 @@
-import { PatternedBackground } from "./backgrounds";
+import { PatternedBackground, PatternedBackgroundMobile } from "@/components/landing-page/backgrounds";
 import { cn } from "@/lib/utils";
 import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
 import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
@@ -39,11 +39,14 @@ const CONTENT = {
 
 export function BenefitsSection() {
 	return (
-		<section aria-labelledby="benefits-section" className="relative w-full overflow-hidden bg-white">
-			<div className="absolute inset-0 flex items-center justify-center">
-				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
+		<section aria-label="benefits-section" className="relative w-full bg-white">
+			<div className="absolute inset-0 z-0 hidden sm:block">
+				<PatternedBackground aria-hidden="true" />
 			</div>
-			<div className="xl:px-30 relative z-10 flex flex-col items-center px-4 pb-15 pt-8 text-center md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pt-20">
+			<div className="absolute inset-0 z-0 sm:hidden opacity-50">
+				<PatternedBackgroundMobile aria-hidden="true" />
+			</div>
+			<div className="relative flex flex-col w-full z-10 items-center text-center px-4 pb-15 pt-8 md:px-10 md:pt-12 lg:px-20 xl:px-30 lg:pt-16 xl:pt-20">
 				<ScrollFadeElement className="mx-auto">
 					<h2 className={benefitsCardHeader} id="benefits-heading">
 						{CONTENT.heading}
