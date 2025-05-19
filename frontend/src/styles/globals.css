@@ -109,7 +109,7 @@
 
 	--link-hover: var(--app-slate-blue);
 	--link-focus: var(--app-slate-blue);
-	--ring: var(--app-slate-blue);
+	--ring: oklch(0.5 0.2821 271.85); /* #3c31ff */
 
 	--muted: var(--app-gray-200);
 	--muted-foreground: oklch(1 0 0);
@@ -184,7 +184,7 @@
 
 	--link-hover: var(--app-slate-blue);
 	--link-focus: var(--app-slate-blue);
-	--ring: var(--app-bright-blue);
+	--ring: var(--app-light-blue);
 
 	--muted: var(--app-gray-200);
 	--muted-foreground: oklch(1 0 0);
