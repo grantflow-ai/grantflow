@@ -62,7 +62,7 @@ export function NavHeader() {
 						width="auto"
 					/>
 				</Link>
-				<div className="hidden items-center md:flex">
+				<div className="hidden items-center md:flex" data-testid="nav-header-links">
 					<AppButton
 						aria-label="Go to Home Page"
 						className={`px-4 py-2 ${pathname === PagePath.ROOT.toString() ? "text-link-hover" : ""}`}
@@ -123,6 +123,7 @@ export function NavHeader() {
 				${isTermsPage && isMobileMenuOpen ? "border-b border-primary" : ""}
 				${isMobileMenuOpen ? "max-h-lg opacity-100 pointer-events-auto" : "max-h-sm opacity-0 pointer-events-none"}
 				`}
+				data-testid="mobile-menu"
 			>
 				<AppButton
 					aria-label="Go to Home Page"
@@ -151,7 +152,7 @@ export function NavHeader() {
 							setIsMobileMenuOpen(false);
 						}}
 					>
-						About Us
+						About us
 					</Link>
 				</AppButton>
 				{isHomePage && (
