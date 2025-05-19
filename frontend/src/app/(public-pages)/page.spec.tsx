@@ -109,18 +109,27 @@ vi.mock("@/components/app-button", () => ({
 vi.mock("@/components/scroll-button", () => ({
 	ScrollButton: ({
 		children,
+		desktopTargetId,
+		mobileTargetId,
 		onClick,
 		rightIcon,
-		selector,
 		size,
 	}: {
 		children?: React.ReactNode;
+		desktopTargetId?: string;
+		mobileTargetId?: string;
 		onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 		rightIcon?: React.ReactNode;
 		selector: string;
 		size?: "lg" | "md" | "sm";
 	}) => (
-		<button data-selector={selector} data-size={size} data-testid="mock-scroll-button" onClick={onClick}>
+		<button
+			data-desktopTargetId={desktopTargetId}
+			data-mobileTargetId={mobileTargetId}
+			data-size={size}
+			data-testid="mock-scroll-button"
+			onClick={onClick}
+		>
 			{children}
 			{rightIcon && <span data-testid="right-icon-container">{rightIcon}</span>}
 		</button>
@@ -179,7 +188,8 @@ describe("LandingPage", () => {
 		const tryButton = screen.getByRole("button", { name: /try for free/i });
 		expect(tryButton).toBeDefined();
 		expect(tryButton).toHaveAttribute("data-size", "lg");
-		expect(tryButton).toHaveAttribute("data-selector", "waitlist");
+		expect(tryButton).toHaveAttribute("data-desktopTargetId", "waitlist");
+		expect(tryButton).toHaveAttribute("data-mobileTargetId", "waitlist-form-container");
 
 		const iconContainer = screen.getByTestId("right-icon-container");
 		expect(iconContainer).toBeDefined();

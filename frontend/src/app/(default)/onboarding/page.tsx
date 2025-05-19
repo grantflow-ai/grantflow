@@ -100,7 +100,7 @@ export default function SignIn() {
 			data-testid="login-container"
 		>
 			<div className="absolute inset-0 flex items-center justify-center">
-				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
+				<PatternedBackground aria-hidden="true" />
 			</div>
 
 			<OnboardingGradientBackgroundTop
