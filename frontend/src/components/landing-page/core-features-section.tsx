@@ -28,11 +28,11 @@ const CORE_FEATURES = [
 
 export function CoreFeaturesSection() {
 	return (
-		<section aria-label="core-features-section" className="relative w-full bg-white overflow-x-hidden">
-			<div className="absolute inset-0 overflow-hidden flex items-center justify-center">
-				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
+		<section aria-label="core-features-section" className="relative w-full bg-white">
+			<div className="absolute inset-0 z-0">
+				<PatternedBackground aria-hidden="true" />
 			</div>
-			<div className="flex flex-col w-full z-10 items-center py-10 text-center text-stone-800 px-8 md:px-10 lg:px-20 xl:px-30">
+			<div className="relative flex flex-col w-full z-10 items-center py-10 text-center text-stone-800 px-8 md:px-10 lg:px-20 xl:px-30">
 				<ScrollFadeElement className="mx-auto">
 					<h2
 						className="font-heading xl-my-10 my-3 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
