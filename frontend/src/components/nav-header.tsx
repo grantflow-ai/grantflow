@@ -63,10 +63,20 @@ export function NavHeader() {
 					/>
 				</Link>
 				<div className="hidden items-center md:flex">
-					<AppButton aria-label="Go to Home Page" className="px-4 py-2" theme="light" variant="link">
+					<AppButton
+						aria-label="Go to Home Page"
+						className={`px-4 py-2 ${pathname === PagePath.ROOT.toString() ? "text-link-hover" : ""}`}
+						theme="light"
+						variant="link"
+					>
 						<Link href={PagePath.ROOT}>Home</Link>
 					</AppButton>
-					<AppButton aria-label="Go to About Us Page" className="px-4 py-2" theme="light" variant="link">
+					<AppButton
+						aria-label="Go to About Us Page"
+						className={`px-4 py-2 ${pathname === PagePath.ABOUT_US.toString() ? "text-link-hover" : ""}`}
+						theme="light"
+						variant="link"
+					>
 						<Link href={PagePath.ABOUT_US}>About us</Link>
 					</AppButton>
 					{isHomePage && (
@@ -114,7 +124,12 @@ export function NavHeader() {
 				${isMobileMenuOpen ? "max-h-lg opacity-100 pointer-events-auto" : "max-h-sm opacity-0 pointer-events-none"}
 				`}
 			>
-				<AppButton aria-label="Go to Home Page" size="lg" variant="link">
+				<AppButton
+					aria-label="Go to Home Page"
+					className={pathname === PagePath.ROOT.toString() ? "text-link-hover" : ""}
+					size="lg"
+					variant="link"
+				>
 					<Link
 						href={PagePath.ROOT}
 						onClick={() => {
@@ -124,7 +139,12 @@ export function NavHeader() {
 						Home
 					</Link>
 				</AppButton>
-				<AppButton aria-label="Go to About Us Page" size="lg" variant="link">
+				<AppButton
+					aria-label="Go to About Us Page"
+					className={pathname === PagePath.ABOUT_US.toString() ? "text-link-hover" : ""}
+					size="lg"
+					variant="link"
+				>
 					<Link
 						href={PagePath.ABOUT_US}
 						onClick={() => {
