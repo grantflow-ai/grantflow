@@ -4,8 +4,13 @@ import { BenefitsSection } from "@/components/landing-page/benefits-section";
 vi.mock("./backgrounds", () => ({
 	PatternedBackground: vi
 		.fn()
-		.mockImplementation(({ className, ...props }) => (
-			<div className={className} data-testid="mock-patterned-background" {...props}></div>
+		.mockImplementation((props) => (
+			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background"></div>
+		)),
+	PatternedBackgroundMobile: vi
+		.fn()
+		.mockImplementation((props) => (
+			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background-mobile"></div>
 		)),
 }));
 
@@ -60,13 +65,18 @@ describe("BenefitsSection", () => {
 
 		const section = container.querySelector("section");
 		expect(section).toBeInTheDocument();
-		expect(section).toHaveAttribute("aria-labelledby", "benefits-section");
-		expect(section).toHaveClass("relative w-full overflow-hidden bg-white");
+		expect(section).toHaveAttribute("aria-label", "benefits-section");
+		expect(section).toHaveClass("relative w-full bg-white");
 
 		const background = screen.getByTestId("mock-patterned-background");
 		expect(background).toBeInTheDocument();
-		expect(background).toHaveClass("absolute size-full object-cover object-center");
+		expect(background.parentElement).toHaveClass("absolute inset-0 z-0 hidden sm:block");
 		expect(background).toHaveAttribute("aria-hidden", "true");
+
+		const mobileBackground = screen.getByTestId("mock-patterned-background-mobile");
+		expect(mobileBackground).toBeInTheDocument();
+		expect(mobileBackground).toHaveAttribute("aria-hidden", "true");
+		expect(mobileBackground.parentElement).toHaveClass("absolute inset-0 z-0 sm:hidden opacity-50");
 
 		const contentContainer = container.querySelector(".relative.z-10.flex.flex-col");
 		expect(contentContainer).toBeInTheDocument();
