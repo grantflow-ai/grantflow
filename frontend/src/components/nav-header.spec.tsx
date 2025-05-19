@@ -61,19 +61,27 @@ vi.mock("@/components/scroll-button", () => {
 	return {
 		ScrollButton: ({
 			children,
+			desktopTargetId,
+			mobileTargetId,
 			rightIcon,
-			selector,
 			size,
 			variant,
 		}: {
 			children: React.ReactNode;
 			className?: string;
+			desktopTargetId?: string;
+			mobileTargetId?: string;
 			rightIcon?: React.ReactNode;
-			selector?: string;
 			size?: "lg" | "md" | "sm";
 			variant?: "default" | "link" | "outline";
 		}) => (
-			<button data-selector={selector} data-size={size} data-testid="scroll-button" data-variant={variant}>
+			<button
+				data-desktopTargetId={desktopTargetId}
+				data-mobileTargetId={mobileTargetId}
+				data-size={size}
+				data-testid="scroll-button"
+				data-variant={variant}
+			>
 				{children}
 				{rightIcon && <span className="right-icon">{rightIcon}</span>}
 			</button>
@@ -357,7 +365,7 @@ describe("NavHeader Component", () => {
 					.getAllByTestId("scroll-button")
 					.find((button) => !Object.hasOwn(button.dataset, "variant"));
 				expect(tryForFreeButton).toHaveAttribute("data-size", "lg");
-				expect(tryForFreeButton).toHaveAttribute("data-selector", "waitlist");
+				expect(tryForFreeButton).toHaveAttribute("data-desktopTargetId", "waitlist");
 			});
 
 			it("should have correct props for mobile menu button when closed", () => {
@@ -428,7 +436,7 @@ describe("NavHeader Component", () => {
 				expect(tryForFreeButtons).toHaveLength(2);
 
 				expect(tryForFreeButtons[1]).toHaveAttribute("data-size", "lg");
-				expect(tryForFreeButtons[1]).toHaveAttribute("data-selector", "waitlist");
+				expect(tryForFreeButtons[1]).toHaveAttribute("data-mobileTargetId", "waitlist-form-container");
 				expect(tryForFreeButtons[1]).toHaveAttribute("data-variant", "link");
 			});
 
