@@ -6,7 +6,7 @@ import React from "react";
 const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:bg-transparent", {
 	compoundVariants: [
 		{
-			className: "border-white text-white",
+			className: "border-white text-white before:border-white",
 			theme: "light",
 			variant: "secondary",
 		},
@@ -34,7 +34,8 @@ const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:b
 		variant: {
 			link: "rounded-none bg-transparent font-normal hover:text-link-hover hover:no-underline",
 			primary: "hover:bg-accent",
-			secondary: "text-primary border-primary border bg-transparent hover:border-ring hover:text-ring",
+			secondary:
+				"text-primary border-primary border bg-transparent relative before:absolute before:-inset-px before:rounded-sm before:border-2 before:border-primary before:opacity-0 hover:before:opacity-100 before:transition-opacity",
 		},
 	},
 });
