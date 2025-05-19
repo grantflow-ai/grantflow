@@ -45,7 +45,7 @@ export function NavHeader() {
 			data-testid="nav-header"
 		>
 			<div
-				className="flex items-center justify-between border-b border-b-gray-400/20 px-4 md:px-10 lg:px-20 xl:px-30"
+				className="flex items-center justify-between border-b border-b-gray-400/20 px-4 md:px-5 lg:px-6 xl:px-7"
 				data-testid="nav-header-container"
 			>
 				<Link aria-label="Go to homepage" href={PagePath.ROOT}>
@@ -62,16 +62,17 @@ export function NavHeader() {
 						width="auto"
 					/>
 				</Link>
-				<div className="hidden items-center gap-6 md:flex">
-					<AppButton aria-label="Go to Home Page" size="lg" theme="light" variant="link">
+				<div className="hidden items-center md:flex">
+					<AppButton aria-label="Go to Home Page" className="px-4 py-2" theme="light" variant="link">
 						<Link href={PagePath.ROOT}>Home</Link>
 					</AppButton>
-					<AppButton aria-label="Go to About Us Page" size="lg" theme="light" variant="link">
-						<Link href={PagePath.ABOUT_US}>About Us</Link>
+					<AppButton aria-label="Go to About Us Page" className="px-4 py-2" theme="light" variant="link">
+						<Link href={PagePath.ABOUT_US}>About us</Link>
 					</AppButton>
 					{isHomePage && (
 						<ScrollButton
 							aria-label="Go to Waitlist Form"
+							className="ms-6"
 							desktopTargetId="waitlist"
 							rightIcon={<IconGoAhead />}
 							size="lg"
