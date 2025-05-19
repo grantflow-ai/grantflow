@@ -106,7 +106,7 @@ export default function Login() {
 	return (
 		<div className="flex flex-col min-h-screen bg-white relative overflow-hidden" data-testid="login-container">
 			<div className="absolute inset-0 z-0">
-				<PatternedBackground aria-hidden="true" className="absolute size-full object-cover object-center" />
+				<PatternedBackground aria-hidden="true" />
 				<OnboardingGradientBackgroundBottom
 					aria-hidden="true"
 					className="absolute bottom-0 left-0 pointer-events-none"
