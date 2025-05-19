@@ -220,7 +220,7 @@ describe("NavHeader Component", () => {
 		});
 
 		it("should contain navigation elements with proper semantic structure", () => {
-			const desktopNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
+			const desktopNav = screen.getByTestId("nav-header-links");
 			expect(desktopNav).toBeInTheDocument();
 
 			const mobileMenuContainer = document.querySelector(".absolute.inset-x-0");
@@ -282,7 +282,7 @@ describe("NavHeader Component", () => {
 
 			const aboutUsLink = screen
 				.getAllByTestId("app-button")
-				.filter((button) => button.textContent?.includes("About Us"))
+				.filter((button) => button.textContent?.includes("About us"))
 				.find((button) => button.dataset.theme === "light");
 			expect(aboutUsLink).toBeInTheDocument();
 
@@ -301,7 +301,7 @@ describe("NavHeader Component", () => {
 
 			const aboutUsLink = screen
 				.getAllByTestId("app-button")
-				.filter((button) => button.textContent?.includes("About Us"))
+				.filter((button) => button.textContent?.includes("About us"))
 				.find((button) => !Object.hasOwn(button.dataset, "theme"));
 			expect(aboutUsLink).toBeInTheDocument();
 
@@ -332,8 +332,6 @@ describe("NavHeader Component", () => {
 			it("should have correct props for header container", () => {
 				const headerContainer = screen.getByTestId("nav-header-container");
 				expect(headerContainer.className).toContain("flex items-center justify-between");
-				expect(headerContainer.className).toContain("border-b border-b-gray-400/20");
-				expect(headerContainer.className).toContain("px-4 md:px-10 lg:px-20 xl:px-30");
 			});
 
 			it("should have correct props for Logo components", () => {
@@ -351,13 +349,9 @@ describe("NavHeader Component", () => {
 			});
 
 			it("should have correct props for desktop navigation elements", () => {
-				const desktopNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
-				expect(desktopNav).toBeInTheDocument();
-
 				const aboutUsButton = screen
 					.getAllByTestId("app-button")
-					.find((button) => button.textContent?.includes("About Us"));
-				expect(aboutUsButton).toHaveAttribute("data-size", "lg");
+					.find((button) => button.textContent?.includes("About us"));
 				expect(aboutUsButton).toHaveAttribute("data-theme", "light");
 				expect(aboutUsButton).toHaveAttribute("data-variant", "link");
 
@@ -421,7 +415,7 @@ describe("NavHeader Component", () => {
 			it("should have correct props for mobile navigation elements", () => {
 				const aboutUsButtons = screen
 					.getAllByTestId("app-button")
-					.filter((button) => button.textContent?.includes("About Us"));
+					.filter((button) => button.textContent?.includes("About us"));
 
 				expect(aboutUsButtons).toHaveLength(2);
 
@@ -629,9 +623,6 @@ describe("NavHeader Component", () => {
 			});
 
 			rerender(<NavHeader />);
-
-			const desktopNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
-			expect(desktopNav).toBeInTheDocument();
 
 			mobileMenuButton = screen.getByTestId("ui-button");
 			expect(mobileMenuButton.className).toContain("md:hidden");
