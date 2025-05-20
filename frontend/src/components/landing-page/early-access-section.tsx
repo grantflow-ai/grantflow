@@ -214,7 +214,7 @@ export function EarlyAccessSection() {
 function BenefitsAndWaitlistForm() {
 	return (
 		<MotionDiv
-			className="mt-10 flex flex-col gap-8 rounded bg-violet-200/15 py-7 ps-7 md:mt-7 md:flex-row md:gap-12 md:px-11 md:pe-7"
+			className="flex flex-col rounded bg-violet-200/15 gap-8 lg:gap-0 p-7 lg:flex-row mt-10 lg:mt-7 lg:px-11"
 			variants={contentContainerVariants}
 		>
 			<MotionSection
@@ -251,7 +251,7 @@ function BenefitsAndWaitlistForm() {
 			</MotionSection>
 			<MotionAside
 				aria-label="waitlist-form"
-				className="me-7 shrink-0 space-y-2 md:me-0"
+				className="flex flex-col shrink-0 space-y-2"
 				id="waitlist-form-container"
 				variants={formContainerVariants}
 			>
