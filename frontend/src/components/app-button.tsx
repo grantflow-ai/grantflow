@@ -33,7 +33,7 @@ const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:b
 		},
 		variant: {
 			link: "rounded-none bg-transparent font-normal hover:text-link-hover hover:no-underline",
-			primary: "hover:bg-accent",
+			primary: "hover:bg-accent disabled:opacity-100",
 			secondary:
 				"text-primary border-primary border bg-transparent relative before:absolute before:-inset-px before:rounded-sm before:border-2 before:border-primary before:opacity-0 hover:before:opacity-100 before:transition-opacity before:pointer-events-none",
 		},
