@@ -61,9 +61,8 @@ export function WaitlistForm() {
 
 	return (
 		<Form {...form}>
-			<form className="flex flex-col md:mt-0 pe-7 md:pe-0" onSubmit={form.handleSubmit(onSubmit)}>
+			<form className="flex flex-col w-full min-w-[22rem] md:mt-0 pe-0" onSubmit={form.handleSubmit(onSubmit)}>
 				<WaitListFormItem
-					className="w-full md:w-70"
 					formControl={form.control}
 					id="email"
 					label="Email address"
@@ -74,7 +73,7 @@ export function WaitlistForm() {
 				/>
 
 				<WaitListFormItem
-					className="w-full md:w-70 mt-3"
+					className="mt-3"
 					formControl={form.control}
 					id="name"
 					label="Name"
@@ -84,7 +83,7 @@ export function WaitlistForm() {
 					type="text"
 				/>
 
-				<div className="flex justify-end px-2 mt-8">
+				<div className="flex justify-end px-2 mt-8 mb-2">
 					<AppButton
 						className="text-base"
 						disabled={!form.formState.isValid || formState.status === "loading"}
@@ -94,12 +93,14 @@ export function WaitlistForm() {
 					</AppButton>
 				</div>
 
-				<div className="mt-2 w-full relative">
+				<div
+					className={`overflow-hidden transition-all duration-300 ease-in-out
+						${formState.status === "idle" ? "max-h-0 opacity-0" : "max-h-12 opacity-100"}`}
+				>
 					<p
-						className={`absolute inset-0 transition-opacity duration-200 text-wrap
-						${formState.status === "idle" ? "opacity-0" : "opacity-100"}
-						${formState.status === "success" ? "text-success" : formState.status === "error" ? "text-error" : "text-gray-50"}
-					`}
+						className={`w-full text-sm px-1 transition-all duration-300 ease-in-out
+						${formState.status === "idle" ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}
+						${formState.status === "success" ? "text-success" : formState.status === "error" ? "text-error" : "text-gray-50"}`}
 					>
 						{formState.status === "loading" ? (
 							<span className="flex items-center">
