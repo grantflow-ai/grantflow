@@ -5,7 +5,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Control, useForm } from "react-hook-form";
 
 import { z } from "zod";
-import { AppButton } from "@/components/app-button";
 
 import { addToWaitlist } from "@/actions/join-waitlist";
 import { useState } from "react";
@@ -13,7 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
-import { AppInput } from "../input-field";
+import { AppInput } from "@/components/input-field";
+import { SubmitButton } from "@/components/submit-button";
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {
@@ -84,13 +84,13 @@ export function WaitlistForm() {
 				/>
 
 				<div className="flex justify-end px-2 mt-8 mb-2">
-					<AppButton
-						className="text-base"
+					<SubmitButton
+						canBeDisabled={true}
+						data-testid="waitlist-form-submit-button"
 						disabled={!form.formState.isValid || formState.status === "loading"}
-						type="submit"
 					>
 						Join now
-					</AppButton>
+					</SubmitButton>
 				</div>
 
 				<div
