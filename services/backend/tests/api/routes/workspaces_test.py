@@ -4,9 +4,14 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Workspace, WorkspaceUser
-from services.backend.src.api.routes.workspaces import UpdateWorkspaceRequestBody
+from packages.db.src.tables import UserWorkspaceInvitation, Workspace, WorkspaceUser
+from pytest_mock import MockerFixture
+from services.backend.src.api.routes.workspaces import (
+    CreateInvitationRedirectUrlRequestBody,
+    UpdateWorkspaceRequestBody,
+)
 from services.backend.tests.conftest import TestingClientType
+from services.backend.tests.factories import CreateWorkspaceRequestBodyFactory
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -14,8 +19,6 @@ from testing.factories import (
     GrantApplicationFactory,
     WorkspaceFactory,
 )
-
-from tests.factories import CreateWorkspaceRequestBodyFactory
 
 
 async def test_create_workspace_success(
@@ -331,3 +334,120 @@ async def test_delete_workspace_failure_unauthorized(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+
+
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER,))
+async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals_inviter_role(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    user_role: UserRoleEnum,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch("services.backend.src.utils.firebase.get_user_by_email", return_value=None)
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=user_role.value,
+            )
+        )
+        await session.commit()
+
+    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.ADMIN)
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/create-invitation-redirect-url",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "role must be equal to or lower than the inviter's role" in response.json()["detail"].lower()
+
+
+async def test_create_invitation_redirect_url_user_already_member(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "services.backend.src.utils.firebase.get_user_by_email",
+        return_value={"uid": "existing_user_uid", "email": "test@example.com"},
+    )
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.ADMIN,
+            )
+        )
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid="existing_user_uid",
+                role=UserRoleEnum.MEMBER,
+            )
+        )
+
+    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.MEMBER)
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/create-invitation-redirect-url",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "user is already a member of this workspace" in response.json()["detail"].lower()
+
+
+async def test_create_invitation_redirect_url_success(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "services.backend.src.utils.firebase.get_user_by_email",
+        return_value={"uid": "new_user_uid", "email": "new_user@example.com"},
+    )
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.ADMIN,
+            )
+        )
+
+    request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.MEMBER)
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/create-invitation-redirect-url",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    response_data = response.json()
+    assert "redirect_url" in response_data
+    assert "/accept-invitation?token=" in response_data["redirect_url"]
+
+    async with async_session_maker() as session:
+        invitation = await session.scalar(
+            select(UserWorkspaceInvitation)
+            .where(UserWorkspaceInvitation.workspace_id == workspace.id)
+            .where(UserWorkspaceInvitation.email == "new_user@example.com")
+        )
+        assert invitation is not None
+        assert invitation.role == UserRoleEnum.MEMBER
+        assert invitation.invitation_sent_at is not None

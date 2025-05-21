@@ -24,6 +24,7 @@ from services.backend.src.api.routes.sources import (
     handle_retrieve_rag_sources,
 )
 from services.backend.src.api.routes.workspaces import (
+    handle_create_invitation_redirect_url,
     handle_create_workspace,
     handle_delete_workspace,
     handle_retrieve_workspace,
@@ -44,6 +45,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_upload_url,
     handle_crawl_url,
     handle_create_workspace,
+    handle_create_invitation_redirect_url,
     handle_delete_application,
     handle_delete_organization,
     handle_delete_rag_source,
