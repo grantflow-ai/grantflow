@@ -88,6 +88,18 @@ class WorkspaceUser(Base):
     workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="workspace_users")
 
 
+class UserWorkspaceInvitation(BaseWithUUIDPK):
+    __tablename__ = "user_workspace_invitations"
+
+    workspace_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum))
+    invitation_sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    workspace: Relationship["Workspace"] = relationship("Workspace")
+
+
 class RagSource(BaseWithUUIDPK):
     __tablename__ = "rag_sources"
 
