@@ -6,6 +6,7 @@ from firebase_admin.exceptions import FirebaseError
 from google.oauth2.service_account import Credentials
 from litestar.exceptions import NotAuthorizedException
 from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.exceptions import ExternalOperationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
@@ -60,4 +61,4 @@ async def get_user_by_email(email: str) -> dict[str, Any] | None:
         if "USER_NOT_FOUND" in str(e):
             return None
         logger.warning("Error getting user by email.", exec_info=e)
-        raise
+        raise ExternalOperationError("Error getting user by email.") from e
