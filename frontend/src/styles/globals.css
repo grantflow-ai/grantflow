@@ -48,6 +48,7 @@
 	--color-app-gray-300: var(--app-gray-300);
 	--color-app-gray-400: var(--app-gray-400);
 	--color-app-gray-600: var(--app-gray-600);
+	--color-app-lavender-gray: var(--app-lavender-gray);
 
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
@@ -91,6 +92,7 @@
 	--app-gray-300: oklch(0.84 0.0194 292.54); /* C9C7D5 */
 	--app-gray-500: oklch(0.64 0.0297 290.11); /* 8A889C */
 	--app-gray-600: oklch(0.5 0.0237 291.64); /* 636170 */
+	--app-lavender-gray: oklch(0.9462 0.0254 268.85); /* #E6EDFF */
 
 	--background-dark: var(--app-dark-blue);
 	--background-light: oklch(1 0 0);

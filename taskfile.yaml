@@ -119,6 +119,12 @@ tasks:
         cmds:
             - pnpm dev
 
+    frontend:storybook:
+        desc: Start the frontend Storybook server
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - pnpm run storybook
+
     frontend:test:
         desc: Run frontend tests (non-interactive mode)
         dir: "{{.FRONTEND_DIR}}"
