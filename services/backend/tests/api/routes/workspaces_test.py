@@ -13,7 +13,7 @@ from services.backend.src.api.routes.workspaces import (
 from services.backend.tests.conftest import TestingClientType
 from services.backend.tests.factories import CreateWorkspaceRequestBodyFactory
 from sqlalchemy import insert, select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationFactory,
@@ -348,14 +348,18 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
     mocker.patch("services.backend.src.utils.firebase.get_user_by_email", return_value=None)
 
     async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                workspace_id=workspace.id,
-                firebase_uid=firebase_uid,
-                role=user_role.value,
+        try:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=user_role.value,
+                )
             )
-        )
-        await session.commit()
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise e
 
     request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.ADMIN)
 
@@ -381,22 +385,32 @@ async def test_create_invitation_redirect_url_user_already_member(
     )
 
     async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                workspace_id=workspace.id,
-                firebase_uid=firebase_uid,
-                role=UserRoleEnum.ADMIN,
+        try:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.ADMIN,
+                )
             )
-        )
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise e
 
     async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                workspace_id=workspace.id,
-                firebase_uid="existing_user_uid",
-                role=UserRoleEnum.MEMBER,
+        try:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid="existing_user_uid",
+                    role=UserRoleEnum.MEMBER,
+                )
             )
-        )
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise e
 
     request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.MEMBER)
 
@@ -422,13 +436,18 @@ async def test_create_invitation_redirect_url_success(
     )
 
     async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(WorkspaceUser).values(
-                workspace_id=workspace.id,
-                firebase_uid=firebase_uid,
-                role=UserRoleEnum.ADMIN,
+        try:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=UserRoleEnum.ADMIN,
+                )
             )
-        )
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise e
 
     request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.MEMBER)
 
