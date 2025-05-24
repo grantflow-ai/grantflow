@@ -336,7 +336,7 @@ async def test_delete_workspace_failure_unauthorized(
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
-@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER,))
+@pytest.mark.parametrize("user_role", (UserRoleEnum.ADMIN,))
 async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals_inviter_role(
     test_client: TestingClientType,
     workspace: Workspace,
@@ -361,7 +361,7 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.ADMIN)
+    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.OWNER)
 
     response = await test_client.post(
         f"/workspaces/{workspace.id}/create-invitation-redirect-url",

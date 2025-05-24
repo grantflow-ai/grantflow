@@ -210,7 +210,7 @@ async def handle_create_invitation_redirect_url(
             if not inviter:
                 raise ValidationException("User is not a member of this workspace")
 
-            if inviter.role != UserRoleEnum.ADMIN and data["role"] == UserRoleEnum.ADMIN:
+            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
                 raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
 
             firebase_user = await get_user_by_email(data["email"])
