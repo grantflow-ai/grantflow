@@ -223,7 +223,6 @@ async def handle_create_invitation_redirect_url(
                 if existing_member:
                     raise ValidationException("User is already a member of this workspace")
 
-            # Create invitation
             invitation = await session.scalar(
                 insert(UserWorkspaceInvitation)
                 .values(
@@ -254,8 +253,12 @@ async def handle_create_invitation_redirect_url(
             frontend_base_url = request.app.state.settings.frontend_base_url
             redirect_url = f"{frontend_base_url}/accept-invitation?token={jwt_token}"
 
+            await session.commit()
             return InvitationRedirectUrlResponse(redirect_url=redirect_url)
 
-        except SQLAlchemyError as e:
-            logger.error("Error creating invitation", exc_info=e)
-            raise DatabaseError("Error creating invitation", context=str(e)) from e
+        except (SQLAlchemyError, ValidationException) as e:
+            await session.rollback()
+            if isinstance(e, SQLAlchemyError):
+                logger.error("Error creating invitation", exc_info=e)
+                raise DatabaseError("Error creating invitation", context=str(e)) from e
+            raise e
