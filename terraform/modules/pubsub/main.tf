@@ -93,3 +93,73 @@ resource "google_pubsub_subscription" "file_indexing_dlq_subscription" {
   # Retain acknowledged messages
   retain_acked_messages = true
 }
+
+# URL Crawler topic
+resource "google_pubsub_topic" "url_crawling" {
+  name = "url-crawling"
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
+# Push subscription to trigger the crawler Cloud Run service
+resource "google_pubsub_subscription" "url_crawling_subscription" {
+  name  = "url-crawling-subscription"
+  topic = google_pubsub_topic.url_crawling.name
+
+  ack_deadline_seconds = 60
+
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+
+  enable_message_ordering = false
+
+  # Configure push to Cloud Run
+  push_config {
+    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/crawler:call"
+
+    # Authentication for the push endpoint
+    oidc_token {
+      service_account_email = var.pubsub_invoker_service_account_email
+      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/crawler"
+    }
+
+    # This attribute specifies that we have a minimum number of failed attempts before acking the message
+    attributes = {
+      "x-goog-version" = "v1"
+    }
+  }
+
+  # Configure exponential backoff for failed deliveries
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.url_crawling_dlq.name
+    max_delivery_attempts = 5
+  }
+}
+
+# Dead letter queue topic for failed message processing in URL crawling
+resource "google_pubsub_topic" "url_crawling_dlq" {
+  name = "url-crawling-dlq"
+
+  # Add labels for easier identification
+  labels = {
+    purpose = "dead-letter-queue"
+  }
+}
+
+# Subscription to monitor the URL crawling dead letter queue
+resource "google_pubsub_subscription" "url_crawling_dlq_subscription" {
+  name  = "url-crawling-dlq-subscription"
+  topic = google_pubsub_topic.url_crawling_dlq.name
+
+  ack_deadline_seconds = 60
+
+  # Keep messages for 7 days
+  message_retention_duration = "604800s"
+
+  # Retain acknowledged messages
+  retain_acked_messages = true
+}
