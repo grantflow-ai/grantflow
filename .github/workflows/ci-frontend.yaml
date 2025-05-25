@@ -7,11 +7,13 @@ on:
       - development
     paths:
       - 'frontend/**'
+      - '.github/workflows/ci-frontend.yaml'
   push:
     branches:
       - main
     paths:
       - 'frontend/**'
+      - '.github/workflows/ci-frontend.yaml'
 
 jobs:
   test:
