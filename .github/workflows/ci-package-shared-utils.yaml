@@ -6,11 +6,13 @@ on:
       - main
       - development*
     paths:
+      - '.github/workflows/ci-package-shared-utils.yaml'
       - 'packages/shared_utils/**'
   push:
     branches:
       - main
     paths:
+      - '.github/workflows/ci-package-shared-utils.yaml'
       - 'packages/shared_utils/**'
 
 jobs:

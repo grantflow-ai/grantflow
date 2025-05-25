@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/deployment-service-indexer.yaml'
       - 'packages/**/src/**'
       - 'services/indexer/src/**'
   release:
