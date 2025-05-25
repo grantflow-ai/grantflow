@@ -25,7 +25,6 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           run_install: false
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -53,7 +52,6 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           run_install: false
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -94,7 +92,6 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           run_install: false
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
