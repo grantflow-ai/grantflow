@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 from uuid import UUID
 
 from litestar import delete, get, post
@@ -15,14 +15,18 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.exceptions import DatabaseError
+from packages.shared_utils.src.exceptions import DatabaseError, ExternalOperationError
 from packages.shared_utils.src.gcs import create_signed_upload_url
 from packages.shared_utils.src.logger import get_logger
+from services.backend.src.utils.pubsub import PubSubClient
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import with_polymorphic
+
+if TYPE_CHECKING:
+    from packages.shared_utils.src.shared_types import ParentType
 
 logger = get_logger(__name__)
 
@@ -47,6 +51,15 @@ class RagUrlResponse(TypedDict):
 
 class UploadUrlResponse(TypedDict):
     url: str
+
+
+class UrlCrawlingRequest(TypedDict):
+    url: str
+
+
+class UrlCrawlingResponse(TypedDict):
+    message: str
+    message_id: str
 
 
 def _create_operation_id_creator(key: str) -> OperationIDCreator:
@@ -200,3 +213,71 @@ async def handle_create_upload_url(
         blob_name=blob_name,
     )
     return UploadUrlResponse(url=url)
+
+
+@post(
+    [
+        "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
+        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
+        "/organizations/{organization_id:uuid}/sources/crawl-url",
+    ],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id=_create_operation_id_creator("Crawl{value}Url"),
+)
+async def handle_crawl_url(
+    data: UrlCrawlingRequest,
+    application_id: UUID | None = None,
+    organization_id: UUID | None = None,
+    template_id: UUID | None = None,
+    workspace_id: UUID | None = None,
+) -> UrlCrawlingResponse:
+    """
+    Trigger crawling of a URL for a grant application, funding organization, or grant template.
+
+    The crawler service will extract and index content from this URL.
+
+    Args:
+        data: Request containing the URL to crawl
+        application_id: UUID of the grant application (if applicable)
+        organization_id: UUID of the funding organization (if applicable)
+        template_id: UUID of the grant template (if applicable)
+        workspace_id: UUID of the workspace (required for applications and templates)
+
+    Returns:
+        Message about the crawling status and the message ID
+    """
+    url = data["url"]
+
+    # Determine what type of parent we're crawling for and parent ID
+    parent_type: ParentType
+    parent_id: UUID
+
+    if application_id:
+        parent_type = "grant_application"
+        parent_id = application_id
+    elif organization_id:
+        parent_type = "funding_organization"
+        parent_id = organization_id
+    else:
+        parent_type = "grant_template"
+        parent_id = template_id  # type: ignore  # template_id is set at this point
+
+    try:
+        pubsub_client = PubSubClient()
+        message_id = await pubsub_client.publish_url_crawling_task(
+            url=url,
+            parent_type=parent_type,
+            parent_id=parent_id,
+            workspace_id=workspace_id if parent_type != "funding_organization" else None,
+        )
+
+        return UrlCrawlingResponse(
+            message="URL crawling task has been queued successfully.",
+            message_id=message_id,
+        )
+    except Exception as e:
+        logger.error("Failed to queue URL crawling task", exc_info=e, url=url)
+        raise ExternalOperationError(
+            "Failed to queue URL crawling task",
+            context={"url": url, "error": str(e)},
+        ) from e

@@ -1,6 +1,7 @@
+from collections.abc import Generator
 from http import HTTPStatus
-from typing import Any
-from unittest.mock import Mock
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID
 
 import pytest
@@ -18,10 +19,14 @@ from packages.db.src.tables import (
     WorkspaceUser,
 )
 from pytest_mock import MockerFixture
+from services.backend.src.utils.pubsub import PubSubClient
 from services.backend.tests.conftest import TestingClientType
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import GrantApplicationFactory
+
+if TYPE_CHECKING:
+    from services.backend.src.api.routes.sources import UrlCrawlingRequest
 
 
 async def test_retrieve_application_sources(
@@ -432,3 +437,133 @@ async def test_create_upload_url_unauthorized(
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
     mock_create_url.assert_not_called()
+
+
+@pytest.fixture
+def mock_pubsub_client() -> Generator[AsyncMock, None, None]:
+    with patch("services.backend.src.api.routes.sources.PubSubClient") as mock_class:
+        client_instance = AsyncMock(spec=PubSubClient)
+        client_instance.publish_url_crawling_task.return_value = "test-message-id"
+        mock_class.return_value = client_instance
+        yield client_instance
+
+
+async def test_handle_crawl_url_grant_application(
+    test_client: TestingClientType,
+    mock_pubsub_client: AsyncMock,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    workspace_member_user: WorkspaceUser,
+) -> None:
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/crawl-url",
+        json=request_data,
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    result = response.json()
+    assert result["message"] == "URL crawling task has been queued successfully."
+    assert result["message_id"] == "test-message-id"
+
+    mock_pubsub_client.publish_url_crawling_task.assert_called_once_with(
+        url="https://example.org/docs",
+        parent_type="grant_application",
+        parent_id=grant_application.id,
+        workspace_id=workspace.id,
+    )
+
+
+async def test_handle_crawl_url_funding_organization(
+    test_client: TestingClientType,
+    mock_pubsub_client: AsyncMock,
+    funding_organization: FundingOrganization,
+    mock_admin_code: Mock,
+) -> None:
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+
+    response = await test_client.post(
+        f"/organizations/{funding_organization.id}/sources/crawl-url",
+        json=request_data,
+        headers={"Authorization": "test-admin-code"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    result = response.json()
+    assert result["message"] == "URL crawling task has been queued successfully."
+    assert result["message_id"] == "test-message-id"
+
+    mock_pubsub_client.publish_url_crawling_task.assert_called_once_with(
+        url="https://example.org/docs",
+        parent_type="funding_organization",
+        parent_id=funding_organization.id,
+    )
+
+
+async def test_handle_crawl_url_grant_template(
+    test_client: TestingClientType,
+    mock_pubsub_client: AsyncMock,
+    workspace: Workspace,
+    grant_template: GrantTemplate,
+    workspace_member_user: WorkspaceUser,
+) -> None:
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/grant_templates/{grant_template.id}/sources/crawl-url",
+        json=request_data,
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    result = response.json()
+    assert result["message"] == "URL crawling task has been queued successfully."
+    assert result["message_id"] == "test-message-id"
+
+    mock_pubsub_client.publish_url_crawling_task.assert_called_once_with(
+        url="https://example.org/docs",
+        parent_type="grant_template",
+        parent_id=grant_template.id,
+        workspace_id=workspace.id,
+    )
+
+
+async def test_handle_crawl_url_unauthorized(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+) -> None:
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/crawl-url",
+        json=request_data,
+        headers={"Authorization": "Bearer invalid_token"},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_handle_crawl_url_pubsub_error(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    workspace_member_user: WorkspaceUser,
+) -> None:
+    with patch("services.backend.src.api.routes.sources.PubSubClient") as mock_class:
+        client_instance = AsyncMock(spec=PubSubClient)
+        client_instance.publish_url_crawling_task.side_effect = Exception("PubSub error")
+        mock_class.return_value = client_instance
+
+        request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+
+        response = await test_client.post(
+            f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/crawl-url",
+            json=request_data,
+            headers={"Authorization": "Bearer some_token"},
+        )
+
+        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        assert "Failed to queue URL crawling task" in response.json()["detail"]
