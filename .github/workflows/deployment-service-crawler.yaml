@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/deployment-service-crawler.yaml'
       - 'packages/**/src/**'
       - 'services/crawler/src/**'
   release:

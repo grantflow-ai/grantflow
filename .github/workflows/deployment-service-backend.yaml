@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/deployment-service-backend.yaml'
       - 'packages/**/src/**'
       - 'services/backend/src/**'
   release:

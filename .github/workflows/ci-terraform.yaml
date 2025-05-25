@@ -6,11 +6,13 @@ on:
       - main
       - development*
     paths:
+      - '.github/workflows/ci-terraform.yaml'
       - 'terraform/**'
   push:
     branches:
       - main
     paths:
+      - '.github/workflows/ci-terraform.yaml'
       - 'terraform/**'
 
 jobs:
