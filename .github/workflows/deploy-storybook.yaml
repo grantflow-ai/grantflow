@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/deploy-storybook.yaml'
   workflow_dispatch:
 
 permissions:

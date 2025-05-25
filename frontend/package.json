@@ -14,7 +14,8 @@
 		"test:watch": "NODE_NO_WARNINGS=1 pnpm run test --watch --coverage",
 		"ui": "pnpm dlx shadcn@latest",
 		"storybook": "storybook dev -p 6006",
-		"build-storybook": "storybook build"
+		"build-storybook": "storybook build",
+		"chromatic": "npx chromatic --project-token=chpt_9532557fe994077"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^5.0.1",
@@ -63,6 +64,7 @@
 		"@types/react-dom": "19.1.5",
 		"@vitejs/plugin-react": "^4.5.0",
 		"@vitest/coverage-v8": "^3.1.4",
+		"chromatic": "^12.0.0",
 		"jsdom": "^26.1.0",
 		"prettier": "^3.5.3",
 		"storybook": "^8.6.14",
