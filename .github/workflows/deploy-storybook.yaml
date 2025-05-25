@@ -36,9 +36,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
 
       - name: Install Dependencies
         run: pnpm install -r
