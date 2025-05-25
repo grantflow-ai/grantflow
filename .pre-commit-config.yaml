@@ -70,14 +70,14 @@ repos:
 
     # Backend
     - repo: https://github.com/tox-dev/pyproject-fmt
-      rev: v2.5.1
+      rev: v2.6.0
       hooks:
           - id: pyproject-fmt
             files: .*pyproject\.toml$
             additional_dependencies: ["tomli"]
 
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.11.10
+      rev: v0.11.11
       hooks:
           - id: ruff
             args: [--fix, --unsafe-fixes]
@@ -94,14 +94,15 @@ repos:
             language: system
             types: [python]
             files: ^(packages|services)/[a-zA-Z0-9_-]+/
-#    - repo: https://github.com/antonbabenko/pre-commit-terraform
-#      rev: "v1.99.0"
-#      hooks:
-#          - id: terraform_fmt
-#            args:
-#                - --args=-recursive
-#                - --args=-write=true
-#          - id: terraform_tflint
-#            args:
-#                - --args=--fix
-#          - id: terraform_trivy
+
+    - repo: https://github.com/antonbabenko/pre-commit-terraform
+      rev: "v1.99.0"
+      hooks:
+          - id: terraform_fmt
+            args:
+                - --args=-recursive
+                - --args=-write=true
+          - id: terraform_tflint
+            args:
+                - --args=--fix
+          #- id: terraform_trivy

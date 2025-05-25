@@ -30,6 +30,7 @@ out/
 requirements.txt
 
 *storybook.log
+storybook-static/
 
 # Terraform
 terraform/generated/

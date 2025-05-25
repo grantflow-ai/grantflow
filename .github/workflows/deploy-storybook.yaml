@@ -1,0 +1,47 @@
+name: Deploy Storybook to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-storybook.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.build-publish.outputs.page_url }}
+    steps:
+      - name: Deploy Storybook to GitHub Pages
+        id: build-publish
+        uses: bitovi/github-actions-storybook-to-github-pages@v1.0.3
+        with:
+          path: frontend/storybook-static
+          install_command: pnpm install -r
+          build_command: cd frontend && pnpm build-storybook
+        env:
+          NEXT_PUBLIC_SITE_URL: https://grantflow-ai.github.io/monorepo
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+          NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_BACKEND_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_BACKEND_API_BASE_URL }}
+          NEXT_PUBLIC_MAILGUN_API_KEY: ${{ secrets.NEXT_PUBLIC_MAILGUN_API_KEY }}
+          NEXT_PUBLIC_DEBUG: false

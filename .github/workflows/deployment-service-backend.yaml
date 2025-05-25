@@ -16,7 +16,7 @@ jobs:
     if: github.event_name == 'push'
     with:
       service-name: backend
-      image-tag: dev-${{ github.sha }}
+      image-tag: ${{ github.sha }}
     permissions:
       contents: read
       id-token: write

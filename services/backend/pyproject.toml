@@ -12,6 +12,7 @@ dependencies = [
   "aiohttp>=3.11.14",
   "db",
   "firebase-admin>=6.7",
+  "google-cloud-pubsub>=2.29",
   "litestar[valkey]>=2.15.1",
   "pyjwt>=2.10.1",
   "shared-utils[ai,embeddings,gcs,nlp]",

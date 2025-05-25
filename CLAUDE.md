@@ -1,5 +1,11 @@
 # GrantFlow.AI Monorepo Guidelines
 
+Instructions:
+
+- Update CLAUDE.md with your learnings
+- Update this file with your own guidelines
+- If you encounter mistakes, correct them
+
 ## Guidelines
 
 - DO NOT add inline comments
@@ -25,3 +31,13 @@
 - Frontend tests: `cd frontend && pnpm test`
 - Python tests: `export PYTHONPATH=$(pwd) && uv run pytest <path>`
 - Linting: `pre-commit run --all-files`
+- Storybook development: `cd frontend && pnpm storybook`
+- Build Storybook: `cd frontend && pnpm build-storybook`
+
+## Storybook
+
+- We use Storybook for component development and documentation in the frontend
+- Storybook is configured with Next.js and Vite using `@storybook/experimental-nextjs-vite`
+- Story files should follow the pattern `*.stories.tsx` and be placed alongside components
+- Stories can include both UI testing stories (with mocked API calls) and integration testing stories
+- The built Storybook is deployed to GitHub Pages automatically on push to main branch
