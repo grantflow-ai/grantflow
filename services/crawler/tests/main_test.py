@@ -19,8 +19,8 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
+from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent
 from packages.shared_utils.src.shared_types import ParentType
-from services.crawler.src.main import CrawlingRequest, PubSubEvent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -117,8 +117,7 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
     )
 
     response = await test_client.post("/", json=pubsub_event)
-    assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json() == {"message": "URL crawling completed successfully."}
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
         rag_sources = await session.scalars(select(RagSource).order_by(RagSource.created_at.desc()))
@@ -156,7 +155,7 @@ async def test_handle_url_crawling_funding_organization(
     )
 
     response = await test_client.post("/", json=pubsub_event)
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
         rag_sources = await session.scalars(select(RagSource).order_by(RagSource.created_at.desc()))
@@ -190,7 +189,7 @@ async def test_handle_url_crawling_grant_template(
     )
 
     response = await test_client.post("/", json=pubsub_event)
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
         rag_sources = await session.scalars(select(RagSource).order_by(RagSource.created_at.desc()))
@@ -216,13 +215,13 @@ async def test_handle_url_crawling_no_files_returned(
     with patch("services.crawler.src.main.crawl_url") as mock_crawl:
         mock_crawl.return_value = []
 
-        request = create_crawling_request(
+        pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=request)
-        assert response.status_code == HTTPStatus.OK, response.text
+        response = await test_client.post("/", json=pubsub_event)
+        assert response.status_code == HTTPStatus.CREATED, response.text
 
         with patch("services.crawler.src.main.upload_blob") as mock_upload:
             mock_upload.assert_not_called()
@@ -235,12 +234,12 @@ async def test_handle_url_crawling_database_error(
     with patch("services.crawler.src.main.insert") as mock_insert:
         mock_insert.side_effect = Exception("Database error")
 
-        request = create_crawling_request(
+        pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=request)
+        response = await test_client.post("/", json=pubsub_event)
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
@@ -252,12 +251,12 @@ async def test_handle_url_crawling_extraction_error(
     with patch("services.crawler.src.main.crawl_url") as mock_crawl:
         mock_crawl.side_effect = Exception("Extraction error")
 
-        request = create_crawling_request(
+        pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=request)
+        response = await test_client.post("/", json=pubsub_event)
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
         async with async_session_maker() as session:
@@ -273,14 +272,14 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     grant_application: GrantApplication,
 ) -> None:
     workspace_id = uuid4()
-    request = create_crawling_request(
+    pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
         parent_type="grant_application",
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=request)
-    assert response.status_code == HTTPStatus.OK
+    response = await test_client.post("/", json=pubsub_event)
+    assert response.status_code == HTTPStatus.CREATED
 
     assert mock_construct_object_uri.call_count == 2
     assert mock_construct_object_uri.call_args_list[0][1]["application_id"] == str(grant_application.id)
@@ -313,7 +312,7 @@ async def test_decode_pubsub_message(
         )
 
         response = await test_client.post("/", json=pubsub_event)
-        assert response.status_code == HTTPStatus.OK
+        assert response.status_code == HTTPStatus.CREATED
 
         mock_decode.assert_called_once()
 
