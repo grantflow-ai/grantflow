@@ -54,8 +54,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 @pytest.fixture(autouse=True)
 def mock_server_start() -> Generator[None, None, None]:
     with (
-        patch("services.backend.src.api.main.get_firebase_app"),
-        patch("services.backend.src.api.main.init_llm_connection"),
+        patch("services.backend.src.main.get_firebase_app"),
+        patch("services.backend.src.main.init_llm_connection"),
     ):
         yield
 
