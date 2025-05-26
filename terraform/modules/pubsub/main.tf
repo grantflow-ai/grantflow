@@ -168,7 +168,7 @@ resource "google_pubsub_subscription" "url_crawling_dlq_subscription" {
 resource "google_pubsub_topic_iam_member" "backend_publisher" {
   topic  = google_pubsub_topic.url_crawling.name
   role   = "roles/pubsub.publisher"
-  member = "serviceAccount:${data.google_project.project.default_service_account}"
+  member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
 # Data source to get the project number for the default service account
