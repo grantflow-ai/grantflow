@@ -163,3 +163,15 @@ resource "google_pubsub_subscription" "url_crawling_dlq_subscription" {
   # Retain acknowledged messages
   retain_acked_messages = true
 }
+
+# IAM binding to allow the backend service account to publish to the URL crawling topic
+resource "google_pubsub_topic_iam_member" "backend_publisher" {
+  topic  = google_pubsub_topic.url_crawling.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${data.google_project.project.default_service_account}"
+}
+
+# Data source to get the project number for the default service account
+data "google_project" "project" {
+  project_id = var.project_id
+}
