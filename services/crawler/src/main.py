@@ -1,7 +1,6 @@
 import base64
 from asyncio import gather
-from typing import Any, NotRequired, TypedDict
-from uuid import UUID
+from typing import Any
 
 from litestar import post
 from packages.db.src.constants import RAG_URL
@@ -16,9 +15,9 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.exceptions import DatabaseError, DeserializationError, ValidationError
 from packages.shared_utils.src.gcs import construct_object_uri, upload_blob
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
-from packages.shared_utils.src.shared_types import ParentType
 from services.crawler.src.extraction import crawl_url
 from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -27,30 +26,11 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 logger = get_logger(__name__)
 
 
-class PubSubMessage(TypedDict):
-    message_id: str
-    publish_time: str
-    data: str
-    attributes: dict[str, str]
-
-
-class PubSubEvent(TypedDict):
-    message: PubSubMessage
-
-
-class CrawlingRequest(TypedDict):
-    parent_id: UUID
-    parent_type: ParentType
-    workspace_id: NotRequired[UUID]
-    url: str
-
-
 async def decode_pubsub_message(event: PubSubEvent) -> CrawlingRequest:
     try:
         encoded_data = event["message"]["data"]
         decoded_data = base64.b64decode(encoded_data).decode()
         return deserialize(decoded_data, CrawlingRequest)
-
     except DeserializationError as e:
         logger.error("Validation error processing PubSub message", exc_info=e)
         raise ValidationError(

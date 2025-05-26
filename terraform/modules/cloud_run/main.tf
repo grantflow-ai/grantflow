@@ -159,6 +159,11 @@ resource "google_cloud_run_v2_service" "backend" {
         value = var.valkey_connection_string
       }
 
+      env {
+        name  = "URL_CRAWLING_PUBSUB_TOPIC"
+        value = "url-crawling"
+      }
+
       # Mount the Cloud SQL volume
       volume_mounts {
         name       = "cloudsql"

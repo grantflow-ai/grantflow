@@ -15,6 +15,7 @@ from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
 from packages.shared_utils.src.gcs import download_blob, parse_object_uri
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.pubsub import PubSubEvent
 from packages.shared_utils.src.server import create_litestar_app
 from services.indexer.src.processing import process_source
 from sqlalchemy import insert
@@ -22,17 +23,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
-
-
-class PubSubMessage(TypedDict):
-    message_id: str
-    publish_time: str
-    data: str
-    attributes: dict[str, str]
-
-
-class PubSubEvent(TypedDict):
-    message: PubSubMessage
 
 
 class GCSNotification(TypedDict):
