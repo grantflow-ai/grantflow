@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.gcs_test_plugin"]
 
-# Configure logging for the test session
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -21,7 +20,6 @@ async def test_client(
 ) -> AsyncGenerator[AsyncTestClient[Any], None]:
     os.environ.setdefault("STORAGE_EMULATOR_HOST", gcs_emulator_host)
     app.state.session_maker = async_session_maker
-    # Enable debug mode for the app
     app.debug = True
 
     async with AsyncTestClient(app=app, raise_server_exceptions=True) as client:
