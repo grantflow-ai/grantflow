@@ -15,10 +15,10 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.exceptions import DatabaseError, ExternalOperationError
+from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import create_signed_upload_url
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.utils.pubsub import PubSubClient
+from services.backend.src.utils.pubsub import publish_url_crawling_task
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -59,7 +59,6 @@ class UrlCrawlingRequest(TypedDict):
 
 class UrlCrawlingResponse(TypedDict):
     message: str
-    message_id: str
 
 
 def _create_operation_id_creator(key: str) -> OperationIDCreator:
@@ -262,22 +261,14 @@ async def handle_crawl_url(
         parent_type = "grant_template"
         parent_id = template_id  # type: ignore  # template_id is set at this point
 
-    try:
-        pubsub_client = PubSubClient()
-        message_id = await pubsub_client.publish_url_crawling_task(
-            url=url,
-            parent_type=parent_type,
-            parent_id=parent_id,
-            workspace_id=workspace_id if parent_type != "funding_organization" else None,
-        )
+    message_id = await publish_url_crawling_task(
+        url=url,
+        parent_type=parent_type,
+        parent_id=parent_id,
+        workspace_id=workspace_id if parent_type != "funding_organization" else None,
+    )
+    logger.info("Published URL crawling task", url=url, message_id=message_id)
 
-        return UrlCrawlingResponse(
-            message="URL crawling task has been queued successfully.",
-            message_id=message_id,
-        )
-    except Exception as e:
-        logger.error("Failed to queue URL crawling task", exc_info=e, url=url)
-        raise ExternalOperationError(
-            "Failed to queue URL crawling task",
-            context={"url": url, "error": str(e)},
-        ) from e
+    return UrlCrawlingResponse(
+        message="URL crawling task has been queued successfully.",
+    )

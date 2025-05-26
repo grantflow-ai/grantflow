@@ -19,7 +19,6 @@ from packages.db.src.tables import (
     WorkspaceUser,
 )
 from pytest_mock import MockerFixture
-from services.backend.src.utils.pubsub import PubSubClient
 from services.backend.tests.conftest import TestingClientType
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -440,17 +439,15 @@ async def test_create_upload_url_unauthorized(
 
 
 @pytest.fixture
-def mock_pubsub_client() -> Generator[AsyncMock, None, None]:
-    with patch("services.backend.src.api.routes.sources.PubSubClient") as mock_class:
-        client_instance = AsyncMock(spec=PubSubClient)
-        client_instance.publish_url_crawling_task.return_value = "test-message-id"
-        mock_class.return_value = client_instance
-        yield client_instance
+def mock_publish_url_crawling_task() -> Generator[AsyncMock, None, None]:
+    with patch("services.backend.src.api.routes.sources.publish_url_crawling_task") as mock_func:
+        mock_func.return_value = "test-message-id"
+        yield mock_func
 
 
 async def test_handle_crawl_url_grant_application(
     test_client: TestingClientType,
-    mock_pubsub_client: AsyncMock,
+    mock_publish_url_crawling_task: AsyncMock,
     workspace: Workspace,
     grant_application: GrantApplication,
     workspace_member_user: WorkspaceUser,
@@ -466,9 +463,8 @@ async def test_handle_crawl_url_grant_application(
     assert response.status_code == HTTPStatus.CREATED, response.text
     result = response.json()
     assert result["message"] == "URL crawling task has been queued successfully."
-    assert result["message_id"] == "test-message-id"
 
-    mock_pubsub_client.publish_url_crawling_task.assert_called_once_with(
+    mock_publish_url_crawling_task.assert_called_once_with(
         url="https://example.org/docs",
         parent_type="grant_application",
         parent_id=grant_application.id,
@@ -478,7 +474,7 @@ async def test_handle_crawl_url_grant_application(
 
 async def test_handle_crawl_url_funding_organization(
     test_client: TestingClientType,
-    mock_pubsub_client: AsyncMock,
+    mock_publish_url_crawling_task: AsyncMock,
     funding_organization: FundingOrganization,
     mock_admin_code: Mock,
 ) -> None:
@@ -493,18 +489,18 @@ async def test_handle_crawl_url_funding_organization(
     assert response.status_code == HTTPStatus.CREATED, response.text
     result = response.json()
     assert result["message"] == "URL crawling task has been queued successfully."
-    assert result["message_id"] == "test-message-id"
 
-    mock_pubsub_client.publish_url_crawling_task.assert_called_once_with(
+    mock_publish_url_crawling_task.assert_called_once_with(
         url="https://example.org/docs",
         parent_type="funding_organization",
         parent_id=funding_organization.id,
+        workspace_id=None,
     )
 
 
 async def test_handle_crawl_url_grant_template(
     test_client: TestingClientType,
-    mock_pubsub_client: AsyncMock,
+    mock_publish_url_crawling_task: AsyncMock,
     workspace: Workspace,
     grant_template: GrantTemplate,
     workspace_member_user: WorkspaceUser,
@@ -520,9 +516,8 @@ async def test_handle_crawl_url_grant_template(
     assert response.status_code == HTTPStatus.CREATED, response.text
     result = response.json()
     assert result["message"] == "URL crawling task has been queued successfully."
-    assert result["message_id"] == "test-message-id"
 
-    mock_pubsub_client.publish_url_crawling_task.assert_called_once_with(
+    mock_publish_url_crawling_task.assert_called_once_with(
         url="https://example.org/docs",
         parent_type="grant_template",
         parent_id=grant_template.id,
@@ -552,10 +547,8 @@ async def test_handle_crawl_url_pubsub_error(
     grant_application: GrantApplication,
     workspace_member_user: WorkspaceUser,
 ) -> None:
-    with patch("services.backend.src.api.routes.sources.PubSubClient") as mock_class:
-        client_instance = AsyncMock(spec=PubSubClient)
-        client_instance.publish_url_crawling_task.side_effect = Exception("PubSub error")
-        mock_class.return_value = client_instance
+    with patch("services.backend.src.api.routes.sources.publish_url_crawling_task") as mock_func:
+        mock_func.side_effect = Exception("PubSub error")
 
         request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
@@ -566,4 +559,3 @@ async def test_handle_crawl_url_pubsub_error(
         )
 
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-        assert "Failed to queue URL crawling task" in response.json()["detail"]
