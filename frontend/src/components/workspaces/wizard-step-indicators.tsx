@@ -40,7 +40,13 @@ export function WizardStepIndicators({ currentStep, stepTitles }: WizardStepIndi
 										}}
 									>
 										<span
-											className={`text-xs text-center font-heading ${index === currentStep ? "font-semibold text-blue-600" : "text-gray-500"}`}
+											className={`text-xs text-center font-heading ${
+												index < currentStep
+													? "text-secondary"
+													: index === currentStep
+														? "text-primary"
+														: "text-gray-400"
+											}`}
 											data-testid={`step-title-${index}`}
 										>
 											{title}

@@ -116,15 +116,21 @@ function WizardFooter({
 	);
 }
 
-function WizardHeader({ currentStep }: { currentStep: number }) {
+function WizardHeader({ currentStep, showHeaderInfo = true }: { currentStep: number; showHeaderInfo?: boolean }) {
 	return (
 		<header className="w-full border-app-lavender-gray border-solid border-b p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-8">
-				<div className="flex items-center space-x-2">
-					<h1 className="text-nowrap" data-testid="app-name">
-						Application name
-					</h1>
-					<Deadline />
+				<div className="flex items-center space-x-2 min-h-7">
+					{showHeaderInfo ? (
+						<>
+							<h1 className="text-nowrap" data-testid="app-name">
+								Application name
+							</h1>
+							<Deadline />
+						</>
+					) : (
+						<div className="invisible"></div>
+					)}
 				</div>
 				<AppButton className="text-base py-0" data-testid="save-exit-button" size="lg" variant="link">
 					Save and Exit
