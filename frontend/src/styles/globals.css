@@ -109,7 +109,7 @@
 	--secondary: var(--app-dark-blue);
 	--secondary-foreground: oklch(1 0 0);
 
-	--link-hover: var(--app-slate-blue);
+	--link-hover: var(--app-light-blue);
 	--link-focus: var(--app-slate-blue);
 	--ring: var(--app-light-blue);
 

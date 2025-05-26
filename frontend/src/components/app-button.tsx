@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import React from "react";
 
-const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:bg-transparent", {
+const appButtonVariants = cva("font-button text-base rounded-sm font-light hover:bg-transparent", {
 	compoundVariants: [
 		{
 			className: "border-white text-white before:border-white",
@@ -41,9 +41,9 @@ const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:b
 });
 
 const ICON_DIMENSIONS_MAP = {
-	lg: { height: 19, width: 19 },
-	md: { height: 15, width: 15 },
-	sm: { height: 13, width: 13 },
+	lg: { height: 16, width: 16 },
+	md: { height: 16, width: 16 },
+	sm: { height: 16, width: 16 },
 };
 
 export interface AppButtonProps

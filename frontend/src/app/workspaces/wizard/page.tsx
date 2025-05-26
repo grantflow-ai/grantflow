@@ -1,57 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { AppButton } from "@/components/app-button";
 import { IconGoAhead, IconGoBack } from "@/components/icons";
-import {
-	IconApplicationStepActive,
-	IconApplicationStepDone,
-	IconApplicationStepInActive,
-	IconApprove,
-	IconButtonLogo,
-	IconDeadline,
-} from "@/components/workspaces/icons";
+import { IconApprove, IconButtonLogo, IconDeadline } from "@/components/workspaces/icons";
+import { WizardStepIndicators } from "@/components/workspaces/wizard-step-indicators";
+
+const steps = [
+	<div className="p-4" key={0}>
+		<h2 className="text-2xl font-bold mb-4">Application Details</h2>
+		<p>Step 1: Enter your application details here</p>
+	</div>,
+	<div className="p-4" key={1}>
+		<h2 className="text-2xl font-bold mb-4">Preview and Approve</h2>
+		<p>Step 2: Review and approve your application</p>
+	</div>,
+	<div className="p-4" key={2}>
+		<h2 className="text-2xl font-bold mb-4">Knowledge Base</h2>
+		<p>Step 3: Set up your knowledge base</p>
+	</div>,
+	<div className="p-4" key={3}>
+		<h2 className="text-2xl font-bold mb-4">Research Plan</h2>
+		<p>Step 4: Define your research plan</p>
+	</div>,
+	<div className="p-4" key={4}>
+		<h2 className="text-2xl font-bold mb-4">Research Deep Dive</h2>
+		<p>Step 5: Conduct in-depth research</p>
+	</div>,
+	<div className="p-4" key={5}>
+		<h2 className="text-2xl font-bold mb-4">Generate and Complete</h2>
+		<p>Step 6: Finalize and complete your application</p>
+	</div>,
+];
+
+const wizardStepTitles = [
+	"Application Details",
+	"Application Structure",
+	"Knowledge Base",
+	"Research Plan",
+	"Research Deep Dive",
+	"Generate and Complete",
+];
 
 function Deadline() {
 	return (
 		<div
-			className="relative rounded-sm bg-app-lavender-gray w-full flex flex-row items-center justify-center py-1 px-2 box-border gap-0.5"
+			className="relative rounded-xs bg-app-lavender-gray w-full flex flex-row items-center justify-center py-1 px-2 box-border gap-0.5 text-sm"
 			data-testid="deadline-component"
 		>
 			<IconDeadline />
-			<div className="relative leading-[18px]">
+			<div className="leading-[18px]">
 				<span className="font-semibold">4</span>
 				<span> weeks and </span>
 				<span className="font-semibold">3</span>
 				<span> days to the deadline</span>
 			</div>
-		</div>
-	);
-}
-
-function ElementApplicationStepActive() {
-	return (
-		<div className="w-full relative flex flex-row items-center justify-center" data-testid="step-active">
-			<IconApplicationStepActive />
-			<div className="flex-1 relative bg-muted h-px" />
-		</div>
-	);
-}
-
-function ElementApplicationStepDone() {
-	return (
-		<div className="w-full relative flex flex-row items-center justify-center" data-testid="step-done">
-			<IconApplicationStepDone />
-			<div className="flex-1 bg-primary h-px" />
-		</div>
-	);
-}
-
-function ElementApplicationStepInactive() {
-	return (
-		<div className="w-full relative flex flex-row items-center justify-center" data-testid="step-inactive">
-			<IconApplicationStepInActive />
-			<div className="flex-1 bg-muted h-px" />
 		</div>
 	);
 }
@@ -113,108 +116,21 @@ function WizardFooter({
 	);
 }
 
-const steps = [
-	<div className="p-4" key={0}>
-		<h2 className="text-2xl font-bold mb-4">Application Details</h2>
-		<p>Step 1: Enter your application details here</p>
-	</div>,
-	<div className="p-4" key={1}>
-		<h2 className="text-2xl font-bold mb-4">Preview and Approve</h2>
-		<p>Step 2: Review and approve your application</p>
-	</div>,
-	<div className="p-4" key={2}>
-		<h2 className="text-2xl font-bold mb-4">Knowledge Base</h2>
-		<p>Step 3: Set up your knowledge base</p>
-	</div>,
-	<div className="p-4" key={3}>
-		<h2 className="text-2xl font-bold mb-4">Research Plan</h2>
-		<p>Step 4: Define your research plan</p>
-	</div>,
-	<div className="p-4" key={4}>
-		<h2 className="text-2xl font-bold mb-4">Research Deep Dive</h2>
-		<p>Step 5: Conduct in-depth research</p>
-	</div>,
-	<div className="p-4" key={5}>
-		<h2 className="text-2xl font-bold mb-4">Generate and Complete</h2>
-		<p>Step 6: Finalize and complete your application</p>
-	</div>,
-];
-
 function WizardHeader({ currentStep }: { currentStep: number }) {
-	const stepTitles = [
-		"Application Details",
-		"Preview and Approve",
-		"Knowledge Base",
-		"Research Plan",
-		"Research Deep Dive",
-		"Generate and Complete",
-	];
-
 	return (
 		<header className="w-full border-app-lavender-gray border-solid border-b p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-8">
-				<div className="flex items-center space-x-4">
+				<div className="flex items-center space-x-2">
 					<h1 className="text-nowrap" data-testid="app-name">
 						Application name
 					</h1>
 					<Deadline />
 				</div>
-				<AppButton data-testid="save-exit-button" onClick={() => undefined} size="md" variant="link">
+				<AppButton className="text-base py-0" data-testid="save-exit-button" size="lg" variant="link">
 					Save and Exit
 				</AppButton>
 			</div>
-			<div className="flex justify-center">
-				<div className="flex w-full max-w-4xl" data-testid="step-indicators">
-					{stepTitles.map((title, index) => {
-						const isLastStep = index === stepTitles.length - 1;
-
-						return (
-							<div
-								className="flex-1 flex flex-col items-center"
-								data-testid={`step-${index}`}
-								key={index}
-							>
-								<div className="flex items-center w-full">
-									{isLastStep ? (
-										<div
-											className="w-full relative flex flex-row items-center justify-start"
-											data-testid={
-												index < currentStep
-													? "step-done"
-													: index === currentStep
-														? "step-active"
-														: "step-inactive"
-											}
-										>
-											{index < currentStep ? (
-												<IconApplicationStepDone />
-											) : index === currentStep ? (
-												<IconApplicationStepActive />
-											) : (
-												<IconApplicationStepInActive />
-											)}
-										</div>
-									) : index < currentStep ? (
-										<ElementApplicationStepDone />
-									) : index === currentStep ? (
-										<ElementApplicationStepActive />
-									) : (
-										<ElementApplicationStepInactive />
-									)}
-								</div>
-								<div className="flex justify-center w-full mt-2 -ms-35">
-									<span
-										className={`text-xs text-center ${index === currentStep ? "font-semibold text-blue-600" : "text-gray-500"}`}
-										data-testid={`step-title-${index}`}
-									>
-										{title}
-									</span>
-								</div>
-							</div>
-						);
-					})}
-				</div>
-			</div>
+			<WizardStepIndicators currentStep={currentStep} stepTitles={wizardStepTitles} />
 		</header>
 	);
 }
