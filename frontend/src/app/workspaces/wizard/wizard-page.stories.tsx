@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import WizardPage from "./page";
+import { expect, userEvent, within } from "@storybook/test";
+import WizardPage from "@/app/workspaces/wizard/page";
 
 const meta = {
 	component: WizardPage,
@@ -10,7 +11,7 @@ const meta = {
 			query: {},
 		},
 	},
-	title: "Pages/WorkspaceWizard",
+	title: "Pages/Application Workspace Wrapper",
 } satisfies Meta<typeof WizardPage>;
 
 export default meta;
@@ -67,5 +68,48 @@ export const HeaderLayout: Story = {
 export const FooterLayout: Story = {
 	args: {
 		initialStep: 2,
+	},
+};
+
+export const UserInteraction: Story = {
+	args: {
+		initialStep: 0,
+	},
+	play: async ({ canvasElement, step }) => {
+		const canvas = within(canvasElement);
+
+		await step("Wait for component to render", () => {
+			void expect(canvas.getByTestId("wizard-header")).toBeInTheDocument();
+		});
+
+		await step("Click the continue button", async () => {
+			const continueButton = canvas.getByTestId("continue-button");
+			await userEvent.click(continueButton);
+		});
+
+		await step("Verify we moved to the next step", () => {
+			void expect(canvas.getByText("Preview and Approve")).toBeInTheDocument();
+		});
+	},
+};
+
+export const WithCustomParameters: Story = {
+	args: {
+		initialStep: 4,
+	},
+	parameters: {
+		layout: "centered",
+		viewport: {
+			defaultViewport: "mobile",
+		},
+	},
+};
+
+export const NoControls: Story = {
+	args: {
+		initialStep: 5,
+	},
+	parameters: {
+		controls: { disable: true },
 	},
 };
