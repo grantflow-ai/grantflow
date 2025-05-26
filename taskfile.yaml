@@ -130,7 +130,7 @@ tasks:
         dir: "{{.FRONTEND_DIR}}"
         dotenv: [".env"]
         cmds:
-            - pnpm test run
+            - pnpm test
 
     # Backend Commands
 
