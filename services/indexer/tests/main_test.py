@@ -17,8 +17,8 @@ from packages.db.src.tables import (
     RagFile,
     RagSource,
 )
+from packages.shared_utils.src.pubsub import PubSubEvent
 from services.indexer.src.main import (
-    PubSubEvent,
     get_gcs_notification_data,
     handle_pubsub_message,
 )

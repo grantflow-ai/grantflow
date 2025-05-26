@@ -41,3 +41,16 @@ Instructions:
 - Story files should follow the pattern `*.stories.tsx` and be placed alongside components
 - Stories can include both UI testing stories (with mocked API calls) and integration testing stories
 - The built Storybook is deployed to GitHub Pages automatically on push to main branch
+
+## Testing Guidelines
+
+### Python Testing
+
+- Use `pytest.mark.asyncio` for async test functions
+- When testing code that uses singleton patterns (like client references), create fixtures to reset the singleton state between tests
+- For mocking async functions, use `AsyncMock` from `unittest.mock`
+- When mocking Google Cloud clients, ensure you mock both the client creation and the method calls
+- For testing JSON serialization output, be aware that the `serialize` function may produce compact JSON without spaces after colons
+- Test both success and failure scenarios, including specific exception types
+- Use `pytest.raises` with the `match` parameter to verify specific error messages
+- When testing functions that accept both string and UUID types, test both variations
