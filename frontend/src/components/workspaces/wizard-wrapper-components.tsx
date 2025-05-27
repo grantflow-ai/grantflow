@@ -10,6 +10,34 @@ import { AppButton } from "@/components/app-button";
 import { IconGoAhead, IconGoBack } from "@/components/icons";
 import React from "react";
 
+export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
+	const IconComponent =
+		type === "done"
+			? IconApplicationStepDone
+			: type === "active"
+				? IconApplicationStepActive
+				: IconApplicationStepInActive;
+
+	if (isLastStep) {
+		return (
+			<div className="relative flex flex-row items-start justify-start" data-testid={`step-${type}`}>
+				<IconComponent />
+			</div>
+		);
+	}
+
+	const lineClass = type === "done" ? "bg-primary" : "bg-muted";
+
+	return (
+		<div className="w-full relative flex flex-row items-center" data-testid={`step-${type}`}>
+			<div className="relative flex justify-center">
+				<IconComponent />
+			</div>
+			<div className={`flex-1 ${lineClass} h-px`} />
+		</div>
+	);
+}
+
 export function WizardFooter({
 	currentStep,
 	onBack,
@@ -59,7 +87,7 @@ export function WizardFooter({
 export function WizardHeader({
 	applicationName,
 	currentStep,
-	showHeaderInfo = true,
+	showHeaderInfo = false,
 	stepTitles,
 }: {
 	applicationName: string;
@@ -171,32 +199,4 @@ function generateFooterRightButtonProps(currentStep: number) {
 		rightButtonText: isApproveStep ? "Approve and Continue" : isGenerateStep ? "Generate" : "Next",
 		rightIcon: isGenerateStep ? undefined : <IconGoAhead />,
 	};
-}
-
-function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
-	const IconComponent =
-		type === "done"
-			? IconApplicationStepDone
-			: type === "active"
-				? IconApplicationStepActive
-				: IconApplicationStepInActive;
-
-	if (isLastStep) {
-		return (
-			<div className="relative flex flex-row items-start justify-start" data-testid={`step-${type}`}>
-				<IconComponent />
-			</div>
-		);
-	}
-
-	const lineClass = type === "done" ? "bg-primary" : "bg-muted";
-
-	return (
-		<div className="w-full relative flex flex-row items-center" data-testid={`step-${type}`}>
-			<div className="relative flex justify-center">
-				<IconComponent />
-			</div>
-			<div className={`flex-1 ${lineClass} h-px`} />
-		</div>
-	);
 }

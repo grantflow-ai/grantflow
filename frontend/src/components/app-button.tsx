@@ -33,18 +33,12 @@ const appButtonVariants = cva("size-auto font-button text-base rounded-sm font-l
 		},
 		variant: {
 			link: "rounded-none bg-transparent font-normal hover:text-link-hover hover:no-underline",
-			primary: "hover:bg-accent disabled:opacity-100",
+			primary: "hover:bg-accent disabled:opacity-100 disabled:bg-muted",
 			secondary:
 				"text-primary border-primary border bg-transparent relative before:absolute before:-inset-px before:rounded-sm before:border-2 before:border-primary before:opacity-0 hover:before:opacity-100 before:transition-opacity before:pointer-events-none",
 		},
 	},
 });
-
-const ICON_DIMENSIONS_MAP = {
-	lg: { height: 16, width: 16 },
-	md: { height: 16, width: 16 },
-	sm: { height: 16, width: 16 },
-};
 
 export interface AppButtonProps
 	extends Omit<ShadcnButtonProps, "size" | "variant">,
@@ -66,8 +60,6 @@ export function AppButton({
 	variant,
 	...props
 }: AppButtonProps) {
-	const iconDimens = ICON_DIMENSIONS_MAP[size ?? "md"];
-
 	const combinedClassNames = cn(
 		buttonVariants({
 			size: size === "md" ? "default" : size,
@@ -79,26 +71,22 @@ export function AppButton({
 
 	return (
 		<Button className={combinedClassNames} {...props}>
-			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon, iconDimens)} </span>}
+			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
 			{children}
-			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon, iconDimens)}</span>}
+			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon)}</span>}
 		</Button>
 	);
 }
 
-function resizedIcon(
-	icon: React.ReactNode,
-	dimens: { height: number; width: number },
-	keepIconSize = false,
-): React.ReactNode {
+function resizedIcon(icon: React.ReactNode, keepIconSize = false): React.ReactNode {
 	if (!icon || keepIconSize) {
 		return icon;
 	}
 
 	if (React.isValidElement(icon)) {
 		return React.cloneElement(icon as React.ReactElement<React.HTMLProps<SVGSVGElement>>, {
-			height: dimens.height,
-			width: dimens.width,
+			height: 16,
+			width: 16,
 		});
 	}
 

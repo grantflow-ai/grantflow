@@ -1,6 +1,7 @@
 function IconGoAhead({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-go-ahead"
 			fill="currentColor"
 			height={height}
 			viewBox="0 -960 960 960"
@@ -16,6 +17,7 @@ function IconGoAhead({ height = 15, width = 15, ...props }: React.HTMLProps<SVGS
 function IconGoBack({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-go-back"
 			fill="currentColor"
 			height={height}
 			viewBox="0 0 16 16"
