@@ -207,7 +207,6 @@ function LoginForm({
 						)}
 					/>
 					<SubmitButton
-						canBeDisabled={false}
 						className="mt-3 mb-8 w-full"
 						data-testid="login-form-submit-button"
 						disabled={!form.formState.isValid || isLoading}
