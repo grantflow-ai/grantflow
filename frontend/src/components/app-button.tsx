@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import React from "react";
 
-const appButtonVariants = cva("font-button text-base rounded-sm font-light hover:bg-transparent", {
+const appButtonVariants = cva("size-auto font-button text-base rounded-sm font-light hover:bg-transparent", {
 	compoundVariants: [
 		{
 			className: "border-white text-white before:border-white",
@@ -11,7 +11,7 @@ const appButtonVariants = cva("font-button text-base rounded-sm font-light hover
 			variant: "secondary",
 		},
 		{
-			className: "h-0 px-0 text-xl",
+			className: "h-auto px-0 text-xl",
 			size: "lg",
 			variant: "link",
 		},
@@ -23,9 +23,9 @@ const appButtonVariants = cva("font-button text-base rounded-sm font-light hover
 	},
 	variants: {
 		size: {
-			lg: "h-9.5 px-4",
-			md: "h-7.5 px-3",
-			sm: "h-6 px-2 text-sm",
+			lg: "px-4 py-2",
+			md: "px-3 py-1 text-sm",
+			sm: "px-1 py-0.5 text-sm",
 		},
 		theme: {
 			dark: "",
