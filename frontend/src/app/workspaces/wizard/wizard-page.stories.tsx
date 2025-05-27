@@ -6,7 +6,7 @@ const WizardPageRenderer = ({
 	showHeaderInfo = false,
 }: {
 	initialStep: number;
-	showHeaderInfo?: boolean;
+	showHeaderInfo?: boolean | undefined;
 }) => {
 	const props: Parameters<typeof WizardPage>[0] = {
 		initialStep,
