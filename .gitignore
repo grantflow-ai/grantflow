@@ -33,7 +33,6 @@ requirements.txt
 storybook-static/
 
 # Terraform
-terraform/generated/
 .terraform/
 *.tfstate
 *.tfstate.*

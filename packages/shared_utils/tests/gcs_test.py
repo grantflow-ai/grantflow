@@ -70,7 +70,7 @@ def test_get_credentials_with_service_account(mock_env_vars: None) -> None:
         patch("packages.shared_utils.src.gcs.Credentials") as mock_creds_class,
     ):
         mock_get_env.side_effect = (
-            lambda key, fallback=None: "" if key == "STORAGE_EMULATOR_HOST" else "credentials_json"  # noqa: ARG005
+            lambda key, fallback=None: "" if key == "STORAGE_EMULATOR_HOST" else "credentials_json"
         )
         mock_deserialize.return_value = mock_credentials
         mock_creds_instance = MagicMock()
