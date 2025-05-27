@@ -1,6 +1,7 @@
 function IconApplicationStepActive({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-application-step-active"
 			fill="none"
 			height={height}
 			viewBox="0 0 16 16"
@@ -17,6 +18,7 @@ function IconApplicationStepActive({ height = 15, width = 15, ...props }: React.
 function IconApplicationStepDone({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-application-step-done"
 			fill="none"
 			height={height}
 			viewBox="0 0 16 16"
@@ -39,6 +41,7 @@ function IconApplicationStepDone({ height = 15, width = 15, ...props }: React.HT
 function IconApplicationStepInActive({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-application-step-inactive"
 			fill="none"
 			height={height}
 			viewBox="0 0 16 16"
@@ -54,6 +57,7 @@ function IconApplicationStepInActive({ height = 15, width = 15, ...props }: Reac
 function IconApprove({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-approve"
 			fill="none"
 			height={height}
 			viewBox="0 0 16 16"
@@ -85,6 +89,7 @@ function IconApprove({ height = 16, width = 16, ...props }: React.HTMLProps<SVGS
 function IconButtonLogo({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-button-logo"
 			fill="currentColor"
 			height={height}
 			viewBox="0 0 16 16"
@@ -123,6 +128,7 @@ function IconButtonLogo({ height = 16, width = 16, ...props }: React.HTMLProps<S
 function IconDeadline({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			data-testid="icon-deadline"
 			fill="none"
 			height={height}
 			viewBox="0 0 16 16"
