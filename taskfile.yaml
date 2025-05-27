@@ -49,7 +49,7 @@ tasks:
     generate:api-types:
         desc: Generate TypeScript from backend API
         cmds:
-            - PYTHONPATH=. uv run litestar --app services.backend.src.api.main:app schema typescript --output frontend/src/types/api-types.ts
+            - PYTHONPATH=. uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
             - task: lint
 
     # Database Commands
@@ -159,7 +159,7 @@ tasks:
             - task: db:up
         dotenv: ["services/backend/.env"]
         cmds:
-            - PYTHONPATH=. uv run uvicorn services.backend.src.api.main:app --host 0.0.0.0 --port 8000 --log-level debug --reload --reload-dir services/backend/src
+            - PYTHONPATH=. uv run uvicorn services.backend.src.main:app --host 0.0.0.0 --port 8000 --log-level debug --reload --reload-dir services/backend/src
 
     service:indexer:dev:
         desc: Start the indexer service in development mode with hot-reloading

@@ -1,3 +1,5 @@
+import json
+from base64 import b64encode
 from collections.abc import Generator
 from http import HTTPStatus
 from typing import Any
@@ -17,8 +19,8 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
+from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent
 from packages.shared_utils.src.shared_types import ParentType
-from services.crawler.src.main import CrawlingRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -58,8 +60,8 @@ def create_crawling_request(
     parent_type: ParentType,
     url: str = "https://example.org/docs",
     workspace_id: UUID | None = None,
-) -> CrawlingRequest:
-    request = {
+) -> dict[str, str]:  # Changed return type to match actual return
+    request: dict[str, str] = {
         "parent_id": str(parent_id),
         "parent_type": parent_type,
         "url": url,
@@ -68,10 +70,38 @@ def create_crawling_request(
     if workspace_id:
         request["workspace_id"] = str(workspace_id)
 
-    return request  # type: ignore
+    return request
 
 
-async def test_handle_url_crawling_grant_application(
+def create_pubsub_event(
+    parent_id: UUID,
+    parent_type: ParentType,
+    url: str = "https://example.org/docs",
+    workspace_id: UUID | None = None,
+) -> PubSubEvent:
+    message_data = {
+        "parent_id": str(parent_id),
+        "parent_type": parent_type,
+        "url": url,
+    }
+
+    if workspace_id:
+        message_data["workspace_id"] = str(workspace_id)
+
+    return {
+        "message": {
+            "message_id": "test-message-id",
+            "publish_time": "2023-01-01T00:00:00Z",
+            "data": b64encode(json.dumps(message_data).encode("utf-8")).decode("utf-8"),
+            "attributes": {},
+        }
+    }
+
+
+# Direct API call test removed - now only using PubSub
+
+
+async def test_handle_url_crawling_pubsub_event_grant_application(
     test_client: AsyncTestClient[Any],
     mock_crawl_url: AsyncMock,
     mock_upload_blob: AsyncMock,
@@ -80,13 +110,13 @@ async def test_handle_url_crawling_grant_application(
     grant_application: GrantApplication,
 ) -> None:
     workspace_id = uuid4()
-    request = create_crawling_request(
+    pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
         parent_type="grant_application",
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=request)
+    response = await test_client.post("/", json=pubsub_event)
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -99,7 +129,7 @@ async def test_handle_url_crawling_grant_application(
         rag_url = await session.scalars(select(RagUrl).where(RagUrl.id == source.id))
         url_record = rag_url.first()
         assert url_record is not None
-        assert url_record.url == request["url"]
+        assert url_record.url == "https://example.org/docs"
 
         app_source = await session.scalars(
             select(GrantApplicationRagSource).where(GrantApplicationRagSource.rag_source_id == source.id)
@@ -119,12 +149,12 @@ async def test_handle_url_crawling_funding_organization(
     async_session_maker: async_sessionmaker[Any],
     funding_organization: FundingOrganization,
 ) -> None:
-    request = create_crawling_request(
+    pubsub_event = create_pubsub_event(
         parent_id=funding_organization.id,
         parent_type="funding_organization",
     )
 
-    response = await test_client.post("/", json=request)
+    response = await test_client.post("/", json=pubsub_event)
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -152,13 +182,13 @@ async def test_handle_url_crawling_grant_template(
     grant_template: GrantTemplate,
 ) -> None:
     workspace_id = uuid4()
-    request = create_crawling_request(
+    pubsub_event = create_pubsub_event(
         parent_id=grant_template.id,
         parent_type="grant_template",
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=request)
+    response = await test_client.post("/", json=pubsub_event)
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -185,12 +215,12 @@ async def test_handle_url_crawling_no_files_returned(
     with patch("services.crawler.src.main.crawl_url") as mock_crawl:
         mock_crawl.return_value = []
 
-        request = create_crawling_request(
+        pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=request)
+        response = await test_client.post("/", json=pubsub_event)
         assert response.status_code == HTTPStatus.CREATED, response.text
 
         with patch("services.crawler.src.main.upload_blob") as mock_upload:
@@ -204,12 +234,12 @@ async def test_handle_url_crawling_database_error(
     with patch("services.crawler.src.main.insert") as mock_insert:
         mock_insert.side_effect = Exception("Database error")
 
-        request = create_crawling_request(
+        pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=request)
+        response = await test_client.post("/", json=pubsub_event)
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
@@ -221,12 +251,12 @@ async def test_handle_url_crawling_extraction_error(
     with patch("services.crawler.src.main.crawl_url") as mock_crawl:
         mock_crawl.side_effect = Exception("Extraction error")
 
-        request = create_crawling_request(
+        pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=request)
+        response = await test_client.post("/", json=pubsub_event)
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
         async with async_session_maker() as session:
@@ -242,13 +272,13 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     grant_application: GrantApplication,
 ) -> None:
     workspace_id = uuid4()
-    request = create_crawling_request(
+    pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
         parent_type="grant_application",
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=request)
+    response = await test_client.post("/", json=pubsub_event)
     assert response.status_code == HTTPStatus.CREATED
 
     assert mock_construct_object_uri.call_count == 2
@@ -259,3 +289,67 @@ async def test_handle_upload_blob_called_with_correct_parameters(
 
     assert mock_upload_blob.await_count == 2
     assert mock_upload_blob.call_args_list[0][1]["blob_path"] == "test-bucket/test-path/test-file.pdf"
+
+
+async def test_decode_pubsub_message(
+    test_client: AsyncTestClient[Any],
+    grant_application: GrantApplication,
+) -> None:
+    workspace_id = uuid4()
+    pubsub_event = create_pubsub_event(
+        parent_id=grant_application.id,
+        parent_type="grant_application",
+        workspace_id=workspace_id,
+        url="https://example.com/test",
+    )
+
+    with patch("services.crawler.src.main.decode_pubsub_message") as mock_decode:
+        mock_decode.return_value = CrawlingRequest(
+            parent_id=grant_application.id,
+            parent_type="grant_application",
+            workspace_id=workspace_id,
+            url="https://example.com/test",
+        )
+
+        response = await test_client.post("/", json=pubsub_event)
+        assert response.status_code == HTTPStatus.CREATED
+
+        mock_decode.assert_called_once()
+
+
+async def test_invalid_pubsub_message(
+    test_client: AsyncTestClient[Any],
+) -> None:
+    invalid_event = {
+        "message": {
+            "message_id": "test-message-id",
+            "publish_time": "2023-01-01T00:00:00Z",
+            "data": "invalid-base64-data",
+            "attributes": {},
+        }
+    }
+
+    response = await test_client.post("/", json=invalid_event)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+async def test_pubsub_message_missing_required_fields(
+    test_client: AsyncTestClient[Any],
+) -> None:
+    # Missing parent_type
+    message_data = {
+        "parent_id": str(uuid4()),
+        "url": "https://example.org/docs",
+    }
+
+    pubsub_event = {
+        "message": {
+            "message_id": "test-message-id",
+            "publish_time": "2023-01-01T00:00:00Z",
+            "data": b64encode(json.dumps(message_data).encode("utf-8")).decode("utf-8"),
+            "attributes": {},
+        }
+    }
+
+    response = await test_client.post("/", json=pubsub_event)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR

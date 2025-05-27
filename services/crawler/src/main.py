@@ -1,6 +1,6 @@
+import base64
 from asyncio import gather
-from typing import Any, NotRequired, TypedDict
-from uuid import UUID
+from typing import Any
 
 from litestar import post
 from packages.db.src.constants import RAG_URL
@@ -12,11 +12,12 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.exceptions import DatabaseError
+from packages.shared_utils.src.exceptions import DatabaseError, DeserializationError, ValidationError
 from packages.shared_utils.src.gcs import construct_object_uri, upload_blob
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent
+from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
-from packages.shared_utils.src.shared_types import ParentType
 from services.crawler.src.extraction import crawl_url
 from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -25,21 +26,28 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 logger = get_logger(__name__)
 
 
-class CrawlingRequest(TypedDict):
-    parent_id: UUID
-    parent_type: ParentType
-    workspace_id: NotRequired[UUID]
-    url: str
+async def decode_pubsub_message(event: PubSubEvent) -> CrawlingRequest:
+    try:
+        encoded_data = event["message"]["data"]
+        decoded_data = base64.b64decode(encoded_data).decode()
+        return deserialize(decoded_data, CrawlingRequest)
+    except DeserializationError as e:
+        logger.error("Validation error processing PubSub message", exc_info=e)
+        raise ValidationError(
+            "Failed to decode PubSub message", context={"message": event["message"], "error": str(e)}
+        ) from e
 
 
 @post("/")
 async def handle_url_crawling(
-    data: CrawlingRequest,
+    data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
 ) -> None:
+    crawling_request = await decode_pubsub_message(data)
+    parent_type, parent_id = crawling_request["parent_type"], crawling_request["parent_id"]
+
     async with session_maker() as session, session.begin():
         try:
-            parent_type, parent_id = data["parent_type"], data["parent_id"]
             source_id = await session.scalar(
                 insert(RagSource)
                 .values(
@@ -60,7 +68,7 @@ async def handle_url_crawling(
                     [
                         {
                             "id": source_id,
-                            "url": data["url"],
+                            "url": crawling_request["url"],
                         }
                     ]
                 )
@@ -101,7 +109,7 @@ async def handle_url_crawling(
             raise DatabaseError("Error creating url record", context=str(e)) from e
 
     if files := await crawl_url(
-        url=data["url"],
+        url=crawling_request["url"],
         source_id=str(source_id),
         session_maker=session_maker,
     ):
@@ -114,7 +122,9 @@ async def handle_url_crawling(
                         blob_name=file["filename"],
                         organization_id=str(parent_id) if parent_type == "funding_organization" else None,
                         template_id=str(parent_id) if parent_type == "grant_template" else None,
-                        workspace_id=str(data["workspace_id"]) if data.get("workspace_id") else None,
+                        workspace_id=str(crawling_request["workspace_id"])
+                        if crawling_request.get("workspace_id")
+                        else None,
                     ),
                     content=file["content"],
                 )

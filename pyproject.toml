@@ -56,7 +56,7 @@ lint.ignore = [
   "TRY",      # Try except block, rules are too strict
 ]
 lint.per-file-ignores."**/tests/**/*.*" = [
-  "ARG001",
+  "ARG",
   "D",
   "N815",
   "PT006",
