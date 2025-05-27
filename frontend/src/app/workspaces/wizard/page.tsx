@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppButton } from "@/components/app-button";
-import { IconGoAhead, IconGoBack } from "@/components/icons";
-import { IconApprove, IconButtonLogo, IconDeadline } from "@/components/workspaces/icons";
-import { WizardStepIndicators } from "@/components/workspaces/wizard-step-indicators";
+import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 
 const steps = [
 	<div className="p-4" key={0}>
@@ -42,105 +39,6 @@ const wizardStepTitles = [
 	"Generate and Complete",
 ];
 
-function Deadline() {
-	return (
-		<div
-			className="relative rounded-xs bg-app-lavender-gray w-full flex flex-row items-center justify-center py-1 px-2 box-border gap-0.5 text-sm"
-			data-testid="deadline-component"
-		>
-			<IconDeadline />
-			<div className="leading-[18px]">
-				<span className="font-semibold">4</span>
-				<span> weeks and </span>
-				<span className="font-semibold">3</span>
-				<span> days to the deadline</span>
-			</div>
-		</div>
-	);
-}
-
-function WizardFooter({
-	currentStep,
-	onBack,
-	onContinue,
-	showBack,
-}: {
-	currentStep: number;
-	onBack: () => void;
-	onContinue: () => void;
-	showBack: boolean;
-}) {
-	const isApproveButton = currentStep === 1;
-	const isGenerateButton = currentStep === 5;
-	const leftIcon = isApproveButton ? <IconApprove /> : isGenerateButton ? <IconButtonLogo /> : undefined;
-	const rightIcon = isGenerateButton ? undefined : <IconGoAhead />;
-
-	let rightButtonText = "Next";
-	if (isApproveButton) {
-		rightButtonText = "Approve and Continue";
-	} else if (isGenerateButton) {
-		rightButtonText = "Generate";
-	}
-
-	return (
-		<footer
-			className="w-full h-auto bg-white border-app-lavender-gray border-t p-6 flex justify-between items-center"
-			data-testid="wizard-footer"
-		>
-			{showBack ? (
-				<AppButton
-					data-testid="back-button"
-					leftIcon={<IconGoBack />}
-					onClick={onBack}
-					size="lg"
-					theme="dark"
-					variant="secondary"
-				>
-					Back
-				</AppButton>
-			) : (
-				<div></div>
-			)}
-			<AppButton
-				data-testid="continue-button"
-				leftIcon={leftIcon}
-				onClick={onContinue}
-				rightIcon={rightIcon}
-				size="lg"
-				theme="dark"
-				variant="primary"
-			>
-				{rightButtonText}
-			</AppButton>
-		</footer>
-	);
-}
-
-function WizardHeader({ currentStep, showHeaderInfo = true }: { currentStep: number; showHeaderInfo?: boolean }) {
-	return (
-		<header className="w-full border-app-lavender-gray border-solid border-b p-6" data-testid="wizard-header">
-			<div className="flex items-center justify-between mb-8">
-				<div className="flex items-center space-x-2 min-h-7">
-					{showHeaderInfo ? (
-						<>
-							<h1 className="text-nowrap" data-testid="app-name">
-								Application name
-							</h1>
-							<Deadline />
-						</>
-					) : (
-						<div className="invisible"></div>
-					)}
-				</div>
-				<AppButton className="text-base py-0" data-testid="save-exit-button" size="lg" variant="link">
-					Save and Exit
-				</AppButton>
-			</div>
-			<WizardStepIndicators currentStep={currentStep} stepTitles={wizardStepTitles} />
-		</header>
-	);
-}
-
 function WizardPage({ initialStep = 0 }: { initialStep?: number }) {
 	const [currentStep, setCurrentStep] = useState<number>(initialStep);
 
@@ -154,7 +52,7 @@ function WizardPage({ initialStep = 0 }: { initialStep?: number }) {
 
 	return (
 		<div className="flex flex-col bg-light h-screen w-screen" data-testid="wizard-page">
-			<WizardHeader currentStep={currentStep} />
+			<WizardHeader applicationName="Application Name" currentStep={currentStep} stepTitles={wizardStepTitles} />
 			<section className="flex-1 overflow-auto p-6" data-testid="step-content-container">
 				{steps[currentStep]}
 			</section>
