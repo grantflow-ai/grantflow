@@ -39,7 +39,13 @@ const wizardStepTitles = [
 	"Generate and Complete",
 ];
 
-function WizardPage({ initialStep = 0, showHeaderInfo = false }: { initialStep: number; showHeaderInfo: boolean }) {
+function WizardPage({
+	initialStep = 0,
+	showHeaderInfo = false,
+}: {
+	initialStep: number;
+	showHeaderInfo?: boolean | undefined;
+}) {
 	const [currentStep, setCurrentStep] = useState<number>(initialStep);
 
 	const handleBack = () => {
