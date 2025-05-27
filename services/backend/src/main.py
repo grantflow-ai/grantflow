@@ -18,6 +18,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_delete_application,
 )
 from services.backend.src.api.routes.sources import (
+    handle_crawl_url,
     handle_create_upload_url,
     handle_delete_rag_source,
     handle_retrieve_rag_sources,
@@ -41,6 +42,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_organization,
     handle_create_otp,
     handle_create_upload_url,
+    handle_crawl_url,
     handle_create_workspace,
     handle_delete_application,
     handle_delete_organization,

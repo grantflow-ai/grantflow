@@ -66,7 +66,7 @@ async def test_client(
     os.environ["VALKEY_CONNECTION_STRING"] = valkey_connection_string
 
     with (
-        patch("services.backend.src.api.main.before_server_start"),
+        patch("services.backend.src.main.before_server_start"),
         patch("packages.shared_utils.src.ai.get_vertex_credentials", return_value=Mock()),
         patch("packages.shared_utils.src.ai.init", return_value=None),
         patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
