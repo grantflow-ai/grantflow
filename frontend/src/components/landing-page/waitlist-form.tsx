@@ -85,7 +85,6 @@ export function WaitlistForm() {
 
 				<div className="flex justify-end px-2 mt-8 mb-2">
 					<SubmitButton
-						canBeDisabled={true}
 						data-testid="waitlist-form-submit-button"
 						disabled={!form.formState.isValid || formState.status === "loading"}
 					>

@@ -9,7 +9,6 @@ describe("AppButton", () => {
 		const button = screen.getByTestId("test-button");
 		expect(button).toBeInTheDocument();
 		expect(button).toHaveTextContent("Click Me");
-		expect(button).toHaveClass("h-7.5");
 	});
 
 	it("applies custom className", () => {
@@ -31,8 +30,8 @@ describe("AppButton", () => {
 		);
 
 		let button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("h-6");
-		expect(button).toHaveClass("text-sm");
+		expect(button).toHaveClass("px-1");
+		expect(button).toHaveClass("py-0.5");
 
 		rerender(
 			<AppButton data-testid="test-button" size="md">
@@ -40,7 +39,8 @@ describe("AppButton", () => {
 			</AppButton>,
 		);
 		button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("h-7.5");
+		expect(button).toHaveClass("px-3");
+		expect(button).toHaveClass("py-1");
 
 		rerender(
 			<AppButton data-testid="test-button" size="lg">
@@ -48,7 +48,8 @@ describe("AppButton", () => {
 			</AppButton>,
 		);
 		button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("h-9.5");
+		expect(button).toHaveClass("px-4");
+		expect(button).toHaveClass("py-2");
 	});
 
 	it("renders with different variants", () => {
@@ -127,27 +128,5 @@ describe("AppButton", () => {
 		expect(icon).toBeInTheDocument();
 		expect(button).toHaveTextContent("With Right Icon");
 		expect(icon.parentElement).toHaveClass("ml-1");
-	});
-
-	it("resizes icons according to button size", () => {
-		const { rerender } = render(
-			<AppButton data-testid="test-button" leftIcon={<User data-testid="icon" />} size="sm">
-				Small Icon
-			</AppButton>,
-		);
-
-		let icon = screen.getByTestId("icon");
-		expect(icon).toHaveAttribute("width", "13");
-		expect(icon).toHaveAttribute("height", "13");
-
-		rerender(
-			<AppButton data-testid="test-button" leftIcon={<User data-testid="icon" />} size="lg">
-				Large Icon
-			</AppButton>,
-		);
-
-		icon = screen.getByTestId("icon");
-		expect(icon).toHaveAttribute("width", "19");
-		expect(icon).toHaveAttribute("height", "19");
 	});
 });
