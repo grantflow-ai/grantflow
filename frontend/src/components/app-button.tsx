@@ -12,8 +12,8 @@ const appButtonVariants = cva("font-button size-auto rounded-sm text-base font-l
 			variant: "secondary",
 		},
 		{
-			className: "h-auto px-0 text-xl",
-			size: "lg",
+			className: "hover:text-link-hover-light",
+			theme: "light",
 			variant: "link",
 		},
 	],
@@ -33,7 +33,7 @@ const appButtonVariants = cva("font-button size-auto rounded-sm text-base font-l
 			light: "text-white",
 		},
 		variant: {
-			link: "hover:text-link-hover rounded-none bg-transparent font-normal hover:no-underline",
+			link: "hover:text-link-hover-dark rounded-none bg-transparent font-normal hover:no-underline",
 			primary: "hover:bg-accent disabled:bg-muted disabled:opacity-100",
 			secondary:
 				"text-primary border-primary before:border-primary relative border bg-transparent before:pointer-events-none before:absolute before:-inset-px before:rounded-sm before:border-2 before:opacity-0 before:transition-opacity hover:before:opacity-100",

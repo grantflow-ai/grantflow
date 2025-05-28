@@ -28,7 +28,8 @@
 	--color-destructive: var(--destructive);
 
 	--color-link-focus: var(--link-focus);
-	--color-link-hover: var(--link-hover);
+	--color-link-hover-dark: var(--link-hover-dark);
+	--color-link-hover-light: var(--link-hover-light);
 
 	--color-accent-foreground: var(--accent-foreground);
 	--color-accent: var(--accent);
@@ -109,7 +110,8 @@
 	--secondary: var(--app-dark-blue);
 	--secondary-foreground: oklch(1 0 0);
 
-	--link-hover: var(--app-light-blue);
+	--link-hover-light: var(--app-slate-blue);
+	--link-hover-dark: var(--app-light-blue);
 	--link-focus: var(--app-slate-blue);
 	--ring: var(--app-light-blue);
 
