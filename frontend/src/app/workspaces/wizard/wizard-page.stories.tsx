@@ -1,46 +1,105 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { useEffect } from "react";
 import WizardPage from "@/app/workspaces/wizard/page";
 
-const WizardPageRenderer = ({
-	initialStep = 0,
-	showHeaderInfo = false,
-}: {
-	initialStep: number;
-	showHeaderInfo?: boolean | undefined;
-}) => {
-	const props: Parameters<typeof WizardPage>[0] = {
-		initialStep,
-		showHeaderInfo,
-	};
-	return <WizardPage {...props} />;
+const Step1 = () => {
+	return <WizardPage />;
 };
 
+const Step2 = () => {
+	useEffect(() => {
+		const nextButton = document.querySelector('[data-testid="continue-button"]');
+		if (nextButton) {
+			nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+		}
+	}, []);
+	return <WizardPage />;
+};
+
+const Step3 = () => {
+	useEffect(() => {
+		const nextButton = document.querySelector('[data-testid="continue-button"]');
+		if (nextButton) {
+			nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+			setTimeout(() => {
+				nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+			}, 50);
+		}
+	}, []);
+	return <WizardPage />;
+};
+
+const Step4 = () => {
+	useEffect(() => {
+		const nextButton = document.querySelector('[data-testid="continue-button"]');
+		if (nextButton) {
+			nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+			setTimeout(() => {
+				nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+				setTimeout(() => {
+					nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+				}, 50);
+			}, 50);
+		}
+	}, []);
+	return <WizardPage />;
+};
+
+const Step5 = () => {
+	useEffect(() => {
+		const nextButton = document.querySelector('[data-testid="continue-button"]');
+		if (nextButton) {
+			nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+			setTimeout(() => {
+				nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+				setTimeout(() => {
+					nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+					setTimeout(() => {
+						nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+					}, 50);
+				}, 50);
+			}, 50);
+		}
+	}, []);
+	return <WizardPage />;
+};
+
+const Step6 = () => {
+	useEffect(() => {
+		const nextButton = document.querySelector('[data-testid="continue-button"]');
+		if (nextButton) {
+			nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+			setTimeout(() => {
+				nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+				setTimeout(() => {
+					nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+					setTimeout(() => {
+						nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+						setTimeout(() => {
+							nextButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+						}, 50);
+					}, 50);
+				}, 50);
+			}, 50);
+		}
+	}, []);
+	return <WizardPage />;
+};
+
+type WizardStoryComponent = typeof Step1 | typeof Step2 | typeof Step3 | typeof Step4 | typeof Step5 | typeof Step6;
+
 const meta = {
-	argTypes: {
-		initialStep: {
-			control: { max: 5, min: 0, step: 1, type: "range" },
-			description: "Initial step of the wizard",
-			table: { defaultValue: { summary: "0" } },
-		},
-		showHeaderInfo: {
-			control: "boolean",
-			description: "Toggle visibility of application name and deadline in header",
-			table: { defaultValue: { summary: "false" } },
-		},
-	},
-	component: WizardPageRenderer,
 	parameters: {
 		layout: "fullscreen",
 		nextRouter: { path: "/workspaces/wizard", query: {} },
 	},
 	title: "Pages/Application Wizard",
-} satisfies Meta<typeof WizardPageRenderer>;
+} satisfies Meta<WizardStoryComponent>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Step1_ApplicationDetails: Story = {
-	args: { initialStep: 0, showHeaderInfo: false },
 	name: "Step 1: Application Details",
 	parameters: {
 		docs: {
@@ -49,10 +108,10 @@ export const Step1_ApplicationDetails: Story = {
 			},
 		},
 	},
+	render: () => <Step1 />,
 };
 
 export const Step2_PreviewAndApprove: Story = {
-	args: { initialStep: 1, showHeaderInfo: true },
 	name: "Step 2: Preview and Approve (with header info)",
 	parameters: {
 		docs: {
@@ -61,25 +120,25 @@ export const Step2_PreviewAndApprove: Story = {
 			},
 		},
 	},
+	render: () => <Step2 />,
 };
 
 export const Step3_KnowledgeBase: Story = {
-	args: { initialStep: 2, showHeaderInfo: true },
 	name: "Step 3: Knowledge Base",
+	render: () => <Step3 />,
 };
 
 export const Step4_ResearchPlan: Story = {
-	args: { initialStep: 3, showHeaderInfo: true },
 	name: "Step 4: Research Plan",
+	render: () => <Step4 />,
 };
 
 export const Step5_ResearchDeepDive: Story = {
-	args: { initialStep: 4, showHeaderInfo: true },
 	name: "Step 5: Research Deep Dive",
+	render: () => <Step5 />,
 };
 
 export const Step6_GenerateAndComplete: Story = {
-	args: { initialStep: 5, showHeaderInfo: true },
 	name: "Step 6: Generate and Complete",
 	parameters: {
 		docs: {
@@ -88,4 +147,5 @@ export const Step6_GenerateAndComplete: Story = {
 			},
 		},
 	},
+	render: () => <Step6 />,
 };
