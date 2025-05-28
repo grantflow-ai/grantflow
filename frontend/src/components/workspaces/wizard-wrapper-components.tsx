@@ -1,3 +1,7 @@
+import React from "react";
+
+import { AppButton } from "@/components/app-button";
+import { IconGoAhead, IconGoBack } from "@/components/icons";
 import {
 	IconApplicationStepActive,
 	IconApplicationStepDone,
@@ -6,9 +10,6 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/workspaces/icons";
-import { AppButton } from "@/components/app-button";
-import { IconGoAhead, IconGoBack } from "@/components/icons";
-import React from "react";
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
 	const IconComponent =
@@ -29,7 +30,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 	const lineClass = type === "done" ? "bg-primary" : "bg-muted";
 
 	return (
-		<div className="w-full relative flex flex-row items-center" data-testid={`step-${type}`}>
+		<div className="relative flex w-full flex-row items-center" data-testid={`step-${type}`}>
 			<div className="relative flex justify-center">
 				<IconComponent />
 			</div>
@@ -53,7 +54,7 @@ export function WizardFooter({
 
 	return (
 		<footer
-			className="w-full h-auto bg-white border-app-lavender-gray border-t p-6 flex justify-between items-center"
+			className="border-app-lavender-gray flex h-auto w-full items-center justify-between border-t bg-white p-6"
 			data-testid="wizard-footer"
 		>
 			{showBack ? (
@@ -96,9 +97,9 @@ export function WizardHeader({
 	stepTitles: string[];
 }) {
 	return (
-		<header className="w-full border-app-lavender-gray border-solid border-b p-6" data-testid="wizard-header">
-			<div className="flex items-center justify-between mb-8">
-				<div className="flex items-center space-x-2 min-h-7">
+		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
+			<div className="mb-8 flex items-center justify-between">
+				<div className="flex min-h-7 items-center space-x-2">
 					{showHeaderInfo ? (
 						<>
 							<h1 className="text-nowrap" data-testid="app-name">
@@ -110,7 +111,7 @@ export function WizardHeader({
 						<div className="invisible"></div>
 					)}
 				</div>
-				<AppButton className="text-base py-0" data-testid="exit-button" size="lg" variant="link">
+				<AppButton className="py-0 text-base" data-testid="exit-button" size="lg" variant="link">
 					Exit
 				</AppButton>
 			</div>
@@ -122,14 +123,14 @@ export function WizardHeader({
 function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: number; stepTitles: string[] }) {
 	return (
 		<div className="flex justify-center">
-			<div className="flex w-full px-16 flex-col items-center" data-testid="step-indicators">
-				<div className="flex w-full px-20 justify-center relative">
+			<div className="flex w-full flex-col items-center px-16" data-testid="step-indicators">
+				<div className="relative flex w-full justify-center px-20">
 					{stepTitles.map((title, index) => {
 						const isLastStep = index === stepTitles.length - 1;
 
 						return (
 							<div
-								className={`${isLastStep ? "flex-initial w-auto" : "flex-1"} flex flex-col items-center relative`}
+								className={`${isLastStep ? "w-auto flex-initial" : "flex-1"} relative flex flex-col items-center`}
 								data-testid={`step-${index}`}
 								key={index}
 							>
@@ -150,7 +151,7 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: numb
 										}}
 									>
 										<span
-											className={`text-xs text-center font-heading ${
+											className={`font-heading text-center text-xs ${
 												index < currentStep
 													? "text-secondary"
 													: index === currentStep
@@ -176,7 +177,7 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: numb
 function Deadline() {
 	return (
 		<div
-			className="relative rounded-xs bg-app-lavender-gray w-full flex flex-row items-center justify-center py-1 px-2 box-border gap-0.5 text-sm"
+			className="rounded-xs bg-app-lavender-gray relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm"
 			data-testid="deadline-component"
 		>
 			<IconDeadline />

@@ -1,9 +1,10 @@
-import { Button, buttonVariants, type ButtonProps as ShadcnButtonProps } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import React from "react";
 
-const appButtonVariants = cva("size-auto font-button text-base rounded-sm font-light hover:bg-transparent", {
+import { Button, buttonVariants, type ButtonProps as ShadcnButtonProps } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const appButtonVariants = cva("font-button size-auto rounded-sm text-base font-light hover:bg-transparent", {
 	compoundVariants: [
 		{
 			className: "border-white text-white before:border-white",
@@ -32,10 +33,10 @@ const appButtonVariants = cva("size-auto font-button text-base rounded-sm font-l
 			light: "text-white",
 		},
 		variant: {
-			link: "rounded-none bg-transparent font-normal hover:text-link-hover hover:no-underline",
-			primary: "hover:bg-accent disabled:opacity-100 disabled:bg-muted",
+			link: "hover:text-link-hover rounded-none bg-transparent font-normal hover:no-underline",
+			primary: "hover:bg-accent disabled:bg-muted disabled:opacity-100",
 			secondary:
-				"text-primary border-primary border bg-transparent relative before:absolute before:-inset-px before:rounded-sm before:border-2 before:border-primary before:opacity-0 hover:before:opacity-100 before:transition-opacity before:pointer-events-none",
+				"text-primary border-primary before:border-primary relative border bg-transparent before:pointer-events-none before:absolute before:-inset-px before:rounded-sm before:border-2 before:opacity-0 before:transition-opacity hover:before:opacity-100",
 		},
 	},
 });

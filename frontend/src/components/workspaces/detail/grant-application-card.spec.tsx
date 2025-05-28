@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import { GrantApplicationCard } from "./grant-application-card";
+
 import { PagePath } from "@/enums";
+
+import { GrantApplicationCard } from "./grant-application-card";
 
 describe("GrantApplicationCard", () => {
 	const mockWorkspaceId = "workspace-123";

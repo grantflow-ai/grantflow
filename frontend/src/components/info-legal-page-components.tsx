@@ -25,7 +25,7 @@ function LegalPageContainer({
 
 	return (
 		<div
-			className={`w-full z-20 ${colorScheme} flex justify-center ${textColor} py-8 px-16 md:py-12 md:px-20 xl:py-16 xl:px-24 lg:py-20 lg:px-30 relative`}
+			className={`z-20 w-full ${colorScheme} flex justify-center ${textColor} lg:px-30 relative px-16 py-8 md:px-20 md:py-12 lg:py-20 xl:px-24 xl:py-16`}
 		>
 			{backgroundStack && <div className="absolute inset-0 size-full overflow-hidden">{backgroundStack}</div>}
 			<div className={`z-30 ${childrenSpan === "custom" ? "w-198" : "w-full"} ${textChildrenAlignment}`}>

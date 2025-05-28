@@ -1,8 +1,9 @@
+import Image from "next/image";
+
 import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/about/icons";
+import { BrandPattern } from "@/components/brand-pattern";
 import { LegalPageContainer } from "@/components/info-legal-page-components";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { BrandPattern } from "@/components/brand-pattern";
 
 const subHeadingClasses = "font-heading font-medium text-3xl md:text-4xl";
 
@@ -42,7 +43,7 @@ export default function AboutPage() {
 			backgroundStack={
 				<>
 					<div
-						className="absolute z-10 inset-0 size-full overflow-hidden pointer-events-none"
+						className="pointer-events-none absolute inset-0 z-10 size-full overflow-hidden"
 						style={{
 							background: `radial-gradient(ellipse at center, var(--primary) 0%, transparent 75%)`,
 							contain: "strict",
@@ -54,7 +55,7 @@ export default function AboutPage() {
 					></div>
 					<BrandPattern
 						aria-hidden="true"
-						className="absolute inset-0 z-0 size-full pointer-events-none opacity-50"
+						className="pointer-events-none absolute inset-0 z-0 size-full opacity-50"
 						role="presentation"
 						strokeWidth="0.1"
 					/>
@@ -66,9 +67,9 @@ export default function AboutPage() {
 			textColor="text-white"
 			title="About GrantFlow"
 		>
-			<div className="flex flex-col items-center w-full min-h-screen relative">
-				<div className="w-full max-w-198">
-					<p className="text-lg md:text-base mb-20 leading-tight">
+			<div className="relative flex min-h-screen w-full flex-col items-center">
+				<div className="max-w-198 w-full">
+					<p className="mb-20 text-lg leading-tight md:text-base">
 						GrantFlow is a tool designed to support researchers through one of the most time-consuming parts
 						of their work: applying for grants. Researchers today spend a large part of their time on
 						funding-related documentation, most of it could otherwise be invested in research and
@@ -79,7 +80,7 @@ export default function AboutPage() {
 					<p>
 						<span className="font-semibold">GrantFlow</span> uses AI to help researchers:
 					</p>
-					<ul className="grid grid-cols-1 md:grid-cols-4 gap-6 my-8">
+					<ul className="my-8 grid grid-cols-1 gap-6 md:grid-cols-4">
 						{toolkitItems.map((item, index) => (
 							<ToolKitItems Icon={item.icon} key={index} specification={item.specification} />
 						))}
@@ -88,15 +89,15 @@ export default function AboutPage() {
 						Our system is built for research professionals working in academic and applied STEM fields.
 					</p>
 				</div>
-				<div className="w-full max-w-220 py-20">
+				<div className="max-w-220 w-full py-20">
 					<div className="w-full rounded bg-violet-200/15 p-11">
 						<h2 className={cn(subHeadingClasses, "mb-3")}>About GrantFlow Team</h2>
-						<p className="md:px-12 lg:px-16 xl:px-20 leading-tight">
+						<p className="leading-tight md:px-12 lg:px-16 xl:px-20">
 							GrantFlow was founded by a team of professionals with experience in STEM research,
 							engineering, and product development:
 						</p>
-						<div className="w-full items-center mt-11 py-5.5">
-							<ul className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+						<div className="py-5.5 mt-11 w-full items-center">
+							<ul className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
 								{foundersDetails.map((founder, index) => (
 									<Founders
 										designation={founder.designation}
@@ -113,7 +114,7 @@ export default function AboutPage() {
 						</div>
 					</div>
 				</div>
-				<div className="w-full max-w-198 mb-20">
+				<div className="max-w-198 mb-20 w-full">
 					<h2 className={cn(subHeadingClasses, "mb-6")}>Why It Matters?</h2>
 					<p className="font-normal leading-tight">
 						Grants are the most important funding source for STEM research. However, the application process
@@ -124,7 +125,7 @@ export default function AboutPage() {
 						core work advancing knowledge and innovating.
 					</p>
 				</div>
-				<p className="w-full max-w-198 font-semibold leading-tight">
+				<p className="max-w-198 w-full font-semibold leading-tight">
 					GrantFlow is currently in the final stage of development. If you&apos;re interested in early access,
 					you&apos;re welcome to join the waitlist and be one of the first to try it when we launch.
 				</p>
@@ -143,16 +144,16 @@ function Founders({
 	name: string;
 }) {
 	return (
-		<li className="flex flex-col items-center p-3 space-y-3">
+		<li className="flex flex-col items-center space-y-3 p-3">
 			<Image
 				alt={`${name}'s photo`}
-				className="rounded-full size-24.5"
+				className="size-24.5 rounded-full"
 				height={100}
 				src={displayPicture}
 				width={100}
 			/>
 			<p className="font-semibold">{designation}</p>
-			<h4 className="font-heading font-medium text-2xl">{name}</h4>
+			<h4 className="font-heading text-2xl font-medium">{name}</h4>
 		</li>
 	);
 }

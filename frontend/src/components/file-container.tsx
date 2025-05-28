@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { FileUploader } from "./file-uploader";
-import { FilesDisplay } from "./files-display";
+
 import { createApplicationSourceUploadUrl, deleteApplicationSource } from "@/actions/sources";
 import { API } from "@/types/api-types";
+
+import { FileUploader } from "./file-uploader";
+import { FilesDisplay } from "./files-display";
 
 interface FileContainerProps {
 	applicationId: string;
@@ -118,7 +120,7 @@ export function FileContainer({
 
 			{uploadedFiles.length > 0 && <FilesDisplay files={uploadedFiles} onFileRemoved={handleFileRemoved} />}
 
-			{isUploading && <div className="text-center text-sm text-muted-foreground">Uploading files...</div>}
+			{isUploading && <div className="text-muted-foreground text-center text-sm">Uploading files...</div>}
 		</div>
 	);
 }

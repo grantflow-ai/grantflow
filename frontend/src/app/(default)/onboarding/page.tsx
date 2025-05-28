@@ -1,30 +1,31 @@
 "use client";
 
-import { login } from "@/actions/login";
-import { SeparatorWithText } from "@/components/separator-with-text";
-import { SigninForm } from "@/components/onboarding/signin-form";
-import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
-import { getEnv } from "@/utils/env";
-import { getFirebaseAuth } from "@/utils/firebase";
 import { sendSignInLinkToEmail, User } from "firebase/auth";
-import { Card, CardContent } from "@/components/ui/card";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { login } from "@/actions/login";
 import { AppButton } from "@/components/app-button";
-import Link from "next/link";
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
+import { LogoDark } from "@/components/logo";
+import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {
 	OnboardingGradientBackgroundBottom,
 	OnboardingGradientBackgroundTop,
 	StackedHighlight,
 } from "@/components/onboarding/backgrounds";
-import { SocialSigninButton } from "@/components/social-signin-buttons";
-import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
-import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
-import { LogoDark } from "@/components/logo";
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
+import { SigninForm } from "@/components/onboarding/signin-form";
+import { SeparatorWithText } from "@/components/separator-with-text";
+import { SocialSigninButton } from "@/components/social-signin-buttons";
+import { Card, CardContent } from "@/components/ui/card";
+import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
+import { PagePath } from "@/enums";
+import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
+import { getEnv } from "@/utils/env";
+import { getFirebaseAuth } from "@/utils/firebase";
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
@@ -96,7 +97,7 @@ export default function SignIn() {
 
 	return (
 		<div
-			className="flex size-full min-h-screen place-items-center text-center text-card-foreground p-2 relative overflow-hidden bg-white"
+			className="text-card-foreground relative flex size-full min-h-screen place-items-center overflow-hidden bg-white p-2 text-center"
 			data-testid="login-container"
 		>
 			<div className="absolute inset-0 flex items-center justify-center">
@@ -105,18 +106,18 @@ export default function SignIn() {
 
 			<OnboardingGradientBackgroundTop
 				aria-hidden="true"
-				className="absolute top-0 right-0 pointer-events-none opacity-0 lg:opacity-100"
+				className="pointer-events-none absolute right-0 top-0 opacity-0 lg:opacity-100"
 			/>
 
 			<OnboardingGradientBackgroundBottom
 				aria-hidden="true"
-				className="absolute bottom-0 left-0 pointer-events-none opacity-100 lg:opacity-0"
+				className="pointer-events-none absolute bottom-0 left-0 opacity-100 lg:opacity-0"
 			/>
 
-			<div className="z-10 w-full flex flex-col lg:flex-row">
-				<div className="flex flex-1 justify-center lg:justify-end items-center relative my-8 lg:my-0">
-					<div className="relative z-20 w-4/5 xl:w-3/5 text-start">
-						<StackedHighlight className="-z-10 absolute -bottom-1/2 lg:-right-1/3 pointer-events-none" />
+			<div className="z-10 flex w-full flex-col lg:flex-row">
+				<div className="relative my-8 flex flex-1 items-center justify-center lg:my-0 lg:justify-end">
+					<div className="relative z-20 w-4/5 text-start xl:w-3/5">
+						<StackedHighlight className="pointer-events-none absolute -bottom-1/2 -z-10 lg:-right-1/3" />
 						<LogoDark
 							className={`sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16`}
 							height="auto"
@@ -127,7 +128,7 @@ export default function SignIn() {
 				</div>
 
 				<div className="z-20 flex-1 justify-start">
-					<Card className="bg-white w-full md:w-4/5 max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
+					<Card className="border-primary mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9 md:w-4/5">
 						<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
 						<CardContent>
 							<SigninForm
@@ -138,7 +139,7 @@ export default function SignIn() {
 								socialSignInError={socialSignInError}
 							/>
 							<SeparatorWithText className="mb-5" text={"Or connect with "} />
-							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
+							<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
 								<SocialSigninButton
 									isLoading={isLoading}
 									onClick={async () => {

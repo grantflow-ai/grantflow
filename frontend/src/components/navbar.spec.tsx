@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { Breadcrumbs, Navbar } from "@/components/navbar";
+
 import { mockUsePathname } from "::testing/global-mocks";
+import { Breadcrumbs, Navbar } from "@/components/navbar";
 
 describe("Navbar", () => {
 	beforeEach(() => {

@@ -1,10 +1,11 @@
 "use server";
 
+import Link from "next/link";
+
 import { getWorkspace } from "@/actions/workspace";
+import { Button } from "@/components/ui/button";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
 import { PagePath } from "@/enums";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;

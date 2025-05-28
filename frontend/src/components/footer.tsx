@@ -1,7 +1,8 @@
-import { LogoDark } from "@/components/logo";
 import Image from "next/image";
 import Link from "next/link";
+
 import { FooterLinks } from "@/components/footer-links";
+import { LogoDark } from "@/components/logo";
 import { PagePath } from "@/enums";
 
 const LinkedInLink = () => {
@@ -36,11 +37,11 @@ export function Footer() {
 	return (
 		<footer
 			aria-label="site-footer"
-			className="relative z-0 bg-white py-0 md:py-0.5 border-t border-t-gray-400/40"
+			className="relative z-0 border-t border-t-gray-400/40 bg-white py-0 md:py-0.5"
 			data-testid="site-footer"
 			id="site-footer"
 		>
-			<div className="md:hidden flex flex-col px-6 py-2">
+			<div className="flex flex-col px-6 py-2 md:hidden">
 				<nav aria-label="footer-navigation">
 					<FooterLinks isMobile links={links} />
 				</nav>
@@ -51,7 +52,7 @@ export function Footer() {
 					<LinkedInLink />
 				</div>
 			</div>
-			<div className="hidden md:flex md:flex-row items-center justify-between mx-2 my-6 px-8">
+			<div className="mx-2 my-6 hidden items-center justify-between px-8 md:flex md:flex-row">
 				<Link aria-label="Go to homepage" href={PagePath.ROOT}>
 					<LogoDark className="h-15.5" height="250" width="250" />
 				</Link>

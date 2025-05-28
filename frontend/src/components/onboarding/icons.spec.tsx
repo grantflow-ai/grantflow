@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { IconSocialGoogle, IconSocialOrcid, IconTick } from "@/components/onboarding/icons";
 
 describe("Social Icon Components", () => {

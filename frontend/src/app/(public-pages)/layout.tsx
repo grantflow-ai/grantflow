@@ -1,5 +1,5 @@
-import { NavHeader } from "@/components/nav-header";
 import { Footer } from "@/components/footer";
+import { NavHeader } from "@/components/nav-header";
 import { SharedLayout } from "@/components/shared-layout";
 
 export default function LandingPagesLayout({ children }: { children: React.ReactNode }) {

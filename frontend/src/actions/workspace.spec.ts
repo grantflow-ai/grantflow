@@ -1,7 +1,9 @@
-import { createWorkspace, deleteWorkspace, getWorkspace, getWorkspaces, updateWorkspace } from "./workspace";
-import { API } from "@/types/api-types";
-import { mockRedirect } from "::testing/global-mocks";
 import { HTTPError } from "ky";
+
+import { mockRedirect } from "::testing/global-mocks";
+import { API } from "@/types/api-types";
+
+import { createWorkspace, deleteWorkspace, getWorkspace, getWorkspaces, updateWorkspace } from "./workspace";
 
 const mockPost = vi.fn();
 const mockGet = vi.fn();

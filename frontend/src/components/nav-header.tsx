@@ -1,15 +1,17 @@
 "use client";
 
-import { Logo, LogoDark } from "@/components/logo";
-import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
-import { AppButton } from "@/components/app-button";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollButton } from "@/components/scroll-button";
 import Link from "next/link";
-import { PagePath } from "@/enums";
-import { IconGoAhead } from "./icons";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { AppButton } from "@/components/app-button";
+import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
+import { Logo, LogoDark } from "@/components/logo";
+import { ScrollButton } from "@/components/scroll-button";
+import { Button } from "@/components/ui/button";
+import { PagePath } from "@/enums";
+
+import { IconGoAhead } from "./icons";
 
 const BREAKPOINT_MD = 768;
 
@@ -120,8 +122,8 @@ export function NavHeader() {
 				aria-hidden={!isMobileMenuOpen}
 				className={`absolute inset-x-0 top-full flex flex-col gap-4 bg-white p-4 transition-all duration-300 ease-in-out sm:px-6
 				md:hidden
-				${isTermsPage && isMobileMenuOpen ? "border-b border-primary" : ""}
-				${isMobileMenuOpen ? "max-h-lg opacity-100 pointer-events-auto" : "max-h-sm opacity-0 pointer-events-none"}
+				${isTermsPage && isMobileMenuOpen ? "border-primary border-b" : ""}
+				${isMobileMenuOpen ? "max-h-lg pointer-events-auto opacity-100" : "max-h-sm pointer-events-none opacity-0"}
 				`}
 				data-testid="mobile-menu"
 			>

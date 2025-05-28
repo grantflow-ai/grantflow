@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { FileUploader } from "./file-uploader";
+
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof FileUploader> = {
 	argTypes: {

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+
 import WizardPage from "@/app/workspaces/wizard/page";
 
 const advanceToStep = async (step: number) => {

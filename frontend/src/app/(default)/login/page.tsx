@@ -1,31 +1,32 @@
 "use client";
 
-import { login } from "@/actions/login";
-import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
-import { getEnv } from "@/utils/env";
-import { getFirebaseAuth } from "@/utils/firebase";
-import { sendSignInLinkToEmail, User } from "firebase/auth";
-import { useState } from "react";
-import { toast } from "sonner";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { sendSignInLinkToEmail, User } from "firebase/auth";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+import Link from "next/link";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import { AppInput } from "@/components/input-field";
-import { SubmitButton } from "@/components/submit-button";
-import { PatternedBackground } from "@/components/landing-page/backgrounds";
-import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
+
+import { login } from "@/actions/login";
+import { AppButton } from "@/components/app-button";
 import { IconGoAhead } from "@/components/icons";
+import { AppInput } from "@/components/input-field";
+import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { LogoDark } from "@/components/logo";
-import { Card, CardContent } from "@/components/ui/card";
+import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
+import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
 import { SeparatorWithText } from "@/components/separator-with-text";
 import { SocialSigninButton } from "@/components/social-signin-buttons";
-import { AppButton } from "@/components/app-button";
-import Link from "next/link";
+import { SubmitButton } from "@/components/submit-button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
+import { PagePath } from "@/enums";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
-import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
+import { getEnv } from "@/utils/env";
+import { getFirebaseAuth } from "@/utils/firebase";
 
 const loginFormSchema = z.object({
 	email: z
@@ -104,26 +105,26 @@ export default function Login() {
 	};
 
 	return (
-		<div className="flex flex-col min-h-screen bg-white relative overflow-hidden" data-testid="login-container">
+		<div className="relative flex min-h-screen flex-col overflow-hidden bg-white" data-testid="login-container">
 			<div className="absolute inset-0 z-0">
 				<PatternedBackground aria-hidden="true" />
 				<OnboardingGradientBackgroundBottom
 					aria-hidden="true"
-					className="absolute bottom-0 left-0 pointer-events-none"
+					className="pointer-events-none absolute bottom-0 left-0"
 				/>
 			</div>
 
-			<header className="w-full bg-white p-2 md:p-4 shadow-sm z-50">
+			<header className="z-50 w-full bg-white p-2 shadow-sm md:p-4">
 				<LogoDark className="h-12 md:h-14" height="250" width="250" />
 			</header>
 
 			<div
-				className="grow flex size-full place-items-center text-center text-card-foreground"
+				className="text-card-foreground flex size-full grow place-items-center text-center"
 				data-testid="login-container"
 			>
-				<div className="z-10 w-full flex flex-col items-center justify-center">
+				<div className="z-10 flex w-full flex-col items-center justify-center">
 					<div className="relative">
-						<Card className="z-20 bg-white w-full max-w-md mx-auto px-7 pt-7 pb-2 sm:px-9 sm:pt-9 sm:pb-3 border border-primary shadow-md">
+						<Card className="border-primary z-20 mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9">
 							<AuthCardHeader description="Log in to manage your grant workflow" title="Welcome back!" />
 							<CardContent>
 								<LoginForm
@@ -134,7 +135,7 @@ export default function Login() {
 
 								<SeparatorWithText className="mb-5" text={"Or connect with "} />
 
-								<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
+								<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
 									<SocialSigninButton
 										isLoading={isLoading}
 										onClick={handleGoogleSignin}
@@ -148,7 +149,7 @@ export default function Login() {
 									/>
 								</div>
 
-								<div className="text-center flex items-center justify-center min-w-max">
+								<div className="flex min-w-max items-center justify-center text-center">
 									<span className="text-dark whitespace-nowrap">Don&apos;t have an account yet?</span>
 									<AppButton className="text-primary" size="sm" variant="link">
 										<Link href={PagePath.ONBOARDING}>Create an Account</Link>
@@ -207,7 +208,7 @@ function LoginForm({
 						)}
 					/>
 					<SubmitButton
-						className="mt-3 mb-8 w-full"
+						className="mb-8 mt-3 w-full"
 						data-testid="login-form-submit-button"
 						disabled={!form.formState.isValid || isLoading}
 						isLoading={isLoading}

@@ -1,3 +1,7 @@
+import { HTTPError } from "ky";
+
+import { mockRedirect } from "::testing/global-mocks";
+
 import {
 	createApplicationSourceUploadUrl,
 	createTemplateSourceUploadUrl,
@@ -6,8 +10,6 @@ import {
 	getApplicationSources,
 	getTemplateSources,
 } from "./sources";
-import { mockRedirect } from "::testing/global-mocks";
-import { HTTPError } from "ky";
 
 const mockGet = vi.fn();
 const mockDelete = vi.fn();

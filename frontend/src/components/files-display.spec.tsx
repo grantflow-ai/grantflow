@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { FileCard, FilesDisplay } from "./files-display";
+
 import { formatBytes } from "@/utils/format";
+
+import { FileCard, FilesDisplay } from "./files-display";
 
 vi.mock("@/utils/format", () => ({
 	formatBytes: vi.fn().mockReturnValue("10 KB"),

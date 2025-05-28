@@ -1,16 +1,17 @@
 "use client";
 
-import { login } from "@/actions/login";
-import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
-import { getFirebaseAuth } from "@/utils/firebase";
-import { logError } from "@/utils/logging";
 import { isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 import { Loader2 } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
+
+import { login } from "@/actions/login";
+import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
+import { PagePath } from "@/enums";
+import { getFirebaseAuth } from "@/utils/firebase";
+import { logError } from "@/utils/logging";
 
 export default function FinalizeEmailLogin() {
 	const router = useRouter();

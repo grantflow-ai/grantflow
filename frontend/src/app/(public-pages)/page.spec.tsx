@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+
 import LandingPage from "@/app/(public-pages)/page";
 
 vi.mock("@/components/landing-page/backgrounds", () => ({

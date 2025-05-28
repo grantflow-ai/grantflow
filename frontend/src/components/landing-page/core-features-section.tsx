@@ -1,7 +1,8 @@
 import { HTMLProps } from "react";
+
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
-import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
 import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articles-animated";
+import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
 
 const CORE_FEATURES = [
 	{
@@ -32,7 +33,7 @@ export function CoreFeaturesSection() {
 			<div className="absolute inset-0 z-0">
 				<PatternedBackground aria-hidden="true" />
 			</div>
-			<div className="relative flex flex-col w-full z-10 items-center py-10 text-center text-stone-800 px-8 md:px-10 lg:px-20 xl:px-30">
+			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center px-8 py-10 text-center text-stone-800 md:px-10 lg:px-20">
 				<ScrollFadeElement className="mx-auto">
 					<h2
 						className="font-heading xl-my-10 my-3 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"

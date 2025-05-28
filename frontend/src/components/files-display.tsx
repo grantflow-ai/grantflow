@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { FileTextIcon, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatBytes } from "@/utils/format";
 

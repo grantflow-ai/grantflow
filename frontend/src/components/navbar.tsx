@@ -1,5 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import { Fragment } from "react";
+
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
 	Breadcrumb,
@@ -9,8 +12,6 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { usePathname } from "next/navigation";
-import { Fragment } from "react";
 
 const namespaces = new Set(["applications", "new", "sign-in", "workspaces"]);
 

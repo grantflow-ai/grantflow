@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { FileUploader } from "./file-uploader";
-import { mockToast } from "::testing/global-mocks";
 import userEvent from "@testing-library/user-event";
+
+import { mockToast } from "::testing/global-mocks";
+
+import { FileUploader } from "./file-uploader";
 
 vi.mock("react-dropzone", () => ({
 	useDropzone: vi.fn().mockImplementation(({ onDrop }) => ({

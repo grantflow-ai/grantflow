@@ -1,11 +1,12 @@
 "use server";
 
-import { PagePath } from "@/enums";
-import { logError } from "@/utils/logging";
-import { SESSION_COOKIE } from "@/constants";
+import { HTTPError } from "ky";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { HTTPError } from "ky";
+
+import { SESSION_COOKIE } from "@/constants";
+import { PagePath } from "@/enums";
+import { logError } from "@/utils/logging";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function redirectWithToastParams({

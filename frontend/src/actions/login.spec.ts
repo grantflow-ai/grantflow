@@ -1,8 +1,10 @@
-import { login } from "./login";
+import { vi } from "vitest";
+
+import { mockRedirect, mockSetCookie } from "::testing/global-mocks";
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
-import { mockRedirect, mockSetCookie } from "::testing/global-mocks";
-import { vi } from "vitest";
+
+import { login } from "./login";
 
 const mockPost = vi.fn();
 vi.mock("@/utils/api", () => ({
