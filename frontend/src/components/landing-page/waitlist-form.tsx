@@ -12,6 +12,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
+import { analyticsIdentify } from "@/utils/segment";
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {
@@ -43,6 +44,11 @@ export function WaitlistForm() {
 
 	async function onSubmit(values: z.infer<typeof waitlistSchema>): Promise<void> {
 		setFormState({ message: "Sending your details...", status: "loading" });
+
+		await analyticsIdentify(values.email, {
+			email: values.email,
+			name: values.name.split(" ")[0],
+		});
 
 		const result = await addToWaitlist(values);
 		const message = responseMessages[result.code];
