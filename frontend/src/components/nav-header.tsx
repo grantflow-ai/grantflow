@@ -67,7 +67,8 @@ export function NavHeader() {
 				<div className="hidden items-center md:flex" data-testid="nav-header-links">
 					<AppButton
 						aria-label="Go to Home Page"
-						className={`px-4 py-2 ${pathname === PagePath.ROOT.toString() ? "text-link-hover" : ""}`}
+						className={pathname === PagePath.ROOT.toString() ? "text-link-hover-light" : ""}
+						size="lg"
 						theme="light"
 						variant="link"
 					>
@@ -75,7 +76,8 @@ export function NavHeader() {
 					</AppButton>
 					<AppButton
 						aria-label="Go to About Us Page"
-						className={`px-4 py-2 ${pathname === PagePath.ABOUT_US.toString() ? "text-link-hover" : ""}`}
+						className={pathname === PagePath.ABOUT_US.toString() ? "text-link-hover-light" : ""}
+						size="lg"
 						theme="light"
 						variant="link"
 					>
@@ -120,7 +122,7 @@ export function NavHeader() {
 			<div
 				aria-expanded={isMobileMenuOpen}
 				aria-hidden={!isMobileMenuOpen}
-				className={`absolute inset-x-0 top-full flex flex-col gap-4 bg-white p-4 transition-all duration-300 ease-in-out sm:px-6
+				className={`absolute inset-x-0 top-full flex flex-col bg-white p-4 transition-all duration-300 ease-in-out sm:px-6
 				md:hidden
 				${isTermsPage && isMobileMenuOpen ? "border-primary border-b" : ""}
 				${isMobileMenuOpen ? "max-h-lg pointer-events-auto opacity-100" : "max-h-sm pointer-events-none opacity-0"}
@@ -129,7 +131,7 @@ export function NavHeader() {
 			>
 				<AppButton
 					aria-label="Go to Home Page"
-					className={pathname === PagePath.ROOT.toString() ? "text-link-hover" : ""}
+					className={pathname === PagePath.ROOT.toString() ? "text-link-hover-dark" : ""}
 					size="lg"
 					variant="link"
 				>
@@ -144,7 +146,7 @@ export function NavHeader() {
 				</AppButton>
 				<AppButton
 					aria-label="Go to About Us Page"
-					className={pathname === PagePath.ABOUT_US.toString() ? "text-link-hover" : ""}
+					className={pathname === PagePath.ABOUT_US.toString() ? "text-link-hover-dark" : ""}
 					size="lg"
 					variant="link"
 				>
