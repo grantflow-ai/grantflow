@@ -380,7 +380,7 @@ describe("NavHeader Component", () => {
 
 			it("should have mobile menu container hidden", () => {
 				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-				expect(mobileMenuContainer?.className).toContain("max-h-sm opacity-0");
+				expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
 			});
 		});
 
@@ -497,8 +497,7 @@ describe("NavHeader Component", () => {
 
 			it("should have mobile menu container properly hidden from screen readers", () => {
 				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-				expect(mobileMenuContainer?.className).toContain("max-h-sm opacity-0");
-				expect(mobileMenuContainer?.className).toContain("pointer-events-none");
+				expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
 				expect(mobileMenuContainer?.getAttribute("aria-hidden")).toBe("true");
 			});
 		});
@@ -518,8 +517,8 @@ describe("NavHeader Component", () => {
 
 			it("should have mobile menu container properly visible to screen readers", () => {
 				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-				expect(mobileMenuContainer?.className).toContain("max-h-lg opacity-100");
-				expect(mobileMenuContainer?.className).not.toContain("pointer-events-none");
+				expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
+				expect(mobileMenuContainer?.className).not.toContain("max-h-sm pointer-events-none opacity-0");
 				expect(mobileMenuContainer).toHaveAttribute("aria-hidden", "false");
 				expect(mobileMenuContainer).toHaveAttribute("aria-expanded", "true");
 			});
@@ -592,7 +591,7 @@ describe("NavHeader Component", () => {
 			fireEvent.click(mobileMenuButton);
 
 			const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-			expect(mobileMenuContainer?.className).toContain("max-h-lg opacity-100");
+			expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
 
 			Object.defineProperty(globalThis, "innerWidth", {
 				configurable: true,
@@ -602,7 +601,7 @@ describe("NavHeader Component", () => {
 
 			fireEvent(globalThis as unknown as Window, new Event("resize"));
 
-			expect(mobileMenuContainer?.className).toContain("max-h-sm opacity-0");
+			expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
 		});
 
 		it("should maintain correct visibility below and above breakpoint", () => {
