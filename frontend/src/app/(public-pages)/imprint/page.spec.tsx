@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import ImprintPage from "@/app/(public-pages)/imprint/page";
 import { vi } from "vitest";
+
+import ImprintPage from "@/app/(public-pages)/imprint/page";
 
 vi.mock("@/components/info-legal-page-components", () => ({
 	LegalPageContainer: ({ children, title }: { children: React.ReactNode; title: string }) => (

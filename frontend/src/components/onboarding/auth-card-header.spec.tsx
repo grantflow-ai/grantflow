@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 
 describe("AuthCardHeader", () => {

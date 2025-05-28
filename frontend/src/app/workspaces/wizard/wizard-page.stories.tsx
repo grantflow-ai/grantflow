@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect } from "react";
+
 import WizardPage from "@/app/workspaces/wizard/page";
+
+import type { Meta, StoryObj } from "@storybook/react";
 
 const Step1 = () => {
 	return <WizardPage />;

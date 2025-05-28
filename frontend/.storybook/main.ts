@@ -1,5 +1,6 @@
-import type { StorybookConfig } from "@storybook/experimental-nextjs-vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+
+import type { StorybookConfig } from "@storybook/experimental-nextjs-vite";
 
 const config: StorybookConfig = {
 	addons: ["@storybook/addon-essentials", "@storybook/addon-onboarding"],

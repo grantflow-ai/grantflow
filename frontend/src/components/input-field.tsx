@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export function AppInput({
 	className,
@@ -34,7 +35,7 @@ export function AppInput({
 
 	return (
 		<div className="w-full" {...props}>
-			<div className="flex justify-between items-center">
+			<div className="flex items-center justify-between">
 				{label && (
 					<Label
 						className={`block text-start text-xs font-light ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
@@ -47,7 +48,7 @@ export function AppInput({
 
 				{showWordCount && (
 					<div
-						className={`text-xs ps-4 ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
+						className={`ps-4 text-xs ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
 						data-testid={`${testId}-word-count`}
 					>
 						{formattedWordCount}
@@ -93,7 +94,7 @@ export function AppInput({
 			</div>
 
 			<div
-				className={`text-start text-sm text-error mb-1 ${hasError ? "visible" : "invisible"}`}
+				className={`text-error mb-1 text-start text-sm ${hasError ? "visible" : "invisible"}`}
 				data-testid={`${testId}-error`}
 			>
 				{errorMessage}

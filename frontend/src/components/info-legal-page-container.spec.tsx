@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { LegalPageContainer, TitledLegalSection, UntitledLegalSection } from "@/components/info-legal-page-components";
 
 describe("LegalPageContainer", () => {

@@ -1,7 +1,9 @@
-import { getOtp } from "./otp";
-import { API } from "@/types/api-types";
-import { mockRedirect } from "::testing/global-mocks";
 import { HTTPError } from "ky";
+
+import { mockRedirect } from "::testing/global-mocks";
+import { API } from "@/types/api-types";
+
+import { getOtp } from "./otp";
 
 const mockGet = vi.fn();
 const mockCreateAuthHeaders = vi.fn();

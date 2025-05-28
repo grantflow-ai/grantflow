@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 
 vi.mock("./backgrounds", () => ({

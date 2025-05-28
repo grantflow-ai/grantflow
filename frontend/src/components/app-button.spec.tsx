@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { AppButton } from "@/components/app-button";
 import { ArrowRight, User } from "lucide-react";
+
+import { AppButton } from "@/components/app-button";
 
 describe("AppButton", () => {
 	it("renders button with default props", () => {

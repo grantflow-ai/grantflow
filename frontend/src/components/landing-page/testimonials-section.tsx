@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
+
 import { MotionArticle, MotionBlockquote, MotionImage } from "@/components/landing-page/motion-components";
+import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
 
 const CONTENT = {
 	heading: "Why Researchers Join GrantFlow?",
@@ -64,20 +65,20 @@ const imageVariants = {
 
 export function TestimonialsSection() {
 	return (
-		<section aria-labelledby="testimonials-section" className="relative w-full text-stone-800 bg-gray-100">
-			<div className="flex flex-col pt-8 md:pt-12 lg:pt-16 xl:pt-20 pb-20 xl:pb-4 px-8 md:px-10 lg:px-20 xl:px-30 space-y-2">
-				<ScrollFadeElement className="w-full mx-auto">
-					<h2 className="font-heading text-3xl md:text-4xl font-medium" id="testimonials-heading">
+		<section aria-labelledby="testimonials-section" className="relative w-full bg-gray-100 text-stone-800">
+			<div className="xl:px-30 flex flex-col space-y-2 px-8 pb-20 pt-8 md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pb-4 xl:pt-20">
+				<ScrollFadeElement className="mx-auto w-full">
+					<h2 className="font-heading text-3xl font-medium md:text-4xl" id="testimonials-heading">
 						{CONTENT.heading}
 					</h2>
 				</ScrollFadeElement>
-				<ScrollFadeElement className="w-full mx-auto" delay={0.1}>
+				<ScrollFadeElement className="mx-auto w-full" delay={0.1}>
 					<p className="mx-1 text-xl md:text-lg lg:text-base">{CONTENT.subtitle}</p>
 				</ScrollFadeElement>
-				<div className="grid grid-cols-1 lg:grid-cols-3 place-items-center lg:place-items-start gap-12 md:gap-8 lg:gap-4 xl:gap-0 mt-8 xl:m-16">
+				<div className="mt-8 grid grid-cols-1 place-items-center gap-12 md:gap-8 lg:grid-cols-3 lg:place-items-start lg:gap-4 xl:m-16 xl:gap-0">
 					{CONTENT.testimonials.map((testimonial, i) => (
 						<MotionArticle
-							className="flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full px-5 xl:px-0"
+							className="w-sm lg:w-2xs xl:w-xs flex h-full flex-col items-center px-5 text-center xl:px-0"
 							data-testid={`mock-motion-article`}
 							initial="hidden"
 							key={i}
@@ -87,7 +88,7 @@ export function TestimonialsSection() {
 						>
 							<MotionImage
 								alt={`${Image.name}'s photo`}
-								className="rounded-full size-24 md:size-28 lg:size-32 xl:size-36"
+								className="size-24 rounded-full md:size-28 lg:size-32 xl:size-36"
 								data-testid="mock-motion-image"
 								height={100}
 								src={testimonial.image}
@@ -95,7 +96,7 @@ export function TestimonialsSection() {
 								width={100}
 							/>
 							<MotionBlockquote
-								className="mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base"
+								className="mt-6 text-xl font-semibold leading-tight md:text-lg lg:text-base"
 								data-testid="mock-motion-blockquote"
 								variants={textVariants}
 							>

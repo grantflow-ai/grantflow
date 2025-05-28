@@ -1,9 +1,9 @@
 import { PatternedBackground, PatternedBackgroundMobile } from "@/components/landing-page/backgrounds";
-import { cn } from "@/lib/utils";
-import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
-import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
-import { ScaleElement } from "@/components/landing-page/scale-element";
 import { HowItWorksCard } from "@/components/landing-page/howitworks-card";
+import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
+import { ScaleElement } from "@/components/landing-page/scale-element";
+import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
+import { cn } from "@/lib/utils";
 
 const benefitsCardHeader = "font-heading font-medium text-stone-800 text-3xl md:text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
@@ -43,10 +43,10 @@ export function BenefitsSection() {
 			<div className="absolute inset-0 z-0 hidden sm:block">
 				<PatternedBackground aria-hidden="true" />
 			</div>
-			<div className="absolute inset-0 z-0 sm:hidden opacity-50">
+			<div className="absolute inset-0 z-0 opacity-50 sm:hidden">
 				<PatternedBackgroundMobile aria-hidden="true" />
 			</div>
-			<div className="relative flex flex-col w-full z-10 items-center text-center px-4 pb-15 pt-8 md:px-10 md:pt-12 lg:px-20 xl:px-30 lg:pt-16 xl:pt-20">
+			<div className="pb-15 xl:px-30 relative z-10 flex w-full flex-col items-center px-4 pt-8 text-center md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pt-20">
 				<ScrollFadeElement className="mx-auto">
 					<h2 className={benefitsCardHeader} id="benefits-heading">
 						{CONTENT.heading}

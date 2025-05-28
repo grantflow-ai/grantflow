@@ -1,4 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import { ReactNode } from "react";
+
+import { AnimatedFeatureArticle } from "./feature-articles-animated";
 
 vi.mock("motion/react", () => {
 	return {
@@ -91,9 +94,6 @@ vi.mock("motion/react", () => {
 		},
 	};
 });
-
-import { AnimatedFeatureArticle } from "./feature-articles-animated";
-import { ReactNode } from "react";
 
 describe("Animated Feature Articles", () => {
 	const props = {

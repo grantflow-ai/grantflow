@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { BrandPattern } from "@/components/brand-pattern";
 
 describe("BrandPattern Component", () => {

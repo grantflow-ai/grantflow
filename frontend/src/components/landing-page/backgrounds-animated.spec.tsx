@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
 
 describe("AnimatedGradientBackground", () => {

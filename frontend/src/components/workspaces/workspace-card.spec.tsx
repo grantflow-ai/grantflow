@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import { WorkspaceCard } from "./workspace-card";
+
 import { PagePath } from "@/enums";
+
+import { WorkspaceCard } from "./workspace-card";
 
 describe("WorkspaceCard", () => {
 	const mockWorkspaceOwner = {

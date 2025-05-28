@@ -1,7 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
+
+import { cn } from "@/lib/utils";
 
 const gradientPath = [
 	`radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)`,

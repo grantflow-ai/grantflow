@@ -1,30 +1,32 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
-import eslintPluginStorybook from "eslint-plugin-storybook";
 import eslintJS from "@eslint/js";
+import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
+import eslintPluginImportX from "eslint-plugin-import-x";
+import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
 import eslintPluginMarkdown from "eslint-plugin-markdown";
 import eslintPluginNode from "eslint-plugin-n";
+import eslintPluginPaths from "eslint-plugin-paths";
 import eslintPluginPerfectionist from "eslint-plugin-perfectionist";
 import eslintPluginPromise from "eslint-plugin-promise";
 import eslintPluginReact from "eslint-plugin-react";
 import reactPerfPlugin from "eslint-plugin-react-perf";
+import eslintPluginStorybook from "eslint-plugin-storybook";
+import eslintPluginTailwind from "eslint-plugin-tailwindcss";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import eslintPluginUnusedImports from "eslint-plugin-unused-imports";
 import eslintPluginVitest from "eslint-plugin-vitest";
 import globals from "globals";
 import eslintTS from "typescript-eslint";
-import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
-import eslintPluginTailwind from "eslint-plugin-tailwindcss";
-import eslintPluginImportX from "eslint-plugin-import-x";
-import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
-
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const compat = new FlatCompat();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default [
+export default eslintTS.config(
 	eslintJS.configs.recommended,
 	...eslintTS.configs.strictTypeChecked,
 	...eslintTS.configs.stylisticTypeChecked,
@@ -50,16 +52,13 @@ export default [
 				...globals.node,
 			},
 			parserOptions: {
-				ecmaFeatures: { jsx: true },
-				ecmaVersion: "latest",
-				sourceType: "module",
-				parser: "@typescript-eslint/parser",
-				project: ["./frontend/tsconfig.json"],
-				tsconfigRootDir: path.resolve(__dirname),
+				projectService: true,
+				tsconfigRootDir: __dirname,
 			},
 		},
 		plugins: {
 			"markdown": eslintPluginMarkdown,
+			"paths": fixupPluginRules(eslintPluginPaths),
 			"unused-imports": eslintPluginUnusedImports,
 		},
 		rules: {
@@ -70,9 +69,32 @@ export default [
 			"@typescript-eslint/naming-convention": [
 				"error",
 				{
-					custom: { match: false, regex: "^I[A-Z]" },
+					custom: {
+						match: false,
+						regex: "^[IT][A-Z]",
+					},
 					format: ["PascalCase"],
 					selector: "interface",
+				},
+				{
+					custom: {
+						match: false,
+						regex: "^[IT][A-Z]",
+					},
+					format: ["PascalCase"],
+					selector: "typeAlias",
+				},
+				{
+					format: ["UPPER_CASE"],
+					selector: "enumMember",
+				},
+				{
+					custom: {
+						match: true,
+						regex: "^[A-Z]$",
+					},
+					format: ["PascalCase"],
+					selector: "typeParameter",
 				},
 			],
 			"@typescript-eslint/no-extra-non-null-assertion": "error",
@@ -101,6 +123,26 @@ export default [
 			"@typescript-eslint/switch-exhaustiveness-check": "warn",
 			"curly": "error",
 			"eqeqeq": "error",
+			"import-x/no-duplicates": "error",
+			"import-x/no-named-as-default-member": "off",
+			"import-x/order": [
+				"error",
+				{
+					"alphabetize": {
+						caseInsensitive: true,
+						order: "asc",
+					},
+					"groups": ["builtin", "external", "internal", ["parent", "sibling", "index"], "object", "type"],
+					"newlines-between": "always",
+					"pathGroups": [
+						{
+							group: "internal",
+							pattern: "@/**",
+						},
+					],
+					"pathGroupsExcludedImportTypes": ["type"],
+				},
+			],
 			"n/no-extraneous-import": "error",
 			"n/no-missing-import": "off",
 			"n/no-process-exit": "error",
@@ -108,7 +150,15 @@ export default [
 			"no-console": "warn",
 			"no-unused-vars": "off",
 			"object-shorthand": "error",
+			"paths/alias": "error",
 			"perfectionist/sort-imports": "off",
+			"perfectionist/sort-named-imports": [
+				"error",
+				{
+					order: "asc",
+					type: "natural",
+				},
+			],
 			"prefer-const": ["error", { destructuring: "all" }],
 			"prefer-destructuring": "error",
 			"prefer-template": "warn",
@@ -116,7 +166,6 @@ export default [
 			"react-perf/jsx-no-new-object-as-prop": "off",
 			"react/prop-types": "off",
 			"react/react-in-jsx-scope": "off",
-			"tailwindcss/classnames-order": "off",
 			"tailwindcss/no-custom-classname": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
@@ -131,19 +180,22 @@ export default [
 			"unicorn/prefer-string-raw": "off",
 			"unicorn/prevent-abbreviations": "off",
 			"unused-imports/no-unused-imports": "error",
-			"import-x/no-named-as-default-member": "off",
 		},
 		settings: {
-			"react": {
-				version: "detect",
-			},
 			"import-x/resolver-next": [
 				createTypeScriptImportResolver({
 					alwaysTryTypes: true,
 					project: ["./frontend/tsconfig.json"],
 				}),
 			],
+			"react": {
+				version: "detect",
+			},
 		},
+	},
+	{
+		extends: [eslintTS.configs.disableTypeChecked],
+		files: ["**/*.js", "**/*.cjs", "**/*.mjs", "eslint.config.mjs"],
 	},
 	{
 		files: ["**/*.md"],
@@ -214,4 +266,4 @@ export default [
 			"react-perf/jsx-no-new-array-as-prop": "off",
 		},
 	},
-];
+);

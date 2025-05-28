@@ -41,7 +41,7 @@ repos:
       rev: v9.27.0
       hooks:
           - id: eslint
-            files: \.[jt]sx?$
+            files: \.(js|jsx|ts|tsx|mjs|mts)$
             types: [file]
             args: ["--fix", "--max-warnings=0", "--no-warn-ignored", "--cache"]
             additional_dependencies:
@@ -50,15 +50,20 @@ repos:
                     "@eslint/eslintrc",
                     "@eslint/js",
                     "@next/eslint-plugin-next",
+                    "@next/eslint-plugin-next",
                     "eslint",
+                    "eslint-plugin-import-x",
                     "eslint-plugin-jsx-a11y",
                     "eslint-plugin-markdown",
                     "eslint-plugin-n",
+                    "eslint-plugin-paths",
                     "eslint-plugin-perfectionist",
                     "eslint-plugin-promise",
                     "eslint-plugin-react",
                     "eslint-plugin-react-hooks",
                     "eslint-plugin-react-perf",
+                    "eslint-plugin-storybook",
+                    "eslint-plugin-tailwindcss",
                     "eslint-plugin-unicorn",
                     "eslint-plugin-unused-imports",
                     "eslint-plugin-vitest",

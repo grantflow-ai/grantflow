@@ -1,4 +1,5 @@
 {
+	"extends": "../tsconfig.json",
 	"compilerOptions": {
 		"baseUrl": ".",
 		"paths": {
@@ -6,29 +7,8 @@
 			"::testing/*": ["testing/*"]
 		},
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
-		"allowJs": true,
-		"forceConsistentCasingInFileNames": true,
-		"incremental": true,
-		"isolatedModules": true,
-		"module": "ESNext",
 		"jsx": "preserve",
 		"moduleResolution": "bundler",
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"noEmit": true,
-		"noImplicitAny": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"removeComments": true,
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
-		"sourceMap": false,
-		"strict": true,
-		"strictBindCallApply": true,
-		"strictFunctionTypes": true,
-		"strictNullChecks": true,
-		"strictPropertyInitialization": true,
-		"target": "ESNext",
 		"types": ["vitest/globals", "@testing-library/jest-dom"],
 		"plugins": [
 			{

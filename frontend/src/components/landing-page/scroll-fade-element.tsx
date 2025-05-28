@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { motion, useScroll, useTransform } from "motion/react";
+import React from "react";
 
 export const ScrollFadeElement: React.FC<{
 	children: React.ReactNode;

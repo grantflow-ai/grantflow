@@ -13,7 +13,7 @@ export function AuthCardHeader({
 }) {
 	return (
 		<CardHeader data-testid="auth-card-header">
-			<CardTitle className="text-4xl font-heading font-medium" data-testid={titleTestId}>
+			<CardTitle className="font-heading text-4xl font-medium" data-testid={titleTestId}>
 				{title}
 			</CardTitle>
 			<CardDescription className="text-app-gray-600" data-testid={descriptionTestId}>

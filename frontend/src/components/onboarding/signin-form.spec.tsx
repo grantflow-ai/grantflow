@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { SigninForm } from "./signin-form";
 import userEvent from "@testing-library/user-event";
+
+import { SigninForm } from "./signin-form";
 
 describe("EmailSigninForm", () => {
 	const mockOnSubmit = vi.fn();
