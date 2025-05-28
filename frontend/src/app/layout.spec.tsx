@@ -52,7 +52,7 @@ describe("RootLayout", () => {
 		expect(body).toHaveClass("min-h-screen");
 		expect(body).toHaveClass("bg-background");
 		expect(body).toHaveClass("antialiased");
-		expect(body).toHaveClass("font-sora");
+		expect(body).toHaveClass("font-body");
 	});
 
 	it("sets the correct lang attribute on the html element", () => {

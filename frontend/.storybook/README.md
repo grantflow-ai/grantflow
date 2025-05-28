@@ -4,8 +4,14 @@ This is the component library and documentation for GrantFlow's frontend compone
 
 ## Local Development
 
+You can start Storybook locally using either of these commands:
+
 ```bash
+# Using pnpm directly
 pnpm storybook
+
+# Using the project task runner
+task frontend:storybook
 ```
 
 ## Building
@@ -24,4 +30,4 @@ Stories should be placed alongside their components with the `.stories.tsx` exte
 
 ## GitHub Pages URL
 
-Once deployed, Storybook will be available at: https://grantflow-ai.github.io/grantflow/
+Once deployed, Storybook will be available at: <https://grantflow-ai.github.io/grantflow/>

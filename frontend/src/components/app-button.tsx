@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import React from "react";
 
-const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:bg-transparent", {
+const appButtonVariants = cva("size-auto font-button text-base rounded-sm font-light hover:bg-transparent", {
 	compoundVariants: [
 		{
 			className: "border-white text-white before:border-white",
@@ -11,7 +11,7 @@ const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:b
 			variant: "secondary",
 		},
 		{
-			className: "h-0 px-0 text-xl",
+			className: "h-auto px-0 text-xl",
 			size: "lg",
 			variant: "link",
 		},
@@ -23,9 +23,9 @@ const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:b
 	},
 	variants: {
 		size: {
-			lg: "h-9.5 px-4",
-			md: "h-7.5 px-3",
-			sm: "h-6 px-2 text-sm",
+			lg: "px-4 py-2",
+			md: "px-3 py-1 text-sm",
+			sm: "px-1 py-0.5 text-sm",
 		},
 		theme: {
 			dark: "",
@@ -33,18 +33,12 @@ const appButtonVariants = cva("font-button text-md rounded-sm font-light hover:b
 		},
 		variant: {
 			link: "rounded-none bg-transparent font-normal hover:text-link-hover hover:no-underline",
-			primary: "hover:bg-accent disabled:opacity-100",
+			primary: "hover:bg-accent disabled:opacity-100 disabled:bg-muted",
 			secondary:
 				"text-primary border-primary border bg-transparent relative before:absolute before:-inset-px before:rounded-sm before:border-2 before:border-primary before:opacity-0 hover:before:opacity-100 before:transition-opacity before:pointer-events-none",
 		},
 	},
 });
-
-const ICON_DIMENSIONS_MAP = {
-	lg: { height: 19, width: 19 },
-	md: { height: 15, width: 15 },
-	sm: { height: 13, width: 13 },
-};
 
 export interface AppButtonProps
 	extends Omit<ShadcnButtonProps, "size" | "variant">,
@@ -66,8 +60,6 @@ export function AppButton({
 	variant,
 	...props
 }: AppButtonProps) {
-	const iconDimens = ICON_DIMENSIONS_MAP[size ?? "md"];
-
 	const combinedClassNames = cn(
 		buttonVariants({
 			size: size === "md" ? "default" : size,
@@ -79,26 +71,22 @@ export function AppButton({
 
 	return (
 		<Button className={combinedClassNames} {...props}>
-			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon, iconDimens)} </span>}
+			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
 			{children}
-			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon, iconDimens)}</span>}
+			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon)}</span>}
 		</Button>
 	);
 }
 
-function resizedIcon(
-	icon: React.ReactNode,
-	dimens: { height: number; width: number },
-	keepIconSize = false,
-): React.ReactNode {
+function resizedIcon(icon: React.ReactNode, keepIconSize = false): React.ReactNode {
 	if (!icon || keepIconSize) {
 		return icon;
 	}
 
 	if (React.isValidElement(icon)) {
 		return React.cloneElement(icon as React.ReactElement<React.HTMLProps<SVGSVGElement>>, {
-			height: dimens.height,
-			width: dimens.width,
+			height: 16,
+			width: 16,
 		});
 	}
 
