@@ -1,15 +1,16 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { PagePath } from "@/enums";
-import useWebSocket, { ReadyState } from "react-use-websocket";
-import { getEnv } from "@/utils/env";
 import { useCallback, useEffect, useRef, useState } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
+import { getOtp } from "@/actions/otp";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getOtp } from "@/actions/otp";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { PagePath } from "@/enums";
+import { getEnv } from "@/utils/env";
 
 interface ChatMessage {
 	data: {

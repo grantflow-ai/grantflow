@@ -1,15 +1,16 @@
 "use server";
 
+import Link from "next/link";
+
+import { AppButton } from "@/components/app-button";
+import { IconGoAhead } from "@/components/icons";
+import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
-import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
-import { IconGoAhead } from "@/components/icons";
-import { AppButton } from "@/components/app-button";
-import { ScrollButton } from "@/components/scroll-button";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
-import Link from "next/link";
+import { ScrollButton } from "@/components/scroll-button";
 
 const CONTENT_CTA_SECTION = {
 	description:

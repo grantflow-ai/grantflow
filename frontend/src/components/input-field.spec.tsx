@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AppInput } from "@/components/input-field";
 import { Mail } from "lucide-react"; // Assuming you might use Lucide icons
+
+import { AppInput } from "@/components/input-field";
 
 describe("AppInput Component", () => {
 	it("renders correctly with default props", () => {

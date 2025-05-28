@@ -1,7 +1,7 @@
-import type { Env } from "@/types/env-types";
-
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+
+import type { Env } from "@/types/env-types";
 
 const envRef: { value: null | Readonly<Env> } = { value: null };
 

@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { FileContainer } from "./file-container";
+
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof FileContainer> = {
 	component: FileContainer,

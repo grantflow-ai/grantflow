@@ -1,8 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { FileContainer } from "./file-container";
-import { mockToast } from "::testing/global-mocks";
 import userEvent from "@testing-library/user-event";
+
+import { mockToast } from "::testing/global-mocks";
 import { createApplicationSourceUploadUrl } from "@/actions/sources";
+
+import { FileContainer } from "./file-container";
 
 vi.mock("@/actions/sources", () => ({
 	createApplicationSourceUploadUrl: vi.fn(),

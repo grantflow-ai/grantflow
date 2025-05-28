@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 
 describe("Background Components", () => {

@@ -12,7 +12,7 @@ export function SocialSigninButton({
 }) {
 	return (
 		<AppButton
-			className="border-app-gray-400 text-sm font-normal text-dark"
+			className="border-app-gray-400 text-dark text-sm font-normal"
 			disabled={isLoading}
 			leftIcon={platform === "google" ? <IconSocialGoogle /> : <IconSocialOrcid />}
 			onClick={async () => {

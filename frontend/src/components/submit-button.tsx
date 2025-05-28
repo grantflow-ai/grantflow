@@ -1,6 +1,7 @@
-import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+
 import { AppButton, AppButtonProps } from "@/components/app-button";
+import { cn } from "@/lib/utils";
 
 export function SubmitButton({
 	children,

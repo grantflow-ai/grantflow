@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
 
 vi.mock("motion/react", async () => {

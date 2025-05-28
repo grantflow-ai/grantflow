@@ -1,6 +1,8 @@
 import { render } from "@testing-library/react";
-import { ToastListener } from "./toast-listener";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+
+import { ToastListener } from "./toast-listener";
 
 vi.mock("next/navigation", () => ({
 	usePathname: vi.fn().mockReturnValue("/"),
@@ -114,5 +116,3 @@ describe("ToastListener", () => {
 		expect(mockRouter.replace).toHaveBeenCalledWith("/?", { scroll: false });
 	});
 });
-
-import { useRouter, useSearchParams } from "next/navigation";

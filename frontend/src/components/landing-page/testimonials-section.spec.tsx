@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 
 vi.mock("@/components/landing-page/motion-components", () => ({

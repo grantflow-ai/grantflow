@@ -22,11 +22,11 @@ export function BenefitsList({ className = "" }: { className?: string }) {
 		<ul className={`space-y-4 ${className}`} data-testid="benefits-list">
 			{benefitItems.map((item, index) => (
 				<li className="flex flex-row items-start" key={index}>
-					<div className="shrink-0 flex items-center justify-center">
-						<IconTick className="mt-1 mr-2" height={14} width={14} />
+					<div className="flex shrink-0 items-center justify-center">
+						<IconTick className="mr-2 mt-1" height={14} width={14} />
 					</div>
 					<div className="">
-						<h5 className="font-heading font-semibold mb-2">{item.title}</h5>
+						<h5 className="font-heading mb-2 font-semibold">{item.title}</h5>
 						<p className="text-app-gray-600 leading-tight">{item.description}</p>
 					</div>
 				</li>

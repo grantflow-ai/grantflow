@@ -1,19 +1,17 @@
 "use client";
 
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
-
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { addToWaitlist } from "@/actions/join-waitlist";
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { waitlistSchema } from "@/schemas/waitlist-schema";
-import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { AppInput } from "@/components/input-field";
 import { SubmitButton } from "@/components/submit-button";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
+import { waitlistSchema } from "@/schemas/waitlist-schema";
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {
@@ -61,7 +59,7 @@ export function WaitlistForm() {
 
 	return (
 		<Form {...form}>
-			<form className="flex flex-col w-full min-w-[22rem] md:mt-0 pe-0" onSubmit={form.handleSubmit(onSubmit)}>
+			<form className="flex w-full min-w-[22rem] flex-col pe-0 md:mt-0" onSubmit={form.handleSubmit(onSubmit)}>
 				<WaitListFormItem
 					formControl={form.control}
 					id="email"
@@ -83,7 +81,7 @@ export function WaitlistForm() {
 					type="text"
 				/>
 
-				<div className="flex justify-end px-2 mt-8 mb-2">
+				<div className="mb-2 mt-8 flex justify-end px-2">
 					<SubmitButton
 						data-testid="waitlist-form-submit-button"
 						disabled={!form.formState.isValid || formState.status === "loading"}
@@ -97,8 +95,8 @@ export function WaitlistForm() {
 						${formState.status === "idle" ? "max-h-0 opacity-0" : "max-h-12 opacity-100"}`}
 				>
 					<p
-						className={`w-full text-sm px-1 transition-all duration-300 ease-in-out
-						${formState.status === "idle" ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}
+						className={`w-full px-1 text-sm transition-all duration-300 ease-in-out
+						${formState.status === "idle" ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}
 						${formState.status === "success" ? "text-success" : formState.status === "error" ? "text-error" : "text-gray-50"}`}
 					>
 						{formState.status === "loading" ? (
@@ -119,7 +117,7 @@ export function WaitlistForm() {
 function Spinner() {
 	return (
 		<svg
-			className="animate-spin -ml-1 mr-3 size-4"
+			className="-ml-1 mr-3 size-4 animate-spin"
 			fill="none"
 			viewBox="0 0 24 24"
 			xmlns="http://www.w3.org/2000/svg"
@@ -170,13 +168,13 @@ function WaitListFormItem({
 			name={name === "email" ? "email" : "name"}
 			render={({ field }) => (
 				<FormItem className={className}>
-					<FormLabel className="font-heading font-light text-xl md:text-base">{label}</FormLabel>
-					<FormControl className="w-full h-auto mt-3">
+					<FormLabel className="font-heading text-xl font-light md:text-base">{label}</FormLabel>
+					<FormControl className="mt-3 h-auto w-full">
 						<AppInput
 							placeholder={placeholder}
 							type={type}
 							{...field}
-							className={`form-input bg-white text-gray-600 rounded-sm p-3`}
+							className={`form-input rounded-sm bg-white p-3 text-gray-600`}
 							testId={testId}
 						/>
 					</FormControl>

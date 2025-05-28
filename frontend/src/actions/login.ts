@@ -1,11 +1,12 @@
 "use server";
 
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
 import { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { getEnv } from "@/utils/env";
 
 export async function login(idToken: string) {

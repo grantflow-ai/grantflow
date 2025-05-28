@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 
 vi.mock("motion/react", async () => {

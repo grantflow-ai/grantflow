@@ -1,5 +1,4 @@
 import { GradientBackground } from "@/components/landing-page/backgrounds";
-import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 import {
 	IconEarlyAccessBenefit1,
 	IconEarlyAccessBenefit2,
@@ -16,6 +15,7 @@ import {
 	MotionSection,
 	MotionUnorderedList,
 } from "@/components/landing-page/motion-components";
+import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 
 const SECTION_HEADERS = {
 	badge: "Early Access Registration Now Open!",
@@ -181,7 +181,7 @@ export function EarlyAccessSection() {
 		>
 			<GradientBackground className="inset-0 z-0 hidden md:absolute md:block" />
 			<GradientBackground className="absolute inset-0 z-0 md:hidden" position="bottom-left" />
-			<div className="relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 lg:py-15 xl:py-20 xl:px-30">
+			<div className="lg:py-15 xl:px-30 relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 xl:py-20">
 				<MotionDiv
 					className="text-background max-w-fit rounded-full bg-white px-2 pt-0.5 text-lg md:text-sm"
 					id="early-access-badge"
@@ -214,7 +214,7 @@ export function EarlyAccessSection() {
 function BenefitsAndWaitlistForm() {
 	return (
 		<MotionDiv
-			className="flex flex-col rounded bg-violet-200/15 gap-8 lg:gap-0 p-7 lg:flex-row mt-10 lg:mt-7 lg:px-11"
+			className="mt-10 flex flex-col gap-8 rounded bg-violet-200/15 p-7 lg:mt-7 lg:flex-row lg:gap-0 lg:px-11"
 			variants={contentContainerVariants}
 		>
 			<MotionSection
@@ -251,7 +251,7 @@ function BenefitsAndWaitlistForm() {
 			</MotionSection>
 			<MotionAside
 				aria-label="waitlist-form"
-				className="flex flex-col shrink-0 space-y-2"
+				className="flex shrink-0 flex-col space-y-2"
 				id="waitlist-form-container"
 				variants={formContainerVariants}
 			>

@@ -1,7 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
+
+import { cn } from "@/lib/utils";
 
 const containerVariants = {
 	hidden: { opacity: 0 },
@@ -96,9 +97,9 @@ export function HowItWorksCard({
 				{heading}
 			</motion.h2>
 			<div className="relative my-8 grid w-full grid-cols-1 gap-y-12 p-2 md:grid-cols-4 md:gap-x-20">
-				<div className="md:hidden border-background/15 h-7/8 absolute bottom-0 left-5 top-4 z-0 border-l-2 border-dashed" />
+				<div className="border-background/15 h-7/8 absolute bottom-0 left-5 top-4 z-0 border-l-2 border-dashed md:hidden" />
 				<motion.div
-					className="absolute right-0 z-0 hidden top-5 border-background/15 h-[0.15rem] border-t-2 border-dashed md:block md:left-18 md:w-[calc(100%-9.5rem)] lg:left-25 lg:w-[calc(100%-12.5rem)] xl:left-29 xl:w-[calc(100%-15rem)]"
+					className="border-background/15 md:left-18 lg:left-25 xl:left-29 absolute right-0 top-5 z-0 hidden h-[0.15rem] border-t-2 border-dashed md:block md:w-[calc(100%-9.5rem)] lg:w-[calc(100%-12.5rem)] xl:w-[calc(100%-15rem)]"
 					variants={timelineVariants}
 				/>
 

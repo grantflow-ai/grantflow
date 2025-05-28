@@ -1,10 +1,11 @@
-import { SubmitButton } from "@/components/submit-button";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
+
 import { IconGoAhead } from "@/components/icons";
 import { AppInput } from "@/components/input-field";
+import { SubmitButton } from "@/components/submit-button";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
 const signInFormSchema = z.object({
 	email: z
@@ -120,7 +121,7 @@ export function SigninForm({
 						)}
 					/>
 					<SubmitButton
-						className="mt-3 mb-8 w-full"
+						className="mb-8 mt-3 w-full"
 						data-testid="email-signin-form-submit-button"
 						disabled={!form.formState.isValid || isLoading}
 						isLoading={isLoading}

@@ -4,11 +4,11 @@ export function SeparatorWithText({ className, text }: { className?: string; tex
 	return (
 		<div className={cn("relative", className)} data-testid="separator">
 			<div className="relative flex items-center">
-				<div className="grow border-t border-app-gray-300" />
-				<span className="mx-3 shrink text-sm text-app-gray-600" data-testid="separator-text">
+				<div className="border-app-gray-300 grow border-t" />
+				<span className="text-app-gray-600 mx-3 shrink text-sm" data-testid="separator-text">
 					{text}
 				</span>
-				<div className="grow border-t border-app-gray-300" />
+				<div className="border-app-gray-300 grow border-t" />
 			</div>
 		</div>
 	);

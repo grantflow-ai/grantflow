@@ -1,7 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 import { AppButton } from "@/components/app-button";
 
 export function FooterLinks({
@@ -18,7 +19,7 @@ export function FooterLinks({
 	};
 
 	return (
-		<ul className={`flex ${isMobile ? "flex-col items-end my-1" : ""} gap-5`}>
+		<ul className={`flex ${isMobile ? "my-1 flex-col items-end" : ""} gap-5`}>
 			{links.map(({ href, label }, index) => (
 				<li key={index}>
 					<AppButton

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+
 import { HowItWorksCard } from "@/components/landing-page/howitworks-card";
 
 vi.mock("motion/react", () => {

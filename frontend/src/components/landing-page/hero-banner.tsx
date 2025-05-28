@@ -1,9 +1,11 @@
-import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
-import { IconGoAhead } from "@/components/icons";
+import Link from "next/link";
+
 import { AppButton } from "@/components/app-button";
 import { BrandPattern } from "@/components/brand-pattern";
+import { IconGoAhead } from "@/components/icons";
+import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
+
 import { ScrollButton } from "../scroll-button";
-import Link from "next/link";
 
 export function HeroBanner() {
 	return (

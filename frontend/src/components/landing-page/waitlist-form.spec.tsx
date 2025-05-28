@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 import userEvent from "@testing-library/user-event";
+
+import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 
 const { mockAddToWaitlist, mockError, mockSuccess } = vi.hoisted(() => {
