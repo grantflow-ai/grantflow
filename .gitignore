@@ -2,7 +2,7 @@
 **/__pycache__/
 **/http-client.private.env.json
 *.iml
-*.log
+**/*.log
 *.pem
 *.py[cod]
 *.suo
