@@ -120,7 +120,6 @@ export function SigninForm({
 						)}
 					/>
 					<SubmitButton
-						canBeDisabled={false}
 						className="mt-3 mb-8 w-full"
 						data-testid="email-signin-form-submit-button"
 						disabled={!form.formState.isValid || isLoading}
