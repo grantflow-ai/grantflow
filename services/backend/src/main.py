@@ -26,6 +26,7 @@ from services.backend.src.api.routes.sources import (
 from services.backend.src.api.routes.workspaces import (
     handle_create_invitation_redirect_url,
     handle_create_workspace,
+    handle_delete_invitation,
     handle_delete_workspace,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
@@ -57,6 +58,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_workspaces,
     handle_update_organization,
     handle_update_workspace,
+    handle_delete_invitation,
 ]
 
 grant_template_generation_pipeline_handler_listener = listener("grant_template_generation_pipeline_handler")(
