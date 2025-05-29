@@ -524,16 +524,16 @@ async def test_delete_invitation_success(
             await session.rollback()
             raise DatabaseError("Error deleting invitation", context=str(e)) from e
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/invitations/{invitation.id}/",
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        deleted_invitation = await session.get_one_or_none(
-            UserWorkspaceInvitation,
-            id=invitation.id,
-            workspace_id=workspace.id,
+        deleted_invitation = await session.scalar(
+            select(UserWorkspaceInvitation)
+            .where(UserWorkspaceInvitation.id == invitation.id)
+            .where(UserWorkspaceInvitation.workspace_id == workspace.id)
         )
         assert deleted_invitation is None
 
@@ -562,8 +562,8 @@ async def test_delete_invitation_not_workspace_member(
         f"/workspaces/{workspace.id}/invitations/{invitation.id}",
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "user is not a member of this workspace" in response.json()["detail"].lower()
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json()["detail"].lower() == "unauthorized"
 
 
 @pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN))
@@ -629,3 +629,4 @@ async def test_delete_invitation_unauthorized_role(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+    assert response.json()["detail"].lower() == "unauthorized"
