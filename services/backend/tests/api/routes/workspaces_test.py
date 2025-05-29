@@ -380,7 +380,7 @@ async def test_create_invitation_redirect_url_user_already_member(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "services.backend.src.utils.firebase.get_user_by_email",
+        "services.backend.src.api.routes.workspaces.get_user_by_email",
         return_value={"uid": "existing_user_uid", "email": "test@example.com"},
     )
 
@@ -431,7 +431,7 @@ async def test_create_invitation_redirect_url_success(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "services.backend.src.utils.firebase.get_user_by_email",
+        "services.backend.src.api.routes.workspaces.get_user_by_email",
         return_value={"uid": "new_user_uid", "email": "new_user@example.com"},
     )
 
@@ -456,10 +456,11 @@ async def test_create_invitation_redirect_url_success(
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
     response_data = response.json()
-    assert "redirect_url" in response_data
-    assert "/accept-invitation?token=" in response_data["redirect_url"]
+    assert "token" in response_data
+    assert isinstance(response_data["token"], str)
+    assert len(response_data["token"]) > 0
 
     async with async_session_maker() as session:
         invitation = await session.scalar(
