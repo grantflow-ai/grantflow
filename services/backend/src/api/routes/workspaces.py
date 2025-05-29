@@ -275,14 +275,11 @@ async def handle_delete_invitation(
     logger.info("Deleting invitation", workspace_id=workspace_id, invitation_id=invitation_id)
     async with session_maker() as session, session.begin():
         try:
-            inviter = await session.scalar(
+            await session.scalar(
                 select(WorkspaceUser)
                 .where(WorkspaceUser.workspace_id == workspace_id)
                 .where(WorkspaceUser.firebase_uid == request.auth)
             )
-
-            if not inviter:
-                raise ValidationException("User is not a member of this workspace")
 
             invitation = await session.scalar(
                 select(UserWorkspaceInvitation)
