@@ -56,7 +56,7 @@ class CreateInvitationRedirectUrlRequestBody(TypedDict):
 
 
 class InvitationRedirectUrlResponse(TypedDict):
-    redirect_url: str
+    token: str
 
 
 @post("/workspaces", operation_id="CreateWorkspace")
@@ -250,11 +250,8 @@ async def handle_create_invitation_redirect_url(
                 algorithm="HS256",
             )
 
-            frontend_base_url = request.app.state.settings.frontend_base_url
-            redirect_url = f"{frontend_base_url}/accept-invitation?token={jwt_token}"
-
             await session.commit()
-            return InvitationRedirectUrlResponse(redirect_url=redirect_url)
+            return InvitationRedirectUrlResponse(token=jwt_token)
 
         except (SQLAlchemyError, ValidationException) as e:
             await session.rollback()
