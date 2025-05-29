@@ -259,3 +259,44 @@ async def handle_create_invitation_redirect_url(
                 logger.error("Error creating invitation", exc_info=e)
                 raise DatabaseError("Error creating invitation", context=str(e)) from e
             raise e
+
+
+@delete(
+    "/workspaces/{workspace_id:uuid}/invitations/{invitation_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+    operation_id="DeleteInvitation",
+)
+async def handle_delete_invitation(
+    request: APIRequest,
+    workspace_id: UUID,
+    invitation_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    logger.info("Deleting invitation", workspace_id=workspace_id, invitation_id=invitation_id)
+    async with session_maker() as session, session.begin():
+        try:
+            await session.scalar(
+                select(WorkspaceUser)
+                .where(WorkspaceUser.workspace_id == workspace_id)
+                .where(WorkspaceUser.firebase_uid == request.auth)
+            )
+
+            invitation = await session.scalar(
+                select(UserWorkspaceInvitation)
+                .where(UserWorkspaceInvitation.id == invitation_id)
+                .where(UserWorkspaceInvitation.workspace_id == workspace_id)
+            )
+
+            if not invitation:
+                raise ValidationException("Invitation not found")
+
+            await session.execute(
+                sa_delete(UserWorkspaceInvitation)
+                .where(UserWorkspaceInvitation.id == invitation_id)
+                .where(UserWorkspaceInvitation.workspace_id == workspace_id)
+            )
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error deleting invitation", exc_info=e)
+            raise DatabaseError("Error deleting invitation", context=str(e)) from e

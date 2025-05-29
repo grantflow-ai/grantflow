@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import UserWorkspaceInvitation, Workspace, WorkspaceUser
+from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from services.backend.src.api.routes.workspaces import (
     CreateInvitationRedirectUrlRequestBody,
@@ -471,3 +472,161 @@ async def test_create_invitation_redirect_url_success(
         assert invitation is not None
         assert invitation.role == UserRoleEnum.MEMBER
         assert invitation.invitation_sent_at is not None
+
+
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN))
+async def test_delete_invitation_success(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    user_role: UserRoleEnum,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        try:
+            workspace = await session.scalar(
+                insert(Workspace)
+                .values(
+                    {
+                        "name": "Test Workspace",
+                        "description": "A workspace for testing",
+                        "logo_url": None,
+                    }
+                )
+                .returning(Workspace)
+            )
+
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    {
+                        "workspace_id": workspace.id,
+                        "firebase_uid": firebase_uid,
+                        "role": user_role.value,
+                    }
+                )
+            )
+
+            invitation = await session.scalar(
+                insert(UserWorkspaceInvitation)
+                .values(
+                    {
+                        "workspace_id": workspace.id,
+                        "email": "test@example.com",
+                        "role": UserRoleEnum.MEMBER,
+                        "invitation_sent_at": datetime.now(UTC),
+                    }
+                )
+                .returning(UserWorkspaceInvitation)
+            )
+
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise DatabaseError("Error deleting invitation", context=str(e)) from e
+    response = await test_client.delete(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    async with async_session_maker() as session:
+        deleted_invitation = await session.scalar(
+            select(UserWorkspaceInvitation)
+            .where(UserWorkspaceInvitation.id == invitation.id)
+            .where(UserWorkspaceInvitation.workspace_id == workspace.id)
+        )
+        assert deleted_invitation is None
+
+
+async def test_delete_invitation_not_workspace_member(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER.value,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    response = await test_client.delete(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json()["detail"].lower() == "unauthorized"
+
+
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN))
+async def test_delete_invitation_not_found(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    user_role: UserRoleEnum,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=user_role,
+            )
+        )
+        await session.commit()
+
+    non_existent_invitation_id = "00000000-0000-0000-0000-000000000000"
+    response = await test_client.delete(
+        f"/workspaces/{workspace.id}/invitations/{non_existent_invitation_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "invitation not found" in response.json()["detail"].lower()
+
+
+async def test_delete_invitation_unauthorized_role(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.MEMBER,
+            )
+        )
+        await session.commit()
+
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    response = await test_client.delete(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+    assert response.json()["detail"].lower() == "unauthorized"
