@@ -1,12 +1,18 @@
+from datetime import UTC, datetime
+from secrets import token_hex
 from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
+from jwt import encode
 from litestar import delete, get, patch, post
+from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Workspace, WorkspaceUser
+from packages.db.src.tables import UserWorkspaceInvitation, Workspace, WorkspaceUser
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.common_types import APIRequest, TableIdResponse
+from services.backend.src.utils.firebase import get_user_by_email
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -42,6 +48,15 @@ class WorkspaceResponse(WorkspaceBaseResponse):
 class BaseApplicationResponse(TableIdResponse):
     title: str
     completed_at: str | None
+
+
+class CreateInvitationRedirectUrlRequestBody(TypedDict):
+    email: str
+    role: UserRoleEnum
+
+
+class InvitationRedirectUrlResponse(TypedDict):
+    token: str
 
 
 @post("/workspaces", operation_id="CreateWorkspace")
@@ -170,3 +185,77 @@ async def handle_delete_workspace(workspace_id: UUID, session_maker: async_sessi
             await session.rollback()
             logger.error("Error deleting workspace", exc_info=e)
             raise DatabaseError("Error deleting workspace", context=str(e)) from e
+
+
+@post(
+    "/workspaces/{workspace_id:uuid}/create-invitation-redirect-url",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+    operation_id="CreateInvitationRedirectUrl",
+)
+async def handle_create_invitation_redirect_url(
+    request: APIRequest,
+    workspace_id: UUID,
+    data: CreateInvitationRedirectUrlRequestBody,
+    session_maker: async_sessionmaker[Any],
+) -> InvitationRedirectUrlResponse:
+    logger.info("Creating invitation redirect URL", workspace_id=workspace_id, email=data["email"])
+    async with session_maker() as session, session.begin():
+        try:
+            inviter = await session.scalar(
+                select(WorkspaceUser)
+                .where(WorkspaceUser.workspace_id == workspace_id)
+                .where(WorkspaceUser.firebase_uid == request.auth)
+            )
+
+            if not inviter:
+                raise ValidationException("User is not a member of this workspace")
+
+            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
+                raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
+
+            firebase_user = await get_user_by_email(data["email"])
+            if firebase_user:
+                existing_member = await session.scalar(
+                    select(WorkspaceUser)
+                    .where(WorkspaceUser.workspace_id == workspace_id)
+                    .where(WorkspaceUser.firebase_uid == firebase_user["uid"])
+                )
+                if existing_member:
+                    raise ValidationException("User is already a member of this workspace")
+
+            invitation = await session.scalar(
+                insert(UserWorkspaceInvitation)
+                .values(
+                    {
+                        "workspace_id": workspace_id,
+                        "email": data["email"],
+                        "role": data["role"],
+                        "invitation_sent_at": datetime.now(UTC),
+                    }
+                )
+                .returning(UserWorkspaceInvitation)
+            )
+
+            jwt_payload = {
+                "invitation_id": str(invitation.id),
+                "workspace_id": str(workspace_id),
+                "role": data["role"].value,
+                "iat": int(datetime.now(UTC).timestamp()),
+                "jti": token_hex(16),
+            }
+
+            jwt_token = encode(
+                payload=jwt_payload,
+                key=get_env("JWT_SECRET"),
+                algorithm="HS256",
+            )
+
+            await session.commit()
+            return InvitationRedirectUrlResponse(token=jwt_token)
+
+        except (SQLAlchemyError, ValidationException) as e:
+            await session.rollback()
+            if isinstance(e, SQLAlchemyError):
+                logger.error("Error creating invitation", exc_info=e)
+                raise DatabaseError("Error creating invitation", context=str(e)) from e
+            raise e
