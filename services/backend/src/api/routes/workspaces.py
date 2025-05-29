@@ -59,6 +59,10 @@ class InvitationRedirectUrlResponse(TypedDict):
     token: str
 
 
+class UpdateInvitationRoleRequestBody(TypedDict):
+    role: UserRoleEnum
+
+
 @post("/workspaces", operation_id="CreateWorkspace")
 async def handle_create_workspace(
     request: APIRequest, data: CreateWorkspaceRequestBody, session_maker: async_sessionmaker[Any]
@@ -300,3 +304,70 @@ async def handle_delete_invitation(
             await session.rollback()
             logger.error("Error deleting invitation", exc_info=e)
             raise DatabaseError("Error deleting invitation", context=str(e)) from e
+
+
+@patch(
+    "/workspaces/{workspace_id:uuid}/invitations/{invitation_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+    operation_id="UpdateInvitationRole",
+)
+async def handle_update_invitation_role(
+    request: APIRequest,
+    workspace_id: UUID,
+    invitation_id: UUID,
+    data: UpdateInvitationRoleRequestBody,
+    session_maker: async_sessionmaker[Any],
+) -> InvitationRedirectUrlResponse:
+    logger.info("Updating invitation role", workspace_id=workspace_id, invitation_id=invitation_id)
+    async with session_maker() as session, session.begin():
+        try:
+            invitation = await session.scalar(
+                select(UserWorkspaceInvitation)
+                .where(UserWorkspaceInvitation.id == invitation_id)
+                .where(UserWorkspaceInvitation.workspace_id == workspace_id)
+            )
+            if not invitation:
+                raise ValidationException("Invitation not found")
+
+            inviter = await session.scalar(
+                select(WorkspaceUser)
+                .where(WorkspaceUser.workspace_id == workspace_id)
+                .where(WorkspaceUser.firebase_uid == request.auth)
+            )
+            if invitation.accepted_at is not None:
+                raise ValidationException("Cannot update role of an accepted invitation")
+
+            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
+                raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
+
+            invitation = await session.scalar(
+                update(UserWorkspaceInvitation)
+                .where(UserWorkspaceInvitation.id == invitation_id)
+                .where(UserWorkspaceInvitation.workspace_id == workspace_id)
+                .values(role=data["role"])
+                .returning(UserWorkspaceInvitation)
+            )
+
+            jwt_payload = {
+                "invitation_id": str(invitation.id),
+                "workspace_id": str(workspace_id),
+                "role": data["role"].value,
+                "iat": int(datetime.now(UTC).timestamp()),
+                "jti": token_hex(16),
+            }
+
+            jwt_token = encode(
+                payload=jwt_payload,
+                key=get_env("JWT_SECRET"),
+                algorithm="HS256",
+            )
+
+            await session.commit()
+            return InvitationRedirectUrlResponse(token=jwt_token)
+
+        except (SQLAlchemyError, ValidationException) as e:
+            await session.rollback()
+            if isinstance(e, SQLAlchemyError):
+                logger.error("Error updating invitation role", exc_info=e)
+                raise DatabaseError("Error updating invitation role", context=str(e)) from e
+            raise e
