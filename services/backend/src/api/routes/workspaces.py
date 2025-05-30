@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from secrets import token_hex
 from typing import Any, NotRequired, TypedDict, cast
@@ -246,6 +246,7 @@ async def handle_create_invitation_redirect_url(
                 "workspace_id": str(workspace_id),
                 "role": data["role"].value,
                 "iat": int(datetime.now(UTC).timestamp()),
+                "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
                 "jti": token_hex(16),
             }
 
@@ -354,6 +355,7 @@ async def handle_update_invitation_role(
                 "workspace_id": str(workspace_id),
                 "role": data["role"].value,
                 "iat": int(datetime.now(UTC).timestamp()),
+                "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
                 "jti": token_hex(16),
             }
 
@@ -422,12 +424,12 @@ async def handle_accept_invitation(
                 .values(accepted_at=datetime.now(UTC))
             )
 
-            # Create JWT payload for the accepted invitation
             jwt_payload = {
                 "invitation_id": str(invitation.id),
                 "workspace_id": str(invitation.workspace_id),
                 "role": invitation.role.value,
                 "iat": int(datetime.now(UTC).timestamp()),
+                "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
                 "jti": token_hex(16),
             }
 
