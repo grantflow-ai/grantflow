@@ -1402,14 +1402,9 @@ packages:
     debug@4.4.1:
         resolution:
             {
-                integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==,
+                integrity: sha512-h5k/5U50IJJFpzfL6nO9jaaumfjO/f2NjK/oYB2Djzm4p9L+3T9qWpZqZ2hAbLPuuYq9wrU08WQyBTL5GbPk5Q==,
             }
-        engines: { node: ">=6.0" }
-        peerDependencies:
-            supports-color: "*"
-        peerDependenciesMeta:
-            supports-color:
-                optional: true
+        engines: { node: ">=6" }
 
     deep-eql@5.0.2:
         resolution:
@@ -5933,7 +5928,8 @@ snapshots:
 
     ts-interface-checker@0.1.13: {}
 
-    tslib@2.8.1: {}
+    tslib@2.8.1:
+        optional: true
 
     type-check@0.4.0:
         dependencies:
