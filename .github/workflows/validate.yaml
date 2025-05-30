@@ -13,8 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      NODE_OPTIONS: "--max_old_space_size=4096"  # Added memory limit for Prettier
-      
+      NODE_OPTIONS: "--max_old_space_size=4096"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
