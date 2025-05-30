@@ -212,7 +212,7 @@ class GrantApplication(BaseWithUUIDPK):
         Enum(ApplicationStatusEnum), default=ApplicationStatusEnum.DRAFT, index=True
     )
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    title: Mapped[str] = mapped_column(String(255))
+    title: Mapped[str] = mapped_column(Text)
 
     workspace_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
 

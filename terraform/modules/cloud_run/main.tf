@@ -33,8 +33,9 @@ variable "valkey_connection_string" {
 
 # Backend service deployment
 resource "google_cloud_run_v2_service" "backend" {
-  name     = "backend"
-  location = var.region
+  name                = "backend"
+  location            = var.region
+  deletion_protection = false
 
   template {
     containers {
@@ -197,8 +198,9 @@ resource "google_cloud_run_v2_service" "backend" {
 
 # Crawler service deployment
 resource "google_cloud_run_v2_service" "crawler" {
-  name     = "crawler"
-  location = var.region
+  name                = "crawler"
+  location            = var.region
+  deletion_protection = false
 
   template {
     containers {
@@ -301,8 +303,9 @@ resource "google_cloud_run_v2_service" "crawler" {
 
 # Indexer service deployment
 resource "google_cloud_run_v2_service" "indexer" {
-  name     = "indexer"
-  location = var.region
+  name                = "indexer"
+  location            = var.region
+  deletion_protection = false
 
   template {
     containers {

@@ -65,7 +65,7 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
 
   # Configure exponential backoff for failed deliveries
   dead_letter_policy {
-    dead_letter_topic     = google_pubsub_topic.file_indexing_dlq.name
+    dead_letter_topic     = google_pubsub_topic.file_indexing_dlq.id
     max_delivery_attempts = 5
   }
 }
@@ -135,7 +135,7 @@ resource "google_pubsub_subscription" "url_crawling_subscription" {
 
   # Configure exponential backoff for failed deliveries
   dead_letter_policy {
-    dead_letter_topic     = google_pubsub_topic.url_crawling_dlq.name
+    dead_letter_topic     = google_pubsub_topic.url_crawling_dlq.id
     max_delivery_attempts = 5
   }
 }
