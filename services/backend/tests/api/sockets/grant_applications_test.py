@@ -118,7 +118,7 @@ async def application_with_file(
 @pytest.fixture
 def mock_template_generation() -> Generator[None, None, None]:
     with patch(
-        "services.backend.src.api.sockets.grant_applications.grant_template_generation_pipeline_handler"
+        "services.backend.src.api.sockets.grant_applications.handlers.grant_template_generation_pipeline_handler"
     ) as mock:
         mock.return_value = None
         yield
@@ -127,7 +127,7 @@ def mock_template_generation() -> Generator[None, None, None]:
 @pytest.fixture
 def mock_application_generation() -> Generator[None, None, None]:
     with patch(
-        "services.backend.src.api.sockets.grant_applications.grant_application_text_generation_pipeline_handler"
+        "services.backend.src.api.sockets.grant_applications.handlers.grant_application_text_generation_pipeline_handler"
     ) as mock:
         mock.return_value = ("Generated application text", {"section1": "Section 1 content"})
         yield
