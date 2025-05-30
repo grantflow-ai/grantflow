@@ -12,6 +12,9 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      NODE_OPTIONS: "--max_old_space_size=4096"  # Added memory limit for Prettier
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"  # Added quotes for version
           cache: pnpm
           cache-dependency-path: |
             pnpm-lock.yaml
@@ -43,7 +46,7 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install Dependencies
+      - name: Install Python Dependencies
         run: uv sync --all-packages --all-extras --dev
 
       - name: Load Cached Pre-Commit Dependencies
@@ -60,6 +63,7 @@ jobs:
             .eslintcache
             .mypy_cache
             .ruff_cache
+            frontend/.eslintcache  # Added frontend cache if applicable
           key: cache-${{ runner.os }}-${{ hashFiles('uv.lock', 'pnpm-lock.yaml') }}
           restore-keys: |
             cache-${{ runner.os }}-
