@@ -4,9 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { WaitlistForm } from "@/components/landing-page/waitlist-form";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 
-const { mockAddToWaitlist, mockError, mockSuccess } = vi.hoisted(() => {
+const { mockAddToWaitlist, mockAnalyticsIdentify, mockError, mockSuccess } = vi.hoisted(() => {
 	return {
 		mockAddToWaitlist: vi.fn().mockResolvedValue({ code: "SUCCESS", error: null }),
+		mockAnalyticsIdentify: vi.fn().mockResolvedValue(undefined),
 		mockError: vi.fn(),
 		mockSuccess: vi.fn(),
 	};
@@ -17,6 +18,10 @@ vi.mock("@/actions/join-waitlist", () => ({
 	waitlistSchema: {
 		parse: vi.fn(),
 	},
+}));
+
+vi.mock("@/utils/segment", () => ({
+	analyticsIdentify: mockAnalyticsIdentify,
 }));
 
 vi.mock("sonner", async () => {
@@ -33,6 +38,7 @@ describe("WaitlistForm", () => {
 		vi.clearAllMocks();
 		mockSuccess.mockImplementation(() => {});
 		mockError.mockImplementation(() => {});
+		mockAnalyticsIdentify.mockResolvedValue(undefined);
 	});
 
 	it("renders the form correctly", () => {
