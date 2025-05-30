@@ -1,4 +1,5 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 from secrets import token_hex
 from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
@@ -57,6 +58,10 @@ class CreateInvitationRedirectUrlRequestBody(TypedDict):
 
 class InvitationRedirectUrlResponse(TypedDict):
     token: str
+
+
+class UpdateInvitationRoleRequestBody(TypedDict):
+    role: UserRoleEnum
 
 
 @post("/workspaces", operation_id="CreateWorkspace")
@@ -241,6 +246,7 @@ async def handle_create_invitation_redirect_url(
                 "workspace_id": str(workspace_id),
                 "role": data["role"].value,
                 "iat": int(datetime.now(UTC).timestamp()),
+                "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
                 "jti": token_hex(16),
             }
 
@@ -300,3 +306,145 @@ async def handle_delete_invitation(
             await session.rollback()
             logger.error("Error deleting invitation", exc_info=e)
             raise DatabaseError("Error deleting invitation", context=str(e)) from e
+
+
+@patch(
+    "/workspaces/{workspace_id:uuid}/invitations/{invitation_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+    operation_id="UpdateInvitationRole",
+)
+async def handle_update_invitation_role(
+    request: APIRequest,
+    workspace_id: UUID,
+    invitation_id: UUID,
+    data: UpdateInvitationRoleRequestBody,
+    session_maker: async_sessionmaker[Any],
+) -> InvitationRedirectUrlResponse:
+    logger.info("Updating invitation role", workspace_id=workspace_id, invitation_id=invitation_id)
+    async with session_maker() as session, session.begin():
+        try:
+            invitation = await session.scalar(
+                select(UserWorkspaceInvitation)
+                .where(UserWorkspaceInvitation.id == invitation_id)
+                .where(UserWorkspaceInvitation.workspace_id == workspace_id)
+            )
+            if not invitation:
+                raise ValidationException("Invitation not found")
+
+            inviter = await session.scalar(
+                select(WorkspaceUser)
+                .where(WorkspaceUser.workspace_id == workspace_id)
+                .where(WorkspaceUser.firebase_uid == request.auth)
+            )
+            if invitation.accepted_at is not None:
+                raise ValidationException("Cannot update role of an accepted invitation")
+
+            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
+                raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
+
+            invitation = await session.scalar(
+                update(UserWorkspaceInvitation)
+                .where(UserWorkspaceInvitation.id == invitation_id)
+                .where(UserWorkspaceInvitation.workspace_id == workspace_id)
+                .values(role=data["role"])
+                .returning(UserWorkspaceInvitation)
+            )
+
+            jwt_payload = {
+                "invitation_id": str(invitation.id),
+                "workspace_id": str(workspace_id),
+                "role": data["role"].value,
+                "iat": int(datetime.now(UTC).timestamp()),
+                "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
+                "jti": token_hex(16),
+            }
+
+            jwt_token = encode(
+                payload=jwt_payload,
+                key=get_env("JWT_SECRET"),
+                algorithm="HS256",
+            )
+
+            await session.commit()
+            return InvitationRedirectUrlResponse(token=jwt_token)
+
+        except (SQLAlchemyError, ValidationException) as e:
+            await session.rollback()
+            if isinstance(e, SQLAlchemyError):
+                logger.error("Error updating invitation role", exc_info=e)
+                raise DatabaseError("Error updating invitation role", context=str(e)) from e
+            raise e
+
+
+@post(
+    "/workspaces/invitations/{invitation_id:uuid}/accept",
+    operation_id="AcceptInvitation",
+    status_code=HTTPStatus.OK,
+)
+async def handle_accept_invitation(
+    request: APIRequest,
+    invitation_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> InvitationRedirectUrlResponse:
+    logger.info("Accepting invitation", invitation_id=invitation_id)
+    async with session_maker() as session, session.begin():
+        try:
+            invitation = await session.scalar(
+                select(UserWorkspaceInvitation).where(UserWorkspaceInvitation.id == invitation_id)
+            )
+
+            if not invitation:
+                raise ValidationException("Invitation not found")
+
+            if invitation.accepted_at is not None:
+                raise ValidationException("Invitation has already been accepted")
+
+            firebase_user = await get_user_by_email(invitation.email)
+            if not firebase_user:
+                raise ValidationException("User not found in Firebase")
+
+            if firebase_user["uid"] != request.auth:
+                raise ValidationException("Authenticated user does not match invitation email")
+
+            await session.scalar(
+                insert(WorkspaceUser)
+                .values(
+                    {
+                        "workspace_id": invitation.workspace_id,
+                        "firebase_uid": request.auth,
+                        "role": invitation.role,
+                    }
+                )
+                .returning(WorkspaceUser)
+            )
+
+            await session.execute(
+                update(UserWorkspaceInvitation)
+                .where(UserWorkspaceInvitation.id == invitation_id)
+                .values(accepted_at=datetime.now(UTC))
+            )
+
+            jwt_payload = {
+                "invitation_id": str(invitation.id),
+                "workspace_id": str(invitation.workspace_id),
+                "role": invitation.role.value,
+                "iat": int(datetime.now(UTC).timestamp()),
+                "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
+                "jti": token_hex(16),
+            }
+
+            jwt_token = encode(
+                payload=jwt_payload,
+                key=get_env("JWT_SECRET"),
+                algorithm="HS256",
+            )
+
+            await session.commit()
+            return InvitationRedirectUrlResponse(token=jwt_token)
+
+        except (SQLAlchemyError, ValidationException) as e:
+            await session.rollback()
+            if isinstance(e, SQLAlchemyError):
+                logger.error("Error accepting invitation", exc_info=e)
+                raise DatabaseError("Error accepting invitation", context=str(e)) from e
+            raise e

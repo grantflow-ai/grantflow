@@ -24,12 +24,14 @@ from services.backend.src.api.routes.sources import (
     handle_retrieve_rag_sources,
 )
 from services.backend.src.api.routes.workspaces import (
+    handle_accept_invitation,
     handle_create_invitation_redirect_url,
     handle_create_workspace,
     handle_delete_invitation,
     handle_delete_workspace,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
+    handle_update_invitation_role,
     handle_update_workspace,
 )
 from services.backend.src.api.sockets.grant_applications import handle_application_websocket
@@ -59,6 +61,8 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_update_organization,
     handle_update_workspace,
     handle_delete_invitation,
+    handle_update_invitation_role,
+    handle_accept_invitation,
 ]
 
 grant_template_generation_pipeline_handler_listener = listener("grant_template_generation_pipeline_handler")(
