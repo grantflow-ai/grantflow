@@ -25,19 +25,21 @@ variable "network_id" {
   type        = string
 }
 
-# Memorystore for Redis (Valkey compatible) - Minimal Configuration
+# Memorystore for Redis (Valkey compatible) - Cost-effective Configuration
 resource "google_redis_instance" "valkey_cache" {
   name           = "valkey-cache"
   tier           = "BASIC"
-  memory_size_gb = 1 # Minimum size
+  memory_size_gb = 1 # Minimum size for cost-effectiveness
 
-  region                  = var.region
-  project                 = var.project_id
-  location_id             = "${var.region}-a" # Specify a zone for the lowest cost option
-  redis_version           = "REDIS_7_0"
-  reserved_ip_range       = "10.0.0.0/29" # Dedicated small IP range
-  authorized_network      = var.network_id
-  connect_mode            = "PRIVATE_SERVICE_ACCESS"
+  region            = var.region
+  project           = var.project_id
+  location_id       = "${var.region}-a" # Specify a zone for the lowest cost option
+  redis_version     = "REDIS_7_2" # Latest stable version (Valkey compatible)
+  authorized_network = var.network_id
+
+  # Remove reserved_ip_range - let GCP allocate automatically
+  # This avoids the error about mismatched IP ranges
+
   display_name            = "GrantFlow Valkey Cache"
   auth_enabled            = true
   transit_encryption_mode = "DISABLED" # For minimal cost
