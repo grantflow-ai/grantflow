@@ -630,3 +630,421 @@ async def test_delete_invitation_unauthorized_role(
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
     assert response.json()["detail"].lower() == "unauthorized"
+
+
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN))
+async def test_update_invitation_role_success(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    user_role: UserRoleEnum,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        try:
+            await session.execute(
+                insert(WorkspaceUser).values(
+                    workspace_id=workspace.id,
+                    firebase_uid=firebase_uid,
+                    role=user_role.value,
+                )
+            )
+
+            invitation = await session.scalar(
+                insert(UserWorkspaceInvitation)
+                .values(
+                    {
+                        "workspace_id": workspace.id,
+                        "email": "test@example.com",
+                        "role": UserRoleEnum.MEMBER,
+                        "invitation_sent_at": datetime.now(UTC),
+                    }
+                )
+                .returning(UserWorkspaceInvitation)
+            )
+
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise e
+
+    request_body = {"role": UserRoleEnum.ADMIN}
+
+    response = await test_client.patch(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    response_data = response.json()
+    assert "token" in response_data
+    assert isinstance(response_data["token"], str)
+    assert len(response_data["token"]) > 0
+
+    async with async_session_maker() as session:
+        updated_invitation = await session.scalar(
+            select(UserWorkspaceInvitation)
+            .where(UserWorkspaceInvitation.id == invitation.id)
+            .where(UserWorkspaceInvitation.workspace_id == workspace.id)
+        )
+        assert updated_invitation is not None
+        assert updated_invitation.role == UserRoleEnum.ADMIN
+
+
+async def test_update_invitation_role_not_workspace_member(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    request_body = {"role": UserRoleEnum.ADMIN.value}
+
+    response = await test_client.patch(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json()["detail"].lower() == "unauthorized"
+
+
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN))
+async def test_update_invitation_role_not_found(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    user_role: UserRoleEnum,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=user_role,
+            )
+        )
+        await session.commit()
+
+    non_existent_invitation_id = "00000000-0000-0000-0000-000000000000"
+    request_body = {"role": UserRoleEnum.ADMIN.value}
+
+    response = await test_client.patch(
+        f"/workspaces/{workspace.id}/invitations/{non_existent_invitation_id}",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "invitation not found" in response.json()["detail"].lower()
+
+
+async def test_update_invitation_role_unauthorized_role(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.MEMBER,
+            )
+        )
+        await session.commit()
+
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    request_body = {"role": UserRoleEnum.ADMIN.value}
+
+    response = await test_client.patch(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+    assert response.json()["detail"].lower() == "unauthorized"
+
+
+async def test_update_invitation_role_already_accepted(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.ADMIN,
+            )
+        )
+
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                    "accepted_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+
+        await session.commit()
+
+    request_body = {"role": UserRoleEnum.ADMIN.value}
+
+    response = await test_client.patch(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "cannot update role of an accepted invitation" in response.json()["detail"].lower()
+
+
+async def test_update_invitation_role_higher_than_inviter(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(WorkspaceUser).values(
+                workspace_id=workspace.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.ADMIN,
+            )
+        )
+
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+
+        await session.commit()
+
+    request_body = {"role": UserRoleEnum.OWNER}
+
+    response = await test_client.patch(
+        f"/workspaces/{workspace.id}/invitations/{invitation.id}",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "role must be equal to or lower than the inviter's role" in response.json()["detail"].lower()
+
+
+async def test_accept_invitation_success(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "services.backend.src.api.routes.workspaces.get_user_by_email",
+        return_value={"uid": firebase_uid, "email": "test@example.com"},
+    )
+
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    response = await test_client.post(
+        f"/workspaces/invitations/{invitation.id}/accept",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    response_data = response.json()
+    assert "token" in response_data
+    assert isinstance(response_data["token"], str)
+    assert len(response_data["token"]) > 0
+
+    async with async_session_maker() as session:
+        # Verify workspace user was created
+        workspace_user = await session.scalar(
+            select(WorkspaceUser)
+            .where(WorkspaceUser.workspace_id == workspace.id)
+            .where(WorkspaceUser.firebase_uid == firebase_uid)
+        )
+        assert workspace_user is not None
+        assert workspace_user.role == UserRoleEnum.MEMBER
+
+        # Verify invitation was marked as accepted
+        updated_invitation = await session.scalar(
+            select(UserWorkspaceInvitation).where(UserWorkspaceInvitation.id == invitation.id)
+        )
+        assert updated_invitation is not None
+        assert updated_invitation.accepted_at is not None
+
+
+async def test_accept_invitation_not_found(
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    non_existent_invitation_id = "00000000-0000-0000-0000-000000000000"
+    response = await test_client.post(
+        f"/workspaces/invitations/{non_existent_invitation_id}/accept",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "invitation not found" in response.json()["detail"].lower()
+
+
+async def test_accept_invitation_already_accepted(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "services.backend.src.api.routes.workspaces.get_user_by_email",
+        return_value={"uid": firebase_uid, "email": "test@example.com"},
+    )
+
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                    "accepted_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    response = await test_client.post(
+        f"/workspaces/invitations/{invitation.id}/accept",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "invitation has already been accepted" in response.json()["detail"].lower()
+
+
+async def test_accept_invitation_user_not_found(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "services.backend.src.api.routes.workspaces.get_user_by_email",
+        return_value=None,
+    )
+
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    response = await test_client.post(
+        f"/workspaces/invitations/{invitation.id}/accept",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "user not found in firebase" in response.json()["detail"].lower()
+
+
+async def test_accept_invitation_wrong_user(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "services.backend.src.api.routes.workspaces.get_user_by_email",
+        return_value={"uid": "different_user_uid", "email": "test@example.com"},
+    )
+
+    async with async_session_maker() as session, session.begin():
+        invitation = await session.scalar(
+            insert(UserWorkspaceInvitation)
+            .values(
+                {
+                    "workspace_id": workspace.id,
+                    "email": "test@example.com",
+                    "role": UserRoleEnum.MEMBER,
+                    "invitation_sent_at": datetime.now(UTC),
+                }
+            )
+            .returning(UserWorkspaceInvitation)
+        )
+        await session.commit()
+
+    response = await test_client.post(
+        f"/workspaces/invitations/{invitation.id}/accept",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "authenticated user does not match invitation email" in response.json()["detail"].lower()
