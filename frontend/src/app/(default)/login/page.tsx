@@ -135,11 +135,7 @@ export default function Login() {
 							className="border-primary z-20 mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9"
 							data-testid="login-card"
 						>
-							<AuthCardHeader
-								data-testid="login-card-header"
-								description="Log in to manage your grant workflow"
-								title="Welcome back!"
-							/>
+							<AuthCardHeader description="Log in to manage your grant workflow" title="Welcome back!" />
 							<CardContent data-testid="login-card-content">
 								<LoginForm
 									isLoading={isLoading}
@@ -227,12 +223,12 @@ function LoginForm({
 										autoComplete="email"
 										autoCorrect="off"
 										className="form-input"
-										data-testid="login-form-email-input"
 										disabled={isLoading}
 										errorMessage={form.formState.errors.email?.message ?? socialSignInError}
 										id="email"
 										label="Email Address"
 										placeholder="name@example.com"
+										testId="login-form-email-input"
 										type="email"
 										{...field}
 									/>
