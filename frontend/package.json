@@ -11,7 +11,7 @@
 		"start": "NODE_NO_WARNINGS=1 next start",
 		"test": "NODE_NO_WARNINGS=1 vitest run",
 		"test:coverage": "NODE_NO_WARNINGS=1 pnpm run test --coverage",
-		"test:watch": "NODE_NO_WARNINGS=1 pnpm run test --watch --coverage",
+		"test:watch": "NODE_NO_WARNINGS=1 vitest watch --coverage",
 		"ui": "pnpm dlx shadcn@latest",
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
