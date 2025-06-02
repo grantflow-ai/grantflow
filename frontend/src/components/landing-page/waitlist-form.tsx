@@ -47,7 +47,8 @@ export function WaitlistForm() {
 
 		await analyticsIdentify(values.email, {
 			email: values.email,
-			name: values.name.split(" ")[0],
+			firstName: values.name.split(" ")[0],
+			lastName: values.name.split(" ").at(-1) ?? "",
 		});
 
 		const result = await addToWaitlist(values);

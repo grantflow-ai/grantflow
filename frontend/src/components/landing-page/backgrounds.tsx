@@ -27,14 +27,16 @@ function GradientBackground({
 	);
 }
 
-function PatternedBackground() {
+function PatternedBackground({ ...props }: React.SVGProps<SVGSVGElement>) {
 	return (
 		<svg
 			className="size-full"
+			data-testid="patterned-background"
 			fill="none"
 			preserveAspectRatio="xMidYMid slice"
 			viewBox="0 0 1440 972"
 			xmlns="http://www.w3.org/2000/svg"
+			{...props}
 		>
 			<path
 				d="M5.04894 4.75H0.951062L3 1.4717L5.04894 4.75Z"
@@ -37738,14 +37740,16 @@ function PatternedBackground() {
 	);
 }
 
-function PatternedBackgroundMobile() {
+function PatternedBackgroundMobile({ ...props }: React.SVGProps<SVGSVGElement>) {
 	return (
 		<svg
 			className="size-full"
+			data-testid="patterned-background-mobile"
 			fill="none"
 			preserveAspectRatio="xMidYMid slice"
 			viewBox="0 0 391 1446"
 			xmlns="http://www.w3.org/2000/svg"
+			{...props}
 		>
 			<g clipPath="url(#clip0_1943_37214)">
 				<rect fill="white" height="1446" width="391" />
