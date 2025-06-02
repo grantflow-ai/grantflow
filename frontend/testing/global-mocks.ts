@@ -116,7 +116,8 @@ export const mockEnv = {
 	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: "72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
-	NEXT_PUBLIC_MAILGUN_API_KEY: "resend_key_test_1234567890",
+	NEXT_PUBLIC_MAILGUN_API_KEY: "mailgun_key_test_1234567890",
+	NEXT_PUBLIC_SEGMENT_WRITE_KEY: "sk_test_1234567890abcdef",
 	NEXT_PUBLIC_SITE_URL: "https://example.com",
 } satisfies Env;
 
@@ -125,7 +126,6 @@ beforeAll(() => {
 	HTMLDialogElement.prototype.show = mockShow;
 	HTMLDialogElement.prototype.showModal = mockShowModal;
 
-	// Add ResizeObserver to the global object
 	globalThis.ResizeObserver = mockResizeObserver;
 });
 

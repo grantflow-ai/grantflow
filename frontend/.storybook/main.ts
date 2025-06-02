@@ -19,7 +19,7 @@ const config: StorybookConfig = {
 		name: "@storybook/experimental-nextjs-vite",
 		options: {},
 	},
-	stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+	stories: ["../src/**/*.mdx", "../src/**/*.stories.@(mjs|ts|tsx)"],
 	viteFinal: (config) => {
 		config.plugins = [...(config.plugins ?? []), tsconfigPaths()];
 

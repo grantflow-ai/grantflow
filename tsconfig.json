@@ -6,6 +6,7 @@
 		"incremental": true,
 		"isolatedModules": true,
 		"module": "ESNext",
+		"moduleResolution": "bundler",
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"noEmit": true,
