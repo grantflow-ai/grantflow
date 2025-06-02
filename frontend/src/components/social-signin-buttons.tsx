@@ -5,6 +5,7 @@ export function SocialSigninButton({
 	isLoading,
 	onClick,
 	platform,
+	...props
 }: {
 	isLoading: boolean;
 	onClick: () => Promise<void>;
@@ -19,6 +20,7 @@ export function SocialSigninButton({
 				await onClick();
 			}}
 			size="lg"
+			{...props}
 			theme="light"
 			variant="secondary"
 		>

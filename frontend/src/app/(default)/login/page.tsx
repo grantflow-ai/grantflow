@@ -60,7 +60,11 @@ export default function Login() {
 			const errorWithLink = (
 				<>
 					No account found with this email.{" "}
-					<Link className="text-primary text-sm hover:underline" href="/onboarding">
+					<Link
+						className="text-primary text-sm hover:underline"
+						data-testid="login-no-account-link"
+						href="/onboarding"
+					>
 						Create an account.
 					</Link>
 				</>
@@ -105,54 +109,79 @@ export default function Login() {
 	};
 
 	return (
-		<div className="relative flex min-h-screen flex-col overflow-hidden bg-white" data-testid="login-container">
-			<div className="absolute inset-0 z-0">
-				<PatternedBackground aria-hidden="true" />
+		<div className="relative flex min-h-screen flex-col overflow-hidden bg-white" data-testid="login-page">
+			<div className="absolute inset-0 z-0" data-testid="login-background-container">
+				<PatternedBackground aria-hidden="true" data-testid="login-background-pattern" />
 				<OnboardingGradientBackgroundBottom
 					aria-hidden="true"
 					className="pointer-events-none absolute bottom-0 left-0"
+					data-testid="login-background-gradient"
 				/>
 			</div>
 
-			<header className="z-50 w-full bg-white p-2 shadow-sm md:p-4">
-				<LogoDark className="h-12 md:h-14" height="250" width="250" />
+			<header className="z-50 w-full bg-white p-2 shadow-sm md:p-4" data-testid="login-header">
+				<div data-testid="login-header-content">
+					<LogoDark className="h-12 md:h-14" data-testid="login-logo" height="250" width="250" />
+				</div>
 			</header>
 
 			<div
 				className="text-card-foreground flex size-full grow place-items-center text-center"
-				data-testid="login-container"
+				data-testid="login-content-container"
 			>
-				<div className="z-10 flex w-full flex-col items-center justify-center">
-					<div className="relative">
-						<Card className="border-primary z-20 mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9">
+				<div className="z-10 flex w-full flex-col items-center justify-center" data-testid="login-card-wrapper">
+					<div className="relative" data-testid="login-card-container">
+						<Card
+							className="border-primary z-20 mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9"
+							data-testid="login-card"
+						>
 							<AuthCardHeader description="Log in to manage your grant workflow" title="Welcome back!" />
-							<CardContent>
+							<CardContent data-testid="login-card-content">
 								<LoginForm
 									isLoading={isLoading}
 									onSubmit={({ email }) => handleEmailSignin(email)}
 									socialSignInError={socialSignInError}
 								/>
 
-								<SeparatorWithText className="mb-5" text={"Or connect with "} />
+								<SeparatorWithText
+									className="mb-5"
+									data-testid="login-social-separator"
+									text={"Or connect with "}
+								/>
 
-								<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+								<div
+									className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2"
+									data-testid="login-social-buttons-container"
+								>
 									<SocialSigninButton
+										data-testid="login-google-button"
 										isLoading={isLoading}
 										onClick={handleGoogleSignin}
 										platform="google"
 									/>
 
 									<SocialSigninButton
+										data-testid="login-orcid-button"
 										isLoading={isLoading}
 										onClick={handleOrcidSignin}
 										platform="orcid"
 									/>
 								</div>
 
-								<div className="flex min-w-max items-center justify-center text-center">
-									<span className="text-dark whitespace-nowrap">Don&apos;t have an account yet?</span>
-									<AppButton className="text-primary" size="sm" variant="link">
-										<Link href={PagePath.ONBOARDING}>Create an Account</Link>
+								<div
+									className="flex min-w-max items-center justify-center text-center"
+									data-testid="login-create-account-container"
+								>
+									<span className="text-dark whitespace-nowrap">Don&apos;t have an account yet?</span>{" "}
+									<AppButton
+										className="text-primary"
+										data-testid="login-create-account-link"
+										size="sm"
+										variant="link"
+									>
+										<Link data-testid="login-create-account-button-link" href={PagePath.ONBOARDING}>
+											Create an Account
+										</Link>
 									</AppButton>
 								</div>
 							</CardContent>
@@ -181,25 +210,25 @@ function LoginForm({
 
 	return (
 		<div data-testid="login-form-container">
-			<Form {...form}>
+			<Form {...form} data-testid="login-form-wrapper">
 				<form data-testid="login-form" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
 						control={form.control}
 						name="email"
 						render={({ field }) => (
-							<FormItem>
-								<FormControl>
+							<FormItem data-testid="login-form-email-item">
+								<FormControl data-testid="login-form-email-control">
 									<AppInput
 										autoCapitalize="none"
 										autoComplete="email"
 										autoCorrect="off"
 										className="form-input"
-										data-testid="login-form-email-input"
 										disabled={isLoading}
 										errorMessage={form.formState.errors.email?.message ?? socialSignInError}
 										id="email"
 										label="Email Address"
 										placeholder="name@example.com"
+										testId="login-form-email-input"
 										type="email"
 										{...field}
 									/>

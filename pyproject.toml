@@ -87,7 +87,7 @@ lint.pylint.max-returns = 10
 lint.pylint.max-statements = 100
 
 [tool.codespell]
-ignore-words-list = [ "Bu", "COo", "bu", "TAHt" ]
+ignore-words-list = [ "Bu", "COo", "bu", "TAHt", "UE" ]
 
 [tool.pyproject-fmt]
 keep_full_version = true
