@@ -59,8 +59,8 @@ importers:
                 specifier: ^3.3.3
                 version: 3.3.3(eslint@9.28.0(jiti@1.21.7))
             eslint-plugin-storybook:
-                specifier: ^9.0.3
-                version: 9.0.3(eslint@9.28.0(jiti@1.21.7))(storybook@9.0.3(@testing-library/dom@10.4.0))(typescript@5.8.3)
+                specifier: ^9.0.4
+                version: 9.0.4(eslint@9.28.0(jiti@1.21.7))(storybook@9.0.3(@testing-library/dom@10.4.0))(typescript@5.8.3)
             eslint-plugin-tailwindcss:
                 specifier: ^3.18.0
                 version: 3.18.0(tailwindcss@3.4.17)
@@ -1402,9 +1402,14 @@ packages:
     debug@4.4.1:
         resolution:
             {
-                integrity: sha512-h5k/5U50IJJFpzfL6nO9jaaumfjO/f2NjK/oYB2Djzm4p9L+3T9qWpZqZ2hAbLPuuYq9wrU08WQyBTL5GbPk5Q==,
+                integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==,
             }
-        engines: { node: ">=6" }
+        engines: { node: ">=6.0" }
+        peerDependencies:
+            supports-color: "*"
+        peerDependenciesMeta:
+            supports-color:
+                optional: true
 
     deep-eql@5.0.2:
         resolution:
@@ -1762,15 +1767,15 @@ packages:
         peerDependencies:
             eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
 
-    eslint-plugin-storybook@9.0.3:
+    eslint-plugin-storybook@9.0.4:
         resolution:
             {
-                integrity: sha512-O71l6X5x/moGzq81Ka0280Ukz5WU8FtmtCXB4H0eXfW8m2mmy0DJmrVtvs9rbzXQkW8MNoHbCj3yffVMDWWNiw==,
+                integrity: sha512-HdwbfgPkZKsWG859RQk4iROH8D4zGsXxH2C3/7RlqELoT+nZYtc1BzVWzDeMAHadSXRasX3J+O1/4HNyuPXpJw==,
             }
         engines: { node: ">=20.0.0" }
         peerDependencies:
             eslint: ">=8"
-            storybook: ^9.0.3
+            storybook: ^9.0.4
 
     eslint-plugin-tailwindcss@3.18.0:
         resolution:
@@ -4817,7 +4822,7 @@ snapshots:
             string.prototype.matchall: 4.0.12
             string.prototype.repeat: 1.0.0
 
-    eslint-plugin-storybook@9.0.3(eslint@9.28.0(jiti@1.21.7))(storybook@9.0.3(@testing-library/dom@10.4.0))(typescript@5.8.3):
+    eslint-plugin-storybook@9.0.4(eslint@9.28.0(jiti@1.21.7))(storybook@9.0.3(@testing-library/dom@10.4.0))(typescript@5.8.3):
         dependencies:
             "@typescript-eslint/utils": 8.33.0(eslint@9.28.0(jiti@1.21.7))(typescript@5.8.3)
             eslint: 9.28.0(jiti@1.21.7)
@@ -5928,8 +5933,7 @@ snapshots:
 
     ts-interface-checker@0.1.13: {}
 
-    tslib@2.8.1:
-        optional: true
+    tslib@2.8.1: {}
 
     type-check@0.4.0:
         dependencies:
