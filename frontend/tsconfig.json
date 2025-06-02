@@ -51,7 +51,6 @@
 		"*.ts",
 		".next/types/**/*.ts",
 		".storybook/*.ts",
-		".storybook/*.tsx",
-		"src/app/(default)/login/page.spec.tsx.new"
+		".storybook/*.tsx"
 	]
 }
