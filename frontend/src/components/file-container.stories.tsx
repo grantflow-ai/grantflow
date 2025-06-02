@@ -1,5 +1,6 @@
 import { FileContainer } from "./file-container";
 
+// eslint-disable-next-line storybook/no-renderer-packages
 import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof FileContainer> = {

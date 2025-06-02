@@ -132,6 +132,19 @@ tasks:
         cmds:
             - pnpm test
 
+    frontend:test:watch:
+        desc: Run frontend tests (interactive mode)
+        dir: "{{.FRONTEND_DIR}}"
+        dotenv: [".env"]
+        cmds:
+            - pnpm test:watch
+
+    frontend:build:
+        desc: Build the frontend application for production
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - pnpm build
+
     # Backend Commands
 
     backend:install:
