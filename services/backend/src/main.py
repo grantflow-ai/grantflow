@@ -15,7 +15,10 @@ from services.backend.src.api.routes.funding_organizations import (
     handle_update_organization,
 )
 from services.backend.src.api.routes.grant_applications import (
+    handle_create_application,
     handle_delete_application,
+    handle_update_application,
+    handle_update_grant_template,
 )
 from services.backend.src.api.routes.sources import (
     handle_crawl_url,
@@ -43,6 +46,7 @@ logger = get_logger(__name__)
 
 api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_application_websocket,
+    handle_create_application,
     handle_create_organization,
     handle_create_otp,
     handle_create_upload_url,
@@ -58,6 +62,8 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_rag_sources,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
+    handle_update_application,
+    handle_update_grant_template,
     handle_update_organization,
     handle_update_workspace,
     handle_delete_invitation,
