@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Final, TypedDict
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from services.backend.src.rag.completion import handle_completions_request
@@ -33,9 +33,9 @@ ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         </rag_results>
 
     User Inputs:
-        <user_inputs>
-        ${user_inputs}
-        </user_inputs>
+        <form_inputs>
+        ${form_inputs}
+        </form_inputs>
 
     ## Metadata
 
@@ -346,13 +346,13 @@ async def handle_enrich_objective(
     application_id: str,
     grant_section: GrantLongFormSection,
     research_objective: ResearchObjective,
-    form_inputs: dict[str, str],
+    form_inputs: ResearchDeepDive,
 ) -> ObjectiveEnrichmentDTO:
     enrichment_prompt = ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT.substitute(
         objective_and_tasks=research_objective,
         keywords=grant_section["keywords"],
         topics=grant_section["topics"],
-        user_inputs=form_inputs,
+        form_inputs=form_inputs,
     )
 
     enrichment_rag_results = await retrieve_documents(
