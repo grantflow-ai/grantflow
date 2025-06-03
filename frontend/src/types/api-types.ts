@@ -1,4 +1,122 @@
 export namespace API {
+	export namespace AcceptInvitation {
+		export namespace Http200 {
+			export type ResponseBody = {
+				token: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			invitation_id: string;
+		}
+	}
+
+	export namespace CrawlFundingOrganizationUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				message: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			organization_id: null | string;
+		}
+
+		export type RequestBody = {
+			url: string;
+		};
+	}
+
+	export namespace CrawlGrantApplicationUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				message: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: null | string;
+			workspace_id: null | string;
+		}
+
+		export type RequestBody = {
+			url: string;
+		};
+	}
+
+	export namespace CrawlGrantTemplateUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				message: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			template_id: null | string;
+			workspace_id: null | string;
+		}
+
+		export type RequestBody = {
+			url: string;
+		};
+	}
+
+	export namespace CreateApplication {
+		export namespace Http201 {
+			export type ResponseBody = {
+				id: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			workspace_id: string;
+		}
+
+		export type RequestBody = {
+			title: string;
+		};
+	}
+
 	export namespace CreateFundingOrganizationRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
@@ -71,6 +189,31 @@ export namespace API {
 		export interface QueryParameters {
 			blob_name: string;
 		}
+	}
+
+	export namespace CreateInvitationRedirectUrl {
+		export namespace Http201 {
+			export type ResponseBody = {
+				token: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			workspace_id: string;
+		}
+
+		export type RequestBody = {
+			email: string;
+			role: "ADMIN" | "MEMBER" | "OWNER";
+		};
 	}
 
 	export namespace CreateOrganization {
@@ -192,6 +335,25 @@ export namespace API {
 		export interface PathParameters {
 			source_id: string;
 			template_id: null | string;
+			workspace_id: string;
+		}
+	}
+
+	export namespace DeleteInvitation {
+		export namespace Http204 {
+			export type ResponseBody = undefined;
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			invitation_id: string;
 			workspace_id: string;
 		}
 	}
@@ -434,6 +596,104 @@ export namespace API {
 			template_id: null | string;
 			workspace_id: string;
 		}
+	}
+
+	export namespace UpdateApplication {
+		export namespace Http200 {
+			export type ResponseBody = undefined;
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: string;
+			workspace_id: string;
+		}
+
+		export type RequestBody = {
+			form_inputs: {};
+			research_objectives: {
+				description?: string;
+				number: number;
+				research_tasks: {
+					description?: string;
+					number: number;
+					relationships?: {}[];
+					title: string;
+				}[];
+				title: string;
+			}[];
+			status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+			title: string;
+		};
+	}
+
+	export namespace UpdateGrantTemplate {
+		export namespace Http200 {
+			export type ResponseBody = undefined;
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: string;
+			workspace_id: string;
+		}
+
+		export type RequestBody = {
+			grant_sections: {
+				depends_on: string[];
+				generation_instructions: string;
+				id: string;
+				is_clinical_trial: boolean | null;
+				is_detailed_workplan: boolean | null;
+				keywords: string[];
+				max_words: number;
+				order: number;
+				parent_id: null | string;
+				search_queries: string[];
+				title: string;
+				topics: string[];
+			}[];
+			submission_date: string;
+		};
+	}
+
+	export namespace UpdateInvitationRole {
+		export namespace Http200 {
+			export type ResponseBody = {
+				token: string;
+			};
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			invitation_id: string;
+			workspace_id: string;
+		}
+
+		export type RequestBody = {
+			role: "ADMIN" | "MEMBER" | "OWNER";
+		};
 	}
 
 	export namespace UpdateOrganization {
