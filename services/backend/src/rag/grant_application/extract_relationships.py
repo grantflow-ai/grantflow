@@ -2,7 +2,7 @@ from collections import defaultdict
 from functools import partial
 from typing import Final, TypedDict
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from services.backend.src.rag.completion import handle_completions_request
@@ -34,9 +34,9 @@ EXTRACT_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         </rag_results>
 
     User Inputs:
-        <user_inputs>
-        ${user_inputs}
-        </user_inputs>
+        <form_inputs>
+        ${form_inputs}
+        </form_inputs>
 
     ## Instructions
 
@@ -308,7 +308,7 @@ async def handle_extract_relationships(
     application_id: str,
     grant_section: GrantLongFormSection,
     research_objectives: list[ResearchObjective],
-    form_inputs: dict[str, str],
+    form_inputs: ResearchDeepDive,
 ) -> dict[str, list[tuple[str, str]]]:
     prompt = EXTRACT_RELATIONSHIPS_USER_PROMPT.substitute(
         research_objectives=[
@@ -327,7 +327,7 @@ async def handle_extract_relationships(
             }
             for objective in research_objectives
         ],
-        user_inputs=form_inputs,
+        form_inputs=form_inputs,
     )
 
     rag_results = await retrieve_documents(

@@ -4,7 +4,7 @@ from typing import Any, NotRequired, TypedDict
 
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import ApplicationStatusEnum
-from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
 
 
 class ApplicationUpdateDTO(TypedDict):
@@ -31,7 +31,7 @@ class ApplicationResponseDTO(TypedDict):
     title: str
     status: ApplicationStatusEnum
     research_objectives: list[ResearchObjective] | None
-    form_inputs: dict[str, str] | None
+    form_inputs: ResearchDeepDive | None
     text: str | None
     completed_at: datetime | None
     created_at: datetime

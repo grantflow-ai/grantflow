@@ -317,7 +317,7 @@ async def test_generate_work_plan_text_with_mocked_llm(
         result = await generate_work_plan_text(
             application_id="test-app-id",
             work_plan_section=workplan_section,
-            form_inputs={"project_summary": "Test project summary"},
+            form_inputs={"background_context": "Test project summary"},
             research_objectives=mock_research_objectives,
             message_handler=mock_message_handler,
         )
@@ -398,7 +398,7 @@ async def test_generate_grant_section_texts_with_mocked_llm(
     ):
         result = await generate_grant_section_texts(
             application_id="test-app-id",
-            form_inputs={"project_summary": "Test project summary"},
+            form_inputs={"background_context": "Test project summary"},
             grant_sections=mock_grant_sections,
             research_objectives=mock_research_objectives,
             message_handler=mock_message_handler,

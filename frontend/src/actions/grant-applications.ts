@@ -1,0 +1,51 @@
+import { API } from "@/types/api-types";
+import { getClient } from "@/utils/api";
+import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
+
+export async function createApplication(
+	workspaceId: string,
+	data: API.CreateApplication.RequestBody,
+): Promise<API.CreateApplication.Http201.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<API.CreateApplication.Http201.ResponseBody>(),
+	);
+}
+
+export async function deleteApplication(workspaceId: string, applicationId: string): Promise<void> {
+	await withAuthRedirect(
+		getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
+}
+
+export async function updateApplication(
+	workspaceId: string,
+	applicationId: string,
+	data: API.UpdateApplication.RequestBody,
+): Promise<void> {
+	await withAuthRedirect(
+		getClient().patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
+			headers: await createAuthHeaders(),
+			json: data,
+		}),
+	);
+}
+
+export async function updateGrantTemplate(
+	workspaceId: string,
+	applicationId: string,
+	data: API.UpdateGrantTemplate.RequestBody,
+): Promise<void> {
+	await withAuthRedirect(
+		getClient().patch(`workspaces/${workspaceId}/applications/${applicationId}/grant-template`, {
+			headers: await createAuthHeaders(),
+			json: data,
+		}),
+	);
+}

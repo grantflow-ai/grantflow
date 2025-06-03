@@ -25,7 +25,7 @@ from sqlalchemy.sql.functions import now
 
 from packages.db.src.constants import EMBEDDING_DIMENSIONS, RAG_FILE, RAG_URL
 from packages.db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
-from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
 
 
 class Base(DeclarativeBase):
@@ -206,7 +206,7 @@ class GrantApplication(BaseWithUUIDPK):
     __tablename__ = "grant_applications"
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
-    form_inputs: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
+    form_inputs: Mapped[ResearchDeepDive | None] = mapped_column(JSON, nullable=True)
     research_objectives: Mapped[list[ResearchObjective] | None] = mapped_column(JSON, nullable=True)
     status: Mapped[ApplicationStatusEnum] = mapped_column(
         Enum(ApplicationStatusEnum), default=ApplicationStatusEnum.DRAFT, index=True
