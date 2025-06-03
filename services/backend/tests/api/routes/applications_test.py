@@ -121,7 +121,6 @@ async def test_update_grant_template_success(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    # Create a grant template for this application
     async with async_session_maker() as session, session.begin():
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
@@ -137,7 +136,6 @@ async def test_update_grant_template_success(
         session.add(grant_template)
         await session.commit()
 
-    # Create the update data with plain dictionaries
     update_data = {
         "grant_sections": [
             {
@@ -193,7 +191,6 @@ async def test_update_grant_template_not_found(
     grant_application: GrantApplication,
     workspace_member_user: None,
 ) -> None:
-    # This test expects no grant template exists for the application
     response = await test_client.patch(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template",
         json={"submission_date": "2024-12-31"},
