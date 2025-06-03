@@ -1,26 +1,94 @@
 # GrantFlow.AI Monorepo Guidelines
 
-## Guidelines
+## Project Structure
 
-- DO NOT add inline comments
-- DO NOT add doc strings
-- Always type all arguments and return statements in Python
-- Use python 3.12+ syntax only, especially for typing
-- Use pytest functional style only
-- We are working inside a monorepo that includes a Next.js frontend (under `./frontend`) and Python services (under `./services` and `./packages`).
-- For Python commands, use `uv run <command>` instead of `python <command>`
-- Use `pre-commit run --all-files` to run all pre-commit hooks on all files or select specific hooks.
-- We use ruff and mypy for linting and type checking, respectively. These are available in pre-commit or can be ran using uv.
-- We use `pnpm` as the package manager for JS.
-- We use eslint and prettier for linting and formatting in the frontend.
-- Python tests use shared plugins located under `./testing`. We use a real database in testing, see the pertinent plugin for context.
-- Each service and package have their own `conftest.py` file
-- To run python tests, set the PYTHONPATH variable to the root of the monorepo. This can be done by running `export PYTHONPATH=$(pwd)` in the terminal before running the tests.
-- Add fixtures meant to be shared or reused under `./testing` as part of the pertinent test plugin
+- **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS (`./frontend`)
+- **Backend**: Python microservices with Litestar (`./services`)
+    - `backend`: Main API with auth/business logic
+    - `indexer`: Document processing
+    - `crawler`: Web scraping
+- **Packages**: (`./packages`)
+    - `db`: Models, migrations, schemas
+    - `shared_utils`: Common utilities
+- **Infrastructure**: OpenTofu/Terraform (`./terraform`)
+- **Testing**: Shared fixtures (`./testing`)
 
-## Commands
+## Environment
 
-- Frontend typecheck: `cd frontend && pnpm typecheck`
-- Frontend tests: `cd frontend && pnpm test`
-- Python tests: `export PYTHONPATH=$(pwd) && uv run pytest <path>`
-- Linting: `pre-commit run --all-files`
+- Node.js 22+, Python 3.12, pnpm 10.11.0, uv
+- Docker Compose for local dev
+- GCP deployment target
+
+## Key Guidelines
+
+### General
+
+- NO inline comments or docstrings
+- Type all Python args/returns (3.12+ syntax)
+- Use `uv run` not `python`
+- Use `tofu` not `terraform`
+
+### Python/Backend
+
+- **Framework**: Litestar with msgspec serialization
+- **TypedDict**: Use `NotRequired[type]`, NOT `type | None` (msgspec limitation)
+- **Testing**: pytest async, real PostgreSQL, 80% coverage
+- **Validation**: Check entity exists before updates
+- **Auth**: `AuthMiddleware` handles workspace permissions via `allowed_roles`
+- **Database**: SQLAlchemy 2.0 async, transaction pattern:
+    ```python
+    async with session_maker() as session, session.begin():
+        # operations
+    ```
+
+### Frontend
+
+- **Stack**: Next.js 15 App Router, TypeScript strict, Vitest
+- **API**: Ky client with generated types from `@/types/api-types`
+- **Auth**: Wrap calls with `withAuthRedirect`
+- **Errors**: Backend returns 400 (not 422) for validation
+- **Testing**: Focus on actual API behavior, avoid unrelated edge cases
+
+## Essential Commands
+
+```bash
+task setup              # Initial setup
+task dev                # Start all services
+task test               # Run all tests
+task lint               # Run linters
+task db:migrate         # Run migrations
+task generate:api-types # Generate TS types from backend
+```
+
+## Key Patterns
+
+### API Endpoints
+
+```python
+@post("/items", allowed_roles=[UserRoleEnum.MEMBER])
+async def create_item(data: TypedDict, request: Request[User, Token, Any]) -> dict:
+    async with session_maker() as session, session.begin():
+        # Validate & create
+        return {"id": item.id}
+```
+
+### Frontend API Calls
+
+```typescript
+export async function createItem(data: API.CreateItem.RequestBody) {
+	return withAuthRedirect(
+		getClient()
+			.post(`items`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<API.CreateItem.ResponseBody>(),
+	);
+}
+```
+
+## Security
+
+- Environment variables for secrets
+- Firebase auth + JWT
+- Never commit credentials
