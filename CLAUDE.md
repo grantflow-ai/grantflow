@@ -181,3 +181,39 @@ Instructions:
 - Firebase service account credentials required
 - JWT secrets must be configured
 - Admin access codes for protected endpoints
+
+## Learnings from Implementation
+
+### Litestar API Endpoints
+
+- **TypedDict with msgspec**: Litestar uses msgspec for serialization. Do NOT use type unions (e.g., `str | None`) in TypedDict fields - msgspec doesn't support them
+- **NotRequired vs Optional**: Use `NotRequired[type]` for optional fields in request bodies, not `type | None`
+- **Empty values**: Frontend should send empty objects/arrays instead of null when clearing values
+- **Validation pattern**: Always check entity existence before updates:
+    ```python
+    entity = await session.scalar(select(Entity).where(Entity.id == id))
+    if not entity:
+        raise ValidationException("Entity not found")
+    ```
+- **Exception handling**: Use separate except blocks for ValidationException vs SQLAlchemyError
+- **Workspace scoping**: For workspace-scoped endpoints, middleware automatically checks user permissions when `allowed_roles` is set
+
+### Testing Patterns
+
+- **Test fixtures**: Be careful with complex fixtures that have specific data structures - they may not match your test needs
+- **TypedDict in tests**: Don't use TypedDict constructors in tests - use plain dictionaries for JSON payloads
+- **Test isolation**: Each test should create its own test data rather than relying on shared fixtures with specific structures
+- **Error assertions**: Test both the status code and error message content
+
+### Authentication & Authorization
+
+- **Middleware pattern**: The `AuthMiddleware` automatically handles workspace membership checks when `allowed_roles` is set on route handlers
+- **Path parameters**: Workspace-scoped endpoints must have `workspace_id` in the path for authorization to work
+- **Role-based access**: Use `allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER]` decorator parameter
+
+### Database Operations
+
+- **Update pattern**: Use `update().where().values(**data)` for updates with TypedDict data
+- **Transaction handling**: Always use `async with session_maker() as session, session.begin():` pattern
+- **Rollback on error**: Ensure rollback in except blocks before re-raising exceptions
+- **Check relationships**: When updating related entities, verify parent entity exists and belongs to the correct workspace
