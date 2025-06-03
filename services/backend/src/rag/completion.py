@@ -27,7 +27,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.retry import with_exponential_backoff_retry
 from packages.shared_utils.src.serialization import deserialize, fix_string_json_values, serialize
 from services.backend.src.utils.prompt_template import PromptTemplate
-from vertexai.generative_models import (  # type: ignore[import-untyped]
+from vertexai.generative_models import (
     Content,
     GenerationConfig,
     HarmBlockThreshold,
