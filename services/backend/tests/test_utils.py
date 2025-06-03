@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 from anyio import Path as AsyncPath
 from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.json_objects import ResearchObjective
+from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import (
     FundingOrganization,
     FundingOrganizationRagSource,
@@ -241,7 +241,7 @@ async def create_funding_application(
     workspace_id: str,
     title: str,
     research_objectives: list[ResearchObjective],
-    form_inputs: dict[str, str],
+    form_inputs: ResearchDeepDive,
 ) -> str:
     application_id: str
     async with async_session_maker() as session:
@@ -365,7 +365,7 @@ async def process_application_files(
 async def create_grant_application_data(
     workspace: Workspace,
     research_objectives: list[ResearchObjective],
-    form_inputs: dict[str, str],
+    form_inputs: ResearchDeepDive,
     async_session_maker: async_sessionmaker[Any],
     fixture_id: str,
     cfp_markdown_file_name: str,

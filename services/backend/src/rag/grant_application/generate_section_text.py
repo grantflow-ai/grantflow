@@ -1,6 +1,6 @@
 from typing import Any, Final
 
-from packages.db.src.json_objects import GrantLongFormSection
+from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
 from packages.shared_utils.src.logger import get_logger
 from services.backend.src.constants import MIN_WORDS_RATIO
 from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
@@ -124,7 +124,7 @@ async def generate_section_text(
     application_id: str,
     dependencies: dict[str, str],
     grant_section: GrantLongFormSection,
-    user_inputs: dict[str, str],
+    form_input: ResearchDeepDive,
     workplan_text: str,
 ) -> str:
     logger.debug("Generating section text.", grant_section=grant_section)
@@ -141,13 +141,13 @@ async def generate_section_text(
         application_id=application_id,
         task_description=prompt,
         search_queries=grant_section.get("search_queries"),
-        user_inputs=user_inputs,
+        form_inputs=form_input,
     )
 
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
         max_length=grant_section["max_words"],
-        sources={"rag_results": rag_results, "user_inputs": user_inputs, "workplan_text": workplan_text},
+        sources={"rag_results": rag_results, "form_inputs": form_input, "workplan_text": workplan_text},
     ):
         return source_validation_error
 
@@ -159,7 +159,7 @@ async def generate_section_text(
         prompt_handler=handle_section_text_generation,
         prompt_identifier="generate_section_text",
         rag_results=rag_results,
-        user_inputs=user_inputs,
+        form_inputs=form_input,
         workplan_text=workplan_text,
         passing_score=80,
         increment=10,

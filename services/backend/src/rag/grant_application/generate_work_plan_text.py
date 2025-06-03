@@ -1,5 +1,6 @@
 from typing import Any, Final
 
+from packages.db.src.json_objects import ResearchDeepDive
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
@@ -157,7 +158,7 @@ async def generate_work_plan_component_text(
     *,
     application_id: str,
     component: ResearchComponentGenerationDTO,
-    user_inputs: dict[str, str],
+    form_inputs: ResearchDeepDive,
     work_plan_text: str,
 ) -> str:
     logger.debug("Generating text for work plan component.", component=component)
@@ -188,14 +189,14 @@ async def generate_work_plan_component_text(
         application_id=application_id,
         task_description=prompt,
         search_queries=component["search_queries"],
-        user_inputs=user_inputs,
+        form_inputs=form_inputs,
         section_title=component["title"],
         with_guided_retrieval=True,
     )
 
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
-        sources={"rag_results": rag_results, "user_inputs": user_inputs},
+        sources={"rag_results": rag_results, "form_inputs": form_inputs},
         max_length=component["max_words"],
     ):
         return source_validation_error
@@ -208,7 +209,7 @@ async def generate_work_plan_component_text(
             prompt_handler=handle_work_plan_component_generation,
             prompt_identifier="generate_work_component",
             rag_results=rag_results,
-            user_input=user_inputs,
+            user_input=form_inputs,
             passing_score=85,
             increment=10,
             retries=5,
