@@ -228,5 +228,104 @@ describe("Grant Application Actions", () => {
 
 			expect(mockRedirect).toHaveBeenCalledWith("/signin");
 		});
+
+		it("should handle 400 validation errors", async () => {
+			const mockResponse = new Response(
+				JSON.stringify({
+					detail: "Validation error",
+					extra: { title: ["Title cannot be empty"] },
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 400,
+				},
+			);
+			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+
+			await expect(createApplication(mockWorkspaceId, { title: "" })).rejects.toThrow(HTTPError);
+		});
+
+		it("should handle 403 forbidden errors", async () => {
+			const mockResponse = new Response(JSON.stringify({ detail: "Insufficient permissions" }), {
+				headers: { "Content-Type": "application/json" },
+				status: 403,
+			});
+			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+
+			mockDelete.mockRejectedValueOnce(httpError);
+
+			await expect(deleteApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow(HTTPError);
+		});
+	});
+
+	describe("auth header handling", () => {
+		it("should handle auth header generation failure", async () => {
+			mockCreateAuthHeaders.mockRejectedValueOnce(new Error("Failed to get auth token"));
+			mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
+
+			await expect(createApplication(mockWorkspaceId, { title: "Test" })).rejects.toThrow(
+				"Failed to get auth token",
+			);
+		});
+
+		it("should handle null auth headers", async () => {
+			mockCreateAuthHeaders.mockResolvedValueOnce(null);
+			mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue({ id: mockApplicationId }),
+			});
+
+			await createApplication(mockWorkspaceId, { title: "Test" });
+
+			expect(mockPost).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications`, {
+				headers: null,
+				json: { title: "Test" },
+			});
+		});
+
+		it("should handle empty auth headers", async () => {
+			mockCreateAuthHeaders.mockResolvedValueOnce({});
+			mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
+
+			mockPatch.mockResolvedValueOnce(undefined);
+
+			await updateApplication(mockWorkspaceId, mockApplicationId, { title: "Updated" } as any);
+
+			expect(mockPatch).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+				headers: {},
+				json: { title: "Updated" },
+			});
+		});
+	});
+
+	describe("auth redirect behavior", () => {
+		it("should pass through the promise when withAuthRedirect doesn't modify it", async () => {
+			const expectedResponse = { id: "new-app-id" };
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(expectedResponse),
+			});
+
+			const result = await createApplication(mockWorkspaceId, { title: "Test App" });
+
+			expect(result).toEqual(expectedResponse);
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+
+		it("should handle withAuthRedirect returning undefined for void functions", async () => {
+			mockWithAuthRedirect.mockResolvedValueOnce(undefined);
+
+			mockPatch.mockResolvedValueOnce(undefined);
+
+			const result = await updateGrantTemplate(mockWorkspaceId, mockApplicationId, {
+				submission_date: "2024-12-31",
+			} as any);
+
+			expect(result).toBeUndefined();
+		});
 	});
 });
