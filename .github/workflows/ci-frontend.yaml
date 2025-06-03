@@ -1,114 +1,115 @@
 name: Frontend CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/ci-frontend.yaml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/ci-frontend.yaml'
+    pull_request:
+        branches:
+            - main
+            - development
+        paths:
+            - "frontend/**"
+            - ".github/workflows/ci-frontend.yaml"
+    push:
+        branches:
+            - main
+        paths:
+            - "frontend/**"
+            - ".github/workflows/ci-frontend.yaml"
 
 env:
-  NODE_OPTIONS: "--max_old_space_size=4096"
+    NODE_OPTIONS: "--max_old_space_size=4096"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  run_install: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+                  cache-dependency-path: |
+                      pnpm-lock.yaml
+                      frontend/pnpm-lock.yaml
 
-      - name: Install Dependencies
-        run: pnpm install -r
+            - name: Install Dependencies
+              run: pnpm install -r
 
-      - name: Run Tests
-        run: cd frontend && pnpm run test
+            - name: Run Tests
+              run: cd frontend && pnpm run test
 
-  typecheck:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    typecheck:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  run_install: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+                  cache-dependency-path: |
+                      pnpm-lock.yaml
+                      frontend/pnpm-lock.yaml
 
-      - name: Install Dependencies
-        run: pnpm install -r
+            - name: Install Dependencies
+              run: pnpm install -r
 
-      - name: Type Check
-        run: cd frontend && pnpm run typecheck
+            - name: Type Check
+              run: cd frontend && pnpm run typecheck
 
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
-      NEXT_PUBLIC_FIREBASE_API_KEY: mock-api-key
-      NEXT_PUBLIC_FIREBASE_APP_ID: mock-app-id
-      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: mock-auth-domain
-      NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: mock-measurement-id
-      NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: mock-sender-id
-      NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: mock-tenant-id
-      NEXT_PUBLIC_FIREBASE_PROJECT_ID: mock-project-id
-      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: mock-storage-bucket
-      NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
-      NEXT_PUBLIC_MAILGUN_API_KEY: mock-resend-key
-      NEXT_PUBLIC_DEBUG: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        env:
+            NEXT_PUBLIC_SITE_URL: http://localhost:3000
+            NEXT_PUBLIC_FIREBASE_API_KEY: mock-api-key
+            NEXT_PUBLIC_FIREBASE_APP_ID: mock-app-id
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: mock-auth-domain
+            NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: mock-measurement-id
+            NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: mock-sender-id
+            NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: mock-tenant-id
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID: mock-project-id
+            NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: mock-storage-bucket
+            NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
+            NEXT_PUBLIC_MAILGUN_API_KEY: mock-resend-key
+            NEXT_PUBLIC_SEGMENT_WRITE_KEY: mock-segment-key
+            NEXT_PUBLIC_DEBUG: true
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  run_install: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+                  cache-dependency-path: |
+                      pnpm-lock.yaml
+                      frontend/pnpm-lock.yaml
 
-      - name: Install Dependencies
-        run: pnpm install -r
+            - name: Install Dependencies
+              run: pnpm install -r
 
-      - name: Build Next.js App
-        run: cd frontend && pnpm run build
+            - name: Build Next.js App
+              run: cd frontend && pnpm run build
