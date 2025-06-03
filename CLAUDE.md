@@ -6,51 +6,178 @@ Instructions:
 - Update this file with your own guidelines
 - If you encounter mistakes, correct them
 
+## Project Structure
+
+- **Frontend**: Next.js 15 app with TypeScript, React 19, and Tailwind CSS (under `./frontend`)
+- **Backend Services**: Python microservices using Litestar framework (under `./services`)
+    - `backend`: Main API service with authentication and business logic
+    - `indexer`: Document indexing and processing service
+    - `crawler`: Web scraping and content extraction service
+- **Shared Packages**: Reusable Python packages (under `./packages`)
+    - `db`: Database models, migrations, and schemas
+    - `shared_utils`: Common utilities and AI helpers
+- **Infrastructure**: Terraform/OpenTofu configurations (under `./terraform`)
+- **Testing**: Shared testing utilities and fixtures (under `./testing`)
+
+## Development Environment
+
+- **Node.js**: Version 22+ required
+- **Python**: Version 3.12 required (enforced by uv)
+- **Package Managers**:
+    - `pnpm` (v10.11.0) for JavaScript/TypeScript
+    - `uv` for Python dependencies and workspace management
+- **Task Runner**: `task` (Taskfile) for common development commands
+- **Pre-commit Hooks**: Automated code quality checks on commit
+
 ## Guidelines
+
+### General
 
 - DO NOT add inline comments
 - DO NOT add doc strings
 - Always type all arguments and return statements in Python
 - Use python 3.12+ syntax only, especially for typing
 - Use pytest functional style only
-- We are working inside a monorepo that includes a Next.js frontend (under `./frontend`) and Python services (under `./services` and `./packages`).
 - For Python commands, use `uv run <command>` instead of `python <command>`
-- Use `pre-commit run --all-files` to run all pre-commit hooks on all files or select specific hooks.
-- We use ruff and mypy for linting and type checking, respectively. These are available in pre-commit or can be ran using uv.
-- We use `pnpm` as the package manager for JS.
-- We use eslint and prettier for linting and formatting in the frontend.
-- Python tests use shared plugins located under `./testing`. We use a real database in testing, see the pertinent plugin for context.
-- Each service and package have their own `conftest.py` file
-- To run python tests, set the PYTHONPATH variable to the root of the monorepo. This can be done by running `export PYTHONPATH=$(pwd)` in the terminal before running the tests.
-- Add fixtures meant to be shared or reused under `./testing` as part of the pertinent test plugin
+- Use `pre-commit run --all-files` to run all pre-commit hooks on all files or select specific hooks
 - We use opentofu for terraform, so use `tofu` commands instead of `terraform`
+
+### Python Development
+
+- **Linting**: Ruff with extensive rule configuration (see pyproject.toml)
+- **Type Checking**: mypy in strict mode
+- **Testing**: pytest with asyncio support
+    - Tests use real PostgreSQL database (via Docker)
+    - Shared test plugins in `./testing` directory
+    - Each service/package has its own `conftest.py`
+    - Set `PYTHONPATH=$(pwd)` before running tests
+    - Use `E2E_TESTS=1` environment variable for end-to-end tests
+- **Code Coverage**: Minimum 80% coverage required
+- **Async**: Heavy use of async/await patterns with SQLAlchemy async sessions
+
+### Frontend Development
+
+- **Framework**: Next.js 15 with App Router and Server Components
+- **Styling**: Tailwind CSS v4 with custom configuration
+- **Testing**: Vitest with React Testing Library
+    - Mock files in `testing/global-mocks.ts`
+    - Test files use `.spec.ts(x)` extension
+- **Type Safety**: TypeScript in strict mode
+- **State Management**: React Hook Form for forms
+- **API Client**: Ky for HTTP requests with generated types from backend
+
+### Database
+
+- **PostgreSQL 17** with pgvector extension for embeddings
+- **Alembic** for database migrations
+- **SQLAlchemy 2.0** with async support
+- **Testing**: Each test gets isolated database session
+
+### Infrastructure
+
+- **Docker Compose** for local development
+- **Google Cloud Platform** deployment target
+- **Services**:
+    - PostgreSQL database
+    - Valkey (Redis fork) for caching
+    - Google Cloud Storage emulator
+    - Pub/Sub emulator
 
 ## Commands
 
+### Setup & Installation
+
+- Initial setup: `task setup`
+- Update all dependencies: `task update`
+
+### Development
+
+- Start all services: `task dev`
+- Backend API only: `task service:backend:dev`
+- Frontend only: `task frontend:dev`
+- Storybook: `task frontend:storybook`
+
+### Testing
+
+- All tests: `task test`
+- Frontend tests: `task frontend:test` or `task frontend:test:watch`
+- Backend tests: `task backend:test`
+- E2E tests: `task test:e2e`
+- Specific service: `task service:<name>:test`
+
+### Database
+
+- Start database: `task db:up`
+- Run migrations: `task db:migrate`
+- Create migration: `task db:create-migration <message>`
+- Seed database: `task db:seed`
+
+### Code Quality
+
+- Run all linters: `task lint`
 - Frontend typecheck: `cd frontend && pnpm typecheck`
-- Frontend tests: `cd frontend && pnpm test`
-- Python tests: `export PYTHONPATH=$(pwd) && uv run pytest <path>`
-- Linting: `pre-commit run --all-files`
-- Storybook development: `cd frontend && pnpm storybook`
-- Build Storybook: `cd frontend && pnpm build-storybook`
+- Generate API types: `task generate:api-types`
+
+### Infrastructure
+
+- Format Terraform: `task terraform:fmt`
+- Lint Terraform: `task terraform:lint`
 
 ## Storybook
 
-- We use Storybook for component development and documentation in the frontend
-- Storybook is configured with Next.js and Vite using `@storybook/experimental-nextjs-vite`
-- Story files should follow the pattern `*.stories.tsx` and be placed alongside components
-- Stories can include both UI testing stories (with mocked API calls) and integration testing stories
-- The built Storybook is deployed to GitHub Pages automatically on push to main branch
+- Configured with Next.js and Vite using `@storybook/experimental-nextjs-vite`
+- Story files follow pattern `*.stories.tsx` alongside components
+- Preview configuration supports environment variables
+- Deployed to GitHub Pages via Chromatic
 
 ## Testing Guidelines
 
 ### Python Testing
 
-- Use `pytest.mark.asyncio` for async test functions
-- When testing code that uses singleton patterns (like client references), create fixtures to reset the singleton state between tests
-- For mocking async functions, use `AsyncMock` from `unittest.mock`
-- When mocking Google Cloud clients, ensure you mock both the client creation and the method calls
-- For testing JSON serialization output, be aware that the `serialize` function may produce compact JSON without spaces after colons
-- Test both success and failure scenarios, including specific exception types
-- Use `pytest.raises` with the `match` parameter to verify specific error messages
-- When testing functions that accept both string and UUID types, test both variations
+- Use `pytest.mark.asyncio` for async test functions (auto-enabled)
+- Create fixtures for singleton pattern resets
+- Use `AsyncMock` from `unittest.mock` for async mocking
+- Mock Google Cloud clients at both creation and method levels
+- Test both success and failure scenarios
+- Use `pytest.raises` with `match` for error validation
+- Fixtures in `testing/` plugins for reusability
+- Real database used with transaction rollback
+
+### Frontend Testing
+
+- Vitest with jsdom environment
+- Global test setup in `testing/setup.ts`
+- Mock Next.js navigation functions
+- Use Testing Library queries
+- Mock API calls with `vi.mock`
+- Test files colocated with components
+
+## Environment Variables
+
+- Backend services use `.env` files in their directories
+- Frontend uses `.env` with `NEXT_PUBLIC_` prefix for client variables
+- Test environment uses stubbed credentials (see `base_test_plugin.py`)
+- Docker Compose handles service discovery
+
+## Git Workflow
+
+- Commit messages follow Conventional Commits format
+- Pre-commit hooks enforce code quality
+- Branch protection on `main` branch
+- Pull requests required for merges
+
+## API Development
+
+- Litestar framework for Python services
+- WebSocket support for real-time features
+- Generated TypeScript types from backend schemas
+- JWT-based authentication with Firebase integration
+- Structured logging with JSON output
+
+## Security Notes
+
+- Never commit real credentials
+- Use environment variables for secrets
+- Firebase service account credentials required
+- JWT secrets must be configured
+- Admin access codes for protected endpoints
