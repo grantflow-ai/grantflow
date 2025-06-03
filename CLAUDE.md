@@ -1,183 +1,94 @@
 # GrantFlow.AI Monorepo Guidelines
 
-Instructions:
-
-- Update CLAUDE.md with your learnings
-- Update this file with your own guidelines
-- If you encounter mistakes, correct them
-
 ## Project Structure
 
-- **Frontend**: Next.js 15 app with TypeScript, React 19, and Tailwind CSS (under `./frontend`)
-- **Backend Services**: Python microservices using Litestar framework (under `./services`)
-    - `backend`: Main API service with authentication and business logic
-    - `indexer`: Document indexing and processing service
-    - `crawler`: Web scraping and content extraction service
-- **Shared Packages**: Reusable Python packages (under `./packages`)
-    - `db`: Database models, migrations, and schemas
-    - `shared_utils`: Common utilities and AI helpers
-- **Infrastructure**: Terraform/OpenTofu configurations (under `./terraform`)
-- **Testing**: Shared testing utilities and fixtures (under `./testing`)
+- **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS (`./frontend`)
+- **Backend**: Python microservices with Litestar (`./services`)
+    - `backend`: Main API with auth/business logic
+    - `indexer`: Document processing
+    - `crawler`: Web scraping
+- **Packages**: (`./packages`)
+    - `db`: Models, migrations, schemas
+    - `shared_utils`: Common utilities
+- **Infrastructure**: OpenTofu/Terraform (`./terraform`)
+- **Testing**: Shared fixtures (`./testing`)
 
-## Development Environment
+## Environment
 
-- **Node.js**: Version 22+ required
-- **Python**: Version 3.12 required (enforced by uv)
-- **Package Managers**:
-    - `pnpm` (v10.11.0) for JavaScript/TypeScript
-    - `uv` for Python dependencies and workspace management
-- **Task Runner**: `task` (Taskfile) for common development commands
-- **Pre-commit Hooks**: Automated code quality checks on commit
+- Node.js 22+, Python 3.12, pnpm 10.11.0, uv
+- Docker Compose for local dev
+- GCP deployment target
 
-## Guidelines
+## Key Guidelines
 
 ### General
 
-- DO NOT add inline comments
-- DO NOT add doc strings
-- Always type all arguments and return statements in Python
-- Use python 3.12+ syntax only, especially for typing
-- Use pytest functional style only
-- For Python commands, use `uv run <command>` instead of `python <command>`
-- Use `pre-commit run --all-files` to run all pre-commit hooks on all files or select specific hooks
-- We use opentofu for terraform, so use `tofu` commands instead of `terraform`
+- NO inline comments or docstrings
+- Type all Python args/returns (3.12+ syntax)
+- Use `uv run` not `python`
+- Use `tofu` not `terraform`
 
-### Python Development
+### Python/Backend
 
-- **Linting**: Ruff with extensive rule configuration (see pyproject.toml)
-- **Type Checking**: mypy in strict mode
-- **Testing**: pytest with asyncio support
-    - Tests use real PostgreSQL database (via Docker)
-    - Shared test plugins in `./testing` directory
-    - Each service/package has its own `conftest.py`
-    - Set `PYTHONPATH=$(pwd)` before running tests
-    - Use `E2E_TESTS=1` environment variable for end-to-end tests
-- **Code Coverage**: Minimum 80% coverage required
-- **Async**: Heavy use of async/await patterns with SQLAlchemy async sessions
+- **Framework**: Litestar with msgspec serialization
+- **TypedDict**: Use `NotRequired[type]`, NOT `type | None` (msgspec limitation)
+- **Testing**: pytest async, real PostgreSQL, 80% coverage
+- **Validation**: Check entity exists before updates
+- **Auth**: `AuthMiddleware` handles workspace permissions via `allowed_roles`
+- **Database**: SQLAlchemy 2.0 async, transaction pattern:
+    ```python
+    async with session_maker() as session, session.begin():
+        # operations
+    ```
 
-### Frontend Development
+### Frontend
 
-- **Framework**: Next.js 15 with App Router and Server Components
-- **Styling**: Tailwind CSS v4 with custom configuration
-- **Testing**: Vitest with React Testing Library
-    - Mock files in `testing/global-mocks.ts`
-    - Test files use `.spec.ts(x)` extension
-- **Type Safety**: TypeScript in strict mode
-- **State Management**: React Hook Form for forms
-- **API Client**: Ky for HTTP requests with generated types from backend
+- **Stack**: Next.js 15 App Router, TypeScript strict, Vitest
+- **API**: Ky client with generated types from `@/types/api-types`
+- **Auth**: Wrap calls with `withAuthRedirect`
+- **Errors**: Backend returns 400 (not 422) for validation
+- **Testing**: Focus on actual API behavior, avoid unrelated edge cases
 
-### Database
+## Essential Commands
 
-- **PostgreSQL 17** with pgvector extension for embeddings
-- **Alembic** for database migrations
-- **SQLAlchemy 2.0** with async support
-- **Testing**: Each test gets isolated database session
+```bash
+task setup              # Initial setup
+task dev                # Start all services
+task test               # Run all tests
+task lint               # Run linters
+task db:migrate         # Run migrations
+task generate:api-types # Generate TS types from backend
+```
 
-### Infrastructure
+## Key Patterns
 
-- **Docker Compose** for local development
-- **Google Cloud Platform** deployment target
-- **Services**:
-    - PostgreSQL database
-    - Valkey (Redis fork) for caching
-    - Google Cloud Storage emulator
-    - Pub/Sub emulator
+### API Endpoints
 
-## Commands
+```python
+@post("/items", allowed_roles=[UserRoleEnum.MEMBER])
+async def create_item(data: TypedDict, request: Request[User, Token, Any]) -> dict:
+    async with session_maker() as session, session.begin():
+        # Validate & create
+        return {"id": item.id}
+```
 
-### Setup & Installation
+### Frontend API Calls
 
-- Initial setup: `task setup`
-- Update all dependencies: `task update`
+```typescript
+export async function createItem(data: API.CreateItem.RequestBody) {
+	return withAuthRedirect(
+		getClient()
+			.post(`items`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<API.CreateItem.ResponseBody>(),
+	);
+}
+```
 
-### Development
+## Security
 
-- Start all services: `task dev`
-- Backend API only: `task service:backend:dev`
-- Frontend only: `task frontend:dev`
-- Storybook: `task frontend:storybook`
-
-### Testing
-
-- All tests: `task test`
-- Frontend tests: `task frontend:test` or `task frontend:test:watch`
-- Backend tests: `task backend:test`
-- E2E tests: `task test:e2e`
-- Specific service: `task service:<name>:test`
-
-### Database
-
-- Start database: `task db:up`
-- Run migrations: `task db:migrate`
-- Create migration: `task db:create-migration <message>`
-- Seed database: `task db:seed`
-
-### Code Quality
-
-- Run all linters: `task lint`
-- Frontend typecheck: `cd frontend && pnpm typecheck`
-- Generate API types: `task generate:api-types`
-
-### Infrastructure
-
-- Format Terraform: `task terraform:fmt`
-- Lint Terraform: `task terraform:lint`
-
-## Storybook
-
-- Configured with Next.js and Vite using `@storybook/experimental-nextjs-vite`
-- Story files follow pattern `*.stories.tsx` alongside components
-- Preview configuration supports environment variables
-- Deployed to GitHub Pages via Chromatic
-
-## Testing Guidelines
-
-### Python Testing
-
-- Use `pytest.mark.asyncio` for async test functions (auto-enabled)
-- Create fixtures for singleton pattern resets
-- Use `AsyncMock` from `unittest.mock` for async mocking
-- Mock Google Cloud clients at both creation and method levels
-- Test both success and failure scenarios
-- Use `pytest.raises` with `match` for error validation
-- Fixtures in `testing/` plugins for reusability
-- Real database used with transaction rollback
-
-### Frontend Testing
-
-- Vitest with jsdom environment
-- Global test setup in `testing/setup.ts`
-- Mock Next.js navigation functions
-- Use Testing Library queries
-- Mock API calls with `vi.mock`
-- Test files colocated with components
-
-## Environment Variables
-
-- Backend services use `.env` files in their directories
-- Frontend uses `.env` with `NEXT_PUBLIC_` prefix for client variables
-- Test environment uses stubbed credentials (see `base_test_plugin.py`)
-- Docker Compose handles service discovery
-
-## Git Workflow
-
-- Commit messages follow Conventional Commits format
-- Pre-commit hooks enforce code quality
-- Branch protection on `main` branch
-- Pull requests required for merges
-
-## API Development
-
-- Litestar framework for Python services
-- WebSocket support for real-time features
-- Generated TypeScript types from backend schemas
-- JWT-based authentication with Firebase integration
-- Structured logging with JSON output
-
-## Security Notes
-
-- Never commit real credentials
-- Use environment variables for secrets
-- Firebase service account credentials required
-- JWT secrets must be configured
-- Admin access codes for protected endpoints
+- Environment variables for secrets
+- Firebase auth + JWT
+- Never commit credentials

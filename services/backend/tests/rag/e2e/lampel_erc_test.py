@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import ResearchObjective
+    from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 
 
 @pytest.mark.timeout(60 * 30)
@@ -26,7 +26,7 @@ async def test_generate_erc_application_for_lampel(
     workspace: Workspace,
     erc_organization: FundingOrganization,
 ) -> None:
-    form_inputs: dict[str, str] = {
+    form_inputs: ResearchDeepDive = {
         "background_context": "The problem we aim to address is the environmental and sustainability challenges associated with traditional drug and macromolecule-drug conjugates synthesis, which relies heavily on organic solvents, contributing to waste generation and environmental harm.",
         "hypothesis": "The capacity to spatially regulate the partitioning of hydrophobic organic molecules and their chemical transformation i.e., reaction rate and conversion, is determined by the chemical composition of the condensate building block i.e. peptide sequence, which in turn controls the condensate architecture and materials properties.",
         "rationale": "The research is important and motivated by the need for sustainable and environmentally friendly drug synthesis methods. The approach builds upon the principles of micellar catalysis, which enables organic reactions in solvent-free aqueous media, while offering enhanced versatility and tunability in chemical composition and reaction control through condensates. These innovations aim to revolutionize green drug synthesis, providing a sustainable and efficient alternative to traditional organic solvent-based methods. Our approach includes: Employing biomolecular condensates as dynamic, tunable, organic solvent-free reaction systems for green drug synthesis. Focusing on creating sustainable, biocompatible microenvironments that enhance reaction efficiency while addressing the pressing need for environmentally friendly practices in pharmaceutical manufacturing. Key aspects include leveraging liquid-liquid phase separation (LLPS) for system design and targeting precise control over reactant recruitment and catalytic activity.",

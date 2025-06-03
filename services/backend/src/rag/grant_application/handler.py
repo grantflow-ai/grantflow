@@ -1,7 +1,7 @@
 from asyncio import gather
 
 from packages.db.src.connection import get_session_maker
-from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 async def generate_work_plan_text(
     application_id: str,
     work_plan_section: GrantLongFormSection,
-    form_inputs: dict[str, str],
+    form_inputs: ResearchDeepDive,
     research_objectives: list[ResearchObjective],
     message_handler: MessageHandler,
 ) -> str:
@@ -145,7 +145,7 @@ async def generate_work_plan_text(
             application_id=application_id,
             component=objective,
             work_plan_text=work_plan_text,
-            user_inputs=form_inputs,
+            form_inputs=form_inputs,
         )
 
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{research_objective_text}"
@@ -164,7 +164,7 @@ async def generate_work_plan_text(
                     application_id=application_id,
                     component=research_task,
                     work_plan_text=work_plan_text,
-                    user_inputs=form_inputs,
+                    form_inputs=form_inputs,
                 )
                 for research_task in tasks
             ]
@@ -203,7 +203,7 @@ async def generate_work_plan_text(
 
 async def generate_grant_section_texts(
     application_id: str,
-    form_inputs: dict[str, str],
+    form_inputs: ResearchDeepDive,
     grant_sections: list[GrantElement | GrantLongFormSection],
     research_objectives: list[ResearchObjective],
     message_handler: MessageHandler,
@@ -240,7 +240,7 @@ async def generate_grant_section_texts(
                             depends_on=section["depends_on"],
                             texts=section_texts,
                         ),
-                        user_inputs=form_inputs,
+                        form_input=form_inputs,
                         workplan_text=workplan_text,
                     )
                 )
