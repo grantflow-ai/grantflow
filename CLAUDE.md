@@ -217,3 +217,12 @@ Instructions:
 - **Transaction handling**: Always use `async with session_maker() as session, session.begin():` pattern
 - **Rollback on error**: Ensure rollback in except blocks before re-raising exceptions
 - **Check relationships**: When updating related entities, verify parent entity exists and belongs to the correct workspace
+
+### Frontend API Integration
+
+- **Error status codes**: Backend returns 400 for validation errors, not 422
+- **API types**: Use generated types from `@/types/api-types` - they're auto-generated from backend schemas
+- **Request body types**: Cast partial updates with `as API.UpdateSomething.RequestBody` when needed
+- **Auth handling**: Use `withAuthRedirect` wrapper for all authenticated API calls
+- **Error handling**: Catch HTTPError specifically for API errors and check response status
+- **Test organization**: Keep tests focused on actual API behavior - avoid testing edge cases unrelated to our implementation
