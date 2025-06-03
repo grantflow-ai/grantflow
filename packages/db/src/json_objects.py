@@ -44,7 +44,7 @@ class GrantLongFormSection(GrantElement):
     topics: list[str]
 
 
-class ResearchDeepDiveData(TypedDict):
+class ResearchDeepDive(TypedDict):
     background_context: NotRequired[str]
     hypothesis: NotRequired[str]
     rationale: NotRequired[str]
