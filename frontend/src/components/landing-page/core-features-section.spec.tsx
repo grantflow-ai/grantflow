@@ -113,18 +113,18 @@ describe("CoreFeaturesSection", () => {
 	it("renders both mobile and desktop feature containers", () => {
 		render(<CoreFeaturesSection />);
 
-		const mobileContainers = document.querySelectorAll('[class*="snap-x"][class*="md:hidden"]');
-		expect(mobileContainers.length).toBeGreaterThan(0);
+		const mobileContainer = screen.getByTestId("core-features-scroll-container");
+		expect(mobileContainer).toBeInTheDocument();
+		expect(mobileContainer).toHaveClass("sm:hidden");
 
-		const desktopContainers = document.querySelectorAll('[class*="md:grid"]');
-		expect(desktopContainers.length).toBeGreaterThan(0);
+		const desktopContainer = screen.getByTestId("core-features-grid-container");
+		expect(desktopContainer).toBeInTheDocument();
+		expect(desktopContainer).toHaveClass("sm:grid");
 
-		const [mobileContainer] = mobileContainers;
-		const mobileItems = mobileContainer.querySelectorAll('article, [data-testid="feature-item"]');
+		const mobileItems = mobileContainer.querySelectorAll("article");
 		expect(mobileItems.length).toBe(4);
 
-		const [desktopContainer] = desktopContainers;
-		const desktopItems = desktopContainer.querySelectorAll('article, [data-testid="feature-item"]');
+		const desktopItems = desktopContainer.querySelectorAll("article");
 		expect(desktopItems.length).toBe(4);
 	});
 });
