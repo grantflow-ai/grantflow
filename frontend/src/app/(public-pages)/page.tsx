@@ -22,7 +22,7 @@ const CONTENT_CTA_SECTION = {
 // eslint-disable-next-line @typescript-eslint/require-await
 export default async function LandingPage() {
 	return (
-		<div className="flex flex-col">
+		<div className="flex w-full flex-col">
 			<HeroBanner />
 			<BenefitsSection />
 			<EarlyAccessSection />
@@ -35,7 +35,7 @@ export default async function LandingPage() {
 
 function CTASection() {
 	return (
-		<section aria-label="cta-section" className="relative" data-testid="cta-section">
+		<section aria-label="cta-section" className="relative w-full" data-testid="cta-section">
 			<GradientBackground className="absolute inset-0 z-0" />
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center justify-between gap-10 px-6 py-8 md:flex-row md:p-10 lg:p-20">
 				<div className="flex w-fit flex-1 flex-col text-white">

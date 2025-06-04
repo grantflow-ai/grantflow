@@ -33,28 +33,28 @@ export function CoreFeaturesSection() {
 			<div className="absolute inset-0 z-0">
 				<PatternedBackground aria-hidden="true" />
 			</div>
-			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center px-8 py-10 text-center text-stone-800 md:px-10 lg:px-20">
+			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center py-10 text-center text-stone-800 md:px-10 lg:px-20">
 				<ScrollFadeElement className="mx-auto">
 					<h2
-						className="font-heading xl-my-10 my-3 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
+						className="font-heading xl-my-10 my-3 px-8 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
 						id="core-features-heading"
 					>
 						Core Features Designed for Researchers
 					</h2>
 				</ScrollFadeElement>
-				<div className="relative flex w-[calc(100vw-5rem)] snap-x snap-mandatory gap-12 overflow-x-auto py-6 text-start md:hidden">
-					{CORE_FEATURES.map((feature, index) => (
-						<FeatureArticle
-							className={`w-88 flex-none snap-start ${index === 0 ? "ml-4" : ""} ${
-								index === CORE_FEATURES.length - 1 ? "mr-4" : ""
-							}`}
-							featureDescription={feature.description}
-							featureTitle={feature.title}
-							key={index}
-						/>
-					))}
+				<div className="ps-5.5 relative w-full overflow-hidden sm:hidden">
+					<div className="scrollbar-hide gap-5.5 flex w-full snap-x snap-mandatory overflow-x-auto py-6 text-start">
+						{CORE_FEATURES.map((feature, index) => (
+							<FeatureArticle
+								className={`w-[90%] flex-none snap-start ${index === CORE_FEATURES.length - 1 ? "mr-4" : ""}`}
+								featureDescription={feature.description}
+								featureTitle={feature.title}
+								key={index}
+							/>
+						))}
+					</div>
 				</div>
-				<div className="lg:px-26 m-8 hidden justify-center gap-12 px-10 py-4 text-start md:grid md:grid-cols-2 lg:m-12">
+				<div className="lg:px-26 m-8 hidden justify-center gap-12 px-10 py-4 text-start sm:grid sm:grid-cols-2 lg:m-12">
 					{CORE_FEATURES.map((feature, index) => (
 						<AnimatedFeatureArticle
 							featureDescription={feature.description}

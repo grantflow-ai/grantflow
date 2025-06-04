@@ -1,11 +1,10 @@
-// frontend/src/components/shared-layout.tsx
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 
 import { ToastListener } from "@/components/toast-listener";
 import { Toaster } from "@/components/ui/sonner";
 
-export function SharedLayout({ children }: { children: React.ReactNode }) {
+export default function SharedLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
 			{children}

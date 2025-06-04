@@ -33,11 +33,11 @@ const links = [
 	},
 ];
 
-export function Footer() {
+export default function Footer() {
 	return (
 		<footer
 			aria-label="site-footer"
-			className="relative z-0 border-t border-t-gray-400/40 bg-white py-0 md:py-0.5"
+			className="relative z-0 w-full border-t border-t-gray-400/40 bg-white py-0 md:py-0.5"
 			data-testid="site-footer"
 			id="site-footer"
 		>
