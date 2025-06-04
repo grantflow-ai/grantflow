@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { NavHeader } from "@/components/nav-header";
+import NavHeader from "@/components/nav-header";
 
 vi.mock("next/link", () => {
 	return {

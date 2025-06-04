@@ -60,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			</head>
 			<body
 				className={cn(
-					"flex flex-col min-h-screen bg-background antialiased",
+					"flex flex-col w-full min-h-screen bg-background antialiased",
 					fontCabin.variable,
 					fontSourceSans.variable,
 					fontSora.variable,
