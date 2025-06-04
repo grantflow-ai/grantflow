@@ -15,7 +15,7 @@ import { IconGoAhead } from "./icons";
 
 const BREAKPOINT_MD = 768;
 
-export function NavHeader() {
+export default function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const pathname = usePathname();
 	const isHomePage = pathname === PagePath.ROOT.toString();
@@ -41,7 +41,7 @@ export function NavHeader() {
 	return (
 		<header
 			className={`
-		relative z-40 transition-colors duration-300
+		relative z-40 w-full transition-colors duration-300
 		${isMobileMenuOpen ? "bg-white" : "bg-background"}
 		`}
 			data-testid="nav-header"
