@@ -42,7 +42,10 @@ export function CoreFeaturesSection() {
 						Core Features Designed for Researchers
 					</h2>
 				</ScrollFadeElement>
-				<div className="ps-5.5 relative w-full overflow-hidden sm:hidden">
+				<div
+					className="ps-5.5 relative w-full overflow-hidden sm:hidden"
+					data-testid="core-features-scroll-container"
+				>
 					<div className="scrollbar-hide gap-5.5 flex w-full snap-x snap-mandatory overflow-x-auto py-6 text-start">
 						{CORE_FEATURES.map((feature, index) => (
 							<FeatureArticle
@@ -54,7 +57,10 @@ export function CoreFeaturesSection() {
 						))}
 					</div>
 				</div>
-				<div className="lg:px-26 m-8 hidden justify-center gap-12 px-10 py-4 text-start sm:grid sm:grid-cols-2 lg:m-12">
+				<div
+					className="lg:px-26 m-8 hidden justify-center gap-12 px-10 py-4 text-start sm:grid sm:grid-cols-2 lg:m-12"
+					data-testid="core-features-grid-container"
+				>
 					{CORE_FEATURES.map((feature, index) => (
 						<AnimatedFeatureArticle
 							featureDescription={feature.description}
