@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { NavHeader } from "@/components/nav-header";
+import NavHeader from "@/components/nav-header";
 
 vi.mock("next/link", () => {
 	return {
@@ -325,7 +325,7 @@ describe("NavHeader Component", () => {
 
 			it("should have correct props for header element", () => {
 				const header = screen.getByTestId("nav-header");
-				expect(header.className).toContain("relative z-40 transition-colors duration-300");
+				expect(header.className).toContain("relative z-40 w-full transition-colors duration-300");
 				expect(header.className).toContain("bg-background");
 				expect(header.className).not.toContain("bg-white");
 			});
@@ -394,7 +394,7 @@ describe("NavHeader Component", () => {
 
 			it("should have correct props for header element when menu is open", () => {
 				const header = screen.getByTestId("nav-header");
-				expect(header.className).toContain("relative z-40 transition-colors duration-300");
+				expect(header.className).toContain("relative z-40 w-full transition-colors duration-300");
 				expect(header.className).toContain("bg-white");
 				expect(header.className).not.toContain("bg-background");
 			});
