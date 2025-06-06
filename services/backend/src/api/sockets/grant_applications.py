@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
@@ -7,6 +8,8 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import SourceProcessingResult, pull_source_processing_notifications
 
 logger = get_logger(__name__)
+
+NOTIFICATION_POLL_INTERVAL = 1.0
 
 
 @websocket_stream(
@@ -24,3 +27,5 @@ async def handle_grant_application_notifications(
         )
         for source_update in source_updates:
             yield source_update
+
+        await asyncio.sleep(NOTIFICATION_POLL_INTERVAL)

@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import ANY, AsyncMock, Mock, patch
 from uuid import UUID
 
 import pytest
@@ -465,6 +465,7 @@ async def test_handle_crawl_url_grant_application(
     assert result["message"] == "URL crawling task has been queued successfully."
 
     mock_publish_url_crawling_task.assert_called_once_with(
+        logger=ANY,
         url="https://example.org/docs",
         parent_type="grant_application",
         parent_id=grant_application.id,
@@ -491,6 +492,7 @@ async def test_handle_crawl_url_funding_organization(
     assert result["message"] == "URL crawling task has been queued successfully."
 
     mock_publish_url_crawling_task.assert_called_once_with(
+        logger=ANY,
         url="https://example.org/docs",
         parent_type="funding_organization",
         parent_id=funding_organization.id,
@@ -518,6 +520,7 @@ async def test_handle_crawl_url_grant_template(
     assert result["message"] == "URL crawling task has been queued successfully."
 
     mock_publish_url_crawling_task.assert_called_once_with(
+        logger=ANY,
         url="https://example.org/docs",
         parent_type="grant_template",
         parent_id=grant_template.id,

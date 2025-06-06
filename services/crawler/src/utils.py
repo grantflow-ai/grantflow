@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Final
 from urllib.parse import urlparse
 
 from bs4 import Comment, Tag
-from httpx import AsyncClient, ConnectError, HTTPStatusError, Timeout, TimeoutException
+from httpx import AsyncClient, Timeout
 from packages.shared_utils.src.logger import get_logger
 from services.crawler.src.constants import SKIP_DOMAINS, SKIP_URL_PATTERNS
 
@@ -63,115 +63,33 @@ def safe_filename_from_url(url: str, default_extension: str = ".md") -> str:
 
 
 async def download_page_html(url: str) -> str:
-    try:
-        response = await client.get(url, follow_redirects=True)
-        response.raise_for_status()
+    response = await client.get(url, follow_redirects=True)
+    response.raise_for_status()
 
-        logger.debug(
-            "Downloaded page HTML",
-            url=url,
-            status_code=response.status_code,
-            content_type=response.headers.get("content-type", "unknown"),
-            content_length=len(response.content),
-        )
+    logger.debug(
+        "Downloaded page HTML",
+        url=url,
+        status_code=response.status_code,
+        content_type=response.headers.get("content-type", "unknown"),
+        content_length=len(response.content),
+    )
 
-        return response.text
-    except HTTPStatusError as e:
-        if e.response.status_code in [403, 405]:
-            logger.info(
-                "Access denied to URL, skipping",
-                url=url,
-                status_code=e.response.status_code,
-                reason="Forbidden" if e.response.status_code == 403 else "Method Not Allowed",
-            )
-        else:
-            logger.error(
-                "HTTP error downloading page",
-                url=url,
-                status_code=e.response.status_code,
-                error=str(e),
-                response_text=e.response.text[:500] if e.response.text else None,
-            )
-        raise
-    except TimeoutException as e:
-        logger.error(
-            "Timeout downloading page",
-            url=url,
-            error=str(e),
-        )
-        raise
-    except ConnectError as e:
-        logger.error(
-            "Connection error downloading page",
-            url=url,
-            error=str(e),
-            error_type="ConnectError",
-        )
-        raise
-    except Exception as e:
-        logger.error(
-            "Unexpected error downloading page",
-            url=url,
-            error=str(e),
-            error_type=type(e).__name__,
-        )
-        raise
+    return response.text
 
 
 async def download_file(url: str) -> bytes:
-    try:
-        response = await client.get(url, timeout=30, follow_redirects=True)
-        response.raise_for_status()
+    response = await client.get(url, timeout=30, follow_redirects=True)
+    response.raise_for_status()
 
-        logger.debug(
-            "Downloaded file",
-            url=url,
-            status_code=response.status_code,
-            content_type=response.headers.get("content-type", "unknown"),
-            content_length=len(response.content),
-        )
+    logger.debug(
+        "Downloaded file",
+        url=url,
+        status_code=response.status_code,
+        content_type=response.headers.get("content-type", "unknown"),
+        content_length=len(response.content),
+    )
 
-        return response.content
-    except HTTPStatusError as e:
-        if e.response.status_code in [403, 405]:
-            logger.info(
-                "Access denied to file, skipping",
-                url=url,
-                status_code=e.response.status_code,
-                reason="Forbidden" if e.response.status_code == 403 else "Method Not Allowed",
-            )
-        else:
-            logger.error(
-                "HTTP error downloading file",
-                url=url,
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-        raise
-    except TimeoutException as e:
-        logger.error(
-            "Timeout downloading file",
-            url=url,
-            timeout=30,
-            error=str(e),
-        )
-        raise
-    except ConnectError as e:
-        logger.error(
-            "Connection error downloading file",
-            url=url,
-            error=str(e),
-            error_type="ConnectError",
-        )
-        raise
-    except Exception as e:
-        logger.error(
-            "Unexpected error downloading file",
-            url=url,
-            error=str(e),
-            error_type=type(e).__name__,
-        )
-        raise
+    return response.content
 
 
 def sanitize_html(soup: BeautifulSoup) -> BeautifulSoup:
