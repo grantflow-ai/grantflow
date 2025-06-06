@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import { StepIndicator, WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
+import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Navigation Button Visibility - Conditional Back Button Display", () => {
