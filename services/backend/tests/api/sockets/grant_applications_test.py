@@ -65,9 +65,8 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_otp(
 ) -> None:
     with (
         pytest.raises(WebSocketDisconnect),
-        sync_test_client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp="
-        ) as ws,
+        sync_test_client as client,
+        client.websocket_connect(f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp=") as ws,
     ):
         ws.receive_json()
 
@@ -81,7 +80,8 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_work
 ) -> None:
     with (
         pytest.raises(WebSocketDisconnect),
-        sync_test_client.websocket_connect(
+        sync_test_client as client,
+        client.websocket_connect(
             f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
@@ -96,13 +96,6 @@ async def test_handle_grant_application_notifications_success(
     sync_test_client: TestClient[Any],
     mock_pull_source_processing_notifications: AsyncMock,
 ) -> None:
-    mock_pull_source_processing_notifications.return_value = []
-
-    with sync_test_client.websocket_connect(
-        f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
-    ) as ws:
-        ws.close()
-
     test_notifications = [
         SourceProcessingResult(
             parent_id=application.id,
@@ -125,9 +118,12 @@ async def test_handle_grant_application_notifications_success(
         [],
     ]
 
-    with sync_test_client.websocket_connect(
-        f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
-    ) as ws:
+    with (
+        sync_test_client as client,
+        client.websocket_connect(
+            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+        ) as ws,
+    ):
         notification1 = ws.receive_json()
         assert notification1["parent_id"] == str(application.id)
         assert notification1["parent_type"] == "grant_application"
@@ -170,9 +166,12 @@ async def test_handle_grant_application_notifications_failed_status(
         [],
     ]
 
-    with sync_test_client.websocket_connect(
-        f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
-    ) as ws:
+    with (
+        sync_test_client as client,
+        client.websocket_connect(
+            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+        ) as ws,
+    ):
         notification = ws.receive_json()
         assert notification["rag_source_id"] == "323e4567-e89b-12d3-a456-426614174000"
         assert notification["indexing_status"] == "FAILED"
@@ -189,10 +188,13 @@ async def test_handle_grant_application_notifications_empty_notifications(
 ) -> None:
     mock_pull_source_processing_notifications.return_value = []
 
-    with sync_test_client.websocket_connect(
-        f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
-    ) as ws:
-        ws.close()
+    with (
+        sync_test_client as client,
+        client.websocket_connect(
+            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+        ),
+    ):
+        pass
 
     mock_pull_source_processing_notifications.assert_called()
 
@@ -220,9 +222,12 @@ async def test_handle_grant_application_notifications_different_roles(
         [],
     ]
 
-    with sync_test_client.websocket_connect(
-        f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
-    ) as ws:
+    with (
+        sync_test_client as client,
+        client.websocket_connect(
+            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+        ) as ws,
+    ):
         notification = ws.receive_json()
         assert notification["identifier"] == "admin_test.pdf"
 
@@ -261,9 +266,12 @@ async def test_handle_grant_application_notifications_continuous_updates(
         [],
     ]
 
-    with sync_test_client.websocket_connect(
-        f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
-    ) as ws:
+    with (
+        sync_test_client as client,
+        client.websocket_connect(
+            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+        ) as ws,
+    ):
         notification1 = ws.receive_json()
         assert notification1["rag_source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification1["indexing_status"] == "INDEXING"
