@@ -6,7 +6,7 @@ from litestar.exceptions import NotFoundException
 from litestar.handlers import HTTPRouteHandler
 from litestar.types import Method, OperationIDCreator
 from litestar.types.internal_types import PathParameterDefinition
-from packages.db.src.enums import FileIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
     FundingOrganizationRagSource,
     GrantApplicationRagSource,
@@ -18,7 +18,7 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.gcs import create_signed_upload_url
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.utils.pubsub import publish_url_crawling_task
+from packages.shared_utils.src.pubsub import publish_url_crawling_task
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -37,7 +37,7 @@ class RagFileResponse(TypedDict):
     size: int
     mime_type: str
     created_at: str
-    indexing_status: FileIndexingStatusEnum
+    indexing_status: SourceIndexingStatusEnum
 
 
 class RagUrlResponse(TypedDict):
@@ -46,7 +46,7 @@ class RagUrlResponse(TypedDict):
     title: str | None
     description: str | None
     created_at: str
-    indexing_status: FileIndexingStatusEnum
+    indexing_status: SourceIndexingStatusEnum
 
 
 class UploadUrlResponse(TypedDict):
@@ -247,7 +247,6 @@ async def handle_crawl_url(
     """
     url = data["url"]
 
-    # Determine what type of parent we're crawling for and parent ID
     parent_type: ParentType
     parent_id: UUID
 
@@ -262,6 +261,7 @@ async def handle_crawl_url(
         parent_id = template_id  # type: ignore  # template_id is set at this point
 
     message_id = await publish_url_crawling_task(
+        logger=logger,
         url=url,
         parent_type=parent_type,
         parent_id=parent_id,

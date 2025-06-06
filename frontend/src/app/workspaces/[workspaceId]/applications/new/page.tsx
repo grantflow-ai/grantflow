@@ -1,161 +1,211 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-import { getOtp } from "@/actions/otp";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { PagePath } from "@/enums";
-import { getEnv } from "@/utils/env";
+import { createApplication, updateApplication } from "@/actions/grant-applications";
+import {
+	ApplicationDetailsStep,
+	ApplicationStructureStep,
+	GenerateCompleteStep,
+	KnowledgeBaseStep,
+	ResearchDeepDiveStep,
+	ResearchPlanStep,
+} from "@/components/workspaces/wizard";
+import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
+import { useApplicationNotifications } from "@/hooks/use-application-notifications";
+import { logError } from "@/utils/logging";
 
-interface ChatMessage {
-	data: {
-		content: string;
-		duration: number;
-	};
-	text: string;
-	type: string;
-}
+const WIZARD_STEP_TITLES = [
+	"Application Details",
+	"Application Structure",
+	"Knowledge Base",
+	"Research Plan",
+	"Research Deep Dive",
+	"Generate and Complete",
+] as const;
 
-const connectionStatusMap = {
-	[ReadyState.CLOSED]: "Closed",
-	[ReadyState.CLOSING]: "Closing",
-	[ReadyState.CONNECTING]: "Connecting",
-	[ReadyState.OPEN]: "Open",
-	[ReadyState.UNINSTANTIATED]: "Uninstantiated",
-};
+const DEBOUNCE_DELAY_MS = 500;
+const INITIAL_STEP = 0;
+const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
-const connectionStatusColorMap = {
-	[ReadyState.CLOSED]: "bg-red-500",
-	[ReadyState.CLOSING]: "bg-orange-500",
-	[ReadyState.CONNECTING]: "bg-yellow-500",
-	[ReadyState.OPEN]: "bg-green-500",
-	[ReadyState.UNINSTANTIATED]: "bg-gray-500",
-};
-
-export default function ApplicationDetailPage() {
-	const params = useParams();
+export default function CreateGrantApplicationWizardPage() {
+	const params = useParams<{ workspaceId: string }>();
 	const router = useRouter();
 
-	const workspaceId = params.workspaceId as string | undefined;
-	const applicationId = params.applicationId as string | undefined;
+	const [currentStep, setCurrentStep] = useState<number>(INITIAL_STEP);
+	const [applicationTitle, setApplicationTitle] = useState("");
+	const [urls, setUrls] = useState<string[]>([]);
+	const [fileCount, setFileCount] = useState(0);
+	const [applicationId, setApplicationId] = useState<null | string>(null);
+	const [templateId, setTemplateId] = useState<null | string>(null);
+	const [isCreatingApplication, setIsCreatingApplication] = useState(true);
 
-	const [messageHistory, setMessageHistory] = useState<ChatMessage[]>([]);
-	const [inputMessage, setInputMessage] = useState<string>("");
+	const showHeaderInfo = currentStep > INITIAL_STEP;
 
-	const chatContainerRef = useRef<HTMLDivElement>(null);
+	// Use the notifications hook once we have an applicationId
+	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
+		applicationId,
+		workspaceId: params.workspaceId,
+	});
 
-	const getSocketUrl = useCallback(async () => {
-		const response = await getOtp();
-		return new URL(
-			`workspaces/${workspaceId}/applications/${applicationId}?otp=${response.otp}`,
-			getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL,
-		).toString();
-	}, [workspaceId, applicationId]);
-
-	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<ChatMessage>(getSocketUrl);
-
+	// Create application on mount
 	useEffect(() => {
-		setMessageHistory((prev) => [...prev, lastJsonMessage]);
-	}, [lastJsonMessage]);
+		const initializeApplication = async () => {
+			try {
+				// Create a draft application with empty title
+				const response = await createApplication(params.workspaceId, {
+					title: DEFAULT_APPLICATION_TITLE,
+				});
+				setApplicationId(response.id);
+				setTemplateId(response.template_id);
+				setIsCreatingApplication(false);
+			} catch {
+				toast.error("Failed to initialize application. Please try again.");
+				router.push(`/workspaces/${params.workspaceId}`);
+			}
+		};
 
+		void initializeApplication();
+	}, [params.workspaceId, router]);
+
+	// Update application title when it changes
 	useEffect(() => {
-		if (chatContainerRef.current) {
-			chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+		if (!applicationId || !applicationTitle.trim()) {
+			return;
 		}
-	}, [messageHistory]);
 
-	const handleSendMessage = useCallback(() => {
-		if (inputMessage.trim()) {
-			sendMessage(inputMessage);
-			setInputMessage("");
+		const updateTitle = async () => {
+			try {
+				await updateApplication(params.workspaceId, applicationId, {
+					title: applicationTitle,
+				});
+			} catch {
+				toast.error("Failed to update application title");
+			}
+		};
+
+		// Debounce the update
+		const timeoutId = setTimeout(updateTitle, DEBOUNCE_DELAY_MS);
+		return () => {
+			clearTimeout(timeoutId);
+		};
+	}, [applicationTitle, applicationId, params.workspaceId]);
+
+	// Handle incoming notifications
+	useEffect(() => {
+		if (notifications.length === 0) {
+			return;
 		}
-	}, [inputMessage, sendMessage]);
 
-	if (!workspaceId || !applicationId) {
-		router.replace(PagePath.WORKSPACES);
-		return null;
-	}
+		// Get the latest notification
+		const latestNotification = notifications.at(-1);
 
-	const connectionStatus = connectionStatusMap[readyState];
-	const connectionStatusColor = connectionStatusColorMap[readyState];
+		if (!latestNotification) {
+			return;
+		}
 
-	return (
-		<div className="flex h-screen max-h-screen flex-col" data-testid="chat-room">
-			<div className="bg-primary text-primary-foreground flex items-center justify-between p-4">
-				<h1 className="text-2xl font-bold">WebSocket Chat</h1>
-				<Badge
-					className={`${connectionStatusColor} text-white`}
-					data-testid="connection-status"
-					variant="outline"
-				>
-					{connectionStatus}
-				</Badge>
-			</div>
-			<ScrollArea className="grow p-4" data-testid="chat-messages">
-				{messageHistory.map((message, index) => (
-					<div className="mb-4" key={index}>
-						{message.type === "notification" && (
-							<p className="text-muted-foreground italic" data-testid="notification-message">
-								{message.text}
-							</p>
-						)}
-						{message.type === "error" && (
-							<p className="text-destructive font-semibold" data-testid="error-message">
-								{message.text}
-							</p>
-						)}
-						{message.type === "content" && (
-							<div className="bg-secondary rounded-lg p-4" data-testid="content-message">
-								<ScrollArea className="h-[200px] w-full">{message.data.content}</ScrollArea>
-								<p className="text-muted-foreground mt-2 text-sm">
-									Duration: {message.data.duration} seconds
-								</p>
-								<div className="mt-2 flex justify-end space-x-2">
-									<Button
-										aria-label="Copy content"
-										data-testid="copy-button"
-										onClick={() => {
-											void navigator.clipboard.writeText(message.data.content);
-										}}
-										size="sm"
-										variant="outline"
-									>
-										Copy
-									</Button>
-								</div>
-							</div>
-						)}
-					</div>
-				))}
-			</ScrollArea>
-			<div className="bg-background p-4">
-				<div className="flex space-x-2">
-					<Input
-						aria-label="Type a message"
-						className="grow"
-						data-testid="message-input"
-						onChange={(e) => {
-							setInputMessage(e.target.value);
-						}}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") {
-								handleSendMessage();
-							}
-						}}
-						placeholder="Type a message..."
-						type="text"
-						value={inputMessage}
-					/>
-					<Button aria-label="Send message" data-testid="send-button" onClick={handleSendMessage}>
-						Send
-					</Button>
+		try {
+			// Display notification based on indexing status
+			switch (latestNotification.indexing_status) {
+				case "completed": {
+					toast.success(`Successfully processed ${latestNotification.identifier}`);
+					break;
+				}
+				case "failed": {
+					toast.error(`Failed to process ${latestNotification.identifier}`);
+					break;
+				}
+				case "processing": {
+					toast.info(`Processing ${latestNotification.identifier}...`);
+					break;
+				}
+				default: {
+					toast.info(`Document update: ${latestNotification.identifier}`);
+				}
+			}
+		} catch (error) {
+			logError({ error, identifier: "notification-handler" });
+		}
+	}, [notifications]);
+
+	// Validation logic for step 1
+	const isStep1Valid = applicationTitle.trim().length > 0 && (urls.length > 0 || fileCount > 0);
+
+	// Determine if the current step is valid
+	const isCurrentStepValid = () => {
+		switch (currentStep) {
+			case 0: {
+				return isStep1Valid;
+			}
+			default: {
+				return true;
+			} // Other steps don't have validation yet
+		}
+	};
+
+	const handleBack = () => {
+		setCurrentStep((s) => Math.max(INITIAL_STEP, s - 1));
+	};
+
+	const handleNext = () => {
+		if (currentStep === WIZARD_STEP_TITLES.length - 1) {
+			// TODO: Handle submission and navigation
+			return;
+		}
+		setCurrentStep((s) => Math.min(WIZARD_STEP_TITLES.length - 1, s + 1));
+	};
+
+	const steps = [
+		<ApplicationDetailsStep
+			applicationTitle={applicationTitle}
+			connectionStatus={connectionStatus}
+			connectionStatusColor={connectionStatusColor}
+			fileCount={fileCount}
+			key={0}
+			onApplicationTitleChange={setApplicationTitle}
+			onFileCountChange={setFileCount}
+			onUrlsChange={setUrls}
+			templateId={templateId ?? ""}
+			urls={urls}
+			workspaceId={params.workspaceId}
+		/>,
+		<ApplicationStructureStep key={1} />,
+		<KnowledgeBaseStep key={2} />,
+		<ResearchPlanStep key={3} />,
+		<ResearchDeepDiveStep key={4} />,
+		<GenerateCompleteStep key={5} />,
+	];
+
+	if (isCreatingApplication) {
+		return (
+			<div className="flex h-screen w-screen items-center justify-center">
+				<div className="text-center">
+					<p className="text-muted-foreground">Initializing application...</p>
 				</div>
 			</div>
+		);
+	}
+
+	return (
+		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
+			<WizardHeader
+				applicationName={applicationTitle || "New Application"}
+				currentStep={currentStep}
+				showHeaderInfo={showHeaderInfo}
+				stepTitles={WIZARD_STEP_TITLES as unknown as string[]}
+			/>
+			<section className="flex-1 overflow-auto p-6" data-testid="step-content-container">
+				{steps[currentStep]}
+			</section>
+			<WizardFooter
+				currentStep={currentStep}
+				disabled={!isCurrentStepValid()}
+				onBack={handleBack}
+				onContinue={handleNext}
+				showBack={currentStep > INITIAL_STEP}
+			/>
 		</div>
 	);
 }

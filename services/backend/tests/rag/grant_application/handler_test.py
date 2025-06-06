@@ -287,7 +287,6 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
         return application
 
 
-@pytest.mark.asyncio
 async def test_generate_work_plan_text_with_mocked_llm(
     mock_message_handler: AsyncMock,
     mock_research_objectives: list[ResearchObjective],
@@ -381,7 +380,6 @@ async def test_generate_work_plan_text_with_mocked_llm(
     assert workplan_completed_found, "Workplan completed data message not found"
 
 
-@pytest.mark.asyncio
 async def test_generate_grant_section_texts_with_mocked_llm(
     mock_message_handler: AsyncMock,
     mock_research_objectives: list[ResearchObjective],
@@ -413,7 +411,6 @@ async def test_generate_grant_section_texts_with_mocked_llm(
         assert len(result[section["id"]]) > 0
 
 
-@pytest.mark.asyncio
 async def test_grant_application_text_generation_pipeline_handler_with_mocked_llm(
     mock_message_handler: AsyncMock,
     test_application: GrantApplication,
@@ -463,7 +460,6 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
         assert updated_application.text == application_text
 
 
-@pytest.mark.asyncio
 async def test_pipeline_handler_validation_error(
     mock_message_handler: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
@@ -506,7 +502,6 @@ async def test_pipeline_handler_validation_error(
     assert error_message_found, "Validation error message not found"
 
 
-@pytest.mark.asyncio
 async def test_pipeline_handler_backend_error(
     mock_message_handler: AsyncMock,
     test_application: GrantApplication,
@@ -544,7 +539,6 @@ async def test_pipeline_handler_backend_error(
     assert error_message_found, "Backend error message not found"
 
 
-@pytest.mark.asyncio
 async def test_pipeline_handler_database_error(
     mock_message_handler: AsyncMock,
     async_session_maker: async_sessionmaker[Any],

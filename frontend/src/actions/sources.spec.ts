@@ -3,6 +3,8 @@ import { HTTPError } from "ky";
 import { mockRedirect } from "::testing/global-mocks";
 
 import {
+	crawlApplicationUrl,
+	crawlTemplateUrl,
 	createApplicationSourceUploadUrl,
 	createTemplateSourceUploadUrl,
 	deleteApplicationSource,
@@ -378,6 +380,132 @@ describe("Sources Actions", () => {
 				});
 
 				await createTemplateSourceUploadUrl(mockWorkspaceId, mockTemplateId, mockFileName);
+
+				expect(mockRedirect).toHaveBeenCalledWith("/signin");
+			});
+		});
+
+		describe("crawlTemplateUrl", () => {
+			const mockUrl = "https://example.com/grant-guidelines";
+			const mockCrawlResponse = { message: "URL crawled successfully" };
+
+			beforeEach(() => {
+				mockPost.mockReturnValue({
+					json: vi.fn().mockResolvedValue(mockCrawlResponse),
+				});
+			});
+
+			it("should call the API with correct parameters", async () => {
+				const result = await crawlTemplateUrl(mockWorkspaceId, mockTemplateId, mockUrl);
+
+				expect(mockPost).toHaveBeenCalledWith(
+					`workspaces/${mockWorkspaceId}/grant_templates/${mockTemplateId}/sources/crawl-url`,
+					{
+						headers: mockAuthHeaders,
+						json: { url: mockUrl },
+					},
+				);
+
+				expect(mockWithAuthRedirect).toHaveBeenCalled();
+				expect(result).toEqual(mockCrawlResponse);
+			});
+
+			it("should handle API errors correctly", async () => {
+				const mockError = new Error("API Error");
+				mockPost.mockReturnValueOnce({
+					json: vi.fn().mockRejectedValue(mockError),
+				});
+
+				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
+
+				await expect(crawlTemplateUrl(mockWorkspaceId, mockTemplateId, mockUrl)).rejects.toThrow("API Error");
+			});
+
+			it("should redirect to sign-in page on 401 errors", async () => {
+				const mockResponse = new Response(null, { status: 401 });
+				const httpError = new HTTPError(mockResponse, { path: "crawl-url" } as any, {} as any);
+
+				mockPost.mockReturnValueOnce({
+					json: vi.fn().mockRejectedValue(httpError),
+				});
+
+				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
+					try {
+						return await promise;
+					} catch (error) {
+						if (error instanceof HTTPError && error.response.status === 401) {
+							mockRedirect("/signin");
+							return null;
+						}
+						throw error;
+					}
+				});
+
+				await crawlTemplateUrl(mockWorkspaceId, mockTemplateId, mockUrl);
+
+				expect(mockRedirect).toHaveBeenCalledWith("/signin");
+			});
+		});
+
+		describe("crawlApplicationUrl", () => {
+			const mockUrl = "https://example.com/grant-guidelines";
+			const mockCrawlResponse = { message: "URL crawled successfully" };
+
+			beforeEach(() => {
+				mockPost.mockReturnValue({
+					json: vi.fn().mockResolvedValue(mockCrawlResponse),
+				});
+			});
+
+			it("should call the API with correct parameters", async () => {
+				const result = await crawlApplicationUrl(mockWorkspaceId, mockApplicationId, mockUrl);
+
+				expect(mockPost).toHaveBeenCalledWith(
+					`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/sources/crawl-url`,
+					{
+						headers: mockAuthHeaders,
+						json: { url: mockUrl },
+					},
+				);
+
+				expect(mockWithAuthRedirect).toHaveBeenCalled();
+				expect(result).toEqual(mockCrawlResponse);
+			});
+
+			it("should handle API errors correctly", async () => {
+				const mockError = new Error("API Error");
+				mockPost.mockReturnValueOnce({
+					json: vi.fn().mockRejectedValue(mockError),
+				});
+
+				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
+
+				await expect(crawlApplicationUrl(mockWorkspaceId, mockApplicationId, mockUrl)).rejects.toThrow(
+					"API Error",
+				);
+			});
+
+			it("should redirect to sign-in page on 401 errors", async () => {
+				const mockResponse = new Response(null, { status: 401 });
+				const httpError = new HTTPError(mockResponse, { path: "crawl-url" } as any, {} as any);
+
+				mockPost.mockReturnValueOnce({
+					json: vi.fn().mockRejectedValue(httpError),
+				});
+
+				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
+					try {
+						return await promise;
+					} catch (error) {
+						if (error instanceof HTTPError && error.response.status === 401) {
+							mockRedirect("/signin");
+							return null;
+						}
+						throw error;
+					}
+				});
+
+				await crawlApplicationUrl(mockWorkspaceId, mockApplicationId, mockUrl);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});

@@ -6,7 +6,7 @@ from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from packages.db.src.constants import RAG_FILE
-from packages.db.src.enums import FileIndexingStatusEnum
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
     FundingOrganizationRagSource,
@@ -31,7 +31,7 @@ async def test_check_exists_files_being_indexed_application_success(
                 {
                     "id": file_id,
                     "source_type": RAG_FILE,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                    "indexing_status": SourceIndexingStatusEnum.INDEXING,
                 }
             )
         )
@@ -66,12 +66,12 @@ async def test_check_exists_files_being_indexed_application_success(
 
 @pytest.mark.parametrize(
     "indexing_status",
-    [FileIndexingStatusEnum.FINISHED, FileIndexingStatusEnum.FAILED],
+    [SourceIndexingStatusEnum.FINISHED, SourceIndexingStatusEnum.FAILED],
 )
 async def test_check_exists_files_being_indexed_application_non_indexing_status(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    indexing_status: FileIndexingStatusEnum,
+    indexing_status: SourceIndexingStatusEnum,
 ) -> None:
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
@@ -135,7 +135,7 @@ async def test_check_exists_files_being_indexed_organization_success(
                 {
                     "id": file_id,
                     "source_type": RAG_FILE,
-                    "indexing_status": FileIndexingStatusEnum.INDEXING,
+                    "indexing_status": SourceIndexingStatusEnum.INDEXING,
                 }
             )
         )
@@ -170,12 +170,12 @@ async def test_check_exists_files_being_indexed_organization_success(
 
 @pytest.mark.parametrize(
     "indexing_status",
-    [FileIndexingStatusEnum.FINISHED, FileIndexingStatusEnum.FAILED],
+    [SourceIndexingStatusEnum.FINISHED, SourceIndexingStatusEnum.FAILED],
 )
 async def test_check_exists_files_being_indexed_organization_non_indexing_status(
     async_session_maker: async_sessionmaker[Any],
     funding_organization: FundingOrganization,
-    indexing_status: FileIndexingStatusEnum,
+    indexing_status: SourceIndexingStatusEnum,
 ) -> None:
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():

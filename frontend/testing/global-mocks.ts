@@ -35,7 +35,6 @@ const {
 		}),
 	);
 
-	// Mock ResizeObserver
 	const mockResizeObserver = vi.fn().mockImplementation(() => ({
 		disconnect: vi.fn(),
 		observe: vi.fn(),

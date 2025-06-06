@@ -25,13 +25,14 @@ tasks:
             - pre-commit run --show-diff-on-failure --color=always --all-files
 
     dev:
-        desc: Start all services in development mode (database, Pub/Sub emulator, backend, indexer, and frontend)
-        deps:
-            - task: db:up
-            - task: emulator:gcs:up
-            - task: emulator:pubsub:up
+        desc: Start all backend services in development mode (database, GCS, Pub/Sub, backend, indexer, crawler)
         cmds:
-            - task: _dev:services
+            - ./scripts/dev-startup.sh
+
+    dev:stop:
+        desc: Stop all development services
+        cmds:
+            - docker-compose --profile services down
 
     test:
         desc: Run all tests (backend services, packages, and frontend)
@@ -88,6 +89,20 @@ tasks:
             - task: db:up
             - sleep 2
             - PYTHONPATH=. uv run scripts/seed_db.py
+
+    db:drop:
+        desc: "Drop and recreate the development database (WARNING: destroys all data)"
+        cmds:
+            - task: db:up
+            - sleep 2
+            - ./scripts/drop-db.sh
+
+    db:reset:
+        desc: "Drop database and re-run migrations (WARNING: destroys all data)"
+        cmds:
+            - task: db:drop
+            - task: db:migrate
+            - echo "Database reset complete!"
 
     # Emulator Commands
 

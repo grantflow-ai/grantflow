@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { createApplicationSourceUploadUrl, deleteApplicationSource } from "@/actions/sources";
 import { API } from "@/types/api-types";
+import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 
 import { FileUploader } from "./file-uploader";
 import { FilesDisplay } from "./files-display";
@@ -66,6 +67,11 @@ export function FileContainer({
 			setUploadedFiles((prev) => [...prev, file]);
 
 			toast.success(`File ${file.name} uploaded successfully`);
+
+			const objectPath = extractObjectPathFromUrl(url);
+			if (objectPath) {
+				void triggerDevIndexing(objectPath);
+			}
 		},
 		[workspaceId, applicationId],
 	);

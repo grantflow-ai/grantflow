@@ -7,7 +7,7 @@ class UserRoleEnum(StrEnum):
     MEMBER = "MEMBER"
 
 
-class FileIndexingStatusEnum(StrEnum):
+class SourceIndexingStatusEnum(StrEnum):
     INDEXING = "INDEXING"
     FINISHED = "FINISHED"
     FAILED = "FAILED"
