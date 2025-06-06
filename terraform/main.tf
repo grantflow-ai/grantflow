@@ -37,7 +37,6 @@ module "cloud_run" {
   project_id               = var.project_id
   region                   = var.region
   database_connection_name = module.database.instance_connection_name
-  valkey_connection_string = module.memorystore.connection_string
 }
 
 # PubSub Module
@@ -60,16 +59,6 @@ module "storage" {
 module "iam" {
   source = "./modules/iam"
 }
-
-# Memorystore Module
-module "memorystore" {
-  source     = "./modules/memorystore"
-  project_id = var.project_id
-  region     = var.region
-  network_id = module.network.network_id
-  depends_on = [module.network]
-}
-
 
 # Secrets Module
 module "secrets" {

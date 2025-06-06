@@ -15,14 +15,6 @@ const meta: Meta<typeof FileContainer> = {
 export default meta;
 type Story = StoryObj<typeof FileContainer>;
 
-// ==============================
-// UI TESTING STORIES (WITH MOCKS)
-// ==============================
-
-/**
- * UI testing stories with mocked API calls
- * These stories are for quick UI checks without real API calls
- */
 export const MockedDefault: Story = {
 	args: {
 		applicationId: "application-456",
@@ -132,14 +124,6 @@ export const MockedErrorState: Story = {
 	},
 };
 
-// ==============================
-// INTEGRATION TESTING STORIES
-// ==============================
-
-/**
- * Integration testing stories with real API calls
- * These stories will make actual API calls to the backend
- */
 export const IntegrationDefault: Story = {
 	args: {
 		applicationId: "application-456",

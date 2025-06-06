@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { addToWaitlist } from "@/actions/join-waitlist";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { logError } from "@/utils/logging";
+
+import { addToWaitlist } from "./join-waitlist";
 
 const { mockLists, mockMailgun, mockMessages } = vi.hoisted(() => {
 	const mockLists = {

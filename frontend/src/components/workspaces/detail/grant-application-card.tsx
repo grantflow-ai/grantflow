@@ -1,8 +1,13 @@
 "use client";
-import { ChevronRight, FileText } from "lucide-react";
+import { ChevronRight, FileText, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
+import { deleteApplication } from "@/actions/grant-applications";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PagePath } from "@/enums";
 import { API } from "@/types/api-types";
@@ -14,9 +19,32 @@ export function GrantApplicationCard({
 	application: API.GetWorkspace.Http200.ResponseBody["grant_applications"][0];
 	workspaceId: string;
 }) {
+	const router = useRouter();
+	const [isDeleting, setIsDeleting] = useState(false);
+
 	const url = PagePath.APPLICATION_DETAIL.toString()
 		.replace(":workspaceId", workspaceId)
 		.replace(":applicationId", application.id);
+
+	const handleDelete = async (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		if (!confirm("Are you sure you want to delete this application?")) {
+			return;
+		}
+
+		setIsDeleting(true);
+		try {
+			await deleteApplication(workspaceId, application.id);
+			toast.success("Application deleted successfully");
+			router.refresh();
+		} catch {
+			toast.error("Failed to delete application");
+		} finally {
+			setIsDeleting(false);
+		}
+	};
 
 	return (
 		<Link className="block" data-testid={`application-draft-link-${application.id}`} href={url}>
@@ -29,14 +57,25 @@ export function GrantApplicationCard({
 								<span>{application.title}</span>
 							</h3>
 						</div>
-						{application.completed_at && (
-							<Badge
-								className="bg-secondary/50 text-secondary-foreground whitespace-nowrap px-2 py-0.5 text-xs font-medium uppercase"
-								variant="secondary"
+						<div className="flex items-center gap-2">
+							{application.completed_at && (
+								<Badge
+									className="bg-secondary/50 text-secondary-foreground whitespace-nowrap px-2 py-0.5 text-xs font-medium uppercase"
+									variant="secondary"
+								>
+									{application.completed_at}
+								</Badge>
+							)}
+							<Button
+								className="opacity-0 transition-opacity group-hover:opacity-100"
+								disabled={isDeleting}
+								onClick={handleDelete}
+								size="sm"
+								variant="ghost"
 							>
-								{application.completed_at}
-							</Badge>
-						)}
+								<Trash2 className="text-destructive size-4" />
+							</Button>
+						</div>
 					</div>
 					<div className="mt-2 flex items-center justify-end">
 						<ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 transition-all duration-300 group-hover:translate-x-1" />

@@ -1,0 +1,14 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import { ResearchDeepDiveStep } from "./research-deep-dive-step";
+
+describe("ResearchDeepDiveStep", () => {
+	it("renders step content", () => {
+		render(<ResearchDeepDiveStep />);
+
+		expect(screen.getByTestId("research-deep-dive-step")).toBeInTheDocument();
+		expect(screen.getByText("Research Deep Dive")).toBeInTheDocument();
+		expect(screen.getByText("Step 5: Conduct in-depth research")).toBeInTheDocument();
+	});
+});

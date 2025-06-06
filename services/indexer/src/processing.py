@@ -1,20 +1,11 @@
-from packages.db.src.connection import get_session_maker
-from packages.db.src.enums import FileIndexingStatusEnum
-from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.chunking import chunk_text
-from packages.shared_utils.src.exceptions import (
-    DatabaseError,
-    ExternalOperationError,
-    FileParsingError,
-    ValidationError,
-)
-from packages.shared_utils.src.extraction import (
-    extract_file_content,
-)
+from packages.shared_utils.src.dto import VectorDTO
+from packages.shared_utils.src.extraction import extract_file_content
+from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import serialize
-from services.indexer.src.indexing import index_documents, logger
-from sqlalchemy import insert, update
-from sqlalchemy.exc import SQLAlchemyError
+from services.indexer.src.indexing import index_documents
+
+logger = get_logger(__name__)
 
 
 async def process_source(
@@ -23,51 +14,19 @@ async def process_source(
     source_id: str,
     filename: str,
     mime_type: str,
-) -> None:
-    session_maker = get_session_maker()
-    try:
-        extracted_text, mime_type = await extract_file_content(
-            content=content,
-            mime_type=mime_type,
-        )
-        logger.info("Extracted text from file", filename=filename)
+) -> tuple[list[VectorDTO], str]:
+    extracted_text, mime_type = await extract_file_content(
+        content=content,
+        mime_type=mime_type,
+    )
+    logger.info("Extracted text from file", filename=filename)
 
-        chunks = chunk_text(text=extracted_text, mime_type=mime_type)
-        vectors = await index_documents(
-            chunks=chunks,
-            source_id=source_id,
-        )
-    except (FileParsingError, ExternalOperationError, ValidationError) as e:
-        async with session_maker() as session, session.begin():
-            await session.execute(
-                update(RagSource).where(RagSource.id == source_id).values(indexing_status=FileIndexingStatusEnum.FAILED)
-            )
-            await session.commit()
+    chunks = chunk_text(text=extracted_text, mime_type=mime_type)
+    vectors = await index_documents(
+        chunks=chunks,
+        source_id=source_id,
+    )
 
-        logger.error("Failed to parse file", filename=filename, exec_info=e)
-    else:
-        async with session_maker() as session, session.begin():
-            try:
-                await session.execute(insert(TextVector).values(vectors))
-                await session.execute(
-                    update(RagSource)
-                    .where(RagSource.id == source_id)
-                    .values(
-                        {
-                            "indexing_status": FileIndexingStatusEnum.FINISHED,
-                            "text_content": extracted_text
-                            if isinstance(extracted_text, str)
-                            else serialize(extracted_text).decode(),
-                        }
-                    )
-                )
-                await session.commit()
-                logger.info("Successfully indexed file", filename=filename)
-            except SQLAlchemyError as e:
-                logger.error(
-                    "Error inserting vectors.",
-                    exec_info=e,
-                    filename=filename,
-                )
-                await session.rollback()
-                raise DatabaseError("Error inserting vectors", context=str(e)) from e
+    text_content = extracted_text if isinstance(extracted_text, str) else serialize(extracted_text).decode()
+
+    return vectors, text_content

@@ -1,4 +1,3 @@
-import os
 from collections.abc import AsyncGenerator, Generator
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
@@ -24,7 +23,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from vertexai.generative_models import GenerativeModel
 
-pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.valkey_test_plugin"]
+pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 TestingClientType = AsyncTestClient[Litestar]
 
@@ -54,16 +53,12 @@ def mock_generative_model() -> Generator[Mock, Any, None]:
 
 
 @pytest.fixture(scope="session")
-async def test_client(
-    async_session_maker: async_sessionmaker[Any], valkey_connection_string: str
-) -> AsyncGenerator[TestingClientType, None]:
+async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[TestingClientType, None]:
     firebase_uid = "a" * 128
 
     firebase_app_ref.value = Mock()
 
     init_ref.value = True
-
-    os.environ["VALKEY_CONNECTION_STRING"] = valkey_connection_string
 
     with (
         patch("services.backend.src.main.before_server_start"),

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 from anyio import Path as AsyncPath
 from packages.db.src.constants import RAG_FILE
-from packages.db.src.enums import FileIndexingStatusEnum
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import (
     FundingOrganization,
@@ -185,7 +185,7 @@ async def parse_source_file(
                     if source_file.suffix == ".pdf"
                     else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     "size": len(file_content),
-                    "indexing_status": FileIndexingStatusEnum.FINISHED,
+                    "indexing_status": SourceIndexingStatusEnum.FINISHED,
                 }
             )
             .returning(RagFile.id)

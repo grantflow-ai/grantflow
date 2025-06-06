@@ -915,7 +915,6 @@ async def test_accept_invitation_success(
     assert len(response_data["token"]) > 0
 
     async with async_session_maker() as session:
-        # Verify workspace user was created
         workspace_user = await session.scalar(
             select(WorkspaceUser)
             .where(WorkspaceUser.workspace_id == workspace.id)
@@ -924,7 +923,6 @@ async def test_accept_invitation_success(
         assert workspace_user is not None
         assert workspace_user.role == UserRoleEnum.MEMBER
 
-        # Verify invitation was marked as accepted
         updated_invitation = await session.scalar(
             select(UserWorkspaceInvitation).where(UserWorkspaceInvitation.id == invitation.id)
         )

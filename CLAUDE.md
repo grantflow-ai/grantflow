@@ -1,78 +1,41 @@
-# GrantFlow.AI Monorepo Guidelines
+# GrantFlow.AI Development Guide
 
-## Project Structure
+## Stack
 
-- **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS (`./frontend`)
-- **Backend**: Python microservices with Litestar (`./services`)
-    - `backend`: Main API with auth/business logic
-    - `indexer`: Document processing
-    - `crawler`: Web scraping
-- **Packages**: (`./packages`)
-    - `db`: Models, migrations, schemas
-    - `shared_utils`: Common utilities
-- **Infrastructure**: OpenTofu/Terraform (`./terraform`)
-- **Testing**: Shared fixtures (`./testing`)
+- **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
+- **Backend**: Python 3.12, Litestar, msgspec, SQLAlchemy 2.0 async
+- **Services**: backend (API), indexer (docs), crawler (web)
+- **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
 
-## Environment
+## Core Rules
 
-- Node.js 22+, Python 3.12, pnpm 10.11.0, uv
-- Docker Compose for local dev
-- GCP deployment target
-
-## Key Guidelines
-
-### General
-
-- NO inline comments or docstrings
+- NO inline comments/docstrings
 - Type all Python args/returns (3.12+ syntax)
-- Use `uv run` not `python`
-- Use `tofu` not `terraform`
+- Use `uv run`, `tofu`, SCREAMING_SNAKE_CASE constants
+- Use `??` not `||`, extract magic numbers
+- 100% test coverage, real PostgreSQL
+- Use `pnpm`
+- Use `task`
 
-### Python/Backend
-
-- **Framework**: Litestar with msgspec serialization
-- **TypedDict**: Use `NotRequired[type]`, NOT `type | None` (msgspec limitation)
-- **Testing**: pytest async, real PostgreSQL, 80% coverage
-- **Validation**: Check entity exists before updates
-- **Auth**: `AuthMiddleware` handles workspace permissions via `allowed_roles`
-- **Database**: SQLAlchemy 2.0 async, transaction pattern:
-    ```python
-    async with session_maker() as session, session.begin():
-        # operations
-    ```
-
-### Frontend
-
-- **Stack**: Next.js 15 App Router, TypeScript strict, Vitest
-- **API**: Ky client with generated types from `@/types/api-types`
-- **Auth**: Wrap calls with `withAuthRedirect`
-- **Errors**: Backend returns 400 (not 422) for validation
-- **Testing**: Focus on actual API behavior, avoid unrelated edge cases
-
-## Essential Commands
+## Commands
 
 ```bash
-task setup              # Initial setup
-task dev                # Start all services
-task test               # Run all tests
-task lint               # Run linters
-task db:migrate         # Run migrations
-task generate:api-types # Generate TS types from backend
+task setup dev test lint db:migrate generate:api-types
 ```
 
-## Key Patterns
+## Patterns
 
-### API Endpoints
+### Backend Endpoint
 
 ```python
 @post("/items", allowed_roles=[UserRoleEnum.MEMBER])
 async def create_item(data: TypedDict, request: Request[User, Token, Any]) -> dict:
     async with session_maker() as session, session.begin():
-        # Validate & create
+        # operations
         return {"id": item.id}
 ```
 
-### Frontend API Calls
+### Frontend API
 
 ```typescript
 export async function createItem(data: API.CreateItem.RequestBody) {
@@ -87,8 +50,49 @@ export async function createItem(data: API.CreateItem.RequestBody) {
 }
 ```
 
+## TypeScript Guidelines
+
+- Next.js App Router, TypeScript strict, Vitest
+- Ky client with generated types from `@/types/api-types`
+- Wrap API calls with `withAuthRedirect`
+- Backend returns 400 for validation errors
+- Use `getEnv()` for typed environment variables
+
+## Python Guidelines
+
+- Litestar + msgspec serialization
+- TypedDict: Use `NotRequired[type]` not `type | None`
+- Check entity exists before updates
+- Use `logger.exception()` not `logger.error(..., exc_info=True)`
+- Avoid `global` - use singleton classes
+- Use `get_env()` with fallbacks
+
+## Key Learnings
+
+### Wizard Patterns
+
+Create draft entities early for file uploads. Applications start as "Untitled Application", debounced title updates (500ms), validate title + documents before proceeding.
+
+### Pub/Sub Handling
+
+Handle duplicates gracefully in consumers. Check existence before insert, use `ON CONFLICT DO NOTHING`, return 200 for processed messages.
+
+**Topics**: `url-crawling`, `source-processing-notifications`, `file-indexing`
+
+### WebSocket Integration
+
+Extract to custom hooks, use `react-use-websocket`, convert HTTP→WS URLs, handle null IDs gracefully. Endpoint: `/workspaces/{id}/applications/{id}/notifications`
+
+### Environment Variables
+
+- **Frontend**: `getEnv()` throws if missing required vars
+- **Backend**: `get_env()` with fallback values
+- **Build-time**: `process.env.NODE_ENV` in Next.js
+
 ## Security
 
-- Environment variables for secrets
-- Firebase auth + JWT
-- Never commit credentials
+Firebase auth + JWT, environment variables for secrets, never commit credentials.
+
+## Testing
+
+pytest async, focus on API behavior, mock WebSocket hooks, verify connection status UI.

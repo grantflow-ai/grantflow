@@ -25,11 +25,6 @@ variable "database_connection_name" {
   type        = string
 }
 
-variable "valkey_connection_string" {
-  description = "The connection string for the Valkey/Redis instance"
-  type        = string
-  sensitive   = true
-}
 
 # Backend service deployment
 resource "google_cloud_run_v2_service" "backend" {
@@ -155,10 +150,6 @@ resource "google_cloud_run_v2_service" "backend" {
         }
       }
 
-      env {
-        name  = "VALKEY_CONNECTION_STRING"
-        value = var.valkey_connection_string
-      }
 
       env {
         name  = "URL_CRAWLING_PUBSUB_TOPIC"

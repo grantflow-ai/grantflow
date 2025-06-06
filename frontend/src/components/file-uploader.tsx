@@ -1,11 +1,12 @@
-import { Paperclip, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/utils/format";
+
+import { Button } from "./ui/button";
 
 const FILE_ACCEPTS = {
 	"application/csv": [".csv"],
@@ -24,8 +25,8 @@ const FILE_ACCEPTS = {
 	"text/rtf": [".rtf"],
 };
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
-
+const FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
 const DEFAULT_MAX_FILES = Infinity;
 
 export function FileUploader({
@@ -50,9 +51,9 @@ export function FileUploader({
 			}
 
 			for (const file of newFileUploads) {
-				if (file.size > MAX_FILE_SIZE) {
+				if (file.size > MAX_FILE_SIZE_BYTES) {
 					toast.error(
-						`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE)}`,
+						`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE_BYTES)}`,
 					);
 					return false;
 				}
@@ -82,7 +83,7 @@ export function FileUploader({
 	const { getInputProps, getRootProps, isDragActive } = useDropzone({
 		accept: FILE_ACCEPTS,
 		disabled: currentFileCount >= maxFileCount,
-		maxSize: MAX_FILE_SIZE,
+		maxSize: MAX_FILE_SIZE_BYTES,
 		onDrop,
 	});
 
@@ -136,8 +137,8 @@ export function FileUploader({
 				variant="outline"
 			>
 				<label htmlFor={`file-upload-${fieldName}`}>
-					<Paperclip className="mr-2 size-4" />
-					Upload Files
+					<Upload className="mr-2 size-4" />
+					Upload Documents
 				</label>
 			</Button>
 			{maxFileCount !== Infinity && (

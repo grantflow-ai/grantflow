@@ -161,7 +161,6 @@ async def test_application(async_session_maker: async_sessionmaker[Any], workspa
     return application
 
 
-@pytest.mark.asyncio
 async def test_extract_and_enrich_sections_with_mocked_llm(
     sample_cfp_content: list[Content],
     cfp_subject: str,
@@ -229,7 +228,6 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
     assert workplan_sections[0]["id"] == "research_plan"
 
 
-@pytest.mark.asyncio
 async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     mock_message_handler: MessageHandler,
     cfp_file_content: str,
@@ -332,7 +330,6 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     assert cfp_data_extracted_message_found, "CFP data extracted message not found"
 
 
-@pytest.mark.asyncio
 async def test_pipeline_handler_error_handling(
     mock_message_handler: MessageHandler,
     test_application: GrantApplication,
@@ -375,7 +372,6 @@ async def test_pipeline_handler_error_handling(
     assert error_message_found, "Expected error message was not found"
 
 
-@pytest.mark.asyncio
 async def test_idempotent_template_generation(
     mock_message_handler: MessageHandler,
     cfp_file_content: str,
@@ -429,7 +425,6 @@ async def test_idempotent_template_generation(
         assert str(result2.id) in template_ids
 
 
-@pytest.mark.asyncio
 async def test_extract_and_enrich_with_title_only_sections(
     sample_cfp_content: list[Content],
     cfp_subject: str,

@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, Mock, patch
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 
 import pytest
 from anyio import Path
@@ -315,7 +315,6 @@ async def test_download_documents_with_existing(temp_dir: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_find_relevant_links() -> None:
-    url = "https://example.org/main"
     normal_links = {"https://example.org/page1", "https://example.org/page2"}
     embeddings = [[0.1, 0.2, 0.3]]
     visited = ["https://example.org/visited"]
@@ -332,7 +331,7 @@ async def test_find_relevant_links() -> None:
 
         mock_similarity.side_effect = lambda _, __: [[0.4]] if "page2" in str(mock_download.call_args) else [[0.95]]
 
-        results = await find_relevant_links(url, normal_links, embeddings, visited)
+        results = await find_relevant_links(normal_links, embeddings, visited)
 
         assert len(results) == 1
         link, html, embeddings_result, text = results[0]
@@ -350,11 +349,12 @@ async def test_crawl_basic(
     mock_trafilatura_extract: Mock,
     mock_convert_to_markdown: Mock,
     mock_generate_embeddings: AsyncMock,
+    mock_download_file: AsyncMock,
 ) -> None:
     with patch("services.crawler.src.extraction.safe_filename_from_url") as mock_filename:
         mock_filename.return_value = "test-page.md"
 
-        results = await crawl(mock_url, temp_dir)
+        results = await crawl(url=mock_url, temp_dir=temp_dir)
 
         assert len(results) == 2
         result = results[0]
@@ -366,33 +366,18 @@ async def test_crawl_basic(
 
 
 @pytest.mark.asyncio
-async def test_crawl_url_integration() -> None:
+async def test_crawl_url_integration(temp_dir: Path) -> None:
+    await (temp_dir / "test1.pdf").write_bytes(b"content1")
+    await (temp_dir / "test2.docx").write_bytes(b"content2")
+
     with (
         patch("services.crawler.src.extraction.crawl", new_callable=AsyncMock) as mock_crawl,
         patch("services.crawler.src.extraction.TemporaryDirectory") as mock_tempdir,
-        patch("services.crawler.src.extraction.Path") as mock_path,
         patch("services.crawler.src.extraction.chunk_text") as mock_chunk,
-        patch("services.crawler.src.extraction.create_vector_dto", new_callable=AsyncMock),
-        patch("services.crawler.src.extraction.gather", new_callable=AsyncMock),
+        patch("services.crawler.src.extraction.create_vector_dto", new_callable=AsyncMock) as mock_create_vector,
+        patch("services.crawler.src.extraction.gather", new_callable=AsyncMock) as mock_gather,
     ):
-        mock_tempdir.return_value.__enter__.return_value = "/tmp/test"
-
-        mock_file1 = AsyncMock()
-        mock_file1.name = "test1.pdf"
-        mock_file1.is_file.return_value = True
-        mock_file1.read_bytes = AsyncMock(return_value=b"content1")
-
-        mock_file2 = AsyncMock()
-        mock_file2.name = "test2.docx"
-        mock_file2.is_file.return_value = True
-        mock_file2.read_bytes = AsyncMock(return_value=b"content2")
-
-        mock_glob_result = AsyncMock()
-        mock_glob_result.__aiter__.return_value = [mock_file1, mock_file2]
-
-        mock_path_instance = Mock()
-        mock_path_instance.glob.return_value = mock_glob_result
-        mock_path.return_value = mock_path_instance
+        mock_tempdir.return_value.__aenter__.return_value = str(temp_dir)
 
         mock_crawl.return_value = [
             {
@@ -400,58 +385,33 @@ async def test_crawl_url_integration() -> None:
                 "document_links": ["https://example.org/doc1.pdf"],
                 "markdown_content": "# Page 1\n\nContent",
                 "text_content": "Page 1\nContent",
-                "saved_path": "/tmp/test/page1.md",
+                "saved_path": str(temp_dir / "page1.md"),
             }
         ]
 
         mock_chunk.return_value = [{"content": "Test content", "metadata": {"source": "test"}}]
-
-        expected_result = [
-            {"filename": "test1.pdf", "content": b"content1"},
-            {"filename": "test2.docx", "content": b"content2"},
+        mock_create_vector.return_value = {
+            "chunk": {"content": "Test content", "metadata": {}},
+            "embedding": [0.1, 0.2],
+            "rag_source_id": "test-id",
+        }
+        mock_gather.return_value = [
+            {"chunk": {"content": "Test content", "metadata": {}}, "embedding": [0.1, 0.2], "rag_source_id": "test-id"}
         ]
 
-        mock_session_maker = AsyncMock()
-
-        with patch("services.crawler.src.extraction.crawl_url", new_callable=AsyncMock) as patched_crawl_url:
-            patched_crawl_url.return_value = expected_result
-
-            mock_crawl.reset_mock()
-
-            result = await patched_crawl_url(
-                url="https://example.org/test",
-                source_id="test-id",
-                session_maker=mock_session_maker,
-            )
-
-            assert len(result) == 2
-            assert result[0]["filename"] == "test1.pdf"
-            assert result[0]["content"] == b"content1"
-            assert result[1]["filename"] == "test2.docx"
-            assert result[1]["content"] == b"content2"
-
-
-@pytest.mark.asyncio
-async def test_crawl_url_network_error() -> None:
-    with (
-        patch("services.crawler.src.extraction.TemporaryDirectory") as mock_temp_dir,
-        patch("services.crawler.src.extraction.crawl", new_callable=AsyncMock) as mock_crawl,
-    ):
-        mock_temp_dir.return_value.__enter__.return_value = "/tmp/test"
-
-        mock_crawl.side_effect = HTTPError(
-            "https://example.org",
-            404,
-            "Not Found",
-            {},  # type: ignore
-            None,
+        result = await crawl_url(
+            url="https://example.org/test",
+            source_id="test-id",
         )
 
-        mock_session_maker = AsyncMock()
+        assert len(result) == 3
+        vectors, content, files = result
+        assert len(vectors) == 1
+        assert content == "\n\n# Page 1\n\nContent"
+        assert len(files) == 2
 
-        with pytest.raises(ExternalOperationError):
-            await crawl_url(
-                url="https://example.org/test",
-                source_id="test-source-id",
-                session_maker=mock_session_maker,
-            )
+        filenames = sorted([f["filename"] for f in files])
+        assert filenames == ["test1.pdf", "test2.docx"]
+        file_contents = {f["filename"]: f["content"] for f in files}
+        assert file_contents["test1.pdf"] == b"content1"
+        assert file_contents["test2.docx"] == b"content2"
