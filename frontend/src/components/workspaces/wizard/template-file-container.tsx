@@ -3,28 +3,32 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { createApplicationSourceUploadUrl, deleteApplicationSource } from "@/actions/sources";
+import { createTemplateSourceUploadUrl, deleteTemplateSource } from "@/actions/sources";
+import { FileUploader } from "@/components/file-uploader";
+import { FilesDisplay } from "@/components/files-display";
 import { API } from "@/types/api-types";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
-
-import { FileUploader } from "./file-uploader";
-import { FilesDisplay } from "./files-display";
-
-interface FileContainerProps {
-	applicationId: string;
-	initialFiles?: Extract<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[number], { filename: string }>[];
-	maxFileCount?: number;
-	workspaceId: string;
-}
+import { logError } from "@/utils/logging";
 
 type FileWithId = { id?: string } & File;
 
-export function FileContainer({
-	applicationId,
+interface TemplateFileContainerProps {
+	initialFiles?: Extract<API.RetrieveGrantTemplateRagSources.Http200.ResponseBody[number], { filename: string }>[];
+	maxFileCount?: number;
+	onFileCountChange?: (count: number) => void;
+	onFilesChange?: (files: FileWithId[]) => void;
+	templateId: string;
+	workspaceId: string;
+}
+
+export function TemplateFileContainer({
 	initialFiles = [],
 	maxFileCount = 10,
+	onFileCountChange,
+	onFilesChange,
+	templateId,
 	workspaceId,
-}: FileContainerProps) {
+}: TemplateFileContainerProps) {
 	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
 
@@ -48,9 +52,14 @@ export function FileContainer({
 		}
 	}, [initialFiles, uploadedFiles.length]);
 
+	useEffect(() => {
+		onFileCountChange?.(uploadedFiles.length);
+		onFilesChange?.(uploadedFiles);
+	}, [uploadedFiles, onFileCountChange, onFilesChange]);
+
 	const handleUploadFile = useCallback(
 		async (file: File) => {
-			const { url } = await createApplicationSourceUploadUrl(workspaceId, applicationId, file.name);
+			const { url } = await createTemplateSourceUploadUrl(workspaceId, templateId, file.name);
 
 			const uploadResponse = await fetch(url, {
 				body: file,
@@ -68,12 +77,13 @@ export function FileContainer({
 
 			toast.success(`File ${file.name} uploaded successfully`);
 
+			// Development-only: Trigger indexing since fake-gcs-server doesn't send Pub/Sub events ~keep
 			const objectPath = extractObjectPathFromUrl(url);
 			if (objectPath) {
 				void triggerDevIndexing(objectPath);
 			}
 		},
-		[workspaceId, applicationId],
+		[workspaceId, templateId],
 	);
 
 	const handleFilesAdded = useCallback(
@@ -82,7 +92,8 @@ export function FileContainer({
 
 			try {
 				await Promise.all(newFiles.map(handleUploadFile));
-			} catch {
+			} catch (error) {
+				logError({ error, identifier: "handleFilesAdded" });
 				toast.error("Failed to upload file. Please try again.");
 			} finally {
 				setIsUploading(false);
@@ -101,7 +112,7 @@ export function FileContainer({
 				}
 
 				if (file.id) {
-					await deleteApplicationSource(workspaceId, applicationId, file.id);
+					await deleteTemplateSource(workspaceId, templateId, file.id);
 				}
 
 				setUploadedFiles((prev) => prev.filter((f) => f.name !== fileToRemove.name));
@@ -111,22 +122,25 @@ export function FileContainer({
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		[workspaceId, applicationId, uploadedFiles],
+		[workspaceId, templateId, uploadedFiles],
 	);
 
 	return (
-		<div className="space-y-4">
+		<div data-testid="template-file-container">
 			<FileUploader
 				currentFileCount={uploadedFiles.length}
-				fieldName="application-files"
-				isDropZone={true}
+				fieldName="template-files"
 				maxFileCount={maxFileCount}
 				onFilesAdded={handleFilesAdded}
 			/>
 
-			{uploadedFiles.length > 0 && <FilesDisplay files={uploadedFiles} onFileRemoved={handleFileRemoved} />}
+			{uploadedFiles.length > 0 && (
+				<div className="mt-4">
+					<FilesDisplay files={uploadedFiles} onFileRemoved={handleFileRemoved} />
+				</div>
+			)}
 
-			{isUploading && <div className="text-muted-foreground text-center text-sm">Uploading files...</div>}
+			{isUploading && <div className="text-muted-foreground mt-2 text-center text-sm">Uploading files...</div>}
 		</div>
 	);
 }

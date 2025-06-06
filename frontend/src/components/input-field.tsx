@@ -2,39 +2,50 @@
 
 import { useState } from "react";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 export function AppInput({
 	className,
+	countType = "chars",
 	errorMessage,
 	icon,
 	label,
-	maxWords,
-	showWordCount = false,
+	maxCount,
+	showCount = false,
 	testId,
 	variant = "default",
 	...props
 }: {
 	className?: string;
+	countType?: "chars" | "words";
 	errorMessage?: null | React.ReactNode | string;
 	icon?: React.ReactNode;
 	label?: string;
-	maxWords?: number;
-	showWordCount?: boolean;
+	maxCount?: number;
+	showCount?: boolean;
 	testId?: string;
 	variant?: "default" | "field";
 } & React.InputHTMLAttributes<HTMLInputElement>) {
 	const hasError = !!errorMessage;
-	const [text, setText] = useState("");
+	const [text, setText] = useState(props.value?.toString() ?? "");
 
-	const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-	const formattedWordCount = wordCount < 10 ? `0${wordCount}` : `${wordCount}`;
-	const formattedMaxWords = maxWords ? (maxWords < 10 ? `0${maxWords}` : `${maxWords}`) : null;
+	const displayText = props.value === undefined ? text : props.value.toString();
+
+	const currentCount =
+		countType === "chars"
+			? displayText.length
+			: displayText.trim() === ""
+				? 0
+				: displayText.trim().split(/\s+/).length;
+
+	const formattedCount = currentCount < 10 ? `0${currentCount}` : `${currentCount}`;
+	const formattedMaxCount = maxCount ? (maxCount < 10 ? `0${maxCount}` : `${maxCount}`) : null;
 
 	return (
-		<div className="w-full" {...props}>
+		<div className="w-full">
 			<div className="flex items-center justify-between">
 				{label && (
 					<Label
@@ -46,19 +57,20 @@ export function AppInput({
 					</Label>
 				)}
 
-				{showWordCount && (
+				{showCount && (
 					<div
 						className={`ps-4 text-xs ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
-						data-testid={`${testId}-word-count`}
+						data-testid={`${testId}-${countType}-count`}
 					>
-						{formattedWordCount}
-						{formattedMaxWords ? `/${formattedMaxWords}` : ""}
+						{formattedCount}
+						{formattedMaxCount ? `/${formattedMaxCount}` : ""}
 					</div>
 				)}
 			</div>
 
 			<div className="relative">
 				<Input
+					{...props}
 					className={cn(
 						"w-full bg-white text-dark text-sm rounded-sm p-3 placeholder:text-sm",
 						props.disabled ? "placeholder:text-input-muted" : "placeholder:text-input-placeholder",
@@ -68,16 +80,17 @@ export function AppInput({
 						"focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input",
 						"focus-visible:border focus-visible:border-primary",
 						className,
-						{ ...props },
 					)}
 					data-testid={testId}
 					disabled={props.disabled}
 					id={props.id ?? testId}
+					maxLength={countType === "chars" ? maxCount : undefined}
 					onChange={(e) => {
 						setText(e.target.value);
+						props.onChange?.(e);
 					}}
 					placeholder={props.placeholder}
-					value={text}
+					value={displayText}
 				/>
 
 				{icon && (
