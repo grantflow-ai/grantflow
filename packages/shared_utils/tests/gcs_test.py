@@ -168,7 +168,6 @@ def test_get_bucket_caches_bucket(mock_env_vars: None, mock_storage_client: Magi
         assert bucket1 is bucket2
 
 
-@pytest.mark.asyncio
 async def test_download_blob_success(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     blob_name = "test-blob"
     mock_blob = MagicMock()
@@ -188,7 +187,6 @@ async def test_download_blob_success(mock_env_vars: None, mock_bucket: MagicMock
         assert content == b"test content"
 
 
-@pytest.mark.asyncio
 async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     blob_name = "test-blob"
     mock_blob = MagicMock()
@@ -264,7 +262,6 @@ def test_construct_object_uri_organization() -> None:
     assert uri == f"funding_organization/{organization_id}/{blob_name}"
 
 
-@pytest.mark.asyncio
 async def test_create_signed_upload_url_with_application_id(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     workspace_id = "workspace-123"
     application_id = "app-456"
@@ -301,7 +298,6 @@ async def test_create_signed_upload_url_with_application_id(mock_env_vars: None,
         assert url == expected_signed_url
 
 
-@pytest.mark.asyncio
 async def test_create_signed_upload_url_with_template_id(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     workspace_id = "workspace-123"
     template_id = "template-789"
@@ -338,7 +334,6 @@ async def test_create_signed_upload_url_with_template_id(mock_env_vars: None, mo
         assert url == expected_signed_url
 
 
-@pytest.mark.asyncio
 async def test_create_signed_upload_url_with_organization_id(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     organization_id = "org-789"
     blob_name = "test-file.pdf"
@@ -375,7 +370,6 @@ async def test_create_signed_upload_url_with_organization_id(mock_env_vars: None
         assert url == expected_signed_url
 
 
-@pytest.mark.asyncio
 async def test_create_signed_upload_url_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     workspace_id = "workspace-123"
     application_id = "app-456"
@@ -409,7 +403,6 @@ async def test_create_signed_upload_url_error(mock_env_vars: None, mock_bucket: 
     assert "Test error" in exc_info.value.context["error"]
 
 
-@pytest.mark.asyncio
 async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     blob_path = "workspace/workspace-123/test-file.pdf"
     content = b"test content"
@@ -429,7 +422,6 @@ async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) 
         mock_blob.upload_from_string.assert_called_once_with(content)
 
 
-@pytest.mark.asyncio
 async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     blob_path = "workspace/workspace-123/test-file.pdf"
     content = b"test content"

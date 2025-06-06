@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: f4a6a4d9bc01
+Revision ID: 6c2acde43b73
 Revises:
-Create Date: 2025-05-09 10:29:00.989744
+Create Date: 2025-06-05 18:39:58.270852
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "f4a6a4d9bc01"
+revision: str = "6c2acde43b73"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -39,7 +39,9 @@ def upgrade() -> None:
     op.create_table(
         "rag_sources",
         sa.Column(
-            "indexing_status", sa.Enum("INDEXING", "FINISHED", "FAILED", name="fileindexingstatusenum"), nullable=False
+            "indexing_status",
+            sa.Enum("INDEXING", "FINISHED", "FAILED", name="sourceindexingstatusenum"),
+            nullable=False,
         ),
         sa.Column("text_content", sa.Text(), nullable=True),
         sa.Column("source_type", sa.String(length=50), nullable=False),
@@ -89,7 +91,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("text", sa.Text(), nullable=True),
-        sa.Column("title", sa.String(length=255), nullable=False),
+        sa.Column("title", sa.Text(), nullable=False),
         sa.Column("workspace_id", sa.UUID(), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -146,6 +148,26 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_text_vectors_created_at"), "text_vectors", ["created_at"], unique=False)
     op.create_index(op.f("ix_text_vectors_rag_source_id"), "text_vectors", ["rag_source_id"], unique=False)
+    op.create_table(
+        "user_workspace_invitations",
+        sa.Column("workspace_id", sa.UUID(), nullable=False),
+        sa.Column("email", sa.String(length=255), nullable=False),
+        sa.Column("role", sa.Enum("OWNER", "ADMIN", "MEMBER", name="userroleenum"), nullable=False),
+        sa.Column("invitation_sent_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("accepted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["workspace_id"], ["workspaces.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(
+        op.f("ix_user_workspace_invitations_created_at"), "user_workspace_invitations", ["created_at"], unique=False
+    )
+    op.create_index(op.f("ix_user_workspace_invitations_email"), "user_workspace_invitations", ["email"], unique=False)
+    op.create_index(
+        op.f("ix_user_workspace_invitations_workspace_id"), "user_workspace_invitations", ["workspace_id"], unique=False
+    )
     op.create_table(
         "workspace_users",
         sa.Column("firebase_uid", sa.String(length=128), nullable=False),
@@ -218,6 +240,10 @@ def downgrade() -> None:
     op.drop_table("grant_application_rag_sources")
     op.drop_index(op.f("ix_workspace_users_created_at"), table_name="workspace_users")
     op.drop_table("workspace_users")
+    op.drop_index(op.f("ix_user_workspace_invitations_workspace_id"), table_name="user_workspace_invitations")
+    op.drop_index(op.f("ix_user_workspace_invitations_email"), table_name="user_workspace_invitations")
+    op.drop_index(op.f("ix_user_workspace_invitations_created_at"), table_name="user_workspace_invitations")
+    op.drop_table("user_workspace_invitations")
     op.drop_index(op.f("ix_text_vectors_rag_source_id"), table_name="text_vectors")
     op.drop_index(op.f("ix_text_vectors_created_at"), table_name="text_vectors")
     op.drop_index(

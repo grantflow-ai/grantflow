@@ -13,7 +13,7 @@ dependencies = [
   "db",
   "html-to-markdown>=1.3.2",
   "httpx>=0.28.1",
-  "shared-utils[chunking,embeddings,gcs]",
+  "shared-utils[chunking,embeddings,gcs,pubsub]",
   "trafilatura>=2",
   "uvicorn[standard]>=0.34",
 ]

@@ -41,11 +41,13 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 
 export function WizardFooter({
 	currentStep,
+	disabled = false,
 	onBack,
 	onContinue,
 	showBack,
 }: {
 	currentStep: number;
+	disabled?: boolean;
 	onBack: () => void;
 	onContinue: () => void;
 	showBack: boolean;
@@ -73,6 +75,7 @@ export function WizardFooter({
 			)}
 			<AppButton
 				data-testid="continue-button"
+				disabled={disabled}
 				leftIcon={leftIcon}
 				onClick={onContinue}
 				rightIcon={rightIcon}

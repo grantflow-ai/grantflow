@@ -37,3 +37,23 @@ output "url_crawling_subscription_name" {
   description = "The name of the URL crawling subscription"
   value       = google_pubsub_subscription.url_crawling_subscription.name
 }
+
+output "source_processing_notifications_topic_id" {
+  description = "The ID of the source processing notifications topic"
+  value       = google_pubsub_topic.source_processing_notifications.id
+}
+
+output "source_processing_notifications_topic_name" {
+  description = "The name of the source processing notifications topic"
+  value       = google_pubsub_topic.source_processing_notifications.name
+}
+
+output "source_processing_notifications_subscription_id" {
+  description = "The ID of the source processing notifications subscription"
+  value       = google_pubsub_subscription.source_processing_notifications_sub.id
+}
+
+output "source_processing_notifications_subscription_name" {
+  description = "The name of the source processing notifications subscription"
+  value       = google_pubsub_subscription.source_processing_notifications_sub.name
+}

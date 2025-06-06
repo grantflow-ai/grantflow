@@ -29,7 +29,7 @@ describe("FileUploader", () => {
 
 			const uploadButton = screen.getByTestId("upload-files-button");
 			expect(uploadButton).toBeInTheDocument();
-			expect(screen.getByText("Upload Files")).toBeInTheDocument();
+			expect(screen.getByText("Upload Documents")).toBeInTheDocument();
 		});
 
 		it("handles file selection", async () => {
@@ -78,7 +78,7 @@ describe("FileUploader", () => {
 			});
 
 			Object.defineProperty(mockLargeFile, "size", {
-				value: 101 * 1024 * 1024, // 101MB
+				value: 101 * 1024 * 1024, // 101MB ~keep
 				writable: false,
 			});
 

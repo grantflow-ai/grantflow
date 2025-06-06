@@ -171,6 +171,56 @@ resource "google_pubsub_topic_iam_member" "backend_publisher" {
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
+# Source Processing Notifications topic
+resource "google_pubsub_topic" "source_processing_notifications" {
+  name = "source-processing-notifications"
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
+# Pull subscription for the backend to consume source processing notifications
+resource "google_pubsub_subscription" "source_processing_notifications_sub" {
+  name  = "source-processing-notifications-sub"
+  topic = google_pubsub_topic.source_processing_notifications.name
+
+  # Longer ack deadline for pull subscriptions
+  ack_deadline_seconds = 600
+
+  # Message retention settings
+  message_retention_duration = "604800s" # 7 days
+  retain_acked_messages      = false
+
+  # Expiration policy - subscription expires if inactive for 31 days
+  expiration_policy {
+    ttl = "2678400s" # 31 days
+  }
+
+  # Enable message ordering to maintain order per key
+  enable_message_ordering = false
+
+  # Configure retry policy
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+}
+
+# IAM binding to allow services to publish to the source processing notifications topic
+resource "google_pubsub_topic_iam_member" "source_processing_publisher" {
+  topic  = google_pubsub_topic.source_processing_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
+
+# IAM binding to allow backend to subscribe to source processing notifications
+resource "google_pubsub_subscription_iam_member" "backend_subscriber" {
+  subscription = google_pubsub_subscription.source_processing_notifications_sub.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
+
 # Data source to get the project number for the default service account
 data "google_project" "project" {
   project_id = var.project_id

@@ -59,12 +59,12 @@ export function SigninForm({
 										autoComplete="given-name"
 										autoCorrect="off"
 										className="form-input"
-										data-testid="email-signin-form-firstname-input"
 										disabled={isLoading}
 										errorMessage={form.formState.errors.firstName?.message}
 										id="firstName"
 										label="First name"
 										placeholder="Type your first name"
+										testId="email-signin-form-firstname-input"
 										type="text"
 										{...field}
 									></AppInput>
@@ -83,12 +83,12 @@ export function SigninForm({
 										autoComplete="family-name"
 										autoCorrect="off"
 										className="form-input"
-										data-testid="email-signin-form-lastname-input"
 										disabled={isLoading}
 										errorMessage={form.formState.errors.lastName?.message}
 										id="lastName"
 										label="Last name"
 										placeholder="Type your last name"
+										testId="email-signin-form-lastname-input"
 										type="text"
 										{...field}
 									></AppInput>
@@ -107,12 +107,12 @@ export function SigninForm({
 										autoComplete="email"
 										autoCorrect="off"
 										className="form-input"
-										data-testid="email-signin-form-email-input"
 										disabled={isLoading}
 										errorMessage={socialSignInError ?? form.formState.errors.email?.message}
 										id="email"
 										label="Email"
 										placeholder="name@example.com"
+										testId="email-signin-form-email-input"
 										type="email"
 										{...field}
 									></AppInput>

@@ -2,13 +2,14 @@ from datetime import timedelta
 from typing import Any, TypedDict
 
 from litestar import get, post
+from litestar.exceptions import NotAuthorizedException
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Workspace, WorkspaceUser
 from packages.shared_utils.src.logger import get_logger
+from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.firebase import verify_id_token
 from services.backend.src.utils.jwt import create_jwt
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -31,31 +32,28 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
     decoded_token = await verify_id_token(data["id_token"])
     firebase_uid = decoded_token["uid"]
 
-    async with session_maker() as session:
-        try:
-            result = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
-            workspace_user = result.one_or_none()
+    async with session_maker() as session, session.begin():
+        result = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
+        workspace_user = result.scalars().first()
 
-            if workspace_user is None:
-                default_workspace = Workspace(name="default")
-                session.add(default_workspace)
-                await session.flush()
+        if workspace_user is None:
+            default_workspace = Workspace(name="default")
+            session.add(default_workspace)
+            await session.flush()
 
-                workspace_user = WorkspaceUser(
-                    workspace_id=default_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER
-                )
-                session.add(workspace_user)
-                await session.commit()
-        except SQLAlchemyError as err:
-            await session.rollback()
-            raise Exception("Error creating default workspace") from err
+            workspace_user = WorkspaceUser(
+                workspace_id=default_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER
+            )
+            session.add(workspace_user)
 
     jwt = create_jwt(firebase_uid)
     return LoginResponse(jwt_token=jwt)
 
 
 @get("/otp", operation_id="GenerateOtp")
-async def handle_create_otp(auth: str) -> OTPResponse:
+async def handle_create_otp(request: APIRequest) -> OTPResponse:
     # TODO: we need to add a second layer of security here
-    otp = create_jwt(firebase_uid=auth, ttl=timedelta(hours=1))
+    if request.auth is None:
+        raise NotAuthorizedException("Authentication required")
+    otp = create_jwt(firebase_uid=request.auth, ttl=timedelta(hours=1))
     return OTPResponse(otp=otp)
