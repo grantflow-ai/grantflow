@@ -4,22 +4,28 @@ from typing import Any
 
 from litestar import post
 from packages.db.src.constants import RAG_URL
-from packages.db.src.enums import FileIndexingStatusEnum
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganizationRagSource,
     GrantApplicationRagSource,
     GrantTemplateRagSource,
     RagSource,
     RagUrl,
+    TextVector,
 )
-from packages.shared_utils.src.exceptions import DatabaseError, DeserializationError, ValidationError
+from packages.shared_utils.src.exceptions import (
+    DeserializationError,
+    ValidationError,
+)
 from packages.shared_utils.src.gcs import construct_object_uri, upload_blob
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent
+from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, publish_source_processing_message
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from services.crawler.src.extraction import crawl_url
-from sqlalchemy import insert
+from services.crawler.src.utils import should_skip_url
+from sqlalchemy import insert, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -45,92 +51,231 @@ async def handle_url_crawling(
 ) -> None:
     crawling_request = await decode_pubsub_message(data)
     parent_type, parent_id = crawling_request["parent_type"], crawling_request["parent_id"]
+    existing_url = None
+
+    if should_skip_url(crawling_request["url"]):
+        logger.warning(
+            "Skipping URL based on filter rules",
+            url=crawling_request["url"],
+            parent_type=parent_type,
+            parent_id=parent_id,
+        )
+        return
 
     async with session_maker() as session, session.begin():
         try:
-            source_id = await session.scalar(
-                insert(RagSource)
-                .values(
-                    [
-                        {
-                            "indexing_status": FileIndexingStatusEnum.INDEXING,
-                            "text_content": "",
-                            "source_type": RAG_URL,  # Set polymorphic identity ~keep
-                        }
-                    ]
-                )
-                .returning(RagSource.id)
+            rag_source = await session.scalar(
+                select(RagSource).join(RagUrl).where(RagUrl.url == crawling_request["url"])
             )
-
-            await session.execute(
-                insert(RagUrl)
-                .values(
-                    [
-                        {
-                            "id": source_id,
-                            "url": crawling_request["url"],
-                        }
-                    ]
-                )
-                .returning(RagUrl.id)
-            )
-
-            if parent_type == "grant_application":
-                await session.execute(
-                    insert(GrantApplicationRagSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "grant_application_id": parent_id,
-                        }
-                    )
-                )
-            elif parent_type == "funding_organization":
-                await session.execute(
-                    insert(FundingOrganizationRagSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "funding_organization_id": parent_id,
-                        }
-                    )
-                )
+            if rag_source and rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+                source_id = rag_source.id
+                existing_url = True
+                indexing_status = rag_source.indexing_status
             else:
-                await session.execute(
-                    insert(GrantTemplateRagSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "grant_template_id": parent_id,
-                        }
+                existing_url = False
+                indexing_status = SourceIndexingStatusEnum.INDEXING
+                source_id = await session.scalar(
+                    insert(RagSource)
+                    .values(
+                        [
+                            {
+                                "indexing_status": SourceIndexingStatusEnum.INDEXING,
+                                "text_content": "",
+                                "source_type": RAG_URL,  # Set polymorphic identity ~keep
+                            }
+                        ]
                     )
+                    .returning(RagSource.id)
                 )
-            logger.info("Created new url record", source_id=source_id, parent_type=parent_type, parent_id=parent_id)
-        except SQLAlchemyError as e:
-            logger.error("Error creating url record", exc_info=e)
-            await session.rollback()
-            raise DatabaseError("Error creating url record", context=str(e)) from e
 
-    if files := await crawl_url(
-        url=crawling_request["url"],
-        source_id=str(source_id),
-        session_maker=session_maker,
-    ):
-        # we are uploading the files to GCS to have them indexed:
-        await gather(
-            *[
-                upload_blob(
-                    blob_path=construct_object_uri(
-                        application_id=str(parent_id) if parent_type == "grant_application" else None,
-                        blob_name=file["filename"],
-                        organization_id=str(parent_id) if parent_type == "funding_organization" else None,
-                        template_id=str(parent_id) if parent_type == "grant_template" else None,
-                        workspace_id=str(crawling_request["workspace_id"])
-                        if crawling_request.get("workspace_id")
-                        else None,
-                    ),
-                    content=file["content"],
+                await session.execute(
+                    insert(RagUrl)
+                    .values(
+                        [
+                            {
+                                "id": source_id,
+                                "url": crawling_request["url"],
+                            }
+                        ]
+                    )
+                    .returning(RagUrl.id)
                 )
-                for file in files
-            ]
+
+                if parent_type == "grant_application":
+                    await session.execute(
+                        pg_insert(GrantApplicationRagSource)
+                        .values(
+                            {
+                                "rag_source_id": source_id,
+                                "grant_application_id": parent_id,
+                            }
+                        )
+                        .on_conflict_do_nothing(index_elements=["rag_source_id", "grant_application_id"])
+                    )
+                elif parent_type == "funding_organization":
+                    await session.execute(
+                        pg_insert(FundingOrganizationRagSource)
+                        .values(
+                            {
+                                "rag_source_id": source_id,
+                                "funding_organization_id": parent_id,
+                            }
+                        )
+                        .on_conflict_do_nothing(index_elements=["rag_source_id", "funding_organization_id"])
+                    )
+                else:
+                    await session.execute(
+                        pg_insert(GrantTemplateRagSource)
+                        .values(
+                            {
+                                "rag_source_id": source_id,
+                                "grant_template_id": parent_id,
+                            }
+                        )
+                        .on_conflict_do_nothing(index_elements=["rag_source_id", "grant_template_id"])
+                    )
+                logger.info("Created new url record", source_id=source_id, parent_type=parent_type, parent_id=parent_id)
+        except SQLAlchemyError:
+            logger.exception(
+                "Error creating url record",
+                url=crawling_request["url"],
+                parent_type=parent_type,
+                parent_id=parent_id,
+            )
+            await session.rollback()
+            return
+
+    if existing_url:
+        logger.info(
+            "Skipping crawl for existing URL",
+            source_id=source_id,
+            url=crawling_request["url"],
+            indexing_status=indexing_status,
         )
+        await publish_source_processing_message(
+            logger=logger,
+            parent_id=parent_id,
+            parent_type=parent_type,
+            rag_source_id=source_id,
+            indexing_status=indexing_status,
+            identifier=crawling_request["url"],
+        )
+        return
+
+    try:
+        vectors, content, files = await crawl_url(
+            url=crawling_request["url"],
+            source_id=str(source_id),
+        )
+
+        if files:
+            await gather(
+                *[
+                    upload_blob(
+                        blob_path=construct_object_uri(
+                            application_id=str(parent_id) if parent_type == "grant_application" else None,
+                            blob_name=file["filename"],
+                            organization_id=str(parent_id) if parent_type == "funding_organization" else None,
+                            template_id=str(parent_id) if parent_type == "grant_template" else None,
+                            workspace_id=str(crawling_request["workspace_id"])
+                            if crawling_request.get("workspace_id")
+                            else None,
+                        ),
+                        content=file["content"],
+                    )
+                    for file in files
+                ]
+            )
+
+        async with session_maker() as session, session.begin():
+            try:
+                await session.execute(insert(TextVector).values(vectors))
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == source_id)
+                    .values({"indexing_status": SourceIndexingStatusEnum.FINISHED, "text_content": content})
+                )
+                await session.execute(
+                    update(RagUrl).where(RagUrl.id == source_id).values({"title": "", "description": ""})
+                )
+                await session.commit()
+                logger.info("Successfully indexed URL", url=crawling_request["url"], source_id=source_id)
+            except SQLAlchemyError as e:
+                logger.exception(
+                    "Database operation error",
+                    url=crawling_request["url"],
+                    source_id=source_id,
+                    error_type="DatabaseError" if "connection" in str(e).lower() else "SQLAlchemyError",
+                )
+                await session.rollback()
+
+                try:
+                    await publish_source_processing_message(
+                        logger=logger,
+                        parent_id=parent_id,
+                        parent_type=parent_type,
+                        rag_source_id=source_id,
+                        indexing_status=SourceIndexingStatusEnum.FAILED,
+                        identifier=crawling_request["url"],
+                    )
+                except Exception as pub_error:  # noqa: BLE001  # noqa: BLE001
+                    logger.error(
+                        "Failed to publish failure message after database error",
+                        error=str(pub_error),
+                        source_id=source_id,
+                        url=crawling_request["url"],
+                    )
+                return
+
+        await publish_source_processing_message(
+            logger=logger,
+            parent_id=parent_id,
+            parent_type=parent_type,
+            rag_source_id=source_id,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+            identifier=crawling_request["url"],
+        )
+    except Exception as e:
+        logger.exception(
+            "Error crawling URL",
+            url=crawling_request["url"],
+            source_id=source_id,
+            error_type=type(e).__name__,
+        )
+
+        async with session_maker() as session, session.begin():
+            try:
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == source_id)
+                    .values(indexing_status=SourceIndexingStatusEnum.FAILED)
+                )
+                await session.commit()
+            except SQLAlchemyError as db_error:
+                logger.error(
+                    "Failed to mark source as failed in database",
+                    error=str(db_error),
+                    source_id=source_id,
+                    original_error=str(e),
+                )
+                await session.rollback()
+
+        try:
+            await publish_source_processing_message(
+                logger=logger,
+                parent_id=parent_id,
+                parent_type=parent_type,
+                rag_source_id=source_id,
+                indexing_status=SourceIndexingStatusEnum.FAILED,
+                identifier=crawling_request["url"],
+            )
+        except Exception as pub_error:  # noqa: BLE001
+            logger.error(
+                "Failed to publish failure message",
+                error=str(pub_error),
+                source_id=source_id,
+                url=crawling_request["url"],
+            )
 
 
 app = create_litestar_app(

@@ -24,7 +24,7 @@ from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.functions import now
 
 from packages.db.src.constants import EMBEDDING_DIMENSIONS, RAG_FILE, RAG_URL
-from packages.db.src.enums import ApplicationStatusEnum, FileIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
 
 
@@ -103,7 +103,7 @@ class UserWorkspaceInvitation(BaseWithUUIDPK):
 class RagSource(BaseWithUUIDPK):
     __tablename__ = "rag_sources"
 
-    indexing_status: Mapped[FileIndexingStatusEnum] = mapped_column(Enum(FileIndexingStatusEnum), index=True)
+    indexing_status: Mapped[SourceIndexingStatusEnum] = mapped_column(Enum(SourceIndexingStatusEnum), index=True)
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
