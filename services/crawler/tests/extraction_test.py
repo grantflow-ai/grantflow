@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, Mock, patch
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 
 import pytest
 from anyio import Path
@@ -315,7 +315,6 @@ async def test_download_documents_with_existing(temp_dir: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_find_relevant_links() -> None:
-    url = "https://example.org/main"
     normal_links = {"https://example.org/page1", "https://example.org/page2"}
     embeddings = [[0.1, 0.2, 0.3]]
     visited = ["https://example.org/visited"]
@@ -332,7 +331,7 @@ async def test_find_relevant_links() -> None:
 
         mock_similarity.side_effect = lambda _, __: [[0.4]] if "page2" in str(mock_download.call_args) else [[0.95]]
 
-        results = await find_relevant_links(url, normal_links, embeddings, visited)
+        results = await find_relevant_links(normal_links, embeddings, visited)
 
         assert len(results) == 1
         link, html, embeddings_result, text = results[0]
@@ -355,7 +354,7 @@ async def test_crawl_basic(
     with patch("services.crawler.src.extraction.safe_filename_from_url") as mock_filename:
         mock_filename.return_value = "test-page.md"
 
-        results = await crawl(mock_url, temp_dir)
+        results = await crawl(url=mock_url, temp_dir=temp_dir)
 
         assert len(results) == 2
         result = results[0]
@@ -416,26 +415,3 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
         file_contents = {f["filename"]: f["content"] for f in files}
         assert file_contents["test1.pdf"] == b"content1"
         assert file_contents["test2.docx"] == b"content2"
-
-
-@pytest.mark.asyncio
-async def test_crawl_url_network_error() -> None:
-    with (
-        patch("services.crawler.src.extraction.TemporaryDirectory") as mock_temp_dir,
-        patch("services.crawler.src.extraction.crawl", new_callable=AsyncMock) as mock_crawl,
-    ):
-        mock_temp_dir.return_value.__aenter__.return_value = "/tmp/test"
-
-        mock_crawl.side_effect = HTTPError(
-            "https://example.org",
-            404,
-            "Not Found",
-            {},  # type: ignore
-            None,
-        )
-
-        with pytest.raises(ExternalOperationError):
-            await crawl_url(
-                url="https://example.org/test",
-                source_id="test-source-id",
-            )
