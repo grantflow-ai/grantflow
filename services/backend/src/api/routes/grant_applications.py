@@ -9,7 +9,6 @@ from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.common_types import TableIdResponse
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -20,6 +19,11 @@ logger = get_logger(__name__)
 
 class CreateApplicationRequestBody(TypedDict):
     title: str
+
+
+class CreateApplicationResponse(TypedDict):
+    id: str
+    template_id: str
 
 
 class UpdateApplicationRequestBody(TypedDict):
@@ -41,7 +45,7 @@ class UpdateGrantTemplateRequestBody(TypedDict):
 )
 async def handle_create_application(
     workspace_id: UUID, data: CreateApplicationRequestBody, session_maker: async_sessionmaker[Any]
-) -> TableIdResponse:
+) -> CreateApplicationResponse:
     logger.info("Creating application", workspace_id=workspace_id, title=data["title"])
 
     async with session_maker() as session, session.begin():
@@ -57,13 +61,25 @@ async def handle_create_application(
                 )
                 .returning(GrantApplication)
             )
+
+            template = await session.scalar(
+                insert(GrantTemplate)
+                .values(
+                    {
+                        "grant_application_id": application.id,
+                        "grant_sections": [],
+                    }
+                )
+                .returning(GrantTemplate)
+            )
+
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
-            logger.error("Error creating application", exc_info=e)
-            raise DatabaseError("Error creating application", context=str(e)) from e
+            logger.error("Error creating application and template", exc_info=e)
+            raise DatabaseError("Error creating application and template", context=str(e)) from e
 
-    return TableIdResponse(id=str(application.id))
+    return CreateApplicationResponse(id=str(application.id), template_id=str(template.id))
 
 
 @patch(

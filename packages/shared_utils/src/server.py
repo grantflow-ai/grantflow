@@ -11,9 +11,10 @@ from litestar.logging import StructLoggingConfig
 from litestar.types import ExceptionHandler, LifespanHook
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from structlog.typing import FilteringBoundLogger
+from structlog.typing import EventDict, FilteringBoundLogger
 
 from packages.db.src.connection import get_session_maker
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DeserializationError
 
 
@@ -23,6 +24,25 @@ class APIError(TypedDict):
 
 
 session_maker_provider = Provide(get_session_maker, sync_to_thread=False)
+
+
+def exception_serializer_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
+    """Process event dict to serialize custom exception types."""
+
+    if event_dict.get("exc_info"):
+        exc_info = event_dict["exc_info"]
+        if isinstance(exc_info, tuple) and len(exc_info) >= 2:
+            exc_type, exc_value, _ = exc_info
+            if isinstance(exc_value, (BackendError, SQLAlchemyError)):
+                event_dict["exc_info"] = {"type": exc_type.__name__, "message": str(exc_value)}
+        elif isinstance(exc_info, (BackendError, SQLAlchemyError)):
+            event_dict["exc_info"] = {"type": type(exc_info).__name__, "message": str(exc_info)}
+
+    for key, value in event_dict.items():
+        if key != "exc_info" and isinstance(value, (BackendError, SQLAlchemyError)):
+            event_dict[key] = {"type": type(value).__name__, "message": str(value)}
+
+    return event_dict
 
 
 def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler:  # type: ignore[type-arg]
@@ -96,6 +116,13 @@ def create_litestar_app(logger: FilteringBoundLogger, add_session_maker: bool = 
         else:
             kwargs["on_startup"] = [session_maker_startup_hook]
 
+    default_config = StructLoggingConfig()
+    default_processors = default_config.processors if default_config.processors else []
+    logging_config = StructLoggingConfig(
+        log_exceptions="always",
+        processors=[exception_serializer_processor, *default_processors],
+    )
+
     return Litestar(
         cors_config=CORSConfig(
             allow_origins=["*"],
@@ -103,7 +130,8 @@ def create_litestar_app(logger: FilteringBoundLogger, add_session_maker: bool = 
             allow_headers=["*"],
             max_age=86400,
         ),
+        debug=get_env("DEBUG", fallback="", raise_on_missing=False) == "true",
         exception_handlers={SQLAlchemyError: exception_handler, BackendError: exception_handler},
-        logging_config=StructLoggingConfig(log_exceptions="always"),
+        logging_config=logging_config,
         **kwargs,
     )

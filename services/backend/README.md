@@ -180,8 +180,6 @@ The Grant Application Wizard is implemented using a step-by-step WebSocket inter
 - The backend responds with success/failure events
 - Progress updates are streamed during long-running operations
 
-The wizard tracks completed steps using ValkeyStore, allowing for persistent session state with an 8-week expiration.
-
 See the [Grant Application Wizard Architecture diagram](../../diagrams/grant_application_wizard.md) for a detailed view of the interaction flow.
 
 ## RAG Architecture

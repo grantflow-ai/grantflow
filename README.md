@@ -113,7 +113,7 @@ Our docker-compose.yaml uses profiles to organize services into logical groups. 
 # Start all services
 docker compose --profile all up -d
 
-# Start only backend-related services (backend, db, valkey, gcs-emulator)
+# Start only backend-related services (backend, db, gcs-emulator)
 docker compose --profile backend up -d
 
 # Start only indexer-related services (indexer, db, gcs-emulator)
@@ -126,7 +126,7 @@ docker compose --profile crawler up -d
 docker compose --profile frontend up -d
 
 # Start only database and supporting services for backend development
-docker compose --profile backend-services up -d
+docker compose --profile services up -d
 
 # Stop all running services
 docker compose down
@@ -142,7 +142,7 @@ Available profiles:
 - `indexer`: Indexer service and its dependencies
 - `crawler`: Crawler service and its dependencies
 - `frontend`: Frontend service
-- `backend-services`: Common backend dependencies (db, valkey, gcs-emulator)
+- `services`: All backend services
 
 ### Service-Specific Development
 

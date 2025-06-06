@@ -97,6 +97,7 @@ export namespace API {
 		export namespace Http201 {
 			export type ResponseBody = {
 				id: string;
+				template_id: string;
 			};
 		}
 

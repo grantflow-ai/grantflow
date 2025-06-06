@@ -80,7 +80,6 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     A[Frontend] -->|WebSocket events| B[Backend Socket Handler]
-    B -->|Store| C[ValkeyStore]
     C -->|Track completed steps| B
     B -->|CRUD operations| D[GrantApplication DB]
     B -->|Trigger| E[Grant Template Generation]

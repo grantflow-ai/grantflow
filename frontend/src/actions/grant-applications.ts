@@ -1,3 +1,5 @@
+"use server";
+
 import { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
@@ -27,7 +29,7 @@ export async function deleteApplication(workspaceId: string, applicationId: stri
 export async function updateApplication(
 	workspaceId: string,
 	applicationId: string,
-	data: API.UpdateApplication.RequestBody,
+	data: Partial<API.UpdateApplication.RequestBody>,
 ): Promise<void> {
 	await withAuthRedirect(
 		getClient().patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
@@ -40,7 +42,7 @@ export async function updateApplication(
 export async function updateGrantTemplate(
 	workspaceId: string,
 	applicationId: string,
-	data: API.UpdateGrantTemplate.RequestBody,
+	data: Partial<API.UpdateGrantTemplate.RequestBody>,
 ): Promise<void> {
 	await withAuthRedirect(
 		getClient().patch(`workspaces/${workspaceId}/applications/${applicationId}/grant-template`, {

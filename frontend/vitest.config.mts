@@ -12,8 +12,18 @@ export default defineConfig({
 	plugins: [tsconfigPaths(), react()],
 	test: {
 		coverage: {
-			exclude: ["**/*.spec.*", "**/*.d.ts", "src/types/*", "src/components/ui/*", "**/mocks/**"],
+			exclude: [
+				"**/*.spec.*",
+				"**/*.d.ts",
+				"src/types/*",
+				"src/components/ui/*",
+				"**/mocks/**",
+				"src/utils/dev-indexing-patch.ts",
+			],
 			include: ["src"],
+			provider: "v8",
+			reporter: ["text", "json", "html"],
+			reportsDirectory: "./coverage",
 		},
 		environment: "jsdom",
 		globals: true,

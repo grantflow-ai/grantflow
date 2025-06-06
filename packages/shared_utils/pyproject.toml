@@ -44,6 +44,9 @@ optional-dependencies.nlp = [
   "spacy>=3.8.4",
   "torch>=2.2.2",
 ]
+optional-dependencies.pubsub = [
+  "google-cloud-pubsub>=2.29",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "src" ]
