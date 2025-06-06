@@ -3,9 +3,9 @@ provider "google" {
 }
 
 terraform {
-	required_providers {
-		google = {
-	    version = ""
-		}
+  required_providers {
+    google = {
+      version = ""
+    }
   }
 }

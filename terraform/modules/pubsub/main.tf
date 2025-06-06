@@ -189,12 +189,12 @@ resource "google_pubsub_subscription" "source_processing_notifications_sub" {
   ack_deadline_seconds = 600
 
   # Message retention settings
-  message_retention_duration = "604800s"  # 7 days
-  retain_acked_messages = false
+  message_retention_duration = "604800s" # 7 days
+  retain_acked_messages      = false
 
   # Expiration policy - subscription expires if inactive for 31 days
   expiration_policy {
-    ttl = "2678400s"  # 31 days
+    ttl = "2678400s" # 31 days
   }
 
   # Enable message ordering to maintain order per key
