@@ -1,5 +1,6 @@
 from typing import Any, NotRequired, TypedDict, cast
 
+from google.api_core import exceptions
 from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
 from google.cloud.exceptions import ClientError
@@ -52,8 +53,11 @@ def get_bucket() -> Bucket:
         storage_client = get_storage_client()
         bucket = storage_client.bucket(get_env("GCS_BUCKET_NAME", fallback="grantflow-uploads"))
 
-        if not bucket.exists():
-            bucket.create()
+        try:
+            if not bucket.exists():
+                bucket.create()
+        except exceptions.Conflict:
+            pass
 
         bucket_ref.value = bucket
 

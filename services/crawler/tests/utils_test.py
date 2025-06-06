@@ -8,6 +8,7 @@ from services.crawler.src.utils import (
     download_page_html,
     safe_filename_from_url,
     sanitize_html,
+    should_skip_url,
 )
 
 
@@ -123,25 +124,53 @@ def test_sanitize_html_removes_comments() -> None:
 async def test_download_page_html() -> None:
     mock_response = Mock()
     mock_response.text = "<html><body>Test content</body></html>"
+    mock_response.content = b"<html><body>Test content</body></html>"
+    mock_response.status_code = 200
+    mock_response.headers = {"content-type": "text/html"}
+    mock_response.raise_for_status = Mock()
 
     with patch("services.crawler.src.utils.client.get", new_callable=AsyncMock) as mock_get:
         mock_get.return_value = mock_response
 
         result = await download_page_html("https://example.org")
 
-        mock_get.assert_called_once_with("https://example.org", timeout=15)
+        mock_get.assert_called_once_with("https://example.org", follow_redirects=True)
         assert result == "<html><body>Test content</body></html>"
+
+
+def test_should_skip_url_skips_domains() -> None:
+    assert should_skip_url("https://extramural-intranet.nih.gov/page")
+    assert should_skip_url("https://x.com/NIHFunding")
+    assert should_skip_url("https://twitter.com/user/status/123")
+    assert not should_skip_url("https://grants.nih.gov/grants")
+
+
+def test_should_skip_url_skips_patterns() -> None:
+    assert should_skip_url("https://example.org/vulnerability-disclosure-policy/page")
+    assert should_skip_url("https://example.org/login")
+    assert should_skip_url("https://example.org/signin?redirect=/")
+    assert should_skip_url("https://example.org/auth/callback")
+    assert not should_skip_url("https://example.org/grants")
+
+
+def test_should_skip_url_case_insensitive() -> None:
+    assert should_skip_url("https://example.org/LOGIN")
+    assert should_skip_url("https://example.org/Auth/callback")
+    assert should_skip_url("https://example.org/VULNERABILITY-DISCLOSURE-POLICY")
 
 
 @pytest.mark.asyncio
 async def test_download_file() -> None:
     mock_response = Mock()
     mock_response.content = b"File content bytes"
+    mock_response.status_code = 200
+    mock_response.headers = {"content-type": "application/pdf"}
+    mock_response.raise_for_status = Mock()
 
     with patch("services.crawler.src.utils.client.get", new_callable=AsyncMock) as mock_get:
         mock_get.return_value = mock_response
 
         result = await download_file("https://example.org/file.pdf")
 
-        mock_get.assert_called_once_with("https://example.org/file.pdf", timeout=30)
+        mock_get.assert_called_once_with("https://example.org/file.pdf", timeout=30, follow_redirects=True)
         assert result == b"File content bytes"

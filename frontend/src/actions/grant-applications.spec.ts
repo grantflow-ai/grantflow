@@ -34,10 +34,12 @@ vi.mock("@/utils/server-side", async () => {
 
 const mockWorkspaceId = "mock-workspace-id";
 const mockApplicationId = "mock-application-id";
+const mockTemplateId = "mock-template-id";
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
 const mockCreateApplicationResponse: API.CreateApplication.Http201.ResponseBody = {
 	id: mockApplicationId,
+	template_id: mockTemplateId,
 };
 
 beforeEach(() => {

@@ -1,6 +1,38 @@
+"use server";
+
 import { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
+
+export async function crawlApplicationUrl(
+	workspaceId: string,
+	applicationId: string,
+	url: string,
+): Promise<API.CrawlGrantApplicationUrl.Http201.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/applications/${applicationId}/sources/crawl-url`, {
+				headers: await createAuthHeaders(),
+				json: { url } satisfies API.CrawlGrantApplicationUrl.RequestBody,
+			})
+			.json<API.CrawlGrantApplicationUrl.Http201.ResponseBody>(),
+	);
+}
+
+export async function crawlTemplateUrl(
+	workspaceId: string,
+	templateId: string,
+	url: string,
+): Promise<API.CrawlGrantTemplateUrl.Http201.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.post(`workspaces/${workspaceId}/grant_templates/${templateId}/sources/crawl-url`, {
+				headers: await createAuthHeaders(),
+				json: { url } satisfies API.CrawlGrantTemplateUrl.RequestBody,
+			})
+			.json<API.CrawlGrantTemplateUrl.Http201.ResponseBody>(),
+	);
+}
 
 export async function createApplicationSourceUploadUrl(
 	workspaceId: string,

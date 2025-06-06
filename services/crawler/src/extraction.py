@@ -1,31 +1,32 @@
 import re
 from asyncio import gather
-from typing import Any, TypedDict, cast
+from typing import TypedDict, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
 from html_to_markdown import convert_to_markdown
-from packages.db.src.enums import FileIndexingStatusEnum
+from httpx import ConnectError, HTTPStatusError
 from packages.db.src.json_objects import Chunk
-from packages.db.src.tables import RagSource, RagUrl, TextVector
 from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.exceptions import (
-    DatabaseError,
     ExternalOperationError,
     FileParsingError,
     UrlParsingError,
 )
 from packages.shared_utils.src.logger import get_logger
 from services.crawler.src.constants import CHUNKS_BATCH_SIZE, FILE_RX, MAX_DEPTH
-from services.crawler.src.utils import download_file, download_page_html, safe_filename_from_url, sanitize_html
+from services.crawler.src.utils import (
+    download_file,
+    download_page_html,
+    safe_filename_from_url,
+    sanitize_html,
+    should_skip_url,
+)
 from sklearn.metrics.pairwise import cosine_similarity
-from sqlalchemy import insert, update
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from trafilatura import extract
 
 logger = get_logger(__name__)
@@ -68,17 +69,6 @@ class CrawlResult(TypedDict):
 async def prepare_url_data(
     url: str, raw_html: str | None = None, visited_urls: list[str] | None = None
 ) -> tuple[str, list[str]]:
-    """
-    Download and prepare HTML data for a given URL.
-
-    Args:
-        url: The URL to process
-        raw_html: HTML content if already downloaded
-        visited_urls: List of URLs already visited
-
-    Returns:
-        Tuple of (raw_html, updated_visited_urls)
-    """
     if visited_urls is None:
         visited_urls = []
 
@@ -97,16 +87,6 @@ async def prepare_url_data(
 
 
 def extract_links(raw_html: str, base_url: str) -> tuple[set[str], set[str]]:
-    """
-    Extract document links and normal links from HTML content.
-
-    Args:
-        raw_html: HTML content
-        base_url: Base URL for resolving relative links
-
-    Returns:
-        Tuple of (document_links, normal_links)
-    """
     soup = BeautifulSoup(raw_html, "html.parser")
     sanitized_html = sanitize_html(soup)
 
@@ -120,6 +100,9 @@ def extract_links(raw_html: str, base_url: str) -> tuple[set[str], set[str]]:
     normal_links = set()
 
     for absolute in absolute_links:
+        if should_skip_url(absolute):
+            continue
+
         if rx.search(urlparse(absolute).path):
             doc_links.add(absolute)
         else:
@@ -131,17 +114,25 @@ def extract_links(raw_html: str, base_url: str) -> tuple[set[str], set[str]]:
 async def extract_and_process_content(
     url: str, raw_html: str, page_text: str | None = None, main_embeddings: list[list[float]] | None = None
 ) -> tuple[str, str, list[list[float]]]:
-    """
-    Extract and process text content from HTML.
-    """
     if page_text is None:
         try:
             page_text = extract(raw_html, output_format="markdown", include_comments=False)
             if page_text is None:
-                logger.warning("Failed to extract text content from {url}", url=url)
+                logger.warning(
+                    "Failed to extract text content",
+                    url=url,
+                    html_length=len(raw_html) if raw_html else 0,
+                    html_preview=raw_html[:500] if raw_html else None,
+                )
                 page_text = ""
         except Exception as e:
-            logger.error("Error extracting text with trafilatura: {error}", error=str(e), url=url)
+            logger.exception(
+                "Error extracting text with trafilatura",
+                error=str(e),
+                error_type=type(e).__name__,
+                url=url,
+                html_length=len(raw_html) if raw_html else 0,
+            )
             raise UrlParsingError(f"Failed to extract text content from {url}", context=str(e)) from e
 
     if main_embeddings is None:
@@ -160,17 +151,6 @@ async def extract_and_process_content(
 
 
 async def save_page_content(url: str, temp_dir: Path, markdown_content: str) -> Path:
-    """
-    Save page content to a file.
-
-    Args:
-        url: The URL being processed
-        temp_dir: Path to temporary directory for saving files
-        markdown_content: Markdown content to save
-
-    Returns:
-        Path to the saved file
-    """
     page_filename = safe_filename_from_url(url)
     page_path = temp_dir / page_filename
 
@@ -185,17 +165,6 @@ async def save_page_content(url: str, temp_dir: Path, markdown_content: str) -> 
 async def download_documents(
     doc_links: set[str], temp_dir: Path, downloaded_files: dict[str, Path] | None = None
 ) -> dict[str, Path]:
-    """
-    Download document files from links.
-
-    Args:
-        doc_links: Set of document links to download
-        temp_dir: Path to temporary directory for saving files
-        downloaded_files: Dictionary mapping URLs to downloaded file paths
-
-    Returns:
-        Updated dictionary of downloaded files
-    """
     if downloaded_files is None:
         downloaded_files = {}
 
@@ -211,12 +180,57 @@ async def download_documents(
             doc_content = await download_file(doc_url)
             await doc_path.write_bytes(doc_content)
             downloaded_files[doc_url] = doc_path
+        except HTTPStatusError as e:
+            if e.response.status_code in [403, 405]:
+                logger.info(
+                    "Access denied downloading file",
+                    status_code=e.response.status_code,
+                    reason="Forbidden" if e.response.status_code == 403 else "Method Not Allowed",
+                    file_url=doc_url,
+                )
+            else:
+                logger.exception(
+                    "HTTP error downloading file",
+                    error=str(e),
+                    status_code=e.response.status_code,
+                    file_url=doc_url,
+                )
+        except ConnectError as e:
+            logger.exception(
+                "DNS resolution or connection error downloading file",
+                error=str(e),
+                error_type="ConnectError",
+                file_url=doc_url,
+            )
         except (URLError, HTTPError) as e:
-            logger.info("Network error downloading file: {error}", error=str(e), file_url=doc_url)
+            logger.exception(
+                "Network error downloading file",
+                error=str(e),
+                error_type=type(e).__name__,
+                file_url=doc_url,
+            )
         except (OSError, PermissionError) as e:
-            logger.info("File system error when saving: {error}", error=str(e), file_url=doc_url)
+            logger.exception(
+                "File system error when saving",
+                error=str(e),
+                error_type=type(e).__name__,
+                file_url=doc_url,
+                path=str(doc_path),
+            )
         except TimeoutError as e:
-            logger.info("Timeout when downloading file: {error}", error=str(e), file_url=doc_url)
+            logger.exception(
+                "Timeout when downloading file",
+                error=str(e),
+                error_type=type(e).__name__,
+                file_url=doc_url,
+            )
+        except Exception as e:
+            logger.exception(
+                "Unexpected error downloading file",
+                error=str(e),
+                error_type=type(e).__name__,
+                file_url=doc_url,
+            )
 
     return downloaded_files
 
@@ -224,24 +238,16 @@ async def download_documents(
 async def find_relevant_links(
     url: str, normal_links: set[str], main_embeddings: list[list[float]], visited_urls: list[str]
 ) -> list[tuple[str, str, list[list[float]], str]]:
-    """
-    Find relevant links based on content similarity.
-
-    Args:
-        url: The current URL being processed
-        normal_links: Set of normal (non-document) links
-        main_embeddings: Embeddings of the current page
-        visited_urls: List of already visited URLs
-
-    Returns:
-        List of tuples (link, html, embeddings, text) for relevant links
-    """
     relevant_links = []
 
     for link in normal_links:
         try:
             if link in visited_urls:
                 logger.info("Already visited {url}, skipping.", url=link)
+                continue
+
+            if should_skip_url(link):
+                logger.info("Skipping URL based on filter rules", url=link)
                 continue
 
             link_html = await download_page_html(str(link))
@@ -251,20 +257,75 @@ async def find_relevant_links(
             if link_text is not None:
                 link_embeddings = await generate_embeddings([link_text])
             else:
+                logger.warning(
+                    "Failed to extract text from link",
+                    link=link,
+                    html_length=len(link_html) if link_html else 0,
+                    html_preview=link_html[:500] if link_html else None,
+                )
                 raise UrlParsingError(f"Failed to extract text content from {link}")
 
             similarity = cosine_similarity(main_embeddings, link_embeddings)
 
             if similarity[0][0] >= 0.58:
                 relevant_links.append((link, link_html, link_embeddings, link_text))
+        except HTTPStatusError as e:
+            if e.response.status_code in [403, 405]:
+                logger.info(
+                    "Access denied when comparing URLs",
+                    status_code=e.response.status_code,
+                    reason="Forbidden" if e.response.status_code == 403 else "Method Not Allowed",
+                    url1=url,
+                    url2=link,
+                )
+            else:
+                logger.exception(
+                    "HTTP error when comparing URLs",
+                    error=str(e),
+                    status_code=e.response.status_code,
+                    url1=url,
+                    url2=link,
+                )
+        except ConnectError as e:
+            logger.exception(
+                "DNS resolution or connection error",
+                error=str(e),
+                error_type="ConnectError",
+                url1=url,
+                url2=link,
+            )
         except (URLError, HTTPError) as e:
-            logger.info("Network error when comparing URLs: {error}", error=str(e), url1=url, url2=link)
+            logger.exception(
+                "Network error when comparing URLs",
+                error=str(e),
+                error_type=type(e).__name__,
+                url1=url,
+                url2=link,
+            )
         except UrlParsingError as e:
-            logger.info("Content extraction error: {error}", error=str(e), url1=url, url2=link)
+            logger.exception(
+                "Content extraction error",
+                error=str(e),
+                error_type=type(e).__name__,
+                url1=url,
+                url2=link,
+            )
         except ExternalOperationError as e:
-            logger.info("Embedding generation error: {error}", error=str(e), url1=url, url2=link)
-
-            logger.info("Unexpected error comparing URL content: {error}", error=str(e), url1=url, url2=link)
+            logger.exception(
+                "Embedding generation error",
+                error=str(e),
+                error_type=type(e).__name__,
+                url1=url,
+                url2=link,
+            )
+        except Exception as e:
+            logger.exception(
+                "Unexpected error comparing URL content",
+                error=str(e),
+                error_type=type(e).__name__,
+                url1=url,
+                url2=link,
+            )
 
     return relevant_links
 
@@ -280,23 +341,6 @@ async def crawl(
     downloaded_files: dict[str, Path] | None = None,
     results: list[CrawlResult] | None = None,
 ) -> list[CrawlResult]:
-    """
-    Crawl a URL and its linked pages, downloading files and saving page content.
-
-    Args:
-        url: The URL to crawl
-        temp_dir: Path to temporary directory for saving files
-        depth: Current crawl depth
-        raw_html: HTML content if already downloaded
-        main_embeddings: Embeddings if already computed
-        page_text: Plain text for the webpage if already extracted
-        visited_urls: List of URLs already visited
-        downloaded_files: Dictionary mapping URLs to downloaded file paths
-        results: List to store results for all crawled pages
-
-    Returns:
-        List of dictionaries containing info about crawled pages
-    """
     if visited_urls is None:
         visited_urls = []
     if downloaded_files is None:
@@ -348,7 +392,7 @@ async def crawl(
     return results
 
 
-async def crawl_url(*, url: str, source_id: str, session_maker: async_sessionmaker[Any]) -> list[FileContent]:
+async def crawl_url(*, url: str, source_id: str) -> tuple[list[VectorDTO], str, list[FileContent]]:
     try:
         async with (
             TemporaryDirectory() as temp_dir_str,
@@ -363,8 +407,6 @@ async def crawl_url(*, url: str, source_id: str, session_maker: async_sessionmak
             ]
 
             content = ""
-            title: str | None = None
-            description: str | None = None
 
         for result in crawl_results:
             content += "\n\n" + result["markdown_content"]
@@ -384,42 +426,6 @@ async def crawl_url(*, url: str, source_id: str, session_maker: async_sessionmak
             )
             vectors.extend([result for result in results if result is not None])
 
-    except (UrlParsingError, FileParsingError) as e:
-        async with session_maker() as session, session.begin():
-            try:
-                await session.execute(
-                    update(RagSource)
-                    .where(RagSource.id == source_id)
-                    .values(indexing_status=FileIndexingStatusEnum.FAILED)
-                )
-                await session.commit()
-            except SQLAlchemyError:
-                logger.error("Failed to mark source as failed: {error}", error=str(e), source_id=source_id)
-                await session.rollback()
-            raise DatabaseError("Failed to mark source as failed", context=str(e)) from e
+        return vectors, content, files
     except (URLError, HTTPError, TimeoutError) as e:
         raise ExternalOperationError(f"Network error when crawling URL: {url}", context=str(e)) from e
-    else:
-        async with session_maker() as session, session.begin():
-            try:
-                await session.execute(insert(TextVector).values(vectors))
-                await session.execute(
-                    update(RagSource)
-                    .where(RagSource.id == source_id)
-                    .values({"indexing_status": FileIndexingStatusEnum.FINISHED, "text_content": content})
-                )
-                await session.execute(
-                    update(RagUrl).where(RagUrl.id == source_id).values({"title": title, "description": description})
-                )
-                await session.commit()
-                logger.info("Successfully indexed URL", url=url, source_id=source_id)
-            except SQLAlchemyError as e:
-                if "connection" in str(e).lower():
-                    logger.error("Database connection error", exc_info=e, url=url)
-                    await session.rollback()
-                    raise DatabaseError("Database connection failed", context=str(e)) from e
-                logger.error("Database operation error", exc_info=e, url=url)
-                await session.rollback()
-                raise DatabaseError("Error in database operation", context=str(e)) from e
-
-        return files

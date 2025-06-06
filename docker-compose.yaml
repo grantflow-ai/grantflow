@@ -2,7 +2,7 @@ services:
     db:
         profiles:
             - all
-            - backend-services
+            - services
             - indexer
             - crawler
             - backend
@@ -23,26 +23,11 @@ services:
             timeout: 5s
             retries: 10
 
-    valkey:
-        profiles:
-            - all
-            - backend-services
-            - backend
-        image: valkey/valkey:latest
-        restart: always
-        ports:
-            - "6379:6379"
-        healthcheck:
-            test: ["CMD", "valkey-cli", "ping"]
-            interval: 1s
-            timeout: 5s
-            retries: 10
-
     gcs-emulator:
         profiles:
             - all
             - gcs
-            - backend-services
+            - services
             - indexer
             - crawler
             - backend
@@ -52,12 +37,56 @@ services:
             - "4443:4443"
         volumes:
             - gcs-data:/storage
-        command: ["-scheme", "both", "-port", "4443", "-public-host", "localhost", "-backend", "memory"]
+        environment:
+            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+        command:
+            [
+                "-scheme",
+                "http",
+                "-port",
+                "4443",
+                "-public-host",
+                "gcs-emulator",
+                "-backend",
+                "memory",
+                "-event.pubsub-project-id",
+                "grantflow",
+                "-event.pubsub-topic",
+                "file-indexing",
+                "-event.object-prefix",
+                "OBJECT_",
+            ]
+        depends_on:
+            pubsub-emulator:
+                condition: service_healthy
+
+    pubsub-emulator:
+        profiles:
+            - all
+            - services
+            - indexer
+            - crawler
+            - backend
+        image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+        restart: always
+        ports:
+            - "8085:8085"
+        environment:
+            PUBSUB_PROJECT_ID: grantflow
+            JAVA_TOOL_OPTIONS: -Djava.util.logging.config.file=/config/logging.properties
+        volumes:
+            - ./scripts/pubsub-logging.properties:/config/logging.properties:ro
+        command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=grantflow --verbosity=warning
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8085"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
 
     backend:
         profiles:
             - all
-            - backend-services
+            - services
             - backend
         build:
             args:
@@ -67,8 +96,10 @@ services:
                 - "linux/x86_64" # needed due to spaCy build issues on Mac linux
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            VALKEY_CONNECTION_STRING: redis://valkey:6379/0
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             PYTHONPATH: .
+            DEBUG: "True"
         env_file:
             - ./services/backend/.env
         ports:
@@ -80,24 +111,26 @@ services:
         depends_on:
             db:
                 condition: service_healthy
-            valkey:
+            pubsub-emulator:
                 condition: service_healthy
 
     indexer:
         profiles:
             - all
-            - backend-services
+            - services
             - indexer
         build:
             args:
                 service_name: crawler
-            dockerfile: ./services/indexer/Dockerfile
+            dockerfile: ./services/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
             STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             GCS_BUCKET_NAME: grantflow-uploads
+            DEBUG: "True"
         env_file:
             - ./services/indexer/.env
         ports:
@@ -109,22 +142,26 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            pubsub-emulator:
+                condition: service_healthy
 
     crawler:
         profiles:
             - all
-            - backend-services
+            - services
             - crawler
         build:
             args:
                 service_name: crawler
-            dockerfile: ./services/crawler/Dockerfile
+            dockerfile: ./services/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
             STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             GCS_BUCKET_NAME: grantflow-uploads
+            DEBUG: "True"
         env_file:
             - ./services/crawler/.env
         ports:
@@ -135,6 +172,8 @@ services:
         command: "uvicorn services.crawler.src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
+                condition: service_healthy
+            pubsub-emulator:
                 condition: service_healthy
 
     frontend:
