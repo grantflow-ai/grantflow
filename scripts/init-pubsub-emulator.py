@@ -35,12 +35,7 @@ def main():
         },
         {
             "topic": "source-processing-notifications",
-            "subscriptions": [
-                {
-                    "name": "source-processing-notifications-sub",
-                    "push_endpoint": None,
-                }
-            ],
+            "subscriptions": [],
         },
     ]
 

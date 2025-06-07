@@ -9,7 +9,7 @@ from packages.shared_utils.src.pubsub import SourceProcessingResult, pull_source
 
 logger = get_logger(__name__)
 
-NOTIFICATION_POLL_INTERVAL = 1.0
+NOTIFICATION_POLL_INTERVAL = 3.0
 
 
 @websocket_stream(
@@ -21,10 +21,12 @@ async def handle_grant_application_notifications(
     application_id: UUID,
 ) -> AsyncGenerator[SourceProcessingResult, None]:
     while True:
+        logger.info("Polling for source updates")
         source_updates = await pull_source_processing_notifications(
             logger=logger,
             parent_id=application_id,
         )
+        logger.debug("Received source updates", source_updates=source_updates)
         for source_update in source_updates:
             yield source_update
 
