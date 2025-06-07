@@ -1,6 +1,7 @@
 import re
 from asyncio import gather
 from contextlib import suppress
+from itertools import chain
 from typing import TypedDict, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
@@ -23,7 +24,6 @@ from services.crawler.src.utils import (
     download_page_html,
     safe_filename_from_url,
     sanitize_html,
-    should_skip_url,
 )
 from sklearn.metrics.pairwise import cosine_similarity
 from trafilatura import extract
@@ -95,9 +95,6 @@ def extract_links(raw_html: str, base_url: str) -> tuple[set[str], set[str]]:
     normal_links = set()
 
     for absolute in absolute_links:
-        if should_skip_url(absolute):
-            continue
-
         if rx.search(urlparse(absolute).path):
             doc_links.add(absolute)
         else:
@@ -174,47 +171,37 @@ async def find_relevant_links(
 
     for link in normal_links:
         if link in visited_urls:
-            logger.info("Already visited {url}, skipping.", url=link)
+            logger.debug("Already visited url, skipping.", url=link)
             continue
 
-        if should_skip_url(link):
-            logger.info("Skipping URL based on filter rules", url=link)
+        try:
+            link_html = await download_page_html(str(link))
+            visited_urls.append(str(link))
+
+            if link_text := extract(link_html, output_format="markdown", include_comments=False):
+                link_embeddings = await generate_embeddings([link_text])
+                similarity = cosine_similarity(main_embeddings, link_embeddings)
+                if similarity[0][0] >= 0.58:
+                    relevant_links.append((link, link_html, link_embeddings, link_text))
+        except Exception as e:
+            logger.warning("Failed to download or process link, skipping", url=str(link), error=str(e))
             continue
-
-        link_html = await download_page_html(str(link))
-        visited_urls.append(str(link))
-
-        link_text = extract(link_html, output_format="markdown", include_comments=False)
-        if link_text is not None:
-            link_embeddings = await generate_embeddings([link_text])
-        else:
-            logger.warning(
-                "Failed to extract text from link",
-                link=link,
-                html_length=len(link_html) if link_html else 0,
-                html_preview=link_html[:500] if link_html else None,
-            )
-            raise UrlParsingError(f"Failed to extract text content from {link}")
-
-        similarity = cosine_similarity(main_embeddings, link_embeddings)
-
-        if similarity[0][0] >= 0.58:
-            relevant_links.append((link, link_html, link_embeddings, link_text))
 
     return relevant_links
 
 
 async def crawl(
     *,
-    url: str,
-    temp_dir: Path,
     depth: int = 0,
-    raw_html: str | None = None,
+    downloaded_files: dict[str, Path] | None = None,
+    is_initial_crawl: bool = False,
     main_embeddings: list[list[float]] | None = None,
     page_text: str | None = None,
-    visited_urls: list[str] | None = None,
-    downloaded_files: dict[str, Path] | None = None,
+    raw_html: str | None = None,
     results: list[CrawlResult] | None = None,
+    temp_dir: Path,
+    url: str,
+    visited_urls: list[str] | None = None,
 ) -> list[CrawlResult]:
     try:
         if visited_urls is None:
@@ -245,12 +232,11 @@ async def crawl(
             "saved_path": str(page_path),
         }
         results.append(page_result)
-
         relevant_links = await find_relevant_links(normal_links, main_embeddings, visited_urls)
 
         if depth < MAX_DEPTH:
-            for rlink in relevant_links:
-                await crawl(
+            crawl_tasks = [
+                crawl(
                     url=str(rlink[0]),
                     temp_dir=temp_dir,
                     depth=depth + 1,
@@ -261,11 +247,17 @@ async def crawl(
                     downloaded_files=downloaded_files,
                     results=results,
                 )
+                for rlink in relevant_links
+            ]
+            if crawl_tasks:
+                crawl_results = await gather(*crawl_tasks)
+                results.extend(chain.from_iterable(result for result in crawl_results if result))
 
         return results
     except Exception as e:
-        if depth == 0:
+        if is_initial_crawl:
             raise UrlParsingError(f"Failed to crawl {url}", context=str(e)) from e
+        # we suppress all errors here because we don't want to fail the entire crawl ~keep
         return []
 
 
@@ -273,7 +265,7 @@ async def crawl_url(*, url: str, source_id: str) -> tuple[list[VectorDTO], str, 
     async with (
         TemporaryDirectory() as temp_dir,
     ):
-        crawl_results = await crawl(url=url, temp_dir=Path(temp_dir))
+        crawl_results = await crawl(url=url, temp_dir=Path(temp_dir), is_initial_crawl=True)
 
         files = [
             FileContent(filename=file.name, content=await file.read_bytes())

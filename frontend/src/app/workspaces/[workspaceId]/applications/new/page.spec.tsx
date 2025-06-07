@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { describe, expect, it, vi } from "vitest";
 
 import { createApplication, updateApplication } from "@/actions/grant-applications";
+import { SourceIndexingStatus } from "@/enums";
 import { useApplicationNotifications } from "@/hooks/use-application-notifications";
 
 import CreateGrantApplicationWizardPage from "./page";
@@ -318,7 +319,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		const mockNotifications = [
 			{
 				identifier: "document1.pdf",
-				indexing_status: "processing",
+				indexing_status: SourceIndexingStatus.INDEXING,
 				parent_id: "app-123",
 				parent_type: "grant_application",
 				rag_source_id: "source-1",
@@ -351,7 +352,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		const mockNotifications = [
 			{
 				identifier: "document1.pdf",
-				indexing_status: "completed",
+				indexing_status: SourceIndexingStatus.FINISHED,
 				parent_id: "app-123",
 				parent_type: "grant_application",
 				rag_source_id: "source-1",
@@ -384,7 +385,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		const mockNotifications = [
 			{
 				identifier: "document1.pdf",
-				indexing_status: "failed",
+				indexing_status: SourceIndexingStatus.FAILED,
 				parent_id: "app-123",
 				parent_type: "grant_application",
 				rag_source_id: "source-1",

@@ -23,7 +23,6 @@ from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, publi
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from services.crawler.src.extraction import crawl_url
-from services.crawler.src.utils import should_skip_url
 from sqlalchemy import insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -53,24 +52,24 @@ async def handle_url_crawling(
     parent_type, parent_id = crawling_request["parent_type"], crawling_request["parent_id"]
     existing_url = None
 
-    if should_skip_url(crawling_request["url"]):
-        logger.warning(
-            "Skipping URL based on filter rules",
-            url=crawling_request["url"],
-            parent_type=parent_type,
-            parent_id=parent_id,
-        )
-        return
-
     async with session_maker() as session, session.begin():
         try:
             rag_source = await session.scalar(
                 select(RagSource).join(RagUrl).where(RagUrl.url == crawling_request["url"])
             )
-            if rag_source and rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+            if rag_source:
                 source_id = rag_source.id
-                existing_url = True
-                indexing_status = rag_source.indexing_status
+                if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+                    await session.execute(
+                        update(RagSource)
+                        .where(RagSource.id == rag_source.id)
+                        .values(indexing_status=SourceIndexingStatusEnum.INDEXING)
+                    )
+                    existing_url = False
+                    indexing_status = SourceIndexingStatusEnum.INDEXING
+                else:
+                    existing_url = True
+                    indexing_status = rag_source.indexing_status
             else:
                 existing_url = False
                 indexing_status = SourceIndexingStatusEnum.INDEXING
@@ -79,7 +78,7 @@ async def handle_url_crawling(
                     .values(
                         [
                             {
-                                "indexing_status": SourceIndexingStatusEnum.INDEXING,
+                                "indexing_status": indexing_status,
                                 "text_content": "",
                                 "source_type": RAG_URL,  # Set polymorphic identity ~keep
                             }
@@ -208,24 +207,14 @@ async def handle_url_crawling(
                     error_type="DatabaseError" if "connection" in str(e).lower() else "SQLAlchemyError",
                 )
                 await session.rollback()
-
-                try:
-                    await publish_source_processing_message(
-                        logger=logger,
-                        parent_id=parent_id,
-                        parent_type=parent_type,
-                        rag_source_id=source_id,
-                        indexing_status=SourceIndexingStatusEnum.FAILED,
-                        identifier=crawling_request["url"],
-                    )
-                except Exception as pub_error:  # noqa: BLE001  # noqa: BLE001
-                    logger.error(
-                        "Failed to publish failure message after database error",
-                        error=str(pub_error),
-                        source_id=source_id,
-                        url=crawling_request["url"],
-                    )
-                return
+                await publish_source_processing_message(
+                    logger=logger,
+                    parent_id=parent_id,
+                    parent_type=parent_type,
+                    rag_source_id=source_id,
+                    indexing_status=SourceIndexingStatusEnum.FAILED,
+                    identifier=crawling_request["url"],
+                )
 
         await publish_source_processing_message(
             logger=logger,
@@ -260,22 +249,14 @@ async def handle_url_crawling(
                 )
                 await session.rollback()
 
-        try:
-            await publish_source_processing_message(
-                logger=logger,
-                parent_id=parent_id,
-                parent_type=parent_type,
-                rag_source_id=source_id,
-                indexing_status=SourceIndexingStatusEnum.FAILED,
-                identifier=crawling_request["url"],
-            )
-        except Exception as pub_error:  # noqa: BLE001
-            logger.error(
-                "Failed to publish failure message",
-                error=str(pub_error),
-                source_id=source_id,
-                url=crawling_request["url"],
-            )
+        await publish_source_processing_message(
+            logger=logger,
+            parent_id=parent_id,
+            parent_type=parent_type,
+            rag_source_id=source_id,
+            indexing_status=SourceIndexingStatusEnum.FAILED,
+            identifier=crawling_request["url"],
+        )
 
 
 app = create_litestar_app(
