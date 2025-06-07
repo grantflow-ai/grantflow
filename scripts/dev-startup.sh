@@ -65,13 +65,13 @@ echo -e "${GREEN}✅ Database migrations complete${NC}"
 echo ""
 
 # Seed database (idempotent)
-echo -e "${YELLOW}Seeding database...${NC}"
-task db:seed || {
-    echo -e "${RED}❌ Database seeding failed${NC}"
-    exit 1
-}
-echo -e "${GREEN}✅ Database seeding complete${NC}"
-echo ""
+# echo -e "${YELLOW}Seeding database...${NC}"
+#task db:seed || {
+#    echo -e "${RED}❌ Database seeding failed${NC}"
+#    exit 1
+#}
+#echo -e "${GREEN}✅ Database seeding complete${NC}"
+#echo ""
 
 # Initialize Pub/Sub emulator topics
 echo -e "${YELLOW}Initializing Pub/Sub emulator...${NC}"

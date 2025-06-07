@@ -20,7 +20,7 @@ import {
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
 
-const WIZARD_STEP_TITLES = [
+export const WIZARD_STEP_TITLES = [
 	"Application Details",
 	"Application Structure",
 	"Knowledge Base",
@@ -180,7 +180,7 @@ export default function CreateGrantApplicationWizardPage() {
 				applicationName={applicationTitle || "New Application"}
 				currentStep={currentStep}
 				showHeaderInfo={showHeaderInfo}
-				stepTitles={WIZARD_STEP_TITLES as unknown as string[]}
+				stepTitles={WIZARD_STEP_TITLES}
 			/>
 			<section className="flex-1 overflow-auto p-6" data-testid="step-content-container">
 				{steps[currentStep]}
