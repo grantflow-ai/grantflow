@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 from bs4 import Comment, Tag
 from httpx import AsyncClient, Timeout
 from packages.shared_utils.src.logger import get_logger
-from services.crawler.src.constants import SKIP_DOMAINS, SKIP_URL_PATTERNS
 
 if TYPE_CHECKING:
     from bs4 import BeautifulSoup
@@ -29,21 +28,6 @@ HTML_ATTRIBUTES_TO_KEEP: Final[set[str]] = {"href", "alt", "desc", "description"
 
 client = AsyncClient(timeout=Timeout(15))
 logger = get_logger(__name__)
-
-
-def should_skip_url(url: str) -> bool:
-    parsed = urlparse(url)
-
-    if parsed.netloc in SKIP_DOMAINS:
-        logger.debug("Skipping URL due to domain", url=url, domain=parsed.netloc)
-        return True
-
-    for pattern in SKIP_URL_PATTERNS:
-        if pattern in url.lower():
-            logger.debug("Skipping URL due to pattern match", url=url, pattern=pattern)
-            return True
-
-    return False
 
 
 def safe_filename_from_url(url: str, default_extension: str = ".md") -> str:

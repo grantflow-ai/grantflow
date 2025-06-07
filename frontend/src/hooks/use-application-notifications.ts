@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
+import { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 
 export interface SourceProcessingNotification {
 	identifier: string;
-	indexing_status: string;
+	indexing_status: SourceIndexingStatus;
 	parent_id: string;
 	parent_type: string;
 	rag_source_id: string;
@@ -53,7 +54,6 @@ export function useApplicationNotifications({
 		}
 
 		const response = await getOtp();
-
 		const baseUrl = getEnv()
 			.NEXT_PUBLIC_BACKEND_API_BASE_URL.replace(/^https/, "wss")
 			.replace(/^http/, "ws");
@@ -68,7 +68,9 @@ export function useApplicationNotifications({
 	);
 
 	useEffect(() => {
-		setNotifications((prev) => [...prev, lastJsonMessage]);
+		if (lastJsonMessage) {
+			setNotifications((prev) => [...prev, lastJsonMessage]);
+		}
 	}, [lastJsonMessage]);
 
 	const connectionStatus = CONNECTION_STATUS_MAP[readyState];

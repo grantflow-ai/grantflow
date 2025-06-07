@@ -13,6 +13,12 @@ export enum PagePath {
 	WORKSPACES = "/workspaces",
 }
 
+export enum SourceIndexingStatus {
+	FAILED = "FAILED",
+	FINISHED = "FINISHED",
+	INDEXING = "INDEXING",
+}
+
 export enum WAITING_LIST_RESPONSE_CODES {
 	SERVER_ERROR = "SERVER_ERROR",
 	SUCCESS = "SUCCESS",

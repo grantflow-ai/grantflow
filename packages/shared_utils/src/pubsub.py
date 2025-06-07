@@ -1,7 +1,9 @@
+from contextlib import suppress
 from typing import TYPE_CHECKING, NotRequired, TypedDict
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
+from google.api_core.exceptions import AlreadyExists
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -101,6 +103,28 @@ async def publish_url_crawling_task(
         raise BackendError("Error publishing URL crawling message", context={"error": str(e)}) from e
 
 
+async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
+    subscriber = get_subscriber_client()
+    project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
+    topic_id = get_env("SOURCE_PROCESSING_NOTIFICATIONS_PUBSUB_TOPIC", fallback="source-processing-notifications")
+    topic_path = subscriber.topic_path(project=project_id, topic=topic_id)
+
+    subscription_id = f"source-processing-notifications-sub-{parent_id}"
+    subscription_path = subscriber.subscription_path(project=project_id, subscription=subscription_id)
+
+    with suppress(AlreadyExists):
+        await run_sync(
+            subscriber.create_subscription,
+            request={
+                "name": subscription_path,
+                "topic": topic_path,
+                "filter": f'attributes.parent_id = "{parent_id}"',
+                "ack_deadline_seconds": 20,
+            },
+        )
+    return subscription_path
+
+
 async def publish_source_processing_message(
     *,
     logger: "FilteringBoundLogger",
@@ -126,7 +150,15 @@ async def publish_source_processing_message(
     )
     try:
         message_data = serialize(data)
-        future = client.publish(topic=topic_path, data=message_data)
+        future = client.publish(
+            topic=topic_path,
+            data=message_data,
+            attributes=serialize(
+                {
+                    "parent_id": str(parent_id),
+                }
+            ),
+        )
         message_id = await run_sync(future.result)
 
         logger.info(
@@ -147,12 +179,7 @@ async def pull_source_processing_notifications(
 ) -> list[SourceProcessingResult]:
     client = get_subscriber_client()
 
-    subscription_path = client.subscription_path(
-        project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
-        subscription=get_env(
-            "SOURCE_PROCESSING_NOTIFICATIONS_SUBSCRIPTION", fallback="source-processing-notifications-sub"
-        ),
-    )
+    subscription_path = await ensure_subscription_for_parent_id(parent_id)
 
     response = await run_sync(
         client.pull,
@@ -164,20 +191,15 @@ async def pull_source_processing_notifications(
     )
     ret: list[SourceProcessingResult] = []
     ack_ids: list[str] = []
-    nack_ids: list[str] = []
 
     for received_message in response.received_messages:
         try:
             data = deserialize(received_message.message.data, SourceProcessingResult)
-            if data["parent_id"] != parent_id:
-                nack_ids.append(received_message.ack_id)
-                continue
-            ack_ids.append(received_message.ack_id)
             ret.append(data)
-            continue
+            ack_ids.append(received_message.ack_id)
         except (DeserializationError, ValueError, KeyError, TypeError) as e:
             logger.error("Error processing source processing notification", error=str(e))
-            nack_ids.append(received_message.ack_id)
+            ack_ids.append(received_message.ack_id)
 
     if ack_ids:
         await run_sync(
@@ -185,16 +207,6 @@ async def pull_source_processing_notifications(
             request={
                 "subscription": subscription_path,
                 "ack_ids": ack_ids,
-            },
-        )
-
-    if nack_ids:
-        await run_sync(
-            client.modify_ack_deadline,
-            request={
-                "subscription": subscription_path,
-                "ack_ids": nack_ids,
-                "ack_deadline_seconds": 0,
             },
         )
 

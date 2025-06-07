@@ -14,6 +14,7 @@ import {
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
+import { SourceIndexingStatus } from "@/enums";
 import { useApplicationNotifications } from "@/hooks/use-application-notifications";
 import { logError } from "@/utils/logging";
 
@@ -109,20 +110,23 @@ export default function CreateGrantApplicationWizardPage() {
 		try {
 			// Display notification based on indexing status
 			switch (latestNotification.indexing_status) {
-				case "completed": {
-					toast.success(`Successfully processed ${latestNotification.identifier}`);
-					break;
-				}
-				case "failed": {
+				case SourceIndexingStatus.FAILED: {
 					toast.error(`Failed to process ${latestNotification.identifier}`);
 					break;
 				}
-				case "processing": {
+				case SourceIndexingStatus.FINISHED: {
+					toast.success(`Successfully processed ${latestNotification.identifier}`);
+					break;
+				}
+				case SourceIndexingStatus.INDEXING: {
 					toast.info(`Processing ${latestNotification.identifier}...`);
 					break;
 				}
 				default: {
+					// This case should never happen with strict typing
+					const exhaustiveCheck: never = latestNotification.indexing_status;
 					toast.info(`Document update: ${latestNotification.identifier}`);
+					void exhaustiveCheck;
 				}
 			}
 		} catch (error) {
