@@ -49,6 +49,7 @@ export const createAuthHeaders = async () => {
 	}
 	return { Authorization: `Bearer ${cookie.value}` };
 };
+
 export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 	try {
 		return await promise;

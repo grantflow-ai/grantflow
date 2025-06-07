@@ -1,5 +1,6 @@
 import React from "react";
 
+import { WIZARD_STEP_TITLES } from "@/app/workspaces/[workspaceId]/applications/new/page";
 import { AppButton } from "@/components/app-button";
 import { IconGoAhead, IconGoBack } from "@/components/icons";
 import {
@@ -97,7 +98,7 @@ export function WizardHeader({
 	applicationName: string;
 	currentStep: number;
 	showHeaderInfo?: boolean;
-	stepTitles: string[];
+	stepTitles: typeof WIZARD_STEP_TITLES;
 }) {
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
@@ -123,7 +124,13 @@ export function WizardHeader({
 	);
 }
 
-function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: number; stepTitles: string[] }) {
+function ApplicationProgressBar({
+	currentStep,
+	stepTitles,
+}: {
+	currentStep: number;
+	stepTitles: typeof WIZARD_STEP_TITLES;
+}) {
 	return (
 		<div className="flex justify-center">
 			<div className="flex w-full flex-col items-center px-16" data-testid="step-indicators">
