@@ -1,0 +1,56 @@
+{
+	"test_info": {
+		"grant_template_id": "2fb8fb60-4972-4a7e-ad9d-691121409d19",
+		"source_ids": ["a6edbc03-9c53-45f9-bfa3-27d4c6c5865a"],
+		"source_count": 1,
+		"execution_time_seconds": 75.942435,
+		"timestamp": "2025-06-08T12:35:03.736392+00:00"
+	},
+	"extraction_result": {
+		"organization_id": null,
+		"cfp_subject": "Announcement of Opportunity for an Interdisciplinary Scientist and Guest Investigators in the BepiColombo mission. This AO solicits applications by scientists to augment the scientific return of the BepiColombo mission, a joint ESA and JAXA project with NASA participation focused on the planet Mercury. The goal is to appoint up to one Interdisciplinary Scientist (IDS) from ESA Member States and up to eleven Guest Investigators (GIs), with specific allocations of up to five from ESA Member States, up to one from Japan, and up to five from the USA. The appointments are ad personam for a renewable three-year period, with no direct funding from ESA for activities.",
+		"content": [
+			{
+				"title": "AO for BepiColombo Interdisciplinary Scientist and Guest Investigators 2025 - Title only",
+				"subtitles": [
+					"Navigation: Provides links to the Home page, Letter of Intent submission, and Proposal submission sections."
+				]
+			},
+			{
+				"title": "Announcement of Opportunity for an Interdisciplinary Scientist and Guest Investigators in the BepiColombo mission - Title only",
+				"subtitles": [
+					"Purpose of AO: Solicits applications from scientists to augment the scientific return of the BepiColombo mission.",
+					"Appointment Goals: Aims to appoint up to one Interdisciplinary Scientist (IDS) from ESA Member States and up to eleven Guest Investigators (GIs), with specific allocations of up to five from ESA Member States, up to one from Japan, and up to five from the USA.",
+					"Appointment Duration: IDS and GIs will be appointed for a first period of three years, renewable.",
+					"Appointment Nature: An IDS or GI appointment is ad personam.",
+					"Funding Policy: ESA will not fund the activities of the IDS or the GI (e.g., travel costs), requiring each proposer to secure their own funding.",
+					"GI Eligibility: The call for GIs is open to scientists based in ESA Member States, Japan, and the USA.",
+					"IDS Eligibility: The call for the IDS is open to scientists based only in ESA Member States.",
+					"Exclusions: Principal Investigators and Co-Principal Investigators of the BepiColombo instrument teams are excluded from this call.",
+					"Co-Investigator Eligibility: Co-Investigators are eligible for the IDS position, but not for GI positions."
+				]
+			},
+			{
+				"title": "Schedule - Title only",
+				"subtitles": [
+					"AO Release Date: 22 April 2025.",
+					"Letter of Intent Deadline: 20 May 2025, 12:00 (noon) CEST.",
+					"Proposal Submission Deadline: 17 June 2025, 12:00 (noon) CEST.",
+					"Appointment Timeline: Interdisciplinary Scientist and Guest Investigators will be appointed in Q4 2025."
+				]
+			},
+			{
+				"title": "Proposal submission form - Title only",
+				"subtitles": [
+					"Submission Method: Individuals must submit their proposal using the provided submission form.",
+					"File Format: Only PDF files will be accepted.",
+					"File Protection: Submitted files must not be locked or protected.",
+					"File Size Limit: The maximum file size accepted is 20 MB.",
+					"Detailed Guidelines: Full details regarding eligibility, format, and content for the application are available in the main Announcement of Opportunity document."
+				]
+			}
+		],
+		"submission_date": "2025-06-17",
+		"error": null
+	}
+}
