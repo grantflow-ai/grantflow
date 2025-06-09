@@ -1,6 +1,7 @@
 import re
 from asyncio import gather
 from contextlib import suppress
+from itertools import chain
 from typing import TypedDict, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
@@ -234,22 +235,23 @@ async def crawl(
         relevant_links = await find_relevant_links(normal_links, main_embeddings, visited_urls)
 
         if depth < MAX_DEPTH:
-            for rlink in relevant_links:
-                try:
-                    await crawl(
-                        url=str(rlink[0]),
-                        temp_dir=temp_dir,
-                        depth=depth + 1,
-                        raw_html=rlink[1],
-                        main_embeddings=rlink[2],
-                        page_text=rlink[3],
-                        visited_urls=visited_urls,
-                        downloaded_files=downloaded_files,
-                        results=results,
-                    )
-                except Exception as e:  # noqa: BLE001
-                    logger.warning("Crawl failed for link, continuing.", url=str(rlink), error=str(e))
-                    continue
+            crawl_tasks = [
+                crawl(
+                    url=str(rlink[0]),
+                    temp_dir=temp_dir,
+                    depth=depth + 1,
+                    raw_html=rlink[1],
+                    main_embeddings=rlink[2],
+                    page_text=rlink[3],
+                    visited_urls=visited_urls,
+                    downloaded_files=downloaded_files,
+                )
+                for rlink in relevant_links
+            ]
+            if crawl_tasks:
+                crawl_results = await gather(*crawl_tasks)
+                results.extend(chain.from_iterable(result for result in crawl_results if result))
+
         return results
     except Exception as e:
         if is_initial_crawl:
