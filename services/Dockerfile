@@ -1,8 +1,4 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    pandoc \
-    tesseract-ocr \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
 FROM base AS model-download
@@ -27,6 +23,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM base AS app
 ARG service_name
 WORKDIR /app/
+
+# Install service-specific dependencies
+RUN if [ "$service_name" = "indexer" ]; then \
+        apt-get update && apt-get install -y --no-install-recommends \
+        pandoc \
+        tesseract-ocr \
+        && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
+    fi
+
 COPY --chown=appuser:appuser --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/${service_name}/src/ /app/services/${service_name}/src/
