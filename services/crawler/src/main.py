@@ -59,7 +59,10 @@ async def handle_url_crawling(
             )
             if rag_source:
                 source_id = rag_source.id
-                if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+                if rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED:
+                    existing_url = True
+                    indexing_status = rag_source.indexing_status
+                else:
                     await session.execute(
                         update(RagSource)
                         .where(RagSource.id == rag_source.id)
@@ -67,9 +70,6 @@ async def handle_url_crawling(
                     )
                     existing_url = False
                     indexing_status = SourceIndexingStatusEnum.INDEXING
-                else:
-                    existing_url = True
-                    indexing_status = rag_source.indexing_status
             else:
                 existing_url = False
                 indexing_status = SourceIndexingStatusEnum.INDEXING

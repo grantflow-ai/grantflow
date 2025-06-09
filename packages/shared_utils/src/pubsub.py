@@ -122,7 +122,7 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
                 "ack_deadline_seconds": 20,
             },
         )
-    return subscription_path
+    return str(subscription_path)
 
 
 async def publish_source_processing_message(
