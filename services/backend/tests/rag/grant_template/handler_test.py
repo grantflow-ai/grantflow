@@ -602,13 +602,13 @@ async def test_get_rag_sources_data_mixed_existing_nonexistent(
 def test_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) -> None:
     result = format_rag_sources_for_prompt(mock_rag_sources)
 
-    assert "Source 1: PDF" in result
+    assert "Source 0: PDF" in result
     assert "This is the full content of the first source document" in result
     assert "Chunk 1: Funding eligibility criteria" in result
     assert "Chunk 2: Application submission requirements" in result
     assert "Chunk 3: Budget guidelines and restrictions" in result
 
-    assert "Source 2: WEB_CRAWL" in result
+    assert "Source 1: WEB_CRAWL" in result
     assert "This is web content from the funding organization's website" in result
     assert "Web chunk 1: Organization mission and values" in result
     assert "Web chunk 2: Past funded projects examples" in result
@@ -668,7 +668,7 @@ async def test_extract_cfp_data_multi_source(
         nih: National Institutes of Health (aliases: NIH)
         nsf: National Science Foundation (aliases: NSF)
 
-        Source 1: PDF
+        Source 0: PDF
         Full content: Sample CFP document content
         Chunks:
         - Eligibility requirements
