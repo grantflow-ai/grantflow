@@ -6,11 +6,18 @@ from uuid import UUID
 import pytest
 from packages.db.src.json_objects import ResearchObjective, ResearchTask
 from packages.db.src.tables import FundingOrganization, GrantApplication, GrantTemplate
-from packages.shared_utils.src.exceptions import BackendError
+from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from services.backend.src.common_types import MessageHandler
+from services.backend.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.backend.src.rag.grant_template.determine_longform_metadata import SectionMetadata
-from services.backend.src.rag.grant_template.extract_cfp_data import Content
+from services.backend.src.rag.grant_template.extract_cfp_data import (
+    Content,
+    RagSourceData,
+    extract_cfp_data_multi_source,
+    format_rag_sources_for_prompt,
+    get_rag_sources_data,
+)
 from services.backend.src.rag.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
@@ -19,7 +26,7 @@ from services.backend.tests.factories import CfpContentFactory, ExtractedSection
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
-from testing.factories import GrantApplicationFactory
+from testing.factories import GrantApplicationFactory, RagFileFactory, TextVectorFactory
 
 
 @pytest.fixture
@@ -130,6 +137,31 @@ async def cfp_file_content() -> str:
     cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
     assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
     return cfp_content_file.read_text()
+
+
+@pytest.fixture
+def mock_rag_sources() -> list[RagSourceData]:
+    return [
+        {
+            "source_id": "source-1-id",
+            "source_type": "pdf",
+            "text_content": "This is the full content of the first source document about funding opportunities.",
+            "chunks": [
+                "Chunk 1: Funding eligibility criteria",
+                "Chunk 2: Application submission requirements",
+                "Chunk 3: Budget guidelines and restrictions",
+            ],
+        },
+        {
+            "source_id": "source-2-id",
+            "source_type": "web_crawl",
+            "text_content": "This is web content from the funding organization's website with additional details.",
+            "chunks": [
+                "Web chunk 1: Organization mission and values",
+                "Web chunk 2: Past funded projects examples",
+            ],
+        },
+    ]
 
 
 @pytest.fixture
@@ -500,3 +532,169 @@ async def test_extract_and_enrich_with_title_only_sections(
     assert title_only_sections[0]["title"] == "Parent Section"
 
     assert len(long_form_sections) == 3
+
+
+async def test_get_rag_sources_data(
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    source1 = RagFileFactory.build(text_content="Source 1 content")
+    source2 = RagFileFactory.build(text_content="Source 2 content")
+
+    vector1_1 = TextVectorFactory.build(rag_source_id=source1.id, chunk={"content": "First chunk of source 1"})
+    vector1_2 = TextVectorFactory.build(rag_source_id=source1.id, chunk={"content": "Second chunk of source 1"})
+    vector2_1 = TextVectorFactory.build(rag_source_id=source2.id, chunk={"content": "First chunk of source 2"})
+
+    async with async_session_maker() as session:
+        session.add_all([source1, source2, vector1_1, vector1_2, vector2_1])
+        await session.commit()
+
+    source_ids = [str(source1.id), str(source2.id)]
+    result = await get_rag_sources_data(source_ids, async_session_maker)
+
+    assert len(result) == 2
+
+    source1_data = next(r for r in result if r["source_id"] == str(source1.id))
+    assert source1_data["source_type"] == source1.source_type
+    assert source1_data["text_content"] == source1.text_content
+    assert len(source1_data["chunks"]) == 2
+    assert vector1_1.chunk["content"] in source1_data["chunks"]
+    assert vector1_2.chunk["content"] in source1_data["chunks"]
+
+    source2_data = next(r for r in result if r["source_id"] == str(source2.id))
+    assert source2_data["source_type"] == source2.source_type
+    assert source2_data["text_content"] == source2.text_content
+    assert len(source2_data["chunks"]) == 1
+    assert vector2_1.chunk["content"] in source2_data["chunks"]
+
+
+async def test_get_rag_sources_data_empty_source_ids(
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    result = await get_rag_sources_data([], async_session_maker)
+    assert result == []
+
+
+async def test_get_rag_sources_data_nonexistent_sources(
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    nonexistent_ids = ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440001"]
+    result = await get_rag_sources_data(nonexistent_ids, async_session_maker)
+    assert result == []
+
+
+async def test_get_rag_sources_data_mixed_existing_nonexistent(
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    existing_source = RagFileFactory.build()
+    vector = TextVectorFactory.build(rag_source_id=existing_source.id)
+
+    async with async_session_maker() as session:
+        session.add_all([existing_source, vector])
+        await session.commit()
+
+    mixed_ids = [str(existing_source.id), "550e8400-e29b-41d4-a716-446655440001"]
+    result = await get_rag_sources_data(mixed_ids, async_session_maker)
+
+    assert len(result) == 1
+    assert result[0]["source_id"] == str(existing_source.id)
+
+
+def test_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) -> None:
+    result = format_rag_sources_for_prompt(mock_rag_sources)
+
+    assert "Source 0: PDF" in result
+    assert "This is the full content of the first source document" in result
+    assert "Chunk 1: Funding eligibility criteria" in result
+    assert "Chunk 2: Application submission requirements" in result
+    assert "Chunk 3: Budget guidelines and restrictions" in result
+
+    assert "Source 1: WEB_CRAWL" in result
+    assert "This is web content from the funding organization's website" in result
+    assert "Web chunk 1: Organization mission and values" in result
+    assert "Web chunk 2: Past funded projects examples" in result
+
+    lines = result.strip().split("\n")
+    assert len([line for line in lines if line.startswith("### Source ")]) == 2
+
+
+def test_format_rag_sources_for_prompt_empty_list() -> None:
+    result = format_rag_sources_for_prompt([])
+    assert result == ""
+
+
+def test_format_rag_sources_for_prompt_truncation() -> None:
+    long_content = "A" * 10000
+    long_chunk = "B" * 1000
+
+    sources: list[RagSourceData] = [
+        {
+            "source_id": "test-id",
+            "source_type": "pdf",
+            "text_content": long_content,
+            "chunks": [long_chunk] * 20,
+        }
+    ]
+
+    result = format_rag_sources_for_prompt(sources)
+
+    assert len(result) < len(long_content) + (len(long_chunk) * 20)
+    assert result.count("A") <= MAX_SOURCE_SIZE
+    chunks_in_result = result.count("B")
+    assert chunks_in_result <= MAX_CHUNK_SIZE * NUM_CHUNKS
+
+
+def test_format_rag_sources_for_prompt_special_characters() -> None:
+    sources: list[RagSourceData] = [
+        {
+            "source_id": "test-id",
+            "source_type": "web_crawl",
+            "text_content": 'Content with \n newlines \t tabs and "quotes"',
+            "chunks": ["Chunk with \n newline", "Chunk with \t tab"],
+        }
+    ]
+
+    result = format_rag_sources_for_prompt(sources)
+
+    assert "Content with \n newlines \t tabs" in result
+    assert "Chunk with \n newline" in result
+    assert "Chunk with \t tab" in result
+
+
+async def test_extract_cfp_data_multi_source(
+    mock_extracted_cfp_data: dict[str, Any],
+) -> None:
+    formatted_prompt = """
+        Organization Mapping:
+        nih: National Institutes of Health (aliases: NIH)
+        nsf: National Science Foundation (aliases: NSF)
+
+        Source 0: PDF
+        Full content: Sample CFP document content
+        Chunks:
+        - Eligibility requirements
+        - Budget guidelines
+    """
+
+    with patch(
+        "services.backend.src.rag.grant_template.extract_cfp_data.handle_completions_request",
+        return_value=mock_extracted_cfp_data,
+    ):
+        result = await extract_cfp_data_multi_source(formatted_prompt)
+
+    assert result["organization_id"] == mock_extracted_cfp_data["organization_id"]
+    assert result["cfp_subject"] == mock_extracted_cfp_data["cfp_subject"]
+    assert result["submission_date"] == mock_extracted_cfp_data["submission_date"]
+    assert len(result["content"]) == len(mock_extracted_cfp_data["content"])
+
+
+async def test_extract_cfp_data_multi_source_with_validation_error() -> None:
+    formatted_prompt = "Test prompt"
+
+    with (
+        patch(
+            "services.backend.src.rag.grant_template.extract_cfp_data.handle_completions_request",
+            side_effect=ValidationError("Validation failed"),
+        ),
+        pytest.raises(ValidationError),
+    ):
+        await extract_cfp_data_multi_source(formatted_prompt)
