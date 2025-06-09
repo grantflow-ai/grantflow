@@ -6,6 +6,7 @@ from uuid import UUID
 
 import pytest
 from litestar.testing import AsyncTestClient
+from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
@@ -370,9 +371,14 @@ async def test_handle_file_indexing_processing_error(
         rag_source = await session.scalars(select(RagSource).order_by(RagSource.created_at.desc()))
         source = rag_source.first()
         assert source is not None
-        assert source.indexing_status == SourceIndexingStatusEnum.INDEXING
+        assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
-    mock_publish_source_processing_message.assert_not_called()
+    mock_publish_source_processing_message.assert_called_once()
+    call_kwargs = mock_publish_source_processing_message.call_args.kwargs
+    assert str(call_kwargs["parent_id"]) == str(grant_application.id)
+    assert call_kwargs["parent_type"] == "grant_application"
+    assert call_kwargs["indexing_status"] == SourceIndexingStatusEnum.FAILED
+    assert call_kwargs["identifier"] == "document.pdf"
 
 
 async def test_handle_database_error(
@@ -509,7 +515,8 @@ async def test_handle_file_indexing_file_parsing_error(
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=pubsub_event)
-    assert response.status_code == HTTPStatus.CREATED
+    # FileParsingError should be re-raised for Pub/Sub retry
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     async with async_session_maker() as session:
         rag_source = await session.scalars(select(RagSource).order_by(RagSource.created_at.desc()))
@@ -523,3 +530,80 @@ async def test_handle_file_indexing_file_parsing_error(
     assert call_kwargs["parent_type"] == "grant_application"
     assert call_kwargs["indexing_status"] == SourceIndexingStatusEnum.FAILED
     assert call_kwargs["identifier"] == "document.pdf"
+
+
+async def test_handle_file_indexing_retry_failed_file(
+    test_client: AsyncTestClient[Any],
+    mock_download_blob: AsyncMock,
+    mock_process_source: AsyncMock,
+    mock_parse_object_uri: MagicMock,
+    grant_application: GrantApplication,
+    mock_publish_source_processing_message: AsyncMock,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    """Test that failed files are reprocessed on retry."""
+    # First, create a failed file record
+    object_path = f"workspace/ws-123/grant_application/{grant_application.id}/failed.pdf"
+    async with async_session_maker() as session, session.begin():
+        source_id = await session.scalar(
+            insert(RagSource)
+            .values(
+                {
+                    "indexing_status": SourceIndexingStatusEnum.FAILED,
+                    "text_content": "",
+                    "source_type": RAG_FILE,
+                }
+            )
+            .returning(RagSource.id)
+        )
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": source_id,
+                    "bucket_name": "test-bucket",
+                    "object_path": object_path,
+                    "filename": "failed.pdf",
+                    "mime_type": "application/pdf",
+                    "size": 1000,
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationRagSource).values(
+                {
+                    "rag_source_id": source_id,
+                    "grant_application_id": grant_application.id,
+                }
+            )
+        )
+
+    mock_parse_object_uri.return_value = {
+        "parent_type": "grant_application",
+        "parent_id": str(grant_application.id),
+        "filename": "failed.pdf",
+        "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
+    }
+
+    # The mock_process_source fixture has a side_effect that returns "Test extracted content"
+    pubsub_event = create_pubsub_event(object_path)
+
+    response = await test_client.post("/", json=pubsub_event)
+    assert response.status_code == HTTPStatus.CREATED
+
+    # Verify the file was reprocessed and marked as finished
+    async with async_session_maker() as session:
+        rag_source = await session.get(RagSource, source_id)
+        assert rag_source is not None
+        assert rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED
+        assert rag_source.text_content == "Test extracted content"
+
+    mock_download_blob.assert_awaited_once_with(object_path)
+    mock_process_source.assert_awaited_once()
+
+    mock_publish_source_processing_message.assert_called_once()
+    call_kwargs = mock_publish_source_processing_message.call_args.kwargs
+    assert str(call_kwargs["parent_id"]) == str(grant_application.id)
+    assert call_kwargs["parent_type"] == "grant_application"
+    assert call_kwargs["rag_source_id"] == source_id
+    assert call_kwargs["indexing_status"] == SourceIndexingStatusEnum.FINISHED
+    assert call_kwargs["identifier"] == "failed.pdf"

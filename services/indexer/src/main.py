@@ -145,10 +145,20 @@ async def handle_file_indexing(
             rag_source = await session.scalar(
                 select(RagSource).join(RagFile, RagSource.id == RagFile.id).where(RagFile.object_path == object_path)
             )
-            if rag_source and rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+            if rag_source:
                 source_id = rag_source.id
-                existing_file = True
-                indexing_status = rag_source.indexing_status
+                if rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED:
+                    existing_file = True
+                    indexing_status = rag_source.indexing_status
+                else:
+                    # Reprocess FAILED or INDEXING files
+                    await session.execute(
+                        update(RagSource)
+                        .where(RagSource.id == rag_source.id)
+                        .values(indexing_status=SourceIndexingStatusEnum.INDEXING)
+                    )
+                    existing_file = False
+                    indexing_status = SourceIndexingStatusEnum.INDEXING
             else:
                 existing_file = False
                 indexing_status = SourceIndexingStatusEnum.INDEXING
@@ -275,7 +285,15 @@ async def handle_file_indexing(
                 await session.rollback()
                 raise DatabaseError("Error in database operation", context=str(e)) from e
 
-    except (FileParsingError, ExternalOperationError, ValidationError) as e:
+    except Exception as e:
+        logger.error(
+            "Error processing file",
+            filename=indexing_request["filename"],
+            source_id=source_id,
+            error_type=type(e).__name__,
+            exc_info=e,
+        )
+
         async with session_maker() as session, session.begin():
             try:
                 await session.execute(
@@ -293,9 +311,24 @@ async def handle_file_indexing(
                     identifier=indexing_request["filename"],
                 )
             except SQLAlchemyError as sql_error:
-                logger.error("Failed to mark source as failed: {error}", error=str(e), source_id=source_id)
+                logger.error(
+                    "Failed to mark source as failed in database",
+                    error=str(sql_error),
+                    source_id=source_id,
+                    original_error=str(e),
+                )
                 await session.rollback()
-                raise DatabaseError("Failed to mark source as failed", context=str(sql_error)) from sql_error
+
+        # Re-raise parsing and processing errors for Pub/Sub retry
+        if isinstance(e, (FileParsingError, ExternalOperationError)):
+            raise
+
+        # For validation errors and other permanent failures, return success (no retry)
+        if isinstance(e, ValidationError):
+            return
+
+        # For unexpected errors, re-raise to trigger retry
+        raise
 
 
 app = create_litestar_app(
