@@ -16,8 +16,8 @@
 	--color-text-light: var(--text-light);
 	--color-text-dark: var(--text-dark);
 
-	--color-input-label: var(--app-gray-500);
-	--color-input-placeholder: var(--app-gray-400);
+	--color-input-label: var(--app-gray-400);
+	--color-input-placeholder: var(--app-gray-500);
 	--color-input-icon: var(--app-gray-600);
 	--color-input-border: var(--app-gray-600);
 	--color-input-muted: var(--app-gray-300);
@@ -35,6 +35,7 @@
 	--color-accent: var(--accent);
 
 	--color-muted-foreground: var(--muted-foreground);
+	--color-muted-foreground-dark: var(--muted-foreground-dark);
 	--color-muted: var(--muted);
 
 	--color-secondary-foreground: var(--secondary-foreground);
@@ -117,6 +118,7 @@
 
 	--muted: var(--app-gray-200);
 	--muted-foreground: oklch(1 0 0);
+	--muted-foreground-dark: var(--app-gray-600);
 
 	--accent: var(--app-light-blue);
 	--accent-foreground: oklch(1 0 0);
@@ -192,6 +194,7 @@
 
 	--muted: var(--app-gray-200);
 	--muted-foreground: oklch(1 0 0);
+	--muted-foreground-dark: var(--app-gray-600);
 
 	--accent: var(--app-light-blue);
 	--accent-foreground: oklch(1 0 0);

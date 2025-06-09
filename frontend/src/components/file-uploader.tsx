@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/utils/format";
 
-import { Button } from "./ui/button";
+import { AppButton } from "./app-button";
+import { IconUpload } from "./workspaces/icons";
 
 const FILE_ACCEPTS = {
 	"application/csv": [".csv"],
@@ -129,23 +130,19 @@ export function FileUploader({
 				}}
 				type="file"
 			/>
-			<Button
-				asChild
-				className={cn("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
+			<AppButton
+				// className={cn("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
 				data-testid="upload-files-button"
-				size="sm"
-				variant="outline"
+				leftIcon={<IconUpload />}
+				variant="secondary"
 			>
-				<label htmlFor={`file-upload-${fieldName}`}>
-					<Upload className="mr-2 size-4" />
-					Upload Documents
-				</label>
-			</Button>
-			{maxFileCount !== Infinity && (
+				<label htmlFor={`file-upload-${fieldName}`}>Upload Documents</label>
+			</AppButton>
+			{/* {maxFileCount !== Infinity && (
 				<p className="text-muted-foreground mt-2 text-xs">
 					{currentFileCount} / {maxFileCount} files uploaded
 				</p>
-			)}
+			)} */}
 		</div>
 	);
 }

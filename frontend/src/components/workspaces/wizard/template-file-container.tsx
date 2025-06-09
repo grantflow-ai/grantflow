@@ -166,7 +166,7 @@ export function TemplateFileContainer({
 				</div>
 			)}
 
-			{isUploading && <div className="text-muted-foreground mt-2 text-center text-sm">Uploading files...</div>}
+			{isUploading && <div className="text-muted-foreground text-center text-sm">Uploading files...</div>}
 		</div>
 	);
 }
