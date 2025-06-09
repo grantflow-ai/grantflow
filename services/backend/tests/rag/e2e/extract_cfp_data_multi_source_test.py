@@ -13,7 +13,7 @@ from services.backend.src.rag.grant_template.extract_cfp_data import (
 from sqlalchemy import select
 from testing import RESULTS_FOLDER
 
-TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="")
+TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="2fb8fb60-4972-4a7e-ad9d-691121409d19")
 
 
 @pytest.mark.timeout(60 * 5)
