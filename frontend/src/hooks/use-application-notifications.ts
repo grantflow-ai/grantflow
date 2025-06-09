@@ -68,6 +68,7 @@ export function useApplicationNotifications({
 	);
 
 	useEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (lastJsonMessage) {
 			setNotifications((prev) => [...prev, lastJsonMessage]);
 		}

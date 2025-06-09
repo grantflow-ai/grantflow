@@ -23,6 +23,7 @@ from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, publi
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from services.crawler.src.extraction import crawl_url
+from services.crawler.src.utils import filter_url
 from sqlalchemy import insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -52,6 +53,10 @@ async def handle_url_crawling(
     parent_type, parent_id = crawling_request["parent_type"], crawling_request["parent_id"]
     existing_url = None
 
+    if filter_url(crawling_request["url"]):
+        logger.info("Skipping URL due to filtering rules", url=crawling_request["url"])
+        return
+
     async with session_maker() as session, session.begin():
         try:
             rag_source = await session.scalar(
@@ -59,7 +64,10 @@ async def handle_url_crawling(
             )
             if rag_source:
                 source_id = rag_source.id
-                if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+                if rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED:
+                    existing_url = True
+                    indexing_status = rag_source.indexing_status
+                else:
                     await session.execute(
                         update(RagSource)
                         .where(RagSource.id == rag_source.id)
@@ -67,9 +75,6 @@ async def handle_url_crawling(
                     )
                     existing_url = False
                     indexing_status = SourceIndexingStatusEnum.INDEXING
-                else:
-                    existing_url = True
-                    indexing_status = rag_source.indexing_status
             else:
                 existing_url = False
                 indexing_status = SourceIndexingStatusEnum.INDEXING
