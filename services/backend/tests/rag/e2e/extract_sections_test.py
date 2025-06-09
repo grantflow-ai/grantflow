@@ -34,7 +34,7 @@ async def test_extract_sections_melanoma_alliance_cfp(
         folder.mkdir(parents=True, exist_ok=True)
 
     results_file = (
-        folder / f"handle_extract_sections_melanoma_alliance_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+        folder / f"handle_extract_sections_melanoma_alliance_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
     )
     results_file.write_bytes(serialize(sections))
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
@@ -67,7 +67,7 @@ async def test_extract_sections_erc_cfp(
     if not folder.exists():
         folder.mkdir(parents=True, exist_ok=True)
 
-    results_file = folder / f"handle_extract_sections_erc_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = folder / f"handle_extract_sections_erc_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
     results_file.write_bytes(serialize(sections))
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
@@ -97,7 +97,7 @@ async def test_extract_sections_standard_awards_cfp(
         folder.mkdir(parents=True, exist_ok=True)
 
     results_file = (
-        folder / f"handle_extract_sections_standard_awards_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+        folder / f"handle_extract_sections_standard_awards_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
     )
     results_file.write_bytes(serialize(sections))
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
@@ -130,7 +130,7 @@ async def test_extract_sections_nih_cfp(
     if not folder.exists():
         folder.mkdir(parents=True, exist_ok=True)
 
-    results_file = folder / f"handle_extract_sections_nih_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = folder / f"handle_extract_sections_nih_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
     results_file.write_bytes(serialize(sections))
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
@@ -158,6 +158,6 @@ async def test_extract_sections_ics_cfp(
     if not folder.exists():
         folder.mkdir(parents=True, exist_ok=True)
 
-    results_file = folder / f"handle_extract_sections_ics_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+    results_file = folder / f"handle_extract_sections_ics_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
     results_file.write_bytes(serialize(sections))
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))

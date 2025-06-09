@@ -44,6 +44,6 @@ async def test_document_retrieval(
     retrival_results = (
         RESULTS_FOLDER
         / melanoma_alliance_full_application_id
-        / f"retrieval_{datetime.now(UTC).strftime('%d_%m_%Y_%H:%M')}.json"
+        / f"retrieval_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
     )
     retrival_results.write_bytes(serialize(results))
