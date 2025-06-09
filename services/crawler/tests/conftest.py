@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 async def test_client(
     async_session_maker: async_sessionmaker[Any],
     gcs_emulator_host: str,
-) -> AsyncGenerator[AsyncTestClient[Any], None]:
+) -> AsyncGenerator[AsyncTestClient[Any]]:
     os.environ.setdefault("STORAGE_EMULATOR_HOST", gcs_emulator_host)
     app.state.session_maker = async_session_maker
     app.debug = True

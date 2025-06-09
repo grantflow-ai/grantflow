@@ -24,7 +24,7 @@ def sync_test_client() -> TestClient[Any]:
 
 
 @pytest.fixture(autouse=True)
-def mock_server_start() -> Generator[None, None, None]:
+def mock_server_start() -> Generator[None]:
     with (
         patch("services.backend.src.main.get_firebase_app"),
         patch("services.backend.src.main.init_llm_connection"),
@@ -51,7 +51,7 @@ async def application(workspace: Workspace, async_session_maker: async_sessionma
 
 
 @pytest.fixture
-def mock_pull_source_processing_notifications() -> Generator[AsyncMock, None, None]:
+def mock_pull_source_processing_notifications() -> Generator[AsyncMock]:
     with patch("services.backend.src.api.sockets.grant_applications.pull_source_processing_notifications") as mock:
         yield mock
 

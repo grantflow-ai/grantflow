@@ -32,7 +32,7 @@ The shared utilities package is organized as follows:
 ## Key Features
 
 - **Performance**: Optimized for high-throughput operations
-- **Type Safety**: Comprehensive type annotations using Python 3.12 syntax
+- **Type Safety**: Comprehensive type annotations using Python 3.13 syntax
 - **Consistency**: Shared patterns across services
 - **Logging**: Structured logging with consistent format
 - **Error Handling**: Standardized exception handling

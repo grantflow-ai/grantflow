@@ -19,7 +19,7 @@ NOTIFICATION_POLL_INTERVAL = 3.0
 )
 async def handle_grant_application_notifications(
     application_id: UUID,
-) -> AsyncGenerator[SourceProcessingResult, None]:
+) -> AsyncGenerator[SourceProcessingResult]:
     while True:
         logger.info("Polling for source updates")
         source_updates = await pull_source_processing_notifications(

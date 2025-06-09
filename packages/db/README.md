@@ -29,12 +29,12 @@ The database package is organized as follows:
 - **Alembic**: Database migration tool
 - **PostgreSQL**: Primary database with pgvector extension
 - **asyncpg**: Fast asynchronous PostgreSQL driver
-- **Python 3.12+**: Leveraging latest type annotations
+- **Python 3.13+**: Leveraging latest type annotations
 
 ## Key Features
 
 - **Async-first**: All database operations support async/await
-- **Strictly Typed**: Comprehensive type annotations with Python 3.12 syntax
+- **Strictly Typed**: Comprehensive type annotations with Python 3.13 syntax
 - **Migration Support**: Alembic integration for database versioning
 - **Vector Operations**: pgvector integration for embedding storage and similarity search
 

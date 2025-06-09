@@ -27,7 +27,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 @pytest.fixture(autouse=True)
-def mock_crawl_url() -> Generator[AsyncMock, None, None]:
+def mock_crawl_url() -> Generator[AsyncMock]:
     with patch("services.crawler.src.main.crawl_url") as mock:
         embedding = [0.1] * 384
 
@@ -48,27 +48,27 @@ def mock_crawl_url() -> Generator[AsyncMock, None, None]:
 
 
 @pytest.fixture(autouse=True)
-def mock_crawl_module() -> Generator[None, None, None]:
+def mock_crawl_module() -> Generator[None]:
     with patch("services.crawler.src.extraction.crawl"):
         yield
 
 
 @pytest.fixture(autouse=True)
-def mock_upload_blob() -> Generator[AsyncMock, None, None]:
+def mock_upload_blob() -> Generator[AsyncMock]:
     with patch("services.crawler.src.main.upload_blob") as mock:
         mock.return_value = None
         yield mock
 
 
 @pytest.fixture(autouse=True)
-def mock_construct_object_uri() -> Generator[Mock, None, None]:
+def mock_construct_object_uri() -> Generator[Mock]:
     with patch("services.crawler.src.main.construct_object_uri") as mock:
         mock.return_value = "test-bucket/test-path/test-file.pdf"
         yield mock
 
 
 @pytest.fixture(autouse=True)
-def mock_publish_source_processing_message() -> Generator[AsyncMock, None, None]:
+def mock_publish_source_processing_message() -> Generator[AsyncMock]:
     with patch("services.crawler.src.main.publish_source_processing_message") as mock:
         mock.return_value = None
         yield mock

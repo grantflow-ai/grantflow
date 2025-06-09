@@ -24,7 +24,7 @@
 ### General
 
 - NO inline comments or docstrings
-- Type all Python args/returns (3.12+ syntax)
+- Type all Python args/returns (3.13+ syntax)
 - Use `uv run` not `python`
 - Use `tofu` not `terraform`
 

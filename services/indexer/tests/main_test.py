@@ -29,14 +29,14 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 @pytest.fixture
-def mock_download_blob() -> Generator[AsyncMock, None, None]:
+def mock_download_blob() -> Generator[AsyncMock]:
     with patch("services.indexer.src.main.download_blob") as mock:
         mock.return_value = b"Test file content"
         yield mock
 
 
 @pytest.fixture
-def mock_process_source() -> Generator[AsyncMock, None, None]:
+def mock_process_source() -> Generator[AsyncMock]:
     with patch("services.indexer.src.main.process_source") as mock:
         embedding = [0.1] * 384
 
@@ -52,13 +52,13 @@ def mock_process_source() -> Generator[AsyncMock, None, None]:
 
 
 @pytest.fixture
-def mock_parse_object_uri() -> Generator[MagicMock, None, None]:
+def mock_parse_object_uri() -> Generator[MagicMock]:
     with patch("services.indexer.src.main.parse_object_uri") as mock:
         yield mock
 
 
 @pytest.fixture(autouse=True)
-def mock_publish_source_processing_message() -> Generator[AsyncMock, None, None]:
+def mock_publish_source_processing_message() -> Generator[AsyncMock]:
     with patch("services.indexer.src.main.publish_source_processing_message") as mock:
         mock.return_value = None
         yield mock
