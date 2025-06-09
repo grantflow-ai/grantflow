@@ -182,7 +182,7 @@ export default function CreateGrantApplicationWizardPage() {
 				showHeaderInfo={showHeaderInfo}
 				stepTitles={WIZARD_STEP_TITLES}
 			/>
-			<section className="flex-1 overflow-auto p-6" data-testid="step-content-container">
+			<section className="flex-1 overflow-auto" data-testid="step-content-container">
 				{steps[currentStep]}
 			</section>
 			<WizardFooter

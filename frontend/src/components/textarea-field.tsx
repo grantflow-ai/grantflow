@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 
-export function AppTextarea({
+export default function AppTextArea({
 	className,
 	countType = "chars",
 	errorMessage,
@@ -39,15 +39,15 @@ export function AppTextarea({
 				? 0
 				: displayText.trim().split(/\s+/).length;
 
-	const formattedCount = currentCount.toString();
-	const formattedMaxCount = maxCount?.toString() ?? null;
+	const formattedCount = currentCount < 10 ? `0${currentCount}` : `${currentCount}`;
+	const formattedMaxCount = maxCount ? (maxCount < 10 ? `0${maxCount}` : `${maxCount}`) : null;
 
 	return (
 		<div className="w-full">
 			<div className="flex items-center justify-between">
 				{label && (
 					<Label
-						className={`block text-start text-sm font-normal ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-foreground"}`}
+						className={`block text-start text-xs font-light ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
 						data-testid={`${testId}-label`}
 						htmlFor={props.id ?? testId}
 					>
@@ -57,7 +57,7 @@ export function AppTextarea({
 
 				{showCount && (
 					<div
-						className={`text-sm ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-muted-foreground"}`}
+						className={`ps-4 text-xs ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
 						data-testid={`${testId}-${countType}-count`}
 					>
 						{formattedCount}
@@ -69,9 +69,12 @@ export function AppTextarea({
 			<Textarea
 				{...props}
 				className={cn(
-					"mt-2 min-h-[80px] resize-none",
+					"w-full bg-white text-dark text-sm rounded-sm py-2 px-3 placeholder:text-sm",
+					props.disabled ? "placeholder:text-input-muted" : "placeholder:text-input-placeholder",
 					variant === "field" && "ring-1 ring-input-border",
 					errorMessage && "border-error",
+					"focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input",
+					"focus-visible:border focus-visible:border-primary",
 					className,
 				)}
 				data-testid={testId}
@@ -86,11 +89,12 @@ export function AppTextarea({
 				value={displayText}
 			/>
 
-			{errorMessage && (
-				<div className="text-error mt-1 text-start text-sm" data-testid={`${testId}-error`}>
-					{errorMessage}
-				</div>
-			)}
+			<div
+				className={`text-error mb-1 text-start text-sm ${hasError ? "visible" : "invisible"}`}
+				data-testid={`${testId}-error`}
+			>
+				{errorMessage}
+			</div>
 		</div>
 	);
 }
