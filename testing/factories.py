@@ -13,6 +13,7 @@ from packages.db.src.tables import (
     GrantTemplate,
     GrantTemplateRagSource,
     RagFile,
+    RagSource,
     RagUrl,
     TextVector,
     Workspace,
@@ -63,6 +64,11 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
             ),
         ]
     )
+
+
+class RagSourceFactory(SQLAlchemyFactory[RagSource]):
+    __model__ = RagSource
+    source_type = choice([RAG_FILE, RAG_URL])
 
 
 class RagFileFactory(SQLAlchemyFactory[RagFile]):

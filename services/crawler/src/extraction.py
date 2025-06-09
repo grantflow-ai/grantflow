@@ -183,7 +183,7 @@ async def find_relevant_links(
                 similarity = cosine_similarity(main_embeddings, link_embeddings)
                 if similarity[0][0] >= 0.58:
                     relevant_links.append((link, link_html, link_embeddings, link_text))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning("Failed to download or process link, skipping", url=str(link), error=str(e))
             continue
 
@@ -245,7 +245,6 @@ async def crawl(
                     page_text=rlink[3],
                     visited_urls=visited_urls,
                     downloaded_files=downloaded_files,
-                    results=results,
                 )
                 for rlink in relevant_links
             ]

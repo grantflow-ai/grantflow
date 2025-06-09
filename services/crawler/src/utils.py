@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from bs4 import Comment, Tag
 from httpx import AsyncClient, Timeout
 from packages.shared_utils.src.logger import get_logger
+from services.crawler.src.constants import SKIP_DOMAINS
 
 if TYPE_CHECKING:
     from bs4 import BeautifulSoup
@@ -89,3 +90,17 @@ def sanitize_html(soup: BeautifulSoup) -> BeautifulSoup:
         comment.extract()
 
     return soup
+
+
+def filter_url(url: str) -> bool:
+    """Checks if a URL should be skipped based on various rules."""
+
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower()
+
+    # Skip social media
+    if domain in SKIP_DOMAINS:
+        return True
+
+    # Skip non-HTTP protocols
+    return parsed.scheme not in {"http", "https"}

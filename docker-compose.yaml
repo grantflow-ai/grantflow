@@ -63,6 +63,7 @@ services:
     pubsub-emulator:
         profiles:
             - all
+            - gcs
             - services
             - indexer
             - crawler
