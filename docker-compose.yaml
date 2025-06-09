@@ -122,7 +122,7 @@ services:
             - indexer
         build:
             args:
-                service_name: crawler
+                service_name: indexer
             dockerfile: ./services/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
