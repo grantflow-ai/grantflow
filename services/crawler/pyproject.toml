@@ -5,9 +5,9 @@ description = "Grantflow Crawler"
 readme = "README.md"
 license = { text = "UNLICENSED" }
 authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
-requires-python = "==3.12.*"
+requires-python = "==3.13.*"
 
-classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.12" ]
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
 dependencies = [
   "beautifulsoup4>=4.13.4",
   "db",

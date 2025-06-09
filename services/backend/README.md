@@ -43,7 +43,7 @@ The backend follows a modular architecture:
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13+
 - PostgreSQL 17+ with pgvector extension
 - uv (Python package manager)
 
@@ -113,7 +113,7 @@ uv run python -m pytest --cov=src
 
 - **Line Length**: 120 character line length
 - **Docstrings**: Google docstring format
-- **Types**: Python 3.12 syntax with comprehensive type hints
+- **Types**: Python 3.13 syntax with comprehensive type hints
 - **Patterns**:
     - Use async/await for database operations
     - Sort kwargs alphabetically

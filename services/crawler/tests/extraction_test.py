@@ -53,7 +53,7 @@ def mock_html_content() -> str:
 
 
 @pytest.fixture
-def mock_download_page_html() -> Generator[AsyncMock, None, None]:
+def mock_download_page_html() -> Generator[AsyncMock]:
     with patch("services.crawler.src.extraction.download_page_html") as mock:
         mock.return_value = """
         <html>
@@ -71,42 +71,42 @@ def mock_download_page_html() -> Generator[AsyncMock, None, None]:
 
 
 @pytest.fixture
-def mock_download_file() -> Generator[AsyncMock, None, None]:
+def mock_download_file() -> Generator[AsyncMock]:
     with patch("services.crawler.src.extraction.download_file") as mock:
         mock.return_value = b"Test file content"
         yield mock
 
 
 @pytest.fixture
-def mock_trafilatura_extract() -> Generator[Mock, None, None]:
+def mock_trafilatura_extract() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.extract") as mock:
         mock.return_value = "Test Content\n\nThis is a test paragraph with some content."
         yield mock
 
 
 @pytest.fixture
-def mock_convert_to_markdown() -> Generator[Mock, None, None]:
+def mock_convert_to_markdown() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.convert_to_markdown") as mock:
         mock.return_value = "# Test Content\n\nThis is a test paragraph with some content."
         yield mock
 
 
 @pytest.fixture
-def mock_generate_embeddings() -> Generator[AsyncMock, None, None]:
+def mock_generate_embeddings() -> Generator[AsyncMock]:
     with patch("services.crawler.src.extraction.generate_embeddings") as mock:
         mock.return_value = [[0.1, 0.2, 0.3, 0.4, 0.5]]
         yield mock
 
 
 @pytest.fixture
-def mock_cosine_similarity() -> Generator[Mock, None, None]:
+def mock_cosine_similarity() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.cosine_similarity") as mock:
         mock.return_value = [[0.95]]
         yield mock
 
 
 @pytest.fixture
-def mock_chunk_text() -> Generator[Mock, None, None]:
+def mock_chunk_text() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.chunk_text") as mock:
         mock.return_value = [
             {"content": "Test Content", "metadata": {"source": "https://example.org/test-page"}},

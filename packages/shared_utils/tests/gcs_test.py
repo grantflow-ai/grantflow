@@ -32,7 +32,7 @@ def reset_refs() -> None:
 
 
 @pytest.fixture
-def mock_env_vars() -> Generator[None, None, None]:
+def mock_env_vars() -> Generator[None]:
     with patch.dict(
         os.environ,
         {
