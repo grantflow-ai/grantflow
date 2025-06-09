@@ -5,6 +5,7 @@ from os import environ
 import pytest
 from packages.db.src.connection import get_session_maker
 from packages.db.src.tables import GrantTemplateRagSource
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.serialization import serialize
 from services.backend.src.rag.grant_template.extract_cfp_data import (
     handle_extract_cfp_data_from_rag_sources,
@@ -12,7 +13,7 @@ from services.backend.src.rag.grant_template.extract_cfp_data import (
 from sqlalchemy import select
 from testing import RESULTS_FOLDER
 
-TEST_GRANT_TEMPLATE_ID = environ.get("TEST_GRANT_TEMPLATE_ID", "")
+TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="")
 
 
 @pytest.mark.timeout(60 * 5)

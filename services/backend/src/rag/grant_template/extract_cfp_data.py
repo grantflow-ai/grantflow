@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
 from packages.db.src.tables import RagSource, TextVector
@@ -201,11 +202,10 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         chunks_result = await session.execute(
             select(TextVector.rag_source_id, TextVector.chunk).where(TextVector.rag_source_id.in_(source_ids))
         )
-        chunks_by_source: dict[str, list[str]] = {}
-        for source_id, chunk in chunks_result.fetchall():
-            if source_id not in chunks_by_source:
-                chunks_by_source[source_id] = []
-            chunk_content = chunk.get("content", "") if isinstance(chunk, dict) else str(chunk)
+        chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
+
+        for source_id, chunk in chunks_result:
+            chunk_content = chunk.get("content", "")
             chunks_by_source[source_id].append(chunk_content)
 
     rag_sources_data = []
@@ -234,7 +234,7 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
     """
     formatted_sources = []
 
-    for i, source in enumerate(rag_sources, 1):
+    for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
 
         source_section += "#### Full Content:\n"
@@ -242,7 +242,7 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 
         source_section += "#### Key Chunks:\n"
 
-        for j, chunk in enumerate(source["chunks"][:NUM_CHUNKS], 1):
+        for j, chunk in enumerate(source["chunks"][:NUM_CHUNKS]):
             source_section += f"{j}. {chunk[:MAX_CHUNK_SIZE]}{'...' if len(chunk) > MAX_CHUNK_SIZE else ''}\n"
 
         formatted_sources.append(source_section)
