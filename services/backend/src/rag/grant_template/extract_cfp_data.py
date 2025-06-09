@@ -4,6 +4,7 @@ from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.ai import REASONING_MODEL
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
+from services.backend.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.backend.src.rag.completion import handle_completions_request
 from services.backend.src.rag.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.backend.src.utils.prompt_template import PromptTemplate
@@ -234,16 +235,15 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
     formatted_sources = []
 
     for i, source in enumerate(rag_sources, 1):
-        source_section = f"""
-            ### Source {i}: {source["source_type"].upper()} (ID: {source["source_id"]})
+        source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
 
-            #### Full Content:
-            {source["text_content"][:8000]}{"..." if len(source["text_content"]) > 8000 else ""}
+        source_section += "#### Full Content:\n"
+        source_section += f"{source['text_content'][:MAX_SOURCE_SIZE]}{'...' if len(source['text_content']) > MAX_SOURCE_SIZE else ''}\n\n"
 
-            #### Key Chunks:
-        """
-        for j, chunk in enumerate(source["chunks"][:15], 1):
-            source_section += f"{j}. {chunk[:800]}{'...' if len(chunk) > 800 else ''}\n"
+        source_section += "#### Key Chunks:\n"
+
+        for j, chunk in enumerate(source["chunks"][:NUM_CHUNKS], 1):
+            source_section += f"{j}. {chunk[:MAX_CHUNK_SIZE]}{'...' if len(chunk) > MAX_CHUNK_SIZE else ''}\n"
 
         formatted_sources.append(source_section)
 
