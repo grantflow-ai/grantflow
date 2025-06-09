@@ -56,7 +56,7 @@ The service expects PubSub messages in the following format:
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13+
 - Docker
 - Google Cloud Storage emulator (provided in docker-compose)
 

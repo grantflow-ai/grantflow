@@ -30,7 +30,7 @@ For detailed information on specific modules, refer to their dedicated documenta
 ## Prerequisites
 
 - Node.js 22 or higher
-- Python 3.12
+- Python 3.13
 - Docker and Docker Compose
 - [UV](https://github.com/astral-sh/uv): Package manager for Python dependencies
 - [PNPM](https://pnpm.io/): Package manager for JavaScript/TypeScript dependencies

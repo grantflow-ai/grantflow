@@ -44,7 +44,7 @@ def firebase_uid() -> str:
 
 
 @pytest.fixture
-def mock_generative_model() -> Generator[Mock, Any, None]:
+def mock_generative_model() -> Generator[Mock, Any]:
     init_ref.value = True
     with patch("vertexai.generative_models.GenerativeModel") as mock:
         mock_instance = Mock(spec=GenerativeModel)
@@ -53,7 +53,7 @@ def mock_generative_model() -> Generator[Mock, Any, None]:
 
 
 @pytest.fixture(scope="session")
-async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[TestingClientType, None]:
+async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[TestingClientType]:
     firebase_uid = "a" * 128
 
     firebase_app_ref.value = Mock()
@@ -90,7 +90,7 @@ async def mock_extract_webpage_content(mocker: MockerFixture) -> AsyncMock:
 
 
 @pytest.fixture
-def signal_dispatch_mock() -> Generator[Mock, None]:
+def signal_dispatch_mock() -> Generator[Mock]:
     with patch("litestar.events.emitter.SimpleEventEmitter.emit") as mock:
         yield mock
 

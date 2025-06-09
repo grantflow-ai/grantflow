@@ -3,14 +3,14 @@
 ## Stack
 
 - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
-- **Backend**: Python 3.12, Litestar, msgspec, SQLAlchemy 2.0 async
+- **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
 - **Services**: backend (API), indexer (docs), crawler (web)
 - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
 
 ## Core Rules
 
 - NO inline comments/docstrings
-- Type all Python args/returns (3.12+ syntax)
+- Type all Python args/returns (3.13+ syntax)
 - Use `uv run`, `tofu`, SCREAMING_SNAKE_CASE constants
 - Use `??` not `||`, extract magic numbers
 - 100% test coverage, real PostgreSQL
