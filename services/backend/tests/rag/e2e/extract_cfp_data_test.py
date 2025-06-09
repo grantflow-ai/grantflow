@@ -64,7 +64,7 @@ async def test_extract_cfp_data(
         folder.mkdir(parents=True, exist_ok=True)
 
     filename_wo_ext = re.sub(r"\.[^.]*$", "", filename)
-    timestamp = datetime.now(UTC).strftime("%d_%m_%Y_%H:%M")
+    timestamp = datetime.now(UTC).strftime("%d_%m_%Y_%H_%M")
     results_file = folder / f"extract_cfp_data_{filename_wo_ext}_{timestamp}.json"
     results_file.write_bytes(serialize(result))
 
