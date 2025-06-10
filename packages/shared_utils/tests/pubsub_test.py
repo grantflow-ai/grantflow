@@ -11,11 +11,13 @@ from packages.shared_utils.src.pubsub import (
     CrawlingRequest,
     PubSubEvent,
     PubSubMessage,
+    RagRequest,
     SourceProcessingResult,
     WebsocketMessage,
     get_publisher_client,
     get_subscriber_client,
     publish_notification,
+    publish_rag_task,
     publish_url_crawling_task,
     pull_notifications,
 )
@@ -495,3 +497,105 @@ def test_websocket_message_typed_dict() -> None:
     assert message["type"] == "data"
     assert message["event"] == "test_event"
     assert message["data"] == test_data
+
+
+def test_rag_request_typed_dict() -> None:
+    request: RagRequest = {
+        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
+        "parent_type": "grant_application",
+    }
+    assert request["parent_type"] == "grant_application"
+
+    request_template: RagRequest = {
+        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
+        "parent_type": "grant_template",
+    }
+    assert request_template["parent_type"] == "grant_template"
+
+
+@pytest.mark.asyncio
+async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
+    parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+        result = await publish_rag_task(
+            logger=logger,
+            parent_type="grant_application",
+            parent_id=parent_id,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.topic_path.assert_called_once_with(
+            project="grantflow",
+            topic="rag-processing",
+        )
+        mock_publisher_client.publish.assert_called_once()
+
+        # Check the published data
+        published_data = mock_publisher_client.publish.call_args[1]["data"]
+        assert b'"parent_type":"grant_application"' in published_data
+        assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
+
+
+@pytest.mark.asyncio
+async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> None:
+    parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+        result = await publish_rag_task(
+            logger=logger,
+            parent_type="grant_template",
+            parent_id=parent_id,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.topic_path.assert_called_once_with(
+            project="grantflow",
+            topic="rag-processing",
+        )
+        mock_publisher_client.publish.assert_called_once()
+
+        # Check the published data
+        published_data = mock_publisher_client.publish.call_args[1]["data"]
+        assert b'"parent_type":"grant_template"' in published_data
+        assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
+
+
+@pytest.mark.asyncio
+async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> None:
+    parent_id_str = "123e4567-e89b-12d3-a456-426614174000"
+
+    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+        result = await publish_rag_task(
+            logger=logger,
+            parent_type="grant_application",
+            parent_id=parent_id_str,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.publish.assert_called_once()
+
+        # Check the published data
+        published_data = mock_publisher_client.publish.call_args[1]["data"]
+        assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
+
+
+@pytest.mark.asyncio
+async def test_publish_rag_task_message_too_large(mock_publisher_client: Mock) -> None:
+    parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+    future = Mock()
+    future.result.side_effect = MessageTooLargeError("Message too large")
+    mock_publisher_client.publish.return_value = future
+
+    with (
+        patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client),
+        pytest.raises(BackendError) as exc_info,
+    ):
+        await publish_rag_task(
+            logger=logger,
+            parent_type="grant_application",
+            parent_id=parent_id,
+        )
+
+    assert "Error publishing RAG processing message" in str(exc_info.value)
