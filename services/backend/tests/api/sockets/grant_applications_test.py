@@ -12,7 +12,7 @@ from packages.db.src.tables import (
     Workspace,
     WorkspaceUser,
 )
-from packages.shared_utils.src.pubsub import SourceProcessingResult
+from packages.shared_utils.src.pubsub import SourceProcessingResult, WebsocketMessage
 from services.backend.src.main import app
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -113,8 +113,19 @@ async def test_handle_grant_application_notifications_success(
         ),
     ]
 
+    # Wrap notifications in WebsocketMessage format
+    wrapped_notifications = [
+        WebsocketMessage(
+            type="data",
+            parent_id=notification["parent_id"],
+            event="source_processing",
+            data=notification,
+        )
+        for notification in test_notifications
+    ]
+
     mock_pull_notifications.side_effect = [
-        test_notifications,
+        wrapped_notifications,
         [],
     ]
 
@@ -124,14 +135,22 @@ async def test_handle_grant_application_notifications_success(
             f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
-        notification1 = ws.receive_json()
+        message1 = ws.receive_json()
+        assert message1["type"] == "data"
+        assert message1["event"] == "source_processing"
+        assert message1["parent_id"] == str(application.id)
+        notification1 = message1["data"]
         assert notification1["parent_id"] == str(application.id)
         assert notification1["parent_type"] == "grant_application"
         assert notification1["rag_source_id"] == "123e4567-e89b-12d3-a456-426614174000"
         assert notification1["indexing_status"] == "FINISHED"
         assert notification1["identifier"] == "test_document.pdf"
 
-        notification2 = ws.receive_json()
+        message2 = ws.receive_json()
+        assert message2["type"] == "data"
+        assert message2["event"] == "source_processing"
+        assert message2["parent_id"] == str(application.id)
+        notification2 = message2["data"]
         assert notification2["parent_id"] == str(application.id)
         assert notification2["parent_type"] == "grant_application"
         assert notification2["rag_source_id"] == "223e4567-e89b-12d3-a456-426614174000"
@@ -161,8 +180,19 @@ async def test_handle_grant_application_notifications_failed_status(
         ),
     ]
 
+    # Wrap notifications in WebsocketMessage format
+    wrapped_notifications = [
+        WebsocketMessage(
+            type="data",
+            parent_id=notification["parent_id"],
+            event="source_processing",
+            data=notification,
+        )
+        for notification in test_notifications
+    ]
+
     mock_pull_notifications.side_effect = [
-        test_notifications,
+        wrapped_notifications,
         [],
     ]
 
@@ -172,7 +202,10 @@ async def test_handle_grant_application_notifications_failed_status(
             f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
-        notification = ws.receive_json()
+        message = ws.receive_json()
+        assert message["type"] == "data"
+        assert message["event"] == "source_processing"
+        notification = message["data"]
         assert notification["rag_source_id"] == "323e4567-e89b-12d3-a456-426614174000"
         assert notification["indexing_status"] == "FAILED"
         assert notification["identifier"] == "error_document.pdf"
@@ -217,8 +250,19 @@ async def test_handle_grant_application_notifications_different_roles(
         ),
     ]
 
+    # Wrap notifications in WebsocketMessage format
+    wrapped_notifications = [
+        WebsocketMessage(
+            type="data",
+            parent_id=notification["parent_id"],
+            event="source_processing",
+            data=notification,
+        )
+        for notification in test_notifications
+    ]
+
     mock_pull_notifications.side_effect = [
-        test_notifications,
+        wrapped_notifications,
         [],
     ]
 
@@ -228,7 +272,10 @@ async def test_handle_grant_application_notifications_different_roles(
             f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
-        notification = ws.receive_json()
+        message = ws.receive_json()
+        assert message["type"] == "data"
+        assert message["event"] == "source_processing"
+        notification = message["data"]
         assert notification["identifier"] == "admin_test.pdf"
 
 
@@ -260,9 +307,30 @@ async def test_handle_grant_application_notifications_continuous_updates(
         ),
     ]
 
+    # Wrap notifications in WebsocketMessage format
+    wrapped_round1 = [
+        WebsocketMessage(
+            type="data",
+            parent_id=notification["parent_id"],
+            event="source_processing",
+            data=notification,
+        )
+        for notification in round1
+    ]
+
+    wrapped_round2 = [
+        WebsocketMessage(
+            type="data",
+            parent_id=notification["parent_id"],
+            event="source_processing",
+            data=notification,
+        )
+        for notification in round2
+    ]
+
     mock_pull_notifications.side_effect = [
-        round1,
-        round2,
+        wrapped_round1,
+        wrapped_round2,
         [],
     ]
 
@@ -272,11 +340,17 @@ async def test_handle_grant_application_notifications_continuous_updates(
             f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
-        notification1 = ws.receive_json()
+        message1 = ws.receive_json()
+        assert message1["type"] == "data"
+        assert message1["event"] == "source_processing"
+        notification1 = message1["data"]
         assert notification1["rag_source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification1["indexing_status"] == "INDEXING"
 
-        notification2 = ws.receive_json()
+        message2 = ws.receive_json()
+        assert message2["type"] == "data"
+        assert message2["event"] == "source_processing"
+        notification2 = message2["data"]
         assert notification2["rag_source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification2["indexing_status"] == "FINISHED"
 

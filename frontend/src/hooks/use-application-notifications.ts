@@ -1,3 +1,4 @@
+import { createTypeGuard, isRecord } from "@tool-belt/type-predicates";
 import { useCallback, useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
@@ -12,6 +13,22 @@ export interface SourceProcessingNotification {
 	parent_type: string;
 	rag_source_id: string;
 }
+
+export type SourceProcessingNotificationMessage = WebsocketMessage<SourceProcessingNotification>;
+
+export interface WebsocketMessage<T> {
+	data: T;
+	event: string;
+	parent_id: string;
+	type: "data" | "error" | "info";
+}
+
+export const isWebsocketMessage = createTypeGuard<WebsocketMessage<unknown>>(
+	(value: unknown) => isRecord(value) && "type" in value,
+);
+export const isSourceProcessingNotificationMessage = createTypeGuard<SourceProcessingNotificationMessage>(
+	(value: unknown) => isWebsocketMessage(value) && isRecord(value.data) && "indexing_status" in value.data,
+);
 
 export const CONNECTION_STATUS_MAP = {
 	[ReadyState.CLOSED]: "Closed",
@@ -37,7 +54,7 @@ interface UseApplicationNotificationsProps {
 interface UseApplicationNotificationsReturn {
 	connectionStatus: string;
 	connectionStatusColor: string;
-	notifications: SourceProcessingNotification[];
+	notifications: WebsocketMessage<unknown>[];
 	readyState: ReadyState;
 	sendMessage: (message: string) => void;
 }
@@ -46,7 +63,7 @@ export function useApplicationNotifications({
 	applicationId,
 	workspaceId,
 }: UseApplicationNotificationsProps): UseApplicationNotificationsReturn {
-	const [notifications, setNotifications] = useState<SourceProcessingNotification[]>([]);
+	const [notifications, setNotifications] = useState<WebsocketMessage<unknown>[]>([]);
 
 	const getSocketUrl = useCallback(async () => {
 		if (!workspaceId || !applicationId) {
@@ -63,13 +80,12 @@ export function useApplicationNotifications({
 		).toString();
 	}, [workspaceId, applicationId]);
 
-	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<SourceProcessingNotification>(
+	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
 		workspaceId && applicationId ? getSocketUrl : null,
 	);
 
 	useEffect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		if (lastJsonMessage) {
+		if (isWebsocketMessage(lastJsonMessage)) {
 			setNotifications((prev) => [...prev, lastJsonMessage]);
 		}
 	}, [lastJsonMessage]);
