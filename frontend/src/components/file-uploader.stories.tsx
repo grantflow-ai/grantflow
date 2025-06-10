@@ -19,42 +19,26 @@ type Story = StoryObj<typeof FileUploader>;
 
 export const Default: Story = {
 	args: {
-		currentFileCount: 0,
 		fieldName: "documents",
-		maxFileCount: 5,
 	},
 };
 
-export const WithLimitReached: Story = {
+export const WithFiles: Story = {
 	args: {
-		currentFileCount: 5,
 		fieldName: "documents",
-		maxFileCount: 5,
 	},
 };
 
 export const AsDropZone: Story = {
 	args: {
-		currentFileCount: 0,
 		fieldName: "documents",
 		isDropZone: true,
-		maxFileCount: 10,
 	},
 };
 
-export const DropZoneWithLimitReached: Story = {
+export const DropZoneWithFiles: Story = {
 	args: {
-		currentFileCount: 10,
 		fieldName: "documents",
 		isDropZone: true,
-		maxFileCount: 10,
-	},
-};
-
-export const WithUnlimitedFiles: Story = {
-	args: {
-		currentFileCount: 3,
-		fieldName: "documents",
-		maxFileCount: Infinity,
 	},
 };

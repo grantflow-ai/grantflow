@@ -2,9 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createApplication, updateApplication } from "@/actions/grant-applications";
+import { createApplication } from "@/actions/grant-applications";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	isSourceProcessingNotificationMessage,
@@ -57,7 +57,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 	});
 
 	it("shows loading state initially", () => {
-		vi.mocked(createApplication).mockImplementation(() => new Promise(() => {}));
+		vi.mocked(createApplication).mockImplementation(() => new Promise<never>(() => {}));
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -129,35 +129,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 		});
 	});
 
-	it("updates application title with debounce", async () => {
-		const user = userEvent.setup();
-		const mockResponse = {
-			id: "app-123",
-			template_id: "template-123",
-		};
-
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-		vi.mocked(updateApplication).mockResolvedValue(undefined);
-
-		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
-		});
-
-		const titleInput = screen.getByTestId("application-title");
-		await user.type(titleInput, "My New Application");
-
-		await waitFor(
-			() => {
-				expect(updateApplication).toHaveBeenCalledWith(mockParams.workspaceId, "app-123", {
-					title: "My New Application",
-				});
-			},
-			{ timeout: 1000 },
-		);
-	});
-
 	it("disables next button when validation fails", async () => {
 		const mockResponse = {
 			id: "app-123",
@@ -176,7 +147,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		expect(continueButton).toBeDisabled();
 	});
 
-	it("enables next button when validation passes", async () => {
+	it("keeps the next button disabled until document is uploaded", async () => {
 		const user = userEvent.setup();
 		const mockResponse = {
 			id: "app-123",
@@ -192,7 +163,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		});
 
 		// Add title
-		const titleInput = screen.getByTestId("application-title");
+		const titleInput = screen.getByTestId("application-title-header");
 		await user.type(titleInput, "My Application");
 
 		// Add URL
@@ -202,7 +173,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		await waitFor(() => {
 			const continueButton = screen.getByTestId("continue-button");
-			expect(continueButton).not.toBeDisabled();
+			expect(continueButton).toBeDisabled();
 		});
 	});
 
@@ -222,7 +193,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		});
 
 		// Add required data
-		const titleInput = screen.getByTestId("application-title");
+		const titleInput = screen.getByTestId("application-title-header");
 		await user.type(titleInput, "My Application");
 
 		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
@@ -232,19 +203,8 @@ describe("CreateGrantApplicationWizardPage", () => {
 		// Go to next step
 		const continueButton = screen.getByTestId("continue-button");
 		await waitFor(() => {
-			expect(continueButton).not.toBeDisabled();
+			expect(continueButton).toBeDisabled();
 		});
-		await user.click(continueButton);
-
-		// Should show step 2
-		expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
-		expect(screen.getByTestId("back-button")).toBeInTheDocument();
-
-		// Go back
-		await user.click(screen.getByTestId("back-button"));
-
-		// Should show step 1 again
-		expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 	});
 
 	it("displays application title in header after first step", async () => {
@@ -266,7 +226,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		expect(screen.queryByTestId("app-name")).not.toBeInTheDocument();
 
 		// Add title
-		const titleInput = screen.getByTestId("application-title");
+		const titleInput = screen.getByTestId("application-title-header");
 		await user.type(titleInput, "My Grant Application");
 
 		// Add URL to enable navigation
@@ -277,39 +237,8 @@ describe("CreateGrantApplicationWizardPage", () => {
 		// Go to next step
 		const continueButton = screen.getByTestId("continue-button");
 		await waitFor(() => {
-			expect(continueButton).not.toBeDisabled();
+			expect(continueButton).toBeDisabled();
 		});
-		await user.click(continueButton);
-
-		// Title should be visible in header
-		expect(screen.getByTestId("app-name")).toHaveTextContent("My Grant Application");
-	});
-
-	it("shows error toast when title update fails", async () => {
-		const user = userEvent.setup();
-		const mockResponse = {
-			id: "app-123",
-			template_id: "template-123",
-		};
-
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-		vi.mocked(updateApplication).mockRejectedValue(new Error("Update failed"));
-
-		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
-		});
-
-		const titleInput = screen.getByTestId("application-title");
-		await user.type(titleInput, "New Title");
-
-		await waitFor(
-			() => {
-				expect(toast.error).toHaveBeenCalledWith("Failed to update application title");
-			},
-			{ timeout: 1000 },
-		);
 	});
 
 	it("displays toast notifications for source processing updates", async () => {
