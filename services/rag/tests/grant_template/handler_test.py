@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
@@ -34,6 +34,9 @@ from services.rag.src.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
 )
+
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import GrantLongFormSection
 
 
 @pytest.fixture
@@ -309,6 +312,8 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
     assert len(long_form_sections) == 3
 
     for section in long_form_sections:
+        # Type narrowing: sections with "keywords" are GrantLongFormSection
+        section = cast("GrantLongFormSection", section)
         assert "keywords" in section
         assert "topics" in section
         assert "generation_instructions" in section
