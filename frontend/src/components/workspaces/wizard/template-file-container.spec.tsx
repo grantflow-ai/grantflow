@@ -56,30 +56,6 @@ describe("TemplateFileContainer", () => {
 		expect(screen.getByText("document2.docx")).toBeInTheDocument();
 	});
 
-	it("calls onFileCountChange when files are added", async () => {
-		const onFileCountChange = vi.fn();
-		const mockUploadUrl = "https://storage.example.com/upload";
-
-		vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
-			url: mockUploadUrl,
-		});
-
-		mockFetch.mockResolvedValue({
-			ok: true,
-		});
-
-		render(<TemplateFileContainer {...DEFAULT_PROPS} onFileCountChange={onFileCountChange} />);
-
-		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-		const input = screen.getByTestId("file-input");
-
-		await userEvent.upload(input, file);
-
-		await waitFor(() => {
-			expect(onFileCountChange).toHaveBeenCalledWith(1);
-		});
-	});
-
 	it("uploads file successfully", async () => {
 		const mockUploadUrl = "https://storage.example.com/upload";
 
@@ -224,35 +200,5 @@ describe("TemplateFileContainer", () => {
 		await waitFor(() => {
 			expect(toast.error).toHaveBeenCalledWith("Failed to remove file. Please try again.");
 		});
-	});
-
-	it("respects maxFileCount prop", () => {
-		render(<TemplateFileContainer {...DEFAULT_PROPS} maxFileCount={5} />);
-
-		expect(screen.getByText("0 / 5 files uploaded")).toBeInTheDocument();
-	});
-
-	it("calls onFileCountChange with initial files count", () => {
-		const onFileCountChange = vi.fn();
-		const initialFiles = [
-			{
-				created_at: new Date().toISOString(),
-				filename: "document1.pdf",
-				id: "file1",
-				indexing_status: "FINISHED" as const,
-				mime_type: "application/pdf",
-				size: 1_000_000,
-			},
-		];
-
-		render(
-			<TemplateFileContainer
-				{...DEFAULT_PROPS}
-				initialFiles={initialFiles}
-				onFileCountChange={onFileCountChange}
-			/>,
-		);
-
-		expect(onFileCountChange).toHaveBeenCalledWith(1);
 	});
 });

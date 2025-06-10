@@ -28,42 +28,28 @@ const FILE_ACCEPTS = {
 
 const FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
-const DEFAULT_MAX_FILES = Infinity;
 
 export function FileUploader({
-	currentFileCount = 0,
 	fieldName,
 	isDropZone = false,
-	maxFileCount = DEFAULT_MAX_FILES,
 	onFilesAdded,
 }: {
-	currentFileCount?: number;
 	fieldName: string;
 	isDropZone?: boolean;
-	maxFileCount?: number;
 	onFilesAdded: (files: File[]) => void;
 }) {
-	const validateFileUploads = useCallback(
-		(newFileUploads: File[]) => {
-			const totalFiles = currentFileCount + newFileUploads.length;
-			if (totalFiles > maxFileCount) {
-				toast.error(`Upload is limited to ${maxFileCount} file(s)`);
+	const validateFileUploads = useCallback((newFileUploads: File[]) => {
+		for (const file of newFileUploads) {
+			if (file.size > MAX_FILE_SIZE_BYTES) {
+				toast.error(
+					`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE_BYTES)}`,
+				);
 				return false;
 			}
+		}
 
-			for (const file of newFileUploads) {
-				if (file.size > MAX_FILE_SIZE_BYTES) {
-					toast.error(
-						`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE_BYTES)}`,
-					);
-					return false;
-				}
-			}
-
-			return true;
-		},
-		[currentFileCount, maxFileCount],
-	);
+		return true;
+	}, []);
 
 	const handleFilesAdded = useCallback(
 		(newFiles: File[]) => {
@@ -83,7 +69,6 @@ export function FileUploader({
 
 	const { getInputProps, getRootProps, isDragActive } = useDropzone({
 		accept: FILE_ACCEPTS,
-		disabled: currentFileCount >= maxFileCount,
 		maxSize: MAX_FILE_SIZE_BYTES,
 		onDrop,
 	});
@@ -95,7 +80,6 @@ export function FileUploader({
 				className={cn(
 					"p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors",
 					isDragActive ? "border-primary bg-primary/10" : "border-input hover:border-primary",
-					currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed",
 				)}
 				data-testid="file-dropzone"
 			>
@@ -104,11 +88,6 @@ export function FileUploader({
 				<p className="text-muted-foreground mt-2 text-sm">
 					Drag &#39;n&#39; drop files here, or click to select files
 				</p>
-				{maxFileCount !== Infinity && (
-					<p className="text-muted-foreground mt-2 text-xs">
-						{currentFileCount} / {maxFileCount} files uploaded
-					</p>
-				)}
 			</div>
 		);
 	}
@@ -119,7 +98,6 @@ export function FileUploader({
 				accept={Object.keys(FILE_ACCEPTS).join(", ")}
 				className="sr-only"
 				data-testid="file-input"
-				disabled={currentFileCount >= maxFileCount}
 				id={`file-upload-${fieldName}`}
 				multiple={true}
 				onChange={(e) => {
@@ -130,19 +108,9 @@ export function FileUploader({
 				}}
 				type="file"
 			/>
-			<AppButton
-				// className={cn("text-sm", currentFileCount >= maxFileCount && "opacity-50 cursor-not-allowed")}
-				data-testid="upload-files-button"
-				leftIcon={<IconUpload />}
-				variant="secondary"
-			>
+			<AppButton data-testid="upload-files-button" leftIcon={<IconUpload />} variant="secondary">
 				<label htmlFor={`file-upload-${fieldName}`}>Upload Documents</label>
 			</AppButton>
-			{/* {maxFileCount !== Infinity && (
-				<p className="text-muted-foreground mt-2 text-xs">
-					{currentFileCount} / {maxFileCount} files uploaded
-				</p>
-			)} */}
 		</div>
 	);
 }

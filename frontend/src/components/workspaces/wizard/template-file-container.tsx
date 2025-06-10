@@ -14,8 +14,6 @@ type FileWithId = { id?: string } & File;
 
 interface TemplateFileContainerProps {
 	initialFiles?: Extract<API.RetrieveGrantTemplateRagSources.Http200.ResponseBody[number], { filename: string }>[];
-	maxFileCount?: number;
-	onFileCountChange?: (count: number) => void;
 	onFilesChange?: (files: FileWithId[]) => void;
 	templateId: string;
 	workspaceId: string;
@@ -23,8 +21,6 @@ interface TemplateFileContainerProps {
 
 export function TemplateFileContainer({
 	initialFiles = [],
-	maxFileCount = 10,
-	onFileCountChange,
 	onFilesChange,
 	templateId,
 	workspaceId,
@@ -53,9 +49,8 @@ export function TemplateFileContainer({
 	}, [initialFiles, uploadedFiles.length]);
 
 	useEffect(() => {
-		onFileCountChange?.(uploadedFiles.length);
 		onFilesChange?.(uploadedFiles);
-	}, [uploadedFiles, onFileCountChange, onFilesChange]);
+	}, [uploadedFiles, onFilesChange]);
 
 	const handleUploadFile = useCallback(
 		async (file: File) => {
@@ -156,7 +151,6 @@ export function TemplateFileContainer({
 			<FileUploader
 				currentFileCount={uploadedFiles.length}
 				fieldName="template-files"
-				maxFileCount={maxFileCount}
 				onFilesAdded={handleFilesAdded}
 			/>
 

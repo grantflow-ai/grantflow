@@ -18,9 +18,7 @@ interface ApplicationDetailsStepProps {
 	applicationTitle: string;
 	connectionStatus?: string;
 	connectionStatusColor?: string;
-	fileCount: number;
 	onApplicationTitleChange: (value: string) => void;
-	onFileCountChange: (count: number) => void;
 	onUrlsChange: (urls: string[]) => void;
 	templateId: string;
 	urls: string[];
@@ -31,9 +29,7 @@ export function ApplicationDetailsStep({
 	applicationTitle,
 	connectionStatus,
 	connectionStatusColor,
-	fileCount: _fileCount,
 	onApplicationTitleChange,
-	onFileCountChange,
 	onUrlsChange,
 	templateId,
 	urls,
@@ -89,15 +85,23 @@ export function ApplicationDetailsStep({
 			<div className="w-1/3 space-y-6 overflow-y-auto p-6 sm:w-1/2">
 				<div className="space-y-6">
 					<div>
-						<h2 className="font-heading text-2xl font-medium leading-loose">Application Title</h2>
-						<p className="text-muted-foreground-dark leading-tight">
+						<h2
+							className="font-heading text-2xl font-medium leading-loose"
+							data-testid="application-title-header"
+						>
+							Application Title
+						</h2>
+						<p
+							className="text-muted-foreground-dark leading-tight"
+							data-testid="application-title-description"
+						>
 							Give your application file a clear, descriptive name.
 						</p>
 					</div>
 
 					<AppTextArea
 						countType="chars"
-						id="application-title"
+						id="application-title-textarea"
 						label="Application Title"
 						maxCount={TITLE_MAX_LENGTH}
 						onChange={(e) => {
@@ -106,7 +110,7 @@ export function ApplicationDetailsStep({
 						placeholder="Title of your grant application"
 						rows={4}
 						showCount
-						testId="application-title"
+						testId="application-title-textarea"
 						value={applicationTitle}
 					/>
 				</div>
@@ -121,7 +125,6 @@ export function ApplicationDetailsStep({
 							analyze these to extract key requirements for your application.
 						</p>
 						<TemplateFileContainer
-							onFileCountChange={onFileCountChange}
 							onFilesChange={setUploadedFiles}
 							templateId={templateId}
 							workspaceId={workspaceId}
