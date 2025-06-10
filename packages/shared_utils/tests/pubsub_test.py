@@ -422,24 +422,24 @@ async def test_pull_notifications_timeout(mock_subscriber_client: Mock) -> None:
 
 def test_pubsub_message_typed_dict() -> None:
     message: PubSubMessage = {
-        "message_id": "test-id",
-        "publish_time": "2023-01-01T00:00:00Z",
+        "messageId": "test-id",
+        "publishTime": "2023-01-01T00:00:00Z",
         "data": "test-data",
         "attributes": {"key": "value"},
     }
-    assert message["message_id"] == "test-id"
+    assert message["messageId"] == "test-id"
 
 
 def test_pubsub_event_typed_dict() -> None:
     event: PubSubEvent = {
         "message": {
-            "message_id": "test-id",
-            "publish_time": "2023-01-01T00:00:00Z",
+            "messageId": "test-id",
+            "publishTime": "2023-01-01T00:00:00Z",
             "data": "test-data",
             "attributes": {"key": "value"},
         }
     }
-    assert event["message"]["message_id"] == "test-id"
+    assert event["message"]["messageId"] == "test-id"
 
 
 def test_crawling_request_typed_dict() -> None:
