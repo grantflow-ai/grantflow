@@ -12,3 +12,8 @@ dependencies = [
   "db",
   "shared-utils[server,ai,embeddings,gcs,nlp,pubsub]",
 ]
+
+[dependency-groups]
+dev = [
+  "shared-utils[server,ai,embeddings,gcs,nlp,pubsub,extraction]",
+]
