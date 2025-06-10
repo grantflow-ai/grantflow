@@ -77,12 +77,12 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 describe("WizardHeader - Application Progress and Information Display", () => {
 	const mockStepTitles = [
 		"Application Details",
-		"Preview and Approve",
+		"Application Structure",
 		"Knowledge Base",
 		"Research Plan",
 		"Research Deep Dive",
 		"Generate and Complete",
-	];
+	] as const;
 
 	describe("Header Info Visibility", () => {
 		it("shows application name and deadline when header info is visible", () => {

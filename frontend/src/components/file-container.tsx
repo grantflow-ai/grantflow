@@ -136,12 +136,7 @@ export function FileContainer({ applicationId, initialFiles = [], workspaceId }:
 
 	return (
 		<div className="space-y-4">
-			<FileUploader
-				currentFileCount={uploadedFiles.length}
-				fieldName="application-files"
-				isDropZone={true}
-				onFilesAdded={handleFilesAdded}
-			/>
+			<FileUploader fieldName="application-files" isDropZone={true} onFilesAdded={handleFilesAdded} />
 
 			{uploadedFiles.length > 0 && <FilesDisplay files={uploadedFiles} onFileRemoved={handleFileRemoved} />}
 
