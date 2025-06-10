@@ -9,11 +9,10 @@ requires-python = "==3.13.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
 
 dependencies = [
-  "aiohttp>=3.11.14",
   "db",
   "firebase-admin>=6.7",
   "pyjwt>=2.10.1",
-  "shared-utils[server,ai,embeddings,gcs,nlp,pubsub]",
+  "shared-utils[server,gcs,pubsub]",
 ]
 
 [dependency-groups]
