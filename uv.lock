@@ -167,11 +167,6 @@ dependencies = [
     { name = "shared-utils", extra = ["gcs", "pubsub", "server"] },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "shared-utils", extra = ["ai", "chunking", "embeddings", "extraction", "gcs", "nlp"] },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "db", editable = "packages/db" },
@@ -179,9 +174,6 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "shared-utils", extras = ["ai", "chunking", "embeddings", "extraction", "gcs", "nlp"], editable = "packages/shared_utils" }]
 
 [[package]]
 name = "beautifulsoup4"
@@ -739,7 +731,7 @@ grpc = [
 
 [[package]]
 name = "google-api-python-client"
-version = "2.171.0"
+version = "2.172.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core" },
@@ -748,9 +740,9 @@ dependencies = [
     { name = "httplib2" },
     { name = "uritemplate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/35/99/237cd2510aecca9fabb54007e58553274cc43cb3c18512ee1ea574d11b87/google_api_python_client-2.171.0.tar.gz", hash = "sha256:057a5c08d28463c6b9eb89746355de5f14b7ed27a65c11fdbf1d06c66bb66b23", size = 13028937, upload-time = "2025-06-03T18:57:38.732Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/69/c0cec6be5878d4de161f64096edb3d4a2d1a838f036b8425ea8358d0dfb3/google_api_python_client-2.172.0.tar.gz", hash = "sha256:dcb3b7e067154b2aa41f1776cf86584a5739c0ac74e6ff46fc665790dca0e6a6", size = 13074841, upload-time = "2025-06-10T16:58:41.181Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/db/c397e3eb3ea18f423855479d0a5852bdc9c3f644e3d4194931fa664a70b4/google_api_python_client-2.171.0-py3-none-any.whl", hash = "sha256:c9c9b76f561e9d9ac14e54a9e2c0842876201d5b96e69e48f967373f0784cbe9", size = 13547393, upload-time = "2025-06-10T02:14:38.225Z" },
+    { url = "https://files.pythonhosted.org/packages/15/fc/8850ccf21c5df43faeaf8bba8c4149ee880b41b8dc7066e3259bcfd921ca/google_api_python_client-2.172.0-py3-none-any.whl", hash = "sha256:9f1b9a268d5dc1228207d246c673d3a09ee211b41a11521d38d9212aeaa43af7", size = 13595800, upload-time = "2025-06-10T16:58:38.143Z" },
 ]
 
 [[package]]
@@ -1206,7 +1198,7 @@ http2 = [
 
 [[package]]
 name = "huggingface-hub"
-version = "0.32.4"
+version = "0.32.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -1218,9 +1210,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/60/c8/4f7d270285c46324fd66f62159eb16739aa5696f422dba57678a8c6b78e9/huggingface_hub-0.32.4.tar.gz", hash = "sha256:f61d45cd338736f59fb0e97550b74c24ee771bcc92c05ae0766b9116abe720be", size = 424494, upload-time = "2025-06-03T09:59:46.105Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/96/179f323578414b6fcc6aa254ecc4d27dc87ded90a271b147c634cf860784/huggingface_hub-0.32.5.tar.gz", hash = "sha256:8328f848218e3212647cec77eab9fdfc2590e8117d979b925439bc01042a20de", size = 425011, upload-time = "2025-06-10T16:03:12.527Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/8b/222140f3cfb6f17b0dd8c4b9a0b36bd4ebefe9fb0098ba35d6960abcda0f/huggingface_hub-0.32.4-py3-none-any.whl", hash = "sha256:37abf8826b38d971f60d3625229221c36e53fe58060286db9baf619cfbf39767", size = 512101, upload-time = "2025-06-03T09:59:44.099Z" },
+    { url = "https://files.pythonhosted.org/packages/45/6e/36c929e105c9ff57a0a792780deaadf2c02f055f65ef96dc9cd597be9f23/huggingface_hub-0.32.5-py3-none-any.whl", hash = "sha256:6df8d5f42034a1b61daac60eed04acf348d337a4bd83aa448d4235cfb003e379", size = 512792, upload-time = "2025-06-10T16:03:10.106Z" },
 ]
 
 [[package]]
@@ -2589,11 +2581,19 @@ dependencies = [
     { name = "shared-utils", extra = ["ai", "embeddings", "gcs", "nlp", "pubsub", "server"] },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "shared-utils", extra = ["ai", "embeddings", "extraction", "gcs", "nlp", "pubsub", "server"] },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "db", editable = "packages/db" },
     { name = "shared-utils", extras = ["server", "ai", "embeddings", "gcs", "nlp", "pubsub"], editable = "packages/shared_utils" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "shared-utils", extras = ["server", "ai", "embeddings", "gcs", "nlp", "pubsub", "extraction"], editable = "packages/shared_utils" }]
 
 [[package]]
 name = "rank-bm25"
