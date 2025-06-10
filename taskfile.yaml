@@ -25,7 +25,7 @@ tasks:
             - pre-commit run --show-diff-on-failure --color=always --all-files
 
     dev:
-        desc: Start all backend services in development mode (database, GCS, Pub/Sub, backend, indexer, crawler)
+        desc: Start all backend services in development mode (database, GCS, Pub/Sub, backend, indexer, crawler, rag)
         cmds:
             - ./scripts/dev-startup.sh
 
@@ -46,6 +46,7 @@ tasks:
             - task: service:backend:test:e2e
             - task: service:indexer:test:e2e
             - task: service:crawler:test:e2e
+            - task: service:rag:test:e2e
 
     generate:api-types:
         desc: Generate TypeScript from backend API
@@ -246,6 +247,26 @@ tasks:
         dotenv: ["services/crawler/.env"]
         cmds:
             - E2E_TESTS=1 PYTHONPATH=. uv run pytest services/crawler/tests -v
+
+    service:rag:dev:
+        desc: Start the RAG service in development mode with hot-reloading
+        deps:
+            - task: db:up
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - PYTHONPATH=. uv run uvicorn services.rag.src.main:app --host 0.0.0.0 --port 8003 --log-level debug --reload --reload-dir services/rag/src
+
+    service:rag:test:
+        desc: Run RAG service tests with detailed output
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - PYTHONPATH=. uv run pytest services/rag/tests -v
+
+    service:rag:test:e2e:
+        desc: Run RAG service end-to-end tests
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH=. uv run pytest services/rag/tests -v
 
     packages:test:
         desc: Run all shared packages tests

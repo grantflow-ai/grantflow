@@ -1,6 +1,5 @@
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 from bs4 import BeautifulSoup, Comment, Tag
 from services.crawler.src.utils import (
     HTML_TAGS_TO_DECOMPOSE,
@@ -119,7 +118,6 @@ def test_sanitize_html_removes_comments() -> None:
     assert not comments
 
 
-@pytest.mark.asyncio
 async def test_download_page_html() -> None:
     mock_response = Mock()
     mock_response.text = "<html><body>Test content</body></html>"
@@ -137,7 +135,6 @@ async def test_download_page_html() -> None:
         assert result == "<html><body>Test content</body></html>"
 
 
-@pytest.mark.asyncio
 async def test_download_file() -> None:
     mock_response = Mock()
     mock_response.content = b"File content bytes"

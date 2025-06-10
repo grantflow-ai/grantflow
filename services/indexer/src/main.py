@@ -151,7 +151,6 @@ async def handle_file_indexing(
                     existing_file = True
                     indexing_status = rag_source.indexing_status
                 else:
-                    # Reprocess FAILED or INDEXING files
                     await session.execute(
                         update(RagSource)
                         .where(RagSource.id == rag_source.id)
@@ -331,15 +330,12 @@ async def handle_file_indexing(
                 )
                 await session.rollback()
 
-        # Re-raise parsing and processing errors for Pub/Sub retry
         if isinstance(e, (FileParsingError, ExternalOperationError)):
             raise
 
-        # For validation errors and other permanent failures, return success (no retry)
         if isinstance(e, ValidationError):
             return
 
-        # For unexpected errors, re-raise to trigger retry
         raise
 
 

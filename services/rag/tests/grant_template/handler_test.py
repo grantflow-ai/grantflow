@@ -312,7 +312,6 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
     assert len(long_form_sections) == 3
 
     for section in long_form_sections:
-        # Type narrowing: sections with "keywords" are GrantLongFormSection
         section = cast("GrantLongFormSection", section)
         assert "keywords" in section
         assert "topics" in section
@@ -681,11 +680,10 @@ def test_format_rag_sources_for_prompt_truncation() -> None:
 
     assert len(result) < len(long_content) + (len(long_chunk) * 20)
     assert "A" * MAX_SOURCE_SIZE in result or "A" * (MAX_SOURCE_SIZE - 3) + "..." in result
-    # The function should only include NUM_CHUNKS chunks (0 through 14)
-    # Check that chunks 0-14 are present
+
     for i in range(NUM_CHUNKS):
         assert f"{i}. " in result
-    # Check that chunk 15 and beyond are not present
+
     assert "15. " not in result
     assert "16. " not in result
 
