@@ -171,28 +171,28 @@ resource "google_pubsub_topic_iam_member" "backend_publisher" {
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-# Source Processing Notifications topic
-resource "google_pubsub_topic" "source_processing_notifications" {
-  name = "source-processing-notifications"
+# Frontend Notifications topic
+resource "google_pubsub_topic" "frontend_notifications" {
+  name = "frontend-notifications"
 
   lifecycle {
     ignore_changes = all
   }
 }
 
-# NOTE: Subscriptions for source-processing-notifications are created dynamically
+# NOTE: Subscriptions for frontend-notifications are created dynamically
 # by the application with parent_id filters. See pubsub.py:ensure_subscription_for_parent_id
 
-# IAM binding to allow services to publish to the source processing notifications topic
-resource "google_pubsub_topic_iam_member" "source_processing_publisher" {
-  topic  = google_pubsub_topic.source_processing_notifications.name
+# IAM binding to allow services to publish to the frontend notifications topic
+resource "google_pubsub_topic_iam_member" "frontend_notifications_publisher" {
+  topic  = google_pubsub_topic.frontend_notifications.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
 # IAM binding to allow backend to create and subscribe to dynamic subscriptions
 resource "google_pubsub_topic_iam_member" "backend_subscriber" {
-  topic  = google_pubsub_topic.source_processing_notifications.name
+  topic  = google_pubsub_topic.frontend_notifications.name
   role   = "roles/pubsub.subscriber"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }

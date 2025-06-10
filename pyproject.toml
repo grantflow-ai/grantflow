@@ -5,12 +5,9 @@ description = "GrantFlow Monorepo"
 readme = "README.md"
 license = { text = "UNLICENSED" }
 
+requires-python = "==3.13.*"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
 
