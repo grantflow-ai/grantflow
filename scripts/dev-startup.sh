@@ -65,17 +65,17 @@ echo -e "${GREEN}✅ Database migrations complete${NC}"
 echo ""
 
 # Seed database (idempotent)
-echo -e "${YELLOW}Seeding database...${NC}"
-task db:seed || {
-    echo -e "${RED}❌ Database seeding failed${NC}"
-    exit 1
-}
-echo -e "${GREEN}✅ Database seeding complete${NC}"
-echo ""
+# echo -e "${YELLOW}Seeding database...${NC}"
+#task db:seed || {
+#    echo -e "${RED}❌ Database seeding failed${NC}"
+#    exit 1
+#}
+#echo -e "${GREEN}✅ Database seeding complete${NC}"
+#echo ""
 
 # Initialize Pub/Sub emulator topics
 echo -e "${YELLOW}Initializing Pub/Sub emulator...${NC}"
-docker-compose --profile services up -d pubsub-emulator || {
+docker compose --profile services up -d pubsub-emulator || {
     echo -e "${RED}❌ Failed to start Pub/Sub emulator${NC}"
     exit 1
 }
@@ -121,7 +121,7 @@ echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
 echo ""
 
 # Start services attached to show logs
-docker-compose --profile services up || {
+docker compose --profile services up || {
     echo -e "${RED}❌ Failed to start services${NC}"
     exit 1
 }

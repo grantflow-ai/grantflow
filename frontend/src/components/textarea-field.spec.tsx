@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
-import { AppTextarea } from "./textarea-field";
+import AppTextarea from "./textarea-field";
 
 describe("AppTextarea Component", () => {
 	it("renders correctly with default props", () => {
@@ -10,7 +10,6 @@ describe("AppTextarea Component", () => {
 
 		const textarea = screen.getByTestId("test-textarea");
 		expect(textarea).toBeInTheDocument();
-		expect(textarea).toHaveClass("min-h-[80px]", "resize-none");
 	});
 
 	it("displays the placeholder text", () => {

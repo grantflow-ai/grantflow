@@ -12,7 +12,7 @@ import { z } from "zod";
 import { login } from "@/actions/login";
 import { AppButton } from "@/components/app-button";
 import { IconGoAhead } from "@/components/icons";
-import { AppInput } from "@/components/input-field";
+import AppInput from "@/components/input-field";
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { LogoDark } from "@/components/logo";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";

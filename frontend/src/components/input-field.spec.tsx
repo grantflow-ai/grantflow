@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { Mail } from "lucide-react";
 import { useState } from "react";
 
-import { AppInput } from "./input-field";
+import AppInput from "./input-field";
 
 describe("AppInput Component", () => {
 	it("renders correctly with default props", () => {

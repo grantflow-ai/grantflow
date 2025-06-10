@@ -10,6 +10,7 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/workspaces/icons";
+import { WizardStepTitlesType } from "@/constants";
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
 	const IconComponent =
@@ -97,7 +98,7 @@ export function WizardHeader({
 	applicationName: string;
 	currentStep: number;
 	showHeaderInfo?: boolean;
-	stepTitles: string[];
+	stepTitles: WizardStepTitlesType;
 }) {
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
@@ -123,7 +124,13 @@ export function WizardHeader({
 	);
 }
 
-function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: number; stepTitles: string[] }) {
+function ApplicationProgressBar({
+	currentStep,
+	stepTitles,
+}: {
+	currentStep: number;
+	stepTitles: WizardStepTitlesType;
+}) {
 	return (
 		<div className="flex justify-center">
 			<div className="flex w-full flex-col items-center px-16" data-testid="step-indicators">

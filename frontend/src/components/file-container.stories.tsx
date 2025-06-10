@@ -17,7 +17,6 @@ type Story = StoryObj<typeof FileContainer>;
 export const MockedDefault: Story = {
 	args: {
 		applicationId: "application-456",
-		maxFileCount: 5,
 		workspaceId: "workspace-123",
 	},
 	name: "UI: Default",
@@ -54,7 +53,6 @@ export const MockedWithInitialFiles: Story = {
 				size: 1024 * 100,
 			},
 		],
-		maxFileCount: 5,
 		workspaceId: "workspace-123",
 	},
 	name: "UI: With Initial Files",
@@ -89,7 +87,6 @@ export const MockedWithLimitReached: Story = {
 				mime_type: "application/pdf",
 				size: 1024 * 50,
 			})),
-		maxFileCount: 5,
 		workspaceId: "workspace-123",
 	},
 	name: "UI: With Limit Reached",
@@ -126,7 +123,6 @@ export const MockedErrorState: Story = {
 export const IntegrationDefault: Story = {
 	args: {
 		applicationId: "application-456",
-		maxFileCount: 5,
 		workspaceId: "workspace-123",
 	},
 	name: "Integration: Default",
@@ -153,7 +149,6 @@ export const IntegrationWithInitialFiles: Story = {
 				size: 1024 * 100,
 			},
 		],
-		maxFileCount: 5,
 		workspaceId: "workspace-123",
 	},
 	name: "Integration: With Initial Files",
