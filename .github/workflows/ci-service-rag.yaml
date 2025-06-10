@@ -1,4 +1,4 @@
-name: Indexer Service CI
+name: Rag Service CI
 
 on:
   pull_request:

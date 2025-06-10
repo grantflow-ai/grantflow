@@ -259,7 +259,7 @@ class GrantTemplate(BaseWithUUIDPK):
     funding_organization: Relationship[FundingOrganization | None] = relationship(
         "FundingOrganization", back_populates="grant_templates"
     )
-    files: Relationship[list["GrantTemplateRagSource"]] = relationship(
+    rag_sources: Relationship[list["GrantTemplateRagSource"]] = relationship(
         "GrantTemplateRagSource", back_populates="grant_template", cascade="all, delete-orphan"
     )
 
@@ -274,5 +274,5 @@ class GrantTemplateRagSource(Base):
         SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), primary_key=True
     )
 
-    grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="files")
+    grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="rag_sources")
     rag_source: Relationship["RagSource"] = relationship("RagSource")

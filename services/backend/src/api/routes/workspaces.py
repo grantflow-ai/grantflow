@@ -12,13 +12,14 @@ from packages.db.src.tables import UserWorkspaceInvitation, Workspace, Workspace
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from services.backend.src.common_types import APIRequest, TableIdResponse
-from services.backend.src.utils.firebase import get_user_by_email
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
+
+from services.backend.src.common_types import APIRequest, TableIdResponse
+from services.backend.src.utils.firebase import get_user_by_email
 
 logger = get_logger(__name__)
 

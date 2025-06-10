@@ -2,6 +2,7 @@ from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import create_litestar_app
+
 from services.backend.src.api.middleware import AuthMiddleware
 from services.backend.src.api.routes.auth import handle_create_otp, handle_login
 from services.backend.src.api.routes.funding_organizations import (
@@ -13,9 +14,10 @@ from services.backend.src.api.routes.funding_organizations import (
 from services.backend.src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
+    handle_generate_application,
     handle_update_application,
-    handle_update_grant_template,
 )
+from services.backend.src.api.routes.grant_template import handle_generate_grant_template, handle_update_grant_template
 from services.backend.src.api.routes.sources import (
     handle_crawl_url,
     handle_create_upload_url,
@@ -51,6 +53,8 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_delete_organization,
     handle_delete_rag_source,
     handle_delete_workspace,
+    handle_generate_application,
+    handle_generate_grant_template,
     handle_login,
     handle_retrieve_organizations,
     handle_retrieve_rag_sources,
