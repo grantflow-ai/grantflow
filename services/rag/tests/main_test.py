@@ -4,10 +4,11 @@ from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
+import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.pubsub import PubSubEvent
+from packages.shared_utils.src.pubsub import PubSubEvent, PubSubMessage
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -15,15 +16,15 @@ from services.rag.src.main import app, handle_pubsub_message
 
 
 def create_pubsub_event(data: dict[str, Any]) -> PubSubEvent:
-    return {
-        "message": {
-            "data": b64encode(json.dumps(data).encode("utf-8")).decode("utf-8"),
-            "messageId": "test-message-id",
-            "publishTime": "2025-01-01T00:00:00Z",
-            "attributes": {},
-        },
-        "subscription": "test-subscription",
-    }
+    return PubSubEvent(
+        message=PubSubMessage(
+            data=b64encode(json.dumps(data).encode("utf-8")).decode("utf-8"),
+            message_id="test-message-id",
+            publish_time="2025-01-01T00:00:00Z",
+            attributes={},
+        ),
+        subscription="test-subscription",
+    )
 
 
 @pytest.fixture
@@ -78,7 +79,7 @@ async def test_handle_rag_request_grant_template(
     mock_grant_application_handler: AsyncMock,
 ) -> None:
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=pubsub_event_grant_template)
+        response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_template))
 
     assert response.status_code == 201
 
@@ -97,7 +98,7 @@ async def test_handle_rag_request_grant_application(
     mock_grant_application_handler: AsyncMock,
 ) -> None:
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=pubsub_event_grant_application)
+        response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_application))
 
     assert response.status_code == 201
 
@@ -113,7 +114,7 @@ async def test_handle_rag_request_invalid_message() -> None:
     invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=invalid_event)
+        response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
     assert response.status_code == 500
     assert "Invalid pubsub message" in response.json()["detail"]
@@ -124,7 +125,7 @@ async def test_handle_rag_request_missing_parent_type() -> None:
     invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=invalid_event)
+        response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
     assert response.status_code == 500
     assert "Invalid pubsub message" in response.json()["detail"]
@@ -135,7 +136,7 @@ async def test_handle_rag_request_missing_parent_id() -> None:
     invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=invalid_event)
+        response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
     assert response.status_code == 500
     assert "Invalid pubsub message" in response.json()["detail"]
@@ -149,7 +150,7 @@ async def test_handle_rag_request_invalid_parent_type() -> None:
     invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=invalid_event)
+        response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
     assert response.status_code == 500
     assert "Invalid pubsub message" in response.json()["detail"]
@@ -163,7 +164,7 @@ async def test_handle_rag_request_handler_error(
     mock_grant_template_handler.side_effect = Exception("Handler error")
 
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=pubsub_event_grant_template)
+        response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_template))
 
     assert response.status_code == 500
 
@@ -171,18 +172,18 @@ async def test_handle_rag_request_handler_error(
 
 
 async def test_handle_rag_request_invalid_base64() -> None:
-    invalid_event: PubSubEvent = {
-        "message": {
-            "data": "invalid-base64!@#",
-            "messageId": "test-message-id",
-            "publishTime": "2025-01-01T00:00:00Z",
-            "attributes": {},
-        },
-        "subscription": "test-subscription",
-    }
+    invalid_event = PubSubEvent(
+        message=PubSubMessage(
+            data="invalid-base64!@#",
+            message_id="test-message-id",
+            publish_time="2025-01-01T00:00:00Z",
+            attributes={},
+        ),
+        subscription="test-subscription",
+    )
 
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=invalid_event)
+        response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
     assert response.status_code == 500
     assert "Invalid pubsub message" in response.json()["detail"]

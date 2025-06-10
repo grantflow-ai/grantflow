@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
+import msgspec
 from google.api_core.exceptions import AlreadyExists
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
@@ -21,17 +22,17 @@ client_ref = Ref[pubsub.PublisherClient]()
 subscriber_client_ref = Ref[pubsub.SubscriberClient]()
 
 
-class PubSubMessage(TypedDict):
-    messageId: str
-    publishTime: str
-    data: NotRequired[str]
-    attributes: NotRequired[dict[str, str]]
-    orderingKey: NotRequired[str]
+class PubSubMessage(msgspec.Struct, rename="camel"):
+    message_id: str
+    publish_time: str
+    data: str | None = None
+    attributes: dict[str, str] | None = None
+    ordering_key: str | None = None
 
 
-class PubSubEvent(TypedDict):
+class PubSubEvent(msgspec.Struct, rename="camel"):
     message: PubSubMessage
-    subscription: NotRequired[str]
+    subscription: str | None = None
 
 
 class CrawlingRequest(TypedDict):

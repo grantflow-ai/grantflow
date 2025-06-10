@@ -66,7 +66,7 @@ class FileIndexingRequest(TypedDict):
 
 
 def get_gcs_notification_data(event: PubSubEvent) -> GCSNotification | None:
-    attributes = event["message"].get("attributes", {})
+    attributes = event.message.attributes or {}
     if any(key not in attributes for key in ("bucketId", "objectId", "eventType")):
         return None
 
@@ -121,8 +121,8 @@ async def handle_pubsub_message(
     raise ValidationError(
         "Invalid pubsub message.",
         context={
-            "message": event["message"],
-            "attributes": event["message"].get("attributes"),
+            "message": event.message,
+            "attributes": event.message.attributes,
         },
     )
 
@@ -330,11 +330,8 @@ async def handle_file_indexing(
                 )
                 await session.rollback()
 
-        if isinstance(e, (FileParsingError, ExternalOperationError)):
+        if isinstance(e, (FileParsingError, ExternalOperationError, ValidationError)):
             raise
-
-        if isinstance(e, ValidationError):
-            return
 
         raise
 
