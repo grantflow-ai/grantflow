@@ -256,11 +256,14 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
 
     message1 = Mock()
     message1.message.data = (
-        b'{"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
+        b'{"type":"data",'
+        b'"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
+        b'"event":"source_processing",'
+        b'"data":{"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
         b'"parent_type":"grant_application",'
         b'"rag_source_id":"323e4567-e89b-12d3-a456-426614174000",'
         b'"indexing_status":"FINISHED",'
-        b'"identifier":"test_file.pdf"}'
+        b'"identifier":"test_file.pdf"}}'
     )
     message1.ack_id = "ack-1"
     message1.ack = Mock()
@@ -268,11 +271,14 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
 
     message2 = Mock()
     message2.message.data = (
-        b'{"parent_id":"999e4567-e89b-12d3-a456-426614174000",'
+        b'{"type":"data",'
+        b'"parent_id":"999e4567-e89b-12d3-a456-426614174000",'
+        b'"event":"source_processing",'
+        b'"data":{"parent_id":"999e4567-e89b-12d3-a456-426614174000",'
         b'"parent_type":"grant_application",'
         b'"rag_source_id":"423e4567-e89b-12d3-a456-426614174000",'
         b'"indexing_status":"FINISHED",'
-        b'"identifier":"other_file.pdf"}'
+        b'"identifier":"other_file.pdf"}}'
     )
     message2.ack_id = "ack-2"
     message2.ack = Mock()
@@ -292,8 +298,11 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
 
         assert len(results) == 2
         assert results[0]["parent_id"] == parent_id
-        assert results[0]["rag_source_id"] == rag_source_id
-        assert results[0]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
+        assert results[0]["type"] == "data"
+        assert results[0]["event"] == "source_processing"
+        assert results[0]["data"]["parent_id"] == parent_id
+        assert results[0]["data"]["rag_source_id"] == rag_source_id
+        assert results[0]["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
 
         # Check that acknowledge was called with both ack_ids
         mock_subscriber_client.acknowledge.assert_called_once()
@@ -311,11 +320,14 @@ async def test_pull_notifications_with_identifier(mock_subscriber_client: Mock) 
 
     message = Mock()
     message.message.data = (
-        b'{"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
+        b'{"type":"data",'
+        b'"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
+        b'"event":"source_processing",'
+        b'"data":{"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
         b'"parent_type":"grant_application",'
         b'"rag_source_id":"323e4567-e89b-12d3-a456-426614174000",'
         b'"indexing_status":"FINISHED",'
-        b'"identifier":"https://example.com/document"}'
+        b'"identifier":"https://example.com/document"}}'
     )
     message.ack_id = "ack-1"
     message.ack = Mock()
@@ -334,7 +346,7 @@ async def test_pull_notifications_with_identifier(mock_subscriber_client: Mock) 
         )
 
         assert len(results) == 1
-        assert results[0]["identifier"] == "https://example.com/document"
+        assert results[0]["data"]["identifier"] == "https://example.com/document"
 
         # Check that acknowledge was called with message's ack_id
         mock_subscriber_client.acknowledge.assert_called_once()

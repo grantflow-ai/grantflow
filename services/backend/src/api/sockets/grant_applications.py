@@ -1,11 +1,12 @@
 import asyncio
 from collections.abc import AsyncGenerator
+from typing import Any
 from uuid import UUID
 
 from litestar import websocket_stream
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import SourceProcessingResult, pull_notifications
+from packages.shared_utils.src.pubsub import WebsocketMessage, pull_notifications
 
 logger = get_logger(__name__)
 
@@ -19,15 +20,15 @@ NOTIFICATION_POLL_INTERVAL = 3.0
 )
 async def handle_grant_application_notifications(
     application_id: UUID,
-) -> AsyncGenerator[SourceProcessingResult]:
+) -> AsyncGenerator[WebsocketMessage[dict[str, Any]]]:
     while True:
         logger.info("Polling for source updates")
-        source_updates = await pull_notifications(
+        messages = await pull_notifications(
             logger=logger,
             parent_id=application_id,
         )
-        logger.debug("Received source updates", source_updates=source_updates)
-        for source_update in source_updates:
-            yield source_update
+        logger.debug("Received messages", messages=messages)
+        for message in messages:
+            yield message
 
         await asyncio.sleep(NOTIFICATION_POLL_INTERVAL)

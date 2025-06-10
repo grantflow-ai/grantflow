@@ -258,6 +258,7 @@ export default eslintTS.config(
 			"**/coverage",
 			"**/.coverage",
 			"**/api-types.ts",
+			"**/storybook-static",
 		],
 	},
 	{

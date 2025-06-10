@@ -6,7 +6,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createApplication, updateApplication } from "@/actions/grant-applications";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationNotifications } from "@/hooks/use-application-notifications";
+import {
+	isSourceProcessingNotificationMessage,
+	useApplicationNotifications,
+} from "@/hooks/use-application-notifications";
 
 import CreateGrantApplicationWizardPage from "./page";
 
@@ -33,6 +36,7 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/hooks/use-application-notifications", () => ({
+	isSourceProcessingNotificationMessage: vi.fn().mockReturnValue(false),
 	useApplicationNotifications: vi.fn().mockReturnValue({
 		connectionStatus: "Open",
 		connectionStatusColor: "bg-green-500",
@@ -318,11 +322,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		const mockNotifications = [
 			{
-				identifier: "document1.pdf",
-				indexing_status: SourceIndexingStatus.INDEXING,
+				data: {
+					identifier: "document1.pdf",
+					indexing_status: SourceIndexingStatus.INDEXING,
+					parent_id: "app-123",
+					parent_type: "grant_application",
+					rag_source_id: "source-1",
+				},
+				event: "source_processing",
 				parent_id: "app-123",
-				parent_type: "grant_application",
-				rag_source_id: "source-1",
+				type: "data" as const,
 			},
 		];
 
@@ -333,6 +342,8 @@ describe("CreateGrantApplicationWizardPage", () => {
 			readyState: 1,
 			sendMessage: vi.fn(),
 		});
+
+		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -351,11 +362,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		const mockNotifications = [
 			{
-				identifier: "document1.pdf",
-				indexing_status: SourceIndexingStatus.FINISHED,
+				data: {
+					identifier: "document1.pdf",
+					indexing_status: SourceIndexingStatus.FINISHED,
+					parent_id: "app-123",
+					parent_type: "grant_application",
+					rag_source_id: "source-1",
+				},
+				event: "source_processing",
 				parent_id: "app-123",
-				parent_type: "grant_application",
-				rag_source_id: "source-1",
+				type: "data" as const,
 			},
 		];
 
@@ -366,6 +382,8 @@ describe("CreateGrantApplicationWizardPage", () => {
 			readyState: 1,
 			sendMessage: vi.fn(),
 		});
+
+		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -384,11 +402,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		const mockNotifications = [
 			{
-				identifier: "document1.pdf",
-				indexing_status: SourceIndexingStatus.FAILED,
+				data: {
+					identifier: "document1.pdf",
+					indexing_status: SourceIndexingStatus.FAILED,
+					parent_id: "app-123",
+					parent_type: "grant_application",
+					rag_source_id: "source-1",
+				},
+				event: "source_processing",
 				parent_id: "app-123",
-				parent_type: "grant_application",
-				rag_source_id: "source-1",
+				type: "data" as const,
 			},
 		];
 
@@ -399,6 +422,8 @@ describe("CreateGrantApplicationWizardPage", () => {
 			readyState: 1,
 			sendMessage: vi.fn(),
 		});
+
+		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
 
 		render(<CreateGrantApplicationWizardPage />);
 

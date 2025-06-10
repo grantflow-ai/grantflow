@@ -1,5 +1,5 @@
 from contextlib import suppress
-from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
@@ -179,7 +179,7 @@ async def pull_notifications(
     *,
     logger: "FilteringBoundLogger",
     parent_id: UUID,
-) -> list[SourceProcessingResult]:
+) -> list[WebsocketMessage[dict[str, Any]]]:
     client = get_subscriber_client()
 
     subscription_path = await ensure_subscription_for_parent_id(parent_id)
@@ -192,16 +192,16 @@ async def pull_notifications(
         },
         timeout=5.0,
     )
-    ret: list[SourceProcessingResult] = []
+    ret: list[WebsocketMessage[dict[str, Any]]] = []
     ack_ids: list[str] = []
 
     for received_message in response.received_messages:
         try:
-            data = deserialize(received_message.message.data, SourceProcessingResult)
-            ret.append(data)
+            message = deserialize(received_message.message.data, WebsocketMessage[dict[str, Any]])
+            ret.append(message)
             ack_ids.append(received_message.ack_id)
         except (DeserializationError, ValueError, KeyError, TypeError) as e:
-            logger.error("Error processing source processing notification", error=str(e))
+            logger.error("Error processing notification", error=str(e))
             ack_ids.append(received_message.ack_id)
 
     if ack_ids:

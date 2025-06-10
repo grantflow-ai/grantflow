@@ -15,8 +15,10 @@ import {
 } from "@/components/workspaces/wizard";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationNotifications } from "@/hooks/use-application-notifications";
-import { logError } from "@/utils/logging";
+import {
+	isSourceProcessingNotificationMessage,
+	useApplicationNotifications,
+} from "@/hooks/use-application-notifications";
 
 const WIZARD_STEP_TITLES = [
 	"Application Details",
@@ -100,37 +102,17 @@ export default function CreateGrantApplicationWizardPage() {
 			return;
 		}
 
-		// Get the latest notification
 		const latestNotification = notifications.at(-1);
 
-		if (!latestNotification) {
-			return;
-		}
-
-		try {
-			// Display notification based on indexing status
-			switch (latestNotification.indexing_status) {
-				case SourceIndexingStatus.FAILED: {
-					toast.error(`Failed to process ${latestNotification.identifier}`);
-					break;
-				}
-				case SourceIndexingStatus.FINISHED: {
-					toast.success(`Successfully processed ${latestNotification.identifier}`);
-					break;
-				}
-				case SourceIndexingStatus.INDEXING: {
-					toast.info(`Processing ${latestNotification.identifier}...`);
-					break;
-				}
-				default: {
-					// This case should never happen with strict typing
-					const exhaustiveCheck: never = latestNotification.indexing_status;
-					toast.info(`Document update: ${latestNotification.identifier}`);
-					void exhaustiveCheck;
-				}
+		if (isSourceProcessingNotificationMessage(latestNotification)) {
+			if (latestNotification.data.indexing_status === SourceIndexingStatus.FAILED) {
+				toast.error(`Failed to process ${latestNotification.data.identifier}`);
+				return;
+			} else if (latestNotification.data.indexing_status === SourceIndexingStatus.FINISHED) {
+				toast.success(`Successfully processed ${latestNotification.data.identifier}`);
+				return;
 			}
-		} catch (error) {
-			logError({ error, identifier: "notification-handler" });
+			toast.info(`Processing ${latestNotification.data.identifier}...`);
 		}
 	}, [notifications]);
 
