@@ -1,6 +1,5 @@
 import base64
-from typing import Any, Literal, TypedDict
-from uuid import UUID
+from typing import Any
 
 from litestar import post
 from packages.shared_utils.src.exceptions import (
@@ -8,7 +7,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import PubSubEvent
+from packages.shared_utils.src.pubsub import PubSubEvent, RagRequest
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -17,11 +16,6 @@ from services.rag.src.grant_application.handler import grant_application_text_ge
 from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
 
 logger = get_logger(__name__)
-
-
-class RagRequest(TypedDict):
-    parent_type: Literal["grant_application", "grant_template"]
-    parent_id: UUID
 
 
 def handle_pubsub_message(message: PubSubEvent) -> RagRequest:
