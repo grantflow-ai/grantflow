@@ -10,6 +10,5 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 
 dependencies = [
   "db",
-  "shared-utils[chunking,embeddings,extraction,gcs,pubsub]",
-  "uvicorn[standard]>=0.34",
+  "shared-utils[server,chunking,embeddings,extraction,gcs,pubsub]",
 ]

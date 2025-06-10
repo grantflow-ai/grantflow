@@ -19,7 +19,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.gcs import construct_object_uri, upload_blob
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, publish_source_processing_message
+from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, SourceProcessingResult, publish_notification
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from services.crawler.src.extraction import crawl_url
@@ -156,13 +156,17 @@ async def handle_url_crawling(
             url=crawling_request["url"],
             indexing_status=indexing_status,
         )
-        await publish_source_processing_message(
+        await publish_notification(
             logger=logger,
             parent_id=parent_id,
-            parent_type=parent_type,
-            rag_source_id=source_id,
-            indexing_status=indexing_status,
-            identifier=crawling_request["url"],
+            event="source_processing",
+            data=SourceProcessingResult(
+                parent_id=parent_id,
+                parent_type=parent_type,
+                rag_source_id=source_id,
+                indexing_status=indexing_status,
+                identifier=crawling_request["url"],
+            ),
         )
         return
 
@@ -212,22 +216,30 @@ async def handle_url_crawling(
                     error_type="DatabaseError" if "connection" in str(e).lower() else "SQLAlchemyError",
                 )
                 await session.rollback()
-                await publish_source_processing_message(
+                await publish_notification(
                     logger=logger,
                     parent_id=parent_id,
-                    parent_type=parent_type,
-                    rag_source_id=source_id,
-                    indexing_status=SourceIndexingStatusEnum.FAILED,
-                    identifier=crawling_request["url"],
+                    event="source_processing",
+                    data=SourceProcessingResult(
+                        parent_id=parent_id,
+                        parent_type=parent_type,
+                        rag_source_id=source_id,
+                        indexing_status=SourceIndexingStatusEnum.FAILED,
+                        identifier=crawling_request["url"],
+                    ),
                 )
 
-        await publish_source_processing_message(
+        await publish_notification(
             logger=logger,
             parent_id=parent_id,
-            parent_type=parent_type,
-            rag_source_id=source_id,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-            identifier=crawling_request["url"],
+            event="source_processing",
+            data=SourceProcessingResult(
+                parent_id=parent_id,
+                parent_type=parent_type,
+                rag_source_id=source_id,
+                indexing_status=SourceIndexingStatusEnum.FINISHED,
+                identifier=crawling_request["url"],
+            ),
         )
     except Exception as e:
         logger.exception(
@@ -254,13 +266,17 @@ async def handle_url_crawling(
                 )
                 await session.rollback()
 
-        await publish_source_processing_message(
+        await publish_notification(
             logger=logger,
             parent_id=parent_id,
-            parent_type=parent_type,
-            rag_source_id=source_id,
-            indexing_status=SourceIndexingStatusEnum.FAILED,
-            identifier=crawling_request["url"],
+            event="source_processing",
+            data=SourceProcessingResult(
+                parent_id=parent_id,
+                parent_type=parent_type,
+                rag_source_id=source_id,
+                indexing_status=SourceIndexingStatusEnum.FAILED,
+                identifier=crawling_request["url"],
+            ),
         )
 
 

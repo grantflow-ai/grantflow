@@ -15,7 +15,6 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 
 dependencies = [
   "anyio>=4.9",
-  "litestar>=2.15.1",
   "msgspec>=0.19",
   "structlog>=25.2",
   "tenacity>=9",
@@ -46,6 +45,11 @@ optional-dependencies.nlp = [
 ]
 optional-dependencies.pubsub = [
   "google-cloud-pubsub>=2.29",
+]
+
+optional-dependencies.server = [
+  "litestar>=2.16",
+  "uvicorn[standard]>=0.34",
 ]
 
 [tool.hatch.build.targets.wheel]

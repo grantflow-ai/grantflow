@@ -1,5 +1,5 @@
 from contextlib import suppress
-from typing import TYPE_CHECKING, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
@@ -45,6 +45,13 @@ class SourceProcessingResult(TypedDict):
     rag_source_id: UUID
     indexing_status: SourceIndexingStatusEnum
     identifier: str
+
+
+class WebsocketMessage[T](TypedDict):
+    type: Literal["info", "error", "data"]
+    parent_id: UUID
+    event: str
+    data: T
 
 
 def get_publisher_client() -> pubsub.PublisherClient:
@@ -106,10 +113,10 @@ async def publish_url_crawling_task(
 async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
     subscriber = get_subscriber_client()
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
-    topic_id = get_env("SOURCE_PROCESSING_NOTIFICATIONS_PUBSUB_TOPIC", fallback="source-processing-notifications")
+    topic_id = get_env("FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications")
     topic_path = subscriber.topic_path(project=project_id, topic=topic_id)
 
-    subscription_id = f"source-processing-notifications-sub-{parent_id}"
+    subscription_id = f"frontend-notifications-sub-{parent_id}"
     subscription_path = subscriber.subscription_path(project=project_id, subscription=subscription_id)
 
     with suppress(AlreadyExists):
@@ -125,31 +132,28 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
     return str(subscription_path)
 
 
-async def publish_source_processing_message(
+async def publish_notification[T](
     *,
     logger: "FilteringBoundLogger",
     parent_id: UUID,
-    parent_type: ParentType,
-    rag_source_id: UUID,
-    indexing_status: SourceIndexingStatusEnum,
-    identifier: str,
+    event: str,
+    data: T,
 ) -> str:
     client = get_publisher_client()
 
-    data = SourceProcessingResult(
-        parent_type=parent_type,
-        parent_id=parent_id,
-        rag_source_id=rag_source_id,
-        indexing_status=indexing_status,
-        identifier=identifier,
-    )
-
     topic_path = client.topic_path(
         project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
-        topic=get_env("SOURCE_PROCESSING_NOTIFICATIONS_PUBSUB_TOPIC", fallback="source-processing-notifications"),
+        topic=get_env("FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"),
     )
     try:
-        message_data = serialize(data)
+        message_data = serialize(
+            WebsocketMessage(
+                event=event,
+                data=data,
+                parent_id=parent_id,
+                type="data",
+            )
+        )
         future = client.publish(
             topic=topic_path,
             data=message_data,
@@ -164,7 +168,6 @@ async def publish_source_processing_message(
         logger.info(
             "Published source processing message",
             message_id=message_id,
-            rag_source_id=str(rag_source_id),
         )
         return str(message_id)
     except MessageTooLargeError as e:
@@ -172,7 +175,7 @@ async def publish_source_processing_message(
         raise BackendError("Error publishing source processing message", context={"error": str(e)}) from e
 
 
-async def pull_source_processing_notifications(
+async def pull_notifications(
     *,
     logger: "FilteringBoundLogger",
     parent_id: UUID,

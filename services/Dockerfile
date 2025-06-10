@@ -1,9 +1,14 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS base
+ENV MODEL_DIR="/app/hf"
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
 FROM base AS model-download
-RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer
-RUN huggingface-cli download sentence-transformers/all-MiniLM-L12-v2
+ARG service_name
+RUN mkdir -p "${MODEL_DIR}"
+RUN if [ "$service_name" = "indexer" ] || [ "$service_name" = "crawler" ] || [ "$service_name" = "backend" ]; then \
+        pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer && \
+        huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir ${MODEL_DIR}; \
+    fi
 
 FROM base AS install
 ARG service_name
@@ -24,7 +29,6 @@ FROM base AS app
 ARG service_name
 WORKDIR /app/
 
-# Install service-specific dependencies
 RUN if [ "$service_name" = "indexer" ]; then \
         apt-get update && apt-get install -y --no-install-recommends \
         pandoc \
@@ -32,11 +36,13 @@ RUN if [ "$service_name" = "indexer" ]; then \
         && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
     fi
 
-COPY --chown=appuser:appuser --from=model-download /root/.cache/huggingface/ /root/.cache/huggingface/
+COPY --chown=appuser:appuser --from=model-download ${MODEL_DIR} ${MODEL_DIR}
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/${service_name}/src/ /app/services/${service_name}/src/
 COPY --chown=appuser:appuser packages /app/packages
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
     APP="services.${service_name}.src.main:app"
+
+USER appuser
 CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --log-level info"]

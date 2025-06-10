@@ -51,8 +51,8 @@ async def application(workspace: Workspace, async_session_maker: async_sessionma
 
 
 @pytest.fixture
-def mock_pull_source_processing_notifications() -> Generator[AsyncMock]:
-    with patch("services.backend.src.api.sockets.grant_applications.pull_source_processing_notifications") as mock:
+def mock_pull_notifications() -> Generator[AsyncMock]:
+    with patch("services.backend.src.api.sockets.grant_applications.pull_notifications") as mock:
         yield mock
 
 
@@ -94,7 +94,7 @@ async def test_handle_grant_application_notifications_success(
     workspace_member_user: WorkspaceUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
-    mock_pull_source_processing_notifications: AsyncMock,
+    mock_pull_notifications: AsyncMock,
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
@@ -113,7 +113,7 @@ async def test_handle_grant_application_notifications_success(
         ),
     ]
 
-    mock_pull_source_processing_notifications.side_effect = [
+    mock_pull_notifications.side_effect = [
         test_notifications,
         [],
     ]
@@ -138,8 +138,8 @@ async def test_handle_grant_application_notifications_success(
         assert notification2["indexing_status"] == "INDEXING"
         assert notification2["identifier"] == "https://example.com/resource"
 
-    assert mock_pull_source_processing_notifications.call_count >= 1
-    call_kwargs = mock_pull_source_processing_notifications.call_args_list[0].kwargs
+    assert mock_pull_notifications.call_count >= 1
+    call_kwargs = mock_pull_notifications.call_args_list[0].kwargs
     assert call_kwargs["parent_id"] == application.id
 
 
@@ -149,7 +149,7 @@ async def test_handle_grant_application_notifications_failed_status(
     workspace_member_user: WorkspaceUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
-    mock_pull_source_processing_notifications: AsyncMock,
+    mock_pull_notifications: AsyncMock,
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
@@ -161,7 +161,7 @@ async def test_handle_grant_application_notifications_failed_status(
         ),
     ]
 
-    mock_pull_source_processing_notifications.side_effect = [
+    mock_pull_notifications.side_effect = [
         test_notifications,
         [],
     ]
@@ -184,9 +184,9 @@ async def test_handle_grant_application_notifications_empty_notifications(
     workspace_member_user: WorkspaceUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
-    mock_pull_source_processing_notifications: AsyncMock,
+    mock_pull_notifications: AsyncMock,
 ) -> None:
-    mock_pull_source_processing_notifications.return_value = []
+    mock_pull_notifications.return_value = []
 
     with (
         sync_test_client as client,
@@ -196,7 +196,7 @@ async def test_handle_grant_application_notifications_empty_notifications(
     ):
         pass
 
-    mock_pull_source_processing_notifications.assert_called()
+    mock_pull_notifications.assert_called()
 
 
 async def test_handle_grant_application_notifications_different_roles(
@@ -205,7 +205,7 @@ async def test_handle_grant_application_notifications_different_roles(
     workspace_admin_user: WorkspaceUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
-    mock_pull_source_processing_notifications: AsyncMock,
+    mock_pull_notifications: AsyncMock,
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
@@ -217,7 +217,7 @@ async def test_handle_grant_application_notifications_different_roles(
         ),
     ]
 
-    mock_pull_source_processing_notifications.side_effect = [
+    mock_pull_notifications.side_effect = [
         test_notifications,
         [],
     ]
@@ -238,7 +238,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
     workspace_member_user: WorkspaceUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
-    mock_pull_source_processing_notifications: AsyncMock,
+    mock_pull_notifications: AsyncMock,
 ) -> None:
     round1 = [
         SourceProcessingResult(
@@ -260,7 +260,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
         ),
     ]
 
-    mock_pull_source_processing_notifications.side_effect = [
+    mock_pull_notifications.side_effect = [
         round1,
         round2,
         [],
@@ -280,4 +280,4 @@ async def test_handle_grant_application_notifications_continuous_updates(
         assert notification2["rag_source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification2["indexing_status"] == "FINISHED"
 
-    assert mock_pull_source_processing_notifications.call_count >= 2
+    assert mock_pull_notifications.call_count >= 2
