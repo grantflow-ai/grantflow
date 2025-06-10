@@ -34,7 +34,7 @@ def main():
             ],
         },
         {
-            "topic": "source-processing-notifications",
+            "topic": "frontend-notifications",
             "subscriptions": [],
         },
     ]

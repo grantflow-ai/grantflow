@@ -77,7 +77,7 @@ Create draft entities early for file uploads. Applications start as "Untitled Ap
 
 Handle duplicates gracefully in consumers. Check existence before insert, use `ON CONFLICT DO NOTHING`, return 200 for processed messages.
 
-**Topics**: `url-crawling`, `source-processing-notifications`, `file-indexing`
+**Topics**: `url-crawling`, `frontend-notifications`, `file-indexing`
 
 ### WebSocket Integration
 

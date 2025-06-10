@@ -13,14 +13,10 @@ dependencies = [
   "db",
   "firebase-admin>=6.7",
   "pyjwt>=2.10.1",
-  "shared-utils[ai,embeddings,gcs,nlp,pubsub]",
-  "uvicorn[standard]>=0.34",
+  "shared-utils[server,ai,embeddings,gcs,nlp,pubsub]",
 ]
 
 [dependency-groups]
 dev = [
   "shared-utils[ai,chunking,embeddings,extraction,gcs,nlp]",
 ]
-
-[tool.codespell]
-skip = "frontend/src/components/onboarding/icons.tsx"

@@ -21,7 +21,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.gcs import download_blob, parse_object_uri
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import PubSubEvent, publish_source_processing_message
+from packages.shared_utils.src.pubsub import PubSubEvent, SourceProcessingResult, publish_notification
 from packages.shared_utils.src.server import create_litestar_app
 from services.indexer.src.processing import process_source
 from sqlalchemy import insert, select, update
@@ -238,13 +238,17 @@ async def handle_file_indexing(
             object_path=object_path,
             indexing_status=indexing_status,
         )
-        await publish_source_processing_message(
+        await publish_notification(
             logger=logger,
             parent_id=UUID(parent_id),
-            parent_type=parent_type,
-            rag_source_id=source_id,
-            indexing_status=indexing_status,
-            identifier=indexing_request["filename"],
+            event="source_processing",
+            data=SourceProcessingResult(
+                parent_id=UUID(parent_id),
+                parent_type=parent_type,
+                rag_source_id=source_id,
+                indexing_status=indexing_status,
+                identifier=indexing_request["filename"],
+            ),
         )
         return
 
@@ -268,13 +272,17 @@ async def handle_file_indexing(
                 await session.commit()
                 logger.info("Successfully indexed file", filename=indexing_request["filename"], source_id=source_id)
 
-                await publish_source_processing_message(
+                await publish_notification(
                     logger=logger,
                     parent_id=UUID(parent_id),
-                    parent_type=parent_type,
-                    rag_source_id=source_id,
-                    indexing_status=SourceIndexingStatusEnum.FINISHED,
-                    identifier=indexing_request["filename"],
+                    event="source_processing",
+                    data=SourceProcessingResult(
+                        parent_id=UUID(parent_id),
+                        parent_type=parent_type,
+                        rag_source_id=source_id,
+                        indexing_status=SourceIndexingStatusEnum.FINISHED,
+                        identifier=indexing_request["filename"],
+                    ),
                 )
             except SQLAlchemyError as e:
                 if "connection" in str(e).lower():
@@ -302,13 +310,17 @@ async def handle_file_indexing(
                     .values(indexing_status=SourceIndexingStatusEnum.FAILED)
                 )
                 await session.commit()
-                await publish_source_processing_message(
+                await publish_notification(
                     logger=logger,
                     parent_id=UUID(parent_id),
-                    parent_type=parent_type,
-                    rag_source_id=source_id,
-                    indexing_status=SourceIndexingStatusEnum.FAILED,
-                    identifier=indexing_request["filename"],
+                    event="source_processing",
+                    data=SourceProcessingResult(
+                        parent_id=UUID(parent_id),
+                        parent_type=parent_type,
+                        rag_source_id=source_id,
+                        indexing_status=SourceIndexingStatusEnum.FAILED,
+                        identifier=indexing_request["filename"],
+                    ),
                 )
             except SQLAlchemyError as sql_error:
                 logger.error(

@@ -5,7 +5,7 @@ from uuid import UUID
 from litestar import websocket_stream
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import SourceProcessingResult, pull_source_processing_notifications
+from packages.shared_utils.src.pubsub import SourceProcessingResult, pull_notifications
 
 logger = get_logger(__name__)
 
@@ -22,7 +22,7 @@ async def handle_grant_application_notifications(
 ) -> AsyncGenerator[SourceProcessingResult]:
     while True:
         logger.info("Polling for source updates")
-        source_updates = await pull_source_processing_notifications(
+        source_updates = await pull_notifications(
             logger=logger,
             parent_id=application_id,
         )

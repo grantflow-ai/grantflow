@@ -68,8 +68,8 @@ def mock_construct_object_uri() -> Generator[Mock]:
 
 
 @pytest.fixture(autouse=True)
-def mock_publish_source_processing_message() -> Generator[AsyncMock]:
-    with patch("services.crawler.src.main.publish_source_processing_message") as mock:
+def mock_publish_notification() -> Generator[AsyncMock]:
+    with patch("services.crawler.src.main.publish_notification") as mock:
         mock.return_value = None
         yield mock
 
@@ -122,7 +122,7 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
     mock_crawl_url: AsyncMock,
     mock_upload_blob: AsyncMock,
     mock_construct_object_uri: Mock,
-    mock_publish_source_processing_message: AsyncMock,
+    mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> None:
@@ -157,13 +157,15 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
 
     assert mock_upload_blob.await_count == 2
 
-    mock_publish_source_processing_message.assert_called_once()
-    call_kwargs = mock_publish_source_processing_message.call_args.kwargs
+    mock_publish_notification.assert_called_once()
+    call_kwargs = mock_publish_notification.call_args.kwargs
     assert call_kwargs["parent_id"] == grant_application.id
-    assert call_kwargs["parent_type"] == "grant_application"
-    assert call_kwargs["rag_source_id"] == source.id
-    assert call_kwargs["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-    assert call_kwargs["identifier"] == "https://example.org/docs"
+    assert call_kwargs["event"] == "source_processing"
+    assert call_kwargs["data"]["parent_id"] == grant_application.id
+    assert call_kwargs["data"]["parent_type"] == "grant_application"
+    assert call_kwargs["data"]["rag_source_id"] == source.id
+    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
+    assert call_kwargs["data"]["identifier"] == "https://example.org/docs"
 
 
 async def test_handle_url_crawling_funding_organization(
@@ -284,7 +286,7 @@ async def test_handle_url_crawling_extraction_error(
     test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    mock_publish_source_processing_message: AsyncMock,
+    mock_publish_notification: AsyncMock,
 ) -> None:
     from packages.shared_utils.src.exceptions import UrlParsingError
 
@@ -306,20 +308,22 @@ async def test_handle_url_crawling_extraction_error(
 
             assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
-        mock_publish_source_processing_message.assert_called_once()
-        call_kwargs = mock_publish_source_processing_message.call_args.kwargs
+        mock_publish_notification.assert_called_once()
+        call_kwargs = mock_publish_notification.call_args.kwargs
         assert call_kwargs["parent_id"] == grant_application.id
-        assert call_kwargs["parent_type"] == "grant_application"
-        assert call_kwargs["rag_source_id"] == source.id
-        assert call_kwargs["indexing_status"] == SourceIndexingStatusEnum.FAILED
-        assert call_kwargs["identifier"] == "https://example.org/docs"
+        assert call_kwargs["event"] == "source_processing"
+        assert call_kwargs["data"]["parent_id"] == grant_application.id
+        assert call_kwargs["data"]["parent_type"] == "grant_application"
+        assert call_kwargs["data"]["rag_source_id"] == source.id
+        assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED
+        assert call_kwargs["data"]["identifier"] == "https://example.org/docs"
 
 
 async def test_handle_url_crawling_network_error(
     test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    mock_publish_source_processing_message: AsyncMock,
+    mock_publish_notification: AsyncMock,
 ) -> None:
     from httpx import ConnectError
 
@@ -341,13 +345,15 @@ async def test_handle_url_crawling_network_error(
 
             assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
-        mock_publish_source_processing_message.assert_called_once()
-        call_kwargs = mock_publish_source_processing_message.call_args.kwargs
+        mock_publish_notification.assert_called_once()
+        call_kwargs = mock_publish_notification.call_args.kwargs
         assert call_kwargs["parent_id"] == grant_application.id
-        assert call_kwargs["parent_type"] == "grant_application"
-        assert call_kwargs["rag_source_id"] == source.id
-        assert call_kwargs["indexing_status"] == SourceIndexingStatusEnum.FAILED
-        assert call_kwargs["identifier"] == "https://example.org/docs"
+        assert call_kwargs["event"] == "source_processing"
+        assert call_kwargs["data"]["parent_id"] == grant_application.id
+        assert call_kwargs["data"]["parent_type"] == "grant_application"
+        assert call_kwargs["data"]["rag_source_id"] == source.id
+        assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED
+        assert call_kwargs["data"]["identifier"] == "https://example.org/docs"
 
 
 async def test_handle_upload_blob_called_with_correct_parameters(
@@ -443,7 +449,7 @@ async def test_handle_url_crawling_skipped_url(
     test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    mock_publish_source_processing_message: AsyncMock,
+    mock_publish_notification: AsyncMock,
 ) -> None:
     pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
@@ -458,14 +464,14 @@ async def test_handle_url_crawling_skipped_url(
         rag_sources = await session.scalars(select(RagSource))
         assert len(list(rag_sources)) == 0
 
-    mock_publish_source_processing_message.assert_not_called()
+    mock_publish_notification.assert_not_called()
 
 
 async def test_handle_url_crawling_existing_url(
     test_client: AsyncTestClient[Any],
     mock_crawl_url: AsyncMock,
     mock_upload_blob: AsyncMock,
-    mock_publish_source_processing_message: AsyncMock,
+    mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> None:
@@ -507,10 +513,12 @@ async def test_handle_url_crawling_existing_url(
     mock_crawl_url.assert_not_called()
     mock_upload_blob.assert_not_called()
 
-    mock_publish_source_processing_message.assert_called_once()
-    call_kwargs = mock_publish_source_processing_message.call_args.kwargs
+    mock_publish_notification.assert_called_once()
+    call_kwargs = mock_publish_notification.call_args.kwargs
     assert call_kwargs["parent_id"] == grant_application.id
-    assert call_kwargs["parent_type"] == "grant_application"
-    assert call_kwargs["rag_source_id"] == source_id
-    assert call_kwargs["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-    assert call_kwargs["identifier"] == "https://example.org/docs"
+    assert call_kwargs["event"] == "source_processing"
+    assert call_kwargs["data"]["parent_id"] == grant_application.id
+    assert call_kwargs["data"]["parent_type"] == "grant_application"
+    assert call_kwargs["data"]["rag_source_id"] == source_id
+    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
+    assert call_kwargs["data"]["identifier"] == "https://example.org/docs"

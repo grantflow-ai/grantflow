@@ -12,11 +12,12 @@ from packages.shared_utils.src.pubsub import (
     PubSubEvent,
     PubSubMessage,
     SourceProcessingResult,
+    WebsocketMessage,
     get_publisher_client,
     get_subscriber_client,
-    publish_source_processing_message,
+    publish_notification,
     publish_url_crawling_task,
-    pull_source_processing_notifications,
+    pull_notifications,
 )
 
 logger = get_logger(__name__)
@@ -145,13 +146,12 @@ async def test_publish_url_crawling_task_with_string_ids(mock_publisher_client: 
 
 
 @pytest.mark.asyncio
-async def test_publish_source_processing_message_success(mock_publisher_client: Mock) -> None:
+async def test_publish_notification_success(mock_publisher_client: Mock) -> None:
     with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         rag_source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
-        result = await publish_source_processing_message(
-            logger=logger,
+        test_data = SourceProcessingResult(
             parent_id=parent_id,
             parent_type="grant_application",
             rag_source_id=rag_source_id,
@@ -159,26 +159,37 @@ async def test_publish_source_processing_message_success(mock_publisher_client: 
             identifier="test_file.pdf",
         )
 
-        assert result == "test-message-id"
-        mock_publisher_client.topic_path.assert_called_once_with(
-            project="grantflow", topic="source-processing-notifications"
+        result = await publish_notification(
+            logger=logger,
+            parent_id=parent_id,
+            event="source_processing",
+            data=test_data,
         )
+
+        assert result == "test-message-id"
+        mock_publisher_client.topic_path.assert_called_once_with(project="grantflow", topic="frontend-notifications")
         mock_publisher_client.publish.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_publish_source_processing_message_with_url_identifier(mock_publisher_client: Mock) -> None:
+async def test_publish_notification_with_url_identifier(mock_publisher_client: Mock) -> None:
     with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         rag_source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
-        result = await publish_source_processing_message(
-            logger=logger,
+        test_data = SourceProcessingResult(
             parent_id=parent_id,
             parent_type="funding_organization",
             rag_source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.INDEXING,
             identifier="https://example.com/guidelines",
+        )
+
+        result = await publish_notification(
+            logger=logger,
+            parent_id=parent_id,
+            event="source_processing",
+            data=test_data,
         )
 
         assert result == "test-message-id"
@@ -188,18 +199,24 @@ async def test_publish_source_processing_message_with_url_identifier(mock_publis
 
 
 @pytest.mark.asyncio
-async def test_publish_source_processing_message_failed_status(mock_publisher_client: Mock) -> None:
+async def test_publish_notification_failed_status(mock_publisher_client: Mock) -> None:
     with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         rag_source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
-        result = await publish_source_processing_message(
-            logger=logger,
+        test_data = SourceProcessingResult(
             parent_id=parent_id,
             parent_type="grant_template",
             rag_source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.FAILED,
             identifier="template.docx",
+        )
+
+        result = await publish_notification(
+            logger=logger,
+            parent_id=parent_id,
+            event="source_processing",
+            data=test_data,
         )
 
         assert result == "test-message-id"
@@ -209,18 +226,24 @@ async def test_publish_source_processing_message_failed_status(mock_publisher_cl
 
 
 @pytest.mark.asyncio
-async def test_publish_source_processing_message_too_large(mock_publisher_client: Mock) -> None:
+async def test_publish_notification_too_large(mock_publisher_client: Mock) -> None:
     mock_publisher_client.publish.side_effect = MessageTooLargeError("Message too large")
 
     with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
         with pytest.raises(BackendError) as exc_info:
-            await publish_source_processing_message(
-                logger=logger,
+            test_data = SourceProcessingResult(
                 parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
                 parent_type="grant_application",
                 rag_source_id=UUID("323e4567-e89b-12d3-a456-426614174000"),
                 indexing_status=SourceIndexingStatusEnum.FINISHED,
                 identifier="document.pdf",
+            )
+
+            await publish_notification(
+                logger=logger,
+                parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+                event="source_processing",
+                data=test_data,
             )
 
         assert "Error publishing source processing message" in str(exc_info.value)
@@ -262,29 +285,23 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
     with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
-        results = await pull_source_processing_notifications(
+        results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
         )
 
-        assert len(results) == 1
+        assert len(results) == 2
         assert results[0]["parent_id"] == parent_id
         assert results[0]["rag_source_id"] == rag_source_id
         assert results[0]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
 
-        # Check that acknowledge was called with message1's ack_id
+        # Check that acknowledge was called with both ack_ids
         mock_subscriber_client.acknowledge.assert_called_once()
         ack_call_args = mock_subscriber_client.acknowledge.call_args[1]
-        assert ack_call_args["request"]["ack_ids"] == ["ack-1"]
-
-        # Check that modify_ack_deadline was called with message2's ack_id
-        mock_subscriber_client.modify_ack_deadline.assert_called_once()
-        nack_call_args = mock_subscriber_client.modify_ack_deadline.call_args[1]
-        assert nack_call_args["request"]["ack_ids"] == ["ack-2"]
-        assert nack_call_args["request"]["ack_deadline_seconds"] == 0
+        assert set(ack_call_args["request"]["ack_ids"]) == {"ack-1", "ack-2"}
 
         mock_subscriber_client.subscription_path.assert_called_once_with(
-            project="grantflow", subscription="source-processing-notifications-sub"
+            project="grantflow", subscription=f"frontend-notifications-sub-{parent_id}"
         )
 
 
@@ -311,7 +328,7 @@ async def test_pull_notifications_with_identifier(mock_subscriber_client: Mock) 
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
     with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
-        results = await pull_source_processing_notifications(
+        results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
         )
@@ -342,18 +359,17 @@ async def test_pull_notifications_invalid_message(mock_subscriber_client: Mock) 
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
     with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
-        results = await pull_source_processing_notifications(
+        results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
         )
 
         assert len(results) == 0
 
-        # Check that modify_ack_deadline was called to nack the invalid message
-        mock_subscriber_client.modify_ack_deadline.assert_called_once()
-        nack_call_args = mock_subscriber_client.modify_ack_deadline.call_args[1]
-        assert nack_call_args["request"]["ack_ids"] == ["ack-invalid"]
-        assert nack_call_args["request"]["ack_deadline_seconds"] == 0
+        # Check that acknowledge was called even for invalid messages (they're still acknowledged)
+        mock_subscriber_client.acknowledge.assert_called_once()
+        ack_call_args = mock_subscriber_client.acknowledge.call_args[1]
+        assert ack_call_args["request"]["ack_ids"] == ["ack-invalid"]
 
 
 @pytest.mark.asyncio
@@ -367,7 +383,7 @@ async def test_pull_notifications_empty_response(mock_subscriber_client: Mock) -
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
     with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
-        results = await pull_source_processing_notifications(
+        results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
         )
@@ -386,7 +402,7 @@ async def test_pull_notifications_timeout(mock_subscriber_client: Mock) -> None:
         patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client),
         pytest.raises(TimeoutError),
     ):
-        await pull_source_processing_notifications(
+        await pull_notifications(
             logger=logger,
             parent_id=parent_id,
         )
@@ -450,3 +466,20 @@ def test_source_processing_result_typed_dict() -> None:
         "identifier": "https://example.com/document",
     }
     assert result_with_url["identifier"] == "https://example.com/document"
+
+
+def test_websocket_message_typed_dict() -> None:
+    test_data: dict[str, str | int] = {
+        "some_field": "value",
+        "another_field": 123,
+    }
+
+    message: WebsocketMessage[dict[str, str | int]] = {
+        "type": "data",
+        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
+        "event": "test_event",
+        "data": test_data,
+    }
+    assert message["type"] == "data"
+    assert message["event"] == "test_event"
+    assert message["data"] == test_data
