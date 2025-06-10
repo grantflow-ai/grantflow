@@ -66,7 +66,7 @@ class FileIndexingRequest(TypedDict):
 
 
 def get_gcs_notification_data(event: PubSubEvent) -> GCSNotification | None:
-    attributes = event["message"]["attributes"]
+    attributes = event["message"].get("attributes", {})
     if any(key not in attributes for key in ("bucketId", "objectId", "eventType")):
         return None
 
@@ -122,7 +122,7 @@ async def handle_pubsub_message(
         "Invalid pubsub message.",
         context={
             "message": event["message"],
-            "attributes": event["message"]["attributes"],
+            "attributes": event["message"].get("attributes"),
         },
     )
 
