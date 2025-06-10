@@ -197,13 +197,13 @@ describe("Grant Application Actions", () => {
 		});
 
 		it("should handle API errors", async () => {
+			const mockResponse = new Response();
 			const mockError = new HTTPError(
-				new Response(),
+				mockResponse,
 				{
-					method: "POST",
-					url: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
-				},
-				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
+					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
+				} as never,
+				{} as never,
 			);
 
 			mockPost.mockRejectedValue(mockError);
