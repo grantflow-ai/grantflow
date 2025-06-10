@@ -148,11 +148,7 @@ export function TemplateFileContainer({
 
 	return (
 		<div data-testid="template-file-container">
-			<FileUploader
-				currentFileCount={uploadedFiles.length}
-				fieldName="template-files"
-				onFilesAdded={handleFilesAdded}
-			/>
+			<FileUploader fieldName="template-files" onFilesAdded={handleFilesAdded} />
 
 			{uploadedFiles.length > 0 && (
 				<div className="mt-4">
