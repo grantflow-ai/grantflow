@@ -34,6 +34,15 @@ def main():
             ],
         },
         {
+            "topic": "rag-processing",
+            "subscriptions": [
+                {
+                    "name": "rag-processing-subscription",
+                    "push_endpoint": "http://rag:8000/",
+                }
+            ],
+        },
+        {
             "topic": "frontend-notifications",
             "subscriptions": [],
         },
