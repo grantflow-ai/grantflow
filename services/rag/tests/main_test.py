@@ -18,8 +18,8 @@ def create_pubsub_event(data: dict[str, Any]) -> PubSubEvent:
     return {
         "message": {
             "data": b64encode(json.dumps(data).encode("utf-8")).decode("utf-8"),
-            "message_id": "test-message-id",
-            "publish_time": "2025-01-01T00:00:00Z",
+            "messageId": "test-message-id",
+            "publishTime": "2025-01-01T00:00:00Z",
             "attributes": {},
         },
         "subscription": "test-subscription",
@@ -175,8 +175,8 @@ async def test_handle_rag_request_invalid_base64() -> None:
     invalid_event: PubSubEvent = {
         "message": {
             "data": "invalid-base64!@#",
-            "message_id": "test-message-id",
-            "publish_time": "2025-01-01T00:00:00Z",
+            "messageId": "test-message-id",
+            "publishTime": "2025-01-01T00:00:00Z",
             "attributes": {},
         },
         "subscription": "test-subscription",

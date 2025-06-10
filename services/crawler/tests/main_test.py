@@ -109,8 +109,8 @@ def create_pubsub_event(
 
     return {
         "message": {
-            "message_id": "test-message-id",
-            "publish_time": "2023-01-01T00:00:00Z",
+            "messageId": "test-message-id",
+            "publishTime": "2023-01-01T00:00:00Z",
             "data": b64encode(json.dumps(message_data).encode("utf-8")).decode("utf-8"),
             "attributes": {},
         }

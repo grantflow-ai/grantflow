@@ -22,14 +22,16 @@ subscriber_client_ref = Ref[pubsub.SubscriberClient]()
 
 
 class PubSubMessage(TypedDict):
-    message_id: str
-    publish_time: str
-    data: str
-    attributes: dict[str, str]
+    messageId: str
+    publishTime: str
+    data: NotRequired[str]
+    attributes: NotRequired[dict[str, str]]
+    orderingKey: NotRequired[str]
 
 
 class PubSubEvent(TypedDict):
     message: PubSubMessage
+    subscription: NotRequired[str]
 
 
 class CrawlingRequest(TypedDict):
