@@ -89,8 +89,8 @@ async def test_get_gcs_notification_data() -> None:
 
     invalid_event: PubSubEvent = {
         "message": {
-            "message_id": "test-message-id",
-            "publish_time": "2023-01-01T00:00:00Z",
+            "messageId": "test-message-id",
+            "publishTime": "2023-01-01T00:00:00Z",
             "data": "",
             "attributes": {},
         }
