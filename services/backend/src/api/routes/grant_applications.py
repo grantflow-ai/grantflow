@@ -1,18 +1,20 @@
-from datetime import date
 from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
 from litestar import delete, patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.enums import ApplicationStatusEnum, UserRoleEnum
-from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
-from packages.db.src.tables import GrantApplication, GrantTemplate
-from packages.shared_utils.src.exceptions import DatabaseError
+from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.json_objects import ResearchObjective
+from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, GrantTemplate, RagSource
+from packages.db.src.utils import retrieve_application
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.pubsub import publish_rag_task
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.sql.functions import count
 
 logger = get_logger(__name__)
 
@@ -31,11 +33,6 @@ class UpdateApplicationRequestBody(TypedDict):
     research_objectives: NotRequired[list[ResearchObjective]]
     status: NotRequired[ApplicationStatusEnum]
     title: NotRequired[str]
-
-
-class UpdateGrantTemplateRequestBody(TypedDict):
-    grant_sections: NotRequired[list[GrantLongFormSection]]
-    submission_date: NotRequired[date]
 
 
 @post(
@@ -117,48 +114,6 @@ async def handle_update_application(
             raise DatabaseError("Error updating application", context=str(e)) from e
 
 
-@patch(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/grant-template",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
-    operation_id="UpdateGrantTemplate",
-)
-async def handle_update_grant_template(
-    workspace_id: UUID,
-    application_id: UUID,
-    data: UpdateGrantTemplateRequestBody,
-    session_maker: async_sessionmaker[Any],
-) -> None:
-    logger.info("Updating grant template", workspace_id=workspace_id, application_id=application_id, data=data)
-
-    async with session_maker() as session, session.begin():
-        try:
-            application = await session.scalar(
-                select(GrantApplication)
-                .where(GrantApplication.id == application_id)
-                .where(GrantApplication.workspace_id == workspace_id)
-            )
-
-            if not application:
-                raise ValidationException("Application not found")
-
-            grant_template = await session.scalar(
-                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
-            )
-
-            if not grant_template:
-                raise ValidationException("Grant template not found")
-
-            await session.execute(update(GrantTemplate).where(GrantTemplate.id == grant_template.id).values(**data))
-            await session.commit()
-        except ValidationException:
-            await session.rollback()
-            raise
-        except SQLAlchemyError as e:
-            await session.rollback()
-            logger.error("Error updating grant template", exc_info=e)
-            raise DatabaseError("Error updating grant template", context=str(e)) from e
-
-
 @delete(
     "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
@@ -175,3 +130,45 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
             await session.rollback()
             logger.error("Error deleting application", exc_info=e)
             raise DatabaseError("Error deleting application", context=str(e)) from e
+
+
+@post(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="GenerateApplication",
+)
+async def handle_generate_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
+    logger.info("Generating application", application_id=application_id)
+
+    application = await retrieve_application(application_id=application_id, session_maker=session_maker)
+
+    if (
+        not application.title
+        or not application.grant_template
+        or not application.grant_template.grant_sections
+        or not application.research_objectives
+    ):
+        raise ValidationException("Insufficient data to generate application.")
+
+    async with session_maker() as session:
+        rag_sources_count = await session.scalar(
+            select(count())
+            .select_from(GrantApplicationRagSource)
+            .join(RagSource)
+            .where(
+                GrantApplicationRagSource.grant_application_id == application.id,
+                RagSource.indexing_status.in_((SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.FINISHED)),
+            )
+        )
+
+        if rag_sources_count == 0:
+            raise ValidationException("No rag sources found for application, cannot generate")
+
+    try:
+        await publish_rag_task(logger=logger, parent_type="grant_application", parent_id=application.id)
+    except BackendError as e:
+        logger.error("Error initiating application generation", exc_info=e)
+        raise
+    except SQLAlchemyError as e:
+        logger.error("Error initiating application generation", exc_info=e)
+        raise DatabaseError("Error initiating application generation", context=str(e)) from e

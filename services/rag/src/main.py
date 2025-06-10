@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 def handle_pubsub_message(message: PubSubEvent) -> RagRequest:
     try:
-        encoded_data = message["message"].get("data")
+        encoded_data = message.message.data
         if not encoded_data:
             raise ValidationError("PubSub message missing data field")
         decoded_data = base64.b64decode(encoded_data).decode()

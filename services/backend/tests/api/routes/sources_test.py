@@ -19,10 +19,11 @@ from packages.db.src.tables import (
     WorkspaceUser,
 )
 from pytest_mock import MockerFixture
-from services.backend.tests.conftest import TestingClientType
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import GrantApplicationFactory
+
+from services.backend.tests.conftest import TestingClientType
 
 if TYPE_CHECKING:
     from services.backend.src.api.routes.sources import UrlCrawlingRequest

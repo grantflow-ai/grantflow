@@ -167,6 +167,26 @@ export namespace API {
 		}
 	}
 
+	export namespace CreateGrantTemplate {
+		export namespace Http201 {
+			export type ResponseBody = undefined;
+		}
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+		export interface PathParameters {
+			application_id: string;
+			grant_template_id: string;
+			workspace_id: string;
+		}
+	}
+
 	export namespace CreateGrantTemplateRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
@@ -395,11 +415,9 @@ export namespace API {
 		}
 	}
 
-	export namespace GenerateOtp {
-		export namespace Http200 {
-			export type ResponseBody = {
-				otp: string;
-			};
+	export namespace GenerateApplication {
+		export namespace Http201 {
+			export type ResponseBody = undefined;
 		}
 
 		export namespace Http400 {
@@ -410,8 +428,17 @@ export namespace API {
 			};
 		}
 
-		export interface QueryParameters {
-			auth: string;
+		export interface PathParameters {
+			application_id: string;
+			workspace_id: string;
+		}
+	}
+
+	export namespace GenerateOtp {
+		export namespace Http200 {
+			export type ResponseBody = {
+				otp: string;
+			};
 		}
 	}
 
@@ -650,6 +677,7 @@ export namespace API {
 
 		export interface PathParameters {
 			application_id: string;
+			grant_template_id: string;
 			workspace_id: string;
 		}
 

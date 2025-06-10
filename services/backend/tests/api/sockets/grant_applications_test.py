@@ -13,9 +13,10 @@ from packages.db.src.tables import (
     WorkspaceUser,
 )
 from packages.shared_utils.src.pubsub import SourceProcessingResult, WebsocketMessage
-from services.backend.src.main import app
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.backend.src.main import app
 
 
 @pytest.fixture

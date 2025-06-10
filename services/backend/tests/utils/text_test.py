@@ -1,4 +1,5 @@
 import pytest
+
 from services.rag.src.utils.text import (
     concatenate_segments_with_spacy_coherence,
     normalize_markdown,

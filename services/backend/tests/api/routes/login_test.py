@@ -4,10 +4,11 @@ from typing import Any
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Workspace, WorkspaceUser
 from pytest_mock import MockerFixture
-from services.backend.src.api.routes.auth import LoginRequestBody
-from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.backend.src.api.routes.auth import LoginRequestBody
+from services.backend.tests.conftest import TestingClientType
 
 
 async def test_login_new_user_creates_workspace(
@@ -17,7 +18,7 @@ async def test_login_new_user_creates_workspace(
     firebase_uid: str,
 ) -> None:
     mocker.patch("jwt.encode", return_value="jwt_token")
-    mocker.patch("src.utils.firebase.verify_id_token", return_value={"uid": firebase_uid})
+    mocker.patch("services.backend.src.utils.firebase.verify_id_token", return_value={"uid": firebase_uid})
 
     response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
     assert response.status_code == HTTPStatus.CREATED
@@ -41,7 +42,7 @@ async def test_login_existing_user_keeps_workspace(
     firebase_uid: str,
 ) -> None:
     mocker.patch("jwt.encode", return_value="jwt_token")
-    mocker.patch("src.utils.firebase.verify_id_token", return_value={"uid": firebase_uid})
+    mocker.patch("services.backend.src.utils.firebase.verify_id_token", return_value={"uid": firebase_uid})
 
     await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
 
