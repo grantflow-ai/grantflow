@@ -9,9 +9,9 @@ from services.backend.src.api.routes.workspaces import (
     WorkspaceBaseResponse,
 )
 from services.backend.src.common_types import TableIdResponse
-from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
-from services.backend.src.rag.grant_template.determine_longform_metadata import SectionMetadata
-from services.backend.src.rag.grant_template.extract_cfp_data import Content
+from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
+from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
+from services.rag.src.grant_template.extract_cfp_data import Content
 from testing.factories import faker
 
 

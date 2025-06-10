@@ -47,6 +47,12 @@ class SourceProcessingResult(TypedDict):
     identifier: str
 
 
+class RagProcessingStatus(TypedDict):
+    event: str
+    message: str
+    data: NotRequired[dict[str, Any]]
+
+
 class WebsocketMessage[T](TypedDict):
     type: Literal["info", "error", "data"]
     parent_id: UUID

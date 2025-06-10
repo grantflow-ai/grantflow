@@ -9,6 +9,7 @@ members = [
     "db",
     "grantflow",
     "indexer",
+    "rag",
     "shared-utils",
 ]
 
@@ -160,11 +161,10 @@ name = "backend"
 version = "0.1.0"
 source = { virtual = "services/backend" }
 dependencies = [
-    { name = "aiohttp" },
     { name = "db" },
     { name = "firebase-admin" },
     { name = "pyjwt" },
-    { name = "shared-utils", extra = ["ai", "embeddings", "gcs", "nlp", "pubsub", "server"] },
+    { name = "shared-utils", extra = ["gcs", "pubsub", "server"] },
 ]
 
 [package.dev-dependencies]
@@ -174,11 +174,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", specifier = ">=3.11.14" },
     { name = "db", editable = "packages/db" },
     { name = "firebase-admin", specifier = ">=6.7" },
     { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "shared-utils", extras = ["server", "ai", "embeddings", "gcs", "nlp", "pubsub"], editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]
 
 [package.metadata.requires-dev]
@@ -2579,6 +2578,21 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/0f/25911a9f080464c59fab9027482f822b86bf0608957a5fcc6eaac85aa515/PyYAML-6.0.2-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:68ccc6023a3400877818152ad9a1033e3db8625d899c72eacb5a668902e4d652", size = 751597, upload-time = "2024-08-06T20:32:56.985Z" },
     { url = "https://files.pythonhosted.org/packages/14/0d/e2c3b43bbce3cf6bd97c840b46088a3031085179e596d4929729d8d68270/PyYAML-6.0.2-cp313-cp313-win32.whl", hash = "sha256:bc2fa7c6b47d6bc618dd7fb02ef6fdedb1090ec036abab80d4681424b84c1183", size = 140527, upload-time = "2024-08-06T20:33:03.001Z" },
     { url = "https://files.pythonhosted.org/packages/fa/de/02b54f42487e3d3c6efb3f89428677074ca7bf43aae402517bc7cca949f3/PyYAML-6.0.2-cp313-cp313-win_amd64.whl", hash = "sha256:8388ee1976c416731879ac16da0aff3f63b286ffdd57cdeb95f3f2e085687563", size = 156446, upload-time = "2024-08-06T20:33:04.33Z" },
+]
+
+[[package]]
+name = "rag"
+version = "0.1.0"
+source = { virtual = "services/rag" }
+dependencies = [
+    { name = "db" },
+    { name = "shared-utils", extra = ["ai", "embeddings", "gcs", "nlp", "pubsub", "server"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "db", editable = "packages/db" },
+    { name = "shared-utils", extras = ["server", "ai", "embeddings", "gcs", "nlp", "pubsub"], editable = "packages/shared_utils" },
 ]
 
 [[package]]

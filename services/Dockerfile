@@ -5,7 +5,7 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuse
 FROM base AS model-download
 ARG service_name
 RUN mkdir -p "${MODEL_DIR}"
-RUN if [ "$service_name" = "indexer" ] || [ "$service_name" = "crawler" ] || [ "$service_name" = "backend" ]; then \
+RUN if [ "$service_name" = "indexer" ] || [ "$service_name" = "crawler" ] || [ "$service_name" = "rag" ]; then \
         pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer && \
         huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir ${MODEL_DIR}; \
     fi

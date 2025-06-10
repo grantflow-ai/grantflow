@@ -1,4 +1,3 @@
-from litestar.events import listener
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.logger import get_logger
@@ -35,8 +34,6 @@ from services.backend.src.api.routes.workspaces import (
     handle_update_workspace,
 )
 from services.backend.src.api.sockets.grant_applications import handle_grant_application_notifications
-from services.backend.src.rag.grant_application.handler import grant_application_text_generation_pipeline_handler
-from services.backend.src.rag.grant_template.handler import grant_template_generation_pipeline_handler
 from services.backend.src.utils.firebase import get_firebase_app
 
 logger = get_logger(__name__)
@@ -68,13 +65,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_accept_invitation,
 ]
 
-grant_template_generation_pipeline_handler_listener = listener("grant_template_generation_pipeline_handler")(
-    grant_template_generation_pipeline_handler
-)
-grant_application_text_generation_pipeline_handler_listener = listener(
-    "grant_application_text_generation_pipeline_handler"
-)(grant_application_text_generation_pipeline_handler)
-
 
 async def before_server_start() -> None:
     get_firebase_app()
@@ -86,8 +76,4 @@ app = create_litestar_app(
     route_handlers=api_routes,
     on_startup=[before_server_start],
     middleware=[AuthMiddleware],
-    listeners=[
-        grant_template_generation_pipeline_handler_listener,
-        grant_application_text_generation_pipeline_handler_listener,
-    ],
 )
