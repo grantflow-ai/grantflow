@@ -80,11 +80,16 @@ describe("useApplicationNotifications", () => {
 		const { useApplicationNotifications } = await import("./use-application-notifications");
 
 		const firstNotification = {
-			identifier: "doc1.pdf",
-			indexing_status: "completed",
+			data: {
+				identifier: "doc1.pdf",
+				indexing_status: "completed",
+				parent_id: "app-123",
+				parent_type: "grant_application",
+				rag_source_id: "source-1",
+			},
+			event: "source_processing",
 			parent_id: "app-123",
-			parent_type: "grant_application",
-			rag_source_id: "source-1",
+			type: "data" as const,
 		};
 
 		mockUseWebSocket.mockReturnValue({
@@ -104,11 +109,16 @@ describe("useApplicationNotifications", () => {
 		expect(result.current.notifications[0]).toEqual(firstNotification);
 
 		const secondNotification = {
-			identifier: "doc2.pdf",
-			indexing_status: "processing",
+			data: {
+				identifier: "doc2.pdf",
+				indexing_status: "processing",
+				parent_id: "app-123",
+				parent_type: "grant_application",
+				rag_source_id: "source-2",
+			},
+			event: "source_processing",
 			parent_id: "app-123",
-			parent_type: "grant_application",
-			rag_source_id: "source-2",
+			type: "data" as const,
 		};
 
 		mockUseWebSocket.mockReturnValue({

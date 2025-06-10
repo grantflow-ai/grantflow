@@ -24,6 +24,6 @@ async def batched_gather[T](
     batch_size: int,
 ) -> list[T]:
     ret: list[T] = []
-    for batch in batched(coroutines, batch_size, strict=True):
+    for batch in batched(coroutines, batch_size, strict=False):
         ret.extend(await gather(*batch))
     return ret
