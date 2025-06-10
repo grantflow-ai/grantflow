@@ -525,7 +525,7 @@ async def test_handle_file_indexing_file_parsing_error(
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=pubsub_event)
-    # FileParsingError should be re-raised for Pub/Sub retry
+
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     async with async_session_maker() as session:
@@ -554,7 +554,7 @@ async def test_handle_file_indexing_retry_failed_file(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     """Test that failed files are reprocessed on retry."""
-    # First, create a failed file record
+
     object_path = f"workspace/ws-123/grant_application/{grant_application.id}/failed.pdf"
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -596,13 +596,11 @@ async def test_handle_file_indexing_retry_failed_file(
         "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
     }
 
-    # The mock_process_source fixture has a side_effect that returns "Test extracted content"
     pubsub_event = create_pubsub_event(object_path)
 
     response = await test_client.post("/", json=pubsub_event)
     assert response.status_code == HTTPStatus.CREATED
 
-    # Verify the file was reprocessed and marked as finished
     async with async_session_maker() as session:
         rag_source = await session.get(RagSource, source_id)
         assert rag_source is not None

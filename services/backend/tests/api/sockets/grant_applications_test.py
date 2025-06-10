@@ -113,7 +113,6 @@ async def test_handle_grant_application_notifications_success(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
@@ -180,7 +179,6 @@ async def test_handle_grant_application_notifications_failed_status(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
@@ -250,7 +248,6 @@ async def test_handle_grant_application_notifications_different_roles(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
@@ -307,7 +304,6 @@ async def test_handle_grant_application_notifications_continuous_updates(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_round1 = [
         WebsocketMessage(
             type="data",

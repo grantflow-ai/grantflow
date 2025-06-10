@@ -24,17 +24,14 @@ async def test_handle_generate_grant_template_melanoma_alliance(
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
-    # Create a test grant template
     template_id = str(uuid4())
 
-    # Create RAG sources from the CFP file
     source_ids = await create_rag_sources_from_cfp_file(
         cfp_file_name="melanoma_alliance.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
     )
 
-    # Extract CFP data from RAG sources
     result = await handle_extract_cfp_data_from_rag_sources(
         source_ids=source_ids,
         organization_mapping=organization_mapping,
@@ -70,17 +67,14 @@ async def test_handle_generate_grant_template_standard_aware(
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
-    # Create a test grant template
     template_id = str(uuid4())
 
-    # Create RAG sources from the CFP file
     source_ids = await create_rag_sources_from_cfp_file(
         cfp_file_name="standard_awards.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
     )
 
-    # Extract CFP data from RAG sources
     result = await handle_extract_cfp_data_from_rag_sources(
         source_ids=source_ids,
         organization_mapping=organization_mapping,
@@ -116,17 +110,14 @@ async def test_handle_generate_grant_template_nih(
     organization_mapping: dict[str, dict[str, str]],
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create a test grant template
     template_id = str(uuid4())
 
-    # Create RAG sources from the CFP file
     source_ids = await create_rag_sources_from_cfp_file(
         cfp_file_name="nih.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
     )
 
-    # Extract CFP data from RAG sources
     result = await handle_extract_cfp_data_from_rag_sources(
         source_ids=source_ids,
         organization_mapping=organization_mapping,
@@ -164,17 +155,14 @@ async def test_handle_generate_grant_template_ics(
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
-    # Create a test grant template
     template_id = str(uuid4())
 
-    # Create RAG sources from the CFP file
     source_ids = await create_rag_sources_from_cfp_file(
         cfp_file_name="ics.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
     )
 
-    # Extract CFP data from RAG sources
     result = await handle_extract_cfp_data_from_rag_sources(
         source_ids=source_ids,
         organization_mapping=organization_mapping,
@@ -210,17 +198,14 @@ async def test_handle_generate_grant_template_erc(
     erc_organization: FundingOrganization,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create a test grant template
     template_id = str(uuid4())
 
-    # Create RAG sources from the CFP file
     source_ids = await create_rag_sources_from_cfp_file(
         cfp_file_name="erc.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
     )
 
-    # Extract CFP data from RAG sources
     result = await handle_extract_cfp_data_from_rag_sources(
         source_ids=source_ids,
         organization_mapping=organization_mapping,
@@ -262,17 +247,14 @@ async def test_handle_generate_grant_template(
     organization_mapping: dict[str, dict[str, str]],
     source_file_name: str,
 ) -> None:
-    # Create a test grant template
     template_id = str(uuid4())
 
-    # Create RAG sources from the CFP file
     source_ids = await create_rag_sources_from_cfp_file(
         cfp_file_name=f"{source_file_name}.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
     )
 
-    # Extract CFP data from RAG sources
     result = await handle_extract_cfp_data_from_rag_sources(
         source_ids=source_ids,
         organization_mapping=organization_mapping,

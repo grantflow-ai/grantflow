@@ -59,7 +59,6 @@ async def test_extract_cfp_data_multi_source(
         execution_time = (datetime.now(UTC) - start_time).total_seconds()
         logger.info("Extraction completed in %.2f seconds", execution_time)
 
-        # Add validation assertions like the first test
         assert isinstance(extraction_result["organization_id"], (str | type(None))), (
             "organization_id should be a string or None"
         )
