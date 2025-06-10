@@ -40,7 +40,6 @@ export default function CreateGrantApplicationWizardPage() {
 	const [currentStep, setCurrentStep] = useState<number>(INITIAL_STEP);
 	const [applicationTitle, setApplicationTitle] = useState("");
 	const [urls, setUrls] = useState<string[]>([]);
-	const [fileCount, setFileCount] = useState(0);
 	const [applicationId, setApplicationId] = useState<null | string>(null);
 	const [templateId, setTemplateId] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(true);
@@ -117,7 +116,7 @@ export default function CreateGrantApplicationWizardPage() {
 	}, [notifications]);
 
 	// Validation logic for step 1
-	const isStep1Valid = applicationTitle.trim().length > 0 && (urls.length > 0 || fileCount > 0);
+	const isStep1Valid = applicationTitle.trim().length > 0 && urls.length > 0;
 
 	// Determine if the current step is valid
 	const isCurrentStepValid = () => {
@@ -148,10 +147,8 @@ export default function CreateGrantApplicationWizardPage() {
 			applicationTitle={applicationTitle}
 			connectionStatus={connectionStatus}
 			connectionStatusColor={connectionStatusColor}
-			fileCount={fileCount}
 			key={0}
 			onApplicationTitleChange={setApplicationTitle}
-			onFileCountChange={setFileCount}
 			onUrlsChange={setUrls}
 			templateId={templateId ?? ""}
 			urls={urls}

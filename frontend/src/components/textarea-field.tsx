@@ -14,7 +14,7 @@ export default function AppTextArea({
 	label,
 	maxCount,
 	showCount = false,
-	testId,
+	testId = "test-textarea",
 	variant = "default",
 	...props
 }: {
