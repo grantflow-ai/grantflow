@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
-export function AppInput({
+export default function AppInput({
 	className,
 	countType = "chars",
 	errorMessage,
