@@ -120,13 +120,13 @@ describe("Grant Template Actions", () => {
 
 	describe("error handling", () => {
 		it("should propagate API errors", async () => {
+			const mockResponse = new Response();
 			const mockError = new HTTPError(
-				new Response(),
+				mockResponse,
 				{
-					method: "POST",
-					url: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
-				},
-				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+				} as any,
+				{} as any,
 			);
 
 			mockPost.mockRejectedValue(mockError);
@@ -137,13 +137,13 @@ describe("Grant Template Actions", () => {
 		});
 
 		it("should handle API errors for update operations", async () => {
+			const mockResponse = new Response();
 			const mockError = new HTTPError(
-				new Response(),
+				mockResponse,
 				{
-					method: "PATCH",
-					url: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
-				},
-				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+				} as any,
+				{} as any,
 			);
 
 			mockPatch.mockRejectedValue(mockError);
