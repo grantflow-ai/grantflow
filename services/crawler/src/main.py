@@ -34,7 +34,9 @@ logger = get_logger(__name__)
 
 async def decode_pubsub_message(event: PubSubEvent) -> CrawlingRequest:
     try:
-        encoded_data = event["message"]["data"]
+        encoded_data = event["message"].get("data")
+        if not encoded_data:
+            raise ValidationError("PubSub message missing data field")
         decoded_data = base64.b64decode(encoded_data).decode()
         return deserialize(decoded_data, CrawlingRequest)
     except DeserializationError as e:

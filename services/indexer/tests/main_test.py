@@ -67,8 +67,8 @@ def mock_publish_notification() -> Generator[AsyncMock]:
 def create_pubsub_event(object_path: str, event_type: str = "OBJECT_FINALIZE") -> PubSubEvent:
     return {
         "message": {
-            "message_id": "test-message-id",
-            "publish_time": "2023-01-01T00:00:00Z",
+            "messageId": "test-message-id",
+            "publishTime": "2023-01-01T00:00:00Z",
             "data": "",
             "attributes": {
                 "bucketId": "test-bucket",
