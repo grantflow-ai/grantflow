@@ -150,22 +150,6 @@ export function ApplicationDetailsStep({
 							type="url"
 							value={urlInput}
 						/>
-						{/* <div className="space-y-2">
-							<Label htmlFor="url-input">URL</Label>
-							<div className="relative">
-								<Input
-									id="url-input"
-									onChange={(e) => {
-										setUrlInput(e.target.value);
-									}}
-									onKeyDown={handleAddUrl}
-									placeholder="Paste a link and press Enter to add"
-									type="url"
-									value={urlInput}
-								/>
-								<Link className="text-muted-foreground pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2" />
-							</div>
-						</div> */}
 
 						{urls.length > 0 && (
 							<div className="space-y-2">
