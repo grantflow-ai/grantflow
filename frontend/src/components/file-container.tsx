@@ -13,18 +13,12 @@ import { FilesDisplay } from "./files-display";
 interface FileContainerProps {
 	applicationId: string;
 	initialFiles?: Extract<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[number], { filename: string }>[];
-	maxFileCount?: number;
 	workspaceId: string;
 }
 
 type FileWithId = { id?: string } & File;
 
-export function FileContainer({
-	applicationId,
-	initialFiles = [],
-	maxFileCount = 10,
-	workspaceId,
-}: FileContainerProps) {
+export function FileContainer({ applicationId, initialFiles = [], workspaceId }: FileContainerProps) {
 	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
 
@@ -146,7 +140,6 @@ export function FileContainer({
 				currentFileCount={uploadedFiles.length}
 				fieldName="application-files"
 				isDropZone={true}
-				maxFileCount={maxFileCount}
 				onFilesAdded={handleFilesAdded}
 			/>
 

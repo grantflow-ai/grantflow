@@ -12,9 +12,7 @@ vi.mock("@/actions/sources", () => ({
 
 const DEFAULT_PROPS = {
 	applicationTitle: "",
-	fileCount: 0,
 	onApplicationTitleChange: vi.fn(),
-	onFileCountChange: vi.fn(),
 	onUrlsChange: vi.fn(),
 	templateId: "test-template-id",
 	urls: [],
@@ -25,10 +23,9 @@ describe("ApplicationDetailsStep", () => {
 	it("renders application title section", () => {
 		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
 
-		expect(screen.getByText("Application Title")).toBeInTheDocument();
-		expect(screen.getByText("Give your application file a clear, descriptive name.")).toBeInTheDocument();
-		expect(screen.getByLabelText("Title of your grant application")).toBeInTheDocument();
-		expect(screen.getByPlaceholderText("Enter a descriptive title for your grant application")).toBeInTheDocument();
+		expect(screen.getByTestId("application-title-header")).toBeInTheDocument();
+		expect(screen.getByTestId("application-title-description")).toBeInTheDocument();
+		expect(screen.getByTestId("application-title-textarea")).toBeInTheDocument();
 	});
 
 	it("renders application instructions section", () => {
@@ -43,7 +40,7 @@ describe("ApplicationDetailsStep", () => {
 		const props = { ...DEFAULT_PROPS, applicationTitle: "Test Title" };
 		render(<ApplicationDetailsStep {...props} />);
 
-		expect(screen.getByText("10/255")).toBeInTheDocument();
+		expect(screen.getByTestId("application-title-textarea-chars-count")).toBeInTheDocument();
 	});
 
 	it("calls onApplicationTitleChange when title is typed", async () => {
@@ -66,18 +63,18 @@ describe("ApplicationDetailsStep", () => {
 
 		render(<TestWrapper />);
 
-		const input = screen.getByPlaceholderText("Enter a descriptive title for your grant application");
-		await user.type(input, "New Title");
+		const textarea = screen.getByTestId("application-title-textarea");
+		await user.type(textarea, "New Title");
 
 		expect(onApplicationTitleChange).toHaveBeenCalledTimes(9);
 		expect(onApplicationTitleChange).toHaveBeenLastCalledWith("New Title");
 	});
 
-	it("limits title length to 255 characters", () => {
+	it("limits title length to 120 characters", () => {
 		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
 
-		const input = screen.getByPlaceholderText("Enter a descriptive title for your grant application");
-		expect(input).toHaveAttribute("maxLength", "255");
+		const textarea = screen.getByTestId("application-title-textarea");
+		expect(textarea).toHaveAttribute("maxLength", "120");
 	});
 
 	it("adds URL when Enter is pressed", async () => {

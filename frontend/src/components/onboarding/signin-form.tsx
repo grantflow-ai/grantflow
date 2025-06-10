@@ -3,7 +3,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { IconGoAhead } from "@/components/icons";
-import { AppInput } from "@/components/input-field";
+import AppInput from "@/components/input-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
