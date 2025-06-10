@@ -14,20 +14,12 @@ import {
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
+import { WIZARD_STEP_TITLES } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
-
-export const WIZARD_STEP_TITLES = [
-	"Application Details",
-	"Application Structure",
-	"Knowledge Base",
-	"Research Plan",
-	"Research Deep Dive",
-	"Generate and Complete",
-] as const;
 
 const DEBOUNCE_DELAY_MS = 500;
 const INITIAL_STEP = 0;
