@@ -38,6 +38,7 @@ MISSING_ENV_FILES=()
 [ -f "services/backend/.env" ] || MISSING_ENV_FILES+=("services/backend/.env")
 [ -f "services/indexer/.env" ] || MISSING_ENV_FILES+=("services/indexer/.env")
 [ -f "services/crawler/.env" ] || MISSING_ENV_FILES+=("services/crawler/.env")
+[ -f "services/rag/.env" ] || MISSING_ENV_FILES+=("services/rag/.env")
 
 if [ ${#MISSING_ENV_FILES[@]} -ne 0 ]; then
     echo -e "${RED}❌ Missing .env files:${NC}"
@@ -113,6 +114,7 @@ echo "  - Backend API: http://localhost:8000"
 echo "  - Backend API Docs: http://localhost:8000/schema/swagger"
 echo "  - Indexer: http://localhost:8001"
 echo "  - Crawler: http://localhost:8002"
+echo "  - RAG: http://localhost:8003"
 echo "  - GCS Emulator: http://localhost:4443"
 echo "  - Pub/Sub Emulator: http://localhost:8085"
 echo ""
