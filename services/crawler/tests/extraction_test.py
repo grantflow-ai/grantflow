@@ -118,7 +118,6 @@ def mock_chunk_text() -> Generator[Mock]:
         yield mock
 
 
-@pytest.mark.asyncio
 async def test_create_vector_dto() -> None:
     chunk: Chunk = {"content": "Test content", "metadata": {"source": "test-source"}}  # type: ignore
     rag_source_id = "test-source-id"
@@ -133,7 +132,6 @@ async def test_create_vector_dto() -> None:
         assert result["rag_source_id"] == rag_source_id
 
 
-@pytest.mark.asyncio
 async def test_create_vector_dto_error() -> None:
     chunk: Chunk = {"content": "Test content", "metadata": {"source": "test-source"}}  # type: ignore
     rag_source_id = "test-source-id"
@@ -145,7 +143,6 @@ async def test_create_vector_dto_error() -> None:
             await create_vector_dto(chunk=chunk, rag_source_id=rag_source_id)
 
 
-@pytest.mark.asyncio
 async def test_prepare_url_data_new_url() -> None:
     url = "https://example.org/test"
 
@@ -159,7 +156,6 @@ async def test_prepare_url_data_new_url() -> None:
         mock_download.assert_called_once_with(url)
 
 
-@pytest.mark.asyncio
 async def test_prepare_url_data_with_existing_html() -> None:
     url = "https://example.org/test"
     html = "<html>Existing HTML</html>"
@@ -173,7 +169,6 @@ async def test_prepare_url_data_with_existing_html() -> None:
         mock_download.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_prepare_url_data_network_error() -> None:
     url = "https://example.org/test"
 
@@ -208,7 +203,6 @@ def test_extract_links() -> None:
     assert "https://example.org/page" in normal_links
 
 
-@pytest.mark.asyncio
 async def test_extract_and_process_content() -> None:
     url = "https://example.org/test"
     html = "<html><body><h1>Test</h1><p>Content</p></body></html>"
@@ -233,7 +227,6 @@ async def test_extract_and_process_content() -> None:
         assert embeddings == [[0.1, 0.2, 0.3]]
 
 
-@pytest.mark.asyncio
 async def test_extract_and_process_content_with_existing_data() -> None:
     url = "https://example.org/test"
     html = "<html><body><h1>Test</h1><p>Content</p></body></html>"
@@ -258,7 +251,6 @@ async def test_extract_and_process_content_with_existing_data() -> None:
         assert embeddings == existing_embeddings
 
 
-@pytest.mark.asyncio
 async def test_save_page_content(temp_dir: Path) -> None:
     url = "https://example.org/test-page"
     content = "# Test Content\n\nThis is test content."
@@ -270,7 +262,6 @@ async def test_save_page_content(temp_dir: Path) -> None:
     assert await path.read_text() == content
 
 
-@pytest.mark.asyncio
 async def test_download_documents(temp_dir: Path) -> None:
     doc_links = {"https://example.org/doc1.pdf", "https://example.org/doc2.docx"}
 
@@ -290,7 +281,6 @@ async def test_download_documents(temp_dir: Path) -> None:
         assert await result["https://example.org/doc2.docx"].read_bytes() == b"Test file content"
 
 
-@pytest.mark.asyncio
 async def test_download_documents_with_existing(temp_dir: Path) -> None:
     doc_links = {"https://example.org/doc1.pdf", "https://example.org/doc2.docx"}
     existing_downloads = {"https://example.org/doc1.pdf": temp_dir / "existing.pdf"}
@@ -313,7 +303,6 @@ async def test_download_documents_with_existing(temp_dir: Path) -> None:
         mock_download.assert_called_once_with("https://example.org/doc2.docx")
 
 
-@pytest.mark.asyncio
 async def test_find_relevant_links() -> None:
     normal_links = {"https://example.org/page1", "https://example.org/page2"}
     embeddings = [[0.1, 0.2, 0.3]]
@@ -341,7 +330,6 @@ async def test_find_relevant_links() -> None:
         assert text == "Extracted content"
 
 
-@pytest.mark.asyncio
 async def test_crawl_basic(
     temp_dir: Path,
     mock_url: str,
@@ -365,7 +353,6 @@ async def test_crawl_basic(
         assert "test-page" in result["saved_path"]
 
 
-@pytest.mark.asyncio
 async def test_crawl_url_integration(temp_dir: Path) -> None:
     await (temp_dir / "test1.pdf").write_bytes(b"content1")
     await (temp_dir / "test2.docx").write_bytes(b"content2")

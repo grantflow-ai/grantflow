@@ -275,13 +275,13 @@ def ensure_directory(directory: Path) -> None:
 
 
 # TODO: This function needs to be updated to use the new RAG-based grant_template_generation_pipeline_handler
-# which requires grant_template_id and session_maker instead of cfp_content, application_id, and message_handler
+
 async def ensure_grant_template(
     application_id: str, cfp_content_file: Path, data_fixture_folder: Path, async_session_maker: async_sessionmaker[Any]
 ) -> None:
     grant_template_file = data_fixture_folder / "grant_template.json"
     if not grant_template_file.exists():
-        # Old API call - needs update
+
         raise NotImplementedError(
             "This function needs to be updated to use the new RAG-based grant_template_generation_pipeline_handler"
         )

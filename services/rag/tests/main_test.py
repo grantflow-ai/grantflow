@@ -115,7 +115,6 @@ async def test_handle_rag_request_invalid_message() -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=invalid_event)
 
-    # ValidationError results in 500 when raised from the handler
     assert response.status_code == 500
     assert "Invalid pubsub message" in response.json()["detail"]
 
@@ -167,7 +166,7 @@ async def test_handle_rag_request_handler_error(
         response = await client.post("/", json=pubsub_event_grant_template)
 
     assert response.status_code == 500
-    # Generic internal server error from Litestar
+
     assert response.json()["detail"] == "Internal Server Error"
 
 

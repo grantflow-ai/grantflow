@@ -24,15 +24,12 @@ async def create_rag_sources_from_cfp_file(
 
     cfp_content = (FIXTURES_FOLDER / "cfps" / cfp_file_name).read_text()
 
-    # Create a RagFile source
     source = RagFileFactory.build(
         text_content=cfp_content,
         source_type="rag_file",
         mime_type="text/markdown",
     )
 
-    # Create text vectors (chunks) for the source
-    # For simplicity, we'll create a few chunks from the content
     chunk_size = 1000
     chunks = []
     for i in range(0, len(cfp_content), chunk_size):
@@ -45,7 +42,6 @@ async def create_rag_sources_from_cfp_file(
         session.add_all(chunks)
         await session.commit()
 
-        # Link source to grant template
         template_source = GrantTemplateSourceFactory.build(
             grant_template_id=grant_template_id,
             rag_source_id=source.id,
