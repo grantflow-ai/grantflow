@@ -300,8 +300,8 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         assert results[0]["parent_id"] == parent_id
         assert results[0]["type"] == "data"
         assert results[0]["event"] == "source_processing"
-        assert results[0]["data"]["parent_id"] == parent_id
-        assert results[0]["data"]["rag_source_id"] == rag_source_id
+        assert results[0]["data"]["parent_id"] == str(parent_id)
+        assert results[0]["data"]["rag_source_id"] == str(rag_source_id)
         assert results[0]["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
 
         # Check that acknowledge was called with both ack_ids
