@@ -167,6 +167,11 @@ dependencies = [
     { name = "shared-utils", extra = ["gcs", "pubsub", "server"] },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "shared-utils", extra = ["ai", "embeddings", "extraction", "gcs", "pubsub", "server"] },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "db", editable = "packages/db" },
@@ -174,6 +179,9 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "shared-utils", extras = ["server", "gcs", "pubsub", "ai", "embeddings", "extraction"], editable = "packages/shared_utils" }]
 
 [[package]]
 name = "beautifulsoup4"
