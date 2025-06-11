@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 import pytest
 from litestar import Litestar
 from litestar.testing import AsyncTestClient
-from packages.shared_utils.src.ai import init_ref
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.utils.firebase import firebase_app_ref
@@ -36,8 +35,6 @@ async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGene
     firebase_uid = "a" * 128
 
     firebase_app_ref.value = Mock()
-
-    init_ref.value = True
 
     with (
         patch("services.backend.src.main.before_server_start"),

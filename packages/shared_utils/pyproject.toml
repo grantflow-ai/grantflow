@@ -52,6 +52,11 @@ optional-dependencies.server = [
   "uvicorn[standard]>=0.34",
 ]
 
+[dependency-groups]
+dev = [
+  "db",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = [ "src" ]
 
