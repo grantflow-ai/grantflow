@@ -7,12 +7,6 @@ from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import UserWorkspaceInvitation, Workspace, WorkspaceUser
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
-from services.backend.src.api.routes.workspaces import (
-    CreateInvitationRedirectUrlRequestBody,
-    UpdateWorkspaceRequestBody,
-)
-from services.backend.tests.conftest import TestingClientType
-from services.backend.tests.factories import CreateWorkspaceRequestBodyFactory
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -20,6 +14,13 @@ from testing.factories import (
     GrantApplicationFactory,
     WorkspaceFactory,
 )
+
+from services.backend.src.api.routes.workspaces import (
+    CreateInvitationRedirectUrlRequestBody,
+    UpdateWorkspaceRequestBody,
+)
+from services.backend.tests.conftest import TestingClientType
+from services.backend.tests.factories import CreateWorkspaceRequestBodyFactory
 
 
 async def test_create_workspace_success(

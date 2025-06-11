@@ -98,9 +98,7 @@ def filter_url(url: str) -> bool:
     parsed = urlparse(url)
     domain = parsed.netloc.lower()
 
-    # Skip social media
     if domain in SKIP_DOMAINS:
         return True
 
-    # Skip non-HTTP protocols
     return parsed.scheme not in {"http", "https"}

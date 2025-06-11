@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID, uuid4
 
+import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
 from packages.db.src.constants import RAG_URL
@@ -20,7 +21,7 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent
+from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, PubSubMessage
 from packages.shared_utils.src.shared_types import ParentType
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -107,14 +108,14 @@ def create_pubsub_event(
     if workspace_id:
         message_data["workspace_id"] = str(workspace_id)
 
-    return {
-        "message": {
-            "message_id": "test-message-id",
-            "publish_time": "2023-01-01T00:00:00Z",
-            "data": b64encode(json.dumps(message_data).encode("utf-8")).decode("utf-8"),
-            "attributes": {},
-        }
-    }
+    return PubSubEvent(
+        message=PubSubMessage(
+            message_id="test-message-id",
+            publish_time="2023-01-01T00:00:00Z",
+            data=b64encode(json.dumps(message_data).encode("utf-8")).decode("utf-8"),
+            attributes={},
+        )
+    )
 
 
 async def test_handle_url_crawling_pubsub_event_grant_application(
@@ -133,7 +134,7 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -181,7 +182,7 @@ async def test_handle_url_crawling_funding_organization(
         parent_type="funding_organization",
     )
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -215,7 +216,7 @@ async def test_handle_url_crawling_grant_template(
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -259,7 +260,7 @@ async def test_handle_url_crawling_no_files_returned(
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=pubsub_event)
+        response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
         assert response.status_code == HTTPStatus.CREATED, response.text
 
         mock_upload_blob.assert_not_called()
@@ -278,7 +279,7 @@ async def test_handle_url_crawling_database_error(
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=pubsub_event)
+        response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
@@ -298,7 +299,7 @@ async def test_handle_url_crawling_extraction_error(
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=pubsub_event)
+        response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
         assert response.status_code == HTTPStatus.CREATED
 
         async with async_session_maker() as session:
@@ -335,7 +336,7 @@ async def test_handle_url_crawling_network_error(
             parent_type="grant_application",
         )
 
-        response = await test_client.post("/", json=pubsub_event)
+        response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
         assert response.status_code == HTTPStatus.CREATED
 
         async with async_session_maker() as session:
@@ -369,7 +370,7 @@ async def test_handle_upload_blob_called_with_correct_parameters(
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED
 
     assert mock_construct_object_uri.call_count == 2
@@ -402,7 +403,7 @@ async def test_decode_pubsub_message(
             url="https://example.com/test",
         )
 
-        response = await test_client.post("/", json=pubsub_event)
+        response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
         assert response.status_code == HTTPStatus.CREATED
 
         mock_decode.assert_called_once()
@@ -421,7 +422,7 @@ async def test_invalid_pubsub_message(
     }
 
     response = await test_client.post("/", json=invalid_event)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 async def test_pubsub_message_missing_required_fields(
@@ -441,8 +442,8 @@ async def test_pubsub_message_missing_required_fields(
         }
     }
 
-    response = await test_client.post("/", json=pubsub_event)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 async def test_handle_url_crawling_skipped_url(
@@ -457,7 +458,7 @@ async def test_handle_url_crawling_skipped_url(
         url="https://x.com/NIHFunding",
     )
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED
 
     async with async_session_maker() as session:
@@ -507,7 +508,7 @@ async def test_handle_url_crawling_existing_url(
         workspace_id=workspace_id,
     )
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     mock_crawl_url.assert_not_called()

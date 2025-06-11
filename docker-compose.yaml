@@ -97,7 +97,6 @@ services:
                 - "linux/x86_64" # needed due to spaCy build issues on Mac linux
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             PYTHONPATH: .
             DEBUG: "True"
@@ -159,9 +158,7 @@ services:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-            GCS_BUCKET_NAME: grantflow-uploads
             DEBUG: "True"
         env_file:
             - ./services/crawler/.env
@@ -171,6 +168,35 @@ services:
             - ./services/crawler:/app/services/crawler:cached
             - ./packages:/app/packages:cached
         command: "uvicorn services.crawler.src.main:app --host 0.0.0.0 --log-level info --reload"
+        depends_on:
+            db:
+                condition: service_healthy
+            pubsub-emulator:
+                condition: service_healthy
+
+    rag:
+        profiles:
+            - all
+            - services
+            - rag
+        build:
+            args:
+                service_name: rag
+            dockerfile: ./services/Dockerfile
+        environment:
+            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+            GOOGLE_CLOUD_PROJECT: grantflow
+            GOOGLE_CLOUD_REGION: us-central1
+            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+            DEBUG: "True"
+        env_file:
+            - ./services/rag/.env
+        ports:
+            - "8003:8000"
+        volumes:
+            - ./services/rag:/app/services/rag:cached
+            - ./packages:/app/packages:cached
+        command: "uvicorn services.rag.src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
             db:
                 condition: service_healthy

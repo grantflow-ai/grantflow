@@ -66,7 +66,7 @@ class FileIndexingRequest(TypedDict):
 
 
 def get_gcs_notification_data(event: PubSubEvent) -> GCSNotification | None:
-    attributes = event["message"]["attributes"]
+    attributes = event.message.attributes or {}
     if any(key not in attributes for key in ("bucketId", "objectId", "eventType")):
         return None
 
@@ -121,8 +121,8 @@ async def handle_pubsub_message(
     raise ValidationError(
         "Invalid pubsub message.",
         context={
-            "message": event["message"],
-            "attributes": event["message"]["attributes"],
+            "message": event.message,
+            "attributes": event.message.attributes,
         },
     )
 
@@ -151,7 +151,6 @@ async def handle_file_indexing(
                     existing_file = True
                     indexing_status = rag_source.indexing_status
                 else:
-                    # Reprocess FAILED or INDEXING files
                     await session.execute(
                         update(RagSource)
                         .where(RagSource.id == rag_source.id)
@@ -331,15 +330,9 @@ async def handle_file_indexing(
                 )
                 await session.rollback()
 
-        # Re-raise parsing and processing errors for Pub/Sub retry
-        if isinstance(e, (FileParsingError, ExternalOperationError)):
+        if isinstance(e, (FileParsingError, ExternalOperationError, ValidationError)):
             raise
 
-        # For validation errors and other permanent failures, return success (no retry)
-        if isinstance(e, ValidationError):
-            return
-
-        # For unexpected errors, re-raise to trigger retry
         raise
 
 
