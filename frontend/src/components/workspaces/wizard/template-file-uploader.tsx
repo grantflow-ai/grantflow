@@ -4,51 +4,61 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { createTemplateSourceUploadUrl } from "@/actions/sources";
-import { FileUploader } from "@/components/file-uploader";
-import { FilesDisplay } from "@/components/files-display";
-import { API } from "@/types/api-types";
+import { AppButton } from "@/components/app-button";
+import { IconUpload } from "@/components/workspaces/icons";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
+import { formatBytes } from "@/utils/format";
 import { logError } from "@/utils/logging";
 
 type FileWithId = { id: string } & File;
 
-export function TemplateFileContainer({
-	initialFiles = [],
+const FILE_ACCEPTS = {
+	"application/csv": [".csv"],
+	"application/latex": [".latex"],
+	"application/pdf": [".pdf"],
+	"application/rtf": [".rtf"],
+	"application/vnd.oasis.opendocument.text": [".odt"],
+	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+	"text/csv": [".csv"],
+	"text/latex": [".latex"],
+	"text/markdown": [".md"],
+	"text/plain": [".txt"],
+	"text/rst": [".rst"],
+	"text/rtf": [".rtf"],
+};
+
+const FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
+
+export function TemplateFileUploader({
 	onFilesChange,
 	templateId,
 	workspaceId,
 }: {
-	initialFiles?: Extract<API.RetrieveGrantTemplateRagSources.Http200.ResponseBody[number], { filename: string }>[];
 	onFilesChange?: (files: FileWithId[]) => void;
 	templateId: string;
 	workspaceId: string;
 }) {
 	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
-	const [isUploading, setIsUploading] = useState(false);
-
-	useEffect(() => {
-		if (initialFiles.length > 0 && uploadedFiles.length === 0) {
-			const files = initialFiles.map((serverFile) => {
-				const file = new File([], serverFile.filename, { type: serverFile.mime_type });
-
-				Object.defineProperty(file, "size", {
-					value: serverFile.size,
-					writable: false,
-				});
-
-				const fileWithId = file as FileWithId;
-				fileWithId.id = serverFile.id;
-
-				return fileWithId;
-			});
-
-			setUploadedFiles(files);
-		}
-	}, [initialFiles, uploadedFiles.length]);
 
 	useEffect(() => {
 		onFilesChange?.(uploadedFiles);
 	}, [uploadedFiles, onFilesChange]);
+
+	const validateFileUploads = useCallback((newFileUploads: File[]) => {
+		for (const file of newFileUploads) {
+			if (file.size > MAX_FILE_SIZE_BYTES) {
+				toast.error([
+					`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE_BYTES)}`,
+				]);
+				return false;
+			}
+		}
+
+		return true;
+	}, []);
 
 	const handleUploadFile = useCallback(
 		async (file: File) => {
@@ -111,58 +121,39 @@ export function TemplateFileContainer({
 
 	const handleFilesAdded = useCallback(
 		async (newFiles: File[]) => {
-			setIsUploading(true);
+			if (!validateFileUploads(newFiles)) {
+				return;
+			}
 
 			try {
 				await Promise.all(newFiles.map(handleUploadFile));
 			} catch (error) {
 				logError({ error, identifier: "handleFilesAdded" });
 				toast.error("Failed to upload file. Please try again.");
-			} finally {
-				setIsUploading(false);
 			}
 		},
-		[handleUploadFile],
-	);
-
-	const handleFileRemoved = useCallback(
-		async (fileToRemove: File) => {
-			try {
-				const file = uploadedFiles.find((f) => f.name === fileToRemove.name);
-
-				if (!file) {
-					return;
-				}
-
-				// if (file.id) {
-				// 	await deleteTemplateSource(workspaceId, templateId, file.id);
-				// }
-				await new Promise(() => {
-					/* */
-				});
-
-				setUploadedFiles((prev) => prev.filter((f) => f.name !== fileToRemove.name));
-
-				toast.success(`File ${fileToRemove.name} removed`);
-			} catch {
-				toast.error("Failed to remove file. Please try again.");
-			}
-		},
-		// [workspaceId, templateId, uploadedFiles],
-		[uploadedFiles],
+		[handleUploadFile, validateFileUploads],
 	);
 
 	return (
-		<div data-testid="template-file-container">
-			<FileUploader fieldName="template-files" onFilesAdded={handleFilesAdded} />
-
-			{uploadedFiles.length > 0 && (
-				<div className="mt-4">
-					<FilesDisplay files={uploadedFiles} onFileRemoved={handleFileRemoved} />
-				</div>
-			)}
-
-			{isUploading && <div className="text-muted-foreground-dark text-center text-sm">Uploading files...</div>}
+		<div className="relative">
+			<input
+				accept={Object.keys(FILE_ACCEPTS).join(", ")}
+				className="sr-only"
+				data-testid="file-input"
+				id="file-upload-template-files"
+				multiple={true}
+				onChange={(e) => {
+					if (e.target.files) {
+						void handleFilesAdded([...e.target.files]);
+					}
+					e.target.value = "";
+				}}
+				type="file"
+			/>
+			<AppButton data-testid="upload-files-button" leftIcon={<IconUpload />} variant="secondary">
+				<label htmlFor="file-upload-template-files">Upload Documents</label>
+			</AppButton>
 		</div>
 	);
 }

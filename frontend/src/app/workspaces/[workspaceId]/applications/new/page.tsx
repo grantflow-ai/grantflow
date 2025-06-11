@@ -13,6 +13,7 @@ import {
 	ResearchDeepDiveStep,
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
+import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { WIZARD_STEP_TITLES } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
@@ -32,6 +33,7 @@ export default function CreateGrantApplicationWizardPage() {
 	const [currentStep, setCurrentStep] = useState<number>(INITIAL_STEP);
 	const [applicationTitle, setApplicationTitle] = useState("");
 	const [urls, setUrls] = useState<string[]>([]);
+	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
 	const [applicationId, setApplicationId] = useState<null | string>(null);
 	const [templateId, setTemplateId] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(true);
@@ -105,7 +107,7 @@ export default function CreateGrantApplicationWizardPage() {
 	}, [notifications]);
 
 	// Validation logic for step 1
-	const isStep1Valid = applicationTitle.trim().length > 0 && urls.length > 0;
+	const isStep1Valid = applicationTitle.trim().length > 0 && (urls.length > 0 || uploadedFiles.length > 0);
 
 	// Determine if the current step is valid
 	const isCurrentStepValid = () => {
@@ -138,8 +140,10 @@ export default function CreateGrantApplicationWizardPage() {
 			connectionStatusColor={connectionStatusColor}
 			key={0}
 			onApplicationTitleChange={setApplicationTitle}
+			onUploadedFilesChange={setUploadedFiles}
 			onUrlsChange={setUrls}
 			templateId={templateId ?? ""}
+			uploadedFiles={uploadedFiles}
 			urls={urls}
 			workspaceId={params.workspaceId}
 		/>,
