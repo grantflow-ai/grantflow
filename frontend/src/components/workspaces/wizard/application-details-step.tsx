@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { toast } from "sonner";
 
-import { crawlTemplateUrl } from "@/actions/sources";
-import AppInput from "@/components/input-field";
 import AppTextArea from "@/components/textarea-field";
-import { IconGlobe } from "@/components/workspaces/icons";
 import { logError } from "@/utils/logging";
 
 import { ApplicationPreview, FileWithId } from "./application-preview";
-import { TemplateFileContainer } from "./template-file-container";
+import { TemplateFileUploader } from "./template-file-uploader";
+import { UrlInput } from "./url-input";
 
 const TITLE_MAX_LENGTH = 120;
 
@@ -19,8 +17,10 @@ interface ApplicationDetailsStepProps {
 	connectionStatus?: string;
 	connectionStatusColor?: string;
 	onApplicationTitleChange: (value: string) => void;
+	onUploadedFilesChange: (files: FileWithId[]) => void;
 	onUrlsChange: (urls: string[]) => void;
 	templateId: string;
+	uploadedFiles: FileWithId[];
 	urls: string[];
 	workspaceId: string;
 }
@@ -30,34 +30,13 @@ export function ApplicationDetailsStep({
 	connectionStatus,
 	connectionStatusColor,
 	onApplicationTitleChange,
+	onUploadedFilesChange,
 	onUrlsChange,
 	templateId,
+	uploadedFiles,
 	urls,
 	workspaceId,
 }: ApplicationDetailsStepProps) {
-	const [urlInput, setUrlInput] = useState("");
-	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
-
-	const handleAddUrl = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter" && urlInput.trim()) {
-			e.preventDefault();
-			const trimmedUrl = urlInput.trim();
-
-			if (!urls.includes(trimmedUrl)) {
-				try {
-					const result = await crawlTemplateUrl(workspaceId, templateId, trimmedUrl);
-					toast.success(result.message || "URL added successfully");
-
-					onUrlsChange([...urls, trimmedUrl]);
-				} catch (error) {
-					logError({ error, identifier: "crawlTemplateUrl" });
-					toast.error("Failed to process URL. Please try again.");
-				}
-			}
-			setUrlInput("");
-		}
-	};
-
 	const handleRemoveUrl = (urlToRemove: string) => {
 		onUrlsChange(urls.filter((url) => url !== urlToRemove));
 	};
@@ -70,19 +49,19 @@ export function ApplicationDetailsStep({
 			}
 
 			try {
-				// await deleteTemplateSource(workspaceId, templateId, file.id);
+				// TODO: await deleteTemplateSource(workspaceId, templateId, file.id);
 				await new Promise(() => {
 					/* */
 				});
-				setUploadedFiles((prev) => prev.filter((f) => f.name !== fileToRemove.name));
+				onUploadedFilesChange(uploadedFiles.filter((f) => f.name !== fileToRemove.name));
 				toast.success(`File ${fileToRemove.name} removed`);
 			} catch (error) {
 				logError({ error, identifier: "deleteTemplateSource" });
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		// [workspaceId, templateId],
-		[],
+		// TODO: [workspaceId, templateId],
+		[uploadedFiles, onUploadedFilesChange],
 	);
 
 	return (
@@ -129,8 +108,8 @@ export function ApplicationDetailsStep({
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileContainer
-							onFilesChange={setUploadedFiles}
+						<TemplateFileUploader
+							onFilesChange={onUploadedFilesChange}
 							templateId={templateId}
 							workspaceId={workspaceId}
 						/>
@@ -143,40 +122,12 @@ export function ApplicationDetailsStep({
 							understand the funding requirements.
 						</p>
 
-						<AppInput
-							icon={<IconGlobe />}
-							id="url-input"
-							label="URL"
-							onChange={(e) => {
-								setUrlInput(e.target.value);
-							}}
-							onKeyDown={handleAddUrl}
-							placeholder="Paste a link and press Enter to add"
-							type="url"
-							value={urlInput}
+						<UrlInput
+							onUrlsChange={onUrlsChange}
+							templateId={templateId}
+							urls={urls}
+							workspaceId={workspaceId}
 						/>
-
-						{urls.length > 0 && (
-							<div className="space-y-2">
-								{urls.map((url, index) => (
-									<div
-										className="flex items-center justify-between rounded-md border p-2 text-sm"
-										key={index}
-									>
-										<span className="truncate">{url}</span>
-										<button
-											className="text-muted-foreground hover:text-foreground ml-2"
-											onClick={() => {
-												handleRemoveUrl(url);
-											}}
-											type="button"
-										>
-											×
-										</button>
-									</div>
-								))}
-							</div>
-						)}
 					</div>
 				</div>
 			</div>
