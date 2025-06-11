@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
+import msgspec
 from google.api_core.exceptions import AlreadyExists
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
@@ -21,15 +22,17 @@ client_ref = Ref[pubsub.PublisherClient]()
 subscriber_client_ref = Ref[pubsub.SubscriberClient]()
 
 
-class PubSubMessage(TypedDict):
+class PubSubMessage(msgspec.Struct, rename="camel"):
     message_id: str
     publish_time: str
-    data: str
-    attributes: dict[str, str]
+    data: str | None = None
+    attributes: dict[str, str] | None = None
+    ordering_key: str | None = None
 
 
-class PubSubEvent(TypedDict):
+class PubSubEvent(msgspec.Struct, rename="camel"):
     message: PubSubMessage
+    subscription: str | None = None
 
 
 class CrawlingRequest(TypedDict):
@@ -45,6 +48,17 @@ class SourceProcessingResult(TypedDict):
     rag_source_id: UUID
     indexing_status: SourceIndexingStatusEnum
     identifier: str
+
+
+class RagProcessingStatus(TypedDict):
+    event: str
+    message: str
+    data: NotRequired[dict[str, Any]]
+
+
+class RagRequest(TypedDict):
+    parent_type: Literal["grant_application", "grant_template"]
+    parent_id: UUID
 
 
 class WebsocketMessage[T](TypedDict):
@@ -108,6 +122,39 @@ async def publish_url_crawling_task(
     except MessageTooLargeError as e:
         logger.error("Error publishing URL crawling message", error=str(e))
         raise BackendError("Error publishing URL crawling message", context={"error": str(e)}) from e
+
+
+async def publish_rag_task(
+    *,
+    logger: "FilteringBoundLogger",
+    parent_type: Literal["grant_application", "grant_template"],
+    parent_id: str | UUID,
+) -> str:
+    client = get_publisher_client()
+
+    data = RagRequest(
+        parent_type=parent_type,
+        parent_id=UUID(str(parent_id)),
+    )
+
+    try:
+        message_data = serialize(data)
+        topic_path = client.topic_path(
+            project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
+            topic=get_env("RAG_PROCESSING_PUBSUB_TOPIC", fallback="rag-processing"),
+        )
+        future = client.publish(topic=topic_path, data=message_data)
+        message_id = await run_sync(future.result)
+        logger.info(
+            "Published message to process RAG",
+            message_id=message_id,
+            parent_type=parent_type,
+            parent_id=str(parent_id),
+        )
+        return str(message_id)
+    except MessageTooLargeError as e:
+        logger.error("Error publishing RAG processing message", error=str(e))
+        raise BackendError("Error publishing RAG processing message", context={"error": str(e)}) from e
 
 
 async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:

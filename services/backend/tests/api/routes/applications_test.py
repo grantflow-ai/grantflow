@@ -1,6 +1,6 @@
-from datetime import date
 from http import HTTPStatus
 from typing import Any
+from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
 from packages.db.src.enums import ApplicationStatusEnum
@@ -9,9 +9,10 @@ from packages.db.src.tables import (
     GrantTemplate,
     Workspace,
 )
-from services.backend.tests.conftest import TestingClientType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.backend.tests.conftest import TestingClientType
 
 
 async def test_create_application_success(
@@ -114,110 +115,6 @@ async def test_update_application_not_found(
     assert "Application not found" in response.text
 
 
-async def test_update_grant_template_success(
-    test_client: TestingClientType,
-    workspace: Workspace,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        grant_template = GrantTemplate(
-            grant_application_id=grant_application.id,
-            grant_sections=[
-                {
-                    "id": "existing_section",
-                    "order": 1,
-                    "title": "Existing Section",
-                    "parent_id": None,
-                }
-            ],
-        )
-        session.add(grant_template)
-        await session.commit()
-
-    update_data = {
-        "grant_sections": [
-            {
-                "id": "section1",
-                "order": 1,
-                "title": "Introduction",
-                "parent_id": None,
-                "depends_on": [],
-                "generation_instructions": "Write an introduction",
-                "is_clinical_trial": False,
-                "is_detailed_workplan": False,
-                "keywords": ["intro", "background"],
-                "max_words": 500,
-                "search_queries": ["introduction research"],
-                "topics": ["research background"],
-            }
-        ],
-        "submission_date": "2024-12-31",
-    }
-
-    response = await test_client.patch(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template",
-        json=update_data,
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-
-    async with async_session_maker() as session:
-        updated_template = await session.scalar(
-            select(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id)
-        )
-        assert updated_template is not None
-        assert len(updated_template.grant_sections) == 1
-        section = updated_template.grant_sections[0]
-        assert section["title"] == "Introduction"
-        assert section["id"] == "section1"
-        assert section["order"] == 1
-        assert section["depends_on"] == []
-        assert section["generation_instructions"] == "Write an introduction"
-        assert section["is_clinical_trial"] is False
-        assert section["is_detailed_workplan"] is False
-        assert section["keywords"] == ["intro", "background"]
-        assert section["max_words"] == 500
-        assert section["search_queries"] == ["introduction research"]
-        assert section["topics"] == ["research background"]
-        assert updated_template.submission_date == date(2024, 12, 31)
-
-
-async def test_update_grant_template_not_found(
-    test_client: TestingClientType,
-    workspace: Workspace,
-    grant_application: GrantApplication,
-    workspace_member_user: None,
-) -> None:
-    response = await test_client.patch(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template",
-        json={"submission_date": "2024-12-31"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "Grant template not found" in response.text
-
-
-async def test_update_grant_template_application_not_found(
-    test_client: TestingClientType,
-    workspace: Workspace,
-    workspace_member_user: None,
-) -> None:
-    non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
-
-    response = await test_client.patch(
-        f"/workspaces/{workspace.id}/applications/{non_existent_id}/grant-template",
-        json={"submission_date": "2024-12-31"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "Application not found" in response.text
-
-
 async def test_delete_application_success(
     test_client: TestingClientType,
     workspace: Workspace,
@@ -250,3 +147,161 @@ async def test_delete_application_unauthorized(
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+
+
+@patch("services.backend.src.api.routes.grant_applications.publish_rag_task", new_callable=AsyncMock)
+async def test_generate_application_success(
+    mock_publish_rag_task: AsyncMock,
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
+) -> None:
+    # Set up the application with required data
+    async with async_session_maker() as session, session.begin():
+        from packages.db.src.enums import SourceIndexingStatusEnum
+        from packages.db.src.tables import GrantApplicationRagSource, RagFile
+
+        # Update application with research objectives
+        grant_application.research_objectives = [
+            {
+                "number": 1,
+                "title": "Research Objective 1",
+                "description": "Description of objective 1",
+                "research_tasks": [
+                    {
+                        "number": 1,
+                        "title": "Research Task 1",
+                        "description": "Task description",
+                    }
+                ],
+            }
+        ]
+        session.add(grant_application)
+
+        # Create grant template with sections
+        grant_template = GrantTemplate(
+            grant_application_id=grant_application.id,
+            grant_sections=[
+                {
+                    "id": "section1",
+                    "order": 1,
+                    "title": "Introduction",
+                    "parent_id": None,
+                }
+            ],
+        )
+        session.add(grant_template)
+
+        # Create a rag source with FINISHED status
+        rag_source = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path",
+            filename="test.pdf",
+            mime_type="application/pdf",
+            size=1000,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+        session.add(rag_source)
+        await session.flush()
+
+        # Link rag source to grant application
+        app_source = GrantApplicationRagSource(
+            grant_application_id=grant_application.id,
+            rag_source_id=rag_source.id,
+        )
+        session.add(app_source)
+        await session.commit()
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    mock_publish_rag_task.assert_called_once_with(
+        logger=ANY, parent_type="grant_application", parent_id=grant_application.id
+    )
+
+
+async def test_generate_application_insufficient_data(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    workspace_member_user: None,
+) -> None:
+    # Application without required data (no research objectives or grant template)
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "Insufficient data" in response.text
+
+
+async def test_generate_application_no_rag_sources(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
+) -> None:
+    # Set up the application with all required data except rag sources
+    async with async_session_maker() as session, session.begin():
+        # Update application with research objectives
+        grant_application.research_objectives = [
+            {
+                "number": 1,
+                "title": "Research Objective 1",
+                "description": "Description of objective 1",
+                "research_tasks": [
+                    {
+                        "number": 1,
+                        "title": "Research Task 1",
+                        "description": "Task description",
+                    }
+                ],
+            }
+        ]
+        session.add(grant_application)
+
+        # Create grant template with sections
+        grant_template = GrantTemplate(
+            grant_application_id=grant_application.id,
+            grant_sections=[
+                {
+                    "id": "section1",
+                    "order": 1,
+                    "title": "Introduction",
+                    "parent_id": None,
+                }
+            ],
+        )
+        session.add(grant_template)
+        # Note: No rag sources created
+        await session.commit()
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "No rag sources found" in response.text
+
+
+async def test_generate_application_not_found(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    workspace_member_user: None,
+) -> None:
+    non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
+
+    response = await test_client.post(
+        f"/workspaces/{workspace.id}/applications/{non_existent_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text

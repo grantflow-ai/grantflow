@@ -13,9 +13,10 @@ from packages.db.src.tables import (
     WorkspaceUser,
 )
 from packages.shared_utils.src.pubsub import SourceProcessingResult, WebsocketMessage
-from services.backend.src.main import app
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.backend.src.main import app
 
 
 @pytest.fixture
@@ -113,7 +114,6 @@ async def test_handle_grant_application_notifications_success(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
@@ -180,7 +180,6 @@ async def test_handle_grant_application_notifications_failed_status(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
@@ -250,7 +249,6 @@ async def test_handle_grant_application_notifications_different_roles(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
@@ -307,7 +305,6 @@ async def test_handle_grant_application_notifications_continuous_updates(
         ),
     ]
 
-    # Wrap notifications in WebsocketMessage format
     wrapped_round1 = [
         WebsocketMessage(
             type="data",

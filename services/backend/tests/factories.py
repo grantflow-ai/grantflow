@@ -1,6 +1,8 @@
 from typing import TypedDict
 
 from polyfactory.factories import TypedDictFactory
+from testing.factories import faker
+
 from services.backend.src.api.routes.auth import LoginRequestBody, LoginResponse, OTPResponse
 from services.backend.src.api.routes.funding_organizations import CreateOrganizationRequestBody
 from services.backend.src.api.routes.workspaces import (
@@ -9,10 +11,9 @@ from services.backend.src.api.routes.workspaces import (
     WorkspaceBaseResponse,
 )
 from services.backend.src.common_types import TableIdResponse
-from services.backend.src.rag.grant_template.determine_application_sections import ExtractedSectionDTO
-from services.backend.src.rag.grant_template.determine_longform_metadata import SectionMetadata
-from services.backend.src.rag.grant_template.extract_cfp_data import Content
-from testing.factories import faker
+from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
+from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
+from services.rag.src.grant_template.extract_cfp_data import Content
 
 
 class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):

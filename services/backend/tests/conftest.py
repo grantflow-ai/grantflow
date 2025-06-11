@@ -12,16 +12,17 @@ from packages.db.src.tables import (
 )
 from packages.shared_utils.src.ai import init_ref
 from pytest_mock import MockerFixture
-from services.backend.src.utils.firebase import firebase_app_ref
-from services.backend.src.utils.jwt import create_jwt
-from services.backend.tests.test_utils import (
-    create_grant_application_data,
-    process_funding_organization,
-)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
+from testing.test_utils import (
+    create_grant_application_data,
+    process_funding_organization,
+)
 from vertexai.generative_models import GenerativeModel
+
+from services.backend.src.utils.firebase import firebase_app_ref
+from services.backend.src.utils.jwt import create_jwt
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 

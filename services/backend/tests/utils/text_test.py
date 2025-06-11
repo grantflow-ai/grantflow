@@ -1,5 +1,6 @@
 import pytest
-from services.backend.src.utils.text import (
+
+from services.rag.src.utils.text import (
     concatenate_segments_with_spacy_coherence,
     normalize_markdown,
     normalize_punctuation,

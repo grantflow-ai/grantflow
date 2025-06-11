@@ -6,11 +6,12 @@ from litestar.exceptions import NotAuthorizedException
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Workspace, WorkspaceUser
 from packages.shared_utils.src.logger import get_logger
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.firebase import verify_id_token
 from services.backend.src.utils.jwt import create_jwt
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
 

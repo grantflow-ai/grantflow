@@ -171,6 +171,83 @@ resource "google_pubsub_topic_iam_member" "backend_publisher" {
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
+# RAG Processing topic
+resource "google_pubsub_topic" "rag_processing" {
+  name = "rag-processing"
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
+# Push subscription to trigger the RAG Cloud Run service
+resource "google_pubsub_subscription" "rag_processing_subscription" {
+  name  = "rag-processing-subscription"
+  topic = google_pubsub_topic.rag_processing.name
+
+  ack_deadline_seconds = 600 # 10 minutes max for Pub/Sub (maximum allowed)
+
+  retry_policy {
+    minimum_backoff = "30s"
+    maximum_backoff = "600s"
+  }
+
+  enable_message_ordering = false
+
+  # Configure push to Cloud Run
+  push_config {
+    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/rag:call"
+
+    # Authentication for the push endpoint
+    oidc_token {
+      service_account_email = var.pubsub_invoker_service_account_email
+      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/rag"
+    }
+
+    # This attribute specifies that we have a minimum number of failed attempts before acking the message
+    attributes = {
+      "x-goog-version" = "v1"
+    }
+  }
+
+  # Configure exponential backoff for failed deliveries
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.rag_processing_dlq.id
+    max_delivery_attempts = 3 # Fewer retries for expensive RAG operations
+  }
+}
+
+# Dead letter queue topic for failed RAG processing
+resource "google_pubsub_topic" "rag_processing_dlq" {
+  name = "rag-processing-dlq"
+
+  # Add labels for easier identification
+  labels = {
+    purpose = "dead-letter-queue"
+  }
+}
+
+# Subscription to monitor the RAG processing dead letter queue
+resource "google_pubsub_subscription" "rag_processing_dlq_subscription" {
+  name  = "rag-processing-dlq-subscription"
+  topic = google_pubsub_topic.rag_processing_dlq.name
+
+  ack_deadline_seconds = 60
+
+  # Keep messages for 7 days
+  message_retention_duration = "604800s"
+
+  # Retain acknowledged messages
+  retain_acked_messages = true
+}
+
+# IAM binding to allow the backend service account to publish to the RAG processing topic
+resource "google_pubsub_topic_iam_member" "backend_rag_publisher" {
+  topic  = google_pubsub_topic.rag_processing.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
+
 # Frontend Notifications topic
 resource "google_pubsub_topic" "frontend_notifications" {
   name = "frontend-notifications"
