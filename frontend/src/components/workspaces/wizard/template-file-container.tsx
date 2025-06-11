@@ -3,28 +3,26 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { createTemplateSourceUploadUrl, deleteTemplateSource } from "@/actions/sources";
+import { createTemplateSourceUploadUrl } from "@/actions/sources";
 import { FileUploader } from "@/components/file-uploader";
 import { FilesDisplay } from "@/components/files-display";
 import { API } from "@/types/api-types";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 import { logError } from "@/utils/logging";
 
-type FileWithId = { id?: string } & File;
-
-interface TemplateFileContainerProps {
-	initialFiles?: Extract<API.RetrieveGrantTemplateRagSources.Http200.ResponseBody[number], { filename: string }>[];
-	onFilesChange?: (files: FileWithId[]) => void;
-	templateId: string;
-	workspaceId: string;
-}
+type FileWithId = { id: string } & File;
 
 export function TemplateFileContainer({
 	initialFiles = [],
 	onFilesChange,
 	templateId,
 	workspaceId,
-}: TemplateFileContainerProps) {
+}: {
+	initialFiles?: Extract<API.RetrieveGrantTemplateRagSources.Http200.ResponseBody[number], { filename: string }>[];
+	onFilesChange?: (files: FileWithId[]) => void;
+	templateId: string;
+	workspaceId: string;
+}) {
 	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
 
@@ -57,21 +55,24 @@ export function TemplateFileContainer({
 			// In development, bypass signed URL creation and upload directly to GCS emulator
 			if (process.env.NODE_ENV === "development") {
 				const objectPath = `workspace/${workspaceId}/grant_template/${templateId}/${file.name}`;
-				const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
+				// const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
 
-				const uploadResponse = await fetch(emulatorUrl, {
-					body: file,
-					headers: {
-						"Content-Type": file.type,
-					},
-					method: "POST",
-				});
+				// console.log(`Uploading file ${file.name} to ${emulatorUrl}`);
+				// const uploadResponse = await fetch(emulatorUrl, {
+				// 	body: file,
+				// 	headers: {
+				// 		"Content-Type": file.type,
+				// 	},
+				// 	method: "POST",
+				// });
+				//
+				// console.log("Upload response", uploadResponse);
+				// if (!uploadResponse.ok) {
+				// 	throw new Error(`Failed to upload file ${file.name}`);
+				// }
 
-				if (!uploadResponse.ok) {
-					throw new Error(`Failed to upload file ${file.name}`);
-				}
-
-				setUploadedFiles((prev) => [...prev, file]);
+				const fileWithId: FileWithId = Object.assign(file, { id: file.name });
+				setUploadedFiles((prev) => [...prev, fileWithId]);
 				toast.success(`File ${file.name} uploaded successfully`);
 
 				// Trigger indexing directly
@@ -94,7 +95,8 @@ export function TemplateFileContainer({
 				throw new Error(`Failed to upload file ${file.name}`);
 			}
 
-			setUploadedFiles((prev) => [...prev, file]);
+			const fileWithId: FileWithId = Object.assign(file, { id: file.name });
+			setUploadedFiles((prev) => [...prev, fileWithId]);
 
 			toast.success(`File ${file.name} uploaded successfully`);
 
@@ -132,9 +134,12 @@ export function TemplateFileContainer({
 					return;
 				}
 
-				if (file.id) {
-					await deleteTemplateSource(workspaceId, templateId, file.id);
-				}
+				// if (file.id) {
+				// 	await deleteTemplateSource(workspaceId, templateId, file.id);
+				// }
+				await new Promise(() => {
+					/* */
+				});
 
 				setUploadedFiles((prev) => prev.filter((f) => f.name !== fileToRemove.name));
 
@@ -143,7 +148,8 @@ export function TemplateFileContainer({
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		[workspaceId, templateId, uploadedFiles],
+		// [workspaceId, templateId, uploadedFiles],
+		[uploadedFiles],
 	);
 
 	return (
@@ -156,7 +162,7 @@ export function TemplateFileContainer({
 				</div>
 			)}
 
-			{isUploading && <div className="text-muted-foreground text-center text-sm">Uploading files...</div>}
+			{isUploading && <div className="text-muted-foreground-dark text-center text-sm">Uploading files...</div>}
 		</div>
 	);
 }
