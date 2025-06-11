@@ -129,6 +129,7 @@ services:
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             GCS_BUCKET_NAME: grantflow-uploads
             DEBUG: "True"
+            MODEL_DIR: /app/hf
         env_file:
             - ./services/indexer/.env
         ports:
@@ -158,6 +159,7 @@ services:
             GOOGLE_CLOUD_REGION: us-central1
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             DEBUG: "True"
+            MODEL_DIR: /app/hf
         env_file:
             - ./services/crawler/.env
         ports:
@@ -187,6 +189,7 @@ services:
             GOOGLE_CLOUD_REGION: us-central1
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             DEBUG: "True"
+            MODEL_DIR: /app/hf
         env_file:
             - ./services/rag/.env
         ports:

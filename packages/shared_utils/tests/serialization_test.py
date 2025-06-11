@@ -11,34 +11,34 @@ from packages.shared_utils.src.serialization import deserialize, encode_hook, se
 
 
 @dataclass
-class TestModel:
+class SampleModel:
     name: str
     value: int
 
 
-class TestEnum(Enum):
+class SampleEnum(Enum):
     A = "a"
     B = "b"
 
 
 @dataclass
-class TestModelWithEnum:
-    enum_field: TestEnum
+class SampleModelWithEnum:
+    enum_field: SampleEnum
 
 
-class TestDict(TypedDict):
+class SampleDict(TypedDict):
     name: str
     value: int
 
 
 def test_encode_hook_dataclass_model() -> None:
-    model = TestModel(name="test", value=42)
+    model = SampleModel(name="test", value=42)
     result = encode_hook(model)
     assert result == {"name": "test", "value": 42}
 
 
 def test_encode_hook_pydantic_model_with_enum() -> None:
-    model = TestModelWithEnum(enum_field=TestEnum.A)
+    model = SampleModelWithEnum(enum_field=SampleEnum.A)
     result = encode_hook(model)
     assert result == {"enum_field": "a"}
 
@@ -74,7 +74,7 @@ def test_encode_hook_unsupported_type() -> None:
 
 def test_deserialize_success() -> None:
     json_str = '{"name": "test", "value": 42}'
-    result = deserialize(json_str, TestDict)
+    result = deserialize(json_str, SampleDict)
     assert result == {"name": "test", "value": 42}
 
 
@@ -90,7 +90,7 @@ def test_deserialize_decode_error(mocker: MockFixture) -> None:
 
 
 def test_serialize_success() -> None:
-    data = TestModel(name="test", value=42)
+    data = SampleModel(name="test", value=42)
     result = serialize(data)
     assert result == b'{"name":"test","value":42}'
 
@@ -113,7 +113,7 @@ def test_serialize_encode_error(mocker: MockFixture) -> None:
 
 
 def test_encoder_decoder_integration() -> None:
-    original = TestModel(name="test", value=42)
+    original = SampleModel(name="test", value=42)
     encoded = serialize(original)
-    decoded = deserialize(encoded, TestDict)
+    decoded = deserialize(encoded, SampleDict)
     assert decoded == {"name": "test", "value": 42}
