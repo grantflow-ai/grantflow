@@ -63,6 +63,7 @@ async def test_generate_embeddings_single_string(mocker: MockerFixture) -> None:
 def test_get_embedding_model(mocker: MockerFixture) -> None:
     embedding_model_ref.value = None
 
+    mocker.patch("packages.shared_utils.src.embeddings.getenv", return_value=None)
     mock_sentence_transformer = mocker.patch("packages.shared_utils.src.embeddings.SentenceTransformer")
     mock_model_instance = mocker.Mock()
     mock_sentence_transformer.return_value = mock_model_instance
@@ -76,6 +77,26 @@ def test_get_embedding_model(mocker: MockerFixture) -> None:
     model2 = get_embedding_model()
     assert model2 == mock_model_instance
     assert mock_sentence_transformer.call_count == 1
+
+    embedding_model_ref.value = None
+
+
+def test_get_embedding_model_with_model_dir(mocker: MockerFixture) -> None:
+    embedding_model_ref.value = None
+
+    mocker.patch("packages.shared_utils.src.embeddings.getenv", return_value="/app/hf")
+    mock_path = mocker.patch("packages.shared_utils.src.embeddings.Path")
+    mock_path.return_value.exists.return_value = True
+
+    mock_sentence_transformer = mocker.patch("packages.shared_utils.src.embeddings.SentenceTransformer")
+    mock_model_instance = mocker.Mock()
+    mock_sentence_transformer.return_value = mock_model_instance
+
+    model = get_embedding_model()
+
+    assert model == mock_model_instance
+    assert embedding_model_ref.value == mock_model_instance
+    mock_sentence_transformer.assert_called_once_with("/app/hf", device="cpu")
 
     embedding_model_ref.value = None
 
