@@ -13,6 +13,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { IconClose, IconPreviewLogo } from "@/components/workspaces/icons";
 
 export interface FileWithId extends File {
 	id?: string;
@@ -24,6 +25,7 @@ interface ApplicationPreviewProps {
 	connectionStatusColor?: string;
 	files: FileWithId[];
 	onFileRemove?: (file: FileWithId) => Promise<void>;
+	onUrlRemove?: (url: string) => void;
 	urls: string[];
 }
 
@@ -33,58 +35,76 @@ export function ApplicationPreview({
 	connectionStatusColor,
 	files,
 	onFileRemove,
+	onUrlRemove,
 	urls,
 }: ApplicationPreviewProps) {
+	const isEmpty = !applicationTitle && files.length === 0 && urls.length === 0;
+
 	return (
 		<div className="flex h-full w-[70%] flex-col gap-6 border-l p-6">
-			<div className="flex flex-col items-center gap-2">
-				<div className="flex items-center gap-2">
-					<Badge className="w-fit" variant="secondary">
-						<FileText className="mr-1 size-3" />
-						Draft
-					</Badge>
-					{connectionStatus && (
-						<Badge className={`w-fit ${connectionStatusColor} text-white`} variant="outline">
-							{connectionStatus}
-						</Badge>
-					)}
+			{isEmpty ? (
+				<div className="flex h-full flex-col items-center justify-center">
+					<IconPreviewLogo height={180} width={180} />
+					<p className="text-muted-foreground-dark mt-6 text-center text-sm">
+						Add application details, documents, or links to see a preview
+					</p>
 				</div>
-				<h3 className="text-center text-2xl font-bold">{applicationTitle || "Untitled Application"}</h3>
-			</div>
+			) : (
+				<>
+					<div className="flex flex-col items-start gap-2">
+						<div className="flex items-center gap-2">
+							<Badge className="w-fit" variant="secondary">
+								<FileText className="mr-1 size-3" />
+								Application Title
+							</Badge>
+							{connectionStatus && (
+								<Badge className={`w-fit ${connectionStatusColor} text-white`} variant="outline">
+									{connectionStatus}
+								</Badge>
+							)}
+						</div>
+						<h3
+							className={`font-heading text-center text-3xl font-medium ${applicationTitle ? "" : "text-muted-foreground-dark"}`}
+						>
+							{applicationTitle || "Untitled Application"}
+						</h3>
+					</div>
 
-			<ScrollArea className="flex-1">
-				<div className="space-y-4">
-					<Card className="p-5">
-						<h4 className="mb-4 font-semibold">Application Documents</h4>
-						{files.length > 0 ? (
-							<div className="grid grid-cols-2 gap-3">
-								{files.map((file, index) => (
-									<FilePreviewCard
-										file={file}
-										key={file.name + index.toString()}
-										onRemove={onFileRemove}
-									/>
-								))}
-							</div>
-						) : (
-							<p className="text-muted-foreground text-sm">No documents uploaded yet</p>
-						)}
-					</Card>
+					<ScrollArea className="flex-1">
+						<div className="space-y-4">
+							{files.length > 0 && (
+								<Card className="p-5" data-testid="application-documents">
+									<h4 className="mb-4 font-semibold">Application Documents</h4>
+									<div className="grid grid-cols-2 gap-3">
+										{files.map((file, index) => (
+											<FilePreviewCard
+												file={file}
+												key={file.name + index.toString()}
+												onRemove={onFileRemove}
+											/>
+										))}
+									</div>
+								</Card>
+							)}
 
-					<Card className="p-5">
-						<h4 className="mb-4 font-semibold">Links</h4>
-						{urls.length > 0 ? (
-							<div className="space-y-2">
-								{urls.map((url, index) => (
-									<LinkPreviewItem key={url + index.toString()} url={url} />
-								))}
-							</div>
-						) : (
-							<p className="text-muted-foreground text-sm">No links added yet</p>
-						)}
-					</Card>
-				</div>
-			</ScrollArea>
+							{urls.length > 0 && (
+								<Card className="p-5" data-testid="application-links">
+									<h4 className="font-heading mb-4 font-semibold">Links</h4>
+									<div className="space-y-2">
+										{urls.map((url, index) => (
+											<LinkPreviewItem
+												key={url + index.toString()}
+												onRemove={onUrlRemove}
+												url={url}
+											/>
+										))}
+									</div>
+								</Card>
+							)}
+						</div>
+					</ScrollArea>
+				</>
+			)}
 		</div>
 	);
 }
@@ -171,7 +191,7 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 			<span className="max-w-full truncate text-xs font-medium" title={file.name}>
 				{file.name}
 			</span>
-			<span className="text-muted-foreground text-[10px]">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+			<span className="text-muted-foreground-dark text-[10px]">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
 
 			<DropdownMenu onOpenChange={setDropdownOpen} open={dropdownOpen}>
 				<DropdownMenuTrigger asChild>
@@ -201,10 +221,30 @@ function getFileExtension(filename: string) {
 	return parts.length > 1 ? parts.at(-1)?.toLowerCase() : "";
 }
 
-function LinkPreviewItem({ url }: { url: string }) {
+function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; url: string }) {
+	const [isHovered, setIsHovered] = useState(false);
+
+	const handleRemove = () => {
+		onRemove?.(url);
+	};
+
 	return (
-		<div className="flex items-center gap-2">
-			<Link className="size-3.5 shrink-0 text-blue-600" />
+		<div
+			className="group relative flex items-center gap-2"
+			onMouseEnter={() => {
+				setIsHovered(true);
+			}}
+			onMouseLeave={() => {
+				setIsHovered(false);
+			}}
+		>
+			<div className="flex size-3.5 shrink-0 items-center justify-center">
+				{isHovered ? (
+					<IconClose className="cursor-pointer text-blue-600" onClick={handleRemove} />
+				) : (
+					<Link className="text-blue-600" />
+				)}
+			</div>
 			<Button asChild className="h-auto justify-start p-0.5 text-blue-600 hover:text-blue-800" variant="link">
 				<a href={url} rel="noopener noreferrer" target="_blank">
 					{url}
