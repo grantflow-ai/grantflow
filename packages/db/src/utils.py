@@ -1,7 +1,6 @@
 from typing import Any, cast
 from uuid import UUID
 
-from litestar.exceptions import NotFoundException
 from sqlalchemy import exists, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -61,4 +60,4 @@ async def retrieve_application(
             )
             return cast("GrantApplication", result.scalar_one())
         except NoResultFound as e:
-            raise NotFoundException("Application not found") from e
+            raise ValidationError("Application not found.", context=str(e)) from e

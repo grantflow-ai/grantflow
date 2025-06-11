@@ -3,7 +3,8 @@ import { HTTPError } from "ky";
 import { mockRedirect } from "::testing/global-mocks";
 import { API } from "@/types/api-types";
 
-import { createApplication, deleteApplication, updateApplication, updateGrantTemplate } from "./grant-applications";
+import { createApplication, deleteApplication, generateApplication, updateApplication } from "./grant-applications";
+import { updateGrantTemplate } from "./grant-template";
 
 const mockPost = vi.fn();
 const mockPatch = vi.fn();
@@ -152,10 +153,10 @@ describe("Grant Application Actions", () => {
 				submission_date: "2024-12-31",
 			};
 
-			await updateGrantTemplate(mockWorkspaceId, mockApplicationId, updateData);
+			await updateGrantTemplate(mockWorkspaceId, mockApplicationId, mockTemplateId, updateData);
 
 			expect(mockPatch).toHaveBeenCalledWith(
-				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template`,
+				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
 					headers: mockAuthHeaders,
 					json: updateData,
@@ -170,16 +171,45 @@ describe("Grant Application Actions", () => {
 				submission_date: "2024-12-31",
 			} as API.UpdateGrantTemplate.RequestBody;
 
-			await updateGrantTemplate(mockWorkspaceId, mockApplicationId, updateData);
+			await updateGrantTemplate(mockWorkspaceId, mockApplicationId, mockTemplateId, updateData);
 
 			expect(mockPatch).toHaveBeenCalledWith(
-				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template`,
+				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
 					headers: mockAuthHeaders,
 					json: updateData,
 				},
 			);
 
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+	});
+
+	describe("generateApplication", () => {
+		it("should call the API with correct parameters", async () => {
+			await generateApplication(mockWorkspaceId, mockApplicationId);
+
+			expect(mockPost).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+				headers: mockAuthHeaders,
+			});
+
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+
+		it("should handle API errors", async () => {
+			const mockResponse = new Response();
+			const mockError = new HTTPError(
+				mockResponse,
+				{
+					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
+				} as never,
+				{} as never,
+			);
+
+			mockPost.mockRejectedValue(mockError);
+			mockWithAuthRedirect.mockRejectedValue(mockError);
+
+			await expect(generateApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 	});
@@ -323,7 +353,7 @@ describe("Grant Application Actions", () => {
 
 			mockPatch.mockResolvedValueOnce(undefined);
 
-			const result = await updateGrantTemplate(mockWorkspaceId, mockApplicationId, {
+			const result = await updateGrantTemplate(mockWorkspaceId, mockApplicationId, mockTemplateId, {
 				submission_date: "2024-12-31",
 			} as any);
 

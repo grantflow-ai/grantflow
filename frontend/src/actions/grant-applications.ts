@@ -26,6 +26,14 @@ export async function deleteApplication(workspaceId: string, applicationId: stri
 	);
 }
 
+export async function generateApplication(workspaceId: string, applicationId: string): Promise<void> {
+	await withAuthRedirect(
+		getClient().post(`workspaces/${workspaceId}/applications/${applicationId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
+}
+
 export async function updateApplication(
 	workspaceId: string,
 	applicationId: string,
@@ -33,19 +41,6 @@ export async function updateApplication(
 ): Promise<void> {
 	await withAuthRedirect(
 		getClient().patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
-			headers: await createAuthHeaders(),
-			json: data,
-		}),
-	);
-}
-
-export async function updateGrantTemplate(
-	workspaceId: string,
-	applicationId: string,
-	data: Partial<API.UpdateGrantTemplate.RequestBody>,
-): Promise<void> {
-	await withAuthRedirect(
-		getClient().patch(`workspaces/${workspaceId}/applications/${applicationId}/grant-template`, {
 			headers: await createAuthHeaders(),
 			json: data,
 		}),

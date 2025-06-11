@@ -7,9 +7,10 @@ from litestar.middleware import AbstractAuthenticationMiddleware, Authentication
 from packages.db.src.tables import WorkspaceUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
+from sqlalchemy import select
+
 from services.backend.src.common_types import APIRequestState
 from services.backend.src.utils.jwt import verify_jwt_token
-from sqlalchemy import select
 
 logger = get_logger(__name__)
 

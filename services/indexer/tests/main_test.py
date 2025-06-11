@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
+import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
 from packages.db.src.constants import RAG_FILE
@@ -65,18 +66,20 @@ def mock_publish_notification() -> Generator[AsyncMock]:
 
 
 def create_pubsub_event(object_path: str, event_type: str = "OBJECT_FINALIZE") -> PubSubEvent:
-    return {
-        "message": {
-            "message_id": "test-message-id",
-            "publish_time": "2023-01-01T00:00:00Z",
-            "data": "",
-            "attributes": {
+    from packages.shared_utils.src.pubsub import PubSubMessage
+
+    return PubSubEvent(
+        message=PubSubMessage(
+            message_id="test-message-id",
+            publish_time="2023-01-01T00:00:00Z",
+            data="",
+            attributes={
                 "bucketId": "test-bucket",
                 "objectId": object_path,
                 "eventType": event_type,
             },
-        }
-    }
+        )
+    )
 
 
 async def test_get_gcs_notification_data() -> None:
@@ -87,14 +90,16 @@ async def test_get_gcs_notification_data() -> None:
     assert result["object_name"] == "test/path"
     assert result["event_type"] == "OBJECT_FINALIZE"
 
-    invalid_event: PubSubEvent = {
-        "message": {
-            "message_id": "test-message-id",
-            "publish_time": "2023-01-01T00:00:00Z",
-            "data": "",
-            "attributes": {},
-        }
-    }
+    from packages.shared_utils.src.pubsub import PubSubMessage
+
+    invalid_event = PubSubEvent(
+        message=PubSubMessage(
+            message_id="test-message-id",
+            publish_time="2023-01-01T00:00:00Z",
+            data="",
+            attributes={},
+        )
+    )
     result = get_gcs_notification_data(invalid_event)
     assert result is None
 
@@ -145,7 +150,7 @@ async def test_handle_file_indexing_grant_application(
     file_path = f"workspace/ws-123/grant_application/{grant_application.id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -204,7 +209,7 @@ async def test_handle_file_indexing_funding_organization(
     file_path = f"funding_organization/{funding_organization.id}/guidelines.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -252,7 +257,7 @@ async def test_handle_file_indexing_grant_template(
     file_path = f"workspace/ws-123/grant_template/{grant_template.id}/template.docx"
     pubsub_event = create_pubsub_event(file_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     async with async_session_maker() as session:
@@ -295,7 +300,7 @@ async def test_handle_file_indexing_invalid_path(
     mock_parse_object_uri.side_effect = KeyError("Invalid path format")
 
     pubsub_event = create_pubsub_event("invalid/path")
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     mock_publish_notification.assert_not_called()
@@ -317,7 +322,7 @@ async def test_handle_file_indexing_unsupported_extension(
     file_path = f"workspace/ws-123/grant_application/{grant_application.id}/document.unsupported"
     pubsub_event = create_pubsub_event(file_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     mock_publish_notification.assert_not_called()
@@ -342,7 +347,7 @@ async def test_handle_file_indexing_download_error(
     file_path = f"workspace/ws-123/grant_application/{grant_application.id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     mock_publish_notification.assert_not_called()
@@ -369,7 +374,7 @@ async def test_handle_file_indexing_processing_error(
     file_path = f"workspace/ws-123/grant_application/{grant_application.id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
 
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -409,7 +414,7 @@ async def test_handle_database_error(
         file_path = f"workspace/ws-123/grant_application/{grant_application.id}/document.pdf"
         pubsub_event = create_pubsub_event(file_path)
 
-        response = await test_client.post("/", json=pubsub_event)
+        response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
         mock_publish_notification.assert_not_called()
@@ -421,14 +426,14 @@ async def test_invalid_pubsub_message(
 ) -> None:
     invalid_event = {
         "message": {
-            "message_id": "test-message-id",
-            "publish_time": "2023-01-01T00:00:00Z",
+            "messageId": "test-message-id",
+            "publishTime": "2023-01-01T00:00:00Z",
             "data": "",
             "attributes": {},
         }
     }
 
-    response = await test_client.post("/", json=invalid_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(invalid_event))
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     mock_publish_notification.assert_not_called()
@@ -486,7 +491,7 @@ async def test_handle_file_indexing_existing_file(
 
     pubsub_event = create_pubsub_event(object_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
     mock_download_blob.assert_awaited_once_with(object_path)
@@ -524,8 +529,8 @@ async def test_handle_file_indexing_file_parsing_error(
     file_path = f"workspace/ws-123/grant_application/{grant_application.id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
-    response = await test_client.post("/", json=pubsub_event)
-    # FileParsingError should be re-raised for Pub/Sub retry
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
+
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
     async with async_session_maker() as session:
@@ -554,7 +559,7 @@ async def test_handle_file_indexing_retry_failed_file(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     """Test that failed files are reprocessed on retry."""
-    # First, create a failed file record
+
     object_path = f"workspace/ws-123/grant_application/{grant_application.id}/failed.pdf"
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -596,13 +601,11 @@ async def test_handle_file_indexing_retry_failed_file(
         "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
     }
 
-    # The mock_process_source fixture has a side_effect that returns "Test extracted content"
     pubsub_event = create_pubsub_event(object_path)
 
-    response = await test_client.post("/", json=pubsub_event)
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED
 
-    # Verify the file was reprocessed and marked as finished
     async with async_session_maker() as session:
         rag_source = await session.get(RagSource, source_id)
         assert rag_source is not None
