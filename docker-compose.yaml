@@ -93,8 +93,6 @@ services:
             args:
                 service_name: backend
             dockerfile: services/Dockerfile
-            platforms:
-                - "linux/x86_64" # needed due to spaCy build issues on Mac linux
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
