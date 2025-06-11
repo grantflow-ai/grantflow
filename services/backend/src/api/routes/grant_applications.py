@@ -2,12 +2,12 @@ from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
 from litestar import delete, patch, post
-from litestar.exceptions import ValidationException
+from litestar.exceptions import NotFoundException, ValidationException
 from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, GrantTemplate, RagSource
 from packages.db.src.utils import retrieve_application
-from packages.shared_utils.src.exceptions import BackendError, DatabaseError
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_rag_task
 from sqlalchemy import delete as sa_delete
@@ -140,7 +140,10 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
 async def handle_generate_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     logger.info("Generating application", application_id=application_id)
 
-    application = await retrieve_application(application_id=application_id, session_maker=session_maker)
+    try:
+        application = await retrieve_application(application_id=application_id, session_maker=session_maker)
+    except ValidationError as e:
+        raise NotFoundException("Application not found") from e
 
     if (
         not application.title

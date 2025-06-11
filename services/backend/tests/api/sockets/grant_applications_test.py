@@ -26,10 +26,7 @@ def sync_test_client() -> TestClient[Any]:
 
 @pytest.fixture(autouse=True)
 def mock_server_start() -> Generator[None]:
-    with (
-        patch("services.backend.src.main.get_firebase_app"),
-        patch("services.backend.src.main.init_llm_connection"),
-    ):
+    with patch("services.backend.src.main.get_firebase_app"):
         yield
 
 

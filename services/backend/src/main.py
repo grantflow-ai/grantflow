@@ -1,5 +1,4 @@
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
-from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import create_litestar_app
 
@@ -72,7 +71,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
 
 async def before_server_start() -> None:
     get_firebase_app()
-    init_llm_connection()
 
 
 app = create_litestar_app(

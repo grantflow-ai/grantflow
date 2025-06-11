@@ -1,5 +1,3 @@
-from typing import TypedDict
-
 from polyfactory.factories import TypedDictFactory
 from testing.factories import faker
 
@@ -13,7 +11,6 @@ from services.backend.src.api.routes.workspaces import (
 from services.backend.src.common_types import TableIdResponse
 from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
-from services.rag.src.grant_template.extract_cfp_data import Content
 
 
 class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):
@@ -88,28 +85,3 @@ class SectionMetadataFactory(TypedDictFactory[SectionMetadata]):
     @classmethod
     def search_queries(cls) -> list[str]:
         return [faker.sentence() for _ in range(3)]
-
-
-class CfpContentFactory(TypedDictFactory[Content]):
-    __model__ = Content
-    title = faker.sentence(nb_words=3)
-
-    @classmethod
-    def subtitles(cls) -> list[str]:
-        return [faker.sentence(nb_words=5) for _ in range(3)]
-
-
-class ExtractedCfpData(TypedDict):
-    organization_id: str
-    cfp_subject: str
-    content: list[Content]
-
-
-class ExtractedCfpDataFactory(TypedDictFactory[ExtractedCfpData]):
-    __model__ = ExtractedCfpData
-    organization_id = faker.uuid4
-    cfp_subject = faker.sentence
-
-    @classmethod
-    def content(cls) -> list[Content]:
-        return [CfpContentFactory.build() for _ in range(3)]
