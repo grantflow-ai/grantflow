@@ -125,6 +125,37 @@ function IconButtonLogo({ height = 16, width = 16, ...props }: React.HTMLProps<S
 	);
 }
 
+function IconClose({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			fill="currentColor"
+			height={height}
+			viewBox="0 0 16 16"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<mask
+				height="16"
+				id="mask0_1848_7294"
+				maskUnits="userSpaceOnUse"
+				style={{ maskType: "alpha" }}
+				width="16"
+				x="0"
+				y="0"
+			>
+				<rect fill="#D9D9D9" height="16" width="16" />
+			</mask>
+			<g mask="url(#mask0_1848_7294)">
+				<path
+					d="M5.60001 11.3333L4.66667 10.3999L7.06667 7.99994L4.66667 5.61661L5.60001 4.68327L8 7.08327L10.3833 4.68327L11.3167 5.61661L8.91667 7.99994L11.3167 10.3999L10.3833 11.3333L8 8.93327L5.60001 11.3333Z"
+					fill="currentColor"
+				/>
+			</g>
+		</svg>
+	);
+}
+
 function IconDeadline({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
@@ -188,6 +219,46 @@ function IconGlobe({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVG
 	);
 }
 
+function IconPreviewLogo({ height = 262, width = 256, ...props }: React.HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			fill="none"
+			height={height}
+			viewBox="0 0 256 262"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<g opacity="0.6">
+				<circle cx="25.9807" cy="235.571" fill="#E1DFEB" r="25.93" />
+				<circle cx="217.267" cy="216.866" fill="#E1DFEB" r="18.2785" />
+				<circle cx="217.27" cy="39.1814" fill="#E1DFEB" r="28.4805" />
+				<circle cx="108.875" cy="148.852" fill="#E1DFEB" r="28.4805" />
+				<path
+					d="M255.948 39.3942C255.948 60.8753 238.534 78.2892 217.053 78.2892C195.572 78.2892 178.158 60.8753 178.158 39.3942C178.158 17.9131 195.572 0.499268 217.053 0.499268C238.534 0.499268 255.948 17.9131 255.948 39.3942ZM182.048 39.3942C182.048 58.7272 197.72 74.3997 217.053 74.3997C236.386 74.3997 252.059 58.7272 252.059 39.3942C252.059 20.0612 236.386 4.38876 217.053 4.38876C197.72 4.38876 182.048 20.0612 182.048 39.3942Z"
+					fill="#E1DFEB"
+				/>
+				<path
+					d="M181.137 148.853C181.137 188.763 148.783 221.117 108.873 221.117C68.963 221.117 36.6094 188.763 36.6094 148.853C36.6094 108.943 68.963 76.589 108.873 76.589C148.783 76.589 181.137 108.943 181.137 148.853ZM43.8358 148.853C43.8358 184.772 72.954 213.89 108.873 213.89C144.792 213.89 173.911 184.772 173.911 148.853C173.911 112.934 144.792 83.8154 108.873 83.8154C72.954 83.8154 43.8358 112.934 43.8358 148.853Z"
+					fill="#E1DFEB"
+				/>
+				<path
+					d="M107.811 150.127L189.851 67.236"
+					stroke="#E1DFEB"
+					strokeLinecap="square"
+					strokeMiterlimit="1"
+					strokeWidth="8.04399"
+				/>
+				<path d="M22.1523 238.971L60.8348 198.588" stroke="#E1DFEB" strokeWidth="8.04399" />
+				<path
+					d="M110.987 146.706C109.097 145.539 106.618 146.124 105.451 148.014C104.284 149.904 104.87 152.382 106.76 153.55L110.987 146.706ZM108.873 150.128L106.76 153.55L215.155 220.5L217.269 217.078L219.382 213.656L110.987 146.706L108.873 150.128Z"
+					fill="#E1DFEB"
+				/>
+			</g>
+		</svg>
+	);
+}
+
 function IconUpload({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
@@ -225,7 +296,9 @@ export {
 	IconApplicationStepInActive,
 	IconApprove,
 	IconButtonLogo,
+	IconClose,
 	IconDeadline,
 	IconGlobe,
+	IconPreviewLogo,
 	IconUpload,
 };
