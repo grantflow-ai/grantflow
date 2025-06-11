@@ -22,12 +22,13 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, SourceProcessingResult, publish_notification
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
-from services.crawler.src.extraction import crawl_url
-from services.crawler.src.utils import filter_url
 from sqlalchemy import insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.crawler.src.extraction import crawl_url
+from services.crawler.src.utils import filter_url
 
 logger = get_logger(__name__)
 

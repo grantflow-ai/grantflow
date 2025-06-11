@@ -23,11 +23,12 @@ from packages.shared_utils.src.gcs import download_blob, parse_object_uri
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import PubSubEvent, SourceProcessingResult, publish_notification
 from packages.shared_utils.src.server import create_litestar_app
-from services.indexer.src.processing import process_source
 from sqlalchemy import insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.indexer.src.processing import process_source
 
 logger = get_logger(__name__)
 

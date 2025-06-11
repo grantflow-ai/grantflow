@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, Mock, patch
 from urllib.error import URLError
 
@@ -10,12 +9,9 @@ from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
 )
 
-if TYPE_CHECKING:
-    from packages.db.src.json_objects import Chunk
 from services.crawler.src.extraction import (
     crawl,
     crawl_url,
-    create_vector_dto,
     download_documents,
     extract_and_process_content,
     extract_links,
@@ -116,31 +112,6 @@ def mock_chunk_text() -> Generator[Mock]:
             },
         ]
         yield mock
-
-
-async def test_create_vector_dto() -> None:
-    chunk: Chunk = {"content": "Test content", "metadata": {"source": "test-source"}}  # type: ignore
-    rag_source_id = "test-source-id"
-
-    with patch("services.crawler.src.extraction.generate_embeddings", new_callable=AsyncMock) as mock_embeddings:
-        mock_embeddings.return_value = [[0.1, 0.2, 0.3]]
-
-        result = await create_vector_dto(chunk=chunk, rag_source_id=rag_source_id)
-
-        assert result["chunk"] == chunk
-        assert result["embedding"] == [0.1, 0.2, 0.3]
-        assert result["rag_source_id"] == rag_source_id
-
-
-async def test_create_vector_dto_error() -> None:
-    chunk: Chunk = {"content": "Test content", "metadata": {"source": "test-source"}}  # type: ignore
-    rag_source_id = "test-source-id"
-
-    with patch("services.crawler.src.extraction.generate_embeddings", new_callable=AsyncMock) as mock_embeddings:
-        mock_embeddings.side_effect = ValueError("Embedding error")
-
-        with pytest.raises(ExternalOperationError):
-            await create_vector_dto(chunk=chunk, rag_source_id=rag_source_id)
 
 
 async def test_prepare_url_data_new_url() -> None:
@@ -361,8 +332,7 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
         patch("services.crawler.src.extraction.crawl", new_callable=AsyncMock) as mock_crawl,
         patch("services.crawler.src.extraction.TemporaryDirectory") as mock_tempdir,
         patch("services.crawler.src.extraction.chunk_text") as mock_chunk,
-        patch("services.crawler.src.extraction.create_vector_dto", new_callable=AsyncMock) as mock_create_vector,
-        patch("services.crawler.src.extraction.gather", new_callable=AsyncMock) as mock_gather,
+        patch("services.crawler.src.extraction.index_chunks", new_callable=AsyncMock) as mock_index_chunks,
     ):
         mock_tempdir.return_value.__aenter__.return_value = str(temp_dir)
 
@@ -377,13 +347,12 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
         ]
 
         mock_chunk.return_value = [{"content": "Test content", "metadata": {"source": "test"}}]
-        mock_create_vector.return_value = {
-            "chunk": {"content": "Test content", "metadata": {}},
-            "embedding": [0.1, 0.2],
-            "rag_source_id": "test-id",
-        }
-        mock_gather.return_value = [
-            {"chunk": {"content": "Test content", "metadata": {}}, "embedding": [0.1, 0.2], "rag_source_id": "test-id"}
+        mock_index_chunks.return_value = [
+            {
+                "chunk": {"content": "Test content", "metadata": {"source": "test"}},
+                "embedding": [0.1, 0.2],
+                "rag_source_id": "test-id",
+            }
         ]
 
         result = await crawl_url(
@@ -402,3 +371,7 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
         file_contents = {f["filename"]: f["content"] for f in files}
         assert file_contents["test1.pdf"] == b"content1"
         assert file_contents["test2.docx"] == b"content2"
+
+        mock_index_chunks.assert_called_once_with(
+            chunks=[{"content": "Test content", "metadata": {"source": "test"}}], source_id="test-id"
+        )

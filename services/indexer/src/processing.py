@@ -1,9 +1,9 @@
 from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.dto import VectorDTO
+from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import serialize
-from services.indexer.src.indexing import index_documents
 
 logger = get_logger(__name__)
 
@@ -22,7 +22,7 @@ async def process_source(
     logger.info("Extracted text from file", filename=filename)
 
     chunks = chunk_text(text=extracted_text, mime_type=mime_type)
-    vectors = await index_documents(
+    vectors = await index_chunks(
         chunks=chunks,
         source_id=source_id,
     )

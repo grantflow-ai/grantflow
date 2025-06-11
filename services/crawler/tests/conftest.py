@@ -5,8 +5,9 @@ from typing import Any
 
 import pytest
 from litestar.testing import AsyncTestClient
-from services.crawler.src.main import app
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.crawler.src.main import app
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.gcs_test_plugin"]
 
