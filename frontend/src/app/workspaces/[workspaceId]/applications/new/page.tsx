@@ -44,11 +44,9 @@ export default function CreateGrantApplicationWizardPage() {
 		workspaceId: params.workspaceId,
 	});
 
-	// Create application on mount
 	useEffect(() => {
 		const initializeApplication = async () => {
 			try {
-				// Create a draft application with empty title
 				const response = await createApplication(params.workspaceId, {
 					title: DEFAULT_APPLICATION_TITLE,
 				});
@@ -64,7 +62,6 @@ export default function CreateGrantApplicationWizardPage() {
 		void initializeApplication();
 	}, [params.workspaceId, router]);
 
-	// Update application title when it changes
 	useEffect(() => {
 		if (!applicationId || !applicationTitle.trim()) {
 			return;
@@ -166,7 +163,7 @@ export default function CreateGrantApplicationWizardPage() {
 	return (
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
 			<WizardHeader
-				applicationName={applicationTitle || "New Application"}
+				applicationName={applicationTitle || DEFAULT_APPLICATION_TITLE}
 				currentStep={currentStep}
 				showHeaderInfo={showHeaderInfo}
 				stepTitles={WIZARD_STEP_TITLES}
