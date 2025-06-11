@@ -21,12 +21,13 @@ from packages.db.src.tables import (
 )
 from packages.shared_utils.src.exceptions import FileParsingError
 from packages.shared_utils.src.pubsub import PubSubEvent
+from sqlalchemy import insert, select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from services.indexer.src.main import (
     get_gcs_notification_data,
     handle_pubsub_message,
 )
-from sqlalchemy import insert, select
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 @pytest.fixture

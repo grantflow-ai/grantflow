@@ -6,10 +6,11 @@ import pytest
 from google.cloud import storage
 from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, TextVector
 from packages.shared_utils.src.gcs import download_blob
-from services.indexer.src.processing import process_source
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
+
+from services.indexer.src.processing import process_source
 
 FILENAME = "PIC seq.pdf"
 SMALL_PDF_TEST_FILE = SOURCES_FOLDER / "application_sources" / "43b4aed5-8549-461f-9290-5ee9a630ac9a" / FILENAME

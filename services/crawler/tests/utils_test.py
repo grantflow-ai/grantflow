@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, Mock, patch
 
 from bs4 import BeautifulSoup, Comment, Tag
+
 from services.crawler.src.utils import (
     HTML_TAGS_TO_DECOMPOSE,
     download_file,
