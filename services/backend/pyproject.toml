@@ -14,3 +14,8 @@ dependencies = [
   "pyjwt>=2.10.1",
   "shared-utils[server,gcs,pubsub]",
 ]
+
+[dependency-groups]
+dev = [
+  "shared-utils[server,gcs,pubsub,ai,embeddings,extraction]",
+]
