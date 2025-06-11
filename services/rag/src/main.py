@@ -2,6 +2,7 @@ import base64
 from typing import Any
 
 from litestar import post
+from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.exceptions import (
     DeserializationError,
     ValidationError,
@@ -47,9 +48,14 @@ async def handle_rag_request(
         )
 
 
+async def before_server_start() -> None:
+    init_llm_connection()
+
+
 app = create_litestar_app(
     logger=logger,
     route_handlers=[
         handle_rag_request,
     ],
+    on_startup=[before_server_start],
 )
