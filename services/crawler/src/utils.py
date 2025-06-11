@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from bs4 import Comment, Tag
 from httpx import AsyncClient, Timeout
 from packages.shared_utils.src.logger import get_logger
+
 from services.crawler.src.constants import SKIP_DOMAINS
 
 if TYPE_CHECKING:

@@ -11,7 +11,6 @@ from packages.db.src.tables import (
     FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
-    GrantTemplate,
     RagFile,
     RagSource,
     TextVector,
@@ -19,7 +18,6 @@ from packages.db.src.tables import (
 )
 from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.serialization import deserialize, serialize
-from services.indexer.src.processing import process_source
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -200,15 +198,6 @@ async def parse_source_file(
         )
         await session.commit()
 
-    await process_source(
-        filename=source_file.name,
-        content=file_content,
-        mime_type="application/pdf"
-        if source_file.suffix == ".pdf"
-        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        source_id=str(file_id),
-    )
-
     async with async_session_maker() as session:
         if application_id:
             stmt = (
@@ -272,32 +261,6 @@ async def ensure_cfp_content_exists(cfp_markdown_file: Path, cfp_source_file: Pa
 def ensure_directory(directory: Path) -> None:
     if not directory.exists():
         directory.mkdir(parents=True)
-
-
-# TODO: This function needs to be updated to use the new RAG-based grant_template_generation_pipeline_handler
-
-async def ensure_grant_template(
-    application_id: str, cfp_content_file: Path, data_fixture_folder: Path, async_session_maker: async_sessionmaker[Any]
-) -> None:
-    grant_template_file = data_fixture_folder / "grant_template.json"
-    if not grant_template_file.exists():
-
-        raise NotImplementedError(
-            "This function needs to be updated to use the new RAG-based grant_template_generation_pipeline_handler"
-        )
-        async with async_session_maker() as session:
-            grant_template = await session.scalar(
-                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
-            )
-        grant_template_file.write_bytes(serialize(grant_template))
-    data = deserialize(grant_template_file.read_text(), dict[str, Any])
-    async with async_session_maker() as session:
-        await session.execute(
-            insert(GrantTemplate).values(
-                {k: v for k, v in data.items() if v is not None and k not in {"created_at", "updated_at"}}
-            )
-        )
-        await session.commit()
 
 
 async def process_application_files(
@@ -379,7 +342,6 @@ async def create_grant_application_data(
 
     data_fixture_folder = FIXTURES_FOLDER / fixture_id
     ensure_directory(data_fixture_folder)
-    await ensure_grant_template(application_id, cfp_content_file, data_fixture_folder, async_session_maker)
 
     application_files_fixtures_dir = data_fixture_folder / "files"
     ensure_directory(application_files_fixtures_dir)

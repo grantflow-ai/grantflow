@@ -9,24 +9,24 @@ from urllib.parse import urljoin, urlparse
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
 from html_to_markdown import convert_to_markdown
-from packages.db.src.json_objects import Chunk
 from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.dto import VectorDTO
-from packages.shared_utils.src.embeddings import generate_embeddings
+from packages.shared_utils.src.embeddings import generate_embeddings, index_chunks
 from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
     UrlParsingError,
 )
 from packages.shared_utils.src.logger import get_logger
-from services.crawler.src.constants import CHUNKS_BATCH_SIZE, FILE_RX, MAX_DEPTH
+from sklearn.metrics.pairwise import cosine_similarity
+from trafilatura import extract
+
+from services.crawler.src.constants import FILE_RX, MAX_DEPTH
 from services.crawler.src.utils import (
     download_file,
     download_page_html,
     safe_filename_from_url,
     sanitize_html,
 )
-from sklearn.metrics.pairwise import cosine_similarity
-from trafilatura import extract
 
 logger = get_logger(__name__)
 
@@ -42,27 +42,6 @@ class CrawlResult(TypedDict):
     markdown_content: str
     text_content: str
     saved_path: str
-
-
-async def create_vector_dto(
-    *,
-    chunk: Chunk,
-    rag_source_id: str,
-) -> VectorDTO:
-    try:
-        embedding = await generate_embeddings([chunk["content"]])
-
-        if len(embedding) != 1:
-            logger.error("Expected a single embedding to be generated for the content")
-            raise ExternalOperationError("Expected a single embedding to be generated for the content")
-
-        return VectorDTO(
-            chunk=chunk,
-            embedding=embedding[0],
-            rag_source_id=rag_source_id,
-        )
-    except ValueError as e:
-        raise ExternalOperationError("Failed to generate embedding", context=str(e)) from e
 
 
 async def prepare_url_data(
@@ -278,18 +257,6 @@ async def crawl_url(*, url: str, source_id: str) -> tuple[list[VectorDTO], str, 
         content += "\n\n" + result["markdown_content"]
 
     chunks = chunk_text(text=content, mime_type="text/markdown")
-    vectors: list[VectorDTO] = []
-
-    for i in range(0, len(chunks), CHUNKS_BATCH_SIZE):
-        results = await gather(
-            *[
-                create_vector_dto(
-                    chunk=chunk,
-                    rag_source_id=source_id,
-                )
-                for chunk in chunks[i : i + CHUNKS_BATCH_SIZE]
-            ]
-        )
-        vectors.extend([result for result in results if result is not None])
+    vectors = await index_chunks(chunks=chunks, source_id=source_id)
 
     return vectors, content, files

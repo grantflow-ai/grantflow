@@ -6,8 +6,8 @@ from typing import Any
 import pytest
 from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
 from packages.shared_utils.src.chunking import chunk_text
+from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.extraction import extract_file_content
-from services.indexer.src.indexing import index_documents
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import TEST_DATA_SOURCES
 
@@ -17,7 +17,7 @@ from testing import TEST_DATA_SOURCES
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
-async def test_index_documents(
+async def test_index_chunks(
     logger: logging.Logger,
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
@@ -38,7 +38,7 @@ async def test_index_documents(
     chunks = chunk_text(text=content, mime_type=mime_type)
     assert len(chunks) > 0, f"No chunks generated from {data_file.name}"
 
-    vector_dtos = await index_documents(
+    vector_dtos = await index_chunks(
         chunks=chunks,
         source_id=str(grant_application_file.rag_source_id),
     )
