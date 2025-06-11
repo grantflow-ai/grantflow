@@ -106,6 +106,22 @@ uv run scripts/init-pubsub-emulator.py || {
 echo -e "${GREEN}✅ Pub/Sub emulator initialized${NC}"
 echo ""
 
+# Initialize GCS emulator
+echo -e "${YELLOW}Initializing GCS emulator...${NC}"
+docker compose --profile services up -d gcs-emulator || {
+    echo -e "${RED}❌ Failed to start GCS emulator${NC}"
+    exit 1
+}
+
+# Wait for GCS emulator to be ready and create bucket
+export STORAGE_EMULATOR_HOST=http://localhost:4443
+uv run scripts/init-gcs-emulator.py || {
+    echo -e "${RED}❌ Failed to initialize GCS emulator${NC}"
+    exit 1
+}
+echo -e "${GREEN}✅ GCS emulator initialized${NC}"
+echo ""
+
 # Start all services
 echo -e "${YELLOW}Starting all services...${NC}"
 echo ""
