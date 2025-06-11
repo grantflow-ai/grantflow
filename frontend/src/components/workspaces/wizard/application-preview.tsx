@@ -74,7 +74,7 @@ export function ApplicationPreview({
 						<div className="space-y-4">
 							{files.length > 0 && (
 								<Card className="p-5" data-testid="application-documents">
-									<h4 className="mb-4 font-semibold">Application Documents</h4>
+									<h4 className="font-heading mb-4 font-semibold">Application Documents</h4>
 									<div className="grid grid-cols-2 gap-3">
 										{files.map((file, index) => (
 											<FilePreviewCard
@@ -179,11 +179,13 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 
 	return (
 		<div
-			className="group relative flex flex-col items-center justify-center rounded-lg border bg-white p-3 transition-all hover:shadow-sm"
+			className="group relative flex cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-3 transition-all hover:shadow-sm"
 			onContextMenu={(e) => {
 				e.preventDefault();
 				setDropdownOpen(true);
 			}}
+			onDoubleClick={canOpenInBrowser ? handleOpen : undefined}
+			title={canOpenInBrowser ? "Double-click to open file" : undefined}
 		>
 			<div className="mb-2">
 				<FileIcon />
@@ -193,9 +195,9 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 			</span>
 			<span className="text-muted-foreground-dark text-[10px]">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
 
-			<DropdownMenu onOpenChange={setDropdownOpen} open={dropdownOpen}>
-				<DropdownMenuTrigger asChild>
-					<div className="absolute inset-0" />
+			<DropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
+				<DropdownMenuTrigger disabled>
+					<span className="sr-only">Open menu</span>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="w-40">
 					<DropdownMenuItem className="gap-2" disabled={!canOpenInBrowser} onClick={handleOpen}>

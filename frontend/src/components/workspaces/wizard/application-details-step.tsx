@@ -3,7 +3,7 @@
 import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { crawlTemplateUrl, deleteTemplateSource } from "@/actions/sources";
+import { crawlTemplateUrl } from "@/actions/sources";
 import AppInput from "@/components/input-field";
 import AppTextArea from "@/components/textarea-field";
 import { IconGlobe } from "@/components/workspaces/icons";
@@ -63,21 +63,26 @@ export function ApplicationDetailsStep({
 	};
 
 	const handleFileRemove = useCallback(
-		async (file: FileWithId) => {
-			if (!file.id) {
+		async (fileToRemove: FileWithId) => {
+			if (!fileToRemove.id) {
 				toast.error("Cannot remove file: File ID not found");
 				return;
 			}
 
 			try {
-				await deleteTemplateSource(workspaceId, templateId, file.id);
-				toast.success(`File ${file.name} removed`);
+				// await deleteTemplateSource(workspaceId, templateId, file.id);
+				await new Promise(() => {
+					/* */
+				});
+				setUploadedFiles((prev) => prev.filter((f) => f.name !== fileToRemove.name));
+				toast.success(`File ${fileToRemove.name} removed`);
 			} catch (error) {
 				logError({ error, identifier: "deleteTemplateSource" });
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		[workspaceId, templateId],
+		// [workspaceId, templateId],
+		[],
 	);
 
 	return (
@@ -182,6 +187,7 @@ export function ApplicationDetailsStep({
 				connectionStatusColor={connectionStatusColor}
 				files={uploadedFiles}
 				onFileRemove={handleFileRemove}
+				onUrlRemove={handleRemoveUrl}
 				urls={urls}
 			/>
 		</div>
