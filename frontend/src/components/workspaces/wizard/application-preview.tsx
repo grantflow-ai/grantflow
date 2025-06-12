@@ -1,9 +1,8 @@
 "use client";
 
-import { ExternalLink, FileText, Link, Trash2 } from "lucide-react";
+import { ExternalLink, Link, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -13,7 +12,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconClose, IconPreviewLogo } from "@/components/workspaces/icons";
+import { IconApplication, IconClose, IconPreviewLogo } from "@/components/workspaces/icons";
+import { ThemeBadge } from "@/components/workspaces/theme-badge";
 
 export interface FileWithId extends File {
 	id?: string;
@@ -53,14 +53,13 @@ export function ApplicationPreview({
 				<>
 					<div className="flex flex-col items-start gap-2">
 						<div className="flex items-center gap-2">
-							<Badge className="w-fit" variant="secondary">
-								<FileText className="mr-1 size-3" />
+							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Title
-							</Badge>
+							</ThemeBadge>
 							{connectionStatus && (
-								<Badge className={`w-fit ${connectionStatusColor} text-white`} variant="outline">
+								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
 									{connectionStatus}
-								</Badge>
+								</ThemeBadge>
 							)}
 						</div>
 						<h3
