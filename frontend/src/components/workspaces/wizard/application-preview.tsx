@@ -12,7 +12,19 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconApplication, IconClose, IconPreviewLogo } from "@/components/workspaces/icons";
+import {
+	IconApplication,
+	IconClose,
+	IconFileCsv,
+	IconFileDoc,
+	IconFileDocX,
+	IconFileGeneral,
+	IconFileMarkdown,
+	IconFilePdf,
+	IconFilePpt,
+	IconFilePptx,
+	IconPreviewLogo,
+} from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
 
 export interface FileWithId extends File {
@@ -41,7 +53,7 @@ export function ApplicationPreview({
 	const isEmpty = !applicationTitle && files.length === 0 && urls.length === 0;
 
 	return (
-		<div className="flex h-full w-[70%] flex-col gap-6 border-l p-6">
+		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
 			{isEmpty ? (
 				<div className="flex h-full flex-col items-center justify-center">
 					<IconPreviewLogo height={180} width={180} />
@@ -51,7 +63,7 @@ export function ApplicationPreview({
 				</div>
 			) : (
 				<>
-					<div className="flex flex-col items-start gap-2">
+					<div className="mb-11 flex flex-col items-start gap-2">
 						<div className="flex items-center gap-2">
 							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Title
@@ -71,11 +83,14 @@ export function ApplicationPreview({
 					</div>
 
 					<ScrollArea className="flex-1">
-						<div className="space-y-4">
+						<div className="space-y-5">
 							{files.length > 0 && (
-								<Card className="p-5" data-testid="application-documents">
-									<h4 className="font-heading mb-4 font-semibold">Application Documents</h4>
-									<div className="grid grid-cols-2 gap-3">
+								<Card
+									className="border-app-gray-100 border p-5 shadow-none"
+									data-testid="application-documents"
+								>
+									<h4 className="font-heading mb-8 font-semibold">Application Documents</h4>
+									<div className="flex gap-3">
 										{files.map((file, index) => (
 											<FilePreviewCard
 												file={file}
@@ -88,9 +103,12 @@ export function ApplicationPreview({
 							)}
 
 							{urls.length > 0 && (
-								<Card className="p-5" data-testid="application-links">
-									<h4 className="font-heading mb-4 font-semibold">Links</h4>
-									<div className="space-y-2">
+								<Card
+									className="border-app-gray-100 border p-5 shadow-none"
+									data-testid="application-links"
+								>
+									<h4 className="font-heading mb-8 font-semibold">Links</h4>
+									<div className="space-y-1">
 										{urls.map((url, index) => (
 											<LinkPreviewItem
 												key={url + index.toString()}
@@ -134,52 +152,42 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 	};
 
 	const FileIcon = () => {
-		const iconClass = "h-16 w-12 relative";
-
-		const getColor = () => {
-			if (extension === "pdf") {
-				return "fill-red-500";
+		const getIconComponent = () => {
+			switch (extension) {
+				case "csv": {
+					return <IconFileCsv height={56} width={48} />;
+				}
+				case "doc": {
+					return <IconFileDoc height={56} width={48} />;
+				}
+				case "docx": {
+					return <IconFileDocX height={56} width={48} />;
+				}
+				case "markdown":
+				case "md": {
+					return <IconFileMarkdown height={56} width={48} />;
+				}
+				case "pdf": {
+					return <IconFilePdf height={56} width={48} />;
+				}
+				case "ppt": {
+					return <IconFilePpt height={56} width={48} />;
+				}
+				case "pptx": {
+					return <IconFilePptx height={56} width={48} />;
+				}
+				default: {
+					return <IconFileGeneral height={56} width={48} />;
+				}
 			}
-			if (["doc", "docx"].includes(extension)) {
-				return "fill-blue-500";
-			}
-			if (["xls", "xlsx"].includes(extension)) {
-				return "fill-green-500";
-			}
-			if (["ppt", "pptx"].includes(extension)) {
-				return "fill-orange-500";
-			}
-			return "fill-gray-400";
 		};
 
-		return (
-			<div className="relative">
-				<svg className={iconClass} fill="none" viewBox="0 0 48 64" xmlns="http://www.w3.org/2000/svg">
-					<path
-						className={getColor()}
-						d="M8 0h24l8 8v48a8 8 0 01-8 8H8a8 8 0 01-8-8V8a8 8 0 018-8z"
-						opacity="0.2"
-					/>
-					<path
-						className={getColor().replace("fill-", "text-")}
-						d="M32 0v8h8M8 2h22v6h6v46a6 6 0 01-6 6H8a6 6 0 01-6-6V8a6 6 0 016-6z"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-					/>
-				</svg>
-				<div className={`absolute inset-x-0 bottom-3 flex items-center justify-center`}>
-					<span className={`text-xs font-bold uppercase ${getColor().replace("fill-", "text-")}`}>
-						{extension}
-					</span>
-				</div>
-			</div>
-		);
+		return <div className="flex items-center justify-center">{getIconComponent()}</div>;
 	};
 
 	return (
 		<div
-			className="group relative flex cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-3 transition-all hover:shadow-sm"
+			className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all"
 			onContextMenu={(e) => {
 				e.preventDefault();
 				setDropdownOpen(true);
@@ -187,13 +195,12 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 			onDoubleClick={canOpenInBrowser ? handleOpen : undefined}
 			title={canOpenInBrowser ? "Double-click to open file" : undefined}
 		>
-			<div className="mb-2">
+			<div className="mb-1">
 				<FileIcon />
 			</div>
-			<span className="max-w-full truncate text-xs font-medium" title={file.name}>
+			<span className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3" title={file.name}>
 				{file.name}
 			</span>
-			<span className="text-muted-foreground-dark text-[10px]">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
 
 			<DropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
 				<DropdownMenuTrigger disabled>
@@ -249,7 +256,7 @@ function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; 
 						onClick={handleRemove}
 					/>
 				) : (
-					<Link className="text-blue-600" />
+					<Link className="text-primary" />
 				)}
 			</div>
 			<Button asChild className="h-auto justify-start p-0.5 text-blue-600 hover:text-blue-800" variant="link">
