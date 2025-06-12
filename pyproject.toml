@@ -31,7 +31,12 @@ dev = [
 [tool.ruff]
 target-version = "py313"
 line-length = 120
-src = [ "packages/**/src", "packages/**/tests", "services/**/src", "services/**/tests" ]
+src = [
+  "packages/**/src",
+  "packages/**/tests",
+  "services/**/src",
+  "services/**/tests",
+]
 
 format.docstring-code-line-length = 120
 format.docstring-code-format = true
@@ -146,4 +151,4 @@ members = [
 [tool.uv.sources]
 db = { workspace = true }
 shared-utils = { workspace = true }
-uv-bump = { git = "https://github.com/zundertj/uv-bump" }
+uv-bump = { git = "https://github.com/Goldziher/uv-bump" }
