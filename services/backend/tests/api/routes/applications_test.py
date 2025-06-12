@@ -8,6 +8,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
     Workspace,
+    WorkspaceUser,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -305,3 +306,125 @@ async def test_generate_application_not_found(
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+# Retrieve Application Tests
+
+
+async def test_retrieve_application_success(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    workspace_member_user: None,
+) -> None:
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    # Verify basic application fields
+    assert data["id"] == str(grant_application.id)
+    assert data["workspace_id"] == str(grant_application.workspace_id)
+    assert data["title"] == grant_application.title
+    assert data["status"] == grant_application.status.value
+    assert "created_at" in data
+    assert "updated_at" in data
+    assert data["rag_sources"] == []
+
+
+async def test_retrieve_application_with_grant_template(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    grant_template: GrantTemplate,
+    workspace_member_user: None,
+) -> None:
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    # Verify application data
+    assert data["id"] == str(grant_application.id)
+    assert data["title"] == grant_application.title
+
+    # Verify grant_template exists and has correct structure
+    assert "grant_template" in data
+    template_data = data["grant_template"]
+    assert template_data["id"] == str(grant_template.id)
+    assert "grant_sections" in template_data
+    assert "funding_organization_id" in template_data
+
+    # Verify funding organization data is included if present
+    if "funding_organization" in template_data:
+        org_data = template_data["funding_organization"]
+        assert "id" in org_data
+        assert "full_name" in org_data
+
+    # Basic test should have no RAG sources initially
+    assert data["rag_sources"] == []
+
+
+async def test_retrieve_application_not_found(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    workspace_member_user: None,
+) -> None:
+    non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
+
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}/applications/{non_existent_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+async def test_retrieve_application_wrong_workspace(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
+) -> None:
+    # Create a different workspace with a workspace user for authorization
+    async with async_session_maker() as session, session.begin():
+        different_workspace = Workspace(name="Different Workspace")
+        session.add(different_workspace)
+        await session.flush()
+
+        # Create workspace user for the different workspace for authorization
+        from packages.db.src.enums import UserRoleEnum
+
+        firebase_uid = "a" * 128  # Same as test fixture
+        workspace_user = WorkspaceUser(
+            workspace_id=different_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER
+        )
+        session.add(workspace_user)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/workspaces/{different_workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+async def test_retrieve_application_unauthorized(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+) -> None:
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        # No authorization header
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
