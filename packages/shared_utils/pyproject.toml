@@ -21,18 +21,18 @@ dependencies = [
 ]
 
 optional-dependencies.ai = [
-  "anthropic>=0.49",
-  "google-cloud-aiplatform>=1.85",
+  "anthropic>=0.54",
+  "google-cloud-aiplatform>=1.97",
   "prompt-template>=1.2",
 ]
 optional-dependencies.chunking = [
-  "semantic-text-splitter>=0.24.2",
+  "semantic-text-splitter>=0.27",
 ]
 optional-dependencies.embeddings = [
-  "sentence-transformers[onnx]>=3.4.1",
+  "sentence-transformers[onnx]>=4.1",
 ]
 optional-dependencies.extraction = [
-  "kreuzberg>=2.1.2",
+  "kreuzberg>=3.1.7",
 ]
 optional-dependencies.gcs = [
   "google-cloud-storage>=2.19",
@@ -40,16 +40,16 @@ optional-dependencies.gcs = [
 optional-dependencies.nlp = [
   "en-core-web-sm",
   "rank-bm25>=0.2.2",
-  "spacy>=3.8.4",
-  "torch>=2.2.2",
+  "spacy>=3.8.7",
+  "torch>=2.7.1",
 ]
 optional-dependencies.pubsub = [
-  "google-cloud-pubsub>=2.29",
+  "google-cloud-pubsub>=2.30",
 ]
 
 optional-dependencies.server = [
   "litestar>=2.16",
-  "uvicorn[standard]>=0.34",
+  "uvicorn[standard]>=0.34.3",
 ]
 
 [dependency-groups]
