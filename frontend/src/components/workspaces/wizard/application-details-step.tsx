@@ -3,6 +3,7 @@
 import React, { useCallback } from "react";
 import { toast } from "sonner";
 
+import { deleteTemplateSource } from "@/actions/sources";
 import AppTextArea from "@/components/textarea-field";
 import { logError } from "@/utils/logging";
 
@@ -49,10 +50,7 @@ export function ApplicationDetailsStep({
 			}
 
 			try {
-				// TODO: await deleteTemplateSource(workspaceId, templateId, file.id);
-				await new Promise(() => {
-					/* */
-				});
+				await deleteTemplateSource(workspaceId, templateId, fileToRemove.id);
 				onUploadedFilesChange(uploadedFiles.filter((f) => f.name !== fileToRemove.name));
 				toast.success(`File ${fileToRemove.name} removed`);
 			} catch (error) {
@@ -60,8 +58,7 @@ export function ApplicationDetailsStep({
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		// TODO: [workspaceId, templateId],
-		[uploadedFiles, onUploadedFilesChange],
+		[workspaceId, templateId, uploadedFiles, onUploadedFilesChange],
 	);
 
 	return (

@@ -24,25 +24,19 @@ describe("ApplicationPreview", () => {
 		render(<ApplicationPreview applicationTitle="Test Application" files={[]} urls={[]} />);
 
 		expect(screen.getByText("Test Application")).toBeInTheDocument();
-		expect(screen.getByText("Draft")).toBeInTheDocument();
-	});
-
-	it("renders default title when no title provided", () => {
-		render(<ApplicationPreview applicationTitle="" files={[]} urls={[]} />);
-
-		expect(screen.getByText("Untitled Application")).toBeInTheDocument();
+		expect(screen.getByText("Application Title")).toBeInTheDocument();
 	});
 
 	it("renders empty state for documents", () => {
 		render(<ApplicationPreview applicationTitle="Test" files={[]} urls={[]} />);
 
-		expect(screen.getByText("No documents uploaded yet")).toBeInTheDocument();
+		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
 	});
 
 	it("renders empty state for links", () => {
 		render(<ApplicationPreview applicationTitle="Test" files={[]} urls={[]} />);
 
-		expect(screen.getByText("No links added yet")).toBeInTheDocument();
+		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
 	});
 
 	it("renders uploaded files", () => {

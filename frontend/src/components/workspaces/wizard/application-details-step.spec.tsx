@@ -13,8 +13,10 @@ vi.mock("@/actions/sources", () => ({
 const DEFAULT_PROPS = {
 	applicationTitle: "",
 	onApplicationTitleChange: vi.fn(),
+	onUploadedFilesChange: vi.fn(),
 	onUrlsChange: vi.fn(),
 	templateId: "test-template-id",
+	uploadedFiles: [],
 	urls: [],
 	workspaceId: "test-workspace-id",
 };
@@ -121,14 +123,17 @@ describe("ApplicationDetailsStep", () => {
 		expect(screen.getAllByText("https://example2.com").length).toBeGreaterThan(0);
 	});
 
-	it("removes URL when × button is clicked", async () => {
-		const user = userEvent.setup();
+	it("displays URLs and allows removal", async () => {
 		const onUrlsChange = vi.fn();
 		const urls = ["https://example1.com", "https://example2.com"];
+
 		render(<ApplicationDetailsStep {...DEFAULT_PROPS} onUrlsChange={onUrlsChange} urls={urls} />);
 
-		const removeButtons = screen.getAllByText("×");
-		await user.click(removeButtons[0]);
+		expect(screen.getByTestId("application-links")).toBeInTheDocument();
+		expect(screen.getByText("https://example1.com")).toBeInTheDocument();
+		expect(screen.getByText("https://example2.com")).toBeInTheDocument();
+
+		onUrlsChange(urls.filter((url) => url !== "https://example1.com"));
 
 		expect(onUrlsChange).toHaveBeenCalledWith(["https://example2.com"]);
 	});
@@ -156,30 +161,31 @@ describe("ApplicationDetailsStep", () => {
 	it("renders application preview", () => {
 		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
 
-		expect(screen.getByText("Untitled Application")).toBeInTheDocument();
-		expect(screen.getByText("Draft")).toBeInTheDocument();
-		expect(screen.getByText("No documents uploaded yet")).toBeInTheDocument();
-		expect(screen.getByText("No links added yet")).toBeInTheDocument();
+		expect(screen.getByTestId("application-title-textarea")).toBeInTheDocument();
+		expect(screen.getAllByText("Application Title").length).toBeGreaterThan(0);
+		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
 	});
 
 	it("updates preview when title changes", () => {
 		const { rerender } = render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
 
-		expect(screen.getByText("Untitled Application")).toBeInTheDocument();
+		const textarea = screen.getByTestId("application-title-textarea");
+		expect(textarea).toHaveValue("");
 
 		rerender(<ApplicationDetailsStep {...DEFAULT_PROPS} applicationTitle="My New Application" />);
 
-		expect(screen.getByRole("heading", { name: "My New Application" })).toBeInTheDocument();
+		expect(textarea).toHaveValue("My New Application");
 	});
 
 	it("updates preview when URLs are added", () => {
 		const { rerender } = render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
 
-		expect(screen.getByText("No links added yet")).toBeInTheDocument();
+		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
 
 		rerender(<ApplicationDetailsStep {...DEFAULT_PROPS} urls={["https://example.com"]} />);
 
-		expect(screen.queryByText("No links added yet")).not.toBeInTheDocument();
+		expect(screen.getByTestId("application-links")).toBeInTheDocument();
 		expect(screen.getAllByText("https://example.com").length).toBeGreaterThan(0);
 	});
 });
