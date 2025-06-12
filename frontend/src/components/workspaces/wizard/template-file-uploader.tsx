@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { createTemplateSourceUploadUrl } from "@/actions/sources";
@@ -37,22 +37,16 @@ export function TemplateFileUploader({
 	templateId,
 	workspaceId,
 }: {
-	onFilesChange?: (files: FileWithId[]) => void;
+	onFilesChange?: (files: FileWithId) => void;
 	templateId: string;
 	workspaceId: string;
 }) {
-	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
-
-	useEffect(() => {
-		onFilesChange?.(uploadedFiles);
-	}, [uploadedFiles, onFilesChange]);
-
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
 		for (const file of newFileUploads) {
 			if (file.size > MAX_FILE_SIZE_BYTES) {
-				toast.error([
+				toast.error(
 					`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE_BYTES)}`,
-				]);
+				);
 				return false;
 			}
 		}
@@ -82,7 +76,7 @@ export function TemplateFileUploader({
 				// }
 
 				const fileWithId: FileWithId = Object.assign(file, { id: file.name });
-				setUploadedFiles((prev) => [...prev, fileWithId]);
+				onFilesChange?.(fileWithId);
 				toast.success(`File ${file.name} uploaded successfully`);
 
 				// Trigger indexing directly
@@ -106,7 +100,7 @@ export function TemplateFileUploader({
 			}
 
 			const fileWithId: FileWithId = Object.assign(file, { id: file.name });
-			setUploadedFiles((prev) => [...prev, fileWithId]);
+			onFilesChange?.(fileWithId);
 
 			toast.success(`File ${file.name} uploaded successfully`);
 
@@ -116,7 +110,7 @@ export function TemplateFileUploader({
 				void triggerDevIndexing(objectPath);
 			}
 		},
-		[workspaceId, templateId],
+		[workspaceId, templateId, onFilesChange],
 	);
 
 	const handleFilesAdded = useCallback(

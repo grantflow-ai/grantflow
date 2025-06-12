@@ -109,7 +109,9 @@ export function ApplicationDetailsStep({
 							analyze these to extract key requirements for your application.
 						</p>
 						<TemplateFileUploader
-							onFilesChange={onUploadedFilesChange}
+							onFilesChange={(newFile) => {
+								onUploadedFilesChange([...uploadedFiles, newFile]);
+							}}
 							templateId={templateId}
 							workspaceId={workspaceId}
 						/>
