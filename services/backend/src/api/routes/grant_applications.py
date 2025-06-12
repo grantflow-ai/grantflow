@@ -1,11 +1,18 @@
 from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
-from litestar import delete, patch, post
+from litestar import delete, get, patch, post
 from litestar.exceptions import NotFoundException, ValidationException
 from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
-from packages.db.src.json_objects import ResearchObjective
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, GrantTemplate, RagSource
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.tables import (
+    GrantApplication,
+    GrantApplicationRagSource,
+    GrantTemplate,
+    RagFile,
+    RagSource,
+    RagUrl,
+)
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -33,6 +40,61 @@ class UpdateApplicationRequestBody(TypedDict):
     research_objectives: NotRequired[list[ResearchObjective]]
     status: NotRequired[ApplicationStatusEnum]
     title: NotRequired[str]
+
+
+class FundingOrganizationResponse(TypedDict):
+    id: str
+    full_name: str
+    abbreviation: NotRequired[str]
+    created_at: str
+    updated_at: str
+
+
+class GrantTemplateResponse(TypedDict):
+    id: str
+    grant_application_id: str
+    funding_organization_id: NotRequired[str]
+    funding_organization: NotRequired[FundingOrganizationResponse]
+    grant_sections: list[GrantLongFormSection | GrantElement]
+    submission_date: NotRequired[str]
+    created_at: str
+    updated_at: str
+
+
+class RagSourceResponse(TypedDict):
+    id: str
+    source_type: str
+    indexing_status: SourceIndexingStatusEnum
+    url: NotRequired[str]
+    title: NotRequired[str]
+    filename: NotRequired[str]
+    mime_type: NotRequired[str]
+    size: NotRequired[int]
+    created_at: str
+    updated_at: str
+
+
+class GrantApplicationRagSourceResponse(TypedDict):
+    grant_application_id: str
+    rag_source_id: str
+    rag_source: RagSourceResponse
+    created_at: str
+    updated_at: str
+
+
+class ApplicationResponse(TypedDict):
+    id: str
+    workspace_id: str
+    title: str
+    status: ApplicationStatusEnum
+    completed_at: NotRequired[str]
+    form_inputs: NotRequired[ResearchDeepDive]
+    research_objectives: NotRequired[list[ResearchObjective]]
+    text: NotRequired[str]
+    grant_template: NotRequired[GrantTemplateResponse]
+    rag_sources: list[GrantApplicationRagSourceResponse]
+    created_at: str
+    updated_at: str
 
 
 @post(
@@ -175,3 +237,105 @@ async def handle_generate_application(application_id: UUID, session_maker: async
     except SQLAlchemyError as e:
         logger.error("Error initiating application generation", exc_info=e)
         raise DatabaseError("Error initiating application generation", context=str(e)) from e
+
+
+@get(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="RetrieveApplication",
+)
+async def handle_retrieve_application(
+    workspace_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> ApplicationResponse:
+    logger.info("Retrieving application", workspace_id=workspace_id, application_id=application_id)
+
+    try:
+        grant_application = await retrieve_application(application_id=application_id, session_maker=session_maker)
+    except ValidationError as e:
+        raise NotFoundException("Application not found") from e
+
+    if grant_application.workspace_id != workspace_id:
+        raise NotFoundException("Application not found")
+
+    response: ApplicationResponse = {
+        "id": str(grant_application.id),
+        "workspace_id": str(grant_application.workspace_id),
+        "title": grant_application.title,
+        "status": grant_application.status,
+        "rag_sources": [],
+        "created_at": grant_application.created_at.isoformat(),
+        "updated_at": grant_application.updated_at.isoformat(),
+    }
+
+    if grant_application.completed_at:
+        response["completed_at"] = grant_application.completed_at.isoformat()
+
+    if grant_application.form_inputs:
+        response["form_inputs"] = grant_application.form_inputs
+
+    if grant_application.research_objectives:
+        response["research_objectives"] = grant_application.research_objectives
+
+    if grant_application.text:
+        response["text"] = grant_application.text
+
+    if grant_application.grant_template:
+        template = grant_application.grant_template
+        template_response: GrantTemplateResponse = {
+            "id": str(template.id),
+            "grant_application_id": str(template.grant_application_id),
+            "grant_sections": template.grant_sections,
+            "created_at": template.created_at.isoformat(),
+            "updated_at": template.updated_at.isoformat(),
+        }
+
+        if template.funding_organization_id:
+            template_response["funding_organization_id"] = str(template.funding_organization_id)
+
+        if template.submission_date:
+            template_response["submission_date"] = template.submission_date.isoformat()
+
+        if template.funding_organization:
+            org = template.funding_organization
+            funding_org_response: FundingOrganizationResponse = {
+                "id": str(org.id),
+                "full_name": org.full_name,
+                "created_at": org.created_at.isoformat(),
+                "updated_at": org.updated_at.isoformat(),
+            }
+            if org.abbreviation:
+                funding_org_response["abbreviation"] = org.abbreviation
+            template_response["funding_organization"] = funding_org_response
+
+        response["grant_template"] = template_response
+
+    if grant_application.rag_sources:
+        for app_rag_source in grant_application.rag_sources:
+            rag_source = app_rag_source.rag_source
+            rag_source_response: RagSourceResponse = {
+                "id": str(rag_source.id),
+                "source_type": rag_source.source_type,
+                "indexing_status": rag_source.indexing_status,
+                "created_at": rag_source.created_at.isoformat(),
+                "updated_at": rag_source.updated_at.isoformat(),
+            }
+
+            if rag_source.source_type == "rag_url" and isinstance(rag_source, RagUrl):
+                rag_source_response["url"] = rag_source.url
+                if rag_source.title:
+                    rag_source_response["title"] = rag_source.title
+            elif rag_source.source_type == "rag_file" and isinstance(rag_source, RagFile):
+                rag_source_response["filename"] = rag_source.filename
+                rag_source_response["mime_type"] = rag_source.mime_type
+                rag_source_response["size"] = rag_source.size
+
+            app_rag_source_response: GrantApplicationRagSourceResponse = {
+                "grant_application_id": str(app_rag_source.grant_application_id),
+                "rag_source_id": str(app_rag_source.rag_source_id),
+                "rag_source": rag_source_response,
+                "created_at": app_rag_source.created_at.isoformat(),
+                "updated_at": app_rag_source.updated_at.isoformat(),
+            }
+            response["rag_sources"].append(app_rag_source_response)
+
+    return response
