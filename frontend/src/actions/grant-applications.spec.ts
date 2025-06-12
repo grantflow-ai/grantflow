@@ -3,12 +3,19 @@ import { HTTPError } from "ky";
 import { mockRedirect } from "::testing/global-mocks";
 import { API } from "@/types/api-types";
 
-import { createApplication, deleteApplication, generateApplication, updateApplication } from "./grant-applications";
+import {
+	createApplication,
+	deleteApplication,
+	generateApplication,
+	retrieveApplication,
+	updateApplication,
+} from "./grant-applications";
 import { updateGrantTemplate } from "./grant-template";
 
 const mockPost = vi.fn();
 const mockPatch = vi.fn();
 const mockDelete = vi.fn();
+const mockGet = vi.fn();
 const mockCreateAuthHeaders = vi.fn();
 const mockWithAuthRedirect = vi.fn();
 
@@ -18,6 +25,7 @@ vi.mock("@/utils/api", async () => {
 		...actual,
 		getClient: () => ({
 			delete: mockDelete,
+			get: mockGet,
 			patch: mockPatch,
 			post: mockPost,
 		}),
@@ -43,6 +51,47 @@ const mockCreateApplicationResponse: API.CreateApplication.Http201.ResponseBody 
 	template_id: mockTemplateId,
 };
 
+const mockRetrieveApplicationResponse: API.RetrieveApplication.Http200.ResponseBody = {
+	created_at: "2024-01-01T00:00:00Z",
+	id: mockApplicationId,
+	rag_sources: [
+		{
+			created_at: "2024-01-01T00:00:00Z",
+			grant_application_id: mockApplicationId,
+			id: "rag-source-1",
+			rag_source: {
+				created_at: "2024-01-01T00:00:00Z",
+				id: "source-1",
+				indexing_status: "FINISHED",
+				source_type: "url",
+				title: "Example Source",
+				updated_at: "2024-01-01T00:00:00Z",
+				url: "https://example.com",
+			},
+			rag_source_id: "source-1",
+			updated_at: "2024-01-01T00:00:00Z",
+		},
+	],
+	research_objectives: [
+		{
+			description: "Description of objective 1",
+			number: 1,
+			research_tasks: [
+				{
+					description: "Task description",
+					number: 1,
+					title: "Research Task 1",
+				},
+			],
+			title: "Research Objective 1",
+		},
+	],
+	status: "DRAFT",
+	title: "Test Application",
+	updated_at: "2024-01-01T00:00:00Z",
+	workspace_id: mockWorkspaceId,
+};
+
 beforeEach(() => {
 	vi.clearAllMocks();
 
@@ -51,6 +100,10 @@ beforeEach(() => {
 
 	mockPost.mockReturnValue({
 		json: vi.fn().mockResolvedValue(mockCreateApplicationResponse),
+	});
+
+	mockGet.mockReturnValue({
+		json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
 	});
 
 	mockPatch.mockResolvedValue(undefined);
@@ -77,6 +130,57 @@ describe("Grant Application Actions", () => {
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 			expect(result).toEqual(mockCreateApplicationResponse);
+		});
+	});
+
+	describe("retrieveApplication", () => {
+		it("should call the API with correct parameters", async () => {
+			const result = await retrieveApplication(mockWorkspaceId, mockApplicationId);
+
+			expect(mockGet).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+				headers: mockAuthHeaders,
+			});
+
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+			expect(result).toEqual(mockRetrieveApplicationResponse);
+		});
+
+		it("should handle API errors", async () => {
+			const mockResponse = new Response();
+			const mockError = new HTTPError(
+				mockResponse,
+				{
+					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
+				} as never,
+				{} as never,
+			);
+
+			mockGet.mockReturnValue({
+				json: vi.fn().mockRejectedValue(mockError),
+			});
+			mockWithAuthRedirect.mockRejectedValue(mockError);
+
+			await expect(retrieveApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow();
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+
+		it("should handle 404 not found errors", async () => {
+			const mockResponse = new Response(
+				JSON.stringify({
+					detail: "Application not found",
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 404,
+				},
+			);
+			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+
+			mockGet.mockReturnValue({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+
+			await expect(retrieveApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow(HTTPError);
 		});
 	});
 
