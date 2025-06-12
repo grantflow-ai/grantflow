@@ -1,9 +1,8 @@
 "use client";
 
-import { ExternalLink, FileText, Link, Trash2 } from "lucide-react";
+import { ExternalLink, Link, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -13,6 +12,20 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+	IconApplication,
+	IconClose,
+	IconFileCsv,
+	IconFileDoc,
+	IconFileDocX,
+	IconFileGeneral,
+	IconFileMarkdown,
+	IconFilePdf,
+	IconFilePpt,
+	IconFilePptx,
+	IconPreviewLogo,
+} from "@/components/workspaces/icons";
+import { ThemeBadge } from "@/components/workspaces/theme-badge";
 
 export interface FileWithId extends File {
 	id?: string;
@@ -24,6 +37,7 @@ interface ApplicationPreviewProps {
 	connectionStatusColor?: string;
 	files: FileWithId[];
 	onFileRemove?: (file: FileWithId) => Promise<void>;
+	onUrlRemove?: (url: string) => void;
 	urls: string[];
 }
 
@@ -33,58 +47,82 @@ export function ApplicationPreview({
 	connectionStatusColor,
 	files,
 	onFileRemove,
+	onUrlRemove,
 	urls,
 }: ApplicationPreviewProps) {
+	const isEmpty = !applicationTitle && files.length === 0 && urls.length === 0;
+
 	return (
-		<div className="flex h-full w-[70%] flex-col gap-6 border-l p-6">
-			<div className="flex flex-col items-center gap-2">
-				<div className="flex items-center gap-2">
-					<Badge className="w-fit" variant="secondary">
-						<FileText className="mr-1 size-3" />
-						Draft
-					</Badge>
-					{connectionStatus && (
-						<Badge className={`w-fit ${connectionStatusColor} text-white`} variant="outline">
-							{connectionStatus}
-						</Badge>
-					)}
+		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
+			{isEmpty ? (
+				<div className="flex h-full flex-col items-center justify-center">
+					<IconPreviewLogo height={180} width={180} />
+					<p className="text-muted-foreground-dark mt-6 text-center text-sm">
+						Add application details, documents, or links to see a preview
+					</p>
 				</div>
-				<h3 className="text-center text-2xl font-bold">{applicationTitle || "Untitled Application"}</h3>
-			</div>
+			) : (
+				<>
+					<div className="mb-11 flex flex-col items-start gap-2">
+						<div className="flex items-center gap-2">
+							<ThemeBadge color="light" leftIcon={<IconApplication />}>
+								Application Title
+							</ThemeBadge>
+							{connectionStatus && (
+								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
+									{connectionStatus}
+								</ThemeBadge>
+							)}
+						</div>
+						<h3
+							className={`font-heading text-center text-3xl font-medium ${applicationTitle ? "" : "text-muted-foreground-dark/50"}`}
+							data-testid="application-title"
+						>
+							{applicationTitle || "Untitled Application"}
+						</h3>
+					</div>
 
-			<ScrollArea className="flex-1">
-				<div className="space-y-4">
-					<Card className="p-5">
-						<h4 className="mb-4 font-semibold">Application Documents</h4>
-						{files.length > 0 ? (
-							<div className="grid grid-cols-2 gap-3">
-								{files.map((file, index) => (
-									<FilePreviewCard
-										file={file}
-										key={file.name + index.toString()}
-										onRemove={onFileRemove}
-									/>
-								))}
-							</div>
-						) : (
-							<p className="text-muted-foreground text-sm">No documents uploaded yet</p>
-						)}
-					</Card>
+					<ScrollArea className="flex-1">
+						<div className="space-y-5">
+							{files.length > 0 && (
+								<Card
+									className="border-app-gray-100 border p-5 shadow-none"
+									data-testid="application-documents"
+								>
+									<h4 className="font-heading mb-8 font-semibold">Application Documents</h4>
+									<div className="flex gap-3" data-testid="file-collection">
+										{files.map((file, index) => (
+											<FilePreviewCard
+												file={file}
+												key={file.name + index.toString()}
+												onRemove={onFileRemove}
+											/>
+										))}
+									</div>
+								</Card>
+							)}
 
-					<Card className="p-5">
-						<h4 className="mb-4 font-semibold">Links</h4>
-						{urls.length > 0 ? (
-							<div className="space-y-2">
-								{urls.map((url, index) => (
-									<LinkPreviewItem key={url + index.toString()} url={url} />
-								))}
-							</div>
-						) : (
-							<p className="text-muted-foreground text-sm">No links added yet</p>
-						)}
-					</Card>
-				</div>
-			</ScrollArea>
+							{urls.length > 0 && (
+								<Card
+									className="border-app-gray-100 border p-5 shadow-none"
+									data-testid="application-links"
+								>
+									<h4 className="font-heading mb-8 font-semibold">Links</h4>
+									<div className="space-y-1">
+										{urls.map((url, index) => (
+											<LinkPreviewItem
+												key={url + index.toString()}
+												onRemove={onUrlRemove}
+												url={url}
+											/>
+										))}
+									</div>
+								</Card>
+							)}
+						</div>
+					</ScrollArea>
+				</>
+			)}
 		</div>
 	);
 }
@@ -114,68 +152,59 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 	};
 
 	const FileIcon = () => {
-		const iconClass = "h-16 w-12 relative";
-
-		const getColor = () => {
-			if (extension === "pdf") {
-				return "fill-red-500";
+		const getIconComponent = () => {
+			switch (extension) {
+				case "csv": {
+					return <IconFileCsv height={56} width={48} />;
+				}
+				case "doc": {
+					return <IconFileDoc height={56} width={48} />;
+				}
+				case "docx": {
+					return <IconFileDocX height={56} width={48} />;
+				}
+				case "markdown":
+				case "md": {
+					return <IconFileMarkdown height={56} width={48} />;
+				}
+				case "pdf": {
+					return <IconFilePdf height={56} width={48} />;
+				}
+				case "ppt": {
+					return <IconFilePpt height={56} width={48} />;
+				}
+				case "pptx": {
+					return <IconFilePptx height={56} width={48} />;
+				}
+				default: {
+					return <IconFileGeneral height={56} width={48} />;
+				}
 			}
-			if (["doc", "docx"].includes(extension)) {
-				return "fill-blue-500";
-			}
-			if (["xls", "xlsx"].includes(extension)) {
-				return "fill-green-500";
-			}
-			if (["ppt", "pptx"].includes(extension)) {
-				return "fill-orange-500";
-			}
-			return "fill-gray-400";
 		};
 
-		return (
-			<div className="relative">
-				<svg className={iconClass} fill="none" viewBox="0 0 48 64" xmlns="http://www.w3.org/2000/svg">
-					<path
-						className={getColor()}
-						d="M8 0h24l8 8v48a8 8 0 01-8 8H8a8 8 0 01-8-8V8a8 8 0 018-8z"
-						opacity="0.2"
-					/>
-					<path
-						className={getColor().replace("fill-", "text-")}
-						d="M32 0v8h8M8 2h22v6h6v46a6 6 0 01-6 6H8a6 6 0 01-6-6V8a6 6 0 016-6z"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-					/>
-				</svg>
-				<div className={`absolute inset-x-0 bottom-3 flex items-center justify-center`}>
-					<span className={`text-xs font-bold uppercase ${getColor().replace("fill-", "text-")}`}>
-						{extension}
-					</span>
-				</div>
-			</div>
-		);
+		return <div className="flex items-center justify-center">{getIconComponent()}</div>;
 	};
 
 	return (
 		<div
-			className="group relative flex flex-col items-center justify-center rounded-lg border bg-white p-3 transition-all hover:shadow-sm"
+			className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all"
 			onContextMenu={(e) => {
 				e.preventDefault();
 				setDropdownOpen(true);
 			}}
+			onDoubleClick={canOpenInBrowser ? handleOpen : undefined}
+			title={canOpenInBrowser ? "Double-click to open file" : undefined}
 		>
-			<div className="mb-2">
+			<div className="mb-1">
 				<FileIcon />
 			</div>
-			<span className="max-w-full truncate text-xs font-medium" title={file.name}>
+			<span className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3" title={file.name}>
 				{file.name}
 			</span>
-			<span className="text-muted-foreground text-[10px]">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
 
-			<DropdownMenu onOpenChange={setDropdownOpen} open={dropdownOpen}>
-				<DropdownMenuTrigger asChild>
-					<div className="absolute inset-0" />
+			<DropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
+				<DropdownMenuTrigger disabled>
+					<span className="sr-only">Open menu</span>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="w-40">
 					<DropdownMenuItem className="gap-2" disabled={!canOpenInBrowser} onClick={handleOpen}>
@@ -201,12 +230,37 @@ function getFileExtension(filename: string) {
 	return parts.length > 1 ? parts.at(-1)?.toLowerCase() : "";
 }
 
-function LinkPreviewItem({ url }: { url: string }) {
+function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; url: string }) {
+	const [isHovered, setIsHovered] = useState(false);
+
+	const handleRemove = () => {
+		onRemove?.(url);
+	};
+
 	return (
-		<div className="flex items-center gap-2">
-			<Link className="size-3.5 shrink-0 text-blue-600" />
+		<div
+			className="group relative flex items-center gap-2"
+			data-testid="link-preview-item"
+			onMouseEnter={() => {
+				setIsHovered(true);
+			}}
+			onMouseLeave={() => {
+				setIsHovered(false);
+			}}
+		>
+			<div className="flex size-3.5 shrink-0 items-center justify-center">
+				{isHovered ? (
+					<IconClose
+						className="cursor-pointer text-blue-600"
+						data-testid="link-remove-icon"
+						onClick={handleRemove}
+					/>
+				) : (
+					<Link className="text-primary" />
+				)}
+			</div>
 			<Button asChild className="h-auto justify-start p-0.5 text-blue-600 hover:text-blue-800" variant="link">
-				<a href={url} rel="noopener noreferrer" target="_blank">
+				<a data-testid="link-url" href={url} rel="noopener noreferrer" target="_blank">
 					{url}
 				</a>
 			</Button>
