@@ -597,7 +597,6 @@ export namespace API {
 					research_tasks: {
 						description?: string;
 						number: number;
-						relationships?: {}[];
 						title: string;
 					}[];
 					title: string;
@@ -757,7 +756,6 @@ export namespace API {
 				research_tasks: {
 					description?: string;
 					number: number;
-					relationships?: {}[];
 					title: string;
 				}[];
 				title: string;

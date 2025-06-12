@@ -49,7 +49,6 @@ def create_research_objective(*, tasks: list[dict[str, Any]] | None = None) -> R
                 "number": 1,
                 "title": t.get("title", "Task 1"),
                 "description": t.get("description", ""),
-                "relationships": [],
             }
             for t in (tasks or [{"title": "Task 1"}])
         ],
