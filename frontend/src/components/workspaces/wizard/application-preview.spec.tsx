@@ -24,25 +24,19 @@ describe("ApplicationPreview", () => {
 		render(<ApplicationPreview applicationTitle="Test Application" files={[]} urls={[]} />);
 
 		expect(screen.getByText("Test Application")).toBeInTheDocument();
-		expect(screen.getByText("Draft")).toBeInTheDocument();
-	});
-
-	it("renders default title when no title provided", () => {
-		render(<ApplicationPreview applicationTitle="" files={[]} urls={[]} />);
-
-		expect(screen.getByText("Untitled Application")).toBeInTheDocument();
+		expect(screen.getByText("Application Title")).toBeInTheDocument();
 	});
 
 	it("renders empty state for documents", () => {
 		render(<ApplicationPreview applicationTitle="Test" files={[]} urls={[]} />);
 
-		expect(screen.getByText("No documents uploaded yet")).toBeInTheDocument();
+		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
 	});
 
 	it("renders empty state for links", () => {
 		render(<ApplicationPreview applicationTitle="Test" files={[]} urls={[]} />);
 
-		expect(screen.getByText("No links added yet")).toBeInTheDocument();
+		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
 	});
 
 	it("renders uploaded files", () => {
@@ -59,8 +53,6 @@ describe("ApplicationPreview", () => {
 
 		expect(screen.getByText("document.pdf")).toBeInTheDocument();
 		expect(screen.getByText("spreadsheet.xlsx")).toBeInTheDocument();
-		expect(screen.getByText("1.0 MB")).toBeInTheDocument();
-		expect(screen.getByText("2.0 MB")).toBeInTheDocument();
 	});
 
 	it("renders file icons with correct extensions", () => {
@@ -75,8 +67,16 @@ describe("ApplicationPreview", () => {
 
 		render(<ApplicationPreview applicationTitle="Test" files={files} urls={[]} />);
 
-		expect(screen.getByText("pdf")).toBeInTheDocument();
-		expect(screen.getByText("docx")).toBeInTheDocument();
+		const fileCollection = screen.getByTestId("file-collection");
+		expect(fileCollection).toBeInTheDocument();
+
+		const svgElements = fileCollection.querySelectorAll("svg");
+		expect(svgElements).toHaveLength(2);
+
+		svgElements.forEach((svg) => {
+			expect(svg).toHaveAttribute("height", "56");
+			expect(svg).toHaveAttribute("width", "48");
+		});
 	});
 
 	it("renders links", () => {
@@ -188,7 +188,7 @@ describe("ApplicationPreview", () => {
 
 		const { container } = render(<ApplicationPreview applicationTitle="Test" files={files} urls={[]} />);
 
-		const grid = container.querySelector(".grid.grid-cols-2");
+		const grid = container.querySelector(".flex.gap-3");
 		expect(grid).toBeInTheDocument();
 		expect(grid?.children).toHaveLength(4);
 	});

@@ -13,6 +13,7 @@ import {
 	ResearchDeepDiveStep,
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
+import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { WIZARD_STEP_TITLES } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
@@ -32,6 +33,7 @@ export default function CreateGrantApplicationWizardPage() {
 	const [currentStep, setCurrentStep] = useState<number>(INITIAL_STEP);
 	const [applicationTitle, setApplicationTitle] = useState("");
 	const [urls, setUrls] = useState<string[]>([]);
+	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
 	const [applicationId, setApplicationId] = useState<null | string>(null);
 	const [templateId, setTemplateId] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(true);
@@ -44,11 +46,9 @@ export default function CreateGrantApplicationWizardPage() {
 		workspaceId: params.workspaceId,
 	});
 
-	// Create application on mount
 	useEffect(() => {
 		const initializeApplication = async () => {
 			try {
-				// Create a draft application with empty title
 				const response = await createApplication(params.workspaceId, {
 					title: DEFAULT_APPLICATION_TITLE,
 				});
@@ -64,7 +64,6 @@ export default function CreateGrantApplicationWizardPage() {
 		void initializeApplication();
 	}, [params.workspaceId, router]);
 
-	// Update application title when it changes
 	useEffect(() => {
 		if (!applicationId || !applicationTitle.trim()) {
 			return;
@@ -108,7 +107,7 @@ export default function CreateGrantApplicationWizardPage() {
 	}, [notifications]);
 
 	// Validation logic for step 1
-	const isStep1Valid = applicationTitle.trim().length > 0 && urls.length > 0;
+	const isStep1Valid = applicationTitle.trim().length > 0 && (urls.length > 0 || uploadedFiles.length > 0);
 
 	// Determine if the current step is valid
 	const isCurrentStepValid = () => {
@@ -141,8 +140,10 @@ export default function CreateGrantApplicationWizardPage() {
 			connectionStatusColor={connectionStatusColor}
 			key={0}
 			onApplicationTitleChange={setApplicationTitle}
+			onUploadedFilesChange={setUploadedFiles}
 			onUrlsChange={setUrls}
 			templateId={templateId ?? ""}
+			uploadedFiles={uploadedFiles}
 			urls={urls}
 			workspaceId={params.workspaceId}
 		/>,
@@ -166,7 +167,7 @@ export default function CreateGrantApplicationWizardPage() {
 	return (
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
 			<WizardHeader
-				applicationName={applicationTitle || "New Application"}
+				applicationName={applicationTitle || DEFAULT_APPLICATION_TITLE}
 				currentStep={currentStep}
 				showHeaderInfo={showHeaderInfo}
 				stepTitles={WIZARD_STEP_TITLES}

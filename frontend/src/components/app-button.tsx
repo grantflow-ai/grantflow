@@ -4,42 +4,45 @@ import React from "react";
 import { Button, buttonVariants, type ButtonProps as ShadcnButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const appButtonVariants = cva("font-button size-auto rounded-sm text-base font-light hover:bg-transparent", {
-	compoundVariants: [
-		{
-			className: "border-white text-white before:border-white",
-			theme: "light",
-			variant: "secondary",
+const appButtonVariants = cva(
+	"font-button size-auto cursor-pointer rounded-sm text-base font-light hover:bg-transparent",
+	{
+		compoundVariants: [
+			{
+				className: "border-white text-white before:border-white",
+				theme: "light",
+				variant: "secondary",
+			},
+			{
+				className: "hover:text-link-hover-light",
+				theme: "light",
+				variant: "link",
+			},
+		],
+		defaultVariants: {
+			size: "md",
+			theme: "dark",
+			variant: "primary",
 		},
-		{
-			className: "hover:text-link-hover-light",
-			theme: "light",
-			variant: "link",
+		variants: {
+			size: {
+				lg: "px-4 py-2",
+				md: "px-3 py-1 text-sm",
+				sm: "px-1 py-0.5 text-sm",
+			},
+			theme: {
+				dark: "",
+				light: "text-white",
+			},
+			variant: {
+				link: "hover:text-link-hover-dark rounded-none bg-transparent font-normal hover:no-underline",
+				primary: "hover:bg-accent disabled:bg-muted disabled:opacity-100",
+				secondary:
+					"text-primary border-primary before:border-primary relative border bg-transparent before:pointer-events-none before:absolute before:-inset-px before:rounded-sm before:border-2 before:opacity-0 before:transition-opacity hover:before:opacity-100",
+			},
 		},
-	],
-	defaultVariants: {
-		size: "md",
-		theme: "dark",
-		variant: "primary",
 	},
-	variants: {
-		size: {
-			lg: "px-4 py-2",
-			md: "px-3 py-1 text-sm",
-			sm: "px-1 py-0.5 text-sm",
-		},
-		theme: {
-			dark: "",
-			light: "text-white",
-		},
-		variant: {
-			link: "hover:text-link-hover-dark rounded-none bg-transparent font-normal hover:no-underline",
-			primary: "hover:bg-accent disabled:bg-muted disabled:opacity-100",
-			secondary:
-				"text-primary border-primary before:border-primary relative border bg-transparent before:pointer-events-none before:absolute before:-inset-px before:rounded-sm before:border-2 before:opacity-0 before:transition-opacity hover:before:opacity-100",
-		},
-	},
-});
+);
 
 export interface AppButtonProps
 	extends Omit<ShadcnButtonProps, "size" | "variant">,
