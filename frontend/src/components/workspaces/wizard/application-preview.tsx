@@ -64,7 +64,8 @@ export function ApplicationPreview({
 							)}
 						</div>
 						<h3
-							className={`font-heading text-center text-3xl font-medium ${applicationTitle ? "" : "text-muted-foreground-dark"}`}
+							className={`font-heading text-center text-3xl font-medium ${applicationTitle ? "" : "text-muted-foreground-dark/50"}`}
+							data-testid="application-title"
 						>
 							{applicationTitle || "Untitled Application"}
 						</h3>
@@ -233,6 +234,7 @@ function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; 
 	return (
 		<div
 			className="group relative flex items-center gap-2"
+			data-testid="link-preview-item"
 			onMouseEnter={() => {
 				setIsHovered(true);
 			}}
@@ -242,13 +244,17 @@ function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; 
 		>
 			<div className="flex size-3.5 shrink-0 items-center justify-center">
 				{isHovered ? (
-					<IconClose className="cursor-pointer text-blue-600" onClick={handleRemove} />
+					<IconClose
+						className="cursor-pointer text-blue-600"
+						data-testid="link-remove-icon"
+						onClick={handleRemove}
+					/>
 				) : (
 					<Link className="text-blue-600" />
 				)}
 			</div>
 			<Button asChild className="h-auto justify-start p-0.5 text-blue-600 hover:text-blue-800" variant="link">
-				<a href={url} rel="noopener noreferrer" target="_blank">
+				<a data-testid="link-url" href={url} rel="noopener noreferrer" target="_blank">
 					{url}
 				</a>
 			</Button>

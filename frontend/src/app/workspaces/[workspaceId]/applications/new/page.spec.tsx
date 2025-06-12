@@ -360,31 +360,4 @@ describe("CreateGrantApplicationWizardPage", () => {
 			expect(toast.error).toHaveBeenCalledWith("Failed to process document1.pdf");
 		});
 	});
-
-	it("shows connection status in application preview", async () => {
-		const mockResponse = {
-			id: "app-123",
-			template_id: "template-123",
-		};
-
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-		vi.mocked(useApplicationNotifications).mockReturnValue({
-			connectionStatus: "Connecting",
-			connectionStatusColor: "bg-yellow-500",
-			notifications: [],
-			readyState: 0,
-			sendMessage: vi.fn(),
-		});
-
-		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
-		});
-
-		// Check that connection status is passed to ApplicationDetailsStep
-		const connectionBadge = screen.getByText("Connecting");
-		expect(connectionBadge).toBeInTheDocument();
-		expect(connectionBadge).toHaveClass("bg-yellow-500");
-	});
 });

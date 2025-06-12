@@ -59,21 +59,19 @@ export function TemplateFileUploader({
 			// In development, bypass signed URL creation and upload directly to GCS emulator
 			if (process.env.NODE_ENV === "development") {
 				const objectPath = `workspace/${workspaceId}/grant_template/${templateId}/${file.name}`;
-				// const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
+				const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
 
-				// console.log(`Uploading file ${file.name} to ${emulatorUrl}`);
-				// const uploadResponse = await fetch(emulatorUrl, {
-				// 	body: file,
-				// 	headers: {
-				// 		"Content-Type": file.type,
-				// 	},
-				// 	method: "POST",
-				// });
-				//
-				// console.log("Upload response", uploadResponse);
-				// if (!uploadResponse.ok) {
-				// 	throw new Error(`Failed to upload file ${file.name}`);
-				// }
+				const uploadResponse = await fetch(emulatorUrl, {
+					body: file,
+					headers: {
+						"Content-Type": file.type,
+					},
+					method: "POST",
+				});
+
+				if (!uploadResponse.ok) {
+					throw new Error(`Failed to upload file ${file.name}`);
+				}
 
 				const fileWithId: FileWithId = Object.assign(file, { id: file.name });
 				onFilesChange?.(fileWithId);
@@ -130,7 +128,7 @@ export function TemplateFileUploader({
 	);
 
 	return (
-		<div className="relative">
+		<div className="relative" data-testid="template-file-container">
 			<input
 				accept={Object.keys(FILE_ACCEPTS).join(", ")}
 				className="sr-only"

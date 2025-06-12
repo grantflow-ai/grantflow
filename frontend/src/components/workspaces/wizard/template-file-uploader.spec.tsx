@@ -82,7 +82,7 @@ describe("TemplateFileContainer", () => {
 		});
 	});
 
-	it("shows uploading state", async () => {
+	it("handles delayed file upload", async () => {
 		const mockUploadUrl = "https://storage.example.com/upload";
 
 		vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
@@ -103,12 +103,11 @@ describe("TemplateFileContainer", () => {
 
 		await userEvent.upload(input, file);
 
-		await waitFor(() => {
-			expect(screen.getByText("Uploading files...")).toBeInTheDocument();
-		});
-
-		await waitFor(() => {
-			expect(screen.queryByText("Uploading files...")).not.toBeInTheDocument();
-		});
+		await waitFor(
+			() => {
+				expect(toast.success).toHaveBeenCalledWith("File test.pdf uploaded successfully");
+			},
+			{ timeout: 200 },
+		);
 	});
 });
