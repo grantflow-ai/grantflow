@@ -90,7 +90,7 @@ export function ApplicationPreview({
 									data-testid="application-documents"
 								>
 									<h4 className="font-heading mb-8 font-semibold">Application Documents</h4>
-									<div className="flex gap-3">
+									<div className="flex gap-3" data-testid="file-collection">
 										{files.map((file, index) => (
 											<FilePreviewCard
 												file={file}
