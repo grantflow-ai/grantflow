@@ -14,6 +14,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
     handle_generate_application,
+    handle_retrieve_application,
     handle_update_application,
 )
 from services.backend.src.api.routes.grant_template import handle_generate_grant_template, handle_update_grant_template
@@ -40,32 +41,33 @@ from services.backend.src.utils.firebase import get_firebase_app
 logger = get_logger(__name__)
 
 api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
-    handle_grant_application_notifications,
+    handle_accept_invitation,
+    handle_crawl_url,
     handle_create_application,
+    handle_create_invitation_redirect_url,
     handle_create_organization,
     handle_create_otp,
     handle_create_upload_url,
-    handle_crawl_url,
     handle_create_workspace,
-    handle_create_invitation_redirect_url,
     handle_delete_application,
+    handle_delete_invitation,
     handle_delete_organization,
     handle_delete_rag_source,
     handle_delete_workspace,
     handle_generate_application,
     handle_generate_grant_template,
+    handle_grant_application_notifications,
     handle_login,
+    handle_retrieve_application,
     handle_retrieve_organizations,
     handle_retrieve_rag_sources,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
     handle_update_application,
     handle_update_grant_template,
+    handle_update_invitation_role,
     handle_update_organization,
     handle_update_workspace,
-    handle_delete_invitation,
-    handle_update_invitation_role,
-    handle_accept_invitation,
 ]
 
 
