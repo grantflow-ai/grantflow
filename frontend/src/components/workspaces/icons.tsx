@@ -1,3 +1,34 @@
+function IconApplication({ height = 12, width = 12, ...props }: React.HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			fill="currentColor"
+			height={height}
+			viewBox="0 0 12 12"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<mask
+				height="12"
+				id="mask0_2315_11856"
+				maskUnits="userSpaceOnUse"
+				style={{ maskType: "alpha" }}
+				width="12"
+				x="0"
+				y="0"
+			>
+				<rect fill="currentColor" height="12" width="12" />
+			</mask>
+			<g mask="url(#mask0_2315_11856)">
+				<path
+					d="M1.5 2.5V1.5H10.5V2.5H1.5ZM9.5 3.5C9.775 3.5 10.0104 3.59792 10.2063 3.79375C10.4021 3.98958 10.5 4.225 10.5 4.5V9.5C10.5 9.775 10.4021 10.0104 10.2063 10.2063C10.0104 10.4021 9.775 10.5 9.5 10.5H2.5C2.225 10.5 1.98958 10.4021 1.79375 10.2063C1.59792 10.0104 1.5 9.775 1.5 9.5V4.5C1.5 4.225 1.59792 3.98958 1.79375 3.79375C1.98958 3.59792 2.225 3.5 2.5 3.5H9.5ZM9.5 4.5H2.5V9.5H9.5V4.5Z"
+					fill="currentColor"
+				/>
+			</g>
+		</svg>
+	);
+}
+
 function IconApplicationStepActive({ height = 15, width = 15, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
@@ -188,6 +219,99 @@ function IconDeadline({ height = 16, width = 16, ...props }: React.HTMLProps<SVG
 	);
 }
 
+function IconDraftApplication({ height = 12, width = 12, ...props }: React.HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			fill="currentColor"
+			height={height}
+			viewBox="0 0 12 12"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<mask
+				height="12"
+				id="mask0_2354_4048"
+				maskUnits="userSpaceOnUse"
+				style={{ maskType: "alpha" }}
+				width="12"
+				x="0"
+				y="0"
+			>
+				<rect fill="currentColor" height="12" width="12" />
+			</mask>
+			<g mask="url(#mask0_2354_4048)">
+				<path
+					d="M4.5 4.5V3.5H9V4.5H4.5ZM4.5 6V5H9V6H4.5ZM6 11H3C2.58333 11 2.22917 10.8542 1.9375 10.5625C1.64583 10.2708 1.5 9.91667 1.5 9.5V8H3V1H10.5V5.5125C10.3333 5.49583 10.1646 5.50208 9.99375 5.53125C9.82292 5.56042 9.65833 5.6125 9.5 5.6875V2H4V8H7L6 9H2.5V9.5C2.5 9.64167 2.54792 9.76042 2.64375 9.85625C2.73958 9.95208 2.85833 10 3 10H6V11ZM7 11V9.4625L9.7625 6.7125C9.8375 6.6375 9.92083 6.58333 10.0125 6.55C10.1042 6.51667 10.1958 6.5 10.2875 6.5C10.3875 6.5 10.4833 6.51875 10.575 6.55625C10.6667 6.59375 10.75 6.65 10.825 6.725L11.2875 7.1875C11.3542 7.2625 11.4062 7.34583 11.4438 7.4375C11.4813 7.52917 11.5 7.62083 11.5 7.7125C11.5 7.80417 11.4833 7.89792 11.45 7.99375C11.4167 8.08958 11.3625 8.175 11.2875 8.25L8.5375 11H7ZM7.75 10.25H8.225L9.7375 8.725L9.5125 8.4875L9.275 8.2625L7.75 9.775V10.25ZM9.5125 8.4875L9.275 8.2625L9.7375 8.725L9.5125 8.4875Z"
+					fill="currentColor"
+				/>
+			</g>
+		</svg>
+	);
+}
+
+function IconGenerated({ height = 12, width = 12, ...props }: React.HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			fill="currentColor"
+			height={height}
+			viewBox="0 0 12 12"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<mask
+				height="12"
+				id="mask0_2354_4071"
+				maskUnits="userSpaceOnUse"
+				style={{ maskType: "alpha" }}
+				width="12"
+				x="0"
+				y="0"
+			>
+				<rect fill="currentColor" height="12" width="12" />
+			</mask>
+			<g mask="url(#mask0_2354_4071)">
+				<path
+					d="M4 6V5H8V6H4ZM4 4V3H8V4H4ZM3 7H6.75C6.99167 7 7.21667 7.05208 7.425 7.15625C7.63333 7.26042 7.80833 7.40833 7.95 7.6L9 8.975V2H3V7ZM3 10H8.525L7.1625 8.2125C7.1125 8.14583 7.05208 8.09375 6.98125 8.05625C6.91042 8.01875 6.83333 8 6.75 8H3V10ZM9 11H3C2.725 11 2.48958 10.9021 2.29375 10.7063C2.09792 10.5104 2 10.275 2 10V2C2 1.725 2.09792 1.48958 2.29375 1.29375C2.48958 1.09792 2.725 1 3 1H9C9.275 1 9.51042 1.09792 9.70625 1.29375C9.90208 1.48958 10 1.725 10 2V10C10 10.275 9.90208 10.5104 9.70625 10.7063C9.51042 10.9021 9.275 11 9 11Z"
+					fill="currentColor"
+				/>
+			</g>
+		</svg>
+	);
+}
+
+function IconGenerating({ height = 12, width = 12, ...props }: React.HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			fill="currentColor"
+			height={height}
+			viewBox="0 0 12 12"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<mask
+				height="12"
+				id="mask0_2354_4061"
+				maskUnits="userSpaceOnUse"
+				style={{ maskType: "alpha" }}
+				width="12"
+				x="0"
+				y="0"
+			>
+				<rect fill="currentColor" height="12" width="12" />
+			</mask>
+			<g mask="url(#mask0_2354_4061)">
+				<path
+					d="M6 11C5.30833 11 4.65833 10.8687 4.05 10.6062C3.44167 10.3438 2.9125 9.9875 2.4625 9.5375C2.0125 9.0875 1.65625 8.55833 1.39375 7.95C1.13125 7.34167 1 6.69167 1 6C1 5.30833 1.13125 4.65833 1.39375 4.05C1.65625 3.44167 2.0125 2.9125 2.4625 2.4625C2.9125 2.0125 3.44167 1.65625 4.05 1.39375C4.65833 1.13125 5.30833 1 6 1C6.69167 1 7.34167 1.13125 7.95 1.39375C8.55833 1.65625 9.0875 2.0125 9.5375 2.4625C9.9875 2.9125 10.3438 3.44167 10.6062 4.05C10.8687 4.65833 11 5.30833 11 6C11 6.69167 10.8687 7.34167 10.6062 7.95C10.3438 8.55833 9.9875 9.0875 9.5375 9.5375C9.0875 9.9875 8.55833 10.3438 7.95 10.6062C7.34167 10.8687 6.69167 11 6 11ZM6 10C6.53333 10 7.04583 9.9 7.5375 9.7C8.02917 9.5 8.4625 9.2125 8.8375 8.8375L6 6V2C4.88333 2 3.9375 2.3875 3.1625 3.1625C2.3875 3.9375 2 4.88333 2 6C2 7.11667 2.3875 8.0625 3.1625 8.8375C3.9375 9.6125 4.88333 10 6 10Z"
+					fill="currentColor"
+				/>
+			</g>
+		</svg>
+	);
+}
+
 function IconGlobe({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
@@ -259,6 +383,39 @@ function IconPreviewLogo({ height = 262, width = 256, ...props }: React.HTMLProp
 	);
 }
 
+function IconResearchPlan({ height = 12, width = 12, ...props }: React.HTMLProps<SVGSVGElement>) {
+	return (
+		<svg
+			fill="currentColor"
+			height={height}
+			viewBox="0 0 12 12"
+			width={width}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<mask
+				height="12"
+				id="mask0_2315_11892"
+				maskUnits="userSpaceOnUse"
+				style={{
+					maskType: "alpha",
+				}}
+				width="12"
+				x="0"
+				y="0"
+			>
+				<rect fill="currentColor" height="12" width="12" />
+			</mask>
+			<g mask="url(#mask0_2315_11892)">
+				<path
+					d="M2.5 10.5C2.225 10.5 1.98958 10.4021 1.79375 10.2063C1.59792 10.0104 1.5 9.775 1.5 9.5V2.5C1.5 2.225 1.59792 1.98958 1.79375 1.79375C1.98958 1.59792 2.225 1.5 2.5 1.5H4.6C4.70833 1.2 4.88958 0.958333 5.14375 0.775C5.39792 0.591667 5.68333 0.5 6 0.5C6.31667 0.5 6.60208 0.591667 6.85625 0.775C7.11042 0.958333 7.29167 1.2 7.4 1.5H9.5C9.775 1.5 10.0104 1.59792 10.2063 1.79375C10.4021 1.98958 10.5 2.225 10.5 2.5V9.5C10.5 9.775 10.4021 10.0104 10.2063 10.2063C10.0104 10.4021 9.775 10.5 9.5 10.5H2.5ZM2.5 9.5H9.5V2.5H2.5V9.5ZM3.5 8.5H7V7.5H3.5V8.5ZM3.5 6.5H8.5V5.5H3.5V6.5ZM3.5 4.5H8.5V3.5H3.5V4.5ZM6 2.125C6.10833 2.125 6.19792 2.08958 6.26875 2.01875C6.33958 1.94792 6.375 1.85833 6.375 1.75C6.375 1.64167 6.33958 1.55208 6.26875 1.48125C6.19792 1.41042 6.10833 1.375 6 1.375C5.89167 1.375 5.80208 1.41042 5.73125 1.48125C5.66042 1.55208 5.625 1.64167 5.625 1.75C5.625 1.85833 5.66042 1.94792 5.73125 2.01875C5.80208 2.08958 5.89167 2.125 6 2.125Z"
+					fill="currentColor"
+				/>
+			</g>
+		</svg>
+	);
+}
+
 function IconUpload({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
@@ -291,6 +448,7 @@ function IconUpload({ height = 16, width = 16, ...props }: React.HTMLProps<SVGSV
 }
 
 export {
+	IconApplication,
 	IconApplicationStepActive,
 	IconApplicationStepDone,
 	IconApplicationStepInActive,
@@ -298,7 +456,11 @@ export {
 	IconButtonLogo,
 	IconClose,
 	IconDeadline,
+	IconDraftApplication,
+	IconGenerated,
+	IconGenerating,
 	IconGlobe,
 	IconPreviewLogo,
+	IconResearchPlan,
 	IconUpload,
 };
