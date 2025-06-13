@@ -38,13 +38,15 @@ export const validateStepNext = ({
 	currentStep,
 	hadUrls,
 	hasFiles,
+	isGenerating,
 }: {
 	application: ApplicationType | null;
 	currentStep: number;
 	hadUrls: boolean;
 	hasFiles: boolean;
+	isGenerating: boolean;
 }) => {
-	if (!application) {
+	if (!application || isGenerating) {
 		return false;
 	}
 	if (currentStep === 0) {
@@ -79,10 +81,10 @@ export default function CreateGrantApplicationWizardPage() {
 		workspaceId: params.workspaceId,
 	});
 
-	// Get or create application on mount ~keep
+	// Get or create an application on mount ~keep
 	useEffect(() => {
 		const applicationId = searchParams.get("applicationId");
-		(async () => {
+		const handleApplication = async () => {
 			try {
 				if (applicationId) {
 					const response = await retrieveApplication(params.workspaceId, applicationId);
@@ -98,7 +100,8 @@ export default function CreateGrantApplicationWizardPage() {
 				toast.error(applicationId ? "Failed to retrieve application" : "Failed to initialize application");
 				router.push(`/workspaces/${params.workspaceId}`);
 			}
-		})();
+		};
+		void handleApplication();
 	}, [params.workspaceId, router, application, searchParams]);
 
 	useEffect(() => {
@@ -155,7 +158,7 @@ export default function CreateGrantApplicationWizardPage() {
 		if (currentStep === 0 && application?.grant_template && !application.grant_template.grant_sections.length) {
 			setIsGeneratingTemplate(true);
 			try {
-				await generateGrantTemplate(params.workspaceId, application.id, application.grant_template.id);
+				void generateGrantTemplate(params.workspaceId, application.id, application.grant_template.id);
 				setCurrentStep((s) => Math.min(WIZARD_STEP_TITLES.length - 1, s + 1));
 			} catch {
 				toast.error("Failed to generate grant template. Please try again.");
@@ -176,8 +179,8 @@ export default function CreateGrantApplicationWizardPage() {
 			onApplicationTitleChange={setApplicationTitle}
 			onUploadedFilesChange={setUploadedFiles}
 			onUrlsChange={setUrls}
-			uploadedFiles={uploadedFiles}
 			templateId={application?.grant_template?.id ?? ""}
+			uploadedFiles={uploadedFiles}
 			urls={urls}
 			workspaceId={params.workspaceId}
 		/>,
@@ -213,7 +216,15 @@ export default function CreateGrantApplicationWizardPage() {
 			</section>
 			<WizardFooter
 				currentStep={currentStep}
-				disabled={!canPressNext()}
+				disabled={
+					!validateStepNext({
+						application,
+						currentStep,
+						hadUrls: urls.length > 0,
+						hasFiles: uploadedFiles.length > 0,
+						isGenerating: isGeneratingTemplate,
+					})
+				}
 				onBack={handleBack}
 				onContinue={handleNext}
 				showBack={currentStep > INITIAL_STEP}
