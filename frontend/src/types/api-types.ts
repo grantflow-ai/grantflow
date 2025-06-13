@@ -146,7 +146,7 @@ export namespace API {
 					rag_sources: {
 						filename?: string;
 						sourceId: string;
-						status: string;
+						status: "FAILED" | "FINISHED" | "INDEXING";
 						url?: string;
 					}[];
 					submission_date?: string;
@@ -156,7 +156,7 @@ export namespace API {
 				rag_sources: {
 					filename?: string;
 					sourceId: string;
-					status: string;
+					status: "FAILED" | "FINISHED" | "INDEXING";
 					url?: string;
 				}[];
 				research_objectives?: {
@@ -648,7 +648,7 @@ export namespace API {
 					rag_sources: {
 						filename?: string;
 						sourceId: string;
-						status: string;
+						status: "FAILED" | "FINISHED" | "INDEXING";
 						url?: string;
 					}[];
 					submission_date?: string;
@@ -658,7 +658,7 @@ export namespace API {
 				rag_sources: {
 					filename?: string;
 					sourceId: string;
-					status: string;
+					status: "FAILED" | "FINISHED" | "INDEXING";
 					url?: string;
 				}[];
 				research_objectives?: {
@@ -853,7 +853,7 @@ export namespace API {
 					rag_sources: {
 						filename?: string;
 						sourceId: string;
-						status: string;
+						status: "FAILED" | "FINISHED" | "INDEXING";
 						url?: string;
 					}[];
 					submission_date?: string;
@@ -863,7 +863,7 @@ export namespace API {
 				rag_sources: {
 					filename?: string;
 					sourceId: string;
-					status: string;
+					status: "FAILED" | "FINISHED" | "INDEXING";
 					url?: string;
 				}[];
 				research_objectives?: {
