@@ -10,6 +10,7 @@ import { CoreFeaturesSection } from "@/components/landing-page/core-features-sec
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
+import { TutorialVideo } from "@/components/landing-page/tutorial-video";
 import { ScrollButton } from "@/components/scroll-button";
 
 const CONTENT_CTA_SECTION = {
@@ -23,18 +24,7 @@ export default async function LandingPage() {
 	return (
 		<div className="flex w-full flex-col">
 			<HeroBanner />
-			{/* Tutorial Video */}
-			<div className="my-8 flex w-full justify-center bg-white">
-				<video
-					autoPlay
-					className="h-auto max-w-full shadow-lg"
-					controls
-					loop
-					muted
-					playsInline
-					src="/assets/tutorial-480p.mp4"
-				/>
-			</div>
+			<TutorialVideo />
 			<BenefitsSection />
 			<EarlyAccessSection />
 			<CoreFeaturesSection />
