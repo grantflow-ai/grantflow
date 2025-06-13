@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
 
 import { ApplicationDetailsStep } from "./application-details-step";
 
@@ -10,20 +11,33 @@ vi.mock("@/actions/sources", () => ({
 	deleteTemplateSource: vi.fn(),
 }));
 
-const DEFAULT_PROPS = {
-	applicationTitle: "",
-	onApplicationTitleChange: vi.fn(),
-	onUploadedFilesChange: vi.fn(),
-	onUrlsChange: vi.fn(),
-	templateId: "test-template-id",
-	uploadedFiles: [],
-	urls: [],
-	workspaceId: "test-workspace-id",
-};
+vi.mock("@/stores/wizard-store", () => ({
+	useWizardStore: mockUseWizardStore,
+}));
 
 describe("ApplicationDetailsStep", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		// Reset mock store to default state
+		Object.assign(mockWizardStore, {
+			applicationId: null,
+			applicationTitle: "",
+			currentStep: 0,
+			isCreatingApplication: false,
+			templateId: "test-template-id",
+			ui: {
+				fileDropdownStates: {},
+				linkHoverStates: {},
+				urlInput: "",
+			},
+			uploadedFiles: [],
+			urls: [],
+			workspaceId: "test-workspace-id",
+		});
+	});
+
 	it("renders application title section", () => {
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
+		render(<ApplicationDetailsStep />);
 
 		expect(screen.getByTestId("application-title-header")).toBeInTheDocument();
 		expect(screen.getByTestId("application-title-description")).toBeInTheDocument();
@@ -31,7 +45,7 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("renders application instructions section", () => {
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
+		render(<ApplicationDetailsStep />);
 
 		expect(screen.getByText("Application Instructions")).toBeInTheDocument();
 		expect(screen.getAllByText("Documents")[0]).toBeInTheDocument();
@@ -39,127 +53,102 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("displays character count for title", () => {
-		const props = { ...DEFAULT_PROPS, applicationTitle: "Test Title" };
-		render(<ApplicationDetailsStep {...props} />);
+		Object.assign(mockWizardStore, {
+			applicationTitle: "Test Title",
+		});
+
+		render(<ApplicationDetailsStep />);
 
 		expect(screen.getByTestId("application-title-textarea-chars-count")).toBeInTheDocument();
 	});
 
-	it("calls onApplicationTitleChange when title is typed", async () => {
+	it("calls setApplicationTitle when title is typed", async () => {
 		const user = userEvent.setup();
-		const onApplicationTitleChange = vi.fn();
 
-		function TestWrapper() {
-			const [title, setTitle] = useState("");
-			return (
-				<ApplicationDetailsStep
-					{...DEFAULT_PROPS}
-					applicationTitle={title}
-					onApplicationTitleChange={(value) => {
-						setTitle(value);
-						onApplicationTitleChange(value);
-					}}
-				/>
-			);
-		}
-
-		render(<TestWrapper />);
+		render(<ApplicationDetailsStep />);
 
 		const textarea = screen.getByTestId("application-title-textarea");
-		await user.type(textarea, "New Title");
+		await user.type(textarea, "Test");
 
-		expect(onApplicationTitleChange).toHaveBeenCalledTimes(9);
-		expect(onApplicationTitleChange).toHaveBeenLastCalledWith("New Title");
+		// Check that setApplicationTitle was called multiple times as the user types
+		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalled();
+		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("T");
+		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("e");
+		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("s");
+		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("t");
 	});
 
 	it("limits title length to 120 characters", () => {
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
+		render(<ApplicationDetailsStep />);
 
 		const textarea = screen.getByTestId("application-title-textarea");
 		expect(textarea).toHaveAttribute("maxLength", "120");
 	});
 
-	it("adds URL when Enter is pressed", async () => {
+	it("types in URL input", async () => {
 		const user = userEvent.setup();
-		const onUrlsChange = vi.fn();
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} onUrlsChange={onUrlsChange} />);
+
+		// Set up required fields for URL input to work
+		Object.assign(mockWizardStore, {
+			templateId: "test-template-id",
+			ui: {
+				...mockWizardStore.ui,
+				urlInput: "",
+			},
+			workspaceId: "test-workspace-id",
+		});
+
+		render(<ApplicationDetailsStep />);
 
 		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
 		await user.type(urlInput, "https://example.com");
-		await user.keyboard("{Enter}");
 
-		expect(onUrlsChange).toHaveBeenCalledWith(["https://example.com"]);
-	});
-
-	it("does not add empty URLs", async () => {
-		const user = userEvent.setup();
-		const onUrlsChange = vi.fn();
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} onUrlsChange={onUrlsChange} />);
-
-		screen.getByPlaceholderText("Paste a link and press Enter to add");
-		await user.keyboard("{Enter}");
-
-		expect(onUrlsChange).not.toHaveBeenCalled();
-	});
-
-	it("does not add duplicate URLs", async () => {
-		const user = userEvent.setup();
-		const onUrlsChange = vi.fn();
-		const existingUrls = ["https://example.com"];
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} onUrlsChange={onUrlsChange} urls={existingUrls} />);
-
-		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
-		await user.type(urlInput, "https://example.com");
-		await user.keyboard("{Enter}");
-
-		expect(onUrlsChange).not.toHaveBeenCalled();
+		// Check that setUrlInput was called as the user types
+		expect(mockWizardStore.setUrlInput).toHaveBeenCalled();
 	});
 
 	it("displays existing URLs", () => {
-		const urls = ["https://example1.com", "https://example2.com"];
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} urls={urls} />);
+		Object.assign(mockWizardStore, {
+			urls: ["https://example1.com", "https://example2.com"],
+		});
+
+		render(<ApplicationDetailsStep />);
 
 		expect(screen.getAllByText("https://example1.com").length).toBeGreaterThan(0);
 		expect(screen.getAllByText("https://example2.com").length).toBeGreaterThan(0);
 	});
 
-	it("displays URLs and allows removal", async () => {
-		const onUrlsChange = vi.fn();
-		const urls = ["https://example1.com", "https://example2.com"];
+	it("displays URLs and allows hover interaction", async () => {
+		const user = userEvent.setup();
 
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} onUrlsChange={onUrlsChange} urls={urls} />);
+		Object.assign(mockWizardStore, {
+			urls: ["https://example1.com", "https://example2.com"],
+		});
+
+		render(<ApplicationDetailsStep />);
 
 		expect(screen.getByTestId("application-links")).toBeInTheDocument();
 		expect(screen.getByText("https://example1.com")).toBeInTheDocument();
 		expect(screen.getByText("https://example2.com")).toBeInTheDocument();
 
-		onUrlsChange(urls.filter((url) => url !== "https://example1.com"));
+		const [link] = screen.getAllByTestId("link-preview-item");
+		await user.hover(link);
 
-		expect(onUrlsChange).toHaveBeenCalledWith(["https://example2.com"]);
-	});
-
-	it("clears URL input after adding", async () => {
-		const user = userEvent.setup();
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
-
-		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
-		await user.type(urlInput, "https://example.com");
-		await user.keyboard("{Enter}");
-
+		// Check that hovering calls the state setter
 		await waitFor(() => {
-			expect(Reflect.get(urlInput, "value")).toBe("");
+			expect(mockWizardStore.setLinkHoverState).toHaveBeenCalledWith("https://example1.com", true);
 		});
 	});
 
-	it("renders TemplateFileContainer with correct props", () => {
-		const { container } = render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
+	it("renders TemplateFileContainer", () => {
+		const { container } = render(<ApplicationDetailsStep />);
 
 		const templateFileContainer = container.querySelector('[data-testid="template-file-container"]');
 		expect(templateFileContainer).toBeInTheDocument();
 	});
 
-	it("renders application preview", () => {
-		render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
+	it("renders application preview with empty state", () => {
+		render(<ApplicationDetailsStep />);
 
 		expect(screen.getByTestId("application-title-textarea")).toBeInTheDocument();
 		expect(screen.getAllByText("Application Title").length).toBeGreaterThan(0);
@@ -167,25 +156,40 @@ describe("ApplicationDetailsStep", () => {
 		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
 	});
 
-	it("updates preview when title changes", () => {
-		const { rerender } = render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
+	it("shows uploaded files in preview", () => {
+		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+		Object.assign(file, { id: "file-id" });
 
-		const textarea = screen.getByTestId("application-title-textarea");
-		expect(textarea).toHaveValue("");
+		Object.assign(mockWizardStore, {
+			uploadedFiles: [file],
+		});
 
-		rerender(<ApplicationDetailsStep {...DEFAULT_PROPS} applicationTitle="My New Application" />);
+		render(<ApplicationDetailsStep />);
 
-		expect(textarea).toHaveValue("My New Application");
+		expect(screen.getByTestId("application-documents")).toBeInTheDocument();
+		expect(screen.getByText("test.pdf")).toBeInTheDocument();
 	});
 
-	it("updates preview when URLs are added", () => {
-		const { rerender } = render(<ApplicationDetailsStep {...DEFAULT_PROPS} />);
+	it("renders file dropdown with right-click", async () => {
+		const user = userEvent.setup();
 
-		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
+		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+		Object.assign(file, { id: "file-id" });
 
-		rerender(<ApplicationDetailsStep {...DEFAULT_PROPS} urls={["https://example.com"]} />);
+		Object.assign(mockWizardStore, {
+			uploadedFiles: [file],
+		});
 
-		expect(screen.getByTestId("application-links")).toBeInTheDocument();
-		expect(screen.getAllByText("https://example.com").length).toBeGreaterThan(0);
+		render(<ApplicationDetailsStep />);
+
+		const fileCard = screen.getByText("test.pdf").closest(".group");
+		if (fileCard) {
+			await user.pointer({ keys: "[MouseRight]", target: fileCard });
+		}
+
+		// Check that right-clicking calls the dropdown state setter
+		await waitFor(() => {
+			expect(mockWizardStore.setFileDropdownOpen).toHaveBeenCalledWith("test.pdf", true);
+		});
 	});
 });

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createTemplateSourceUploadUrl } from "@/actions/sources";
 import { AppButton } from "@/components/app-button";
 import { IconUpload } from "@/components/workspaces/icons";
+import { useWizardStore } from "@/stores/wizard-store";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 import { formatBytes } from "@/utils/format";
 import { logError } from "@/utils/logging";
@@ -32,15 +33,8 @@ const FILE_ACCEPTS = {
 const FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
 
-export function TemplateFileUploader({
-	onFilesChange,
-	templateId,
-	workspaceId,
-}: {
-	onFilesChange?: (files: FileWithId) => void;
-	templateId: string;
-	workspaceId: string;
-}) {
+export function TemplateFileUploader() {
+	const { addFile, templateId, workspaceId } = useWizardStore();
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
 		for (const file of newFileUploads) {
 			if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -74,7 +68,7 @@ export function TemplateFileUploader({
 				}
 
 				const fileWithId: FileWithId = Object.assign(file, { id: file.name });
-				onFilesChange?.(fileWithId);
+				addFile(fileWithId);
 				toast.success(`File ${file.name} uploaded successfully`);
 
 				// Trigger indexing directly
@@ -83,7 +77,7 @@ export function TemplateFileUploader({
 			}
 
 			// Production path: use signed URLs
-			const { url } = await createTemplateSourceUploadUrl(workspaceId, templateId, file.name);
+			const { url } = await createTemplateSourceUploadUrl(workspaceId, templateId ?? "", file.name);
 
 			const uploadResponse = await fetch(url, {
 				body: file,
@@ -98,7 +92,7 @@ export function TemplateFileUploader({
 			}
 
 			const fileWithId: FileWithId = Object.assign(file, { id: file.name });
-			onFilesChange?.(fileWithId);
+			addFile(fileWithId);
 
 			toast.success(`File ${file.name} uploaded successfully`);
 
@@ -108,7 +102,7 @@ export function TemplateFileUploader({
 				void triggerDevIndexing(objectPath);
 			}
 		},
-		[workspaceId, templateId, onFilesChange],
+		[workspaceId, templateId, addFile],
 	);
 
 	const handleFilesAdded = useCallback(
