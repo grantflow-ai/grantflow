@@ -22,45 +22,13 @@ import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
-import { API } from "@/types/api-types";
 import { logError } from "@/utils/logging";
+
+import { ApplicationType, validateStepNext } from "./validation";
 
 const DEBOUNCE_DELAY_MS = 500;
 const INITIAL_STEP = 0;
 const DEFAULT_APPLICATION_TITLE = "Untitled Application";
-const MIN_TITLE_LENGTH = 10;
-
-type ApplicationType = API.CreateApplication.Http201.ResponseBody | API.RetrieveApplication.Http200.ResponseBody | null;
-
-// we export this function to allow us to test the logic in isolation
-export const validateStepNext = ({
-	application,
-	currentStep,
-	hadUrls,
-	hasFiles,
-	isGenerating,
-}: {
-	application: ApplicationType | null;
-	currentStep: number;
-	hadUrls: boolean;
-	hasFiles: boolean;
-	isGenerating: boolean;
-}) => {
-	if (!application || isGenerating) {
-		return false;
-	}
-	if (currentStep === 0) {
-		return application.title.trim().length >= MIN_TITLE_LENGTH && (hadUrls || hasFiles);
-	}
-	if (currentStep === 1) {
-		return !!application.grant_template?.grant_sections.length;
-	}
-	if (currentStep === 2) {
-		return (
-			!!application.rag_sources.length && application.rag_sources.every((source) => source.status !== "FAILED")
-		);
-	}
-};
 
 export default function CreateGrantApplicationWizardPage() {
 	const params = useParams<{ workspaceId: string }>();
@@ -89,6 +57,8 @@ export default function CreateGrantApplicationWizardPage() {
 				if (applicationId) {
 					const response = await retrieveApplication(params.workspaceId, applicationId);
 					setApplication(response);
+					setApplicationTitle(response.title);
+					// TODO: Varun, we should set the files and urls here.
 				} else {
 					const response = await createApplication(params.workspaceId, {
 						title: DEFAULT_APPLICATION_TITLE,
