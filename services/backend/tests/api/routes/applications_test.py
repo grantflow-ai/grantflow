@@ -543,6 +543,7 @@ async def test_retrieve_application_with_rag_sources(
         )
         session.add(rag_file)
         await session.flush()
+        rag_file_id = rag_file.id
 
         # Create RagUrl source
         rag_url = RagUrl(
@@ -552,6 +553,7 @@ async def test_retrieve_application_with_rag_sources(
         )
         session.add(rag_url)
         await session.flush()
+        rag_url_id = rag_url.id
 
         # Create another RagFile for template
         template_rag_file = RagFile(
@@ -607,16 +609,16 @@ async def test_retrieve_application_with_rag_sources(
 
     # Verify file source
     assert file_source is not None
-    assert file_source["sourceId"] == str(rag_file.id)
+    assert file_source["sourceId"] == str(rag_file_id)
     assert file_source["filename"] == "research_proposal.pdf"
-    assert file_source["status"] == "finished"
+    assert file_source["status"] == "FINISHED"
     assert "url" not in file_source
 
     # Verify URL source
     assert url_source is not None
-    assert url_source["sourceId"] == str(rag_url.id)
+    assert url_source["sourceId"] == str(rag_url_id)
     assert url_source["url"] == "https://example.com/grant-guidelines"
-    assert url_source["status"] == "indexing"
+    assert url_source["status"] == "INDEXING"
     assert "filename" not in url_source
 
     # Verify template with rag sources
@@ -629,5 +631,5 @@ async def test_retrieve_application_with_rag_sources(
     template_source = template_data["rag_sources"][0]
     assert template_source["sourceId"] == str(template_rag_file.id)
     assert template_source["filename"] == "grant_template_guide.docx"
-    assert template_source["status"] == "finished"
+    assert template_source["status"] == "FINISHED"
     assert "url" not in template_source

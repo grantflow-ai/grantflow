@@ -22,29 +22,27 @@ async def test_document_retrieval(
     melanoma_alliance_full_application_id: str,
 ) -> None:
     logger.info("Running end-to-end test for documents retrieval")
+    async with async_session_maker() as session:
+        application = await retrieve_application(application_id=melanoma_alliance_full_application_id, session=session)
 
-    application = await retrieve_application(
-        application_id=melanoma_alliance_full_application_id, session_maker=async_session_maker
-    )
+        results = await retrieve_documents(
+            rerank=True,
+            application_id=melanoma_alliance_full_application_id,
+            task_description=f"""
+                The task is to test the RAG pipeline by testing that retrieval works.
 
-    results = await retrieve_documents(
-        rerank=True,
-        application_id=melanoma_alliance_full_application_id,
-        task_description=f"""
-            The task is to test the RAG pipeline by testing that retrieval works.
+                Here is the content of the grant application:
 
-            Here is the content of the grant application:
+                {serialize(application).decode()}
+                """,
+        )
+        assert len(results) == 25
 
-            {serialize(application).decode()}
-            """,
-    )
-    assert len(results) == 25
+        assert all(isinstance(result, str) for result in results)
 
-    assert all(isinstance(result, str) for result in results)
-
-    retrival_results = (
-        RESULTS_FOLDER
-        / melanoma_alliance_full_application_id
-        / f"retrieval_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
-    )
-    retrival_results.write_bytes(serialize(results))
+        retrival_results = (
+            RESULTS_FOLDER
+            / melanoma_alliance_full_application_id
+            / f"retrieval_{datetime.now(UTC).strftime('%d_%m_%Y_%H_%M')}.json"
+        )
+        retrival_results.write_bytes(serialize(results))
