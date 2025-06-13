@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { deleteTemplateSource } from "@/actions/sources";
 import AppTextArea from "@/components/textarea-field";
+import { useWizardStore } from "@/stores/wizard-store";
 import { logError } from "@/utils/logging";
 
 import { ApplicationPreview, FileWithId } from "./application-preview";
@@ -14,32 +15,15 @@ import { UrlInput } from "./url-input";
 const TITLE_MAX_LENGTH = 120;
 
 interface ApplicationDetailsStepProps {
-	applicationTitle: string;
 	connectionStatus?: string;
 	connectionStatusColor?: string;
-	onApplicationTitleChange: (value: string) => void;
-	onUploadedFilesChange: (files: FileWithId[]) => void;
-	onUrlsChange: (urls: string[]) => void;
-	templateId: string;
-	uploadedFiles: FileWithId[];
-	urls: string[];
-	workspaceId: string;
 }
 
-export function ApplicationDetailsStep({
-	applicationTitle,
-	connectionStatus,
-	connectionStatusColor,
-	onApplicationTitleChange,
-	onUploadedFilesChange,
-	onUrlsChange,
-	templateId,
-	uploadedFiles,
-	urls,
-	workspaceId,
-}: ApplicationDetailsStepProps) {
+export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
+	const { applicationTitle, removeFile, removeUrl, setApplicationTitle, templateId, workspaceId } = useWizardStore();
+
 	const handleRemoveUrl = (urlToRemove: string) => {
-		onUrlsChange(urls.filter((url) => url !== urlToRemove));
+		removeUrl(urlToRemove);
 	};
 
 	const handleFileRemove = useCallback(
@@ -50,15 +34,15 @@ export function ApplicationDetailsStep({
 			}
 
 			try {
-				await deleteTemplateSource(workspaceId, templateId, fileToRemove.id);
-				onUploadedFilesChange(uploadedFiles.filter((f) => f.name !== fileToRemove.name));
+				await deleteTemplateSource(workspaceId, templateId ?? "", fileToRemove.id);
+				removeFile(fileToRemove);
 				toast.success(`File ${fileToRemove.name} removed`);
 			} catch (error) {
 				logError({ error, identifier: "deleteTemplateSource" });
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		[workspaceId, templateId, uploadedFiles, onUploadedFilesChange],
+		[workspaceId, templateId, removeFile],
 	);
 
 	return (
@@ -86,7 +70,7 @@ export function ApplicationDetailsStep({
 						label="Application Title"
 						maxCount={TITLE_MAX_LENGTH}
 						onChange={(e) => {
-							onApplicationTitleChange(e.target.value);
+							setApplicationTitle(e.target.value);
 						}}
 						placeholder="Title of your grant application"
 						rows={4}
@@ -105,13 +89,7 @@ export function ApplicationDetailsStep({
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileUploader
-							onFilesChange={(newFile) => {
-								onUploadedFilesChange([...uploadedFiles, newFile]);
-							}}
-							templateId={templateId}
-							workspaceId={workspaceId}
-						/>
+						<TemplateFileUploader />
 					</div>
 
 					<div>
@@ -121,24 +99,16 @@ export function ApplicationDetailsStep({
 							understand the funding requirements.
 						</p>
 
-						<UrlInput
-							onUrlsChange={onUrlsChange}
-							templateId={templateId}
-							urls={urls}
-							workspaceId={workspaceId}
-						/>
+						<UrlInput />
 					</div>
 				</div>
 			</div>
 
 			<ApplicationPreview
-				applicationTitle={applicationTitle}
 				connectionStatus={connectionStatus}
 				connectionStatusColor={connectionStatusColor}
-				files={uploadedFiles}
 				onFileRemove={handleFileRemove}
 				onUrlRemove={handleRemoveUrl}
-				urls={urls}
 			/>
 		</div>
 	);
