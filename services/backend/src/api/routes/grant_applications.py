@@ -1,4 +1,4 @@
-from typing import Any, NotRequired, TypedDict, cast
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
 from litestar import delete, get, patch, post
@@ -9,7 +9,8 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
-    RagSource, RagFile,
+    RagFile,
+    RagSource,
 )
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
@@ -21,7 +22,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.sql.functions import count
 
-from src.tables import RagUrl
+if TYPE_CHECKING:
+    from packages.db.src.tables import RagUrl
 
 logger = get_logger(__name__)
 
@@ -95,9 +97,9 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
     )
 
     if rag_source.source_type == "rag_url":
-        source_response["url"] = cast(RagUrl, rag_source).url
+        source_response["url"] = cast("RagUrl", rag_source).url
     else:
-        source_response["filename"] = cast(RagFile, rag_source).filename
+        source_response["filename"] = cast("RagFile", rag_source).filename
 
     return source_response
 
