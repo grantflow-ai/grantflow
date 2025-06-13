@@ -12,6 +12,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
+    GrantTemplateRagSource,
     RagFile,
 )
 from packages.shared_utils.src.exceptions import ValidationError
@@ -56,6 +57,11 @@ async def retrieve_application(
             result = await session.execute(
                 select(GrantApplication)
                 .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
+                .options(
+                    selectinload(GrantApplication.grant_template)
+                    .selectinload(GrantTemplate.rag_sources)
+                    .selectinload(GrantTemplateRagSource.rag_source)
+                )
                 .options(selectinload(GrantApplication.rag_sources).selectinload(GrantApplicationRagSource.rag_source))
                 .where(GrantApplication.id == application_id)
             )
