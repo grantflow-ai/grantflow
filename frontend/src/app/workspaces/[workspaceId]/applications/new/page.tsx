@@ -1,10 +1,9 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 
-import { createApplication, updateApplication } from "@/actions/grant-applications";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -13,7 +12,6 @@ import {
 	ResearchDeepDiveStep,
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
-import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { WIZARD_STEP_TITLES } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
@@ -21,22 +19,25 @@ import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
+import { DEFAULT_APPLICATION_TITLE, useWizardStore } from "@/stores/wizard-store";
 
-const DEBOUNCE_DELAY_MS = 500;
 const INITIAL_STEP = 0;
-const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 export default function CreateGrantApplicationWizardPage() {
 	const params = useParams<{ workspaceId: string }>();
 	const router = useRouter();
 
-	const [currentStep, setCurrentStep] = useState<number>(INITIAL_STEP);
-	const [applicationTitle, setApplicationTitle] = useState("");
-	const [urls, setUrls] = useState<string[]>([]);
-	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
-	const [applicationId, setApplicationId] = useState<null | string>(null);
-	const [templateId, setTemplateId] = useState<null | string>(null);
-	const [isCreatingApplication, setIsCreatingApplication] = useState(true);
+	const {
+		applicationId,
+		applicationTitle,
+		currentStep,
+		goToNextStep,
+		goToPreviousStep,
+		initializeApplication,
+		isCreatingApplication,
+		isCurrentStepValid,
+		resetWizard,
+	} = useWizardStore();
 
 	const showHeaderInfo = currentStep > INITIAL_STEP;
 
@@ -47,44 +48,17 @@ export default function CreateGrantApplicationWizardPage() {
 	});
 
 	useEffect(() => {
-		const initializeApplication = async () => {
+		const init = async () => {
 			try {
-				const response = await createApplication(params.workspaceId, {
-					title: DEFAULT_APPLICATION_TITLE,
-				});
-				setApplicationId(response.id);
-				setTemplateId(response.template_id);
-				setIsCreatingApplication(false);
+				await initializeApplication(params.workspaceId);
 			} catch {
 				toast.error("Failed to initialize application. Please try again.");
 				router.push(`/workspaces/${params.workspaceId}`);
 			}
 		};
 
-		void initializeApplication();
-	}, [params.workspaceId, router]);
-
-	useEffect(() => {
-		if (!applicationId || !applicationTitle.trim()) {
-			return;
-		}
-
-		const updateTitle = async () => {
-			try {
-				await updateApplication(params.workspaceId, applicationId, {
-					title: applicationTitle,
-				});
-			} catch {
-				toast.error("Failed to update application title");
-			}
-		};
-
-		// Debounce the update
-		const timeoutId = setTimeout(updateTitle, DEBOUNCE_DELAY_MS);
-		return () => {
-			clearTimeout(timeoutId);
-		};
-	}, [applicationTitle, applicationId, params.workspaceId]);
+		void init();
+	}, [params.workspaceId, router, initializeApplication, resetWizard]);
 
 	// Handle incoming notifications
 	useEffect(() => {
@@ -106,46 +80,19 @@ export default function CreateGrantApplicationWizardPage() {
 		}
 	}, [notifications]);
 
-	// Validation logic for step 1
-	const isStep1Valid = applicationTitle.trim().length > 0 && (urls.length > 0 || uploadedFiles.length > 0);
-
-	// Determine if the current step is valid
-	const isCurrentStepValid = () => {
-		switch (currentStep) {
-			case 0: {
-				return isStep1Valid;
-			}
-			default: {
-				return true;
-			} // Other steps don't have validation yet
-		}
-	};
-
-	const handleBack = () => {
-		setCurrentStep((s) => Math.max(INITIAL_STEP, s - 1));
-	};
-
 	const handleNext = () => {
 		if (currentStep === WIZARD_STEP_TITLES.length - 1) {
 			// TODO: Handle submission and navigation
 			return;
 		}
-		setCurrentStep((s) => Math.min(WIZARD_STEP_TITLES.length - 1, s + 1));
+		goToNextStep();
 	};
 
 	const steps = [
 		<ApplicationDetailsStep
-			applicationTitle={applicationTitle}
 			connectionStatus={connectionStatus}
 			connectionStatusColor={connectionStatusColor}
 			key={0}
-			onApplicationTitleChange={setApplicationTitle}
-			onUploadedFilesChange={setUploadedFiles}
-			onUrlsChange={setUrls}
-			templateId={templateId ?? ""}
-			uploadedFiles={uploadedFiles}
-			urls={urls}
-			workspaceId={params.workspaceId}
 		/>,
 		<ApplicationStructureStep key={1} />,
 		<KnowledgeBaseStep key={2} />,
@@ -178,9 +125,9 @@ export default function CreateGrantApplicationWizardPage() {
 			<WizardFooter
 				currentStep={currentStep}
 				disabled={!isCurrentStepValid()}
-				onBack={handleBack}
+				onBack={goToPreviousStep}
 				onContinue={handleNext}
-				showBack={currentStep > INITIAL_STEP}
+				showBack={currentStep > 0}
 			/>
 		</div>
 	);
