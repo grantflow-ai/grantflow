@@ -4,7 +4,7 @@ from uuid import UUID
 
 from packages.db.src.connection import get_session_maker
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
-from packages.db.src.tables import GrantApplication
+from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -291,32 +291,42 @@ async def grant_application_text_generation_pipeline_handler(
         ),
     )
 
-    grant_application = await retrieve_application(application_id=application_id, session_maker=session_maker)
-    if not grant_application.grant_template or not grant_application.research_objectives:
-        error_message = "Grant application does not have a grant template or research objectives."
-        logger.error(error_message, application_id=application_id)
-        await publish_notification(
-            logger=logger,
-            parent_id=application_id,
-            event="validation_error",
-            data=RagProcessingStatus(
+    grant_application: GrantApplication | None = None
+    grant_template: GrantTemplate | None = None
+
+    async with session_maker() as session:
+        grant_application = await retrieve_application(application_id=application_id, session=session)
+        grant_template = grant_application.grant_template
+
+        if not grant_application.grant_template or not grant_application.research_objectives:
+            error_message = "Grant application does not have a grant template or research objectives."
+            logger.error(error_message, application_id=application_id)
+            await publish_notification(
+                logger=logger,
+                parent_id=application_id,
                 event="validation_error",
-                message=error_message,
-                data={
+                data=RagProcessingStatus(
+                    event="validation_error",
+                    message=error_message,
+                    data={
+                        "has_grant_template": grant_application.grant_template is not None,
+                        "has_research_objectives": grant_application.research_objectives is not None,
+                    },
+                ),
+            )
+            raise ValidationError(
+                error_message,
+                context={
+                    "application_id": application_id,
                     "has_grant_template": grant_application.grant_template is not None,
                     "has_research_objectives": grant_application.research_objectives is not None,
+                    "recovery_instruction": "Ensure the grant application has both a grant template and research objectives before generating text.",
                 },
-            ),
-        )
-        raise ValidationError(
-            error_message,
-            context={
-                "application_id": application_id,
-                "has_grant_template": grant_application.grant_template is not None,
-                "has_research_objectives": grant_application.research_objectives is not None,
-                "recovery_instruction": "Ensure the grant application has both a grant template and research objectives before generating text.",
-            },
-        )
+            )
+
+    # At this point, grant_template is guaranteed to be non-None due to the check above
+    if grant_template is None:
+        raise ValidationError("Grant template is unexpectedly None")
 
     try:
         await publish_notification(
@@ -384,7 +394,7 @@ async def grant_application_text_generation_pipeline_handler(
                 event="template_validated",
                 message="Template validation complete",
                 data={
-                    "section_count": len(grant_application.grant_template.grant_sections),
+                    "section_count": len(grant_template.grant_sections),
                     "research_objectives_count": len(grant_application.research_objectives),
                 },
             ),
@@ -402,7 +412,7 @@ async def grant_application_text_generation_pipeline_handler(
 
         section_texts = await generate_grant_section_texts(
             application_id=str(application_id),
-            grant_sections=grant_application.grant_template.grant_sections,
+            grant_sections=grant_template.grant_sections,
             form_inputs=grant_application.form_inputs or {},
             research_objectives=grant_application.research_objectives,
         )
@@ -433,7 +443,7 @@ async def grant_application_text_generation_pipeline_handler(
 
         application_text = generate_application_text(
             title=grant_application.title,
-            grant_sections=grant_application.grant_template.grant_sections,
+            grant_sections=grant_template.grant_sections,
             section_texts=section_texts,
         )
 

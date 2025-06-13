@@ -161,6 +161,9 @@ importers:
             chromatic:
                 specifier: ^12.2.0
                 version: 12.2.0
+            interface-forge:
+                specifier: ^2.2.1
+                version: 2.2.1
             jsdom:
                 specifier: ^26.1.0
                 version: 26.1.0
@@ -5719,6 +5722,13 @@ packages:
             {
                 integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==,
             }
+
+    interface-forge@2.2.1:
+        resolution:
+            {
+                integrity: sha512-GNHDm1bP1zOvblsWrurhWkEgH7b5YHeP9vdQR7wcHEHDXvv2phpk45qg9WI4s97WJAj6FCBPNO7XHkRnyTdxOw==,
+            }
+        engines: { node: ">=16.0.0" }
 
     is-arguments@1.2.0:
         resolution:
@@ -12234,6 +12244,11 @@ snapshots:
             wrappy: 1.0.2
 
     inherits@2.0.4: {}
+
+    interface-forge@2.2.1:
+        dependencies:
+            "@faker-js/faker": 9.8.0
+            "@tool-belt/type-predicates": 1.4.0
 
     is-arguments@1.2.0:
         dependencies:
