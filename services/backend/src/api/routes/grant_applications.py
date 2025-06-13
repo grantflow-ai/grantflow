@@ -1,4 +1,4 @@
-from typing import Any, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
 from litestar import delete, get, patch, post
@@ -9,7 +9,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
-    RagSource,
+    RagSource, RagFile,
 )
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
@@ -20,6 +20,8 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.sql.functions import count
+
+from src.tables import RagUrl
 
 logger = get_logger(__name__)
 
@@ -47,7 +49,7 @@ class SourceResponse(TypedDict):
     sourceId: str
     filename: NotRequired[str]  # For files: "my_doc.docx"
     url: NotRequired[str]  # For URLs
-    status: str  # Enum value as string
+    status: SourceIndexingStatusEnum  # Enum value
 
 
 class GrantTemplateResponse(TypedDict):
@@ -80,7 +82,7 @@ class ApplicationResponse(TypedDict):
 def _build_source_response(rag_source: RagSource) -> SourceResponse:
     source_response: SourceResponse = {
         "sourceId": str(rag_source.id),
-        "status": rag_source.indexing_status.value,
+        "status": rag_source.indexing_status,
     }
 
     # Debug log
@@ -92,20 +94,10 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
         has_filename=hasattr(rag_source, "filename"),
     )
 
-    # Try to access attributes without type checking to avoid SQLAlchemy issues
-    try:
-        if rag_source.source_type == "rag_url":
-            # For URL sources, try to get the url attribute
-            url = getattr(rag_source, "url", None)
-            if url:
-                source_response["url"] = url
-        elif rag_source.source_type == "rag_file":
-            # For file sources, try to get the filename attribute
-            filename = getattr(rag_source, "filename", None)
-            if filename:
-                source_response["filename"] = filename
-    except Exception as e:
-        logger.warning("Error accessing rag_source attributes", error=str(e), source_type=rag_source.source_type)
+    if rag_source.source_type == "rag_url":
+        source_response["url"] = cast(RagUrl, rag_source).url
+    else:
+        source_response["filename"] = cast(RagFile, rag_source).filename
 
     return source_response
 

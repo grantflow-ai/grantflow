@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApplicationFactory } from "::testing/factories";
 import { createApplication } from "@/actions/grant-applications";
 import { SourceIndexingStatus } from "@/enums";
 import {
@@ -17,10 +18,12 @@ import CreateGrantApplicationWizardPage from "./page";
 vi.mock("next/navigation", () => ({
 	useParams: vi.fn(),
 	useRouter: vi.fn(),
+	useSearchParams: vi.fn(),
 }));
 
 vi.mock("@/actions/grant-applications", () => ({
 	createApplication: vi.fn(),
+	retrieveApplication: vi.fn(),
 	updateApplication: vi.fn(),
 }));
 
@@ -112,14 +115,18 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		render(<CreateGrantApplicationWizardPage />);
 
-		expect(screen.getByText("Initializing application...")).toBeInTheDocument();
+		// When no applicationId is in search params, it shows an empty loading state
+		const loadingContainer = screen.getByText((_, element) => {
+			return element?.className === "text-center";
+		});
+		expect(loadingContainer).toBeInTheDocument();
 	});
 
 	it("creates application on mount", async () => {
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -164,16 +171,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		render(<CreateGrantApplicationWizardPage />);
 
 		await waitFor(() => {
-			expect(toast.error).toHaveBeenCalledWith("Failed to initialize application. Please try again.");
+			expect(toast.error).toHaveBeenCalledWith("Failed to initialize application");
 			expect(mockPush).toHaveBeenCalledWith(`/workspaces/${mockParams.workspaceId}`);
 		});
 	});
 
 	it("renders wizard components after application is created", async () => {
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -188,10 +195,10 @@ describe("CreateGrantApplicationWizardPage", () => {
 	});
 
 	it("shows first step by default", async () => {
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -203,10 +210,10 @@ describe("CreateGrantApplicationWizardPage", () => {
 	});
 
 	it("disables next button when validation fails", async () => {
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -222,10 +229,10 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 	it("keeps the next button disabled until document is uploaded", async () => {
 		const user = userEvent.setup();
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -245,27 +252,22 @@ describe("CreateGrantApplicationWizardPage", () => {
 			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 		});
 
-		// Add title
-		const titleInput = screen.getByTestId("application-title-header");
+		// Add title only - button should still be disabled without files or urls
+		const titleInput = screen.getByTestId("application-title-textarea");
+		await user.clear(titleInput);
 		await user.type(titleInput, "My Application");
 
-		// Add URL
-		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
-		await user.type(urlInput, "https://example.com");
-		await user.keyboard("{Enter}");
-
-		await waitFor(() => {
-			const continueButton = screen.getByTestId("continue-button");
-			expect(continueButton).toBeDisabled();
-		});
+		// Without files or URLs, the button should remain disabled
+		const continueButton = screen.getByTestId("continue-button");
+		expect(continueButton).toBeDisabled();
 	});
 
 	it("navigates between steps", async () => {
 		const user = userEvent.setup();
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -276,26 +278,27 @@ describe("CreateGrantApplicationWizardPage", () => {
 		});
 
 		// Add required data
-		const titleInput = screen.getByTestId("application-title-header");
+		const titleInput = screen.getByTestId("application-title-textarea");
+		await user.clear(titleInput);
 		await user.type(titleInput, "My Application");
 
 		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
 		await user.type(urlInput, "https://example.com");
 		await user.keyboard("{Enter}");
 
-		// Go to next step
+		// After adding both title and URL, the button should be enabled
 		const continueButton = screen.getByTestId("continue-button");
 		await waitFor(() => {
-			expect(continueButton).toBeDisabled();
+			expect(continueButton).toBeEnabled();
 		});
 	});
 
 	it("displays application title in header after first step", async () => {
 		const user = userEvent.setup();
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -309,7 +312,8 @@ describe("CreateGrantApplicationWizardPage", () => {
 		expect(screen.queryByTestId("app-name")).not.toBeInTheDocument();
 
 		// Add title
-		const titleInput = screen.getByTestId("application-title-header");
+		const titleInput = screen.getByTestId("application-title-textarea");
+		await user.clear(titleInput);
 		await user.type(titleInput, "My Grant Application");
 
 		// Add URL to enable navigation
@@ -317,18 +321,18 @@ describe("CreateGrantApplicationWizardPage", () => {
 		await user.type(urlInput, "https://example.com");
 		await user.keyboard("{Enter}");
 
-		// Go to next step
+		// After adding title and URL, the button should be enabled
 		const continueButton = screen.getByTestId("continue-button");
 		await waitFor(() => {
-			expect(continueButton).toBeDisabled();
+			expect(continueButton).toBeEnabled();
 		});
 	});
 
 	it("displays toast notifications for source processing updates", async () => {
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -365,10 +369,10 @@ describe("CreateGrantApplicationWizardPage", () => {
 	});
 
 	it("displays success toast for completed processing", async () => {
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
@@ -405,10 +409,10 @@ describe("CreateGrantApplicationWizardPage", () => {
 	});
 
 	it("displays error toast for failed processing", async () => {
-		const mockResponse = {
+		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
-			template_id: "template-123",
-		};
+			workspace_id: mockParams.workspaceId,
+		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
