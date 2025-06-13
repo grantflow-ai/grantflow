@@ -1,11 +1,9 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 
-import { createApplication, retrieveApplication, updateApplication } from "@/actions/grant-applications";
-import { generateGrantTemplate } from "@/actions/grant-template";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -14,87 +12,44 @@ import {
 	ResearchDeepDiveStep,
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
-import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
-import { WIZARD_STEP_TITLES } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
-import { logError } from "@/utils/logging";
-
-import { ApplicationType, validateStepNext } from "./validation";
-
-const DEBOUNCE_DELAY_MS = 500;
-const INITIAL_STEP = 0;
-const DEFAULT_APPLICATION_TITLE = "Untitled Application";
+import { useWizardStore } from "@/stores/wizard-store";
 
 export default function CreateGrantApplicationWizardPage() {
 	const params = useParams<{ workspaceId: string }>();
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const [application, setApplication] = useState<ApplicationType | null>(null);
-	const [currentStep, setCurrentStep] = useState<number>(INITIAL_STEP);
-	const [applicationTitle, setApplicationTitle] = useState("");
-	const [urls, setUrls] = useState<string[]>([]);
-	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
-	const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
-
-	const showHeaderInfo = currentStep > INITIAL_STEP;
+	const { application, currentStep, handleApplicationInit, setConnectionStatus, setConnectionStatusColor } =
+		useWizardStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: application?.id,
 		workspaceId: params.workspaceId,
 	});
 
+	useEffect(() => {
+		setConnectionStatus(connectionStatus);
+		setConnectionStatusColor(connectionStatusColor);
+	}, [connectionStatus, connectionStatusColor, setConnectionStatus, setConnectionStatusColor]);
+
 	// Get or create an application on mount ~keep
 	useEffect(() => {
 		const applicationId = searchParams.get("applicationId");
 		const handleApplication = async () => {
 			try {
-				if (applicationId) {
-					const response = await retrieveApplication(params.workspaceId, applicationId);
-					setApplication(response);
-					setApplicationTitle(response.title);
-					// TODO: Varun, we should set the files and urls here.
-				} else {
-					const response = await createApplication(params.workspaceId, {
-						title: DEFAULT_APPLICATION_TITLE,
-					});
-					setApplication(response);
-				}
-			} catch (e: unknown) {
-				logError({ error: e, identifier: "application-wizard-init" });
-				toast.error(applicationId ? "Failed to retrieve application" : "Failed to initialize application");
+				await handleApplicationInit(params.workspaceId, applicationId ?? undefined);
+			} catch {
 				router.push(`/workspaces/${params.workspaceId}`);
 			}
 		};
 		void handleApplication();
-	}, [params.workspaceId, router, application, searchParams]);
-
-	useEffect(() => {
-		if (!application?.id || !applicationTitle.trim()) {
-			return;
-		}
-
-		const updateTitle = async () => {
-			try {
-				await updateApplication(params.workspaceId, application.id, {
-					title: applicationTitle,
-				});
-			} catch {
-				toast.error("Failed to update application title");
-			}
-		};
-
-		// Debounce the update
-		const timeoutId = setTimeout(updateTitle, DEBOUNCE_DELAY_MS);
-		return () => {
-			clearTimeout(timeoutId);
-		};
-	}, [applicationTitle, application?.id, params.workspaceId]);
+	}, [params.workspaceId, router, searchParams, handleApplicationInit]);
 
 	useEffect(() => {
 		if (notifications.length === 0) {
@@ -115,45 +70,8 @@ export default function CreateGrantApplicationWizardPage() {
 		}
 	}, [notifications]);
 
-	const handleBack = () => {
-		setCurrentStep((s) => Math.max(INITIAL_STEP, s - 1));
-	};
-
-	const handleNext = () => {
-		if (currentStep === WIZARD_STEP_TITLES.length - 1) {
-			// TODO: Handle submission and navigation
-			return;
-		}
-
-		if (currentStep === 0 && application?.grant_template && !application.grant_template.grant_sections.length) {
-			setIsGeneratingTemplate(true);
-			try {
-				void generateGrantTemplate(params.workspaceId, application.id, application.grant_template.id);
-				setCurrentStep((s) => Math.min(WIZARD_STEP_TITLES.length - 1, s + 1));
-			} catch {
-				toast.error("Failed to generate grant template. Please try again.");
-			} finally {
-				setIsGeneratingTemplate(false);
-			}
-		} else {
-			setCurrentStep((s) => Math.min(WIZARD_STEP_TITLES.length - 1, s + 1));
-		}
-	};
-
 	const steps = [
-		<ApplicationDetailsStep
-			applicationTitle={applicationTitle}
-			connectionStatus={connectionStatus}
-			connectionStatusColor={connectionStatusColor}
-			key={0}
-			onApplicationTitleChange={setApplicationTitle}
-			onUploadedFilesChange={setUploadedFiles}
-			onUrlsChange={setUrls}
-			templateId={application?.grant_template?.id ?? ""}
-			uploadedFiles={uploadedFiles}
-			urls={urls}
-			workspaceId={params.workspaceId}
-		/>,
+		<ApplicationDetailsStep key={0} />,
 		<ApplicationStructureStep key={1} />,
 		<KnowledgeBaseStep key={2} />,
 		<ResearchPlanStep key={3} />,
@@ -175,30 +93,11 @@ export default function CreateGrantApplicationWizardPage() {
 
 	return (
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
-			<WizardHeader
-				applicationName={applicationTitle || DEFAULT_APPLICATION_TITLE}
-				currentStep={currentStep}
-				showHeaderInfo={showHeaderInfo}
-				stepTitles={WIZARD_STEP_TITLES}
-			/>
+			<WizardHeader />
 			<section className="flex-1 overflow-auto" data-testid="step-content-container">
 				{steps[currentStep]}
 			</section>
-			<WizardFooter
-				currentStep={currentStep}
-				disabled={
-					!validateStepNext({
-						application,
-						currentStep,
-						hadUrls: urls.length > 0,
-						hasFiles: uploadedFiles.length > 0,
-						isGenerating: isGeneratingTemplate,
-					})
-				}
-				onBack={handleBack}
-				onContinue={handleNext}
-				showBack={currentStep > INITIAL_STEP}
-			/>
+			<WizardFooter />
 		</div>
 	);
 }
