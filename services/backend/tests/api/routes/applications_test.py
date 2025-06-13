@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from http import HTTPStatus
 from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
@@ -360,6 +361,8 @@ async def test_retrieve_application_with_grant_template(
     assert template_data["id"] == str(grant_template.id)
     assert "grant_sections" in template_data
     assert "funding_organization_id" in template_data
+    assert "rag_sources" in template_data
+    assert template_data["rag_sources"] == []  # No template sources initially
 
     # Verify funding organization data is included if present
     if "funding_organization" in template_data:
@@ -428,3 +431,203 @@ async def test_retrieve_application_unauthorized(
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+
+
+async def test_retrieve_application_with_complete_data(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
+) -> None:
+    from packages.db.src.tables import FundingOrganization
+
+    async with async_session_maker() as session, session.begin():
+        # Re-attach grant_application and grant_template to the session
+        app = await session.get(GrantApplication, grant_application.id)
+        template = await session.get(GrantTemplate, grant_template.id)
+
+        # Add funding organization to template
+        funding_org = FundingOrganization(
+            full_name="Test Funding Organization Complete",
+            abbreviation="TFOC",
+        )
+        session.add(funding_org)
+        await session.flush()
+
+        template.funding_organization_id = funding_org.id
+        template.submission_date = date(2024, 12, 31)
+
+        # Update application with additional fields
+        app.form_inputs = {"principal_investigator": "Dr. Smith", "budget": "500000"}
+        app.research_objectives = [
+            {
+                "number": 1,
+                "title": "Objective 1",
+                "description": "Research objective description",
+                "research_tasks": [{"number": 1, "title": "Task 1", "description": "Task description"}],
+            }
+        ]
+        app.text = "Generated application text content"
+        app.completed_at = datetime.now()
+
+        await session.commit()
+
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    # Verify basic fields
+    assert data["id"] == str(grant_application.id)
+    assert data["workspace_id"] == str(grant_application.workspace_id)
+    assert data["title"] == grant_application.title
+    assert data["status"] == grant_application.status.value
+    assert data["form_inputs"] == {"principal_investigator": "Dr. Smith", "budget": "500000"}
+    assert data["text"] == "Generated application text content"
+    assert len(data["research_objectives"]) == 1
+    assert data["research_objectives"][0]["title"] == "Objective 1"
+    assert "completed_at" in data
+
+    # Verify grant template with funding organization
+    assert "grant_template" in data
+    template_data = data["grant_template"]
+    assert template_data["id"] == str(grant_template.id)
+    assert template_data["submission_date"] == "2024-12-31"
+    assert "funding_organization" in template_data
+    org_data = template_data["funding_organization"]
+    assert org_data["full_name"] == "Test Funding Organization Complete"
+    assert org_data["abbreviation"] == "TFOC"
+
+    # Verify template rag_sources field exists
+    assert "rag_sources" in template_data
+    assert template_data["rag_sources"] == []  # No template sources initially
+
+    # No application RAG sources in this test
+    assert data["rag_sources"] == []
+
+
+async def test_retrieve_application_with_rag_sources(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
+) -> None:
+    from packages.db.src.enums import SourceIndexingStatusEnum
+    from packages.db.src.tables import (
+        GrantApplicationRagSource,
+        GrantTemplateRagSource,
+        RagFile,
+        RagUrl,
+    )
+
+    async with async_session_maker() as session, session.begin():
+        # Re-attach entities to the session
+        app = await session.get(GrantApplication, grant_application.id)
+        template = await session.get(GrantTemplate, grant_template.id)
+
+        # Create RagFile source
+        rag_file = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path/document.pdf",
+            filename="research_proposal.pdf",
+            mime_type="application/pdf",
+            size=2048576,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+        session.add(rag_file)
+        await session.flush()
+
+        # Create RagUrl source
+        rag_url = RagUrl(
+            url="https://example.com/grant-guidelines",
+            title="Grant Guidelines",
+            indexing_status=SourceIndexingStatusEnum.INDEXING,
+        )
+        session.add(rag_url)
+        await session.flush()
+
+        # Create another RagFile for template
+        template_rag_file = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path/template_doc.docx",
+            filename="grant_template_guide.docx",
+            mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            size=1024000,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+        session.add(template_rag_file)
+        await session.flush()
+
+        # Link sources to application
+        app_rag_file = GrantApplicationRagSource(
+            grant_application_id=app.id,
+            rag_source_id=rag_file.id,
+        )
+        app_rag_url = GrantApplicationRagSource(
+            grant_application_id=app.id,
+            rag_source_id=rag_url.id,
+        )
+        session.add(app_rag_file)
+        session.add(app_rag_url)
+
+        # Link source to template
+        template_rag_source = GrantTemplateRagSource(
+            grant_template_id=template.id,
+            rag_source_id=template_rag_file.id,
+        )
+        session.add(template_rag_source)
+
+        await session.commit()
+
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    # Verify basic fields
+    assert data["id"] == str(grant_application.id)
+
+    # Verify application RAG sources using standardized format
+    assert len(data["rag_sources"]) == 2
+
+    # Find specific sources
+    app_sources = data["rag_sources"]
+    file_source = next((s for s in app_sources if "filename" in s), None)
+    url_source = next((s for s in app_sources if "url" in s), None)
+
+    # Verify file source
+    assert file_source is not None
+    assert file_source["sourceId"] == str(rag_file.id)
+    assert file_source["filename"] == "research_proposal.pdf"
+    assert file_source["status"] == "finished"
+    assert "url" not in file_source
+
+    # Verify URL source
+    assert url_source is not None
+    assert url_source["sourceId"] == str(rag_url.id)
+    assert url_source["url"] == "https://example.com/grant-guidelines"
+    assert url_source["status"] == "indexing"
+    assert "filename" not in url_source
+
+    # Verify template with rag sources
+    assert "grant_template" in data
+    template_data = data["grant_template"]
+    assert "rag_sources" in template_data
+    assert len(template_data["rag_sources"]) == 1
+
+    # Verify template source
+    template_source = template_data["rag_sources"][0]
+    assert template_source["sourceId"] == str(template_rag_file.id)
+    assert template_source["filename"] == "grant_template_guide.docx"
+    assert template_source["status"] == "finished"
+    assert "url" not in template_source

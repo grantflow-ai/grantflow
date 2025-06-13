@@ -96,8 +96,84 @@ export namespace API {
 	export namespace CreateApplication {
 		export namespace Http201 {
 			export type ResponseBody = {
+				completed_at?: string;
+				created_at: string;
+				form_inputs?: {
+					background_context: string;
+					hypothesis: string;
+					impact: string;
+					novelty_and_innovation: string;
+					preliminary_data: string;
+					rationale: string;
+					research_feasibility: string;
+					scientific_infrastructure: string;
+					team_excellence: string;
+				};
+				grant_template?: {
+					created_at: string;
+					funding_organization?: {
+						abbreviation?: string;
+						created_at: string;
+						full_name: string;
+						id: string;
+						updated_at: string;
+					};
+					funding_organization_id?: string;
+					grant_application_id: string;
+					grant_sections: (
+						| {
+								depends_on: string[];
+								generation_instructions: string;
+								id: string;
+								is_clinical_trial: boolean | null;
+								is_detailed_workplan: boolean | null;
+								keywords: string[];
+								max_words: number;
+								order: number;
+								parent_id: null | string;
+								search_queries: string[];
+								title: string;
+								topics: string[];
+						  }
+						| {
+								id: string;
+								order: number;
+								parent_id: null | string;
+								title: string;
+						  }
+					)[];
+					id: string;
+					rag_sources: {
+						filename?: string;
+						sourceId: string;
+						status: string;
+						url?: string;
+					}[];
+					submission_date?: string;
+					updated_at: string;
+				};
 				id: string;
-				template_id: string;
+				rag_sources: {
+					filename?: string;
+					sourceId: string;
+					status: string;
+					url?: string;
+				}[];
+				research_objectives?: {
+					description?: string;
+					number: number;
+					research_tasks: {
+						description?: string;
+						number: number;
+						title: string;
+					}[];
+					title: string;
+				}[];
+				status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+				text?: string;
+				title: string;
+				updated_at: string;
+				workspace_id: string;
 			};
 		}
 
@@ -569,27 +645,21 @@ export namespace API {
 						  }
 					)[];
 					id: string;
+					rag_sources: {
+						filename?: string;
+						sourceId: string;
+						status: string;
+						url?: string;
+					}[];
 					submission_date?: string;
 					updated_at: string;
 				};
 				id: string;
 				rag_sources: {
-					created_at: string;
-					grant_application_id: string;
-					rag_source: {
-						created_at: string;
-						filename?: string;
-						id: string;
-						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
-						mime_type?: string;
-						size?: number;
-						source_type: string;
-						title?: string;
-						updated_at: string;
-						url?: string;
-					};
-					rag_source_id: string;
-					updated_at: string;
+					filename?: string;
+					sourceId: string;
+					status: string;
+					url?: string;
 				}[];
 				research_objectives?: {
 					description?: string;
@@ -732,7 +802,86 @@ export namespace API {
 
 	export namespace UpdateApplication {
 		export namespace Http200 {
-			export type ResponseBody = undefined;
+			export type ResponseBody = {
+				completed_at?: string;
+				created_at: string;
+				form_inputs?: {
+					background_context: string;
+					hypothesis: string;
+					impact: string;
+					novelty_and_innovation: string;
+					preliminary_data: string;
+					rationale: string;
+					research_feasibility: string;
+					scientific_infrastructure: string;
+					team_excellence: string;
+				};
+				grant_template?: {
+					created_at: string;
+					funding_organization?: {
+						abbreviation?: string;
+						created_at: string;
+						full_name: string;
+						id: string;
+						updated_at: string;
+					};
+					funding_organization_id?: string;
+					grant_application_id: string;
+					grant_sections: (
+						| {
+								depends_on: string[];
+								generation_instructions: string;
+								id: string;
+								is_clinical_trial: boolean | null;
+								is_detailed_workplan: boolean | null;
+								keywords: string[];
+								max_words: number;
+								order: number;
+								parent_id: null | string;
+								search_queries: string[];
+								title: string;
+								topics: string[];
+						  }
+						| {
+								id: string;
+								order: number;
+								parent_id: null | string;
+								title: string;
+						  }
+					)[];
+					id: string;
+					rag_sources: {
+						filename?: string;
+						sourceId: string;
+						status: string;
+						url?: string;
+					}[];
+					submission_date?: string;
+					updated_at: string;
+				};
+				id: string;
+				rag_sources: {
+					filename?: string;
+					sourceId: string;
+					status: string;
+					url?: string;
+				}[];
+				research_objectives?: {
+					description?: string;
+					number: number;
+					research_tasks: {
+						description?: string;
+						number: number;
+						title: string;
+					}[];
+					title: string;
+				}[];
+				status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+				text?: string;
+				title: string;
+				updated_at: string;
+				workspace_id: string;
+			};
 		}
 
 		export namespace Http400 {
