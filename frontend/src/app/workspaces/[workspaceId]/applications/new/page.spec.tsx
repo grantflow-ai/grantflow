@@ -10,6 +10,7 @@ import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
+import { useWizardStore } from "@/stores/wizard-store";
 
 import CreateGrantApplicationWizardPage from "./page";
 
@@ -46,18 +47,68 @@ vi.mock("@/hooks/use-application-notifications", () => ({
 	}),
 }));
 
+vi.mock("@/stores/wizard-store", () => ({
+	useWizardStore: vi.fn(),
+}));
+
 const mockPush = vi.fn();
 const mockParams = { workspaceId: "test-workspace-id" };
+
+const createMockWizardStore = (overrides = {}) => ({
+	addFile: vi.fn(),
+	addUrl: vi.fn(),
+	applicationId: "app-123",
+	applicationTitle: "Untitled Application",
+	currentStep: 0,
+	goToNextStep: vi.fn(),
+	goToPreviousStep: vi.fn(),
+	initializeApplication: vi.fn(),
+	isCreatingApplication: false,
+	isCurrentStepValid: vi.fn().mockReturnValue(false),
+	isStep1Valid: vi.fn().mockReturnValue(false),
+	removeFile: vi.fn(),
+	removeUrl: vi.fn(),
+	resetWizard: vi.fn(),
+	setApplicationId: vi.fn(),
+	setApplicationTitle: vi.fn(),
+	setCurrentStep: vi.fn(),
+	setFileDropdownOpen: vi.fn(),
+	setIsCreatingApplication: vi.fn(),
+	setLinkHoverState: vi.fn(),
+	setTemplateId: vi.fn(),
+	setUploadedFiles: vi.fn(),
+	setUrlInput: vi.fn(),
+	setUrls: vi.fn(),
+	setWorkspaceId: vi.fn(),
+	templateId: "template-123",
+	ui: {
+		fileDropdownStates: {},
+		linkHoverStates: {},
+		urlInput: "",
+	},
+	updateApplicationTitle: vi.fn(),
+	uploadedFiles: [],
+	urls: [],
+	workspaceId: "test-workspace-id",
+	...overrides,
+});
 
 describe("CreateGrantApplicationWizardPage", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any);
 		vi.mocked(useParams).mockReturnValue(mockParams);
+		vi.mocked(useWizardStore).mockReturnValue(createMockWizardStore());
 	});
 
 	it("shows loading state initially", () => {
 		vi.mocked(createApplication).mockImplementation(() => new Promise<never>(() => {}));
+
+		// Mock store to show loading state
+		const mockStore = createMockWizardStore({
+			isCreatingApplication: true,
+		});
+		vi.mocked(useWizardStore).mockReturnValue(mockStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -72,6 +123,17 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
+		// Mock the store with actual implementation that calls createApplication
+		const mockInitializeApplication = vi.fn().mockImplementation(async (workspaceId: string) => {
+			await createApplication(workspaceId, { title: "Untitled Application" });
+		});
+
+		const mockStore = createMockWizardStore({
+			initializeApplication: mockInitializeApplication,
+			isCreatingApplication: true,
+		});
+		vi.mocked(useWizardStore).mockReturnValue(mockStore);
+
 		render(<CreateGrantApplicationWizardPage />);
 
 		await waitFor(() => {
@@ -81,12 +143,23 @@ describe("CreateGrantApplicationWizardPage", () => {
 		});
 
 		await waitFor(() => {
-			expect(screen.queryByText("Initializing application...")).not.toBeInTheDocument();
+			expect(mockInitializeApplication).toHaveBeenCalledWith(mockParams.workspaceId);
 		});
 	});
 
 	it("shows error and redirects when application creation fails", async () => {
 		vi.mocked(createApplication).mockRejectedValue(new Error("Failed"));
+
+		// Mock the store with implementation that will fail
+		const mockInitializeApplication = vi.fn().mockImplementation(async (workspaceId: string) => {
+			await createApplication(workspaceId, { title: "Untitled Application" });
+		});
+
+		const mockStore = createMockWizardStore({
+			initializeApplication: mockInitializeApplication,
+			isCreatingApplication: true,
+		});
+		vi.mocked(useWizardStore).mockReturnValue(mockStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -155,6 +228,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		};
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
+
+		// Mock store to simulate state with title and URL but no files uploaded
+		const mockStore = createMockWizardStore({
+			applicationTitle: "My Application",
+			isCurrentStepValid: vi.fn().mockReturnValue(false), // Validation should fail
+			isStep1Valid: vi.fn().mockReturnValue(false), // Step 1 should be invalid
+			uploadedFiles: [], // No files uploaded
+			urls: ["https://example.com"],
+		});
+		vi.mocked(useWizardStore).mockReturnValue(mockStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
