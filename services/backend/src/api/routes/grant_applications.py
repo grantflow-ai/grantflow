@@ -1,11 +1,16 @@
 from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
-from litestar import delete, patch, post
+from litestar import delete, get, patch, post
 from litestar.exceptions import NotFoundException, ValidationException
 from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
-from packages.db.src.json_objects import ResearchObjective
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, GrantTemplate, RagSource
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.tables import (
+    GrantApplication,
+    GrantApplicationRagSource,
+    GrantTemplate,
+    RagSource,
+)
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -23,16 +28,158 @@ class CreateApplicationRequestBody(TypedDict):
     title: str
 
 
-class CreateApplicationResponse(TypedDict):
-    id: str
-    template_id: str
-
-
 class UpdateApplicationRequestBody(TypedDict):
     form_inputs: NotRequired[dict[str, str]]
     research_objectives: NotRequired[list[ResearchObjective]]
     status: NotRequired[ApplicationStatusEnum]
     title: NotRequired[str]
+
+
+class FundingOrganizationResponse(TypedDict):
+    id: str
+    full_name: str
+    abbreviation: NotRequired[str]
+    created_at: str
+    updated_at: str
+
+
+class SourceResponse(TypedDict):
+    sourceId: str
+    filename: NotRequired[str]  # For files: "my_doc.docx"
+    url: NotRequired[str]  # For URLs
+    status: SourceIndexingStatusEnum  # Enum value
+
+
+class GrantTemplateResponse(TypedDict):
+    id: str
+    grant_application_id: str
+    funding_organization_id: NotRequired[str]
+    funding_organization: NotRequired[FundingOrganizationResponse]
+    grant_sections: list[GrantLongFormSection | GrantElement]
+    submission_date: NotRequired[str]
+    rag_sources: list[SourceResponse]
+    created_at: str
+    updated_at: str
+
+
+class ApplicationResponse(TypedDict):
+    id: str
+    workspace_id: str
+    title: str
+    status: ApplicationStatusEnum
+    completed_at: NotRequired[str]
+    form_inputs: NotRequired[ResearchDeepDive]
+    research_objectives: NotRequired[list[ResearchObjective]]
+    text: NotRequired[str]
+    grant_template: NotRequired[GrantTemplateResponse]
+    rag_sources: list[SourceResponse]
+    created_at: str
+    updated_at: str
+
+
+def _build_source_response(rag_source: RagSource) -> SourceResponse:
+    from packages.db.src.tables import RagFile, RagUrl
+
+    source_response: SourceResponse = {
+        "sourceId": str(rag_source.id),
+        "status": rag_source.indexing_status,
+    }
+
+    # Debug log
+    logger.debug(
+        "Building source response",
+        source_type=type(rag_source).__name__,
+        source_id=str(rag_source.id),
+        is_url=isinstance(rag_source, RagUrl),
+        is_file=isinstance(rag_source, RagFile),
+    )
+
+    if isinstance(rag_source, RagUrl):
+        source_response["url"] = rag_source.url
+    elif isinstance(rag_source, RagFile):
+        source_response["filename"] = rag_source.filename
+
+    return source_response
+
+
+async def _handle_retrieve_application(
+    workspace_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> ApplicationResponse:
+    logger.info("Retrieving application", workspace_id=workspace_id, application_id=application_id)
+    async with session_maker() as session:
+        try:
+            grant_application = await retrieve_application(application_id=application_id, session=session)
+        except ValidationError as e:
+            raise NotFoundException("Application not found") from e
+
+        if grant_application.workspace_id != workspace_id:
+            raise NotFoundException("Application not found")
+
+        response: ApplicationResponse = {
+            "id": str(grant_application.id),
+            "workspace_id": str(grant_application.workspace_id),
+            "title": grant_application.title,
+            "status": grant_application.status,
+            "rag_sources": [],
+            "created_at": grant_application.created_at.isoformat(),
+            "updated_at": grant_application.updated_at.isoformat(),
+        }
+
+        if grant_application.completed_at:
+            response["completed_at"] = grant_application.completed_at.isoformat()
+
+        if grant_application.form_inputs:
+            response["form_inputs"] = grant_application.form_inputs
+
+        if grant_application.research_objectives:
+            response["research_objectives"] = grant_application.research_objectives
+
+        if grant_application.text:
+            response["text"] = grant_application.text
+
+        if grant_application.grant_template:
+            template = grant_application.grant_template
+            template_response: GrantTemplateResponse = {
+                "id": str(template.id),
+                "grant_application_id": str(template.grant_application_id),
+                "grant_sections": template.grant_sections,
+                "rag_sources": [],
+                "created_at": template.created_at.isoformat(),
+                "updated_at": template.updated_at.isoformat(),
+            }
+
+            if template.funding_organization_id:
+                template_response["funding_organization_id"] = str(template.funding_organization_id)
+
+            if template.submission_date:
+                template_response["submission_date"] = template.submission_date.isoformat()
+
+            if template.funding_organization:
+                org = template.funding_organization
+                funding_org_response: FundingOrganizationResponse = {
+                    "id": str(org.id),
+                    "full_name": org.full_name,
+                    "created_at": org.created_at.isoformat(),
+                    "updated_at": org.updated_at.isoformat(),
+                }
+                if org.abbreviation:
+                    funding_org_response["abbreviation"] = org.abbreviation
+                template_response["funding_organization"] = funding_org_response
+
+            # Add template rag sources
+            if hasattr(template, "rag_sources") and template.rag_sources:
+                for template_rag_source in template.rag_sources:
+                    source_response = _build_source_response(template_rag_source.rag_source)
+                    template_response["rag_sources"].append(source_response)
+
+            response["grant_template"] = template_response
+
+        if grant_application.rag_sources:
+            for app_rag_source in grant_application.rag_sources:
+                source_response = _build_source_response(app_rag_source.rag_source)
+                response["rag_sources"].append(source_response)
+
+    return response
 
 
 @post(
@@ -42,7 +189,7 @@ class UpdateApplicationRequestBody(TypedDict):
 )
 async def handle_create_application(
     workspace_id: UUID, data: CreateApplicationRequestBody, session_maker: async_sessionmaker[Any]
-) -> CreateApplicationResponse:
+) -> ApplicationResponse:
     logger.info("Creating application", workspace_id=workspace_id, title=data["title"])
 
     async with session_maker() as session, session.begin():
@@ -59,7 +206,7 @@ async def handle_create_application(
                 .returning(GrantApplication)
             )
 
-            template = await session.scalar(
+            await session.scalar(
                 insert(GrantTemplate)
                 .values(
                     {
@@ -76,7 +223,9 @@ async def handle_create_application(
             logger.error("Error creating application and template", exc_info=e)
             raise DatabaseError("Error creating application and template", context=str(e)) from e
 
-    return CreateApplicationResponse(id=str(application.id), template_id=str(template.id))
+    return await _handle_retrieve_application(
+        workspace_id=workspace_id, application_id=application.id, session_maker=session_maker
+    )
 
 
 @patch(
@@ -89,7 +238,7 @@ async def handle_update_application(
     application_id: UUID,
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
-) -> None:
+) -> ApplicationResponse:
     logger.info("Updating application", workspace_id=workspace_id, application_id=application_id)
 
     async with session_maker() as session, session.begin():
@@ -112,6 +261,10 @@ async def handle_update_application(
             await session.rollback()
             logger.error("Error updating application", exc_info=e)
             raise DatabaseError("Error updating application", context=str(e)) from e
+
+    return await _handle_retrieve_application(
+        workspace_id=workspace_id, application_id=application_id, session_maker=session_maker
+    )
 
 
 @delete(
@@ -139,21 +292,20 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
 )
 async def handle_generate_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     logger.info("Generating application", application_id=application_id)
-
-    try:
-        application = await retrieve_application(application_id=application_id, session_maker=session_maker)
-    except ValidationError as e:
-        raise NotFoundException("Application not found") from e
-
-    if (
-        not application.title
-        or not application.grant_template
-        or not application.grant_template.grant_sections
-        or not application.research_objectives
-    ):
-        raise ValidationException("Insufficient data to generate application.")
-
     async with session_maker() as session:
+        try:
+            application = await retrieve_application(application_id=application_id, session=session)
+        except ValidationError as e:
+            raise NotFoundException("Application not found") from e
+
+        if (
+            not application.title
+            or not application.grant_template
+            or not application.grant_template.grant_sections
+            or not application.research_objectives
+        ):
+            raise ValidationException("Insufficient data to generate application.")
+
         rag_sources_count = await session.scalar(
             select(count())
             .select_from(GrantApplicationRagSource)
@@ -167,11 +319,22 @@ async def handle_generate_application(application_id: UUID, session_maker: async
         if rag_sources_count == 0:
             raise ValidationException("No rag sources found for application, cannot generate")
 
-    try:
-        await publish_rag_task(logger=logger, parent_type="grant_application", parent_id=application.id)
-    except BackendError as e:
-        logger.error("Error initiating application generation", exc_info=e)
-        raise
-    except SQLAlchemyError as e:
-        logger.error("Error initiating application generation", exc_info=e)
-        raise DatabaseError("Error initiating application generation", context=str(e)) from e
+        try:
+            await publish_rag_task(logger=logger, parent_type="grant_application", parent_id=application.id)
+        except BackendError as e:
+            logger.error("Error initiating application generation", exc_info=e)
+            raise
+        except SQLAlchemyError as e:
+            logger.error("Error initiating application generation", exc_info=e)
+            raise DatabaseError("Error initiating application generation", context=str(e)) from e
+
+
+@get(
+    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="RetrieveApplication",
+)
+async def handle_retrieve_application(
+    workspace_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> ApplicationResponse:
+    return await _handle_retrieve_application(workspace_id, application_id, session_maker)

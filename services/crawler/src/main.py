@@ -1,8 +1,10 @@
 import base64
+import binascii
 from asyncio import gather
 from typing import Any
 
 from litestar import post
+from litestar.exceptions import ValidationException
 from packages.db.src.constants import RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
@@ -40,7 +42,7 @@ async def decode_pubsub_message(event: PubSubEvent) -> CrawlingRequest:
             raise ValidationError("PubSub message missing data field")
         decoded_data = base64.b64decode(encoded_data).decode()
         return deserialize(decoded_data, CrawlingRequest)
-    except DeserializationError as e:
+    except (DeserializationError, binascii.Error, UnicodeDecodeError) as e:
         logger.error("Validation error processing PubSub message", exc_info=e)
         raise ValidationError(
             "Failed to decode PubSub message", context={"message": event.message, "error": str(e)}
@@ -52,7 +54,12 @@ async def handle_url_crawling(
     data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    crawling_request = await decode_pubsub_message(data)
+    try:
+        crawling_request = await decode_pubsub_message(data)
+    except ValidationError as e:
+        logger.error("Invalid PubSub message", exc_info=e)
+        raise ValidationException(str(e)) from e
+
     parent_type, parent_id = crawling_request["parent_type"], crawling_request["parent_id"]
     existing_url = None
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { createApplication, retrieveApplication, updateApplication } from "@/actions/grant-applications";
+import { generateGrantTemplate } from "@/actions/grant-template";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -12,6 +14,7 @@ import {
 	ResearchDeepDiveStep,
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
+import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { WIZARD_STEP_TITLES } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
@@ -19,48 +22,80 @@ import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
-import { DEFAULT_APPLICATION_TITLE, useWizardStore } from "@/stores/wizard-store";
+import { logError } from "@/utils/logging";
 
+import { ApplicationType, validateStepNext } from "./validation";
+
+const DEBOUNCE_DELAY_MS = 500;
 const INITIAL_STEP = 0;
+const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 export default function CreateGrantApplicationWizardPage() {
 	const params = useParams<{ workspaceId: string }>();
+	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const {
-		applicationId,
-		applicationTitle,
-		currentStep,
-		goToNextStep,
-		goToPreviousStep,
-		initializeApplication,
-		isCreatingApplication,
-		isCurrentStepValid,
-		resetWizard,
-	} = useWizardStore();
+	const [application, setApplication] = useState<ApplicationType | null>(null);
+	const [currentStep, setCurrentStep] = useState<number>(INITIAL_STEP);
+	const [applicationTitle, setApplicationTitle] = useState("");
+	const [urls, setUrls] = useState<string[]>([]);
+	const [uploadedFiles, setUploadedFiles] = useState<FileWithId[]>([]);
+	const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
 
 	const showHeaderInfo = currentStep > INITIAL_STEP;
 
-	// Use the notifications hook once we have an applicationId
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
-		applicationId,
+		applicationId: application?.id,
 		workspaceId: params.workspaceId,
 	});
 
+	// Get or create an application on mount ~keep
 	useEffect(() => {
-		const init = async () => {
+		const applicationId = searchParams.get("applicationId");
+		const handleApplication = async () => {
 			try {
-				await initializeApplication(params.workspaceId);
-			} catch {
-				toast.error("Failed to initialize application. Please try again.");
+				if (applicationId) {
+					const response = await retrieveApplication(params.workspaceId, applicationId);
+					setApplication(response);
+					setApplicationTitle(response.title);
+					// TODO: Varun, we should set the files and urls here.
+				} else {
+					const response = await createApplication(params.workspaceId, {
+						title: DEFAULT_APPLICATION_TITLE,
+					});
+					setApplication(response);
+				}
+			} catch (e: unknown) {
+				logError({ error: e, identifier: "application-wizard-init" });
+				toast.error(applicationId ? "Failed to retrieve application" : "Failed to initialize application");
 				router.push(`/workspaces/${params.workspaceId}`);
 			}
 		};
+		void handleApplication();
+	}, [params.workspaceId, router, application, searchParams]);
 
-		void init();
-	}, [params.workspaceId, router, initializeApplication, resetWizard]);
+	useEffect(() => {
+		if (!application?.id || !applicationTitle.trim()) {
+			return;
+		}
 
-	// Handle incoming notifications
+		const updateTitle = async () => {
+			try {
+				await updateApplication(params.workspaceId, application.id, {
+					title: applicationTitle,
+				});
+			} catch {
+				toast.error("Failed to update application title");
+			}
+		};
+
+		// Debounce the update
+		const timeoutId = setTimeout(updateTitle, DEBOUNCE_DELAY_MS);
+		return () => {
+			clearTimeout(timeoutId);
+		};
+	}, [applicationTitle, application?.id, params.workspaceId]);
+
 	useEffect(() => {
 		if (notifications.length === 0) {
 			return;
@@ -80,19 +115,44 @@ export default function CreateGrantApplicationWizardPage() {
 		}
 	}, [notifications]);
 
+	const handleBack = () => {
+		setCurrentStep((s) => Math.max(INITIAL_STEP, s - 1));
+	};
+
 	const handleNext = () => {
 		if (currentStep === WIZARD_STEP_TITLES.length - 1) {
 			// TODO: Handle submission and navigation
 			return;
 		}
-		goToNextStep();
+
+		if (currentStep === 0 && application?.grant_template && !application.grant_template.grant_sections.length) {
+			setIsGeneratingTemplate(true);
+			try {
+				void generateGrantTemplate(params.workspaceId, application.id, application.grant_template.id);
+				setCurrentStep((s) => Math.min(WIZARD_STEP_TITLES.length - 1, s + 1));
+			} catch {
+				toast.error("Failed to generate grant template. Please try again.");
+			} finally {
+				setIsGeneratingTemplate(false);
+			}
+		} else {
+			setCurrentStep((s) => Math.min(WIZARD_STEP_TITLES.length - 1, s + 1));
+		}
 	};
 
 	const steps = [
 		<ApplicationDetailsStep
+			applicationTitle={applicationTitle}
 			connectionStatus={connectionStatus}
 			connectionStatusColor={connectionStatusColor}
 			key={0}
+			onApplicationTitleChange={setApplicationTitle}
+			onUploadedFilesChange={setUploadedFiles}
+			onUrlsChange={setUrls}
+			templateId={application?.grant_template?.id ?? ""}
+			uploadedFiles={uploadedFiles}
+			urls={urls}
+			workspaceId={params.workspaceId}
 		/>,
 		<ApplicationStructureStep key={1} />,
 		<KnowledgeBaseStep key={2} />,
@@ -101,11 +161,13 @@ export default function CreateGrantApplicationWizardPage() {
 		<GenerateCompleteStep key={5} />,
 	];
 
-	if (isCreatingApplication) {
+	if (!application) {
 		return (
 			<div className="flex h-screen w-screen items-center justify-center">
 				<div className="text-center">
-					<p className="text-muted-foreground">Initializing application...</p>
+					<p className="text-muted-foreground">
+						{!!searchParams.get("applicationId") && "Loading application..."}
+					</p>
 				</div>
 			</div>
 		);
@@ -124,10 +186,18 @@ export default function CreateGrantApplicationWizardPage() {
 			</section>
 			<WizardFooter
 				currentStep={currentStep}
-				disabled={!isCurrentStepValid()}
-				onBack={goToPreviousStep}
+				disabled={
+					!validateStepNext({
+						application,
+						currentStep,
+						hadUrls: urls.length > 0,
+						hasFiles: uploadedFiles.length > 0,
+						isGenerating: isGeneratingTemplate,
+					})
+				}
+				onBack={handleBack}
 				onContinue={handleNext}
-				showBack={currentStep > 0}
+				showBack={currentStep > INITIAL_STEP}
 			/>
 		</div>
 	);
