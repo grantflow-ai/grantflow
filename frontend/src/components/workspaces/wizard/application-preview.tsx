@@ -32,19 +32,12 @@ export interface FileWithId extends File {
 }
 
 interface ApplicationPreviewProps {
-	connectionStatus?: string;
-	connectionStatusColor?: string;
 	onFileRemove?: (file: FileWithId) => Promise<void>;
 	onUrlRemove?: (url: string) => void;
 }
 
-export function ApplicationPreview({
-	connectionStatus,
-	connectionStatusColor,
-	onFileRemove,
-	onUrlRemove,
-}: ApplicationPreviewProps) {
-	const { applicationTitle, uploadedFiles: files, urls } = useWizardStore();
+export function ApplicationPreview({ onFileRemove, onUrlRemove }: ApplicationPreviewProps) {
+	const { applicationTitle, connectionStatus, connectionStatusColor, uploadedFiles: files, urls } = useWizardStore();
 	const isEmpty = !applicationTitle && files.length === 0 && urls.length === 0;
 
 	return (
