@@ -23,8 +23,8 @@ subscriber_client_ref = Ref[pubsub.SubscriberClient]()
 
 
 class PubSubMessage(msgspec.Struct, rename="camel"):
-    message_id: str
-    publish_time: str
+    publish_time: str | None = None
+    message_id: str | None = None
     data: str | None = None
     attributes: dict[str, str] | None = None
     ordering_key: str | None = None

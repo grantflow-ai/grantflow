@@ -1,14 +1,22 @@
 import { HTTPError } from "ky";
 
+import { ApplicationFactory } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
 import { API } from "@/types/api-types";
 
-import { createApplication, deleteApplication, generateApplication, updateApplication } from "./grant-applications";
+import {
+	createApplication,
+	deleteApplication,
+	generateApplication,
+	retrieveApplication,
+	updateApplication,
+} from "./grant-applications";
 import { updateGrantTemplate } from "./grant-template";
 
 const mockPost = vi.fn();
 const mockPatch = vi.fn();
 const mockDelete = vi.fn();
+const mockGet = vi.fn();
 const mockCreateAuthHeaders = vi.fn();
 const mockWithAuthRedirect = vi.fn();
 
@@ -18,6 +26,7 @@ vi.mock("@/utils/api", async () => {
 		...actual,
 		getClient: () => ({
 			delete: mockDelete,
+			get: mockGet,
 			patch: mockPatch,
 			post: mockPost,
 		}),
@@ -38,9 +47,83 @@ const mockApplicationId = "mock-application-id";
 const mockTemplateId = "mock-template-id";
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
-const mockCreateApplicationResponse: API.CreateApplication.Http201.ResponseBody = {
+const mockCreateApplicationResponse: API.CreateApplication.Http201.ResponseBody = ApplicationFactory.build({
 	id: mockApplicationId,
-	template_id: mockTemplateId,
+});
+
+const mockRetrieveApplicationResponse: API.RetrieveApplication.Http200.ResponseBody = {
+	created_at: "2024-01-01T00:00:00Z",
+	grant_template: {
+		created_at: "2024-01-01T00:00:00Z",
+		funding_organization: {
+			abbreviation: "NIH",
+			created_at: "2024-01-01T00:00:00Z",
+			full_name: "National Institutes of Health",
+			id: "org-1",
+			updated_at: "2024-01-01T00:00:00Z",
+		},
+		funding_organization_id: "org-1",
+		grant_application_id: mockApplicationId,
+		grant_sections: [
+			{
+				depends_on: [],
+				generation_instructions: "Write an introduction",
+				id: "section-1",
+				is_clinical_trial: false,
+				is_detailed_workplan: false,
+				keywords: ["intro", "background"],
+				max_words: 500,
+				order: 1,
+				parent_id: null,
+				search_queries: ["introduction research"],
+				title: "Introduction",
+				topics: ["research background"],
+			},
+			{
+				id: "section-2",
+				order: 2,
+				parent_id: "section-1",
+				title: "Sub-section",
+			},
+		],
+		id: mockTemplateId,
+		rag_sources: [
+			{
+				filename: "template-doc.pdf",
+				sourceId: "template-source-1",
+				status: "FINISHED",
+			},
+		],
+		submission_date: "2024-12-31",
+		updated_at: "2024-01-01T00:00:00Z",
+	},
+	id: mockApplicationId,
+	rag_sources: [
+		{
+			filename: "example.pdf",
+			sourceId: "source-1",
+			status: "FINISHED",
+			url: "https://example.com",
+		},
+	],
+	research_objectives: [
+		{
+			description: "Description of objective 1",
+			number: 1,
+			research_tasks: [
+				{
+					description: "Task description",
+					number: 1,
+					title: "Research Task 1",
+				},
+			],
+			title: "Research Objective 1",
+		},
+	],
+	status: "DRAFT",
+	title: "Test Application",
+	updated_at: "2024-01-01T00:00:00Z",
+	workspace_id: mockWorkspaceId,
 };
 
 beforeEach(() => {
@@ -51,6 +134,10 @@ beforeEach(() => {
 
 	mockPost.mockReturnValue({
 		json: vi.fn().mockResolvedValue(mockCreateApplicationResponse),
+	});
+
+	mockGet.mockReturnValue({
+		json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
 	});
 
 	mockPatch.mockResolvedValue(undefined);
@@ -77,6 +164,57 @@ describe("Grant Application Actions", () => {
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 			expect(result).toEqual(mockCreateApplicationResponse);
+		});
+	});
+
+	describe("retrieveApplication", () => {
+		it("should call the API with correct parameters", async () => {
+			const result = await retrieveApplication(mockWorkspaceId, mockApplicationId);
+
+			expect(mockGet).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+				headers: mockAuthHeaders,
+			});
+
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+			expect(result).toEqual(mockRetrieveApplicationResponse);
+		});
+
+		it("should handle API errors", async () => {
+			const mockResponse = new Response();
+			const mockError = new HTTPError(
+				mockResponse,
+				{
+					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
+				} as never,
+				{} as never,
+			);
+
+			mockGet.mockReturnValue({
+				json: vi.fn().mockRejectedValue(mockError),
+			});
+			mockWithAuthRedirect.mockRejectedValue(mockError);
+
+			await expect(retrieveApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow();
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+
+		it("should handle 404 not found errors", async () => {
+			const mockResponse = new Response(
+				JSON.stringify({
+					detail: "Application not found",
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 404,
+				},
+			);
+			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+
+			mockGet.mockReturnValue({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+
+			await expect(retrieveApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow(HTTPError);
 		});
 	});
 

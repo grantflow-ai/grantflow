@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import exists, select
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -12,6 +12,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
+    GrantTemplateRagSource,
     RagFile,
 )
 from packages.shared_utils.src.exceptions import ValidationError
@@ -48,16 +49,30 @@ async def check_exists_files_being_indexed(
         )
 
 
-async def retrieve_application(
-    *, application_id: UUID | str, session_maker: async_sessionmaker[Any]
-) -> GrantApplication:
-    async with session_maker() as session:
-        try:
-            result = await session.execute(
-                select(GrantApplication)
-                .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
-                .where(GrantApplication.id == application_id)
+async def retrieve_application(*, application_id: UUID | str, session: AsyncSession) -> GrantApplication:
+    from sqlalchemy.orm import with_polymorphic
+
+    from packages.db.src.tables import RagFile, RagSource, RagUrl
+
+    # Create polymorphic query for RagSource with all subclasses
+    poly_rag_source = with_polymorphic(RagSource, [RagFile, RagUrl])
+
+    try:
+        result = await session.execute(
+            select(GrantApplication)
+            .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
+            .options(
+                selectinload(GrantApplication.grant_template)
+                .selectinload(GrantTemplate.rag_sources)
+                .selectinload(GrantTemplateRagSource.rag_source.of_type(poly_rag_source))
             )
-            return cast("GrantApplication", result.scalar_one())
-        except NoResultFound as e:
-            raise ValidationError("Application not found.", context=str(e)) from e
+            .options(
+                selectinload(GrantApplication.rag_sources).selectinload(
+                    GrantApplicationRagSource.rag_source.of_type(poly_rag_source)
+                )
+            )
+            .where(GrantApplication.id == application_id)
+        )
+        return result.scalar_one()
+    except NoResultFound as e:
+        raise ValidationError("Application not found.", context=str(e)) from e

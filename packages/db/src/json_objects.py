@@ -16,7 +16,6 @@ class ResearchTask(TypedDict):
     number: int
     title: str
     description: NotRequired[str]
-    relationships: NotRequired[list[dict[str, str]]]
 
 
 class ResearchObjective(TypedDict):

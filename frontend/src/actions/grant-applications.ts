@@ -34,6 +34,19 @@ export async function generateApplication(workspaceId: string, applicationId: st
 	);
 }
 
+export async function retrieveApplication(
+	workspaceId: string,
+	applicationId: string,
+): Promise<API.RetrieveApplication.Http200.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.get(`workspaces/${workspaceId}/applications/${applicationId}`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.RetrieveApplication.Http200.ResponseBody>(),
+	);
+}
+
 export async function updateApplication(
 	workspaceId: string,
 	applicationId: string,

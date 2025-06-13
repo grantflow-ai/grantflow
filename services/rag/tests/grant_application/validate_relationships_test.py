@@ -11,8 +11,7 @@ def create_research_objective(*, tasks: list[dict[str, str]] | None = None) -> R
         "title": "Test Objective",
         "description": "Test objective",
         "research_tasks": [
-            {"number": 1, "title": t["title"], "description": t.get("description", ""), "relationships": []}
-            for t in (tasks or [])
+            {"number": 1, "title": t["title"], "description": t.get("description", "")} for t in (tasks or [])
         ],
     }
 
