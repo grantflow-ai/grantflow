@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from http import HTTPStatus
 from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
@@ -470,7 +470,7 @@ async def test_retrieve_application_with_complete_data(
             }
         ]
         app.text = "Generated application text content"
-        app.completed_at = datetime.now()
+        app.completed_at = datetime.now(tz=UTC)
 
         await session.commit()
 
