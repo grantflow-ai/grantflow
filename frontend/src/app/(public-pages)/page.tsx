@@ -23,6 +23,18 @@ export default async function LandingPage() {
 	return (
 		<div className="flex w-full flex-col">
 			<HeroBanner />
+			{/* Tutorial Video */}
+			<div className="my-8 flex w-full justify-center bg-white">
+				<video
+					autoPlay
+					className="h-auto max-w-full shadow-lg"
+					controls
+					loop
+					muted
+					playsInline
+					src="/assets/tutorial-480p.mp4"
+				/>
+			</div>
 			<BenefitsSection />
 			<EarlyAccessSection />
 			<CoreFeaturesSection />
