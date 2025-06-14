@@ -57,6 +57,7 @@ export async function createItem(data: API.CreateItem.RequestBody) {
 - Wrap API calls with `withAuthRedirect`
 - Backend returns 400 for validation errors
 - Use `getEnv()` for typed environment variables
+- Use object or array destructuring wherever possible
 
 ## Python Guidelines
 
