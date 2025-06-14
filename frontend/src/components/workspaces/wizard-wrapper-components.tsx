@@ -10,7 +10,8 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/workspaces/icons";
-import { WizardStepTitlesType } from "@/constants";
+import { WIZARD_STEP_TITLES } from "@/constants";
+import { useWizardStore } from "@/stores/wizard-store";
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
 	const IconComponent =
@@ -40,20 +41,11 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 	);
 }
 
-export function WizardFooter({
-	currentStep,
-	disabled = false,
-	onBack,
-	onContinue,
-	showBack,
-}: {
-	currentStep: number;
-	disabled?: boolean;
-	onBack: () => void;
-	onContinue: () => void;
-	showBack: boolean;
-}) {
+export function WizardFooter() {
+	const { currentStep, goToNextStep, goToPreviousStep, validateStepNext } = useWizardStore();
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
+	const showBack = currentStep > 0;
+	const disabled = !validateStepNext();
 
 	return (
 		<footer
@@ -64,7 +56,7 @@ export function WizardFooter({
 				<AppButton
 					data-testid="back-button"
 					leftIcon={<IconGoBack />}
-					onClick={onBack}
+					onClick={goToPreviousStep}
 					size="lg"
 					theme="dark"
 					variant="secondary"
@@ -78,7 +70,9 @@ export function WizardFooter({
 				data-testid="continue-button"
 				disabled={disabled}
 				leftIcon={leftIcon}
-				onClick={onContinue}
+				onClick={() => {
+					goToNextStep();
+				}}
 				rightIcon={rightIcon}
 				size="lg"
 				variant="primary"
@@ -89,17 +83,9 @@ export function WizardFooter({
 	);
 }
 
-export function WizardHeader({
-	applicationName,
-	currentStep,
-	showHeaderInfo = false,
-	stepTitles,
-}: {
-	applicationName: string;
-	currentStep: number;
-	showHeaderInfo?: boolean;
-	stepTitles: WizardStepTitlesType;
-}) {
+export function WizardHeader() {
+	const { applicationTitle, currentStep } = useWizardStore();
+	const showHeaderInfo = currentStep > 0;
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
 			<div className="mb-8 flex items-center justify-between">
@@ -107,7 +93,7 @@ export function WizardHeader({
 					{showHeaderInfo ? (
 						<>
 							<h1 className="text-nowrap" data-testid="app-name">
-								{applicationName}
+								{applicationTitle}
 							</h1>
 							<Deadline />
 						</>
@@ -119,7 +105,7 @@ export function WizardHeader({
 					Exit
 				</AppButton>
 			</div>
-			<ApplicationProgressBar currentStep={currentStep} stepTitles={stepTitles} />
+			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_TITLES} />
 		</header>
 	);
 }
@@ -129,7 +115,7 @@ function ApplicationProgressBar({
 	stepTitles,
 }: {
 	currentStep: number;
-	stepTitles: WizardStepTitlesType;
+	stepTitles: typeof WIZARD_STEP_TITLES;
 }) {
 	return (
 		<div className="flex justify-center">
