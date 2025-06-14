@@ -1,17 +1,24 @@
 import { render, screen } from "@testing-library/react";
 
+import { ApplicationFactory } from "::testing/factories";
+import { useWizardStore } from "@/stores/wizard-store";
+
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Navigation Button Visibility - Conditional Back Button Display", () => {
 		it("displays back button for steps after the first to enable backward navigation", () => {
-			render(<WizardFooter currentStep={1} onBack={() => {}} onContinue={() => {}} showBack={true} />);
+			const application = ApplicationFactory.build();
+			useWizardStore.setState({ application, currentStep: 1 });
+			render(<WizardFooter />);
 
 			expect(screen.getByTestId("back-button")).toBeInTheDocument();
 		});
 
 		it("hides back button on the first step to enforce linear progression through the wizard", () => {
-			render(<WizardFooter currentStep={0} onBack={() => {}} onContinue={() => {}} showBack={false} />);
+			const application = ApplicationFactory.build();
+			useWizardStore.setState({ application, currentStep: 0 });
+			render(<WizardFooter />);
 
 			expect(screen.queryByTestId("back-button")).not.toBeInTheDocument();
 		});
@@ -19,9 +26,9 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 	describe("Action Button Configuration - Context-Aware Button Text and Icons", () => {
 		it("displays approval action on step 2 with 'Approve and Continue' text and approval/forward icons", () => {
-			const { container } = render(
-				<WizardFooter currentStep={1} onBack={() => {}} onContinue={() => {}} showBack={true} />,
-			);
+			const application = ApplicationFactory.build();
+			useWizardStore.setState({ application, currentStep: 1 });
+			const { container } = render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
 			expect(continueButton).toHaveTextContent("Approve and Continue");
@@ -37,9 +44,9 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 
 		it("displays generation action on final step (step 6) with 'Generate' text and company logo icon", () => {
-			const { container } = render(
-				<WizardFooter currentStep={5} onBack={() => {}} onContinue={() => {}} showBack={true} />,
-			);
+			const application = ApplicationFactory.build();
+			useWizardStore.setState({ application, currentStep: 5 });
+			const { container } = render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
 			expect(continueButton).toHaveTextContent("Generate");
@@ -55,9 +62,9 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 
 		it("displays standard navigation on intermediate steps (3-5) with 'Next' text and forward arrow", () => {
-			const { container } = render(
-				<WizardFooter currentStep={2} onBack={() => {}} onContinue={() => {}} showBack={true} />,
-			);
+			const application = ApplicationFactory.build();
+			useWizardStore.setState({ application, currentStep: 2 });
+			const { container } = render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
 			expect(continueButton).toHaveTextContent("Next");
@@ -86,14 +93,8 @@ describe("WizardHeader - Application Progress and Information Display", () => {
 
 	describe("Header Info Visibility", () => {
 		it("shows application name and deadline when header info is visible", () => {
-			render(
-				<WizardHeader
-					applicationName="Test Grant Application"
-					currentStep={0}
-					showHeaderInfo={true}
-					stepTitles={mockStepTitles}
-				/>,
-			);
+			useWizardStore.setState({ applicationTitle: "Test Grant Application", currentStep: 1 });
+			render(<WizardHeader />);
 
 			expect(screen.getByTestId("app-name")).toBeInTheDocument();
 			expect(screen.getByTestId("app-name")).toHaveTextContent("Test Grant Application");
@@ -101,14 +102,8 @@ describe("WizardHeader - Application Progress and Information Display", () => {
 		});
 
 		it("hides application name and deadline when header info is not visible", () => {
-			render(
-				<WizardHeader
-					applicationName="Test Grant Application"
-					currentStep={0}
-					showHeaderInfo={false}
-					stepTitles={mockStepTitles}
-				/>,
-			);
+			useWizardStore.setState({ applicationTitle: "Test Grant Application", currentStep: 0 });
+			render(<WizardHeader />);
 
 			expect(screen.queryByTestId("app-name")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("deadline-component")).not.toBeInTheDocument();
@@ -119,14 +114,8 @@ describe("WizardHeader - Application Progress and Information Display", () => {
 		it("marks previous steps as done, current step as active, and future steps as inactive", () => {
 			const currentStepIndex = 2;
 
-			render(
-				<WizardHeader
-					applicationName="Test Grant Application"
-					currentStep={currentStepIndex}
-					showHeaderInfo={true}
-					stepTitles={mockStepTitles}
-				/>,
-			);
+			useWizardStore.setState({ applicationTitle: "Test Grant Application", currentStep: currentStepIndex });
+			render(<WizardHeader />);
 
 			const stepIndicators = screen.getByTestId("step-indicators");
 			expect(stepIndicators).toBeInTheDocument();

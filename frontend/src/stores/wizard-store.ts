@@ -1,47 +1,61 @@
 import { toast } from "sonner";
 import { create } from "zustand";
 
-import { createApplication, updateApplication } from "@/actions/grant-applications";
+import { createApplication, retrieveApplication, updateApplication } from "@/actions/grant-applications";
+import { generateGrantTemplate } from "@/actions/grant-template";
 import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { WIZARD_STEP_TITLES } from "@/constants";
+import { API } from "@/types/api-types";
+import { logError } from "@/utils/logging";
+
+export type ApplicationType =
+	| API.CreateApplication.Http201.ResponseBody
+	| API.RetrieveApplication.Http200.ResponseBody
+	| null;
 
 const DEBOUNCE_DELAY_MS = 500;
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
+export const MIN_TITLE_LENGTH = 10;
 
-interface WizardState {
+interface WizardActions {
 	addFile: (file: FileWithId) => void;
 	addUrl: (url: string) => void;
-	applicationId: null | string;
-	applicationTitle: string;
-	currentStep: number;
+	generateTemplate: (workspaceId: string, applicationId: string, templateId: string) => Promise<void>;
 	goToNextStep: () => void;
 	goToPreviousStep: () => void;
-	initializeApplication: (workspaceId: string) => Promise<void>;
-	isCreatingApplication: boolean;
-
-	isCurrentStepValid: () => boolean;
-	isStep1Valid: () => boolean;
+	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
 	removeFile: (fileToRemove: FileWithId) => void;
 	removeUrl: (url: string) => void;
-	resetWizard: () => void;
+	setApplication: (application: Exclude<ApplicationType, null>) => void;
 	setApplicationId: (id: string) => void;
 	setApplicationTitle: (title: string) => void;
+	setConnectionStatus: (status?: string) => void;
+	setConnectionStatusColor: (color?: string) => void;
 	setCurrentStep: (step: number) => void;
 	setFileDropdownOpen: (fileId: string, open: boolean) => void;
 	setIsCreatingApplication: (loading: boolean) => void;
+	setIsGeneratingTemplate: (loading: boolean) => void;
 	setLinkHoverState: (url: string, hovered: boolean) => void;
 	setTemplateId: (id: string) => void;
-
 	setUploadedFiles: (files: FileWithId[]) => void;
 	setUrlInput: (input: string) => void;
 	setUrls: (urls: string[]) => void;
-
 	setWorkspaceId: (id: string) => void;
-	templateId: null | string;
-
-	ui: WizardUI;
 	updateApplicationTitle: (title: string) => Promise<void>;
+	validateStepNext: () => boolean;
+}
 
+interface WizardState {
+	application: ApplicationType;
+	applicationId: null | string;
+	applicationTitle: string;
+	connectionStatus?: string;
+	connectionStatusColor?: string;
+	currentStep: number;
+	isCreatingApplication: boolean;
+	isGeneratingTemplate: boolean;
+	templateId: null | string;
+	ui: WizardUI;
 	uploadedFiles: FileWithId[];
 	urls: string[];
 	workspaceId: string;
@@ -55,7 +69,7 @@ interface WizardUI {
 
 let titleUpdateTimeout: NodeJS.Timeout | null = null;
 
-export const useWizardStore = create<WizardState>((set, get) => ({
+export const useWizardStore = create<WizardActions & WizardState>((set, get) => ({
 	addFile: (file: FileWithId) => {
 		set((state) => ({
 			uploadedFiles: [...state.uploadedFiles, file],
@@ -66,13 +80,34 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 			urls: state.urls.includes(url) ? state.urls : [...state.urls, url],
 		}));
 	},
+	application: null,
 	applicationId: null,
 	applicationTitle: DEFAULT_APPLICATION_TITLE,
+	connectionStatus: undefined,
+	connectionStatusColor: undefined,
 	currentStep: 0,
+	generateTemplate: async (workspaceId: string, applicationId: string, templateId: string) => {
+		set({ isGeneratingTemplate: true });
+		try {
+			await generateGrantTemplate(workspaceId, applicationId, templateId);
+		} catch {
+			toast.error("Failed to generate grant template. Please try again.");
+		} finally {
+			set({ isGeneratingTemplate: false });
+		}
+	},
 	goToNextStep: () => {
 		const state = get();
 		if (state.currentStep === WIZARD_STEP_TITLES.length - 1) {
 			return;
+		}
+
+		if (
+			state.currentStep === 0 &&
+			state.application?.grant_template &&
+			!state.application.grant_template.grant_sections.length
+		) {
+			void get().generateTemplate(state.workspaceId, state.application.id, state.application.grant_template.id);
 		}
 		set({ currentStep: state.currentStep + 1 });
 	},
@@ -80,37 +115,66 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 		const state = get();
 		set({ currentStep: Math.max(0, state.currentStep - 1) });
 	},
-	initializeApplication: async (workspaceId: string) => {
+
+	handleApplicationInit: async (workspaceId: string, applicationId?: string) => {
 		set({ isCreatingApplication: true, workspaceId });
+		try {
+			if (applicationId) {
+				const response = await retrieveApplication(workspaceId, applicationId);
 
-		const response = await createApplication(workspaceId, {
-			title: DEFAULT_APPLICATION_TITLE,
-		});
+				const allRagSources = [...response.rag_sources, ...(response.grant_template?.rag_sources ?? [])];
 
-		set({
-			applicationId: response.id,
-			isCreatingApplication: false,
-			templateId: response.template_id,
-		});
-	},
-	isCreatingApplication: true,
+				const urls = allRagSources.filter((source) => source.url).map((source) => source.url!);
 
-	isCurrentStepValid: () => {
-		const state = get();
-		switch (state.currentStep) {
-			case 0: {
-				return state.isStep1Valid();
+				const uploadedFiles: FileWithId[] = allRagSources
+					.filter((source) => source.filename)
+					.map(
+						(source) =>
+							({
+								arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+								id: source.sourceId,
+								lastModified: Date.now(),
+								name: source.filename!,
+								size: 0,
+								slice: () => new Blob(),
+								stream: () => new ReadableStream(),
+								text: () => Promise.resolve(""),
+								type: "",
+								webkitRelativePath: "",
+							}) as FileWithId,
+					);
+
+				set({
+					application: response,
+					applicationId: response.id,
+					applicationTitle: response.title,
+					isCreatingApplication: false,
+					templateId: response.grant_template?.id ?? null,
+					uploadedFiles,
+					urls,
+				});
+			} else {
+				const response = await createApplication(workspaceId, {
+					title: DEFAULT_APPLICATION_TITLE,
+				});
+				set({
+					application: response,
+					applicationId: response.id,
+					applicationTitle: "",
+					isCreatingApplication: false,
+					templateId: response.grant_template?.id ?? null,
+				});
 			}
-			default: {
-				return true;
-			}
+		} catch (e: unknown) {
+			logError({ error: e, identifier: "application-wizard-init" });
+			toast.error(applicationId ? "Failed to retrieve application" : "Failed to initialize application");
+			throw e;
 		}
 	},
 
-	isStep1Valid: () => {
-		const state = get();
-		return state.applicationTitle.trim().length > 0 && (state.urls.length > 0 || state.uploadedFiles.length > 0);
-	},
+	isCreatingApplication: true,
+
+	isGeneratingTemplate: false,
 
 	removeFile: (fileToRemove: FileWithId) => {
 		set((state) => ({
@@ -124,26 +188,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 		}));
 	},
 
-	resetWizard: () => {
-		if (titleUpdateTimeout) {
-			clearTimeout(titleUpdateTimeout);
-			titleUpdateTimeout = null;
-		}
-		set({
-			applicationId: null,
-			applicationTitle: "",
-			currentStep: 0,
-			isCreatingApplication: true,
-			templateId: null,
-			ui: {
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
-			},
-			uploadedFiles: [],
-			urls: [],
-			workspaceId: "",
-		});
+	setApplication: (application: Exclude<ApplicationType, null>) => {
+		set({ application });
 	},
 
 	setApplicationId: (id: string) => {
@@ -164,6 +210,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 		}
 	},
 
+	setConnectionStatus: (status?: string) => {
+		set({ connectionStatus: status });
+	},
+
+	setConnectionStatusColor: (color?: string) => {
+		set({ connectionStatusColor: color });
+	},
+
 	setCurrentStep: (step: number) => {
 		set({ currentStep: Math.max(0, Math.min(WIZARD_STEP_TITLES.length - 1, step)) });
 	},
@@ -182,6 +236,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
 	setIsCreatingApplication: (loading: boolean) => {
 		set({ isCreatingApplication: loading });
+	},
+
+	setIsGeneratingTemplate: (loading: boolean) => {
+		set({ isGeneratingTemplate: loading });
 	},
 
 	setLinkHoverState: (url: string, hovered: boolean) => {
@@ -244,6 +302,29 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 	uploadedFiles: [],
 
 	urls: [],
+
+	validateStepNext: () => {
+		const state = get();
+		if (!state.application || state.isGeneratingTemplate) {
+			return false;
+		}
+		if (state.currentStep === 0) {
+			return (
+				state.applicationTitle.trim().length >= MIN_TITLE_LENGTH &&
+				(state.urls.length > 0 || state.uploadedFiles.length > 0)
+			);
+		}
+		if (state.currentStep === 1) {
+			return !!state.application.grant_template?.grant_sections.length;
+		}
+		if (state.currentStep === 2) {
+			return (
+				!!state.application.rag_sources.length &&
+				state.application.rag_sources.every((source) => source.status !== "FAILED")
+			);
+		}
+		return false;
+	},
 
 	workspaceId: "",
 }));

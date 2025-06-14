@@ -14,12 +14,7 @@ import { UrlInput } from "./url-input";
 
 const TITLE_MAX_LENGTH = 120;
 
-interface ApplicationDetailsStepProps {
-	connectionStatus?: string;
-	connectionStatusColor?: string;
-}
-
-export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
+export function ApplicationDetailsStep() {
 	const { applicationTitle, removeFile, removeUrl, setApplicationTitle, templateId, workspaceId } = useWizardStore();
 
 	const handleRemoveUrl = (urlToRemove: string) => {
@@ -104,12 +99,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 				</div>
 			</div>
 
-			<ApplicationPreview
-				connectionStatus={connectionStatus}
-				connectionStatusColor={connectionStatusColor}
-				onFileRemove={handleFileRemove}
-				onUrlRemove={handleRemoveUrl}
-			/>
+			<ApplicationPreview onFileRemove={handleFileRemove} onUrlRemove={handleRemoveUrl} />
 		</div>
 	);
 }
