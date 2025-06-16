@@ -166,6 +166,7 @@ export default eslintTS.config(
 			"react-perf/jsx-no-new-object-as-prop": "off",
 			"react/prop-types": "off",
 			"react/react-in-jsx-scope": "off",
+			"storybook/no-renderer-packages": "off",
 			"tailwindcss/no-custom-classname": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
