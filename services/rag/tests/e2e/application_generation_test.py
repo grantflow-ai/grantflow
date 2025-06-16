@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import UTC, datetime
 from typing import Any
+from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 from packages.shared_utils.src.serialization import serialize
@@ -10,10 +11,18 @@ from testing import RESULTS_FOLDER
 from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
+from services.rag.src.utils.job_manager import JobManager
+
+
+def create_mock_job_manager_for_e2e(session_maker: Any) -> JobManager:
+    """Create a JobManager for e2e tests with mocked pubsub."""
+    return JobManager(session_maker)
 
 
 @e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
+@patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock)
 async def test_generate_full_application_text(
+    mock_publish: AsyncMock,
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,
     async_session_maker: async_sessionmaker[Any],
@@ -21,9 +30,11 @@ async def test_generate_full_application_text(
     logger.info("Running end-to-end test for generating a full grant application text format")
     start_time = datetime.now(UTC)
 
+    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
     text, section_texts = await grant_application_text_generation_pipeline_handler(
         grant_application_id=UUID(melanoma_alliance_full_application_id),
         session_maker=async_session_maker,
+        job_manager=job_manager,
     )
 
     execution_time = (datetime.now(UTC) - start_time).total_seconds()

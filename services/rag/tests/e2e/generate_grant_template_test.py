@@ -1,6 +1,7 @@
 import logging
 from datetime import UTC, datetime
 from typing import Any
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -12,11 +13,19 @@ from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from services.rag.src.grant_template.handler import extract_and_enrich_sections
+from services.rag.src.utils.job_manager import JobManager
 from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 
 
+def create_mock_job_manager_for_e2e(session_maker: Any) -> JobManager:
+    """Create a JobManager for e2e tests with mocked pubsub."""
+    return JobManager(session_maker)
+
+
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock)
 async def test_handle_generate_grant_template_melanoma_alliance(
+    mock_publish: AsyncMock,
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
@@ -38,8 +47,13 @@ async def test_handle_generate_grant_template_melanoma_alliance(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
+    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None, parent_id=uuid4()
+        cfp_content=result["content"],
+        cfp_subject=result["cfp_subject"],
+        organization=None,
+        parent_id=uuid4(),
+        job_manager=job_manager,
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -78,8 +92,13 @@ async def test_handle_generate_grant_template_standard_aware(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
+    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None, parent_id=uuid4()
+        cfp_content=result["content"],
+        cfp_subject=result["cfp_subject"],
+        organization=None,
+        parent_id=uuid4(),
+        job_manager=job_manager,
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -118,11 +137,13 @@ async def test_handle_generate_grant_template_nih(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
+    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
         organization=nih_organization,
         parent_id=uuid4(),
+        job_manager=job_manager,
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -160,8 +181,13 @@ async def test_handle_generate_grant_template_ics(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
+    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
     sections = await extract_and_enrich_sections(
-        cfp_content=result["content"], cfp_subject=result["cfp_subject"], organization=None, parent_id=uuid4()
+        cfp_content=result["content"],
+        cfp_subject=result["cfp_subject"],
+        organization=None,
+        parent_id=uuid4(),
+        job_manager=job_manager,
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -200,11 +226,13 @@ async def test_handle_generate_grant_template_erc(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
+    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
         organization=erc_organization,
         parent_id=uuid4(),
+        job_manager=job_manager,
     )
 
     elapsed_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -246,11 +274,13 @@ async def test_handle_generate_grant_template(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(tz=UTC)
 
+    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
         organization=nih_organization,
         parent_id=uuid4(),
+        job_manager=job_manager,
     )
 
     elapsed_time = (datetime.now(tz=UTC) - start_time).total_seconds()

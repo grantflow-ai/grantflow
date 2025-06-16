@@ -51,7 +51,9 @@ async def handle_pubsub_message(
 ) -> tuple[URIParseResult, str]:
     if gcs_notification := get_gcs_notification_data(event):
         object_path = gcs_notification["object_name"]
-        return parse_object_uri(object_path=object_path), object_path
+        logger.debug("Received object path for indexing", object_path=object_path)
+        parsed = parse_object_uri(object_path=object_path)
+        return parsed, object_path
 
     raise ValidationError(
         "Invalid pubsub message.",

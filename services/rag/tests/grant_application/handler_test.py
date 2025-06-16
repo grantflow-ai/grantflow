@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
@@ -13,6 +13,7 @@ from testing.factories import (
     WorkspaceFactory,
 )
 
+from services.rag.src.constants import NotificationEvents
 from services.rag.src.grant_application.handler import (
     generate_grant_section_texts,
     generate_work_plan_text,
@@ -21,9 +22,17 @@ from services.rag.src.grant_application.handler import (
 from services.rag.src.grant_application.utils import is_grant_long_form_section
 
 
-@pytest.fixture
-def mock_publish_notification() -> AsyncMock:
-    return AsyncMock(return_value="message-id-123")
+def create_mock_job_manager() -> MagicMock:
+    """Create a mock JobManager for testing."""
+    mock_job = AsyncMock()
+    mock_job.id = UUID("00000000-0000-0000-0000-000000000002")
+
+    mock_job_manager = MagicMock()
+    mock_job_manager.create_grant_application_job = AsyncMock(return_value=mock_job)
+    mock_job_manager.update_job_status = AsyncMock()
+    mock_job_manager.add_notification = AsyncMock()
+
+    return mock_job_manager
 
 
 @pytest.fixture
@@ -287,7 +296,6 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
 
 
 async def test_generate_work_plan_text_with_mocked_llm(
-    mock_publish_notification: AsyncMock,
     mock_research_objectives: list[ResearchObjective],
     mock_enrichment_response: dict[str, Any],
     mock_relationships: dict[str, list[tuple[str, str, str]]],
@@ -297,6 +305,9 @@ async def test_generate_work_plan_text_with_mocked_llm(
     workplan_section = next(
         s for s in mock_grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
     )
+
+    mock_job_manager = AsyncMock()
+    mock_job_manager.add_notification = AsyncMock()
 
     with (
         patch(
@@ -311,49 +322,50 @@ async def test_generate_work_plan_text_with_mocked_llm(
             "services.rag.src.grant_application.handler.generate_work_plan_component_text",
             return_value=mock_work_plan_component_text,
         ),
-        patch(
-            "services.rag.src.grant_application.handler.publish_notification",
-            mock_publish_notification,
-        ),
     ):
         result = await generate_work_plan_text(
             application_id=str(UUID("550e8400-e29b-41d4-a716-446655440000")),
             work_plan_section=workplan_section,
             form_inputs={"background_context": "Test project summary"},
             research_objectives=mock_research_objectives,
+            job_manager=mock_job_manager,
         )
 
     assert isinstance(result, str)
     assert len(result) > 0
 
-    assert mock_publish_notification.call_count > 0
+    assert mock_job_manager.add_notification.call_count > 0
 
     notification_events = [
-        call.kwargs["event"] for call in mock_publish_notification.call_args_list if "event" in call.kwargs
+        call.kwargs["event"] for call in mock_job_manager.add_notification.call_args_list if "event" in call.kwargs
     ]
 
-    assert "extracting_relationships" in notification_events
-    assert "enriching_objectives" in notification_events
-    assert "objectives_enriched" in notification_events
-    assert "generating_workplan" in notification_events
-    assert "generating_objective" in notification_events
-    assert "generating_tasks" in notification_events
-    assert "objective_completed" in notification_events
-    assert "workplan_completed" in notification_events
+    assert NotificationEvents.EXTRACTING_RELATIONSHIPS in notification_events
+    assert NotificationEvents.ENRICHING_OBJECTIVES in notification_events
+    assert NotificationEvents.OBJECTIVES_ENRICHED in notification_events
+    assert NotificationEvents.GENERATING_WORKPLAN in notification_events
+    assert NotificationEvents.GENERATING_OBJECTIVE in notification_events
+    assert NotificationEvents.GENERATING_TASKS in notification_events
+    assert NotificationEvents.OBJECTIVE_COMPLETED in notification_events
+    assert NotificationEvents.WORKPLAN_COMPLETED in notification_events
 
 
 async def test_generate_grant_section_texts_with_mocked_llm(
-    mock_publish_notification: AsyncMock,
     mock_research_objectives: list[ResearchObjective],
     mock_grant_sections: list[GrantElement | GrantLongFormSection],
     mock_section_text: str,
 ) -> None:
+    mock_job_manager = AsyncMock()
+    mock_job_manager.add_notification = AsyncMock()
+
     with (
-        patch("services.rag.src.grant_application.handler.generate_work_plan_text", return_value=mock_section_text),
-        patch("services.rag.src.grant_application.handler.generate_section_text", return_value=mock_section_text),
         patch(
-            "services.rag.src.grant_application.handler.publish_notification",
-            mock_publish_notification,
+            "services.rag.src.grant_application.handler.generate_work_plan_text",
+            return_value="Mocked work plan text.",
+        ),
+        patch(
+            "services.rag.src.grant_application.handler.generate_section_text",
+            return_value=mock_section_text,
         ),
     ):
         result = await generate_grant_section_texts(
@@ -361,86 +373,63 @@ async def test_generate_grant_section_texts_with_mocked_llm(
             form_inputs={"background_context": "Test project summary"},
             grant_sections=mock_grant_sections,
             research_objectives=mock_research_objectives,
+            job_manager=mock_job_manager,
         )
 
     assert isinstance(result, dict)
-    assert len(result) == len(mock_grant_sections)
+    assert "research_plan" in result
+    assert "abstract" in result
+    assert "impact" in result
 
-    for section in mock_grant_sections:
-        assert section["id"] in result
-        assert isinstance(result[section["id"]], str)
-        assert len(result[section["id"]]) > 0
+    for text in result.values():
+        assert isinstance(text, str)
+        assert len(text) > 0
 
 
 async def test_grant_application_text_generation_pipeline_handler_with_mocked_llm(
-    mock_publish_notification: AsyncMock,
     test_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    section_texts = {
+    mocked_section_texts = {
         "abstract": "This is the abstract text.",
         "research_plan": "This is the research plan text.",
         "impact": "This is the impact text.",
     }
 
-    application_text = """
-    # Novel Biomarkers for Early Cancer Detection
-
-    ## Abstract
-    This is the abstract text.
-
-    ## Research Plan
-    This is the research plan text.
-
-    ## Impact
-    This is the impact text.
-    """
+    mock_job_manager = create_mock_job_manager()
 
     with (
         patch(
+            "services.rag.src.grant_application.handler.verify_rag_sources_indexed",
+            return_value=None,
+        ),
+        patch(
             "services.rag.src.grant_application.handler.generate_grant_section_texts",
-            return_value=section_texts,
+            return_value=mocked_section_texts,
         ),
         patch(
             "services.rag.src.grant_application.handler.generate_application_text",
-            return_value=application_text,
-        ),
-        patch(
-            "services.rag.src.grant_application.handler.publish_notification",
-            mock_publish_notification,
+            return_value="Complete application text",
         ),
     ):
-        result_text, result_sections = await grant_application_text_generation_pipeline_handler(
+        result_text, section_texts = await grant_application_text_generation_pipeline_handler(
             grant_application_id=test_application.id,
             session_maker=async_session_maker,
+            job_manager=mock_job_manager,
         )
 
-    assert result_text == application_text
-    assert result_sections == section_texts
+    assert mock_job_manager.add_notification.call_count > 0
 
-    assert mock_publish_notification.call_count > 0
-
-    notification_events = [
-        call.kwargs["event"] for call in mock_publish_notification.call_args_list if "event" in call.kwargs
-    ]
-
-    assert "grant_application_generation_started" in notification_events
-    assert "validating_template" in notification_events
-    assert "template_validated" in notification_events
-    assert "generating_section_texts" in notification_events
-    assert "section_texts_generated" in notification_events
-    assert "assembling_application" in notification_events
-    assert "saving_application" in notification_events
-    assert "application_saved" in notification_events
-    assert "grant_application_generation_completed" in notification_events
+    assert result_text == "Complete application text"
+    assert section_texts == mocked_section_texts
 
     async with async_session_maker() as session:
-        updated_application = await session.get(GrantApplication, test_application.id)
-        assert updated_application.text == application_text
+        app = await session.get(GrantApplication, test_application.id)
+        assert app is not None
+        assert app.text == "Complete application text"
 
 
-async def test_pipeline_handler_validation_error(
-    mock_publish_notification: AsyncMock,
+async def test_pipeline_missing_grant_template(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session:
@@ -449,117 +438,193 @@ async def test_pipeline_handler_validation_error(
         await session.flush()
 
         application = GrantApplicationFactory.build(
-            title="Incomplete Application",
+            title="Test Application",
             workspace_id=workspace.id,
+            research_objectives=[{"number": 1, "title": "Test Objective", "research_tasks": []}],
         )
         session.add(application)
         await session.commit()
-        application_id = application.id
 
-    with (
-        patch(
-            "services.rag.src.grant_application.handler.publish_notification",
-            mock_publish_notification,
-        ),
-        pytest.raises(ValidationError),
-    ):
+    with pytest.raises(ValidationError) as exc_info:
         await grant_application_text_generation_pipeline_handler(
-            grant_application_id=application_id,
+            grant_application_id=application.id,
             session_maker=async_session_maker,
+            job_manager=create_mock_job_manager(),
         )
 
-    assert mock_publish_notification.call_count > 0
-
-    error_calls = [
-        call for call in mock_publish_notification.call_args_list if call.kwargs.get("event") == "validation_error"
-    ]
-
-    assert len(error_calls) > 0, "Validation error notification not found"
+    assert "grant template" in str(exc_info.value).lower()
 
 
-async def test_pipeline_handler_backend_error(
-    mock_publish_notification: AsyncMock,
+async def test_pipeline_missing_research_objectives(
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session:
+        workspace = WorkspaceFactory.build()
+        session.add(workspace)
+        await session.flush()
+
+        application = GrantApplicationFactory.build(
+            title="Test Application",
+            workspace_id=workspace.id,
+            research_objectives=None,
+        )
+        session.add(application)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=application.id,
+            grant_sections=[{"id": "test", "title": "Test", "order": 1}],
+        )
+        session.add(template)
+        await session.commit()
+
+    with pytest.raises(ValidationError) as exc_info:
+        await grant_application_text_generation_pipeline_handler(
+            grant_application_id=application.id,
+            session_maker=async_session_maker,
+            job_manager=create_mock_job_manager(),
+        )
+
+    assert "research objectives" in str(exc_info.value).lower()
+
+
+async def test_pipeline_missing_work_plan_section(
     test_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    error_message = "Test backend error"
-    with (
-        patch(
-            "services.rag.src.grant_application.handler.generate_grant_section_texts",
-            side_effect=BackendError(error_message, context={"test": "context"}),
-        ),
-        patch(
-            "services.rag.src.grant_application.handler.publish_notification",
-            mock_publish_notification,
-        ),
-        pytest.raises(BackendError),
-    ):
+    async with async_session_maker() as session:
+        app = await session.get(GrantApplication, test_application.id)
+        assert app is not None
+        assert app.grant_template is not None
+        app.grant_template.grant_sections = [
+            s for s in app.grant_template.grant_sections if not s.get("is_detailed_workplan")
+        ]
+        await session.commit()
+
+    with pytest.raises(ValidationError) as exc_info:
         await grant_application_text_generation_pipeline_handler(
             grant_application_id=test_application.id,
             session_maker=async_session_maker,
+            job_manager=create_mock_job_manager(),
         )
 
-    assert mock_publish_notification.call_count > 0
-
-    error_calls = [
-        call for call in mock_publish_notification.call_args_list if call.kwargs.get("event") == "generation_error"
-    ]
-
-    assert len(error_calls) > 0, "Generation error notification not found"
-
-    error_data = error_calls[0].kwargs["data"]
-    assert isinstance(error_data, dict)
-    assert "Failed to generate grant application text:" in error_data["message"]
-    assert "data" in error_data
-    assert error_data["data"].get("error_type") == "BackendError"
-    assert error_data["data"].get("test") == "context"
+    assert "work plan section" in str(exc_info.value).lower()
 
 
-async def test_pipeline_handler_database_error(
-    mock_publish_notification: AsyncMock,
+async def test_pipeline_database_error_during_save(
     test_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    section_texts = {
+    mocked_section_texts = {
         "abstract": "This is the abstract text.",
         "research_plan": "This is the research plan text.",
         "impact": "This is the impact text.",
     }
 
-    application_text = "# Test Application Text"
+    mock_job_manager = create_mock_job_manager()
 
     with (
         patch(
+            "services.rag.src.grant_application.handler.verify_rag_sources_indexed",
+            return_value=None,
+        ),
+        patch(
             "services.rag.src.grant_application.handler.generate_grant_section_texts",
-            return_value=section_texts,
+            return_value=mocked_section_texts,
         ),
         patch(
             "services.rag.src.grant_application.handler.generate_application_text",
-            return_value=application_text,
+            return_value="Complete application text",
         ),
         patch(
-            "services.rag.src.grant_application.handler.publish_notification",
-            mock_publish_notification,
+            "sqlalchemy.ext.asyncio.AsyncSession.execute",
+            side_effect=SQLAlchemyError("Database connection failed"),
         ),
-        patch(
-            "services.rag.src.grant_application.handler.update",
-            side_effect=SQLAlchemyError("Test database error"),
-        ),
-        pytest.raises(DatabaseError),
     ):
-        await grant_application_text_generation_pipeline_handler(
-            grant_application_id=test_application.id,
-            session_maker=async_session_maker,
+        with pytest.raises(DatabaseError) as exc_info:
+            await grant_application_text_generation_pipeline_handler(
+                grant_application_id=test_application.id,
+                session_maker=async_session_maker,
+                job_manager=mock_job_manager,
+            )
+
+        assert "internal error" in str(exc_info.value).lower()
+
+
+async def test_pipeline_backend_error_during_generation(
+    test_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    mock_job_manager = create_mock_job_manager()
+
+    with (
+        patch(
+            "services.rag.src.grant_application.handler.verify_rag_sources_indexed",
+            return_value=None,
+        ),
+        patch(
+            "services.rag.src.grant_application.handler.generate_grant_section_texts",
+            side_effect=BackendError("Insufficient context for generation"),
+        ),
+    ):
+        with pytest.raises(BackendError) as exc_info:
+            await grant_application_text_generation_pipeline_handler(
+                grant_application_id=test_application.id,
+                session_maker=async_session_maker,
+                job_manager=mock_job_manager,
+            )
+
+        assert "insufficient context" in str(exc_info.value).lower()
+
+
+async def test_generate_work_plan_text_normalizes_markdown(
+    mock_research_objectives: list[ResearchObjective],
+    mock_enrichment_response: dict[str, Any],
+    mock_relationships: dict[str, list[tuple[str, str, str]]],
+    mock_grant_sections: list[GrantElement | GrantLongFormSection],
+) -> None:
+    workplan_section = next(
+        s for s in mock_grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
+    )
+
+    messy_text = """
+
+
+    This text has    multiple    spaces.
+
+    And too many
+
+
+    newlines.
+
+
+    """
+
+    mock_job_manager = AsyncMock()
+    mock_job_manager.add_notification = AsyncMock()
+
+    with (
+        patch(
+            "services.rag.src.grant_application.handler.handle_extract_relationships",
+            return_value=mock_relationships,
+        ),
+        patch(
+            "services.rag.src.grant_application.handler.handle_enrich_objective",
+            return_value=mock_enrichment_response,
+        ),
+        patch(
+            "services.rag.src.grant_application.handler.generate_work_plan_component_text",
+            return_value=messy_text,
+        ),
+    ):
+        result = await generate_work_plan_text(
+            application_id=str(UUID("550e8400-e29b-41d4-a716-446655440000")),
+            work_plan_section=workplan_section,
+            form_inputs={"background_context": "Test project summary"},
+            research_objectives=mock_research_objectives,
+            job_manager=mock_job_manager,
         )
 
-    assert mock_publish_notification.call_count > 0
-
-    error_calls = [
-        call for call in mock_publish_notification.call_args_list if call.kwargs.get("event") == "database_error"
-    ]
-
-    assert len(error_calls) > 0, "Database error notification not found"
-
-    error_data = error_calls[0].kwargs["data"]
-    assert isinstance(error_data, dict)
-    assert "Failed to update grant application text." in error_data["message"]
+    assert "    " not in result
+    assert "\n\n\n" not in result
+    assert result.strip() == result

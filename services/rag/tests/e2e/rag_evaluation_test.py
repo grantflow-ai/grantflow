@@ -3,6 +3,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -310,11 +311,15 @@ async def test_grant_template_generation_full_pipeline(
         session_maker=async_session_maker,
     )
 
+    mock_job_manager = MagicMock()
+    mock_job_manager.add_notification = AsyncMock()
+
     sections = await extract_and_enrich_sections(
         cfp_content=extraction_result["content"],
         cfp_subject=extraction_result["cfp_subject"],
         organization=None,
         parent_id=uuid4(),
+        job_manager=mock_job_manager,
     )
 
     end_time = time.time()
