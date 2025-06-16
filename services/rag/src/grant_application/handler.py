@@ -3,17 +3,24 @@ from typing import Any
 from uuid import UUID
 
 from packages.db.src.connection import get_session_maker
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.db.src.utils import retrieve_application
-from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
+from packages.shared_utils.src.exceptions import (
+    BackendError,
+    DatabaseError,
+    InsufficientContextError,
+    RagError,
+    ValidationError,
+)
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
 from packages.shared_utils.src.sync import batched_gather
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.enrich_research_objective import handle_enrich_objective
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
@@ -25,6 +32,8 @@ from services.rag.src.grant_application.utils import (
     generate_application_text,
     is_grant_long_form_section,
 )
+from services.rag.src.utils.checks import verify_rag_sources_indexed
+from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.text import normalize_markdown
 
 logger = get_logger(__name__)
@@ -35,15 +44,15 @@ async def generate_work_plan_text(
     work_plan_section: GrantLongFormSection,
     form_inputs: ResearchDeepDive,
     research_objectives: list[ResearchObjective],
+    job_manager: JobManager,
 ) -> str:
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event="extracting_relationships",
-        data=RagProcessingStatus(
-            event="extracting_relationships",
-            message="Extracting relationships between research objectives and tasks...",
-        ),
+        event=NotificationEvents.EXTRACTING_RELATIONSHIPS,
+        message="Extracting relationships between research objectives and tasks...",
+        notification_type="info",
+        current_pipeline_stage=4,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
     relationships = await handle_extract_relationships(
         application_id=application_id,
@@ -52,14 +61,13 @@ async def generate_work_plan_text(
         form_inputs=form_inputs,
     )
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event="enriching_objectives",
-        data=RagProcessingStatus(
-            event="enriching_objectives",
-            message="Enriching research objectives with additional context...",
-        ),
+        event=NotificationEvents.ENRICHING_OBJECTIVES,
+        message="Enriching research objectives with additional context...",
+        notification_type="info",
+        current_pipeline_stage=5,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
     enrichment_responses = await gather(
@@ -74,18 +82,17 @@ async def generate_work_plan_text(
         ]
     )
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event="objectives_enriched",
-        data=RagProcessingStatus(
-            event="objectives_enriched",
-            message="Objectives enriched successfully",
-            data={
-                "objective_count": len(research_objectives),
-                "total_tasks": sum(len(objective["research_tasks"]) for objective in research_objectives),
-            },
-        ),
+        event=NotificationEvents.OBJECTIVES_ENRICHED,
+        message="Objectives enriched successfully",
+        notification_type="info",
+        data={
+            "objective_count": len(research_objectives),
+            "total_tasks": sum(len(objective["research_tasks"]) for objective in research_objectives),
+        },
+        current_pipeline_stage=5,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
     dtos = []
@@ -127,14 +134,11 @@ async def generate_work_plan_text(
 
     work_plan_text = ""
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event="generating_workplan",
-        data=RagProcessingStatus(
-            event="generating_workplan",
-            message="Generating work plan text for research objectives and tasks...",
-        ),
+        event=NotificationEvents.GENERATING_WORKPLAN,
+        message="Generating work plan text for research objectives and tasks...",
+        notification_type="info",
     )
 
     total_objectives = len(research_objectives)
@@ -144,14 +148,11 @@ async def generate_work_plan_text(
         objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
         tasks: list[ResearchComponentGenerationDTO] = [t for t in dtos if t["number"].startswith(f"{count}.")]
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=UUID(application_id),
-            event="generating_objective",
-            data=RagProcessingStatus(
-                event="generating_objective",
-                message=f"Generating text for Objective {objective['number']}: {objective['title']}...",
-            ),
+            event=NotificationEvents.GENERATING_OBJECTIVE,
+            message=f"Generating text for Objective {objective['number']}: {objective['title']}...",
+            notification_type="info",
         )
 
         research_objective_text = await generate_work_plan_component_text(
@@ -163,14 +164,11 @@ async def generate_work_plan_text(
 
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{research_objective_text}"
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=UUID(application_id),
-            event="generating_tasks",
-            data=RagProcessingStatus(
-                event="generating_tasks",
-                message=f"Generating text for {len(tasks)} tasks under Objective {objective['number']}...",
-            ),
+            event=NotificationEvents.GENERATING_TASKS,
+            message=f"Generating text for {len(tasks)} tasks under Objective {objective['number']}...",
+            notification_type="info",
         )
 
         research_task_texts = await gather(
@@ -188,35 +186,29 @@ async def generate_work_plan_text(
         for research_task, research_task_text in zip(tasks, research_task_texts, strict=True):
             work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=UUID(application_id),
-            event="objective_completed",
-            data=RagProcessingStatus(
-                event="objective_completed",
-                message=f"Completed Objective {objective['number']}",
-                data={
-                    "objective_number": objective["number"],
-                    "objective_title": objective["title"],
-                    "tasks_completed": len(tasks),
-                    "progress": f"{count}/{total_objectives}",
-                },
-            ),
+            event=NotificationEvents.OBJECTIVE_COMPLETED,
+            message=f"Completed Objective {objective['number']}",
+            notification_type="info",
+            data={
+                "objective_number": objective["number"],
+                "objective_title": objective["title"],
+                "tasks_completed": len(tasks),
+                "progress": f"{count}/{total_objectives}",
+            },
         )
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event="workplan_completed",
-        data=RagProcessingStatus(
-            event="workplan_completed",
-            message="Work plan generation completed",
-            data={
-                "objectives_count": total_objectives,
-                "total_tasks": total_tasks,
-                "word_count": len(work_plan_text.split()),
-            },
-        ),
+        event=NotificationEvents.WORKPLAN_COMPLETED,
+        message="Work plan generation completed",
+        notification_type="info",
+        data={
+            "objectives_count": total_objectives,
+            "total_tasks": total_tasks,
+            "word_count": len(work_plan_text.split()),
+        },
     )
 
     return normalize_markdown(work_plan_text)
@@ -227,6 +219,7 @@ async def generate_grant_section_texts(
     form_inputs: ResearchDeepDive,
     grant_sections: list[GrantElement | GrantLongFormSection],
     research_objectives: list[ResearchObjective],
+    job_manager: JobManager,
 ) -> dict[str, str]:
     section_texts: dict[str, str] = {}
     workplan_section = next(
@@ -237,6 +230,7 @@ async def generate_grant_section_texts(
         work_plan_section=workplan_section,
         research_objectives=research_objectives,
         form_inputs=form_inputs,
+        job_manager=job_manager,
     )
     section_texts[workplan_section["id"]] = workplan_text
 
@@ -276,19 +270,28 @@ async def generate_grant_section_texts(
 async def grant_application_text_generation_pipeline_handler(
     grant_application_id: UUID,
     session_maker: async_sessionmaker[Any],
+    job_manager: JobManager | None = None,
 ) -> tuple[str, dict[str, str]]:
     session_maker = get_session_maker()
     application_id = grant_application_id
     logger.info("Starting grant application text generation pipeline", application_id=application_id)
 
-    await publish_notification(
-        logger=logger,
+    if job_manager is None:
+        job_manager = JobManager(session_maker)
+        await job_manager.create_grant_application_job(
+            grant_application_id=application_id,
+            total_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        )
+
+        await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
+
+    await job_manager.add_notification(
         parent_id=application_id,
-        event="grant_application_generation_started",
-        data=RagProcessingStatus(
-            event="grant_application_generation_started",
-            message="Starting grant application text generation pipeline...",
-        ),
+        event=NotificationEvents.GRANT_APPLICATION_GENERATION_STARTED,
+        message="Starting grant application text generation pipeline...",
+        notification_type="info",
+        current_pipeline_stage=1,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
     grant_application: GrantApplication | None = None
@@ -299,20 +302,30 @@ async def grant_application_text_generation_pipeline_handler(
         grant_template = grant_application.grant_template
 
         if not grant_application.grant_template or not grant_application.research_objectives:
-            error_message = "Grant application does not have a grant template or research objectives."
-            logger.error(error_message, application_id=application_id)
-            await publish_notification(
-                logger=logger,
+            missing_parts = []
+            if not grant_application.grant_template:
+                missing_parts.append("grant template")
+            if not grant_application.research_objectives:
+                missing_parts.append("research objectives")
+
+            error_message = (
+                f"Please complete the following before generating application text: {', '.join(missing_parts)}."
+            )
+            logger.error(
+                "Missing prerequisites for grant application", application_id=application_id, missing=missing_parts
+            )
+
+            await job_manager.add_notification(
                 parent_id=application_id,
-                event="validation_error",
-                data=RagProcessingStatus(
-                    event="validation_error",
-                    message=error_message,
-                    data={
-                        "has_grant_template": grant_application.grant_template is not None,
-                        "has_research_objectives": grant_application.research_objectives is not None,
-                    },
-                ),
+                event=NotificationEvents.MISSING_PREREQUISITES,
+                message=error_message,
+                notification_type="error",
+                data={
+                    "has_grant_template": grant_application.grant_template is not None,
+                    "has_research_objectives": grant_application.research_objectives is not None,
+                    "missing": missing_parts,
+                    "recoverable": True,
+                },
             )
             raise ValidationError(
                 error_message,
@@ -328,14 +341,15 @@ async def grant_application_text_generation_pipeline_handler(
         raise ValidationError("Grant template is unexpectedly None")
 
     try:
-        await publish_notification(
-            logger=logger,
+        await verify_rag_sources_indexed(application_id, session_maker, GrantApplication)
+
+        await job_manager.add_notification(
             parent_id=application_id,
-            event="validating_template",
-            data=RagProcessingStatus(
-                event="validating_template",
-                message="Validating grant template structure...",
-            ),
+            event=NotificationEvents.VALIDATING_TEMPLATE,
+            message="Validating grant template structure...",
+            notification_type="info",
+            current_pipeline_stage=2,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
         work_plan_sections = []
@@ -347,21 +361,20 @@ async def grant_application_text_generation_pipeline_handler(
             ]
 
         if not work_plan_sections:
-            error_message = "Grant template does not have a detailed work plan section."
-            logger.error(error_message, application_id=application_id)
-            await publish_notification(
-                logger=logger,
+            error_message = "The grant template is missing a required work plan section. Please update the template to include a detailed work plan section."
+            logger.error("Missing work plan section in template", application_id=application_id)
+            await job_manager.add_notification(
                 parent_id=application_id,
-                event="validation_error",
-                data=RagProcessingStatus(
-                    event="validation_error",
-                    message=error_message,
-                    data={
-                        "grant_section_count": len(grant_application.grant_template.grant_sections)
-                        if grant_application.grant_template.grant_sections
-                        else 0,
-                    },
-                ),
+                event=NotificationEvents.TEMPLATE_INCOMPLETE,
+                message=error_message,
+                notification_type="error",
+                data={
+                    "grant_section_count": len(grant_application.grant_template.grant_sections)
+                    if grant_application.grant_template.grant_sections
+                    else 0,
+                    "missing_section": "detailed_work_plan",
+                    "recoverable": True,
+                },
             )
             raise ValidationError(
                 error_message,
@@ -385,28 +398,26 @@ async def grant_application_text_generation_pipeline_handler(
                 },
             )
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=application_id,
-            event="template_validated",
-            data=RagProcessingStatus(
-                event="template_validated",
-                message="Template validation complete",
-                data={
-                    "section_count": len(grant_template.grant_sections),
-                    "research_objectives_count": len(grant_application.research_objectives),
-                },
-            ),
+            event=NotificationEvents.TEMPLATE_VALIDATED,
+            message="Template validation complete",
+            notification_type="info",
+            data={
+                "section_count": len(grant_template.grant_sections),
+                "research_objectives_count": len(grant_application.research_objectives),
+            },
+            current_pipeline_stage=3,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=application_id,
-            event="generating_section_texts",
-            data=RagProcessingStatus(
-                event="generating_section_texts",
-                message="Generating text for all grant sections...",
-            ),
+            event=NotificationEvents.GENERATING_SECTION_TEXTS,
+            message="Generating text for all grant sections...",
+            notification_type="info",
+            current_pipeline_stage=4,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
         section_texts = await generate_grant_section_texts(
@@ -414,30 +425,29 @@ async def grant_application_text_generation_pipeline_handler(
             grant_sections=grant_template.grant_sections,
             form_inputs=grant_application.form_inputs or {},
             research_objectives=grant_application.research_objectives,
+            job_manager=job_manager,
         )
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=application_id,
-            event="section_texts_generated",
-            data=RagProcessingStatus(
-                event="section_texts_generated",
-                message="Section texts generated",
-                data={
-                    "section_count": len(section_texts),
-                    "total_words": sum(len(text.split()) for text in section_texts.values()),
-                },
-            ),
+            event=NotificationEvents.SECTION_TEXTS_GENERATED,
+            message="Section texts generated",
+            notification_type="info",
+            data={
+                "section_count": len(section_texts),
+                "total_words": sum(len(text.split()) for text in section_texts.values()),
+            },
+            current_pipeline_stage=5,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=application_id,
-            event="assembling_application",
-            data=RagProcessingStatus(
-                event="assembling_application",
-                message="Assembling complete grant application text...",
-            ),
+            event=NotificationEvents.ASSEMBLING_APPLICATION,
+            message="Assembling complete grant application text...",
+            notification_type="info",
+            current_pipeline_stage=6,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
         application_text = generate_application_text(
@@ -446,26 +456,56 @@ async def grant_application_text_generation_pipeline_handler(
             section_texts=section_texts,
         )
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=application_id,
-            event="saving_application",
-            data=RagProcessingStatus(
-                event="saving_application",
-                message="Saving grant application text to database...",
-            ),
+            event=NotificationEvents.SAVING_APPLICATION,
+            message="Saving grant application text to database...",
+            notification_type="info",
+            current_pipeline_stage=7,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
     except BackendError as e:
         logger.error("Failed to generate grant application text.", application_id=application_id, error=e)
-        await publish_notification(
-            logger=logger,
+
+        if isinstance(e, InsufficientContextError):
+            error_message = "Unable to generate application text due to insufficient information. Please ensure all research objectives have detailed descriptions."
+            event_type = NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
+            recoverable = True
+        elif isinstance(e, RagError) and "retrieval quality" in str(e).lower():
+            error_message = "Unable to find sufficient relevant information to generate high-quality content. Please ensure your uploaded documents contain comprehensive research details."
+            event_type = NotificationEvents.LOW_RETRIEVAL_QUALITY
+            recoverable = True
+        elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
+            error_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
+            event_type = NotificationEvents.INDEXING_TIMEOUT
+            recoverable = True
+        elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():
+            error_message = "Document indexing failed. Please upload new documents and try again."
+            event_type = NotificationEvents.INDEXING_FAILED
+            recoverable = True
+        else:
+            error_message = "An unexpected error occurred while generating your application text. Please try again or contact support if this persists."
+            event_type = NotificationEvents.GENERATION_ERROR
+            recoverable = False
+            logger.error("Unexpected error in application generation", error=e, context=getattr(e, "context", None))
+
+        await job_manager.update_job_status(
+            status=RagGenerationStatusEnum.FAILED,
+            error_message=error_message,
+            error_details={
+                "error_type": e.__class__.__name__,
+                "recoverable": recoverable,
+            },
+        )
+        await job_manager.add_notification(
             parent_id=application_id,
-            event="generation_error",
-            data=RagProcessingStatus(
-                event="generation_error",
-                message=f"Failed to generate grant application text: {e!s}",
-                data={"error_type": e.__class__.__name__, **getattr(e, "context", {})},
-            ),
+            event=event_type,
+            message=error_message,
+            notification_type="error",
+            data={
+                "error_type": e.__class__.__name__,
+                "recoverable": recoverable,
+            },
         )
         raise
 
@@ -475,42 +515,44 @@ async def grant_application_text_generation_pipeline_handler(
                 update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
             )
 
-            await publish_notification(
-                logger=logger,
+            await job_manager.add_notification(
                 parent_id=application_id,
-                event="application_saved",
-                data=RagProcessingStatus(
-                    event="application_saved",
-                    message="Application saved successfully",
-                    data={
-                        "application_id": str(application_id),
-                        "word_count": len(application_text.split()),
-                        "section_count": len(section_texts),
-                    },
-                ),
+                event=NotificationEvents.APPLICATION_SAVED,
+                message="Application saved successfully",
+                notification_type="info",
+                data={
+                    "application_id": str(application_id),
+                    "word_count": len(application_text.split()),
+                    "section_count": len(section_texts),
+                },
+                current_pipeline_stage=8,
+                total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
             )
         except SQLAlchemyError as e:
-            logger.error("Failed to update grant application text.", application_id=application_id, error=e)
-            await publish_notification(
-                logger=logger,
+            logger.error("Database error updating grant application text.", application_id=application_id, error=e)
+
+            await job_manager.update_job_status(
+                status=RagGenerationStatusEnum.FAILED,
+                error_message="An internal error occurred. Please try again or contact support.",
+                error_details={"error_type": "database_error"},
+            )
+            await job_manager.add_notification(
                 parent_id=application_id,
-                event="database_error",
-                data=RagProcessingStatus(
-                    event="database_error",
-                    message="Failed to update grant application text.",
-                    data={"error": str(e)},
-                ),
+                event=NotificationEvents.INTERNAL_ERROR,
+                message="An internal error occurred. Please try again or contact support.",
+                notification_type="error",
+                data={"error_type": "database_error"},
             )
             raise DatabaseError("Failed to update grant application text.", context=str(e)) from e
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
+    await job_manager.add_notification(
         parent_id=application_id,
-        event="grant_application_generation_completed",
-        data=RagProcessingStatus(
-            event="grant_application_generation_completed",
-            message="Grant application text generation completed successfully.",
-        ),
+        event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,
+        message="Grant application text generation completed successfully.",
+        notification_type="success",
+        current_pipeline_stage=GRANT_APPLICATION_PIPELINE_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
     return application_text, section_texts

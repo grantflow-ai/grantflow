@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
-import { useApplicationStore } from "@/stores/application-store";
+import { applicationStore } from "@/stores/application-store";
 import { createDebounce } from "@/utils/debounce";
 
 const DEBOUNCE_DELAY_MS = 500;
@@ -21,6 +21,7 @@ interface PollingState {
 interface WizardActions {
 	handleTitleChange: (title: string) => void;
 	polling: PollingActions;
+	reset: () => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	validateStepNext: () => boolean;
@@ -39,14 +40,15 @@ const initialWizardState: WizardState = {
 	},
 };
 
-export const useWizardStore = create<WizardActions & WizardState>()(
+export const wizardStore = create<WizardActions & WizardState>()(
 	persist(
 		(set, get) => {
 			const debouncedUpdateTitle = createDebounce((title: string) => {
-				const { application, updateApplicationTitle } = useApplicationStore.getState();
-
+				const { application } = applicationStore.getState();
 				if (application?.workspace_id && title.trim() && title !== application.title) {
-					void updateApplicationTitle(application.workspace_id, application.id, title);
+					void applicationStore
+						.getState()
+						.updateApplicationTitle(application.workspace_id, application.id, title);
 				}
 			}, DEBOUNCE_DELAY_MS);
 
@@ -54,13 +56,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				...initialWizardState,
 
 				handleTitleChange: (title: string) => {
-					useApplicationStore.getState().setApplicationTitle(title);
-
+					applicationStore.getState().setApplicationTitle(title);
 					debouncedUpdateTitle.call(title);
 				},
 
 				polling: {
 					...initialWizardState.polling,
+
 					start: (apiFunction: () => Promise<void>, duration: number, callImmediately = true) => {
 						const { polling } = get();
 						if (polling.isActive || polling.intervalId) {
@@ -109,6 +111,20 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					},
 				},
 
+				reset: () => {
+					const currentState = get();
+					if (currentState.polling.intervalId) {
+						clearInterval(currentState.polling.intervalId);
+					}
+					set({
+						currentStep: initialWizardState.currentStep,
+						polling: {
+							...currentState.polling,
+							...initialWizardState.polling,
+						},
+					});
+				},
+
 				toNextStep: () => {
 					const { currentStep } = get();
 
@@ -116,14 +132,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
-					const { application } = useApplicationStore.getState();
-
+					const { application } = applicationStore.getState();
 					if (
 						currentStep === WizardStep.APPLICATION_DETAILS &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
-						void useApplicationStore.getState().generateTemplate(application.grant_template.id);
+						void applicationStore.getState().generateTemplate(application.grant_template.id);
 					}
 
 					set((state) => ({
@@ -142,34 +157,33 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}));
 				},
 
-				validateStepNext: () => {
+				validateStepNext: (): boolean => {
 					const { currentStep } = get();
+					const { application } = applicationStore.getState();
 
-					const { application, applicationTitle, isLoading, uploadedFiles, urls } =
-						useApplicationStore.getState();
-
-					if (!application || isLoading) {
-						return false;
+					switch (currentStep) {
+						case WizardStep.APPLICATION_DETAILS: {
+							if (!application?.title || application.title.trim().length < MIN_TITLE_LENGTH) {
+								return false;
+							}
+							return true;
+						}
+						case WizardStep.APPLICATION_STRUCTURE: {
+							return true;
+						}
+						case WizardStep.GENERATE_AND_COMPLETE: {
+							return true;
+						}
+						case WizardStep.KNOWLEDGE_BASE: {
+							return true;
+						}
+						case WizardStep.RESEARCH_DEEP_DIVE: {
+							return true;
+						}
+						case WizardStep.RESEARCH_PLAN: {
+							return true;
+						}
 					}
-
-					if (currentStep === WizardStep.APPLICATION_DETAILS) {
-						const totalUrls = urls.application.length + urls.template.length;
-						const totalFiles = uploadedFiles.application.length + uploadedFiles.template.length;
-						return (
-							applicationTitle.trim().length >= MIN_TITLE_LENGTH &&
-							(totalUrls > 0 || totalFiles > 0)
-						);
-					}
-					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
-						return !!application.grant_template?.grant_sections.length;
-					}
-					if (currentStep === WizardStep.KNOWLEDGE_BASE) {
-						return (
-							!!application.rag_sources.length &&
-							application.rag_sources.every((source) => source.status !== "FAILED")
-						);
-					}
-					return false;
 				},
 			};
 		},

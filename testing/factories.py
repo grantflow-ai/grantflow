@@ -3,16 +3,27 @@ from typing import Any, cast
 
 from faker import Faker
 from numpy.random import default_rng
-from packages.db.src.constants import EMBEDDING_DIMENSIONS, RAG_FILE, RAG_URL
+from packages.db.src.constants import (
+    EMBEDDING_DIMENSIONS,
+    GRANT_APPLICATION_GENERATION,
+    GRANT_TEMPLATE_GENERATION,
+    RAG_FILE,
+    RAG_URL,
+)
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     FundingOrganization,
     FundingOrganizationRagSource,
     GrantApplication,
+    GrantApplicationGenerationJob,
     GrantApplicationRagSource,
     GrantTemplate,
+    GrantTemplateGenerationJob,
     GrantTemplateRagSource,
     RagFile,
+    RagGenerationJob,
+    RagGenerationNotification,
     RagSource,
     RagUrl,
     TextVector,
@@ -51,6 +62,7 @@ class GrantSectionFactory(TypedDictFactory[GrantLongFormSection]):
 
 class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     __model__ = GrantTemplate
+    rag_job_id = None
     grant_sections = Use(
         lambda: [
             GrantSectionFactory.build(
@@ -114,8 +126,43 @@ class WorkspaceUserFactory(SQLAlchemyFactory[WorkspaceUser]):
     __model__ = WorkspaceUser
 
 
+class RagGenerationJobFactory(SQLAlchemyFactory[RagGenerationJob]):
+    __model__ = RagGenerationJob
+    total_stages = 5
+    current_stage = 0
+    retry_count = 0
+    status = RagGenerationStatusEnum.PENDING
+    job_type = "rag_generation_job"
+
+
+class GrantTemplateGenerationJobFactory(SQLAlchemyFactory[GrantTemplateGenerationJob]):
+    __model__ = GrantTemplateGenerationJob
+    total_stages = 4
+    current_stage = 0
+    retry_count = 0
+    status = RagGenerationStatusEnum.PENDING
+    job_type = GRANT_TEMPLATE_GENERATION
+
+
+class GrantApplicationGenerationJobFactory(SQLAlchemyFactory[GrantApplicationGenerationJob]):
+    __model__ = GrantApplicationGenerationJob
+    total_stages = 5
+    current_stage = 0
+    retry_count = 0
+    status = RagGenerationStatusEnum.PENDING
+    job_type = GRANT_APPLICATION_GENERATION
+
+
+class RagGenerationNotificationFactory(SQLAlchemyFactory[RagGenerationNotification]):
+    __model__ = RagGenerationNotification
+    event = faker.word()
+    message = faker.sentence()
+    notification_type = "info"
+
+
 class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __model__ = GrantApplication
+    rag_job_id = None
 
 
 class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationRagSource]):

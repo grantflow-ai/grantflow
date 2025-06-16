@@ -1,7 +1,7 @@
 /**
- * Development-only patch for triggering file indexing
- * This is a temporary workaround for fake-gcs-server not sending Pub/Sub events
- * TODO: Remove this when GCS emulator Pub/Sub integration is fixed
+ * Development-only bypass for file indexing ~keep
+ * In dev mode, we skip GCS entirely and send files directly to the indexer
+ * This avoids issues with GCS emulator and simplifies local development
  */
 
 import { getEnv } from "./env";
@@ -43,6 +43,7 @@ export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 /**
  * Triggers file indexing in development by directly calling the indexer
  * This simulates the Pub/Sub event that would normally be sent by GCS
+ * @param objectPath - The GCS object path
  */
 export async function triggerDevIndexing(objectPath: string): Promise<void> {
 	if (process.env.NODE_ENV !== "development") {

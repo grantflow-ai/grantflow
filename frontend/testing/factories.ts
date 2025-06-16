@@ -233,6 +233,7 @@ interface GrantTemplate {
 	grant_application_id: string;
 	grant_sections: (GrantSectionBase | GrantSectionDetailed)[];
 	id: string;
+	rag_job_id?: string;
 	rag_sources: RagSource[];
 	submission_date?: string;
 	updated_at: string;
@@ -248,6 +249,7 @@ export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
 		{ count: { max: 10, min: 1 } },
 	),
 	id: factory.string.uuid(),
+	rag_job_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
 	submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
 	updated_at: factory.date.recent().toISOString(),
