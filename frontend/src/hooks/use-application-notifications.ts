@@ -1,5 +1,5 @@
 import { createTypeGuard, isRecord } from "@tool-belt/type-predicates";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
@@ -7,9 +7,11 @@ import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 
 export interface RagProcessingStatus {
+	current_pipeline_stage?: number;
 	data?: Record<string, unknown>;
 	event: string;
 	message: string;
+	total_pipeline_stages?: number;
 }
 
 export type RagProcessingStatusMessage = WebsocketMessage<RagProcessingStatus>;
@@ -70,11 +72,16 @@ interface UseApplicationNotificationsReturn {
 	sendMessage: (message: string) => void;
 }
 
+const RECONNECT_INTERVAL_BASE = 1000;
+const RECONNECT_INTERVAL_MAX = 30_000;
+const RECONNECT_ATTEMPTS_MAX = 10;
+
 export function useApplicationNotifications({
 	applicationId,
 	workspaceId,
 }: UseApplicationNotificationsProps): UseApplicationNotificationsReturn {
 	const [notifications, setNotifications] = useState<WebsocketMessage<unknown>[]>([]);
+	const reconnectAttemptRef = useRef(0);
 
 	const getSocketUrl = useCallback(async () => {
 		if (!(workspaceId && applicationId)) {
@@ -93,6 +100,20 @@ export function useApplicationNotifications({
 
 	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
 		workspaceId && applicationId ? getSocketUrl : null,
+		{
+			onOpen: () => {
+				reconnectAttemptRef.current = 0;
+			},
+			reconnectInterval: (attemptNumber) => {
+				reconnectAttemptRef.current = attemptNumber + 1;
+
+				const interval = Math.min(RECONNECT_INTERVAL_BASE * 2 ** attemptNumber, RECONNECT_INTERVAL_MAX);
+				return interval;
+			},
+			shouldReconnect: (closeEvent) => {
+				return closeEvent.code !== 1000 && reconnectAttemptRef.current < RECONNECT_ATTEMPTS_MAX;
+			},
+		},
 	);
 
 	useEffect(() => {

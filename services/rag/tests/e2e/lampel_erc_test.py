@@ -7,6 +7,7 @@ from packages.db.src.tables import FundingOrganization, Workspace
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.test_utils import create_grant_application_data
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 
 
-# @e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
+@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
 async def test_generate_erc_application_for_lampel(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
