@@ -37,8 +37,11 @@ interface ApplicationPreviewProps {
 }
 
 export function ApplicationPreview({ onFileRemove, onUrlRemove }: ApplicationPreviewProps) {
-	const { applicationTitle, connectionStatus, connectionStatusColor, uploadedFiles: files, urls } = useWizardStore();
-	const isEmpty = !applicationTitle && files.length === 0 && urls.length === 0;
+	const {
+		applicationState: { applicationTitle, wsConnectionStatus, wsConnectionStatusColor },
+		contentState: { uploadedFiles, urls },
+	} = useWizardStore();
+	const isEmpty = !applicationTitle && uploadedFiles.length === 0 && urls.length === 0;
 
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
@@ -56,9 +59,9 @@ export function ApplicationPreview({ onFileRemove, onUrlRemove }: ApplicationPre
 							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Title
 							</ThemeBadge>
-							{connectionStatus && (
-								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
-									{connectionStatus}
+							{wsConnectionStatus && (
+								<ThemeBadge className={`w-fit ${wsConnectionStatusColor} text-white`}>
+									{wsConnectionStatus}
 								</ThemeBadge>
 							)}
 						</div>
@@ -72,14 +75,14 @@ export function ApplicationPreview({ onFileRemove, onUrlRemove }: ApplicationPre
 
 					<ScrollArea className="flex-1">
 						<div className="space-y-5">
-							{files.length > 0 && (
+							{uploadedFiles.length > 0 && (
 								<Card
 									className="border-app-gray-100 border p-5 shadow-none"
 									data-testid="application-documents"
 								>
 									<h4 className="font-heading mb-8 font-semibold">Application Documents</h4>
 									<div className="flex gap-3" data-testid="file-collection">
-										{files.map((file, index) => (
+										{uploadedFiles.map((file, index) => (
 											<FilePreviewCard
 												file={file}
 												key={file.name + index.toString()}

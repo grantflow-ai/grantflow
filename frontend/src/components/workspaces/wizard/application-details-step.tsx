@@ -19,14 +19,13 @@ const TITLE_MAX_LENGTH = 120;
 
 export function ApplicationDetailsStep() {
 	const {
-		applicationTitle,
+		applicationState: { applicationTitle, templateId },
 		areFilesOrUrlsIndexing,
 		polling,
 		removeFile,
 		removeUrl,
 		retrieveApplication,
 		setApplicationTitle,
-		templateId,
 		workspaceId,
 	} = useWizardStore();
 

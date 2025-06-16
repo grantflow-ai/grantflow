@@ -25,8 +25,13 @@ export default function CreateGrantApplicationWizardPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const { application, currentStep, handleApplicationInit, setConnectionStatus, setConnectionStatusColor } =
-		useWizardStore();
+	const {
+		applicationState: { application },
+		handleApplicationInit,
+		setWsConnectionStatus,
+		setWsConnectionStatusColor,
+		ui: { currentStep },
+	} = useWizardStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: application?.id,
@@ -34,9 +39,9 @@ export default function CreateGrantApplicationWizardPage() {
 	});
 
 	useEffect(() => {
-		setConnectionStatus(connectionStatus);
-		setConnectionStatusColor(connectionStatusColor);
-	}, [connectionStatus, connectionStatusColor, setConnectionStatus, setConnectionStatusColor]);
+		setWsConnectionStatus(connectionStatus);
+		setWsConnectionStatusColor(connectionStatusColor);
+	}, [connectionStatus, connectionStatusColor, setWsConnectionStatus, setWsConnectionStatusColor]);
 
 	// Get or create an application on mount ~keep
 	useEffect(() => {
