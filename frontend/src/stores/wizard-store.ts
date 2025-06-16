@@ -18,6 +18,20 @@ const DEBOUNCE_DELAY_MS = 500;
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 export const MIN_TITLE_LENGTH = 10;
 
+interface ApplicationState {
+	application: ApplicationType;
+	applicationId: null | string;
+	applicationTitle: string;
+	templateId: null | string;
+	wsConnectionStatus?: string;
+	wsConnectionStatusColor?: string;
+}
+
+interface ContentState {
+	uploadedFiles: FileWithId[];
+	urls: string[];
+}
+
 interface PollingActions {
 	start: (apiFunction: () => Promise<void>, duration: number, callImmediately?: boolean) => void;
 	stop: () => void;
@@ -34,8 +48,6 @@ interface WizardActions {
 	areFilesOrUrlsIndexing: () => boolean;
 	createApplication: () => Promise<void>;
 	generateTemplate: (workspaceId: string, applicationId: string, templateId: string) => Promise<void>;
-	goToNextStep: () => void;
-	goToPreviousStep: () => void;
 	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
 	polling: PollingActions;
 	removeFile: (fileToRemove: FileWithId) => void;
@@ -44,40 +56,33 @@ interface WizardActions {
 	setApplication: (application: Exclude<ApplicationType, null>) => void;
 	setApplicationId: (id: string) => void;
 	setApplicationTitle: (title: string) => void;
-	setConnectionStatus: (status?: string) => void;
-	setConnectionStatusColor: (color?: string) => void;
 	setCurrentStep: (step: number) => void;
 	setFileDropdownOpen: (fileId: string, open: boolean) => void;
-	setIsCreatingApplication: (loading: boolean) => void;
-	setIsGeneratingTemplate: (loading: boolean) => void;
 	setLinkHoverState: (url: string, hovered: boolean) => void;
 	setTemplateId: (id: string) => void;
 	setUploadedFiles: (files: FileWithId[]) => void;
 	setUrlInput: (input: string) => void;
 	setUrls: (urls: string[]) => void;
 	setWorkspaceId: (id: string) => void;
+	setWsConnectionStatus: (status?: string) => void;
+	setWsConnectionStatusColor: (color?: string) => void;
+	toNextStep: () => void;
+	toPreviousStep: () => void;
 	updateApplicationTitle: (title: string) => Promise<void>;
 	validateStepNext: () => boolean;
 }
 
 interface WizardState {
-	application: ApplicationType;
-	applicationId: null | string;
-	applicationTitle: string;
-	connectionStatus?: string;
-	connectionStatusColor?: string;
-	currentStep: number;
-	isCreatingApplication: boolean;
-	isGeneratingTemplate: boolean;
+	applicationState: ApplicationState;
+	contentState: ContentState;
+	isLoading: boolean;
 	polling: PollingState;
-	templateId: null | string;
 	ui: WizardUI;
-	uploadedFiles: FileWithId[];
-	urls: string[];
 	workspaceId: string;
 }
 
 interface WizardUI {
+	currentStep: number;
 	fileDropdownStates: Record<string, boolean>;
 	linkHoverStates: Record<string, boolean>;
 	urlInput: string;
@@ -85,22 +90,37 @@ interface WizardUI {
 
 export const useWizardStore = create<WizardActions & WizardState>((set, get) => ({
 	addFile: (file: FileWithId) => {
-		set((state) => ({
-			uploadedFiles: [...state.uploadedFiles, file],
+		set(({ contentState, ...state }) => ({
+			...state,
+			contentState: {
+				...contentState,
+				uploadedFiles: [...contentState.uploadedFiles, file],
+			},
 		}));
 	},
 	addUrl: (url: string) => {
-		set((state) => ({
-			urls: state.urls.includes(url) ? state.urls : [...state.urls, url],
+		set(({ contentState, ...state }) => ({
+			...state,
+			contentState: {
+				...contentState,
+				urls: contentState.urls.includes(url) ? contentState.urls : [...contentState.urls, url],
+			},
 		}));
 	},
 
-	application: null,
-	applicationId: null,
-	applicationTitle: DEFAULT_APPLICATION_TITLE,
+	applicationState: {
+		application: null,
+		applicationId: null,
+		applicationTitle: DEFAULT_APPLICATION_TITLE,
+		templateId: null,
+		wsConnectionStatus: undefined,
+		wsConnectionStatusColor: undefined,
+	},
 
 	areFilesOrUrlsIndexing: () => {
-		const { application } = get();
+		const {
+			applicationState: { application },
+		} = get();
 		if (!application) {
 			return false;
 		}
@@ -108,8 +128,10 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 		const allSources = [...application.rag_sources, ...(application.grant_template?.rag_sources ?? [])];
 		return allSources.some((source) => source.status === "INDEXING");
 	},
-	connectionStatus: undefined,
-	connectionStatusColor: undefined,
+	contentState: {
+		uploadedFiles: [],
+		urls: [],
+	},
 	createApplication: async () => {
 		const { workspaceId } = get();
 
@@ -117,56 +139,49 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 			throw new Error("No workspace ID found");
 		}
 
+		set({ isLoading: true });
 		try {
 			const response = await createApplication(workspaceId, {
 				title: DEFAULT_APPLICATION_TITLE,
 			});
-			set({
-				application: response,
-				applicationId: response.id,
-				applicationTitle: "",
-				isCreatingApplication: false,
-				templateId: response.grant_template?.id ?? null,
-			});
+			set(({ applicationState, ...state }) => ({
+				...state,
+				applicationState: {
+					...applicationState,
+					application: response,
+					applicationId: response.id,
+					applicationTitle: "",
+					templateId: response.grant_template?.id ?? null,
+				},
+			}));
 		} catch (e: unknown) {
 			logError({ error: e, identifier: "application-wizard-create" });
 			toast.error("Failed to initialize application");
 			throw e;
+		} finally {
+			set({ isLoading: false });
 		}
 	},
-	currentStep: 0,
 	generateTemplate: async (workspaceId: string, applicationId: string, templateId: string) => {
-		set({ isGeneratingTemplate: true });
+		set({ isLoading: true });
 		try {
 			await generateGrantTemplate(workspaceId, applicationId, templateId);
 		} catch {
 			toast.error("Failed to generate grant template. Please try again.");
 		} finally {
-			set({ isGeneratingTemplate: false });
+			set({ isLoading: false });
 		}
 	},
-	goToNextStep: () => {
-		const { application, currentStep, workspaceId } = get();
-		if (currentStep === WIZARD_STEP_TITLES.length - 1) {
-			return;
-		}
-
-		if (currentStep === 0 && application?.grant_template && !application.grant_template.grant_sections.length) {
-			void get().generateTemplate(workspaceId, application.id, application.grant_template.id);
-		}
-		set({ currentStep: currentStep + 1 });
-	},
-	goToPreviousStep: () => {
-		const { currentStep } = get();
-		set({ currentStep: Math.max(0, currentStep - 1) });
-	},
-
 	handleApplicationInit: async (workspaceId: string, applicationId?: string) => {
-		set({
-			applicationId: applicationId ?? null,
-			isCreatingApplication: true,
+		set(({ applicationState, ...state }) => ({
+			...state,
+			applicationState: {
+				...applicationState,
+				applicationId: applicationId ?? null,
+			},
+			isLoading: true,
 			workspaceId,
-		});
+		}));
 
 		try {
 			await (applicationId ? get().retrieveApplication() : get().createApplication());
@@ -174,12 +189,11 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 			logError({ error: e, identifier: "handleApplicationInit" });
 			toast.error(applicationId ? "Failed to retrieve application" : "Failed to initialize application");
 			throw e;
+		} finally {
+			set({ isLoading: false });
 		}
 	},
-
-	isCreatingApplication: true,
-
-	isGeneratingTemplate: false,
+	isLoading: false,
 
 	polling: {
 		intervalId: null,
@@ -190,9 +204,10 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 				return;
 			}
 
-			set((state) => ({
+			set(({ polling, ...state }) => ({
+				...state,
 				polling: {
-					...state.polling,
+					...polling,
 					isActive: true,
 				},
 			}));
@@ -205,9 +220,10 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 				void apiFunction();
 			}, duration);
 
-			set((state) => ({
+			set(({ polling, ...state }) => ({
+				...state,
 				polling: {
-					...state.polling,
+					...polling,
 					intervalId,
 				},
 			}));
@@ -219,9 +235,10 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 				clearInterval(polling.intervalId);
 			}
 
-			set((state) => ({
+			set(({ polling, ...state }) => ({
+				...state,
 				polling: {
-					...state.polling,
+					...polling,
 					intervalId: null,
 					isActive: false,
 				},
@@ -230,52 +247,90 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 	},
 
 	removeFile: (fileToRemove: FileWithId) => {
-		set((state) => ({
-			uploadedFiles: state.uploadedFiles.filter((f) => f.name !== fileToRemove.name),
+		set(({ contentState, ...state }) => ({
+			...state,
+			contentState: {
+				...contentState,
+				uploadedFiles: contentState.uploadedFiles.filter((f) => f.name !== fileToRemove.name),
+			},
 		}));
 	},
 
 	removeUrl: (urlToRemove: string) => {
-		set((state) => ({
-			urls: state.urls.filter((url) => url !== urlToRemove),
+		set(({ contentState, ...state }) => ({
+			...state,
+			contentState: {
+				...contentState,
+				urls: contentState.urls.filter((url) => url !== urlToRemove),
+			},
 		}));
 	},
 
 	retrieveApplication: async () => {
-		const { applicationId, workspaceId } = get();
+		const {
+			applicationState: { applicationId },
+			workspaceId,
+		} = get();
 
 		if (!workspaceId || !applicationId) {
 			return;
 		}
 
+		set({ isLoading: true });
 		try {
 			const response = await retrieveApplication(workspaceId, applicationId);
 
-			set({
-				application: response,
-				applicationId: response.id,
-				isCreatingApplication: false,
-				templateId: response.grant_template?.id ?? null,
-			});
+			set(({ applicationState, ...state }) => ({
+				...state,
+				applicationState: {
+					...applicationState,
+					application: response,
+					applicationId: response.id,
+					templateId: response.grant_template?.id ?? null,
+				},
+			}));
 		} catch (e: unknown) {
 			logError({ error: e, identifier: "retrieveApplication" });
 			toast.error("Failed to retrieve application");
 			throw e;
+		} finally {
+			set({ isLoading: false });
 		}
 	},
 
 	setApplication: (application: Exclude<ApplicationType, null>) => {
-		set({ application });
+		set(({ applicationState, ...state }) => ({
+			...state,
+			applicationState: {
+				...applicationState,
+				application,
+			},
+		}));
 	},
 
 	setApplicationId: (id: string) => {
-		set({ applicationId: id });
+		set(({ applicationState, ...state }) => ({
+			...state,
+			applicationState: {
+				...applicationState,
+				applicationId: id,
+			},
+		}));
 	},
 
 	setApplicationTitle: (title: string) => {
-		set({ applicationTitle: title });
+		set(({ applicationState, ...state }) => ({
+			...state,
+			applicationState: {
+				...applicationState,
+				applicationTitle: title,
+			},
+		}));
 
-		const { applicationId, updateApplicationTitle } = get();
+		const {
+			applicationState: { applicationId },
+			updateApplicationTitle,
+		} = get();
 		if (applicationId && title.trim()) {
 			const debouncedUpdate = createDebounce(() => {
 				void updateApplicationTitle(title);
@@ -284,44 +339,36 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 		}
 	},
 
-	setConnectionStatus: (status?: string) => {
-		set({ connectionStatus: status });
-	},
-
-	setConnectionStatusColor: (color?: string) => {
-		set({ connectionStatusColor: color });
-	},
-
 	setCurrentStep: (step: number) => {
-		set({ currentStep: Math.max(0, Math.min(WIZARD_STEP_TITLES.length - 1, step)) });
+		set(({ ui, ...state }) => ({
+			...state,
+			ui: {
+				...ui,
+				currentStep: Math.max(0, Math.min(WIZARD_STEP_TITLES.length - 1, step)),
+			},
+		}));
 	},
 
 	setFileDropdownOpen: (fileId: string, open: boolean) => {
-		set((state) => ({
+		set(({ ui, ...state }) => ({
+			...state,
 			ui: {
-				...state.ui,
+				...ui,
 				fileDropdownStates: {
-					...state.ui.fileDropdownStates,
+					...ui.fileDropdownStates,
 					[fileId]: open,
 				},
 			},
 		}));
 	},
 
-	setIsCreatingApplication: (loading: boolean) => {
-		set({ isCreatingApplication: loading });
-	},
-
-	setIsGeneratingTemplate: (loading: boolean) => {
-		set({ isGeneratingTemplate: loading });
-	},
-
 	setLinkHoverState: (url: string, hovered: boolean) => {
-		set((state) => ({
+		set(({ ui, ...state }) => ({
+			...state,
 			ui: {
-				...state.ui,
+				...ui,
 				linkHoverStates: {
-					...state.ui.linkHoverStates,
+					...ui.linkHoverStates,
 					[url]: hovered,
 				},
 			},
@@ -329,57 +376,140 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 	},
 
 	setTemplateId: (id: string) => {
-		set({ templateId: id });
+		set(({ applicationState, ...state }) => ({
+			...state,
+			applicationState: {
+				...applicationState,
+				templateId: id,
+			},
+		}));
 	},
 
 	setUploadedFiles: (files: FileWithId[]) => {
-		set({ uploadedFiles: files });
+		set(({ contentState, ...state }) => ({
+			...state,
+			contentState: {
+				...contentState,
+				uploadedFiles: files,
+			},
+		}));
 	},
 
 	setUrlInput: (input: string) => {
-		set((state) => ({
-			ui: { ...state.ui, urlInput: input },
+		set(({ ui, ...state }) => ({
+			...state,
+			ui: { ...ui, urlInput: input },
 		}));
 	},
 
 	setUrls: (urls: string[]) => {
-		set({ urls });
+		set(({ contentState, ...state }) => ({
+			...state,
+			contentState: {
+				...contentState,
+				urls,
+			},
+		}));
 	},
 
 	setWorkspaceId: (id: string) => {
 		set({ workspaceId: id });
 	},
 
-	templateId: null,
+	setWsConnectionStatus: (status?: string) => {
+		set(({ applicationState, ...state }) => ({
+			...state,
+			applicationState: {
+				...applicationState,
+				wsConnectionStatus: status,
+			},
+		}));
+	},
+
+	setWsConnectionStatusColor: (color?: string) => {
+		set(({ applicationState, ...state }) => ({
+			...state,
+			applicationState: {
+				...applicationState,
+				wsConnectionStatusColor: color,
+			},
+		}));
+	},
+
+	toNextStep: () => {
+		const {
+			applicationState: { application },
+			ui: { currentStep },
+			workspaceId,
+		} = get();
+
+		if (currentStep === WIZARD_STEP_TITLES.length - 1) {
+			return;
+		}
+
+		if (currentStep === 0 && application?.grant_template && !application.grant_template.grant_sections.length) {
+			void get().generateTemplate(workspaceId, application.id, application.grant_template.id);
+		}
+		set(({ ui, ...state }) => ({
+			...state,
+			ui: {
+				...ui,
+				currentStep: currentStep + 1,
+			},
+		}));
+	},
+
+	toPreviousStep: () => {
+		const {
+			ui: { currentStep },
+		} = get();
+
+		set(({ ui, ...state }) => ({
+			...state,
+			ui: {
+				...ui,
+				currentStep: Math.max(0, currentStep - 1),
+			},
+		}));
+	},
 
 	ui: {
+		currentStep: 0,
 		fileDropdownStates: {},
 		linkHoverStates: {},
 		urlInput: "",
 	},
 
 	updateApplicationTitle: async (title: string) => {
-		const { applicationId, workspaceId } = get();
+		const {
+			applicationState: { applicationId },
+			workspaceId,
+		} = get();
 		if (!applicationId || !workspaceId) {
 			return;
 		}
 
+		set({ isLoading: true });
 		try {
 			await updateApplication(workspaceId, applicationId, {
 				title,
 			});
 		} catch {
 			toast.error("Failed to update application title");
+		} finally {
+			set({ isLoading: false });
 		}
 	},
 
-	uploadedFiles: [],
-
-	urls: [],
-
 	validateStepNext: () => {
-		const { application, applicationTitle, currentStep, isGeneratingTemplate, uploadedFiles, urls } = get();
-		if (!application || isGeneratingTemplate) {
+		const {
+			applicationState: { application, applicationTitle },
+			contentState: { uploadedFiles, urls },
+			isLoading,
+			ui: { currentStep },
+		} = get();
+
+		if (!application || isLoading) {
 			return false;
 		}
 		if (currentStep === 0) {

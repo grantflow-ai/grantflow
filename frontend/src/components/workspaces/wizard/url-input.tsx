@@ -8,23 +8,15 @@ import AppInput from "@/components/input-field";
 import { IconGlobe } from "@/components/workspaces/icons";
 import { useWizardStore } from "@/stores/wizard-store";
 import { logError } from "@/utils/logging";
-
-const isValidUrl = (url: string): boolean => {
-	try {
-		new URL(url);
-		return true;
-	} catch {
-		return false;
-	}
-};
+import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 	const {
 		addUrl,
+		applicationState: { templateId },
+		contentState: { urls },
 		setUrlInput,
-		templateId,
 		ui: { urlInput },
-		urls,
 		workspaceId,
 	} = useWizardStore();
 

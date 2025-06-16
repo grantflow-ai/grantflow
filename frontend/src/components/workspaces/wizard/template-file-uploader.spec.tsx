@@ -22,7 +22,10 @@ describe("TemplateFileUploader", () => {
 		vi.clearAllMocks();
 		Object.assign(mockWizardStore, {
 			addFile: vi.fn(),
-			templateId: "test-template-id",
+			applicationState: {
+				...mockWizardStore.applicationState,
+				templateId: "test-template-id",
+			},
 			workspaceId: "test-workspace-id",
 		});
 	});
