@@ -1,6 +1,6 @@
 import CreateGrantApplicationWizardPage from "./page";
 
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof CreateGrantApplicationWizardPage> = {
 	component: CreateGrantApplicationWizardPage,
