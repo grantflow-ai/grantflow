@@ -6,16 +6,42 @@ import { toast } from "sonner";
 import { deleteTemplateSource } from "@/actions/sources";
 import AppTextArea from "@/components/textarea-field";
 import { useWizardStore } from "@/stores/wizard-store";
+import { useDebounce } from "@/utils/debounce";
 import { logError } from "@/utils/logging";
 
 import { ApplicationPreview, FileWithId } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 
+const DEBOUNCE_MS = 1000;
+const POLLING_INTERVAL_DURATION = 3000;
 const TITLE_MAX_LENGTH = 120;
 
 export function ApplicationDetailsStep() {
-	const { applicationTitle, removeFile, removeUrl, setApplicationTitle, templateId, workspaceId } = useWizardStore();
+	const {
+		applicationTitle,
+		areFilesOrUrlsIndexing,
+		polling,
+		removeFile,
+		removeUrl,
+		retrieveApplication,
+		setApplicationTitle,
+		templateId,
+		workspaceId,
+	} = useWizardStore();
+
+	const handleRetrieveWithPolling = useCallback(async () => {
+		await retrieveApplication();
+		if (areFilesOrUrlsIndexing()) {
+			polling.start(retrieveApplication, POLLING_INTERVAL_DURATION, false);
+		}
+	}, [retrieveApplication, areFilesOrUrlsIndexing, polling]);
+
+	const debouncedRetrieveApplication = useDebounce(handleRetrieveWithPolling, DEBOUNCE_MS);
+
+	const handleDocumentChange = useCallback(() => {
+		debouncedRetrieveApplication();
+	}, [debouncedRetrieveApplication]);
 
 	const handleRemoveUrl = (urlToRemove: string) => {
 		removeUrl(urlToRemove);
@@ -84,7 +110,7 @@ export function ApplicationDetailsStep() {
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileUploader />
+						<TemplateFileUploader onUploadComplete={handleDocumentChange} />
 					</div>
 
 					<div>
@@ -94,7 +120,7 @@ export function ApplicationDetailsStep() {
 							understand the funding requirements.
 						</p>
 
-						<UrlInput />
+						<UrlInput onUrlAdded={handleDocumentChange} />
 					</div>
 				</div>
 			</div>

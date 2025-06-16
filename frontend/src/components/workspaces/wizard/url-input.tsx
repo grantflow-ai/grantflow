@@ -9,7 +9,7 @@ import { IconGlobe } from "@/components/workspaces/icons";
 import { useWizardStore } from "@/stores/wizard-store";
 import { logError } from "@/utils/logging";
 
-export function UrlInput() {
+export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 	const {
 		addUrl,
 		setUrlInput,
@@ -30,6 +30,9 @@ export function UrlInput() {
 					toast.success([result.message || "URL added successfully"]);
 
 					addUrl(trimmedUrl);
+
+					// Notify parent of URL addition
+					onUrlAdded?.();
 				} catch (error) {
 					logError({ error, identifier: "crawlTemplateUrl" });
 					toast.error(["Failed to process URL. Please try again."]);
