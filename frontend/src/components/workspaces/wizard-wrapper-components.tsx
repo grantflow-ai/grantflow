@@ -42,9 +42,9 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const { currentStep, goToNextStep, goToPreviousStep, validateStepNext } = useWizardStore();
-	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
-	const showBack = currentStep > 0;
+	const { toNextStep, toPreviousStep, ui, validateStepNext } = useWizardStore();
+	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(ui.currentStep);
+	const showBack = ui.currentStep > 0;
 	const disabled = !validateStepNext();
 
 	return (
@@ -56,7 +56,7 @@ export function WizardFooter() {
 				<AppButton
 					data-testid="back-button"
 					leftIcon={<IconGoBack />}
-					onClick={goToPreviousStep}
+					onClick={toPreviousStep}
 					size="lg"
 					theme="dark"
 					variant="secondary"
@@ -71,7 +71,7 @@ export function WizardFooter() {
 				disabled={disabled}
 				leftIcon={leftIcon}
 				onClick={() => {
-					goToNextStep();
+					toNextStep();
 				}}
 				rightIcon={rightIcon}
 				size="lg"
@@ -84,8 +84,8 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
-	const { applicationTitle, currentStep } = useWizardStore();
-	const showHeaderInfo = currentStep > 0;
+	const { applicationState, ui } = useWizardStore();
+	const showHeaderInfo = ui.currentStep > 0;
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
 			<div className="mb-8 flex items-center justify-between">
@@ -93,7 +93,7 @@ export function WizardHeader() {
 					{showHeaderInfo ? (
 						<>
 							<h1 className="text-nowrap" data-testid="app-name">
-								{applicationTitle}
+								{applicationState.applicationTitle}
 							</h1>
 							<Deadline />
 						</>
@@ -105,7 +105,7 @@ export function WizardHeader() {
 					Exit
 				</AppButton>
 			</div>
-			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_TITLES} />
+			<ApplicationProgressBar currentStep={ui.currentStep} stepTitles={WIZARD_STEP_TITLES} />
 		</header>
 	);
 }
