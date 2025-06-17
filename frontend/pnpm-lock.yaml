@@ -2325,8 +2325,17 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.10.0:
-    resolution: {integrity: sha512-/1xYAC4MP/HEG+3duIhFr4ZQXR4sQXOIe+o6sdqzeykGLx6Upp/1p8MHqhINOvGeP7xyNHe7tsiJByc4SSVUxw==}
+  available-typed-arrays@1.0.7:
+        resolution:
+            {
+                integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==,
+            }
+        engines: { node: ">= 0.4" }
+
+    axios@1.10.0:
+        resolution:
+            {
+                integrity: sha512-/1xYAC4MP/HEG+3duIhFr4ZQXR4sQXOIe+o6sdqzeykGLx6Upp/1p8MHqhINOvGeP7xyNHe7tsiJByc4SSVUxw==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -2377,6 +2386,20 @@ packages:
   call-bound@1.0.4:
     resolution: {integrity: sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==}
     engines: {node: '>= 0.4'}
+
+    call-bind@1.0.8:
+        resolution:
+            {
+                integrity: sha512-oKlSFMcMwpUg2ednkhQ454wfWiU/ul3CkJe/PEHcTKuiX6RpbehUiFMXu13HalGZxfUwCQzZG747YXBn1im9ww==,
+            }
+        engines: { node: ">= 0.4" }
+
+    call-bound@1.0.4:
+        resolution:
+            {
+                integrity: sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==,
+            }
+        engines: { node: ">= 0.4" }
 
   caniuse-lite@1.0.30001723:
     resolution: {integrity: sha512-1R/elMjtehrFejxwmexeXAtae5UO9iSyFn6G/I806CYC/BLyyBk1EPhrKBkWhy6wM6Xnm47dSJQec+tLJ39WHw==}
@@ -2502,8 +2525,17 @@ packages:
     resolution: {integrity: sha512-rBMvIzlpA8v6E+SJZoo++HAYqsLrkg7MSfIinMPFhmkorw7X+dOXVJQs+QT69zGkzMyfDnIMN2Wid1+NbL3T+A==}
     engines: {node: '>= 0.4'}
 
-  define-lazy-prop@2.0.0:
-    resolution: {integrity: sha512-Ds09qNh8yw3khSjiJjiUInaGX9xlqZDY7JVryGxdxV7NPeuqQfplOpQ66yJFZut3jLa5zOwkXw1g9EI2uKh4Og==}
+  define-data-property@1.1.4:
+        resolution:
+            {
+                integrity: sha512-rBMvIzlpA8v6E+SJZoo++HAYqsLrkg7MSfIinMPFhmkorw7X+dOXVJQs+QT69zGkzMyfDnIMN2Wid1+NbL3T+A==,
+            }
+        engines: { node: ">= 0.4" }
+
+    define-lazy-prop@2.0.0:
+        resolution:
+            {
+                integrity: sha512-Ds09qNh8yw3khSjiJjiUInaGX9xlqZDY7JVryGxdxV7NPeuqQfplOpQ66yJFZut3jLa5zOwkXw1g9EI2uKh4Og==}
     engines: {node: '>=8'}
 
   delayed-stream@1.0.0:
@@ -2737,8 +2769,16 @@ packages:
   has-property-descriptors@1.0.2:
     resolution: {integrity: sha512-55JNKuIW+vq4Ke1BjOTjM2YctQIvCT7GFzHwmfZPGo5wnrgkid0YQtnAleFSqumZm4az3n2BS+erby5ipJdgrg==}
 
-  has-symbols@1.1.0:
-    resolution: {integrity: sha512-1cDNdwJ2Jaohmb3sg4OmKaMBwuC48sYni5HUw2DvsC8LjGTLK9h+eb1X6RyuOHe4hT0ULCW68iomhjUoKUqlPQ==}
+  has-property-descriptors@1.0.2:
+        resolution:
+            {
+                integrity: sha512-55JNKuIW+vq4Ke1BjOTjM2YctQIvCT7GFzHwmfZPGo5wnrgkid0YQtnAleFSqumZm4az3n2BS+erby5ipJdgrg==,
+            }
+
+    has-symbols@1.1.0:
+        resolution:
+            {
+                integrity: sha512-1cDNdwJ2Jaohmb3sg4OmKaMBwuC48sYni5HUw2DvsC8LjGTLK9h+eb1X6RyuOHe4hT0ULCW68iomhjUoKUqlPQ==}
     engines: {node: '>= 0.4'}
 
   has-tostringtag@1.0.2:
@@ -2809,8 +2849,17 @@ packages:
     resolution: {integrity: sha512-1BC0BVFhS/p0qtw6enp8e+8OD0UrK0oFLztSjNzhcKA3WDuJxxAPXzPuPtKkjEY9UUoEWlX/8fgKeu2S8i9JTA==}
     engines: {node: '>= 0.4'}
 
-  is-core-module@2.16.1:
-    resolution: {integrity: sha512-UfoeMA6fIJ8wTYFEUjelnaGI67v6+N7qXJEvQuIGa99l4xsCruSYOVSQ0uPANn4dAzm8lkYPaKLrrijLq7x23w==}
+  is-callable@1.2.7:
+        resolution:
+            {
+                integrity: sha512-1BC0BVFhS/p0qtw6enp8e+8OD0UrK0oFLztSjNzhcKA3WDuJxxAPXzPuPtKkjEY9UUoEWlX/8fgKeu2S8i9JTA==,
+            }
+        engines: { node: ">= 0.4" }
+
+    is-core-module@2.16.1:
+        resolution:
+            {
+                integrity: sha512-UfoeMA6fIJ8wTYFEUjelnaGI67v6+N7qXJEvQuIGa99l4xsCruSYOVSQ0uPANn4dAzm8lkYPaKLrrijLq7x23w==}
     engines: {node: '>= 0.4'}
 
   is-docker@2.2.1:
@@ -2826,8 +2875,17 @@ packages:
     resolution: {integrity: sha512-nPUB5km40q9e8UfN/Zc24eLlzdSf9OfKByBw9CIdw4H1giPMeA0OIJvbchsCu4npfI2QcMVBsGEBHKZ7wLTWmQ==}
     engines: {node: '>= 0.4'}
 
-  is-potential-custom-element-name@1.0.1:
-    resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
+  is-generator-function@1.1.0:
+        resolution:
+            {
+                integrity: sha512-nPUB5km40q9e8UfN/Zc24eLlzdSf9OfKByBw9CIdw4H1giPMeA0OIJvbchsCu4npfI2QcMVBsGEBHKZ7wLTWmQ==,
+            }
+        engines: { node: ">= 0.4" }
+
+    is-potential-custom-element-name@1.0.1:
+        resolution:
+            {
+                integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
 
   is-regex@1.2.1:
     resolution: {integrity: sha512-MjYsKHO5O7mCsmRGxWcLWheFqN9DJ/2TmngvjKXihe6efViPqc274+Fx/4fYj/r03+ESvBdTXK0V6tA3rgez1g==}
@@ -2837,8 +2895,24 @@ packages:
     resolution: {integrity: sha512-p3EcsicXjit7SaskXHs1hA91QxgTw46Fv6EFKKGS5DRFLD8yKnohjF3hxoju94b/OcMZoQukzpPpBE9uLVKzgQ==}
     engines: {node: '>= 0.4'}
 
-  is-wsl@2.2.0:
-    resolution: {integrity: sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==}
+  is-regex@1.2.1:
+        resolution:
+            {
+                integrity: sha512-MjYsKHO5O7mCsmRGxWcLWheFqN9DJ/2TmngvjKXihe6efViPqc274+Fx/4fYj/r03+ESvBdTXK0V6tA3rgez1g==,
+            }
+        engines: { node: ">= 0.4" }
+
+    is-typed-array@1.1.15:
+        resolution:
+            {
+                integrity: sha512-p3EcsicXjit7SaskXHs1hA91QxgTw46Fv6EFKKGS5DRFLD8yKnohjF3hxoju94b/OcMZoQukzpPpBE9uLVKzgQ==,
+            }
+        engines: { node: ">= 0.4" }
+
+    is-wsl@2.2.0:
+        resolution:
+            {
+                integrity: sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==}
     engines: {node: '>=8'}
 
   isexe@2.0.0:
@@ -2885,8 +2959,17 @@ packages:
     resolution: {integrity: sha512-Hicd6JK5Njt2QB6XYFS7ok9e37O8AYk3jTcppG4YVQnYjOemymvTcmc7OWsmq/Qqj5TdRFO5/x/tIPmBeRtGHg==}
     engines: {node: '>=12.0.0'}
 
-  jsdom@26.1.0:
-    resolution: {integrity: sha512-Cvc9WUhxSMEo4McES3P7oK3QaXldCfNWp7pl2NNeiIFlCoLr3kfq9kb1fxftiwk1FLV7CvpvDfonxtzUDeSOPg==}
+  jsdoc-type-pratt-parser@4.1.0:
+        resolution:
+            {
+                integrity: sha512-Hicd6JK5Njt2QB6XYFS7ok9e37O8AYk3jTcppG4YVQnYjOemymvTcmc7OWsmq/Qqj5TdRFO5/x/tIPmBeRtGHg==,
+            }
+        engines: { node: ">=12.0.0" }
+
+    jsdom@26.1.0:
+        resolution:
+            {
+                integrity: sha512-Cvc9WUhxSMEo4McES3P7oK3QaXldCfNWp7pl2NNeiIFlCoLr3kfq9kb1fxftiwk1FLV7CvpvDfonxtzUDeSOPg==}
     engines: {node: '>=18'}
     peerDependencies:
       canvas: ^3.0.0
@@ -3291,8 +3374,17 @@ packages:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
 
-  postcss@8.4.31:
-    resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
+  possible-typed-array-names@1.1.0:
+        resolution:
+            {
+                integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==,
+            }
+        engines: { node: ">= 0.4" }
+
+    postcss@8.4.31:
+        resolution:
+            {
+                integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   postcss@8.5.6:
@@ -3498,8 +3590,17 @@ packages:
     resolution: {integrity: sha512-x/+Cz4YrimQxQccJf5mKEbIa1NzeCRNI5Ecl/ekmlYaampdNLPalVyIcCZNNH3MvmqBugV5TMYZXv0ljslUlaw==}
     engines: {node: '>= 0.4'}
 
-  safer-buffer@2.1.2:
-    resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
+  safe-regex-test@1.1.0:
+        resolution:
+            {
+                integrity: sha512-x/+Cz4YrimQxQccJf5mKEbIa1NzeCRNI5Ecl/ekmlYaampdNLPalVyIcCZNNH3MvmqBugV5TMYZXv0ljslUlaw==,
+            }
+        engines: { node: ">= 0.4" }
+
+    safer-buffer@2.1.2:
+        resolution:
+            {
+                integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
   sass-embedded-android-arm64@1.89.2:
     resolution: {integrity: sha512-+pq7a7AUpItNyPu61sRlP6G2A8pSPpyazASb+8AK2pVlFayCSPAEgpwpCE9A2/Xj86xJZeMizzKUHxM2CBCUxA==}
@@ -3833,7 +3934,9 @@ packages:
     engines: {node: '>=6.10'}
 
   tsconfck@3.1.6:
-    resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
+        resolution:
+            {
+                integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
     hasBin: true
     peerDependencies:
@@ -4056,8 +4159,17 @@ packages:
     resolution: {integrity: sha512-rEvr90Bck4WZt9HHFC4DJMsjvu7x+r6bImz0/BrbWb7A2djJ8hnZMrWnHo9F8ssv0OMErasDhftrfROTyqSDrw==}
     engines: {node: '>= 0.4'}
 
-  which@2.0.2:
-    resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
+  which-typed-array@1.1.19:
+        resolution:
+            {
+                integrity: sha512-rEvr90Bck4WZt9HHFC4DJMsjvu7x+r6bImz0/BrbWb7A2djJ8hnZMrWnHo9F8ssv0OMErasDhftrfROTyqSDrw==,
+            }
+        engines: { node: ">= 0.4" }
+
+    which@2.0.2:
+        resolution:
+            {
+                integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
     hasBin: true
 
@@ -6278,17 +6390,17 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  available-typed-arrays@1.0.7:
-    dependencies:
-      possible-typed-array-names: 1.1.0
+    available-typed-arrays@1.0.7:
+        dependencies:
+            possible-typed-array-names: 1.1.0
 
-  axios@1.10.0:
-    dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.3
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
+    axios@1.10.0:
+        dependencies:
+            follow-redirects: 1.15.9
+            form-data: 4.0.3
+            proxy-from-env: 1.1.0
+        transitivePeerDependencies:
+            - debug
 
   balanced-match@1.0.2: {}
 
@@ -6330,19 +6442,19 @@ snapshots:
       es-errors: 1.3.0
       function-bind: 1.1.2
 
-  call-bind@1.0.8:
-    dependencies:
-      call-bind-apply-helpers: 1.0.2
-      es-define-property: 1.0.1
-      get-intrinsic: 1.3.0
-      set-function-length: 1.2.2
+    call-bind@1.0.8:
+        dependencies:
+            call-bind-apply-helpers: 1.0.2
+            es-define-property: 1.0.1
+            get-intrinsic: 1.3.0
+            set-function-length: 1.2.2
 
-  call-bound@1.0.4:
-    dependencies:
-      call-bind-apply-helpers: 1.0.2
-      get-intrinsic: 1.3.0
+    call-bound@1.0.4:
+        dependencies:
+            call-bind-apply-helpers: 1.0.2
+            get-intrinsic: 1.3.0
 
-  caniuse-lite@1.0.30001723: {}
+    caniuse-lite@1.0.30001723: {}
 
   chai@5.2.0:
     dependencies:
@@ -6625,14 +6737,14 @@ snapshots:
 
   follow-redirects@1.15.9: {}
 
-  for-each@0.3.5:
-    dependencies:
-      is-callable: 1.2.7
+    for-each@0.3.5:
+        dependencies:
+            is-callable: 1.2.7
 
-  foreground-child@3.3.1:
-    dependencies:
-      cross-spawn: 7.0.6
-      signal-exit: 4.1.0
+    foreground-child@3.3.1:
+        dependencies:
+            cross-spawn: 7.0.6
+            signal-exit: 4.1.0
 
   form-data@4.0.3:
     dependencies:
@@ -6708,11 +6820,11 @@ snapshots:
 
   has-flag@4.0.0: {}
 
-  has-property-descriptors@1.0.2:
-    dependencies:
-      es-define-property: 1.0.1
+    has-property-descriptors@1.0.2:
+        dependencies:
+            es-define-property: 1.0.1
 
-  has-symbols@1.1.0: {}
+    has-symbols@1.1.0: {}
 
   has-tostringtag@1.0.2:
     dependencies:
@@ -6779,42 +6891,47 @@ snapshots:
       call-bound: 1.0.4
       has-tostringtag: 1.0.2
 
-  is-arrayish@0.3.2:
-    optional: true
+  is-arguments@1.2.0:
+        dependencies:
+            call-bound: 1.0.4
+            has-tostringtag: 1.0.2
 
-  is-callable@1.2.7: {}
+    is-arrayish@0.3.2:
+        optional: true
 
-  is-core-module@2.16.1:
-    dependencies:
-      hasown: 2.0.2
+    is-callable@1.2.7: {}
+
+    is-core-module@2.16.1:
+        dependencies:
+            hasown: 2.0.2
 
   is-docker@2.2.1: {}
 
   is-fullwidth-code-point@3.0.0: {}
 
-  is-generator-function@1.1.0:
-    dependencies:
-      call-bound: 1.0.4
-      get-proto: 1.0.1
-      has-tostringtag: 1.0.2
-      safe-regex-test: 1.1.0
+    is-generator-function@1.1.0:
+        dependencies:
+            call-bound: 1.0.4
+            get-proto: 1.0.1
+            has-tostringtag: 1.0.2
+            safe-regex-test: 1.1.0
 
-  is-potential-custom-element-name@1.0.1: {}
+    is-potential-custom-element-name@1.0.1: {}
 
-  is-regex@1.2.1:
-    dependencies:
-      call-bound: 1.0.4
-      gopd: 1.2.0
-      has-tostringtag: 1.0.2
-      hasown: 2.0.2
+    is-regex@1.2.1:
+        dependencies:
+            call-bound: 1.0.4
+            gopd: 1.2.0
+            has-tostringtag: 1.0.2
+            hasown: 2.0.2
 
-  is-typed-array@1.1.15:
-    dependencies:
-      which-typed-array: 1.1.19
+    is-typed-array@1.1.15:
+        dependencies:
+            which-typed-array: 1.1.19
 
-  is-wsl@2.2.0:
-    dependencies:
-      is-docker: 2.2.1
+    is-wsl@2.2.0:
+        dependencies:
+            is-docker: 2.2.1
 
   isexe@2.0.0: {}
 
@@ -6857,34 +6974,34 @@ snapshots:
 
   js-tokens@9.0.1: {}
 
-  jsdoc-type-pratt-parser@4.1.0: {}
+    jsdoc-type-pratt-parser@4.1.0: {}
 
-  jsdom@26.1.0:
-    dependencies:
-      cssstyle: 4.4.0
-      data-urls: 5.0.0
-      decimal.js: 10.5.0
-      html-encoding-sniffer: 4.0.0
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
-      is-potential-custom-element-name: 1.0.1
-      nwsapi: 2.2.20
-      parse5: 7.3.0
-      rrweb-cssom: 0.8.0
-      saxes: 6.0.0
-      symbol-tree: 3.2.4
-      tough-cookie: 5.1.2
-      w3c-xmlserializer: 5.0.0
-      webidl-conversions: 7.0.0
-      whatwg-encoding: 3.1.1
-      whatwg-mimetype: 4.0.0
-      whatwg-url: 14.2.0
-      ws: 8.18.2
-      xml-name-validator: 5.0.0
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
+    jsdom@26.1.0:
+        dependencies:
+            cssstyle: 4.4.0
+            data-urls: 5.0.0
+            decimal.js: 10.5.0
+            html-encoding-sniffer: 4.0.0
+            http-proxy-agent: 7.0.2
+            https-proxy-agent: 7.0.6
+            is-potential-custom-element-name: 1.0.1
+            nwsapi: 2.2.20
+            parse5: 7.3.0
+            rrweb-cssom: 0.8.0
+            saxes: 6.0.0
+            symbol-tree: 3.2.4
+            tough-cookie: 5.1.2
+            w3c-xmlserializer: 5.0.0
+            webidl-conversions: 7.0.0
+            whatwg-encoding: 3.1.1
+            whatwg-mimetype: 4.0.0
+            whatwg-url: 14.2.0
+            ws: 8.18.2
+            xml-name-validator: 5.0.0
+        transitivePeerDependencies:
+            - bufferutil
+            - supports-color
+            - utf-8-validate
 
   jsesc@3.1.0: {}
 
@@ -7308,11 +7425,13 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss@8.4.31:
-    dependencies:
-      nanoid: 3.3.11
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
+  possible-typed-array-names@1.1.0: {}
+
+    postcss@8.4.31:
+        dependencies:
+            nanoid: 3.3.11
+            picocolors: 1.1.1
+            source-map-js: 1.2.1
 
   postcss@8.5.6:
     dependencies:
@@ -7337,11 +7456,11 @@ snapshots:
       ansi-styles: 5.2.0
       react-is: 17.0.2
 
-  process@0.11.10: {}
+    process@0.11.10: {}
 
-  prosemirror-changeset@2.3.1:
-    dependencies:
-      prosemirror-transform: 1.10.4
+    prosemirror-changeset@2.3.1:
+        dependencies:
+            prosemirror-transform: 1.10.4
 
   prosemirror-collab@1.3.1:
     dependencies:
@@ -7589,13 +7708,13 @@ snapshots:
 
   safe-buffer@5.2.1: {}
 
-  safe-regex-test@1.1.0:
-    dependencies:
-      call-bound: 1.0.4
-      es-errors: 1.3.0
-      is-regex: 1.2.1
+    safe-regex-test@1.1.0:
+        dependencies:
+            call-bound: 1.0.4
+            es-errors: 1.3.0
+            is-regex: 1.2.1
 
-  safer-buffer@2.1.2: {}
+    safer-buffer@2.1.2: {}
 
   sass-embedded-android-arm64@1.89.2:
     optional: true
@@ -7684,22 +7803,22 @@ snapshots:
 
   semver@7.7.2: {}
 
-  set-function-length@1.2.2:
-    dependencies:
-      define-data-property: 1.1.4
-      es-errors: 1.3.0
-      function-bind: 1.1.2
-      get-intrinsic: 1.3.0
-      gopd: 1.2.0
-      has-property-descriptors: 1.0.2
+    set-function-length@1.2.2:
+        dependencies:
+            define-data-property: 1.1.4
+            es-errors: 1.3.0
+            function-bind: 1.1.2
+            get-intrinsic: 1.3.0
+            gopd: 1.2.0
+            has-property-descriptors: 1.0.2
 
-  sharp@0.33.5:
-    dependencies:
-      color: 4.2.3
-      detect-libc: 2.0.4
-      semver: 7.7.2
-    optionalDependencies:
-      '@img/sharp-darwin-arm64': 0.33.5
+    sharp@0.33.5:
+        dependencies:
+            color: 4.2.3
+            detect-libc: 2.0.4
+            semver: 7.7.2
+        optionalDependencies:
+            '@img/sharp-darwin-arm64': 0.33.5
       '@img/sharp-darwin-x64': 0.33.5
       '@img/sharp-libvips-darwin-arm64': 1.0.4
       '@img/sharp-libvips-darwin-x64': 1.0.4
@@ -7993,15 +8112,15 @@ snapshots:
     dependencies:
       react: 19.1.0
 
-  util@0.12.5:
-    dependencies:
-      inherits: 2.0.4
-      is-arguments: 1.2.0
-      is-generator-function: 1.1.0
-      is-typed-array: 1.1.15
-      which-typed-array: 1.1.19
+    util@0.12.5:
+        dependencies:
+            inherits: 2.0.4
+            is-arguments: 1.2.0
+            is-generator-function: 1.1.0
+            is-typed-array: 1.1.15
+            which-typed-array: 1.1.19
 
-  uuid@9.0.1: {}
+    uuid@9.0.1: {}
 
   varint@6.0.0:
     optional: true
@@ -8027,7 +8146,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-storybook-nextjs@1.1.5(@storybook/test@8.6.14(storybook@8.6.14(prettier@3.5.3)))(next@15.3.4(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(storybook@8.6.14(prettier@3.5.3))(vite@6.3.5(@types/node@24.0.1)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.42.0)):
+  vite-plugin-storybook-nextjs@1.1.5(@storybook/test@8.6.14(storybook@8.6.14(prettier@3.5.3)))(next@15.3.4(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(storybook@8.6.14(prettier@3.5.3))(vite@6.3.5(@types/node@24.0.3)(jiti@2.4.2)(lightningcss@1.30.1)(sass-embedded@1.89.2)(terser@5.42.0)):
     dependencies:
       '@next/env': 15.3.4
       '@storybook/test': 8.6.14(storybook@8.6.14(prettier@3.5.3))
@@ -8147,19 +8266,19 @@ snapshots:
       tr46: 0.0.3
       webidl-conversions: 3.0.1
 
-  which-typed-array@1.1.19:
-    dependencies:
-      available-typed-arrays: 1.0.7
-      call-bind: 1.0.8
-      call-bound: 1.0.4
-      for-each: 0.3.5
-      get-proto: 1.0.1
-      gopd: 1.2.0
-      has-tostringtag: 1.0.2
+    which-typed-array@1.1.19:
+        dependencies:
+            available-typed-arrays: 1.0.7
+            call-bind: 1.0.8
+            call-bound: 1.0.4
+            for-each: 0.3.5
+            get-proto: 1.0.1
+            gopd: 1.2.0
+            has-tostringtag: 1.0.2
 
-  which@2.0.2:
-    dependencies:
-      isexe: 2.0.0
+    which@2.0.2:
+        dependencies:
+            isexe: 2.0.0
 
   why-is-node-running@2.3.0:
     dependencies:

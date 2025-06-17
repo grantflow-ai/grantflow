@@ -4075,11 +4075,7 @@ snapshots:
   eslint-plugin-promise@7.2.1(eslint@9.29.0(jiti@2.4.2)):
     dependencies:
       '@eslint-community/eslint-utils': 4.7.0(eslint@9.29.0(jiti@2.4.2))
-      eslint: 9.29.0(jiti@2.4.2)
-
-  eslint-plugin-react-hooks@5.2.0(eslint@9.29.0(jiti@2.4.2)):
-    dependencies:
-      eslint: 9.29.0(jiti@2.4.2)
+            eslint: 9.29.0(jiti@2.4.2)
 
   eslint-plugin-react-perf@3.3.3(eslint@9.29.0(jiti@2.4.2)):
     dependencies:
