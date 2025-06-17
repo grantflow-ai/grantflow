@@ -97,7 +97,7 @@ interface SortableSectionProps {
 export function ApplicationStructureStep({ connectionStatus, connectionStatusColor }: ApplicationStructureStepProps) {
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
-			<div className="w-1/3 space-y-6 overflow-y-auto p-6 sm:w-1/2">
+			<div className="w-1/3 overflow-y-auto p-6 sm:w-1/2">
 				<div className="space-y-6">
 					<div>
 						<h2
@@ -110,32 +110,113 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 							className="text-muted-foreground-dark leading-tight"
 							data-testid="application-structure-description"
 						>
-							Review and customize the structure of your grant application.
+							{structureAnalysisStatus === "analyzing"
+								? "Analyzing your knowledge base to generate the optimal structure..."
+								: "Review and customize the structure of your grant application."}
 						</p>
 					</div>
 
-					<div className="space-y-4">
-						<Card className="border-app-gray-100 border p-4 shadow-none">
-							<h3 className="font-heading mb-2 text-base font-semibold">Section Configuration</h3>
-							<p className="text-muted-foreground-dark text-sm">
-								Configure the sections and structure of your application based on the requirements.
-							</p>
-						</Card>
+					{structureAnalysisStatus === "analyzing" ? (
+						<div className="relative space-y-6">
+							{ANALYZING_STEPS.map((section, sectionIndex) => (
+								<div
+									className={`transition-all duration-700 ${
+										visibleSteps > sectionIndex
+											? "translate-x-0 opacity-100"
+											: "-translate-x-4 opacity-0"
+									}`}
+									key={sectionIndex}
+								>
+									<div className="relative">
+										{/* Step connector line */}
+										{sectionIndex < ANALYZING_STEPS.length - 1 && (
+											<div
+												className={`absolute left-3 top-8 h-full w-0.5 transition-all duration-500 ${
+													visibleSteps > sectionIndex ? "bg-blue-200" : "bg-gray-200"
+												}`}
+											/>
+										)}
 
-						<Card className="border-app-gray-100 border p-4 shadow-none">
-							<h3 className="font-heading mb-2 text-base font-semibold">Content Organization</h3>
-							<p className="text-muted-foreground-dark text-sm">
-								Organize your content and determine the flow of your application.
-							</p>
-						</Card>
+										{/* Step header */}
+										<div className="mb-3 flex items-center gap-3">
+											<div
+												className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+													visibleSteps > sectionIndex
+														? "border-blue-500 bg-blue-500 text-white"
+														: "border-gray-300 bg-white text-gray-400"
+												}`}
+											>
+												<span className="text-xs font-medium">{sectionIndex + 1}</span>
+											</div>
+											<h4
+												className={`font-medium transition-colors duration-300 ${
+													visibleSteps > sectionIndex ? "text-gray-900" : "text-gray-400"
+												}`}
+											>
+												{section.title}
+											</h4>
+											{visibleSteps === sectionIndex + 1 && (
+												<div className="ml-2 size-2 animate-pulse rounded-full bg-blue-500" />
+											)}
+										</div>
 
-						<Card className="border-app-gray-100 border p-4 shadow-none">
-							<h3 className="font-heading mb-2 text-base font-semibold">Requirements Mapping</h3>
-							<p className="text-muted-foreground-dark text-sm">
-								Map application requirements to specific sections and content areas.
-							</p>
-						</Card>
-					</div>
+										{/* Sub-steps */}
+										<div className="ml-9 space-y-2">
+											{section.steps.map((step, stepIndex) => (
+												<div
+													className={`flex items-start gap-2 text-sm transition-all duration-300 ${
+														visibleSteps > sectionIndex
+															? "translate-x-0 opacity-100"
+															: "-translate-x-2 opacity-0"
+													}`}
+													key={stepIndex}
+													style={{
+														transitionDelay: `${stepIndex * 100}ms`,
+													}}
+												>
+													<span className="text-gray-400">{stepIndex + 1}.</span>
+													<span
+														className={`transition-colors duration-300 ${
+															visibleSteps > sectionIndex
+																? "text-gray-700"
+																: "text-gray-400"
+														}`}
+													>
+														{step}
+													</span>
+												</div>
+											))}
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					) : structureAnalysisStatus === "analyzed" ? (
+						<AnalyzedStateContent />
+					) : (
+						<div className="space-y-4">
+							<Card className="border-app-gray-100 border p-4 shadow-none">
+								<h3 className="font-heading mb-2 text-base font-semibold">Section Configuration</h3>
+								<p className="text-muted-foreground-dark text-sm">
+									Configure the sections and structure of your application based on the requirements.
+								</p>
+							</Card>
+
+							<Card className="border-app-gray-100 border p-4 shadow-none">
+								<h3 className="font-heading mb-2 text-base font-semibold">Content Organization</h3>
+								<p className="text-muted-foreground-dark text-sm">
+									Organize your content and determine the flow of your application.
+								</p>
+							</Card>
+
+							<Card className="border-app-gray-100 border p-4 shadow-none">
+								<h3 className="font-heading mb-2 text-base font-semibold">Requirements Mapping</h3>
+								<p className="text-muted-foreground-dark text-sm">
+									Map application requirements to specific sections and content areas.
+								</p>
+							</Card>
+						</div>
+					)}
 				</div>
 			</div>
 

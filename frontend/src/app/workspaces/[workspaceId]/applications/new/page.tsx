@@ -121,7 +121,7 @@ export default function CreateGrantApplicationWizardPage() {
 	return (
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
 			<WizardHeader />
-			<section className="flex-1 overflow-auto" data-testid="step-content-container">
+			<section className="flex-1 overflow-auto" data-testid="step-content-container" key={currentStep}>
 				{steps[currentStep]}
 			</section>
 			<WizardFooter />
