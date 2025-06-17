@@ -1,10 +1,11 @@
 import ky, { KyInstance } from "ky";
 
-import { ONE_MINUTE_IN_MS } from "@/constants";
 import { getEnv } from "@/utils/env";
 import { Ref } from "@/utils/state";
 
 const clientRef = new Ref<KyInstance>();
+
+const ONE_MINUTE_IN_MS = 60 * 1000;
 
 export function getClient(): KyInstance {
 	clientRef.value ??= ky.create({
