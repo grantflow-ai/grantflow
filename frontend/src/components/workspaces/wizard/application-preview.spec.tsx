@@ -23,13 +23,23 @@ describe("ApplicationPreview", () => {
 		vi.clearAllMocks();
 		// Reset mock store to default state
 		Object.assign(mockWizardStore, {
-			applicationTitle: "",
+			applicationState: {
+				application: null,
+				applicationId: null,
+				applicationTitle: "",
+				connectionStatus: undefined,
+				connectionStatusColor: undefined,
+				templateId: null,
+			},
+			contentState: {
+				uploadedFiles: [],
+				urls: [],
+			},
 			ui: {
 				fileDropdownStates: {},
 				linkHoverStates: {},
+				urlInput: "",
 			},
-			uploadedFiles: [],
-			urls: [],
 		});
 	});
 
@@ -41,7 +51,10 @@ describe("ApplicationPreview", () => {
 
 	it("renders application title", () => {
 		Object.assign(mockWizardStore, {
-			applicationTitle: "Test Application",
+			applicationState: {
+				...mockWizardStore.applicationState,
+				applicationTitle: "Test Application",
+			},
 		});
 
 		render(<ApplicationPreview />);
@@ -53,7 +66,10 @@ describe("ApplicationPreview", () => {
 	it("renders untitled when no title", () => {
 		const file = createMockFile("test.pdf", 1024, "application/pdf", "file-id");
 		Object.assign(mockWizardStore, {
-			uploadedFiles: [file],
+			contentState: {
+				...mockWizardStore.contentState,
+				uploadedFiles: [file],
+			},
 		});
 
 		render(<ApplicationPreview />);
@@ -64,7 +80,10 @@ describe("ApplicationPreview", () => {
 	it("renders uploaded files", () => {
 		const file = createMockFile("test.pdf", 1024, "application/pdf", "file-id");
 		Object.assign(mockWizardStore, {
-			uploadedFiles: [file],
+			contentState: {
+				...mockWizardStore.contentState,
+				uploadedFiles: [file],
+			},
 		});
 
 		render(<ApplicationPreview />);
@@ -75,7 +94,10 @@ describe("ApplicationPreview", () => {
 
 	it("renders URLs", () => {
 		Object.assign(mockWizardStore, {
-			urls: ["https://example.com"],
+			contentState: {
+				...mockWizardStore.contentState,
+				urls: ["https://example.com"],
+			},
 		});
 
 		render(<ApplicationPreview />);

@@ -7,22 +7,25 @@ import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";
 describe("validateStepNext", () => {
 	beforeEach(() => {
 		useWizardStore.setState({
-			application: null,
-			applicationId: null,
-			applicationTitle: "",
-			connectionStatus: undefined,
-			connectionStatusColor: undefined,
-			currentStep: 0,
-			isCreatingApplication: true,
-			isGeneratingTemplate: false,
-			templateId: null,
+			applicationState: {
+				application: null,
+				applicationId: null,
+				applicationTitle: "",
+				templateId: null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
+			contentState: {
+				uploadedFiles: [],
+				urls: [],
+			},
+			isLoading: true,
 			ui: {
+				currentStep: 0,
 				fileDropdownStates: {},
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			uploadedFiles: [],
-			urls: [],
 			workspaceId: "",
 		});
 	});
@@ -35,12 +38,19 @@ describe("validateStepNext", () => {
 		});
 	});
 
-	describe("when isGeneratingTemplate is true", () => {
+	describe("when isLoading is true", () => {
 		it("should return false", () => {
 			const application = ApplicationFactory.build();
 			useWizardStore.setState({
-				application,
-				isGeneratingTemplate: true,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: true,
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -53,11 +63,25 @@ describe("validateStepNext", () => {
 		it("should return true when title is long enough and has URLs", () => {
 			const application = ApplicationFactory.build();
 			useWizardStore.setState({
-				application,
-				applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-				currentStep: 0,
-				uploadedFiles: [],
-				urls: ["https://example.com"],
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				contentState: {
+					uploadedFiles: [],
+					urls: ["https://example.com"],
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -68,11 +92,25 @@ describe("validateStepNext", () => {
 		it("should return true when title is long enough and has files", () => {
 			const application = ApplicationFactory.build();
 			useWizardStore.setState({
-				application,
-				applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-				currentStep: 0,
-				uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
-				urls: [],
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				contentState: {
+					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
+					urls: [],
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -83,11 +121,25 @@ describe("validateStepNext", () => {
 		it("should return true when title is long enough and has both URLs and files", () => {
 			const application = ApplicationFactory.build();
 			useWizardStore.setState({
-				application,
-				applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-				currentStep: 0,
-				uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
-				urls: ["https://example.com"],
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				contentState: {
+					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
+					urls: ["https://example.com"],
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -100,10 +152,25 @@ describe("validateStepNext", () => {
 				title: "A".repeat(MIN_TITLE_LENGTH - 1),
 			});
 			useWizardStore.setState({
-				application,
-				currentStep: 0,
-				uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
-				urls: ["https://example.com"],
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "A".repeat(MIN_TITLE_LENGTH - 1),
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				contentState: {
+					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
+					urls: ["https://example.com"],
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -114,11 +181,25 @@ describe("validateStepNext", () => {
 		it("should trim whitespace from title", () => {
 			const application = ApplicationFactory.build();
 			useWizardStore.setState({
-				application,
-				applicationTitle: `   ${"A".repeat(MIN_TITLE_LENGTH)}   `,
-				currentStep: 0,
-				uploadedFiles: [],
-				urls: ["https://example.com"],
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: `   ${"A".repeat(MIN_TITLE_LENGTH)}   `,
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				contentState: {
+					uploadedFiles: [],
+					urls: ["https://example.com"],
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -131,10 +212,25 @@ describe("validateStepNext", () => {
 				title: "A".repeat(MIN_TITLE_LENGTH),
 			});
 			useWizardStore.setState({
-				application,
-				currentStep: 0,
-				uploadedFiles: [],
-				urls: [],
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				contentState: {
+					uploadedFiles: [],
+					urls: [],
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -147,8 +243,21 @@ describe("validateStepNext", () => {
 		it("should return true when grant template has sections", () => {
 			const application = ApplicationWithTemplateFactory.build();
 			useWizardStore.setState({
-				application,
-				currentStep: 1,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 1,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -159,8 +268,21 @@ describe("validateStepNext", () => {
 		it("should return false when grant template is null", () => {
 			const application = ApplicationFactory.build();
 			useWizardStore.setState({
-				application,
-				currentStep: 1,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 1,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -183,8 +305,21 @@ describe("validateStepNext", () => {
 				},
 			});
 			useWizardStore.setState({
-				application,
-				currentStep: 1,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 1,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -198,8 +333,21 @@ describe("validateStepNext", () => {
 			const ragSources = RagSourceFactory.batch(3, { status: "FINISHED" });
 			const application = ApplicationFactory.build({ rag_sources: ragSources });
 			useWizardStore.setState({
-				application,
-				currentStep: 2,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 2,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -215,8 +363,21 @@ describe("validateStepNext", () => {
 			];
 			const application = ApplicationFactory.build({ rag_sources: ragSources });
 			useWizardStore.setState({
-				application,
-				currentStep: 2,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 2,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -232,8 +393,21 @@ describe("validateStepNext", () => {
 			];
 			const application = ApplicationFactory.build({ rag_sources: ragSources });
 			useWizardStore.setState({
-				application,
-				currentStep: 2,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 2,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -244,8 +418,21 @@ describe("validateStepNext", () => {
 		it("should return false when no rag sources exist", () => {
 			const application = ApplicationFactory.build({ rag_sources: [] });
 			useWizardStore.setState({
-				application,
-				currentStep: 2,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 2,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();
@@ -258,8 +445,21 @@ describe("validateStepNext", () => {
 		it("should return false for steps beyond 2", () => {
 			const application = ApplicationFactory.build();
 			useWizardStore.setState({
-				application,
-				currentStep: 3,
+				applicationState: {
+					application,
+					applicationId: null,
+					applicationTitle: "",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				isLoading: false,
+				ui: {
+					currentStep: 3,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
 			});
 
 			const { validateStepNext } = useWizardStore.getState();

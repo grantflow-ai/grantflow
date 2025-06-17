@@ -34,7 +34,11 @@ const FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
 
 export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: () => void }) {
-	const { addFile, templateId, workspaceId } = useWizardStore();
+	const {
+		addFile,
+		applicationState: { templateId },
+		workspaceId,
+	} = useWizardStore();
 
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
 		for (const file of newFileUploads) {
