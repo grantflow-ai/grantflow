@@ -8,26 +8,36 @@ import AppInput from "@/components/input-field";
 import { IconGlobe } from "@/components/workspaces/icons";
 import { useWizardStore } from "@/stores/wizard-store";
 import { logError } from "@/utils/logging";
+import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 	const {
 		addUrl,
+		applicationState: { templateId },
+		contentState: { urls },
 		setUrlInput,
-		templateId,
 		ui: { urlInput },
-		urls,
 		workspaceId,
 	} = useWizardStore();
+
+	const [urlError, setUrlError] = React.useState<null | string>(null);
 
 	const handleAddUrl = async (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter" && urlInput.trim()) {
 			e.preventDefault();
 			const trimmedUrl = urlInput.trim();
 
+			if (!isValidUrl(trimmedUrl)) {
+				setUrlError("Please enter a valid URL");
+				return;
+			}
+
+			setUrlError(null);
+
 			if (!urls.includes(trimmedUrl)) {
 				try {
 					const result = await crawlTemplateUrl(workspaceId, templateId ?? "", trimmedUrl);
-					toast.success([result.message || "URL added successfully"]);
+					toast.success(result.message || "URL added successfully");
 
 					addUrl(trimmedUrl);
 
@@ -35,7 +45,7 @@ export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 					onUrlAdded?.();
 				} catch (error) {
 					logError({ error, identifier: "crawlTemplateUrl" });
-					toast.error(["Failed to process URL. Please try again."]);
+					toast.error("Failed to process URL. Please try again.");
 				}
 			}
 			setUrlInput("");
@@ -44,11 +54,15 @@ export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 
 	return (
 		<AppInput
+			errorMessage={urlError}
 			icon={<IconGlobe />}
 			id="url-input"
 			label="URL"
 			onChange={(e) => {
 				setUrlInput(e.target.value);
+				if (urlError) {
+					setUrlError(null);
+				}
 			}}
 			onKeyDown={handleAddUrl}
 			placeholder="Paste a link and press Enter to add"

@@ -20,18 +20,25 @@ describe("ApplicationDetailsStep", () => {
 		vi.clearAllMocks();
 		// Reset mock store to default state
 		Object.assign(mockWizardStore, {
-			applicationId: null,
-			applicationTitle: "",
-			currentStep: 0,
-			isCreatingApplication: false,
-			templateId: "test-template-id",
+			applicationState: {
+				application: null,
+				applicationId: null,
+				applicationTitle: "",
+				connectionStatus: undefined,
+				connectionStatusColor: undefined,
+				templateId: "test-template-id",
+			},
+			contentState: {
+				uploadedFiles: [],
+				urls: [],
+			},
+			isLoading: false,
 			ui: {
+				currentStep: 0,
 				fileDropdownStates: {},
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			uploadedFiles: [],
-			urls: [],
 			workspaceId: "test-workspace-id",
 		});
 	});
@@ -54,7 +61,10 @@ describe("ApplicationDetailsStep", () => {
 
 	it("displays character count for title", () => {
 		Object.assign(mockWizardStore, {
-			applicationTitle: "Test Title",
+			applicationState: {
+				...mockWizardStore.applicationState,
+				applicationTitle: "Test Title",
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -90,7 +100,10 @@ describe("ApplicationDetailsStep", () => {
 
 		// Set up required fields for URL input to work
 		Object.assign(mockWizardStore, {
-			templateId: "test-template-id",
+			applicationState: {
+				...mockWizardStore.applicationState,
+				templateId: "test-template-id",
+			},
 			ui: {
 				...mockWizardStore.ui,
 				urlInput: "",
@@ -109,7 +122,10 @@ describe("ApplicationDetailsStep", () => {
 
 	it("displays existing URLs", () => {
 		Object.assign(mockWizardStore, {
-			urls: ["https://example1.com", "https://example2.com"],
+			contentState: {
+				...mockWizardStore.contentState,
+				urls: ["https://example1.com", "https://example2.com"],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -122,7 +138,10 @@ describe("ApplicationDetailsStep", () => {
 		const user = userEvent.setup();
 
 		Object.assign(mockWizardStore, {
-			urls: ["https://example1.com", "https://example2.com"],
+			contentState: {
+				...mockWizardStore.contentState,
+				urls: ["https://example1.com", "https://example2.com"],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -161,7 +180,10 @@ describe("ApplicationDetailsStep", () => {
 		Object.assign(file, { id: "file-id" });
 
 		Object.assign(mockWizardStore, {
-			uploadedFiles: [file],
+			contentState: {
+				...mockWizardStore.contentState,
+				uploadedFiles: [file],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -177,7 +199,10 @@ describe("ApplicationDetailsStep", () => {
 		Object.assign(file, { id: "file-id" });
 
 		Object.assign(mockWizardStore, {
-			uploadedFiles: [file],
+			contentState: {
+				...mockWizardStore.contentState,
+				uploadedFiles: [file],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
