@@ -22,12 +22,11 @@ import { SocialSigninButton } from "@/components/social-signin-buttons";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
-
-const FIREBASE_LOCAL_STORAGE_KEY = "firebase-signin-email";
 
 const loginFormSchema = z.object({
 	email: z

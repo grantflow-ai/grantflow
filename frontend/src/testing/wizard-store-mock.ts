@@ -20,14 +20,20 @@ interface WizardStoreMock {
 	addFile: (file: FileWithId) => void;
 	addUrl: (url: string) => void;
 	applicationState: ApplicationState;
+	areFilesOrUrlsIndexing: () => boolean;
 	contentState: ContentState;
 	initializeApplication: (workspaceId: string) => Promise<void>;
 	isCurrentStepValid: () => boolean;
 	isLoading: boolean;
 	isStep1Valid: () => boolean;
+	polling: {
+		start: (callback: () => void, interval: number, immediate?: boolean) => void;
+		stop: () => void;
+	};
 	removeFile: (fileToRemove: FileWithId) => void;
 	removeUrl: (url: string) => void;
 	resetWizard: () => void;
+	retrieveApplication: () => Promise<void>;
 	setApplicationId: (id: string) => void;
 	setApplicationTitle: (title: string) => void;
 	setCurrentStep: (step: number) => void;
@@ -68,6 +74,7 @@ const mockWizardStore: WizardStoreMock = {
 		wsConnectionStatus: undefined,
 		wsConnectionStatusColor: undefined,
 	},
+	areFilesOrUrlsIndexing: vi.fn(() => false),
 	contentState: {
 		uploadedFiles: [],
 		urls: [],
@@ -76,11 +83,16 @@ const mockWizardStore: WizardStoreMock = {
 	isCurrentStepValid: vi.fn(() => false),
 	isLoading: false,
 	isStep1Valid: vi.fn(() => false),
+	polling: {
+		start: vi.fn(),
+		stop: vi.fn(),
+	},
 	removeFile: vi.fn(),
 	removeUrl: vi.fn((url: string) => {
 		mockWizardStore.contentState.urls = mockWizardStore.contentState.urls.filter((u) => u !== url);
 	}),
 	resetWizard: vi.fn(),
+	retrieveApplication: vi.fn().mockResolvedValue(undefined),
 	setApplicationId: vi.fn(),
 	setApplicationTitle: vi.fn(),
 	setCurrentStep: vi.fn(),
