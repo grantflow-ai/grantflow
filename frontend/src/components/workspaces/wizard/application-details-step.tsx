@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 
 import { deleteTemplateSource } from "@/actions/sources";
@@ -19,29 +19,42 @@ const TITLE_MAX_LENGTH = 120;
 
 export function ApplicationDetailsStep() {
 	const {
-		applicationTitle,
+		applicationState: { applicationTitle, templateId },
 		areFilesOrUrlsIndexing,
-		polling,
+		polling: { start, stop },
 		removeFile,
 		removeUrl,
 		retrieveApplication,
 		setApplicationTitle,
-		templateId,
 		workspaceId,
 	} = useWizardStore();
 
-	const handleRetrieveWithPolling = useCallback(async () => {
+	const getIndexingStatus = useCallback(async () => {
 		await retrieveApplication();
-		if (areFilesOrUrlsIndexing()) {
-			polling.start(retrieveApplication, POLLING_INTERVAL_DURATION, false);
+		return areFilesOrUrlsIndexing();
+	}, [retrieveApplication, areFilesOrUrlsIndexing]);
+
+	const handleRetrieveWithPolling = useCallback(async () => {
+		const isIndexing = await getIndexingStatus();
+
+		if (isIndexing) {
+			start(handleRetrieveWithPolling, POLLING_INTERVAL_DURATION, false);
+		} else {
+			stop();
 		}
-	}, [retrieveApplication, areFilesOrUrlsIndexing, polling]);
+	}, [getIndexingStatus, start, stop]);
 
 	const debouncedRetrieveApplication = useDebounce(handleRetrieveWithPolling, DEBOUNCE_MS);
 
 	const handleDocumentChange = useCallback(() => {
 		debouncedRetrieveApplication();
 	}, [debouncedRetrieveApplication]);
+
+	useEffect(() => {
+		return () => {
+			stop();
+		};
+	}, [stop]);
 
 	const handleRemoveUrl = (urlToRemove: string) => {
 		removeUrl(urlToRemove);
