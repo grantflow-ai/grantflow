@@ -23,3 +23,5 @@ vi.mock("react", async (importOriginal) => {
 		cache: <T extends (...args: unknown[]) => unknown>(func: T) => func,
 	};
 });
+
+vi.mock("zustand");

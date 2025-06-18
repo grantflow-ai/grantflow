@@ -152,5 +152,3 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 		},
 	),
 );
-
-useWizardStore.getState();
