@@ -36,13 +36,10 @@ export function DevAutofillButton() {
 		try {
 			const workspaceId = params.workspaceId as string;
 
-			// Step 0: Application Details
 			switch (ui.currentStep) {
 				case 0: {
-					// Set title
 					setApplicationTitle("AI-Powered Early Cancer Detection Using Novel Biomarkers");
 
-					// Add URLs via real API calls
 					for (const url of TEST_URLS) {
 						try {
 							await crawlTemplateUrl(workspaceId, applicationState.templateId ?? "", url);
@@ -54,13 +51,9 @@ export function DevAutofillButton() {
 						}
 					}
 
-					// Create test files from the actual test data
 					const testFiles = TEST_FILES.map((fileInfo) => {
-						// For development, we'll create mock File objects
-						// In a real scenario, you'd fetch these from the file system
 						const file = new File(["Test file content"], fileInfo.name, { type: fileInfo.type });
 
-						// Add id property to the File object
 						(file as FileWithId).id = `file-${Date.now()}-${Math.random()}`;
 
 						return file as FileWithId;
@@ -73,14 +66,11 @@ export function DevAutofillButton() {
 					break;
 				}
 				case 1: {
-					// The structure is already generated when moving from step 0 to step 1
-					// Just click "Approve and Continue"
 					toast.info("Application structure is ready. Click 'Approve and Continue'.");
 
 					break;
 				}
 				case 2: {
-					// RAG sources should already be populated from step 0
 					toast.info("Knowledge base is ready. Click 'Next' to proceed.");
 
 					break;
@@ -94,7 +84,6 @@ export function DevAutofillButton() {
 		}
 	};
 
-	// Only show in development
 	if (process.env.NODE_ENV === "production") {
 		return null;
 	}
