@@ -1,33 +1,33 @@
 import { render, screen } from "@testing-library/react";
 
+import { WorkspaceListItemFactory } from "::testing/factories";
 import { PagePath } from "@/enums";
 
 import { WorkspaceCard } from "./workspace-card";
 
 describe("WorkspaceCard", () => {
-	const mockWorkspaceOwner = {
+	const mockWorkspaceOwner = WorkspaceListItemFactory.build({
 		description: "This is a test workspace description",
 		id: "workspace-123",
 		name: "Test Workspace",
-		role: "OWNER" as const,
-	};
+		role: "OWNER",
+	});
 
-	const mockWorkspaceAdmin = {
+	const mockWorkspaceAdmin = WorkspaceListItemFactory.build({
 		description: "This is an admin workspace",
 		id: "workspace-456",
 		name: "Admin Workspace",
-		role: "ADMIN" as const,
-	};
+		role: "ADMIN",
+	});
 
-	const mockWorkspaceMember = {
+	const mockWorkspaceMember = WorkspaceListItemFactory.build({
 		description: "This is a member workspace",
 		id: "workspace-789",
 		name: "Member Workspace",
-		role: "MEMBER" as const,
-	};
+		role: "MEMBER",
+	});
 
 	it("renders workspace details correctly", () => {
-		// @ts-expect-error, mocking
 		render(<WorkspaceCard workspace={mockWorkspaceOwner} />);
 
 		expect(screen.getByText("Test Workspace")).toBeInTheDocument();
@@ -36,7 +36,6 @@ describe("WorkspaceCard", () => {
 	});
 
 	it("links to the correct workspace detail page", () => {
-		// @ts-expect-error, mocking
 		render(<WorkspaceCard workspace={mockWorkspaceOwner} />);
 
 		const link = screen.getByTestId(`workspace-link-${mockWorkspaceOwner.id}`);
@@ -46,7 +45,6 @@ describe("WorkspaceCard", () => {
 	});
 
 	it("applies the correct badge color for OWNER role", () => {
-		// @ts-expect-error, mocking
 		render(<WorkspaceCard workspace={mockWorkspaceOwner} />);
 
 		const badge = screen.getByText("OWNER");
@@ -55,7 +53,6 @@ describe("WorkspaceCard", () => {
 	});
 
 	it("applies the correct badge color for ADMIN role", () => {
-		// @ts-expect-error, mocking
 		render(<WorkspaceCard workspace={mockWorkspaceAdmin} />);
 
 		const badge = screen.getByText("ADMIN");
@@ -64,7 +61,6 @@ describe("WorkspaceCard", () => {
 	});
 
 	it("applies the correct badge color for MEMBER role", () => {
-		// @ts-expect-error, mocking
 		render(<WorkspaceCard workspace={mockWorkspaceMember} />);
 
 		const badge = screen.getByText("MEMBER");
@@ -73,17 +69,16 @@ describe("WorkspaceCard", () => {
 	});
 
 	it("truncates long workspace names and descriptions", () => {
-		const longNameWorkspace = {
+		const longNameWorkspace = WorkspaceListItemFactory.build({
 			...mockWorkspaceOwner,
 			description:
 				"This is an extremely long description that should definitely be truncated in the UI to prevent it from taking up too much space and causing layout issues",
 			name: "This is a very long workspace name that should be truncated in the UI",
-		};
-		// @ts-expect-error, mocking
+		});
 		render(<WorkspaceCard workspace={longNameWorkspace} />);
 
 		const nameElement = screen.getByText(longNameWorkspace.name);
-		const descriptionElement = screen.getByText(longNameWorkspace.description);
+		const descriptionElement = screen.getByText(longNameWorkspace.description!);
 
 		expect(nameElement).toHaveClass("line-clamp-1");
 		expect(descriptionElement).toHaveClass("line-clamp-2");

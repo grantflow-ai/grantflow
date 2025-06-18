@@ -41,17 +41,14 @@ importers:
                 specifier: ^1.1.0
                 version: 1.1.0
             eslint-plugin-perfectionist:
-                specifier: ^4.14.0
-                version: 4.14.0(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
+                specifier: ^4.15.0
+                version: 4.15.0(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
             eslint-plugin-promise:
                 specifier: 7.2.1
                 version: 7.2.1(eslint@9.29.0(jiti@2.4.2))
             eslint-plugin-react:
                 specifier: ^7.37.5
                 version: 7.37.5(eslint@9.29.0(jiti@2.4.2))
-            eslint-plugin-react-hooks:
-                specifier: ^5.2.0
-                version: 5.2.0(eslint@9.29.0(jiti@2.4.2))
             eslint-plugin-react-perf:
                 specifier: ^3.3.3
                 version: 3.3.3(eslint@9.29.0(jiti@2.4.2))
@@ -1873,10 +1870,10 @@ packages:
                 integrity: sha512-Ye633sqwSy/GE5dLUI4zpxXoekIyQOD8FyYi2H0YkBws3Q4xjX/ycIzpDWt7BDAlKhbXYGk2BgP9qmNFnEX03w==,
             }
 
-    eslint-plugin-perfectionist@4.14.0:
+    eslint-plugin-perfectionist@4.15.0:
         resolution:
             {
-                integrity: sha512-BkhiOqzdum8vQSFgj1/q5+6UUWPMn4GELdxuX7uIsGegmAeH/+LnWsiVxgMrxalD0p68sYfMeKaHF1NfrpI/mg==,
+                integrity: sha512-pC7PgoXyDnEXe14xvRUhBII8A3zRgggKqJFx2a82fjrItDs1BSI7zdZnQtM2yQvcyod6/ujmzb7ejKPx8lZTnw==,
             }
         engines: { node: ^18.0.0 || >=20.0.0 }
         peerDependencies:
@@ -1890,15 +1887,6 @@ packages:
         engines: { node: ^18.18.0 || ^20.9.0 || >=21.1.0 }
         peerDependencies:
             eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-
-    eslint-plugin-react-hooks@5.2.0:
-        resolution:
-            {
-                integrity: sha512-+f15FfK64YQwZdJNELETdn5ibXEUQmW1DZL6KXhNnc2heoy/sg9VJJeT7n8TlMWouzWqSWavFkIhHyIbIAEapg==,
-            }
-        engines: { node: ">=10" }
-        peerDependencies:
-            eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
 
     eslint-plugin-react-perf@3.3.3:
         resolution:
@@ -5084,7 +5072,7 @@ snapshots:
         dependencies:
             comment-json: 4.2.5
 
-    eslint-plugin-perfectionist@4.14.0(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3):
+    eslint-plugin-perfectionist@4.15.0(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3):
         dependencies:
             "@typescript-eslint/types": 8.34.1
             "@typescript-eslint/utils": 8.34.1(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
@@ -5097,10 +5085,6 @@ snapshots:
     eslint-plugin-promise@7.2.1(eslint@9.29.0(jiti@2.4.2)):
         dependencies:
             "@eslint-community/eslint-utils": 4.7.0(eslint@9.29.0(jiti@2.4.2))
-            eslint: 9.29.0(jiti@2.4.2)
-
-    eslint-plugin-react-hooks@5.2.0(eslint@9.29.0(jiti@2.4.2)):
-        dependencies:
             eslint: 9.29.0(jiti@2.4.2)
 
     eslint-plugin-react-perf@3.3.3(eslint@9.29.0(jiti@2.4.2)):

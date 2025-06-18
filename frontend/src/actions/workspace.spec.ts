@@ -1,5 +1,12 @@
 import { HTTPError } from "ky";
 
+import {
+	CreateWorkspaceRequestFactory,
+	IdResponseFactory,
+	UpdateWorkspaceRequestFactory,
+	WorkspaceFactory,
+	WorkspaceListItemFactory,
+} from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
 import { API } from "@/types/api-types";
 
@@ -37,11 +44,11 @@ vi.mock("@/utils/server-side", async () => {
 const mockWorkspaceId = "mock-workspace-id";
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
-const mockCreateWorkspaceResponse: API.CreateWorkspace.Http201.ResponseBody = {
+const mockCreateWorkspaceResponse = IdResponseFactory.build({
 	id: mockWorkspaceId,
-};
+});
 
-const mockGetWorkspaceResponse: API.GetWorkspace.Http200.ResponseBody = {
+const mockGetWorkspaceResponse = WorkspaceFactory.build({
 	description: "Test Description",
 	grant_applications: [
 		{
@@ -54,32 +61,32 @@ const mockGetWorkspaceResponse: API.GetWorkspace.Http200.ResponseBody = {
 	logo_url: "https://example.com/logo.png",
 	name: "Test Workspace",
 	role: "OWNER",
-};
+});
 
-const mockGetWorkspacesResponse: API.ListWorkspaces.Http200.ResponseBody = [
-	{
+const mockGetWorkspacesResponse = [
+	WorkspaceListItemFactory.build({
 		description: "Test Description",
 		id: mockWorkspaceId,
 		logo_url: "https://example.com/logo.png",
 		name: "Test Workspace",
 		role: "OWNER",
-	},
-	{
+	}),
+	WorkspaceListItemFactory.build({
 		description: null,
 		id: "workspace-2",
 		logo_url: null,
 		name: "Another Workspace",
 		role: "MEMBER",
-	},
+	}),
 ];
 
-const mockUpdateWorkspaceResponse: API.UpdateWorkspace.Http200.ResponseBody = {
+const mockUpdateWorkspaceResponse = WorkspaceListItemFactory.build({
 	description: "Updated Description",
 	id: mockWorkspaceId,
 	logo_url: "https://example.com/updated-logo.png",
 	name: "Updated Workspace",
 	role: "OWNER",
-};
+});
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -112,11 +119,7 @@ afterEach(() => {
 describe("Workspace Actions", () => {
 	describe("createWorkspace", () => {
 		it("should call the API with correct parameters", async () => {
-			const workspaceData: API.CreateWorkspace.RequestBody = {
-				description: "New Description",
-				logo_url: "https://example.com/logo.png",
-				name: "New Workspace",
-			};
+			const workspaceData = CreateWorkspaceRequestFactory.build();
 
 			const result = await createWorkspace(workspaceData);
 
@@ -162,11 +165,7 @@ describe("Workspace Actions", () => {
 
 	describe("updateWorkspace", () => {
 		it("should call the API with correct parameters", async () => {
-			const updateData: API.UpdateWorkspace.RequestBody = {
-				description: "Updated Description",
-				logo_url: "https://example.com/updated-logo.png",
-				name: "Updated Workspace",
-			};
+			const updateData = UpdateWorkspaceRequestFactory.build() as API.UpdateWorkspace.RequestBody;
 
 			const result = await updateWorkspace(mockWorkspaceId, updateData);
 

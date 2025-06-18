@@ -4,9 +4,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApplicationFactory } from "::testing/factories";
+import { ApplicationFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { createApplication } from "@/actions/grant-applications";
-import { SourceIndexingStatus } from "@/enums";
 import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
@@ -412,18 +411,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		const mockNotifications = [
-			{
+			SourceProcessingNotificationMessageFactory.build({
 				data: {
 					identifier: "document1.pdf",
-					indexing_status: SourceIndexingStatus.INDEXING,
+					indexing_status: "INDEXING",
 					parent_id: "app-123",
 					parent_type: "grant_application",
 					rag_source_id: "source-1",
 				},
-				event: "source_processing",
 				parent_id: "app-123",
-				type: "data" as const,
-			},
+			}),
 		];
 
 		vi.mocked(useApplicationNotifications).mockReturnValue({
@@ -452,18 +449,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		const mockNotifications = [
-			{
+			SourceProcessingNotificationMessageFactory.build({
 				data: {
 					identifier: "document1.pdf",
-					indexing_status: SourceIndexingStatus.FINISHED,
+					indexing_status: "FINISHED",
 					parent_id: "app-123",
 					parent_type: "grant_application",
 					rag_source_id: "source-1",
 				},
-				event: "source_processing",
 				parent_id: "app-123",
-				type: "data" as const,
-			},
+			}),
 		];
 
 		vi.mocked(useApplicationNotifications).mockReturnValue({
@@ -492,18 +487,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		const mockNotifications = [
-			{
+			SourceProcessingNotificationMessageFactory.build({
 				data: {
 					identifier: "document1.pdf",
-					indexing_status: SourceIndexingStatus.FAILED,
+					indexing_status: "FAILED",
 					parent_id: "app-123",
 					parent_type: "grant_application",
 					rag_source_id: "source-1",
 				},
-				event: "source_processing",
 				parent_id: "app-123",
-				type: "data" as const,
-			},
+			}),
 		];
 
 		vi.mocked(useApplicationNotifications).mockReturnValue({
