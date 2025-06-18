@@ -161,7 +161,7 @@ describe("ApplicationStructureStep", () => {
 				grant_sections: [],
 				id: "template-id",
 				rag_sources: [],
-				submission_date: null,
+				submission_date: undefined,
 				updated_at: new Date().toISOString(),
 			},
 			id: "test-id",

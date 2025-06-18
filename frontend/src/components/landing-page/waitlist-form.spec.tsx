@@ -185,9 +185,9 @@ describe("WaitlistForm", () => {
 		await user.type(emailInput, "test@example.com");
 		await user.type(nameInput, "John Doe");
 
-		expect(emailInput.value).toBe("test@example.com");
+		expect((emailInput as HTMLInputElement).value).toBe("test@example.com");
 
-		expect(nameInput.value).toBe("John Doe");
+		expect((nameInput as HTMLInputElement).value).toBe("John Doe");
 
 		await user.click(submitButton);
 
@@ -196,9 +196,9 @@ describe("WaitlistForm", () => {
 		});
 
 		await waitFor(() => {
-			expect(emailInput.value).toBe("");
+			expect((emailInput as HTMLInputElement).value).toBe("");
 
-			expect(nameInput.value).toBe("");
+			expect((nameInput as HTMLInputElement).value).toBe("");
 		});
 	});
 
