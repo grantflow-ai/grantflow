@@ -40,12 +40,31 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			currentStep: 0,
+			applicationState: {
+				application: ApplicationFactory.build({ title: "A".repeat(20) }),
+				applicationId: null,
+				applicationTitle: "A".repeat(20),
+				templateId: null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
+			contentState: {
+				uploadedFiles: [],
+				urls: ["https://example.com"],
+			},
+			isLoading: false,
 			polling: {
 				...polling,
 				intervalId: null,
 				isActive: false,
 			},
+			ui: {
+				currentStep: 0,
+				fileDropdownStates: {},
+				linkHoverStates: {},
+				urlInput: "",
+			},
+			workspaceId: "test-workspace-id",
 		});
 		// Update the mock store state
 		Object.assign(mockStoreState, {
@@ -56,14 +75,28 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 	describe("Navigation Button Visibility", () => {
 		it("displays back button for steps after the first", () => {
-			useWizardStore.setState({ currentStep: 1 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 1,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardFooter />);
 
 			expect(screen.getByTestId("back-button")).toBeInTheDocument();
 		});
 
 		it("hides back button on the first step", () => {
-			useWizardStore.setState({ currentStep: 0 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardFooter />);
 
 			expect(screen.queryByTestId("back-button")).not.toBeInTheDocument();
@@ -72,7 +105,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 	describe("Action Button Configuration", () => {
 		it("displays approval action on step 2", () => {
-			useWizardStore.setState({ currentStep: 1 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 1,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -80,7 +120,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 
 		it("displays generation action on final step", () => {
-			useWizardStore.setState({ currentStep: 5 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 5,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -88,7 +135,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 
 		it("displays standard next action on other steps", () => {
-			useWizardStore.setState({ currentStep: 2 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 2,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -98,7 +152,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 	describe("Button State Management", () => {
 		it("enables continue button when step validation passes", () => {
-			useWizardStore.setState({ currentStep: 0 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -106,7 +167,26 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 
 		it("disables continue button when step validation fails", () => {
-			useWizardStore.setState({ currentStep: 0 });
+			useWizardStore.setState({
+				applicationState: {
+					application: ApplicationFactory.build({ title: "Short" }),
+					applicationId: null,
+					applicationTitle: "Short",
+					templateId: null,
+					wsConnectionStatus: undefined,
+					wsConnectionStatusColor: undefined,
+				},
+				contentState: {
+					uploadedFiles: [],
+					urls: [],
+				},
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			// Update the mock store state for this test
 			Object.assign(mockStoreState, {
 				application: ApplicationFactory.build({ title: "Short" }),
@@ -124,12 +204,31 @@ describe("WizardHeader", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			currentStep: 0,
+			applicationState: {
+				application: ApplicationFactory.build({ title: "Test Application" }),
+				applicationId: null,
+				applicationTitle: "Test Application",
+				templateId: null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
+			contentState: {
+				uploadedFiles: [],
+				urls: [],
+			},
+			isLoading: false,
 			polling: {
 				...polling,
 				intervalId: null,
 				isActive: false,
 			},
+			ui: {
+				currentStep: 0,
+				fileDropdownStates: {},
+				linkHoverStates: {},
+				urlInput: "",
+			},
+			workspaceId: "test-workspace-id",
 		});
 		// Update the mock store state
 		Object.assign(mockStoreState, {
@@ -140,7 +239,14 @@ describe("WizardHeader", () => {
 
 	describe("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
-			useWizardStore.setState({ currentStep: 1 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 1,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardHeader />);
 
 			expect(screen.getByTestId("app-name")).toHaveTextContent("Test Application");
@@ -148,7 +254,14 @@ describe("WizardHeader", () => {
 		});
 
 		it("hides application info on first step", () => {
-			useWizardStore.setState({ currentStep: 0 });
+			useWizardStore.setState({
+				ui: {
+					currentStep: 0,
+					fileDropdownStates: {},
+					linkHoverStates: {},
+					urlInput: "",
+				},
+			});
 			render(<WizardHeader />);
 
 			expect(screen.queryByTestId("app-name")).not.toBeInTheDocument();
