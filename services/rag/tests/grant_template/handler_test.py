@@ -700,7 +700,6 @@ def test_format_rag_sources_for_prompt_special_characters() -> None:
 
     result = format_rag_sources_for_prompt(sources)
 
-    # After sanitization, trailing spaces are removed from lines
     assert "Content with\n newlines \t tabs" in result
     assert "0. Chunk with\n newline" in result
     assert "1. Chunk with \t tab" in result
@@ -718,12 +717,10 @@ def test_format_rag_sources_for_prompt_with_excessive_newlines() -> None:
 
     result = format_rag_sources_for_prompt(sources)
 
-    # Check that excessive newlines are reduced to double newlines
     assert "Title\n\nContent with\n\nexcessive newlines" in result
     assert "0. Chunk 1\n\nwith newlines" in result
     assert "1. Chunk 2\n\nwith more newlines" in result
 
-    # Ensure no triple newlines remain
     assert "\n\n\n" not in result
 
 
@@ -739,11 +736,9 @@ def test_format_rag_sources_for_prompt_with_multiple_spaces() -> None:
 
     result = format_rag_sources_for_prompt(sources)
 
-    # Check that multiple spaces are reduced to single spaces
     assert "Text with multiple spaces" in result
     assert "0. Chunk with spaces" in result
 
-    # Ensure no double spaces remain
     assert "  " not in result
 
 

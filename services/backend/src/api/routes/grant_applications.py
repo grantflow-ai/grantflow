@@ -60,9 +60,9 @@ class FundingOrganizationResponse(TypedDict):
 
 class SourceResponse(TypedDict):
     sourceId: str
-    filename: NotRequired[str]  # For files: "my_doc.docx"
-    url: NotRequired[str]  # For URLs
-    status: SourceIndexingStatusEnum  # Enum value
+    filename: NotRequired[str]
+    url: NotRequired[str]
+    status: SourceIndexingStatusEnum
 
 
 class GrantTemplateResponse(TypedDict):
@@ -98,7 +98,6 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
         "status": rag_source.indexing_status,
     }
 
-    # Debug log
     logger.debug(
         "Building source response",
         source_type=type(rag_source).__name__,
@@ -189,7 +188,6 @@ async def _handle_retrieve_application(
                     funding_org_response["abbreviation"] = org.abbreviation
                 template_response["funding_organization"] = funding_org_response
 
-            # Add template rag sources
             if hasattr(template, "rag_sources") and template.rag_sources:
                 for template_rag_source in template.rag_sources:
                     source_response = _build_source_response(

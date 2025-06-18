@@ -10,9 +10,9 @@ from packages.shared_utils.src.exceptions import (
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import PubSubEvent, RagRequest
 from packages.shared_utils.src.serialization import deserialize
+from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.app import create_rag_litestar_app
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
 
@@ -52,7 +52,7 @@ async def before_server_start() -> None:
     init_llm_connection()
 
 
-app = create_rag_litestar_app(
+app = create_litestar_app(
     logger=logger,
     route_handlers=[
         handle_rag_request,

@@ -12,7 +12,6 @@ from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError, DeserializationError
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize, serialize
-from packages.shared_utils.src.shared_types import ParentType
 from packages.shared_utils.src.sync import run_sync
 
 if TYPE_CHECKING:
@@ -116,7 +115,9 @@ async def publish_url_crawling_task(
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing URL crawling message", error=str(e))
-        raise BackendError("Error publishing URL crawling message", context={"error": str(e)}) from e
+        raise BackendError(
+            "Error publishing URL crawling message", context={"error": str(e)}
+        ) from e
 
 
 async def publish_rag_task(
@@ -149,17 +150,23 @@ async def publish_rag_task(
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing RAG processing message", error=str(e))
-        raise BackendError("Error publishing RAG processing message", context={"error": str(e)}) from e
+        raise BackendError(
+            "Error publishing RAG processing message", context={"error": str(e)}
+        ) from e
 
 
 async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
     subscriber = get_subscriber_client()
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
-    topic_id = get_env("FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications")
+    topic_id = get_env(
+        "FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"
+    )
     topic_path = subscriber.topic_path(project=project_id, topic=topic_id)
 
     subscription_id = f"frontend-notifications-sub-{parent_id}"
-    subscription_path = subscriber.subscription_path(project=project_id, subscription=subscription_id)
+    subscription_path = subscriber.subscription_path(
+        project=project_id, subscription=subscription_id
+    )
 
     with suppress(AlreadyExists):
         await run_sync(
@@ -185,7 +192,9 @@ async def publish_notification[T](
 
     topic_path = client.topic_path(
         project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
-        topic=get_env("FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"),
+        topic=get_env(
+            "FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"
+        ),
     )
     try:
         message_data = serialize(
@@ -214,7 +223,9 @@ async def publish_notification[T](
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing source processing message", error=str(e))
-        raise BackendError("Error publishing source processing message", context={"error": str(e)}) from e
+        raise BackendError(
+            "Error publishing source processing message", context={"error": str(e)}
+        ) from e
 
 
 async def pull_notifications(
@@ -239,7 +250,9 @@ async def pull_notifications(
 
     for received_message in response.received_messages:
         try:
-            message = deserialize(received_message.message.data, WebsocketMessage[dict[str, Any]])
+            message = deserialize(
+                received_message.message.data, WebsocketMessage[dict[str, Any]]
+            )
             ret.append(message)
             ack_ids.append(received_message.ack_id)
         except (DeserializationError, ValueError, KeyError, TypeError) as e:

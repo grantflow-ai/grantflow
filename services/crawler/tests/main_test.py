@@ -22,7 +22,6 @@ from packages.db.src.tables import (
     RagUrl,
 )
 from packages.shared_utils.src.pubsub import CrawlingRequest, PubSubEvent, PubSubMessage
-from packages.shared_utils.src.shared_types import ParentType
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -76,7 +75,7 @@ def mock_construct_object_uri() -> Generator[Mock]:
 
 @pytest.fixture(autouse=True)
 def mock_publish_notification() -> Generator[AsyncMock]:
-    with patch("services.crawler.src.main.publish_notification") as mock:
+    with patch("packages.db.src.utils.publish_notification") as mock:
         mock.return_value = None
         yield mock
 
@@ -131,7 +130,6 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
 ) -> None:
     workspace_id = uuid4()
 
-    # Create RAG source and URL record first
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -184,15 +182,11 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
 
     assert mock_upload_blob.await_count == 2
 
-    # Should be called twice: once for INDEXING and once for FINISHED
     assert mock_publish_notification.call_count == 2
 
-    # Check the final call (FINISHED status)
     final_call_kwargs = mock_publish_notification.call_args.kwargs
     assert final_call_kwargs["parent_id"] == grant_application.id
     assert final_call_kwargs["event"] == "source_processing"
-    assert final_call_kwargs["data"]["parent_id"] == grant_application.id
-    assert final_call_kwargs["data"]["parent_type"] == "grant_application"
     assert final_call_kwargs["data"]["source_id"] == source_id
     assert (
         final_call_kwargs["data"]["indexing_status"]
@@ -209,7 +203,6 @@ async def test_handle_url_crawling_funding_organization(
     async_session_maker: async_sessionmaker[Any],
     funding_organization: FundingOrganization,
 ) -> None:
-    # Create RAG source and URL record first
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -245,7 +238,7 @@ async def test_handle_url_crawling_funding_organization(
 
     pubsub_event = create_pubsub_event(
         parent_id=funding_organization.id,
-                source_id=source_id,
+        source_id=source_id,
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -271,7 +264,6 @@ async def test_handle_url_crawling_grant_template(
 ) -> None:
     workspace_id = uuid4()
 
-    # Create RAG source and URL record first
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -307,7 +299,7 @@ async def test_handle_url_crawling_grant_template(
 
     pubsub_event = create_pubsub_event(
         parent_id=grant_template.id,
-                source_id=source_id,
+        source_id=source_id,
         workspace_id=workspace_id,
     )
 
@@ -330,7 +322,6 @@ async def test_handle_url_crawling_no_files_returned(
     grant_application: GrantApplication,
     mock_upload_blob: AsyncMock,
 ) -> None:
-    # Create RAG source and URL record first
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -386,7 +377,7 @@ async def test_handle_url_crawling_no_files_returned(
 
         pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
-                        source_id=source_id,
+            source_id=source_id,
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -400,7 +391,6 @@ async def test_handle_url_crawling_database_error(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create RAG source and URL record first
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -434,12 +424,14 @@ async def test_handle_url_crawling_database_error(
             )
         )
 
-    with patch("services.crawler.src.main.update_rag_source_status") as mock_update:
+    with patch(
+        "services.crawler.src.main.update_source_indexing_status"
+    ) as mock_update:
         mock_update.side_effect = Exception("Database error")
 
         pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
-                        source_id=source_id,
+            source_id=source_id,
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -455,7 +447,7 @@ async def test_handle_url_crawling_extraction_error(
     from packages.shared_utils.src.exceptions import UrlParsingError
 
     source_id: UUID
-    # Create RAG source and URL record first
+
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -494,7 +486,7 @@ async def test_handle_url_crawling_extraction_error(
 
         pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
-                        source_id=source_id,
+            source_id=source_id,
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -507,15 +499,11 @@ async def test_handle_url_crawling_extraction_error(
             assert source is not None
             assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
-        # Should be called twice: once for INDEXING and once for FAILED
         assert mock_publish_notification.call_count == 2
 
-        # Check the final call (FAILED status)
         final_call_kwargs = mock_publish_notification.call_args.kwargs
         assert final_call_kwargs["parent_id"] == grant_application.id
         assert final_call_kwargs["event"] == "source_processing"
-        assert final_call_kwargs["data"]["parent_id"] == grant_application.id
-        assert final_call_kwargs["data"]["parent_type"] == "grant_application"
         assert final_call_kwargs["data"]["source_id"] == source_id
         assert (
             final_call_kwargs["data"]["indexing_status"]
@@ -533,7 +521,7 @@ async def test_handle_url_crawling_network_error(
     from httpx import ConnectError
 
     source_id: UUID
-    # Create RAG source and URL record first
+
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -572,7 +560,7 @@ async def test_handle_url_crawling_network_error(
 
         pubsub_event = create_pubsub_event(
             parent_id=grant_application.id,
-                        source_id=source_id,
+            source_id=source_id,
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -585,15 +573,11 @@ async def test_handle_url_crawling_network_error(
             assert source is not None
             assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
-        # Should be called twice: once for INDEXING and once for FAILED
         assert mock_publish_notification.call_count == 2
 
-        # Check the final call (FAILED status)
         final_call_kwargs = mock_publish_notification.call_args.kwargs
         assert final_call_kwargs["parent_id"] == grant_application.id
         assert final_call_kwargs["event"] == "source_processing"
-        assert final_call_kwargs["data"]["parent_id"] == grant_application.id
-        assert final_call_kwargs["data"]["parent_type"] == "grant_application"
         assert final_call_kwargs["data"]["source_id"] == source_id
         assert (
             final_call_kwargs["data"]["indexing_status"]
@@ -611,7 +595,6 @@ async def test_handle_upload_blob_called_with_correct_parameters(
 ) -> None:
     workspace_id = uuid4()
 
-    # Create RAG source and URL record first
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -647,7 +630,7 @@ async def test_handle_upload_blob_called_with_correct_parameters(
 
     pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
-                source_id=source_id,
+        source_id=source_id,
         workspace_id=workspace_id,
     )
 
@@ -656,8 +639,8 @@ async def test_handle_upload_blob_called_with_correct_parameters(
 
     assert mock_construct_object_uri.call_count == 2
     assert mock_construct_object_uri.call_args_list[0][1]["source_id"] == source_id
-    assert mock_construct_object_uri.call_args_list[0][1]["workspace_id"] == str(
-        workspace_id
+    assert (
+        mock_construct_object_uri.call_args_list[0][1]["workspace_id"] == workspace_id
     )
     assert "blob_name" in mock_construct_object_uri.call_args_list[0][1]
 
@@ -717,7 +700,6 @@ async def test_pubsub_message_missing_required_fields(
     message_data = {
         "parent_id": str(uuid4()),
         "url": "https://example.org/docs",
-        # Missing source_id and workspace_id
     }
 
     pubsub_event = {
@@ -742,7 +724,7 @@ async def test_handle_url_crawling_skipped_url(
     source_id = uuid4()
     pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
-                source_id=source_id,
+        source_id=source_id,
         url="https://x.com/NIHFunding",
     )
 
@@ -764,7 +746,4 @@ async def test_handle_url_crawling_existing_url(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> None:
-    # This test is no longer relevant since the architecture changed -
-    # sources are now created in the backend, not the crawler
-    # We'll remove the "existing URL" logic from the crawler
     pass

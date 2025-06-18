@@ -22,10 +22,20 @@ from packages.shared_utils.src.ai import (
 
 
 async def test_model_constants() -> None:
-    assert os.environ.get("EVALUATION_MODEL", "gemini-2.0-flash-001") == EVALUATION_MODEL
-    assert os.environ.get("GENERATION_MODEL", "gemini-2.0-flash-001") == GENERATION_MODEL
-    assert os.environ.get("ANTHROPIC_SONNET_MODEL", "claude-3-5-sonnet-latest") == ANTHROPIC_SONNET_MODEL
-    assert os.environ.get("REASONING_MODEL", "gemini-2.5-flash-preview-05-20") == REASONING_MODEL
+    assert (
+        os.environ.get("EVALUATION_MODEL", "gemini-2.0-flash-001") == EVALUATION_MODEL
+    )
+    assert (
+        os.environ.get("GENERATION_MODEL", "gemini-2.0-flash-001") == GENERATION_MODEL
+    )
+    assert (
+        os.environ.get("ANTHROPIC_SONNET_MODEL", "claude-3-5-sonnet-latest")
+        == ANTHROPIC_SONNET_MODEL
+    )
+    assert (
+        os.environ.get("REASONING_MODEL", "gemini-2.5-flash-preview-05-20")
+        == REASONING_MODEL
+    )
 
 
 async def test_get_vertex_credentials() -> None:
@@ -33,7 +43,9 @@ async def test_get_vertex_credentials() -> None:
 
     with (
         patch("packages.shared_utils.src.ai.get_env", return_value=mock_env),
-        patch("packages.shared_utils.src.ai.Credentials.from_service_account_info") as mock_from_info,
+        patch(
+            "packages.shared_utils.src.ai.Credentials.from_service_account_info"
+        ) as mock_from_info,
     ):
         get_vertex_credentials()
         mock_from_info.assert_called_once()
@@ -84,7 +96,9 @@ async def test_get_google_ai_client_new() -> None:
         )
 
         mock_init.assert_called_once()
-        mock_model_class.assert_called_once_with("test-model", system_instruction="Test instructions")
+        mock_model_class.assert_called_once_with(
+            "test-model", system_instruction="Test instructions"
+        )
         assert client == mock_model
 
 
@@ -145,16 +159,14 @@ async def test_estimate_token_count_short_text() -> None:
         (
             "This is a long text that should be more than 100 characters to test the complex estimation logic with multiple words and sentences",
             20,
-            29,  # math.ceil((132 / 4.0 + 20 * 1.3) / 2) = math.ceil((33.0 + 26.0) / 2) = math.ceil(29.5) = 30
+            29,
         ),
     ],
 )
-async def test_estimate_token_count_long_text(text: str, word_count: int, expected: int) -> None:
+async def test_estimate_token_count_long_text(
+    text: str, word_count: int, expected: int
+) -> None:
     with patch("packages.shared_utils.src.nlp.get_word_count", return_value=word_count):
-        # The actual calculation: text is 132 chars
-        # char_tokens = 132 / 4.0 = 33.0
-        # word_tokens = 20 * 1.3 = 26.0
-        # result = math.ceil((33.0 + 26.0) / 2) = math.ceil(29.5) = 30
         assert estimate_token_count(text) == 30
 
 
@@ -163,7 +175,9 @@ async def test_count_tokens_empty_text() -> None:
 
 
 async def test_count_tokens_anthropic_model() -> None:
-    with patch("packages.shared_utils.src.ai.estimate_token_count", return_value=42) as mock_estimate:
+    with patch(
+        "packages.shared_utils.src.ai.estimate_token_count", return_value=42
+    ) as mock_estimate:
         result = await count_tokens("Some text", model=ANTHROPIC_SONNET_MODEL)
         assert result == 42
         mock_estimate.assert_called_once_with("Some text")
@@ -173,7 +187,9 @@ async def test_count_tokens_google_model_success() -> None:
     mock_client = Mock()
     mock_client.count_tokens.return_value = Mock(total_tokens=10)
 
-    with patch("packages.shared_utils.src.ai.get_google_ai_client", return_value=mock_client):
+    with patch(
+        "packages.shared_utils.src.ai.get_google_ai_client", return_value=mock_client
+    ):
         result = await count_tokens("Some text", model="gemini-model")
         assert result == 10
 
@@ -183,7 +199,10 @@ async def test_count_tokens_google_model_fallback() -> None:
     mock_client.count_tokens.side_effect = ValueError("API error")
 
     with (
-        patch("packages.shared_utils.src.ai.get_google_ai_client", return_value=mock_client),
+        patch(
+            "packages.shared_utils.src.ai.get_google_ai_client",
+            return_value=mock_client,
+        ),
         patch("packages.shared_utils.src.ai.estimate_token_count", return_value=15),
     ):
         result = await count_tokens("Some text", model="gemini-model")
