@@ -1,6 +1,7 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 

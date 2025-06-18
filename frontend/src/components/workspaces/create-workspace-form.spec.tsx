@@ -1,6 +1,7 @@
-import { mockToast } from "::testing/global-mocks";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+import { mockToast } from "::testing/global-mocks";
 import { createWorkspace } from "@/actions/workspace";
 
 import { CreateWorkspaceForm } from "./create-workspace-form";

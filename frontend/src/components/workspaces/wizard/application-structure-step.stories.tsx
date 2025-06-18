@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { ApplicationStructureStep } from "./application-structure-step";
+
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof ApplicationStructureStep> = {
 	component: ApplicationStructureStep,

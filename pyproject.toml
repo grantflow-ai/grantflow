@@ -112,7 +112,7 @@ lint.pylint.max-returns = 10
 lint.pylint.max-statements = 100
 
 [tool.codespell]
-ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw"
+ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw,afterAll,beforeAll"
 skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml"
 
 [tool.pyproject-fmt]

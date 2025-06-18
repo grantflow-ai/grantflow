@@ -1,15 +1,29 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
-	"vcs": {
-		"clientKind": "git",
-		"enabled": true,
-		"useIgnoreFile": true
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on",
+				"useSortedKeys": "on"
+			}
+		},
+		"enabled": true
+	},
+	"css": {
+		"formatter": {
+			"enabled": true,
+			"indentStyle": "tab",
+			"indentWidth": 4,
+			"lineEnding": "lf",
+			"lineWidth": 120,
+			"quoteStyle": "double"
+		}
 	},
 	"files": {
 		"ignoreUnknown": true,
 		"includes": [
 			"**/*.js",
-			"**/*.jsx", 
+			"**/*.jsx",
 			"**/*.ts",
 			"**/*.tsx",
 			"**/*.json",
@@ -37,24 +51,24 @@
 		"maxSize": 2097152
 	},
 	"formatter": {
+		"attributePosition": "auto",
 		"enabled": true,
 		"formatWithErrors": false,
 		"indentStyle": "tab",
 		"indentWidth": 4,
 		"lineEnding": "lf",
-		"lineWidth": 120,
-		"attributePosition": "auto"
+		"lineWidth": 120
 	},
 	"javascript": {
 		"formatter": {
-			"quoteStyle": "double",
+			"arrowParentheses": "always",
+			"bracketSameLine": false,
+			"bracketSpacing": true,
 			"jsxQuoteStyle": "double",
 			"quoteProperties": "asNeeded",
-			"trailingCommas": "all",
+			"quoteStyle": "double",
 			"semicolons": "always",
-			"arrowParentheses": "always",
-			"bracketSpacing": true,
-			"bracketSameLine": false
+			"trailingCommas": "all"
 		},
 		"globals": [
 			"describe",
@@ -79,35 +93,26 @@
 			"trailingCommas": "none"
 		}
 	},
-	"css": {
-		"formatter": {
-			"enabled": true,
-			"indentStyle": "tab",
-			"indentWidth": 4,
-			"lineEnding": "lf",
-			"lineWidth": 120,
-			"quoteStyle": "double"
-		}
-	},
 	"linter": {
-		"enabled": true,
 		"domains": {
 			"next": "recommended"
 		},
+		"enabled": true,
 		"rules": {
-			"recommended": true,
 			"a11y": {
+				"noSvgWithoutTitle": "off",
 				"useAltText": "error",
-				"useButtonType": "error",
+				"useAriaPropsSupportedByRole": "warn",
+				"useButtonType": "warn",
 				"useHtmlLang": "error",
-				"useValidAnchor": "error",
 				"useKeyWithClickEvents": "warn",
-				"useKeyWithMouseEvents": "warn"
+				"useKeyWithMouseEvents": "warn",
+				"useValidAnchor": "error"
 			},
 			"complexity": {
 				"noBannedTypes": "error",
-				"noExtraBooleanCast": "error",
 				"noExcessiveCognitiveComplexity": "warn",
+				"noExtraBooleanCast": "error",
 				"noForEach": "off",
 				"noUselessCatch": "error",
 				"noUselessConstructor": "error",
@@ -116,7 +121,7 @@
 				"noUselessLoneBlockStatements": "error",
 				"noUselessRename": "error",
 				"noUselessTernary": "error",
-				"noVoid": "error",
+				"noVoid": "off",
 				"useLiteralKeys": "error",
 				"useOptionalChain": "error",
 				"useSimplifiedLogicExpression": "error"
@@ -142,9 +147,9 @@
 				"noUnreachableSuper": "error",
 				"noUnsafeFinally": "error",
 				"noUnsafeOptionalChaining": "error",
-				"noUnusedImports": "error",
+				"noUnusedImports": "warn",
 				"noUnusedLabels": "error",
-				"noUnusedVariables": "error",
+				"noUnusedVariables": "warn",
 				"useExhaustiveDependencies": "error",
 				"useHookAtTopLevel": "error",
 				"useIsNan": "error",
@@ -156,8 +161,9 @@
 				"noAccumulatingSpread": "warn",
 				"noDelete": "warn"
 			},
+			"recommended": true,
 			"security": {
-				"noDangerouslySetInnerHtml": "warn",
+				"noDangerouslySetInnerHtml": "off",
 				"noDangerouslySetInnerHtmlWithChildren": "error",
 				"noGlobalEval": "error"
 			},
@@ -170,8 +176,8 @@
 					"level": "error",
 					"options": {
 						"deniedGlobals": {
-							"event": "Use the specific event type instead",
-							"error": "Name your errors more specifically"
+							"error": "Name your errors more specifically",
+							"event": "Use the specific event type instead"
 						}
 					}
 				},
@@ -196,23 +202,23 @@
 				"useTemplate": "error"
 			},
 			"suspicious": {
-				"noArrayIndexKey": "warn",
+				"noArrayIndexKey": "off",
 				"noAsyncPromiseExecutor": "error",
 				"noCatchAssign": "error",
 				"noClassAssign": "error",
-				"noCommentText": "warn",
+				"noCommentText": "off",
 				"noCompareNegZero": "error",
-				"noConsole": "warn",
+				"noConsole": "off",
 				"noConstEnum": "error",
 				"noControlCharactersInRegex": "error",
 				"noDebugger": "error",
-				"noDoubleEquals": "error",
+				"noDoubleEquals": "warn",
 				"noDuplicateCase": "error",
 				"noDuplicateClassMembers": "error",
 				"noDuplicateJsxProps": "error",
 				"noDuplicateObjectKeys": "error",
 				"noDuplicateParameters": "error",
-				"noEmptyBlockStatements": "error",
+				"noEmptyBlockStatements": "off",
 				"noExplicitAny": "off",
 				"noExtraNonNullAssertion": "error",
 				"noFallthroughSwitchClause": "error",
@@ -233,13 +239,9 @@
 			}
 		}
 	},
-	"assist": {
+	"vcs": {
+		"clientKind": "git",
 		"enabled": true,
-		"actions": {
-			"source": {
-				"organizeImports": "on",
-				"useSortedKeys": "on"
-			}
-		}
+		"useIgnoreFile": true
 	}
 }

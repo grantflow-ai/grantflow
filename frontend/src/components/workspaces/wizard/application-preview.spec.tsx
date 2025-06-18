@@ -1,6 +1,7 @@
-import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApplicationFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
 

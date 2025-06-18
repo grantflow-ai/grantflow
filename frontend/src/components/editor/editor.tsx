@@ -2,7 +2,6 @@ import "./styles.css";
 
 import { type EditorEvents, EditorProvider } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React from "react";
 
 const extensions = [StarterKit];
 
