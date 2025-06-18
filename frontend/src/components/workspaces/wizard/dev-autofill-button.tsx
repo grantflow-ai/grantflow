@@ -55,18 +55,16 @@ export function DevAutofillButton() {
 					}
 
 					// Create test files from the actual test data
-					const testFiles = await Promise.all(
-						TEST_FILES.map(async (fileInfo) => {
-							// For development, we'll create mock File objects
-							// In a real scenario, you'd fetch these from the file system
-							const file = new File(["Test file content"], fileInfo.name, { type: fileInfo.type });
+					const testFiles = TEST_FILES.map((fileInfo) => {
+						// For development, we'll create mock File objects
+						// In a real scenario, you'd fetch these from the file system
+						const file = new File(["Test file content"], fileInfo.name, { type: fileInfo.type });
 
-							// Add id property to the File object
-							(file as FileWithId).id = `file-${Date.now()}-${Math.random()}`;
+						// Add id property to the File object
+						(file as FileWithId).id = `file-${Date.now()}-${Math.random()}`;
 
-							return file as FileWithId;
-						}),
-					);
+						return file as FileWithId;
+					});
 
 					setUploadedFiles(testFiles);
 
@@ -91,8 +89,7 @@ export function DevAutofillButton() {
 					toast.info("Autofill not implemented for this step yet.");
 				}
 			}
-		} catch (error) {
-			console.error("Autofill error:", error);
+		} catch {
 			toast.error("Failed to autofill wizard");
 		}
 	};
