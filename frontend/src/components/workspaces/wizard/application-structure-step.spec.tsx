@@ -10,7 +10,7 @@ import { ApplicationStructureStep } from "./application-structure-step";
 describe("ApplicationStructureStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Reset stores to initial state
+
 		useWizardStore.setState({
 			currentStep: 1,
 		});
@@ -101,11 +101,12 @@ describe("ApplicationStructureStep", () => {
 
 		const titleElement = screen.getByTestId("application-structure-title");
 		expect(titleElement).toBeInTheDocument();
-		expect(titleElement).toHaveTextContent("");
+		expect(titleElement).toHaveTextContent("Untitled Application");
 	});
 
 	it("renders application sections preview", () => {
 		const application = ApplicationFactory.build({
+			grant_template: undefined,
 			id: "test-id",
 			title: "Test Application",
 			workspace_id: "test-workspace-id",
@@ -123,7 +124,6 @@ describe("ApplicationStructureStep", () => {
 		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.getByText("Application Sections")).toBeInTheDocument();
 
-		// Check for the sample sections
 		expect(screen.getByText("Executive Summary")).toBeInTheDocument();
 		expect(screen.getByText("Overview of the project and key highlights")).toBeInTheDocument();
 
@@ -143,12 +143,10 @@ describe("ApplicationStructureStep", () => {
 		const mainContainer = screen.getByTestId("application-structure-step");
 		expect(mainContainer).toHaveClass("flex", "size-full");
 
-		// Left pane should have responsive width classes
 		const leftPane = mainContainer.querySelector(".w-1\\/3");
 		expect(leftPane).toBeInTheDocument();
 		expect(leftPane).toHaveClass("sm:w-1/2", "space-y-6", "overflow-y-auto", "p-6");
 
-		// Preview pane should have correct width
 		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
 		expect(previewPane).toBeInTheDocument();
 		expect(previewPane).toHaveClass(

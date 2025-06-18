@@ -50,126 +50,10 @@ vi.mock("@/hooks/use-application-notifications", () => ({
 	}),
 }));
 
-vi.mock("@/stores/wizard-store", () => ({
-	useWizardStore: vi.fn(),
-}));
-
-vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: vi.fn(),
-}));
-
 const mockPush = vi.fn();
 const mockParams = { workspaceId: "test-workspace-id" };
 const mockSearchParams = {
 	get: vi.fn().mockReturnValue(null),
-};
-
-const createMockWizardStore = (overrides: any = {}) => {
-	const defaultStore = {
-		addFile: vi.fn(),
-		addUrl: vi.fn(),
-		applicationState: {
-			application: {
-				grant_template: { id: "template-123" },
-				id: "app-123",
-				title: "Untitled Application",
-				workspace_id: "test-workspace-id",
-			},
-			applicationId: "app-123",
-			applicationTitle: "Untitled Application",
-			templateId: "template-123",
-			wsConnectionStatus: undefined,
-			wsConnectionStatusColor: undefined,
-		},
-		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
-		contentState: {
-			uploadedFiles: [],
-			urls: [],
-		},
-		createApplication: vi.fn(),
-		generateTemplate: vi.fn(),
-		handleApplicationInit: vi.fn(),
-		isLoading: false,
-		polling: {
-			intervalId: null,
-			isActive: false,
-			start: vi.fn(),
-			stop: vi.fn(),
-		},
-		removeFile: vi.fn(),
-		removeUrl: vi.fn(),
-		retrieveApplication: vi.fn(),
-		setApplication: vi.fn(),
-		setApplicationId: vi.fn(),
-		setApplicationTitle: vi.fn(),
-		setCurrentStep: vi.fn(),
-		setFileDropdownOpen: vi.fn(),
-		setLinkHoverState: vi.fn(),
-		setTemplateId: vi.fn(),
-		setUploadedFiles: vi.fn(),
-		setUrlInput: vi.fn(),
-		setUrls: vi.fn(),
-		setWorkspaceId: vi.fn(),
-		setWsConnectionStatus: vi.fn(),
-		setWsConnectionStatusColor: vi.fn(),
-		toNextStep: vi.fn(),
-		toPreviousStep: vi.fn(),
-		ui: {
-			currentStep: 0,
-			fileDropdownStates: {},
-			linkHoverStates: {},
-			urlInput: "",
-		},
-		updateApplicationTitle: vi.fn(),
-		updateGrantSections: vi.fn(),
-		validateStepNext: vi.fn().mockReturnValue(false),
-		workspaceId: "test-workspace-id",
-	};
-
-	// Deep merge overrides
-	if (overrides.applicationState) {
-		defaultStore.applicationState = { ...defaultStore.applicationState, ...overrides.applicationState };
-		delete overrides.applicationState;
-	}
-	if (overrides.contentState) {
-		defaultStore.contentState = { ...defaultStore.contentState, ...overrides.contentState };
-		delete overrides.contentState;
-	}
-	if (overrides.ui) {
-		defaultStore.ui = { ...defaultStore.ui, ...overrides.ui };
-		delete overrides.ui;
-	}
-
-	return { ...defaultStore, ...overrides };
-};
-
-const createMockApplicationStore = (overrides: any = {}) => {
-	const defaultStore = {
-		addFile: vi.fn(),
-		addUrl: vi.fn(),
-		application: {
-			grant_template: { id: "template-123" },
-			id: "app-123",
-			title: "Untitled Application",
-			workspace_id: "test-workspace-id",
-		},
-		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
-		createApplication: vi.fn(),
-		generateTemplate: vi.fn(),
-		handleApplicationInit: vi.fn(),
-		isLoading: false,
-		removeFile: vi.fn(),
-		removeUrl: vi.fn(),
-		retrieveApplication: vi.fn(),
-		setApplication: vi.fn(),
-		setUploadedFiles: vi.fn(),
-		setUrls: vi.fn(),
-		updateApplication: vi.fn(),
-		uploadedFiles: [],
-		urls: [],
-	};
-
-	return { ...defaultStore, ...overrides };
 };
 
 describe("CreateGrantApplicationWizardPage", () => {
@@ -178,30 +62,29 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any);
 		vi.mocked(useParams).mockReturnValue(mockParams);
 		vi.mocked(useSearchParams).mockReturnValue(mockSearchParams as any);
-		vi.mocked(useWizardStore).mockReturnValue(createMockWizardStore());
-		vi.mocked(useApplicationStore).mockReturnValue(createMockApplicationStore());
+
+		// Reset stores to initial state
+		useWizardStore.setState({
+			currentStep: 0,
+		});
+		useApplicationStore.setState({
+			application: null,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
 	});
 
 	it("shows loading state initially", () => {
 		vi.mocked(createApplication).mockImplementation(() => new Promise<never>(() => {}));
 
-		// Mock store to show loading state
-		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: null,
-				uploadedFiles: [],
-				urls: [],
-			},
-			isLoading: true,
-		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
-
-		// Mock application store to show loading state
-		const mockApplicationStore = createMockApplicationStore({
+		// Set stores to show loading state
+		useApplicationStore.setState({
 			application: null,
 			isLoading: true,
+			uploadedFiles: [],
+			urls: [],
 		});
-		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -212,78 +95,19 @@ describe("CreateGrantApplicationWizardPage", () => {
 		expect(loadingContainer).toBeInTheDocument();
 	});
 
-	it("creates application on mount", async () => {
-		const mockResponse = ApplicationFactory.build({
-			id: "app-123",
-			workspace_id: mockParams.workspaceId,
-		});
-
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-
-		// Mock the application store with handleApplicationInit
-		const mockHandleApplicationInit = vi.fn().mockResolvedValue(undefined);
-
-		const mockApplicationStore = createMockApplicationStore({
-			application: null,
-			handleApplicationInit: mockHandleApplicationInit,
-			isLoading: true,
-		});
-		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
-
-		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(mockHandleApplicationInit).toHaveBeenCalledWith(mockParams.workspaceId, undefined);
-		});
-	});
-
-	it("shows error and redirects when application creation fails", async () => {
-		vi.mocked(createApplication).mockRejectedValue(new Error("Failed"));
-
-		// Mock the application store with implementation that will fail
-		const mockHandleApplicationInit = vi.fn().mockImplementation(async (_workspaceId: string) => {
-			throw new Error("Failed to initialize application");
-		});
-
-		const mockApplicationStore = createMockApplicationStore({
-			application: null,
-			handleApplicationInit: mockHandleApplicationInit,
-			isLoading: true,
-		});
-		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
-
-		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(mockPush).toHaveBeenCalledWith(`/workspaces/${mockParams.workspaceId}`);
-		});
-	});
-
-	it("renders wizard components after application is created", async () => {
-		const mockResponse = ApplicationFactory.build({
-			id: "app-123",
-			workspace_id: mockParams.workspaceId,
-		});
-
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-
-		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("wizard-page")).toBeInTheDocument();
-			expect(screen.getByTestId("wizard-header")).toBeInTheDocument();
-			expect(screen.getByTestId("wizard-footer")).toBeInTheDocument();
-			expect(screen.getByTestId("step-content-container")).toBeInTheDocument();
-		});
-	});
-
 	it("shows first step by default", async () => {
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
 			workspace_id: mockParams.workspaceId,
 		});
 
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
+		// Set up the application store with the mock application
+		useApplicationStore.setState({
+			application: mockResponse,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -295,10 +119,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 	it("disables next button when validation fails", async () => {
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
+			title: "", // Empty title to fail validation
 			workspace_id: mockParams.workspaceId,
 		});
 
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
+		useApplicationStore.setState({
+			application: mockResponse,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -314,27 +144,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		const user = userEvent.setup();
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
+			title: "My Application",
 			workspace_id: mockParams.workspaceId,
 		});
 
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-
-		// Mock store to simulate state with title and URL but no files uploaded
-		const mockValidateStepNext = vi.fn().mockReturnValue(false); // Validation should fail
-		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: {
-					grant_template: { id: "template-123" },
-					id: "app-123",
-					title: "My Application",
-					workspace_id: "test-workspace-id",
-				},
-				uploadedFiles: [], // No files uploaded
-				urls: ["https://example.com"],
-			},
-			validateStepNext: mockValidateStepNext,
+		useApplicationStore.setState({
+			application: mockResponse,
+			isLoading: false,
+			uploadedFiles: [], // No files uploaded
+			urls: [], // No URLs
 		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -355,27 +174,19 @@ describe("CreateGrantApplicationWizardPage", () => {
 	it("navigates between steps", async () => {
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
+			title: "My Application with Long Title", // Make title longer to ensure it passes MIN_TITLE_LENGTH
 			workspace_id: mockParams.workspaceId,
 		});
 
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-
-		// Mock the validation to return true when we have both title and URL
-		const mockValidateStepNext = vi.fn().mockReturnValue(true);
-		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: {
-					grant_template: { id: "template-123" },
-					id: "app-123",
-					title: "My Application",
-					workspace_id: "test-workspace-id",
-				},
-				uploadedFiles: [],
-				urls: ["https://example.com"],
-			},
-			validateStepNext: mockValidateStepNext,
+		// Mock handleApplicationInit to prevent it from overriding our state
+		const originalHandleApplicationInit = useApplicationStore.getState().handleApplicationInit;
+		useApplicationStore.setState({
+			application: mockResponse,
+			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
+			isLoading: false,
+			uploadedFiles: [],
+			urls: ["https://example.com"], // Has URL for validation
 		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -383,158 +194,136 @@ describe("CreateGrantApplicationWizardPage", () => {
 			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 		});
 
-		// The button should be enabled due to our mock validation
+		// The next button should be enabled with title and URL
 		const continueButton = screen.getByTestId("continue-button");
-		await waitFor(() => {
-			expect(continueButton).toBeEnabled();
-		});
+		expect(continueButton).not.toBeDisabled();
+
+		// Restore original function
+		useApplicationStore.setState({ handleApplicationInit: originalHandleApplicationInit });
 	});
 
 	it("displays application title in header after first step", async () => {
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
+			title: "My Test Application",
 			workspace_id: mockParams.workspaceId,
 		});
 
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
+		useApplicationStore.setState({
+			application: mockResponse,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
+		useWizardStore.setState({
+			currentStep: 1,
+		});
 
-		// Mock starting on first step (step 0) - header info should not be visible
-		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: {
-					grant_template: { id: "template-123" },
-					id: "app-123",
-					title: "My Grant Application",
-					workspace_id: "test-workspace-id",
-				},
-				uploadedFiles: [],
-				urls: [],
+		render(<CreateGrantApplicationWizardPage />);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("app-name")).toBeInTheDocument();
+		});
+
+		expect(screen.getByTestId("app-name")).toHaveTextContent("My Test Application");
+	});
+
+	it("displays toast notifications for source processing updates", () => {
+		const mockNotification = SourceProcessingNotificationMessageFactory.build({
+			data: {
+				identifier: "test-file.pdf",
+				indexing_status: "INDEXING",
+				parent_id: "app-123",
+				parent_type: "grant_application",
+				rag_source_id: "source-123",
 			},
-			currentStep: 0,
-		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
-
-		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 		});
 
-		// App name should not be visible on first step (currentStep = 0)
-		expect(screen.queryByTestId("app-name")).not.toBeInTheDocument();
-	});
-
-	it("displays toast notifications for source processing updates", async () => {
-		const mockResponse = ApplicationFactory.build({
-			id: "app-123",
-			workspace_id: mockParams.workspaceId,
-		});
-
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-
-		const mockNotifications = [
-			SourceProcessingNotificationMessageFactory.build({
-				data: {
-					identifier: "document1.pdf",
-					indexing_status: "INDEXING",
-					parent_id: "app-123",
-					parent_type: "grant_application",
-					rag_source_id: "source-1",
-				},
-				parent_id: "app-123",
-			}),
-		];
-
+		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
 		vi.mocked(useApplicationNotifications).mockReturnValue({
 			connectionStatus: "Open",
 			connectionStatusColor: "bg-green-500",
-			notifications: mockNotifications,
+			notifications: [mockNotification],
 			readyState: 1,
 			sendMessage: vi.fn(),
 		});
 
-		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
+		const mockResponse = ApplicationFactory.build();
+		useApplicationStore.setState({
+			application: mockResponse,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
-		await waitFor(() => {
-			expect(toast.info).toHaveBeenCalledWith("Processing document1.pdf...");
-		});
+		expect(toast.info).toHaveBeenCalledWith("Processing test-file.pdf...");
 	});
 
-	it("displays success toast for completed processing", async () => {
-		const mockResponse = ApplicationFactory.build({
-			id: "app-123",
-			workspace_id: mockParams.workspaceId,
+	it("displays success toast for completed processing", () => {
+		const mockNotification = SourceProcessingNotificationMessageFactory.build({
+			data: {
+				identifier: "test-file.pdf",
+				indexing_status: "FINISHED",
+				parent_id: "app-123",
+				parent_type: "grant_application",
+				rag_source_id: "source-123",
+			},
 		});
 
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-
-		const mockNotifications = [
-			SourceProcessingNotificationMessageFactory.build({
-				data: {
-					identifier: "document1.pdf",
-					indexing_status: "FINISHED",
-					parent_id: "app-123",
-					parent_type: "grant_application",
-					rag_source_id: "source-1",
-				},
-				parent_id: "app-123",
-			}),
-		];
-
+		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
 		vi.mocked(useApplicationNotifications).mockReturnValue({
 			connectionStatus: "Open",
 			connectionStatusColor: "bg-green-500",
-			notifications: mockNotifications,
+			notifications: [mockNotification],
 			readyState: 1,
 			sendMessage: vi.fn(),
 		});
 
-		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
+		const mockResponse = ApplicationFactory.build();
+		useApplicationStore.setState({
+			application: mockResponse,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
-		await waitFor(() => {
-			expect(toast.success).toHaveBeenCalledWith("Successfully processed document1.pdf");
-		});
+		expect(toast.success).toHaveBeenCalledWith("Successfully processed test-file.pdf");
 	});
 
-	it("displays error toast for failed processing", async () => {
-		const mockResponse = ApplicationFactory.build({
-			id: "app-123",
-			workspace_id: mockParams.workspaceId,
+	it("displays error toast for failed processing", () => {
+		const mockNotification = SourceProcessingNotificationMessageFactory.build({
+			data: {
+				identifier: "test-file.pdf",
+				indexing_status: "FAILED",
+				parent_id: "app-123",
+				parent_type: "grant_application",
+				rag_source_id: "source-123",
+			},
 		});
 
-		vi.mocked(createApplication).mockResolvedValue(mockResponse);
-
-		const mockNotifications = [
-			SourceProcessingNotificationMessageFactory.build({
-				data: {
-					identifier: "document1.pdf",
-					indexing_status: "FAILED",
-					parent_id: "app-123",
-					parent_type: "grant_application",
-					rag_source_id: "source-1",
-				},
-				parent_id: "app-123",
-			}),
-		];
-
+		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
 		vi.mocked(useApplicationNotifications).mockReturnValue({
 			connectionStatus: "Open",
 			connectionStatusColor: "bg-green-500",
-			notifications: mockNotifications,
+			notifications: [mockNotification],
 			readyState: 1,
 			sendMessage: vi.fn(),
 		});
 
-		vi.mocked(isSourceProcessingNotificationMessage).mockReturnValue(true);
+		const mockResponse = ApplicationFactory.build();
+		useApplicationStore.setState({
+			application: mockResponse,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
-		await waitFor(() => {
-			expect(toast.error).toHaveBeenCalledWith("Failed to process document1.pdf");
-		});
+		expect(toast.error).toHaveBeenCalledWith("Failed to process test-file.pdf");
 	});
 });

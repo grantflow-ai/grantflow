@@ -1,73 +1,22 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { ApplicationFactory } from "::testing/factories";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
-const mockStoreState = {
-	addFile: vi.fn(),
-	addUrl: vi.fn(),
-	application: null,
-	areFilesOrUrlsIndexing: vi.fn(() => false),
-	createApplication: vi.fn(),
-	generateTemplate: vi.fn(),
-	handleApplicationInit: vi.fn(),
-	isLoading: false,
-	removeFile: vi.fn(),
-	removeUrl: vi.fn(),
-	retrieveApplication: vi.fn(),
-	setApplication: vi.fn(),
-	setUploadedFiles: vi.fn(),
-	setUrls: vi.fn(),
-	updateApplication: vi.fn().mockResolvedValue(undefined),
-	uploadedFiles: [],
-	urls: [],
-};
-
-vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: Object.assign(
-		vi.fn(() => mockStoreState),
-		{
-			getState: vi.fn(() => mockStoreState),
-		},
-	),
-}));
-
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	beforeEach(() => {
-		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			applicationState: {
-				application: ApplicationFactory.build({ title: "A".repeat(20) }),
-				applicationId: null,
-				applicationTitle: "A".repeat(20),
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
-			contentState: {
-				uploadedFiles: [],
-				urls: ["https://example.com"],
-			},
-			isLoading: false,
-			polling: {
-				...polling,
-				intervalId: null,
-				isActive: false,
-			},
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
-			},
-			workspaceId: "test-workspace-id",
+			currentStep: 0,
 		});
 
-		Object.assign(mockStoreState, {
+		useApplicationStore.setState({
 			application: ApplicationFactory.build({ title: "A".repeat(20) }),
+			isLoading: false,
+			uploadedFiles: [],
 			urls: ["https://example.com"],
 		});
 	});
@@ -75,12 +24,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Navigation Button Visibility", () => {
 		it("displays back button for steps after the first", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 1,
 			});
 			render(<WizardFooter />);
 
@@ -89,12 +33,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("hides back button on the first step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 			render(<WizardFooter />);
 
@@ -105,12 +44,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Action Button Configuration", () => {
 		it("displays approval action on step 2", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 1,
 			});
 			render(<WizardFooter />);
 
@@ -120,12 +54,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("displays generation action on final step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 5,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 5,
 			});
 			render(<WizardFooter />);
 
@@ -135,12 +64,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("displays standard next action on other steps", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 2,
 			});
 			render(<WizardFooter />);
 
@@ -152,12 +76,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Button State Management", () => {
 		it("enables continue button when step validation passes", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 			render(<WizardFooter />);
 
@@ -167,28 +86,13 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("disables continue button when step validation fails", () => {
 			useWizardStore.setState({
-				applicationState: {
-					application: ApplicationFactory.build({ title: "Short" }),
-					applicationId: null,
-					applicationTitle: "Short",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 
-			Object.assign(mockStoreState, {
+			useApplicationStore.setState({
 				application: ApplicationFactory.build({ title: "Short" }),
+				isLoading: false,
+				uploadedFiles: [],
 				urls: [],
 			});
 			render(<WizardFooter />);
@@ -201,37 +105,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 describe("WizardHeader", () => {
 	beforeEach(() => {
-		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			applicationState: {
-				application: ApplicationFactory.build({ title: "Test Application" }),
-				applicationId: null,
-				applicationTitle: "Test Application",
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
-			contentState: {
-				uploadedFiles: [],
-				urls: [],
-			},
-			isLoading: false,
-			polling: {
-				...polling,
-				intervalId: null,
-				isActive: false,
-			},
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
-			},
-			workspaceId: "test-workspace-id",
+			currentStep: 0,
 		});
 
-		Object.assign(mockStoreState, {
+		useApplicationStore.setState({
 			application: ApplicationFactory.build({ title: "Test Application" }),
+			isLoading: false,
+			uploadedFiles: [],
 			urls: [],
 		});
 	});
@@ -239,12 +120,7 @@ describe("WizardHeader", () => {
 	describe("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 1,
 			});
 			render(<WizardHeader />);
 
@@ -254,12 +130,7 @@ describe("WizardHeader", () => {
 
 		it("hides application info on first step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 			render(<WizardHeader />);
 
@@ -300,5 +171,11 @@ describe("StepIndicator", () => {
 		render(<StepIndicator isLastStep={false} type="inactive" />);
 
 		expect(screen.getByTestId("step-inactive")).toBeInTheDocument();
+	});
+
+	it("renders without line on last step", () => {
+		render(<StepIndicator isLastStep={true} type="active" />);
+
+		expect(screen.getByTestId("step-active")).toBeInTheDocument();
 	});
 });
