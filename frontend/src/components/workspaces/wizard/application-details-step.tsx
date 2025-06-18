@@ -7,10 +7,11 @@ import { deleteTemplateSource } from "@/actions/sources";
 import AppTextArea from "@/components/textarea-field";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { FileWithId } from "@/types/files";
 import { useDebounce } from "@/utils/debounce";
 import { logError } from "@/utils/logging";
 
-import { ApplicationPreview, FileWithId } from "./application-preview";
+import { ApplicationPreview } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 

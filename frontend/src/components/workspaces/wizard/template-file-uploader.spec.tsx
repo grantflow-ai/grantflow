@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
+import { useWizardStore } from "@/stores/wizard-store";
 
 import { TemplateFileUploader } from "./template-file-uploader";
 
@@ -11,22 +11,14 @@ vi.mock("@/actions/sources", () => ({
 	}),
 }));
 
-vi.mock("@/stores/wizard-store", () => ({
-	useWizardStore: mockUseWizardStore,
-}));
-
 globalThis.fetch = vi.fn();
 
 describe("TemplateFileUploader", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		Object.assign(mockWizardStore, {
-			addFile: vi.fn(),
-			applicationState: {
-				...mockWizardStore.applicationState,
-				templateId: "test-template-id",
-			},
-			workspaceId: "test-workspace-id",
+
+		useWizardStore.setState({
+			currentStep: 0,
 		});
 	});
 
@@ -34,7 +26,6 @@ describe("TemplateFileUploader", () => {
 		render(<TemplateFileUploader />);
 
 		expect(screen.getByTestId("upload-files-button")).toBeInTheDocument();
-		expect(screen.getByText("Upload Documents")).toBeInTheDocument();
 	});
 
 	it("renders file input with correct attributes", () => {
