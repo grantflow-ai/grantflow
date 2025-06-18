@@ -1,3 +1,5 @@
+import { HTTPError } from "ky";
+
 import {
 	ApplicationFactory,
 	CreateApplicationRequestFactory,
@@ -5,8 +7,7 @@ import {
 	UpdateApplicationRequestFactory,
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
-import { HTTPError } from "ky";
-import type { API } from "@/types/api-types";
+
 
 import {
 	createApplication,
@@ -16,6 +17,8 @@ import {
 	updateApplication,
 } from "./grant-applications";
 import { updateGrantTemplate } from "./grant-template";
+
+import type { API } from "@/types/api-types";
 
 const mockPost = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
 const mockPatch = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });

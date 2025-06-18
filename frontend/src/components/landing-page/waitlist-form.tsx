@@ -4,16 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod";
 
 import { addToWaitlist } from "@/actions/join-waitlist";
 import AppInput from "@/components/input-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { logError } from "@/utils/logging";
 import { analyticsIdentify } from "@/utils/segment";
+
+import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
+import type { z } from "zod";
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {

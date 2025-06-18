@@ -1,6 +1,7 @@
+import { HTTPError } from "ky";
+
 import { IdResponseFactory, MessageResponseFactory, UrlRequestFactory, UrlResponseFactory } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
-import { HTTPError } from "ky";
 
 import {
 	crawlApplicationUrl,

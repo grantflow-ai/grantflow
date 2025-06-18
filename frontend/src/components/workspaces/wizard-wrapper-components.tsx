@@ -1,5 +1,3 @@
-import React from "react";
-
 import { AppButton } from "@/components/app-button";
 import { IconGoAhead, IconGoBack } from "@/components/icons";
 import {

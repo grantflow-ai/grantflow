@@ -16,7 +16,7 @@ vi.mock("@/components/icons", () => ({
 
 vi.mock("@/components/app-button", () => ({
 	AppButton: vi.fn().mockImplementation(({ children, size, theme, variant }) => (
-		<button data-size={size} data-testid="mock-app-button" data-theme={theme} data-variant={variant}>
+		<button data-size={size} data-testid="mock-app-button" data-theme={theme} data-variant={variant} type="button">
 			{children}
 		</button>
 	)),

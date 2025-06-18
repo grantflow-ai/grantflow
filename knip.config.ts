@@ -23,7 +23,7 @@ const config: KnipConfig = {
 	],
 	ignoreBinaries: ["only-allow", "eslint", "cross-env"],
 	workspaces: {
-		"frontend": {
+		frontend: {
 			entry: [
 				"src/app/**/page.tsx",
 				"src/app/**/layout.tsx",

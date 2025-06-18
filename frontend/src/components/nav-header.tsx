@@ -15,6 +15,51 @@ import { IconGoAhead } from "./icons";
 
 const BREAKPOINT_MD = 768;
 
+const NavLink = ({
+	href,
+	isActive,
+	label,
+	onClick,
+	theme = "light",
+}: {
+	href: string;
+	isActive: boolean;
+	label: string;
+	onClick?: () => void;
+	theme?: "dark" | "light";
+}) => (
+	<AppButton
+		aria-label={`Go to ${label} Page`}
+		className={isActive ? `text-link-hover-${theme}` : ""}
+		size="lg"
+		theme={theme}
+		variant="link"
+	>
+		<Link href={href} onClick={onClick}>
+			{label}
+		</Link>
+	</AppButton>
+);
+
+const LogoSection = ({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) => (
+	<>
+		<Link aria-label="Go to homepage" href={PagePath.ROOT}>
+			<Logo
+				className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-0" : "opacity-100"}`}
+				height="auto"
+				width="auto"
+			/>
+		</Link>
+		<Link aria-label="Go to homepage" className="absolute" href={PagePath.ROOT}>
+			<LogoDark
+				className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
+				height="auto"
+				width="auto"
+			/>
+		</Link>
+	</>
+);
+
 export default function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const pathname = usePathname();
@@ -50,39 +95,14 @@ export default function NavHeader() {
 				className="flex items-center justify-between border-b border-b-gray-400/20 px-4 md:px-5 lg:px-6 xl:px-7"
 				data-testid="nav-header-container"
 			>
-				<Link aria-label="Go to homepage" href={PagePath.ROOT}>
-					<Logo
-						className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-0" : "opacity-100"}`}
-						height="auto"
-						width="auto"
-					/>
-				</Link>
-				<Link aria-label="Go to homepage" className="absolute" href={PagePath.ROOT}>
-					<LogoDark
-						className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
-						height="auto"
-						width="auto"
-					/>
-				</Link>
+				<LogoSection isMobileMenuOpen={isMobileMenuOpen} />
 				<div className="hidden items-center md:flex" data-testid="nav-header-links">
-					<AppButton
-						aria-label="Go to Home Page"
-						className={pathname === PagePath.ROOT.toString() ? "text-link-hover-light" : ""}
-						size="lg"
-						theme="light"
-						variant="link"
-					>
-						<Link href={PagePath.ROOT}>Home</Link>
-					</AppButton>
-					<AppButton
-						aria-label="Go to About Us Page"
-						className={pathname === PagePath.ABOUT_US.toString() ? "text-link-hover-light" : ""}
-						size="lg"
-						theme="light"
-						variant="link"
-					>
-						<Link href={PagePath.ABOUT_US}>About us</Link>
-					</AppButton>
+					<NavLink href={PagePath.ROOT} isActive={pathname === PagePath.ROOT.toString()} label="Home" />
+					<NavLink
+						href={PagePath.ABOUT_US}
+						isActive={pathname === PagePath.ABOUT_US.toString()}
+						label="About us"
+					/>
 					{isHomePage && (
 						<ScrollButton
 							aria-label="Go to Waitlist Form"
@@ -120,7 +140,6 @@ export default function NavHeader() {
 				</Button>
 			</div>
 			<div
-				aria-expanded={isMobileMenuOpen}
 				aria-hidden={!isMobileMenuOpen}
 				className={`absolute inset-x-0 top-full flex flex-col bg-white p-4 transition-all duration-300 ease-in-out sm:px-6
 				md:hidden
@@ -129,36 +148,24 @@ export default function NavHeader() {
 				`}
 				data-testid="mobile-menu"
 			>
-				<AppButton
-					aria-label="Go to Home Page"
-					className={pathname === PagePath.ROOT.toString() ? "text-link-hover-dark" : ""}
-					size="lg"
-					variant="link"
-				>
-					<Link
-						href={PagePath.ROOT}
-						onClick={() => {
-							setIsMobileMenuOpen(false);
-						}}
-					>
-						Home
-					</Link>
-				</AppButton>
-				<AppButton
-					aria-label="Go to About Us Page"
-					className={pathname === PagePath.ABOUT_US.toString() ? "text-link-hover-dark" : ""}
-					size="lg"
-					variant="link"
-				>
-					<Link
-						href={PagePath.ABOUT_US}
-						onClick={() => {
-							setIsMobileMenuOpen(false);
-						}}
-					>
-						About us
-					</Link>
-				</AppButton>
+				<NavLink
+					href={PagePath.ROOT}
+					isActive={pathname === PagePath.ROOT.toString()}
+					label="Home"
+					onClick={() => {
+						setIsMobileMenuOpen(false);
+					}}
+					theme="dark"
+				/>
+				<NavLink
+					href={PagePath.ABOUT_US}
+					isActive={pathname === PagePath.ABOUT_US.toString()}
+					label="About us"
+					onClick={() => {
+						setIsMobileMenuOpen(false);
+					}}
+					theme="dark"
+				/>
 				{isHomePage && (
 					<ScrollButton
 						aria-label="Go to Waitlist Form"
