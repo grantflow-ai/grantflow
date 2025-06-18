@@ -2,6 +2,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
+from testing.factories import GrantTemplateSourceFactory, RagFileFactory, TextVectorFactory
 
 
 async def create_rag_sources_from_cfp_file(
@@ -20,8 +21,6 @@ async def create_rag_sources_from_cfp_file(
     Returns:
         List of created RAG source IDs
     """
-    from testing.factories import GrantTemplateSourceFactory, RagFileFactory, TextVectorFactory
-
     cfp_content = (FIXTURES_FOLDER / "cfps" / cfp_file_name).read_text()
 
     source = RagFileFactory.build(
