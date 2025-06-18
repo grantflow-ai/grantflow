@@ -126,7 +126,9 @@ describe("validateStepNext", () => {
 		});
 
 		it("should return false when grant template is null", () => {
-			const application = ApplicationFactory.build();
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+			});
 			useApplicationStore.setState({
 				application,
 				isLoading: false,

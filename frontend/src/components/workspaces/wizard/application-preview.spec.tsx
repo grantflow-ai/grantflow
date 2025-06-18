@@ -4,8 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApplicationFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { FileWithId } from "@/types/files";
 
-import { ApplicationPreview, FileWithId } from "./application-preview";
+import { ApplicationPreview } from "./application-preview";
 
 function createMockFile(name: string, size: number, type: string, id?: string): FileWithId {
 	const file = new File(["content"], name, { type }) as FileWithId;
@@ -35,7 +36,6 @@ describe("ApplicationPreview", () => {
 	it("renders empty state when no content", () => {
 		render(<ApplicationPreview />);
 
-		// Check that none of the main content sections are present
 		expect(screen.queryByTestId("application-title")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();

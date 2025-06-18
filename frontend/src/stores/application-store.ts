@@ -3,8 +3,8 @@ import { create } from "zustand";
 
 import { createApplication, retrieveApplication, updateApplication } from "@/actions/grant-applications";
 import { generateGrantTemplate } from "@/actions/grant-template";
-import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { API } from "@/types/api-types";
+import { FileWithId } from "@/types/files";
 import { logError } from "@/utils/logging";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;

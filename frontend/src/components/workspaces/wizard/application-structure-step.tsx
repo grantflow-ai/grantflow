@@ -23,6 +23,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
 import React, { useState } from "react";
 
+import { updateGrantTemplate } from "@/actions/grant-template";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,8 +32,9 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
 import { API } from "@/types/api-types";
+import { logError } from "@/utils/logging";
 
 type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
@@ -135,12 +137,26 @@ export function ApplicationStructureStep() {
 }
 
 function ApplicationStructurePreview() {
-	const { applicationState, updateGrantSections } = useWizardStore();
-	const hasContent = applicationState.applicationTitle || applicationState.application;
-	const grantSections = applicationState.application?.grant_template?.grant_sections ?? [];
+	const { application } = useApplicationStore();
+	const hasContent = !!application;
+	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 	const [editingNewSection, setEditingNewSection] = useState(false);
+
+	const updateGrantSections = async (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
+		if (!application?.workspace_id || !application.id || !application.grant_template?.id) {
+			return;
+		}
+
+		try {
+			await updateGrantTemplate(application.workspace_id, application.id, application.grant_template.id, {
+				grant_sections: sections,
+			});
+		} catch (error) {
+			logError({ error, identifier: "ApplicationStructureStep.updateGrantSections" });
+		}
+	};
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -291,17 +307,12 @@ function ApplicationStructurePreview() {
 							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Structure
 							</ThemeBadge>
-							{applicationState.wsConnectionStatus && (
-								<ThemeBadge className={`w-fit ${applicationState.wsConnectionStatusColor} text-white`}>
-									{applicationState.wsConnectionStatus}
-								</ThemeBadge>
-							)}
 						</div>
 						<h3
 							className="font-heading text-center text-3xl font-medium"
 							data-testid="application-structure-title"
 						>
-							{applicationState.applicationTitle.trim() || "Untitled Application"}
+							{application.title.trim() || "Untitled Application"}
 						</h3>
 					</div>
 

@@ -16,7 +16,7 @@ vi.mock("@/actions/sources", () => ({
 describe("ApplicationDetailsStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Reset only the state parts, not the actions
+
 		useWizardStore.setState({
 			currentStep: 0,
 		});
@@ -87,7 +87,6 @@ describe("ApplicationDetailsStep", () => {
 		const titleInput = screen.getByTestId("application-title-textarea");
 		await user.type(titleInput, "e");
 
-		// Wait for debounced update
 		await waitFor(
 			() => {
 				const charCount = screen.getByTestId("application-title-textarea-chars-count");
@@ -170,7 +169,6 @@ describe("ApplicationDetailsStep", () => {
 		const [link] = screen.getAllByTestId("link-preview-item");
 		await user.hover(link);
 
-		// Check that the remove icon appears on hover
 		await waitFor(() => {
 			expect(screen.getByTestId("link-remove-icon")).toBeInTheDocument();
 		});
@@ -259,7 +257,6 @@ describe("ApplicationDetailsStep", () => {
 			await user.pointer({ keys: "[MouseRight]", target: fileCard });
 		}
 
-		// Check that right-clicking shows context menu
 		await waitFor(() => {
 			expect(screen.getByText("Open")).toBeInTheDocument();
 			expect(screen.getByText("Remove")).toBeInTheDocument();
