@@ -16,7 +16,7 @@ pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 @pytest.fixture(autouse=True)
 def mock_init_llm_connection(mocker: MockerFixture) -> None:
-    mocker.patch("services.rag.src.main.init_llm_connection")
+    mocker.patch("packages.shared_utils.src.ai.init_llm_connection")
 
 
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
