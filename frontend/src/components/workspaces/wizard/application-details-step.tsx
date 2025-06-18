@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { deleteTemplateSource } from "@/actions/sources";
 import AppTextArea from "@/components/textarea-field";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { useDebounce } from "@/utils/debounce";
 import { logError } from "@/utils/logging";
@@ -13,26 +14,29 @@ import { ApplicationPreview, FileWithId } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 
-const DEBOUNCE_MS = 1000;
+const RETRIEVE_DEBOUNCE_MS = 1000;
 const POLLING_INTERVAL_DURATION = 3000;
 const TITLE_MAX_LENGTH = 120;
+const TITLE_DEBOUNCE_MS = 500;
 
-export function ApplicationDetailsStep() {
+interface ApplicationDetailsStepProps {
+	connectionStatus?: string;
+	connectionStatusColor?: string;
+}
+
+export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
 	const {
-		applicationState: { applicationTitle, templateId },
-		areFilesOrUrlsIndexing,
 		polling: { start, stop },
-		removeFile,
-		removeUrl,
-		retrieveApplication,
-		setApplicationTitle,
-		workspaceId,
 	} = useWizardStore();
+	const { application, areFilesOrUrlsIndexing, removeFile, removeUrl, retrieveApplication, updateApplication } =
+		useApplicationStore();
 
 	const getIndexingStatus = useCallback(async () => {
-		await retrieveApplication();
+		if (application) {
+			await retrieveApplication(application.workspace_id, application.id);
+		}
 		return areFilesOrUrlsIndexing();
-	}, [retrieveApplication, areFilesOrUrlsIndexing]);
+	}, [retrieveApplication, areFilesOrUrlsIndexing, application]);
 
 	const handleRetrieveWithPolling = useCallback(async () => {
 		const isIndexing = await getIndexingStatus();
@@ -44,7 +48,13 @@ export function ApplicationDetailsStep() {
 		}
 	}, [getIndexingStatus, start, stop]);
 
-	const debouncedRetrieveApplication = useDebounce(handleRetrieveWithPolling, DEBOUNCE_MS);
+	const debouncedRetrieveApplication = useDebounce(handleRetrieveWithPolling, RETRIEVE_DEBOUNCE_MS);
+
+	const debouncedUpdateTitle = useDebounce((title: string) => {
+		if (application) {
+			void updateApplication(application.workspace_id, application.id, { title });
+		}
+	}, TITLE_DEBOUNCE_MS);
 
 	const handleDocumentChange = useCallback(() => {
 		debouncedRetrieveApplication();
@@ -62,13 +72,13 @@ export function ApplicationDetailsStep() {
 
 	const handleFileRemove = useCallback(
 		async (fileToRemove: FileWithId) => {
-			if (!fileToRemove.id) {
+			if (!fileToRemove.id || !application?.grant_template?.id) {
 				toast.error("Cannot remove file: File ID not found");
 				return;
 			}
 
 			try {
-				await deleteTemplateSource(workspaceId, templateId ?? "", fileToRemove.id);
+				await deleteTemplateSource(application.workspace_id, application.grant_template.id, fileToRemove.id);
 				removeFile(fileToRemove);
 				toast.success(`File ${fileToRemove.name} removed`);
 			} catch (error) {
@@ -76,7 +86,7 @@ export function ApplicationDetailsStep() {
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		[workspaceId, templateId, removeFile],
+		[application, removeFile],
 	);
 
 	return (
@@ -104,13 +114,13 @@ export function ApplicationDetailsStep() {
 						label="Application Title"
 						maxCount={TITLE_MAX_LENGTH}
 						onChange={(e) => {
-							setApplicationTitle(e.target.value);
+							debouncedUpdateTitle(e.target.value);
 						}}
 						placeholder="Title of your grant application"
 						rows={4}
 						showCount
 						testId="application-title-textarea"
-						value={applicationTitle}
+						value={application?.title ?? ""}
 					/>
 				</div>
 
@@ -138,7 +148,12 @@ export function ApplicationDetailsStep() {
 				</div>
 			</div>
 
-			<ApplicationPreview onFileRemove={handleFileRemove} onUrlRemove={handleRemoveUrl} />
+			<ApplicationPreview
+				connectionStatus={connectionStatus}
+				connectionStatusColor={connectionStatusColor}
+				onFileRemove={handleFileRemove}
+				onUrlRemove={handleRemoveUrl}
+			/>
 		</div>
 	);
 }
