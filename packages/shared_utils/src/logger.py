@@ -2,6 +2,7 @@ import logging
 import re
 from typing import Any, Final, cast
 
+from structlog import get_logger as get_structlog_logger
 from structlog.typing import EventDict, FilteringBoundLogger
 
 from packages.shared_utils.src.env import get_env
@@ -137,7 +138,5 @@ def get_logger(name: str) -> FilteringBoundLogger:
         )
 
         configured_ref.value = True
-
-    from structlog import get_logger as get_structlog_logger
 
     return cast("FilteringBoundLogger", get_structlog_logger(name))
