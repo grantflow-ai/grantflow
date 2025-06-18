@@ -23,7 +23,7 @@ function GradientBackground({
 				background: `radial-gradient(60% 100% at ${centerX} ${centerY}, var(--primary) 0%, transparent 100%)`,
 			}}
 			{...rest}
-		></div>
+		/>
 	);
 }
 

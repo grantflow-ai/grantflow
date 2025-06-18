@@ -160,7 +160,7 @@ describe("LegalPageContainer", () => {
 		it("preserves aria attributes on child elements", () => {
 			render(
 				<LegalPageContainer title="Accessibility Test">
-					<button aria-label="Action button" data-testid="test-button">
+					<button aria-label="Action button" data-testid="test-button" type="button">
 						Click me
 					</button>
 				</LegalPageContainer>,

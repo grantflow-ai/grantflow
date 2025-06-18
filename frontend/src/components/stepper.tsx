@@ -17,6 +17,7 @@ export function Stepper({ currentStep, onStepClick, steps }: StepperProps) {
 						onClick={() => {
 							onStepClick(index);
 						}}
+						type="button"
 					>
 						<div
 							className={`h-2 w-full ${

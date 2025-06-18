@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import AppTextArea from "@/components/textarea-field";
 import { useApplicationStore } from "@/stores/application-store";

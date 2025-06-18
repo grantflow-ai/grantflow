@@ -6,10 +6,11 @@ import { toast } from "sonner";
 
 import { crawlTemplateUrl } from "@/actions/sources";
 import { Button } from "@/components/ui/button";
-import type { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { logError } from "@/utils/logging";
+
+import type { FileWithId } from "@/components/workspaces/wizard/application-preview";
 
 const TEST_FILES = [
 	{

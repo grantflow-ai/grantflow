@@ -1,6 +1,7 @@
+import { vi } from "vitest";
+
 import { JwtResponseFactory, LoginRequestFactory } from "::testing/factories";
 import { mockRedirect, mockSetCookie } from "::testing/global-mocks";
-import { vi } from "vitest";
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
 

@@ -1,5 +1,6 @@
-import { WorkspaceListItemFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
+
+import { WorkspaceListItemFactory } from "::testing/factories";
 import { PagePath } from "@/enums";
 
 import { WorkspaceCard } from "./workspace-card";
