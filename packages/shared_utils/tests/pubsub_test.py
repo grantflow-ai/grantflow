@@ -21,6 +21,7 @@ from packages.shared_utils.src.pubsub import (
     publish_url_crawling_task,
     pull_notifications,
 )
+from packages.shared_utils.src.serialization import deserialize
 
 logger = get_logger(__name__)
 
@@ -38,7 +39,9 @@ def mock_publisher_client() -> Mock:
 @pytest.fixture
 def mock_subscriber_client() -> Mock:
     client = Mock()
-    client.subscription_path.return_value = "projects/test-project/subscriptions/test-subscription"
+    client.subscription_path.return_value = (
+        "projects/test-project/subscriptions/test-subscription"
+    )
     return client
 
 
@@ -51,7 +54,9 @@ def reset_client_refs() -> None:
 
 
 def test_get_publisher_client_creates_client_once() -> None:
-    with patch("packages.shared_utils.src.pubsub.pubsub.PublisherClient") as mock_client_class:
+    with patch(
+        "packages.shared_utils.src.pubsub.pubsub.PublisherClient"
+    ) as mock_client_class:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
 
@@ -64,7 +69,9 @@ def test_get_publisher_client_creates_client_once() -> None:
 
 
 def test_get_subscriber_client_creates_client_once() -> None:
-    with patch("packages.shared_utils.src.pubsub.pubsub.SubscriberClient") as mock_client_class:
+    with patch(
+        "packages.shared_utils.src.pubsub.pubsub.SubscriberClient"
+    ) as mock_client_class:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
 
@@ -77,64 +84,91 @@ def test_get_subscriber_client_creates_client_once() -> None:
 
 
 async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) -> None:
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         workspace_id = UUID("223e4567-e89b-12d3-a456-426614174000")
 
+        source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
         result = await publish_url_crawling_task(
             logger=logger,
             url="https://example.com",
-            parent_type="grant_application",
+            source_id=source_id,
             parent_id=parent_id,
             workspace_id=workspace_id,
         )
 
         assert result == "test-message-id"
-        mock_publisher_client.topic_path.assert_called_once_with(project="grantflow", topic="url-crawling")
+        mock_publisher_client.topic_path.assert_called_once_with(
+            project="grantflow", topic="url-crawling"
+        )
         mock_publisher_client.publish.assert_called_once()
         _, kwargs = mock_publisher_client.publish.call_args
         assert kwargs["topic"] == "projects/test-project/topics/test-topic"
         assert b"https://example.com" in kwargs["data"]
 
 
-async def test_publish_url_crawling_task_without_workspace_id(mock_publisher_client: Mock) -> None:
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+async def test_publish_url_crawling_task_with_all_params(
+    mock_publisher_client: Mock,
+) -> None:
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+        workspace_id = UUID("223e4567-e89b-12d3-a456-426614174000")
+        source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
         result = await publish_url_crawling_task(
             logger=logger,
             url="https://example.com",
-            parent_type="funding_organization",
+            source_id=source_id,
             parent_id=parent_id,
+            workspace_id=workspace_id,
         )
 
         assert result == "test-message-id"
         mock_publisher_client.publish.assert_called_once()
         _, kwargs = mock_publisher_client.publish.call_args
-        assert b"workspace_id" not in kwargs["data"]
+        assert b"workspace_id" in kwargs["data"]
 
 
-async def test_publish_url_crawling_task_message_too_large(mock_publisher_client: Mock) -> None:
-    mock_publisher_client.publish.side_effect = MessageTooLargeError("Message too large")
+async def test_publish_url_crawling_task_message_too_large(
+    mock_publisher_client: Mock,
+) -> None:
+    mock_publisher_client.publish.side_effect = MessageTooLargeError(
+        "Message too large"
+    )
 
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         with pytest.raises(BackendError) as exc_info:
             await publish_url_crawling_task(
                 logger=logger,
                 url="https://example.com" + "x" * 10000000,
-                parent_type="grant_application",
+                source_id="323e4567-e89b-12d3-a456-426614174000",
                 parent_id="123e4567-e89b-12d3-a456-426614174000",
+                workspace_id="223e4567-e89b-12d3-a456-426614174000",
             )
 
         assert "Error publishing URL crawling message" in str(exc_info.value)
 
 
-async def test_publish_url_crawling_task_with_string_ids(mock_publisher_client: Mock) -> None:
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+async def test_publish_url_crawling_task_with_string_ids(
+    mock_publisher_client: Mock,
+) -> None:
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         result = await publish_url_crawling_task(
             logger=logger,
             url="https://example.com",
-            parent_type="grant_template",
+            source_id="323e4567-e89b-12d3-a456-426614174000",
             parent_id="123e4567-e89b-12d3-a456-426614174000",
             workspace_id="223e4567-e89b-12d3-a456-426614174000",
         )
@@ -143,15 +177,40 @@ async def test_publish_url_crawling_task_with_string_ids(mock_publisher_client: 
         mock_publisher_client.publish.assert_called_once()
 
 
+async def test_publish_url_crawling_task_with_none_workspace(
+    mock_publisher_client: Mock,
+) -> None:
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
+        result = await publish_url_crawling_task(
+            logger=logger,
+            url="https://example.com",
+            source_id="323e4567-e89b-12d3-a456-426614174000",
+            parent_id="123e4567-e89b-12d3-a456-426614174000",
+            workspace_id=None,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.publish.assert_called_once()
+
+        call_args = mock_publisher_client.publish.call_args
+        data_bytes = call_args.kwargs["data"]
+        published_data = deserialize(data_bytes, CrawlingRequest)
+        assert published_data["workspace_id"] is None
+
+
 async def test_publish_notification_success(mock_publisher_client: Mock) -> None:
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         rag_source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
         test_data = SourceProcessingResult(
-            parent_id=parent_id,
-            parent_type="grant_application",
-            rag_source_id=rag_source_id,
+            source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="test_file.pdf",
         )
@@ -164,19 +223,24 @@ async def test_publish_notification_success(mock_publisher_client: Mock) -> None
         )
 
         assert result == "test-message-id"
-        mock_publisher_client.topic_path.assert_called_once_with(project="grantflow", topic="frontend-notifications")
+        mock_publisher_client.topic_path.assert_called_once_with(
+            project="grantflow", topic="frontend-notifications"
+        )
         mock_publisher_client.publish.assert_called_once()
 
 
-async def test_publish_notification_with_url_identifier(mock_publisher_client: Mock) -> None:
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+async def test_publish_notification_with_url_identifier(
+    mock_publisher_client: Mock,
+) -> None:
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         rag_source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
         test_data = SourceProcessingResult(
-            parent_id=parent_id,
-            parent_type="funding_organization",
-            rag_source_id=rag_source_id,
+            source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.INDEXING,
             identifier="https://example.com/guidelines",
         )
@@ -195,14 +259,15 @@ async def test_publish_notification_with_url_identifier(mock_publisher_client: M
 
 
 async def test_publish_notification_failed_status(mock_publisher_client: Mock) -> None:
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         rag_source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
         test_data = SourceProcessingResult(
-            parent_id=parent_id,
-            parent_type="grant_template",
-            rag_source_id=rag_source_id,
+            source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.FAILED,
             identifier="template.docx",
         )
@@ -221,14 +286,17 @@ async def test_publish_notification_failed_status(mock_publisher_client: Mock) -
 
 
 async def test_publish_notification_too_large(mock_publisher_client: Mock) -> None:
-    mock_publisher_client.publish.side_effect = MessageTooLargeError("Message too large")
+    mock_publisher_client.publish.side_effect = MessageTooLargeError(
+        "Message too large"
+    )
 
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         with pytest.raises(BackendError) as exc_info:
             test_data = SourceProcessingResult(
-                parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-                parent_type="grant_application",
-                rag_source_id=UUID("323e4567-e89b-12d3-a456-426614174000"),
+                source_id=UUID("323e4567-e89b-12d3-a456-426614174000"),
                 indexing_status=SourceIndexingStatusEnum.FINISHED,
                 identifier="document.pdf",
             )
@@ -282,7 +350,10 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
 
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
-    with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_subscriber_client",
+        return_value=mock_subscriber_client,
+    ):
         results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
@@ -294,7 +365,9 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         assert results[0]["event"] == "source_processing"
         assert results[0]["data"]["parent_id"] == str(parent_id)
         assert results[0]["data"]["rag_source_id"] == str(rag_source_id)
-        assert results[0]["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
+        assert (
+            results[0]["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
+        )
 
         mock_subscriber_client.acknowledge.assert_called_once()
         ack_call_args = mock_subscriber_client.acknowledge.call_args[1]
@@ -328,7 +401,10 @@ async def test_pull_notifications_with_identifier(mock_subscriber_client: Mock) 
 
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
-    with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_subscriber_client",
+        return_value=mock_subscriber_client,
+    ):
         results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
@@ -356,7 +432,10 @@ async def test_pull_notifications_invalid_message(mock_subscriber_client: Mock) 
 
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
-    with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_subscriber_client",
+        return_value=mock_subscriber_client,
+    ):
         results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
@@ -377,7 +456,10 @@ async def test_pull_notifications_empty_response(mock_subscriber_client: Mock) -
 
     mock_subscriber_client.pull = Mock(return_value=pull_response)
 
-    with patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_subscriber_client",
+        return_value=mock_subscriber_client,
+    ):
         results = await pull_notifications(
             logger=logger,
             parent_id=parent_id,
@@ -392,7 +474,10 @@ async def test_pull_notifications_timeout(mock_subscriber_client: Mock) -> None:
     mock_subscriber_client.pull.side_effect = TimeoutError()
 
     with (
-        patch("packages.shared_utils.src.pubsub.get_subscriber_client", return_value=mock_subscriber_client),
+        patch(
+            "packages.shared_utils.src.pubsub.get_subscriber_client",
+            return_value=mock_subscriber_client,
+        ),
         pytest.raises(TimeoutError),
     ):
         await pull_notifications(
@@ -425,26 +510,18 @@ def test_pubsub_event_typed_dict() -> None:
 
 def test_crawling_request_typed_dict() -> None:
     request: CrawlingRequest = {
+        "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
         "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_type": "grant_application",
-        "url": "https://example.com",
-    }
-    assert request["url"] == "https://example.com"
-
-    request_with_workspace: CrawlingRequest = {
-        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_type": "grant_template",
         "workspace_id": UUID("223e4567-e89b-12d3-a456-426614174000"),
         "url": "https://example.com",
     }
-    assert "workspace_id" in request_with_workspace
+    assert request["url"] == "https://example.com"
+    assert request["workspace_id"] == UUID("223e4567-e89b-12d3-a456-426614174000")
 
 
 def test_source_processing_result_typed_dict() -> None:
     result: SourceProcessingResult = {
-        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_type": "funding_organization",
-        "rag_source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
+        "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
         "indexing_status": SourceIndexingStatusEnum.FINISHED,
         "identifier": "guidelines.pdf",
     }
@@ -452,9 +529,7 @@ def test_source_processing_result_typed_dict() -> None:
     assert result["identifier"] == "guidelines.pdf"
 
     result_with_url: SourceProcessingResult = {
-        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_type": "grant_application",
-        "rag_source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
+        "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
         "indexing_status": SourceIndexingStatusEnum.INDEXING,
         "identifier": "https://example.com/document",
     }
@@ -495,7 +570,10 @@ def test_rag_request_typed_dict() -> None:
 async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
     parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         result = await publish_rag_task(
             logger=logger,
             parent_type="grant_application",
@@ -517,7 +595,10 @@ async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
 async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> None:
     parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         result = await publish_rag_task(
             logger=logger,
             parent_type="grant_template",
@@ -539,7 +620,10 @@ async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> N
 async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> None:
     parent_id_str = "123e4567-e89b-12d3-a456-426614174000"
 
-    with patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client):
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
         result = await publish_rag_task(
             logger=logger,
             parent_type="grant_application",
@@ -561,7 +645,10 @@ async def test_publish_rag_task_message_too_large(mock_publisher_client: Mock) -
     mock_publisher_client.publish.return_value = future
 
     with (
-        patch("packages.shared_utils.src.pubsub.get_publisher_client", return_value=mock_publisher_client),
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
         pytest.raises(BackendError) as exc_info,
     ):
         await publish_rag_task(

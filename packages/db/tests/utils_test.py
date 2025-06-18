@@ -1,9 +1,12 @@
 from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import insert
+from sqlalchemy import insert, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from structlog import BoundLogger
 
 from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -15,7 +18,8 @@ from packages.db.src.tables import (
     RagFile,
     RagSource,
 )
-from packages.db.src.utils import check_exists_files_being_indexed
+from packages.db.src.utils import check_exists_files_being_indexed, update_source_indexing_status
+from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.exceptions import ValidationError
 
 
@@ -235,3 +239,195 @@ async def test_check_exists_files_being_indexed_validation_error(
         await check_exists_files_being_indexed(
             session_maker=async_session_maker,
         )
+
+
+async def test_update_source_indexing_status_success(
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+) -> None:
+    file_id: UUID = uuid4()
+    parent_id = grant_application.id
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": RAG_FILE,
+                    "indexing_status": SourceIndexingStatusEnum.CREATED,
+                    "text_content": "",
+                }
+            )
+        )
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": file_id,
+                    "filename": "test.pdf",
+                    "mime_type": "application/pdf",
+                    "size": 1000,
+                    "bucket_name": "test-bucket",
+                    "object_path": "test-path",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationRagSource).values(
+                {
+                    "grant_application_id": parent_id,
+                    "rag_source_id": file_id,
+                }
+            )
+        )
+
+    mock_logger = Mock(spec=BoundLogger)
+    vectors = [
+        VectorDTO(
+            chunk={"content": "test content"},
+            embedding=[0.1] * 384,
+            rag_source_id=str(file_id),
+        )
+    ]
+
+    with patch("packages.db.src.utils.publish_notification") as mock_publish:
+        mock_publish.return_value = "test-message-id"
+
+        await update_source_indexing_status(
+            logger=mock_logger,
+            session_maker=async_session_maker,
+            source_id=file_id,
+            parent_id=parent_id,
+            identifier="test.pdf",
+            text_content="Test content extracted from PDF",
+            vectors=vectors,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+
+        assert mock_publish.call_count == 1
+
+        call = mock_publish.call_args
+        assert call.kwargs["logger"] == mock_logger
+        assert call.kwargs["parent_id"] == parent_id
+        assert call.kwargs["event"] == "source_processing"
+        assert call.kwargs["data"]["source_id"] == file_id
+        assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
+        assert call.kwargs["data"]["identifier"] == "test.pdf"
+
+    async with async_session_maker() as session:
+        source = await session.scalar(select(RagSource).where(RagSource.id == file_id))
+        assert source is not None
+        assert source.indexing_status == SourceIndexingStatusEnum.FINISHED
+        assert source.text_content == "Test content extracted from PDF"
+
+
+async def test_update_source_indexing_status_no_vectors(
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+) -> None:
+    file_id: UUID = uuid4()
+    parent_id = grant_application.id
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": file_id,
+                    "source_type": RAG_FILE,
+                    "indexing_status": SourceIndexingStatusEnum.CREATED,
+                    "text_content": "",
+                }
+            )
+        )
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": file_id,
+                    "filename": "empty.pdf",
+                    "mime_type": "application/pdf",
+                    "size": 100,
+                    "bucket_name": "test-bucket",
+                    "object_path": "test-path",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationRagSource).values(
+                {
+                    "grant_application_id": parent_id,
+                    "rag_source_id": file_id,
+                }
+            )
+        )
+
+    mock_logger = Mock(spec=BoundLogger)
+
+    with patch("packages.db.src.utils.publish_notification") as mock_publish:
+        mock_publish.return_value = "test-message-id"
+
+        await update_source_indexing_status(
+            logger=mock_logger,
+            session_maker=async_session_maker,
+            source_id=file_id,
+            parent_id=parent_id,
+            identifier="empty.pdf",
+            text_content="",
+            vectors=None,
+            indexing_status=SourceIndexingStatusEnum.FAILED,
+        )
+
+        assert mock_publish.call_count == 1
+
+        call = mock_publish.call_args
+        assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED
+
+    async with async_session_maker() as session:
+        source = await session.scalar(select(RagSource).where(RagSource.id == file_id))
+        assert source is not None
+        assert source.indexing_status == SourceIndexingStatusEnum.FAILED
+        assert source.text_content == ""
+
+
+async def test_update_source_indexing_status_database_error(
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+) -> None:
+    file_id: UUID = uuid4()
+    parent_id = grant_application.id
+
+    mock_logger = Mock(spec=BoundLogger)
+    mock_logger.exception = Mock()
+
+    mock_session_maker = Mock()
+    mock_session = AsyncMock()
+    mock_session_maker.return_value = mock_session
+
+    mock_session.__aenter__.return_value = mock_session
+    mock_session.__aexit__.return_value = None
+
+    mock_begin = AsyncMock()
+    mock_begin.__aenter__.return_value = mock_session
+    mock_begin.__aexit__.return_value = None
+    mock_session.begin = Mock(return_value=mock_begin)
+
+    mock_session.execute.side_effect = SQLAlchemyError("Database error")
+    mock_session.rollback = AsyncMock()
+
+    with patch("packages.db.src.utils.publish_notification") as mock_publish:
+        mock_publish.return_value = "test-message-id"
+
+        await update_source_indexing_status(
+            logger=mock_logger,
+            session_maker=mock_session_maker,
+            source_id=file_id,
+            parent_id=parent_id,
+            identifier="test.pdf",
+            text_content="Test content",
+            vectors=None,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+
+        mock_logger.exception.assert_called_once()
+
+        assert mock_publish.call_count == 1
+        call = mock_publish.call_args
+        assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED

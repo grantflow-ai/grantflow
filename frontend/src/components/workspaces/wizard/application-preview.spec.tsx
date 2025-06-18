@@ -27,7 +27,7 @@ function createMockFile(name: string, size: number, type: string, id?: string): 
 describe("ApplicationPreview", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Reset mock store to default state
+
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,

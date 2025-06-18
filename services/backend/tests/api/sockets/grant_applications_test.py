@@ -31,7 +31,9 @@ def mock_server_start() -> Generator[None]:
 
 
 @pytest.fixture
-async def application(workspace: Workspace, async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
+async def application(
+    workspace: Workspace, async_session_maker: async_sessionmaker[Any]
+) -> GrantApplication:
     application_id = uuid4()
 
     async with async_session_maker() as session, session.begin():
@@ -44,13 +46,17 @@ async def application(workspace: Workspace, async_session_maker: async_sessionma
             )
         )
 
-        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == application_id))
+        result = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == application_id)
+        )
         return cast("GrantApplication", result)
 
 
 @pytest.fixture
 def mock_pull_notifications() -> Generator[AsyncMock]:
-    with patch("services.backend.src.api.sockets.grant_applications.pull_notifications") as mock:
+    with patch(
+        "services.backend.src.api.sockets.grant_applications.pull_notifications"
+    ) as mock:
         yield mock
 
 
@@ -64,7 +70,9 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_otp(
     with (
         pytest.raises(WebSocketDisconnect),
         sync_test_client as client,
-        client.websocket_connect(f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp=") as ws,
+        client.websocket_connect(
+            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp="
+        ) as ws,
     ):
         ws.receive_json()
 
@@ -96,16 +104,12 @@ async def test_handle_grant_application_notifications_success(
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
-            parent_id=application.id,
-            parent_type="grant_application",
-            rag_source_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            source_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="test_document.pdf",
         ),
         SourceProcessingResult(
-            parent_id=application.id,
-            parent_type="grant_application",
-            rag_source_id=UUID("223e4567-e89b-12d3-a456-426614174000"),
+            source_id=UUID("223e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.INDEXING,
             identifier="https://example.com/resource",
         ),
@@ -114,7 +118,7 @@ async def test_handle_grant_application_notifications_success(
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
-            parent_id=notification["parent_id"],
+            parent_id=application.id,
             event="source_processing",
             data=notification,
         )
@@ -137,9 +141,7 @@ async def test_handle_grant_application_notifications_success(
         assert message1["event"] == "source_processing"
         assert message1["parent_id"] == str(application.id)
         notification1 = message1["data"]
-        assert notification1["parent_id"] == str(application.id)
-        assert notification1["parent_type"] == "grant_application"
-        assert notification1["rag_source_id"] == "123e4567-e89b-12d3-a456-426614174000"
+        assert notification1["source_id"] == "123e4567-e89b-12d3-a456-426614174000"
         assert notification1["indexing_status"] == "FINISHED"
         assert notification1["identifier"] == "test_document.pdf"
 
@@ -148,9 +150,7 @@ async def test_handle_grant_application_notifications_success(
         assert message2["event"] == "source_processing"
         assert message2["parent_id"] == str(application.id)
         notification2 = message2["data"]
-        assert notification2["parent_id"] == str(application.id)
-        assert notification2["parent_type"] == "grant_application"
-        assert notification2["rag_source_id"] == "223e4567-e89b-12d3-a456-426614174000"
+        assert notification2["source_id"] == "223e4567-e89b-12d3-a456-426614174000"
         assert notification2["indexing_status"] == "INDEXING"
         assert notification2["identifier"] == "https://example.com/resource"
 
@@ -169,9 +169,7 @@ async def test_handle_grant_application_notifications_failed_status(
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
-            parent_id=application.id,
-            parent_type="grant_application",
-            rag_source_id=UUID("323e4567-e89b-12d3-a456-426614174000"),
+            source_id=UUID("323e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FAILED,
             identifier="error_document.pdf",
         ),
@@ -180,7 +178,7 @@ async def test_handle_grant_application_notifications_failed_status(
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
-            parent_id=notification["parent_id"],
+            parent_id=application.id,
             event="source_processing",
             data=notification,
         )
@@ -202,7 +200,7 @@ async def test_handle_grant_application_notifications_failed_status(
         assert message["type"] == "data"
         assert message["event"] == "source_processing"
         notification = message["data"]
-        assert notification["rag_source_id"] == "323e4567-e89b-12d3-a456-426614174000"
+        assert notification["source_id"] == "323e4567-e89b-12d3-a456-426614174000"
         assert notification["indexing_status"] == "FAILED"
         assert notification["identifier"] == "error_document.pdf"
 
@@ -238,9 +236,7 @@ async def test_handle_grant_application_notifications_different_roles(
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
-            parent_id=application.id,
-            parent_type="grant_application",
-            rag_source_id=UUID("423e4567-e89b-12d3-a456-426614174000"),
+            source_id=UUID("423e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="admin_test.pdf",
         ),
@@ -249,7 +245,7 @@ async def test_handle_grant_application_notifications_different_roles(
     wrapped_notifications = [
         WebsocketMessage(
             type="data",
-            parent_id=notification["parent_id"],
+            parent_id=application.id,
             event="source_processing",
             data=notification,
         )
@@ -284,9 +280,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
 ) -> None:
     round1 = [
         SourceProcessingResult(
-            parent_id=application.id,
-            parent_type="grant_application",
-            rag_source_id=UUID("523e4567-e89b-12d3-a456-426614174000"),
+            source_id=UUID("523e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.INDEXING,
             identifier="doc1.pdf",
         ),
@@ -294,9 +288,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
 
     round2 = [
         SourceProcessingResult(
-            parent_id=application.id,
-            parent_type="grant_application",
-            rag_source_id=UUID("523e4567-e89b-12d3-a456-426614174000"),
+            source_id=UUID("523e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="doc1.pdf",
         ),
@@ -305,7 +297,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
     wrapped_round1 = [
         WebsocketMessage(
             type="data",
-            parent_id=notification["parent_id"],
+            parent_id=application.id,
             event="source_processing",
             data=notification,
         )
@@ -315,7 +307,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
     wrapped_round2 = [
         WebsocketMessage(
             type="data",
-            parent_id=notification["parent_id"],
+            parent_id=application.id,
             event="source_processing",
             data=notification,
         )
@@ -338,14 +330,14 @@ async def test_handle_grant_application_notifications_continuous_updates(
         assert message1["type"] == "data"
         assert message1["event"] == "source_processing"
         notification1 = message1["data"]
-        assert notification1["rag_source_id"] == "523e4567-e89b-12d3-a456-426614174000"
+        assert notification1["source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification1["indexing_status"] == "INDEXING"
 
         message2 = ws.receive_json()
         assert message2["type"] == "data"
         assert message2["event"] == "source_processing"
         notification2 = message2["data"]
-        assert notification2["rag_source_id"] == "523e4567-e89b-12d3-a456-426614174000"
+        assert notification2["source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification2["indexing_status"] == "FINISHED"
 
     assert mock_pull_notifications.call_count >= 2

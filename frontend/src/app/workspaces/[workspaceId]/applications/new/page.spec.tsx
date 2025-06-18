@@ -4,9 +4,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApplicationFactory } from "::testing/factories";
+import { ApplicationFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { createApplication } from "@/actions/grant-applications";
-import { SourceIndexingStatus } from "@/enums";
 import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
@@ -76,12 +75,18 @@ const createMockWizardStore = (overrides: any = {}) => {
 				title: "Untitled Application",
 				workspace_id: "test-workspace-id",
 			},
+			applicationId: "app-123",
+			applicationTitle: "Untitled Application",
+			templateId: "template-123",
+			wsConnectionStatus: undefined,
+			wsConnectionStatusColor: undefined,
+		},
+		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
+		contentState: {
 			uploadedFiles: [],
 			urls: [],
 		},
-		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
 		createApplication: vi.fn(),
-		currentStep: 0,
 		generateTemplate: vi.fn(),
 		handleApplicationInit: vi.fn(),
 		isLoading: false,
@@ -95,13 +100,30 @@ const createMockWizardStore = (overrides: any = {}) => {
 		removeUrl: vi.fn(),
 		retrieveApplication: vi.fn(),
 		setApplication: vi.fn(),
+		setApplicationId: vi.fn(),
+		setApplicationTitle: vi.fn(),
 		setCurrentStep: vi.fn(),
+		setFileDropdownOpen: vi.fn(),
+		setLinkHoverState: vi.fn(),
+		setTemplateId: vi.fn(),
 		setUploadedFiles: vi.fn(),
+		setUrlInput: vi.fn(),
 		setUrls: vi.fn(),
+		setWorkspaceId: vi.fn(),
+		setWsConnectionStatus: vi.fn(),
+		setWsConnectionStatusColor: vi.fn(),
 		toNextStep: vi.fn(),
 		toPreviousStep: vi.fn(),
-		updateApplication: vi.fn(),
+		ui: {
+			currentStep: 0,
+			fileDropdownStates: {},
+			linkHoverStates: {},
+			urlInput: "",
+		},
+		updateApplicationTitle: vi.fn(),
+		updateGrantSections: vi.fn(),
 		validateStepNext: vi.fn().mockReturnValue(false),
+		workspaceId: "test-workspace-id",
 	};
 
 	// Deep merge overrides
@@ -110,13 +132,12 @@ const createMockWizardStore = (overrides: any = {}) => {
 		delete overrides.applicationState;
 	}
 	if (overrides.contentState) {
-		// Map contentState to applicationState for backward compatibility
-		defaultStore.applicationState = {
-			...defaultStore.applicationState,
-			uploadedFiles: overrides.contentState.uploadedFiles ?? defaultStore.applicationState.uploadedFiles,
-			urls: overrides.contentState.urls ?? defaultStore.applicationState.urls,
-		};
+		defaultStore.contentState = { ...defaultStore.contentState, ...overrides.contentState };
 		delete overrides.contentState;
+	}
+	if (overrides.ui) {
+		defaultStore.ui = { ...defaultStore.ui, ...overrides.ui };
+		delete overrides.ui;
 	}
 
 	return { ...defaultStore, ...overrides };
@@ -412,18 +433,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		const mockNotifications = [
-			{
+			SourceProcessingNotificationMessageFactory.build({
 				data: {
 					identifier: "document1.pdf",
-					indexing_status: SourceIndexingStatus.INDEXING,
+					indexing_status: "INDEXING",
 					parent_id: "app-123",
 					parent_type: "grant_application",
 					rag_source_id: "source-1",
 				},
-				event: "source_processing",
 				parent_id: "app-123",
-				type: "data" as const,
-			},
+			}),
 		];
 
 		vi.mocked(useApplicationNotifications).mockReturnValue({
@@ -452,18 +471,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		const mockNotifications = [
-			{
+			SourceProcessingNotificationMessageFactory.build({
 				data: {
 					identifier: "document1.pdf",
-					indexing_status: SourceIndexingStatus.FINISHED,
+					indexing_status: "FINISHED",
 					parent_id: "app-123",
 					parent_type: "grant_application",
 					rag_source_id: "source-1",
 				},
-				event: "source_processing",
 				parent_id: "app-123",
-				type: "data" as const,
-			},
+			}),
 		];
 
 		vi.mocked(useApplicationNotifications).mockReturnValue({
@@ -492,18 +509,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		const mockNotifications = [
-			{
+			SourceProcessingNotificationMessageFactory.build({
 				data: {
 					identifier: "document1.pdf",
-					indexing_status: SourceIndexingStatus.FAILED,
+					indexing_status: "FAILED",
 					parent_id: "app-123",
 					parent_type: "grant_application",
 					rag_source_id: "source-1",
 				},
-				event: "source_processing",
 				parent_id: "app-123",
-				type: "data" as const,
-			},
+			}),
 		];
 
 		vi.mocked(useApplicationNotifications).mockReturnValue({

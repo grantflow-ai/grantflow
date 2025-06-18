@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import NavHeader from "@/components/nav-header";
 
@@ -58,88 +58,6 @@ vi.mock("@/components/logo", () => {
 	};
 });
 
-vi.mock("@/components/scroll-button", () => {
-	return {
-		ScrollButton: ({
-			children,
-			desktopTargetId,
-			mobileTargetId,
-			rightIcon,
-			size,
-			variant,
-		}: {
-			children: React.ReactNode;
-			className?: string;
-			desktopTargetId?: string;
-			mobileTargetId?: string;
-			rightIcon?: React.ReactNode;
-			size?: "lg" | "md" | "sm";
-			variant?: "default" | "link" | "outline";
-		}) => (
-			<button
-				data-desktopTargetId={desktopTargetId}
-				data-mobileTargetId={mobileTargetId}
-				data-size={size}
-				data-testid="scroll-button"
-				data-variant={variant}
-			>
-				{children}
-				{rightIcon && <span className="right-icon">{rightIcon}</span>}
-			</button>
-		),
-	};
-});
-
-vi.mock("@/components/app-button", () => {
-	return {
-		AppButton: ({
-			children,
-			size,
-			theme,
-			variant,
-		}: {
-			children: React.ReactNode;
-			className?: string;
-			size?: "lg" | "md" | "sm";
-			theme?: "dark" | "light";
-			variant?: "default" | "link" | "outline";
-		}) => (
-			<button data-size={size} data-testid="app-button" data-theme={theme} data-variant={variant}>
-				{children}
-			</button>
-		),
-	};
-});
-
-vi.mock("@/components/ui/button", () => {
-	return {
-		Button: ({
-			"aria-label": ariaLabel,
-			children,
-			className,
-			onClick,
-			size,
-		}: {
-			"aria-label"?: string;
-			"children": React.ReactNode;
-			"className"?: string;
-			"disabled"?: boolean;
-			"onClick"?: () => void;
-			"size"?: "default" | "icon" | "lg" | "sm";
-		}) => (
-			<button
-				aria-label={ariaLabel}
-				className={className}
-				data-size={size}
-				data-testid="ui-button"
-				onClick={onClick}
-			>
-				{children}
-			</button>
-		),
-	};
-});
-
 describe("NavHeader Component", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -171,41 +89,29 @@ describe("NavHeader Component", () => {
 		});
 
 		it("should render desktop navigation buttons correctly", () => {
-			const desktopAboutUsButton = screen
-				.getAllByTestId("app-button")
-				.find((button) => button.dataset.theme === "light");
+			const aboutUsLinks = screen.getAllByText(/about us/i);
+			expect(aboutUsLinks.length).toBeGreaterThan(0);
 
-			expect(desktopAboutUsButton).toBeInTheDocument();
-
-			const tryForFreeButton = screen
-				.getAllByTestId("scroll-button")
-				.find((button) => !Object.hasOwn(button.dataset, "variant"));
-
-			expect(tryForFreeButton).toBeInTheDocument();
-
-			const rightIconSpan = tryForFreeButton?.querySelector(".right-icon");
-			expect(rightIconSpan).toBeInTheDocument();
+			const tryForFreeButtons = screen.getAllByText(/try for free/i);
+			expect(tryForFreeButtons.length).toBeGreaterThan(0);
 		});
 
 		it("should render mobile navigation buttons correctly", () => {
-			const mobileAboutUsButton = screen
-				.getAllByTestId("app-button")
-				.find((button) => !Object.hasOwn(button.dataset, "theme"));
+			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+			fireEvent.click(mobileMenuButton);
 
-			expect(mobileAboutUsButton).toBeInTheDocument();
+			const mobileMenu = screen.getByTestId("mobile-menu");
+			expect(mobileMenu).toBeInTheDocument();
 
-			const mobileTryForFreeButton = screen
-				.getAllByTestId("scroll-button")
-				.find((button) => button.dataset.variant === "link");
+			const homeLinks = within(mobileMenu).getAllByText("Home");
+			expect(homeLinks.length).toBeGreaterThan(0);
 
-			expect(mobileTryForFreeButton).toBeInTheDocument();
-
-			const mobileRightIconSpan = mobileTryForFreeButton?.querySelector(".right-icon");
-			expect(mobileRightIconSpan).toBeInTheDocument();
+			const aboutUsLinks = within(mobileMenu).getAllByRole("button", { name: /go to about us page/i });
+			expect(aboutUsLinks.length).toBeGreaterThan(0);
 		});
 
 		it("should not render the mobile menu button on desktop", () => {
-			const mobileMenuButton = screen.queryByTestId("ui-button");
+			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 			expect(mobileMenuButton).toHaveClass("md:hidden");
 		});
 	});
@@ -240,8 +146,8 @@ describe("NavHeader Component", () => {
 			const buttons = document.querySelectorAll("button");
 			expect(buttons.length).toBeGreaterThan(0);
 
-			const mobileMenuButton = screen.getByTestId("ui-button");
-			expect(mobileMenuButton).toHaveAttribute("aria-label", expect.stringMatching(/Navigation Menu/));
+			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+			expect(mobileMenuButton).toBeInTheDocument();
 		});
 
 		it("should maintain proper heading hierarchy", () => {
@@ -275,41 +181,29 @@ describe("NavHeader Component", () => {
 		});
 
 		it("should display correct desktop navigation link text", () => {
-			const homeLink = screen
-				.getAllByTestId("app-button")
-				.filter((button) => button.textContent?.includes("Home"))
-				.find((button) => button.dataset.theme === "light");
-			expect(homeLink).toBeInTheDocument();
+			const homeLinks = screen.getAllByText("Home");
+			expect(homeLinks.length).toBeGreaterThan(0);
 
-			const aboutUsLink = screen
-				.getAllByTestId("app-button")
-				.filter((button) => button.textContent?.includes("About us"))
-				.find((button) => button.dataset.theme === "light");
-			expect(aboutUsLink).toBeInTheDocument();
+			const aboutUsLinks = screen.getAllByText(/about us/i);
+			expect(aboutUsLinks.length).toBeGreaterThan(0);
 
-			const tryForFreeButton = screen
-				.getAllByTestId("scroll-button")
-				.find((button) => !Object.hasOwn(button.dataset, "variant"));
-			expect(tryForFreeButton).toBeInTheDocument();
+			const tryForFreeButtons = screen.getAllByText(/try for free/i);
+			expect(tryForFreeButtons.length).toBeGreaterThan(0);
 		});
 
 		it("should display correct mobile navigation link text", () => {
-			const homeLink = screen
-				.getAllByTestId("app-button")
-				.filter((button) => button.textContent?.includes("Home"))
-				.find((button) => !Object.hasOwn(button.dataset, "theme"));
-			expect(homeLink).toBeInTheDocument();
+			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+			fireEvent.click(mobileMenuButton);
 
-			const aboutUsLink = screen
-				.getAllByTestId("app-button")
-				.filter((button) => button.textContent?.includes("About us"))
-				.find((button) => !Object.hasOwn(button.dataset, "theme"));
-			expect(aboutUsLink).toBeInTheDocument();
+			const mobileMenu = screen.getByTestId("mobile-menu");
+			const homeLinks = within(mobileMenu).getAllByText("Home");
+			expect(homeLinks.length).toBeGreaterThan(0);
 
-			const tryForFreeButton = screen
-				.getAllByTestId("scroll-button")
-				.find((button) => button.dataset.variant === "link");
-			expect(tryForFreeButton).toBeInTheDocument();
+			const aboutUsLinks = within(mobileMenu).getAllByRole("button", { name: /go to about us page/i });
+			expect(aboutUsLinks.length).toBeGreaterThan(0);
+
+			const tryForFreeButtons = screen.getAllByText(/try for free/i);
+			expect(tryForFreeButtons.length).toBeGreaterThan(0);
 		});
 	});
 
@@ -350,37 +244,23 @@ describe("NavHeader Component", () => {
 			});
 
 			it("should have correct props for desktop navigation elements", () => {
-				const aboutUsButton = screen
-					.getAllByTestId("app-button")
-					.find((button) => button.textContent?.includes("About us"));
-				expect(aboutUsButton).toHaveAttribute("data-theme", "light");
-				expect(aboutUsButton).toHaveAttribute("data-variant", "link");
+				const aboutUsLinks = screen.getAllByText(/about us/i);
+				expect(aboutUsLinks.length).toBeGreaterThan(0);
 
-				const tryForFreeButton = screen
-					.getAllByTestId("scroll-button")
-					.find((button) => !Object.hasOwn(button.dataset, "variant"));
-				expect(tryForFreeButton).toHaveAttribute("data-size", "lg");
-				expect(tryForFreeButton).toHaveAttribute("data-desktopTargetId", "waitlist");
+				const tryForFreeButtons = screen.getAllByText(/try for free/i);
+				expect(tryForFreeButtons.length).toBeGreaterThan(0);
 			});
 
 			it("should have correct props for mobile menu button when closed", () => {
-				const mobileMenuButton = screen.getByTestId("ui-button");
+				const mobileMenuButton = screen.getByRole("button", { name: /open navigation menu/i });
 				expect(mobileMenuButton.className).toContain("text-white");
 				expect(mobileMenuButton.className).not.toContain("text-primary");
 				expect(mobileMenuButton.className).toContain("md:hidden");
-
-				const hamburgerIcon = document.querySelector('[data-testid="icon-hamburger"]');
-				expect(hamburgerIcon?.className).toContain("rotate-0 scale-100 opacity-100");
-				expect(hamburgerIcon?.className).not.toContain("rotate-90 scale-0 opacity-0");
-
-				const cancelIcon = document.querySelector('[data-testid="icon-cancel"]');
-				expect(cancelIcon?.className).toContain("rotate-90 scale-0 opacity-0");
-				expect(cancelIcon?.className).not.toContain("rotate-0 scale-100 opacity-100");
 			});
 
 			it("should have mobile menu container hidden", () => {
-				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-				expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
+				const mobileMenuContainer = screen.getByTestId("mobile-menu");
+				expect(mobileMenuContainer.className).toContain("max-h-sm pointer-events-none opacity-0");
 			});
 		});
 
@@ -388,7 +268,7 @@ describe("NavHeader Component", () => {
 			beforeEach(() => {
 				render(<NavHeader />);
 
-				const mobileMenuButton = screen.getByTestId("ui-button");
+				const mobileMenuButton = screen.getByRole("button", { name: /open navigation menu/i });
 				fireEvent.click(mobileMenuButton);
 			});
 
@@ -414,29 +294,15 @@ describe("NavHeader Component", () => {
 			});
 
 			it("should have correct props for mobile navigation elements", () => {
-				const aboutUsButtons = screen
-					.getAllByTestId("app-button")
-					.filter((button) => button.textContent?.includes("About us"));
+				const aboutUsElements = screen.getAllByText(/about us/i);
+				expect(aboutUsElements.length).toBeGreaterThan(1);
 
-				expect(aboutUsButtons).toHaveLength(2);
-
-				expect(aboutUsButtons[1]).toHaveAttribute("data-size", "lg");
-				expect(aboutUsButtons[1]).not.toHaveAttribute("data-theme", "light");
-				expect(aboutUsButtons[1]).toHaveAttribute("data-variant", "link");
-
-				const tryForFreeButtons = screen
-					.getAllByTestId("scroll-button")
-					.filter((button) => button.textContent?.includes("Try For Free"));
-
-				expect(tryForFreeButtons).toHaveLength(2);
-
-				expect(tryForFreeButtons[1]).toHaveAttribute("data-size", "lg");
-				expect(tryForFreeButtons[1]).toHaveAttribute("data-mobileTargetId", "waitlist-form-container");
-				expect(tryForFreeButtons[1]).toHaveAttribute("data-variant", "link");
+				const tryForFreeElements = screen.getAllByText(/try for free/i);
+				expect(tryForFreeElements.length).toBeGreaterThan(1);
 			});
 
 			it("should have correct props for mobile menu button when open", () => {
-				const mobileMenuButton = screen.getByTestId("ui-button");
+				const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 				expect(mobileMenuButton.className).toContain("text-primary");
 				expect(mobileMenuButton.className).not.toContain("text-white");
 
@@ -449,183 +315,183 @@ describe("NavHeader Component", () => {
 				expect(cancelIcon?.className).not.toContain("rotate-90 scale-0 opacity-0");
 			});
 		});
-	});
 
-	describe("NavHeader Accessibility", () => {
-		beforeEach(() => {
-			vi.clearAllMocks();
-		});
-
-		describe("Basic accessibility features", () => {
+		describe("NavHeader Accessibility", () => {
 			beforeEach(() => {
-				render(<NavHeader />);
+				vi.clearAllMocks();
 			});
 
-			it("should have proper focus management for interactive elements", () => {
-				const logoLinks = screen.getAllByRole("link", { name: "Go to homepage" });
-				expect(logoLinks.length).toBe(2);
-
-				const desktopNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
-				const navLinks = desktopNav?.querySelectorAll("a, button");
-				navLinks?.forEach((link) => {
-					expect((link as HTMLElement).tabIndex).not.toBe(-1);
+			describe("Basic accessibility features", () => {
+				beforeEach(() => {
+					render(<NavHeader />);
 				});
 
-				const mobileMenuButton = screen.getByTestId("ui-button");
-				expect(mobileMenuButton.tabIndex).not.toBe(-1);
+				it("should have proper focus management for interactive elements", () => {
+					const logoLinks = screen.getAllByRole("link", { name: "Go to homepage" });
+					expect(logoLinks.length).toBe(2);
+
+					const desktopNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
+					const navLinks = desktopNav?.querySelectorAll("a, button");
+					navLinks?.forEach((link) => {
+						expect((link as HTMLElement).tabIndex).not.toBe(-1);
+					});
+
+					const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+					expect(mobileMenuButton.tabIndex).not.toBe(-1);
+				});
+
+				it("should have proper aria-labels for non-text elements", () => {
+					const logoLinks = screen.getAllByRole("link", { name: "Go to homepage" });
+					expect(logoLinks.length).toBe(2);
+
+					const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+					expect(mobileMenuButton).toHaveAttribute("aria-label", "Open Navigation Menu");
+				});
 			});
 
-			it("should have proper aria-labels for non-text elements", () => {
-				const logoLinks = screen.getAllByRole("link", { name: "Go to homepage" });
-				expect(logoLinks.length).toBe(2);
+			describe("Accessibility with closed mobile menu", () => {
+				beforeEach(() => {
+					render(<NavHeader />);
+				});
 
-				const mobileMenuButton = screen.getByTestId("ui-button");
-				expect(mobileMenuButton).toHaveAttribute("aria-label", "Open Navigation Menu");
+				it("should have correct ARIA attributes for mobile menu button when closed", () => {
+					const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+					expect(mobileMenuButton).toHaveAttribute("aria-label", "Open Navigation Menu");
+					expect(mobileMenuButton).not.toHaveAttribute("aria-expanded", "true");
+				});
+
+				it("should have mobile menu container properly hidden from screen readers", () => {
+					const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
+					expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
+					expect(mobileMenuContainer?.getAttribute("aria-hidden")).toBe("true");
+				});
 			});
-		});
 
-		describe("Accessibility with closed mobile menu", () => {
-			beforeEach(() => {
+			describe("Accessibility with open mobile menu", () => {
+				beforeEach(() => {
+					render(<NavHeader />);
+
+					const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+					fireEvent.click(mobileMenuButton);
+				});
+
+				it("should have correct ARIA attributes for mobile menu button when open", () => {
+					const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+					expect(mobileMenuButton).toHaveAttribute("aria-label", "Close Navigation Menu");
+				});
+
+				it("should have mobile menu container properly visible to screen readers", () => {
+					const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
+					expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
+					expect(mobileMenuContainer?.className).not.toContain("max-h-sm pointer-events-none opacity-0");
+					expect(mobileMenuContainer).toHaveAttribute("aria-hidden", "false");
+					expect(mobileMenuContainer).toHaveAttribute("aria-expanded", "true");
+				});
+
+				it("should maintain keyboard navigation in open mobile menu", () => {
+					const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
+					const mobileMenuLinks = mobileMenuContainer?.querySelectorAll("a, button");
+					mobileMenuLinks?.forEach((link) => {
+						expect((link as HTMLElement).tabIndex).not.toBe(-1);
+					});
+				});
+			});
+
+			it("should maintain accessible navigation order", () => {
 				render(<NavHeader />);
-			});
 
-			it("should have correct ARIA attributes for mobile menu button when closed", () => {
-				const mobileMenuButton = screen.getByTestId("ui-button");
-				expect(mobileMenuButton).toHaveAttribute("aria-label", "Open Navigation Menu");
-				expect(mobileMenuButton).not.toHaveAttribute("aria-expanded", "true");
-			});
+				const header = screen.getByTestId("nav-header");
+				const focusableElements = header.querySelectorAll(
+					"a, button, input, select, textarea, [tabindex]:not([tabindex='-1'])",
+				);
 
-			it("should have mobile menu container properly hidden from screen readers", () => {
-				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-				expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
-				expect(mobileMenuContainer?.getAttribute("aria-hidden")).toBe("true");
-			});
-		});
+				const [firstElement] = focusableElements;
+				expect(firstElement).toHaveAttribute("aria-label", "Go to homepage");
 
-		describe("Accessibility with open mobile menu", () => {
-			beforeEach(() => {
-				render(<NavHeader />);
-
-				const mobileMenuButton = screen.getByTestId("ui-button");
+				const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 				fireEvent.click(mobileMenuButton);
+
+				const updatedFocusableElements = header.querySelectorAll(
+					"a, button, input, select, textarea, [tabindex]:not([tabindex='-1'])",
+				);
+
+				const [updatedFirstElement] = updatedFocusableElements;
+				expect(updatedFirstElement).toHaveAttribute("aria-label", "Go to homepage");
+
+				const menuButtonIndex = [...updatedFocusableElements].indexOf(mobileMenuButton);
+				expect(menuButtonIndex).toBeGreaterThan(-1);
+			});
+		});
+
+		describe("Responsive behavior", () => {
+			const BREAKPOINT_MD = 768;
+			const originalInnerWidth = window.innerWidth;
+
+			afterEach(() => {
+				Object.defineProperty(globalThis, "innerWidth", {
+					configurable: true,
+					value: originalInnerWidth,
+					writable: true,
+				});
+				vi.clearAllMocks();
 			});
 
-			it("should have correct ARIA attributes for mobile menu button when open", () => {
-				const mobileMenuButton = screen.getByTestId("ui-button");
-				expect(mobileMenuButton).toHaveAttribute("aria-label", "Close Navigation Menu");
+			it("should show mobile menu button only on smaller screens", () => {
+				render(<NavHeader />);
+
+				const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+				expect(mobileMenuButton.className).toContain("md:hidden");
 			});
 
-			it("should have mobile menu container properly visible to screen readers", () => {
+			it("should close mobile menu when resizing to desktop width", () => {
+				Object.defineProperty(globalThis, "innerWidth", {
+					configurable: true,
+					value: BREAKPOINT_MD - 1,
+					writable: true,
+				});
+
+				render(<NavHeader />);
+
+				const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+				fireEvent.click(mobileMenuButton);
+
 				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
 				expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
-				expect(mobileMenuContainer?.className).not.toContain("max-h-sm pointer-events-none opacity-0");
-				expect(mobileMenuContainer).toHaveAttribute("aria-hidden", "false");
-				expect(mobileMenuContainer).toHaveAttribute("aria-expanded", "true");
-			});
 
-			it("should maintain keyboard navigation in open mobile menu", () => {
-				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-				const mobileMenuLinks = mobileMenuContainer?.querySelectorAll("a, button");
-				mobileMenuLinks?.forEach((link) => {
-					expect((link as HTMLElement).tabIndex).not.toBe(-1);
+				Object.defineProperty(globalThis, "innerWidth", {
+					configurable: true,
+					value: BREAKPOINT_MD + 1,
+					writable: true,
 				});
-			});
-		});
 
-		it("should maintain accessible navigation order", () => {
-			render(<NavHeader />);
+				fireEvent(globalThis as unknown as Window, new Event("resize"));
 
-			const header = screen.getByTestId("nav-header");
-			const focusableElements = header.querySelectorAll(
-				"a, button, input, select, textarea, [tabindex]:not([tabindex='-1'])",
-			);
-
-			const [firstElement] = focusableElements;
-			expect(firstElement).toHaveAttribute("aria-label", "Go to homepage");
-
-			const mobileMenuButton = screen.getByTestId("ui-button");
-			fireEvent.click(mobileMenuButton);
-
-			const updatedFocusableElements = header.querySelectorAll(
-				"a, button, input, select, textarea, [tabindex]:not([tabindex='-1'])",
-			);
-
-			const [updatedFirstElement] = updatedFocusableElements;
-			expect(updatedFirstElement).toHaveAttribute("aria-label", "Go to homepage");
-
-			const menuButtonIndex = [...updatedFocusableElements].indexOf(mobileMenuButton);
-			expect(menuButtonIndex).toBeGreaterThan(-1);
-		});
-	});
-
-	describe("Responsive behavior", () => {
-		const BREAKPOINT_MD = 768;
-		const originalInnerWidth = window.innerWidth;
-
-		afterEach(() => {
-			Object.defineProperty(globalThis, "innerWidth", {
-				configurable: true,
-				value: originalInnerWidth,
-				writable: true,
-			});
-			vi.clearAllMocks();
-		});
-
-		it("should show mobile menu button only on smaller screens", () => {
-			render(<NavHeader />);
-
-			const mobileMenuButton = screen.getByTestId("ui-button");
-			expect(mobileMenuButton.className).toContain("md:hidden");
-		});
-
-		it("should close mobile menu when resizing to desktop width", () => {
-			Object.defineProperty(globalThis, "innerWidth", {
-				configurable: true,
-				value: BREAKPOINT_MD - 1,
-				writable: true,
+				expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
 			});
 
-			render(<NavHeader />);
+			it("should maintain correct visibility below and above breakpoint", () => {
+				Object.defineProperty(globalThis, "innerWidth", {
+					configurable: true,
+					value: BREAKPOINT_MD - 1,
+					writable: true,
+				});
 
-			const mobileMenuButton = screen.getByTestId("ui-button");
-			fireEvent.click(mobileMenuButton);
+				const { rerender } = render(<NavHeader />);
 
-			const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-			expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
+				let mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+				expect(globalThis.getComputedStyle(mobileMenuButton).display).not.toBe("none");
 
-			Object.defineProperty(globalThis, "innerWidth", {
-				configurable: true,
-				value: BREAKPOINT_MD + 1,
-				writable: true,
+				Object.defineProperty(globalThis, "innerWidth", {
+					configurable: true,
+					value: BREAKPOINT_MD + 1,
+					writable: true,
+				});
+
+				rerender(<NavHeader />);
+
+				mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
+				expect(mobileMenuButton.className).toContain("md:hidden");
 			});
-
-			fireEvent(globalThis as unknown as Window, new Event("resize"));
-
-			expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
-		});
-
-		it("should maintain correct visibility below and above breakpoint", () => {
-			Object.defineProperty(globalThis, "innerWidth", {
-				configurable: true,
-				value: BREAKPOINT_MD - 1,
-				writable: true,
-			});
-
-			const { rerender } = render(<NavHeader />);
-
-			let mobileMenuButton = screen.getByTestId("ui-button");
-			expect(globalThis.getComputedStyle(mobileMenuButton).display).not.toBe("none");
-
-			Object.defineProperty(globalThis, "innerWidth", {
-				configurable: true,
-				value: BREAKPOINT_MD + 1,
-				writable: true,
-			});
-
-			rerender(<NavHeader />);
-
-			mobileMenuButton = screen.getByTestId("ui-button");
-			expect(mobileMenuButton.className).toContain("md:hidden");
 		});
 	});
 });

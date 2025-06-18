@@ -1,7 +1,7 @@
 import { HTTPError } from "ky";
 
+import { OtpResponseFactory } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
-import { API } from "@/types/api-types";
 
 import { getOtp } from "./otp";
 
@@ -30,10 +30,7 @@ vi.mock("@/utils/server-side", async () => {
 
 describe("OTP Actions", () => {
 	const mockAuthHeaders = { Authorization: "Bearer mock-token" };
-
-	const mockOtpResponse: API.GenerateOtp.Http200.ResponseBody = {
-		otp: "123456",
-	};
+	const mockOtpResponse = OtpResponseFactory.build();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
