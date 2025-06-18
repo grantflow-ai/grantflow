@@ -28,12 +28,11 @@ describe("ToastListener", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// @ts-expect-error, mocking
+
 		vi.mocked(useRouter).mockReturnValue(mockRouter);
 	});
 
 	it("does nothing when no toast params are present", () => {
-		// @ts-expect-error, mocking
 		vi.mocked(useSearchParams).mockReturnValue({
 			get: vi.fn().mockReturnValue(null),
 			toString: vi.fn().mockReturnValue(""),
@@ -53,7 +52,7 @@ describe("ToastListener", () => {
 			["toastContent", "Operation completed successfully"],
 			["toastType", "success"],
 		]);
-		// @ts-expect-error, mocking
+
 		vi.mocked(useSearchParams).mockReturnValue({
 			get: (key: string) => mockParams.get(key) ?? null,
 			toString: () => "toastType=success&toastContent=Operation+completed+successfully&otherParam=value",
@@ -70,7 +69,7 @@ describe("ToastListener", () => {
 			["toastContent", "Something went wrong"],
 			["toastType", "error"],
 		]);
-		// @ts-expect-error, mocking
+
 		vi.mocked(useSearchParams).mockReturnValue({
 			get: (key: string) => mockParams.get(key) ?? null,
 			toString: () => "toastType=error&toastContent=Something+went+wrong",
@@ -87,7 +86,7 @@ describe("ToastListener", () => {
 			["toastContent", "Please note this information"],
 			["toastType", "info"],
 		]);
-		// @ts-expect-error, mocking
+
 		vi.mocked(useSearchParams).mockReturnValue({
 			get: (key: string) => mockParams.get(key) ?? null,
 			toString: () => "toastType=info&toastContent=Please+note+this+information",
@@ -104,7 +103,7 @@ describe("ToastListener", () => {
 			["toastContent", ""],
 			["toastType", "success"],
 		]);
-		// @ts-expect-error, mocking
+
 		vi.mocked(useSearchParams).mockReturnValue({
 			get: (key: string) => mockParams.get(key) ?? null,
 			toString: () => "toastType=success&toastContent=",

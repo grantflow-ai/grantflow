@@ -18,7 +18,7 @@ vi.mock("@/stores/application-store", () => ({
 describe("ApplicationStructureStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Reset mock store to default state
+
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,
@@ -104,7 +104,6 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("shows preview when application title is present", () => {
-		// Update the mock wizard store to have an application title
 		const application = ApplicationWithTemplateFactory.build({
 			id: "test-id",
 			title: "Test Application",
@@ -129,7 +128,6 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("displays untitled when no title is set", () => {
-		// Update the mock wizard store to have an empty application title
 		const application = ApplicationWithTemplateFactory.build({
 			id: "test-id",
 			title: "",
@@ -154,14 +152,13 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("renders application sections preview", () => {
-		// Update the mock wizard store to have an application with title but no grant sections
 		const application = ApplicationFactory.build({
 			grant_template: {
 				created_at: new Date().toISOString(),
 				funding_organization: undefined,
 				funding_organization_id: undefined,
 				grant_application_id: "test-id",
-				grant_sections: [], // Empty sections to show the default UI
+				grant_sections: [],
 				id: "template-id",
 				rag_sources: [],
 				submission_date: null,
@@ -187,7 +184,6 @@ describe("ApplicationStructureStep", () => {
 		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.getByText("Application Sections")).toBeInTheDocument();
 
-		// Check for the sample sections (shown when grant_sections is empty)
 		expect(screen.getByText("Executive Summary")).toBeInTheDocument();
 		expect(screen.getByText("Overview of the project and key highlights")).toBeInTheDocument();
 
@@ -207,12 +203,10 @@ describe("ApplicationStructureStep", () => {
 		const mainContainer = screen.getByTestId("application-structure-step");
 		expect(mainContainer).toHaveClass("flex", "size-full");
 
-		// Left pane should have responsive width classes
 		const leftPane = mainContainer.querySelector(".w-1\\/3");
 		expect(leftPane).toBeInTheDocument();
 		expect(leftPane).toHaveClass("sm:w-1/2", "space-y-6", "overflow-y-auto", "p-6");
 
-		// Preview pane should have correct width
 		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
 		expect(previewPane).toBeInTheDocument();
 		expect(previewPane).toHaveClass(
@@ -230,7 +224,6 @@ describe("ApplicationStructureStep", () => {
 		const longTitle =
 			"This is a very long application title that should be handled gracefully by the UI without breaking the layout or causing overflow issues";
 
-		// Update the mock wizard store with a long title
 		const application = ApplicationWithTemplateFactory.build({
 			id: "test-id",
 			title: longTitle,

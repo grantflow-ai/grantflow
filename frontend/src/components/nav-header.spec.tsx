@@ -89,25 +89,20 @@ describe("NavHeader Component", () => {
 		});
 
 		it("should render desktop navigation buttons correctly", () => {
-			// Look for About Us link/button
 			const aboutUsLinks = screen.getAllByText(/about us/i);
 			expect(aboutUsLinks.length).toBeGreaterThan(0);
 
-			// Look for Try For Free button
 			const tryForFreeButtons = screen.getAllByText(/try for free/i);
 			expect(tryForFreeButtons.length).toBeGreaterThan(0);
 		});
 
 		it("should render mobile navigation buttons correctly", () => {
-			// Mobile menu is initially hidden, so we need to open it first
 			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 			fireEvent.click(mobileMenuButton);
 
-			// Now check for mobile navigation elements
 			const mobileMenu = screen.getByTestId("mobile-menu");
 			expect(mobileMenu).toBeInTheDocument();
 
-			// Check for navigation links in mobile menu
 			const homeLinks = within(mobileMenu).getAllByText("Home");
 			expect(homeLinks.length).toBeGreaterThan(0);
 
@@ -186,34 +181,27 @@ describe("NavHeader Component", () => {
 		});
 
 		it("should display correct desktop navigation link text", () => {
-			// Check for Home link in desktop navigation
 			const homeLinks = screen.getAllByText("Home");
 			expect(homeLinks.length).toBeGreaterThan(0);
 
-			// Check for About Us link in desktop navigation
 			const aboutUsLinks = screen.getAllByText(/about us/i);
 			expect(aboutUsLinks.length).toBeGreaterThan(0);
 
-			// Check for Try For Free button in desktop navigation
 			const tryForFreeButtons = screen.getAllByText(/try for free/i);
 			expect(tryForFreeButtons.length).toBeGreaterThan(0);
 		});
 
 		it("should display correct mobile navigation link text", () => {
-			// Open mobile menu first
 			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 			fireEvent.click(mobileMenuButton);
 
-			// Check for Home link in mobile menu
 			const mobileMenu = screen.getByTestId("mobile-menu");
 			const homeLinks = within(mobileMenu).getAllByText("Home");
 			expect(homeLinks.length).toBeGreaterThan(0);
 
-			// Check for About Us link in mobile menu
 			const aboutUsLinks = within(mobileMenu).getAllByRole("button", { name: /go to about us page/i });
 			expect(aboutUsLinks.length).toBeGreaterThan(0);
 
-			// Check for Try For Free button in mobile menu
 			const tryForFreeButtons = screen.getAllByText(/try for free/i);
 			expect(tryForFreeButtons.length).toBeGreaterThan(0);
 		});
@@ -256,11 +244,9 @@ describe("NavHeader Component", () => {
 			});
 
 			it("should have correct props for desktop navigation elements", () => {
-				// Check that About Us link exists
 				const aboutUsLinks = screen.getAllByText(/about us/i);
 				expect(aboutUsLinks.length).toBeGreaterThan(0);
 
-				// Check that Try For Free button exists
 				const tryForFreeButtons = screen.getAllByText(/try for free/i);
 				expect(tryForFreeButtons.length).toBeGreaterThan(0);
 			});
@@ -308,11 +294,9 @@ describe("NavHeader Component", () => {
 			});
 
 			it("should have correct props for mobile navigation elements", () => {
-				// Check that About Us appears in both desktop and mobile navigation
 				const aboutUsElements = screen.getAllByText(/about us/i);
 				expect(aboutUsElements.length).toBeGreaterThan(1);
 
-				// Check that Try For Free appears in both desktop and mobile navigation
 				const tryForFreeElements = screen.getAllByText(/try for free/i);
 				expect(tryForFreeElements.length).toBeGreaterThan(1);
 			});

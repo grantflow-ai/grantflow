@@ -53,13 +53,11 @@ interface SectionFormData {
 
 type UpdateGrantSection = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
 
-// Helper function to convert GrantSection to UpdateGrantSection
 const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	if (isDetailedSection(section)) {
 		return section;
 	}
 
-	// Basic section - fill in required fields with defaults
 	return {
 		depends_on: [],
 		generation_instructions: "",
@@ -464,7 +462,6 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 				<div>
 					<Label htmlFor="new-section-name">Section name</Label>
 					<Input
-						// autoFocus - removed for accessibility
 						className="mt-1"
 						id="new-section-name"
 						onChange={(e) => {

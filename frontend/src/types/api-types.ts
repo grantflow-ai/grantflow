@@ -22,7 +22,7 @@ export namespace API {
 	export namespace CrawlFundingOrganizationUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
-				message: string;
+				source_id: string;
 			};
 		}
 
@@ -46,7 +46,7 @@ export namespace API {
 	export namespace CrawlGrantApplicationUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
-				message: string;
+				source_id: string;
 			};
 		}
 
@@ -71,7 +71,7 @@ export namespace API {
 	export namespace CrawlGrantTemplateUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
-				message: string;
+				source_id: string;
 			};
 		}
 
@@ -197,6 +197,7 @@ export namespace API {
 	export namespace CreateFundingOrganizationRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
+				source_id: string;
 				url: string;
 			};
 		}
@@ -221,6 +222,7 @@ export namespace API {
 	export namespace CreateGrantApplicationRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
+				source_id: string;
 				url: string;
 			};
 		}
@@ -266,6 +268,7 @@ export namespace API {
 	export namespace CreateGrantTemplateRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
+				source_id: string;
 				url: string;
 			};
 		}

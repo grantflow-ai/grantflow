@@ -21,6 +21,7 @@ from packages.shared_utils.src.pubsub import (
     publish_url_crawling_task,
     pull_notifications,
 )
+from packages.shared_utils.src.serialization import deserialize
 
 logger = get_logger(__name__)
 
@@ -174,6 +175,30 @@ async def test_publish_url_crawling_task_with_string_ids(
 
         assert result == "test-message-id"
         mock_publisher_client.publish.assert_called_once()
+
+
+async def test_publish_url_crawling_task_with_none_workspace(
+    mock_publisher_client: Mock,
+) -> None:
+    with patch(
+        "packages.shared_utils.src.pubsub.get_publisher_client",
+        return_value=mock_publisher_client,
+    ):
+        result = await publish_url_crawling_task(
+            logger=logger,
+            url="https://example.com",
+            source_id="323e4567-e89b-12d3-a456-426614174000",
+            parent_id="123e4567-e89b-12d3-a456-426614174000",
+            workspace_id=None,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.publish.assert_called_once()
+
+        call_args = mock_publisher_client.publish.call_args
+        data_bytes = call_args.kwargs["data"]
+        published_data = deserialize(data_bytes, CrawlingRequest)
+        assert published_data["workspace_id"] is None
 
 
 async def test_publish_notification_success(mock_publisher_client: Mock) -> None:
