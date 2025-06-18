@@ -6,24 +6,35 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false,
-		"includes": ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "**/*.json", "**/*.jsonc", "**/*.css", "**/*.md"],
-		"experimentalScannerIgnores": [
-			"**/node_modules/**",
-			"**/.next/**",
-			"**/dist/**",
-			"**/build/**",
-			"**/.venv/**",
-			"**/__pycache__/**",
-			"**/pnpm-lock.yaml",
-			"**/uv.lock",
-			"**/storybook-static/**",
-			"**/.git/**",
-			"**/coverage/**",
-			"**/.pytest_cache/**",
-			"**/.mypy_cache/**",
-			"**/test_data/**"
-		]
+		"ignoreUnknown": true,
+		"includes": [
+			"**/*.js",
+			"**/*.jsx", 
+			"**/*.ts",
+			"**/*.tsx",
+			"**/*.json",
+			"**/*.jsonc",
+			"**/*.css",
+			"**/*.md",
+			"!**/node_modules/**",
+			"!**/.next/**",
+			"!**/dist/**",
+			"!**/build/**",
+			"!**/.venv/**",
+			"!**/__pycache__/**",
+			"!**/pnpm-lock.yaml",
+			"!**/uv.lock",
+			"!**/storybook-static/**",
+			"!**/.git/**",
+			"!**/coverage/**",
+			"!**/.pytest_cache/**",
+			"!**/.mypy_cache/**",
+			"!**/test_data/**",
+			"!**/*.min.js",
+			"!**/*.min.css",
+			"!**/api-types.ts"
+		],
+		"maxSize": 2097152
 	},
 	"formatter": {
 		"enabled": true,
