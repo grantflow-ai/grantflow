@@ -40,7 +40,11 @@ def truncate_value(value: Any) -> Any:
 
     if isinstance(value, dict):
         if len(value) > MAX_DICT_KEYS:
-            truncated = {k: truncate_value(v) for i, (k, v) in enumerate(value.items()) if i < MAX_DICT_KEYS}
+            truncated = {
+                k: truncate_value(v)
+                for i, (k, v) in enumerate(value.items())
+                if i < MAX_DICT_KEYS
+            }
             truncated["_truncated"] = f"{len(value) - MAX_DICT_KEYS} more keys"
             return truncated
         return {k: truncate_value(v) for k, v in value.items()}
@@ -91,7 +95,9 @@ def rag_log_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
 
 
 def error_detail_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
-    if "error" in event_dict and "DeserializationError" in str(event_dict.get("error", "")):
+    if "error" in event_dict and "DeserializationError" in str(
+        event_dict.get("error", "")
+    ):
         error_str = str(event_dict["error"])
 
         if "Context:" in error_str:
@@ -107,7 +113,9 @@ def error_detail_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
         essential_fields = {"error_type", "message", "field", "value_length"}
         if isinstance(event_dict["error_context"], dict):
             event_dict["error_context"] = {
-                k: v for k, v in event_dict["error_context"].items() if k in essential_fields
+                k: v
+                for k, v in event_dict["error_context"].items()
+                if k in essential_fields
             }
 
     return event_dict
@@ -115,15 +123,27 @@ def error_detail_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
 
 def get_logger(name: str) -> FilteringBoundLogger:
     if configured_ref.value is None:
-        from structlog import BytesLoggerFactory, PrintLoggerFactory, configure_once, make_filtering_bound_logger
+        from structlog import (
+            BytesLoggerFactory,
+            PrintLoggerFactory,
+            configure_once,
+            make_filtering_bound_logger,
+        )
         from structlog.contextvars import merge_contextvars
         from structlog.dev import ConsoleRenderer
-        from structlog.processors import JSONRenderer, TimeStamper, add_log_level, format_exc_info
+        from structlog.processors import (
+            JSONRenderer,
+            TimeStamper,
+            add_log_level,
+            format_exc_info,
+        )
 
         configure_once(
             cache_logger_on_first_use=True,
             wrapper_class=make_filtering_bound_logger(
-                logging.DEBUG if get_env("DEBUG", raise_on_missing=False) else logging.INFO,
+                logging.DEBUG
+                if get_env("DEBUG", raise_on_missing=False)
+                else logging.INFO,
             ),
             processors=[
                 merge_contextvars,
@@ -134,7 +154,9 @@ def get_logger(name: str) -> FilteringBoundLogger:
                 if get_env("DEBUG", raise_on_missing=False)
                 else JSONRenderer(serializer=serialize),
             ],
-            logger_factory=PrintLoggerFactory() if get_env("DEBUG", raise_on_missing=False) else BytesLoggerFactory(),
+            logger_factory=PrintLoggerFactory()
+            if get_env("DEBUG", raise_on_missing=False)
+            else BytesLoggerFactory(),
         )
 
         configured_ref.value = True

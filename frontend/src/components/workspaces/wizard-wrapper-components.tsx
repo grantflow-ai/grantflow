@@ -44,7 +44,12 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const { currentStep, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
+	const {
+		toNextStep,
+		toPreviousStep,
+		ui: { currentStep },
+		validateStepNext,
+	} = useWizardStore();
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep > 0;
 	const disabled = !validateStepNext();
@@ -87,7 +92,9 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
-	const { currentStep } = useWizardStore();
+	const {
+		ui: { currentStep },
+	} = useWizardStore();
 	const { application } = useApplicationStore();
 	const showHeaderInfo = currentStep > 0;
 	return (
