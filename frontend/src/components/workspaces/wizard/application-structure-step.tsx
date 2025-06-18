@@ -361,7 +361,7 @@ function ApplicationStructurePreview() {
 															}
 															section={section}
 														/>
-														{subsectionsByParent[section.id].map((subsection) => (
+														{(subsectionsByParent[section.id] ?? []).map((subsection) => (
 															<SortableSection
 																isExpanded={expandedSections.has(subsection.id)}
 																isSubsection
