@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, Link, Trash2 } from "lucide-react";
+import React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,23 +26,27 @@ import {
 	IconPreviewLogo,
 } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
 
 export interface FileWithId extends File {
 	id?: string;
 }
 
 interface ApplicationPreviewProps {
+	connectionStatus?: string;
+	connectionStatusColor?: string;
 	onFileRemove?: (file: FileWithId) => Promise<void>;
 	onUrlRemove?: (url: string) => void;
 }
 
-export function ApplicationPreview({ onFileRemove, onUrlRemove }: ApplicationPreviewProps) {
-	const {
-		applicationState: { applicationTitle, wsConnectionStatus, wsConnectionStatusColor },
-		contentState: { uploadedFiles, urls },
-	} = useWizardStore();
-	const isEmpty = !applicationTitle && uploadedFiles.length === 0 && urls.length === 0;
+export function ApplicationPreview({
+	connectionStatus,
+	connectionStatusColor,
+	onFileRemove,
+	onUrlRemove,
+}: ApplicationPreviewProps) {
+	const { application, uploadedFiles, urls } = useApplicationStore();
+	const isEmpty = !application?.title && uploadedFiles.length === 0 && urls.length === 0;
 
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
@@ -59,17 +64,17 @@ export function ApplicationPreview({ onFileRemove, onUrlRemove }: ApplicationPre
 							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Title
 							</ThemeBadge>
-							{wsConnectionStatus && (
-								<ThemeBadge className={`w-fit ${wsConnectionStatusColor} text-white`}>
-									{wsConnectionStatus}
+							{connectionStatus && (
+								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
+									{connectionStatus}
 								</ThemeBadge>
 							)}
 						</div>
 						<h3
-							className={`font-heading text-center text-3xl font-medium ${applicationTitle ? "" : "text-muted-foreground-dark/50"}`}
+							className={`font-heading text-center text-3xl font-medium ${application?.title ? "" : "text-muted-foreground-dark/50"}`}
 							data-testid="application-title"
 						>
-							{applicationTitle || "Untitled Application"}
+							{application?.title ?? "Untitled Application"}
 						</h3>
 					</div>
 
@@ -119,11 +124,7 @@ export function ApplicationPreview({ onFileRemove, onUrlRemove }: ApplicationPre
 }
 
 function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (file: FileWithId) => Promise<void> }) {
-	const {
-		setFileDropdownOpen,
-		ui: { fileDropdownStates },
-	} = useWizardStore();
-	const dropdownOpen = fileDropdownStates[file.name] ?? false;
+	const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
 	const extension = getFileExtension(file.name) ?? "";
 
@@ -142,7 +143,7 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 	const handleRemove = async () => {
 		if (onRemove) {
 			await onRemove(file);
-			setFileDropdownOpen(file.name, false);
+			setDropdownOpen(false);
 		}
 	};
 
@@ -185,7 +186,7 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 			className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all"
 			onContextMenu={(e) => {
 				e.preventDefault();
-				setFileDropdownOpen(file.name, true);
+				setDropdownOpen(true);
 			}}
 			onDoubleClick={canOpenInBrowser ? handleOpen : undefined}
 			title={canOpenInBrowser ? "Double-click to open file" : undefined}
@@ -197,13 +198,7 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 				{file.name}
 			</span>
 
-			<DropdownMenu
-				modal={false}
-				onOpenChange={(open) => {
-					setFileDropdownOpen(file.name, open);
-				}}
-				open={dropdownOpen}
-			>
+			<DropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
 				<DropdownMenuTrigger disabled>
 					<span className="sr-only">Open menu</span>
 				</DropdownMenuTrigger>
@@ -232,11 +227,7 @@ function getFileExtension(filename: string) {
 }
 
 function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; url: string }) {
-	const {
-		setLinkHoverState,
-		ui: { linkHoverStates },
-	} = useWizardStore();
-	const isHovered = linkHoverStates[url] ?? false;
+	const [isHovered, setIsHovered] = React.useState(false);
 
 	const handleRemove = () => {
 		onRemove?.(url);
@@ -247,10 +238,10 @@ function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; 
 			className="group relative flex items-center gap-2"
 			data-testid="link-preview-item"
 			onMouseEnter={() => {
-				setLinkHoverState(url, true);
+				setIsHovered(true);
 			}}
 			onMouseLeave={() => {
-				setLinkHoverState(url, false);
+				setIsHovered(false);
 			}}
 		>
 			<div className="flex size-3.5 shrink-0 items-center justify-center">
