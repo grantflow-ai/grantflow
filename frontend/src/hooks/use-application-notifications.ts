@@ -6,6 +6,14 @@ import { getOtp } from "@/actions/otp";
 import { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 
+export interface RagProcessingStatus {
+	data?: Record<string, unknown>;
+	event: string;
+	message: string;
+}
+
+export type RagProcessingStatusMessage = WebsocketMessage<RagProcessingStatus>;
+
 export interface SourceProcessingNotification {
 	identifier: string;
 	indexing_status: SourceIndexingStatus;
@@ -13,7 +21,6 @@ export interface SourceProcessingNotification {
 	parent_type: string;
 	rag_source_id: string;
 }
-
 export type SourceProcessingNotificationMessage = WebsocketMessage<SourceProcessingNotification>;
 
 export interface WebsocketMessage<T> {
@@ -28,6 +35,10 @@ export const isWebsocketMessage = createTypeGuard<WebsocketMessage<unknown>>(
 );
 export const isSourceProcessingNotificationMessage = createTypeGuard<SourceProcessingNotificationMessage>(
 	(value: unknown) => isWebsocketMessage(value) && isRecord(value.data) && "indexing_status" in value.data,
+);
+export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusMessage>(
+	(value: unknown) =>
+		isWebsocketMessage(value) && isRecord(value.data) && "event" in value.data && "message" in value.data,
 );
 
 export const CONNECTION_STATUS_MAP = {
