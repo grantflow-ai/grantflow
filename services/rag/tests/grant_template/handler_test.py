@@ -700,9 +700,51 @@ def test_format_rag_sources_for_prompt_special_characters() -> None:
 
     result = format_rag_sources_for_prompt(sources)
 
-    assert "Content with \n newlines \t tabs" in result
-    assert "0. Chunk with \n newline" in result
+    # After sanitization, trailing spaces are removed from lines
+    assert "Content with\n newlines \t tabs" in result
+    assert "0. Chunk with\n newline" in result
     assert "1. Chunk with \t tab" in result
+
+
+def test_format_rag_sources_for_prompt_with_excessive_newlines() -> None:
+    sources: list[RagSourceData] = [
+        {
+            "source_id": "test-id",
+            "source_type": "rag_file",
+            "text_content": "Title\n\n\n\n\nContent with\n\n\n\n\n\n\nexcessive newlines",
+            "chunks": ["Chunk 1\n\n\n\n\nwith newlines", "Chunk 2\n\n\n\n\n\n\n\nwith more newlines"],
+        }
+    ]
+
+    result = format_rag_sources_for_prompt(sources)
+
+    # Check that excessive newlines are reduced to double newlines
+    assert "Title\n\nContent with\n\nexcessive newlines" in result
+    assert "0. Chunk 1\n\nwith newlines" in result
+    assert "1. Chunk 2\n\nwith more newlines" in result
+
+    # Ensure no triple newlines remain
+    assert "\n\n\n" not in result
+
+
+def test_format_rag_sources_for_prompt_with_multiple_spaces() -> None:
+    sources: list[RagSourceData] = [
+        {
+            "source_id": "test-id",
+            "source_type": "rag_file",
+            "text_content": "Text   with     multiple      spaces",
+            "chunks": ["Chunk    with   spaces"],
+        }
+    ]
+
+    result = format_rag_sources_for_prompt(sources)
+
+    # Check that multiple spaces are reduced to single spaces
+    assert "Text with multiple spaces" in result
+    assert "0. Chunk with spaces" in result
+
+    # Ensure no double spaces remain
+    assert "  " not in result
 
 
 async def test_extract_cfp_data_multi_source(

@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
@@ -223,6 +224,37 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
     return rag_sources_data
 
 
+def sanitize_text_content(text: str) -> str:
+    """
+    Sanitize text content by removing excessive newlines and whitespace.
+
+    Args:
+        text: Text to sanitize
+
+    Returns:
+        Sanitized text
+    """
+    # Normalize line endings to Unix style
+    text = text.replace("\r\n", "\n")
+    text = text.replace("\r", "\n")
+
+    # Replace multiple consecutive newlines with double newlines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    # Replace multiple consecutive spaces with single space
+    text = re.sub(r" {2,}", " ", text)
+
+    # Remove trailing whitespace from each line
+    lines = text.split("\n")
+    lines = [line.rstrip() for line in lines]
+    text = "\n".join(lines)
+
+    # Remove any null characters or other problematic characters
+    text = text.replace("\x00", "")
+
+    return text.strip()
+
+
 def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
     """
     Format RAG sources data for inclusion in the prompt.
@@ -238,13 +270,20 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
     for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
 
+        # Sanitize the text content before including it
+        sanitized_content = sanitize_text_content(source["text_content"])
         source_section += "#### Full Content:\n"
-        source_section += f"{source['text_content'][:MAX_SOURCE_SIZE]}{'...' if len(source['text_content']) > MAX_SOURCE_SIZE else ''}\n\n"
+        source_section += (
+            f"{sanitized_content[:MAX_SOURCE_SIZE]}{'...' if len(sanitized_content) > MAX_SOURCE_SIZE else ''}\n\n"
+        )
 
         source_section += "#### Key Chunks:\n"
 
         for j, chunk in enumerate(source["chunks"][:NUM_CHUNKS]):
-            source_section += f"{j}. {chunk[:MAX_CHUNK_SIZE]}{'...' if len(chunk) > MAX_CHUNK_SIZE else ''}\n"
+            sanitized_chunk = sanitize_text_content(chunk)
+            source_section += (
+                f"{j}. {sanitized_chunk[:MAX_CHUNK_SIZE]}{'...' if len(sanitized_chunk) > MAX_CHUNK_SIZE else ''}\n"
+            )
 
         formatted_sources.append(source_section)
 
