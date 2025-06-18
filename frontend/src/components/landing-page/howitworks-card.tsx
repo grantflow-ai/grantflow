@@ -10,9 +10,8 @@ const containerVariants = {
 		opacity: 1,
 		transition: {
 			duration: 1,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 			staggerChildren: 0.4,
-			when: "beforeChildren",
 		},
 	},
 };
@@ -23,7 +22,7 @@ const headingVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: "easeOut",
+			ease: "easeOut" as const,
 		},
 		y: 0,
 	},
@@ -36,7 +35,7 @@ const stepIndicatorVariants = {
 		transition: {
 			delay: 0.1,
 			duration: 0.4,
-			ease: "easeOut",
+			ease: "easeOut" as const,
 		},
 	},
 };
@@ -48,7 +47,7 @@ const textVariants = {
 		transition: {
 			delay: 0.1,
 			duration: 0.4,
-			ease: "easeOut",
+			ease: "easeOut" as const,
 		},
 	},
 };
@@ -59,7 +58,7 @@ const timelineVariants = {
 		scaleX: 1,
 		transition: {
 			duration: 0.8,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 		},
 	},
 };
@@ -70,7 +69,7 @@ const timelineStepGroupVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: "easeOut",
+			ease: "easeOut" as const,
 		},
 		y: 0,
 	},

@@ -1,6 +1,11 @@
 import { HTTPError } from "ky";
 
-import { ApplicationFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	CreateApplicationRequestFactory,
+	GrantTemplateFactory,
+	UpdateApplicationRequestFactory,
+} from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
 import { API } from "@/types/api-types";
 
@@ -47,84 +52,34 @@ const mockApplicationId = "mock-application-id";
 const mockTemplateId = "mock-template-id";
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
-const mockCreateApplicationResponse: API.CreateApplication.Http201.ResponseBody = ApplicationFactory.build({
+const mockCreateApplicationResponse = ApplicationFactory.build({
 	id: mockApplicationId,
 });
 
-const mockRetrieveApplicationResponse: API.RetrieveApplication.Http200.ResponseBody = {
-	created_at: "2024-01-01T00:00:00Z",
-	grant_template: {
+const fundingOrg: NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>["funding_organization"] =
+	{
+		abbreviation: "NIH",
 		created_at: "2024-01-01T00:00:00Z",
-		funding_organization: {
-			abbreviation: "NIH",
-			created_at: "2024-01-01T00:00:00Z",
-			full_name: "National Institutes of Health",
-			id: "org-1",
-			updated_at: "2024-01-01T00:00:00Z",
-		},
-		funding_organization_id: "org-1",
-		grant_application_id: mockApplicationId,
-		grant_sections: [
-			{
-				depends_on: [],
-				generation_instructions: "Write an introduction",
-				id: "section-1",
-				is_clinical_trial: false,
-				is_detailed_workplan: false,
-				keywords: ["intro", "background"],
-				max_words: 500,
-				order: 1,
-				parent_id: null,
-				search_queries: ["introduction research"],
-				title: "Introduction",
-				topics: ["research background"],
-			},
-			{
-				id: "section-2",
-				order: 2,
-				parent_id: "section-1",
-				title: "Sub-section",
-			},
-		],
-		id: mockTemplateId,
-		rag_sources: [
-			{
-				filename: "template-doc.pdf",
-				sourceId: "template-source-1",
-				status: "FINISHED",
-			},
-		],
-		submission_date: "2024-12-31",
+		full_name: "National Institutes of Health",
+		id: "org-1",
 		updated_at: "2024-01-01T00:00:00Z",
-	},
-	id: mockApplicationId,
-	rag_sources: [
-		{
-			filename: "example.pdf",
-			sourceId: "source-1",
-			status: "FINISHED",
-			url: "https://example.com",
-		},
-	],
-	research_objectives: [
-		{
-			description: "Description of objective 1",
-			number: 1,
-			research_tasks: [
-				{
-					description: "Task description",
-					number: 1,
-					title: "Research Task 1",
-				},
-			],
-			title: "Research Objective 1",
-		},
-	],
-	status: "DRAFT",
-	title: "Test Application",
+	};
+
+const grantTemplate: NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]> = {
+	...GrantTemplateFactory.build(),
+	created_at: "2024-01-01T00:00:00Z",
+	funding_organization: fundingOrg,
+	funding_organization_id: "org-1",
+	grant_application_id: mockApplicationId,
+	id: mockTemplateId,
 	updated_at: "2024-01-01T00:00:00Z",
-	workspace_id: mockWorkspaceId,
 };
+
+const mockRetrieveApplicationResponse = ApplicationFactory.build({
+	created_at: "2024-01-01T00:00:00Z",
+	grant_template: grantTemplate,
+	id: mockApplicationId,
+}) as API.RetrieveApplication.Http200.ResponseBody;
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -151,9 +106,7 @@ afterEach(() => {
 describe("Grant Application Actions", () => {
 	describe("createApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			const applicationData: API.CreateApplication.RequestBody = {
-				title: "New Grant Application",
-			};
+			const applicationData = CreateApplicationRequestFactory.build();
 
 			const result = await createApplication(mockWorkspaceId, applicationData);
 
@@ -220,28 +173,7 @@ describe("Grant Application Actions", () => {
 
 	describe("updateApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			const updateData: API.UpdateApplication.RequestBody = {
-				form_inputs: {
-					field1: "value1",
-					field2: "value2",
-				},
-				research_objectives: [
-					{
-						description: "Description 1",
-						number: 1,
-						research_tasks: [
-							{
-								description: "Task Description",
-								number: 1,
-								title: "Task 1",
-							},
-						],
-						title: "Objective 1",
-					},
-				],
-				status: "IN_PROGRESS",
-				title: "Updated Title",
-			};
+			const updateData = UpdateApplicationRequestFactory.build();
 
 			await updateApplication(mockWorkspaceId, mockApplicationId, updateData);
 

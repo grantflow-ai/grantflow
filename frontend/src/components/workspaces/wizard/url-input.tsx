@@ -35,16 +35,11 @@ export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 				}
 
 				try {
-					const result = await crawlTemplateUrl(
-						application.workspace_id,
-						application.grant_template.id,
-						trimmedUrl,
-					);
-					toast.success(result.message || "URL added successfully");
+					await crawlTemplateUrl(application.workspace_id, application.grant_template.id, trimmedUrl);
+					toast.success("URL added successfully");
 
 					addUrl(trimmedUrl);
 
-					// Notify parent of URL addition
 					onUrlAdded?.();
 				} catch (error) {
 					logError({ error, identifier: "crawlTemplateUrl" });

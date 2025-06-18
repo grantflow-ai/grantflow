@@ -10,6 +10,7 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/workspaces/icons";
+import { DevAutofillButton } from "@/components/workspaces/wizard/dev-autofill-button";
 import { WIZARD_STEP_TITLES } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -43,14 +44,19 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const { currentStep, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
+	const {
+		toNextStep,
+		toPreviousStep,
+		ui: { currentStep },
+		validateStepNext,
+	} = useWizardStore();
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep > 0;
 	const disabled = !validateStepNext();
 
 	return (
 		<footer
-			className="border-app-lavender-gray flex h-auto w-full items-center justify-between border-t bg-white p-6"
+			className="border-app-lavender-gray relative flex h-auto w-full items-center justify-between border-t bg-white p-6"
 			data-testid="wizard-footer"
 		>
 			{showBack ? (
@@ -67,6 +73,7 @@ export function WizardFooter() {
 			) : (
 				<div></div>
 			)}
+			<DevAutofillButton />
 			<AppButton
 				data-testid="continue-button"
 				disabled={disabled}
@@ -85,7 +92,9 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
-	const { currentStep } = useWizardStore();
+	const {
+		ui: { currentStep },
+	} = useWizardStore();
 	const { application } = useApplicationStore();
 	const showHeaderInfo = currentStep > 0;
 	return (

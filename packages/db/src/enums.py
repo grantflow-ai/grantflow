@@ -8,6 +8,7 @@ class UserRoleEnum(StrEnum):
 
 
 class SourceIndexingStatusEnum(StrEnum):
+    CREATED = "CREATED"
     INDEXING = "INDEXING"
     FINISHED = "FINISHED"
     FAILED = "FAILED"

@@ -1,5 +1,6 @@
 import { HTTPError } from "ky";
 
+import { GrantSectionDetailedFactory, UpdateGrantTemplateRequestFactory } from "::testing/factories";
 import { API } from "@/types/api-types";
 
 import { generateGrantTemplate, updateGrantTemplate } from "./grant-template";
@@ -66,9 +67,9 @@ describe("Grant Template Actions", () => {
 
 	describe("updateGrantTemplate", () => {
 		it("should call the API with correct parameters", async () => {
-			const updateData: Partial<API.UpdateGrantTemplate.RequestBody> = {
+			const updateData = UpdateGrantTemplateRequestFactory.build({
 				grant_sections: [
-					{
+					GrantSectionDetailedFactory.build({
 						depends_on: [],
 						generation_instructions: "Write an introduction",
 						id: "section1",
@@ -81,10 +82,10 @@ describe("Grant Template Actions", () => {
 						search_queries: ["introduction research"],
 						title: "Introduction",
 						topics: ["research background"],
-					},
+					}),
 				],
 				submission_date: "2024-12-31",
-			};
+			});
 
 			await updateGrantTemplate(mockWorkspaceId, mockApplicationId, mockTemplateId, updateData);
 

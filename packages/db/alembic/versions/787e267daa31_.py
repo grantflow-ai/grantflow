@@ -1,19 +1,19 @@
-"""initial
+"""
 
-Revision ID: 6c2acde43b73
+Revision ID: 787e267daa31
 Revises:
-Create Date: 2025-06-05 18:39:58.270852
+Create Date: 2025-06-18 10:37:42.230270
 
 """
 
 from collections.abc import Sequence
 
-import pgvector
 import sqlalchemy as sa
 from alembic import op
+from pgvector.sqlalchemy import Vector
 
 # revision identifiers, used by Alembic.
-revision: str = "6c2acde43b73"
+revision: str = "787e267daa31"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -40,7 +40,7 @@ def upgrade() -> None:
         "rag_sources",
         sa.Column(
             "indexing_status",
-            sa.Enum("INDEXING", "FINISHED", "FAILED", name="sourceindexingstatusenum"),
+            sa.Enum("CREATED", "INDEXING", "FINISHED", "FAILED", name="sourceindexingstatusenum"),
             nullable=False,
         ),
         sa.Column("text_content", sa.Text(), nullable=True),
@@ -129,7 +129,7 @@ def upgrade() -> None:
     op.create_table(
         "text_vectors",
         sa.Column("chunk", sa.JSON(), nullable=False),
-        sa.Column("embedding", pgvector.sqlalchemy.vector.VECTOR(dim=384), nullable=False),
+        sa.Column("embedding", Vector(384), nullable=False),
         sa.Column("rag_source_id", sa.UUID(), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),

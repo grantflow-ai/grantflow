@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
@@ -71,7 +72,9 @@ async def test_update_grant_template_success(
 
     async with async_session_maker() as session:
         updated_template = await session.scalar(
-            select(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id)
+            select(GrantTemplate).where(
+                GrantTemplate.grant_application_id == grant_application.id
+            )
         )
         assert updated_template is not None
         assert len(updated_template.grant_sections) == 1
@@ -107,7 +110,10 @@ async def test_update_grant_template_not_found(
     assert "Grant template not found" in response.text
 
 
-@patch("services.backend.src.api.routes.grant_template.publish_rag_task", new_callable=AsyncMock)
+@patch(
+    "services.backend.src.api.routes.grant_template.publish_rag_task",
+    new_callable=AsyncMock,
+)
 async def test_generate_grant_template_success(
     mock_publish_rag_task: AsyncMock,
     test_client: TestingClientType,
@@ -118,9 +124,6 @@ async def test_generate_grant_template_success(
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
-        # Create a rag source
-        from packages.db.src.enums import SourceIndexingStatusEnum
-
         rag_source = RagFile(
             bucket_name="test-bucket",
             object_path="test/path",
@@ -132,7 +135,6 @@ async def test_generate_grant_template_success(
         session.add(rag_source)
         await session.flush()
 
-        # Create grant template
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
@@ -140,7 +142,6 @@ async def test_generate_grant_template_success(
         session.add(grant_template)
         await session.flush()
 
-        # Link rag source to grant template
         template_source = GrantTemplateRagSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
@@ -155,7 +156,9 @@ async def test_generate_grant_template_success(
     )
 
     assert response.status_code == HTTPStatus.CREATED, response.text
-    mock_publish_rag_task.assert_called_once_with(logger=ANY, parent_type="grant_template", parent_id=grant_template_id)
+    mock_publish_rag_task.assert_called_once_with(
+        logger=ANY, parent_type="grant_template", parent_id=grant_template_id
+    )
 
 
 async def test_generate_grant_template_no_sources(
@@ -193,9 +196,6 @@ async def test_generate_grant_template_failed_sources_only(
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
-        from packages.db.src.enums import SourceIndexingStatusEnum
-
-        # Create a rag source with FAILED status
         rag_source = RagFile(
             bucket_name="test-bucket",
             object_path="test/path",
@@ -207,7 +207,6 @@ async def test_generate_grant_template_failed_sources_only(
         session.add(rag_source)
         await session.flush()
 
-        # Create grant template
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
@@ -215,7 +214,6 @@ async def test_generate_grant_template_failed_sources_only(
         session.add(grant_template)
         await session.flush()
 
-        # Link rag source to grant template
         template_source = GrantTemplateRagSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
@@ -239,7 +237,6 @@ async def test_update_grant_template_unauthorized(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create grant template for a different workspace
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
         grant_template = GrantTemplate(
@@ -250,7 +247,6 @@ async def test_update_grant_template_unauthorized(
         await session.commit()
         grant_template_id = grant_template.id
 
-    # Try to update with a different workspace ID
     different_workspace_id = UUID("00000000-0000-0000-0000-000000000000")
     response = await test_client.patch(
         f"/workspaces/{different_workspace_id}/applications/{grant_application.id}/grant-template/{grant_template_id}",

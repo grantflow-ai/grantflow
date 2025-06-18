@@ -3,16 +3,31 @@ from uuid import UUID
 
 from litestar import delete, get, patch, post
 from litestar.exceptions import NotFoundException, ValidationException
-from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
-from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.enums import (
+    ApplicationStatusEnum,
+    SourceIndexingStatusEnum,
+    UserRoleEnum,
+)
+from packages.db.src.json_objects import (
+    GrantElement,
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+)
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationRagSource,
     GrantTemplate,
+    RagFile,
     RagSource,
+    RagUrl,
 )
 from packages.db.src.utils import retrieve_application
-from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
+from packages.shared_utils.src.exceptions import (
+    BackendError,
+    DatabaseError,
+    ValidationError,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_rag_task
 from sqlalchemy import delete as sa_delete
@@ -45,9 +60,9 @@ class FundingOrganizationResponse(TypedDict):
 
 class SourceResponse(TypedDict):
     sourceId: str
-    filename: NotRequired[str]  # For files: "my_doc.docx"
-    url: NotRequired[str]  # For URLs
-    status: SourceIndexingStatusEnum  # Enum value
+    filename: NotRequired[str]
+    url: NotRequired[str]
+    status: SourceIndexingStatusEnum
 
 
 class GrantTemplateResponse(TypedDict):
@@ -78,14 +93,11 @@ class ApplicationResponse(TypedDict):
 
 
 def _build_source_response(rag_source: RagSource) -> SourceResponse:
-    from packages.db.src.tables import RagFile, RagUrl
-
     source_response: SourceResponse = {
         "sourceId": str(rag_source.id),
         "status": rag_source.indexing_status,
     }
 
-    # Debug log
     logger.debug(
         "Building source response",
         source_type=type(rag_source).__name__,
@@ -105,10 +117,16 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
 async def _handle_retrieve_application(
     workspace_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    logger.info("Retrieving application", workspace_id=workspace_id, application_id=application_id)
+    logger.info(
+        "Retrieving application",
+        workspace_id=workspace_id,
+        application_id=application_id,
+    )
     async with session_maker() as session:
         try:
-            grant_application = await retrieve_application(application_id=application_id, session=session)
+            grant_application = await retrieve_application(
+                application_id=application_id, session=session
+            )
         except ValidationError as e:
             raise NotFoundException("Application not found") from e
 
@@ -149,10 +167,14 @@ async def _handle_retrieve_application(
             }
 
             if template.funding_organization_id:
-                template_response["funding_organization_id"] = str(template.funding_organization_id)
+                template_response["funding_organization_id"] = str(
+                    template.funding_organization_id
+                )
 
             if template.submission_date:
-                template_response["submission_date"] = template.submission_date.isoformat()
+                template_response["submission_date"] = (
+                    template.submission_date.isoformat()
+                )
 
             if template.funding_organization:
                 org = template.funding_organization
@@ -166,10 +188,11 @@ async def _handle_retrieve_application(
                     funding_org_response["abbreviation"] = org.abbreviation
                 template_response["funding_organization"] = funding_org_response
 
-            # Add template rag sources
             if hasattr(template, "rag_sources") and template.rag_sources:
                 for template_rag_source in template.rag_sources:
-                    source_response = _build_source_response(template_rag_source.rag_source)
+                    source_response = _build_source_response(
+                        template_rag_source.rag_source
+                    )
                     template_response["rag_sources"].append(source_response)
 
             response["grant_template"] = template_response
@@ -188,7 +211,9 @@ async def _handle_retrieve_application(
     operation_id="CreateApplication",
 )
 async def handle_create_application(
-    workspace_id: UUID, data: CreateApplicationRequestBody, session_maker: async_sessionmaker[Any]
+    workspace_id: UUID,
+    data: CreateApplicationRequestBody,
+    session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
     logger.info("Creating application", workspace_id=workspace_id, title=data["title"])
 
@@ -221,10 +246,14 @@ async def handle_create_application(
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error creating application and template", exc_info=e)
-            raise DatabaseError("Error creating application and template", context=str(e)) from e
+            raise DatabaseError(
+                "Error creating application and template", context=str(e)
+            ) from e
 
     return await _handle_retrieve_application(
-        workspace_id=workspace_id, application_id=application.id, session_maker=session_maker
+        workspace_id=workspace_id,
+        application_id=application.id,
+        session_maker=session_maker,
     )
 
 
@@ -239,7 +268,9 @@ async def handle_update_application(
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info("Updating application", workspace_id=workspace_id, application_id=application_id)
+    logger.info(
+        "Updating application", workspace_id=workspace_id, application_id=application_id
+    )
 
     async with session_maker() as session, session.begin():
         try:
@@ -252,7 +283,11 @@ async def handle_update_application(
             if not application:
                 raise ValidationException("Application not found")
 
-            await session.execute(update(GrantApplication).where(GrantApplication.id == application_id).values(**data))
+            await session.execute(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .values(**data)
+            )
             await session.commit()
         except ValidationException:
             await session.rollback()
@@ -263,7 +298,9 @@ async def handle_update_application(
             raise DatabaseError("Error updating application", context=str(e)) from e
 
     return await _handle_retrieve_application(
-        workspace_id=workspace_id, application_id=application_id, session_maker=session_maker
+        workspace_id=workspace_id,
+        application_id=application_id,
+        session_maker=session_maker,
     )
 
 
@@ -272,12 +309,16 @@ async def handle_update_application(
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="DeleteApplication",
 )
-async def handle_delete_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
+async def handle_delete_application(
+    application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> None:
     logger.info("Deleting application", application_id=application_id)
 
     async with session_maker() as session, session.begin():
         try:
-            await session.execute(sa_delete(GrantApplication).where(GrantApplication.id == application_id))
+            await session.execute(
+                sa_delete(GrantApplication).where(GrantApplication.id == application_id)
+            )
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
@@ -290,11 +331,15 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="GenerateApplication",
 )
-async def handle_generate_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
+async def handle_generate_application(
+    application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> None:
     logger.info("Generating application", application_id=application_id)
     async with session_maker() as session:
         try:
-            application = await retrieve_application(application_id=application_id, session=session)
+            application = await retrieve_application(
+                application_id=application_id, session=session
+            )
         except ValidationError as e:
             raise NotFoundException("Application not found") from e
 
@@ -312,21 +357,32 @@ async def handle_generate_application(application_id: UUID, session_maker: async
             .join(RagSource)
             .where(
                 GrantApplicationRagSource.grant_application_id == application.id,
-                RagSource.indexing_status.in_((SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.FINISHED)),
+                RagSource.indexing_status.in_(
+                    (
+                        SourceIndexingStatusEnum.INDEXING,
+                        SourceIndexingStatusEnum.FINISHED,
+                    )
+                ),
             )
         )
 
         if rag_sources_count == 0:
-            raise ValidationException("No rag sources found for application, cannot generate")
+            raise ValidationException(
+                "No rag sources found for application, cannot generate"
+            )
 
         try:
-            await publish_rag_task(logger=logger, parent_type="grant_application", parent_id=application.id)
+            await publish_rag_task(
+                logger=logger, parent_type="grant_application", parent_id=application.id
+            )
         except BackendError as e:
             logger.error("Error initiating application generation", exc_info=e)
             raise
         except SQLAlchemyError as e:
             logger.error("Error initiating application generation", exc_info=e)
-            raise DatabaseError("Error initiating application generation", context=str(e)) from e
+            raise DatabaseError(
+                "Error initiating application generation", context=str(e)
+            ) from e
 
 
 @get(
@@ -337,4 +393,6 @@ async def handle_generate_application(application_id: UUID, session_maker: async
 async def handle_retrieve_application(
     workspace_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    return await _handle_retrieve_application(workspace_id, application_id, session_maker)
+    return await _handle_retrieve_application(
+        workspace_id, application_id, session_maker
+    )

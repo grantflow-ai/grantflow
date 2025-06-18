@@ -16,3 +16,6 @@ dependencies = [
   "shared-utils[server,chunking,embeddings,gcs,pubsub]",
   "trafilatura>=2",
 ]
+
+[tool.ruff]
+lint.per-file-ignores = { "tests/main_test.py" = [ "PLC0415" ] }

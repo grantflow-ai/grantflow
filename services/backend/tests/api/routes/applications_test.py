@@ -4,10 +4,19 @@ from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
-from packages.db.src.enums import ApplicationStatusEnum
+from packages.db.src.enums import (
+    ApplicationStatusEnum,
+    SourceIndexingStatusEnum,
+    UserRoleEnum,
+)
 from packages.db.src.tables import (
+    FundingOrganization,
     GrantApplication,
+    GrantApplicationRagSource,
     GrantTemplate,
+    GrantTemplateRagSource,
+    RagFile,
+    RagUrl,
     Workspace,
     WorkspaceUser,
 )
@@ -34,7 +43,9 @@ async def test_create_application_success(
     assert "id" in data
 
     async with async_session_maker() as session:
-        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == UUID(data["id"])))
+        application = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == UUID(data["id"]))
+        )
         assert application is not None
         assert application.title == "Test Grant Application"
         assert application.workspace_id == workspace.id
@@ -91,7 +102,9 @@ async def test_update_application_success(
     assert response.status_code == HTTPStatus.OK, response.text
 
     async with async_session_maker() as session:
-        updated_app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        updated_app = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == grant_application.id)
+        )
         assert updated_app is not None
         assert updated_app.title == "Updated Title"
         assert updated_app.status == ApplicationStatusEnum.IN_PROGRESS
@@ -132,7 +145,9 @@ async def test_delete_application_success(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        result = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == grant_application.id)
+        )
         assert result is None
 
 
@@ -151,7 +166,10 @@ async def test_delete_application_unauthorized(
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
-@patch("services.backend.src.api.routes.grant_applications.publish_rag_task", new_callable=AsyncMock)
+@patch(
+    "services.backend.src.api.routes.grant_applications.publish_rag_task",
+    new_callable=AsyncMock,
+)
 async def test_generate_application_success(
     mock_publish_rag_task: AsyncMock,
     test_client: TestingClientType,
@@ -160,12 +178,7 @@ async def test_generate_application_success(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    # Set up the application with required data
     async with async_session_maker() as session, session.begin():
-        from packages.db.src.enums import SourceIndexingStatusEnum
-        from packages.db.src.tables import GrantApplicationRagSource, RagFile
-
-        # Update application with research objectives
         grant_application.research_objectives = [
             {
                 "number": 1,
@@ -182,7 +195,6 @@ async def test_generate_application_success(
         ]
         session.add(grant_application)
 
-        # Create grant template with sections
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[
@@ -196,7 +208,6 @@ async def test_generate_application_success(
         )
         session.add(grant_template)
 
-        # Create a rag source with FINISHED status
         rag_source = RagFile(
             bucket_name="test-bucket",
             object_path="test/path",
@@ -208,7 +219,6 @@ async def test_generate_application_success(
         session.add(rag_source)
         await session.flush()
 
-        # Link rag source to grant application
         app_source = GrantApplicationRagSource(
             grant_application_id=grant_application.id,
             rag_source_id=rag_source.id,
@@ -233,7 +243,6 @@ async def test_generate_application_insufficient_data(
     grant_application: GrantApplication,
     workspace_member_user: None,
 ) -> None:
-    # Application without required data (no research objectives or grant template)
     response = await test_client.post(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
@@ -250,9 +259,7 @@ async def test_generate_application_no_rag_sources(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    # Set up the application with all required data except rag sources
     async with async_session_maker() as session, session.begin():
-        # Update application with research objectives
         grant_application.research_objectives = [
             {
                 "number": 1,
@@ -269,7 +276,6 @@ async def test_generate_application_no_rag_sources(
         ]
         session.add(grant_application)
 
-        # Create grant template with sections
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[
@@ -282,7 +288,7 @@ async def test_generate_application_no_rag_sources(
             ],
         )
         session.add(grant_template)
-        # Note: No rag sources created
+
         await session.commit()
 
     response = await test_client.post(
@@ -309,9 +315,6 @@ async def test_generate_application_not_found(
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
 
 
-# Retrieve Application Tests
-
-
 async def test_retrieve_application_success(
     test_client: TestingClientType,
     workspace: Workspace,
@@ -326,7 +329,6 @@ async def test_retrieve_application_success(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
-    # Verify basic application fields
     assert data["id"] == str(grant_application.id)
     assert data["workspace_id"] == str(grant_application.workspace_id)
     assert data["title"] == grant_application.title
@@ -351,26 +353,22 @@ async def test_retrieve_application_with_grant_template(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
-    # Verify application data
     assert data["id"] == str(grant_application.id)
     assert data["title"] == grant_application.title
 
-    # Verify grant_template exists and has correct structure
     assert "grant_template" in data
     template_data = data["grant_template"]
     assert template_data["id"] == str(grant_template.id)
     assert "grant_sections" in template_data
     assert "funding_organization_id" in template_data
     assert "rag_sources" in template_data
-    assert template_data["rag_sources"] == []  # No template sources initially
+    assert template_data["rag_sources"] == []
 
-    # Verify funding organization data is included if present
     if "funding_organization" in template_data:
         org_data = template_data["funding_organization"]
         assert "id" in org_data
         assert "full_name" in org_data
 
-    # Basic test should have no RAG sources initially
     assert data["rag_sources"] == []
 
 
@@ -396,18 +394,16 @@ async def test_retrieve_application_wrong_workspace(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    # Create a different workspace with a workspace user for authorization
     async with async_session_maker() as session, session.begin():
         different_workspace = Workspace(name="Different Workspace")
         session.add(different_workspace)
         await session.flush()
 
-        # Create workspace user for the different workspace for authorization
-        from packages.db.src.enums import UserRoleEnum
-
-        firebase_uid = "a" * 128  # Same as test fixture
+        firebase_uid = "a" * 128
         workspace_user = WorkspaceUser(
-            workspace_id=different_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER
+            workspace_id=different_workspace.id,
+            firebase_uid=firebase_uid,
+            role=UserRoleEnum.MEMBER,
         )
         session.add(workspace_user)
         await session.commit()
@@ -427,7 +423,6 @@ async def test_retrieve_application_unauthorized(
 ) -> None:
     response = await test_client.get(
         f"/workspaces/{workspace.id}/applications/{grant_application.id}",
-        # No authorization header
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -441,14 +436,10 @@ async def test_retrieve_application_with_complete_data(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    from packages.db.src.tables import FundingOrganization
-
     async with async_session_maker() as session, session.begin():
-        # Re-attach grant_application and grant_template to the session
         app = await session.get(GrantApplication, grant_application.id)
         template = await session.get(GrantTemplate, grant_template.id)
 
-        # Add funding organization to template
         funding_org = FundingOrganization(
             full_name="Test Funding Organization Complete",
             abbreviation="TFOC",
@@ -459,14 +450,15 @@ async def test_retrieve_application_with_complete_data(
         template.funding_organization_id = funding_org.id
         template.submission_date = date(2024, 12, 31)
 
-        # Update application with additional fields
         app.form_inputs = {"principal_investigator": "Dr. Smith", "budget": "500000"}
         app.research_objectives = [
             {
                 "number": 1,
                 "title": "Objective 1",
                 "description": "Research objective description",
-                "research_tasks": [{"number": 1, "title": "Task 1", "description": "Task description"}],
+                "research_tasks": [
+                    {"number": 1, "title": "Task 1", "description": "Task description"}
+                ],
             }
         ]
         app.text = "Generated application text content"
@@ -482,18 +474,19 @@ async def test_retrieve_application_with_complete_data(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
-    # Verify basic fields
     assert data["id"] == str(grant_application.id)
     assert data["workspace_id"] == str(grant_application.workspace_id)
     assert data["title"] == grant_application.title
     assert data["status"] == grant_application.status.value
-    assert data["form_inputs"] == {"principal_investigator": "Dr. Smith", "budget": "500000"}
+    assert data["form_inputs"] == {
+        "principal_investigator": "Dr. Smith",
+        "budget": "500000",
+    }
     assert data["text"] == "Generated application text content"
     assert len(data["research_objectives"]) == 1
     assert data["research_objectives"][0]["title"] == "Objective 1"
     assert "completed_at" in data
 
-    # Verify grant template with funding organization
     assert "grant_template" in data
     template_data = data["grant_template"]
     assert template_data["id"] == str(grant_template.id)
@@ -503,11 +496,9 @@ async def test_retrieve_application_with_complete_data(
     assert org_data["full_name"] == "Test Funding Organization Complete"
     assert org_data["abbreviation"] == "TFOC"
 
-    # Verify template rag_sources field exists
     assert "rag_sources" in template_data
-    assert template_data["rag_sources"] == []  # No template sources initially
+    assert template_data["rag_sources"] == []
 
-    # No application RAG sources in this test
     assert data["rag_sources"] == []
 
 
@@ -519,20 +510,10 @@ async def test_retrieve_application_with_rag_sources(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    from packages.db.src.enums import SourceIndexingStatusEnum
-    from packages.db.src.tables import (
-        GrantApplicationRagSource,
-        GrantTemplateRagSource,
-        RagFile,
-        RagUrl,
-    )
-
     async with async_session_maker() as session, session.begin():
-        # Re-attach entities to the session
         app = await session.get(GrantApplication, grant_application.id)
         template = await session.get(GrantTemplate, grant_template.id)
 
-        # Create RagFile source
         rag_file = RagFile(
             bucket_name="test-bucket",
             object_path="test/path/document.pdf",
@@ -545,7 +526,6 @@ async def test_retrieve_application_with_rag_sources(
         await session.flush()
         rag_file_id = rag_file.id
 
-        # Create RagUrl source
         rag_url = RagUrl(
             url="https://example.com/grant-guidelines",
             title="Grant Guidelines",
@@ -555,7 +535,6 @@ async def test_retrieve_application_with_rag_sources(
         await session.flush()
         rag_url_id = rag_url.id
 
-        # Create another RagFile for template
         template_rag_file = RagFile(
             bucket_name="test-bucket",
             object_path="test/path/template_doc.docx",
@@ -567,7 +546,6 @@ async def test_retrieve_application_with_rag_sources(
         session.add(template_rag_file)
         await session.flush()
 
-        # Link sources to application
         app_rag_file = GrantApplicationRagSource(
             grant_application_id=app.id,
             rag_source_id=rag_file.id,
@@ -579,7 +557,6 @@ async def test_retrieve_application_with_rag_sources(
         session.add(app_rag_file)
         session.add(app_rag_url)
 
-        # Link source to template
         template_rag_source = GrantTemplateRagSource(
             grant_template_id=template.id,
             rag_source_id=template_rag_file.id,
@@ -596,38 +573,31 @@ async def test_retrieve_application_with_rag_sources(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
-    # Verify basic fields
     assert data["id"] == str(grant_application.id)
 
-    # Verify application RAG sources using standardized format
     assert len(data["rag_sources"]) == 2
 
-    # Find specific sources
     app_sources = data["rag_sources"]
     file_source = next((s for s in app_sources if "filename" in s), None)
     url_source = next((s for s in app_sources if "url" in s), None)
 
-    # Verify file source
     assert file_source is not None
     assert file_source["sourceId"] == str(rag_file_id)
     assert file_source["filename"] == "research_proposal.pdf"
     assert file_source["status"] == "FINISHED"
     assert "url" not in file_source
 
-    # Verify URL source
     assert url_source is not None
     assert url_source["sourceId"] == str(rag_url_id)
     assert url_source["url"] == "https://example.com/grant-guidelines"
     assert url_source["status"] == "INDEXING"
     assert "filename" not in url_source
 
-    # Verify template with rag sources
     assert "grant_template" in data
     template_data = data["grant_template"]
     assert "rag_sources" in template_data
     assert len(template_data["rag_sources"]) == 1
 
-    # Verify template source
     template_source = template_data["rag_sources"][0]
     assert template_source["sourceId"] == str(template_rag_file.id)
     assert template_source["filename"] == "grant_template_guide.docx"

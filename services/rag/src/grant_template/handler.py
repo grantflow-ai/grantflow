@@ -1,10 +1,11 @@
+from asyncio import sleep
 from datetime import datetime
 from typing import Any, cast
 from uuid import UUID
 
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 from packages.db.src.tables import FundingOrganization, GrantTemplate, GrantTemplateRagSource, RagSource
-from packages.shared_utils.src.exceptions import BackendError, DatabaseError
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
 from sqlalchemy import select, update
@@ -17,6 +18,30 @@ from services.rag.src.grant_template.extract_cfp_data import Content, handle_ext
 from services.rag.src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
+
+
+async def verify_rag_sources_indexed(
+    grant_template_id: UUID, session_maker: async_sessionmaker[Any], total_sleep_duration: int = 0
+) -> None:
+    async with session_maker() as session:
+        try:
+            rag_sources = await session.scalars(
+                select(RagSource)
+                .join(GrantTemplateRagSource)
+                .join(GrantTemplate)
+                .where(GrantTemplateRagSource.grant_template_id == grant_template_id)
+            )
+            if not rag_sources:
+                if total_sleep_duration < 30:
+                    await sleep(10)
+                    return await verify_rag_sources_indexed(grant_template_id, session_maker, total_sleep_duration + 5)
+                raise ValidationError(
+                    "No rag sources found for grant template, cannot generate grant template",
+                    context={"grant_template_id": grant_template_id},
+                )
+
+        except SQLAlchemyError as e:
+            raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e
 
 
 async def extract_and_enrich_sections(
@@ -222,14 +247,22 @@ async def grant_template_generation_pipeline_handler(
 
     except BackendError as e:
         logger.error("Backend error in grant template generation pipeline", error=e)
+
+        if isinstance(e, InsufficientContextError):
+            error_message = "The uploaded document doesn't contain sufficient information about the required application sections. Please upload a complete Call for Proposals (CFP) document that includes details about application requirements and sections."
+            event_type = "insufficient_context_error"
+        else:
+            error_message = f"Error in grant template generation: {e!s}"
+            event_type = "pipeline_error"
+
         await publish_notification(
             logger=logger,
             parent_id=grant_template_id,
-            event="pipeline_error",
+            event=event_type,
             data=RagProcessingStatus(
-                event="pipeline_error",
-                message=f"Error in grant template generation: {e!s}",
-                data={"error_type": e.__class__.__name__, **e.context},
+                event=event_type,
+                message=error_message,
+                data={"error_type": e.__class__.__name__, **(e.context if hasattr(e, "context") and e.context else {})},
             ),
         )
         raise
