@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 from uuid import UUID
 
 from litestar import delete, get, post
@@ -15,21 +15,37 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.exceptions import DatabaseError
-from packages.shared_utils.src.gcs import create_signed_upload_url
+from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
+from packages.shared_utils.src.gcs import create_signed_upload_url, construct_object_uri
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_url_crawling_task
 from sqlalchemy import delete as sa_delete
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import with_polymorphic
+
+from packages.db.src.constants import RAG_URL, RAG_FILE
+from packages.shared_utils.src.exceptions import BackendError
 
 if TYPE_CHECKING:
     from packages.shared_utils.src.shared_types import ParentType
 
 logger = get_logger(__name__)
 
+SUPPORTED_FILE_EXTENSIONS = {
+    "csv": "text/csv",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "latex": "text/latex",
+    "md": "text/markdown",
+    "odt": "application/vnd.oasis.opendocument.text",
+    "pdf": "application/pdf",
+    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "rst": "text/rst",
+    "rtf": "text/rtf",
+    "txt": "text/plain",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
 
 class RagFileResponse(TypedDict):
     id: str
@@ -51,6 +67,7 @@ class RagUrlResponse(TypedDict):
 
 class UploadUrlResponse(TypedDict):
     url: str
+    source_id: UUID
 
 
 class UrlCrawlingRequest(TypedDict):
@@ -58,7 +75,7 @@ class UrlCrawlingRequest(TypedDict):
 
 
 class UrlCrawlingResponse(TypedDict):
-    message: str
+    source_id: UUID
 
 
 def _create_operation_id_creator(key: str) -> OperationIDCreator:
@@ -70,6 +87,129 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
         return key.format(value="FundingOrganization")
 
     return _create_operation_id
+
+async def handle_create_rag_source(
+    session_maker: async_sessionmaker[Any],
+    workspace_id: UUID,
+    url: str | None = None,
+    blob_name: str | None = None,
+    mime_type: str | None = None,
+    application_id: UUID | None = None,
+    organization_id: UUID | None = None,
+    template_id: UUID | None = None,
+) -> UUID:
+    parent_type: ParentType
+    parent_id: UUID
+
+    if application_id:
+        parent_type = "grant_application"
+        parent_id = application_id
+    elif organization_id:
+        parent_type = "funding_organization"
+        parent_id = organization_id
+    else:
+        parent_type = "grant_template"
+        parent_id = template_id
+
+    if not parent_id:
+        raise BackendError("Missing parent_id")
+
+    async with session_maker() as session, session.begin():
+        try:
+            rag_source = await session.scalar(select(RagSource).join(RagUrl).where(RagUrl.url == url))
+            if rag_source:
+                if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+                    return rag_source.id
+
+                await session.execute(sa_delete(RagSource).where(RagSource.id == rag_source.id))
+
+            source_id = await session.scalar(
+                insert(RagSource)
+                .values(
+                    [
+                        {
+                            "indexing_status": SourceIndexingStatusEnum.CREATED,
+                            "text_content": "",
+                            "source_type": RAG_URL if url else RAG_FILE,  # Set polymorphic identity ~keep
+                        }
+                    ]
+                )
+                .returning(RagSource.id)
+            )
+
+            if url:
+                await session.execute(
+                    insert(RagUrl)
+                    .values(
+                        [
+                            {
+                                "id": source_id,
+                                "url": url,
+                            }
+                        ]
+                    )
+                    .returning(RagUrl.id)
+                )
+            else:
+                await session.execute(
+                    insert(RagFile)
+                    .values(
+                        [
+                            {
+                                "id": source_id,
+                                "filename": blob_name,
+                                "mime_type": mime_type,
+                                "size": 0,
+                                "bucket_name": "",
+                                "object_path": construct_object_uri(
+                                    workspace_id=workspace_id,
+                                    parent_id=parent_id,
+                                    source_id=source_id,
+                                    blob_name=blob_name
+                                )
+                            }
+                        ]
+                    )
+                )
+
+            if parent_type == "grant_application":
+                await session.execute(
+                    insert(GrantApplicationRagSource).values(
+                        {
+                            "rag_source_id": source_id,
+                            "grant_application_id": parent_id,
+                        }
+                    )
+                )
+            elif parent_type == "funding_organization":
+                await session.execute(
+                    insert(FundingOrganizationRagSource).values(
+                        {
+                            "rag_source_id": source_id,
+                            "funding_organization_id": parent_id,
+                        }
+                    )
+                )
+            else:
+                await session.execute(
+                    insert(GrantTemplateRagSource).values(
+                        {
+                            "rag_source_id": source_id,
+                            "grant_template_id": parent_id,
+                        }
+                    )
+                )
+            logger.info("Created new rag source", source_id=source_id, parent_type=parent_type, parent_id=parent_id)
+            return source_id
+        except SQLAlchemyError as e:
+            logger.exception(
+                "Error creating rag source",
+                url=url,
+                parent_type=parent_type,
+                parent_id=parent_id,
+            )
+            await session.rollback()
+            raise DatabaseError("Error creating rag source", context=str(e)) from e
 
 
 @get(
@@ -198,21 +338,42 @@ async def handle_delete_rag_source(
     operation_id=_create_operation_id_creator("Create{value}RagSourceUploadUrl"),
 )
 async def handle_create_upload_url(
+    session_maker: async_sessionmaker[Any],
     blob_name: str,
     application_id: UUID | None = None,
     organization_id: UUID | None = None,
     template_id: UUID | None = None,
     workspace_id: UUID | None = None,
 ) -> UploadUrlResponse:
+    file_extension = blob_name.split(".")[-1].lower()
+    mime_type = SUPPORTED_FILE_EXTENSIONS.get(file_extension)
+
+    if not mime_type:
+        raise ValidationError(
+            f"Unsupported file extension: {file_extension}",
+            context={
+                "supported_extensions": list(SUPPORTED_FILE_EXTENSIONS.keys()),
+            },
+        )
+
+    source_id = await handle_create_rag_source(
+        application_id=application_id,
+        blob_name=blob_name,
+        mime_type=mime_type,
+        organization_id=organization_id,
+        session_maker=session_maker,
+        template_id=template_id,
+        workspace_id=workspace_id,
+    )
+
     url = await create_signed_upload_url(
-        workspace_id=str(workspace_id) if workspace_id else None,
-        application_id=str(application_id) if application_id else None,
-        organization_id=str(organization_id) if organization_id else None,
-        template_id=str(template_id) if template_id else None,
+        workspace_id=workspace_id,
+        parent_id=cast(UUID,application_id or organization_id or template_id),
+        source_id=source_id,
         blob_name=blob_name,
     )
-    return UploadUrlResponse(url=url)
 
+    return UploadUrlResponse(url=url, source_id=source_id)
 
 @post(
     [
@@ -224,51 +385,42 @@ async def handle_create_upload_url(
     operation_id=_create_operation_id_creator("Crawl{value}Url"),
 )
 async def handle_crawl_url(
+    session_maker: async_sessionmaker[Any],
     data: UrlCrawlingRequest,
     application_id: UUID | None = None,
     organization_id: UUID | None = None,
     template_id: UUID | None = None,
     workspace_id: UUID | None = None,
 ) -> UrlCrawlingResponse:
-    """
-    Trigger crawling of a URL for a grant application, funding organization, or grant template.
-
-    The crawler service will extract and index content from this URL.
-
-    Args:
-        data: Request containing the URL to crawl
-        application_id: UUID of the grant application (if applicable)
-        organization_id: UUID of the funding organization (if applicable)
-        template_id: UUID of the grant template (if applicable)
-        workspace_id: UUID of the workspace (required for applications and templates)
-
-    Returns:
-        Message about the crawling status and the message ID
-    """
     url = data["url"]
 
-    parent_type: ParentType
-    parent_id: UUID
+    source_id = await handle_create_rag_source(
+        session_maker=session_maker,
+        workspace_id=workspace_id,
+        url=url,
+        application_id=application_id,
+        organization_id=organization_id,
+        template_id=template_id,
+    )
 
+    # Determine parent_id based on which entity is provided
     if application_id:
-        parent_type = "grant_application"
         parent_id = application_id
     elif organization_id:
-        parent_type = "funding_organization"
         parent_id = organization_id
     else:
-        parent_type = "grant_template"
-        parent_id = template_id  # type: ignore  # template_id is set at this point
+        parent_id = template_id
 
     message_id = await publish_url_crawling_task(
         logger=logger,
         url=url,
-        parent_type=parent_type,
+        source_id=source_id,
+        workspace_id=workspace_id or parent_id,  # Use parent_id if workspace_id is None (for organizations)
         parent_id=parent_id,
-        workspace_id=workspace_id if parent_type != "funding_organization" else None,
     )
+
     logger.info("Published URL crawling task", url=url, message_id=message_id)
 
     return UrlCrawlingResponse(
-        message="URL crawling task has been queued successfully.",
+        source_id=source_id,
     )

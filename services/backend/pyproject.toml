@@ -19,3 +19,12 @@ dependencies = [
 dev = [
   "shared-utils[server,gcs,pubsub,ai,embeddings,extraction]",
 ]
+
+[tool.ruff]
+lint.per-file-ignores = { "src/utils/firebase.py" = [
+  "PLC0415",
+], "src/utils/jwt.py" = [
+  "PLC0415",
+], "tests/conftest.py" = [
+  "PLC0415",
+] }

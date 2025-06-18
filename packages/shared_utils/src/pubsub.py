@@ -36,16 +36,14 @@ class PubSubEvent(msgspec.Struct, rename="camel"):
 
 
 class CrawlingRequest(TypedDict):
+    source_id: UUID
+    workspace_id: UUID
     parent_id: UUID
-    parent_type: ParentType
-    workspace_id: NotRequired[UUID]
     url: str
 
 
 class SourceProcessingResult(TypedDict):
-    parent_id: UUID
-    parent_type: ParentType
-    rag_source_id: UUID
+    source_id: UUID
     indexing_status: SourceIndexingStatusEnum
     identifier: str
 
@@ -88,20 +86,18 @@ async def publish_url_crawling_task(
     *,
     logger: "FilteringBoundLogger",
     url: str,
-    parent_type: ParentType,
+    source_id: str | UUID,
+    workspace_id: str | UUID,
     parent_id: str | UUID,
-    workspace_id: str | UUID | None = None,
 ) -> str:
     client = get_publisher_client()
 
     data = CrawlingRequest(
         url=url,
-        parent_type=parent_type,
+        source_id=UUID(str(source_id)),
+        workspace_id=UUID(str(workspace_id)),
         parent_id=UUID(str(parent_id)),
     )
-
-    if workspace_id:
-        data["workspace_id"] = UUID(str(workspace_id))
 
     try:
         message_data = serialize(data)
@@ -115,8 +111,7 @@ async def publish_url_crawling_task(
             "Published message to crawl URL",
             message_id=message_id,
             url=url,
-            parent_type=parent_type,
-            parent_id=str(parent_id),
+            source_id=str(source_id),
         )
         return str(message_id)
     except MessageTooLargeError as e:

@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
@@ -71,7 +72,9 @@ async def test_update_grant_template_success(
 
     async with async_session_maker() as session:
         updated_template = await session.scalar(
-            select(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id)
+            select(GrantTemplate).where(
+                GrantTemplate.grant_application_id == grant_application.id
+            )
         )
         assert updated_template is not None
         assert len(updated_template.grant_sections) == 1
@@ -107,7 +110,10 @@ async def test_update_grant_template_not_found(
     assert "Grant template not found" in response.text
 
 
-@patch("services.backend.src.api.routes.grant_template.publish_rag_task", new_callable=AsyncMock)
+@patch(
+    "services.backend.src.api.routes.grant_template.publish_rag_task",
+    new_callable=AsyncMock,
+)
 async def test_generate_grant_template_success(
     mock_publish_rag_task: AsyncMock,
     test_client: TestingClientType,
@@ -119,8 +125,6 @@ async def test_generate_grant_template_success(
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
         # Create a rag source
-        from packages.db.src.enums import SourceIndexingStatusEnum
-
         rag_source = RagFile(
             bucket_name="test-bucket",
             object_path="test/path",
@@ -155,7 +159,9 @@ async def test_generate_grant_template_success(
     )
 
     assert response.status_code == HTTPStatus.CREATED, response.text
-    mock_publish_rag_task.assert_called_once_with(logger=ANY, parent_type="grant_template", parent_id=grant_template_id)
+    mock_publish_rag_task.assert_called_once_with(
+        logger=ANY, parent_type="grant_template", parent_id=grant_template_id
+    )
 
 
 async def test_generate_grant_template_no_sources(
@@ -193,8 +199,6 @@ async def test_generate_grant_template_failed_sources_only(
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
-        from packages.db.src.enums import SourceIndexingStatusEnum
-
         # Create a rag source with FAILED status
         rag_source = RagFile(
             bucket_name="test-bucket",

@@ -1,4 +1,5 @@
 from typing import Any, NotRequired, TypedDict, cast
+from uuid import UUID
 
 from google.api_core import exceptions
 from google.auth.credentials import AnonymousCredentials
@@ -23,10 +24,10 @@ bucket_ref = Ref[Bucket]()
 
 
 class URIParseResult(TypedDict):
-    parent_type: ParentType
-    workspace_id: NotRequired[str]
-    parent_id: str
-    filename: str
+    workspace_id: UUID
+    parent_id: UUID
+    source_id: UUID
+    blob_name: str
 
 
 def get_credentials() -> Credentials:
@@ -90,65 +91,12 @@ async def download_blob(blob_name: str) -> bytes:
 
 def construct_object_uri(
     *,
-    application_id: str | None,
+    workspace_id: UUID | str,
+    parent_id: UUID | str,
+    source_id: UUID | str,
     blob_name: str,
-    organization_id: str | None,
-    template_id: str | None,
-    workspace_id: str | None,
 ) -> str:
-    if workspace_id and not (application_id or template_id):
-        raise ValidationError(
-            "Either application_id or template_id must be provided if workspace_id is provided",
-            context={
-                "workspace_id": workspace_id,
-                "application_id": application_id,
-                "template_id": template_id,
-            },
-        )
-    if (application_id or template_id) and not workspace_id:
-        raise ValidationError(
-            "workspace_id must be provided if application_id or template_id is provided",
-            context={
-                "workspace_id": workspace_id,
-                "application_id": application_id,
-                "template_id": template_id,
-            },
-        )
-    if not workspace_id and not organization_id:
-        raise ValidationError(
-            "Either workspace_id or organization_id must be provided",
-            context={
-                "workspace_id": workspace_id,
-                "organization_id": organization_id,
-            },
-        )
-
-    components = []
-    if workspace_id:
-        components.append(f"workspace/{workspace_id}")
-
-        if application_id:
-            components.append(f"grant_application/{application_id}")
-
-        elif template_id:
-            components.append(f"grant_template/{template_id}")
-
-        else:
-            raise ValidationError(
-                "Either application_id or template_id must be provided",
-                context={
-                    "workspace_id": workspace_id,
-                    "application_id": application_id,
-                    "template_id": template_id,
-                },
-            )
-
-    else:
-        components.append(f"funding_organization/{organization_id}")
-
-    components.append(blob_name)
-
-    return "/".join(components)
+    return f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
 
 
 def parse_object_uri(
@@ -157,55 +105,18 @@ def parse_object_uri(
 ) -> URIParseResult:
     components = object_path.split("/")
 
-    if len(components) == 3:
-        parent_type, parent_id, filename = components
-
-        if parent_type != "funding_organization":
-            raise ValidationError(
-                "Invalid object path format. Expected format: funding_organization/<organization_id>/<filename>.<extension>",
-                context={
-                    "object_path": object_path,
-                },
-            )
+    if len(components) == 4:
+        workspace_id, parent_id, source_id, blob_name = components
 
         return URIParseResult(
-            parent_type="funding_organization",
-            parent_id=components[1],
-            filename=components[2],
-        )
-    if len(components) == 5:
-        top_level, workspace_id, parent_type, parent_id, filename = components
-        if top_level != "workspace":
-            raise ValidationError(
-                "Invalid object path format. Expected format: workspace/<workspace_id>/<parent_type>/<parent_id>/<filename>.<extension>",
-                context={
-                    "object_path": object_path,
-                },
-            )
-
-        if parent_type == "grant_application":
-            return URIParseResult(
-                parent_type="grant_application",
-                workspace_id=workspace_id,
-                parent_id=parent_id,
-                filename=filename,
-            )
-        if parent_type == "grant_template":
-            return URIParseResult(
-                parent_type="grant_template",
-                workspace_id=workspace_id,
-                parent_id=parent_id,
-                filename=filename,
-            )
-        raise ValidationError(
-            "Invalid object path format. Expected format: workspace/<workspace_id>/<parent_type>/<parent_id>/<filename>.<extension>",
-            context={
-                "object_path": object_path,
-            },
+            workspace_id=UUID(workspace_id),
+            parent_id=UUID(parent_id),
+            source_id=UUID(source_id),
+            blob_name=blob_name,
         )
 
     raise ValidationError(
-        "Invalid object path format. Expected format: funding_organization/<organization_id>/<filename>.<extension> or workspace/<workspace_id>/<parent_type>/<parent_id>/<filename>.<extension>",
+        "Invalid object path format. Expected format: <workspace_id>/<source_id>/<blob_name>",
         context={
             "object_path": object_path,
         },
@@ -213,18 +124,16 @@ def parse_object_uri(
 
 
 async def create_signed_upload_url(
-    application_id: str | None,
+    workspace_id: UUID | str,
+    parent_id: UUID | str,
+    source_id: UUID | str,
     blob_name: str,
-    organization_id: str | None,
-    template_id: str | None,
-    workspace_id: str | None,
 ) -> str:
     blob_path = construct_object_uri(
-        application_id=application_id,
-        blob_name=blob_name,
-        organization_id=organization_id,
-        template_id=template_id,
         workspace_id=workspace_id,
+        parent_id=parent_id,
+        source_id=source_id,
+        blob_name=blob_name,
     )
     try:
         bucket = await run_sync(get_bucket)
