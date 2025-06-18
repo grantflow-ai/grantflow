@@ -11,6 +11,7 @@ import {
 	IconDeadline,
 } from "@/components/workspaces/icons";
 import { WIZARD_STEP_TITLES } from "@/constants";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
@@ -42,9 +43,9 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const { toNextStep, toPreviousStep, ui, validateStepNext } = useWizardStore();
-	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(ui.currentStep);
-	const showBack = ui.currentStep > 0;
+	const { currentStep, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
+	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
+	const showBack = currentStep > 0;
 	const disabled = !validateStepNext();
 
 	return (
@@ -84,8 +85,9 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
-	const { applicationState, ui } = useWizardStore();
-	const showHeaderInfo = ui.currentStep > 0;
+	const { currentStep } = useWizardStore();
+	const { application } = useApplicationStore();
+	const showHeaderInfo = currentStep > 0;
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
 			<div className="mb-8 flex items-center justify-between">
@@ -93,7 +95,7 @@ export function WizardHeader() {
 					{showHeaderInfo ? (
 						<>
 							<h1 className="text-nowrap" data-testid="app-name">
-								{applicationState.applicationTitle}
+								{application?.title}
 							</h1>
 							<Deadline />
 						</>
@@ -105,7 +107,7 @@ export function WizardHeader() {
 					Exit
 				</AppButton>
 			</div>
-			<ApplicationProgressBar currentStep={ui.currentStep} stepTitles={WIZARD_STEP_TITLES} />
+			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_TITLES} />
 		</header>
 	);
 }

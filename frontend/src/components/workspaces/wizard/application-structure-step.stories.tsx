@@ -14,27 +14,18 @@ const meta: Meta<typeof ApplicationStructureStep> = {
 	parameters: {
 		layout: "fullscreen",
 		zustand: {
-			store: {
-				applicationState: {
-					application: null,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
+			application: {
+				application: null,
+				isLoading: false,
+				uploadedFiles: [],
+				urls: [],
+			},
+			wizard: {
+				currentStep: 1,
+				polling: {
+					intervalId: null,
+					isActive: false,
 				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				uiState: {},
-				workspaceId: "test-workspace",
 			},
 		},
 	},
@@ -48,19 +39,11 @@ export const EmptyState: Story = {
 	name: "Empty State - No Content",
 	parameters: {
 		zustand: {
-			store: {
-				applicationState: {
-					application: null,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
+			application: {
+				application: null,
+				isLoading: false,
+				uploadedFiles: [],
+				urls: [],
 			},
 		},
 	},
@@ -69,149 +52,26 @@ export const EmptyState: Story = {
 export const WithApplicationTitle: Story = {
 	parameters: {
 		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [],
-							id: "template-456",
-						},
-						id: "app-123",
+			application: {
+				application: {
+					created_at: "2024-01-01T00:00:00Z",
+					grant_template: {
+						created_at: "2024-01-01T00:00:00Z",
+						grant_application_id: "app-123",
+						grant_sections: [],
+						id: "template-456",
 						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
+						updated_at: "2024-01-01T00:00:00Z",
 					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
+					id: "app-123",
+					rag_sources: [],
+					title: "Climate Change Research Grant",
+					updated_at: "2024-01-01T00:00:00Z",
+					workspace_id: "workspace-123",
 				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
-			},
-		},
-	},
-};
-
-export const WithConnectionStatus: Story = {
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
-					wsConnectionStatus: "Connected",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
-			},
-		},
-	},
-};
-
-export const ProcessingState: Story = {
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
-					wsConnectionStatus: "Processing",
-					wsConnectionStatusColor: "bg-yellow-500",
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
-			},
-		},
-	},
-};
-
-export const ErrorState: Story = {
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
-					wsConnectionStatus: "Error",
-					wsConnectionStatusColor: "bg-red-500",
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
-			},
-		},
-	},
-};
-
-export const LongApplicationTitle: Story = {
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [],
-						title: "Comprehensive Climate Change Research and Environmental Impact Assessment Grant for Sustainable Development",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle:
-						"Comprehensive Climate Change Research and Environmental Impact Assessment Grant for Sustainable Development",
-					templateId: "template-456",
-					wsConnectionStatus: "Connected",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
+				isLoading: false,
+				uploadedFiles: [],
+				urls: [],
 			},
 		},
 	},
@@ -220,96 +80,83 @@ export const LongApplicationTitle: Story = {
 export const WithGeneratedSections: Story = {
 	parameters: {
 		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [
-								{
-									description: "Overview of the project and key highlights",
-									id: "section-1",
-									order: 1,
-									title: "Executive Summary",
-								},
-								{
-									description: "Detailed description of the proposed project",
-									id: "section-2",
-									order: 2,
-									title: "Project Description",
-								},
-								{
-									description: "Financial breakdown and project timeline",
-									id: "section-3",
-									order: 3,
-									title: "Budget & Timeline",
-								},
-								{
-									description: "Team members and their relevant experience",
-									id: "section-4",
-									order: 4,
-									title: "Team & Qualifications",
-								},
-							],
-							id: "template-456",
-						},
-						id: "app-123",
+			application: {
+				application: {
+					created_at: "2024-01-01T00:00:00Z",
+					grant_template: {
+						created_at: "2024-01-01T00:00:00Z",
+						grant_application_id: "app-123",
+						grant_sections: [
+							{
+								depends_on: [],
+								generation_instructions: "Write an executive summary",
+								id: "section-1",
+								is_clinical_trial: false,
+								is_detailed_workplan: false,
+								keywords: ["summary", "overview"],
+								max_words: 500,
+								order: 1,
+								parent_id: null,
+								search_queries: ["executive summary"],
+								title: "Executive Summary",
+								topics: ["project overview"],
+							},
+							{
+								depends_on: [],
+								generation_instructions: "Write project description",
+								id: "section-2",
+								is_clinical_trial: false,
+								is_detailed_workplan: false,
+								keywords: ["project", "description"],
+								max_words: 1000,
+								order: 2,
+								parent_id: null,
+								search_queries: ["project description"],
+								title: "Project Description",
+								topics: ["project details"],
+							},
+							{
+								depends_on: [],
+								generation_instructions: "Write budget and timeline",
+								id: "section-3",
+								is_clinical_trial: false,
+								is_detailed_workplan: false,
+								keywords: ["budget", "timeline"],
+								max_words: 750,
+								order: 3,
+								parent_id: null,
+								search_queries: ["budget timeline"],
+								title: "Budget & Timeline",
+								topics: ["financial planning"],
+							},
+							{
+								depends_on: [],
+								generation_instructions: "Write team qualifications",
+								id: "section-4",
+								is_clinical_trial: false,
+								is_detailed_workplan: false,
+								keywords: ["team", "qualifications"],
+								max_words: 600,
+								order: 4,
+								parent_id: null,
+								search_queries: ["team qualifications"],
+								title: "Team & Qualifications",
+								topics: ["team expertise"],
+							},
+						],
+						id: "template-456",
 						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
+						updated_at: "2024-01-01T00:00:00Z",
 					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
-					wsConnectionStatus: "Connected",
-					wsConnectionStatusColor: "bg-green-500",
+					id: "app-123",
+					rag_sources: [],
+					title: "Climate Change Research Grant",
+					updated_at: "2024-01-01T00:00:00Z",
+					workspace_id: "workspace-123",
 				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
-			},
-		},
-	},
-};
-
-export const InteractiveDemo: Story = {
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [
-								{
-									description: "Overview of the project and key highlights",
-									id: "section-1",
-									order: 1,
-									title: "Executive Summary",
-								},
-								{
-									description: "Detailed description of the proposed project",
-									id: "section-2",
-									order: 2,
-									title: "Project Description",
-								},
-							],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
-					wsConnectionStatus: "Connected",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
+				isLoading: false,
+				uploadedFiles: [],
+				urls: [],
 			},
 		},
 	},

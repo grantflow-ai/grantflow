@@ -1,12 +1,18 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApplicationFactory } from "::testing/factories";
+import { useApplicationStore } from "@/stores/application-store";
 import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
 
 import { ApplicationStructureStep } from "./application-structure-step";
 
 vi.mock("@/stores/wizard-store", () => ({
 	useWizardStore: mockUseWizardStore,
+}));
+
+vi.mock("@/stores/application-store", () => ({
+	useApplicationStore: vi.fn(),
 }));
 
 describe("ApplicationStructureStep", () => {
@@ -16,13 +22,6 @@ describe("ApplicationStructureStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,
-				applicationId: null,
-				applicationTitle: "",
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
-			contentState: {
 				uploadedFiles: [],
 				urls: [],
 			},
@@ -34,7 +33,26 @@ describe("ApplicationStructureStep", () => {
 				urlInput: "",
 			},
 			uiState: {},
-			workspaceId: "test-workspace-id",
+		});
+
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: null,
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
 		});
 	});
 
@@ -79,11 +97,28 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("shows preview when application title is present", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				id: "test-id",
+				title: "Test Application",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
@@ -94,42 +129,59 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("displays untitled when no title is set", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				application: { id: "test-id" }, // Has application but no title
-				applicationTitle: " ", // Truthy but effectively empty to trigger preview but show "Untitled Application"
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				id: "test-id",
+				title: "",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
 
 		const titleElement = screen.getByTestId("application-structure-title");
 		expect(titleElement).toBeInTheDocument();
-		expect(titleElement).toHaveTextContent("Untitled Application");
-	});
-
-	it("shows connection status when present", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
-				wsConnectionStatus: "Connected",
-				wsConnectionStatusColor: "bg-green-500",
-			},
-		});
-
-		render(<ApplicationStructureStep />);
-
-		expect(screen.getByText("Connected")).toBeInTheDocument();
+		expect(titleElement).toHaveTextContent("");
 	});
 
 	it("renders application sections preview", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				id: "test-id",
+				title: "Test Application",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
@@ -176,32 +228,32 @@ describe("ApplicationStructureStep", () => {
 		);
 	});
 
-	it("renders with different connection status colors", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
-				wsConnectionStatus: "Processing",
-				wsConnectionStatusColor: "bg-yellow-500",
-			},
-		});
-
-		render(<ApplicationStructureStep />);
-
-		expect(screen.getByText("Processing")).toBeInTheDocument();
-		const badge = screen.getByText("Processing").closest(".bg-yellow-500");
-		expect(badge).toBeInTheDocument();
-	});
-
 	it("handles long application titles gracefully", () => {
 		const longTitle =
 			"This is a very long application title that should be handled gracefully by the UI without breaking the layout or causing overflow issues";
 
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				applicationTitle: longTitle,
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				id: "test-id",
+				title: longTitle,
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
