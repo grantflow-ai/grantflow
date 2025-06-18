@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { createTemplateSourceUploadUrl } from "@/actions/sources";
 import { AppButton } from "@/components/app-button";
 import { IconUpload } from "@/components/workspaces/icons";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 import { formatBytes } from "@/utils/format";
 import { logError } from "@/utils/logging";
@@ -34,11 +34,7 @@ const FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
 
 export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: () => void }) {
-	const {
-		addFile,
-		applicationState: { templateId },
-		workspaceId,
-	} = useWizardStore();
+	const { addFile, application } = useApplicationStore();
 
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
 		for (const file of newFileUploads) {
@@ -55,9 +51,14 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 
 	const handleUploadFile = useCallback(
 		async (file: File) => {
+			if (!application?.grant_template?.id) {
+				toast.error("Cannot upload file: Template not found");
+				return;
+			}
+
 			// In development, bypass signed URL creation and upload directly to GCS emulator
 			if (process.env.NODE_ENV === "development") {
-				const objectPath = `workspace/${workspaceId}/grant_template/${templateId}/${file.name}`;
+				const objectPath = `workspace/${application.workspace_id}/grant_template/${application.grant_template.id}/${file.name}`;
 				const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
 
 				const uploadResponse = await fetch(emulatorUrl, {
@@ -85,7 +86,11 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 			}
 
 			// Production path: use signed URLs
-			const { url } = await createTemplateSourceUploadUrl(workspaceId, templateId ?? "", file.name);
+			const { url } = await createTemplateSourceUploadUrl(
+				application.workspace_id,
+				application.grant_template.id,
+				file.name,
+			);
 
 			const uploadResponse = await fetch(url, {
 				body: file,
@@ -113,7 +118,7 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 			// Notify parent of upload completion
 			onUploadComplete?.();
 		},
-		[workspaceId, templateId, addFile, onUploadComplete],
+		[application, addFile, onUploadComplete],
 	);
 
 	const handleFilesAdded = useCallback(

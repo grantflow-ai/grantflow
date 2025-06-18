@@ -6,20 +6,14 @@ import { toast } from "sonner";
 import { crawlTemplateUrl } from "@/actions/sources";
 import AppInput from "@/components/input-field";
 import { IconGlobe } from "@/components/workspaces/icons";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
 import { logError } from "@/utils/logging";
 import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
-	const {
-		addUrl,
-		applicationState: { templateId },
-		contentState: { urls },
-		setUrlInput,
-		ui: { urlInput },
-		workspaceId,
-	} = useWizardStore();
+	const { addUrl, application, urls } = useApplicationStore();
 
+	const [urlInput, setUrlInput] = React.useState("");
 	const [urlError, setUrlError] = React.useState<null | string>(null);
 
 	const handleAddUrl = async (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -35,8 +29,17 @@ export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 			setUrlError(null);
 
 			if (!urls.includes(trimmedUrl)) {
+				if (!application?.grant_template?.id) {
+					logError({ error: "Template not found", identifier: "handleAddUrl" });
+					return;
+				}
+
 				try {
-					const result = await crawlTemplateUrl(workspaceId, templateId ?? "", trimmedUrl);
+					const result = await crawlTemplateUrl(
+						application.workspace_id,
+						application.grant_template.id,
+						trimmedUrl,
+					);
 					toast.success(result.message || "URL added successfully");
 
 					addUrl(trimmedUrl);

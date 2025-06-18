@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
 
 export function ApplicationStructureStep() {
 	return (
@@ -59,8 +59,8 @@ export function ApplicationStructureStep() {
 }
 
 function ApplicationStructurePreview() {
-	const { applicationState } = useWizardStore();
-	const hasContent = applicationState.applicationTitle || applicationState.application;
+	const { application } = useApplicationStore();
+	const hasContent = application;
 
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
@@ -71,17 +71,12 @@ function ApplicationStructurePreview() {
 							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Structure
 							</ThemeBadge>
-							{applicationState.wsConnectionStatus && (
-								<ThemeBadge className={`w-fit ${applicationState.wsConnectionStatusColor} text-white`}>
-									{applicationState.wsConnectionStatus}
-								</ThemeBadge>
-							)}
 						</div>
 						<h3
 							className="font-heading text-center text-3xl font-medium"
 							data-testid="application-structure-title"
 						>
-							{applicationState.applicationTitle.trim() || "Untitled Application"}
+							{application.title}
 						</h3>
 					</div>
 

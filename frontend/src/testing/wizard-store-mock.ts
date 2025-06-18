@@ -4,14 +4,6 @@ import type { FileWithId } from "@/components/workspaces/wizard/application-prev
 
 interface ApplicationState {
 	application: any;
-	applicationId: null | string;
-	applicationTitle: string;
-	templateId: null | string;
-	wsConnectionStatus?: string;
-	wsConnectionStatusColor?: string;
-}
-
-interface ContentState {
 	uploadedFiles: FileWithId[];
 	urls: string[];
 }
@@ -20,31 +12,29 @@ interface WizardStoreMock {
 	addFile: (file: FileWithId) => void;
 	addUrl: (url: string) => void;
 	applicationState: ApplicationState;
-	contentState: ContentState;
+	areFilesOrUrlsIndexing: () => boolean;
 	initializeApplication: (workspaceId: string) => Promise<void>;
 	isCurrentStepValid: () => boolean;
 	isLoading: boolean;
 	isStep1Valid: () => boolean;
+	polling: {
+		start: (callback: () => void, interval: number, immediate?: boolean) => void;
+		stop: () => void;
+	};
 	removeFile: (fileToRemove: FileWithId) => void;
 	removeUrl: (url: string) => void;
 	resetWizard: () => void;
-	setApplicationId: (id: string) => void;
-	setApplicationTitle: (title: string) => void;
+	retrieveApplication: (workspaceId: string, applicationId: string) => Promise<void>;
 	setCurrentStep: (step: number) => void;
 	setFileDropdownOpen: (fileId: string, open: boolean) => void;
 	setLinkHoverState: (url: string, hovered: boolean) => void;
-	setTemplateId: (id: string) => void;
 	setUploadedFiles: (files: FileWithId[]) => void;
 	setUrlInput: (input: string) => void;
 	setUrls: (urls: string[]) => void;
-	setWorkspaceId: (id: string) => void;
-	setWsConnectionStatus: (status?: string) => void;
-	setWsConnectionStatusColor: (color?: string) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	ui: WizardUI;
-	updateApplicationTitle: (title: string) => Promise<void>;
-	workspaceId: string;
+	updateApplication: (workspaceId: string, applicationId: string, data: any) => Promise<void>;
 }
 
 // Define types to match the real store
@@ -58,31 +48,28 @@ interface WizardUI {
 const mockWizardStore: WizardStoreMock = {
 	addFile: vi.fn(),
 	addUrl: vi.fn((url: string) => {
-		mockWizardStore.contentState.urls = [...mockWizardStore.contentState.urls, url];
+		mockWizardStore.applicationState.urls = [...mockWizardStore.applicationState.urls, url];
 	}),
 	applicationState: {
 		application: null,
-		applicationId: null,
-		applicationTitle: "",
-		templateId: null,
-		wsConnectionStatus: undefined,
-		wsConnectionStatusColor: undefined,
-	},
-	contentState: {
 		uploadedFiles: [],
 		urls: [],
 	},
+	areFilesOrUrlsIndexing: vi.fn(() => false),
 	initializeApplication: vi.fn().mockResolvedValue(undefined),
 	isCurrentStepValid: vi.fn(() => false),
 	isLoading: false,
 	isStep1Valid: vi.fn(() => false),
+	polling: {
+		start: vi.fn(),
+		stop: vi.fn(),
+	},
 	removeFile: vi.fn(),
 	removeUrl: vi.fn((url: string) => {
-		mockWizardStore.contentState.urls = mockWizardStore.contentState.urls.filter((u) => u !== url);
+		mockWizardStore.applicationState.urls = mockWizardStore.applicationState.urls.filter((u) => u !== url);
 	}),
 	resetWizard: vi.fn(),
-	setApplicationId: vi.fn(),
-	setApplicationTitle: vi.fn(),
+	retrieveApplication: vi.fn().mockResolvedValue(undefined),
 	setCurrentStep: vi.fn(),
 	setFileDropdownOpen: vi.fn((fileId: string, open: boolean) => {
 		mockWizardStore.ui.fileDropdownStates[fileId] = open;
@@ -90,15 +77,11 @@ const mockWizardStore: WizardStoreMock = {
 	setLinkHoverState: vi.fn((url: string, hovered: boolean) => {
 		mockWizardStore.ui.linkHoverStates[url] = hovered;
 	}),
-	setTemplateId: vi.fn(),
 	setUploadedFiles: vi.fn(),
 	setUrlInput: vi.fn((input: string) => {
 		mockWizardStore.ui.urlInput = input;
 	}),
 	setUrls: vi.fn(),
-	setWorkspaceId: vi.fn(),
-	setWsConnectionStatus: vi.fn(),
-	setWsConnectionStatusColor: vi.fn(),
 	toNextStep: vi.fn(),
 	toPreviousStep: vi.fn(),
 	ui: {
@@ -107,8 +90,7 @@ const mockWizardStore: WizardStoreMock = {
 		linkHoverStates: {},
 		urlInput: "",
 	},
-	updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
-	workspaceId: "",
+	updateApplication: vi.fn().mockResolvedValue(undefined),
 };
 
 export { mockWizardStore };
