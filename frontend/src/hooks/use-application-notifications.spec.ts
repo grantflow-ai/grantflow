@@ -167,3 +167,76 @@ describe("useApplicationNotifications", () => {
 		expect(mockSendMessage).toHaveBeenCalledWith("Test message");
 	});
 });
+
+describe("Type Guards", () => {
+	it("isSourceProcessingNotificationMessage should correctly identify source notifications", async () => {
+		const { isSourceProcessingNotificationMessage } = await import("./use-application-notifications");
+		const { SourceIndexingStatus } = await import("@/enums");
+
+		const validNotification = {
+			type: "data",
+			event: "source_processing",
+			parent_id: "test-id",
+			data: {
+				identifier: "test.pdf",
+				indexing_status: SourceIndexingStatus.INDEXING,
+				parent_id: "test-id",
+				parent_type: "grant_template",
+				rag_source_id: "source-1",
+			},
+		};
+
+		expect(isSourceProcessingNotificationMessage(validNotification)).toBe(true);
+
+		const invalidNotification = {
+			type: "data",
+			event: "other_event",
+			parent_id: "test-id",
+			data: {
+				message: "Some other message",
+			},
+		};
+
+		expect(isSourceProcessingNotificationMessage(invalidNotification)).toBe(false);
+	});
+
+	it("isRagProcessingStatusMessage should correctly identify RAG status messages", async () => {
+		const { isRagProcessingStatusMessage } = await import("./use-application-notifications");
+
+		const validNotification = {
+			type: "data",
+			event: "grant_template_extraction",
+			parent_id: "test-id",
+			data: {
+				event: "grant_template_extraction",
+				message: "Extracting sections...",
+				data: { section_count: 5 },
+			},
+		};
+
+		expect(isRagProcessingStatusMessage(validNotification)).toBe(true);
+
+		const validNotificationWithoutData = {
+			type: "data",
+			event: "grant_template_extraction",
+			parent_id: "test-id",
+			data: {
+				event: "grant_template_extraction",
+				message: "Processing...",
+			},
+		};
+
+		expect(isRagProcessingStatusMessage(validNotificationWithoutData)).toBe(true);
+
+		const invalidNotification = {
+			type: "data",
+			event: "source_processing",
+			parent_id: "test-id",
+			data: {
+				identifier: "test.pdf",
+			},
+		};
+
+		expect(isRagProcessingStatusMessage(invalidNotification)).toBe(false);
+	});
+});
