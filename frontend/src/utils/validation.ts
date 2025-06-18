@@ -1,8 +1,8 @@
+import { z } from "zod";
+
+const urlSchema = z.string().url();
+
 export const isValidUrl = (url: string): boolean => {
-	try {
-		new URL(url);
-		return true;
-	} catch {
-		return false;
-	}
+	const result = urlSchema.safeParse(url);
+	return result.success;
 };
