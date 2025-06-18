@@ -6,6 +6,9 @@ export const ONE_WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 export const FIREBASE_LOCAL_STORAGE_KEY = "firebase-signin-email";
 export const SESSION_COOKIE = "grantflow_session";
 
+// Storage keys for persisted state
+export const WIZARD_STORAGE_KEY = "grantflow-wizard-state";
+
 export const WIZARD_STEP_TITLES = [
 	"Application Details",
 	"Application Structure",
