@@ -432,6 +432,43 @@ export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketM
 	},
 );
 
+interface RagProcessingStatus {
+	data?: Record<string, unknown>;
+	event: string;
+	message: string;
+}
+
+export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((factory) => ({
+	event: factory.helpers.arrayElement([
+		"grant_template_extraction",
+		"sections_extracted",
+		"grant_template_metadata",
+		"extracting_relationships",
+		"enriching_objectives",
+		"objectives_enriched",
+	]),
+	message: factory.lorem.sentence(),
+	data: factory.datatype.boolean()
+		? {
+				[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int({
+					max: 10,
+					min: 1,
+				}),
+				...(factory.datatype.boolean() ? { organization: factory.company.name() } : {}),
+			}
+		: undefined,
+}));
+
+export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<RagProcessingStatus>>((factory) => {
+	const status = RagProcessingStatusFactory.build();
+	return {
+		data: status,
+		event: status.event,
+		parent_id: factory.string.uuid(),
+		type: "data",
+	};
+});
+
 interface ApplicationListItem {
 	completed_at: null | string;
 	id: string;

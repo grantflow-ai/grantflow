@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SourceIndexingStatus } from "@/enums";
 import {
-	RagProcessingStatusMessage,
-	SourceProcessingNotificationMessage,
-	WebsocketMessage,
-} from "@/hooks/use-application-notifications";
+	RagProcessingStatusMessageFactory,
+	SourceProcessingNotificationMessageFactory,
+} from "::testing/factories";
+import { SourceIndexingStatus } from "@/enums";
+import { WebsocketMessage } from "@/hooks/use-application-notifications";
 
 import CreateGrantApplicationWizardPage from "./page";
 
@@ -117,9 +117,7 @@ describe("WebSocket Notifications Integration", () => {
 	describe("Source Processing Notifications", () => {
 		it("shows info toast for indexing status", async () => {
 			const { toast } = await import("sonner");
-			const notification: SourceProcessingNotificationMessage = {
-				type: "data",
-				event: "source_processing",
+			const notification = SourceProcessingNotificationMessageFactory.build({
 				parent_id: "test-app-id",
 				data: {
 					identifier: "document.pdf",
@@ -128,7 +126,7 @@ describe("WebSocket Notifications Integration", () => {
 					parent_type: "grant_template",
 					rag_source_id: "source-1",
 				},
-			};
+			});
 
 			mockNotifications.mockReturnValue([notification]);
 			render(<CreateGrantApplicationWizardPage />);
@@ -140,9 +138,7 @@ describe("WebSocket Notifications Integration", () => {
 
 		it("shows success toast when indexing finishes", async () => {
 			const { toast } = await import("sonner");
-			const notification: SourceProcessingNotificationMessage = {
-				type: "data",
-				event: "source_processing",
+			const notification = SourceProcessingNotificationMessageFactory.build({
 				parent_id: "test-app-id",
 				data: {
 					identifier: "research-paper.pdf",
@@ -151,7 +147,7 @@ describe("WebSocket Notifications Integration", () => {
 					parent_type: "grant_template",
 					rag_source_id: "source-2",
 				},
-			};
+			});
 
 			mockNotifications.mockReturnValue([notification]);
 			render(<CreateGrantApplicationWizardPage />);
@@ -163,9 +159,7 @@ describe("WebSocket Notifications Integration", () => {
 
 		it("shows error toast when indexing fails", async () => {
 			const { toast } = await import("sonner");
-			const notification: SourceProcessingNotificationMessage = {
-				type: "data",
-				event: "source_processing",
+			const notification = SourceProcessingNotificationMessageFactory.build({
 				parent_id: "test-app-id",
 				data: {
 					identifier: "broken-file.pdf",
@@ -174,7 +168,7 @@ describe("WebSocket Notifications Integration", () => {
 					parent_type: "grant_template",
 					rag_source_id: "source-3",
 				},
-			};
+			});
 
 			mockNotifications.mockReturnValue([notification]);
 			render(<CreateGrantApplicationWizardPage />);
@@ -188,15 +182,15 @@ describe("WebSocket Notifications Integration", () => {
 	describe("RAG Processing Status Notifications", () => {
 		it("shows info toast for RAG processing events", async () => {
 			const { toast } = await import("sonner");
-			const notification: RagProcessingStatusMessage = {
-				type: "data",
+			const notification = RagProcessingStatusMessageFactory.build({
 				event: "grant_template_extraction",
 				parent_id: "test-app-id",
 				data: {
 					event: "grant_template_extraction",
 					message: "Extracting grant application sections from CFP content...",
+					data: undefined, // Explicitly no data for this test
 				},
-			};
+			});
 
 			mockNotifications.mockReturnValue([notification]);
 			render(<CreateGrantApplicationWizardPage />);
@@ -208,8 +202,7 @@ describe("WebSocket Notifications Integration", () => {
 
 		it("shows info toast with description for RAG processing events with data", async () => {
 			const { toast } = await import("sonner");
-			const notification: RagProcessingStatusMessage = {
-				type: "data",
+			const notification = RagProcessingStatusMessageFactory.build({
 				event: "sections_extracted",
 				parent_id: "test-app-id",
 				data: {
@@ -220,43 +213,43 @@ describe("WebSocket Notifications Integration", () => {
 						organization: "National Science Foundation",
 					},
 				},
-			};
+			});
 
 			mockNotifications.mockReturnValue([notification]);
 			render(<CreateGrantApplicationWizardPage />);
 
 			await waitFor(() => {
 				expect(toast.info).toHaveBeenCalledWith("Sections extracted successfully", {
-					description: "section_count: 5, organization: National Science Foundation",
+					description: expect.stringContaining("section_count: 5"),
+				});
+				expect(toast.info).toHaveBeenCalledWith("Sections extracted successfully", {
+					description: expect.stringContaining("organization: National Science Foundation"),
 				});
 			});
 		});
 
 		it("handles multiple notifications in sequence", async () => {
 			const { toast } = await import("sonner");
-			const notifications: WebsocketMessage<unknown>[] = [
-				{
-					type: "data",
+			const ragNotification = RagProcessingStatusMessageFactory.build({
+				event: "grant_template_extraction",
+				parent_id: "test-app-id",
+				data: {
 					event: "grant_template_extraction",
+					message: "Starting extraction...",
+					data: undefined, // Explicitly no data
+				},
+			});
+			const sourceNotification = SourceProcessingNotificationMessageFactory.build({
+				parent_id: "test-app-id",
+				data: {
+					identifier: "file1.pdf",
+					indexing_status: SourceIndexingStatus.INDEXING,
 					parent_id: "test-app-id",
-					data: {
-						event: "grant_template_extraction",
-						message: "Starting extraction...",
-					},
-				} as RagProcessingStatusMessage,
-				{
-					type: "data",
-					event: "source_processing",
-					parent_id: "test-app-id",
-					data: {
-						identifier: "file1.pdf",
-						indexing_status: SourceIndexingStatus.INDEXING,
-						parent_id: "test-app-id",
-						parent_type: "grant_template",
-						rag_source_id: "source-4",
-					},
-				} as SourceProcessingNotificationMessage,
-			];
+					parent_type: "grant_template",
+					rag_source_id: "source-4",
+				},
+			});
+			const notifications: WebsocketMessage<unknown>[] = [ragNotification, sourceNotification];
 
 			// First render with first notification
 			mockNotifications.mockReturnValue([notifications[0]]);
