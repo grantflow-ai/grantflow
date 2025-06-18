@@ -13,11 +13,13 @@ classifiers = [
 
 [dependency-groups]
 dev = [
+  "codespell>=2.4.0",
   "covdefaults>=2.3.0",
   "faker>=37.0.1",
+  "lefthook>=1.11.14",
   "mypy>=1.15.0",
   "polyfactory>=2.19.0",
-  "pre-commit>=4.2.0",
+  "pyproject-fmt>=2.6.0",
   "pytest>=8.3.5",
   "pytest-asyncio>=0.25.3",
   "pytest-cov>=6.0.0",
@@ -81,6 +83,15 @@ lint.per-file-ignores."e2e/**/*.*" = [
   "S",
 ]
 lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
+lint.per-file-ignores."scripts/**/*.*" = [
+  "ARG001",
+  "BLE001",
+  "D",
+  "DTZ003",
+  "G004",
+  "N999",
+  "S",
+]
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",
   "D",
@@ -101,7 +112,8 @@ lint.pylint.max-returns = 10
 lint.pylint.max-statements = 100
 
 [tool.codespell]
-ignore-words-list = [ "Bu", "COo", "bu", "TAHt", "UE" ]
+ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw"
+skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml"
 
 [tool.pyproject-fmt]
 keep_full_version = true

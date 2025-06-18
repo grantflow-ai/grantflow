@@ -32,7 +32,9 @@ def verify_jwt_token(token: str) -> str:
     from jwt import decode
 
     try:
-        decoded_token = decode(jwt=token, key=get_env("JWT_SECRET"), algorithms=["HS256"])
+        decoded_token = decode(
+            jwt=token, key=get_env("JWT_SECRET"), algorithms=["HS256"]
+        )
         return cast("str", decoded_token["sub"])
     except (
         ValueError,

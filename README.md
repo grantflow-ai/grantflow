@@ -27,7 +27,6 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - [UV](https://github.com/astral-sh/uv): Package manager for Python dependencies
 - [PNPM](https://pnpm.io/): Package manager for JavaScript/TypeScript dependencies
 - [Task](https://taskfile.dev): Taskfile runner
-- [pre-commit](https://pre-commit.com/): Linting and formatting tool
 - [OpenTofu](https://opentofu.org/): Infrastructure as Code tool for managing cloud resources
 - [GCloud CLI](https://cloud.google.com/sdk/docs/install): For GCP management
 - [GCloud CLI Pub/Sub Emulator](https://cloud.google.com/pubsub/docs/emulator): For local development
@@ -54,13 +53,13 @@ You'll need environment files for the services:
 
 ### Initial Setup
 
-After installing Task and pre-commit, run:
+After installing Task, run:
 
 ```bash
 task setup
 ```
 
-This will install all dependencies and set up pre-commit hooks.
+This will install all dependencies and set up git hooks using lefthook.
 
 ## Local Development
 
@@ -76,8 +75,16 @@ task test
 # Run end-to-end tests
 task test:e2e
 
-# Run linters and formatters
+# Run all linters and formatters
 task lint
+
+# Run specific linters
+task lint:prettier      # Format all code with Prettier
+task lint:eslint        # Lint JavaScript/TypeScript files
+task lint:ruff          # Lint and format Python code
+task lint:mypy          # Type check Python code
+task lint:python        # Run all Python linters (ruff + mypy)
+task lint:frontend      # Run all frontend linters (prettier + eslint)
 ```
 
 ### Database Management
@@ -158,8 +165,21 @@ task frontend:dev
 For a complete list of available commands:
 
 ```bash
-task --list
+task --list             # Show all tasks with descriptions
+task --list-all         # Show all tasks including internal ones
 ```
+
+### Task Organization
+
+The Taskfile is organized into sections:
+
+- **Main Commands**: Primary developer workflows (`setup`, `dev`, `test`, `lint`)
+- **Database Commands**: Database management (`db:*`)
+- **Service Commands**: Individual service control (`service:*`)
+- **Frontend Commands**: Frontend-specific tasks (`frontend:*`)
+- **Backend Commands**: Backend-specific tasks (`backend:*`)
+- **Linting Commands**: Code quality tools (`lint:*`)
+- **Internal Tasks**: Helper tasks (prefixed with `_`)
 
 ## Windows Setup (WSL)
 

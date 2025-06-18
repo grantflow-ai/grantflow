@@ -71,7 +71,7 @@ export function WizardFooter() {
 					Back
 				</AppButton>
 			) : (
-				<div></div>
+				<div />
 			)}
 			<DevAutofillButton />
 			<AppButton
@@ -109,7 +109,7 @@ export function WizardHeader() {
 							<Deadline />
 						</>
 					) : (
-						<div className="invisible"></div>
+						<div className="invisible" />
 					)}
 				</div>
 				<AppButton className="py-0 text-base" data-testid="exit-button" size="lg" variant="link">
@@ -175,7 +175,7 @@ function ApplicationProgressBar({
 						);
 					})}
 				</div>
-				<div className="h-8"></div>
+				<div className="h-8" />
 			</div>
 		</div>
 	);

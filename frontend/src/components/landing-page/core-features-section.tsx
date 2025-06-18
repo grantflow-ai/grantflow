@@ -1,4 +1,4 @@
-import { HTMLProps } from "react";
+import type { HTMLProps } from "react";
 
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articles-animated";

@@ -1,5 +1,3 @@
-import { HTTPError } from "ky";
-
 import {
 	CreateWorkspaceRequestFactory,
 	IdResponseFactory,
@@ -8,7 +6,8 @@ import {
 	WorkspaceListItemFactory,
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
-import { API } from "@/types/api-types";
+import { HTTPError } from "ky";
+import type { API } from "@/types/api-types";
 
 import { createWorkspace, deleteWorkspace, getWorkspace, getWorkspaces, updateWorkspace } from "./workspace";
 

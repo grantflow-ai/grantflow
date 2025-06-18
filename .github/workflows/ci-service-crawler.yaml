@@ -1,32 +1,32 @@
 name: Crawler Service CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development*
-    paths:
-      - '.github/workflows/ci-service-crawler.yaml'
-      - 'packages/**'
-      - 'services/crawler/**'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/ci-service-crawler.yaml'
-      - 'packages/**'
-      - 'services/crawler/**'
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/ci-service-crawler.yaml"
+            - "packages/**"
+            - "services/crawler/**"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/ci-service-crawler.yaml"
+            - "packages/**"
+            - "services/crawler/**"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Run Tests
-        uses: ./.github/actions/run-python-tests
-        with:
-            target: crawler
-            chromium: true
+            - name: Run Tests
+              uses: ./.github/actions/run-python-tests
+              with:
+                  target: crawler
+                  chromium: true

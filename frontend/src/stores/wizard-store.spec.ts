@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
 	GrantTemplateFactory,
 	RagSourceFactory,
 } from "::testing/factories";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useApplicationStore } from "./application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";

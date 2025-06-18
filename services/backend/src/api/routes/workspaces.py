@@ -67,12 +67,16 @@ class UpdateInvitationRoleRequestBody(TypedDict):
 
 @post("/workspaces", operation_id="CreateWorkspace")
 async def handle_create_workspace(
-    request: APIRequest, data: CreateWorkspaceRequestBody, session_maker: async_sessionmaker[Any]
+    request: APIRequest,
+    data: CreateWorkspaceRequestBody,
+    session_maker: async_sessionmaker[Any],
 ) -> TableIdResponse:
     logger.info("Creating workspace by user", uid=request.auth)
     async with session_maker() as session, session.begin():
         try:
-            workspace = await session.scalar(insert(Workspace).values(data).returning(Workspace))
+            workspace = await session.scalar(
+                insert(Workspace).values(data).returning(Workspace)
+            )
             await session.execute(
                 insert(WorkspaceUser).values(
                     {
@@ -126,13 +130,19 @@ async def handle_retrieve_workspaces(
     operation_id="UpdateWorkspace",
 )
 async def handle_update_workspace(
-    request: APIRequest, data: UpdateWorkspaceRequestBody, workspace_id: UUID, session_maker: async_sessionmaker[Any]
+    request: APIRequest,
+    data: UpdateWorkspaceRequestBody,
+    workspace_id: UUID,
+    session_maker: async_sessionmaker[Any],
 ) -> WorkspaceBaseResponse:
     logger.info("Updating workspace", workspace_id=workspace_id)
     async with session_maker() as session, session.begin():
         try:
             workspace = await session.scalar(
-                update(Workspace).where(Workspace.id == workspace_id).values(data).returning(Workspace)
+                update(Workspace)
+                .where(Workspace.id == workspace_id)
+                .values(data)
+                .returning(Workspace)
             )
             await session.commit()
         except SQLAlchemyError as e:
@@ -160,7 +170,9 @@ async def handle_retrieve_workspace(
     logger.info("Retrieving workspace", workspace_id=workspace_id)
     async with session_maker() as session, session.begin():
         workspace = await session.scalar(
-            select(Workspace).options(selectinload(Workspace.grant_applications)).where(Workspace.id == workspace_id)
+            select(Workspace)
+            .options(selectinload(Workspace.grant_applications))
+            .where(Workspace.id == workspace_id)
         )
 
     return WorkspaceResponse(
@@ -173,19 +185,29 @@ async def handle_retrieve_workspace(
             BaseApplicationResponse(
                 id=str(grant_application.id),
                 title=grant_application.title,
-                completed_at=grant_application.completed_at.isoformat() if grant_application.completed_at else None,
+                completed_at=grant_application.completed_at.isoformat()
+                if grant_application.completed_at
+                else None,
             )
             for grant_application in workspace.grant_applications
         ],
     )
 
 
-@delete("/workspaces/{workspace_id:uuid}", allowed_roles=[UserRoleEnum.OWNER], operation_id="DeleteWorkspace")
-async def handle_delete_workspace(workspace_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
+@delete(
+    "/workspaces/{workspace_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER],
+    operation_id="DeleteWorkspace",
+)
+async def handle_delete_workspace(
+    workspace_id: UUID, session_maker: async_sessionmaker[Any]
+) -> None:
     logger.info("Deleting workspace", workspace_id=workspace_id)
     async with session_maker() as session, session.begin():
         try:
-            await session.execute(sa_delete(Workspace).where(Workspace.id == workspace_id))
+            await session.execute(
+                sa_delete(Workspace).where(Workspace.id == workspace_id)
+            )
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
@@ -204,7 +226,11 @@ async def handle_create_invitation_redirect_url(
     data: CreateInvitationRedirectUrlRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info("Creating invitation redirect URL", workspace_id=workspace_id, email=data["email"])
+    logger.info(
+        "Creating invitation redirect URL",
+        workspace_id=workspace_id,
+        email=data["email"],
+    )
     async with session_maker() as session, session.begin():
         try:
             inviter = await session.scalar(
@@ -216,8 +242,13 @@ async def handle_create_invitation_redirect_url(
             if not inviter:
                 raise ValidationException("User is not a member of this workspace")
 
-            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
-                raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
+            if (
+                inviter.role != UserRoleEnum.OWNER
+                and data["role"] == UserRoleEnum.OWNER
+            ):
+                raise ValidationException(
+                    "Invitee role must be equal to or lower than the inviter's role"
+                )
 
             firebase_user = await get_user_by_email(data["email"])
             if firebase_user:
@@ -227,7 +258,9 @@ async def handle_create_invitation_redirect_url(
                     .where(WorkspaceUser.firebase_uid == firebase_user["uid"])
                 )
                 if existing_member:
-                    raise ValidationException("User is already a member of this workspace")
+                    raise ValidationException(
+                        "User is already a member of this workspace"
+                    )
 
             invitation = await session.scalar(
                 insert(UserWorkspaceInvitation)
@@ -279,7 +312,9 @@ async def handle_delete_invitation(
     invitation_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info("Deleting invitation", workspace_id=workspace_id, invitation_id=invitation_id)
+    logger.info(
+        "Deleting invitation", workspace_id=workspace_id, invitation_id=invitation_id
+    )
     async with session_maker() as session, session.begin():
         try:
             await session.scalar(
@@ -321,7 +356,11 @@ async def handle_update_invitation_role(
     data: UpdateInvitationRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info("Updating invitation role", workspace_id=workspace_id, invitation_id=invitation_id)
+    logger.info(
+        "Updating invitation role",
+        workspace_id=workspace_id,
+        invitation_id=invitation_id,
+    )
     async with session_maker() as session, session.begin():
         try:
             invitation = await session.scalar(
@@ -338,10 +377,17 @@ async def handle_update_invitation_role(
                 .where(WorkspaceUser.firebase_uid == request.auth)
             )
             if invitation.accepted_at is not None:
-                raise ValidationException("Cannot update role of an accepted invitation")
+                raise ValidationException(
+                    "Cannot update role of an accepted invitation"
+                )
 
-            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
-                raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
+            if (
+                inviter.role != UserRoleEnum.OWNER
+                and data["role"] == UserRoleEnum.OWNER
+            ):
+                raise ValidationException(
+                    "Invitee role must be equal to or lower than the inviter's role"
+                )
 
             invitation = await session.scalar(
                 update(UserWorkspaceInvitation)
@@ -373,7 +419,9 @@ async def handle_update_invitation_role(
             await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error updating invitation role", exc_info=e)
-                raise DatabaseError("Error updating invitation role", context=str(e)) from e
+                raise DatabaseError(
+                    "Error updating invitation role", context=str(e)
+                ) from e
             raise e
 
 
@@ -391,7 +439,9 @@ async def handle_accept_invitation(
     async with session_maker() as session, session.begin():
         try:
             invitation = await session.scalar(
-                select(UserWorkspaceInvitation).where(UserWorkspaceInvitation.id == invitation_id)
+                select(UserWorkspaceInvitation).where(
+                    UserWorkspaceInvitation.id == invitation_id
+                )
             )
 
             if not invitation:
@@ -405,7 +455,9 @@ async def handle_accept_invitation(
                 raise ValidationException("User not found in Firebase")
 
             if firebase_user["uid"] != request.auth:
-                raise ValidationException("Authenticated user does not match invitation email")
+                raise ValidationException(
+                    "Authenticated user does not match invitation email"
+                )
 
             await session.scalar(
                 insert(WorkspaceUser)

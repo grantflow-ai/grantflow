@@ -76,14 +76,18 @@ def mock_download_file() -> Generator[AsyncMock]:
 @pytest.fixture
 def mock_trafilatura_extract() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.extract") as mock:
-        mock.return_value = "Test Content\n\nThis is a test paragraph with some content."
+        mock.return_value = (
+            "Test Content\n\nThis is a test paragraph with some content."
+        )
         yield mock
 
 
 @pytest.fixture
 def mock_convert_to_markdown() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.convert_to_markdown") as mock:
-        mock.return_value = "# Test Content\n\nThis is a test paragraph with some content."
+        mock.return_value = (
+            "# Test Content\n\nThis is a test paragraph with some content."
+        )
         yield mock
 
 
@@ -105,7 +109,10 @@ def mock_cosine_similarity() -> Generator[Mock]:
 def mock_chunk_text() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.chunk_text") as mock:
         mock.return_value = [
-            {"content": "Test Content", "metadata": {"source": "https://example.org/test-page"}},
+            {
+                "content": "Test Content",
+                "metadata": {"source": "https://example.org/test-page"},
+            },
             {
                 "content": "This is a test paragraph with some content.",
                 "metadata": {"source": "https://example.org/test-page"},
@@ -117,7 +124,9 @@ def mock_chunk_text() -> Generator[Mock]:
 async def test_prepare_url_data_new_url() -> None:
     url = "https://example.org/test"
 
-    with patch("services.crawler.src.extraction.download_page_html", new_callable=AsyncMock) as mock_download:
+    with patch(
+        "services.crawler.src.extraction.download_page_html", new_callable=AsyncMock
+    ) as mock_download:
         mock_download.return_value = "<html>Test</html>"
 
         html, visited = await prepare_url_data(url)
@@ -132,7 +141,9 @@ async def test_prepare_url_data_with_existing_html() -> None:
     html = "<html>Existing HTML</html>"
     visited = ["https://other.org"]
 
-    with patch("services.crawler.src.extraction.download_page_html", new_callable=AsyncMock) as mock_download:
+    with patch(
+        "services.crawler.src.extraction.download_page_html", new_callable=AsyncMock
+    ) as mock_download:
         result_html, result_visited = await prepare_url_data(url, html, visited)
 
         assert result_html == html
@@ -143,7 +154,9 @@ async def test_prepare_url_data_with_existing_html() -> None:
 async def test_prepare_url_data_network_error() -> None:
     url = "https://example.org/test"
 
-    with patch("services.crawler.src.extraction.download_page_html", new_callable=AsyncMock) as mock_download:
+    with patch(
+        "services.crawler.src.extraction.download_page_html", new_callable=AsyncMock
+    ) as mock_download:
         mock_download.side_effect = URLError("Network error")
 
         with pytest.raises(ExternalOperationError):
@@ -180,7 +193,10 @@ async def test_extract_and_process_content() -> None:
 
     with (
         patch("services.crawler.src.extraction.extract") as mock_extract,
-        patch("services.crawler.src.extraction.generate_embeddings", new_callable=AsyncMock) as mock_embeddings,
+        patch(
+            "services.crawler.src.extraction.generate_embeddings",
+            new_callable=AsyncMock,
+        ) as mock_embeddings,
         patch("services.crawler.src.extraction.sanitize_html") as mock_sanitize,
         patch("services.crawler.src.extraction.convert_to_markdown") as mock_convert,
     ):
@@ -191,7 +207,9 @@ async def test_extract_and_process_content() -> None:
         )
         mock_convert.return_value = "# Test\n\nContent"
 
-        md_content, text_content, embeddings = await extract_and_process_content(url, html)
+        md_content, text_content, embeddings = await extract_and_process_content(
+            url, html
+        )
 
         assert md_content == "# Test\n\nContent"
         assert text_content == "Test\nContent"
@@ -237,8 +255,12 @@ async def test_download_documents(temp_dir: Path) -> None:
     doc_links = {"https://example.org/doc1.pdf", "https://example.org/doc2.docx"}
 
     with (
-        patch("services.crawler.src.extraction.download_file", new_callable=AsyncMock) as mock_download,
-        patch("services.crawler.src.extraction.safe_filename_from_url") as mock_filename,
+        patch(
+            "services.crawler.src.extraction.download_file", new_callable=AsyncMock
+        ) as mock_download,
+        patch(
+            "services.crawler.src.extraction.safe_filename_from_url"
+        ) as mock_filename,
     ):
         mock_download.return_value = b"Test file content"
         mock_filename.side_effect = lambda url: url.split("/")[-1]
@@ -248,8 +270,14 @@ async def test_download_documents(temp_dir: Path) -> None:
         assert len(result) == 2
         assert "https://example.org/doc1.pdf" in result
         assert "https://example.org/doc2.docx" in result
-        assert await result["https://example.org/doc1.pdf"].read_bytes() == b"Test file content"
-        assert await result["https://example.org/doc2.docx"].read_bytes() == b"Test file content"
+        assert (
+            await result["https://example.org/doc1.pdf"].read_bytes()
+            == b"Test file content"
+        )
+        assert (
+            await result["https://example.org/doc2.docx"].read_bytes()
+            == b"Test file content"
+        )
 
 
 async def test_download_documents_with_existing(temp_dir: Path) -> None:
@@ -259,8 +287,12 @@ async def test_download_documents_with_existing(temp_dir: Path) -> None:
     await (temp_dir / "existing.pdf").write_bytes(b"Existing content")
 
     with (
-        patch("services.crawler.src.extraction.download_file", new_callable=AsyncMock) as mock_download,
-        patch("services.crawler.src.extraction.safe_filename_from_url") as mock_filename,
+        patch(
+            "services.crawler.src.extraction.download_file", new_callable=AsyncMock
+        ) as mock_download,
+        patch(
+            "services.crawler.src.extraction.safe_filename_from_url"
+        ) as mock_filename,
     ):
         mock_download.return_value = b"New content"
         mock_filename.return_value = "doc2.docx"
@@ -280,16 +312,27 @@ async def test_find_relevant_links() -> None:
     visited = ["https://example.org/visited"]
 
     with (
-        patch("services.crawler.src.extraction.download_page_html", new_callable=AsyncMock) as mock_download,
+        patch(
+            "services.crawler.src.extraction.download_page_html", new_callable=AsyncMock
+        ) as mock_download,
         patch("services.crawler.src.extraction.extract") as mock_extract,
-        patch("services.crawler.src.extraction.generate_embeddings", new_callable=AsyncMock) as mock_embeddings,
+        patch(
+            "services.crawler.src.extraction.generate_embeddings",
+            new_callable=AsyncMock,
+        ) as mock_embeddings,
         patch("services.crawler.src.extraction.cosine_similarity") as mock_similarity,
     ):
-        mock_download.side_effect = lambda link: f"<html><body>Content for {link}</body></html>"
+        mock_download.side_effect = (
+            lambda link: f"<html><body>Content for {link}</body></html>"
+        )
         mock_extract.return_value = "Extracted content"
         mock_embeddings.return_value = [[0.4, 0.5, 0.6]]
 
-        mock_similarity.side_effect = lambda _, __: [[0.4]] if "page2" in str(mock_download.call_args) else [[0.95]]
+        mock_similarity.side_effect = (
+            lambda _, __: [[0.4]]
+            if "page2" in str(mock_download.call_args)
+            else [[0.95]]
+        )
 
         results = await find_relevant_links(normal_links, embeddings, visited)
 
@@ -310,7 +353,9 @@ async def test_crawl_basic(
     mock_generate_embeddings: AsyncMock,
     mock_download_file: AsyncMock,
 ) -> None:
-    with patch("services.crawler.src.extraction.safe_filename_from_url") as mock_filename:
+    with patch(
+        "services.crawler.src.extraction.safe_filename_from_url"
+    ) as mock_filename:
         mock_filename.return_value = "test-page.md"
 
         results = await crawl(url=mock_url, temp_dir=temp_dir)
@@ -319,8 +364,14 @@ async def test_crawl_basic(
         result = results[0]
         assert result["url"] == mock_url
         assert len(result["document_links"]) == 2
-        assert result["markdown_content"] == "# Test Content\n\nThis is a test paragraph with some content."
-        assert result["text_content"] == "Test Content\n\nThis is a test paragraph with some content."
+        assert (
+            result["markdown_content"]
+            == "# Test Content\n\nThis is a test paragraph with some content."
+        )
+        assert (
+            result["text_content"]
+            == "Test Content\n\nThis is a test paragraph with some content."
+        )
         assert "test-page" in result["saved_path"]
 
 
@@ -329,10 +380,14 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
     await (temp_dir / "test2.docx").write_bytes(b"content2")
 
     with (
-        patch("services.crawler.src.extraction.crawl", new_callable=AsyncMock) as mock_crawl,
+        patch(
+            "services.crawler.src.extraction.crawl", new_callable=AsyncMock
+        ) as mock_crawl,
         patch("services.crawler.src.extraction.TemporaryDirectory") as mock_tempdir,
         patch("services.crawler.src.extraction.chunk_text") as mock_chunk,
-        patch("services.crawler.src.extraction.index_chunks", new_callable=AsyncMock) as mock_index_chunks,
+        patch(
+            "services.crawler.src.extraction.index_chunks", new_callable=AsyncMock
+        ) as mock_index_chunks,
     ):
         mock_tempdir.return_value.__aenter__.return_value = str(temp_dir)
 
@@ -346,7 +401,9 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
             }
         ]
 
-        mock_chunk.return_value = [{"content": "Test content", "metadata": {"source": "test"}}]
+        mock_chunk.return_value = [
+            {"content": "Test content", "metadata": {"source": "test"}}
+        ]
         mock_index_chunks.return_value = [
             {
                 "chunk": {"content": "Test content", "metadata": {"source": "test"}},
@@ -373,5 +430,6 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
         assert file_contents["test2.docx"] == b"content2"
 
         mock_index_chunks.assert_called_once_with(
-            chunks=[{"content": "Test content", "metadata": {"source": "test"}}], source_id="test-id"
+            chunks=[{"content": "Test content", "metadata": {"source": "test"}}],
+            source_id="test-id",
         )

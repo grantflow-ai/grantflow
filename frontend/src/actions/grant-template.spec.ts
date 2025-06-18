@@ -1,7 +1,6 @@
-import { HTTPError } from "ky";
-
 import { GrantSectionDetailedFactory, UpdateGrantTemplateRequestFactory } from "::testing/factories";
-import { API } from "@/types/api-types";
+import { HTTPError } from "ky";
+import type { API } from "@/types/api-types";
 
 import { generateGrantTemplate, updateGrantTemplate } from "./grant-template";
 

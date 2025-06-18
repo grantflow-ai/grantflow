@@ -26,9 +26,9 @@ vi.mock("next/link", () => ({
 		href,
 	}: {
 		"aria-label"?: string;
-		"children": React.ReactNode;
-		"className"?: string;
-		"href": string;
+		children: React.ReactNode;
+		className?: string;
+		href: string;
 	}) => (
 		<a aria-label={ariaLabel} className={className} href={href}>
 			{children}

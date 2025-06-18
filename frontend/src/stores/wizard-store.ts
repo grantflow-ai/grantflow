@@ -57,10 +57,7 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 
 	return {
 		handleTitleChange: (title: string) => {
-			// Update local state immediately for responsive UI
 			useApplicationStore.getState().setApplicationTitle(title);
-
-			// Debounce the backend update
 			debouncedUpdateTitle.call(title);
 		},
 

@@ -53,7 +53,7 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 
 @pytest.fixture(scope="session")
-async def db_connection_string() -> AsyncGenerator[str, None]:
+async def db_connection_string() -> AsyncGenerator[str]:
     container_name = "test_postgres_container"
 
     with socket(AF_INET, SOCK_STREAM) as s:

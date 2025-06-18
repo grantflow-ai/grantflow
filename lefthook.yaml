@@ -5,14 +5,16 @@ skip_output:
 pre-commit:
     parallel: true
     commands:
-        prettier:
-            glob: "*.{js,jsx,ts,tsx,mjs,mts,json,yaml,yml,toml,md,css}"
-            run: pnpm --dir frontend prettier --write {staged_files}
+        biome:
+            glob: "*.{js,jsx,ts,tsx,mjs,mts,json,jsonc,css}"
+            run: pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
             stage_fixed: true
 
         eslint:
             glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts}"
-            run: pnpm --dir frontend eslint --fix --max-warnings=0 --no-warn-ignored --cache {staged_files}
+            run: |
+                files=$(echo {staged_files} | sed 's|frontend/||g')
+                cd frontend && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $files
             stage_fixed: true
 
         ruff:

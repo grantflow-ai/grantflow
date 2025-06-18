@@ -1,29 +1,29 @@
 name: DB Package CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development*
-    paths:
-      - 'packages/db/**'
-      - '.github/workflows/ci-package-db.yaml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'packages/db/**'
-      - '.github/workflows/ci-package-db.yaml'
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - "packages/db/**"
+            - ".github/workflows/ci-package-db.yaml"
+    push:
+        branches:
+            - main
+        paths:
+            - "packages/db/**"
+            - ".github/workflows/ci-package-db.yaml"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Run Tests
-        uses: ./.github/actions/run-python-tests
-        with:
-            target: db
+            - name: Run Tests
+              uses: ./.github/actions/run-python-tests
+              with:
+                  target: db

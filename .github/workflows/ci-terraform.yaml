@@ -1,66 +1,66 @@
 name: Terraform CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development*
-    paths:
-      - '.github/workflows/ci-terraform.yaml'
-      - 'terraform/**'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/ci-terraform.yaml'
-      - 'terraform/**'
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/ci-terraform.yaml"
+            - "terraform/**"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/ci-terraform.yaml"
+            - "terraform/**"
 
 jobs:
-  fmt:
-    name: Format Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    fmt:
+        name: Format Check
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: OpenTofu Format
-        uses: dflook/terraform-fmt-check@v2
-        with:
-          path: terraform
-          command: tofu
+            - name: OpenTofu Format
+              uses: dflook/terraform-fmt-check@v2
+              with:
+                  path: terraform
+                  command: tofu
 
-  validate:
-    name: Validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    validate:
+        name: Validate
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: OpenTofu Validate
-        uses: dflook/terraform-validate@v2
-        with:
-          path: terraform
-          command: tofu
+            - name: OpenTofu Validate
+              uses: dflook/terraform-validate@v2
+              with:
+                  path: terraform
+                  command: tofu
 
-  tflint:
-    name: TFLint
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    tflint:
+        name: TFLint
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: v0.57.0
+            - name: Setup TFLint
+              uses: terraform-linters/setup-tflint@v4
+              with:
+                  tflint_version: v0.57.0
 
-      - name: Initialize TFLint
-        run: tflint --init
+            - name: Initialize TFLint
+              run: tflint --init
 
-      - name: Run TFLint
-        run: |
-          cd terraform
-          tflint --format compact
+            - name: Run TFLint
+              run: |
+                  cd terraform
+                  tflint --format compact
