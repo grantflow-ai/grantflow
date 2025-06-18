@@ -2,16 +2,11 @@ import base64
 import binascii
 from asyncio import gather
 from typing import Any
-from uuid import UUID
 
 from litestar import post
 from litestar.exceptions import ValidationException
+from packages.db.src.utils import update_source_indexing_status
 from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.tables import (
-    RagSource,
-    TextVector,
-)
-from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.exceptions import (
     DeserializationError,
     ValidationError,
@@ -21,14 +16,9 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import (
     CrawlingRequest,
     PubSubEvent,
-    SourceProcessingResult,
-    publish_notification,
 )
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
-from packages.shared_utils.src.shared_types import ParentType
-from sqlalchemy import insert, update
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.crawler.src.extraction import crawl_url
@@ -52,58 +42,6 @@ async def decode_pubsub_message(event: PubSubEvent) -> CrawlingRequest:
         ) from e
 
 
-async def update_rag_source_status(
-    session_maker: async_sessionmaker[Any],
-    source_id: UUID,
-    parent_id: UUID,
-    crawling_request: CrawlingRequest,
-    content: str,
-    vectors: list[VectorDTO] | None,
-    indexing_status: SourceIndexingStatusEnum,
-) -> None:
-    async with session_maker() as session, session.begin():
-        try:
-            await session.execute(
-                update(RagSource)
-                .where(RagSource.id == source_id)
-                .values({"indexing_status": indexing_status, "text_content": content})
-            )
-            if vectors:
-                await session.execute(insert(TextVector).values(vectors))
-            await session.commit()
-
-            await publish_notification(
-                logger=logger,
-                parent_id=parent_id,
-                event="source_processing",
-                data=SourceProcessingResult(
-                    source_id=source_id,
-                    indexing_status=indexing_status,
-                    identifier=crawling_request["url"],
-                ),
-            )
-        except SQLAlchemyError as e:
-            logger.exception(
-                "Database operation error",
-                url=crawling_request["url"],
-                source_id=source_id,
-                error_type="DatabaseError"
-                if "connection" in str(e).lower()
-                else "SQLAlchemyError",
-            )
-            await session.rollback()
-            await publish_notification(
-                logger=logger,
-                parent_id=parent_id,
-                event="source_processing",
-                data=SourceProcessingResult(
-                    source_id=source_id,
-                    indexing_status=SourceIndexingStatusEnum.FAILED,
-                    identifier=crawling_request["url"],
-                ),
-            )
-
-
 @post("/")
 async def handle_url_crawling(
     data: PubSubEvent,
@@ -119,12 +57,13 @@ async def handle_url_crawling(
         logger.info("Skipping URL due to filtering rules", url=crawling_request["url"])
         return
 
-    await update_rag_source_status(
+    await update_source_indexing_status(
+        logger=logger,
         session_maker=session_maker,
-        parent_id=crawling_request["parent_id"],
         source_id=crawling_request["source_id"],
-        crawling_request=crawling_request,
-        content="",
+        parent_id=crawling_request["parent_id"],
+        identifier=crawling_request["url"],
+        text_content="",
         vectors=None,
         indexing_status=SourceIndexingStatusEnum.INDEXING,
     )
@@ -140,9 +79,10 @@ async def handle_url_crawling(
                 *[
                     upload_blob(
                         blob_path=construct_object_uri(
+                            workspace_id=crawling_request["workspace_id"],
+                            parent_id=crawling_request["parent_id"],
                             source_id=crawling_request["source_id"],
                             blob_name=file["filename"],
-                            workspace_id=crawling_request["workspace_id"],
                         ),
                         content=file["content"],
                     )
@@ -150,23 +90,25 @@ async def handle_url_crawling(
                 ]
             )
 
-        await update_rag_source_status(
+        await update_source_indexing_status(
+            logger=logger,
             session_maker=session_maker,
-            parent_id=crawling_request["parent_id"],
             source_id=crawling_request["source_id"],
-            crawling_request=crawling_request,
-            content=content,
+            parent_id=crawling_request["parent_id"],
+            identifier=crawling_request["url"],
+            text_content=content,
             vectors=vectors,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
         )
     except Exception as e:
         logger.exception("Error during URL crawling", error=e)
-        await update_rag_source_status(
+        await update_source_indexing_status(
+            logger=logger,
             session_maker=session_maker,
-            parent_id=crawling_request["parent_id"],
             source_id=crawling_request["source_id"],
-            crawling_request=crawling_request,
-            content="",
+            parent_id=crawling_request["parent_id"],
+            identifier=crawling_request["url"],
+            text_content="",
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
         )

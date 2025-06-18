@@ -124,7 +124,6 @@ async def test_generate_grant_template_success(
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
-        # Create a rag source
         rag_source = RagFile(
             bucket_name="test-bucket",
             object_path="test/path",
@@ -136,7 +135,6 @@ async def test_generate_grant_template_success(
         session.add(rag_source)
         await session.flush()
 
-        # Create grant template
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
@@ -144,7 +142,6 @@ async def test_generate_grant_template_success(
         session.add(grant_template)
         await session.flush()
 
-        # Link rag source to grant template
         template_source = GrantTemplateRagSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
@@ -199,7 +196,6 @@ async def test_generate_grant_template_failed_sources_only(
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
-        # Create a rag source with FAILED status
         rag_source = RagFile(
             bucket_name="test-bucket",
             object_path="test/path",
@@ -211,7 +207,6 @@ async def test_generate_grant_template_failed_sources_only(
         session.add(rag_source)
         await session.flush()
 
-        # Create grant template
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
@@ -219,7 +214,6 @@ async def test_generate_grant_template_failed_sources_only(
         session.add(grant_template)
         await session.flush()
 
-        # Link rag source to grant template
         template_source = GrantTemplateRagSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
@@ -243,7 +237,6 @@ async def test_update_grant_template_unauthorized(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create grant template for a different workspace
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
         grant_template = GrantTemplate(
@@ -254,7 +247,6 @@ async def test_update_grant_template_unauthorized(
         await session.commit()
         grant_template_id = grant_template.id
 
-    # Try to update with a different workspace ID
     different_workspace_id = UUID("00000000-0000-0000-0000-000000000000")
     response = await test_client.patch(
         f"/workspaces/{different_workspace_id}/applications/{grant_application.id}/grant-template/{grant_template_id}",

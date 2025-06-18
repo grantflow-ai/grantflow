@@ -324,7 +324,6 @@ async def grant_application_text_generation_pipeline_handler(
                 },
             )
 
-    # At this point, grant_template is guaranteed to be non-None due to the check above
     if grant_template is None:
         raise ValidationError("Grant template is unexpectedly None")
 

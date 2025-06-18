@@ -343,10 +343,9 @@ async def test_create_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        workspace_id=str(workspace.id),
-        application_id=str(grant_application.id),
-        organization_id=None,
-        template_id=None,
+        workspace_id=workspace.id,
+        parent_id=grant_application.id,
+        source_id=ANY,
         blob_name=test_blob_name,
     )
 
@@ -376,9 +375,8 @@ async def test_create_organization_upload_url(
 
     mock_create_url.assert_called_once_with(
         workspace_id=None,
-        application_id=None,
-        organization_id=str(funding_organization.id),
-        template_id=None,
+        parent_id=funding_organization.id,
+        source_id=ANY,
         blob_name=test_blob_name,
     )
 
@@ -408,10 +406,9 @@ async def test_create_template_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        workspace_id=str(workspace.id),
-        application_id=None,
-        organization_id=None,
-        template_id=str(grant_template.id),
+        workspace_id=workspace.id,
+        parent_id=grant_template.id,
+        source_id=ANY,
         blob_name=test_blob_name,
     )
 
@@ -498,7 +495,7 @@ async def test_handle_crawl_url_funding_organization(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        workspace_id=funding_organization.id,  # Use parent_id when workspace_id is None
+        workspace_id=funding_organization.id,
         parent_id=funding_organization.id,
     )
 
