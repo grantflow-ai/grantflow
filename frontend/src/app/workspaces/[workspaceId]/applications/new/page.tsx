@@ -15,6 +15,7 @@ import {
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { SourceIndexingStatus } from "@/enums";
 import {
+	isRagProcessingStatusMessage,
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
@@ -67,6 +68,17 @@ export default function CreateGrantApplicationWizardPage() {
 				return;
 			}
 			toast.info(`Processing ${latestNotification.data.identifier}...`);
+		} else if (isRagProcessingStatusMessage(latestNotification)) {
+			const { data, message } = latestNotification.data;
+			if (data && Object.keys(data).length > 0) {
+				toast.info(message, {
+					description: Object.entries(data)
+						.map(([key, value]) => `${key}: ${value}`)
+						.join(", "),
+				});
+			} else {
+				toast.info(message);
+			}
 		}
 	}, [notifications]);
 
