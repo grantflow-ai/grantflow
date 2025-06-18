@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApplicationFactory } from "::testing/factories";
+import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
 
@@ -22,6 +22,13 @@ describe("ApplicationStructureStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,
+				applicationId: null,
+				applicationTitle: "",
+				templateId: null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
+			contentState: {
 				uploadedFiles: [],
 				urls: [],
 			},
@@ -32,7 +39,7 @@ describe("ApplicationStructureStep", () => {
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			uiState: {},
+			updateGrantSections: vi.fn(),
 		});
 
 		vi.mocked(useApplicationStore).mockReturnValue({
@@ -97,28 +104,21 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("shows preview when application title is present", () => {
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: "Test Application",
-				workspace_id: "test-workspace-id",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
-			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+		// Update the mock wizard store to have an application title
+		const application = ApplicationWithTemplateFactory.build({
+			id: "test-id",
+			title: "Test Application",
+			workspace_id: "test-workspace-id",
+		});
+		Object.assign(mockWizardStore, {
+			applicationState: {
+				application,
+				applicationId: "test-id",
+				applicationTitle: "Test Application",
+				templateId: application.grant_template?.id ?? null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
 		});
 
 		render(<ApplicationStructureStep />);
@@ -129,59 +129,57 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("displays untitled when no title is set", () => {
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: "",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
-			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+		// Update the mock wizard store to have an empty application title
+		const application = ApplicationWithTemplateFactory.build({
+			id: "test-id",
+			title: "",
+			workspace_id: "test-workspace-id",
+		});
+		Object.assign(mockWizardStore, {
+			applicationState: {
+				application,
+				applicationId: "test-id",
+				applicationTitle: "",
+				templateId: application.grant_template?.id ?? null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
 		});
 
 		render(<ApplicationStructureStep />);
 
 		const titleElement = screen.getByTestId("application-structure-title");
 		expect(titleElement).toBeInTheDocument();
-		expect(titleElement).toHaveTextContent("");
+		expect(titleElement).toHaveTextContent("Untitled Application");
 	});
 
 	it("renders application sections preview", () => {
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: "Test Application",
-				workspace_id: "test-workspace-id",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
-			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+		// Update the mock wizard store to have an application with title but no grant sections
+		const application = ApplicationFactory.build({
+			grant_template: {
+				created_at: new Date().toISOString(),
+				funding_organization: undefined,
+				funding_organization_id: undefined,
+				grant_application_id: "test-id",
+				grant_sections: [], // Empty sections to show the default UI
+				id: "template-id",
+				rag_sources: [],
+				submission_date: null,
+				updated_at: new Date().toISOString(),
+			},
+			id: "test-id",
+			title: "Test Application",
+			workspace_id: "test-workspace-id",
+		});
+		Object.assign(mockWizardStore, {
+			applicationState: {
+				application,
+				applicationId: "test-id",
+				applicationTitle: "Test Application",
+				templateId: application.grant_template?.id ?? null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
 		});
 
 		render(<ApplicationStructureStep />);
@@ -189,7 +187,7 @@ describe("ApplicationStructureStep", () => {
 		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.getByText("Application Sections")).toBeInTheDocument();
 
-		// Check for the sample sections
+		// Check for the sample sections (shown when grant_sections is empty)
 		expect(screen.getByText("Executive Summary")).toBeInTheDocument();
 		expect(screen.getByText("Overview of the project and key highlights")).toBeInTheDocument();
 
@@ -232,28 +230,21 @@ describe("ApplicationStructureStep", () => {
 		const longTitle =
 			"This is a very long application title that should be handled gracefully by the UI without breaking the layout or causing overflow issues";
 
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: longTitle,
-				workspace_id: "test-workspace-id",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
-			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+		// Update the mock wizard store with a long title
+		const application = ApplicationWithTemplateFactory.build({
+			id: "test-id",
+			title: longTitle,
+			workspace_id: "test-workspace-id",
+		});
+		Object.assign(mockWizardStore, {
+			applicationState: {
+				application,
+				applicationId: "test-id",
+				applicationTitle: longTitle,
+				templateId: application.grant_template?.id ?? null,
+				wsConnectionStatus: undefined,
+				wsConnectionStatusColor: undefined,
+			},
 		});
 
 		render(<ApplicationStructureStep />);
