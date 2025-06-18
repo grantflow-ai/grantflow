@@ -37,6 +37,18 @@ describe("RootLayout", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// Suppress console errors for hydration warnings in this test
+		vi.spyOn(console, "error").mockImplementation((message) => {
+			// Only suppress hydration warnings, let other errors through by throwing
+			if (typeof message === "string" && message.includes("cannot be a child of")) {
+				return;
+			}
+			throw new Error(`Unexpected console.error: ${String(message)}`);
+		});
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	it("renders the layout with all expected components", async () => {

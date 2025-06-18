@@ -4,8 +4,23 @@ import type { FileWithId } from "@/components/workspaces/wizard/application-prev
 
 interface ApplicationState {
 	application: any;
+	applicationId: null | string;
+	applicationTitle: string;
+	templateId: null | string;
+	wsConnectionStatus?: string;
+	wsConnectionStatusColor?: string;
+}
+
+interface ContentState {
 	uploadedFiles: FileWithId[];
 	urls: string[];
+}
+
+interface PollingState {
+	intervalId: NodeJS.Timeout | null;
+	isActive: boolean;
+	start: (apiFunction: () => Promise<void>, duration: number, callImmediately?: boolean) => void;
+	stop: () => void;
 }
 
 interface WizardStoreMock {
@@ -13,28 +28,32 @@ interface WizardStoreMock {
 	addUrl: (url: string) => void;
 	applicationState: ApplicationState;
 	areFilesOrUrlsIndexing: () => boolean;
+	contentState: ContentState;
 	initializeApplication: (workspaceId: string) => Promise<void>;
 	isCurrentStepValid: () => boolean;
 	isLoading: boolean;
 	isStep1Valid: () => boolean;
-	polling: {
-		start: (callback: () => void, interval: number, immediate?: boolean) => void;
-		stop: () => void;
-	};
+	polling: PollingState;
 	removeFile: (fileToRemove: FileWithId) => void;
 	removeUrl: (url: string) => void;
 	resetWizard: () => void;
-	retrieveApplication: (workspaceId: string, applicationId: string) => Promise<void>;
+	setApplicationId: (id: string) => void;
+	setApplicationTitle: (title: string) => void;
 	setCurrentStep: (step: number) => void;
 	setFileDropdownOpen: (fileId: string, open: boolean) => void;
 	setLinkHoverState: (url: string, hovered: boolean) => void;
+	setTemplateId: (id: string) => void;
 	setUploadedFiles: (files: FileWithId[]) => void;
 	setUrlInput: (input: string) => void;
 	setUrls: (urls: string[]) => void;
+	setWorkspaceId: (id: string) => void;
+	setWsConnectionStatus: (status?: string) => void;
+	setWsConnectionStatusColor: (color?: string) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	ui: WizardUI;
-	updateApplication: (workspaceId: string, applicationId: string, data: any) => Promise<void>;
+	updateApplicationTitle: (title: string) => Promise<void>;
+	workspaceId: string;
 }
 
 // Define types to match the real store
@@ -48,28 +67,38 @@ interface WizardUI {
 const mockWizardStore: WizardStoreMock = {
 	addFile: vi.fn(),
 	addUrl: vi.fn((url: string) => {
-		mockWizardStore.applicationState.urls = [...mockWizardStore.applicationState.urls, url];
+		mockWizardStore.contentState.urls = [...mockWizardStore.contentState.urls, url];
 	}),
 	applicationState: {
 		application: null,
+		applicationId: null,
+		applicationTitle: "",
+		templateId: null,
+		wsConnectionStatus: undefined,
+		wsConnectionStatusColor: undefined,
+	},
+	areFilesOrUrlsIndexing: vi.fn(() => false),
+	contentState: {
 		uploadedFiles: [],
 		urls: [],
 	},
-	areFilesOrUrlsIndexing: vi.fn(() => false),
 	initializeApplication: vi.fn().mockResolvedValue(undefined),
 	isCurrentStepValid: vi.fn(() => false),
 	isLoading: false,
 	isStep1Valid: vi.fn(() => false),
 	polling: {
+		intervalId: null,
+		isActive: false,
 		start: vi.fn(),
 		stop: vi.fn(),
 	},
 	removeFile: vi.fn(),
 	removeUrl: vi.fn((url: string) => {
-		mockWizardStore.applicationState.urls = mockWizardStore.applicationState.urls.filter((u) => u !== url);
+		mockWizardStore.contentState.urls = mockWizardStore.contentState.urls.filter((u) => u !== url);
 	}),
 	resetWizard: vi.fn(),
-	retrieveApplication: vi.fn().mockResolvedValue(undefined),
+	setApplicationId: vi.fn(),
+	setApplicationTitle: vi.fn(),
 	setCurrentStep: vi.fn(),
 	setFileDropdownOpen: vi.fn((fileId: string, open: boolean) => {
 		mockWizardStore.ui.fileDropdownStates[fileId] = open;
@@ -77,11 +106,15 @@ const mockWizardStore: WizardStoreMock = {
 	setLinkHoverState: vi.fn((url: string, hovered: boolean) => {
 		mockWizardStore.ui.linkHoverStates[url] = hovered;
 	}),
+	setTemplateId: vi.fn(),
 	setUploadedFiles: vi.fn(),
 	setUrlInput: vi.fn((input: string) => {
 		mockWizardStore.ui.urlInput = input;
 	}),
 	setUrls: vi.fn(),
+	setWorkspaceId: vi.fn(),
+	setWsConnectionStatus: vi.fn(),
+	setWsConnectionStatusColor: vi.fn(),
 	toNextStep: vi.fn(),
 	toPreviousStep: vi.fn(),
 	ui: {
@@ -90,7 +123,8 @@ const mockWizardStore: WizardStoreMock = {
 		linkHoverStates: {},
 		urlInput: "",
 	},
-	updateApplication: vi.fn().mockResolvedValue(undefined),
+	updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
+	workspaceId: "",
 };
 
 export { mockWizardStore };

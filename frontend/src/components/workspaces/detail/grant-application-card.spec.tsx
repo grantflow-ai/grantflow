@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
+import { ApplicationListItemFactory } from "::testing/factories";
 import { PagePath } from "@/enums";
 
 import { GrantApplicationCard } from "./grant-application-card";
@@ -7,17 +8,17 @@ import { GrantApplicationCard } from "./grant-application-card";
 describe("GrantApplicationCard", () => {
 	const mockWorkspaceId = "workspace-123";
 
-	const mockApplication = {
+	const mockApplication = ApplicationListItemFactory.build({
 		completed_at: null,
 		id: "app-456",
 		title: "Research Grant Application",
-	};
+	});
 
-	const mockCompletedApplication = {
+	const mockCompletedApplication = ApplicationListItemFactory.build({
 		completed_at: "2025-03-15",
 		id: "app-789",
 		title: "Completed Grant Application",
-	};
+	});
 
 	it("renders application details correctly", () => {
 		render(<GrantApplicationCard application={mockApplication} workspaceId={mockWorkspaceId} />);

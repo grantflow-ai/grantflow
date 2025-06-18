@@ -2,6 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { ReadyState } from "react-use-websocket";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { getOtp } from "@/actions/otp";
 import { getEnv } from "@/utils/env";
 
@@ -79,18 +80,16 @@ describe("useApplicationNotifications", () => {
 	it("should accumulate notifications", async () => {
 		const { useApplicationNotifications } = await import("./use-application-notifications");
 
-		const firstNotification = {
+		const firstNotification = SourceProcessingNotificationMessageFactory.build({
 			data: {
 				identifier: "doc1.pdf",
-				indexing_status: "completed",
+				indexing_status: "FINISHED",
 				parent_id: "app-123",
 				parent_type: "grant_application",
 				rag_source_id: "source-1",
 			},
-			event: "source_processing",
 			parent_id: "app-123",
-			type: "data" as const,
-		};
+		});
 
 		mockUseWebSocket.mockReturnValue({
 			lastJsonMessage: firstNotification,
@@ -108,18 +107,16 @@ describe("useApplicationNotifications", () => {
 		expect(result.current.notifications).toHaveLength(1);
 		expect(result.current.notifications[0]).toEqual(firstNotification);
 
-		const secondNotification = {
+		const secondNotification = SourceProcessingNotificationMessageFactory.build({
 			data: {
 				identifier: "doc2.pdf",
-				indexing_status: "processing",
+				indexing_status: "INDEXING",
 				parent_id: "app-123",
 				parent_type: "grant_application",
 				rag_source_id: "source-2",
 			},
-			event: "source_processing",
 			parent_id: "app-123",
-			type: "data" as const,
-		};
+		});
 
 		mockUseWebSocket.mockReturnValue({
 			lastJsonMessage: secondNotification,

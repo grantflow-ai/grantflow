@@ -19,7 +19,7 @@
 		"eslint-plugin-markdown": "^5.1.0",
 		"eslint-plugin-n": "17.20.0",
 		"eslint-plugin-paths": "^1.1.0",
-		"eslint-plugin-perfectionist": "^4.14.0",
+		"eslint-plugin-perfectionist": "^4.15.0",
 		"eslint-plugin-promise": "7.2.1",
 		"eslint-plugin-react": "^7.37.5",
 		"eslint-plugin-react-hooks": "^5.2.0",

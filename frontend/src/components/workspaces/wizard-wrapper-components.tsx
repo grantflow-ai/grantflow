@@ -10,6 +10,7 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/workspaces/icons";
+import { DevAutofillButton } from "@/components/workspaces/wizard/dev-autofill-button";
 import { WIZARD_STEP_TITLES } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -50,7 +51,7 @@ export function WizardFooter() {
 
 	return (
 		<footer
-			className="border-app-lavender-gray flex h-auto w-full items-center justify-between border-t bg-white p-6"
+			className="border-app-lavender-gray relative flex h-auto w-full items-center justify-between border-t bg-white p-6"
 			data-testid="wizard-footer"
 		>
 			{showBack ? (
@@ -67,6 +68,7 @@ export function WizardFooter() {
 			) : (
 				<div></div>
 			)}
+			<DevAutofillButton />
 			<AppButton
 				data-testid="continue-button"
 				disabled={disabled}

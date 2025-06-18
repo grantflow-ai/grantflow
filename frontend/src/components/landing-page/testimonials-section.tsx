@@ -1,3 +1,4 @@
+import { easeInOut } from "motion";
 import Image from "next/image";
 
 import { MotionArticle, MotionBlockquote, MotionImage } from "@/components/landing-page/motion-components";
@@ -42,7 +43,7 @@ const textVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: "easeInOut",
+			ease: easeInOut,
 		},
 		y: 0,
 	},
@@ -57,7 +58,7 @@ const imageVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: "easeInOut",
+			ease: easeInOut,
 		},
 		y: 0,
 	},
