@@ -4,10 +4,19 @@ from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
-from packages.db.src.enums import ApplicationStatusEnum
+from packages.db.src.enums import (
+    ApplicationStatusEnum,
+    SourceIndexingStatusEnum,
+    UserRoleEnum,
+)
 from packages.db.src.tables import (
+    FundingOrganization,
     GrantApplication,
+    GrantApplicationRagSource,
     GrantTemplate,
+    GrantTemplateRagSource,
+    RagFile,
+    RagUrl,
     Workspace,
     WorkspaceUser,
 )
@@ -34,7 +43,9 @@ async def test_create_application_success(
     assert "id" in data
 
     async with async_session_maker() as session:
-        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == UUID(data["id"])))
+        application = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == UUID(data["id"]))
+        )
         assert application is not None
         assert application.title == "Test Grant Application"
         assert application.workspace_id == workspace.id
@@ -91,7 +102,9 @@ async def test_update_application_success(
     assert response.status_code == HTTPStatus.OK, response.text
 
     async with async_session_maker() as session:
-        updated_app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        updated_app = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == grant_application.id)
+        )
         assert updated_app is not None
         assert updated_app.title == "Updated Title"
         assert updated_app.status == ApplicationStatusEnum.IN_PROGRESS
@@ -132,7 +145,9 @@ async def test_delete_application_success(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        result = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == grant_application.id)
+        )
         assert result is None
 
 
@@ -151,7 +166,10 @@ async def test_delete_application_unauthorized(
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
-@patch("services.backend.src.api.routes.grant_applications.publish_rag_task", new_callable=AsyncMock)
+@patch(
+    "services.backend.src.api.routes.grant_applications.publish_rag_task",
+    new_callable=AsyncMock,
+)
 async def test_generate_application_success(
     mock_publish_rag_task: AsyncMock,
     test_client: TestingClientType,
@@ -162,9 +180,6 @@ async def test_generate_application_success(
 ) -> None:
     # Set up the application with required data
     async with async_session_maker() as session, session.begin():
-        from packages.db.src.enums import SourceIndexingStatusEnum
-        from packages.db.src.tables import GrantApplicationRagSource, RagFile
-
         # Update application with research objectives
         grant_application.research_objectives = [
             {
@@ -403,11 +418,11 @@ async def test_retrieve_application_wrong_workspace(
         await session.flush()
 
         # Create workspace user for the different workspace for authorization
-        from packages.db.src.enums import UserRoleEnum
-
         firebase_uid = "a" * 128  # Same as test fixture
         workspace_user = WorkspaceUser(
-            workspace_id=different_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER
+            workspace_id=different_workspace.id,
+            firebase_uid=firebase_uid,
+            role=UserRoleEnum.MEMBER,
         )
         session.add(workspace_user)
         await session.commit()
@@ -441,8 +456,6 @@ async def test_retrieve_application_with_complete_data(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    from packages.db.src.tables import FundingOrganization
-
     async with async_session_maker() as session, session.begin():
         # Re-attach grant_application and grant_template to the session
         app = await session.get(GrantApplication, grant_application.id)
@@ -466,7 +479,9 @@ async def test_retrieve_application_with_complete_data(
                 "number": 1,
                 "title": "Objective 1",
                 "description": "Research objective description",
-                "research_tasks": [{"number": 1, "title": "Task 1", "description": "Task description"}],
+                "research_tasks": [
+                    {"number": 1, "title": "Task 1", "description": "Task description"}
+                ],
             }
         ]
         app.text = "Generated application text content"
@@ -487,7 +502,10 @@ async def test_retrieve_application_with_complete_data(
     assert data["workspace_id"] == str(grant_application.workspace_id)
     assert data["title"] == grant_application.title
     assert data["status"] == grant_application.status.value
-    assert data["form_inputs"] == {"principal_investigator": "Dr. Smith", "budget": "500000"}
+    assert data["form_inputs"] == {
+        "principal_investigator": "Dr. Smith",
+        "budget": "500000",
+    }
     assert data["text"] == "Generated application text content"
     assert len(data["research_objectives"]) == 1
     assert data["research_objectives"][0]["title"] == "Objective 1"
@@ -519,14 +537,6 @@ async def test_retrieve_application_with_rag_sources(
     async_session_maker: async_sessionmaker[Any],
     workspace_member_user: None,
 ) -> None:
-    from packages.db.src.enums import SourceIndexingStatusEnum
-    from packages.db.src.tables import (
-        GrantApplicationRagSource,
-        GrantTemplateRagSource,
-        RagFile,
-        RagUrl,
-    )
-
     async with async_session_maker() as session, session.begin():
         # Re-attach entities to the session
         app = await session.get(GrantApplication, grant_application.id)
