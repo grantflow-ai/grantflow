@@ -93,10 +93,6 @@ export const Default: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Untitled Application",
 					templateId: null,
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [],
 					urls: [],
 				},
@@ -117,7 +113,6 @@ export const Default: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => false,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -153,12 +148,9 @@ export const Step1_ApplicationDetails: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: null,
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [],
 					urls: [],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -177,7 +169,6 @@ export const Step1_ApplicationDetails: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => true,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -226,10 +217,6 @@ export const Step2_ApplicationStructure: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: "template-456",
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [
 						{
 							file: { name: "research-proposal.pdf", size: 1_024_000 },
@@ -237,6 +224,7 @@ export const Step2_ApplicationStructure: Story = {
 						},
 					],
 					urls: ["https://example.com/research-data"],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -255,7 +243,6 @@ export const Step2_ApplicationStructure: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => true,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -305,10 +292,6 @@ export const Step3_KnowledgeBase: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: "template-456",
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [
 						{
 							file: { name: "research-proposal.pdf", size: 1_024_000 },
@@ -316,6 +299,7 @@ export const Step3_KnowledgeBase: Story = {
 						},
 					],
 					urls: ["https://example.com/research-data"],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -334,7 +318,6 @@ export const Step3_KnowledgeBase: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => true,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -384,10 +367,6 @@ export const Step4_ResearchPlan: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: "template-456",
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [
 						{
 							file: { name: "research-proposal.pdf", size: 1_024_000 },
@@ -395,6 +374,7 @@ export const Step4_ResearchPlan: Story = {
 						},
 					],
 					urls: [],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -413,7 +393,6 @@ export const Step4_ResearchPlan: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => true,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -469,10 +448,6 @@ export const Step5_ResearchDeepDive: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: "template-456",
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [
 						{
 							file: { name: "research-proposal.pdf", size: 1_024_000 },
@@ -480,6 +455,7 @@ export const Step5_ResearchDeepDive: Story = {
 						},
 					],
 					urls: [],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -498,7 +474,6 @@ export const Step5_ResearchDeepDive: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => true,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -566,10 +541,6 @@ export const Step6_GenerateComplete: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: "template-456",
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [
 						{
 							file: { name: "research-proposal.pdf", size: 1_024_000 },
@@ -581,6 +552,7 @@ export const Step6_GenerateComplete: Story = {
 						},
 					],
 					urls: [],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -599,7 +571,6 @@ export const Step6_GenerateComplete: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => true,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -631,12 +602,9 @@ export const LongApplicationTitle: Story = {
 					applicationTitle:
 						"Comprehensive Climate Change Research and Environmental Impact Assessment Grant for Sustainable Development and Renewable Energy Solutions",
 					templateId: "template-456",
-					wsConnectionStatus: "Open",
-					wsConnectionStatusColor: "bg-green-500",
-				},
-				contentState: {
 					uploadedFiles: [],
 					urls: [],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -655,7 +623,6 @@ export const LongApplicationTitle: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => false,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -694,10 +661,6 @@ export const ProcessingFiles: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: null,
-					wsConnectionStatus: "Processing",
-					wsConnectionStatusColor: "bg-yellow-500",
-				},
-				contentState: {
 					uploadedFiles: [
 						{
 							file: { name: "research-proposal.pdf", size: 1_024_000 },
@@ -705,6 +668,7 @@ export const ProcessingFiles: Story = {
 						},
 					],
 					urls: ["https://example.com/research-data"],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -723,7 +687,6 @@ export const ProcessingFiles: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => false,
-				workspaceId: "workspace-123",
 			},
 		},
 	},
@@ -749,12 +712,9 @@ export const ConnectionError: Story = {
 					applicationId: "app-123",
 					applicationTitle: "Climate Change Research Grant",
 					templateId: null,
-					wsConnectionStatus: "Error",
-					wsConnectionStatusColor: "bg-red-500",
-				},
-				contentState: {
 					uploadedFiles: [],
 					urls: [],
+					workspaceId: "workspace-123",
 				},
 				handleApplicationInit: () => Promise.resolve(),
 				isLoading: false,
@@ -773,7 +733,6 @@ export const ConnectionError: Story = {
 					urlInput: "",
 				},
 				validateStepNext: () => false,
-				workspaceId: "workspace-123",
 			},
 		},
 	},

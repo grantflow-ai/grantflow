@@ -25,13 +25,6 @@ describe("ApplicationPreview", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,
-				applicationId: null,
-				applicationTitle: "",
-				connectionStatus: undefined,
-				connectionStatusColor: undefined,
-				templateId: null,
-			},
-			contentState: {
 				uploadedFiles: [],
 				urls: [],
 			},
@@ -53,7 +46,11 @@ describe("ApplicationPreview", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
+				application: {
+					id: "test-id",
+					title: "Test Application",
+					workspace_id: "test-workspace-id",
+				},
 			},
 		});
 
@@ -66,8 +63,8 @@ describe("ApplicationPreview", () => {
 	it("renders untitled when no title", () => {
 		const file = createMockFile("test.pdf", 1024, "application/pdf", "file-id");
 		Object.assign(mockWizardStore, {
-			contentState: {
-				...mockWizardStore.contentState,
+			applicationState: {
+				...mockWizardStore.applicationState,
 				uploadedFiles: [file],
 			},
 		});
@@ -80,8 +77,8 @@ describe("ApplicationPreview", () => {
 	it("renders uploaded files", () => {
 		const file = createMockFile("test.pdf", 1024, "application/pdf", "file-id");
 		Object.assign(mockWizardStore, {
-			contentState: {
-				...mockWizardStore.contentState,
+			applicationState: {
+				...mockWizardStore.applicationState,
 				uploadedFiles: [file],
 			},
 		});
@@ -94,8 +91,8 @@ describe("ApplicationPreview", () => {
 
 	it("renders URLs", () => {
 		Object.assign(mockWizardStore, {
-			contentState: {
-				...mockWizardStore.contentState,
+			applicationState: {
+				...mockWizardStore.applicationState,
 				urls: ["https://example.com"],
 			},
 		});

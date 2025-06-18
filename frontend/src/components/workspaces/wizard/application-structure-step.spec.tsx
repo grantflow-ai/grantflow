@@ -16,13 +16,6 @@ describe("ApplicationStructureStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,
-				applicationId: null,
-				applicationTitle: "",
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
-			contentState: {
 				uploadedFiles: [],
 				urls: [],
 			},
@@ -34,7 +27,6 @@ describe("ApplicationStructureStep", () => {
 				urlInput: "",
 			},
 			uiState: {},
-			workspaceId: "test-workspace-id",
 		});
 	});
 
@@ -82,7 +74,11 @@ describe("ApplicationStructureStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
+				application: {
+					id: "test-id",
+					title: "Test Application",
+					workspace_id: "test-workspace-id",
+				},
 			},
 		});
 
@@ -97,8 +93,7 @@ describe("ApplicationStructureStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				...mockWizardStore.applicationState,
-				application: { id: "test-id" }, // Has application but no title
-				applicationTitle: " ", // Truthy but effectively empty to trigger preview but show "Untitled Application"
+				application: { id: "test-id", title: "" }, // Has application but no title
 			},
 		});
 
@@ -109,26 +104,15 @@ describe("ApplicationStructureStep", () => {
 		expect(titleElement).toHaveTextContent("Untitled Application");
 	});
 
-	it("shows connection status when present", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
-				wsConnectionStatus: "Connected",
-				wsConnectionStatusColor: "bg-green-500",
-			},
-		});
-
-		render(<ApplicationStructureStep />);
-
-		expect(screen.getByText("Connected")).toBeInTheDocument();
-	});
-
 	it("renders application sections preview", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
+				application: {
+					id: "test-id",
+					title: "Test Application",
+					workspace_id: "test-workspace-id",
+				},
 			},
 		});
 
@@ -176,23 +160,6 @@ describe("ApplicationStructureStep", () => {
 		);
 	});
 
-	it("renders with different connection status colors", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				applicationTitle: "Test Application",
-				wsConnectionStatus: "Processing",
-				wsConnectionStatusColor: "bg-yellow-500",
-			},
-		});
-
-		render(<ApplicationStructureStep />);
-
-		expect(screen.getByText("Processing")).toBeInTheDocument();
-		const badge = screen.getByText("Processing").closest(".bg-yellow-500");
-		expect(badge).toBeInTheDocument();
-	});
-
 	it("handles long application titles gracefully", () => {
 		const longTitle =
 			"This is a very long application title that should be handled gracefully by the UI without breaking the layout or causing overflow issues";
@@ -200,7 +167,11 @@ describe("ApplicationStructureStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				...mockWizardStore.applicationState,
-				applicationTitle: longTitle,
+				application: {
+					id: "test-id",
+					title: longTitle,
+					workspace_id: "test-workspace-id",
+				},
 			},
 		});
 

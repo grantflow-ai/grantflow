@@ -18,6 +18,7 @@ import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 export default function CreateGrantApplicationWizardPage() {
@@ -25,23 +26,13 @@ export default function CreateGrantApplicationWizardPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const {
-		applicationState: { application },
-		handleApplicationInit,
-		setWsConnectionStatus,
-		setWsConnectionStatusColor,
-		ui: { currentStep },
-	} = useWizardStore();
+	const { currentStep } = useWizardStore();
+	const { application, handleApplicationInit } = useApplicationStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: application?.id,
 		workspaceId: params.workspaceId,
 	});
-
-	useEffect(() => {
-		setWsConnectionStatus(connectionStatus);
-		setWsConnectionStatusColor(connectionStatusColor);
-	}, [connectionStatus, connectionStatusColor, setWsConnectionStatus, setWsConnectionStatusColor]);
 
 	// Get or create an application on mount ~keep
 	useEffect(() => {
@@ -76,7 +67,11 @@ export default function CreateGrantApplicationWizardPage() {
 	}, [notifications]);
 
 	const steps = [
-		<ApplicationDetailsStep key={0} />,
+		<ApplicationDetailsStep
+			connectionStatus={connectionStatus}
+			connectionStatusColor={connectionStatusColor}
+			key={0}
+		/>,
 		<ApplicationStructureStep key={1} />,
 		<KnowledgeBaseStep key={2} />,
 		<ResearchPlanStep key={3} />,

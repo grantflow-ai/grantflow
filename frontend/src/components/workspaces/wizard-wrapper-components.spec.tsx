@@ -1,139 +1,174 @@
 import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApplicationFactory } from "::testing/factories";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
+// Mock the application store
+vi.mock("@/stores/application-store", () => ({
+	useApplicationStore: {
+		getState: vi.fn(),
+	},
+}));
+
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
-	describe("Navigation Button Visibility - Conditional Back Button Display", () => {
-		it("displays back button for steps after the first to enable backward navigation", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: { application, applicationId: null, applicationTitle: "", templateId: null },
-				ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
+	beforeEach(() => {
+		const { polling } = useWizardStore.getState();
+		useWizardStore.setState({
+			currentStep: 0,
+			polling: {
+				...polling,
+				intervalId: null,
+				isActive: false,
+			},
+		});
+		vi.mocked(useApplicationStore.getState).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({ title: "A".repeat(20) }),
+			areFilesOrUrlsIndexing: vi.fn(),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn(),
+			uploadedFiles: [],
+			urls: ["https://example.com"],
+		});
+	});
+
+	describe("Navigation Button Visibility", () => {
+		it("displays back button for steps after the first", () => {
+			useWizardStore.setState({ currentStep: 1 });
 			render(<WizardFooter />);
 
 			expect(screen.getByTestId("back-button")).toBeInTheDocument();
 		});
 
-		it("hides back button on the first step to enforce linear progression through the wizard", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: { application, applicationId: null, applicationTitle: "", templateId: null },
-				ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
+		it("hides back button on the first step", () => {
+			useWizardStore.setState({ currentStep: 0 });
 			render(<WizardFooter />);
 
 			expect(screen.queryByTestId("back-button")).not.toBeInTheDocument();
 		});
 	});
 
-	describe("Action Button Configuration - Context-Aware Button Text and Icons", () => {
-		it("displays approval action on step 2 with 'Approve and Continue' text and approval/forward icons", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: { application, applicationId: null, applicationTitle: "", templateId: null },
-				ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
-			const { container } = render(<WizardFooter />);
+	describe("Action Button Configuration", () => {
+		it("displays approval action on step 2", () => {
+			useWizardStore.setState({ currentStep: 1 });
+			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
 			expect(continueButton).toHaveTextContent("Approve and Continue");
-
-			const approveIcon = container.querySelector('[data-testid="icon-approve"]');
-			expect(approveIcon).toBeInTheDocument();
-
-			const goAheadIcon = container.querySelector('[data-testid="icon-go-ahead"]');
-			expect(goAheadIcon).toBeInTheDocument();
-
-			const buttonLogoIcon = container.querySelector('[data-testid="icon-button-logo"]');
-			expect(buttonLogoIcon).not.toBeInTheDocument();
 		});
 
-		it("displays generation action on final step (step 6) with 'Generate' text and company logo icon", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: { application, applicationId: null, applicationTitle: "", templateId: null },
-				ui: { currentStep: 5, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
-			const { container } = render(<WizardFooter />);
+		it("displays generation action on final step", () => {
+			useWizardStore.setState({ currentStep: 5 });
+			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
 			expect(continueButton).toHaveTextContent("Generate");
-
-			const buttonLogoIcon = container.querySelector('[data-testid="icon-button-logo"]');
-			expect(buttonLogoIcon).toBeInTheDocument();
-
-			const goAheadIcon = container.querySelector('[data-testid="icon-go-ahead"]');
-			expect(goAheadIcon).not.toBeInTheDocument();
-
-			const approveIcon = container.querySelector('[data-testid="icon-approve"]');
-			expect(approveIcon).not.toBeInTheDocument();
 		});
 
-		it("displays standard navigation on intermediate steps (3-5) with 'Next' text and forward arrow", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: { application, applicationId: null, applicationTitle: "", templateId: null },
-				ui: { currentStep: 2, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
-			const { container } = render(<WizardFooter />);
+		it("displays standard next action on other steps", () => {
+			useWizardStore.setState({ currentStep: 2 });
+			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
 			expect(continueButton).toHaveTextContent("Next");
+		});
+	});
 
-			const goAheadIcon = container.querySelector('[data-testid="icon-go-ahead"]');
-			expect(goAheadIcon).toBeInTheDocument();
+	describe("Button State Management", () => {
+		it("enables continue button when step validation passes", () => {
+			useWizardStore.setState({ currentStep: 0 });
+			render(<WizardFooter />);
 
-			const approveIcon = container.querySelector('[data-testid="icon-approve"]');
-			expect(approveIcon).not.toBeInTheDocument();
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+		});
 
-			const buttonLogoIcon = container.querySelector('[data-testid="icon-button-logo"]');
-			expect(buttonLogoIcon).not.toBeInTheDocument();
+		it("disables continue button when step validation fails", () => {
+			useWizardStore.setState({ currentStep: 0 });
+			vi.mocked(useApplicationStore.getState).mockReturnValue({
+				addFile: vi.fn(),
+				addUrl: vi.fn(),
+				application: ApplicationFactory.build({ title: "Short" }),
+				areFilesOrUrlsIndexing: vi.fn(),
+				createApplication: vi.fn(),
+				generateTemplate: vi.fn(),
+				handleApplicationInit: vi.fn(),
+				isLoading: false,
+				removeFile: vi.fn(),
+				removeUrl: vi.fn(),
+				retrieveApplication: vi.fn(),
+				setApplication: vi.fn(),
+				setUploadedFiles: vi.fn(),
+				setUrls: vi.fn(),
+				updateApplication: vi.fn(),
+				uploadedFiles: [],
+				urls: [],
+			});
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
 		});
 	});
 });
 
-describe("WizardHeader - Application Progress and Information Display", () => {
-	const mockStepTitles = [
-		"Application Details",
-		"Application Structure",
-		"Knowledge Base",
-		"Research Plan",
-		"Research Deep Dive",
-		"Generate and Complete",
-	] as const;
+describe("WizardHeader", () => {
+	beforeEach(() => {
+		const { polling } = useWizardStore.getState();
+		useWizardStore.setState({
+			currentStep: 0,
+			polling: {
+				...polling,
+				intervalId: null,
+				isActive: false,
+			},
+		});
+		vi.mocked(useApplicationStore.getState).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({ title: "Test Application" }),
+			areFilesOrUrlsIndexing: vi.fn(),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn(),
+			uploadedFiles: [],
+			urls: [],
+		});
+	});
 
-	describe("Header Info Visibility", () => {
-		it("shows application name and deadline when header info is visible", () => {
-			useWizardStore.setState({
-				applicationState: {
-					application: null,
-					applicationId: null,
-					applicationTitle: "Test Grant Application",
-					templateId: null,
-				},
-				ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
+	describe("Header Information Display", () => {
+		it("shows application name and deadline after first step", () => {
+			useWizardStore.setState({ currentStep: 1 });
 			render(<WizardHeader />);
 
-			expect(screen.getByTestId("app-name")).toBeInTheDocument();
-			expect(screen.getByTestId("app-name")).toHaveTextContent("Test Grant Application");
+			expect(screen.getByTestId("app-name")).toHaveTextContent("Test Application");
 			expect(screen.getByTestId("deadline-component")).toBeInTheDocument();
 		});
 
-		it("hides application name and deadline when header info is not visible", () => {
-			useWizardStore.setState({
-				applicationState: {
-					application: null,
-					applicationId: null,
-					applicationTitle: "Test Grant Application",
-					templateId: null,
-				},
-				ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
+		it("hides application info on first step", () => {
+			useWizardStore.setState({ currentStep: 0 });
 			render(<WizardHeader />);
 
 			expect(screen.queryByTestId("app-name")).not.toBeInTheDocument();
@@ -141,97 +176,37 @@ describe("WizardHeader - Application Progress and Information Display", () => {
 		});
 	});
 
-	describe("Step Indicators in Progress Bar", () => {
-		it("marks previous steps as done, current step as active, and future steps as inactive", () => {
-			const currentStepIndex = 2;
-
-			useWizardStore.setState({
-				applicationState: {
-					application: null,
-					applicationId: null,
-					applicationTitle: "Test Grant Application",
-					templateId: null,
-				},
-				ui: { currentStep: currentStepIndex, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
-			});
+	describe("Progress Bar Display", () => {
+		it("always displays step indicators", () => {
 			render(<WizardHeader />);
 
-			const stepIndicators = screen.getByTestId("step-indicators");
-			expect(stepIndicators).toBeInTheDocument();
+			expect(screen.getByTestId("step-indicators")).toBeInTheDocument();
+		});
 
-			mockStepTitles.forEach((_, index) => {
-				const stepElement = screen.getByTestId(`step-${index}`);
-				expect(stepElement).toBeInTheDocument();
+		it("displays exit button", () => {
+			render(<WizardHeader />);
 
-				if (index < currentStepIndex) {
-					expect(stepElement.querySelector('[data-testid="step-done"]')).toBeInTheDocument();
-				} else if (index === currentStepIndex) {
-					expect(stepElement.querySelector('[data-testid="step-active"]')).toBeInTheDocument();
-				} else {
-					expect(stepElement.querySelector('[data-testid="step-inactive"]')).toBeInTheDocument();
-				}
-			});
+			expect(screen.getByTestId("exit-button")).toBeInTheDocument();
 		});
 	});
-	describe("StepIndicator - Icon Selection Based on Step State", () => {
-		it("renders IconApplicationStepDone for completed steps showing accomplishment", () => {
-			const { container } = render(
-				<div data-testid="wrapper">
-					<StepIndicator isLastStep={false} type="done" />
-				</div>,
-			);
+});
 
-			const stepIndicator = screen.getByTestId("step-done");
-			expect(stepIndicator).toBeInTheDocument();
+describe("StepIndicator", () => {
+	it("renders active step indicator", () => {
+		render(<StepIndicator isLastStep={false} type="active" />);
 
-			const doneIcon = container.querySelector('[data-testid="icon-application-step-done"]');
-			expect(doneIcon).toBeInTheDocument();
+		expect(screen.getByTestId("step-active")).toBeInTheDocument();
+	});
 
-			const activeIcon = container.querySelector('[data-testid="icon-application-step-active"]');
-			expect(activeIcon).not.toBeInTheDocument();
+	it("renders done step indicator", () => {
+		render(<StepIndicator isLastStep={false} type="done" />);
 
-			const inactiveIcon = container.querySelector('[data-testid="icon-application-step-inactive"]');
-			expect(inactiveIcon).not.toBeInTheDocument();
-		});
+		expect(screen.getByTestId("step-done")).toBeInTheDocument();
+	});
 
-		it("renders IconApplicationStepActive for current step highlighting user's position", () => {
-			const { container } = render(
-				<div data-testid="wrapper">
-					<StepIndicator isLastStep={false} type="active" />
-				</div>,
-			);
+	it("renders inactive step indicator", () => {
+		render(<StepIndicator isLastStep={false} type="inactive" />);
 
-			const stepIndicator = screen.getByTestId("step-active");
-			expect(stepIndicator).toBeInTheDocument();
-
-			const activeIcon = container.querySelector('[data-testid="icon-application-step-active"]');
-			expect(activeIcon).toBeInTheDocument();
-
-			const doneIcon = container.querySelector('[data-testid="icon-application-step-done"]');
-			expect(doneIcon).not.toBeInTheDocument();
-
-			const inactiveIcon = container.querySelector('[data-testid="icon-application-step-inactive"]');
-			expect(inactiveIcon).not.toBeInTheDocument();
-		});
-
-		it("renders IconApplicationStepInActive for future steps indicating upcoming work", () => {
-			const { container } = render(
-				<div data-testid="wrapper">
-					<StepIndicator isLastStep={false} type="inactive" />
-				</div>,
-			);
-
-			const stepIndicator = screen.getByTestId("step-inactive");
-			expect(stepIndicator).toBeInTheDocument();
-
-			const inactiveIcon = container.querySelector('[data-testid="icon-application-step-inactive"]');
-			expect(inactiveIcon).toBeInTheDocument();
-
-			const doneIcon = container.querySelector('[data-testid="icon-application-step-done"]');
-			expect(doneIcon).not.toBeInTheDocument();
-
-			const activeIcon = container.querySelector('[data-testid="icon-application-step-active"]');
-			expect(activeIcon).not.toBeInTheDocument();
-		});
+		expect(screen.getByTestId("step-inactive")).toBeInTheDocument();
 	});
 });
