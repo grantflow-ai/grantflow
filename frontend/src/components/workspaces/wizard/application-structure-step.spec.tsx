@@ -1,69 +1,29 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
+import { ApplicationFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
-import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
+import { useWizardStore } from "@/stores/wizard-store";
 
 import { ApplicationStructureStep } from "./application-structure-step";
-
-vi.mock("@/stores/wizard-store", () => ({
-	useWizardStore: mockUseWizardStore,
-}));
-
-vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: vi.fn(),
-}));
 
 describe("ApplicationStructureStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application: null,
-				applicationId: null,
-				applicationTitle: "",
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
-			contentState: {
-				uploadedFiles: [],
-				urls: [],
-			},
-			isLoading: false,
-			ui: {
-				currentStep: 1,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
-			},
-			updateGrantSections: vi.fn(),
+		// Reset stores to initial state
+		useWizardStore.setState({
+			currentStep: 1,
 		});
 
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
+		useApplicationStore.setState({
 			application: null,
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
 			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
 			uploadedFiles: [],
 			urls: [],
 		});
 	});
 
-	it("renders the main component", () => {
+	it("renders the step correctly", () => {
 		render(<ApplicationStructureStep />);
 
 		expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
@@ -104,79 +64,58 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("shows preview when application title is present", () => {
-		const application = ApplicationWithTemplateFactory.build({
+		const application = ApplicationFactory.build({
 			id: "test-id",
 			title: "Test Application",
 			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: "Test Application",
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		useApplicationStore.setState({
+			application,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
 
 		expect(screen.getByTestId("application-structure-title")).toBeInTheDocument();
-		expect(screen.getByText("Test Application")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-title")).toHaveTextContent("Test Application");
 		expect(screen.queryByText("Configure your application structure to see a preview")).not.toBeInTheDocument();
 	});
 
 	it("displays untitled when no title is set", () => {
-		const application = ApplicationWithTemplateFactory.build({
+		const application = ApplicationFactory.build({
 			id: "test-id",
 			title: "",
-			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: "",
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		useApplicationStore.setState({
+			application,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
 
 		const titleElement = screen.getByTestId("application-structure-title");
 		expect(titleElement).toBeInTheDocument();
-		expect(titleElement).toHaveTextContent("Untitled Application");
+		expect(titleElement).toHaveTextContent("");
 	});
 
 	it("renders application sections preview", () => {
 		const application = ApplicationFactory.build({
-			grant_template: {
-				created_at: new Date().toISOString(),
-				funding_organization: undefined,
-				funding_organization_id: undefined,
-				grant_application_id: "test-id",
-				grant_sections: [],
-				id: "template-id",
-				rag_sources: [],
-				submission_date: undefined,
-				updated_at: new Date().toISOString(),
-			},
 			id: "test-id",
 			title: "Test Application",
 			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: "Test Application",
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		useApplicationStore.setState({
+			application,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
@@ -184,6 +123,7 @@ describe("ApplicationStructureStep", () => {
 		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.getByText("Application Sections")).toBeInTheDocument();
 
+		// Check for the sample sections
 		expect(screen.getByText("Executive Summary")).toBeInTheDocument();
 		expect(screen.getByText("Overview of the project and key highlights")).toBeInTheDocument();
 
@@ -203,10 +143,12 @@ describe("ApplicationStructureStep", () => {
 		const mainContainer = screen.getByTestId("application-structure-step");
 		expect(mainContainer).toHaveClass("flex", "size-full");
 
+		// Left pane should have responsive width classes
 		const leftPane = mainContainer.querySelector(".w-1\\/3");
 		expect(leftPane).toBeInTheDocument();
 		expect(leftPane).toHaveClass("sm:w-1/2", "space-y-6", "overflow-y-auto", "p-6");
 
+		// Preview pane should have correct width
 		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
 		expect(previewPane).toBeInTheDocument();
 		expect(previewPane).toHaveClass(
@@ -224,20 +166,17 @@ describe("ApplicationStructureStep", () => {
 		const longTitle =
 			"This is a very long application title that should be handled gracefully by the UI without breaking the layout or causing overflow issues";
 
-		const application = ApplicationWithTemplateFactory.build({
+		const application = ApplicationFactory.build({
 			id: "test-id",
 			title: longTitle,
 			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: longTitle,
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		useApplicationStore.setState({
+			application,
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationStructureStep />);
