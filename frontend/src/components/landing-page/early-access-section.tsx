@@ -57,9 +57,8 @@ const sectionVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.3,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 			staggerChildren: 0.4,
-			when: "beforeChildren",
 		},
 	},
 };
@@ -75,7 +74,7 @@ const badgeVariants = {
 		transition: {
 			delay: 0.2,
 			duration: 0.6,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 		},
 	},
 };
@@ -89,7 +88,7 @@ const textVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 		},
 		y: 0,
 	},
@@ -101,9 +100,8 @@ const contentContainerVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.2,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 			staggerChildren: 0.2,
-			when: "beforeChildren",
 		},
 	},
 };
@@ -114,7 +112,6 @@ const benefitsContainerVariants = {
 		opacity: 1,
 		transition: {
 			staggerChildren: 0.1,
-			when: "beforeChildren",
 		},
 	},
 };
@@ -128,9 +125,8 @@ const benefitCardVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.5,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 			staggerChildren: 0.3,
-			when: "beforeChildren",
 		},
 		y: 0,
 	},
@@ -146,7 +142,7 @@ const benefitIconVariants = {
 		scale: 1,
 		transition: {
 			duration: 0.3,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 		},
 	},
 };
@@ -160,9 +156,8 @@ const formContainerVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: "easeInOut",
+			ease: "easeInOut" as const,
 			staggerChildren: 0.3,
-			when: "beforeChildren",
 		},
 		x: 0,
 	},

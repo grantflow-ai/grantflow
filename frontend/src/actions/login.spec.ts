@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 
+import { JwtResponseFactory, LoginRequestFactory } from "::testing/factories";
 import { mockRedirect, mockSetCookie } from "::testing/global-mocks";
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
@@ -19,14 +20,14 @@ vi.mock("../utils/env", () => ({
 }));
 
 describe("login", () => {
-	const mockIdToken = "mock.id.token";
-	const mockJwtToken = "mock.jwt.token";
+	const loginRequest = LoginRequestFactory.build();
+	const jwtResponse = JwtResponseFactory.build();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 
 		mockPost.mockReturnValue({
-			json: vi.fn().mockResolvedValue({ jwt_token: mockJwtToken }),
+			json: vi.fn().mockResolvedValue(jwtResponse),
 		});
 
 		mockGetEnv.mockReturnValue({
@@ -36,17 +37,17 @@ describe("login", () => {
 	});
 
 	it("should call the backend API with the correct URL and request body", async () => {
-		await login(mockIdToken);
+		await login(loginRequest.id_token);
 		expect(mockPost).toHaveBeenCalledWith(
 			expect.any(URL),
 			expect.objectContaining({
-				json: { id_token: mockIdToken },
+				json: { id_token: loginRequest.id_token },
 			}),
 		);
 	});
 
 	it("should set the session cookie with correct attributes", async () => {
-		await login(mockIdToken);
+		await login(loginRequest.id_token);
 
 		expect(mockSetCookie).toHaveBeenCalledWith({
 			httpOnly: true,
@@ -54,7 +55,7 @@ describe("login", () => {
 			name: SESSION_COOKIE,
 			sameSite: "strict",
 			secure: true,
-			value: mockJwtToken,
+			value: jwtResponse.jwt_token,
 		});
 	});
 
@@ -64,7 +65,7 @@ describe("login", () => {
 			NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
 		});
 
-		await login(mockIdToken);
+		await login(loginRequest.id_token);
 
 		expect(mockSetCookie).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -74,7 +75,7 @@ describe("login", () => {
 	});
 
 	it("should redirect to workspaces page after successful login", async () => {
-		await login(mockIdToken);
+		await login(loginRequest.id_token);
 
 		expect(mockRedirect).toHaveBeenCalledWith(PagePath.WORKSPACES);
 	});

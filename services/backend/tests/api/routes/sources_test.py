@@ -343,10 +343,9 @@ async def test_create_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        workspace_id=str(workspace.id),
-        application_id=str(grant_application.id),
-        organization_id=None,
-        template_id=None,
+        workspace_id=workspace.id,
+        parent_id=grant_application.id,
+        source_id=ANY,
         blob_name=test_blob_name,
     )
 
@@ -376,9 +375,8 @@ async def test_create_organization_upload_url(
 
     mock_create_url.assert_called_once_with(
         workspace_id=None,
-        application_id=None,
-        organization_id=str(funding_organization.id),
-        template_id=None,
+        parent_id=funding_organization.id,
+        source_id=ANY,
         blob_name=test_blob_name,
     )
 
@@ -408,10 +406,9 @@ async def test_create_template_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        workspace_id=str(workspace.id),
-        application_id=None,
-        organization_id=None,
-        template_id=str(grant_template.id),
+        workspace_id=workspace.id,
+        parent_id=grant_template.id,
+        source_id=ANY,
         blob_name=test_blob_name,
     )
 
@@ -441,7 +438,9 @@ async def test_create_upload_url_unauthorized(
 
 @pytest.fixture
 def mock_publish_url_crawling_task() -> Generator[AsyncMock]:
-    with patch("services.backend.src.api.routes.sources.publish_url_crawling_task") as mock_func:
+    with patch(
+        "services.backend.src.api.routes.sources.publish_url_crawling_task"
+    ) as mock_func:
         mock_func.return_value = "test-message-id"
         yield mock_func
 
@@ -463,14 +462,14 @@ async def test_handle_crawl_url_grant_application(
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     result = response.json()
-    assert result["message"] == "URL crawling task has been queued successfully."
+    assert "source_id" in result
 
     mock_publish_url_crawling_task.assert_called_once_with(
         logger=ANY,
         url="https://example.org/docs",
-        parent_type="grant_application",
-        parent_id=grant_application.id,
+        source_id=ANY,
         workspace_id=workspace.id,
+        parent_id=grant_application.id,
     )
 
 
@@ -490,14 +489,14 @@ async def test_handle_crawl_url_funding_organization(
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     result = response.json()
-    assert result["message"] == "URL crawling task has been queued successfully."
+    assert "source_id" in result
 
     mock_publish_url_crawling_task.assert_called_once_with(
         logger=ANY,
         url="https://example.org/docs",
-        parent_type="funding_organization",
-        parent_id=funding_organization.id,
+        source_id=ANY,
         workspace_id=None,
+        parent_id=funding_organization.id,
     )
 
 
@@ -518,14 +517,14 @@ async def test_handle_crawl_url_grant_template(
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     result = response.json()
-    assert result["message"] == "URL crawling task has been queued successfully."
+    assert "source_id" in result
 
     mock_publish_url_crawling_task.assert_called_once_with(
         logger=ANY,
         url="https://example.org/docs",
-        parent_type="grant_template",
-        parent_id=grant_template.id,
+        source_id=ANY,
         workspace_id=workspace.id,
+        parent_id=grant_template.id,
     )
 
 
@@ -551,7 +550,9 @@ async def test_handle_crawl_url_pubsub_error(
     grant_application: GrantApplication,
     workspace_member_user: WorkspaceUser,
 ) -> None:
-    with patch("services.backend.src.api.routes.sources.publish_url_crawling_task") as mock_func:
+    with patch(
+        "services.backend.src.api.routes.sources.publish_url_crawling_task"
+    ) as mock_func:
         mock_func.side_effect = Exception("PubSub error")
 
         request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}

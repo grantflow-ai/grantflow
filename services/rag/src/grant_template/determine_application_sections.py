@@ -196,7 +196,13 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     1. Identify the sections the grant application should have from the provided sources:
         - When organization guidelines are available, they take precedence over CFP requirements.
         - Base yourself on the available sources.
-        - If reasonable assumptions cannot be made with high confidence (75%) based on sources, stop and return an error.
+        - If the sources don't explicitly list required sections, use common grant application structure as a reasonable default:
+            • Project Summary/Abstract
+            • Project Narrative (including Background, Objectives, Methods/Approach, Expected Outcomes)
+            • References
+            • Budget Justification
+            • Biographical Sketches
+        - Only return an error if you cannot determine ANY reasonable structure at all.
 
     2. Model the structure as a tree:
         - Maximum nesting depth is 5 levels
@@ -218,7 +224,7 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
         - Pay special attention to distinguishing between "Specific Aims" (which lists objectives) and the actual workplan (which details how those aims will be achieved).
         - The workplan must contain specific experimental procedures, not just goals or outcomes.
         - The workplan section MUST ALWAYS be marked as a long-form section.
-        - If no section can be reasonably assigned as the workplan details, return an error.
+        - If no clear workplan section is identified in the sources, use "Methods/Approach" or "Project Narrative" as the workplan section.
 
     4. Identify and flag all sections that belong to the research long form sections:
       - Research long form sections are sections that the applicants write (i.e. not external materials, letters of support, etc.).
@@ -240,15 +246,10 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
         - The order should reflect the order of the section in the application.
 
     8. Review and validate results:
-      - If your confidence is below 75% about:
-        - Required sections being identified correctly.
-        - Section hierarchy accuracy.
-        - Section that are titles only.
-        - Workplan section identification.
-        - Long form sections identification.
-        - Top-level title identification.
-        - Adherence to organization guidelines.
-      Then return detailed error message explaining low confidence causes and empty sections array
+      - If your confidence is below 50% about the overall structure or if you cannot identify ANY reasonable sections:
+        - Return a detailed error message explaining the issue
+        - Include empty sections array
+      - Otherwise, proceed with your best interpretation of the requirements, using standard grant structures when specific guidance is lacking
 
     ## Output
 
@@ -324,7 +325,7 @@ def validate_section_extraction(response: ExtractedSections) -> None:
     if (
         error := response.get("error")
     ) and error != "null":  # occasionally, the model suffers a stroke and returns "null" as a string ~keep
-        raise InsufficientContextError(error)
+        raise InsufficientContextError(error, context={"response": response})
 
     if not response["sections"]:
         raise ValidationError("No sections extracted. Please provide an error message.", context=response)

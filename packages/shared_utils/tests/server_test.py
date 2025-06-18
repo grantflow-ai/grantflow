@@ -93,7 +93,6 @@ async def test_create_session_maker_server_startup_success() -> None:
     startup_hook = create_session_maker_server_startup(logger)
     app_instance = Mock(spec=Litestar)
 
-    # Create a proper async context manager
     session = AsyncMock()
     async_cm = AsyncMock()
     async_cm.__aenter__.return_value = session
@@ -101,7 +100,9 @@ async def test_create_session_maker_server_startup_success() -> None:
     session_maker = Mock()
     session_maker.return_value = async_cm
 
-    with patch("packages.shared_utils.src.server.get_session_maker", return_value=session_maker):
+    with patch(
+        "packages.shared_utils.src.server.get_session_maker", return_value=session_maker
+    ):
         await startup_hook(app_instance)  # type: ignore[call-arg]
 
     logger.info.assert_called_once_with("DB connection established.")
@@ -114,7 +115,6 @@ async def test_create_session_maker_server_startup_failure() -> None:
     startup_hook = create_session_maker_server_startup(logger)
     app_instance = Mock(spec=Litestar)
 
-    # Create a proper async context manager
     session = AsyncMock()
     session.execute.side_effect = SQLAlchemyError("Connection failed")
     async_cm = AsyncMock()
@@ -124,7 +124,10 @@ async def test_create_session_maker_server_startup_failure() -> None:
     session_maker.return_value = async_cm
 
     with (
-        patch("packages.shared_utils.src.server.get_session_maker", return_value=session_maker),
+        patch(
+            "packages.shared_utils.src.server.get_session_maker",
+            return_value=session_maker,
+        ),
         patch("packages.shared_utils.src.server.sys.exit") as mock_exit,
     ):
         await startup_hook(app_instance)  # type: ignore[call-arg]
@@ -141,11 +144,9 @@ async def test_create_litestar_app_basic() -> None:
 
     assert isinstance(app, Litestar)
 
-    # Check that health check endpoint was added
     routes = {route.path for route in app.routes}
     assert "/health" in routes
 
-    # Check that session_maker was added
     assert "session_maker" in app.dependencies
     assert app.on_startup
 
@@ -162,7 +163,6 @@ async def test_create_litestar_app_with_custom_routes() -> None:
     with patch("packages.shared_utils.src.server.get_env", return_value=""):
         app = create_litestar_app(logger, route_handlers=[custom_route])
 
-    # Check that routes were added
     routes = {route.path for route in app.routes}
     assert "/custom" in routes
     assert "/health" in routes
@@ -174,6 +174,8 @@ async def test_create_litestar_app_without_session_maker() -> None:
     with patch("packages.shared_utils.src.server.get_env", return_value=""):
         app = create_litestar_app(logger, add_session_maker=False)
 
-    # Check that session_maker was not added
-    assert not hasattr(app.dependencies, "session_maker") or app.dependencies["session_maker"] is None
+    assert (
+        not hasattr(app.dependencies, "session_maker")
+        or app.dependencies["session_maker"] is None
+    )
     assert not app.on_startup or not len(app.on_startup)

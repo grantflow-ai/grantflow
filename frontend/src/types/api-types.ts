@@ -22,7 +22,7 @@ export namespace API {
 	export namespace CrawlFundingOrganizationUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
-				message: string;
+				source_id: string;
 			};
 		}
 
@@ -46,7 +46,7 @@ export namespace API {
 	export namespace CrawlGrantApplicationUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
-				message: string;
+				source_id: string;
 			};
 		}
 
@@ -71,7 +71,7 @@ export namespace API {
 	export namespace CrawlGrantTemplateUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
-				message: string;
+				source_id: string;
 			};
 		}
 
@@ -146,7 +146,7 @@ export namespace API {
 					rag_sources: {
 						filename?: string;
 						sourceId: string;
-						status: "FAILED" | "FINISHED" | "INDEXING";
+						status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						url?: string;
 					}[];
 					submission_date?: string;
@@ -156,7 +156,7 @@ export namespace API {
 				rag_sources: {
 					filename?: string;
 					sourceId: string;
-					status: "FAILED" | "FINISHED" | "INDEXING";
+					status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 					url?: string;
 				}[];
 				research_objectives?: {
@@ -197,6 +197,7 @@ export namespace API {
 	export namespace CreateFundingOrganizationRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
+				source_id: string;
 				url: string;
 			};
 		}
@@ -221,6 +222,7 @@ export namespace API {
 	export namespace CreateGrantApplicationRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
+				source_id: string;
 				url: string;
 			};
 		}
@@ -266,6 +268,7 @@ export namespace API {
 	export namespace CreateGrantTemplateRagSourceUploadUrl {
 		export namespace Http201 {
 			export type ResponseBody = {
+				source_id: string;
 				url: string;
 			};
 		}
@@ -648,7 +651,7 @@ export namespace API {
 					rag_sources: {
 						filename?: string;
 						sourceId: string;
-						status: "FAILED" | "FINISHED" | "INDEXING";
+						status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						url?: string;
 					}[];
 					submission_date?: string;
@@ -658,7 +661,7 @@ export namespace API {
 				rag_sources: {
 					filename?: string;
 					sourceId: string;
-					status: "FAILED" | "FINISHED" | "INDEXING";
+					status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 					url?: string;
 				}[];
 				research_objectives?: {
@@ -700,7 +703,7 @@ export namespace API {
 						created_at: string;
 						description: null | string;
 						id: string;
-						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						title: null | string;
 						url: string;
 				  }
@@ -708,7 +711,7 @@ export namespace API {
 						created_at: string;
 						filename: string;
 						id: string;
-						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						mime_type: string;
 						size: number;
 				  }
@@ -735,7 +738,7 @@ export namespace API {
 						created_at: string;
 						description: null | string;
 						id: string;
-						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						title: null | string;
 						url: string;
 				  }
@@ -743,7 +746,7 @@ export namespace API {
 						created_at: string;
 						filename: string;
 						id: string;
-						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						mime_type: string;
 						size: number;
 				  }
@@ -771,7 +774,7 @@ export namespace API {
 						created_at: string;
 						description: null | string;
 						id: string;
-						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						title: null | string;
 						url: string;
 				  }
@@ -779,7 +782,7 @@ export namespace API {
 						created_at: string;
 						filename: string;
 						id: string;
-						indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+						indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						mime_type: string;
 						size: number;
 				  }
@@ -853,7 +856,7 @@ export namespace API {
 					rag_sources: {
 						filename?: string;
 						sourceId: string;
-						status: "FAILED" | "FINISHED" | "INDEXING";
+						status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 						url?: string;
 					}[];
 					submission_date?: string;
@@ -863,7 +866,7 @@ export namespace API {
 				rag_sources: {
 					filename?: string;
 					sourceId: string;
-					status: "FAILED" | "FINISHED" | "INDEXING";
+					status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
 					url?: string;
 				}[];
 				research_objectives?: {

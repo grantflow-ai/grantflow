@@ -56,7 +56,6 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 				return;
 			}
 
-			// In development, bypass signed URL creation and upload directly to GCS emulator
 			if (process.env.NODE_ENV === "development") {
 				const objectPath = `workspace/${application.workspace_id}/grant_template/${application.grant_template.id}/${file.name}`;
 				const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
@@ -77,15 +76,12 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 				addFile(fileWithId);
 				toast.success(`File ${file.name} uploaded successfully`);
 
-				// Trigger indexing directly
 				void triggerDevIndexing(objectPath);
 
-				// Notify parent of upload completion
 				onUploadComplete?.();
 				return;
 			}
 
-			// Production path: use signed URLs
 			const { url } = await createTemplateSourceUploadUrl(
 				application.workspace_id,
 				application.grant_template.id,
@@ -115,7 +111,6 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 				void triggerDevIndexing(objectPath);
 			}
 
-			// Notify parent of upload completion
 			onUploadComplete?.();
 		},
 		[application, addFile, onUploadComplete],

@@ -5,7 +5,8 @@ from uuid import UUID
 import pytest
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from packages.db.src.tables import GrantApplication, GrantTemplate
-from packages.shared_utils.src.exceptions import BackendError, ValidationError
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationFactory,
@@ -526,9 +527,6 @@ async def test_pipeline_handler_database_error(
     }
 
     application_text = "# Test Application Text"
-
-    from packages.shared_utils.src.exceptions import DatabaseError
-    from sqlalchemy.exc import SQLAlchemyError
 
     with (
         patch(

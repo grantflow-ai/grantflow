@@ -37,6 +37,17 @@ describe("RootLayout", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+
+		vi.spyOn(console, "error").mockImplementation((message) => {
+			if (typeof message === "string" && message.includes("cannot be a child of")) {
+				return;
+			}
+			throw new Error(`Unexpected console.error: ${String(message)}`);
+		});
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	it("renders the layout with all expected components", async () => {

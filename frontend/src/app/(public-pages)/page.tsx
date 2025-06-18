@@ -18,7 +18,6 @@ const CONTENT_CTA_SECTION = {
 	heading: "Ready to Transform Your Grant Writing Process?",
 };
 
-// page components are Server Components by default and need to be async to properly handle server-side operations
 // eslint-disable-next-line @typescript-eslint/require-await
 export default async function LandingPage() {
 	return (
