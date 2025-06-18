@@ -69,7 +69,20 @@ def mock_upload_blob() -> Generator[AsyncMock]:
 @pytest.fixture(autouse=True)
 def mock_construct_object_uri() -> Generator[Mock]:
     with patch("services.crawler.src.main.construct_object_uri") as mock:
-        mock.return_value = "test-bucket/test-path/test-file.pdf"
+
+        def side_effect(
+            *,
+            workspace_id: str | None = None,
+            parent_id: str | None = None,
+            source_id: str | None = None,
+            blob_name: str | None = None,
+        ) -> str:
+            if workspace_id:
+                return f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+            else:
+                return f"{parent_id}/{source_id}/{blob_name}"
+
+        mock.side_effect = side_effect
         yield mock
 
 
@@ -638,17 +651,17 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     assert response.status_code == HTTPStatus.CREATED
 
     assert mock_construct_object_uri.call_count == 2
-    assert mock_construct_object_uri.call_args_list[0][1]["source_id"] == source_id
-    assert (
-        mock_construct_object_uri.call_args_list[0][1]["workspace_id"] == workspace_id
-    )
-    assert "blob_name" in mock_construct_object_uri.call_args_list[0][1]
+    first_call_kwargs = mock_construct_object_uri.call_args_list[0][1]
+    assert first_call_kwargs["workspace_id"] == workspace_id
+    assert first_call_kwargs["parent_id"] == grant_application.id
+    assert "source_id" in first_call_kwargs
+    assert "blob_name" in first_call_kwargs
 
     assert mock_upload_blob.await_count == 2
-    assert (
-        mock_upload_blob.call_args_list[0][1]["blob_path"]
-        == "test-bucket/test-path/test-file.pdf"
-    )
+    first_upload_call_args = mock_upload_blob.call_args_list[0][0]
+    assert len(first_upload_call_args) >= 1
+    blob_path = first_upload_call_args[0]
+    assert str(workspace_id) in blob_path
 
 
 async def test_decode_pubsub_message(

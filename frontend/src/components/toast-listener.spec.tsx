@@ -4,6 +4,8 @@ import { toast } from "sonner";
 
 import { ToastListener } from "./toast-listener";
 
+import type { ReadonlyURLSearchParams } from "next/navigation";
+
 vi.mock("next/navigation", () => ({
 	usePathname: vi.fn().mockReturnValue("/"),
 	useRouter: vi.fn().mockReturnValue({
@@ -24,7 +26,14 @@ vi.mock("sonner", () => ({
 }));
 
 describe("ToastListener", () => {
-	const mockRouter = { replace: vi.fn() };
+	const mockRouter = {
+		back: vi.fn(),
+		forward: vi.fn(),
+		prefetch: vi.fn(),
+		push: vi.fn(),
+		refresh: vi.fn(),
+		replace: vi.fn(),
+	};
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -34,9 +43,21 @@ describe("ToastListener", () => {
 
 	it("does nothing when no toast params are present", () => {
 		vi.mocked(useSearchParams).mockReturnValue({
+			append: vi.fn(),
+			delete: vi.fn(),
+			entries: vi.fn(),
+			forEach: vi.fn(),
 			get: vi.fn().mockReturnValue(null),
+			getAll: vi.fn(),
+			has: vi.fn(),
+			keys: vi.fn(),
+			set: vi.fn(),
+			size: 0,
+			sort: vi.fn(),
+			[Symbol.iterator]: vi.fn(),
 			toString: vi.fn().mockReturnValue(""),
-		});
+			values: vi.fn(),
+		} as ReadonlyURLSearchParams);
 
 		render(<ToastListener />);
 
@@ -54,9 +75,21 @@ describe("ToastListener", () => {
 		]);
 
 		vi.mocked(useSearchParams).mockReturnValue({
+			append: vi.fn(),
+			delete: vi.fn(),
+			entries: vi.fn(),
+			forEach: vi.fn(),
 			get: (key: string) => mockParams.get(key) ?? null,
+			getAll: vi.fn(),
+			has: vi.fn(),
+			keys: vi.fn(),
+			set: vi.fn(),
+			size: 3,
+			sort: vi.fn(),
+			[Symbol.iterator]: vi.fn(),
 			toString: () => "toastType=success&toastContent=Operation+completed+successfully&otherParam=value",
-		});
+			values: vi.fn(),
+		} as ReadonlyURLSearchParams);
 
 		render(<ToastListener />);
 
@@ -71,9 +104,21 @@ describe("ToastListener", () => {
 		]);
 
 		vi.mocked(useSearchParams).mockReturnValue({
+			append: vi.fn(),
+			delete: vi.fn(),
+			entries: vi.fn(),
+			forEach: vi.fn(),
 			get: (key: string) => mockParams.get(key) ?? null,
+			getAll: vi.fn(),
+			has: vi.fn(),
+			keys: vi.fn(),
+			set: vi.fn(),
+			size: 2,
+			sort: vi.fn(),
+			[Symbol.iterator]: vi.fn(),
 			toString: () => "toastType=error&toastContent=Something+went+wrong",
-		});
+			values: vi.fn(),
+		} as ReadonlyURLSearchParams);
 
 		render(<ToastListener />);
 
@@ -88,9 +133,21 @@ describe("ToastListener", () => {
 		]);
 
 		vi.mocked(useSearchParams).mockReturnValue({
+			append: vi.fn(),
+			delete: vi.fn(),
+			entries: vi.fn(),
+			forEach: vi.fn(),
 			get: (key: string) => mockParams.get(key) ?? null,
+			getAll: vi.fn(),
+			has: vi.fn(),
+			keys: vi.fn(),
+			set: vi.fn(),
+			size: 2,
+			sort: vi.fn(),
+			[Symbol.iterator]: vi.fn(),
 			toString: () => "toastType=info&toastContent=Please+note+this+information",
-		});
+			values: vi.fn(),
+		} as ReadonlyURLSearchParams);
 
 		render(<ToastListener />);
 
@@ -105,9 +162,21 @@ describe("ToastListener", () => {
 		]);
 
 		vi.mocked(useSearchParams).mockReturnValue({
+			append: vi.fn(),
+			delete: vi.fn(),
+			entries: vi.fn(),
+			forEach: vi.fn(),
 			get: (key: string) => mockParams.get(key) ?? null,
+			getAll: vi.fn(),
+			has: vi.fn(),
+			keys: vi.fn(),
+			set: vi.fn(),
+			size: 2,
+			sort: vi.fn(),
+			[Symbol.iterator]: vi.fn(),
 			toString: () => "toastType=success&toastContent=",
-		});
+			values: vi.fn(),
+		} as ReadonlyURLSearchParams);
 
 		render(<ToastListener />);
 
