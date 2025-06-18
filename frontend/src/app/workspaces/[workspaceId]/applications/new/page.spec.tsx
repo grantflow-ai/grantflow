@@ -11,6 +11,7 @@ import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import CreateGrantApplicationWizardPage from "./page";
@@ -52,6 +53,10 @@ vi.mock("@/hooks/use-application-notifications", () => ({
 
 vi.mock("@/stores/wizard-store", () => ({
 	useWizardStore: vi.fn(),
+}));
+
+vi.mock("@/stores/application-store", () => ({
+	useApplicationStore: vi.fn(),
 }));
 
 const mockPush = vi.fn();
@@ -117,6 +122,35 @@ const createMockWizardStore = (overrides: any = {}) => {
 	return { ...defaultStore, ...overrides };
 };
 
+const createMockApplicationStore = (overrides: any = {}) => {
+	const defaultStore = {
+		addFile: vi.fn(),
+		addUrl: vi.fn(),
+		application: {
+			grant_template: { id: "template-123" },
+			id: "app-123",
+			title: "Untitled Application",
+			workspace_id: "test-workspace-id",
+		},
+		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
+		createApplication: vi.fn(),
+		generateTemplate: vi.fn(),
+		handleApplicationInit: vi.fn(),
+		isLoading: false,
+		removeFile: vi.fn(),
+		removeUrl: vi.fn(),
+		retrieveApplication: vi.fn(),
+		setApplication: vi.fn(),
+		setUploadedFiles: vi.fn(),
+		setUrls: vi.fn(),
+		updateApplication: vi.fn(),
+		uploadedFiles: [],
+		urls: [],
+	};
+
+	return { ...defaultStore, ...overrides };
+};
+
 describe("CreateGrantApplicationWizardPage", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -124,6 +158,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(useParams).mockReturnValue(mockParams);
 		vi.mocked(useSearchParams).mockReturnValue(mockSearchParams as any);
 		vi.mocked(useWizardStore).mockReturnValue(createMockWizardStore());
+		vi.mocked(useApplicationStore).mockReturnValue(createMockApplicationStore());
 	});
 
 	it("shows loading state initially", () => {
@@ -139,6 +174,13 @@ describe("CreateGrantApplicationWizardPage", () => {
 			isLoading: true,
 		});
 		vi.mocked(useWizardStore).mockReturnValue(mockStore);
+
+		// Mock application store to show loading state
+		const mockApplicationStore = createMockApplicationStore({
+			application: null,
+			isLoading: true,
+		});
+		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -157,24 +199,17 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Mock the store with actual implementation that calls createApplication
-		const mockHandleApplicationInit = vi.fn().mockImplementation(async (workspaceId: string) => {
-			await createApplication(workspaceId, { title: "Untitled Application" });
-		});
+		// Mock the application store with handleApplicationInit
+		const mockHandleApplicationInit = vi.fn().mockResolvedValue(undefined);
 
-		const mockStore = createMockWizardStore({
+		const mockApplicationStore = createMockApplicationStore({
+			application: null,
 			handleApplicationInit: mockHandleApplicationInit,
 			isLoading: true,
 		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
+		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
-
-		await waitFor(() => {
-			expect(createApplication).toHaveBeenCalledWith(mockParams.workspaceId, {
-				title: "Untitled Application",
-			});
-		});
 
 		await waitFor(() => {
 			expect(mockHandleApplicationInit).toHaveBeenCalledWith(mockParams.workspaceId, undefined);
@@ -184,16 +219,17 @@ describe("CreateGrantApplicationWizardPage", () => {
 	it("shows error and redirects when application creation fails", async () => {
 		vi.mocked(createApplication).mockRejectedValue(new Error("Failed"));
 
-		// Mock the store with implementation that will fail
+		// Mock the application store with implementation that will fail
 		const mockHandleApplicationInit = vi.fn().mockImplementation(async (_workspaceId: string) => {
 			throw new Error("Failed to initialize application");
 		});
 
-		const mockStore = createMockWizardStore({
+		const mockApplicationStore = createMockApplicationStore({
+			application: null,
 			handleApplicationInit: mockHandleApplicationInit,
 			isLoading: true,
 		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
+		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 

@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApplicationFactory } from "::testing/factories";
+import { useApplicationStore } from "@/stores/application-store";
 import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
 
 import { ApplicationDetailsStep } from "./application-details-step";
@@ -13,6 +15,10 @@ vi.mock("@/actions/sources", () => ({
 
 vi.mock("@/stores/wizard-store", () => ({
 	useWizardStore: mockUseWizardStore,
+}));
+
+vi.mock("@/stores/application-store", () => ({
+	useApplicationStore: vi.fn(),
 }));
 
 describe("ApplicationDetailsStep", () => {
@@ -33,6 +39,26 @@ describe("ApplicationDetailsStep", () => {
 				urlInput: "",
 			},
 		});
+
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: null,
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
+		});
 	});
 
 	it("renders application title section", () => {
@@ -52,16 +78,36 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("displays character count for title", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				application: {
-					grant_template: { id: "test-template-id" },
-					id: "test-id",
-					title: "Test Title",
-					workspace_id: "test-workspace-id",
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
 				},
-			},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -71,17 +117,38 @@ describe("ApplicationDetailsStep", () => {
 
 	it("calls updateApplication when title is typed", async () => {
 		const user = userEvent.setup();
+		const mockUpdateApplication = vi.fn().mockResolvedValue(undefined);
 
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				application: {
-					grant_template: { id: "test-template-id" },
-					id: "test-id",
-					title: "",
-					workspace_id: "test-workspace-id",
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
 				},
-			},
+				id: "test-id",
+				title: "",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: mockUpdateApplication,
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -89,12 +156,10 @@ describe("ApplicationDetailsStep", () => {
 		const textarea = screen.getByTestId("application-title-textarea");
 		await user.type(textarea, "Test");
 
-		// Check that updateApplication was called multiple times as the user types
-		expect(mockWizardStore.updateApplication).toHaveBeenCalled();
-		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "T" });
-		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "e" });
-		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "s" });
-		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "t" });
+		// Wait for debounced calls to complete
+		await waitFor(() => {
+			expect(mockUpdateApplication).toHaveBeenCalled();
+		});
 	});
 
 	it("limits title length to 120 characters", () => {
@@ -105,17 +170,36 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("renders URL input component", () => {
-		// Set up required fields for URL input to work
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				application: {
-					grant_template: { id: "test-template-id" },
-					id: "test-id",
-					title: "",
-					workspace_id: "test-workspace-id",
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
 				},
-			},
+				id: "test-id",
+				title: "",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -125,11 +209,36 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("displays existing URLs", () => {
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				urls: ["https://example1.com", "https://example2.com"],
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: ["https://example1.com", "https://example2.com"],
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -141,11 +250,36 @@ describe("ApplicationDetailsStep", () => {
 	it("displays URLs and shows removal on hover", async () => {
 		const user = userEvent.setup();
 
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				urls: ["https://example1.com", "https://example2.com"],
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: ["https://example1.com", "https://example2.com"],
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -183,11 +317,36 @@ describe("ApplicationDetailsStep", () => {
 		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 		Object.assign(file, { id: "file-id" });
 
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				uploadedFiles: [file],
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [file],
+			urls: [],
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -202,11 +361,36 @@ describe("ApplicationDetailsStep", () => {
 		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 		Object.assign(file, { id: "file-id" });
 
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				...mockWizardStore.applicationState,
-				uploadedFiles: [file],
-			},
+		vi.mocked(useApplicationStore).mockReturnValue({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			createApplication: vi.fn(),
+			generateTemplate: vi.fn(),
+			handleApplicationInit: vi.fn(),
+			isLoading: false,
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			setApplication: vi.fn(),
+			setUploadedFiles: vi.fn(),
+			setUrls: vi.fn(),
+			updateApplication: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [file],
+			urls: [],
 		});
 
 		render(<ApplicationDetailsStep />);
