@@ -15,13 +15,13 @@ const config: KnipConfig = {
 		"**/factories.{ts,py}",
 		"**/global-mocks.ts",
 		"vitest.config.mts",
-		"eslint.config.mjs",
 		"next.config.ts",
 		"postcss.config.mjs",
 		"components.json",
 		"tailwind.config.ts",
 	],
-	ignoreBinaries: ["only-allow", "eslint", "cross-env"],
+	ignoreBinaries: ["only-allow"],
+	ignoreDependencies: ["@next/eslint-plugin-next", "eslint-plugin-react-hooks"],
 	workspaces: {
 		"frontend": {
 			entry: [

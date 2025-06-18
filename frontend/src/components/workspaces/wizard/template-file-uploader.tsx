@@ -7,11 +7,10 @@ import { createTemplateSourceUploadUrl } from "@/actions/sources";
 import { AppButton } from "@/components/app-button";
 import { IconUpload } from "@/components/workspaces/icons";
 import { useApplicationStore } from "@/stores/application-store";
+import { FileWithId } from "@/types/files";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 import { formatBytes } from "@/utils/format";
 import { logError } from "@/utils/logging";
-
-type FileWithId = { id: string } & File;
 
 const FILE_ACCEPTS = {
 	"application/csv": [".csv"],
