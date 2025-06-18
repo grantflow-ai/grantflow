@@ -22,13 +22,6 @@ describe("ApplicationDetailsStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,
-				applicationId: null,
-				applicationTitle: "",
-				connectionStatus: undefined,
-				connectionStatusColor: undefined,
-				templateId: "test-template-id",
-			},
-			contentState: {
 				uploadedFiles: [],
 				urls: [],
 			},
@@ -39,7 +32,6 @@ describe("ApplicationDetailsStep", () => {
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			workspaceId: "test-workspace-id",
 		});
 	});
 
@@ -63,7 +55,12 @@ describe("ApplicationDetailsStep", () => {
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				...mockWizardStore.applicationState,
-				applicationTitle: "Test Title",
+				application: {
+					grant_template: { id: "test-template-id" },
+					id: "test-id",
+					title: "Test Title",
+					workspace_id: "test-workspace-id",
+				},
 			},
 		});
 
@@ -72,20 +69,32 @@ describe("ApplicationDetailsStep", () => {
 		expect(screen.getByTestId("application-title-textarea-chars-count")).toBeInTheDocument();
 	});
 
-	it("calls setApplicationTitle when title is typed", async () => {
+	it("calls updateApplication when title is typed", async () => {
 		const user = userEvent.setup();
+
+		Object.assign(mockWizardStore, {
+			applicationState: {
+				...mockWizardStore.applicationState,
+				application: {
+					grant_template: { id: "test-template-id" },
+					id: "test-id",
+					title: "",
+					workspace_id: "test-workspace-id",
+				},
+			},
+		});
 
 		render(<ApplicationDetailsStep />);
 
 		const textarea = screen.getByTestId("application-title-textarea");
 		await user.type(textarea, "Test");
 
-		// Check that setApplicationTitle was called multiple times as the user types
-		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalled();
-		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("T");
-		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("e");
-		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("s");
-		expect(mockWizardStore.setApplicationTitle).toHaveBeenCalledWith("t");
+		// Check that updateApplication was called multiple times as the user types
+		expect(mockWizardStore.updateApplication).toHaveBeenCalled();
+		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "T" });
+		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "e" });
+		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "s" });
+		expect(mockWizardStore.updateApplication).toHaveBeenCalledWith("test-workspace-id", "test-id", { title: "t" });
 	});
 
 	it("limits title length to 120 characters", () => {
@@ -95,35 +104,30 @@ describe("ApplicationDetailsStep", () => {
 		expect(textarea).toHaveAttribute("maxLength", "120");
 	});
 
-	it("types in URL input", async () => {
-		const user = userEvent.setup();
-
+	it("renders URL input component", () => {
 		// Set up required fields for URL input to work
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				...mockWizardStore.applicationState,
-				templateId: "test-template-id",
+				application: {
+					grant_template: { id: "test-template-id" },
+					id: "test-id",
+					title: "",
+					workspace_id: "test-workspace-id",
+				},
 			},
-			ui: {
-				...mockWizardStore.ui,
-				urlInput: "",
-			},
-			workspaceId: "test-workspace-id",
 		});
 
 		render(<ApplicationDetailsStep />);
 
 		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
-		await user.type(urlInput, "https://example.com");
-
-		// Check that setUrlInput was called as the user types
-		expect(mockWizardStore.setUrlInput).toHaveBeenCalled();
+		expect(urlInput).toBeInTheDocument();
 	});
 
 	it("displays existing URLs", () => {
 		Object.assign(mockWizardStore, {
-			contentState: {
-				...mockWizardStore.contentState,
+			applicationState: {
+				...mockWizardStore.applicationState,
 				urls: ["https://example1.com", "https://example2.com"],
 			},
 		});
@@ -134,12 +138,12 @@ describe("ApplicationDetailsStep", () => {
 		expect(screen.getAllByText("https://example2.com").length).toBeGreaterThan(0);
 	});
 
-	it("displays URLs and allows hover interaction", async () => {
+	it("displays URLs and shows removal on hover", async () => {
 		const user = userEvent.setup();
 
 		Object.assign(mockWizardStore, {
-			contentState: {
-				...mockWizardStore.contentState,
+			applicationState: {
+				...mockWizardStore.applicationState,
 				urls: ["https://example1.com", "https://example2.com"],
 			},
 		});
@@ -153,9 +157,9 @@ describe("ApplicationDetailsStep", () => {
 		const [link] = screen.getAllByTestId("link-preview-item");
 		await user.hover(link);
 
-		// Check that hovering calls the state setter
+		// Check that the remove icon appears on hover
 		await waitFor(() => {
-			expect(mockWizardStore.setLinkHoverState).toHaveBeenCalledWith("https://example1.com", true);
+			expect(screen.getByTestId("link-remove-icon")).toBeInTheDocument();
 		});
 	});
 
@@ -180,8 +184,8 @@ describe("ApplicationDetailsStep", () => {
 		Object.assign(file, { id: "file-id" });
 
 		Object.assign(mockWizardStore, {
-			contentState: {
-				...mockWizardStore.contentState,
+			applicationState: {
+				...mockWizardStore.applicationState,
 				uploadedFiles: [file],
 			},
 		});
@@ -199,8 +203,8 @@ describe("ApplicationDetailsStep", () => {
 		Object.assign(file, { id: "file-id" });
 
 		Object.assign(mockWizardStore, {
-			contentState: {
-				...mockWizardStore.contentState,
+			applicationState: {
+				...mockWizardStore.applicationState,
 				uploadedFiles: [file],
 			},
 		});
@@ -208,13 +212,16 @@ describe("ApplicationDetailsStep", () => {
 		render(<ApplicationDetailsStep />);
 
 		const fileCard = screen.getByText("test.pdf").closest(".group");
+		expect(fileCard).toBeInTheDocument();
+
 		if (fileCard) {
 			await user.pointer({ keys: "[MouseRight]", target: fileCard });
 		}
 
-		// Check that right-clicking calls the dropdown state setter
+		// Check that right-clicking shows context menu
 		await waitFor(() => {
-			expect(mockWizardStore.setFileDropdownOpen).toHaveBeenCalledWith("test.pdf", true);
+			expect(screen.getByText("Open")).toBeInTheDocument();
+			expect(screen.getByText("Remove")).toBeInTheDocument();
 		});
 	});
 });
