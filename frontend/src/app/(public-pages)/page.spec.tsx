@@ -81,8 +81,6 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-// Don't mock internal components - let them render naturally
-
 describe("LandingPage", () => {
 	it("renders all major sections", async () => {
 		const { container } = render(await LandingPage());
@@ -132,7 +130,6 @@ describe("LandingPage", () => {
 		const tryButton = screen.getByRole("button", { name: /try for free/i });
 		expect(tryButton).toBeDefined();
 
-		// Test that buttons are interactive
 		fireEvent.click(contactButton);
 		fireEvent.click(tryButton);
 	});

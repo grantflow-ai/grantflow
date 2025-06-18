@@ -495,7 +495,7 @@ async def test_handle_crawl_url_funding_organization(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        workspace_id=funding_organization.id,
+        workspace_id=None,
         parent_id=funding_organization.id,
     )
 

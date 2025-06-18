@@ -6,7 +6,6 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
-// Mock the application store
 const mockStoreState = {
 	addFile: vi.fn(),
 	addUrl: vi.fn(),
@@ -66,7 +65,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 			},
 			workspaceId: "test-workspace-id",
 		});
-		// Update the mock store state
+
 		Object.assign(mockStoreState, {
 			application: ApplicationFactory.build({ title: "A".repeat(20) }),
 			urls: ["https://example.com"],
@@ -187,7 +186,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 					urlInput: "",
 				},
 			});
-			// Update the mock store state for this test
+
 			Object.assign(mockStoreState, {
 				application: ApplicationFactory.build({ title: "Short" }),
 				urls: [],
@@ -230,7 +229,7 @@ describe("WizardHeader", () => {
 			},
 			workspaceId: "test-workspace-id",
 		});
-		// Update the mock store state
+
 		Object.assign(mockStoreState, {
 			application: ApplicationFactory.build({ title: "Test Application" }),
 			urls: [],

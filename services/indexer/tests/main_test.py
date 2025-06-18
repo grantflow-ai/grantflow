@@ -447,10 +447,45 @@ async def test_handle_file_indexing_processing_error(
     mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    workspace_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": source_id,
+                    "indexing_status": SourceIndexingStatusEnum.CREATED,
+                    "text_content": "",
+                    "source_type": RAG_FILE,
+                }
+            )
+        )
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": source_id,
+                    "filename": "document.pdf",
+                    "mime_type": "application/pdf",
+                    "size": 0,
+                    "bucket_name": "test-bucket",
+                    "object_path": f"workspace/ws-123/grant_application/{grant_application.id}/document.pdf",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationRagSource).values(
+                {
+                    "rag_source_id": source_id,
+                    "grant_application_id": grant_application.id,
+                }
+            )
+        )
+
     mock_parse_object_uri.return_value = {
-        "workspace_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
+        "workspace_id": workspace_id,
         "parent_id": grant_application.id,
-        "source_id": UUID("550e8400-e29b-41d4-a716-446655440000"),
+        "source_id": source_id,
         "blob_name": "document.pdf",
     }
 

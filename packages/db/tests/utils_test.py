@@ -397,29 +397,24 @@ async def test_update_source_indexing_status_database_error(
     mock_logger = Mock(spec=BoundLogger)
     mock_logger.exception = Mock()
 
-    # Create a mock session maker that returns a session that fails
     mock_session_maker = Mock()
     mock_session = AsyncMock()
     mock_session_maker.return_value = mock_session
 
-    # Set up the async context managers
     mock_session.__aenter__.return_value = mock_session
     mock_session.__aexit__.return_value = None
 
-    # Create a mock for session.begin() that also acts as an async context manager
     mock_begin = AsyncMock()
     mock_begin.__aenter__.return_value = mock_session
     mock_begin.__aexit__.return_value = None
     mock_session.begin = Mock(return_value=mock_begin)
 
-    # Make execute raise an error
     mock_session.execute.side_effect = SQLAlchemyError("Database error")
     mock_session.rollback = AsyncMock()
 
     with patch("packages.db.src.utils.publish_notification") as mock_publish:
         mock_publish.return_value = "test-message-id"
 
-        # Should not raise, but should send a FAILED notification
         await update_source_indexing_status(
             logger=mock_logger,
             session_maker=mock_session_maker,
@@ -431,10 +426,8 @@ async def test_update_source_indexing_status_database_error(
             indexing_status=SourceIndexingStatusEnum.FINISHED,
         )
 
-        # Should have logged the exception
         mock_logger.exception.assert_called_once()
 
-        # Should have sent a FAILED notification
         assert mock_publish.call_count == 1
         call = mock_publish.call_args
         assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED

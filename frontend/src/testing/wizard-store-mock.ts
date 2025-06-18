@@ -56,7 +56,6 @@ interface WizardStoreMock {
 	workspaceId: string;
 }
 
-// Define types to match the real store
 interface WizardUI {
 	currentStep: number;
 	fileDropdownStates: Record<string, boolean>;

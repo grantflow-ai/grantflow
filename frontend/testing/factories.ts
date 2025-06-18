@@ -390,7 +390,6 @@ export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemp
 	submission_date: factory.date.future().toISOString(),
 }));
 
-// WebSocket notification types
 interface SourceProcessingNotification {
 	identifier: string;
 	indexing_status: "FAILED" | "FINISHED" | "INDEXING";
@@ -433,7 +432,6 @@ export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketM
 	},
 );
 
-// Application list item type used in workspace detail view
 interface ApplicationListItem {
 	completed_at: null | string;
 	id: string;
@@ -446,7 +444,6 @@ export const ApplicationListItemFactory = new Factory<ApplicationListItem>((fact
 	title: factory.lorem.sentence(),
 }));
 
-// Application with template - used in wizard store tests
 export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.Http201.ResponseBody>(() => {
 	const baseApplication = ApplicationFactory.build();
 	const grantTemplate = GrantTemplateFactory.build({

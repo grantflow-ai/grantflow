@@ -27,25 +27,12 @@ from sqlalchemy.orm import with_polymorphic
 
 from packages.db.src.constants import RAG_URL, RAG_FILE
 from packages.shared_utils.src.exceptions import BackendError
+from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
 if TYPE_CHECKING:
     from packages.shared_utils.src.shared_types import ParentType
 
 logger = get_logger(__name__)
-
-SUPPORTED_FILE_EXTENSIONS = {
-    "csv": "text/csv",
-    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "latex": "text/latex",
-    "md": "text/markdown",
-    "odt": "application/vnd.oasis.opendocument.text",
-    "pdf": "application/pdf",
-    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "rst": "text/rst",
-    "rtf": "text/rtf",
-    "txt": "text/plain",
-    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-}
 
 
 class RagFileResponse(TypedDict):
@@ -94,7 +81,7 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
 
 async def handle_create_rag_source(
     session_maker: async_sessionmaker[Any],
-    workspace_id: UUID,
+    workspace_id: UUID | None,
     url: str | None = None,
     blob_name: str | None = None,
     mime_type: str | None = None,
@@ -162,6 +149,9 @@ async def handle_create_rag_source(
             else:
                 if not blob_name:
                     raise BackendError("Missing blob_name for file source")
+                if not workspace_id and parent_type != "funding_organization":
+                    raise BackendError("Missing workspace_id for file source")
+
                 await session.execute(
                     insert(RagFile).values(
                         [
@@ -388,12 +378,7 @@ async def handle_create_upload_url(
             },
         )
 
-    if organization_id:
-        # For organization endpoints, we use organization_id as workspace_id
-        effective_workspace_id = organization_id
-    elif workspace_id:
-        effective_workspace_id = workspace_id
-    else:
+    if not workspace_id and not organization_id:
         raise ValidationError("Either workspace_id or organization_id must be provided")
 
     source_id = await handle_create_rag_source(
@@ -403,7 +388,7 @@ async def handle_create_upload_url(
         organization_id=organization_id,
         session_maker=session_maker,
         template_id=template_id,
-        workspace_id=effective_workspace_id,
+        workspace_id=workspace_id,
     )
 
     if application_id:
@@ -418,7 +403,7 @@ async def handle_create_upload_url(
         )
 
     url = await create_signed_upload_url(
-        workspace_id=effective_workspace_id,
+        workspace_id=workspace_id,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
@@ -446,17 +431,12 @@ async def handle_crawl_url(
 ) -> UrlCrawlingResponse:
     url = data["url"]
 
-    if organization_id:
-        # For organization endpoints, we use organization_id as workspace_id
-        effective_workspace_id = organization_id
-    elif workspace_id:
-        effective_workspace_id = workspace_id
-    else:
+    if not workspace_id and not organization_id:
         raise ValidationError("Either workspace_id or organization_id must be provided")
 
     source_id = await handle_create_rag_source(
         session_maker=session_maker,
-        workspace_id=effective_workspace_id,
+        workspace_id=workspace_id,
         url=url,
         application_id=application_id,
         organization_id=organization_id,
@@ -478,7 +458,7 @@ async def handle_crawl_url(
         logger=logger,
         url=url,
         source_id=source_id,
-        workspace_id=effective_workspace_id,
+        workspace_id=workspace_id,
         parent_id=parent_id,
     )
 

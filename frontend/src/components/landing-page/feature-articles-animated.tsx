@@ -1,6 +1,5 @@
 "use client";
 
-import { easeInOut } from "motion";
 import { motion } from "motion/react";
 
 const featureArticleVariants = {
@@ -12,9 +11,8 @@ const featureArticleVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: easeInOut,
+			ease: "easeInOut" as const,
 			staggerChildren: 0.1,
-			when: "beforeChildren",
 		},
 		y: 0,
 	},
@@ -30,7 +28,7 @@ const featureIconVariants = {
 		scale: 1,
 		transition: {
 			duration: 0.4,
-			ease: easeInOut,
+			ease: "easeInOut" as const,
 		},
 	},
 };
@@ -44,7 +42,7 @@ const textVariants = {
 		opacity: 1,
 		transition: {
 			duration: 0.4,
-			ease: easeInOut,
+			ease: "easeInOut" as const,
 		},
 		y: 0,
 	},

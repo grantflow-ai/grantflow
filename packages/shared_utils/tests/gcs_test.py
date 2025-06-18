@@ -257,6 +257,22 @@ def test_construct_object_uri_with_uuids() -> None:
     assert uri == f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
 
 
+def test_construct_object_uri_with_none_workspace() -> None:
+    """Test constructing URI for organizations (no workspace_id)"""
+    parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+    source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
+    blob_name = "test-file.pdf"
+
+    uri = construct_object_uri(
+        workspace_id=None,
+        parent_id=parent_id,
+        source_id=source_id,
+        blob_name=blob_name,
+    )
+
+    assert uri == f"{parent_id}/{source_id}/{blob_name}"
+
+
 def test_parse_object_uri_valid() -> None:
     workspace_id = "123e4567-e89b-12d3-a456-426614174000"
     parent_id = "223e4567-e89b-12d3-a456-426614174001"
@@ -434,17 +450,29 @@ async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) ->
     assert "Test error" in exc_info.value.context["error"]
 
 
-def test_parse_object_uri_invalid_three_components() -> None:
+def test_parse_object_uri_valid_three_components() -> None:
+    """Test parsing 3-component paths for organizations (no workspace_id)"""
+    parent_id = "223e4567-e89b-12d3-a456-426614174001"
+    source_id = "323e4567-e89b-12d3-a456-426614174002"
+    blob_name = "test-file.pdf"
+    object_path = f"{parent_id}/{source_id}/{blob_name}"
+
+    result = parse_object_uri(object_path=object_path)
+
+    assert result["workspace_id"] is None
+    assert result["parent_id"] == UUID(parent_id)
+    assert result["source_id"] == UUID(source_id)
+    assert result["blob_name"] == blob_name
+
+
+def test_parse_object_uri_invalid_three_components_bad_uuid() -> None:
+    """Test that 3-component paths with invalid UUIDs fail"""
     object_path = "workspace-123/parent-456/test-file.pdf"
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         parse_object_uri(object_path=object_path)
 
-    assert "Invalid object path format" in str(exc_info.value)
-    assert "Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name>" in str(
-        exc_info.value
-    )
-    assert exc_info.value.context["object_path"] == object_path
+    assert "badly formed hexadecimal UUID string" in str(exc_info.value)
 
 
 def test_parse_object_uri_invalid_five_components() -> None:
@@ -454,8 +482,9 @@ def test_parse_object_uri_invalid_five_components() -> None:
         parse_object_uri(object_path=object_path)
 
     assert "Invalid object path format" in str(exc_info.value)
-    assert "Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name>" in str(
-        exc_info.value
+    assert (
+        "Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
+        in str(exc_info.value)
     )
     assert exc_info.value.context["object_path"] == object_path
 
@@ -467,8 +496,9 @@ def test_parse_object_uri_invalid_two_components() -> None:
         parse_object_uri(object_path=object_path)
 
     assert "Invalid object path format" in str(exc_info.value)
-    assert "Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name>" in str(
-        exc_info.value
+    assert (
+        "Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
+        in str(exc_info.value)
     )
     assert exc_info.value.context["object_path"] == object_path
 

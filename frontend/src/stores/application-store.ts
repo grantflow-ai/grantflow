@@ -152,7 +152,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ isLoading: true });
 		try {
 			await updateApplication(workspaceId, applicationId, data);
-			// Refresh the application to get the latest state
+
 			await get().retrieveApplication(workspaceId, applicationId);
 		} catch (e) {
 			logError({ error: `Failed to update application: ${e}`, identifier: "updateApplication" });

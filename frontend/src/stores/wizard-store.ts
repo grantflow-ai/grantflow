@@ -323,7 +323,6 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 		const currentState = get();
 		const currentTitle = currentState.applicationState.application?.title;
 
-		// Update local state
 		set(({ applicationState, ...state }) => ({
 			...state,
 			applicationState: {
@@ -332,7 +331,6 @@ export const useWizardStore = create<WizardActions & WizardState>((set, get) => 
 			},
 		}));
 
-		// Only trigger API update if title actually changed
 		const {
 			applicationState: { applicationId },
 			updateApplicationTitle,

@@ -24,7 +24,7 @@ vi.mock("@/stores/application-store", () => ({
 describe("ApplicationDetailsStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Reset mock store to default state
+
 		Object.assign(mockWizardStore, {
 			applicationState: {
 				application: null,
@@ -156,7 +156,6 @@ describe("ApplicationDetailsStep", () => {
 		const textarea = screen.getByTestId("application-title-textarea");
 		await user.type(textarea, "Test");
 
-		// Wait for debounced calls to complete
 		await waitFor(() => {
 			expect(mockUpdateApplication).toHaveBeenCalled();
 		});
@@ -291,7 +290,6 @@ describe("ApplicationDetailsStep", () => {
 		const [link] = screen.getAllByTestId("link-preview-item");
 		await user.hover(link);
 
-		// Check that the remove icon appears on hover
 		await waitFor(() => {
 			expect(screen.getByTestId("link-remove-icon")).toBeInTheDocument();
 		});
@@ -402,7 +400,6 @@ describe("ApplicationDetailsStep", () => {
 			await user.pointer({ keys: "[MouseRight]", target: fileCard });
 		}
 
-		// Check that right-clicking shows context menu
 		await waitFor(() => {
 			expect(screen.getByText("Open")).toBeInTheDocument();
 			expect(screen.getByText("Remove")).toBeInTheDocument();

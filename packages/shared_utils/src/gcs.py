@@ -23,7 +23,7 @@ bucket_ref = Ref[Bucket]()
 
 
 class URIParseResult(TypedDict):
-    workspace_id: UUID
+    workspace_id: UUID | None
     parent_id: UUID
     source_id: UUID
     blob_name: str
@@ -94,12 +94,16 @@ async def download_blob(blob_name: str) -> bytes:
 
 def construct_object_uri(
     *,
-    workspace_id: UUID | str,
+    workspace_id: UUID | str | None,
     parent_id: UUID | str,
     source_id: UUID | str,
     blob_name: str,
 ) -> str:
-    return f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+    return (
+        f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+        if workspace_id
+        else f"{parent_id}/{source_id}/{blob_name}"
+    )
 
 
 def parse_object_uri(
@@ -108,18 +112,22 @@ def parse_object_uri(
 ) -> URIParseResult:
     components = object_path.split("/")
 
-    if len(components) == 4:
-        workspace_id, parent_id, source_id, blob_name = components
+    if len(components) == 4 or len(components) == 3:
+        if len(components) == 4:
+            workspace_id, parent_id, source_id, blob_name = components
+        else:
+            workspace_id = None
+            parent_id, source_id, blob_name = components
 
         return URIParseResult(
-            workspace_id=UUID(workspace_id),
+            workspace_id=UUID(workspace_id) if workspace_id else None,
             parent_id=UUID(parent_id),
             source_id=UUID(source_id),
             blob_name=blob_name,
         )
 
     raise ValidationError(
-        "Invalid object path format. Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name>",
+        "Invalid object path format. Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>",
         context={
             "object_path": object_path,
         },
@@ -127,7 +135,7 @@ def parse_object_uri(
 
 
 async def create_signed_upload_url(
-    workspace_id: UUID | str,
+    workspace_id: UUID | str | None,
     parent_id: UUID | str,
     source_id: UUID | str,
     blob_name: str,
