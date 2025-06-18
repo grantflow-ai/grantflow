@@ -2,16 +2,38 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApplicationFactory } from "::testing/factories";
-import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 // Mock the application store
+const mockStoreState = {
+	addFile: vi.fn(),
+	addUrl: vi.fn(),
+	application: null,
+	areFilesOrUrlsIndexing: vi.fn(() => false),
+	createApplication: vi.fn(),
+	generateTemplate: vi.fn(),
+	handleApplicationInit: vi.fn(),
+	isLoading: false,
+	removeFile: vi.fn(),
+	removeUrl: vi.fn(),
+	retrieveApplication: vi.fn(),
+	setApplication: vi.fn(),
+	setUploadedFiles: vi.fn(),
+	setUrls: vi.fn(),
+	updateApplication: vi.fn().mockResolvedValue(undefined),
+	uploadedFiles: [],
+	urls: [],
+};
+
 vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: {
-		getState: vi.fn(),
-	},
+	useApplicationStore: Object.assign(
+		vi.fn(() => mockStoreState),
+		{
+			getState: vi.fn(() => mockStoreState),
+		},
+	),
 }));
 
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
@@ -25,23 +47,9 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 				isActive: false,
 			},
 		});
-		vi.mocked(useApplicationStore.getState).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
+		// Update the mock store state
+		Object.assign(mockStoreState, {
 			application: ApplicationFactory.build({ title: "A".repeat(20) }),
-			areFilesOrUrlsIndexing: vi.fn(),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
-			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn(),
-			uploadedFiles: [],
 			urls: ["https://example.com"],
 		});
 	});
@@ -99,23 +107,9 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("disables continue button when step validation fails", () => {
 			useWizardStore.setState({ currentStep: 0 });
-			vi.mocked(useApplicationStore.getState).mockReturnValue({
-				addFile: vi.fn(),
-				addUrl: vi.fn(),
+			// Update the mock store state for this test
+			Object.assign(mockStoreState, {
 				application: ApplicationFactory.build({ title: "Short" }),
-				areFilesOrUrlsIndexing: vi.fn(),
-				createApplication: vi.fn(),
-				generateTemplate: vi.fn(),
-				handleApplicationInit: vi.fn(),
-				isLoading: false,
-				removeFile: vi.fn(),
-				removeUrl: vi.fn(),
-				retrieveApplication: vi.fn(),
-				setApplication: vi.fn(),
-				setUploadedFiles: vi.fn(),
-				setUrls: vi.fn(),
-				updateApplication: vi.fn(),
-				uploadedFiles: [],
 				urls: [],
 			});
 			render(<WizardFooter />);
@@ -137,23 +131,9 @@ describe("WizardHeader", () => {
 				isActive: false,
 			},
 		});
-		vi.mocked(useApplicationStore.getState).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
+		// Update the mock store state
+		Object.assign(mockStoreState, {
 			application: ApplicationFactory.build({ title: "Test Application" }),
-			areFilesOrUrlsIndexing: vi.fn(),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
-			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn(),
-			uploadedFiles: [],
 			urls: [],
 		});
 	});
