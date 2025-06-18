@@ -3,61 +3,38 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
-import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
+import { useWizardStore } from "@/stores/wizard-store";
 
 import { ApplicationStructureStep } from "./application-structure-step";
-
-vi.mock("@/stores/wizard-store", () => ({
-	useWizardStore: mockUseWizardStore,
-}));
-
-vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: vi.fn(),
-}));
 
 describe("ApplicationStructureStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application: null,
-				applicationId: null,
-				applicationTitle: "",
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
+		// Reset wizard store to initial state
+		useWizardStore.setState({
+			polling: {
+				intervalId: null,
+				isActive: false,
+				start: vi.fn(),
+				stop: vi.fn(),
 			},
-			contentState: {
-				uploadedFiles: [],
-				urls: [],
-			},
-			isLoading: false,
 			ui: {
 				currentStep: 1,
 				fileDropdownStates: {},
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			updateGrantSections: vi.fn(),
+			workspaceId: "",
+			wsConnectionStatus: undefined,
+			wsConnectionStatusColor: undefined,
 		});
 
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
+		// Reset application store to initial state
+		useApplicationStore.setState({
 			application: null,
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
+			applicationTitle: "",
 			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
 			uploadedFiles: [],
 			urls: [],
 		});
@@ -109,15 +86,11 @@ describe("ApplicationStructureStep", () => {
 			title: "Test Application",
 			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: "Test Application",
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		// Set the application store state
+		useApplicationStore.setState({
+			application,
+			applicationTitle: "Test Application",
 		});
 
 		render(<ApplicationStructureStep />);
@@ -133,15 +106,11 @@ describe("ApplicationStructureStep", () => {
 			title: "",
 			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: "",
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		// Set the application store state with empty title
+		useApplicationStore.setState({
+			application,
+			applicationTitle: "",
 		});
 
 		render(<ApplicationStructureStep />);
@@ -168,15 +137,11 @@ describe("ApplicationStructureStep", () => {
 			title: "Test Application",
 			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: "Test Application",
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		// Set the application store state
+		useApplicationStore.setState({
+			application,
+			applicationTitle: "Test Application",
 		});
 
 		render(<ApplicationStructureStep />);
@@ -229,15 +194,11 @@ describe("ApplicationStructureStep", () => {
 			title: longTitle,
 			workspace_id: "test-workspace-id",
 		});
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application,
-				applicationId: "test-id",
-				applicationTitle: longTitle,
-				templateId: application.grant_template?.id ?? null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
+
+		// Set the application store state with long title
+		useApplicationStore.setState({
+			application,
+			applicationTitle: longTitle,
 		});
 
 		render(<ApplicationStructureStep />);

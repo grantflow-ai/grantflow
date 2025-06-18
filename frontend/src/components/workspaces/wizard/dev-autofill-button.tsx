@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { crawlTemplateUrl } from "@/actions/sources";
 import { Button } from "@/components/ui/button";
 import { FileWithId } from "@/components/workspaces/wizard/application-preview";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { logError } from "@/utils/logging";
 
@@ -30,7 +31,8 @@ const TEST_URLS = [
 
 export function DevAutofillButton() {
 	const params = useParams();
-	const { addUrl, applicationState, setApplicationTitle, setUploadedFiles, ui } = useWizardStore();
+	const { handleTitleChange, ui } = useWizardStore();
+	const { addUrl, application, setUploadedFiles } = useApplicationStore();
 
 	const handleAutofill = async () => {
 		try {
@@ -38,13 +40,13 @@ export function DevAutofillButton() {
 
 			switch (ui.currentStep) {
 				case 0: {
-					setApplicationTitle("AI-Powered Early Cancer Detection Using Novel Biomarkers");
+					handleTitleChange("AI-Powered Early Cancer Detection Using Novel Biomarkers");
 
 					for (const url of TEST_URLS) {
 						try {
-							await crawlTemplateUrl(workspaceId, applicationState.templateId ?? "", url);
+							await crawlTemplateUrl(workspaceId, application?.grant_template?.id ?? "", url);
 							toast.success(`URL added: ${url}`);
-							addUrl(url);
+							await addUrl(url);
 						} catch (error) {
 							logError({ error, identifier: "dev-autofill-crawlTemplateUrl" });
 							toast.error(`Failed to add URL: ${url}`);

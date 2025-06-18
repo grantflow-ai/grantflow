@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
 import { API } from "@/types/api-types";
 
 type GrantSection = NonNullable<
@@ -74,6 +74,16 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	};
 };
 
+interface ApplicationStructurePreviewProps {
+	connectionStatus?: string;
+	connectionStatusColor?: string;
+}
+
+interface ApplicationStructureStepProps {
+	connectionStatus?: string;
+	connectionStatusColor?: string;
+}
+
 interface SortableSectionProps {
 	isDragging?: boolean;
 	isExpanded: boolean;
@@ -84,7 +94,7 @@ interface SortableSectionProps {
 	section: GrantSection;
 }
 
-export function ApplicationStructureStep() {
+export function ApplicationStructureStep({ connectionStatus, connectionStatusColor }: ApplicationStructureStepProps) {
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
 			<div className="w-1/3 space-y-6 overflow-y-auto p-6 sm:w-1/2">
@@ -129,15 +139,18 @@ export function ApplicationStructureStep() {
 				</div>
 			</div>
 
-			<ApplicationStructurePreview />
+			<ApplicationStructurePreview
+				connectionStatus={connectionStatus}
+				connectionStatusColor={connectionStatusColor}
+			/>
 		</div>
 	);
 }
 
-function ApplicationStructurePreview() {
-	const { applicationState, updateGrantSections } = useWizardStore();
-	const hasContent = applicationState.applicationTitle || applicationState.application;
-	const grantSections = applicationState.application?.grant_template?.grant_sections ?? [];
+function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }: ApplicationStructurePreviewProps) {
+	const { application, applicationTitle, updateGrantSections } = useApplicationStore();
+	const hasContent = applicationTitle || application;
+	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 	const [editingNewSection, setEditingNewSection] = useState(false);
@@ -291,9 +304,9 @@ function ApplicationStructurePreview() {
 							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Structure
 							</ThemeBadge>
-							{applicationState.wsConnectionStatus && (
-								<ThemeBadge className={`w-fit ${applicationState.wsConnectionStatusColor} text-white`}>
-									{applicationState.wsConnectionStatus}
+							{connectionStatus && (
+								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
+									{connectionStatus}
 								</ThemeBadge>
 							)}
 						</div>
@@ -301,7 +314,7 @@ function ApplicationStructurePreview() {
 							className="font-heading text-center text-3xl font-medium"
 							data-testid="application-structure-title"
 						>
-							{applicationState.applicationTitle.trim() || "Untitled Application"}
+							{applicationTitle.trim() || "Untitled Application"}
 						</h3>
 					</div>
 

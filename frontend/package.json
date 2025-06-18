@@ -36,6 +36,7 @@
 		"@tool-belt/type-predicates": "^1.4.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"deepmerge-ts": "^7.1.5",
 		"firebase": "^11.9.1",
 		"ky": "^1.8.1",
 		"lucide-react": "^0.517.0",
