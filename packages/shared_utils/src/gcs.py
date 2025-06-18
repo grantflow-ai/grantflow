@@ -1,4 +1,4 @@
-from typing import Any, NotRequired, TypedDict, cast
+from typing import Any, TypedDict, cast
 from uuid import UUID
 
 from google.api_core import exceptions
@@ -14,7 +14,6 @@ from packages.shared_utils.src.exceptions import ExternalOperationError, Validat
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
-from packages.shared_utils.src.shared_types import ParentType
 from packages.shared_utils.src.sync import run_sync
 
 logger = get_logger(__name__)
@@ -33,7 +32,9 @@ class URIParseResult(TypedDict):
 def get_credentials() -> Credentials:
     if get_env("STORAGE_EMULATOR_HOST", fallback=""):
         return cast("Credentials", AnonymousCredentials())  # type: ignore[no-untyped-call]
-    credentials = deserialize(get_env("GCS_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
+    credentials = deserialize(
+        get_env("GCS_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any]
+    )
     return cast("Credentials", Credentials.from_service_account_info(credentials))  # type: ignore[no-untyped-call]
 
 
@@ -52,7 +53,9 @@ def get_storage_client() -> storage.Client:
 def get_bucket() -> Bucket:
     if not bucket_ref.value:
         storage_client = get_storage_client()
-        bucket = storage_client.bucket(get_env("GCS_BUCKET_NAME", fallback="grantflow-uploads"))
+        bucket = storage_client.bucket(
+            get_env("GCS_BUCKET_NAME", fallback="grantflow-uploads")
+        )
 
         try:
             if not bucket.exists():
@@ -116,7 +119,7 @@ def parse_object_uri(
         )
 
     raise ValidationError(
-        "Invalid object path format. Expected format: <workspace_id>/<source_id>/<blob_name>",
+        "Invalid object path format. Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name>",
         context={
             "object_path": object_path,
         },
@@ -155,7 +158,9 @@ async def create_signed_upload_url(
 
         return cast("str", signed_url)
     except ClientError as e:
-        logger.error("Failed to create signed upload URL", blob_path=blob_path, exc_info=e)
+        logger.error(
+            "Failed to create signed upload URL", blob_path=blob_path, exc_info=e
+        )
         raise ExternalOperationError(
             "Failed to create signed upload URL",
             context={

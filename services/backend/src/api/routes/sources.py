@@ -47,6 +47,7 @@ SUPPORTED_FILE_EXTENSIONS = {
     "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
 
+
 class RagFileResponse(TypedDict):
     id: str
     filename: str
@@ -79,7 +80,9 @@ class UrlCrawlingResponse(TypedDict):
 
 
 def _create_operation_id_creator(key: str) -> OperationIDCreator:
-    def _create_operation_id(_: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]) -> str:
+    def _create_operation_id(
+        _: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]
+    ) -> str:
         if "applications" in paths:
             return key.format(value="GrantApplication")
         if "grant_templates" in paths:
@@ -87,6 +90,7 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
         return key.format(value="FundingOrganization")
 
     return _create_operation_id
+
 
 async def handle_create_rag_source(
     session_maker: async_sessionmaker[Any],
@@ -107,21 +111,24 @@ async def handle_create_rag_source(
     elif organization_id:
         parent_type = "funding_organization"
         parent_id = organization_id
-    else:
+    elif template_id:
         parent_type = "grant_template"
         parent_id = template_id
-
-    if not parent_id:
+    else:
         raise BackendError("Missing parent_id")
 
     async with session_maker() as session, session.begin():
         try:
-            rag_source = await session.scalar(select(RagSource).join(RagUrl).where(RagUrl.url == url))
+            rag_source = await session.scalar(
+                select(RagSource).join(RagUrl).where(RagUrl.url == url)
+            )
             if rag_source:
                 if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
-                    return rag_source.id
+                    return cast(UUID, rag_source.id)
 
-                await session.execute(sa_delete(RagSource).where(RagSource.id == rag_source.id))
+                await session.execute(
+                    sa_delete(RagSource).where(RagSource.id == rag_source.id)
+                )
 
             source_id = await session.scalar(
                 insert(RagSource)
@@ -130,7 +137,9 @@ async def handle_create_rag_source(
                         {
                             "indexing_status": SourceIndexingStatusEnum.CREATED,
                             "text_content": "",
-                            "source_type": RAG_URL if url else RAG_FILE,  # Set polymorphic identity ~keep
+                            "source_type": RAG_URL
+                            if url
+                            else RAG_FILE,  # Set polymorphic identity ~keep
                         }
                     ]
                 )
@@ -151,9 +160,10 @@ async def handle_create_rag_source(
                     .returning(RagUrl.id)
                 )
             else:
+                if not blob_name:
+                    raise BackendError("Missing blob_name for file source")
                 await session.execute(
-                    insert(RagFile)
-                    .values(
+                    insert(RagFile).values(
                         [
                             {
                                 "id": source_id,
@@ -165,8 +175,8 @@ async def handle_create_rag_source(
                                     workspace_id=workspace_id,
                                     parent_id=parent_id,
                                     source_id=source_id,
-                                    blob_name=blob_name
-                                )
+                                    blob_name=blob_name,
+                                ),
                             }
                         ]
                     )
@@ -199,8 +209,13 @@ async def handle_create_rag_source(
                         }
                     )
                 )
-            logger.info("Created new rag source", source_id=source_id, parent_type=parent_type, parent_id=parent_id)
-            return source_id
+            logger.info(
+                "Created new rag source",
+                source_id=source_id,
+                parent_type=parent_type,
+                parent_id=parent_id,
+            )
+            return cast(UUID, source_id)
         except SQLAlchemyError as e:
             logger.exception(
                 "Error creating rag source",
@@ -233,20 +248,32 @@ async def handle_retrieve_rag_sources(
         if application_id:
             stmt = (
                 select(rag_poly)
-                .join(GrantApplicationRagSource, GrantApplicationRagSource.rag_source_id == rag_poly.id)
+                .join(
+                    GrantApplicationRagSource,
+                    GrantApplicationRagSource.rag_source_id == rag_poly.id,
+                )
                 .where(GrantApplicationRagSource.grant_application_id == application_id)
             )
         elif template_id:
             stmt = (
                 select(rag_poly)
-                .join(GrantTemplateRagSource, GrantTemplateRagSource.rag_source_id == rag_poly.id)
+                .join(
+                    GrantTemplateRagSource,
+                    GrantTemplateRagSource.rag_source_id == rag_poly.id,
+                )
                 .where(GrantTemplateRagSource.grant_template_id == template_id)
             )
         else:
             stmt = (
                 select(rag_poly)
-                .join(FundingOrganizationRagSource, FundingOrganizationRagSource.rag_source_id == rag_poly.id)
-                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
+                .join(
+                    FundingOrganizationRagSource,
+                    FundingOrganizationRagSource.rag_source_id == rag_poly.id,
+                )
+                .where(
+                    FundingOrganizationRagSource.funding_organization_id
+                    == organization_id
+                )
             )
 
         results = await session.scalars(stmt)
@@ -312,7 +339,10 @@ async def handle_delete_rag_source(
             statement = (
                 select(RagSource)
                 .join(FundingOrganizationRagSource)
-                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
+                .where(
+                    FundingOrganizationRagSource.funding_organization_id
+                    == organization_id
+                )
             )
 
         try:
@@ -325,7 +355,9 @@ async def handle_delete_rag_source(
         except SQLAlchemyError as e:
             logger.error("Error deleting organization file", exc_info=e)
             await session.rollback()
-            raise DatabaseError("Error deleting organization file", context=str(e)) from e
+            raise DatabaseError(
+                "Error deleting organization file", context=str(e)
+            ) from e
 
 
 @post(
@@ -356,6 +388,14 @@ async def handle_create_upload_url(
             },
         )
 
+    if organization_id:
+        # For organization endpoints, we use organization_id as workspace_id
+        effective_workspace_id = organization_id
+    elif workspace_id:
+        effective_workspace_id = workspace_id
+    else:
+        raise ValidationError("Either workspace_id or organization_id must be provided")
+
     source_id = await handle_create_rag_source(
         application_id=application_id,
         blob_name=blob_name,
@@ -363,17 +403,29 @@ async def handle_create_upload_url(
         organization_id=organization_id,
         session_maker=session_maker,
         template_id=template_id,
-        workspace_id=workspace_id,
+        workspace_id=effective_workspace_id,
     )
 
+    if application_id:
+        parent_id = application_id
+    elif organization_id:
+        parent_id = organization_id
+    elif template_id:
+        parent_id = template_id
+    else:
+        raise ValidationError(
+            "One of application_id, organization_id, or template_id must be provided"
+        )
+
     url = await create_signed_upload_url(
-        workspace_id=workspace_id,
-        parent_id=cast(UUID,application_id or organization_id or template_id),
+        workspace_id=effective_workspace_id,
+        parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
     )
 
     return UploadUrlResponse(url=url, source_id=source_id)
+
 
 @post(
     [
@@ -394,28 +446,39 @@ async def handle_crawl_url(
 ) -> UrlCrawlingResponse:
     url = data["url"]
 
+    if organization_id:
+        # For organization endpoints, we use organization_id as workspace_id
+        effective_workspace_id = organization_id
+    elif workspace_id:
+        effective_workspace_id = workspace_id
+    else:
+        raise ValidationError("Either workspace_id or organization_id must be provided")
+
     source_id = await handle_create_rag_source(
         session_maker=session_maker,
-        workspace_id=workspace_id,
+        workspace_id=effective_workspace_id,
         url=url,
         application_id=application_id,
         organization_id=organization_id,
         template_id=template_id,
     )
 
-    # Determine parent_id based on which entity is provided
     if application_id:
         parent_id = application_id
     elif organization_id:
         parent_id = organization_id
-    else:
+    elif template_id:
         parent_id = template_id
+    else:
+        raise ValidationError(
+            "One of application_id, organization_id, or template_id must be provided"
+        )
 
     message_id = await publish_url_crawling_task(
         logger=logger,
         url=url,
         source_id=source_id,
-        workspace_id=workspace_id or parent_id,  # Use parent_id if workspace_id is None (for organizations)
+        workspace_id=effective_workspace_id,
         parent_id=parent_id,
     )
 

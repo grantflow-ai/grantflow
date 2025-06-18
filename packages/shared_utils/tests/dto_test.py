@@ -25,19 +25,17 @@ async def test_vector_dto_structure() -> None:
 
 
 async def test_vector_dto_complete_example() -> None:
-    # Test a complete VectorDTO with all required fields
     chunk: Chunk = {
         "content": "This is a test chunk content",
         "page_number": 1,
     }
 
     vector: VectorDTO = {
-        "embedding": [0.1] * 384,  # Typical embedding dimension
+        "embedding": [0.1] * 384,
         "rag_source_id": "550e8400-e29b-41d4-a716-446655440000",
         "chunk": chunk,
     }
 
-    # Verify all fields are present and have correct types
     assert isinstance(vector["embedding"], list)
     assert len(vector["embedding"]) == 384
     assert all(isinstance(x, float) for x in vector["embedding"])

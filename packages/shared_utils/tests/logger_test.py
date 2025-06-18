@@ -9,34 +9,28 @@ from packages.shared_utils.src.logger import (
 
 
 async def test_get_logger_returns_logger() -> None:
-    # Reset state
     configured_ref.value = None
 
     logger = get_logger("test_module")
 
-    # Basic checks - logger should exist and have basic logging methods
     assert logger is not None
     assert hasattr(logger, "info")
     assert hasattr(logger, "error")
     assert hasattr(logger, "warning")
     assert hasattr(logger, "debug")
 
-    # Should be configured after first call
     assert configured_ref.value is True
 
 
 async def test_get_logger_subsequent_calls() -> None:
-    # Ensure it's configured
     configured_ref.value = True
 
     logger1 = get_logger("test_module1")
     logger2 = get_logger("test_module2")
 
-    # Both should return valid loggers
     assert logger1 is not None
     assert logger2 is not None
 
-    # Should remain configured
     assert configured_ref.value is True
 
 
@@ -55,7 +49,7 @@ def test_sanitize_string_removes_multiple_spaces() -> None:
 
 
 def test_sanitize_string_truncates_long_text() -> None:
-    text = "a" * 600  # Longer than MAX_STRING_LENGTH (500)
+    text = "a" * 600
     result = sanitize_string(text)
     assert len(result) == 500 + len("... (truncated)")
     assert result.endswith("... (truncated)")
@@ -68,28 +62,24 @@ def test_truncate_value_handles_strings() -> None:
 
 
 def test_truncate_value_handles_lists() -> None:
-    # Small list - should not be truncated
     small_list = ["item1", "item2", "item3"]
     result = truncate_value(small_list)
     assert result == small_list
 
-    # Large list - should be truncated
     large_list = [f"item{i}" for i in range(10)]
     result = truncate_value(large_list)
-    assert len(result) == 6  # 5 items + truncation message
+    assert len(result) == 6
     assert result[-1] == "... and 5 more items"
 
 
 def test_truncate_value_handles_dicts() -> None:
-    # Small dict - should not be truncated
     small_dict = {"key1": "value1", "key2": "value2"}
     result = truncate_value(small_dict)
     assert result == small_dict
 
-    # Large dict - should be truncated
     large_dict = {f"key{i}": f"value{i}" for i in range(15)}
     result = truncate_value(large_dict)
-    assert len(result) == 11  # 10 keys + _truncated key
+    assert len(result) == 11
     assert "_truncated" in result
     assert result["_truncated"] == "5 more keys"
 
@@ -102,15 +92,12 @@ def test_truncate_value_handles_nested_structures() -> None:
     }
     result = truncate_value(nested)
 
-    # Check list was truncated
     assert len(result["list"]) == 6
     assert result["list"][-1] == "... and 2 more items"
 
-    # Check dict was truncated
     assert len(result["dict"]) == 11
     assert "_truncated" in result["dict"]
 
-    # Check string was sanitized
     assert result["string"] == "Text\n\nwith issues"
 
 
@@ -120,23 +107,27 @@ def test_rag_log_processor_processes_long_content_keys() -> None:
         "level": "info",
         "message": "Processing",
         "response": "Very\n\n\n\nlong response",
-        "chunks": ["chunk1", "chunk2", "chunk3", "chunk4", "chunk5", "chunk6", "chunk7"],
+        "chunks": [
+            "chunk1",
+            "chunk2",
+            "chunk3",
+            "chunk4",
+            "chunk5",
+            "chunk6",
+            "chunk7",
+        ],
         "normal_key": "normal value",
     }
 
     result = rag_log_processor(None, "method", event_dict)
 
-    # Check response was sanitized
     assert result["response"] == "Very\n\nlong response"
 
-    # Check chunks was truncated
     assert len(result["chunks"]) == 6
     assert result["chunks"][-1] == "... and 2 more items"
 
-    # Check normal key was not changed
     assert result["normal_key"] == "normal value"
 
-    # Check marker was added
     assert result["_log_processed"] is True
 
 
@@ -149,7 +140,9 @@ def test_rag_log_processor_handles_error_strings() -> None:
 
 
 def test_error_detail_processor_handles_deserialization_error() -> None:
-    event_dict = {"error": "DeserializationError: Failed to parse. Context: {large context data here}"}
+    event_dict = {
+        "error": "DeserializationError: Failed to parse. Context: {large context data here}"
+    }
 
     result = error_detail_processor(None, "method", event_dict)
 
@@ -158,7 +151,9 @@ def test_error_detail_processor_handles_deserialization_error() -> None:
 
 
 def test_error_detail_processor_handles_truncated_input() -> None:
-    event_dict = {"error": "DeserializationError: Failed. Context: Input data was truncated"}
+    event_dict = {
+        "error": "DeserializationError: Failed. Context: Input data was truncated"
+    }
 
     result = error_detail_processor(None, "method", event_dict)
 

@@ -64,7 +64,9 @@ def test_get_embedding_model(mocker: MockerFixture) -> None:
     embedding_model_ref.value = None
 
     mocker.patch("packages.shared_utils.src.embeddings.getenv", return_value=None)
-    mock_sentence_transformer = mocker.patch("packages.shared_utils.src.embeddings.SentenceTransformer")
+    mock_sentence_transformer = mocker.patch(
+        "packages.shared_utils.src.embeddings.SentenceTransformer"
+    )
     mock_model_instance = mocker.Mock()
     mock_sentence_transformer.return_value = mock_model_instance
 
@@ -72,7 +74,9 @@ def test_get_embedding_model(mocker: MockerFixture) -> None:
 
     assert model == mock_model_instance
     assert embedding_model_ref.value == mock_model_instance
-    mock_sentence_transformer.assert_called_once_with(EMBEDDING_MODEL_NAME, device="cpu", trust_remote_code=False)
+    mock_sentence_transformer.assert_called_once_with(
+        EMBEDDING_MODEL_NAME, device="cpu", trust_remote_code=False
+    )
 
     model2 = get_embedding_model()
     assert model2 == mock_model_instance
@@ -88,7 +92,9 @@ def test_get_embedding_model_with_model_dir(mocker: MockerFixture) -> None:
     mock_path = mocker.patch("packages.shared_utils.src.embeddings.Path")
     mock_path.return_value.exists.return_value = True
 
-    mock_sentence_transformer = mocker.patch("packages.shared_utils.src.embeddings.SentenceTransformer")
+    mock_sentence_transformer = mocker.patch(
+        "packages.shared_utils.src.embeddings.SentenceTransformer"
+    )
     mock_model_instance = mocker.Mock()
     mock_sentence_transformer.return_value = mock_model_instance
 
@@ -96,7 +102,9 @@ def test_get_embedding_model_with_model_dir(mocker: MockerFixture) -> None:
 
     assert model == mock_model_instance
     assert embedding_model_ref.value == mock_model_instance
-    mock_sentence_transformer.assert_called_once_with("/app/hf", device="cpu", trust_remote_code=False)
+    mock_sentence_transformer.assert_called_once_with(
+        "/app/hf", device="cpu", trust_remote_code=False
+    )
 
     embedding_model_ref.value = None
 
@@ -105,9 +113,9 @@ async def test_create_vector_dto(mocker: MockerFixture) -> None:
     chunk = ChunkFactory.build()
     source_id = "test_source_id"
 
-    # Mock the generate_embeddings function to return a single embedding
     mock_generate_embeddings = mocker.patch(
-        "packages.shared_utils.src.embeddings.generate_embeddings", return_value=[[0.1] * EMBEDDING_DIMENSIONS]
+        "packages.shared_utils.src.embeddings.generate_embeddings",
+        return_value=[[0.1] * EMBEDDING_DIMENSIONS],
     )
 
     vector_dto = await create_vector_dto(chunk=chunk, rag_source_id=source_id)
@@ -120,7 +128,9 @@ async def test_create_vector_dto(mocker: MockerFixture) -> None:
     mock_generate_embeddings.assert_called_once_with([chunk["content"]])
 
 
-async def test_create_vector_dto_multiple_embeddings_error(mocker: MockerFixture) -> None:
+async def test_create_vector_dto_multiple_embeddings_error(
+    mocker: MockerFixture,
+) -> None:
     mock_generate_embeddings = mocker.patch(
         "packages.shared_utils.src.embeddings.generate_embeddings",
         return_value=[[0.1] * EMBEDDING_DIMENSIONS, [0.2] * EMBEDDING_DIMENSIONS],

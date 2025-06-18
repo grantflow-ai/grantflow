@@ -361,21 +361,21 @@ function ApplicationStructurePreview() {
 															}
 															section={section}
 														/>
-														{subsectionsByParent[section.id]?.map((subsection) => (
-																<SortableSection
-																	isExpanded={expandedSections.has(subsection.id)}
-																	isSubsection
-																	key={subsection.id}
-																	onDelete={() => handleDeleteSection(subsection.id)}
-																	onToggleExpand={() => {
-																		toggleSectionExpanded(subsection.id);
-																	}}
-																	onUpdate={(updates) =>
-																		handleUpdateSection(subsection.id, updates)
-																	}
-																	section={subsection}
-																/>
-															))}
+														{subsectionsByParent[section.id].map((subsection) => (
+															<SortableSection
+																isExpanded={expandedSections.has(subsection.id)}
+																isSubsection
+																key={subsection.id}
+																onDelete={() => handleDeleteSection(subsection.id)}
+																onToggleExpand={() => {
+																	toggleSectionExpanded(subsection.id);
+																}}
+																onUpdate={(updates) =>
+																	handleUpdateSection(subsection.id, updates)
+																}
+																section={subsection}
+															/>
+														))}
 													</div>
 												))}
 											</SortableContext>
