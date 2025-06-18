@@ -6,7 +6,7 @@ vi.mock("./backgrounds-animated", () => ({
 	AnimatedGradientBackground: vi
 		.fn()
 		.mockImplementation(({ className }) => (
-			<div className={className} data-testid="mock-animated-gradient-background"></div>
+			<div className={className} data-testid="mock-animated-gradient-background" />
 		)),
 }));
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Final
 
 
-def _file_path_generator(folder: Path) -> Generator[Path, None, None]:
+def _file_path_generator(folder: Path) -> Generator[Path]:
     for path in folder.glob("*"):
         if path.is_dir():
             yield from _file_path_generator(path)

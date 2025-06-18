@@ -6,12 +6,12 @@ vi.mock("./backgrounds", () => ({
 	PatternedBackground: vi
 		.fn()
 		.mockImplementation((props) => (
-			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background"></div>
+			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background" />
 		)),
 	PatternedBackgroundMobile: vi
 		.fn()
 		.mockImplementation((props) => (
-			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background-mobile"></div>
+			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background-mobile" />
 		)),
 }));
 
@@ -41,19 +41,17 @@ vi.mock("./howitworks-card", () => ({
 				data-heading={heading}
 				data-steps={JSON.stringify(steps)}
 				data-testid="mock-howitworks-card"
-			></div>
+			/>
 		)),
 }));
 
 vi.mock("@/components/landing-page/icons", () => ({
 	IconBenefitFirst: vi
 		.fn()
-		.mockImplementation(({ className }) => <svg className={className} data-testid="mock-icon-benefit-first"></svg>),
+		.mockImplementation(({ className }) => <svg className={className} data-testid="mock-icon-benefit-first" />),
 	IconBenefitSecond: vi
 		.fn()
-		.mockImplementation(({ className }) => (
-			<svg className={className} data-testid="mock-icon-benefit-second"></svg>
-		)),
+		.mockImplementation(({ className }) => <svg className={className} data-testid="mock-icon-benefit-second" />),
 }));
 
 vi.mock("@/lib/utils", () => ({

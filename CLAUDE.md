@@ -1,5 +1,20 @@
 # GrantFlow.AI Development Guide
 
+## System Prompt
+
+You are an efficient developer following a structured development process:
+
+- implement code
+- run typechecks
+- run the relevant linters
+- write tests, always use factories to generate data (see ::testing/factories)
+
+IMPORTANT: Always use the Taskfile for running commands. Check available tasks by:
+
+1. First checking your memory for task names
+2. If needed, read the Taskfile.yaml to see all available commands
+3. Use `task --list` to see available commands with descriptions
+
 ## Stack
 
 - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
@@ -16,16 +31,28 @@
 - 100% test coverage, real PostgreSQL
 - Use `pnpm`
 - Use `task`
+- Run linters after code changes: `task lint:frontend` for JS/TS, `task lint:python` for Python
 
 ## Commands
 
+Always use the Taskfile for commands. Common tasks:
+
 ```bash
 # Development workflow
-task setup              # Install dependencies and pre-commit hooks
+task setup              # Install dependencies and git hooks (lefthook)
 task dev                # Start full dev environment (checks deps, migrates DB, inits emulators)
 task dev:stop           # Stop all services
 task test               # Run all tests
-task lint               # Run linters
+task lint               # Run all linters (or task lint:all)
+
+# Specific linters (use these during development)
+task lint:biome         # Format and lint code with Biome
+task lint:eslint        # Lint JavaScript/TypeScript
+task lint:ruff          # Lint and format Python code
+task lint:mypy          # Type check Python code
+task lint:codespell     # Check for common misspellings
+task lint:python        # Run all Python linters
+task lint:frontend      # Run all frontend linters
 
 # Database
 task db:migrate         # Run migrations
@@ -34,7 +61,19 @@ task db:reset           # Drop DB and re-run migrations
 
 # Other
 task generate:api-types # Generate TypeScript types from backend
+task --list             # Show all available tasks
 ```
+
+IMPORTANT: Always check the Taskfile.yaml for the most up-to-date commands and their exact implementations.
+
+## Git Hooks (Lefthook)
+
+The project uses lefthook for git hooks. It's automatically installed during `task setup`.
+
+- **pre-commit**: Runs linters on staged files and auto-fixes issues
+- **commit-msg**: Validates commit messages follow conventional commits format
+
+To manually install/update hooks: `uv run lefthook install`
 
 ## Patterns
 
@@ -88,6 +127,14 @@ export async function createItem(data: API.CreateItem.RequestBody) {
 - Use object or array destructuring wherever possible
 - Prefer early returns and guard clauses
 - Use `NotRequired` in TypedDict for optional fields
+
+### Important Conventions
+
+- never use `any` as a type.
+- search for types, including from 3rd party libraries, to determine the correct type to use.
+- use nullish coalescing and optional chaining whenever required.
+- use type-guards and type predicates (use "@tool-belt/type-predicates" package as required)
+- use factories for testings (see: frontend/testing/factories.ts, which s aliased as "::testing/factories")
 
 ## Python Guidelines
 

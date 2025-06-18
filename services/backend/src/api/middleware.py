@@ -22,9 +22,9 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
-        if (isinstance(ASGIConnection, Request) and connection.method == "OPTIONS") or any(
-            connection.url.path == f"/{path}" for path in PUBLIC_PATHS
-        ):
+        if (
+            isinstance(ASGIConnection, Request) and connection.method == "OPTIONS"
+        ) or any(connection.url.path == f"/{path}" for path in PUBLIC_PATHS):
             return AuthenticationResult(user=None, auth=None)
 
         auth_header = connection.headers.get("Authorization", "").strip()
@@ -36,7 +36,11 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             raise NotAuthorizedException
 
         firebase_uid: str | None = None
-        if bearer_token := (auth_header.removeprefix("Bearer").strip() if auth_header.startswith("Bearer") else None):
+        if bearer_token := (
+            auth_header.removeprefix("Bearer").strip()
+            if auth_header.startswith("Bearer")
+            else None
+        ):
             firebase_uid = verify_jwt_token(bearer_token)
 
         if otp := connection.query_params.get("otp"):

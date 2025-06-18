@@ -1,11 +1,10 @@
 import "@/styles/globals.css";
 
+import type { Metadata } from "next";
 import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
-
-import type { Metadata } from "next";
 
 export const metadata = {
 	alternates: {

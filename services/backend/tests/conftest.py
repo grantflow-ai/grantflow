@@ -31,16 +31,23 @@ def firebase_uid() -> str:
 
 
 @pytest.fixture(scope="session")
-async def test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[TestingClientType]:
+async def test_client(
+    async_session_maker: async_sessionmaker[Any],
+) -> AsyncGenerator[TestingClientType]:
     firebase_uid = "a" * 128
 
     firebase_app_ref.value = Mock()
 
     with (
         patch("services.backend.src.main.before_server_start"),
-        patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
+        patch(
+            "firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}
+        ),
         patch("jwt.decode", return_value={"sub": firebase_uid}),
-        patch("services.backend.src.utils.firebase.get_firebase_app", return_value=firebase_app_ref.value),
+        patch(
+            "services.backend.src.utils.firebase.get_firebase_app",
+            return_value=firebase_app_ref.value,
+        ),
         patch("firebase_admin.initialize_app", return_value=Mock()),
     ):
         from services.backend.src.main import app

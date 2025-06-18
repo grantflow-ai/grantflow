@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { crawlTemplateUrl } from "@/actions/sources";
 import { Button } from "@/components/ui/button";
-import { FileWithId } from "@/components/workspaces/wizard/application-preview";
+import type { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { logError } from "@/utils/logging";

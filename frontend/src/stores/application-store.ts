@@ -9,8 +9,8 @@ import {
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
-import { FileWithId } from "@/components/workspaces/wizard/application-preview";
-import { API } from "@/types/api-types";
+import type { FileWithId } from "@/components/workspaces/wizard/application-preview";
+import type { API } from "@/types/api-types";
 import { logError } from "@/utils/logging";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
@@ -194,7 +194,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	generateTemplate: async (templateId: string) => {
 		set({ isLoading: true });
 
-		const {application} = get();
+		const { application } = get();
 
 		assertIsNotNullish(application, {
 			message: "Application should not be null when calling generateTemplate",

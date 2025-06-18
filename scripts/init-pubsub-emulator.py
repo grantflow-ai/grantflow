@@ -1,20 +1,30 @@
 #!/usr/bin/env python3
+import contextlib
 import os
 import sys
+from typing import TypedDict
 
 from google.api_core import exceptions
 from google.cloud import pubsub_v1
 
 
-def main():
+class SubscriptionConfig(TypedDict):
+    name: str
+    push_endpoint: str
 
+
+class TopicConfig(TypedDict):
+    topic: str
+    subscriptions: list[SubscriptionConfig]
+
+
+def main() -> None:
     project_id = os.environ.get("PUBSUB_PROJECT_ID", "grantflow")
 
     publisher = pubsub_v1.PublisherClient()
     subscriber = pubsub_v1.SubscriberClient()
 
-
-    topics_and_subscriptions = [
+    topics_and_subscriptions: list[TopicConfig] = [
         {
             "topic": "file-indexing",
             "subscriptions": [
@@ -48,33 +58,24 @@ def main():
         },
     ]
 
-
     for config in topics_and_subscriptions:
         topic_name = config["topic"]
         topic_path = publisher.topic_path(project_id, topic_name)
 
-
         try:
-            topic = publisher.create_topic(request={"name": topic_path})
-            print(f"Created topic: {topic.name}")
+            publisher.create_topic(request={"name": topic_path})
         except exceptions.AlreadyExists:
-            print(f"Topic already exists: {topic_path}")
-        except Exception as e:
-            print(f"Error creating topic {topic_name}: {e}")
+            pass
+        except Exception:
             sys.exit(1)
-
 
         for sub_config in config["subscriptions"]:
             subscription_name = sub_config["name"]
             subscription_path = subscriber.subscription_path(project_id, subscription_name)
 
             try:
-
-                try:
+                with contextlib.suppress(exceptions.NotFound):
                     subscriber.delete_subscription(request={"subscription": subscription_path})
-                    print(f"Deleted existing subscription: {subscription_path}")
-                except exceptions.NotFound:
-                    pass
 
                 request = {
                     "name": subscription_path,
@@ -82,20 +83,15 @@ def main():
                     "ack_deadline_seconds": 600,
                 }
 
-
                 if sub_config.get("push_endpoint"):
                     push_config = pubsub_v1.types.PushConfig(push_endpoint=sub_config["push_endpoint"])
                     request["push_config"] = push_config
 
-                subscription = subscriber.create_subscription(request=request)
-                print(f"Created subscription: {subscription.name}")
+                subscriber.create_subscription(request=request)
             except exceptions.AlreadyExists:
-                print(f"Subscription already exists: {subscription_path}")
-            except Exception as e:
-                print(f"Error creating subscription {subscription_name}: {e}")
+                pass
+            except Exception:
                 sys.exit(1)
-
-    print("Pub/Sub initialization complete!")
 
 
 if __name__ == "__main__":

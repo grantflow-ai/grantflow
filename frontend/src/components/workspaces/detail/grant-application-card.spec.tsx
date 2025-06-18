@@ -1,6 +1,5 @@
-import { render, screen } from "@testing-library/react";
-
 import { ApplicationListItemFactory } from "::testing/factories";
+import { render, screen } from "@testing-library/react";
 import { PagePath } from "@/enums";
 
 import { GrantApplicationCard } from "./grant-application-card";

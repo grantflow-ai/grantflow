@@ -7,7 +7,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { useDebounce } from "@/utils/debounce";
 
-import { ApplicationPreview, FileWithId } from "./application-preview";
+import { ApplicationPreview, type FileWithId } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 
