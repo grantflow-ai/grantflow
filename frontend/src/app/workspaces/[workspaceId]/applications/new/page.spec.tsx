@@ -66,52 +66,18 @@ const mockSearchParams = {
 
 const createMockWizardStore = (overrides: any = {}) => {
 	const defaultStore = {
-		addFile: vi.fn(),
-		addUrl: vi.fn(),
-		applicationState: {
-			application: {
-				grant_template: { id: "template-123" },
-				id: "app-123",
-				title: "Untitled Application",
-				workspace_id: "test-workspace-id",
-			},
-			applicationId: "app-123",
-			applicationTitle: "Untitled Application",
-			templateId: "template-123",
-			wsConnectionStatus: undefined,
-			wsConnectionStatusColor: undefined,
-		},
-		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
-		contentState: {
-			uploadedFiles: [],
-			urls: [],
-		},
-		createApplication: vi.fn(),
-		generateTemplate: vi.fn(),
-		handleApplicationInit: vi.fn(),
-		isLoading: false,
+		handleTitleChange: vi.fn(),
 		polling: {
 			intervalId: null,
 			isActive: false,
 			start: vi.fn(),
 			stop: vi.fn(),
 		},
-		removeFile: vi.fn(),
-		removeUrl: vi.fn(),
-		retrieveApplication: vi.fn(),
-		setApplication: vi.fn(),
-		setApplicationId: vi.fn(),
-		setApplicationTitle: vi.fn(),
 		setCurrentStep: vi.fn(),
 		setFileDropdownOpen: vi.fn(),
 		setLinkHoverState: vi.fn(),
-		setTemplateId: vi.fn(),
-		setUploadedFiles: vi.fn(),
 		setUrlInput: vi.fn(),
-		setUrls: vi.fn(),
 		setWorkspaceId: vi.fn(),
-		setWsConnectionStatus: vi.fn(),
-		setWsConnectionStatusColor: vi.fn(),
 		toNextStep: vi.fn(),
 		toPreviousStep: vi.fn(),
 		ui: {
@@ -120,24 +86,20 @@ const createMockWizardStore = (overrides: any = {}) => {
 			linkHoverStates: {},
 			urlInput: "",
 		},
-		updateApplicationTitle: vi.fn(),
-		updateGrantSections: vi.fn(),
 		validateStepNext: vi.fn().mockReturnValue(false),
 		workspaceId: "test-workspace-id",
+		wsConnectionStatus: undefined,
+		wsConnectionStatusColor: undefined,
 	};
 
 	// Deep merge overrides
-	if (overrides.applicationState) {
-		defaultStore.applicationState = { ...defaultStore.applicationState, ...overrides.applicationState };
-		delete overrides.applicationState;
-	}
-	if (overrides.contentState) {
-		defaultStore.contentState = { ...defaultStore.contentState, ...overrides.contentState };
-		delete overrides.contentState;
-	}
 	if (overrides.ui) {
 		defaultStore.ui = { ...defaultStore.ui, ...overrides.ui };
 		delete overrides.ui;
+	}
+	if (overrides.polling) {
+		defaultStore.polling = { ...defaultStore.polling, ...overrides.polling };
+		delete overrides.polling;
 	}
 
 	return { ...defaultStore, ...overrides };
@@ -152,7 +114,8 @@ const createMockApplicationStore = (overrides: any = {}) => {
 			id: "app-123",
 			title: "Untitled Application",
 			workspace_id: "test-workspace-id",
-		},
+		} as any,
+		applicationTitle: "Untitled Application",
 		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
 		createApplication: vi.fn(),
 		generateTemplate: vi.fn(),
@@ -162,9 +125,12 @@ const createMockApplicationStore = (overrides: any = {}) => {
 		removeUrl: vi.fn(),
 		retrieveApplication: vi.fn(),
 		setApplication: vi.fn(),
+		setApplicationTitle: vi.fn(),
 		setUploadedFiles: vi.fn(),
 		setUrls: vi.fn(),
 		updateApplication: vi.fn(),
+		updateApplicationTitle: vi.fn(),
+		updateGrantSections: vi.fn(),
 		uploadedFiles: [],
 		urls: [],
 	};
@@ -186,14 +152,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockImplementation(() => new Promise<never>(() => {}));
 
 		// Mock store to show loading state
-		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: null,
-				uploadedFiles: [],
-				urls: [],
-			},
-			isLoading: true,
-		});
+		const mockStore = createMockWizardStore();
 		vi.mocked(useWizardStore).mockReturnValue(mockStore);
 
 		// Mock application store to show loading state
@@ -322,19 +281,23 @@ describe("CreateGrantApplicationWizardPage", () => {
 		// Mock store to simulate state with title and URL but no files uploaded
 		const mockValidateStepNext = vi.fn().mockReturnValue(false); // Validation should fail
 		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: {
-					grant_template: { id: "template-123" },
-					id: "app-123",
-					title: "My Application",
-					workspace_id: "test-workspace-id",
-				},
-				uploadedFiles: [], // No files uploaded
-				urls: ["https://example.com"],
-			},
 			validateStepNext: mockValidateStepNext,
 		});
 		vi.mocked(useWizardStore).mockReturnValue(mockStore);
+
+		// Mock application store with the application data
+		const mockApplicationStore = createMockApplicationStore({
+			application: {
+				grant_template: { id: "template-123" },
+				id: "app-123",
+				title: "My Application",
+				workspace_id: "test-workspace-id",
+			},
+			applicationTitle: "My Application",
+			uploadedFiles: [], // No files uploaded
+			urls: ["https://example.com"],
+		});
+		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 

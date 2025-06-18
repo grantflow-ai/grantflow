@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect } from "react";
-import { toast } from "sonner";
 
-import { deleteTemplateSource } from "@/actions/sources";
 import AppTextArea from "@/components/textarea-field";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { useDebounce } from "@/utils/debounce";
-import { logError } from "@/utils/logging";
 
 import { ApplicationPreview, FileWithId } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
@@ -17,8 +14,6 @@ import { UrlInput } from "./url-input";
 const RETRIEVE_DEBOUNCE_MS = 1000;
 const POLLING_INTERVAL_DURATION = 3000;
 const TITLE_MAX_LENGTH = 120;
-const TITLE_DEBOUNCE_MS = 500;
-
 interface ApplicationDetailsStepProps {
 	connectionStatus?: string;
 	connectionStatusColor?: string;
@@ -26,9 +21,10 @@ interface ApplicationDetailsStepProps {
 
 export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
 	const {
+		handleTitleChange,
 		polling: { start, stop },
 	} = useWizardStore();
-	const { application, areFilesOrUrlsIndexing, removeFile, removeUrl, retrieveApplication, updateApplication } =
+	const { application, applicationTitle, areFilesOrUrlsIndexing, removeFile, removeUrl, retrieveApplication } =
 		useApplicationStore();
 
 	const getIndexingStatus = useCallback(async () => {
@@ -50,12 +46,6 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 
 	const debouncedRetrieveApplication = useDebounce(handleRetrieveWithPolling, RETRIEVE_DEBOUNCE_MS);
 
-	const debouncedUpdateTitle = useDebounce((title: string) => {
-		if (application) {
-			void updateApplication(application.workspace_id, application.id, { title });
-		}
-	}, TITLE_DEBOUNCE_MS);
-
 	const handleDocumentChange = useCallback(() => {
 		debouncedRetrieveApplication();
 	}, [debouncedRetrieveApplication]);
@@ -66,27 +56,18 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 		};
 	}, [stop]);
 
-	const handleRemoveUrl = (urlToRemove: string) => {
-		removeUrl(urlToRemove);
-	};
+	const handleRemoveUrl = useCallback(
+		async (urlToRemove: string) => {
+			await removeUrl(urlToRemove);
+		},
+		[removeUrl],
+	);
 
 	const handleFileRemove = useCallback(
 		async (fileToRemove: FileWithId) => {
-			if (!fileToRemove.id || !application?.grant_template?.id) {
-				toast.error("Cannot remove file: File ID not found");
-				return;
-			}
-
-			try {
-				await deleteTemplateSource(application.workspace_id, application.grant_template.id, fileToRemove.id);
-				removeFile(fileToRemove);
-				toast.success(`File ${fileToRemove.name} removed`);
-			} catch (error) {
-				logError({ error, identifier: "deleteTemplateSource" });
-				toast.error("Failed to remove file. Please try again.");
-			}
+			await removeFile(fileToRemove);
 		},
-		[application, removeFile],
+		[removeFile],
 	);
 
 	return (
@@ -114,13 +95,13 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 						label="Application Title"
 						maxCount={TITLE_MAX_LENGTH}
 						onChange={(e) => {
-							debouncedUpdateTitle(e.target.value);
+							handleTitleChange(e.target.value);
 						}}
 						placeholder="Title of your grant application"
 						rows={4}
 						showCount
 						testId="application-title-textarea"
-						value={application?.title ?? ""}
+						value={applicationTitle}
 					/>
 				</div>
 

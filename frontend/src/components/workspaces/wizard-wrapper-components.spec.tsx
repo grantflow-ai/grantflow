@@ -2,14 +2,16 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApplicationFactory } from "::testing/factories";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
-const mockStoreState = {
+const mockApplicationStoreState = {
 	addFile: vi.fn(),
 	addUrl: vi.fn(),
 	application: null,
+	applicationTitle: "",
 	areFilesOrUrlsIndexing: vi.fn(() => false),
 	createApplication: vi.fn(),
 	generateTemplate: vi.fn(),
@@ -19,39 +21,26 @@ const mockStoreState = {
 	removeUrl: vi.fn(),
 	retrieveApplication: vi.fn(),
 	setApplication: vi.fn(),
+	setApplicationTitle: vi.fn(),
 	setUploadedFiles: vi.fn(),
 	setUrls: vi.fn(),
 	updateApplication: vi.fn().mockResolvedValue(undefined),
+	updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
+	updateGrantSections: vi.fn().mockResolvedValue(undefined),
 	uploadedFiles: [],
 	urls: [],
 };
 
-vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: Object.assign(
-		vi.fn(() => mockStoreState),
-		{
-			getState: vi.fn(() => mockStoreState),
-		},
-	),
-}));
+vi.mock("@/stores/application-store");
+
+// Mock the useApplicationStore hook and getState
+vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStoreState as any);
+vi.mocked(useApplicationStore.getState).mockReturnValue(mockApplicationStoreState as any);
 
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			applicationState: {
-				application: ApplicationFactory.build({ title: "A".repeat(20) }),
-				applicationId: null,
-				applicationTitle: "A".repeat(20),
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
-			contentState: {
-				uploadedFiles: [],
-				urls: ["https://example.com"],
-			},
-			isLoading: false,
 			polling: {
 				...polling,
 				intervalId: null,
@@ -64,10 +53,15 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 				urlInput: "",
 			},
 			workspaceId: "test-workspace-id",
+			wsConnectionStatus: undefined,
+			wsConnectionStatusColor: undefined,
 		});
 
-		Object.assign(mockStoreState, {
+		// Update the application store mock
+		Object.assign(mockApplicationStoreState, {
 			application: ApplicationFactory.build({ title: "A".repeat(20) }),
+			applicationTitle: "A".repeat(20),
+			uploadedFiles: [],
 			urls: ["https://example.com"],
 		});
 	});
@@ -167,18 +161,6 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("disables continue button when step validation fails", () => {
 			useWizardStore.setState({
-				applicationState: {
-					application: ApplicationFactory.build({ title: "Short" }),
-					applicationId: null,
-					applicationTitle: "Short",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
-					uploadedFiles: [],
-					urls: [],
-				},
 				ui: {
 					currentStep: 0,
 					fileDropdownStates: {},
@@ -187,8 +169,11 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 				},
 			});
 
-			Object.assign(mockStoreState, {
+			// Update application store to have failing validation
+			Object.assign(mockApplicationStoreState, {
 				application: ApplicationFactory.build({ title: "Short" }),
+				applicationTitle: "Short",
+				uploadedFiles: [],
 				urls: [],
 			});
 			render(<WizardFooter />);
@@ -203,19 +188,6 @@ describe("WizardHeader", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			applicationState: {
-				application: ApplicationFactory.build({ title: "Test Application" }),
-				applicationId: null,
-				applicationTitle: "Test Application",
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
-			},
-			contentState: {
-				uploadedFiles: [],
-				urls: [],
-			},
-			isLoading: false,
 			polling: {
 				...polling,
 				intervalId: null,
@@ -228,10 +200,15 @@ describe("WizardHeader", () => {
 				urlInput: "",
 			},
 			workspaceId: "test-workspace-id",
+			wsConnectionStatus: undefined,
+			wsConnectionStatusColor: undefined,
 		});
 
-		Object.assign(mockStoreState, {
+		// Update the application store mock
+		Object.assign(mockApplicationStoreState, {
 			application: ApplicationFactory.build({ title: "Test Application" }),
+			applicationTitle: "Test Application",
+			uploadedFiles: [],
 			urls: [],
 		});
 	});
