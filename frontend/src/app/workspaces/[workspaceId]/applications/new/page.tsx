@@ -27,6 +27,7 @@ export default function CreateGrantApplicationWizardPage() {
 	const router = useRouter();
 
 	const {
+		setWorkspaceId,
 		ui: { currentStep },
 	} = useWizardStore();
 	const { application, handleApplicationInit } = useApplicationStore();
@@ -38,6 +39,7 @@ export default function CreateGrantApplicationWizardPage() {
 
 	// Get or create an application on mount ~keep
 	useEffect(() => {
+		setWorkspaceId(params.workspaceId);
 		const applicationId = searchParams.get("applicationId");
 		const handleApplication = async () => {
 			try {
@@ -47,7 +49,7 @@ export default function CreateGrantApplicationWizardPage() {
 			}
 		};
 		void handleApplication();
-	}, [params.workspaceId, router, searchParams, handleApplicationInit]);
+	}, [params.workspaceId, router, searchParams, handleApplicationInit, setWorkspaceId]);
 
 	useEffect(() => {
 		if (notifications.length === 0) {
@@ -74,7 +76,11 @@ export default function CreateGrantApplicationWizardPage() {
 			connectionStatusColor={connectionStatusColor}
 			key={0}
 		/>,
-		<ApplicationStructureStep key={1} />,
+		<ApplicationStructureStep
+			connectionStatus={connectionStatus}
+			connectionStatusColor={connectionStatusColor}
+			key={1}
+		/>,
 		<KnowledgeBaseStep key={2} />,
 		<ResearchPlanStep key={3} />,
 		<ResearchDeepDiveStep key={4} />,

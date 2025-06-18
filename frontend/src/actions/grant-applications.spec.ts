@@ -18,10 +18,10 @@ import {
 } from "./grant-applications";
 import { updateGrantTemplate } from "./grant-template";
 
-const mockPost = vi.fn();
-const mockPatch = vi.fn();
-const mockDelete = vi.fn();
-const mockGet = vi.fn();
+const mockPost = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
+const mockPatch = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
+const mockDelete = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
+const mockGet = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
 const mockCreateAuthHeaders = vi.fn();
 const mockWithAuthRedirect = vi.fn();
 
@@ -95,7 +95,9 @@ beforeEach(() => {
 		json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
 	});
 
-	mockPatch.mockResolvedValue(undefined);
+	mockPatch.mockReturnValue({
+		json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
+	});
 	mockDelete.mockResolvedValue(undefined);
 });
 
@@ -394,9 +396,11 @@ describe("Grant Application Actions", () => {
 			mockCreateAuthHeaders.mockResolvedValueOnce({});
 			mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
 
-			mockPatch.mockResolvedValueOnce(undefined);
+			mockPatch.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
+			});
 
-			await updateApplication(mockWorkspaceId, mockApplicationId, { title: "Updated" } as any);
+			await updateApplication(mockWorkspaceId, mockApplicationId, { title: "Updated" });
 
 			expect(mockPatch).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
 				headers: {},

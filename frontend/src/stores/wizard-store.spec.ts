@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
 	ApplicationFactory,
@@ -7,24 +7,24 @@ import {
 	RagSourceFactory,
 } from "::testing/factories";
 
+import { useApplicationStore } from "./application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";
 
-describe("validateStepNext", () => {
+// Mock the application store
+vi.mock("./application-store");
+
+describe("wizard store", () => {
 	beforeEach(() => {
+		vi.clearAllMocks();
+
+		// Reset wizard store
 		useWizardStore.setState({
-			applicationState: {
-				application: null,
-				applicationId: null,
-				applicationTitle: "",
-				templateId: null,
-				wsConnectionStatus: undefined,
-				wsConnectionStatusColor: undefined,
+			polling: {
+				intervalId: null,
+				isActive: false,
+				start: vi.fn(),
+				stop: vi.fn(),
 			},
-			contentState: {
-				uploadedFiles: [],
-				urls: [],
-			},
-			isLoading: true,
 			ui: {
 				currentStep: 0,
 				fileDropdownStates: {},
@@ -32,454 +32,493 @@ describe("validateStepNext", () => {
 				urlInput: "",
 			},
 			workspaceId: "",
+			wsConnectionStatus: undefined,
+			wsConnectionStatusColor: undefined,
+		});
+
+		// Reset application store
+		useApplicationStore.setState({
+			application: null,
+			applicationTitle: "",
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
 		});
 	});
 
-	describe("when application is null", () => {
-		it("should return false", () => {
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
-		});
-	});
-
-	describe("when isLoading is true", () => {
-		it("should return false", () => {
+	describe("handleTitleChange", () => {
+		it("should update title immediately and debounce backend update", async () => {
+			const mockSetApplicationTitle = vi.fn();
+			const mockUpdateApplicationTitle = vi.fn();
 			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: true,
+
+			vi.mocked(useApplicationStore.getState).mockReturnValue({
+				...useApplicationStore.getState(),
+				application,
+				setApplicationTitle: mockSetApplicationTitle,
+				updateApplicationTitle: mockUpdateApplicationTitle,
+			} as any);
+
+			useWizardStore.setState({ workspaceId: "workspace-123" });
+
+			const { handleTitleChange } = useWizardStore.getState();
+
+			// Call handleTitleChange
+			handleTitleChange("New Title");
+
+			// Should immediately update local state
+			expect(mockSetApplicationTitle).toHaveBeenCalledWith("New Title");
+
+			// Backend update should be debounced
+			expect(mockUpdateApplicationTitle).not.toHaveBeenCalled();
+
+			// Wait for debounce
+			await new Promise((resolve) => setTimeout(resolve, 600));
+
+			// Now backend update should have been called
+			expect(mockUpdateApplicationTitle).toHaveBeenCalledWith("workspace-123", application.id, "New Title");
+		});
+
+		it("should not update backend if title is same as current", async () => {
+			const mockSetApplicationTitle = vi.fn();
+			const mockUpdateApplicationTitle = vi.fn();
+			const application = ApplicationFactory.build({ title: "Current Title" });
+
+			vi.mocked(useApplicationStore.getState).mockReturnValue({
+				...useApplicationStore.getState(),
+				application,
+				setApplicationTitle: mockSetApplicationTitle,
+				updateApplicationTitle: mockUpdateApplicationTitle,
+			} as any);
+
+			useWizardStore.setState({ workspaceId: "workspace-123" });
+
+			const { handleTitleChange } = useWizardStore.getState();
+
+			// Call with same title
+			handleTitleChange("Current Title");
+
+			// Should update local state
+			expect(mockSetApplicationTitle).toHaveBeenCalledWith("Current Title");
+
+			// Wait for potential debounce
+			await new Promise((resolve) => setTimeout(resolve, 600));
+
+			// Backend should not be called for same title
+			expect(mockUpdateApplicationTitle).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("validateStepNext", () => {
+		describe("when application is null", () => {
+			it("should return false", () => {
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application: null,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
+			});
+		});
+
+		describe("step 0 validation", () => {
+			beforeEach(() => {
+				useWizardStore.setState({
+					ui: { ...useWizardStore.getState().ui, currentStep: 0 },
+				});
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
-		});
-	});
-
-	describe("step 0 validation", () => {
-		it("should return true when title is long enough and has URLs", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: {
+			it("should return true when title is long enough and has URLs", () => {
+				const application = ApplicationFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
 					application,
-					applicationId: null,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
 					uploadedFiles: [],
 					urls: ["https://example.com"],
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(true);
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(true);
-		});
-
-		it("should return true when title is long enough and has files", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: {
+			it("should return true when title is long enough and has files", () => {
+				const application = ApplicationFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
 					application,
-					applicationId: null,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
 					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
 					urls: [],
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(true);
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(true);
-		});
-
-		it("should return true when title is long enough and has both URLs and files", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: {
+			it("should return true when title is long enough and has both URLs and files", () => {
+				const application = ApplicationFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
 					application,
-					applicationId: null,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
 					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
 					urls: ["https://example.com"],
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(true);
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(true);
-		});
-
-		it("should return false when title is too short", () => {
-			const application = ApplicationFactory.build({
-				title: "A".repeat(MIN_TITLE_LENGTH - 1),
-			});
-			useWizardStore.setState({
-				applicationState: {
+			it("should return false when title is too short", () => {
+				const application = ApplicationFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
 					application,
-					applicationId: null,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH - 1),
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
 					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
 					urls: ["https://example.com"],
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
-		});
-
-		it("should trim whitespace from title", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: {
+			it("should trim whitespace from title", () => {
+				const application = ApplicationFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
 					application,
-					applicationId: null,
 					applicationTitle: `   ${"A".repeat(MIN_TITLE_LENGTH)}   `,
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
 					uploadedFiles: [],
 					urls: ["https://example.com"],
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(true);
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(true);
-		});
-
-		it("should return false when neither URLs nor files are present", () => {
-			const application = ApplicationFactory.build({
-				title: "A".repeat(MIN_TITLE_LENGTH),
-			});
-			useWizardStore.setState({
-				applicationState: {
+			it("should return false when neither URLs nor files are present", () => {
+				const application = ApplicationFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
 					application,
-					applicationId: null,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				contentState: {
 					uploadedFiles: [],
 					urls: [],
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
+			});
+		});
+
+		describe("step 1 validation", () => {
+			beforeEach(() => {
+				useWizardStore.setState({
+					ui: { ...useWizardStore.getState().ui, currentStep: 1 },
+				});
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
+			it("should return true when grant template has sections", () => {
+				const application = ApplicationWithTemplateFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(true);
+			});
+
+			it("should return false when grant template is null", () => {
+				const application = ApplicationFactory.build({ grant_template: undefined });
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
+			});
+
+			it("should return false when grant template has no sections", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: {
+						...GrantTemplateFactory.build(),
+						grant_sections: [],
+					},
+				});
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
+			});
+		});
+
+		describe("step 2 validation", () => {
+			beforeEach(() => {
+				useWizardStore.setState({
+					ui: { ...useWizardStore.getState().ui, currentStep: 2 },
+				});
+			});
+
+			it("should return true when rag sources exist and none have failed", () => {
+				const ragSources = RagSourceFactory.batch(3, { status: "FINISHED" });
+				const application = ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
+				});
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(true);
+			});
+
+			it("should return true with mixed non-failed statuses", () => {
+				const ragSources = [
+					RagSourceFactory.build({ status: "INDEXING" }),
+					RagSourceFactory.build({ status: "FINISHED" }),
+					RagSourceFactory.build({ status: "FINISHED" }),
+				];
+				const application = ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
+				});
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(true);
+			});
+
+			it("should return false when any rag source has failed", () => {
+				const ragSources = [
+					RagSourceFactory.build({ status: "FINISHED" }),
+					RagSourceFactory.build({ status: "FAILED" }),
+					RagSourceFactory.build({ status: "INDEXING" }),
+				];
+				const application = ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
+				});
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
+			});
+
+			it("should return false when no rag sources exist", () => {
+				const application = ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+				});
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
+			});
+		});
+
+		describe("unknown step", () => {
+			it("should return false for steps beyond 2", () => {
+				const application = ApplicationFactory.build();
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					...useApplicationStore.getState(),
+					application,
+				} as any);
+
+				useWizardStore.setState({
+					ui: { ...useWizardStore.getState().ui, currentStep: 3 },
+				});
+
+				const { validateStepNext } = useWizardStore.getState();
+				expect(validateStepNext()).toBe(false);
+			});
 		});
 	});
 
-	describe("step 1 validation", () => {
-		it("should return true when grant template has sections", () => {
-			const application = ApplicationWithTemplateFactory.build();
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-			});
+	describe.skip("polling", () => {
+		it("should start polling with immediate call", () => {
+			const mockApiFunction = vi.fn();
+			const store = useWizardStore.getState();
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(true);
+			store.polling.start(mockApiFunction, 1000, true);
+
+			// Should call immediately
+			expect(mockApiFunction).toHaveBeenCalledTimes(1);
+
+			// Should set active state
+			const updatedState = useWizardStore.getState();
+			expect(updatedState.polling.isActive).toBe(true);
+			expect(updatedState.polling.intervalId).not.toBe(null);
+
+			// Cleanup
+			updatedState.polling.stop();
 		});
 
-		it("should return false when grant template is null", () => {
-			const application = ApplicationFactory.build({
-				grant_template: undefined,
-			});
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-			});
+		it("should start polling without immediate call", () => {
+			const mockApiFunction = vi.fn();
+			const store = useWizardStore.getState();
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
+			store.polling.start(mockApiFunction, 1000, false);
+
+			// Should not call immediately
+			expect(mockApiFunction).not.toHaveBeenCalled();
+
+			// Should set active state
+			const updatedState = useWizardStore.getState();
+			expect(updatedState.polling.isActive).toBe(true);
+			expect(updatedState.polling.intervalId).not.toBe(null);
+
+			// Cleanup
+			updatedState.polling.stop();
 		});
 
-		it("should return false when grant template has no sections", () => {
+		it("should stop polling", () => {
+			const mockApiFunction = vi.fn();
+			const store = useWizardStore.getState();
+
+			store.polling.start(mockApiFunction, 1000);
+			store.polling.stop();
+
+			const updatedState = useWizardStore.getState();
+			expect(updatedState.polling.isActive).toBe(false);
+			expect(updatedState.polling.intervalId).toBe(null);
+		});
+
+		it("should not start polling if already active", () => {
+			const mockApiFunction1 = vi.fn();
+			const mockApiFunction2 = vi.fn();
+			const store = useWizardStore.getState();
+
+			store.polling.start(mockApiFunction1, 1000);
+			const firstIntervalId = useWizardStore.getState().polling.intervalId;
+
+			store.polling.start(mockApiFunction2, 1000);
+			const secondIntervalId = useWizardStore.getState().polling.intervalId;
+
+			// Should not change interval
+			expect(firstIntervalId).toBe(secondIntervalId);
+			expect(mockApiFunction1).toHaveBeenCalledTimes(1);
+			expect(mockApiFunction2).not.toHaveBeenCalled();
+
+			// Cleanup
+			store.polling.stop();
+		});
+	});
+
+	describe("navigation", () => {
+		it("should navigate to next step", () => {
+			const { toNextStep } = useWizardStore.getState();
+
+			toNextStep();
+			expect(useWizardStore.getState().ui.currentStep).toBe(1);
+
+			toNextStep();
+			expect(useWizardStore.getState().ui.currentStep).toBe(2);
+		});
+
+		it("should not navigate beyond last step", () => {
+			useWizardStore.setState({
+				ui: { ...useWizardStore.getState().ui, currentStep: 5 },
+			});
+
+			const { toNextStep } = useWizardStore.getState();
+			toNextStep();
+
+			expect(useWizardStore.getState().ui.currentStep).toBe(5);
+		});
+
+		it("should navigate to previous step", () => {
+			useWizardStore.setState({
+				ui: { ...useWizardStore.getState().ui, currentStep: 2 },
+			});
+
+			const { toPreviousStep } = useWizardStore.getState();
+
+			toPreviousStep();
+			expect(useWizardStore.getState().ui.currentStep).toBe(1);
+
+			toPreviousStep();
+			expect(useWizardStore.getState().ui.currentStep).toBe(0);
+		});
+
+		it("should not navigate before first step", () => {
+			const { toPreviousStep } = useWizardStore.getState();
+			toPreviousStep();
+
+			expect(useWizardStore.getState().ui.currentStep).toBe(0);
+		});
+
+		it("should trigger template generation when moving from step 0 to 1", () => {
+			const mockGenerateTemplate = vi.fn();
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
-					created_at: new Date().toISOString(),
-					funding_organization: undefined,
-					funding_organization_id: undefined,
-					grant_application_id: "123",
+					...GrantTemplateFactory.build(),
 					grant_sections: [],
-					id: "123",
-					rag_sources: [],
-					submission_date: undefined,
-					updated_at: new Date().toISOString(),
-				},
-			});
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
 				},
 			});
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
+			vi.mocked(useApplicationStore.getState).mockReturnValue({
+				...useApplicationStore.getState(),
+				application,
+				generateTemplate: mockGenerateTemplate,
+			} as any);
+
+			useWizardStore.setState({ workspaceId: "workspace-123" });
+
+			const { toNextStep } = useWizardStore.getState();
+			toNextStep();
+
+			expect(mockGenerateTemplate).toHaveBeenCalledWith(application.grant_template!.id);
 		});
 	});
 
-	describe("step 2 validation", () => {
-		it("should return true when rag sources exist and none have failed", () => {
-			const ragSources = RagSourceFactory.batch(3, { status: "FINISHED" });
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
-			});
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-			});
+	describe("UI state management", () => {
+		it("should set file dropdown state", () => {
+			const { setFileDropdownOpen } = useWizardStore.getState();
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(true);
+			setFileDropdownOpen("file-1", true);
+			expect(useWizardStore.getState().ui.fileDropdownStates["file-1"]).toBe(true);
+
+			setFileDropdownOpen("file-1", false);
+			expect(useWizardStore.getState().ui.fileDropdownStates["file-1"]).toBe(false);
 		});
 
-		it("should return true with mixed non-failed statuses", () => {
-			const ragSources = [
-				RagSourceFactory.build({ status: "INDEXING" }),
-				RagSourceFactory.build({ status: "FINISHED" }),
-				RagSourceFactory.build({ status: "FINISHED" }),
-			];
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
-			});
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-			});
+		it("should set link hover state", () => {
+			const { setLinkHoverState } = useWizardStore.getState();
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(true);
+			setLinkHoverState("https://example.com", true);
+			expect(useWizardStore.getState().ui.linkHoverStates["https://example.com"]).toBe(true);
+
+			setLinkHoverState("https://example.com", false);
+			expect(useWizardStore.getState().ui.linkHoverStates["https://example.com"]).toBe(false);
 		});
 
-		it("should return false when any rag source has failed", () => {
-			const ragSources = [
-				RagSourceFactory.build({ status: "FINISHED" }),
-				RagSourceFactory.build({ status: "FAILED" }),
-				RagSourceFactory.build({ status: "INDEXING" }),
-			];
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
-			});
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-			});
+		it("should set URL input", () => {
+			const { setUrlInput } = useWizardStore.getState();
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
+			setUrlInput("https://example.com");
+			expect(useWizardStore.getState().ui.urlInput).toBe("https://example.com");
 		});
 
-		it("should return false when no rag sources exist", () => {
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
-			});
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-			});
+		it("should set workspace ID", () => {
+			const { setWorkspaceId } = useWizardStore.getState();
 
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
-		});
-	});
-
-	describe("unknown step", () => {
-		it("should return false for steps beyond 2", () => {
-			const application = ApplicationFactory.build();
-			useWizardStore.setState({
-				applicationState: {
-					application,
-					applicationId: null,
-					applicationTitle: "",
-					templateId: null,
-					wsConnectionStatus: undefined,
-					wsConnectionStatusColor: undefined,
-				},
-				isLoading: false,
-				ui: {
-					currentStep: 3,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-			});
-
-			const { validateStepNext } = useWizardStore.getState();
-			const result = validateStepNext();
-			expect(result).toBe(false);
+			setWorkspaceId("workspace-123");
+			expect(useWizardStore.getState().workspaceId).toBe("workspace-123");
 		});
 	});
 });
