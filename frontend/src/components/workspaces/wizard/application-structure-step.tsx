@@ -3,10 +3,10 @@
 import {
 	closestCenter,
 	DndContext,
-	DragEndEvent,
-	DragOverEvent,
+	type DragEndEvent,
+	type DragOverEvent,
 	DragOverlay,
-	DragStartEvent,
+	type DragStartEvent,
 	KeyboardSensor,
 	PointerSensor,
 	useSensor,
@@ -21,7 +21,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
-import { API } from "@/types/api-types";
+import type { API } from "@/types/api-types";
 
 type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
@@ -230,7 +231,7 @@ function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }
 		const activeSection = sections.find((s) => s.id === active.id);
 		const overSection = sections.find((s) => s.id === over.id);
 
-		if (!activeSection || !overSection) {
+		if (!(activeSection && overSection)) {
 			return;
 		}
 
@@ -259,7 +260,7 @@ function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }
 		const activeSection = sections.find((s) => s.id === active.id);
 		const overSection = sections.find((s) => s.id === over.id);
 
-		if (!activeSection || !overSection) {
+		if (!(activeSection && overSection)) {
 			return;
 		}
 

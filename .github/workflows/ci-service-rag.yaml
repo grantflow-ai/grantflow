@@ -1,31 +1,31 @@
 name: Rag Service CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development*
-    paths:
-      - '.github/workflows/ci-service-rag.yaml'
-      - 'packages/**'
-      - 'services/rag/**'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/ci-service-rag.yaml'
-      - 'packages/**'
-      - 'services/rag/**'
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/ci-service-rag.yaml"
+            - "packages/**"
+            - "services/rag/**"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/ci-service-rag.yaml"
+            - "packages/**"
+            - "services/rag/**"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Run Tests
-        uses: ./.github/actions/run-python-tests
-        with:
-            target: rag
+            - name: Run Tests
+              uses: ./.github/actions/run-python-tests
+              with:
+                  target: rag

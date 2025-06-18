@@ -63,7 +63,8 @@ export default function CreateGrantApplicationWizardPage() {
 			if (latestNotification.data.indexing_status === SourceIndexingStatus.FAILED) {
 				toast.error(`Failed to process ${latestNotification.data.identifier}`);
 				return;
-			} else if (latestNotification.data.indexing_status === SourceIndexingStatus.FINISHED) {
+			}
+			if (latestNotification.data.indexing_status === SourceIndexingStatus.FINISHED) {
 				toast.success(`Successfully processed ${latestNotification.data.identifier}`);
 				return;
 			}

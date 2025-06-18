@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 
 @pytest.fixture(scope="session")
-async def gcs_emulator_host() -> AsyncGenerator[str, None]:
+async def gcs_emulator_host() -> AsyncGenerator[str]:
     container_name = f"test_gcs_emulator_{uuid4().hex[:8]}"
 
     with socket(AF_INET, SOCK_STREAM) as s:

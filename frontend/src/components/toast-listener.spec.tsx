@@ -1,10 +1,8 @@
 import { render } from "@testing-library/react";
+import type { ReadonlyURLSearchParams } from "next/navigation";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-
 import { ToastListener } from "./toast-listener";
-
-import type { ReadonlyURLSearchParams } from "next/navigation";
 
 vi.mock("next/navigation", () => ({
 	usePathname: vi.fn().mockReturnValue("/"),

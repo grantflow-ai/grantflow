@@ -52,7 +52,7 @@ export default function AboutPage() {
 							top: "60%",
 							transform: "translate(-50%, -50%)",
 						}}
-					></div>
+					/>
 					<BrandPattern
 						aria-hidden="true"
 						className="pointer-events-none absolute inset-0 z-0 size-full opacity-50"
@@ -167,7 +167,7 @@ function ToolKitItems({
 }) {
 	return (
 		<li className="flex flex-col items-center p-3">
-			<Icon className="mb-3" height={24} width={24}></Icon>
+			<Icon className="mb-3" height={24} width={24} />
 			<span className="leading-tight">{specification}</span>
 		</li>
 	);

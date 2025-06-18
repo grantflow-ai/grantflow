@@ -1,5 +1,5 @@
+import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
-
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -9,8 +9,6 @@ import {
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
-
-import type { Meta, StoryObj } from "@storybook/react";
 
 // Completely static wizard page for Storybook that doesn't depend on zustand
 function StaticWizardPage({

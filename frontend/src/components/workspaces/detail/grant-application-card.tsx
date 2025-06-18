@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PagePath } from "@/enums";
-import { API } from "@/types/api-types";
+import type { API } from "@/types/api-types";
 
 export function GrantApplicationCard({
 	application,

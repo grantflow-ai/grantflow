@@ -22,7 +22,7 @@ export default function FinalizeEmailLogin() {
 
 			const email = globalThis.localStorage.getItem(FIREBASE_LOCAL_STORAGE_KEY);
 			const isEmailLink = isSignInWithEmailLink(auth, globalThis.location.href);
-			if (!email || !isEmailLink) {
+			if (!(email && isEmailLink)) {
 				toast.error("Invalid or expired sign-in link");
 				router.replace(PagePath.ONBOARDING);
 				return;

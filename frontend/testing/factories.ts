@@ -439,6 +439,17 @@ interface RagProcessingStatus {
 }
 
 export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((factory) => ({
+	data: factory.datatype.boolean()
+		? {
+				[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int(
+					{
+						max: 10,
+						min: 1,
+					},
+				),
+				...(factory.datatype.boolean() ? { organization: factory.company.name() } : {}),
+			}
+		: undefined,
 	event: factory.helpers.arrayElement([
 		"grant_template_extraction",
 		"sections_extracted",
@@ -448,15 +459,6 @@ export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((fact
 		"objectives_enriched",
 	]),
 	message: factory.lorem.sentence(),
-	data: factory.datatype.boolean()
-		? {
-				[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int({
-					max: 10,
-					min: 1,
-				}),
-				...(factory.datatype.boolean() ? { organization: factory.company.name() } : {}),
-			}
-		: undefined,
 }));
 
 export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<RagProcessingStatus>>((factory) => {

@@ -1,10 +1,9 @@
+import { ApplicationFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { ApplicationFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { createApplication } from "@/actions/grant-applications";
 import {
 	isSourceProcessingNotificationMessage,

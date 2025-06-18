@@ -2,15 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { Control, useForm } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import type { z } from "zod";
 
 import { addToWaitlist } from "@/actions/join-waitlist";
 import AppInput from "@/components/input-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
+import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { logError } from "@/utils/logging";
 import { analyticsIdentify } from "@/utils/segment";

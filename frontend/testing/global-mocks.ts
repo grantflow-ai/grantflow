@@ -1,7 +1,7 @@
 import process from "node:process";
 
-import { toast } from "sonner";
-import { beforeEach, Mock, vi } from "vitest";
+import type { toast } from "sonner";
+import { beforeEach, type Mock, vi } from "vitest";
 
 import { PagePath } from "@/enums";
 

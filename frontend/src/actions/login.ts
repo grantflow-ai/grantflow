@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
-import { API } from "@/types/api-types";
+import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { getEnv } from "@/utils/env";
 
