@@ -103,7 +103,9 @@ class UserWorkspaceInvitation(BaseWithUUIDPK):
 class RagSource(BaseWithUUIDPK):
     __tablename__ = "rag_sources"
 
-    indexing_status: Mapped[SourceIndexingStatusEnum] = mapped_column(Enum(SourceIndexingStatusEnum), index=True)
+    indexing_status: Mapped[SourceIndexingStatusEnum] = mapped_column(
+        Enum(SourceIndexingStatusEnum), index=True, default=SourceIndexingStatusEnum.CREATED
+    )
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
