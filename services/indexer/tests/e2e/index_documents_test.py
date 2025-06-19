@@ -1,12 +1,14 @@
 import logging
+from mimetypes import guess_type
 from os import environ
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
 from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.embeddings import index_chunks
+from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from packages.shared_utils.src.extraction import extract_file_content
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import TEST_DATA_SOURCES
@@ -26,30 +28,38 @@ async def test_index_chunks(
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings from %s", data_file.name)
 
-    if data_file.name.endswith(".pdf"):
-        pytest.skip("PDF files are tested separately")
+    mime_type = cast("str", guess_type(data_file.name)[0])
+    if not mime_type:
+        pytest.skip(f"Cannot determine MIME type for {data_file.name}")
 
-    mime_type = "text/plain" if data_file.name.endswith(".txt") else "text/markdown"
-    content, _ = await extract_file_content(
-        content=data_file.read_bytes(),
-        mime_type=mime_type,
-    )
+    try:
+        content, extracted_mime_type = await extract_file_content(
+            content=data_file.read_bytes(),
+            mime_type=mime_type,
+        )
 
-    chunks = chunk_text(text=content, mime_type=mime_type)
-    assert len(chunks) > 0, f"No chunks generated from {data_file.name}"
+        chunks = chunk_text(text=content, mime_type=extracted_mime_type)
+        assert len(chunks) > 0, f"No chunks generated from {data_file.name}"
 
-    vector_dtos = await index_chunks(
-        chunks=chunks,
-        source_id=str(grant_application_file.rag_source_id),
-    )
+        vector_dtos = await index_chunks(
+            chunks=chunks,
+            source_id=str(grant_application_file.rag_source_id),
+        )
 
-    assert len(vector_dtos) > 0, f"No vectors generated for {data_file.name}"
+        assert len(vector_dtos) > 0, f"No vectors generated for {data_file.name}"
 
-    for vector in vector_dtos:
-        assert vector["rag_source_id"] == grant_application_file.rag_source_id, "Incorrect rag_source_id"
-        assert "chunk" in vector, "Missing chunk attribute"
-        assert vector["chunk"]["content"], "Missing chunk content"
-        assert "embedding" in vector, "Missing embedding attribute"
-        assert len(vector["embedding"]) > 0, "Missing embedding"
+        for vector in vector_dtos:
+            assert vector["rag_source_id"] == str(grant_application_file.rag_source_id), "Incorrect rag_source_id"
+            assert "chunk" in vector, "Missing chunk attribute"
+            assert vector["chunk"]["content"], "Missing chunk content"
+            assert "embedding" in vector, "Missing embedding attribute"
+            assert len(vector["embedding"]) > 0, "Missing embedding"
 
-    logger.info("Successfully indexed %d vectors from %s", len(vector_dtos), data_file.name)
+        logger.info("Successfully indexed %d vectors from %s", len(vector_dtos), data_file.name)
+
+    except (FileParsingError, ValidationError, ExternalOperationError) as e:
+        logger.error("Failed to index chunks from %s: %s", data_file.name, e)
+        pytest.fail(f"Indexing failed for {data_file.name}: {e}")
+    except Exception as e:
+        logger.exception("Unexpected error indexing chunks from %s", data_file.name)
+        pytest.fail(f"Unexpected indexing error for {data_file.name}: {e}")
