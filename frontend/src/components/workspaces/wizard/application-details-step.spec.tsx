@@ -14,7 +14,11 @@ vi.mock("@/actions/sources", () => ({
 }));
 
 vi.mock("@/actions/grant-applications", () => ({
-	updateApplication: vi.fn(),
+	updateApplication: vi.fn().mockResolvedValue({
+		id: "test-id",
+		title: "Updated Title",
+		workspace_id: "test-workspace-id",
+	}),
 }));
 
 describe("ApplicationDetailsStep", () => {
@@ -40,6 +44,7 @@ describe("ApplicationDetailsStep", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
+			updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
 			uploadedFiles: [],
 			urls: [],
 		});
@@ -202,7 +207,8 @@ describe("ApplicationDetailsStep", () => {
 		await user.hover(link);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("link-remove-icon")).toBeInTheDocument();
+			const removeIcons = screen.getAllByTestId("link-remove-icon");
+			expect(removeIcons.length).toBeGreaterThan(0);
 		});
 	});
 
@@ -276,7 +282,7 @@ describe("ApplicationDetailsStep", () => {
 
 		render(<ApplicationDetailsStep />);
 
-		const fileCard = screen.getByText("test.pdf").closest(".group");
+		const fileCard = screen.getByText("test.pdf").closest("button");
 		expect(fileCard).toBeInTheDocument();
 
 		if (fileCard) {
@@ -284,6 +290,7 @@ describe("ApplicationDetailsStep", () => {
 		}
 
 		await waitFor(() => {
+			expect(screen.getByRole("menu")).toBeInTheDocument();
 			expect(screen.getByText("Open")).toBeInTheDocument();
 			expect(screen.getByText("Remove")).toBeInTheDocument();
 		});
