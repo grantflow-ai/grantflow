@@ -63,7 +63,6 @@ async def handle_gcs_file_upload(
 ) -> None:
     async with session_maker() as session, session.begin():
         try:
-            
             source_id = await session.scalar(
                 insert(RagSource)
                 .values(
@@ -83,7 +82,6 @@ async def handle_gcs_file_upload(
                 blob_name=file["filename"],
             )
 
-            
             await session.execute(
                 insert(RagFile).values(
                     {
@@ -99,7 +97,6 @@ async def handle_gcs_file_upload(
                 )
             )
 
-            
             if parent_type == "grant_application":
                 await session.execute(
                     insert(GrantApplicationRagSource).values(
@@ -118,7 +115,7 @@ async def handle_gcs_file_upload(
                         }
                     )
                 )
-            else:  
+            else:
                 await session.execute(
                     insert(GrantTemplateRagSource).values(
                         {
@@ -130,7 +127,6 @@ async def handle_gcs_file_upload(
 
             await session.commit()
 
-            
             await upload_blob(object_path, file["content"])
 
         except SQLAlchemyError as e:
@@ -178,10 +174,8 @@ async def handle_url_crawling(
             for file in files
             if file["filename"].split(".")[-1].lower() in SUPPORTED_FILE_EXTENSIONS
         ]:
-            
             parent_type = None
             async with session_maker() as session:
-                
                 if await session.scalar(
                     select(GrantApplicationRagSource).where(
                         GrantApplicationRagSource.rag_source_id
@@ -189,7 +183,7 @@ async def handle_url_crawling(
                     )
                 ):
                     parent_type = "grant_application"
-                
+
                 elif await session.scalar(
                     select(GrantTemplateRagSource).where(
                         GrantTemplateRagSource.rag_source_id
@@ -197,7 +191,7 @@ async def handle_url_crawling(
                     )
                 ):
                     parent_type = "grant_template"
-                
+
                 elif await session.scalar(
                     select(FundingOrganizationRagSource).where(
                         FundingOrganizationRagSource.rag_source_id

@@ -49,7 +49,6 @@ async def test_index_chunks(
 
         assert len(vector_dtos) > 0, f"No vectors generated for {data_file.name}"
 
-
         chunk_lengths = []
         embedding_norms = []
 
@@ -60,12 +59,10 @@ async def test_index_chunks(
             assert "embedding" in vector, "Missing embedding attribute"
             assert len(vector["embedding"]) > 0, "Missing embedding"
 
-
             chunk_content = vector["chunk"]["content"]
             chunk_lengths.append(len(chunk_content))
             assert len(chunk_content) >= 50, f"Chunk too short: {len(chunk_content)} chars"
             assert len(chunk_content) <= 3000, f"Chunk too long: {len(chunk_content)} chars"
-
 
             embedding = vector["embedding"]
             assert len(embedding) == 384, f"Unexpected embedding dimension: {len(embedding)}"
@@ -75,7 +72,6 @@ async def test_index_chunks(
             norm = math.sqrt(sum(x**2 for x in embedding))
             embedding_norms.append(norm)
             assert 0.1 <= norm <= 3.0, f"Embedding norm out of range: {norm}"
-
 
         avg_chunk_length = sum(chunk_lengths) / len(chunk_lengths)
         avg_embedding_norm = sum(embedding_norms) / len(embedding_norms)

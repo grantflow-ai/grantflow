@@ -8,6 +8,11 @@ import { useApplicationStore } from "./application-store";
 
 vi.mock("@/actions/grant-applications");
 vi.mock("@/actions/grant-template");
+vi.mock("@/actions/sources");
+vi.mock("@/utils/dev-indexing-patch");
+vi.mock("ky", () => ({
+	default: vi.fn(() => Promise.resolve({ ok: true })),
+}));
 
 describe("Application Store", () => {
 	beforeEach(() => {
@@ -249,16 +254,15 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
-			const mockFetch = vi.fn().mockResolvedValue({ ok: true });
-			globalThis.fetch = mockFetch;
+			const { createTemplateSourceUploadUrl } = await import("@/actions/sources");
+			const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 
-			vi.doMock("@/actions/sources", () => ({
-				createTemplateSourceUploadUrl: vi.fn().mockResolvedValue({ url: "https://upload.url" }),
-			}));
-			vi.doMock("@/utils/dev-indexing-patch", () => ({
-				extractObjectPathFromUrl: vi.fn().mockReturnValue("path"),
-				triggerDevIndexing: vi.fn(),
-			}));
+			vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
+				source_id: "source-123",
+				url: "https://upload.url",
+			});
+			vi.mocked(extractObjectPathFromUrl).mockReturnValue("path");
+			vi.mocked(triggerDevIndexing).mockImplementation(() => Promise.resolve());
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
@@ -275,9 +279,8 @@ describe("Application Store", () => {
 		it("should add URLs without duplicates", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 
-			vi.doMock("@/actions/sources", () => ({
-				crawlTemplateUrl: vi.fn().mockResolvedValue({ message: "success" }),
-			}));
+			const { crawlTemplateUrl } = await import("@/actions/sources");
+			vi.mocked(crawlTemplateUrl).mockResolvedValue({ source_id: "source-123" });
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
@@ -297,9 +300,8 @@ describe("Application Store", () => {
 			const file2 = { id: "2", name: "test2.pdf", size: 2000 };
 			const application = ApplicationWithTemplateFactory.build();
 
-			vi.doMock("@/actions/sources", () => ({
-				deleteTemplateSource: vi.fn().mockResolvedValue(undefined),
-			}));
+			const { deleteTemplateSource } = await import("@/actions/sources");
+			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application, uploadedFiles: [file1, file2] as any });
@@ -313,7 +315,7 @@ describe("Application Store", () => {
 		});
 
 		it("should remove URLs", async () => {
-			const ragSource = { id: "source-1", status: "FINISHED", url: "https://example.com" };
+			const ragSource = { id: "source-1", sourceId: "source-1", status: "FINISHED", url: "https://example.com" };
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...GrantTemplateFactory.build(),
@@ -321,9 +323,8 @@ describe("Application Store", () => {
 				},
 			});
 
-			vi.doMock("@/actions/sources", () => ({
-				deleteTemplateSource: vi.fn().mockResolvedValue(undefined),
-			}));
+			const { deleteTemplateSource } = await import("@/actions/sources");
+			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application, urls: ["https://example.com", "https://different.com"] });
@@ -340,7 +341,10 @@ describe("Application Store", () => {
 	describe("areFilesOrUrlsIndexing", () => {
 		it("should return true when sources are indexing", () => {
 			const application = ApplicationFactory.build({
-				rag_sources: [{ status: "FINISHED" }, { status: "INDEXING" }] as any,
+				rag_sources: [
+					{ id: "1", status: "FINISHED" },
+					{ id: "2", status: "INDEXING" },
+				] as any,
 			});
 
 			useApplicationStore.setState({ application });

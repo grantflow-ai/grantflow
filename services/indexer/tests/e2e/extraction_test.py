@@ -31,10 +31,8 @@ async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
         assert extracted_mime_type, "No MIME type returned"
         assert len(result) >= 100, f"Extracted text too short: {len(result)} chars"
 
-
         words = result.split()
         assert len(words) >= 20, f"Too few words extracted: {len(words)}"
-
 
         alpha_chars = sum(1 for c in result if c.isalpha())
         alpha_ratio = alpha_chars / len(result) if result else 0

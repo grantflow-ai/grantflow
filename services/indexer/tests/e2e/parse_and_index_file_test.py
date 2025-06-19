@@ -41,7 +41,6 @@ async def test_parse_application_file(
         assert len(vectors) > 0, "No vectors were generated"
         assert text_content.strip(), "No text content was extracted"
 
-
         chunk_contents = [v["chunk"]["content"] for v in vectors]
         chunk_lengths = [len(content) for content in chunk_contents]
 
@@ -51,7 +50,6 @@ async def test_parse_application_file(
             assert vector["chunk"]["content"], "Missing chunk content"
             assert "embedding" in vector, "Missing embedding attribute"
             assert len(vector["embedding"]) > 0, "Empty embedding vector"
-
 
             chunk_content = vector["chunk"]["content"]
             embedding = vector["embedding"]
@@ -64,12 +62,10 @@ async def test_parse_application_file(
             norm = math.sqrt(sum(x**2 for x in embedding))
             assert 0.1 <= norm <= 3.0, f"Embedding norm out of range: {norm}"
 
-
         total_chunk_chars = sum(chunk_lengths)
         coverage_ratio = total_chunk_chars / len(text_content) if text_content else 0
 
         assert 0.7 <= coverage_ratio <= 1.5, f"Coverage ratio suspicious: {coverage_ratio}"
-
 
         unique_contents = set(chunk_contents)
         duplicate_ratio = 1 - (len(unique_contents) / len(chunk_contents))

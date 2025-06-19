@@ -95,16 +95,16 @@ async def validate_test_data_integrity() -> dict[str, Any]:
         "issues": [],
     }
 
-
     for source_file in TEST_DATA_SOURCES:
         if not source_file.exists():
             cast("list[str]", results["issues"]).append(f"Missing source file: {source_file}")
             continue
 
         ext = source_file.suffix
-        cast("dict[str, int]", results["source_files"]["by_extension"])[ext] = cast("dict[str, int]", results["source_files"]["by_extension"]).get(ext, 0) + 1
+        cast("dict[str, int]", results["source_files"]["by_extension"])[ext] = (
+            cast("dict[str, int]", results["source_files"]["by_extension"]).get(ext, 0) + 1
+        )
         cast("list[int]", results["source_files"]["sizes"]).append(source_file.stat().st_size)
-
 
     fixture_files = list(FIXTURES_FOLDER.glob("**/*.json"))
     for fixture_file in fixture_files:
@@ -116,7 +116,6 @@ async def validate_test_data_integrity() -> dict[str, Any]:
                 cast("list[str]", results["issues"]).append(f"No vectors in fixture: {fixture_file.name}")
         except (FileNotFoundError, KeyError, ValueError) as e:
             cast("list[str]", results["issues"]).append(f"Error reading fixture {fixture_file.name}: {e}")
-
 
     sizes_list = cast("list[int]", results["source_files"]["sizes"])
     if sizes_list:
@@ -187,15 +186,12 @@ def create_test_scenarios() -> list[dict[str, Any]]:
 async def benchmark_test_performance() -> dict[str, Any]:
     benchmark_results: dict[str, Any] = {"file_sizes": {}, "estimated_processing_times": {}, "recommendations": []}
 
-
     for _i, test_file in enumerate(TEST_DATA_SOURCES[:5]):
         size_mb = test_file.stat().st_size / (1024 * 1024)
         benchmark_results["file_sizes"][test_file.name] = size_mb
 
-
         estimated_time = size_mb * 12
         benchmark_results["estimated_processing_times"][test_file.name] = estimated_time
-
 
     total_size = sum(benchmark_results["file_sizes"].values())
     total_estimated_time = sum(benchmark_results["estimated_processing_times"].values())
@@ -226,10 +222,8 @@ def get_optimal_test_configuration(target_duration_minutes: int = 5) -> dict[str
 
     scenarios = create_test_scenarios()
 
-
     suitable_scenarios = []
     for scenario in scenarios:
-
         duration_str = scenario["expected_duration"]
         if "seconds" in duration_str:
             max_duration = int(duration_str.split("-")[-1].split()[0])
@@ -244,7 +238,5 @@ def get_optimal_test_configuration(target_duration_minutes: int = 5) -> dict[str
     return {
         "target_duration_minutes": target_duration_minutes,
         "suitable_scenarios": suitable_scenarios,
-        "recommendation": (
-            suitable_scenarios[-1] if suitable_scenarios else scenarios[0]
-        ),
+        "recommendation": (suitable_scenarios[-1] if suitable_scenarios else scenarios[0]),
     }

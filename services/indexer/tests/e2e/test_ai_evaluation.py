@@ -32,7 +32,6 @@ class TestAIEvaluation:
     ) -> None:
         logger.info("Running AI content relevance evaluation")
 
-
         test_chunks: list[Chunk] = [
             {
                 "content": "This research investigates novel machine learning algorithms for protein structure prediction, "
@@ -52,7 +51,6 @@ class TestAIEvaluation:
 
         try:
             await index_chunks(chunks=test_chunks, source_id=str(grant_application_file.rag_source_id))
-
 
             client = get_anthropic_client()
 
@@ -94,11 +92,9 @@ class TestAIEvaluation:
                 response_content = message.content[0].text
             logger.info("AI evaluation response: %s", response_content)
 
-
             assert "chunk1" in response_content, "AI response missing chunk1 evaluation"
             assert "chunk2" in response_content, "AI response missing chunk2 evaluation"
             assert "chunk3" in response_content, "AI response missing chunk3 evaluation"
-
 
             assert "coherence" in response_content.lower(), "AI response missing coherence evaluation"
             assert "relevance" in response_content.lower(), "AI response missing relevance evaluation"
@@ -116,7 +112,6 @@ class TestAIEvaluation:
         self, logger: logging.Logger, grant_application_file: GrantApplicationRagSource
     ) -> None:
         logger.info("Running AI hallucination detection test")
-
 
         test_cases = [
             {
@@ -173,7 +168,6 @@ class TestAIEvaluation:
                 response_content = message.content[0].text
             logger.info("Hallucination detection response: %s", response_content)
 
-
             assert "statement1" in response_content, "Missing evaluation for statement1"
             assert "statement2" in response_content, "Missing evaluation for statement2"
             assert "fabricated" in response_content.lower(), "Missing fabrication assessment"
@@ -191,7 +185,6 @@ class TestAIEvaluation:
         self, logger: logging.Logger, grant_application_file: GrantApplicationRagSource
     ) -> None:
         logger.info("Running semantic similarity threshold evaluation")
-
 
         similarity_test_cases = [
             {
@@ -218,14 +211,10 @@ class TestAIEvaluation:
 
                 if test_case["label"] == "high_similarity":
                     expected_min = float(str(test_case["expected_min_similarity"]))
-                    assert similarity >= expected_min, (
-                        f"High similarity test failed: {similarity:.3f} < {expected_min}"
-                    )
+                    assert similarity >= expected_min, f"High similarity test failed: {similarity:.3f} < {expected_min}"
                 else:
                     expected_max = float(str(test_case["expected_max_similarity"]))
-                    assert similarity <= expected_max, (
-                        f"Low similarity test failed: {similarity:.3f} > {expected_max}"
-                    )
+                    assert similarity <= expected_max, f"Low similarity test failed: {similarity:.3f} > {expected_max}"
 
                 logger.info(
                     "✓ Similarity test '%s': %.3f (expected %s %.1f)",
@@ -262,12 +251,10 @@ class TestAIEvaluation:
                 source_id=str(grant_application_file.rag_source_id),
             )
 
-
             quality_assessment = comprehensive_quality_assessment(vectors, text_content)
 
             overall_score = quality_assessment["overall_quality_score"]
             assert overall_score > 0.5, f"Overall quality score too low: {overall_score}"
-
 
             chunk_quality = quality_assessment["chunk_quality"]
             assert chunk_quality["quality_score"] > 0.6, f"Chunk quality too low: {chunk_quality['quality_score']}"
@@ -277,10 +264,8 @@ class TestAIEvaluation:
                 f"Embedding quality too low: {embedding_quality['embedding_quality_score']}"
             )
 
-
             try:
                 client = get_anthropic_client()
-
 
                 sample_chunks = vectors[:3]
                 chunk_contents = [v["chunk"]["content"] for v in sample_chunks]
@@ -309,7 +294,6 @@ class TestAIEvaluation:
                     ai_response = message.content[0].text
                 logger.info("AI quality rating: %s", ai_response.strip())
 
-
                 try:
                     ai_rating = float(ai_response.strip())
                     assert 1 <= ai_rating <= 10, f"AI rating out of range: {ai_rating}"
@@ -337,7 +321,6 @@ class TestAIEvaluation:
         self, logger: logging.Logger, grant_application_file: GrantApplicationRagSource
     ) -> None:
         logger.info("Running citation accuracy validation test")
-
 
         citation_test_content = """
         According to Smith et al. (2023), machine learning techniques have shown significant
@@ -378,7 +361,6 @@ class TestAIEvaluation:
             if message.content and hasattr(message.content[0], "text"):
                 response_content = message.content[0].text
             logger.info("Citation validation response: %s", response_content)
-
 
             assert "formatted" in response_content.lower(), "Missing citation format assessment"
             assert "realistic" in response_content.lower(), "Missing citation realism assessment"
