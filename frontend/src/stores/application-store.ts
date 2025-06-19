@@ -9,9 +9,10 @@ import {
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
+import { logError } from "@/utils/logging";
+
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
-import { logError } from "@/utils/logging";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
 

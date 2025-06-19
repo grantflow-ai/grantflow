@@ -3,8 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
-import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
+
+import type { SourceIndexingStatus } from "@/enums";
 
 export interface RagProcessingStatus {
 	data?: Record<string, unknown>;

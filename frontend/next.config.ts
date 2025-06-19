@@ -1,6 +1,8 @@
 import path from "node:path";
-import type { NextConfig } from "next";
+
 import { getEnv } from "@/utils/env";
+
+import type { NextConfig } from "next";
 
 getEnv();
 
