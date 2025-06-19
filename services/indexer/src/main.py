@@ -4,6 +4,7 @@ from litestar import post
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     RagFile,
+    RagSource,
 )
 from packages.db.src.utils import update_source_indexing_status
 from packages.shared_utils.src.exceptions import (
@@ -71,10 +72,32 @@ async def handle_file_indexing(
 
     async with session_maker() as session:
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
+        rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
     if not rag_file:
         logger.error("Rag file not found", source_id=parse_result["source_id"])
         raise ValidationError("Rag file not found", context={"source_id": parse_result["source_id"]})
+
+    if not rag_source:
+        logger.error("Rag source not found", source_id=parse_result["source_id"])
+        raise ValidationError("Rag source not found", context={"source_id": parse_result["source_id"]})
+
+    if rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED:
+        logger.info(
+            "File already processed, skipping", filename=parse_result["blob_name"], source_id=parse_result["source_id"]
+        )
+
+        await update_source_indexing_status(
+            logger=logger,
+            session_maker=session_maker,
+            source_id=parse_result["source_id"],
+            parent_id=parse_result["parent_id"],
+            identifier=parse_result["blob_name"],
+            text_content=rag_source.text_content,
+            vectors=None,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+        return
 
     try:
         vectors, text_content = await process_source(
