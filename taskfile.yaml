@@ -194,6 +194,13 @@ tasks:
         cmds:
             - pnpm test:watch
 
+    frontend:test:coverage:
+        desc: Run frontend tests with coverage reporting
+        dir: "{{.FRONTEND_DIR}}"
+        dotenv: [".env"]
+        cmds:
+            - pnpm test:coverage
+
     frontend:storybook:
         desc: Start the frontend Storybook server
         dir: "{{.FRONTEND_DIR}}"

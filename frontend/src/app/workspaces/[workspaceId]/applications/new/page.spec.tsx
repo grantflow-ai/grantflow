@@ -66,6 +66,7 @@ const mockSearchParams = {
 
 const createMockWizardStore = (overrides: any = {}) => {
 	const defaultStore = {
+		currentStep: 0,
 		handleTitleChange: vi.fn(),
 		polling: {
 			intervalId: null,
@@ -74,29 +75,12 @@ const createMockWizardStore = (overrides: any = {}) => {
 			stop: vi.fn(),
 		},
 		setCurrentStep: vi.fn(),
-		setFileDropdownOpen: vi.fn(),
-		setLinkHoverState: vi.fn(),
-		setUrlInput: vi.fn(),
-		setWorkspaceId: vi.fn(),
 		toNextStep: vi.fn(),
 		toPreviousStep: vi.fn(),
-		ui: {
-			currentStep: 0,
-			fileDropdownStates: {},
-			linkHoverStates: {},
-			urlInput: "",
-		},
 		validateStepNext: vi.fn().mockReturnValue(false),
-		workspaceId: "test-workspace-id",
-		wsConnectionStatus: undefined,
-		wsConnectionStatusColor: undefined,
 	};
 
 	// Deep merge overrides
-	if (overrides.ui) {
-		defaultStore.ui = { ...defaultStore.ui, ...overrides.ui };
-		overrides.ui = undefined;
-	}
 	if (overrides.polling) {
 		defaultStore.polling = { ...defaultStore.polling, ...overrides.polling };
 		overrides.polling = undefined;
