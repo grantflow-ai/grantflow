@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
+
+import type { ReactNode } from "react";
 
 export function IconLink({
 	className,

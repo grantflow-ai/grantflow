@@ -1,3 +1,5 @@
+import { HTTPError } from "ky";
+
 import {
 	CreateWorkspaceRequestFactory,
 	IdResponseFactory,
@@ -6,9 +8,11 @@ import {
 	WorkspaceListItemFactory,
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
-import { HTTPError } from "ky";
-import type { API } from "@/types/api-types";
+
 import { createWorkspace, deleteWorkspace, getWorkspace, getWorkspaces, updateWorkspace } from "./workspace";
+
+import type { API } from "@/types/api-types";
+
 
 const mockPost = vi.fn();
 const mockGet = vi.fn();

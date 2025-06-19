@@ -90,6 +90,13 @@ task lint:typescript    # Type check TypeScript code
 task lint:ruff          # Lint and format Python code
 task lint:mypy          # Type check Python code
 task lint:codespell     # Check for common misspellings
+
+# Terraform linters (specialized - not included in lint:all)
+task lint:terraform     # Run all Terraform linters
+task lint:terraform:fmt # Format Terraform code
+task lint:terraform:validate # Validate Terraform syntax
+task lint:terraform:tflint   # Lint Terraform best practices
+task lint:terraform:trivy    # Security scan Terraform code
 ```
 
 ### Database Management
