@@ -1,7 +1,6 @@
 import logging
 import time
 from datetime import UTC, datetime
-from os import environ
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -11,6 +10,7 @@ from packages.db.src.utils import retrieve_application
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.rag_ai_evaluation import (
     evaluate_cfp_extraction_accuracy,
     evaluate_query_generation_quality,
@@ -32,12 +32,7 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 
 
-@pytest.mark.smoke
-@pytest.mark.timeout(60)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
 async def test_retrieval_smoke(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -71,12 +66,7 @@ async def test_retrieval_smoke(
     )
 
 
-@pytest.mark.quality_assessment
-@pytest.mark.timeout(600)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
 async def test_retrieval_quality_assessment(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -122,12 +112,7 @@ async def test_retrieval_quality_assessment(
     logger.info("Retrieval quality assessment completed with diversity score: %.2f", diversity_score)
 
 
-@pytest.mark.semantic_evaluation
-@pytest.mark.timeout(600)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION, timeout=600)
 async def test_retrieval_semantic_evaluation(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -179,12 +164,7 @@ async def test_retrieval_semantic_evaluation(
     logger.info("Semantic evaluation completed with AI relevance: %.2f", ai_evaluation.get("avg_relevance", 0))
 
 
-@pytest.mark.quality_assessment
-@pytest.mark.timeout(600)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
 @pytest.mark.parametrize("cfp_name", ["melanoma_alliance", "nih"])
 async def test_query_generation_quality(
     logger: logging.Logger,
@@ -238,12 +218,7 @@ async def test_query_generation_quality(
     logger.info("Query generation quality test completed for %s with %d queries", cfp_name, len(queries))
 
 
-@pytest.mark.quality_assessment
-@pytest.mark.timeout(600)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
 @pytest.mark.parametrize("cfp_name", ["melanoma_alliance", "standard_awards"])
 async def test_cfp_extraction_quality(
     logger: logging.Logger,
@@ -312,12 +287,7 @@ async def test_cfp_extraction_quality(
     logger.info("CFP extraction quality test completed for %s", cfp_name)
 
 
-@pytest.mark.e2e_full
-@pytest.mark.timeout(600)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=600)
 async def test_grant_template_generation_full_pipeline(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],

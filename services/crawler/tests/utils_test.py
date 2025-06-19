@@ -25,16 +25,16 @@ def test_safe_filename_from_url_with_filename_no_extension() -> None:
 def test_safe_filename_from_url_without_filename() -> None:
     url = "https://example.org/path/to/"
     filename = safe_filename_from_url(url)
-    assert filename.endswith(".md")
 
+    assert filename.endswith(".md")
     assert "to" in filename
 
 
 def test_safe_filename_from_url_root() -> None:
     url = "https://example.org/"
     filename = safe_filename_from_url(url)
-    assert filename.endswith(".md")
 
+    assert filename.endswith(".md")
     assert "example" in filename
 
 
