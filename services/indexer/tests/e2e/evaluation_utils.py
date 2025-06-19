@@ -4,17 +4,18 @@ from typing import Any, cast
 
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.serialization import deserialize
+from testing.evaluation_utils import cosine_similarity
 
-
-def cosine_similarity(embedding_a: list[float], embedding_b: list[float]) -> float:
-    dot_product = sum(x * y for x, y in zip(embedding_a, embedding_b, strict=False))
-    norm_a = math.sqrt(sum(x**2 for x in embedding_a))
-    norm_b = math.sqrt(sum(x**2 for x in embedding_b))
-
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-
-    return dot_product / (norm_a * norm_b)
+__all__ = [
+    "assess_chunk_quality",
+    "assess_coverage_quality",
+    "assess_embedding_quality",
+    "assess_semantic_coherence",
+    "calculate_embedding_statistics",
+    "comprehensive_quality_assessment",
+    "cosine_similarity",
+    "load_fixture_vectors",
+]
 
 
 def calculate_embedding_statistics(vectors: list[VectorDTO]) -> dict[str, float]:

@@ -1,24 +1,20 @@
 import logging
 import time
 from datetime import UTC, datetime
-from os import environ
 from typing import Any
 
-import pytest
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.rag_ai_evaluation import evaluate_retrieval_relevance
 from testing.rag_evaluation import calculate_performance_metrics, calculate_retrieval_diversity, save_evaluation_results
 
 from services.rag.src.utils.retrieval import retrieve_documents
 
 
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
 async def test_document_retrieval(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -35,7 +31,7 @@ async def test_document_retrieval(
 
             Application ID: {application.id}
             Title: {application.title}
-            Grant Template: {application.grant_template.name if application.grant_template else 'N/A'}
+            Grant Template: {application.grant_template.id if application.grant_template else "N/A"}
             """
 
         results = await retrieve_documents(
@@ -46,8 +42,8 @@ async def test_document_retrieval(
 
     end_time = time.time()
 
-    assert len(results) > 0  # Ensure we have results
-    assert len(results) <= 100  # Reasonable upper bound
+    assert len(results) > 0
+    assert len(results) <= 100
     assert all(isinstance(result, str) for result in results)
 
     diversity_score = calculate_retrieval_diversity(results)

@@ -2,6 +2,7 @@ from datetime import date
 from typing import Any
 
 from packages.db.src.tables import GrantTemplate
+from packages.db.src.utils import retrieve_application
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
@@ -14,18 +15,6 @@ async def create_rag_sources_from_cfp_file(
     session_maker: async_sessionmaker[Any],
     grant_application_id: str | None = None,
 ) -> list[str]:
-    """
-    Create RAG sources from a CFP file for testing purposes.
-
-    Args:
-        cfp_file_name: Name of the CFP file in the test fixtures
-        grant_template_id: ID of the grant template to link sources to
-        session_maker: Database session maker
-        grant_application_id: Optional grant application ID to use
-
-    Returns:
-        List of created RAG source IDs
-    """
     cfp_content = (FIXTURES_FOLDER / "cfps" / cfp_file_name).read_text()
 
     source = RagFileFactory.build(
@@ -42,7 +31,6 @@ async def create_rag_sources_from_cfp_file(
         chunks.append(vector)
 
     async with session_maker() as session:
-
         template_values = {
             "id": grant_template_id,
             "grant_sections": [],
@@ -51,9 +39,7 @@ async def create_rag_sources_from_cfp_file(
 
         if grant_application_id:
             template_values["grant_application_id"] = grant_application_id
-            
-            # Get the funding organization from the grant application
-            from packages.db.src.utils import retrieve_application
+
             application = await retrieve_application(application_id=grant_application_id, session=session)
             if application.grant_template and application.grant_template.funding_organization_id:
                 template_values["funding_organization_id"] = application.grant_template.funding_organization_id

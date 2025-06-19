@@ -13,6 +13,8 @@ from testing.rag_evaluation import assess_query_quality, calculate_performance_m
 from services.rag.src.utils.search_queries import handle_create_search_queries
 
 
+@pytest.mark.smoke
+@pytest.mark.timeout(60)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",

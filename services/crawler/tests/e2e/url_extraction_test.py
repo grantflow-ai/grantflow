@@ -27,7 +27,6 @@ from services.crawler.src.extraction import extract_links, prepare_url_data
 async def test_url_content_extraction(
     logger: logging.Logger, test_url: str, expected_content: str
 ) -> None:
-    """Test URL content extraction with real web requests"""
     logger.info("Running URL content extraction test for %s", test_url)
 
     try:
@@ -69,7 +68,6 @@ async def test_url_content_extraction(
 )
 @pytest.mark.e2e_full
 async def test_link_extraction_comprehensive(logger: logging.Logger) -> None:
-    """Test comprehensive link extraction with various link types"""
     logger.info("Running comprehensive link extraction test")
 
     test_html = """
