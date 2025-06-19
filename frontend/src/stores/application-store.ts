@@ -21,6 +21,7 @@ export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 interface ApplicationState {
 	application: ApplicationType;
 	applicationTitle: string;
+	isGeneratingTemplate: boolean;
 	isLoading: boolean;
 	uploadedFiles: FileWithId[];
 	urls: string[];
@@ -29,6 +30,7 @@ interface ApplicationState {
 const initialState: ApplicationState = {
 	application: null,
 	applicationTitle: "",
+	isGeneratingTemplate: false,
 	isLoading: false,
 	uploadedFiles: [],
 	urls: [],
@@ -183,7 +185,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	generateTemplate: async (templateId: string) => {
-		set({ isLoading: true });
+		set({ isGeneratingTemplate: true });
 
 		const { application } = get();
 
@@ -195,7 +197,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		} catch {
 			toast.error("Failed to generate grant template. Please try again.");
 		} finally {
-			set({ isLoading: false });
+			set({ isGeneratingTemplate: false });
 		}
 	},
 

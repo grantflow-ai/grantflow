@@ -21,16 +21,19 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
+import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
-import { ThemeBadge } from "@/components/workspaces/theme-badge";
+import { IconPreviewLogo } from "@/components/workspaces/icons";
+import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
+import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { useApplicationStore } from "@/stores/application-store";
 
 import type { API } from "@/types/api-types";
@@ -76,16 +79,6 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	};
 };
 
-interface ApplicationStructurePreviewProps {
-	connectionStatus?: string;
-	connectionStatusColor?: string;
-}
-
-interface ApplicationStructureStepProps {
-	connectionStatus?: string;
-	connectionStatusColor?: string;
-}
-
 interface SortableSectionProps {
 	isDragging?: boolean;
 	isExpanded: boolean;
@@ -98,25 +91,41 @@ interface SortableSectionProps {
 
 const ANALYZING_STEPS = [
 	{
-		steps: ["Analyzing grant guidelines", "Extracting evaluation criteria", "Identifying key focus areas"],
-		title: "Understanding Requirements",
+		steps: [
+			"Analyzing the documents to capture every needed section and requirement.",
+			"Reviewing the guidelines in detail so no needed section is overlooked.",
+		],
+		title: "Reading the call",
 	},
 	{
-		steps: ["Determining optimal sections", "Calculating content distribution", "Setting word limits"],
-		title: "Optimizing Structure",
+		steps: [
+			"Translating the requirements into a section-by-section framework.",
+			"Drafting a template that mirrors the grant application guidelines.",
+		],
+		title: "Building the outline",
 	},
 	{
-		steps: ["Creating section dependencies", "Adding helper prompts", "Preparing your workspace"],
-		title: "Finalizing Framework",
+		steps: [
+			"Attaching description for each section to focus the draft generation.",
+			"Pairing every section with clear guidance on what it should include.",
+		],
+		title: "Adding writing cues",
+	},
+	{
+		steps: [
+			"Running a quick consistency scan to confirm coverage and flow.",
+			"Verifying the outline for gaps or overlap before displaying it.",
+		],
+		title: "Final check",
 	},
 ];
 
-export function ApplicationStructureStep({ connectionStatus, connectionStatusColor }: ApplicationStructureStepProps) {
-	const structureAnalysisStatus = "analyzed";
+export function ApplicationStructureStep() {
+	const { isGeneratingTemplate, removeFile, removeUrl, uploadedFiles, urls } = useApplicationStore();
 	const [visibleSteps, setVisibleSteps] = useState(0);
 
 	useEffect(() => {
-		if (structureAnalysisStatus === "analyzing") {
+		if (isGeneratingTemplate) {
 			const interval = setInterval(() => {
 				setVisibleSteps((prev) => {
 					if (prev < ANALYZING_STEPS.length) {
@@ -130,7 +139,9 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 				clearInterval(interval);
 			};
 		}
-	}, [structureAnalysisStatus]);
+		setVisibleSteps(0);
+	}, [isGeneratingTemplate]);
+
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
 			<div className="w-1/3 overflow-y-auto p-6 sm:w-1/2">
@@ -146,13 +157,13 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 							className="text-muted-foreground-dark leading-tight"
 							data-testid="application-structure-description"
 						>
-							{structureAnalysisStatus === "analyzing"
+							{isGeneratingTemplate
 								? "Analyzing your knowledge base to generate the optimal structure..."
 								: "Review and customize the structure of your grant application."}
 						</p>
 					</div>
 
-					{structureAnalysisStatus === "analyzing" ? (
+					{isGeneratingTemplate ? (
 						<div className="relative space-y-6">
 							{ANALYZING_STEPS.map((section, sectionIndex) => (
 								<div
@@ -164,7 +175,6 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 									key={sectionIndex}
 								>
 									<div className="relative">
-										{/* Step connector line */}
 										{sectionIndex < ANALYZING_STEPS.length - 1 && (
 											<div
 												className={`absolute left-3 top-8 h-full w-0.5 transition-all duration-500 ${
@@ -173,7 +183,6 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 											/>
 										)}
 
-										{/* Step header */}
 										<div className="mb-3 flex items-center gap-3">
 											<div
 												className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
@@ -196,7 +205,6 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 											)}
 										</div>
 
-										{/* Sub-steps */}
 										<div className="ml-9 space-y-2">
 											{section.steps.map((step, stepIndex) => (
 												<div
@@ -227,73 +235,65 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 								</div>
 							))}
 						</div>
-					) : structureAnalysisStatus === "analyzed" ? (
-						<AnalyzedStateContent />
 					) : (
 						<div className="space-y-4">
-							<Card className="border-app-gray-100 border p-4 shadow-none">
-								<h3 className="font-heading mb-2 text-base font-semibold">Section Configuration</h3>
-								<p className="text-muted-foreground-dark text-sm">
-									Configure the sections and structure of your application based on the requirements.
-								</p>
+							<Card
+								className="border-app-gray-100 border p-4 shadow-none"
+								data-testid="application-documents-card"
+							>
+								<h3
+									className="font-heading mb-2 text-base font-semibold"
+									data-testid="application-documents-title"
+								>
+									Application Documents
+								</h3>
+								{uploadedFiles.length > 0 ? (
+									<div className="flex gap-3">
+										{uploadedFiles.map((file, index) => (
+											<FilePreviewCard
+												file={file}
+												key={file.name + index.toString()}
+												onRemove={removeFile}
+											/>
+										))}
+									</div>
+								) : (
+									<p
+										className="text-muted-foreground-dark text-sm"
+										data-testid="no-documents-message"
+									>
+										No documents uploaded yet.
+									</p>
+								)}
 							</Card>
 
-							<Card className="border-app-gray-100 border p-4 shadow-none">
-								<h3 className="font-heading mb-2 text-base font-semibold">Content Organization</h3>
-								<p className="text-muted-foreground-dark text-sm">
-									Organize your content and determine the flow of your application.
-								</p>
-							</Card>
-
-							<Card className="border-app-gray-100 border p-4 shadow-none">
-								<h3 className="font-heading mb-2 text-base font-semibold">Requirements Mapping</h3>
-								<p className="text-muted-foreground-dark text-sm">
-									Map application requirements to specific sections and content areas.
-								</p>
-							</Card>
+							{urls.length > 0 && (
+								<Card className="border-app-gray-100 border p-4 shadow-none">
+									<h3 className="font-heading mb-2 text-base font-semibold">Links</h3>
+									<div className="space-y-1">
+										{urls.map((url, index) => (
+											<LinkPreviewItem
+												key={url + index.toString()}
+												onRemove={removeUrl}
+												url={url}
+											/>
+										))}
+									</div>
+								</Card>
+							)}
 						</div>
 					)}
 				</div>
 			</div>
 
-			<ApplicationStructurePreview
-				connectionStatus={connectionStatus}
-				connectionStatusColor={connectionStatusColor}
-			/>
+			<ApplicationStructurePreview />
 		</div>
 	);
 }
 
-function AnalyzedStateContent() {
-	return (
-		<div className="space-y-4">
-			<Card className="border-app-gray-100 border p-4 shadow-none">
-				<h3 className="font-heading mb-2 text-base font-semibold">Section Configuration</h3>
-				<p className="text-muted-foreground-dark text-sm">
-					Configure the sections and structure of your application based on the requirements.
-				</p>
-			</Card>
-
-			<Card className="border-app-gray-100 border p-4 shadow-none">
-				<h3 className="font-heading mb-2 text-base font-semibold">Content Organization</h3>
-				<p className="text-muted-foreground-dark text-sm">
-					Organize your content and determine the flow of your application.
-				</p>
-			</Card>
-
-			<Card className="border-app-gray-100 border p-4 shadow-none">
-				<h3 className="font-heading mb-2 text-base font-semibold">Requirements Mapping</h3>
-				<p className="text-muted-foreground-dark text-sm">
-					Map application requirements to specific sections and content areas.
-				</p>
-			</Card>
-		</div>
-	);
-}
-
-function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }: ApplicationStructurePreviewProps) {
-	const { application, applicationTitle, updateGrantSections } = useApplicationStore();
-	const hasContent = applicationTitle || application;
+function ApplicationStructurePreview() {
+	const { application, isGeneratingTemplate, updateGrantSections } = useApplicationStore();
+	const hasContent = application;
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -442,150 +442,197 @@ function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
 			{hasContent ? (
-				<>
-					<div className="mb-11 flex flex-col items-start gap-2">
-						<div className="flex items-center gap-2">
-							<ThemeBadge color="light" leftIcon={<IconApplication />}>
-								Application Structure
-							</ThemeBadge>
-							{connectionStatus && (
-								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
-									{connectionStatus}
-								</ThemeBadge>
-							)}
-						</div>
-						<h3
-							className="font-heading text-center text-3xl font-medium"
-							data-testid="application-structure-title"
-						>
-							{applicationTitle.trim() || "Untitled Application"}
-						</h3>
+				isGeneratingTemplate ? (
+					<div className="flex h-full flex-col items-center justify-center">
+						<Image
+							alt="Analyzing data"
+							className="size-96 object-contain"
+							height={96}
+							src="/animations/analyzing-loader.gif"
+							width={96}
+						/>
 					</div>
-
-					<ScrollArea className="flex-1">
-						<div className="space-y-5">
-							<Card
-								className="border-app-gray-100 border p-5 shadow-none"
-								data-testid="application-structure-sections"
+				) : (
+					<div className="flex h-full flex-col">
+						<div className="mb-4 flex items-center justify-between">
+							<h4 className="font-heading font-semibold" data-testid="application-sections-title">
+								Application Sections
+							</h4>
+							<AppButton
+								data-testid="add-new-section-button"
+								leftIcon={<Plus />}
+								onClick={() => {
+									setEditingNewSection(true);
+								}}
+								size="sm"
+								variant="secondary"
 							>
-								<div className="mb-4 flex items-center justify-between">
-									<h4 className="font-heading font-semibold">Application Sections</h4>
-									<Button
-										className="gap-2"
-										onClick={() => {
-											setEditingNewSection(true);
-										}}
-										size="sm"
-										variant="outline"
-									>
-										<Plus className="size-4" />
-										Add New Section
-									</Button>
-								</div>
-								{editingNewSection && (
-									<NewSectionForm
-										onCancel={() => {
-											setEditingNewSection(false);
-										}}
-										onSave={handleAddNewSection}
-									/>
-								)}
-								<DndContext
-									collisionDetection={closestCenter}
-									onDragEnd={handleDragEnd}
-									onDragOver={handleDragOver}
-									onDragStart={handleDragStart}
-									sensors={sensors}
+								Add New Section
+							</AppButton>
+						</div>
+						<ScrollArea className="flex-1">
+							<div className="space-y-5">
+								<Card
+									className="border-app-gray-100 border p-5 shadow-none"
+									data-testid="application-structure-sections"
 								>
-									<div className="space-y-3">
-										{grantSections.length > 0 ? (
-											<SortableContext
-												items={grantSections.map((s) => s.id)}
-												strategy={verticalListSortingStrategy}
-											>
-												{mainSections.map((section) => (
-													<div key={section.id}>
-														<SortableSection
-															isExpanded={expandedSections.has(section.id)}
-															onDelete={() => handleDeleteSection(section.id)}
-															onToggleExpand={() => {
-																toggleSectionExpanded(section.id);
-															}}
-															onUpdate={(updates) =>
-																handleUpdateSection(section.id, updates)
-															}
-															section={section}
-														/>
-														{(subsectionsByParent[section.id] ?? []).map((subsection) => (
+									{editingNewSection && (
+										<NewSectionForm
+											onCancel={() => {
+												setEditingNewSection(false);
+											}}
+											onSave={handleAddNewSection}
+										/>
+									)}
+									<DndContext
+										collisionDetection={closestCenter}
+										onDragEnd={handleDragEnd}
+										onDragOver={handleDragOver}
+										onDragStart={handleDragStart}
+										sensors={sensors}
+									>
+										<div className="space-y-3">
+											{grantSections.length > 0 ? (
+												<SortableContext
+													items={grantSections.map((s) => s.id)}
+													strategy={verticalListSortingStrategy}
+												>
+													{mainSections.map((section) => (
+														<div key={section.id}>
 															<SortableSection
-																isExpanded={expandedSections.has(subsection.id)}
-																isSubsection
-																key={subsection.id}
-																onDelete={() => handleDeleteSection(subsection.id)}
+																isExpanded={expandedSections.has(section.id)}
+																onDelete={() => handleDeleteSection(section.id)}
 																onToggleExpand={() => {
-																	toggleSectionExpanded(subsection.id);
+																	toggleSectionExpanded(section.id);
 																}}
 																onUpdate={(updates) =>
-																	handleUpdateSection(subsection.id, updates)
+																	handleUpdateSection(section.id, updates)
 																}
-																section={subsection}
+																section={section}
 															/>
-														))}
+															{(subsectionsByParent[section.id] ?? []).map(
+																(subsection) => (
+																	<SortableSection
+																		isExpanded={expandedSections.has(subsection.id)}
+																		isSubsection
+																		key={subsection.id}
+																		onDelete={() =>
+																			handleDeleteSection(subsection.id)
+																		}
+																		onToggleExpand={() => {
+																			toggleSectionExpanded(subsection.id);
+																		}}
+																		onUpdate={(updates) =>
+																			handleUpdateSection(subsection.id, updates)
+																		}
+																		section={subsection}
+																	/>
+																),
+															)}
+														</div>
+													))}
+												</SortableContext>
+											) : (
+												<>
+													<div
+														className="rounded border border-gray-200 p-3"
+														data-testid="default-section-executive-summary"
+													>
+														<h5
+															className="font-medium"
+															data-testid="section-title-executive-summary"
+														>
+															Executive Summary
+														</h5>
+														<p
+															className="text-muted-foreground-dark text-sm"
+															data-testid="section-description-executive-summary"
+														>
+															Overview of the project and key highlights
+														</p>
 													</div>
-												))}
-											</SortableContext>
-										) : (
-											<>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Executive Summary</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Overview of the project and key highlights
-													</p>
+													<div
+														className="rounded border border-gray-200 p-3"
+														data-testid="default-section-project-description"
+													>
+														<h5
+															className="font-medium"
+															data-testid="section-title-project-description"
+														>
+															Project Description
+														</h5>
+														<p
+															className="text-muted-foreground-dark text-sm"
+															data-testid="section-description-project-description"
+														>
+															Detailed description of the proposed project
+														</p>
+													</div>
+													<div
+														className="rounded border border-gray-200 p-3"
+														data-testid="default-section-budget-timeline"
+													>
+														<h5
+															className="font-medium"
+															data-testid="section-title-budget-timeline"
+														>
+															Budget & Timeline
+														</h5>
+														<p
+															className="text-muted-foreground-dark text-sm"
+															data-testid="section-description-budget-timeline"
+														>
+															Financial breakdown and project timeline
+														</p>
+													</div>
+													<div
+														className="rounded border border-gray-200 p-3"
+														data-testid="default-section-team-qualifications"
+													>
+														<h5
+															className="font-medium"
+															data-testid="section-title-team-qualifications"
+														>
+															Team & Qualifications
+														</h5>
+														<p
+															className="text-muted-foreground-dark text-sm"
+															data-testid="section-description-team-qualifications"
+														>
+															Team members and their relevant experience
+														</p>
+													</div>
+												</>
+											)}
+										</div>
+										<DragOverlay>
+											{activeId && activeSection ? (
+												<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
+													<div className="flex items-center justify-between">
+														<h5 className="font-medium">{activeSection.title}</h5>
+														{isDetailedSection(activeSection) &&
+															activeSection.max_words && (
+																<span className="text-muted-foreground-dark text-sm">
+																	{activeSection.max_words.toLocaleString()} Max words
+																</span>
+															)}
+													</div>
 												</div>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Project Description</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Detailed description of the proposed project
-													</p>
-												</div>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Budget & Timeline</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Financial breakdown and project timeline
-													</p>
-												</div>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Team & Qualifications</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Team members and their relevant experience
-													</p>
-												</div>
-											</>
-										)}
-									</div>
-									<DragOverlay>
-										{activeId && activeSection ? (
-											<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
-												<div className="flex items-center justify-between">
-													<h5 className="font-medium">{activeSection.title}</h5>
-													{isDetailedSection(activeSection) && activeSection.max_words && (
-														<span className="text-muted-foreground-dark text-sm">
-															{activeSection.max_words.toLocaleString()} Max words
-														</span>
-													)}
-												</div>
-											</div>
-										) : null}
-									</DragOverlay>
-								</DndContext>
-							</Card>
-						</div>
-					</ScrollArea>
-				</>
+											) : null}
+										</DragOverlay>
+									</DndContext>
+								</Card>
+							</div>
+						</ScrollArea>
+					</div>
+				)
 			) : (
-				<div className="flex h-full flex-col items-center justify-center">
+				<div className="flex h-full flex-col items-center justify-center" data-testid="empty-state">
 					<IconPreviewLogo height={180} width={180} />
-					<p className="text-muted-foreground-dark mt-6 text-center text-sm">
+					<p
+						className="text-muted-foreground-dark mt-6 text-center text-sm"
+						data-testid="empty-state-message"
+					>
 						Configure your application structure to see a preview
 					</p>
 				</div>
@@ -610,9 +657,15 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 	};
 
 	return (
-		<form className="mb-4 space-y-4 rounded border border-gray-200 p-4" onSubmit={handleSubmit}>
+		<form
+			className="mb-4 space-y-4 rounded border border-gray-200 p-4"
+			data-testid="new-section-form"
+			onSubmit={handleSubmit}
+		>
 			<div className="flex items-center justify-between">
-				<h5 className="font-medium">New section</h5>
+				<h5 className="font-medium" data-testid="new-section-title">
+					New section
+				</h5>
 			</div>
 
 			<div className="space-y-4">
@@ -630,7 +683,7 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 				</div>
 
 				<div>
-					<Label>Words/Characters count</Label>
+					<Label data-testid="words-characters-label">Words/Characters count</Label>
 					<p className="text-muted-foreground text-sm">
 						This helps AI generate content that fits the grant&apos;s requirements. Choose if the limit
 						applies to words or characters.
@@ -679,10 +732,10 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 				</div>
 
 				<div className="flex justify-between gap-2">
-					<Button onClick={onCancel} type="button" variant="outline">
+					<Button data-testid="cancel-button" onClick={onCancel} type="button" variant="outline">
 						Cancel
 					</Button>
-					<Button disabled={!formData.title.trim()} type="submit">
+					<Button data-testid="save-button" disabled={!formData.title.trim()} type="submit">
 						Save
 					</Button>
 				</div>

@@ -8,13 +8,9 @@ describe("ResearchPlanStep", () => {
 		render(<ResearchPlanStep />);
 
 		expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
-		expect(screen.getByText("Research plan")).toBeInTheDocument();
-		expect(
-			screen.getByText(
-				"Define key objectives and break them into tasks. This structure is the backbone of your app.",
-			),
-		).toBeInTheDocument();
-		expect(screen.getByText("Add First Objective")).toBeInTheDocument();
-		expect(screen.getByText("Add your first research objective to get started")).toBeInTheDocument();
+		expect(screen.getByTestId("research-plan-header")).toBeInTheDocument();
+		expect(screen.getByTestId("research-plan-description")).toBeInTheDocument();
+		expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
+		expect(screen.getByTestId("empty-state-message")).toBeInTheDocument();
 	});
 });

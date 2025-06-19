@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-
 import { AppButton } from "@/components/app-button";
 import { IconPreviewLogo } from "@/components/workspaces/icons";
 

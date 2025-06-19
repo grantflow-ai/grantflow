@@ -287,7 +287,7 @@ describe("Application Store", () => {
 			const { addUrl } = useApplicationStore.getState();
 
 			await addUrl("https://example.com");
-			await addUrl("https://example.com"); // Duplicate
+			await addUrl("https://example.com");
 			await addUrl("https://different.com");
 
 			const state = useApplicationStore.getState();

@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
@@ -36,16 +36,14 @@ interface Objective {
 const MAX_OBJECTIVES = 5;
 
 export function ResearchPlanStep() {
-	// Local state for objectives that were removed from wizard store
 	const [objectives, setObjectives] = useState<Objective[]>([]);
 
-	// Local implementations of the methods that were removed from wizard store
 	const addObjective = useCallback((objective: Objective) => {
 		setObjectives((prev) => [...prev, objective]);
 	}, []);
 
-	const removeObjective = useCallback((index: number) => {
-		setObjectives((prev) => prev.filter((_, i) => i !== index));
+	const removeObjective = useCallback((id: string) => {
+		setObjectives((prev) => prev.filter((obj) => obj.id !== id));
 	}, []);
 
 	const reorderObjectives = useCallback((newObjectives: Objective[]) => {
@@ -139,6 +137,7 @@ export function ResearchPlanStep() {
 					<div className="space-y-4">
 						<AppButton
 							className="w-full"
+							data-testid="add-objective-button"
 							disabled={!canAddObjective}
 							leftIcon={<Plus size={16} />}
 							onClick={handleAddObjective}
@@ -216,9 +215,12 @@ function ResearchPlanPreview({
 					</div>
 				</>
 			) : (
-				<div className="flex h-full flex-col items-center justify-center">
+				<div className="flex h-full flex-col items-center justify-center" data-testid="empty-state">
 					<IconPreviewLogo height={180} width={180} />
-					<p className="text-muted-foreground-dark mt-6 text-center text-sm">
+					<p
+						className="text-muted-foreground-dark mt-6 text-center text-sm"
+						data-testid="empty-state-message"
+					>
 						Add your first research objective to get started
 					</p>
 				</div>

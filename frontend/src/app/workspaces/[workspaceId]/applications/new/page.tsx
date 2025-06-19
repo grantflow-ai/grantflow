@@ -97,13 +97,7 @@ export default function CreateGrantApplicationWizardPage() {
 				key="Application Details"
 			/>
 		),
-		"Application Structure": (
-			<ApplicationStructureStep
-				connectionStatus={connectionStatus}
-				connectionStatusColor={connectionStatusColor}
-				key="Application Structure"
-			/>
-		),
+		"Application Structure": <ApplicationStructureStep key="Application Structure" />,
 		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
 		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
 		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
@@ -125,7 +119,7 @@ export default function CreateGrantApplicationWizardPage() {
 	return (
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
 			<WizardHeader />
-			<section className="flex-1 overflow-auto" data-testid="step-content-container" key={currentStep}>
+			<section className="flex-1 overflow-auto" data-testid="step-content-container">
 				{stepComponents[currentStep]}
 			</section>
 			<WizardFooter />

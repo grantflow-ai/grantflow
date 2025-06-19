@@ -34,7 +34,7 @@ export const EmptyState: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 1,
+					currentStep: "Application Structure",
 				});
 			}, []);
 			return <Story />;
@@ -61,7 +61,7 @@ export const WithApplicationTitle: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 1,
+					currentStep: "Application Structure",
 				});
 			}, []);
 			return <Story />;
@@ -83,7 +83,7 @@ export const WithGeneratedSections: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 1,
+					currentStep: "Application Structure",
 				});
 			}, []);
 			return <Story />;

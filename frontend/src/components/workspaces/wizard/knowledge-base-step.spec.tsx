@@ -27,7 +27,7 @@ vi.mock("@/utils/logging", () => ({
 
 vi.mock("./url-input", () => ({
 	UrlInput: ({ onUrlAdded }: { onUrlAdded: () => void }) => (
-		<button data-testid="url-input" onClick={() => onUrlAdded()}>
+		<button data-testid="url-input" onClick={() => onUrlAdded()} type="button">
 			URL Input Component
 		</button>
 	),
@@ -35,7 +35,7 @@ vi.mock("./url-input", () => ({
 
 vi.mock("./template-file-uploader", () => ({
 	TemplateFileUploader: ({ onUploadComplete }: { onUploadComplete: () => void }) => (
-		<button data-testid="template-file-uploader" onClick={() => onUploadComplete()}>
+		<button data-testid="template-file-uploader" onClick={() => onUploadComplete()} type="button">
 			Template File Uploader
 		</button>
 	),
@@ -103,17 +103,15 @@ describe("KnowledgeBaseStep", () => {
 		it("renders documents section without subtitle", () => {
 			render(<KnowledgeBaseStep />);
 
-			expect(screen.getByText("Documents")).toBeInTheDocument();
+			expect(screen.getByTestId("documents-title")).toBeInTheDocument();
 			expect(screen.getByTestId("template-file-uploader")).toBeInTheDocument();
 		});
 
 		it("renders links section with correct subtitle", () => {
 			render(<KnowledgeBaseStep />);
 
-			expect(screen.getByText("Links")).toBeInTheDocument();
-			expect(
-				screen.getByText("Use a static link that doesn't require login, so we can retrieve the information."),
-			).toBeInTheDocument();
+			expect(screen.getByTestId("links-title")).toBeInTheDocument();
+			expect(screen.getByTestId("links-subtitle")).toBeInTheDocument();
 			expect(screen.getByTestId("url-input")).toBeInTheDocument();
 		});
 	});
