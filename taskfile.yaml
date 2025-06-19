@@ -275,6 +275,36 @@ tasks:
         cmds:
             - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/indexer/tests -v
 
+    service:indexer:test:e2e:smoke:
+        desc: Run indexer e2e smoke tests (< 1 min)
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/indexer/tests/e2e/ -m smoke -v
+
+    service:indexer:test:e2e:quality:
+        desc: Run indexer e2e quality assessment tests (2-5 min)
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/indexer/tests/e2e/ -m quality_assessment -v
+
+    service:indexer:test:e2e:semantic:
+        desc: Run indexer e2e semantic evaluation tests
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/indexer/tests/e2e/ -m semantic_evaluation -v
+
+    service:indexer:test:e2e:ai:
+        desc: Run indexer e2e AI-powered evaluation tests
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/indexer/tests/e2e/ -m ai_eval -v
+
+    service:indexer:test:e2e:full:
+        desc: Run complete indexer e2e test suite (10+ min)
+        dotenv: ["services/indexer/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/indexer/tests/e2e/ -m e2e_full -v
+
     service:crawler:dev:
         desc: Start the crawler service in development mode with hot-reloading
         deps:
@@ -314,6 +344,36 @@ tasks:
         dotenv: ["services/rag/.env"]
         cmds:
             - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/rag/tests -v
+
+    service:rag:test:e2e:smoke:
+        desc: Run RAG e2e smoke tests (< 1 min)
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/rag/tests/e2e/ -m smoke -v
+
+    service:rag:test:e2e:quality:
+        desc: Run RAG e2e quality assessment tests (2-5 min)
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/rag/tests/e2e/ -m quality_assessment -v
+
+    service:rag:test:e2e:semantic:
+        desc: Run RAG e2e semantic evaluation tests (5-10 min)
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/rag/tests/e2e/ -m semantic_evaluation -v
+
+    service:rag:test:e2e:ai:
+        desc: Run RAG e2e AI evaluation tests (requires ANTHROPIC_API_KEY)
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/rag/tests/e2e/ -m ai_eval -v
+
+    service:rag:test:e2e:full:
+        desc: Run complete RAG e2e test suite (10+ min)
+        dotenv: ["services/rag/.env"]
+        cmds:
+            - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
     # ==============================================================================
     # EMULATOR COMMANDS - Standalone emulator management
@@ -585,3 +645,4 @@ tasks:
             - cmd: sleep {{.SECONDS}}
               platforms: [darwin, linux]
             - cmd: timeout /t {{.SECONDS}} /nobreak > nul
+              platforms: [windows]

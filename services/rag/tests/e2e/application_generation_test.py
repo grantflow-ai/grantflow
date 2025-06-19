@@ -1,22 +1,18 @@
 import logging
 import re
 from datetime import UTC, datetime
-from os import environ
 from typing import Any
 from uuid import UUID
 
-import pytest
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 
 
-@pytest.mark.timeout(60 * 30)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"), reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests"
-)
+@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
 async def test_generate_full_application_text(
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,

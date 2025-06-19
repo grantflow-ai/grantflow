@@ -1,15 +1,14 @@
 import logging
 import re
 from datetime import UTC, datetime
-from os import environ
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-import pytest
 from packages.db.src.tables import FundingOrganization, Workspace
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.test_utils import create_grant_application_data
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
@@ -18,10 +17,7 @@ if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 
 
-@pytest.mark.timeout(60 * 45)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"), reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests"
-)
+@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=2700)
 async def test_generate_erc_application_for_asaf(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],

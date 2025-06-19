@@ -1,0 +1,35 @@
+{
+  "test_type": "retrieval_semantic_evaluation",
+  "application_id": "43b4aed5-8549-461f-9290-5ee9a630ac9a",
+  "query": "Research melanoma treatment and immunotherapy approaches",
+  "results": {
+    "document_count": 56,
+    "diversity_score": 0.9402855781354281,
+    "ai_evaluation": {
+      "relevance_scores": [
+        4,
+        4,
+        5,
+        5,
+        4
+      ],
+      "avg_relevance": 4.4,
+      "explanations": [
+        "The document discusses melanoma brain metastases and various treatment approaches, including immunotherapy, which is relevant to the query.",
+        "The document is directly focused on the treatment of melanoma brain metastases, which is highly relevant to the query.",
+        "The document discusses immunotherapy options for non-resectable, metastatic melanoma, which is extremely relevant to the query.",
+        "The document covers various treatment approaches for melanoma brain metastases, including chemotherapy and immunotherapy, which is extremely relevant to the query.",
+        "The document provides an overview of the research on the earlier detection, diagnosis, and treatment of melanoma brain metastases, which is highly relevant to the query."
+      ],
+      "overall_assessment": "The set of documents is highly relevant to the query, covering various aspects of melanoma treatment and immunotherapy approaches. The documents provide a comprehensive overview of the current state of research and treatment options for melanoma, particularly brain metastases.",
+      "evaluation_enabled": true
+    },
+    "performance": {
+      "execution_time": 42.165088176727295,
+      "threshold": 5.0,
+      "within_threshold": false,
+      "performance_score": 0.11858151414372502
+    }
+  },
+  "timestamp": "2025-06-19T13:18:13.312371+00:00"
+}

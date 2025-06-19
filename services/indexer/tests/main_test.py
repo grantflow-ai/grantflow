@@ -728,8 +728,6 @@ async def test_handle_file_indexing_retry_failed_file(
     mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test that failed files are reprocessed on retry."""
-
     object_path = f"workspace/ws-123/grant_application/{grant_application.id}/failed.pdf"
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(

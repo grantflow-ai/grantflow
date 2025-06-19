@@ -67,11 +67,6 @@ def get_anthropic_client() -> AsyncAnthropic:
 
 
 async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
-    """Count the number of tokens in a text string.
-
-    Uses a fast local estimation for Anthropic models to avoid rate limits.
-    Uses Google AI client for other models.
-    """
     if not text:
         return 0
 
@@ -93,11 +88,6 @@ CHARS_PER_TOKEN: Final[float] = 4.0
 
 @lru_cache(maxsize=1000)
 def estimate_token_count(text: str) -> int:
-    """Estimate token count without making an API call.
-
-    This uses character count and word count to approximate token count.
-    It's less accurate than the API but doesn't count against rate limits.
-    """
     try:
         from packages.shared_utils.src.nlp import get_word_count
 

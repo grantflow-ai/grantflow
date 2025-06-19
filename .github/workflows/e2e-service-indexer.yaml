@@ -1,0 +1,185 @@
+name: Indexer E2E Tests
+
+on:
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/e2e-service-indexer.yaml"
+            - ".github/actions/run-python-e2e-tests/**"
+            - "packages/**"
+            - "services/indexer/**"
+            - "testing/**"
+            - "pyproject.toml"
+            - "uv.lock"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/e2e-service-indexer.yaml"
+            - ".github/actions/run-python-e2e-tests/**"
+            - "packages/**"
+            - "services/indexer/**"
+            - "testing/**"
+            - "pyproject.toml"
+            - "uv.lock"
+    workflow_dispatch:
+        inputs:
+            test_markers:
+                description: "Test markers to run (smoke, quality_assessment, e2e_full)"
+                required: false
+                default: "smoke"
+                type: choice
+                options:
+                    - smoke
+                    - quality_assessment
+                    - e2e_full
+                    - semantic_evaluation
+                    - ai_eval
+
+jobs:
+    smoke-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_DB: grantflow
+                    POSTGRES_USER: grantflow
+                    POSTGRES_PASSWORD: grantflow
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run Indexer E2E Tests (Smoke)
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  service: indexer
+                  test_markers: smoke
+                  timeout: 120
+              env:
+                  GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+                  LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+                  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+                  GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+                  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    quality-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_DB: grantflow
+                    POSTGRES_USER: grantflow
+                    POSTGRES_PASSWORD: grantflow
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run Indexer E2E Tests (Quality Assessment)
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  service: indexer
+                  test_markers: quality_assessment
+                  timeout: 300
+              env:
+                  GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+                  LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+                  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+                  GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+                  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    full-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_markers == 'e2e_full' || github.event.inputs.test_markers == 'semantic_evaluation')
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_DB: grantflow
+                    POSTGRES_USER: grantflow
+                    POSTGRES_PASSWORD: grantflow
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run Indexer E2E Tests (Full)
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  service: indexer
+                  test_markers: ${{ github.event.inputs.test_markers || 'e2e_full' }}
+                  timeout: 600
+                  skip_ai_eval: true
+              env:
+                  GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+                  LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+                  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+                  GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+                  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    ai-eval-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_markers == 'ai_eval'
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_DB: grantflow
+                    POSTGRES_USER: grantflow
+                    POSTGRES_PASSWORD: grantflow
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run Indexer AI Evaluation Tests
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  service: indexer
+                  test_markers: ai_eval
+                  timeout: 600
+                  skip_ai_eval: false
+              env:
+                  GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+                  LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+                  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+                  GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+                  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
