@@ -67,7 +67,7 @@ export function SigninForm({
 										testId="email-signin-form-firstname-input"
 										type="text"
 										{...field}
-									></AppInput>
+									/>
 								</FormControl>
 							</FormItem>
 						)}
@@ -91,7 +91,7 @@ export function SigninForm({
 										testId="email-signin-form-lastname-input"
 										type="text"
 										{...field}
-									></AppInput>
+									/>
 								</FormControl>
 							</FormItem>
 						)}
@@ -115,7 +115,7 @@ export function SigninForm({
 										testId="email-signin-form-email-input"
 										type="email"
 										{...field}
-									></AppInput>
+									/>
 								</FormControl>
 							</FormItem>
 						)}

@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
-
 import { ApplicationFactory, ApplicationWithTemplateFactory, RagSourceFactory } from "::testing/factories";
+import type { Meta, StoryObj } from "@storybook/react";
+import { useEffect } from "react";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -12,8 +12,6 @@ import {
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import type { Meta, StoryObj } from "@storybook/react";
 
 function WizardPage({
 	currentStep = 0,

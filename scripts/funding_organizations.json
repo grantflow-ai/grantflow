@@ -1,174 +1,174 @@
 [
 	{
-		"full_name": "National Institutes of Health",
-		"abbreviation": "NIH"
+		"abbreviation": "NIH",
+		"full_name": "National Institutes of Health"
 	},
 	{
-		"full_name": "National Science Foundation",
-		"abbreviation": "NSF"
+		"abbreviation": "NSF",
+		"full_name": "National Science Foundation"
 	},
 	{
-		"full_name": "Department of Energy Office of Science",
-		"abbreviation": "DOE"
+		"abbreviation": "DOE",
+		"full_name": "Department of Energy Office of Science"
 	},
 	{
-		"full_name": "Defense Advanced Research Projects Agency",
-		"abbreviation": "DARPA"
+		"abbreviation": "DARPA",
+		"full_name": "Defense Advanced Research Projects Agency"
 	},
 	{
-		"full_name": "National Aeronautics and Space Administration",
-		"abbreviation": "NASA"
+		"abbreviation": "NASA",
+		"full_name": "National Aeronautics and Space Administration"
 	},
 	{
-		"full_name": "United States Department of Agriculture",
-		"abbreviation": "USDA"
+		"abbreviation": "USDA",
+		"full_name": "United States Department of Agriculture"
 	},
 	{
-		"full_name": "Environmental Protection Agency",
-		"abbreviation": "EPA"
+		"abbreviation": "EPA",
+		"full_name": "Environmental Protection Agency"
 	},
 	{
-		"full_name": "Centers for Disease Control and Prevention",
-		"abbreviation": "CDC"
+		"abbreviation": "CDC",
+		"full_name": "Centers for Disease Control and Prevention"
 	},
 	{
-		"full_name": "National Institute of Standards and Technology",
-		"abbreviation": "NIST"
+		"abbreviation": "NIST",
+		"full_name": "National Institute of Standards and Technology"
 	},
 	{
-		"full_name": "Office of Naval Research",
-		"abbreviation": "ONR"
+		"abbreviation": "ONR",
+		"full_name": "Office of Naval Research"
 	},
 	{
-		"full_name": "Air Force Office of Scientific Research",
-		"abbreviation": "AFOSR"
+		"abbreviation": "AFOSR",
+		"full_name": "Air Force Office of Scientific Research"
 	},
 	{
-		"full_name": "Howard Hughes Medical Institute",
-		"abbreviation": "HHMI"
+		"abbreviation": "HHMI",
+		"full_name": "Howard Hughes Medical Institute"
 	},
 	{
-		"full_name": "Gordon and Betty Moore Foundation",
-		"abbreviation": "GBMF"
+		"abbreviation": "GBMF",
+		"full_name": "Gordon and Betty Moore Foundation"
 	},
 	{
-		"full_name": "Wellcome Trust",
-		"abbreviation": "WT"
+		"abbreviation": "WT",
+		"full_name": "Wellcome Trust"
 	},
 	{
-		"full_name": "European Research Council",
-		"abbreviation": "ERC"
+		"abbreviation": "ERC",
+		"full_name": "European Research Council"
 	},
 	{
-		"full_name": "Bill & Melinda Gates Foundation",
-		"abbreviation": "BMGF"
+		"abbreviation": "BMGF",
+		"full_name": "Bill & Melinda Gates Foundation"
 	},
 	{
-		"full_name": "Australian Research Council",
-		"abbreviation": "ARC"
+		"abbreviation": "ARC",
+		"full_name": "Australian Research Council"
 	},
 	{
-		"full_name": "Canadian Institutes of Health Research",
-		"abbreviation": "CIHR"
+		"abbreviation": "CIHR",
+		"full_name": "Canadian Institutes of Health Research"
 	},
 	{
-		"full_name": "Japan Society for the Promotion of Science",
-		"abbreviation": "JSPS"
+		"abbreviation": "JSPS",
+		"full_name": "Japan Society for the Promotion of Science"
 	},
 	{
-		"full_name": "Swiss National Science Foundation",
-		"abbreviation": "SNSF"
+		"abbreviation": "SNSF",
+		"full_name": "Swiss National Science Foundation"
 	},
 	{
-		"full_name": "National Natural Science Foundation of China",
-		"abbreviation": "NSFC"
+		"abbreviation": "NSFC",
+		"full_name": "National Natural Science Foundation of China"
 	},
 	{
-		"full_name": "Korea Science and Engineering Foundation",
-		"abbreviation": "KOSEF"
+		"abbreviation": "KOSEF",
+		"full_name": "Korea Science and Engineering Foundation"
 	},
 	{
-		"full_name": "Indian Council of Medical Research",
-		"abbreviation": "ICMR"
+		"abbreviation": "ICMR",
+		"full_name": "Indian Council of Medical Research"
 	},
 	{
-		"full_name": "Singapore National Research Foundation",
-		"abbreviation": "NRF Singapore"
+		"abbreviation": "NRF Singapore",
+		"full_name": "Singapore National Research Foundation"
 	},
 	{
-		"full_name": "Research Council of Norway",
-		"abbreviation": "RCN"
+		"abbreviation": "RCN",
+		"full_name": "Research Council of Norway"
 	},
 	{
-		"full_name": "Finnish Academy of Science",
-		"abbreviation": "FAS"
+		"abbreviation": "FAS",
+		"full_name": "Finnish Academy of Science"
 	},
 	{
-		"full_name": "Irish Research Council",
-		"abbreviation": "IRC"
+		"abbreviation": "IRC",
+		"full_name": "Irish Research Council"
 	},
 	{
-		"full_name": "Danish National Research Foundation",
-		"abbreviation": "DNRF"
+		"abbreviation": "DNRF",
+		"full_name": "Danish National Research Foundation"
 	},
 	{
-		"full_name": "Austrian Science Fund",
-		"abbreviation": "FWF"
+		"abbreviation": "FWF",
+		"full_name": "Austrian Science Fund"
 	},
 	{
-		"full_name": "Brazilian National Council for Scientific and Technological Development",
-		"abbreviation": "CNPq"
+		"abbreviation": "CNPq",
+		"full_name": "Brazilian National Council for Scientific and Technological Development"
 	},
 	{
-		"full_name": "São Paulo Research Foundation",
-		"abbreviation": "FAPESP"
+		"abbreviation": "FAPESP",
+		"full_name": "São Paulo Research Foundation"
 	},
 	{
-		"full_name": "Colombian Department of Science, Technology and Innovation",
-		"abbreviation": "Colciencias"
+		"abbreviation": "Colciencias",
+		"full_name": "Colombian Department of Science, Technology and Innovation"
 	},
 	{
-		"full_name": "New Zealand Health Research Council",
-		"abbreviation": "NZ-HRC"
+		"abbreviation": "NZ-HRC",
+		"full_name": "New Zealand Health Research Council"
 	},
 	{
-		"full_name": "Royal Society of New Zealand Marsden Fund",
-		"abbreviation": "Marsden Fund"
+		"abbreviation": "Marsden Fund",
+		"full_name": "Royal Society of New Zealand Marsden Fund"
 	},
 	{
-		"full_name": "World Health Organization Research Programs",
-		"abbreviation": "WHO Research"
+		"abbreviation": "WHO Research",
+		"full_name": "World Health Organization Research Programs"
 	},
 	{
-		"full_name": "United Nations Development Programme Research Initiatives",
-		"abbreviation": "UNDP Research"
+		"abbreviation": "UNDP Research",
+		"full_name": "United Nations Development Programme Research Initiatives"
 	},
 	{
-		"full_name": "World Bank Research Grant Programs",
-		"abbreviation": "World Bank Research"
+		"abbreviation": "World Bank Research",
+		"full_name": "World Bank Research Grant Programs"
 	},
 	{
-		"full_name": "Asian Development Bank Research Programs",
-		"abbreviation": "ADB Research"
+		"abbreviation": "ADB Research",
+		"full_name": "Asian Development Bank Research Programs"
 	},
 	{
-		"full_name": "Simons Foundation",
-		"abbreviation": "Simons"
+		"abbreviation": "Simons",
+		"full_name": "Simons Foundation"
 	},
 	{
-		"full_name": "Alfred P. Sloan Foundation",
-		"abbreviation": "Sloan Foundation"
+		"abbreviation": "Sloan Foundation",
+		"full_name": "Alfred P. Sloan Foundation"
 	},
 	{
-		"full_name": "Robert Wood Johnson Foundation",
-		"abbreviation": "RWJF"
+		"abbreviation": "RWJF",
+		"full_name": "Robert Wood Johnson Foundation"
 	},
 	{
-		"full_name": "MacArthur Foundation",
-		"abbreviation": "MacArthur"
+		"abbreviation": "MacArthur",
+		"full_name": "MacArthur Foundation"
 	},
 	{
-		"full_name": "Rockefeller Foundation",
-		"abbreviation": "Rockefeller"
+		"abbreviation": "Rockefeller",
+		"full_name": "Rockefeller Foundation"
 	}
 ]

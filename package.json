@@ -1,18 +1,12 @@
 {
-	"name": "grantflow-monorepo",
-	"version": "0.1.0",
-	"private": true,
-	"scripts": {
-		"knip": "knip",
-		"knip:production": "knip --production",
-		"knip:fix": "knip --fix"
-	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.0.0",
 		"@eslint/compat": "^1.3.0",
 		"@eslint/eslintrc": "^3.3.1",
 		"@eslint/js": "^9.29.0",
 		"@next/eslint-plugin-next": "^15.3.4",
 		"eslint": "^9.29.0",
+		"eslint-config-biome": "^1.9.4",
 		"eslint-import-resolver-typescript": "^4.4.3",
 		"eslint-plugin-import-x": "^4.15.2",
 		"eslint-plugin-jsx-a11y": "^6.10.2",
@@ -37,5 +31,16 @@
 	"engines": {
 		"node": ">=22.0.0"
 	},
-	"packageManager": "pnpm@10.11.0"
+	"name": "grantflow-monorepo",
+	"packageManager": "pnpm@10.11.0",
+	"private": true,
+	"scripts": {
+		"check": "biome check --write . && eslint ",
+		"format": "biome format --write .",
+		"knip": "knip",
+		"knip:fix": "knip --fix",
+		"knip:production": "knip --production",
+		"lint": "biome lint --write . && eslint . --fix"
+	},
+	"version": "0.1.0"
 }

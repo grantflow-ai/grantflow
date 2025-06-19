@@ -44,16 +44,20 @@ task setup              # Install dependencies and git hooks (lefthook)
 task dev                # Start full dev environment (checks deps, migrates DB, inits emulators)
 task dev:stop           # Stop all services
 task test               # Run all tests
-task lint               # Run all linters (or task lint:all)
+task lint               # Run all linters (equivalent to task lint:all)
+
+# Linting commands (organized by scope)
+task lint:all           # Run all linters on all files
+task lint:frontend      # Run frontend linters (Biome, ESLint, and TypeScript)
+task lint:python        # Run Python linters (Ruff and MyPy)
 
 # Specific linters (use these during development)
-task lint:biome         # Format and lint code with Biome
-task lint:eslint        # Lint JavaScript/TypeScript
-task lint:ruff          # Lint and format Python code
-task lint:mypy          # Type check Python code
-task lint:codespell     # Check for common misspellings
-task lint:python        # Run all Python linters
-task lint:frontend      # Run all frontend linters
+task lint:biome         # Format and lint JS/TS/JSON/CSS with Biome
+task lint:eslint        # Lint JavaScript/TypeScript with ESLint
+task lint:typescript    # Type check TypeScript code
+task lint:ruff          # Lint and format Python code with Ruff
+task lint:mypy          # Type check Python code with MyPy
+task lint:codespell     # Check for common misspellings across all files
 
 # Database
 task db:migrate         # Run migrations

@@ -23,7 +23,7 @@ const config: KnipConfig = {
 	ignoreBinaries: ["only-allow"],
 	ignoreDependencies: ["@next/eslint-plugin-next", "eslint-plugin-react-hooks"],
 	workspaces: {
-		"frontend": {
+		frontend: {
 			entry: [
 				"src/app/**/page.tsx",
 				"src/app/**/layout.tsx",

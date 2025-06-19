@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 
 @pytest.fixture(scope="session")
-async def gcs_emulator_host() -> AsyncGenerator[str, None]:
+async def gcs_emulator_host() -> AsyncGenerator[str]:
     container_name = f"test_gcs_emulator_{uuid4().hex[:8]}"
 
     with socket(AF_INET, SOCK_STREAM) as s:
@@ -60,7 +60,7 @@ async def gcs_emulator_host() -> AsyncGenerator[str, None]:
 
 @pytest.fixture
 async def storage_client(gcs_emulator_host: str) -> storage.Client:
-    from packages.shared_utils.src.gcs import get_storage_client
+    from packages.shared_utils.src.gcs import get_storage_client  # noqa: PLC0415
 
     storage_client_ref.value = None
     bucket_ref.value = None
@@ -70,7 +70,7 @@ async def storage_client(gcs_emulator_host: str) -> storage.Client:
 
 @pytest.fixture
 async def storage_bucket(storage_client: storage.Client) -> storage.Bucket:
-    from packages.shared_utils.src.gcs import get_bucket
+    from packages.shared_utils.src.gcs import get_bucket  # noqa: PLC0415
 
     bucket_ref.value = None
 

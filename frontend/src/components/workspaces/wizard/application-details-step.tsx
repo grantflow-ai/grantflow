@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import AppTextArea from "@/components/textarea-field";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { FileWithId } from "@/types/files";
+import type { FileWithId } from "@/types/files";
 import { useDebounce } from "@/utils/debounce";
-
 import { ApplicationPreview } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";

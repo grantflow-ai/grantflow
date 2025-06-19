@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PagePath } from "@/enums";
-import { API } from "@/types/api-types";
+
+import type { API } from "@/types/api-types";
 
 export function WorkspaceCard({ workspace }: { workspace: API.ListWorkspaces.Http200.ResponseBody[0] }) {
 	type UserRole = "ADMIN" | "MEMBER" | "OWNER";

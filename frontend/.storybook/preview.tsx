@@ -1,8 +1,8 @@
 import "@/styles/globals.css";
-import { getEnv } from "@/utils/env";
-import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 
 import type { Preview } from "@storybook/react";
+import { getEnv } from "@/utils/env";
+import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 
 getEnv();
 

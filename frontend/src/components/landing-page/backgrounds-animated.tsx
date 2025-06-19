@@ -24,10 +24,10 @@ export function AnimatedGradientBackground({ className }: React.HTMLAttributes<H
 			transition={{
 				duration: 25,
 				ease: "linear",
-				repeat: Infinity,
+				repeat: Number.POSITIVE_INFINITY,
 				repeatType: "loop",
 				times: [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1],
 			}}
-		></motion.div>
+		/>
 	);
 }
