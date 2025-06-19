@@ -22,36 +22,21 @@ interface WizardActions {
 	handleTitleChange: (title: string) => void;
 	polling: PollingActions;
 	setCurrentStep: (step: number) => void;
-	setFileDropdownOpen: (fileId: string, open: boolean) => void;
-	setLinkHoverState: (url: string, hovered: boolean) => void;
-	setUrlInput: (input: string) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	validateStepNext: () => boolean;
 }
 
 interface WizardState {
-	polling: PollingState;
-	ui: WizardUI;
-}
-
-interface WizardUI {
 	currentStep: number;
-	fileDropdownStates: Record<string, boolean>;
-	linkHoverStates: Record<string, boolean>;
-	urlInput: string;
+	polling: PollingState;
 }
 
 const initialWizardState: WizardState = {
+	currentStep: 0,
 	polling: {
 		intervalId: null,
 		isActive: false,
-	},
-	ui: {
-		currentStep: 0,
-		fileDropdownStates: {},
-		linkHoverStates: {},
-		urlInput: "",
 	},
 };
 
@@ -126,52 +111,14 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				setCurrentStep: (step: number) => {
-					set(({ ui, ...state }) => ({
+					set((state) => ({
 						...state,
-						ui: {
-							...ui,
-							currentStep: Math.max(0, Math.min(WIZARD_STEP_TITLES.length - 1, step)),
-						},
-					}));
-				},
-
-				setFileDropdownOpen: (fileId: string, open: boolean) => {
-					set(({ ui, ...state }) => ({
-						...state,
-						ui: {
-							...ui,
-							fileDropdownStates: {
-								...ui.fileDropdownStates,
-								[fileId]: open,
-							},
-						},
-					}));
-				},
-
-				setLinkHoverState: (url: string, hovered: boolean) => {
-					set(({ ui, ...state }) => ({
-						...state,
-						ui: {
-							...ui,
-							linkHoverStates: {
-								...ui.linkHoverStates,
-								[url]: hovered,
-							},
-						},
-					}));
-				},
-
-				setUrlInput: (input: string) => {
-					set(({ ui, ...state }) => ({
-						...state,
-						ui: { ...ui, urlInput: input },
+						currentStep: Math.max(0, Math.min(WIZARD_STEP_TITLES.length - 1, step)),
 					}));
 				},
 
 				toNextStep: () => {
-					const {
-						ui: { currentStep },
-					} = get();
+					const { currentStep } = get();
 
 					if (currentStep === WIZARD_STEP_TITLES.length - 1) {
 						return;
@@ -186,33 +133,23 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					) {
 						void useApplicationStore.getState().generateTemplate(application.grant_template.id);
 					}
-					set(({ ui, ...state }) => ({
+					set((state) => ({
 						...state,
-						ui: {
-							...ui,
-							currentStep: currentStep + 1,
-						},
+						currentStep: currentStep + 1,
 					}));
 				},
 
 				toPreviousStep: () => {
-					const {
-						ui: { currentStep },
-					} = get();
+					const { currentStep } = get();
 
-					set(({ ui, ...state }) => ({
+					set((state) => ({
 						...state,
-						ui: {
-							...ui,
-							currentStep: Math.max(0, currentStep - 1),
-						},
+						currentStep: Math.max(0, currentStep - 1),
 					}));
 				},
 
 				validateStepNext: () => {
-					const {
-						ui: { currentStep },
-					} = get();
+					const { currentStep } = get();
 
 					const { application, applicationTitle, isLoading, uploadedFiles, urls } =
 						useApplicationStore.getState();
@@ -243,9 +180,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 		{
 			name: WIZARD_STORAGE_KEY,
 			partialize: (state) => ({
-				ui: {
-					currentStep: state.ui.currentStep,
-				},
+				currentStep: state.currentStep,
 			}),
 		},
 	),

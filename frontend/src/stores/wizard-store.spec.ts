@@ -30,16 +30,11 @@ describe("wizard store", () => {
 
 		const wizardState = useWizardStore.getState();
 		useWizardStore.setState({
+			currentStep: 0,
 			polling: {
 				...wizardState.polling,
 				intervalId: null,
 				isActive: false,
-			},
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
 			},
 		});
 
@@ -128,7 +123,7 @@ describe("wizard store", () => {
 		describe("step 0 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					ui: { ...useWizardStore.getState().ui, currentStep: 0 },
+					currentStep: 0,
 				});
 			});
 
@@ -220,7 +215,7 @@ describe("wizard store", () => {
 		describe("step 1 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					ui: { ...useWizardStore.getState().ui, currentStep: 1 },
+					currentStep: 1,
 				});
 			});
 
@@ -263,7 +258,7 @@ describe("wizard store", () => {
 		describe("step 2 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					ui: { ...useWizardStore.getState().ui, currentStep: 2 },
+					currentStep: 2,
 				});
 			});
 
@@ -335,7 +330,7 @@ describe("wizard store", () => {
 				});
 
 				useWizardStore.setState({
-					ui: { ...useWizardStore.getState().ui, currentStep: 3 },
+					currentStep: 3,
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -411,42 +406,42 @@ describe("wizard store", () => {
 			const { toNextStep } = useWizardStore.getState();
 
 			toNextStep();
-			expect(useWizardStore.getState().ui.currentStep).toBe(1);
+			expect(useWizardStore.getState().currentStep).toBe(1);
 
 			toNextStep();
-			expect(useWizardStore.getState().ui.currentStep).toBe(2);
+			expect(useWizardStore.getState().currentStep).toBe(2);
 		});
 
 		it("should not navigate beyond last step", () => {
 			useWizardStore.setState({
-				ui: { ...useWizardStore.getState().ui, currentStep: 5 },
+				currentStep: 5,
 			});
 
 			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
-			expect(useWizardStore.getState().ui.currentStep).toBe(5);
+			expect(useWizardStore.getState().currentStep).toBe(5);
 		});
 
 		it("should navigate to previous step", () => {
 			useWizardStore.setState({
-				ui: { ...useWizardStore.getState().ui, currentStep: 2 },
+				currentStep: 2,
 			});
 
 			const { toPreviousStep } = useWizardStore.getState();
 
 			toPreviousStep();
-			expect(useWizardStore.getState().ui.currentStep).toBe(1);
+			expect(useWizardStore.getState().currentStep).toBe(1);
 
 			toPreviousStep();
-			expect(useWizardStore.getState().ui.currentStep).toBe(0);
+			expect(useWizardStore.getState().currentStep).toBe(0);
 		});
 
 		it("should not navigate before first step", () => {
 			const { toPreviousStep } = useWizardStore.getState();
 			toPreviousStep();
 
-			expect(useWizardStore.getState().ui.currentStep).toBe(0);
+			expect(useWizardStore.getState().currentStep).toBe(0);
 		});
 
 		it("should trigger template generation when moving from step 0 to 1", async () => {
@@ -471,35 +466,6 @@ describe("wizard store", () => {
 				application.id,
 				application.grant_template!.id,
 			);
-		});
-	});
-
-	describe("UI state management", () => {
-		it("should set file dropdown state", () => {
-			const { setFileDropdownOpen } = useWizardStore.getState();
-
-			setFileDropdownOpen("file-1", true);
-			expect(useWizardStore.getState().ui.fileDropdownStates["file-1"]).toBe(true);
-
-			setFileDropdownOpen("file-1", false);
-			expect(useWizardStore.getState().ui.fileDropdownStates["file-1"]).toBe(false);
-		});
-
-		it("should set link hover state", () => {
-			const { setLinkHoverState } = useWizardStore.getState();
-
-			setLinkHoverState("https://example.com", true);
-			expect(useWizardStore.getState().ui.linkHoverStates["https://example.com"]).toBe(true);
-
-			setLinkHoverState("https://example.com", false);
-			expect(useWizardStore.getState().ui.linkHoverStates["https://example.com"]).toBe(false);
-		});
-
-		it("should set URL input", () => {
-			const { setUrlInput } = useWizardStore.getState();
-
-			setUrlInput("https://example.com");
-			expect(useWizardStore.getState().ui.urlInput).toBe("https://example.com");
 		});
 	});
 });

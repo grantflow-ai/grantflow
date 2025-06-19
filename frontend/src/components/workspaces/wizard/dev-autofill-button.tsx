@@ -32,10 +32,7 @@ const TEST_URLS = [
 
 export function DevAutofillButton() {
 	const params = useParams();
-	const {
-		handleTitleChange,
-		ui: { currentStep },
-	} = useWizardStore();
+	const { currentStep, handleTitleChange } = useWizardStore();
 	const { addUrl, application, setUploadedFiles } = useApplicationStore();
 
 	const handleAutofill = async () => {
@@ -60,9 +57,11 @@ export function DevAutofillButton() {
 					const testFiles = TEST_FILES.map((fileInfo) => {
 						const file = new File(["Test file content"], fileInfo.name, { type: fileInfo.type });
 
-						(file as FileWithId).id = `file-${Date.now()}-${Math.random()}`;
+						const fileWithId: FileWithId = Object.assign(file, {
+							id: `file-${Date.now()}-${Math.random()}`,
+						});
 
-						return file as FileWithId;
+						return fileWithId;
 					});
 
 					setUploadedFiles(testFiles);

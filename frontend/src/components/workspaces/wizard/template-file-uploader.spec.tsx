@@ -18,12 +18,7 @@ describe("TemplateFileUploader", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
-			},
+			currentStep: 0,
 		});
 	});
 

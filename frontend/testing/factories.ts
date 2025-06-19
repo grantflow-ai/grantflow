@@ -520,7 +520,7 @@ export const FileWithIdFactory = new Factory<FileWithId>((factory) => {
 		lastModified,
 		type,
 	}) as FileWithId;
-	file.id = factory.datatype.boolean() ? factory.string.uuid() : undefined;
+	file.id = factory.string.uuid();
 
 	return file;
 });
