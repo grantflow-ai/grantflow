@@ -6,13 +6,11 @@ import { updateGrantTemplate } from "@/actions/grant-template";
 
 import { useApplicationStore } from "./application-store";
 
-// Mock the actions
 vi.mock("@/actions/grant-applications");
 vi.mock("@/actions/grant-template");
 
 describe("Application Store", () => {
 	beforeEach(() => {
-		// Reset store to initial state
 		useApplicationStore.setState({
 			application: null,
 			applicationTitle: "",
@@ -21,7 +19,6 @@ describe("Application Store", () => {
 			urls: [],
 		});
 
-		// Reset all mocks
 		vi.clearAllMocks();
 	});
 
@@ -105,7 +102,6 @@ describe("Application Store", () => {
 
 			const { updateApplicationTitle } = useApplicationStore.getState();
 
-			// No error is thrown, just toast is displayed
 			await updateApplicationTitle("workspace-id", "app-id", "New Title");
 
 			const state = useApplicationStore.getState();
@@ -137,7 +133,6 @@ describe("Application Store", () => {
 
 			const { createApplication: createApp } = useApplicationStore.getState();
 
-			// No error is thrown, just toast is displayed
 			await createApp("workspace-id");
 
 			const state = useApplicationStore.getState();
@@ -198,7 +193,6 @@ describe("Application Store", () => {
 				},
 			];
 
-			// Create application with empty grant sections initially
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...GrantTemplateFactory.build(),
@@ -243,10 +237,8 @@ describe("Application Store", () => {
 
 			const { updateGrantSections } = useApplicationStore.getState();
 
-			// Should not throw, just silently fail
 			await updateGrantSections([]);
 
-			// API should have been called
 			expect(updateGrantTemplate).toHaveBeenCalled();
 		});
 	});
@@ -257,11 +249,9 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
-			// Mock fetch for file upload
 			const mockFetch = vi.fn().mockResolvedValue({ ok: true });
 			globalThis.fetch = mockFetch;
 
-			// Mock dynamic imports
 			vi.doMock("@/actions/sources", () => ({
 				createTemplateSourceUploadUrl: vi.fn().mockResolvedValue({ url: "https://upload.url" }),
 			}));
@@ -285,7 +275,6 @@ describe("Application Store", () => {
 		it("should add URLs without duplicates", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 
-			// Mock dynamic imports
 			vi.doMock("@/actions/sources", () => ({
 				crawlTemplateUrl: vi.fn().mockResolvedValue({ message: "success" }),
 			}));
@@ -308,7 +297,6 @@ describe("Application Store", () => {
 			const file2 = { id: "2", name: "test2.pdf", size: 2000 };
 			const application = ApplicationWithTemplateFactory.build();
 
-			// Mock dynamic imports
 			vi.doMock("@/actions/sources", () => ({
 				deleteTemplateSource: vi.fn().mockResolvedValue(undefined),
 			}));
@@ -333,7 +321,6 @@ describe("Application Store", () => {
 				},
 			});
 
-			// Mock dynamic imports
 			vi.doMock("@/actions/sources", () => ({
 				deleteTemplateSource: vi.fn().mockResolvedValue(undefined),
 			}));

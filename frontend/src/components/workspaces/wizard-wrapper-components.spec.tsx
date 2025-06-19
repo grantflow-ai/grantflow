@@ -33,7 +33,6 @@ const mockApplicationStoreState = {
 
 vi.mock("@/stores/application-store");
 
-// Mock the useApplicationStore hook and getState
 vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStoreState as any);
 vi.mocked(useApplicationStore.getState).mockReturnValue(mockApplicationStoreState as any);
 
@@ -52,12 +51,8 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			workspaceId: "test-workspace-id",
-			wsConnectionStatus: undefined,
-			wsConnectionStatusColor: undefined,
 		});
 
-		// Update the application store mock
 		Object.assign(mockApplicationStoreState, {
 			application: ApplicationFactory.build({ title: "A".repeat(20) }),
 			applicationTitle: "A".repeat(20),
@@ -169,7 +164,6 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 				},
 			});
 
-			// Update application store to have failing validation
 			Object.assign(mockApplicationStoreState, {
 				application: ApplicationFactory.build({ title: "Short" }),
 				applicationTitle: "Short",
@@ -199,12 +193,8 @@ describe("WizardHeader", () => {
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			workspaceId: "test-workspace-id",
-			wsConnectionStatus: undefined,
-			wsConnectionStatusColor: undefined,
 		});
 
-		// Update the application store mock
 		Object.assign(mockApplicationStoreState, {
 			application: ApplicationFactory.build({ title: "Test Application" }),
 			applicationTitle: "Test Application",

@@ -30,7 +30,6 @@ export default function CreateGrantApplicationWizardPage() {
 	const router = useRouter();
 
 	const {
-		setWorkspaceId,
 		ui: { currentStep },
 	} = useWizardStore();
 	const { application, handleApplicationInit } = useApplicationStore();
@@ -42,7 +41,6 @@ export default function CreateGrantApplicationWizardPage() {
 
 	// Get or create an application on mount ~keep
 	useEffect(() => {
-		setWorkspaceId(params.workspaceId);
 		const applicationId = searchParams.get("applicationId");
 		const handleApplication = async () => {
 			try {
@@ -52,7 +50,7 @@ export default function CreateGrantApplicationWizardPage() {
 			}
 		};
 		void handleApplication();
-	}, [params.workspaceId, router, searchParams, handleApplicationInit, setWorkspaceId]);
+	}, [params.workspaceId, router, searchParams, handleApplicationInit]);
 
 	const handleSourceProcessingNotification = useCallback((notification: SourceProcessingNotificationMessage) => {
 		const { identifier, indexing_status } = notification.data;

@@ -25,7 +25,6 @@ interface WizardActions {
 	setFileDropdownOpen: (fileId: string, open: boolean) => void;
 	setLinkHoverState: (url: string, hovered: boolean) => void;
 	setUrlInput: (input: string) => void;
-	setWorkspaceId: (id: string) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	validateStepNext: () => boolean;
@@ -34,9 +33,6 @@ interface WizardActions {
 interface WizardState {
 	polling: PollingState;
 	ui: WizardUI;
-	workspaceId: string;
-	wsConnectionStatus?: string;
-	wsConnectionStatusColor?: string;
 }
 
 interface WizardUI {
@@ -57,20 +53,16 @@ const initialWizardState: WizardState = {
 		linkHoverStates: {},
 		urlInput: "",
 	},
-	workspaceId: "",
-	wsConnectionStatus: undefined,
-	wsConnectionStatusColor: undefined,
 };
 
 export const useWizardStore = create<WizardActions & WizardState>()(
 	persist(
 		(set, get) => {
 			const debouncedUpdateTitle = createDebounce((title: string) => {
-				const { workspaceId } = get();
 				const { application, updateApplicationTitle } = useApplicationStore.getState();
 
-				if (application && workspaceId && title.trim() && title !== application.title) {
-					void updateApplicationTitle(workspaceId, application.id, title);
+				if (application?.workspace_id && title.trim() && title !== application.title) {
+					void updateApplicationTitle(application.workspace_id, application.id, title);
 				}
 			}, DEBOUNCE_DELAY_MS);
 
@@ -78,10 +70,8 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				...initialWizardState,
 
 				handleTitleChange: (title: string) => {
-					// Update local state immediately for responsive UI
 					useApplicationStore.getState().setApplicationTitle(title);
 
-					// Debounce the backend update
 					debouncedUpdateTitle.call(title);
 				},
 
@@ -176,10 +166,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						...state,
 						ui: { ...ui, urlInput: input },
 					}));
-				},
-
-				setWorkspaceId: (id: string) => {
-					set({ workspaceId: id });
 				},
 
 				toNextStep: () => {
