@@ -47,12 +47,16 @@ async def create_rag_sources_from_cfp_file(
             "id": grant_template_id,
             "grant_sections": [],
             "submission_date": date(2025, 12, 31),
-            "funding_organization_id": "e8e8b0df-d6d9-4a27-bb1a-7b8e5a5b8c8e",
         }
-
 
         if grant_application_id:
             template_values["grant_application_id"] = grant_application_id
+            
+            # Get the funding organization from the grant application
+            from packages.db.src.utils import retrieve_application
+            application = await retrieve_application(application_id=grant_application_id, session=session)
+            if application.grant_template and application.grant_template.funding_organization_id:
+                template_values["funding_organization_id"] = application.grant_template.funding_organization_id
 
         await session.execute(
             insert(GrantTemplate).values(template_values).on_conflict_do_nothing(index_elements=["id"])

@@ -192,6 +192,7 @@ async def test_query_generation_quality(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     cfp_name: str,
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     start_time = time.time()
 
@@ -200,7 +201,7 @@ async def test_query_generation_quality(
         cfp_file_name=f"{cfp_name}.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
-        grant_application_id=None,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     context = f"Generated test data for {cfp_name} CFP with {len(source_ids)} sources"
@@ -251,6 +252,7 @@ async def test_cfp_extraction_quality(
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
     cfp_name: str,
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     start_time = time.time()
 
@@ -259,7 +261,7 @@ async def test_cfp_extraction_quality(
         cfp_file_name=f"{cfp_name}.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
-        grant_application_id=None,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     extraction_result = await handle_extract_cfp_data_from_rag_sources(
