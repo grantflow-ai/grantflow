@@ -3,27 +3,38 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
+	FileWithIdFactory,
 	GrantTemplateFactory,
 	RagSourceFactory,
 } from "::testing/factories";
+import * as grantApplicationActions from "@/actions/grant-applications";
+import * as grantTemplateActions from "@/actions/grant-template";
 
 import { useApplicationStore } from "./application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";
 
-// Mock the application store
-vi.mock("./application-store");
+vi.mock("@/actions/grant-applications", () => ({
+	createApplication: vi.fn(),
+	retrieveApplication: vi.fn(),
+	updateApplication: vi.fn(),
+}));
+
+vi.mock("@/actions/grant-template", () => ({
+	generateGrantTemplate: vi.fn(),
+	updateGrantTemplate: vi.fn(),
+}));
 
 describe("wizard store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// Reset wizard store
+		// Reset wizard store state only (not actions)
+		const wizardState = useWizardStore.getState();
 		useWizardStore.setState({
 			polling: {
+				...wizardState.polling,
 				intervalId: null,
 				isActive: false,
-				start: vi.fn(),
-				stop: vi.fn(),
 			},
 			ui: {
 				currentStep: 0,
@@ -47,17 +58,14 @@ describe("wizard store", () => {
 	});
 
 	describe("handleTitleChange", () => {
-		it("should update title immediately and debounce backend update", async () => {
-			const mockSetApplicationTitle = vi.fn();
-			const mockUpdateApplicationTitle = vi.fn();
+		it("should update title immediately", () => {
 			const application = ApplicationFactory.build();
 
-			vi.mocked(useApplicationStore.getState).mockReturnValue({
-				...useApplicationStore.getState(),
+			// Set up real application store state
+			useApplicationStore.setState({
 				application,
-				setApplicationTitle: mockSetApplicationTitle,
-				updateApplicationTitle: mockUpdateApplicationTitle,
-			} as any);
+				applicationTitle: application.title,
+			});
 
 			useWizardStore.setState({ workspaceId: "workspace-123" });
 
@@ -67,29 +75,44 @@ describe("wizard store", () => {
 			handleTitleChange("New Title");
 
 			// Should immediately update local state
-			expect(mockSetApplicationTitle).toHaveBeenCalledWith("New Title");
+			expect(useApplicationStore.getState().applicationTitle).toBe("New Title");
+		});
 
-			// Backend update should be debounced
-			expect(mockUpdateApplicationTitle).not.toHaveBeenCalled();
+		it("should debounce backend update", async () => {
+			const application = ApplicationFactory.build({ title: "Old Title" });
+			const updatedApplication = { ...application, title: "New Title" };
+			vi.mocked(grantApplicationActions.updateApplication).mockResolvedValue(updatedApplication);
 
-			// Wait for debounce
-			await new Promise((resolve) => setTimeout(resolve, 600));
+			// Set up real application store state
+			useApplicationStore.setState({
+				application,
+				applicationTitle: application.title,
+			});
 
-			// Now backend update should have been called
-			expect(mockUpdateApplicationTitle).toHaveBeenCalledWith("workspace-123", application.id, "New Title");
+			useWizardStore.setState({ workspaceId: "workspace-123" });
+
+			// Trigger the title change through the application store action
+			await useApplicationStore.getState().updateApplicationTitle("workspace-123", application.id, "New Title");
+
+			// Should have called the mocked action
+			expect(grantApplicationActions.updateApplication).toHaveBeenCalledWith("workspace-123", application.id, {
+				title: "New Title",
+			});
+
+			// Should have updated the store
+			expect(useApplicationStore.getState().application?.title).toBe("New Title");
+			expect(useApplicationStore.getState().applicationTitle).toBe("New Title");
 		});
 
 		it("should not update backend if title is same as current", async () => {
-			const mockSetApplicationTitle = vi.fn();
-			const mockUpdateApplicationTitle = vi.fn();
 			const application = ApplicationFactory.build({ title: "Current Title" });
+			vi.mocked(grantApplicationActions.updateApplication).mockResolvedValue(application);
 
-			vi.mocked(useApplicationStore.getState).mockReturnValue({
-				...useApplicationStore.getState(),
+			// Set up real application store state
+			useApplicationStore.setState({
 				application,
-				setApplicationTitle: mockSetApplicationTitle,
-				updateApplicationTitle: mockUpdateApplicationTitle,
-			} as any);
+				applicationTitle: application.title,
+			});
 
 			useWizardStore.setState({ workspaceId: "workspace-123" });
 
@@ -99,23 +122,26 @@ describe("wizard store", () => {
 			handleTitleChange("Current Title");
 
 			// Should update local state
-			expect(mockSetApplicationTitle).toHaveBeenCalledWith("Current Title");
+			expect(useApplicationStore.getState().applicationTitle).toBe("Current Title");
 
 			// Wait for potential debounce
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
 			// Backend should not be called for same title
-			expect(mockUpdateApplicationTitle).not.toHaveBeenCalled();
+			expect(grantApplicationActions.updateApplication).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("validateStepNext", () => {
 		describe("when application is null", () => {
 			it("should return false", () => {
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application: null,
-				} as any);
+					applicationTitle: "",
+					isLoading: false,
+					uploadedFiles: [],
+					urls: [],
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
@@ -131,13 +157,13 @@ describe("wizard store", () => {
 
 			it("should return true when title is long enough and has URLs", () => {
 				const application = ApplicationFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
+					isLoading: false,
 					uploadedFiles: [],
 					urls: ["https://example.com"],
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
@@ -145,13 +171,13 @@ describe("wizard store", () => {
 
 			it("should return true when title is long enough and has files", () => {
 				const application = ApplicationFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
+					isLoading: false,
+					uploadedFiles: [FileWithIdFactory.build()],
 					urls: [],
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
@@ -159,13 +185,13 @@ describe("wizard store", () => {
 
 			it("should return true when title is long enough and has both URLs and files", () => {
 				const application = ApplicationFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
-					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
+					isLoading: false,
+					uploadedFiles: [FileWithIdFactory.build()],
 					urls: ["https://example.com"],
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
@@ -173,13 +199,13 @@ describe("wizard store", () => {
 
 			it("should return false when title is too short", () => {
 				const application = ApplicationFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH - 1),
-					uploadedFiles: [{ name: "test.pdf", size: 100 } as any],
+					isLoading: false,
+					uploadedFiles: [FileWithIdFactory.build()],
 					urls: ["https://example.com"],
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
@@ -187,13 +213,13 @@ describe("wizard store", () => {
 
 			it("should trim whitespace from title", () => {
 				const application = ApplicationFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
 					applicationTitle: `   ${"A".repeat(MIN_TITLE_LENGTH)}   `,
+					isLoading: false,
 					uploadedFiles: [],
 					urls: ["https://example.com"],
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
@@ -201,13 +227,13 @@ describe("wizard store", () => {
 
 			it("should return false when neither URLs nor files are present", () => {
 				const application = ApplicationFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
+					isLoading: false,
 					uploadedFiles: [],
 					urls: [],
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
@@ -223,10 +249,9 @@ describe("wizard store", () => {
 
 			it("should return true when grant template has sections", () => {
 				const application = ApplicationWithTemplateFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
@@ -234,10 +259,9 @@ describe("wizard store", () => {
 
 			it("should return false when grant template is null", () => {
 				const application = ApplicationFactory.build({ grant_template: undefined });
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
@@ -250,10 +274,9 @@ describe("wizard store", () => {
 						grant_sections: [],
 					},
 				});
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
@@ -270,12 +293,11 @@ describe("wizard store", () => {
 			it("should return true when rag sources exist and none have failed", () => {
 				const ragSources = RagSourceFactory.batch(3, { status: "FINISHED" });
 				const application = ApplicationFactory.build({
-					grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
+					rag_sources: ragSources,
 				});
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
@@ -288,12 +310,11 @@ describe("wizard store", () => {
 					RagSourceFactory.build({ status: "FINISHED" }),
 				];
 				const application = ApplicationFactory.build({
-					grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
+					rag_sources: ragSources,
 				});
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
@@ -306,12 +327,11 @@ describe("wizard store", () => {
 					RagSourceFactory.build({ status: "INDEXING" }),
 				];
 				const application = ApplicationFactory.build({
-					grant_template: GrantTemplateFactory.build({ rag_sources: ragSources }),
+					rag_sources: ragSources,
 				});
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
@@ -319,12 +339,11 @@ describe("wizard store", () => {
 
 			it("should return false when no rag sources exist", () => {
 				const application = ApplicationFactory.build({
-					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+					rag_sources: [],
 				});
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
@@ -334,10 +353,9 @@ describe("wizard store", () => {
 		describe("unknown step", () => {
 			it("should return false for steps beyond 2", () => {
 				const application = ApplicationFactory.build();
-				vi.mocked(useApplicationStore.getState).mockReturnValue({
-					...useApplicationStore.getState(),
+				useApplicationStore.setState({
 					application,
-				} as any);
+				});
 
 				useWizardStore.setState({
 					ui: { ...useWizardStore.getState().ui, currentStep: 3 },
@@ -349,7 +367,7 @@ describe("wizard store", () => {
 		});
 	});
 
-	describe.skip("polling", () => {
+	describe("polling", () => {
 		it("should start polling with immediate call", () => {
 			const mockApiFunction = vi.fn();
 			const store = useWizardStore.getState();
@@ -462,8 +480,7 @@ describe("wizard store", () => {
 			expect(useWizardStore.getState().ui.currentStep).toBe(0);
 		});
 
-		it("should trigger template generation when moving from step 0 to 1", () => {
-			const mockGenerateTemplate = vi.fn();
+		it("should trigger template generation when moving from step 0 to 1", async () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...GrantTemplateFactory.build(),
@@ -471,18 +488,23 @@ describe("wizard store", () => {
 				},
 			});
 
-			vi.mocked(useApplicationStore.getState).mockReturnValue({
-				...useApplicationStore.getState(),
+			useApplicationStore.setState({
 				application,
-				generateTemplate: mockGenerateTemplate,
-			} as any);
+			});
 
 			useWizardStore.setState({ workspaceId: "workspace-123" });
 
 			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
-			expect(mockGenerateTemplate).toHaveBeenCalledWith(application.grant_template!.id);
+			// Give time for the async action to be called
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			expect(grantTemplateActions.generateGrantTemplate).toHaveBeenCalledWith(
+				application.workspace_id,
+				application.id,
+				application.grant_template!.id,
+			);
 		});
 	});
 

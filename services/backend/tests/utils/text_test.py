@@ -12,18 +12,26 @@ from services.rag.src.utils.text import (
     [
         ([], ""),
         (["This is a test."], "This is a test."),
-        (["This is a test. ", "This is another test. "], "This is a test. This is another test."),
+        (
+            ["This is a test. ", "This is another test. "],
+            "This is a test. This is another test.",
+        ),
         (
             ["This is a test. ", "This is a test. This is another test."],
             "This is a test. This is another test.",
         ),
         (
-            ["Complex sentence with multiple parts. Another part.", "Another part. Final segment."],
+            [
+                "Complex sentence with multiple parts. Another part.",
+                "Another part. Final segment.",
+            ],
             "Complex sentence with multiple parts. Another part. Final segment.",
         ),
     ],
 )
-def test_concatenate_segments_with_spacy_coherence(segments: list[str], expected: str) -> None:
+def test_concatenate_segments_with_spacy_coherence(
+    segments: list[str], expected: str
+) -> None:
     result = concatenate_segments_with_spacy_coherence(segments)
     assert result == expected
 
@@ -32,8 +40,14 @@ def test_concatenate_segments_with_spacy_coherence(segments: list[str], expected
     ("input_text", "expected"),
     [
         ("Normal text", "Normal text"),
-        (f"Text with {chr(0x2018)}single quotes{chr(0x2019)}", "Text with 'single quotes'"),
-        (f"Text with {chr(0x201C)}double quotes{chr(0x201D)}", 'Text with "double quotes"'),
+        (
+            f"Text with {chr(0x2018)}single quotes{chr(0x2019)}",
+            "Text with 'single quotes'",
+        ),
+        (
+            f"Text with {chr(0x201C)}double quotes{chr(0x201D)}",
+            'Text with "double quotes"',
+        ),
         (f"Text with {chr(0x2013)} en dash", "Text with - en dash"),
         (f"Text with {chr(0x2014)} em dash", "Text with - em dash"),
         (f"Text with {chr(0x2015)} horizontal bar", "Text with - horizontal bar"),
@@ -45,7 +59,10 @@ def test_concatenate_segments_with_spacy_coherence(segments: list[str], expected
         ("Text with ümlaut", "Text with ümlaut"),
         ("Русский текст", "Русский текст"),
         (f"über{chr(0x2019)}s Café", "über's Café"),
-        (f"{chr(0x201C)}Quote{chr(0x201D)} and {chr(0x201C)}quote{chr(0x201D)}", '"Quote" and "quote"'),
+        (
+            f"{chr(0x201C)}Quote{chr(0x201D)} and {chr(0x201C)}quote{chr(0x201D)}",
+            '"Quote" and "quote"',
+        ),
     ],
 )
 def test_normalize_punctuation(input_text: str, expected: str) -> None:

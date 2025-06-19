@@ -5,7 +5,9 @@ import pytest
 from packages.shared_utils.src.ref import Ref
 
 
-@pytest.mark.parametrize("input_value", [1, "a", True, None, 1.1, 2 + 3j, {"a ": "b"}, [1, 2]])
+@pytest.mark.parametrize(
+    "input_value", [1, "a", True, None, 1.1, 2 + 3j, {"a ": "b"}, [1, 2]]
+)
 def test_ref_with_different_types(input_value: Any) -> None:
     ref = Ref(input_value)  # type: ignore[var-annotated]
     assert ref.value == input_value

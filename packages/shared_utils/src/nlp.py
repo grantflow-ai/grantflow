@@ -19,4 +19,6 @@ def get_spacy_model() -> Language:
 
 def get_word_count(text: str) -> int:
     model = get_spacy_model()
-    return len([token for token in model(text) if not token.is_punct and not token.is_space])
+    return len(
+        [token for token in model(text) if not token.is_punct and not token.is_space]
+    )

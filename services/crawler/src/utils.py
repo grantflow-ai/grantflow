@@ -26,7 +26,14 @@ HTML_TAGS_TO_DECOMPOSE: Final[set[str]] = {
     "applet",
     "link",
 }
-HTML_ATTRIBUTES_TO_KEEP: Final[set[str]] = {"href", "alt", "desc", "description", "title", "value"}
+HTML_ATTRIBUTES_TO_KEEP: Final[set[str]] = {
+    "href",
+    "alt",
+    "desc",
+    "description",
+    "title",
+    "value",
+}
 
 client = AsyncClient(timeout=Timeout(15))
 logger = get_logger(__name__)
@@ -84,7 +91,9 @@ def sanitize_html(soup: BeautifulSoup) -> BeautifulSoup:
             tag.decompose()
             continue
 
-        for attr in [t for t in list(tag.attrs or []) if t not in HTML_ATTRIBUTES_TO_KEEP]:
+        for attr in [
+            t for t in list(tag.attrs or []) if t not in HTML_ATTRIBUTES_TO_KEEP
+        ]:
             del tag[attr]
 
     for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):

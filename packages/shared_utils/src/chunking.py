@@ -22,4 +22,7 @@ def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
 def chunk_text(*, text: str, mime_type: str) -> list["Chunk"]:
     splitter = get_splitter(mime_type)
 
-    return [cast("Chunk", {"content": chunk}) for index, chunk in enumerate(splitter.chunks(text))]
+    return [
+        cast("Chunk", {"content": chunk})
+        for index, chunk in enumerate(splitter.chunks(text))
+    ]

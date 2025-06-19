@@ -27,10 +27,7 @@ import {
 } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
-
-export interface FileWithId extends File {
-	id?: string;
-}
+import { FileWithId } from "@/types/files";
 
 interface ApplicationPreviewProps {
 	connectionStatus?: string;
