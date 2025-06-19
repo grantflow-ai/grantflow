@@ -645,3 +645,4 @@ tasks:
             - cmd: sleep {{.SECONDS}}
               platforms: [darwin, linux]
             - cmd: timeout /t {{.SECONDS}} /nobreak > nul
+              platforms: [windows]

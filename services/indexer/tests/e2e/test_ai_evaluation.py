@@ -28,7 +28,7 @@ class TestAIEvaluation:
     ) -> None:
         logger.info("Running AI content relevance evaluation")
 
-        # Test chunks with varying quality levels
+        
         test_chunks = [
             {
                 "content": "This research investigates novel machine learning algorithms for protein structure prediction, "
@@ -49,7 +49,7 @@ class TestAIEvaluation:
         try:
             await index_chunks(chunks=test_chunks, source_id=str(grant_application_file.rag_source_id))
 
-            # Use AI to evaluate content quality
+            
             client = get_anthropic_client()
 
             evaluation_prompt = """
@@ -88,12 +88,12 @@ class TestAIEvaluation:
             response_content = message.content[0].text if message.content else ""
             logger.info("AI evaluation response: %s", response_content)
 
-            # Basic validation that AI can distinguish quality
+            
             assert "chunk1" in response_content, "AI response missing chunk1 evaluation"
             assert "chunk2" in response_content, "AI response missing chunk2 evaluation"
             assert "chunk3" in response_content, "AI response missing chunk3 evaluation"
 
-            # The AI should be able to provide structured feedback
+            
             assert "coherence" in response_content.lower(), "AI response missing coherence evaluation"
             assert "relevance" in response_content.lower(), "AI response missing relevance evaluation"
 
@@ -111,7 +111,7 @@ class TestAIEvaluation:
     ) -> None:
         logger.info("Running AI hallucination detection test")
 
-        # Test with factual content vs potentially hallucinated content
+        
         test_cases = [
             {
                 "content": "The periodic table contains 118 known chemical elements, with hydrogen being the lightest "
@@ -165,7 +165,7 @@ class TestAIEvaluation:
             response_content = message.content[0].text if message.content else ""
             logger.info("Hallucination detection response: %s", response_content)
 
-            # Validate AI can detect fabricated content
+            
             assert "statement1" in response_content, "Missing evaluation for statement1"
             assert "statement2" in response_content, "Missing evaluation for statement2"
             assert "fabricated" in response_content.lower(), "Missing fabrication assessment"
@@ -184,7 +184,7 @@ class TestAIEvaluation:
     ) -> None:
         logger.info("Running semantic similarity threshold evaluation")
 
-        # Test pairs with expected similarity levels
+        
         similarity_test_cases = [
             {
                 "chunk1": "Machine learning algorithms are used for pattern recognition in data science.",
@@ -232,7 +232,7 @@ class TestAIEvaluation:
 
     @pytest.mark.quality_assessment
     @pytest.mark.timeout(300)
-    @pytest.mark.parametrize("data_file", TEST_DATA_SOURCES[:3])  # Test with first 3 files
+    @pytest.mark.parametrize("data_file", TEST_DATA_SOURCES[:3])  
     async def test_comprehensive_quality_with_ai_validation(
         self, logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationRagSource
     ) -> None:
@@ -252,13 +252,13 @@ class TestAIEvaluation:
                 source_id=str(grant_application_file.rag_source_id),
             )
 
-            # Perform comprehensive quality assessment
+            
             quality_assessment = comprehensive_quality_assessment(vectors, text_content)
 
             overall_score = quality_assessment["overall_quality_score"]
             assert overall_score > 0.5, f"Overall quality score too low: {overall_score}"
 
-            # Check individual quality metrics
+            
             chunk_quality = quality_assessment["chunk_quality"]
             assert chunk_quality["quality_score"] > 0.6, f"Chunk quality too low: {chunk_quality['quality_score']}"
 
@@ -267,11 +267,11 @@ class TestAIEvaluation:
                 f"Embedding quality too low: {embedding_quality['embedding_quality_score']}"
             )
 
-            # AI validation for a sample of chunks (if available)
+            
             try:
                 client = get_anthropic_client()
 
-                # Select first 3 chunks for AI evaluation
+                
                 sample_chunks = vectors[:3]
                 chunk_contents = [v["chunk"]["content"] for v in sample_chunks]
 
@@ -297,7 +297,7 @@ class TestAIEvaluation:
                 ai_response = message.content[0].text if message.content else ""
                 logger.info("AI quality rating: %s", ai_response.strip())
 
-                # Try to extract numeric rating
+                
                 try:
                     ai_rating = float(ai_response.strip())
                     assert 1 <= ai_rating <= 10, f"AI rating out of range: {ai_rating}"
@@ -326,7 +326,7 @@ class TestAIEvaluation:
     ) -> None:
         logger.info("Running citation accuracy validation test")
 
-        # Test with content containing citations
+        
         citation_test_content = """
         According to Smith et al. (2023), machine learning techniques have shown significant
         improvement in protein structure prediction. The AlphaFold model developed by DeepMind
@@ -365,7 +365,7 @@ class TestAIEvaluation:
             response_content = message.content[0].text if message.content else ""
             logger.info("Citation validation response: %s", response_content)
 
-            # Validate AI can assess citation quality
+            
             assert "formatted" in response_content.lower(), "Missing citation format assessment"
             assert "realistic" in response_content.lower(), "Missing citation realism assessment"
 
