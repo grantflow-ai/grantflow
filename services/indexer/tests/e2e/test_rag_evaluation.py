@@ -142,7 +142,7 @@ class TestRAGPipeline:
             assert len(vectors) > 0, "No vectors generated"
             assert len(text_content) > 500, f"Text content too short: {len(text_content)} chars"
 
-            # Semantic coherence checks
+            
             chunk_lengths = [len(v["chunk"]["content"]) for v in vectors]
             avg_length = sum(chunk_lengths) / len(chunk_lengths)
             std_dev = math.sqrt(sum((x - avg_length) ** 2 for x in chunk_lengths) / len(chunk_lengths))
@@ -150,7 +150,7 @@ class TestRAGPipeline:
             assert 500 <= avg_length <= 2500, f"Average chunk length out of range: {avg_length}"
             assert std_dev / avg_length < 0.8, f"Chunk length variance too high: {std_dev / avg_length}"
 
-            # Embedding quality checks
+            
             embedding_norms = [math.sqrt(sum(x**2 for x in v["embedding"])) for v in vectors]
             avg_norm = sum(embedding_norms) / len(embedding_norms)
 
@@ -174,7 +174,7 @@ class TestRAGPipeline:
         """Test semantic similarity between related content"""
         logger.info("Running embedding similarity evaluation")
 
-        # Test with semantically similar content
+        
         similar_chunks = [
             {"content": "Machine learning algorithms are used for pattern recognition and data analysis."},
             {"content": "Artificial intelligence techniques help identify patterns in large datasets."},
@@ -191,11 +191,11 @@ class TestRAGPipeline:
                 norm_b = math.sqrt(sum(x**2 for x in b))
                 return dot_product / (norm_a * norm_b)
 
-            # Similar pairs should have high similarity
+            
             ml_similarity = cosine_similarity(vectors[0]["embedding"], vectors[1]["embedding"])
             weather_similarity = cosine_similarity(vectors[2]["embedding"], vectors[3]["embedding"])
 
-            # Dissimilar pairs should have lower similarity
+            
             cross_similarity = cosine_similarity(vectors[0]["embedding"], vectors[2]["embedding"])
 
             assert ml_similarity > 0.6, f"ML chunks similarity too low: {ml_similarity}"
@@ -231,15 +231,15 @@ class TestRAGPipeline:
         try:
             vectors = await index_chunks(chunks=test_chunks, source_id=str(grant_application_file.rag_source_id))
 
-            # Verify vectors can be stored and retrieved
+            
             async with async_session_maker() as session:
-                # Check that we can query existing vectors
+                
                 result = await session.execute(
                     select(TextVector).where(TextVector.rag_source_id == grant_application_file.rag_source_id)
                 )
                 existing_vectors = result.scalars().all()
 
-                # Validate vector structure and content
+                
                 for vector in vectors:
                     assert len(vector["embedding"]) == 384, (
                         f"Unexpected embedding dimension: {len(vector['embedding'])}"
@@ -283,22 +283,22 @@ class TestRAGPipeline:
                 source_id=str(grant_application_file.rag_source_id),
             )
 
-            # Comprehensive validation
+            
             assert len(vectors) > 0, "No vectors generated"
             assert len(text_content) > 200, f"Insufficient text content: {len(text_content)} chars"
 
-            # Content quality metrics
+            
             total_chunk_chars = sum(len(v["chunk"]["content"]) for v in vectors)
             coverage_ratio = total_chunk_chars / len(text_content)
 
             assert 0.7 <= coverage_ratio <= 1.5, f"Coverage ratio suspicious: {coverage_ratio}"
 
-            # Embedding quality validation
+            
             embedding_dims = {len(v["embedding"]) for v in vectors}
             assert len(embedding_dims) == 1, f"Inconsistent embedding dimensions: {embedding_dims}"
             assert next(iter(embedding_dims)) == 384, f"Unexpected embedding dimension: {next(iter(embedding_dims))}"
 
-            # Check for duplicate or empty content
+            
             chunk_contents = [v["chunk"]["content"] for v in vectors]
             unique_contents = set(chunk_contents)
             duplicate_ratio = 1 - (len(unique_contents) / len(chunk_contents))
@@ -306,7 +306,7 @@ class TestRAGPipeline:
             assert duplicate_ratio < 0.1, f"Too many duplicate chunks: {duplicate_ratio:.2%}"
             assert all(content.strip() for content in chunk_contents), "Empty chunks detected"
 
-            # Statistical validation
+            
             content_lengths = [len(content) for content in chunk_contents]
             avg_length = sum(content_lengths) / len(content_lengths)
 

@@ -82,7 +82,7 @@ IMPORTANT: Always check the Taskfile.yaml for the most up-to-date commands and t
 
 ### Test Organization and Markers
 
-The project uses pytest markers to organize tests by duration and purpose:
+The project uses pytest markers to organize tests by duration and purpose across multiple services (indexer, crawler, rag):
 
 ```bash
 # Quick unit tests (default - no marker needed)
@@ -111,12 +111,13 @@ E2E_TESTS=1 pytest -m "slow"           # Any time-intensive tests
 - Fast, mocked tests
 - Run by default in CI
 - Cover core logic and error paths
-- ~8-10 seconds total runtime
+- ~8-10 seconds total runtime per service
 
 **E2E Tests** (require `E2E_TESTS=1`):
-- Test real functionality with actual files
+- Test real functionality with actual files/URLs
 - Use pytest markers for duration control
-- Include quality and semantic validation
+- Include quality validation and semantic checks
+- Support for indexer (file processing) and crawler (web content) pipelines
 - Range from 1 min (smoke) to 10+ min (full)
 
 ### Running Tests
@@ -128,7 +129,9 @@ E2E_TESTS=1 task test                       # Run all tests including e2e
 
 # Specific services
 pytest services/indexer/tests/             # Just indexer unit tests
+pytest services/crawler/tests/             # Just crawler unit tests
 E2E_TESTS=1 pytest services/indexer/tests/ # Indexer unit + e2e tests
+E2E_TESTS=1 pytest services/crawler/tests/ # Crawler unit + e2e tests
 
 # CI-friendly patterns
 pytest                                      # Fast unit tests only
