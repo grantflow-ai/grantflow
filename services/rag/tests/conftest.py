@@ -4,9 +4,6 @@ from uuid import UUID
 
 import pytest
 from dotenv import load_dotenv
-
-# Load environment variables from .env file (auto-discovery)
-load_dotenv()
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
 from packages.db.src.tables import FundingOrganization, Workspace
 from pytest_mock import MockerFixture
@@ -14,6 +11,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import GrantSectionFactory
 from testing.test_utils import create_grant_application_data, process_funding_organization
+
+load_dotenv()
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 

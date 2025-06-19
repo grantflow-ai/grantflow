@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.crawler.src.main import app
 
-# Load environment variables from .env file (auto-discovery)
+
 load_dotenv()
 
 pytest_plugins = [
