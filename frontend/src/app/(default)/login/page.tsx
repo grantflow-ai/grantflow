@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sendSignInLinkToEmail, User } from "firebase/auth";
+import { sendSignInLinkToEmail, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Link from "next/link";
 import { useState } from "react";

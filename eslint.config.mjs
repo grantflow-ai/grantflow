@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
 import eslintJS from "@eslint/js";
+import biomeConfig from "eslint-config-biome";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import eslintPluginImportX from "eslint-plugin-import-x";
 import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
@@ -260,6 +261,13 @@ export default eslintTS.config(
 			"**/.coverage",
 			"**/api-types.ts",
 			"**/storybook-static",
+			"**/.venv",
+			"**/__pycache__",
+			"**/*.pyc",
+			"**/dist",
+			"**/build",
+			"**/.pytest_cache",
+			"**/.mypy_cache",
 		],
 	},
 	{
@@ -268,4 +276,6 @@ export default eslintTS.config(
 			"react-perf/jsx-no-new-array-as-prop": "off",
 		},
 	},
+	// Add biome config to disable ESLint rules that Biome handles
+	biomeConfig,
 );

@@ -18,9 +18,7 @@ vi.mock("motion/react", async () => {
 vi.mock("./backgrounds", () => ({
 	PatternedBackground: vi
 		.fn()
-		.mockImplementation(({ className }) => (
-			<div className={className} data-testid="mock-patterned-background"></div>
-		)),
+		.mockImplementation(({ className }) => <div className={className} data-testid="mock-patterned-background" />),
 }));
 
 vi.mock("./scroll-fade-element", () => ({

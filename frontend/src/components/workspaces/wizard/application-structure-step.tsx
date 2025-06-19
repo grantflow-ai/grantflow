@@ -3,10 +3,10 @@
 import {
 	closestCenter,
 	DndContext,
-	DragEndEvent,
-	DragOverEvent,
+	type DragEndEvent,
+	type DragOverEvent,
 	DragOverlay,
-	DragStartEvent,
+	type DragStartEvent,
 	KeyboardSensor,
 	PointerSensor,
 	useSensor,
@@ -21,9 +21,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
-import React, { useState } from "react";
-
-import { updateGrantTemplate } from "@/actions/grant-template";
+import type React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,8 +32,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
-import { API } from "@/types/api-types";
-import { logError } from "@/utils/logging";
+import type { API } from "@/types/api-types";
 
 type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
@@ -150,27 +148,12 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 }
 
 function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }: ApplicationStructurePreviewProps) {
-	const { application, applicationTitle } = useApplicationStore();
+	const { application, applicationTitle, updateGrantSections } = useApplicationStore();
 	const hasContent = applicationTitle || application;
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 	const [editingNewSection, setEditingNewSection] = useState(false);
-
-	// TODO: this logic should move to the application store
-	const updateGrantSections = async (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
-		if (!application?.workspace_id || !application.id || !application.grant_template?.id) {
-			return;
-		}
-
-		try {
-			await updateGrantTemplate(application.workspace_id, application.id, application.grant_template.id, {
-				grant_sections: sections,
-			});
-		} catch (error) {
-			logError({ error, identifier: "ApplicationStructureStep.updateGrantSections" });
-		}
-	};
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -247,7 +230,7 @@ function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }
 		const activeSection = sections.find((s) => s.id === active.id);
 		const overSection = sections.find((s) => s.id === over.id);
 
-		if (!activeSection || !overSection) {
+		if (!(activeSection && overSection)) {
 			return;
 		}
 
@@ -276,7 +259,7 @@ function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }
 		const activeSection = sections.find((s) => s.id === active.id);
 		const overSection = sections.find((s) => s.id === over.id);
 
-		if (!activeSection || !overSection) {
+		if (!(activeSection && overSection)) {
 			return;
 		}
 

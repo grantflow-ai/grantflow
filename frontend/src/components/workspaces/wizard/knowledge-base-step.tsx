@@ -1,5 +1,3 @@
-import React from "react";
-
 export function KnowledgeBaseStep() {
 	return (
 		<div className="p-4" data-testid="knowledge-base-step">

@@ -1,14 +1,14 @@
 {
 	"compilerOptions": {
-		"baseUrl": ".",
 		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"incremental": true,
 		"isolatedModules": true,
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
 		"noEmit": true,
 		"noImplicitAny": true,
 		"noUnusedLocals": true,

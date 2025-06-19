@@ -31,11 +31,11 @@ def encode_hook(obj: Any) -> Any:
         if hasattr(obj, key) and callable(getattr(obj, key)):
             return getattr(obj, key)()
 
-    if is_dataclass(obj):
+    if is_dataclass(obj) and not isinstance(obj, type):
         return {
             k: v if not isinstance(v, Enum) else v.value
             for (k, v) in asdict(obj).items()
-        }  # type: ignore[arg-type]
+        }
 
     raise TypeError(f"Unsupported type: {type(obj)!r}")
 

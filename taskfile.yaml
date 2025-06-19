@@ -10,11 +10,11 @@ tasks:
     # ==============================================================================
 
     setup:
-        desc: Initial project setup - installs all dependencies and git pre-commit hooks
+        desc: Initial project setup - installs all dependencies and git hooks
         cmds:
-            - pre-commit install && pre-commit install --hook-type commit-msg && pre-commit install-hooks
             - task: frontend:install
             - task: backend:install
+            - uv run lefthook install
 
     dev:
         desc: Start all backend services in development mode (database, GCS, Pub/Sub, backend, indexer, crawler, rag)
@@ -61,11 +61,10 @@ tasks:
             - task: lint:all
 
     update:
-        desc: Update all dependencies (frontend and backend) and pre-commit hooks to latest versions
+        desc: Update all dependencies (frontend and backend) to latest versions
         cmds:
             - task: frontend:update
             - task: backend:update
-            - pre-commit autoupdate
 
     generate:api-types:
         desc: Generate TypeScript from backend API
@@ -73,53 +72,6 @@ tasks:
             - PYTHONPATH={{.PYTHON_PATH}} uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
             - task: lint
 
-    lint:all:
-        desc: Run all linters (Biome, ESLint, Python linters)
-        deps:
-            - task: lint:biome
-            - task: lint:eslint
-            - task: lint:python
-
-    lint:biome:
-        desc: Format and lint code with Biome
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm biome check --write .
-
-    lint:eslint:
-        desc: Lint JavaScript/TypeScript with ESLint
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm eslint . --fix --max-warnings=0
-
-    lint:python:
-        desc: Run all Python linters (ruff, mypy, codespell)
-        deps:
-            - task: lint:ruff
-            - task: lint:mypy
-            - task: lint:codespell
-
-    lint:ruff:
-        desc: Lint and format Python code with Ruff
-        cmds:
-            - uv run ruff check --fix --unsafe-fixes .
-            - uv run ruff format .
-
-    lint:mypy:
-        desc: Type check Python code with MyPy
-        cmds:
-            - uv run mypy .
-
-    lint:codespell:
-        desc: Check for common misspellings
-        cmds:
-            - uv run codespell .
-
-    lint:frontend:
-        desc: Run all frontend linters (Biome and ESLint)
-        deps:
-            - task: lint:biome
-            - task: lint:eslint
 
     # ==============================================================================
     # DATABASE COMMANDS
@@ -404,6 +356,62 @@ tasks:
             - docker compose --profile gcs up
 
     # ==============================================================================
+    # LINTING COMMANDS - Code quality and formatting
+    # ==============================================================================
+
+    lint:all:
+        desc: Run all linters and formatters on all files
+        deps:
+            - task: lint:frontend
+            - task: lint:python
+            - task: lint:codespell
+
+    lint:frontend:
+        desc: Run all frontend linters (Biome, ESLint, and TypeScript)
+        deps:
+            - task: lint:biome
+            - task: lint:eslint
+            - task: lint:typescript
+
+    lint:python:
+        desc: Run all Python linters (Ruff and MyPy)
+        deps:
+            - task: lint:ruff
+            - task: lint:mypy
+
+    lint:biome:
+        desc: Format and lint code with Biome
+        cmds:
+            - pnpm biome check --write .
+
+    lint:eslint:
+        desc: Lint JavaScript/TypeScript with ESLint
+        cmds:
+            - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
+
+    lint:ruff:
+        desc: Lint and format Python code with Ruff
+        cmds:
+            - uv run ruff check --fix --unsafe-fixes .
+            - uv run ruff format .
+
+    lint:mypy:
+        desc: Type check Python code with MyPy
+        cmds:
+            - uv run mypy .
+
+    lint:codespell:
+        desc: Check for common misspellings
+        cmds:
+            - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js"
+
+    lint:typescript:
+        desc: Type check TypeScript code
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - pnpm typecheck
+
+    # ==============================================================================
     # INTERNAL TASKS - Not intended for direct use
     # ==============================================================================
 
@@ -557,4 +565,3 @@ tasks:
             - cmd: sleep {{.SECONDS}}
               platforms: [darwin, linux]
             - cmd: timeout /t {{.SECONDS}} /nobreak > nul
-              platforms: [windows]

@@ -1,7 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { ApplicationFactory, ApplicationWithTemplateFactory, GrantSectionDetailedFactory } from "::testing/factories";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -205,5 +204,287 @@ describe("ApplicationStructureStep", () => {
 
 		expect(screen.getByText(longTitle)).toBeInTheDocument();
 		expect(screen.getByTestId("application-structure-title")).toBeInTheDocument();
+	});
+
+	describe("grant sections functionality", () => {
+		it("renders grant sections when available", () => {
+			const grantSections = [
+				GrantSectionDetailedFactory.build({ id: "1", order: 0, parent_id: null, title: "Introduction" }),
+				GrantSectionDetailedFactory.build({ id: "2", order: 1, parent_id: null, title: "Methods" }),
+				GrantSectionDetailedFactory.build({ id: "3", order: 2, parent_id: null, title: "Results" }),
+			];
+
+			const application = ApplicationWithTemplateFactory.build();
+			if (application.grant_template) {
+				application.grant_template.grant_sections = grantSections;
+			}
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+			});
+
+			render(<ApplicationStructureStep />);
+
+			expect(screen.getByText("Introduction")).toBeInTheDocument();
+			expect(screen.getByText("Methods")).toBeInTheDocument();
+			expect(screen.getByText("Results")).toBeInTheDocument();
+		});
+
+		it("shows add new section button", () => {
+			const application = ApplicationWithTemplateFactory.build();
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+			});
+
+			render(<ApplicationStructureStep />);
+
+			const addButton = screen.getByText("Add New Section");
+			expect(addButton).toBeInTheDocument();
+		});
+
+		it("opens new section form when add button is clicked", () => {
+			const application = ApplicationWithTemplateFactory.build();
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+			});
+
+			render(<ApplicationStructureStep />);
+
+			const addButton = screen.getByText("Add New Section");
+			fireEvent.click(addButton);
+
+			expect(screen.getByText("New section")).toBeInTheDocument();
+			expect(screen.getByLabelText("Section name")).toBeInTheDocument();
+			expect(screen.getByText("Words/Characters count")).toBeInTheDocument();
+		});
+
+		it("calls updateGrantSections when adding a new section", async () => {
+			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_sections: [],
+				},
+			});
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+				updateGrantSections: mockUpdateGrantSections,
+			});
+
+			render(<ApplicationStructureStep />);
+
+			// Open new section form
+			const addButton = screen.getByText("Add New Section");
+			fireEvent.click(addButton);
+
+			// Fill in the form
+			const nameInput = screen.getByLabelText("Section name");
+			fireEvent.change(nameInput, { target: { value: "New Section Title" } });
+
+			// Submit the form
+			const saveButton = screen.getByText("Save");
+			fireEvent.click(saveButton);
+
+			await waitFor(() => {
+				expect(mockUpdateGrantSections).toHaveBeenCalledWith(
+					expect.arrayContaining([
+						expect.objectContaining({
+							max_words: 3000,
+							title: "New Section Title",
+						}),
+					]),
+				);
+			});
+		});
+
+		it("expands and collapses sections", () => {
+			const grantSections = [
+				GrantSectionDetailedFactory.build({
+					id: "1",
+					max_words: 500,
+					order: 0,
+					title: "Introduction",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_sections: grantSections,
+				},
+			});
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+			});
+
+			render(<ApplicationStructureStep />);
+
+			// Find the expand button (ChevronDown icon)
+			const expandButtons = screen.getAllByRole("button");
+			const expandButton = expandButtons.find((button) => button.querySelector("svg"));
+
+			expect(expandButton).toBeInTheDocument();
+
+			// Click to expand
+			fireEvent.click(expandButton!);
+
+			// Should show the edit form
+			expect(screen.getByDisplayValue("Introduction")).toBeInTheDocument();
+			expect(screen.getByDisplayValue("500")).toBeInTheDocument();
+		});
+
+		it("calls updateGrantSections when updating a section", async () => {
+			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
+			const grantSections = [
+				GrantSectionDetailedFactory.build({
+					id: "1",
+					max_words: 500,
+					order: 0,
+					title: "Introduction",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_sections: grantSections,
+				},
+			});
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+				updateGrantSections: mockUpdateGrantSections,
+			});
+
+			render(<ApplicationStructureStep />);
+
+			// Find and click the expand button
+			const expandButtons = screen.getAllByRole("button");
+			const expandButton = expandButtons.find((button) => button.querySelector("svg"));
+			fireEvent.click(expandButton!);
+
+			// Update the title
+			const titleInput = screen.getByDisplayValue("Introduction");
+			fireEvent.change(titleInput, { target: { value: "Updated Introduction" } });
+
+			// Save changes
+			const saveButton = screen.getByText("Save");
+			fireEvent.click(saveButton);
+
+			await waitFor(() => {
+				expect(mockUpdateGrantSections).toHaveBeenCalledWith(
+					expect.arrayContaining([
+						expect.objectContaining({
+							id: "1",
+							max_words: 500,
+							title: "Updated Introduction",
+						}),
+					]),
+				);
+			});
+		});
+
+		it("displays max words for sections", () => {
+			const grantSections = [
+				GrantSectionDetailedFactory.build({
+					id: "1",
+					max_words: 1500,
+					order: 0,
+					title: "Introduction",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_sections: grantSections,
+				},
+			});
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+			});
+
+			render(<ApplicationStructureStep />);
+
+			expect(screen.getByText("1,500 Max words")).toBeInTheDocument();
+		});
+
+		it("handles subsections correctly", () => {
+			const grantSections = [
+				GrantSectionDetailedFactory.build({
+					id: "1",
+					order: 0,
+					parent_id: null,
+					title: "Main Section",
+				}),
+				GrantSectionDetailedFactory.build({
+					id: "2",
+					order: 1,
+					parent_id: "1",
+					title: "Subsection",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_sections: grantSections,
+				},
+			});
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+			});
+
+			render(<ApplicationStructureStep />);
+
+			expect(screen.getByText("Main Section")).toBeInTheDocument();
+			expect(screen.getByText("Subsection")).toBeInTheDocument();
+		});
+
+		it("disables save button when section name is empty", () => {
+			const application = ApplicationWithTemplateFactory.build();
+
+			useApplicationStore.setState({
+				application,
+				applicationTitle: "Test Application",
+			});
+
+			render(<ApplicationStructureStep />);
+
+			// Open new section form
+			const addButton = screen.getByText("Add New Section");
+			fireEvent.click(addButton);
+
+			// Save button should be disabled by default
+			const saveButton = screen.getByText("Save");
+			expect(saveButton).toBeDisabled();
+
+			// Fill in the name
+			const nameInput = screen.getByLabelText("Section name");
+			fireEvent.change(nameInput, { target: { value: "Test" } });
+
+			// Save button should now be enabled
+			expect(saveButton).not.toBeDisabled();
+
+			// Clear the name
+			fireEvent.change(nameInput, { target: { value: "" } });
+
+			// Save button should be disabled again
+			expect(saveButton).toBeDisabled();
+		});
 	});
 });

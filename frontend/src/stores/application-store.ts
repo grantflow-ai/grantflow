@@ -9,8 +9,8 @@ import {
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
-import { API } from "@/types/api-types";
-import { FileWithId } from "@/types/files";
+import type { API } from "@/types/api-types";
+import type { FileWithId } from "@/types/files";
 import { logError } from "@/utils/logging";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
@@ -36,10 +36,8 @@ const initialState: ApplicationState = {
 interface ApplicationActions {
 	addFile: (file: FileWithId) => Promise<void>;
 	addUrl: (url: string) => Promise<void>;
-
 	areFilesOrUrlsIndexing: () => boolean;
 	createApplication: (workspaceId: string) => Promise<void>;
-
 	generateTemplate: (templateId: string) => Promise<void>; // <- this signals the backend to begin the rag process for the grant template ~keep
 	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
 	removeFile: (file: FileWithId) => Promise<void>;

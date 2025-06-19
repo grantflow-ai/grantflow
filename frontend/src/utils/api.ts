@@ -1,4 +1,4 @@
-import ky, { KyInstance } from "ky";
+import ky, { type KyInstance } from "ky";
 
 import { getEnv } from "@/utils/env";
 import { Ref } from "@/utils/state";
