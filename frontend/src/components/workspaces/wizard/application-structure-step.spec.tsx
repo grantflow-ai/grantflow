@@ -12,17 +12,12 @@ describe("ApplicationStructureStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
+			currentStep: 1,
 			polling: {
 				intervalId: null,
 				isActive: false,
 				start: vi.fn(),
 				stop: vi.fn(),
-			},
-			ui: {
-				currentStep: 1,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
 			},
 		});
 

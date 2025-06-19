@@ -29,9 +29,7 @@ export default function CreateGrantApplicationWizardPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const {
-		ui: { currentStep },
-	} = useWizardStore();
+	const { currentStep } = useWizardStore();
 	const { application, handleApplicationInit } = useApplicationStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
