@@ -99,13 +99,13 @@ async def process_organization_files(
                 )
                 .on_conflict_do_nothing(index_elements=["id"])
             )
-            
+
             child_data = {
                 k: v for k, v in rag_file_data.items()
                 if k not in {"indexing_status", "text_content", "source_type", "created_at", "updated_at"}
                 and v is not None
             }
-            
+
             child_data.setdefault("bucket_name", "test-bucket")
             child_data.setdefault("object_path", f"test/{child_data.get('filename', 'unknown')}")
 
@@ -174,7 +174,7 @@ async def parse_source_file(
     file_content = await AsyncPath(source_file).read_bytes()
 
     async with async_session_maker() as session:
-        
+
         file_id = await session.scalar(
             insert(RagSource)
             .values(
@@ -187,7 +187,7 @@ async def parse_source_file(
             .returning(RagSource.id)
         )
 
-        
+
         await session.execute(
             insert(RagFile)
             .values(
@@ -304,7 +304,7 @@ async def process_application_files(
             rag_source_id = data.pop("rag_source_id")
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
 
-            
+
             parent_data = {
                 k: v for k, v in rag_file_data.items()
                 if k in {"indexing_status", "text_content", "source_type"}
@@ -318,13 +318,13 @@ async def process_application_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
 
-            
+
             child_data = {
                 k: v for k, v in rag_file_data.items()
                 if k not in {"indexing_status", "text_content", "source_type", "created_at", "updated_at"}
                 and v is not None
             }
-            
+
             child_data.setdefault("bucket_name", "test-bucket")
             child_data.setdefault("object_path", f"test/{child_data.get('filename', 'unknown')}")
 
