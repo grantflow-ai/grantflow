@@ -146,45 +146,50 @@ E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)" # Skip expensive AI
 - E2E tests have longer timeouts based on complexity
 - Smoke tests: 60-120s, Quality: 180-300s, Full: 600s+
 
-### Applying Test Markers
+### Writing E2E Tests
 
 **Unit Tests**: No markers needed - they run by default
 
-**E2E Tests**: Apply appropriate markers based on test duration and purpose:
+**E2E Tests**: Use the `@e2e_test` decorator from `testing.e2e_utils`:
 
 ```python
+from testing.e2e_utils import E2ETestCategory, e2e_test
+
 # Quick smoke test (< 1 min)
-@pytest.mark.smoke
-@pytest.mark.timeout(60)
-async def test_basic_extraction():
+@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+async def test_basic_extraction(logger: logging.Logger) -> None:
     ...
 
 # Quality assessment (2-5 min)
-@pytest.mark.quality_assessment
-@pytest.mark.timeout(180)
-async def test_extraction_quality():
+@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+async def test_extraction_quality(logger: logging.Logger) -> None:
     ...
 
 # Full e2e test (10+ min)
-@pytest.mark.e2e_full
-@pytest.mark.timeout(600)
-async def test_comprehensive_pipeline():
+@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=600)
+async def test_comprehensive_pipeline(logger: logging.Logger) -> None:
     ...
 
 # Semantic evaluation
-@pytest.mark.semantic_evaluation
-async def test_embedding_similarity():
+@e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION)
+async def test_embedding_similarity(logger: logging.Logger) -> None:
     ...
 
 # AI-powered evaluation
-@pytest.mark.ai_eval
-async def test_llm_quality_assessment():
+@e2e_test(category=E2ETestCategory.AI_EVAL)
+async def test_llm_quality_assessment(logger: logging.Logger) -> None:
     ...
 ```
 
+The decorator handles:
+- `E2E_TESTS` environment variable checking
+- pytest markers (smoke, quality_assessment, etc.)
+- timeout configuration
+- performance tracking and result persistence
+
 **Guidelines**:
-- Use `@pytest.mark.skipif(not environ.get("E2E_TESTS"))` for all e2e tests
-- Always set appropriate timeouts for longer tests
+- Always use functional pytest patterns (no class-based tests)
+- Set appropriate timeouts based on test complexity
 - Unit tests should complete in seconds, not need markers
 
 ## Git Hooks (Lefthook)
@@ -303,6 +308,13 @@ Extract to custom hooks, use `react-use-websocket`, convert HTTP→WS URLs, hand
 Firebase auth + JWT, environment variables for secrets, never commit credentials.
 
 ## Testing
+
+### Test File Naming Conventions
+
+- **Python**: Test files must end with `_test.py` (e.g., `user_service_test.py`, `auth_test.py`)
+  - NOT `test_user_service.py` - this format is not allowed
+- **TypeScript**: Test files must use `.spec.ts` or `.spec.tsx` (e.g., `Button.spec.tsx`, `auth.spec.ts`)
+  - NOT `.test.ts` or `.test.tsx` - only `.spec` extension is allowed
 
 ### Frontend Testing
 

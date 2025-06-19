@@ -1,6 +1,5 @@
 import logging
 from mimetypes import guess_type
-from os import environ
 from pathlib import Path
 from typing import cast
 
@@ -8,13 +7,10 @@ import pytest
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from packages.shared_utils.src.extraction import extract_file_content
 from testing import TEST_DATA_SOURCES
+from testing.e2e_utils import E2ETestCategory, e2e_test
 
 
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
-@pytest.mark.e2e_full
+@e2e_test(category=E2ETestCategory.E2E_FULL)
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
     logger.info("Running end-to-end test for extracting text from %s", data_file.name)

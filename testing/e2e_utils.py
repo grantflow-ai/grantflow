@@ -1,3 +1,4 @@
+import functools
 import json
 import math
 import os
@@ -71,6 +72,7 @@ def e2e_test[F: Callable[..., Any]](
         )
         @getattr(pytest.mark, category.value)  # type: ignore[misc]
         @pytest.mark.timeout(test_timeout)
+        @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             logger = kwargs.get("logger")

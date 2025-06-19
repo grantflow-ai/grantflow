@@ -72,9 +72,6 @@ task dev
 # Run all tests
 task test
 
-# Run end-to-end tests
-task test:e2e
-
 # Run all linters and formatters
 task lint               # Equivalent to task lint:all
 
@@ -225,6 +222,51 @@ We use [Lefthook](https://github.com/evilmartians/lefthook) to run pre-commit ch
 
 - Linters run on staged files with auto-fix
 - Commit messages are validated against conventional commits format
+
+## End-to-End Tests
+
+E2E tests validate real functionality with actual services and APIs. They are categorized by duration and purpose:
+
+### Running E2E Tests
+
+```bash
+# Run all unit tests (default, fast)
+task test
+
+# Run E2E tests by category
+E2E_TESTS=1 pytest -m "smoke"              # Quick validation (<1 min)
+E2E_TESTS=1 pytest -m "quality_assessment" # Moderate quality checks (2-5 min)
+E2E_TESTS=1 pytest -m "e2e_full"          # Complete integration tests (10+ min)
+E2E_TESTS=1 pytest -m "semantic_evaluation" # Semantic similarity tests
+E2E_TESTS=1 pytest -m "ai_eval"           # AI-powered evaluation tests
+
+# Run specific service E2E tests
+E2E_TESTS=1 pytest services/indexer/tests/e2e/
+E2E_TESTS=1 pytest services/crawler/tests/e2e/
+E2E_TESTS=1 pytest services/rag/tests/e2e/
+
+# Skip expensive AI tests in CI
+E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)"
+```
+
+### Writing E2E Tests
+
+Use the `@e2e_test` decorator from `testing.e2e_utils`:
+
+```python
+from testing.e2e_utils import E2ETestCategory, e2e_test
+
+@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+async def test_basic_functionality(logger: logging.Logger) -> None:
+    # Test implementation
+```
+
+Categories:
+- `SMOKE`: Essential functionality checks
+- `QUALITY_ASSESSMENT`: Quality validation tests
+- `E2E_FULL`: Comprehensive pipeline tests
+- `SEMANTIC_EVALUATION`: Embedding similarity tests
+- `AI_EVAL`: AI-powered quality assessments
 
 ## Commit Conventions
 

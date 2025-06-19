@@ -1,5 +1,4 @@
 import logging
-from os import environ
 from typing import Any
 
 import pytest
@@ -7,6 +6,7 @@ from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.indexer.src.processing import process_source
 
@@ -14,11 +14,7 @@ FILENAME = "PIC seq.pdf"
 SMALL_PDF_TEST_FILE = SOURCES_FOLDER / "application_sources" / "43b4aed5-8549-461f-9290-5ee9a630ac9a" / FILENAME
 
 
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
-@pytest.mark.e2e_full
+@e2e_test(category=E2ETestCategory.E2E_FULL)
 async def test_parse_application_file(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
