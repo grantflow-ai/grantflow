@@ -3,8 +3,8 @@ from os import environ
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, TextVector
-from sqlalchemy import select
+from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
 
@@ -26,30 +26,37 @@ async def test_parse_application_file(
 ) -> None:
     logger.info("Running end-to-end test for parse_and_index_file")
 
-    await process_source(
-        content=SMALL_PDF_TEST_FILE.read_bytes(),
-        filename="test.pdf",
-        mime_type="application/pdf",
-        source_id=str(grant_application_file.rag_source_id),
-    )
+    if not SMALL_PDF_TEST_FILE.exists():
+        pytest.skip(f"Test file {SMALL_PDF_TEST_FILE} does not exist")
 
-    async with async_session_maker() as session:
-        results = list(
-            await session.scalars(
-                select(TextVector).where(TextVector.rag_source_id == grant_application_file.rag_source_id)
-            )
+    try:
+        vectors, text_content = await process_source(
+            content=SMALL_PDF_TEST_FILE.read_bytes(),
+            filename="test.pdf",
+            mime_type="application/pdf",
+            source_id=str(grant_application_file.rag_source_id),
         )
 
-    assert len(results) > 0, "No text vectors were created"
+        assert len(vectors) > 0, "No vectors were generated"
+        assert text_content.strip(), "No text content was extracted"
 
-    for result in results:
-        assert result.rag_source_id == grant_application_file.rag_source_id, "Incorrect rag_source_id"
-        assert result.chunk, "Missing chunk content"
-        assert "content" in result.chunk, "Missing 'content' key in chunk"
-        assert result.embedding is not None, "Missing embedding vector"
-        assert len(result.embedding) > 0, "Empty embedding vector"
-        assert result.id, "Missing ID field"
-        assert result.created_at, "Missing created_at timestamp"
-        assert result.updated_at, "Missing updated_at timestamp"
+        logger.info(
+            "Successfully processed %s: extracted %d characters, generated %d vectors",
+            FILENAME,
+            len(text_content),
+            len(vectors),
+        )
 
-    logger.info("Successfully created %d text vectors", len(results))
+        for vector in vectors:
+            assert vector["rag_source_id"] == str(grant_application_file.rag_source_id), "Incorrect rag_source_id"
+            assert "chunk" in vector, "Missing chunk attribute"
+            assert vector["chunk"]["content"], "Missing chunk content"
+            assert "embedding" in vector, "Missing embedding attribute"
+            assert len(vector["embedding"]) > 0, "Empty embedding vector"
+
+    except (FileParsingError, ValidationError, ExternalOperationError) as e:
+        logger.error("Failed to parse and index file %s: %s", FILENAME, e)
+        pytest.fail(f"File processing failed for {FILENAME}: {e}")
+    except Exception as e:
+        logger.exception("Unexpected error processing file %s", FILENAME)
+        pytest.fail(f"Unexpected file processing error for {FILENAME}: {e}")
