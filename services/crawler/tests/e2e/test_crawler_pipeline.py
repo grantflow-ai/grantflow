@@ -260,7 +260,7 @@ class TestCrawlerPipeline:
 
         
         mock_main_embeddings = [[0.1] * 384]  
-        visited_urls = []
+        visited_urls: list[str] = []
 
         try:
             relevant_links = await find_relevant_links(normal_links, mock_main_embeddings, visited_urls)

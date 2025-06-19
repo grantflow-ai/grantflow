@@ -29,6 +29,11 @@ node_modules/
 out/
 requirements.txt
 
+# Hugging Face model cache
+.cache/
+models/
+sentence-transformers/
+
 *storybook.log
 storybook-static/
 
