@@ -15,6 +15,8 @@ from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_
 from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -57,6 +59,8 @@ async def test_extract_sections_melanoma_alliance_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -100,6 +104,8 @@ async def test_extract_sections_erc_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -142,6 +148,8 @@ async def test_extract_sections_standard_awards_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -185,6 +193,8 @@ async def test_extract_sections_nih_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",

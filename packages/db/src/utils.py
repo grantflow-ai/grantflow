@@ -92,16 +92,6 @@ async def update_source_indexing_status(
     vectors: list[VectorDTO] | None,
     indexing_status: SourceIndexingStatusEnum,
 ) -> None:
-    """
-    Update the indexing status of a RAG source and publish a notification.
-
-    This is a shared helper used by both the crawler and indexer services to:
-    1. Update the source status and text content in the database
-    2. Insert text vectors if provided
-    3. Publish a notification about the status change
-
-    If the database operation fails, it will attempt to publish a FAILED notification.
-    """
     async with session_maker() as session, session.begin():
         try:
             await session.execute(

@@ -1,27 +1,11 @@
 import json
 import logging
-import math
 import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
-
-def cosine_similarity(embedding_a: list[float], embedding_b: list[float]) -> float:
-    if len(embedding_a) != len(embedding_b):
-        msg = f"Embedding dimensions don't match: {len(embedding_a)} vs {len(embedding_b)}"
-        raise ValueError(msg)
-
-    dot_product = sum(x * y for x, y in zip(embedding_a, embedding_b, strict=False))
-    norm_a = math.sqrt(sum(x**2 for x in embedding_a))
-    norm_b = math.sqrt(sum(x**2 for x in embedding_b))
-
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-
-    return dot_product / (norm_a * norm_b)
 
 
 def calculate_retrieval_diversity(documents: list[str]) -> float:

@@ -32,13 +32,10 @@ SMALL_FIXTURE_FILES = [f for f in FIXTURE_FILES if f.stat().st_size < 200000]
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
 class TestRAGPipeline:
-    """Enhanced RAG pipeline testing with tiered approach"""
-
     @pytest.mark.smoke
     @pytest.mark.timeout(60)
     @pytest.mark.parametrize("data_file", QUICK_TEST_FILES)
     async def test_extraction_smoke(self, logger: logging.Logger, data_file: Path) -> None:
-        """Quick smoke test for extraction functionality"""
         logger.info("Running smoke test for extracting text from %s", data_file.name)
 
         mime_type = data_file.suffix
@@ -67,7 +64,6 @@ class TestRAGPipeline:
     @pytest.mark.timeout(90)
     @pytest.mark.parametrize("data_file", QUICK_TEST_FILES)
     async def test_chunking_smoke(self, logger: logging.Logger, data_file: Path) -> None:
-        """Quick smoke test for chunking functionality"""
         logger.info("Running smoke test for chunking from %s", data_file.name)
 
         mime_type = (
@@ -96,7 +92,6 @@ class TestRAGPipeline:
     async def test_embedding_generation_smoke(
         self, logger: logging.Logger, grant_application_file: GrantApplicationRagSource
     ) -> None:
-        """Quick smoke test for embedding generation"""
         logger.info("Running smoke test for embedding generation")
 
         test_chunks: list[Chunk] = [
@@ -125,7 +120,6 @@ class TestRAGPipeline:
     async def test_semantic_coherence_assessment(
         self, logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationRagSource
     ) -> None:
-        """Assess semantic coherence of chunks and embeddings"""
         logger.info("Running semantic coherence assessment for %s", data_file.name)
 
         mime_type = (
@@ -172,7 +166,6 @@ class TestRAGPipeline:
     async def test_embedding_similarity_evaluation(
         self, logger: logging.Logger, grant_application_file: GrantApplicationRagSource
     ) -> None:
-        """Test semantic similarity between related content"""
         logger.info("Running embedding similarity evaluation")
 
         similar_chunks: list[Chunk] = [
@@ -218,7 +211,6 @@ class TestRAGPipeline:
         async_session_maker: async_sessionmaker[Any],
         grant_application_file: GrantApplicationRagSource,
     ) -> None:
-        """Test database integration with quality checks"""
         logger.info("Running database integration quality test")
 
         test_chunks: list[Chunk] = [
@@ -261,7 +253,6 @@ class TestRAGPipeline:
         async_session_maker: async_sessionmaker[Any],
         grant_application_file: GrantApplicationRagSource,
     ) -> None:
-        """Comprehensive end-to-end pipeline evaluation"""
         logger.info("Running comprehensive pipeline evaluation for %s", data_file.name)
 
         mime_type = (

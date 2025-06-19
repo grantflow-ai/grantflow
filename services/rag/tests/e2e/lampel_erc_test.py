@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 
 
+@pytest.mark.e2e_full
 @pytest.mark.timeout(60 * 30)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"), reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests"

@@ -103,8 +103,6 @@ def sanitize_html(soup: BeautifulSoup) -> BeautifulSoup:
 
 
 def filter_url(url: str) -> bool:
-    """Checks if a URL should be skipped based on various rules."""
-
     parsed = urlparse(url)
     domain = parsed.netloc.lower()
 

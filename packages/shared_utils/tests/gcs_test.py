@@ -258,7 +258,6 @@ def test_construct_object_uri_with_uuids() -> None:
 
 
 def test_construct_object_uri_with_none_workspace() -> None:
-    """Test constructing URI for organizations (no workspace_id)"""
     parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
@@ -451,7 +450,6 @@ async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) ->
 
 
 def test_parse_object_uri_valid_three_components() -> None:
-    """Test parsing 3-component paths for organizations (no workspace_id)"""
     parent_id = "223e4567-e89b-12d3-a456-426614174001"
     source_id = "323e4567-e89b-12d3-a456-426614174002"
     blob_name = "test-file.pdf"
@@ -466,7 +464,6 @@ def test_parse_object_uri_valid_three_components() -> None:
 
 
 def test_parse_object_uri_invalid_three_components_bad_uuid() -> None:
-    """Test that 3-component paths with invalid UUIDs fail"""
     object_path = "workspace-123/parent-456/test-file.pdf"
 
     with pytest.raises(ValueError) as exc_info:

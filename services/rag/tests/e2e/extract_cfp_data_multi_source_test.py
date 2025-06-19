@@ -15,6 +15,7 @@ from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_
 TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="2fb8fb60-4972-4a7e-ad9d-691121409d19")
 
 
+@pytest.mark.quality_assessment
 @pytest.mark.timeout(60 * 5)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
@@ -23,13 +24,6 @@ TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="2fb8fb6
 async def test_extract_cfp_data_multi_source(
     logger: logging.Logger, organization_mapping: dict[str, dict[str, str]]
 ) -> None:
-    """
-    Test that:
-    1. Gets existing RAG sources for the template
-    2. Runs multi-source CFP extraction
-    3. Validates the extraction result structure and content
-    4. Outputs result as JSON
-    """
     logger.info("Starting multi-source test for template: %s", TEST_GRANT_TEMPLATE_ID)
     session_maker = get_session_maker()
 
