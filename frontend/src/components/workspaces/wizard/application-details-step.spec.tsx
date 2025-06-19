@@ -21,7 +21,6 @@ describe("ApplicationDetailsStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// Reset wizard store to initial state
 		useWizardStore.setState({
 			polling: {
 				intervalId: null,
@@ -35,12 +34,8 @@ describe("ApplicationDetailsStep", () => {
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			workspaceId: "",
-			wsConnectionStatus: undefined,
-			wsConnectionStatusColor: undefined,
 		});
 
-		// Reset application store to initial state
 		useApplicationStore.setState({
 			application: null,
 			applicationTitle: "",
@@ -67,7 +62,6 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("displays character count for title", () => {
-		// Set application store state with an application
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
 				grant_template: {
@@ -93,10 +87,8 @@ describe("ApplicationDetailsStep", () => {
 	it("calls handleTitleChange when title is typed", async () => {
 		const user = userEvent.setup();
 
-		// Spy on the handleTitleChange method
 		const handleTitleChangeSpy = vi.spyOn(useWizardStore.getState(), "handleTitleChange");
 
-		// Set application store state
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
 				grant_template: {
@@ -132,7 +124,6 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("renders URL input component", () => {
-		// Set application store state
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
 				grant_template: {
@@ -156,7 +147,6 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("displays existing URLs", () => {
-		// Set application store state with URLs
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
 				grant_template: {
@@ -184,7 +174,6 @@ describe("ApplicationDetailsStep", () => {
 	it("displays URLs and shows removal on hover", async () => {
 		const user = userEvent.setup();
 
-		// Set application store state with URLs
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
 				grant_template: {
@@ -237,7 +226,6 @@ describe("ApplicationDetailsStep", () => {
 		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 		Object.assign(file, { id: "file-id" });
 
-		// Set application store state with uploaded files
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
 				grant_template: {
@@ -268,7 +256,6 @@ describe("ApplicationDetailsStep", () => {
 		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 		Object.assign(file, { id: "file-id" });
 
-		// Set application store state with uploaded files
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
 				grant_template: {

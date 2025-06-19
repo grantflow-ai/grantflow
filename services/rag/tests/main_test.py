@@ -12,8 +12,6 @@ from packages.shared_utils.src.pubsub import PubSubEvent, PubSubMessage
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.main import app, handle_pubsub_message
-
 
 def create_pubsub_event(data: dict[str, Any]) -> PubSubEvent:
     return PubSubEvent(
@@ -78,6 +76,8 @@ async def test_handle_rag_request_grant_template(
     mock_grant_template_handler: AsyncMock,
     mock_grant_application_handler: AsyncMock,
 ) -> None:
+    from services.rag.src.main import app
+
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_template))
 
@@ -97,6 +97,8 @@ async def test_handle_rag_request_grant_application(
     mock_grant_template_handler: AsyncMock,
     mock_grant_application_handler: AsyncMock,
 ) -> None:
+    from services.rag.src.main import app
+
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_application))
 
@@ -110,6 +112,8 @@ async def test_handle_rag_request_grant_application(
 
 
 async def test_handle_rag_request_invalid_message() -> None:
+    from services.rag.src.main import app
+
     data = {"invalid": "data"}
     invalid_event = create_pubsub_event(data)
 
@@ -121,6 +125,8 @@ async def test_handle_rag_request_invalid_message() -> None:
 
 
 async def test_handle_rag_request_missing_parent_type() -> None:
+    from services.rag.src.main import app
+
     data = {"parent_id": str(uuid4())}
     invalid_event = create_pubsub_event(data)
 
@@ -132,6 +138,8 @@ async def test_handle_rag_request_missing_parent_type() -> None:
 
 
 async def test_handle_rag_request_missing_parent_id() -> None:
+    from services.rag.src.main import app
+
     data = {"parent_type": "grant_template"}
     invalid_event = create_pubsub_event(data)
 
@@ -143,6 +151,8 @@ async def test_handle_rag_request_missing_parent_id() -> None:
 
 
 async def test_handle_rag_request_invalid_parent_type() -> None:
+    from services.rag.src.main import app
+
     data = {
         "parent_type": "invalid_type",
         "parent_id": str(uuid4()),
@@ -161,6 +171,8 @@ async def test_handle_rag_request_handler_error(
     pubsub_event_grant_template: PubSubEvent,
     mock_grant_template_handler: AsyncMock,
 ) -> None:
+    from services.rag.src.main import app
+
     mock_grant_template_handler.side_effect = Exception("Handler error")
 
     async with AsyncTestClient(app=app) as client:
@@ -172,6 +184,8 @@ async def test_handle_rag_request_handler_error(
 
 
 async def test_handle_rag_request_invalid_base64() -> None:
+    from services.rag.src.main import app
+
     invalid_event = PubSubEvent(
         message=PubSubMessage(
             data="invalid-base64!@#",
@@ -190,6 +204,8 @@ async def test_handle_rag_request_invalid_base64() -> None:
 
 
 def test_handle_pubsub_message_valid() -> None:
+    from services.rag.src.main import handle_pubsub_message
+
     data = {
         "parent_type": "grant_template",
         "parent_id": str(uuid4()),
@@ -203,6 +219,8 @@ def test_handle_pubsub_message_valid() -> None:
 
 
 def test_handle_pubsub_message_invalid() -> None:
+    from services.rag.src.main import handle_pubsub_message
+
     data = {"invalid": "data"}
     event = create_pubsub_event(data)
 
