@@ -17,7 +17,10 @@ from services.backend.src.api.routes.grant_applications import (
     handle_retrieve_application,
     handle_update_application,
 )
-from services.backend.src.api.routes.grant_template import handle_generate_grant_template, handle_update_grant_template
+from services.backend.src.api.routes.grant_template import (
+    handle_generate_grant_template,
+    handle_update_grant_template,
+)
 from services.backend.src.api.routes.sources import (
     handle_crawl_url,
     handle_create_upload_url,
@@ -35,7 +38,9 @@ from services.backend.src.api.routes.workspaces import (
     handle_update_invitation_role,
     handle_update_workspace,
 )
-from services.backend.src.api.sockets.grant_applications import handle_grant_application_notifications
+from services.backend.src.api.sockets.grant_applications import (
+    handle_grant_application_notifications,
+)
 from services.backend.src.utils.firebase import get_firebase_app
 
 logger = get_logger(__name__)

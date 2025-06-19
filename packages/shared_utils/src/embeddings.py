@@ -26,10 +26,14 @@ def get_embedding_model() -> SentenceTransformer:
 
         if model_dir and Path(model_dir).exists():
             logger.info("Loading model from %s", model_dir)
-            model = SentenceTransformer(model_dir, device="cpu", trust_remote_code=False)
+            model = SentenceTransformer(
+                model_dir, device="cpu", trust_remote_code=False
+            )
         else:
             logger.info("Loading model %s from default cache", EMBEDDING_MODEL_NAME)
-            model = SentenceTransformer(EMBEDDING_MODEL_NAME, device="cpu", trust_remote_code=False)
+            model = SentenceTransformer(
+                EMBEDDING_MODEL_NAME, device="cpu", trust_remote_code=False
+            )
 
         embedding_model_ref.value = model
 
@@ -55,7 +59,9 @@ async def create_vector_dto(
 
     if len(embedding) != 1:
         logger.error("Expected a single embedding to be generated for the content")
-        raise ExternalOperationError("Expected a single embedding to be generated for the content")
+        raise ExternalOperationError(
+            "Expected a single embedding to be generated for the content"
+        )
 
     return VectorDTO(
         chunk=chunk,

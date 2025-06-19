@@ -4,9 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApplicationFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { FileWithId } from "@/types/files";
 
 import { ApplicationPreview } from "./application-preview";
+
+import type { FileWithId } from "@/types/files";
 
 function createMockFile(name: string, size: number, type: string, id?: string): FileWithId {
 	const file = new File(["content"], name, { type }) as FileWithId;
@@ -22,7 +23,12 @@ describe("ApplicationPreview", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			ui: {
+				currentStep: 0,
+				fileDropdownStates: {},
+				linkHoverStates: {},
+				urlInput: "",
+			},
 		});
 
 		useApplicationStore.setState({

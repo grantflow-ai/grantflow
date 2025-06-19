@@ -1,5 +1,3 @@
-import React from "react";
-
 export function ResearchPlanStep() {
 	return (
 		<div className="p-4" data-testid="research-plan-step">

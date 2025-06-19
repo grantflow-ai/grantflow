@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.crawler.src.main import app
 
-pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.gcs_test_plugin"]
+pytest_plugins = [
+    "testing.base_test_plugin",
+    "testing.db_test_plugin",
+    "testing.gcs_test_plugin",
+]
 
 logging.basicConfig(level=logging.DEBUG)
 

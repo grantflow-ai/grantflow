@@ -55,7 +55,9 @@ async def prepare_url_data(
             raw_html = await download_page_html(url)
             visited_urls.append(url)
         except (URLError, HTTPError, TimeoutError) as e:
-            raise ExternalOperationError(f"Failed to download page HTML from {url}", context=str(e)) from e
+            raise ExternalOperationError(
+                f"Failed to download page HTML from {url}", context=str(e)
+            ) from e
 
     return raw_html, visited_urls
 
@@ -65,9 +67,14 @@ def extract_links(raw_html: str, base_url: str) -> tuple[set[str], set[str]]:
     sanitized_html = sanitize_html(soup)
 
     a_tags = sanitized_html.find_all("a")
-    raw_links = cast("list[str]", [a["href"] for a in a_tags if isinstance(a, Tag) and a.has_attr("href")])
+    raw_links = cast(
+        "list[str]",
+        [a["href"] for a in a_tags if isinstance(a, Tag) and a.has_attr("href")],
+    )
     absolute_links = [urljoin(base_url, href) for href in raw_links]
-    absolute_links = [link for link in absolute_links if urlparse(link).scheme in {"http", "https"}]
+    absolute_links = [
+        link for link in absolute_links if urlparse(link).scheme in {"http", "https"}
+    ]
 
     rx = re.compile(FILE_RX, re.IGNORECASE)
     doc_links = set()
@@ -83,11 +90,16 @@ def extract_links(raw_html: str, base_url: str) -> tuple[set[str], set[str]]:
 
 
 async def extract_and_process_content(
-    url: str, raw_html: str, page_text: str | None = None, main_embeddings: list[list[float]] | None = None
+    url: str,
+    raw_html: str,
+    page_text: str | None = None,
+    main_embeddings: list[list[float]] | None = None,
 ) -> tuple[str, str, list[list[float]]]:
     if page_text is None:
         try:
-            page_text = extract(raw_html, output_format="markdown", include_comments=False)
+            page_text = extract(
+                raw_html, output_format="markdown", include_comments=False
+            )
             if page_text is None:
                 logger.warning(
                     "Failed to extract text content",
@@ -97,14 +109,18 @@ async def extract_and_process_content(
                 )
                 page_text = ""
         except Exception as e:
-            raise UrlParsingError(f"Failed to extract text content from {url}", context=str(e)) from e
+            raise UrlParsingError(
+                f"Failed to extract text content from {url}", context=str(e)
+            ) from e
 
     if main_embeddings is None:
         try:
             content_to_embed = page_text if page_text is not None else ""
             main_embeddings = await generate_embeddings([content_to_embed])
         except ValueError as e:
-            raise ExternalOperationError(f"Failed to generate embeddings for {url}", context=str(e)) from e
+            raise ExternalOperationError(
+                f"Failed to generate embeddings for {url}", context=str(e)
+            ) from e
 
     soup = BeautifulSoup(raw_html, "html.parser")
     sanitized_html = sanitize_html(soup)
@@ -157,13 +173,19 @@ async def find_relevant_links(
             link_html = await download_page_html(str(link))
             visited_urls.append(str(link))
 
-            if link_text := extract(link_html, output_format="markdown", include_comments=False):
+            if link_text := extract(
+                link_html, output_format="markdown", include_comments=False
+            ):
                 link_embeddings = await generate_embeddings([link_text])
                 similarity = cosine_similarity(main_embeddings, link_embeddings)
                 if similarity[0][0] >= 0.58:
                     relevant_links.append((link, link_html, link_embeddings, link_text))
         except Exception as e:  # noqa: BLE001
-            logger.warning("Failed to download or process link, skipping", url=str(link), error=str(e))
+            logger.warning(
+                "Failed to download or process link, skipping",
+                url=str(link),
+                error=str(e),
+            )
             continue
 
     return relevant_links
@@ -201,7 +223,9 @@ async def crawl(
             url, raw_html, page_text, main_embeddings
         )
         page_path = await save_page_content(url, temp_dir, md_out)
-        downloaded_files = await download_documents(doc_links, temp_dir, downloaded_files)
+        downloaded_files = await download_documents(
+            doc_links, temp_dir, downloaded_files
+        )
 
         page_result: CrawlResult = {
             "url": url,
@@ -211,7 +235,9 @@ async def crawl(
             "saved_path": str(page_path),
         }
         results.append(page_result)
-        relevant_links = await find_relevant_links(normal_links, main_embeddings, visited_urls)
+        relevant_links = await find_relevant_links(
+            normal_links, main_embeddings, visited_urls
+        )
 
         if depth < MAX_DEPTH:
             crawl_tasks = [
@@ -229,7 +255,9 @@ async def crawl(
             ]
             if crawl_tasks:
                 crawl_results = await gather(*crawl_tasks)
-                results.extend(chain.from_iterable(result for result in crawl_results if result))
+                results.extend(
+                    chain.from_iterable(result for result in crawl_results if result)
+                )
 
         return results
     except Exception as e:
@@ -239,11 +267,15 @@ async def crawl(
         return []
 
 
-async def crawl_url(*, url: str, source_id: str) -> tuple[list[VectorDTO], str, list[FileContent]]:
+async def crawl_url(
+    *, url: str, source_id: str
+) -> tuple[list[VectorDTO], str, list[FileContent]]:
     async with (
         TemporaryDirectory() as temp_dir,
     ):
-        crawl_results = await crawl(url=url, temp_dir=Path(temp_dir), is_initial_crawl=True)
+        crawl_results = await crawl(
+            url=url, temp_dir=Path(temp_dir), is_initial_crawl=True
+        )
 
         files = [
             FileContent(filename=file.name, content=await file.read_bytes())

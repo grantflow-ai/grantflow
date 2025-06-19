@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import { ApplicationFactory, ApplicationWithTemplateFactory, RagSourceFactory } from "::testing/factories";
 import {
@@ -93,7 +93,9 @@ export const Default: Story = {
 					uploadedFiles: [],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 0 });
+				useWizardStore.setState({
+					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -129,7 +131,9 @@ export const Step1_ApplicationDetails: Story = {
 					uploadedFiles: [],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 0 });
+				useWizardStore.setState({
+					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -159,7 +163,9 @@ export const Step2_ApplicationStructure: Story = {
 					],
 					urls: ["https://example.com/research-data"],
 				});
-				useWizardStore.setState({ currentStep: 1 });
+				useWizardStore.setState({
+					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -198,7 +204,9 @@ export const Step3_KnowledgeBase: Story = {
 					],
 					urls: ["https://example.com/research-data"],
 				});
-				useWizardStore.setState({ currentStep: 2 });
+				useWizardStore.setState({
+					ui: { currentStep: 2, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -234,7 +242,9 @@ export const Step4_ResearchPlan: Story = {
 					],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 3 });
+				useWizardStore.setState({
+					ui: { currentStep: 3, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -270,7 +280,9 @@ export const Step5_ResearchDeepDive: Story = {
 					],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 4 });
+				useWizardStore.setState({
+					ui: { currentStep: 4, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -317,7 +329,9 @@ export const Step6_GenerateComplete: Story = {
 					],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 5 });
+				useWizardStore.setState({
+					ui: { currentStep: 5, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -348,7 +362,9 @@ export const LongApplicationTitle: Story = {
 					uploadedFiles: [],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 1 });
+				useWizardStore.setState({
+					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -387,7 +403,9 @@ export const ProcessingFiles: Story = {
 					],
 					urls: ["https://example.com/research-data"],
 				});
-				useWizardStore.setState({ currentStep: 2 });
+				useWizardStore.setState({
+					ui: { currentStep: 2, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -413,7 +431,9 @@ export const ConnectionError: Story = {
 					uploadedFiles: [],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 0 });
+				useWizardStore.setState({
+					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},

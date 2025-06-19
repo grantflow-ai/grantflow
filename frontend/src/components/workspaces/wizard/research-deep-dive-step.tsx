@@ -1,5 +1,3 @@
-import React from "react";
-
 export function ResearchDeepDiveStep() {
 	return (
 		<div className="p-4" data-testid="research-deep-dive-step">

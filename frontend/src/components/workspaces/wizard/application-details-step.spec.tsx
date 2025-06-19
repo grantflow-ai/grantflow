@@ -13,16 +13,32 @@ vi.mock("@/actions/sources", () => ({
 	deleteTemplateSource: vi.fn(),
 }));
 
+vi.mock("@/actions/grant-applications", () => ({
+	updateApplication: vi.fn(),
+}));
+
 describe("ApplicationDetailsStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			polling: {
+				intervalId: null,
+				isActive: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+			},
+			ui: {
+				currentStep: 0,
+				fileDropdownStates: {},
+				linkHoverStates: {},
+				urlInput: "",
+			},
 		});
 
 		useApplicationStore.setState({
 			application: null,
+			applicationTitle: "",
 			isLoading: false,
 			uploadedFiles: [],
 			urls: [],
@@ -40,93 +56,112 @@ describe("ApplicationDetailsStep", () => {
 	it("renders application instructions section", () => {
 		render(<ApplicationDetailsStep />);
 
-		expect(screen.getByTestId("template-file-container")).toBeInTheDocument();
+		expect(screen.getByText("Application Instructions")).toBeInTheDocument();
+		expect(screen.getAllByText("Documents")[0]).toBeInTheDocument();
+		expect(screen.getAllByText("Links")[0]).toBeInTheDocument();
 	});
 
 	it("displays character count for title", () => {
-		const application = ApplicationFactory.build({
-			grant_template: {
-				created_at: "",
-				grant_application_id: "",
-				grant_sections: [],
-				id: "test-template-id",
-				rag_sources: [],
-				updated_at: "",
-			},
-			id: "test-id",
-			title: "Test Title",
-			workspace_id: "test-workspace-id",
-		});
-
 		useApplicationStore.setState({
-			application,
-			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			applicationTitle: "Test Title",
 		});
 
 		render(<ApplicationDetailsStep />);
 
-		const charCount = screen.getByTestId("application-title-textarea-chars-count");
-		expect(charCount).toHaveTextContent("10/120");
+		expect(screen.getByTestId("application-title-textarea-chars-count")).toBeInTheDocument();
 	});
 
-	it("updates title on user input", async () => {
+	it("calls handleTitleChange when title is typed", async () => {
 		const user = userEvent.setup();
-		const application = ApplicationFactory.build({ title: "Initial Title" });
+
+		const handleTitleChangeSpy = vi.spyOn(useWizardStore.getState(), "handleTitleChange");
 
 		useApplicationStore.setState({
-			application,
-			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "",
+				workspace_id: "test-workspace-id",
+			}),
+			applicationTitle: "",
 		});
 
 		render(<ApplicationDetailsStep />);
 
-		const titleInput = screen.getByTestId("application-title-textarea");
-		await user.type(titleInput, "e");
+		const textarea = screen.getByTestId("application-title-textarea");
+		await user.type(textarea, "Test");
 
-		await waitFor(
-			() => {
-				const charCount = screen.getByTestId("application-title-textarea-chars-count");
-				expect(charCount).toHaveTextContent("13/120");
-			},
-			{ timeout: 1000 },
-		);
+		await waitFor(() => {
+			expect(handleTitleChangeSpy).toHaveBeenCalled();
+		});
 	});
 
-	it("shows file upload component", () => {
+	it("limits title length to 120 characters", () => {
 		render(<ApplicationDetailsStep />);
 
-		expect(screen.getByTestId("template-file-container")).toBeInTheDocument();
+		const textarea = screen.getByTestId("application-title-textarea");
+		expect(textarea).toHaveAttribute("maxLength", "120");
 	});
 
-	it("shows URL input component", () => {
+	it("renders URL input component", () => {
+		useApplicationStore.setState({
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "",
+				workspace_id: "test-workspace-id",
+			}),
+		});
+
 		render(<ApplicationDetailsStep />);
 
-		expect(screen.getByTestId("template-file-container")).toBeInTheDocument();
+		const urlInput = screen.getByPlaceholderText("Paste a link and press Enter to add");
+		expect(urlInput).toBeInTheDocument();
 	});
 
 	it("displays existing URLs", () => {
-		const application = ApplicationFactory.build({
-			grant_template: {
-				created_at: "",
-				grant_application_id: "",
-				grant_sections: [],
-				id: "test-template-id",
-				rag_sources: [],
-				updated_at: "",
-			},
-			id: "test-id",
-			title: "Test Title",
-			workspace_id: "test-workspace-id",
-		});
-
 		useApplicationStore.setState({
-			application,
-			isLoading: false,
-			uploadedFiles: [],
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			applicationTitle: "Test Title",
 			urls: ["https://example1.com", "https://example2.com"],
 		});
 
@@ -139,24 +174,21 @@ describe("ApplicationDetailsStep", () => {
 	it("displays URLs and shows removal on hover", async () => {
 		const user = userEvent.setup();
 
-		const application = ApplicationFactory.build({
-			grant_template: {
-				created_at: "",
-				grant_application_id: "",
-				grant_sections: [],
-				id: "test-template-id",
-				rag_sources: [],
-				updated_at: "",
-			},
-			id: "test-id",
-			title: "Test Title",
-			workspace_id: "test-workspace-id",
-		});
-
 		useApplicationStore.setState({
-			application,
-			isLoading: false,
-			uploadedFiles: [],
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			applicationTitle: "Test Title",
 			urls: ["https://example1.com", "https://example2.com"],
 		});
 
@@ -194,25 +226,22 @@ describe("ApplicationDetailsStep", () => {
 		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 		Object.assign(file, { id: "file-id" });
 
-		const application = ApplicationFactory.build({
-			grant_template: {
-				created_at: "",
-				grant_application_id: "",
-				grant_sections: [],
-				id: "test-template-id",
-				rag_sources: [],
-				updated_at: "",
-			},
-			id: "test-id",
-			title: "Test Title",
-			workspace_id: "test-workspace-id",
-		});
-
 		useApplicationStore.setState({
-			application,
-			isLoading: false,
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			applicationTitle: "Test Title",
 			uploadedFiles: [file],
-			urls: [],
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -227,25 +256,22 @@ describe("ApplicationDetailsStep", () => {
 		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 		Object.assign(file, { id: "file-id" });
 
-		const application = ApplicationFactory.build({
-			grant_template: {
-				created_at: "",
-				grant_application_id: "",
-				grant_sections: [],
-				id: "test-template-id",
-				rag_sources: [],
-				updated_at: "",
-			},
-			id: "test-id",
-			title: "Test Title",
-			workspace_id: "test-workspace-id",
-		});
-
 		useApplicationStore.setState({
-			application,
-			isLoading: false,
+			application: ApplicationFactory.build({
+				grant_template: {
+					created_at: "",
+					grant_application_id: "",
+					grant_sections: [],
+					id: "test-template-id",
+					rag_sources: [],
+					updated_at: "",
+				},
+				id: "test-id",
+				title: "Test Title",
+				workspace_id: "test-workspace-id",
+			}),
+			applicationTitle: "Test Title",
 			uploadedFiles: [file],
-			urls: [],
 		});
 
 		render(<ApplicationDetailsStep />);

@@ -1,33 +1,33 @@
 name: Build and Push (Indexer)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/deployment-service-indexer.yaml'
-      - 'packages/**/src/**'
-      - 'services/indexer/src/**'
-  release:
-    types: [published]
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/deployment-service-indexer.yaml"
+            - "packages/**/src/**"
+            - "services/indexer/src/**"
+    release:
+        types: [published]
 
 jobs:
-  build-and-push-dev:
-    uses: ./.github/workflows/deploy-service.yaml
-    if: github.event_name == 'push'
-    with:
-      service-name: indexer
-      image-tag: dev-${{ github.sha }}
-    permissions:
-      contents: read
-      id-token: write
+    build-and-push-dev:
+        uses: ./.github/workflows/deploy-service.yaml
+        if: github.event_name == 'push'
+        with:
+            service-name: indexer
+            image-tag: dev-${{ github.sha }}
+        permissions:
+            contents: read
+            id-token: write
 
-  build-and-push-prod:
-    uses: ./.github/workflows/deploy-service.yaml
-    if: github.event_name == 'release'
-    with:
-      service-name: indexer
-      image-tag: ${{ github.event.release.tag_name }}
-    permissions:
-      contents: read
-      id-token: write
+    build-and-push-prod:
+        uses: ./.github/workflows/deploy-service.yaml
+        if: github.event_name == 'release'
+        with:
+            service-name: indexer
+            image-tag: ${{ github.event.release.tag_name }}
+        permissions:
+            contents: read
+            id-token: write

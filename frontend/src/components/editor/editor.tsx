@@ -1,8 +1,7 @@
 import "./styles.css";
 
-import { EditorEvents, EditorProvider } from "@tiptap/react";
+import { type EditorEvents, EditorProvider } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React from "react";
 
 const extensions = [StarterKit];
 
@@ -25,6 +24,6 @@ export const Editor = ({
 			onUpdate={(event: EditorEvents["update"]) => {
 				onContentUpdate(event.editor.getHTML());
 			}}
-		></EditorProvider>
+		/>
 	);
 };
