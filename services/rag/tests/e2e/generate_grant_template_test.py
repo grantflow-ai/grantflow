@@ -15,6 +15,8 @@ from services.rag.src.grant_template.handler import extract_and_enrich_sections
 from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -58,6 +60,8 @@ async def test_handle_generate_grant_template_melanoma_alliance(
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -100,6 +104,8 @@ async def test_handle_generate_grant_template_standard_aware(
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -146,6 +152,8 @@ async def test_handle_generate_grant_template_nih(
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -188,6 +196,8 @@ async def test_handle_generate_grant_template_ics(
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -234,6 +244,8 @@ async def test_handle_generate_grant_template_erc(
     logger.info("Completed grant template generation in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",

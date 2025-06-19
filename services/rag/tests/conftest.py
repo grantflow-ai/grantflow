@@ -20,15 +20,11 @@ if rag_env_file.exists():
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 
-
-
-
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
 
 
 @pytest.fixture
 def organization_mapping() -> dict[str, dict[str, str]]:
-    """Mapping of organization IDs to their names and abbreviations for CFP extraction."""
     return {
         "e8e8b0df-d6d9-4a27-bb1a-7b8e5a5b8c8e": {"name": "Melanoma Research Alliance", "abbreviation": "MRA"},
         "123e4567-e89b-12d3-a456-426614174000": {"name": "National Institutes of Health", "abbreviation": "NIH"},

@@ -33,7 +33,7 @@ from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 
 
 @pytest.mark.smoke
-@pytest.mark.timeout(600)
+@pytest.mark.timeout(60)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
@@ -59,12 +59,10 @@ async def test_retrieval_smoke(
     end_time = time.time()
     performance = calculate_performance_metrics(start_time, end_time, "retrieval")
 
-
     assert len(results) > 0, "Should retrieve at least some documents"
     assert len(results) <= 100, "Should not exceed maximum retrieval limit"
     assert all(isinstance(result, str) for result in results), "All results should be strings"
     assert all(len(result.strip()) > 0 for result in results), "All results should have content"
-
 
     assert performance["execution_time"] < 600, "Should complete within 10 minutes"
 

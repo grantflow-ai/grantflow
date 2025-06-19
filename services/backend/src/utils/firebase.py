@@ -47,14 +47,6 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
 
 
 async def get_user_by_email(email: str) -> dict[str, Any] | None:
-    """Get a Firebase user by email address.
-
-    Args:
-        email: The email address to look up.
-
-    Returns:
-        The user data if found, None otherwise.
-    """
     handler = as_async_callable(firebase_get_user_by_email)
     try:
         user = await handler(email, app=get_firebase_app())

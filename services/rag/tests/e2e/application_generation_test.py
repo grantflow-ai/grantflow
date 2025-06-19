@@ -13,6 +13,7 @@ from testing import RESULTS_FOLDER
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 
 
+@pytest.mark.e2e_full
 @pytest.mark.timeout(60 * 30)
 @pytest.mark.skipif(
     not environ.get("E2E_TESTS"), reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests"
