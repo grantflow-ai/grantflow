@@ -1,5 +1,3 @@
-import React from "react";
-
 import { AppButton } from "@/components/app-button";
 import { IconGoAhead, IconGoBack } from "@/components/icons";
 import {
@@ -44,7 +42,12 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const { currentStep, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
+	const {
+		toNextStep,
+		toPreviousStep,
+		ui: { currentStep },
+		validateStepNext,
+	} = useWizardStore();
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep > 0;
 	const disabled = !validateStepNext();
@@ -66,7 +69,7 @@ export function WizardFooter() {
 					Back
 				</AppButton>
 			) : (
-				<div></div>
+				<div />
 			)}
 			<DevAutofillButton />
 			<AppButton
@@ -87,7 +90,9 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
-	const { currentStep } = useWizardStore();
+	const {
+		ui: { currentStep },
+	} = useWizardStore();
 	const { application } = useApplicationStore();
 	const showHeaderInfo = currentStep > 0;
 	return (
@@ -102,7 +107,7 @@ export function WizardHeader() {
 							<Deadline />
 						</>
 					) : (
-						<div className="invisible"></div>
+						<div className="invisible" />
 					)}
 				</div>
 				<AppButton className="py-0 text-base" data-testid="exit-button" size="lg" variant="link">
@@ -168,7 +173,7 @@ function ApplicationProgressBar({
 						);
 					})}
 				</div>
-				<div className="h-8"></div>
+				<div className="h-8" />
 			</div>
 		</div>
 	);

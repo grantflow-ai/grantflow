@@ -13,7 +13,9 @@ async def test_extract_plain_text() -> None:
     content = b"Hello, World!"
     mime_type = "text/plain"
 
-    result, output_mime_type = await extract_file_content(content=content, mime_type=mime_type)
+    result, output_mime_type = await extract_file_content(
+        content=content, mime_type=mime_type
+    )
 
     assert isinstance(result, str)
     assert result == "Hello, World!"
@@ -24,7 +26,9 @@ async def test_extract_markdown() -> None:
     content = b"# Hello\n\nWorld!"
     mime_type = "text/markdown"
 
-    result, output_mime_type = await extract_file_content(content=content, mime_type=mime_type)
+    result, output_mime_type = await extract_file_content(
+        content=content, mime_type=mime_type
+    )
 
     assert isinstance(result, str)
     assert result == "# Hello\n\nWorld!"
@@ -35,7 +39,9 @@ async def test_extract_csv() -> None:
     content = b"a,b,c\n1,2,3"
     mime_type = "text/csv"
 
-    result, output_mime_type = await extract_file_content(content=content, mime_type=mime_type)
+    result, output_mime_type = await extract_file_content(
+        content=content, mime_type=mime_type
+    )
 
     assert isinstance(result, str)
     assert "a" in result
@@ -53,10 +59,16 @@ async def test_extract_with_kreuzberg(document: Path) -> None:
         else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
 
-    result, output_mime_type = await extract_file_content(content=content, mime_type=mime_type)
+    result, output_mime_type = await extract_file_content(
+        content=content, mime_type=mime_type
+    )
 
     assert isinstance(result, str)
-    assert output_mime_type == "text/markdown" if mime_type != "application/pdf" else "text/plain"
+    assert (
+        output_mime_type == "text/markdown"
+        if mime_type != "application/pdf"
+        else "text/plain"
+    )
 
 
 async def test_extract_unsupported_mime_type() -> None:

@@ -8,9 +8,11 @@ import {
 	WorkspaceListItemFactory,
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
-import { API } from "@/types/api-types";
 
 import { createWorkspace, deleteWorkspace, getWorkspace, getWorkspaces, updateWorkspace } from "./workspace";
+
+import type { API } from "@/types/api-types";
+
 
 const mockPost = vi.fn();
 const mockGet = vi.fn();

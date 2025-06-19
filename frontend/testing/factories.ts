@@ -1,6 +1,7 @@
 import { Factory } from "interface-forge";
 
 import type { API } from "@/types/api-types";
+import type { FileWithId } from "@/types/files";
 
 interface ErrorResponse {
 	detail: string;
@@ -111,7 +112,9 @@ export const RagSourceFactory = new Factory<RagSource>((factory) => {
 		sourceId: factory.string.uuid(),
 		status: factory.helpers.arrayElement<IndexingStatus>(["FAILED", "FINISHED", "INDEXING"]),
 		...(isFile
-			? { filename: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}` }
+			? {
+					filename: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`,
+				}
 			: { url: factory.internet.url() }),
 	};
 });
@@ -203,16 +206,24 @@ export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) =
 
 export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((factory) => ({
 	...GrantSectionBaseFactory.build(),
-	depends_on: factory.helpers.multiple(() => factory.string.uuid(), { count: { max: 3, min: 0 } }),
+	depends_on: factory.helpers.multiple(() => factory.string.uuid(), {
+		count: { max: 3, min: 0 },
+	}),
 	generation_instructions: factory.lorem.paragraph(),
 	// eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary
 	is_clinical_trial: factory.datatype.boolean() ? factory.datatype.boolean() : null,
 	// eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary
 	is_detailed_workplan: factory.datatype.boolean() ? factory.datatype.boolean() : null,
-	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+	keywords: factory.helpers.multiple(() => factory.lorem.word(), {
+		count: { max: 5, min: 1 },
+	}),
 	max_words: factory.number.int({ max: 5000, min: 100 }),
-	search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), { count: { max: 3, min: 0 } }),
-	topics: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+	search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), {
+		count: { max: 3, min: 0 },
+	}),
+	topics: factory.helpers.multiple(() => factory.lorem.word(), {
+		count: { max: 5, min: 1 },
+	}),
 }));
 
 interface GrantTemplate {
@@ -432,6 +443,45 @@ export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketM
 	},
 );
 
+interface RagProcessingStatus {
+	data?: Record<string, unknown>;
+	event: string;
+	message: string;
+}
+
+export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((factory) => ({
+	data: factory.datatype.boolean()
+		? {
+				[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int(
+					{
+						max: 10,
+						min: 1,
+					},
+				),
+				...(factory.datatype.boolean() ? { organization: factory.company.name() } : {}),
+			}
+		: undefined,
+	event: factory.helpers.arrayElement([
+		"grant_template_extraction",
+		"sections_extracted",
+		"grant_template_metadata",
+		"extracting_relationships",
+		"enriching_objectives",
+		"objectives_enriched",
+	]),
+	message: factory.lorem.sentence(),
+}));
+
+export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<RagProcessingStatus>>((factory) => {
+	const status = RagProcessingStatusFactory.build();
+	return {
+		data: status,
+		event: status.event,
+		parent_id: factory.string.uuid(),
+		type: "data",
+	};
+});
+
 interface ApplicationListItem {
 	completed_at: null | string;
 	id: string;
@@ -453,4 +503,24 @@ export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.
 		...baseApplication,
 		grant_template: grantTemplate,
 	};
+});
+
+export const FileWithIdFactory = new Factory<FileWithId>((factory) => {
+	const filename = `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt", "rtf"])}`;
+	const type = factory.helpers.arrayElement([
+		"application/pdf",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		"text/plain",
+		"application/rtf",
+	]);
+	const size = factory.number.int({ max: 10_485_760, min: 1024 });
+	const lastModified = factory.date.recent().getTime();
+
+	const file = new File([new ArrayBuffer(size)], filename, {
+		lastModified,
+		type,
+	}) as FileWithId;
+	file.id = factory.datatype.boolean() ? factory.string.uuid() : undefined;
+
+	return file;
 });

@@ -1,31 +1,31 @@
 name: Backend Service CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development*
-    paths:
-      - '.github/workflows/ci-service-backend.yaml'
-      - 'packages/**'
-      - 'services/backend/**'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/ci-service-backend.yaml'
-      - 'packages/**'
-      - 'services/backend/**'
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/ci-service-backend.yaml"
+            - "packages/**"
+            - "services/backend/**"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/ci-service-backend.yaml"
+            - "packages/**"
+            - "services/backend/**"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Run Tests
-        uses: ./.github/actions/run-python-tests
-        with:
-            target: backend
+            - name: Run Tests
+              uses: ./.github/actions/run-python-tests
+              with:
+                  target: backend

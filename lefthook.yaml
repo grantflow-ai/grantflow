@@ -1,0 +1,127 @@
+skip_output:
+    - meta
+    - summary
+
+pre-commit:
+    parallel: true
+    commands:
+        biome:
+            glob: "*.{js,jsx,ts,tsx,mjs,mts,json,jsonc,css}"
+            run: pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+            stage_fixed: true
+
+        eslint:
+            glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts}"
+            run: pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache {staged_files}
+            stage_fixed: true
+
+        typescript:
+            glob: "frontend/**/*.{ts,tsx,mts}"
+            run: cd frontend && pnpm tsc --noEmit --skipLibCheck
+            exclude: "frontend/src/types/api-types.ts"
+
+        ruff:
+            glob: "*.py"
+            run: uv run ruff check --fix --unsafe-fixes {staged_files} && uv run ruff format {staged_files}
+            stage_fixed: true
+
+        mypy:
+            glob: "*.py"
+            run: uv run mypy {staged_files}
+
+        codespell:
+            run: uv run codespell {staged_files}
+            exclude: |
+                packages/*/tests/**/*
+                services/*/tests/**/*
+                test_data/**/*
+                pnpm-lock.yaml
+
+        pyproject-fmt:
+            glob: "*pyproject.toml"
+            run: uv run pyproject-fmt {staged_files}
+            stage_fixed: true
+
+        trailing-whitespace:
+            run: |
+                for file in {staged_files}; do
+                  if [[ -f "$file" ]]; then
+                    sed -i '' 's/[[:space:]]*$//' "$file"
+                  fi
+                done
+            stage_fixed: true
+
+        end-of-file-fixer:
+            run: |
+                for file in {staged_files}; do
+                  if [[ -f "$file" ]] && [[ -s "$file" ]] && [[ ! "$file" =~ \.(png|jpg|jpeg|gif|svg|ico|webp)$ ]]; then
+                    if [ -n "$(tail -c 1 "$file")" ]; then
+                      echo >> "$file"
+                    fi
+                  fi
+                done
+            stage_fixed: true
+
+        check-yaml:
+            glob: "*.{yaml,yml}"
+            run: |
+                for file in {staged_files}; do
+                  python3 -c "import yaml; yaml.safe_load(open('$file'))"
+                done
+
+        check-toml:
+            glob: "*.toml"
+            run: |
+                for file in {staged_files}; do
+                  python3 -c "import tomllib; tomllib.load(open('$file', 'rb'))"
+                done
+
+        check-json:
+            glob: "*.json"
+            run: |
+                for file in {staged_files}; do
+                  python3 -m json.tool "$file" > /dev/null
+                done
+
+        check-case-conflict:
+            run: |
+                staged_files_lower=$(echo "{staged_files}" | tr '[:upper:]' '[:lower:]')
+                if [ "$staged_files_lower" != "$(echo "$staged_files_lower" | sort -u)" ]; then
+                  echo "Error: Case conflict detected in file names"
+                  exit 1
+                fi
+
+        name-tests-test:
+            glob: "{packages,services}/*/tests/**/*.py"
+            exclude: "completion|utils|test_utils|factories"
+            run: |
+                for file in {staged_files}; do
+                  if [[ ! "$file" =~ (test_.*\.py|.*_test\.py) ]]; then
+                    echo "Error: Test file '$file' does not follow naming convention (should start with 'test_' or end with '_test.py')"
+                    exit 1
+                  fi
+                done
+
+        tofu-fmt:
+            glob: "**/*.tf"
+            run: tofu fmt -check=true {staged_files}
+            stage_fixed: true
+
+        tofu-validate:
+            glob: "terraform/**/*.tf"
+            run: |
+                if [ -n "{staged_files}" ]; then
+                  cd terraform && tofu init -backend=false && tofu validate
+                fi
+
+        tflint:
+            glob: "terraform/**/*.tf"
+            run: |
+                if [ -n "{staged_files}" ]; then
+                  tflint --chdir=terraform
+                fi
+
+commit-msg:
+    commands:
+        commitlint:
+            run: pnpm commitlint --edit {1}

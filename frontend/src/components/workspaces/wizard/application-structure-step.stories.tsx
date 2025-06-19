@@ -36,7 +36,9 @@ export const EmptyState: Story = {
 					uploadedFiles: [],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 1 });
+				useWizardStore.setState({
+					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -61,7 +63,9 @@ export const WithApplicationTitle: Story = {
 					uploadedFiles: [],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 1 });
+				useWizardStore.setState({
+					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},
@@ -81,7 +85,9 @@ export const WithGeneratedSections: Story = {
 					uploadedFiles: [],
 					urls: [],
 				});
-				useWizardStore.setState({ currentStep: 1 });
+				useWizardStore.setState({
+					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
 			}, []);
 			return <Story />;
 		},

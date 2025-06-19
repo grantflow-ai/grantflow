@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 
 import {
@@ -15,7 +15,10 @@ import {
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
 import { SourceIndexingStatus } from "@/enums";
 import {
+	isRagProcessingStatusMessage,
 	isSourceProcessingNotificationMessage,
+	type RagProcessingStatusMessage,
+	type SourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
 import { useApplicationStore } from "@/stores/application-store";
@@ -26,7 +29,9 @@ export default function CreateGrantApplicationWizardPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const { currentStep } = useWizardStore();
+	const {
+		ui: { currentStep },
+	} = useWizardStore();
 	const { application, handleApplicationInit } = useApplicationStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
@@ -47,6 +52,31 @@ export default function CreateGrantApplicationWizardPage() {
 		void handleApplication();
 	}, [params.workspaceId, router, searchParams, handleApplicationInit]);
 
+	const handleSourceProcessingNotification = useCallback((notification: SourceProcessingNotificationMessage) => {
+		const { identifier, indexing_status } = notification.data;
+
+		if (indexing_status === SourceIndexingStatus.FAILED) {
+			toast.error(`Failed to process ${identifier}`);
+		} else if (indexing_status === SourceIndexingStatus.FINISHED) {
+			toast.success(`Successfully processed ${identifier}`);
+		} else {
+			toast.info(`Processing ${identifier}...`);
+		}
+	}, []);
+
+	const handleRagProcessingNotification = useCallback((notification: RagProcessingStatusMessage) => {
+		const { data, message } = notification.data;
+
+		if (data && Object.keys(data).length > 0) {
+			const description = Object.entries(data)
+				.map(([key, value]) => `${key}: ${value}`)
+				.join(", ");
+			toast.info(message, { description });
+		} else {
+			toast.info(message);
+		}
+	}, []);
+
 	useEffect(() => {
 		if (notifications.length === 0) {
 			return;
@@ -55,16 +85,11 @@ export default function CreateGrantApplicationWizardPage() {
 		const latestNotification = notifications.at(-1);
 
 		if (isSourceProcessingNotificationMessage(latestNotification)) {
-			if (latestNotification.data.indexing_status === SourceIndexingStatus.FAILED) {
-				toast.error(`Failed to process ${latestNotification.data.identifier}`);
-				return;
-			} else if (latestNotification.data.indexing_status === SourceIndexingStatus.FINISHED) {
-				toast.success(`Successfully processed ${latestNotification.data.identifier}`);
-				return;
-			}
-			toast.info(`Processing ${latestNotification.data.identifier}...`);
+			handleSourceProcessingNotification(latestNotification);
+		} else if (isRagProcessingStatusMessage(latestNotification)) {
+			handleRagProcessingNotification(latestNotification);
 		}
-	}, [notifications]);
+	}, [notifications, handleSourceProcessingNotification, handleRagProcessingNotification]);
 
 	const steps = [
 		<ApplicationDetailsStep
@@ -72,7 +97,11 @@ export default function CreateGrantApplicationWizardPage() {
 			connectionStatusColor={connectionStatusColor}
 			key={0}
 		/>,
-		<ApplicationStructureStep key={1} />,
+		<ApplicationStructureStep
+			connectionStatus={connectionStatus}
+			connectionStatusColor={connectionStatusColor}
+			key={1}
+		/>,
 		<KnowledgeBaseStep key={2} />,
 		<ResearchPlanStep key={3} />,
 		<ResearchDeepDiveStep key={4} />,

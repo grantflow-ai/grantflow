@@ -1,8 +1,9 @@
 "use server";
 
-import { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
+
+import type { API } from "@/types/api-types";
 
 export async function createApplication(
 	workspaceId: string,
@@ -51,11 +52,13 @@ export async function updateApplication(
 	workspaceId: string,
 	applicationId: string,
 	data: Partial<API.UpdateApplication.RequestBody>,
-): Promise<void> {
-	await withAuthRedirect(
-		getClient().patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
-			headers: await createAuthHeaders(),
-			json: data,
-		}),
+): Promise<API.UpdateApplication.Http200.ResponseBody> {
+	return await withAuthRedirect(
+		getClient()
+			.patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<API.UpdateApplication.Http200.ResponseBody>(),
 	);
 }

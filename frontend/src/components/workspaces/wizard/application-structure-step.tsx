@@ -3,10 +3,10 @@
 import {
 	closestCenter,
 	DndContext,
-	DragEndEvent,
-	DragOverEvent,
+	type DragEndEvent,
+	type DragOverEvent,
 	DragOverlay,
-	DragStartEvent,
+	type DragStartEvent,
 	KeyboardSensor,
 	PointerSensor,
 	useSensor,
@@ -21,9 +21,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 
-import { updateGrantTemplate } from "@/actions/grant-template";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,8 +32,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
-import { API } from "@/types/api-types";
-import { logError } from "@/utils/logging";
+
+import type { API } from "@/types/api-types";
+import type React from "react";
 
 type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
@@ -76,6 +76,16 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	};
 };
 
+interface ApplicationStructurePreviewProps {
+	connectionStatus?: string;
+	connectionStatusColor?: string;
+}
+
+interface ApplicationStructureStepProps {
+	connectionStatus?: string;
+	connectionStatusColor?: string;
+}
+
 interface SortableSectionProps {
 	isDragging?: boolean;
 	isExpanded: boolean;
@@ -86,7 +96,7 @@ interface SortableSectionProps {
 	section: GrantSection;
 }
 
-export function ApplicationStructureStep() {
+export function ApplicationStructureStep({ connectionStatus, connectionStatusColor }: ApplicationStructureStepProps) {
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
 			<div className="w-1/3 space-y-6 overflow-y-auto p-6 sm:w-1/2">
@@ -131,32 +141,21 @@ export function ApplicationStructureStep() {
 				</div>
 			</div>
 
-			<ApplicationStructurePreview />
+			<ApplicationStructurePreview
+				connectionStatus={connectionStatus}
+				connectionStatusColor={connectionStatusColor}
+			/>
 		</div>
 	);
 }
 
-function ApplicationStructurePreview() {
-	const { application } = useApplicationStore();
-	const hasContent = !!application;
+function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }: ApplicationStructurePreviewProps) {
+	const { application, applicationTitle, updateGrantSections } = useApplicationStore();
+	const hasContent = applicationTitle || application;
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 	const [editingNewSection, setEditingNewSection] = useState(false);
-
-	const updateGrantSections = async (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
-		if (!application?.workspace_id || !application.id || !application.grant_template?.id) {
-			return;
-		}
-
-		try {
-			await updateGrantTemplate(application.workspace_id, application.id, application.grant_template.id, {
-				grant_sections: sections,
-			});
-		} catch (error) {
-			logError({ error, identifier: "ApplicationStructureStep.updateGrantSections" });
-		}
-	};
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -233,7 +232,7 @@ function ApplicationStructurePreview() {
 		const activeSection = sections.find((s) => s.id === active.id);
 		const overSection = sections.find((s) => s.id === over.id);
 
-		if (!activeSection || !overSection) {
+		if (!(activeSection && overSection)) {
 			return;
 		}
 
@@ -262,7 +261,7 @@ function ApplicationStructurePreview() {
 		const activeSection = sections.find((s) => s.id === active.id);
 		const overSection = sections.find((s) => s.id === over.id);
 
-		if (!activeSection || !overSection) {
+		if (!(activeSection && overSection)) {
 			return;
 		}
 
@@ -307,12 +306,17 @@ function ApplicationStructurePreview() {
 							<ThemeBadge color="light" leftIcon={<IconApplication />}>
 								Application Structure
 							</ThemeBadge>
+							{connectionStatus && (
+								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
+									{connectionStatus}
+								</ThemeBadge>
+							)}
 						</div>
 						<h3
 							className="font-heading text-center text-3xl font-medium"
 							data-testid="application-structure-title"
 						>
-							{application.title.trim() || "Untitled Application"}
+							{applicationTitle.trim() || "Untitled Application"}
 						</h3>
 					</div>
 

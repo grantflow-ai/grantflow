@@ -1,11 +1,27 @@
 # GrantFlow.AI Development Guide
 
+## System Prompt
+
+You are an efficient developer following a structured development process:
+
+- implement code
+- run typechecks
+- run the relevant linters
+- write tests, always use factories to generate data (see ::testing/factories)
+
+IMPORTANT: Always use the Taskfile for running commands. Check available tasks by:
+
+1. First checking your memory for task names
+2. If needed, read the Taskfile.yaml to see all available commands
+3. Use `task --list` to see available commands with descriptions
+
 ## Stack
 
 - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
 - **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
 - **Services**: backend (API), indexer (docs), crawler (web)
 - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
+- **Linting**: Biome (formatting/style), ESLint (TS/React), MyPy (Python types), Ruff (Python), Codespell
 
 ## Core Rules
 
@@ -16,16 +32,39 @@
 - 100% test coverage, real PostgreSQL
 - Use `pnpm`
 - Use `task`
+- Run linters after code changes: `task lint:frontend` for JS/TS, `task lint:python` for Python
 
 ## Commands
 
+Always use the Taskfile for commands. Common tasks:
+
 ```bash
 # Development workflow
-task setup              # Install dependencies and pre-commit hooks
+task setup              # Install dependencies and git hooks (lefthook)
 task dev                # Start full dev environment (checks deps, migrates DB, inits emulators)
 task dev:stop           # Stop all services
 task test               # Run all tests
-task lint               # Run linters
+task lint               # Run all linters (equivalent to task lint:all)
+
+# Linting commands (organized by scope)
+task lint:all           # Run all linters on all files
+task lint:frontend      # Run frontend linters (Biome, ESLint, and TypeScript)
+task lint:python        # Run Python linters (Ruff and MyPy)
+
+# Specific linters (use these during development)
+task lint:biome         # Format and lint JS/TS/JSON/CSS with Biome
+task lint:eslint        # Lint JavaScript/TypeScript with ESLint
+task lint:typescript    # Type check TypeScript code
+task lint:ruff          # Lint and format Python code with Ruff
+task lint:mypy          # Type check Python code with MyPy
+task lint:codespell     # Check for common misspellings across all files
+
+# Terraform linters (specialized - not included in lint:all)
+task lint:terraform     # Run all Terraform linters (validate, tflint, trivy)
+task lint:terraform:validate  # Validate Terraform configuration
+task lint:terraform:fmt       # Format Terraform code
+task lint:terraform:tflint    # Lint Terraform code with tflint
+task lint:terraform:trivy     # Security scan Terraform code
 
 # Database
 task db:migrate         # Run migrations
@@ -34,7 +73,19 @@ task db:reset           # Drop DB and re-run migrations
 
 # Other
 task generate:api-types # Generate TypeScript types from backend
+task --list             # Show all available tasks
 ```
+
+IMPORTANT: Always check the Taskfile.yaml for the most up-to-date commands and their exact implementations.
+
+## Git Hooks (Lefthook)
+
+The project uses lefthook for git hooks. It's automatically installed during `task setup`.
+
+- **pre-commit**: Runs linters on staged files and auto-fixes issues
+- **commit-msg**: Validates commit messages follow conventional commits format
+
+To manually install/update hooks: `uv run lefthook install`
 
 ## Patterns
 
@@ -89,6 +140,14 @@ export async function createItem(data: API.CreateItem.RequestBody) {
 - Prefer early returns and guard clauses
 - Use `NotRequired` in TypedDict for optional fields
 
+### Important Conventions
+
+- never use `any` as a type.
+- search for types, including from 3rd party libraries, to determine the correct type to use.
+- use nullish coalescing and optional chaining whenever required.
+- use type-guards and type predicates (use "@tool-belt/type-predicates" package as required)
+- use factories for testings (see: frontend/testing/factories.ts, which s aliased as "::testing/factories")
+
 ## Python Guidelines
 
 - Litestar + msgspec serialization
@@ -136,4 +195,78 @@ Firebase auth + JWT, environment variables for secrets, never commit credentials
 
 ## Testing
 
-pytest async, focus on API behavior, mock WebSocket hooks, verify connection status UI.
+### Frontend Testing
+
+- Use Vitest with React Testing Library
+- **NO mocking stores** - use real Zustand stores with setState
+- Mock server actions and API calls, not state management
+- Always use factories from `::testing/factories` (alias for `frontend/testing/factories`)
+- Place shared utils and fixtures in the testing module
+- Use `vi.fn()` for mocking functions you need to spy on
+- Test behavior and user interactions, not implementation details
+
+### Backend Testing
+
+- pytest async, focus on API behavior
+- Use real PostgreSQL for all tests
+- Mock external services, not internal components
+- Verify WebSocket integration with proper test clients
+
+# important-instruction-reminders
+
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (\*.md) or README files. Only create documentation files if explicitly requested by the User.
+
+## Linting and Code Quality
+
+### Biome Configuration
+
+Biome is the primary formatter and linter for JS/TS/JSON/CSS:
+
+- Configuration: `biome.json` in root
+- Integrates with ESLint via `eslint-config-biome`
+- Handles formatting, import sorting, and many style rules
+- Run with: `task lint:biome` or `pnpm biome check --write .`
+
+### Common Linting Patterns
+
+1. **Cognitive Complexity**: Extract helper functions and components to reduce complexity
+
+    - Extract repeated logic into named functions
+    - Use early returns to reduce nesting
+    - Break complex components into smaller ones
+
+2. **Type Safety**: Always provide proper types for function parameters
+
+    - Import types explicitly when needed
+    - Use type guards from `@tool-belt/type-predicates`
+    - Avoid `any` - find the correct type from libraries or create interfaces
+
+3. **Accessibility**: Follow ARIA guidelines
+
+    - Remove unnecessary `aria-label` on semantic elements (like `<footer>`)
+    - Use semantic HTML elements when possible (`<button>` instead of `<div role="button">`)
+    - Interactive elements must be keyboard accessible
+
+4. **React Best Practices**:
+    - Always add `type="button"` to non-submit buttons
+    - Use proper event handlers for keyboard accessibility
+    - Extract complex logic into custom hooks
+
+### Linting Workflow
+
+1. After code changes, run: `task lint`
+2. Fix any errors shown by Biome first
+3. Then fix ESLint errors (usually type-related)
+4. For Python: `task lint:python` runs mypy, ruff, and codespell
+5. Commit with conventional commit messages
+
+### Common Fixes
+
+- **Button type warnings**: Add `type="button"` to all non-form buttons
+- **Excessive complexity**: Extract functions, use early returns, create helper components
+- **Type safety**: Import and use proper types, avoid `any`
+- **ARIA issues**: Use semantic HTML, remove redundant attributes
+- **Static element interactions**: Add proper roles and keyboard handlers

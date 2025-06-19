@@ -127,7 +127,9 @@ async def test_download_page_html() -> None:
     mock_response.headers = {"content-type": "text/html"}
     mock_response.raise_for_status = Mock()
 
-    with patch("services.crawler.src.utils.client.get", new_callable=AsyncMock) as mock_get:
+    with patch(
+        "services.crawler.src.utils.client.get", new_callable=AsyncMock
+    ) as mock_get:
         mock_get.return_value = mock_response
 
         result = await download_page_html("https://example.org")
@@ -143,10 +145,14 @@ async def test_download_file() -> None:
     mock_response.headers = {"content-type": "application/pdf"}
     mock_response.raise_for_status = Mock()
 
-    with patch("services.crawler.src.utils.client.get", new_callable=AsyncMock) as mock_get:
+    with patch(
+        "services.crawler.src.utils.client.get", new_callable=AsyncMock
+    ) as mock_get:
         mock_get.return_value = mock_response
 
         result = await download_file("https://example.org/file.pdf")
 
-        mock_get.assert_called_once_with("https://example.org/file.pdf", timeout=30, follow_redirects=True)
+        mock_get.assert_called_once_with(
+            "https://example.org/file.pdf", timeout=30, follow_redirects=True
+        )
         assert result == b"File content bytes"
