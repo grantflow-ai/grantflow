@@ -4,7 +4,11 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApplicationFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	GrantTemplateFactory,
+	SourceProcessingNotificationMessageFactory,
+} from "::testing/factories";
 import { createApplication } from "@/actions/grant-applications";
 import {
 	isSourceProcessingNotificationMessage,
@@ -50,76 +54,10 @@ vi.mock("@/hooks/use-application-notifications", () => ({
 	}),
 }));
 
-vi.mock("@/stores/wizard-store", () => ({
-	useWizardStore: vi.fn(),
-}));
-
-vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: vi.fn(),
-}));
-
 const mockPush = vi.fn();
 const mockParams = { workspaceId: "test-workspace-id" };
 const mockSearchParams = {
 	get: vi.fn().mockReturnValue(null),
-};
-
-const createMockWizardStore = (overrides: any = {}) => {
-	const defaultStore = {
-		currentStep: 0,
-		handleTitleChange: vi.fn(),
-		polling: {
-			intervalId: null,
-			isActive: false,
-			start: vi.fn(),
-			stop: vi.fn(),
-		},
-		setCurrentStep: vi.fn(),
-		toNextStep: vi.fn(),
-		toPreviousStep: vi.fn(),
-		validateStepNext: vi.fn().mockReturnValue(false),
-	};
-
-	// Deep merge overrides
-	if (overrides.polling) {
-		defaultStore.polling = { ...defaultStore.polling, ...overrides.polling };
-		overrides.polling = undefined;
-	}
-
-	return { ...defaultStore, ...overrides };
-};
-
-const createMockApplicationStore = (overrides: any = {}) => {
-	const defaultStore = {
-		addFile: vi.fn(),
-		addUrl: vi.fn(),
-		application: {
-			grant_template: { id: "template-123" },
-			id: "app-123",
-			title: "Untitled Application",
-			workspace_id: "test-workspace-id",
-		} as any,
-		applicationTitle: "Untitled Application",
-		areFilesOrUrlsIndexing: vi.fn().mockReturnValue(false),
-		createApplication: vi.fn(),
-		generateTemplate: vi.fn(),
-		handleApplicationInit: vi.fn(),
-		isLoading: false,
-		removeFile: vi.fn(),
-		removeUrl: vi.fn(),
-		retrieveApplication: vi.fn(),
-		setApplication: vi.fn(),
-		setApplicationTitle: vi.fn(),
-		setUploadedFiles: vi.fn(),
-		setUrls: vi.fn(),
-		updateApplication: vi.fn(),
-		updateApplicationTitle: vi.fn(),
-		updateGrantSections: vi.fn(),
-		uploadedFiles: [],
-		urls: [],
-	};
-
-	return { ...defaultStore, ...overrides };
 };
 
 describe("CreateGrantApplicationWizardPage", () => {
@@ -128,23 +66,35 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any);
 		vi.mocked(useParams).mockReturnValue(mockParams);
 		vi.mocked(useSearchParams).mockReturnValue(mockSearchParams as any);
-		vi.mocked(useWizardStore).mockReturnValue(createMockWizardStore());
-		vi.mocked(useApplicationStore).mockReturnValue(createMockApplicationStore());
+
+		// Reset stores to initial state
+		useWizardStore.setState({
+			currentStep: 0,
+			polling: {
+				intervalId: null,
+				isActive: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+			},
+		});
+
+		useApplicationStore.setState({
+			application: null,
+			applicationTitle: "",
+			isLoading: false,
+			uploadedFiles: [],
+			urls: [],
+		});
 	});
 
 	it("shows loading state initially", () => {
 		vi.mocked(createApplication).mockImplementation(() => new Promise<never>(() => {}));
 
-		// Mock store to show loading state
-		const mockStore = createMockWizardStore();
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
-
-		// Mock application store to show loading state
-		const mockApplicationStore = createMockApplicationStore({
+		// Set application store to show loading state
+		useApplicationStore.setState({
 			application: null,
 			isLoading: true,
 		});
-		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -163,15 +113,16 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Mock the application store with handleApplicationInit
-		const mockHandleApplicationInit = vi.fn().mockResolvedValue(undefined);
+		// Mock the handleApplicationInit function to set application when called
+		const mockHandleApplicationInit = vi.fn().mockImplementation(async () => {
+			useApplicationStore.setState({ application: mockResponse });
+		});
 
-		const mockApplicationStore = createMockApplicationStore({
+		useApplicationStore.setState({
 			application: null,
 			handleApplicationInit: mockHandleApplicationInit,
 			isLoading: true,
 		});
-		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -188,12 +139,11 @@ describe("CreateGrantApplicationWizardPage", () => {
 			throw new Error("Failed to initialize application");
 		});
 
-		const mockApplicationStore = createMockApplicationStore({
+		useApplicationStore.setState({
 			application: null,
 			handleApplicationInit: mockHandleApplicationInit,
 			isLoading: true,
 		});
-		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -209,6 +159,12 @@ describe("CreateGrantApplicationWizardPage", () => {
 		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
+
+		// Set application directly with minimal mock for handleApplicationInit
+		useApplicationStore.setState({
+			application: mockResponse,
+			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -228,6 +184,12 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
+		// Set application directly with minimal mock for handleApplicationInit
+		useApplicationStore.setState({
+			application: mockResponse,
+			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
+		});
+
 		render(<CreateGrantApplicationWizardPage />);
 
 		await waitFor(() => {
@@ -238,10 +200,20 @@ describe("CreateGrantApplicationWizardPage", () => {
 	it("disables next button when validation fails", async () => {
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
+			title: "Short",
 			workspace_id: mockParams.workspaceId,
 		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
+
+		// Set application with validation data and minimal mock for handleApplicationInit
+		useApplicationStore.setState({
+			application: mockResponse,
+			applicationTitle: "Short", // This should fail validation
+			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
+			uploadedFiles: [],
+			urls: [],
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -257,31 +229,19 @@ describe("CreateGrantApplicationWizardPage", () => {
 		const user = userEvent.setup();
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
+			title: "Short",
 			workspace_id: mockParams.workspaceId,
 		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Mock store to simulate state with title and URL but no files uploaded
-		const mockValidateStepNext = vi.fn().mockReturnValue(false); // Validation should fail
-		const mockStore = createMockWizardStore({
-			validateStepNext: mockValidateStepNext,
-		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
-
-		// Mock application store with the application data
-		const mockApplicationStore = createMockApplicationStore({
-			application: {
-				grant_template: { id: "template-123" },
-				id: "app-123",
-				title: "My Application",
-				workspace_id: "test-workspace-id",
-			},
-			applicationTitle: "My Application",
+		// Set application state directly - no need to mock handleApplicationInit
+		useApplicationStore.setState({
+			application: mockResponse,
+			applicationTitle: "Short", // This will fail validation
 			uploadedFiles: [], // No files uploaded
-			urls: ["https://example.com"],
+			urls: [],
 		});
-		vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -292,9 +252,9 @@ describe("CreateGrantApplicationWizardPage", () => {
 		// Add title only - button should still be disabled without files or urls
 		const titleInput = screen.getByTestId("application-title-textarea");
 		await user.clear(titleInput);
-		await user.type(titleInput, "My Application");
+		await user.type(titleInput, "Short");
 
-		// Without files or URLs, the button should remain disabled
+		// With title length < 10 chars, the button should remain disabled
 		const continueButton = screen.getByTestId("continue-button");
 		expect(continueButton).toBeDisabled();
 	});
@@ -302,27 +262,19 @@ describe("CreateGrantApplicationWizardPage", () => {
 	it("navigates between steps", async () => {
 		const mockResponse = ApplicationFactory.build({
 			id: "app-123",
+			title: "My Application Title That Is Long Enough",
 			workspace_id: mockParams.workspaceId,
 		});
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Mock the validation to return true when we have both title and URL
-		const mockValidateStepNext = vi.fn().mockReturnValue(true);
-		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: {
-					grant_template: { id: "template-123" },
-					id: "app-123",
-					title: "My Application",
-					workspace_id: "test-workspace-id",
-				},
-				uploadedFiles: [],
-				urls: ["https://example.com"],
-			},
-			validateStepNext: mockValidateStepNext,
+		// Set application store with valid data directly - no need to mock handleApplicationInit
+		useApplicationStore.setState({
+			application: mockResponse,
+			applicationTitle: "My Application Title That Is Long Enough",
+			uploadedFiles: [],
+			urls: ["https://example.com"],
 		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
 
 		render(<CreateGrantApplicationWizardPage />);
 
@@ -330,7 +282,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 		});
 
-		// The button should be enabled due to our mock validation
 		const continueButton = screen.getByTestId("continue-button");
 		await waitFor(() => {
 			expect(continueButton).toBeEnabled();
@@ -345,21 +296,21 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Mock starting on first step (step 0) - header info should not be visible
-		const mockStore = createMockWizardStore({
-			applicationState: {
-				application: {
-					grant_template: { id: "template-123" },
-					id: "app-123",
-					title: "My Grant Application",
-					workspace_id: "test-workspace-id",
-				},
-				uploadedFiles: [],
-				urls: [],
-			},
+		useWizardStore.setState({
 			currentStep: 0,
 		});
-		vi.mocked(useWizardStore).mockReturnValue(mockStore);
+
+		useApplicationStore.setState({
+			application: ApplicationFactory.build({
+				grant_template: GrantTemplateFactory.build({ id: "template-123" }),
+				id: "app-123",
+				title: "My Grant Application",
+				workspace_id: "test-workspace-id",
+			}),
+			applicationTitle: "My Grant Application",
+			uploadedFiles: [],
+			urls: [],
+		});
 
 		render(<CreateGrantApplicationWizardPage />);
 
