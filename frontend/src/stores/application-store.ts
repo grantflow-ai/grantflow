@@ -313,7 +313,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 	setApplicationTitle: (title: string) => {
 		set((state) => ({
-			// Optimistically update the application object as well
 			application: state.application ? { ...state.application, title } : state.application,
 			applicationTitle: title,
 		}));
@@ -367,7 +366,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	updateApplicationTitle: async (workspaceId: string, applicationId: string, title: string) => {
 		const { application, applicationTitle } = get();
 
-		// Store previous state for rollback
 		const previousTitle = applicationTitle;
 		const previousApplication = application;
 
@@ -378,7 +376,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				applicationTitle: response.title,
 			});
 		} catch (error) {
-			// Rollback on error
 			set({
 				application: previousApplication,
 				applicationTitle: previousTitle,

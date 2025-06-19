@@ -28,7 +28,6 @@ describe("wizard store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// Reset wizard store state only (not actions)
 		const wizardState = useWizardStore.getState();
 		useWizardStore.setState({
 			polling: {
@@ -42,12 +41,8 @@ describe("wizard store", () => {
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			workspaceId: "",
-			wsConnectionStatus: undefined,
-			wsConnectionStatusColor: undefined,
 		});
 
-		// Reset application store
 		useApplicationStore.setState({
 			application: null,
 			applicationTitle: "",
@@ -59,75 +54,57 @@ describe("wizard store", () => {
 
 	describe("handleTitleChange", () => {
 		it("should update title immediately", () => {
-			const application = ApplicationFactory.build();
+			const application = ApplicationFactory.build({ workspace_id: "workspace-123" });
 
-			// Set up real application store state
 			useApplicationStore.setState({
 				application,
 				applicationTitle: application.title,
 			});
 
-			useWizardStore.setState({ workspaceId: "workspace-123" });
-
 			const { handleTitleChange } = useWizardStore.getState();
 
-			// Call handleTitleChange
 			handleTitleChange("New Title");
 
-			// Should immediately update local state
 			expect(useApplicationStore.getState().applicationTitle).toBe("New Title");
 		});
 
 		it("should debounce backend update", async () => {
-			const application = ApplicationFactory.build({ title: "Old Title" });
+			const application = ApplicationFactory.build({ title: "Old Title", workspace_id: "workspace-123" });
 			const updatedApplication = { ...application, title: "New Title" };
 			vi.mocked(grantApplicationActions.updateApplication).mockResolvedValue(updatedApplication);
 
-			// Set up real application store state
 			useApplicationStore.setState({
 				application,
 				applicationTitle: application.title,
 			});
 
-			useWizardStore.setState({ workspaceId: "workspace-123" });
-
-			// Trigger the title change through the application store action
 			await useApplicationStore.getState().updateApplicationTitle("workspace-123", application.id, "New Title");
 
-			// Should have called the mocked action
 			expect(grantApplicationActions.updateApplication).toHaveBeenCalledWith("workspace-123", application.id, {
 				title: "New Title",
 			});
 
-			// Should have updated the store
 			expect(useApplicationStore.getState().application?.title).toBe("New Title");
 			expect(useApplicationStore.getState().applicationTitle).toBe("New Title");
 		});
 
 		it("should not update backend if title is same as current", async () => {
-			const application = ApplicationFactory.build({ title: "Current Title" });
+			const application = ApplicationFactory.build({ title: "Current Title", workspace_id: "workspace-123" });
 			vi.mocked(grantApplicationActions.updateApplication).mockResolvedValue(application);
 
-			// Set up real application store state
 			useApplicationStore.setState({
 				application,
 				applicationTitle: application.title,
 			});
 
-			useWizardStore.setState({ workspaceId: "workspace-123" });
-
 			const { handleTitleChange } = useWizardStore.getState();
 
-			// Call with same title
 			handleTitleChange("Current Title");
 
-			// Should update local state
 			expect(useApplicationStore.getState().applicationTitle).toBe("Current Title");
 
-			// Wait for potential debounce
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
-			// Backend should not be called for same title
 			expect(grantApplicationActions.updateApplication).not.toHaveBeenCalled();
 		});
 	});
@@ -374,15 +351,12 @@ describe("wizard store", () => {
 
 			store.polling.start(mockApiFunction, 1000, true);
 
-			// Should call immediately
 			expect(mockApiFunction).toHaveBeenCalledTimes(1);
 
-			// Should set active state
 			const updatedState = useWizardStore.getState();
 			expect(updatedState.polling.isActive).toBe(true);
 			expect(updatedState.polling.intervalId).not.toBe(null);
 
-			// Cleanup
 			updatedState.polling.stop();
 		});
 
@@ -392,15 +366,12 @@ describe("wizard store", () => {
 
 			store.polling.start(mockApiFunction, 1000, false);
 
-			// Should not call immediately
 			expect(mockApiFunction).not.toHaveBeenCalled();
 
-			// Should set active state
 			const updatedState = useWizardStore.getState();
 			expect(updatedState.polling.isActive).toBe(true);
 			expect(updatedState.polling.intervalId).not.toBe(null);
 
-			// Cleanup
 			updatedState.polling.stop();
 		});
 
@@ -427,12 +398,10 @@ describe("wizard store", () => {
 			store.polling.start(mockApiFunction2, 1000);
 			const secondIntervalId = useWizardStore.getState().polling.intervalId;
 
-			// Should not change interval
 			expect(firstIntervalId).toBe(secondIntervalId);
 			expect(mockApiFunction1).toHaveBeenCalledTimes(1);
 			expect(mockApiFunction2).not.toHaveBeenCalled();
 
-			// Cleanup
 			store.polling.stop();
 		});
 	});
@@ -492,12 +461,9 @@ describe("wizard store", () => {
 				application,
 			});
 
-			useWizardStore.setState({ workspaceId: "workspace-123" });
-
 			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
-			// Give time for the async action to be called
 			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(grantTemplateActions.generateGrantTemplate).toHaveBeenCalledWith(
@@ -534,13 +500,6 @@ describe("wizard store", () => {
 
 			setUrlInput("https://example.com");
 			expect(useWizardStore.getState().ui.urlInput).toBe("https://example.com");
-		});
-
-		it("should set workspace ID", () => {
-			const { setWorkspaceId } = useWizardStore.getState();
-
-			setWorkspaceId("workspace-123");
-			expect(useWizardStore.getState().workspaceId).toBe("workspace-123");
 		});
 	});
 });

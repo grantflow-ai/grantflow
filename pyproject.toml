@@ -64,6 +64,7 @@ lint.per-file-ignores."**/tests/**/*.*" = [
   "ARG",
   "D",
   "N815",
+  "PLC0415",
   "PT006",
   "PT007",
   "PT012",

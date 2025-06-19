@@ -11,7 +11,6 @@ describe("ApplicationStructureStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// Reset wizard store to initial state
 		useWizardStore.setState({
 			polling: {
 				intervalId: null,
@@ -25,12 +24,8 @@ describe("ApplicationStructureStep", () => {
 				linkHoverStates: {},
 				urlInput: "",
 			},
-			workspaceId: "",
-			wsConnectionStatus: undefined,
-			wsConnectionStatusColor: undefined,
 		});
 
-		// Reset application store to initial state
 		useApplicationStore.setState({
 			application: null,
 			applicationTitle: "",
@@ -87,7 +82,6 @@ describe("ApplicationStructureStep", () => {
 			workspace_id: "test-workspace-id",
 		});
 
-		// Set the application store state
 		useApplicationStore.setState({
 			application,
 			applicationTitle: "Test Application",
@@ -107,7 +101,6 @@ describe("ApplicationStructureStep", () => {
 			workspace_id: "test-workspace-id",
 		});
 
-		// Set the application store state with empty title
 		useApplicationStore.setState({
 			application,
 			applicationTitle: "",
@@ -138,7 +131,6 @@ describe("ApplicationStructureStep", () => {
 			workspace_id: "test-workspace-id",
 		});
 
-		// Set the application store state
 		useApplicationStore.setState({
 			application,
 			applicationTitle: "Test Application",
@@ -195,7 +187,6 @@ describe("ApplicationStructureStep", () => {
 			workspace_id: "test-workspace-id",
 		});
 
-		// Set the application store state with long title
 		useApplicationStore.setState({
 			application,
 			applicationTitle: longTitle,
@@ -279,15 +270,12 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			// Open new section form
 			const addButton = screen.getByText("Add New Section");
 			fireEvent.click(addButton);
 
-			// Fill in the form
 			const nameInput = screen.getByLabelText("Section name");
 			fireEvent.change(nameInput, { target: { value: "New Section Title" } });
 
-			// Submit the form
 			const saveButton = screen.getByText("Save");
 			fireEvent.click(saveButton);
 
@@ -371,25 +359,19 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			// Open new section form
 			const addButton = screen.getByText("Add New Section");
 			fireEvent.click(addButton);
 
-			// Save button should be disabled by default
 			const saveButton = screen.getByText("Save");
 			expect(saveButton).toBeDisabled();
 
-			// Fill in the name
 			const nameInput = screen.getByLabelText("Section name");
 			fireEvent.change(nameInput, { target: { value: "Test" } });
 
-			// Save button should now be enabled
 			expect(saveButton).not.toBeDisabled();
 
-			// Clear the name
 			fireEvent.change(nameInput, { target: { value: "" } });
 
-			// Save button should be disabled again
 			expect(saveButton).toBeDisabled();
 		});
 	});
