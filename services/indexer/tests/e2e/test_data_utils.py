@@ -83,7 +83,7 @@ def get_test_content_summary(file_path: Path) -> dict[str, Any]:
 
 
 async def validate_test_data_integrity() -> dict[str, Any]:
-    results = {
+    results: dict[str, Any] = {
         "source_files": {"total": len(TEST_DATA_SOURCES), "by_extension": {}, "sizes": []},
         "fixture_files": {
             "total": len(list(FIXTURES_FOLDER.glob("**/*.json"))),
@@ -95,38 +95,38 @@ async def validate_test_data_integrity() -> dict[str, Any]:
         "issues": [],
     }
 
-    
+
     for source_file in TEST_DATA_SOURCES:
         if not source_file.exists():
-            results["issues"].append(f"Missing source file: {source_file}")
+            cast("list[str]", results["issues"]).append(f"Missing source file: {source_file}")
             continue
 
         ext = source_file.suffix
-        results["source_files"]["by_extension"][ext] = results["source_files"]["by_extension"].get(ext, 0) + 1
-        results["source_files"]["sizes"].append(source_file.stat().st_size)
+        cast("dict[str, int]", results["source_files"]["by_extension"])[ext] = cast("dict[str, int]", results["source_files"]["by_extension"]).get(ext, 0) + 1
+        cast("list[int]", results["source_files"]["sizes"]).append(source_file.stat().st_size)
 
-    
+
     fixture_files = list(FIXTURES_FOLDER.glob("**/*.json"))
     for fixture_file in fixture_files:
         try:
             vectors = load_pre_generated_vectors(fixture_file)
             if vectors:
-                results["fixture_files"]["vector_counts"].append(len(vectors))
+                cast("list[int]", results["fixture_files"]["vector_counts"]).append(len(vectors))
             else:
-                results["issues"].append(f"No vectors in fixture: {fixture_file.name}")
+                cast("list[str]", results["issues"]).append(f"No vectors in fixture: {fixture_file.name}")
         except (FileNotFoundError, KeyError, ValueError) as e:
-            results["issues"].append(f"Error reading fixture {fixture_file.name}: {e}")
+            cast("list[str]", results["issues"]).append(f"Error reading fixture {fixture_file.name}: {e}")
 
-    
-    if results["source_files"]["sizes"]:
-        results["source_files"]["avg_size_mb"] = (
-            sum(results["source_files"]["sizes"]) / len(results["source_files"]["sizes"]) / (1024 * 1024)
+
+    sizes_list = cast("list[int]", results["source_files"]["sizes"])
+    if sizes_list:
+        cast("dict[str, Any]", results["source_files"])["avg_size_mb"] = (
+            sum(sizes_list) / len(sizes_list) / (1024 * 1024)
         )
 
-    if results["fixture_files"]["vector_counts"]:
-        results["fixture_files"]["avg_vector_count"] = sum(results["fixture_files"]["vector_counts"]) / len(
-            results["fixture_files"]["vector_counts"]
-        )
+    vector_counts = cast("list[int]", results["fixture_files"]["vector_counts"])
+    if vector_counts:
+        cast("dict[str, Any]", results["fixture_files"])["avg_vector_count"] = sum(vector_counts) / len(vector_counts)
 
     return results
 
@@ -185,27 +185,27 @@ def create_test_scenarios() -> list[dict[str, Any]]:
 
 
 async def benchmark_test_performance() -> dict[str, Any]:
-    benchmark_results = {"file_sizes": {}, "estimated_processing_times": {}, "recommendations": []}
+    benchmark_results: dict[str, Any] = {"file_sizes": {}, "estimated_processing_times": {}, "recommendations": []}
 
-    
-    for _i, test_file in enumerate(TEST_DATA_SOURCES[:5]):  
+
+    for _i, test_file in enumerate(TEST_DATA_SOURCES[:5]):
         size_mb = test_file.stat().st_size / (1024 * 1024)
         benchmark_results["file_sizes"][test_file.name] = size_mb
 
-        
+
         estimated_time = size_mb * 12
         benchmark_results["estimated_processing_times"][test_file.name] = estimated_time
 
-    
+
     total_size = sum(benchmark_results["file_sizes"].values())
     total_estimated_time = sum(benchmark_results["estimated_processing_times"].values())
 
-    if total_estimated_time > 300:  
+    if total_estimated_time > 300:
         benchmark_results["recommendations"].append(
             "Consider using tiered testing approach - full suite may take >5 minutes"
         )
 
-    if total_size > 50:  
+    if total_size > 50:
         benchmark_results["recommendations"].append(
             "Large dataset detected - use session-scoped fixtures for better performance"
         )
@@ -226,10 +226,10 @@ def get_optimal_test_configuration(target_duration_minutes: int = 5) -> dict[str
 
     scenarios = create_test_scenarios()
 
-    
+
     suitable_scenarios = []
     for scenario in scenarios:
-        
+
         duration_str = scenario["expected_duration"]
         if "seconds" in duration_str:
             max_duration = int(duration_str.split("-")[-1].split()[0])
@@ -245,6 +245,6 @@ def get_optimal_test_configuration(target_duration_minutes: int = 5) -> dict[str
         "target_duration_minutes": target_duration_minutes,
         "suitable_scenarios": suitable_scenarios,
         "recommendation": (
-            suitable_scenarios[-1] if suitable_scenarios else scenarios[0]  
+            suitable_scenarios[-1] if suitable_scenarios else scenarios[0]
         ),
     }
