@@ -316,32 +316,6 @@ tasks:
             - E2E_TESTS=1 PYTHONPATH={{.PYTHON_PATH}} uv run pytest services/rag/tests -v
 
     # ==============================================================================
-    # TERRAFORM COMMANDS
-    # ==============================================================================
-
-    terraform:lint:
-        desc: Run linting tools (tflint and trivy) on terraform code
-        preconditions:
-            - sh: command -v tflint
-              msg: "tflint is not installed. Please install it from https://github.com/terraform-linters/tflint"
-            - sh: command -v trivy
-              msg: "trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
-        cmds:
-            - echo "Running tflint on terraform directory..."
-            - tflint --chdir=terraform
-            - echo "Running trivy on terraform directory..."
-            - trivy config ./terraform
-
-    terraform:fmt:
-        desc: Format terraform code using tofu fmt
-        preconditions:
-            - sh: command -v tofu
-              msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
-        cmds:
-            - echo "Formatting terraform code..."
-            - tofu fmt -recursive ./terraform
-
-    # ==============================================================================
     # EMULATOR COMMANDS - Standalone emulator management
     # ==============================================================================
 
@@ -383,6 +357,7 @@ tasks:
         desc: Format and lint code with Biome
         cmds:
             - pnpm biome check --write .
+            - pnpm biome format --write .
 
     lint:eslint:
         desc: Lint JavaScript/TypeScript with ESLint
@@ -410,6 +385,51 @@ tasks:
         dir: "{{.FRONTEND_DIR}}"
         cmds:
             - pnpm typecheck
+
+    # Terraform linting tasks (specialized - not included in lint:all)
+    lint:terraform:
+        desc: Run all Terraform linters (tofu validate, tflint, trivy)
+        deps:
+            - task: lint:terraform:validate
+            - task: lint:terraform:tflint
+            - task: lint:terraform:trivy
+
+    lint:terraform:validate:
+        desc: Validate Terraform configuration using tofu validate
+        preconditions:
+            - sh: command -v tofu
+              msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+        cmds:
+            - echo "Validating terraform configuration..."
+            - tofu -chdir=terraform init -backend=false
+            - tofu -chdir=terraform validate
+
+    lint:terraform:fmt:
+        desc: Format Terraform code using tofu fmt
+        preconditions:
+            - sh: command -v tofu
+              msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+        cmds:
+            - echo "Formatting terraform code..."
+            - tofu fmt -recursive ./terraform
+
+    lint:terraform:tflint:
+        desc: Lint Terraform code with tflint
+        preconditions:
+            - sh: command -v tflint
+              msg: "tflint is not installed. Please install it from https://github.com/terraform-linters/tflint"
+        cmds:
+            - echo "Running tflint on terraform directory..."
+            - tflint --chdir=terraform
+
+    lint:terraform:trivy:
+        desc: Security scan Terraform code with trivy
+        preconditions:
+            - sh: command -v trivy
+              msg: "trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
+        cmds:
+            - echo "Running trivy on terraform directory..."
+            - trivy config ./terraform
 
     # ==============================================================================
     # INTERNAL TASKS - Not intended for direct use

@@ -6,8 +6,9 @@ import { toast } from "sonner";
 import { AppButton } from "@/components/app-button";
 import { IconUpload } from "@/components/workspaces/icons";
 import { useApplicationStore } from "@/stores/application-store";
-import type { FileWithId } from "@/types/files";
 import { formatBytes } from "@/utils/format";
+
+import type { FileWithId } from "@/types/files";
 
 const FILE_ACCEPTS = {
 	"application/csv": [".csv"],

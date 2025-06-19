@@ -102,6 +102,25 @@ pre-commit:
                   fi
                 done
 
+        tofu-fmt:
+            glob: "**/*.tf"
+            run: tofu fmt -check=true {staged_files}
+            stage_fixed: true
+
+        tofu-validate:
+            glob: "terraform/**/*.tf"
+            run: |
+                if [ -n "{staged_files}" ]; then
+                  cd terraform && tofu init -backend=false && tofu validate
+                fi
+
+        tflint:
+            glob: "terraform/**/*.tf"
+            run: |
+                if [ -n "{staged_files}" ]; then
+                  tflint --chdir=terraform
+                fi
+
 commit-msg:
     commands:
         commitlint:

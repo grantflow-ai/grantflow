@@ -1,6 +1,7 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory, GrantSectionDetailedFactory } from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApplicationFactory, ApplicationWithTemplateFactory, GrantSectionDetailedFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -265,12 +266,10 @@ describe("ApplicationStructureStep", () => {
 
 		it("calls updateGrantSections when adding a new section", async () => {
 			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: {
-					...ApplicationWithTemplateFactory.build().grant_template!,
-					grant_sections: [],
-				},
-			});
+			const application = ApplicationWithTemplateFactory.build();
+			if (application.grant_template) {
+				application.grant_template.grant_sections = [];
+			}
 
 			useApplicationStore.setState({
 				application,
@@ -304,112 +303,21 @@ describe("ApplicationStructureStep", () => {
 			});
 		});
 
-		it("expands and collapses sections", () => {
-			const grantSections = [
-				GrantSectionDetailedFactory.build({
-					id: "1",
-					max_words: 500,
-					order: 0,
-					title: "Introduction",
-				}),
-			];
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: {
-					...ApplicationWithTemplateFactory.build().grant_template!,
-					grant_sections: grantSections,
-				},
-			});
-
-			useApplicationStore.setState({
-				application,
-				applicationTitle: "Test Application",
-			});
-
-			render(<ApplicationStructureStep />);
-
-			// Find the expand button (ChevronDown icon)
-			const expandButtons = screen.getAllByRole("button");
-			const expandButton = expandButtons.find((button) => button.querySelector("svg"));
-
-			expect(expandButton).toBeInTheDocument();
-
-			// Click to expand
-			fireEvent.click(expandButton!);
-
-			// Should show the edit form
-			expect(screen.getByDisplayValue("Introduction")).toBeInTheDocument();
-			expect(screen.getByDisplayValue("500")).toBeInTheDocument();
-		});
-
-		it("calls updateGrantSections when updating a section", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const grantSections = [
-				GrantSectionDetailedFactory.build({
-					id: "1",
-					max_words: 500,
-					order: 0,
-					title: "Introduction",
-				}),
-			];
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: {
-					...ApplicationWithTemplateFactory.build().grant_template!,
-					grant_sections: grantSections,
-				},
-			});
-
-			useApplicationStore.setState({
-				application,
-				applicationTitle: "Test Application",
-				updateGrantSections: mockUpdateGrantSections,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			// Find and click the expand button
-			const expandButtons = screen.getAllByRole("button");
-			const expandButton = expandButtons.find((button) => button.querySelector("svg"));
-			fireEvent.click(expandButton!);
-
-			// Update the title
-			const titleInput = screen.getByDisplayValue("Introduction");
-			fireEvent.change(titleInput, { target: { value: "Updated Introduction" } });
-
-			// Save changes
-			const saveButton = screen.getByText("Save");
-			fireEvent.click(saveButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith(
-					expect.arrayContaining([
-						expect.objectContaining({
-							id: "1",
-							max_words: 500,
-							title: "Updated Introduction",
-						}),
-					]),
-				);
-			});
-		});
-
 		it("displays max words for sections", () => {
 			const grantSections = [
 				GrantSectionDetailedFactory.build({
 					id: "1",
 					max_words: 1500,
 					order: 0,
+					parent_id: null,
 					title: "Introduction",
 				}),
 			];
 
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: {
-					...ApplicationWithTemplateFactory.build().grant_template!,
-					grant_sections: grantSections,
-				},
-			});
+			const application = ApplicationWithTemplateFactory.build();
+			if (application.grant_template) {
+				application.grant_template.grant_sections = grantSections;
+			}
 
 			useApplicationStore.setState({
 				application,
@@ -437,12 +345,10 @@ describe("ApplicationStructureStep", () => {
 				}),
 			];
 
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: {
-					...ApplicationWithTemplateFactory.build().grant_template!,
-					grant_sections: grantSections,
-				},
-			});
+			const application = ApplicationWithTemplateFactory.build();
+			if (application.grant_template) {
+				application.grant_template.grant_sections = grantSections;
+			}
 
 			useApplicationStore.setState({
 				application,

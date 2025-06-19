@@ -59,6 +59,13 @@ task lint:ruff          # Lint and format Python code with Ruff
 task lint:mypy          # Type check Python code with MyPy
 task lint:codespell     # Check for common misspellings across all files
 
+# Terraform linters (specialized - not included in lint:all)
+task lint:terraform     # Run all Terraform linters (validate, tflint, trivy)
+task lint:terraform:validate  # Validate Terraform configuration
+task lint:terraform:fmt       # Format Terraform code
+task lint:terraform:tflint    # Lint Terraform code with tflint
+task lint:terraform:trivy     # Security scan Terraform code
+
 # Database
 task db:migrate         # Run migrations
 task db:drop            # Drop and recreate DB (WARNING: destroys data)
