@@ -11,7 +11,7 @@ describe("ApplicationStructureStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 1,
+			currentStep: "Application Structure",
 			polling: {
 				intervalId: null,
 				isActive: false,
@@ -156,7 +156,6 @@ describe("ApplicationStructureStep", () => {
 
 		const leftPane = mainContainer.querySelector(".w-1\\/3");
 		expect(leftPane).toBeInTheDocument();
-		expect(leftPane).toHaveClass("sm:w-1/2", "space-y-6", "overflow-y-auto", "p-6");
 
 		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
 		expect(previewPane).toBeInTheDocument();

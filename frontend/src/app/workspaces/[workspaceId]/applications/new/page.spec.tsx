@@ -68,7 +68,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		// Reset stores to initial state
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: "Application Details",
 			polling: {
 				intervalId: null,
 				isActive: false,
@@ -296,7 +296,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: "Application Details",
 		});
 
 		useApplicationStore.setState({

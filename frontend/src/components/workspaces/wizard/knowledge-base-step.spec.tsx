@@ -2,7 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApplicationFactory } from "::testing/factories";
 import { deleteApplicationSource } from "@/actions/sources";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { KnowledgeBaseStep } from "./knowledge-base-step";
@@ -23,47 +25,6 @@ vi.mock("@/utils/logging", () => ({
 	logError: vi.fn(),
 }));
 
-// Create base mock store
-const createMockStore = (overrides = {}) => ({
-	addKnowledgeBaseFile: vi.fn(),
-	addKnowledgeBaseUrl: vi.fn(),
-	applicationState: {
-		applicationId: "test-app-id",
-		applicationTitle: "",
-		wsConnectionStatus: undefined,
-		wsConnectionStatusColor: undefined,
-	},
-	areFilesOrUrlsIndexing: vi.fn(() => false),
-	areKnowledgeBaseFilesOrUrlsIndexing: vi.fn(() => false),
-	contentState: {
-		knowledgeBaseFiles: [],
-		knowledgeBaseUrls: [],
-		uploadedFiles: [],
-		urls: [],
-	},
-	polling: {
-		start: vi.fn(),
-		stop: vi.fn(),
-	},
-	removeFile: vi.fn(),
-	removeKnowledgeBaseFile: vi.fn(),
-	removeKnowledgeBaseUrl: vi.fn(),
-	removeUrl: vi.fn(),
-	retrieveApplication: vi.fn(),
-	setFileDropdownOpen: vi.fn(),
-	setLinkHoverState: vi.fn(),
-	ui: {
-		fileDropdownStates: {},
-		linkHoverStates: {},
-	},
-	workspaceId: "test-workspace",
-	...overrides,
-});
-
-vi.mock("@/stores/wizard-store", () => ({
-	useWizardStore: vi.fn(),
-}));
-
 vi.mock("./url-input", () => ({
 	UrlInput: ({ onUrlAdded }: { onUrlAdded: () => void }) => (
 		<button data-testid="url-input" onClick={() => onUrlAdded()}>
@@ -81,16 +42,41 @@ vi.mock("./template-file-uploader", () => ({
 }));
 
 vi.mock("@/utils/debounce", () => ({
+	createDebounce: vi.fn((fn) => ({
+		call: vi.fn(fn),
+	})),
 	useDebounce: vi.fn((fn) => fn),
 }));
 
 describe("KnowledgeBaseStep", () => {
-	const mockUseWizardStore = vi.mocked(useWizardStore);
 	const mockDeleteApplicationSource = vi.mocked(deleteApplicationSource);
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockUseWizardStore.mockReturnValue(createMockStore());
+
+		useWizardStore.setState({
+			currentStep: "Knowledge Base",
+			polling: {
+				intervalId: null,
+				isActive: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+			},
+		});
+
+		// Set up application store with default state
+		useApplicationStore.setState({
+			addFile: vi.fn(),
+			addUrl: vi.fn(),
+			application: ApplicationFactory.build({ id: "test-app-id", workspace_id: "test-workspace" }),
+			applicationTitle: "",
+			areFilesOrUrlsIndexing: vi.fn(() => false),
+			removeFile: vi.fn(),
+			removeUrl: vi.fn(),
+			retrieveApplication: vi.fn(),
+			uploadedFiles: [],
+			urls: [],
+		});
 	});
 
 	afterEach(() => {
@@ -141,11 +127,10 @@ describe("KnowledgeBaseStep", () => {
 
 		it("shows container when files are uploaded", () => {
 			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [mockFile], knowledgeBaseUrls: [] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [mockFile],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -156,11 +141,10 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("shows container when URLs are added", () => {
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [], knowledgeBaseUrls: ["https://example.com"] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [],
+				urls: ["https://example.com"],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -172,11 +156,10 @@ describe("KnowledgeBaseStep", () => {
 
 		it("shows both sections with separator when both files and URLs exist", () => {
 			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [mockFile], knowledgeBaseUrls: ["https://example.com"] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [mockFile],
+				urls: ["https://example.com"],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -186,27 +169,25 @@ describe("KnowledgeBaseStep", () => {
 			expect(screen.getByTestId("knowledge-base-separator")).toBeInTheDocument();
 		});
 
-		it("shows container when application title exists", () => {
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					applicationState: { applicationTitle: "Test App" },
-				}),
-			);
+		it("does not show container when only application title exists", () => {
+			useApplicationStore.setState({
+				applicationTitle: "Test App",
+				uploadedFiles: [],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
-			expect(screen.getByTestId("knowledge-base-container")).toBeInTheDocument();
+			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();
 		});
 	});
 
 	describe("File Upload Behavior", () => {
 		it("calls handleDocumentChange when file upload completes", async () => {
 			const mockRetrieveApplication = vi.fn();
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					retrieveApplication: mockRetrieveApplication,
-				}),
-			);
+			useApplicationStore.setState({
+				retrieveApplication: mockRetrieveApplication,
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -217,11 +198,9 @@ describe("KnowledgeBaseStep", () => {
 
 		it("calls handleDocumentChange when URL is added", async () => {
 			const mockRetrieveApplication = vi.fn();
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					retrieveApplication: mockRetrieveApplication,
-				}),
-			);
+			useApplicationStore.setState({
+				retrieveApplication: mockRetrieveApplication,
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -235,32 +214,44 @@ describe("KnowledgeBaseStep", () => {
 		it("starts polling when files are indexing", async () => {
 			const mockStart = vi.fn();
 			const mockStop = vi.fn();
-			const mockAreKnowledgeBaseFilesOrUrlsIndexing = vi
+			const mockAreFilesOrUrlsIndexing = vi
 				.fn()
 				.mockReturnValueOnce(true) // First call - start polling
 				.mockReturnValueOnce(false); // Second call - stop polling
 
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					areKnowledgeBaseFilesOrUrlsIndexing: mockAreKnowledgeBaseFilesOrUrlsIndexing,
-					polling: { start: mockStart, stop: mockStop },
-				}),
-			);
+			// Update the wizard store's polling functions
+			const wizardState = useWizardStore.getState();
+			useWizardStore.setState({
+				...wizardState,
+				polling: {
+					...wizardState.polling,
+					start: mockStart,
+					stop: mockStop,
+				},
+			});
+
+			useApplicationStore.setState({
+				areFilesOrUrlsIndexing: mockAreFilesOrUrlsIndexing,
+			});
 
 			render(<KnowledgeBaseStep />);
 
 			await userEvent.click(screen.getByTestId("template-file-uploader"));
 
-			expect(mockAreKnowledgeBaseFilesOrUrlsIndexing).toHaveBeenCalled();
+			expect(mockAreFilesOrUrlsIndexing).toHaveBeenCalled();
 		});
 
 		it("stops polling when component unmounts", () => {
 			const mockStop = vi.fn();
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					polling: { start: vi.fn(), stop: mockStop },
-				}),
-			);
+			const wizardState = useWizardStore.getState();
+			useWizardStore.setState({
+				...wizardState,
+				polling: {
+					...wizardState.polling,
+					start: vi.fn(),
+					stop: mockStop,
+				},
+			});
 
 			const { unmount } = render(<KnowledgeBaseStep />);
 			unmount();
@@ -271,16 +262,15 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("File Removal Logic", () => {
 		it("successfully removes file when delete is called", async () => {
-			const mockRemoveKnowledgeBaseFile = vi.fn();
+			const mockRemoveFile = vi.fn();
 			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
 
 			mockDeleteApplicationSource.mockResolvedValue(undefined);
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [mockFile], knowledgeBaseUrls: [] },
-					removeKnowledgeBaseFile: mockRemoveKnowledgeBaseFile,
-				}),
-			);
+			useApplicationStore.setState({
+				removeFile: mockRemoveFile,
+				uploadedFiles: [mockFile],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -294,12 +284,12 @@ describe("KnowledgeBaseStep", () => {
 				// Simulate file removal behavior
 				if (mockFile.id) {
 					await mockDeleteApplicationSource("test-workspace", "test-app-id", mockFile.id);
-					mockRemoveKnowledgeBaseFile(mockFile);
+					mockRemoveFile(mockFile);
 				}
 			});
 
 			expect(mockDeleteApplicationSource).toHaveBeenCalledWith("test-workspace", "test-app-id", "file-1");
-			expect(mockRemoveKnowledgeBaseFile).toHaveBeenCalledWith(mockFile);
+			expect(mockRemoveFile).toHaveBeenCalledWith(mockFile);
 		});
 
 		it("shows error when file removal fails", async () => {
@@ -307,11 +297,10 @@ describe("KnowledgeBaseStep", () => {
 			const error = new Error("Delete failed");
 
 			mockDeleteApplicationSource.mockRejectedValue(error);
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [mockFile], knowledgeBaseUrls: [] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [mockFile],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -326,11 +315,10 @@ describe("KnowledgeBaseStep", () => {
 		it("shows error when file has no ID", async () => {
 			const mockFile = { name: "test.pdf", size: 1024 } as any; // No ID
 
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [mockFile], knowledgeBaseUrls: [] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [mockFile],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -341,13 +329,12 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("URL Removal Logic", () => {
 		it("removes URL when called", () => {
-			const mockRemoveKnowledgeBaseUrl = vi.fn();
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [], knowledgeBaseUrls: ["https://example.com"] },
-					removeKnowledgeBaseUrl: mockRemoveKnowledgeBaseUrl,
-				}),
-			);
+			const mockRemoveUrl = vi.fn();
+			useApplicationStore.setState({
+				removeUrl: mockRemoveUrl,
+				uploadedFiles: [],
+				urls: ["https://example.com"],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -355,20 +342,20 @@ describe("KnowledgeBaseStep", () => {
 			const urlLink = screen.getByText("https://example.com");
 			expect(urlLink).toBeInTheDocument();
 
-			// Test URL removal directly
-			mockRemoveKnowledgeBaseUrl("https://example.com");
-			expect(mockRemoveKnowledgeBaseUrl).toHaveBeenCalledWith("https://example.com");
+			// Test URL removal directly by calling the store action
+			const { removeUrl } = useApplicationStore.getState();
+			removeUrl("https://example.com");
+			expect(mockRemoveUrl).toHaveBeenCalledWith("https://example.com");
 		});
 	});
 
 	describe("File Display Logic", () => {
 		it("displays file with correct information", () => {
 			const mockFile = { id: "file-1", name: "test-document.pdf", size: 2048 } as any;
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [mockFile], knowledgeBaseUrls: [] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [mockFile],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -382,11 +369,10 @@ describe("KnowledgeBaseStep", () => {
 				{ id: "file-2", name: "doc2.docx", size: 2048 },
 			] as any[];
 
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: mockFiles, knowledgeBaseUrls: [] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: mockFiles,
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -398,11 +384,10 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("URL Display Logic", () => {
 		it("displays URL with correct link", () => {
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [], knowledgeBaseUrls: ["https://example.com"] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [],
+				urls: ["https://example.com"],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -413,14 +398,10 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("displays multiple URLs correctly", () => {
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: {
-						knowledgeBaseFiles: [],
-						knowledgeBaseUrls: ["https://example.com", "https://test.org"],
-					},
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [],
+				urls: ["https://example.com", "https://test.org"],
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -431,11 +412,9 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("Conditional Logic Edge Cases", () => {
 		it("handles empty application title correctly", () => {
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					applicationState: { applicationTitle: "   " }, // Whitespace only
-				}),
-			);
+			useApplicationStore.setState({
+				applicationTitle: "   ", // Whitespace only
+			});
 
 			render(<KnowledgeBaseStep />);
 
@@ -445,28 +424,26 @@ describe("KnowledgeBaseStep", () => {
 
 		it("handles files without size information", () => {
 			const mockFile = { id: "file-1", name: "test.pdf" } as any; // No size property
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					contentState: { knowledgeBaseFiles: [mockFile], knowledgeBaseUrls: [] },
-				}),
-			);
+			useApplicationStore.setState({
+				uploadedFiles: [mockFile],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
 
 			expect(screen.getByText("test.pdf")).toBeInTheDocument();
 		});
 
-		it("shows container when hasContent evaluates to true from any condition", () => {
-			// Test with title only
-			mockUseWizardStore.mockReturnValue(
-				createMockStore({
-					applicationState: { applicationTitle: "Test Title" },
-					contentState: { knowledgeBaseFiles: [], knowledgeBaseUrls: [] },
-				}),
-			);
+		it("does not show container when hasContent is true but no files or URLs exist", () => {
+			// Test with title only - should not show container as it requires files or URLs
+			useApplicationStore.setState({
+				applicationTitle: "Test Title",
+				uploadedFiles: [],
+				urls: [],
+			});
 
 			render(<KnowledgeBaseStep />);
-			expect(screen.getByTestId("knowledge-base-container")).toBeInTheDocument();
+			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();
 		});
 	});
 });

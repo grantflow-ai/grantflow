@@ -89,22 +89,26 @@ export default function CreateGrantApplicationWizardPage() {
 		}
 	}, [notifications, handleSourceProcessingNotification, handleRagProcessingNotification]);
 
-	const steps = [
-		<ApplicationDetailsStep
-			connectionStatus={connectionStatus}
-			connectionStatusColor={connectionStatusColor}
-			key={0}
-		/>,
-		<ApplicationStructureStep
-			connectionStatus={connectionStatus}
-			connectionStatusColor={connectionStatusColor}
-			key={1}
-		/>,
-		<KnowledgeBaseStep key={2} />,
-		<ResearchPlanStep key={3} />,
-		<ResearchDeepDiveStep key={4} />,
-		<GenerateCompleteStep key={5} />,
-	];
+	const stepComponents = {
+		"Application Details": (
+			<ApplicationDetailsStep
+				connectionStatus={connectionStatus}
+				connectionStatusColor={connectionStatusColor}
+				key="Application Details"
+			/>
+		),
+		"Application Structure": (
+			<ApplicationStructureStep
+				connectionStatus={connectionStatus}
+				connectionStatusColor={connectionStatusColor}
+				key="Application Structure"
+			/>
+		),
+		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
+		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
+		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
+		"Research Plan": <ResearchPlanStep key="Research Plan" />,
+	} as const;
 
 	if (!application) {
 		return (
@@ -122,7 +126,7 @@ export default function CreateGrantApplicationWizardPage() {
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
 			<WizardHeader />
 			<section className="flex-1 overflow-auto" data-testid="step-content-container" key={currentStep}>
-				{steps[currentStep]}
+				{stepComponents[currentStep]}
 			</section>
 			<WizardFooter />
 		</div>

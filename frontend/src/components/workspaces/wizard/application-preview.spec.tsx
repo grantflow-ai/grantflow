@@ -18,7 +18,7 @@ describe("ApplicationPreview", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: "Application Details",
 		});
 
 		useApplicationStore.setState({

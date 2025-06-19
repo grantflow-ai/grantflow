@@ -18,7 +18,7 @@ describe("TemplateFileUploader", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: "Application Details",
 		});
 	});
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, Link, Trash2 } from "lucide-react";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { deleteApplicationSource } from "@/actions/sources";
@@ -27,35 +27,57 @@ import {
 	IconFilePptx,
 	IconPreviewLogo,
 } from "@/components/workspaces/icons";
+import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { useDebounce } from "@/utils/debounce";
 import { logError } from "@/utils/logging";
 
-import { FileWithId } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
+
+import type { FileWithId } from "@/types/files";
 
 const DEBOUNCE_MS = 1000;
 const POLLING_INTERVAL_DURATION = 3000;
 
 export function KnowledgeBaseStep() {
+	const { polling } = useWizardStore();
+	const { start, stop } = polling;
 	const {
-		addKnowledgeBaseFile,
-		addKnowledgeBaseUrl,
-		applicationState: { applicationId },
-		areKnowledgeBaseFilesOrUrlsIndexing,
-		contentState: { knowledgeBaseUrls },
-		polling: { start, stop },
-		removeKnowledgeBaseFile,
-		removeKnowledgeBaseUrl,
+		addFile,
+		addUrl,
+		application,
+		areFilesOrUrlsIndexing,
+		removeFile,
+		removeUrl,
 		retrieveApplication,
-		workspaceId,
-	} = useWizardStore();
+		uploadedFiles,
+		urls,
+	} = useApplicationStore();
+
+	// Local state for UI interactions that were removed from wizard store
+	const [fileDropdownStates, setFileDropdownStates] = useState<Record<string, boolean>>({});
+	const [linkHoverStates, setLinkHoverStates] = useState<Record<string, boolean>>({});
+
+	// Helper functions for managing local state
+	const setFileDropdownOpen = useCallback((fileName: string, isOpen: boolean) => {
+		setFileDropdownStates((prev) => ({ ...prev, [fileName]: isOpen }));
+	}, []);
+
+	const setLinkHoverState = useCallback((url: string, isHovered: boolean) => {
+		setLinkHoverStates((prev) => ({ ...prev, [url]: isHovered }));
+	}, []);
+
+	const applicationId = application?.id;
+	const workspaceId = application?.workspace_id;
+	const knowledgeBaseUrls = urls;
 
 	const getIndexingStatus = useCallback(async () => {
-		await retrieveApplication();
-		return areKnowledgeBaseFilesOrUrlsIndexing();
-	}, [retrieveApplication, areKnowledgeBaseFilesOrUrlsIndexing]);
+		if (workspaceId && applicationId) {
+			await retrieveApplication(workspaceId, applicationId);
+		}
+		return areFilesOrUrlsIndexing();
+	}, [retrieveApplication, areFilesOrUrlsIndexing, workspaceId, applicationId]);
 
 	const handleRetrieveWithPolling = useCallback(async () => {
 		const isIndexing = await getIndexingStatus();
@@ -79,8 +101,8 @@ export function KnowledgeBaseStep() {
 		};
 	}, [stop]);
 
-	const handleRemoveUrl = (urlToRemove: string) => {
-		removeKnowledgeBaseUrl(urlToRemove);
+	const handleRemoveUrl = async (urlToRemove: string) => {
+		await removeUrl(urlToRemove);
 	};
 
 	const handleFileRemove = useCallback(
@@ -92,14 +114,14 @@ export function KnowledgeBaseStep() {
 
 			try {
 				await deleteApplicationSource(workspaceId, applicationId ?? "", fileToRemove.id);
-				removeKnowledgeBaseFile(fileToRemove);
+				await removeFile(fileToRemove);
 				toast.success(`File ${fileToRemove.name} removed`);
 			} catch (error) {
 				logError({ error, identifier: "deleteApplicationSource" });
 				toast.error("Failed to remove file. Please try again.");
 			}
 		},
-		[workspaceId, applicationId, removeKnowledgeBaseFile],
+		[workspaceId, applicationId, removeFile],
 	);
 
 	return (
@@ -126,7 +148,7 @@ export function KnowledgeBaseStep() {
 						<div>
 							<h3 className="font-heading mb-5 text-base font-semibold leading-snug">Documents</h3>
 							<TemplateFileUploader
-								addFileAction={addKnowledgeBaseFile}
+								addFileAction={addFile}
 								onUploadComplete={handleDocumentChange}
 								uploadType="application"
 							/>
@@ -139,7 +161,7 @@ export function KnowledgeBaseStep() {
 							</p>
 
 							<UrlInput
-								addUrlAction={addKnowledgeBaseUrl}
+								addUrlAction={addUrl}
 								crawlType="application"
 								existingUrls={knowledgeBaseUrls}
 								onUrlAdded={handleDocumentChange}
@@ -149,16 +171,29 @@ export function KnowledgeBaseStep() {
 				</div>
 			</div>
 
-			<KnowledgeBasePreview onFileRemove={handleFileRemove} onUrlRemove={handleRemoveUrl} />
+			<KnowledgeBasePreview
+				fileDropdownStates={fileDropdownStates}
+				linkHoverStates={linkHoverStates}
+				onFileRemove={handleFileRemove}
+				onUrlRemove={handleRemoveUrl}
+				setFileDropdownOpen={setFileDropdownOpen}
+				setLinkHoverState={setLinkHoverState}
+			/>
 		</div>
 	);
 }
 
-function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (file: FileWithId) => Promise<void> }) {
-	const {
-		setFileDropdownOpen,
-		ui: { fileDropdownStates },
-	} = useWizardStore();
+function FilePreviewCard({
+	file,
+	fileDropdownStates,
+	onRemove,
+	setFileDropdownOpen,
+}: {
+	file: FileWithId;
+	fileDropdownStates: Record<string, boolean>;
+	onRemove?: (file: FileWithId) => Promise<void>;
+	setFileDropdownOpen: (fileName: string, isOpen: boolean) => void;
+}) {
 	const dropdownOpen = fileDropdownStates[file.name] ?? false;
 
 	const extension = getFileExtension(file.name) ?? "";
@@ -268,15 +303,23 @@ function getFileExtension(filename: string) {
 }
 
 function KnowledgeBasePreview({
+	fileDropdownStates,
+	linkHoverStates,
 	onFileRemove,
 	onUrlRemove,
+	setFileDropdownOpen,
+	setLinkHoverState,
 }: {
+	fileDropdownStates: Record<string, boolean>;
+	linkHoverStates: Record<string, boolean>;
 	onFileRemove: (file: FileWithId) => Promise<void>;
 	onUrlRemove: (url: string) => void;
+	setFileDropdownOpen: (fileName: string, isOpen: boolean) => void;
+	setLinkHoverState: (url: string, isHovered: boolean) => void;
 }) {
-	const { applicationState, contentState } = useWizardStore();
-	const { applicationTitle } = applicationState;
-	const { knowledgeBaseFiles, knowledgeBaseUrls } = contentState;
+	const { applicationTitle, uploadedFiles, urls } = useApplicationStore();
+	const knowledgeBaseFiles = uploadedFiles;
+	const knowledgeBaseUrls = urls;
 	const hasContent = applicationTitle || knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
 
 	return (
@@ -296,8 +339,10 @@ function KnowledgeBasePreview({
 											{knowledgeBaseFiles.map((file, index) => (
 												<FilePreviewCard
 													file={file}
+													fileDropdownStates={fileDropdownStates}
 													key={file.name + index.toString()}
 													onRemove={onFileRemove}
+													setFileDropdownOpen={setFileDropdownOpen}
 												/>
 											))}
 										</div>
@@ -315,7 +360,9 @@ function KnowledgeBasePreview({
 											{knowledgeBaseUrls.map((url, index) => (
 												<LinkPreviewItem
 													key={url + index.toString()}
+													linkHoverStates={linkHoverStates}
 													onRemove={onUrlRemove}
+													setLinkHoverState={setLinkHoverState}
 													url={url}
 												/>
 											))}
@@ -335,11 +382,17 @@ function KnowledgeBasePreview({
 	);
 }
 
-function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; url: string }) {
-	const {
-		setLinkHoverState,
-		ui: { linkHoverStates },
-	} = useWizardStore();
+function LinkPreviewItem({
+	linkHoverStates,
+	onRemove,
+	setLinkHoverState,
+	url,
+}: {
+	linkHoverStates: Record<string, boolean>;
+	onRemove?: (url: string) => void;
+	setLinkHoverState: (url: string, isHovered: boolean) => void;
+	url: string;
+}) {
 	const isHovered = linkHoverStates[url] ?? false;
 
 	const handleRemove = () => {

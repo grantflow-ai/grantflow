@@ -29,7 +29,7 @@ describe("wizard store", () => {
 
 		const wizardState = useWizardStore.getState();
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: "Application Details",
 			polling: {
 				...wizardState.polling,
 				intervalId: null,
@@ -122,7 +122,7 @@ describe("wizard store", () => {
 		describe("step 0 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: 0,
+					currentStep: "Application Details",
 				});
 			});
 
@@ -214,7 +214,7 @@ describe("wizard store", () => {
 		describe("step 1 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: 1,
+					currentStep: "Application Structure",
 				});
 			});
 
@@ -257,7 +257,7 @@ describe("wizard store", () => {
 		describe("step 2 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: 2,
+					currentStep: "Knowledge Base",
 				});
 			});
 
@@ -329,7 +329,7 @@ describe("wizard store", () => {
 				});
 
 				useWizardStore.setState({
-					currentStep: 3,
+					currentStep: "Research Plan",
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -405,42 +405,42 @@ describe("wizard store", () => {
 			const { toNextStep } = useWizardStore.getState();
 
 			toNextStep();
-			expect(useWizardStore.getState().currentStep).toBe(1);
+			expect(useWizardStore.getState().currentStep).toBe("Application Structure");
 
 			toNextStep();
-			expect(useWizardStore.getState().currentStep).toBe(2);
+			expect(useWizardStore.getState().currentStep).toBe("Knowledge Base");
 		});
 
 		it("should not navigate beyond last step", () => {
 			useWizardStore.setState({
-				currentStep: 5,
+				currentStep: "Generate and Complete",
 			});
 
 			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
-			expect(useWizardStore.getState().currentStep).toBe(5);
+			expect(useWizardStore.getState().currentStep).toBe("Generate and Complete");
 		});
 
 		it("should navigate to previous step", () => {
 			useWizardStore.setState({
-				currentStep: 2,
+				currentStep: "Knowledge Base",
 			});
 
 			const { toPreviousStep } = useWizardStore.getState();
 
 			toPreviousStep();
-			expect(useWizardStore.getState().currentStep).toBe(1);
+			expect(useWizardStore.getState().currentStep).toBe("Application Structure");
 
 			toPreviousStep();
-			expect(useWizardStore.getState().currentStep).toBe(0);
+			expect(useWizardStore.getState().currentStep).toBe("Application Details");
 		});
 
 		it("should not navigate before first step", () => {
 			const { toPreviousStep } = useWizardStore.getState();
 			toPreviousStep();
 
-			expect(useWizardStore.getState().currentStep).toBe(0);
+			expect(useWizardStore.getState().currentStep).toBe("Application Details");
 		});
 
 		it("should trigger template generation when moving from step 0 to 1", async () => {

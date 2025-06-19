@@ -25,7 +25,7 @@ describe("ApplicationDetailsStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: "Application Details",
 			polling: {
 				intervalId: null,
 				isActive: false,

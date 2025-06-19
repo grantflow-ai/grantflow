@@ -21,8 +21,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
-import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,7 +32,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
+
 import type { API } from "@/types/api-types";
+import type React from "react";
 
 type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
@@ -94,7 +96,39 @@ interface SortableSectionProps {
 	section: GrantSection;
 }
 
+const ANALYZING_STEPS = [
+	{
+		steps: ["Analyzing grant guidelines", "Extracting evaluation criteria", "Identifying key focus areas"],
+		title: "Understanding Requirements",
+	},
+	{
+		steps: ["Determining optimal sections", "Calculating content distribution", "Setting word limits"],
+		title: "Optimizing Structure",
+	},
+	{
+		steps: ["Creating section dependencies", "Adding helper prompts", "Preparing your workspace"],
+		title: "Finalizing Framework",
+	},
+];
+
 export function ApplicationStructureStep({ connectionStatus, connectionStatusColor }: ApplicationStructureStepProps) {
+	const structureAnalysisStatus = "analyzed";
+	const [visibleSteps, setVisibleSteps] = useState(0);
+
+	useEffect(() => {
+		if (structureAnalysisStatus === "analyzing") {
+			const interval = setInterval(() => {
+				setVisibleSteps((prev) => {
+					if (prev < ANALYZING_STEPS.length) {
+						return prev + 1;
+					}
+					return prev;
+				});
+			}, 1000);
+
+			return () => { clearInterval(interval); };
+		}
+	}, [structureAnalysisStatus]);
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
 			<div className="w-1/3 overflow-y-auto p-6 sm:w-1/2">
@@ -224,6 +258,33 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 				connectionStatus={connectionStatus}
 				connectionStatusColor={connectionStatusColor}
 			/>
+		</div>
+	);
+}
+
+function AnalyzedStateContent() {
+	return (
+		<div className="space-y-4">
+			<Card className="border-app-gray-100 border p-4 shadow-none">
+				<h3 className="font-heading mb-2 text-base font-semibold">Section Configuration</h3>
+				<p className="text-muted-foreground-dark text-sm">
+					Configure the sections and structure of your application based on the requirements.
+				</p>
+			</Card>
+
+			<Card className="border-app-gray-100 border p-4 shadow-none">
+				<h3 className="font-heading mb-2 text-base font-semibold">Content Organization</h3>
+				<p className="text-muted-foreground-dark text-sm">
+					Organize your content and determine the flow of your application.
+				</p>
+			</Card>
+
+			<Card className="border-app-gray-100 border p-4 shadow-none">
+				<h3 className="font-heading mb-2 text-base font-semibold">Requirements Mapping</h3>
+				<p className="text-muted-foreground-dark text-sm">
+					Map application requirements to specific sections and content areas.
+				</p>
+			</Card>
 		</div>
 	);
 }

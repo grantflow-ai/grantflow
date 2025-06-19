@@ -39,7 +39,7 @@ export function DevAutofillButton() {
 			const workspaceId = params.workspaceId as string;
 
 			switch (currentStep) {
-				case 0: {
+				case "Application Details": {
 					handleTitleChange("AI-Powered Early Cancer Detection Using Novel Biomarkers");
 
 					for (const url of TEST_URLS) {
@@ -69,16 +69,19 @@ export function DevAutofillButton() {
 
 					break;
 				}
-				case 1: {
+				case "Application Structure": {
 					toast.info("Application structure is ready. Click 'Approve and Continue'.");
 
 					break;
 				}
-				case 2: {
+				case "Knowledge Base": {
 					toast.info("Knowledge base is ready. Click 'Next' to proceed.");
 
 					break;
 				}
+				case "Generate and Complete":
+				case "Research Deep Dive":
+				case "Research Plan":
 				default: {
 					toast.info("Autofill not implemented for this step yet.");
 				}
@@ -101,7 +104,7 @@ export function DevAutofillButton() {
 			variant="outline"
 		>
 			<Wand2 className="size-4" />
-			Autofill Step {currentStep + 1}
+			Autofill {currentStep}
 		</Button>
 	);
 }

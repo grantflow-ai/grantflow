@@ -6,8 +6,8 @@ import {
 	type DragEndEvent,
 	KeyboardSensor,
 	PointerSensor,
-	SensorDescriptor,
-	SensorOptions,
+	type SensorDescriptor,
+	type SensorOptions,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
@@ -19,19 +19,38 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
-import React from "react";
+import React, { useCallback, useState } from "react";
 
 import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconPreviewLogo } from "@/components/workspaces/icons";
-import { type Objective, useWizardStore } from "@/stores/wizard-store";
+
+interface Objective {
+	description: string;
+	id: string;
+	tasks: string[];
+	title: string;
+}
 
 const MAX_OBJECTIVES = 5;
 
 export function ResearchPlanStep() {
-	const { addObjective, applicationState, removeObjective, reorderObjectives } = useWizardStore();
-	const { objectives } = applicationState;
+	// Local state for objectives that were removed from wizard store
+	const [objectives, setObjectives] = useState<Objective[]>([]);
+
+	// Local implementations of the methods that were removed from wizard store
+	const addObjective = useCallback((objective: Objective) => {
+		setObjectives((prev) => [...prev, objective]);
+	}, []);
+
+	const removeObjective = useCallback((index: number) => {
+		setObjectives((prev) => prev.filter((_, i) => i !== index));
+	}, []);
+
+	const reorderObjectives = useCallback((newObjectives: Objective[]) => {
+		setObjectives(newObjectives);
+	}, []);
 
 	const sensors: SensorDescriptor<SensorOptions>[] = useSensors(
 		useSensor(PointerSensor),
@@ -73,6 +92,7 @@ export function ResearchPlanStep() {
 
 		addObjective({
 			description: exampleObj.description,
+			id: crypto.randomUUID(),
 			tasks: [],
 			title: exampleObj.title,
 		});
@@ -85,7 +105,12 @@ export function ResearchPlanStep() {
 			const oldIndex = objectives.findIndex((obj) => obj.id === active.id);
 			const newIndex = objectives.findIndex((obj) => obj.id === over?.id);
 
-			reorderObjectives(oldIndex, newIndex);
+			if (oldIndex !== -1 && newIndex !== -1) {
+				const reorderedObjectives = [...objectives];
+				const [removed] = reorderedObjectives.splice(oldIndex, 1);
+				reorderedObjectives.splice(newIndex, 0, removed);
+				reorderObjectives(reorderedObjectives);
+			}
 		}
 	};
 

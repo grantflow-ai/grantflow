@@ -9,6 +9,12 @@ describe("ResearchDeepDiveStep", () => {
 
 		expect(screen.getByTestId("research-deep-dive-step")).toBeInTheDocument();
 		expect(screen.getByText("Research Deep Dive")).toBeInTheDocument();
-		expect(screen.getByText("Step 5: Conduct in-depth research")).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"Conduct comprehensive research to strengthen your grant application with evidence-based insights.",
+			),
+		).toBeInTheDocument();
+		expect(screen.getByText("Let the AI try")).toBeInTheDocument();
+		expect(screen.getByText("Start your research deep dive to see analysis and insights")).toBeInTheDocument();
 	});
 });
