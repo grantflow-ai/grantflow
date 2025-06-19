@@ -140,7 +140,6 @@ export default function NavHeader() {
 				</Button>
 			</div>
 			<div
-				aria-expanded={isMobileMenuOpen}
 				aria-hidden={!isMobileMenuOpen}
 				className={`absolute inset-x-0 top-full flex flex-col bg-white p-4 transition-all duration-300 ease-in-out sm:px-6
 				md:hidden

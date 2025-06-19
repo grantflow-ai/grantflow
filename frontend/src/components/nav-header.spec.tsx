@@ -385,7 +385,6 @@ describe("NavHeader Component", () => {
 					expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
 					expect(mobileMenuContainer?.className).not.toContain("max-h-sm pointer-events-none opacity-0");
 					expect(mobileMenuContainer).toHaveAttribute("aria-hidden", "false");
-					expect(mobileMenuContainer).toHaveAttribute("aria-expanded", "true");
 				});
 
 				it("should maintain keyboard navigation in open mobile menu", () => {
