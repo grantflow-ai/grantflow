@@ -1,0 +1,35 @@
+{
+  "test_type": "retrieval_semantic_evaluation",
+  "application_id": "43b4aed5-8549-461f-9290-5ee9a630ac9a",
+  "query": "Research melanoma treatment and immunotherapy approaches",
+  "results": {
+    "document_count": 62,
+    "diversity_score": 0.9429083043448339,
+    "ai_evaluation": {
+      "relevance_scores": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "avg_relevance": 4.0,
+      "explanations": [
+        "This document provides a systematic review of melanoma brain metastases, including opportunities for earlier detection, diagnosis, and treatment, which is highly relevant to the given query.",
+        "This document directly addresses the topic of treatment of melanoma brain metastases, which is highly relevant to the query.",
+        "This document discusses various immunotherapy approaches and treatment options for melanoma, including combination therapies, which is highly relevant to the query.",
+        "This document explores emerging immunotherapy options and treatment approaches for non-resectable, metastatic melanoma, which is highly relevant to the query.",
+        "This document provides an overview of the current state of research on melanoma brain metastases, including the importance of early detection and the need for further exploration of treatment options, which is highly relevant to the query."
+      ],
+      "overall_assessment": "The given set of documents is highly relevant to the research query on melanoma treatment and immunotherapy approaches. The documents cover a range of topics, including the current state of research, emerging treatment options, and the importance of early detection and diagnosis. The documents provide a comprehensive overview of the topic and offer valuable insights that would be useful for further research.",
+      "evaluation_enabled": true
+    },
+    "performance": {
+      "execution_time": 50.18855094909668,
+      "threshold": 5.0,
+      "within_threshold": false,
+      "performance_score": 0.0996243148177601
+    }
+  },
+  "timestamp": "2025-06-19T12:03:50.376074+00:00"
+}

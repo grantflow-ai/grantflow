@@ -1,5 +1,6 @@
 import { assertIsNotNullish } from "@tool-belt/type-predicates";
 import { deepmerge } from "deepmerge-ts";
+import ky from "ky";
 import { toast } from "sonner";
 import { create } from "zustand";
 
@@ -75,17 +76,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				const objectPath = `workspace/${application.workspace_id}/grant_template/${application.grant_template.id}/${file.name}`;
 				const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
 
-				const uploadResponse = await fetch(emulatorUrl, {
+				await ky(emulatorUrl, {
 					body: file,
 					headers: {
 						"Content-Type": file.type,
 					},
 					method: "POST",
 				});
-
-				if (!uploadResponse.ok) {
-					throw new Error(`Failed to upload file ${file.name}`);
-				}
 
 				const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 				void triggerDevIndexing(objectPath);
@@ -97,17 +94,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 					file.name,
 				);
 
-				const uploadResponse = await fetch(url, {
+				await ky(url, {
 					body: file,
 					headers: {
 						"Content-Type": file.type,
 					},
 					method: "PUT",
 				});
-
-				if (!uploadResponse.ok) {
-					throw new Error(`Failed to upload file ${file.name}`);
-				}
 
 				const { extractObjectPathFromUrl } = await import("@/utils/dev-indexing-patch");
 				const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");

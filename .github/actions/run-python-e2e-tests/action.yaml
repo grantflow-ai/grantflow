@@ -1,0 +1,150 @@
+name: "Run Python E2E Tests"
+description: "Set up environment and run E2E tests for a specific Python service"
+
+inputs:
+    service:
+        description: "Service to test (indexer, crawler, rag)"
+        required: true
+    test_markers:
+        description: "Pytest markers to run (e.g., 'smoke', 'quality_assessment', 'e2e_full')"
+        required: false
+        default: "smoke"
+    timeout:
+        description: "Test timeout in seconds"
+        required: false
+        default: "300"
+    skip_ai_eval:
+        description: "Skip expensive AI evaluation tests"
+        required: false
+        default: "true"
+
+runs:
+    using: "composite"
+    steps:
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+              python-version-file: "pyproject.toml"
+
+        - name: Install uv
+          uses: astral-sh/setup-uv@v6
+          with:
+              enable-cache: true
+
+        - name: Cache and Install APT Packages
+          uses: awalsh128/cache-apt-pkgs-action@latest
+          with:
+              packages: tesseract-ocr pandoc
+              version: 1.0
+
+        - name: Install Dependencies
+          shell: bash
+          run: uv sync --all-packages --all-extras --dev --upgrade
+
+        - name: Cache Hugging Face models
+          uses: actions/cache@v4
+          with:
+              path: ~/hf_models
+              key: ${{ runner.os }}-hf-models-v2-${{ hashFiles('**/embeddings.py') }}
+              restore-keys: |
+                  ${{ runner.os }}-hf-models-v2-
+
+        - name: Install Hugging Face CLI
+          shell: bash
+          run: pip install huggingface-hub[cli] hf-transfer
+
+        - name: Download and cache embedding model
+          shell: bash
+          run: |
+              # Create model directory
+              mkdir -p $HOME/hf_models
+
+              # Check if model files exist (check for config.json and model files)
+              if [ ! -f "$HOME/hf_models/config.json" ] || [ ! -f "$HOME/hf_models/pytorch_model.bin" ]; then
+                echo "Downloading model sentence-transformers/all-MiniLM-L12-v2 to $HOME/hf_models"
+                # Download all model files to the specified directory without symlinks
+                huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir $HOME/hf_models --local-dir-use-symlinks False
+                echo "Model download completed"
+              else
+                echo "Model already cached at $HOME/hf_models"
+              fi
+
+              # List downloaded files for verification
+              echo "Model directory contents:"
+              ls -la $HOME/hf_models/
+
+        - name: Setup environment variables
+          shell: bash
+          run: |
+              # Create .env file for the service
+              mkdir -p services/${{ inputs.service }}
+
+              if [[ "${{ inputs.service }}" == "indexer" ]]; then
+                cat > services/${{ inputs.service }}/.env << EOF
+              DATABASE_CONNECTION_STRING=postgresql+asyncpg://grantflow:grantflow@localhost:5432/grantflow
+              GCS_SERVICE_ACCOUNT_CREDENTIALS=${{ env.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+              LLM_SERVICE_ACCOUNT_CREDENTIALS=${{ env.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+              GOOGLE_CLOUD_PROJECT=${{ env.GOOGLE_CLOUD_PROJECT }}
+              GOOGLE_CLOUD_REGION=${{ env.GOOGLE_CLOUD_REGION }}
+              ANTHROPIC_API_KEY=${{ env.ANTHROPIC_API_KEY }}
+              MODEL_DIR=$HOME/hf_models
+              EOF
+              elif [[ "${{ inputs.service }}" == "crawler" ]]; then
+                cat > services/${{ inputs.service }}/.env << EOF
+              DATABASE_CONNECTION_STRING=postgresql+asyncpg://grantflow:grantflow@localhost:5432/grantflow
+              GCS_SERVICE_ACCOUNT_CREDENTIALS=${{ env.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+              LLM_SERVICE_ACCOUNT_CREDENTIALS=${{ env.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+              GOOGLE_CLOUD_PROJECT=${{ env.GOOGLE_CLOUD_PROJECT }}
+              GOOGLE_CLOUD_REGION=${{ env.GOOGLE_CLOUD_REGION }}
+              ANTHROPIC_API_KEY=${{ env.ANTHROPIC_API_KEY }}
+              MODEL_DIR=$HOME/hf_models
+              EOF
+              elif [[ "${{ inputs.service }}" == "rag" ]]; then
+                cat > services/${{ inputs.service }}/.env << EOF
+              DATABASE_CONNECTION_STRING=postgresql+asyncpg://grantflow:grantflow@localhost:5432/grantflow
+              LLM_SERVICE_ACCOUNT_CREDENTIALS=${{ env.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+              ANTHROPIC_API_KEY=${{ env.ANTHROPIC_API_KEY }}
+              GOOGLE_CLOUD_PROJECT=${{ env.GOOGLE_CLOUD_PROJECT }}
+              GOOGLE_CLOUD_REGION=${{ env.GOOGLE_CLOUD_REGION }}
+              FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC=frontend-notifications
+              MODEL_DIR=$HOME/hf_models
+              EOF
+              fi
+
+        - name: Run database migrations
+          shell: bash
+          run: uv run task db:migrate
+
+        - name: Run E2E Tests
+          shell: bash
+          env:
+              E2E_TESTS: "1"
+          run: |
+              # Build pytest command
+              PYTEST_CMD="uv run pytest services/${{ inputs.service }}/tests/e2e/"
+
+              # Add markers
+              if [[ -n "${{ inputs.test_markers }}" ]]; then
+                PYTEST_CMD="$PYTEST_CMD -m \"${{ inputs.test_markers }}\""
+              fi
+
+              # Skip AI eval tests if requested
+              if [[ "${{ inputs.skip_ai_eval }}" == "true" && "${{ inputs.test_markers }}" == "e2e_full" ]]; then
+                PYTEST_CMD="$PYTEST_CMD -m \"${{ inputs.test_markers }} and not ai_eval\""
+              fi
+
+              # Add common options
+              PYTEST_CMD="$PYTEST_CMD -v --tb=short --timeout=${{ inputs.timeout }}"
+
+              # Execute tests
+              eval $PYTEST_CMD
+
+        - name: Upload test results
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+              name: ${{ inputs.service }}-e2e-test-results-${{ inputs.test_markers }}
+              path: |
+                  testing/test_data/results/
+                  .pytest_cache/
+              retention-days: 7
