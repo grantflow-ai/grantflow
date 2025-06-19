@@ -1,0 +1,41 @@
+name: "Run Backend Tests"
+description: "Set up environment and run tests for a specific backend target"
+
+inputs:
+    target:
+        description: "Target to test (backend, indexer, crawler, db, shared_utils)"
+        required: true
+
+runs:
+    using: "composite"
+    steps:
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+              python-version-file: "pyproject.toml"
+
+        - name: Install uv
+          uses: astral-sh/setup-uv@v6
+          with:
+              enable-cache: true
+
+        - name: Cache and Install APT Packages
+          uses: awalsh128/cache-apt-pkgs-action@latest
+          with:
+              packages: tesseract-ocr pandoc
+              version: 1.0
+
+        - name: Install Dependencies for Target
+          shell: bash
+          # TODO: temporary fix, we need to handle dependencies for each target better ~keep
+          # run: uv sync --package ${{ inputs.target }} --all-extras --dev
+          run: uv sync --all-packages --all-extras --dev --upgrade
+
+        - name: Run Tests
+          shell: bash
+          run: |
+              if [[ "${{ inputs.target }}" == "db" || "${{ inputs.target }}" == "shared_utils" ]]; then
+                PYTHONPATH=. uv run pytest packages/${{ inputs.target }} -v
+              else
+                PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
+              fi
