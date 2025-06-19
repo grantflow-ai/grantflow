@@ -1,6 +1,11 @@
 import { useEffect } from "react";
 
-import { ApplicationFactory, ApplicationWithTemplateFactory, RagSourceFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	FileWithIdFactory,
+	RagSourceFactory,
+} from "::testing/factories";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -94,7 +99,7 @@ export const Default: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 0,
 				});
 			}, []);
 			return <Story />;
@@ -132,7 +137,7 @@ export const Step1_ApplicationDetails: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 0,
 				});
 			}, []);
 			return <Story />;
@@ -156,15 +161,11 @@ export const Step2_ApplicationStructure: Story = {
 				useApplicationStore.setState({
 					application,
 					isLoading: false,
-					uploadedFiles: [
-						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
-							id: "file-1",
-						}),
-					],
+					uploadedFiles: [FileWithIdFactory.build({ name: "research-proposal.pdf" })],
 					urls: ["https://example.com/research-data"],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 1,
 				});
 			}, []);
 			return <Story />;
@@ -197,15 +198,11 @@ export const Step3_KnowledgeBase: Story = {
 				useApplicationStore.setState({
 					application,
 					isLoading: false,
-					uploadedFiles: [
-						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
-							id: "file-1",
-						}),
-					],
+					uploadedFiles: [FileWithIdFactory.build({ name: "research-proposal.pdf" })],
 					urls: ["https://example.com/research-data"],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 2, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 2,
 				});
 			}, []);
 			return <Story />;
@@ -235,15 +232,11 @@ export const Step4_ResearchPlan: Story = {
 				useApplicationStore.setState({
 					application,
 					isLoading: false,
-					uploadedFiles: [
-						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
-							id: "file-1",
-						}),
-					],
+					uploadedFiles: [FileWithIdFactory.build({ name: "research-proposal.pdf" })],
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 3, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 3,
 				});
 			}, []);
 			return <Story />;
@@ -273,15 +266,11 @@ export const Step5_ResearchDeepDive: Story = {
 				useApplicationStore.setState({
 					application,
 					isLoading: false,
-					uploadedFiles: [
-						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
-							id: "file-1",
-						}),
-					],
+					uploadedFiles: [FileWithIdFactory.build({ name: "research-proposal.pdf" })],
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 4, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 4,
 				});
 			}, []);
 			return <Story />;
@@ -315,22 +304,13 @@ export const Step6_GenerateComplete: Story = {
 					application,
 					isLoading: false,
 					uploadedFiles: [
-						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
-							id: "file-1",
-						}),
-						Object.assign(
-							new File(["content"], "budget-template.xlsx", {
-								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-							}),
-							{
-								id: "file-2",
-							},
-						),
+						FileWithIdFactory.build({ name: "research-proposal.pdf" }),
+						FileWithIdFactory.build({ name: "budget-template.xlsx" }),
 					],
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 5, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 5,
 				});
 			}, []);
 			return <Story />;
@@ -363,7 +343,7 @@ export const LongApplicationTitle: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 1,
 				});
 			}, []);
 			return <Story />;
@@ -396,15 +376,11 @@ export const ProcessingFiles: Story = {
 				useApplicationStore.setState({
 					application,
 					isLoading: false,
-					uploadedFiles: [
-						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
-							id: "file-1",
-						}),
-					],
+					uploadedFiles: [FileWithIdFactory.build({ name: "research-proposal.pdf" })],
 					urls: ["https://example.com/research-data"],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 2, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 2,
 				});
 			}, []);
 			return <Story />;
@@ -432,7 +408,7 @@ export const ConnectionError: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 0,
 				});
 			}, []);
 			return <Story />;

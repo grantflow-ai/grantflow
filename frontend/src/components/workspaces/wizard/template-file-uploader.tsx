@@ -48,7 +48,7 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 
 	const handleUploadFile = useCallback(
 		async (file: File) => {
-			const fileWithId: FileWithId = Object.assign(file, { id: file.name });
+			const fileWithId: FileWithId = Object.assign(file, { id: crypto.randomUUID() });
 			await addFile(fileWithId);
 			onUploadComplete?.();
 		},

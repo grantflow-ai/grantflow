@@ -37,7 +37,7 @@ export const EmptyState: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 1,
 				});
 			}, []);
 			return <Story />;
@@ -64,7 +64,7 @@ export const WithApplicationTitle: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 1,
 				});
 			}, []);
 			return <Story />;
@@ -86,7 +86,7 @@ export const WithGeneratedSections: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+					currentStep: 1,
 				});
 			}, []);
 			return <Story />;
