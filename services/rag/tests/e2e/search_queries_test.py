@@ -1,24 +1,19 @@
 import logging
 import time
 from datetime import UTC, datetime
-from os import environ
 
 import pytest
 from anyio import Path
 from packages.shared_utils.src.serialization import serialize
 from testing import RESULTS_FOLDER, TEST_DATA_SOURCES
+from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.rag_ai_evaluation import evaluate_query_generation_quality
 from testing.rag_evaluation import assess_query_quality, calculate_performance_metrics, save_evaluation_results
 
 from services.rag.src.utils.search_queries import handle_create_search_queries
 
 
-@pytest.mark.smoke
-@pytest.mark.timeout(60)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_handle_create_search_queries(
     logger: logging.Logger,
