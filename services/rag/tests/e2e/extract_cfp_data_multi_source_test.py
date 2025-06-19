@@ -1,26 +1,20 @@
 import logging
 from datetime import UTC, datetime
-from os import environ
 
-import pytest
 from packages.db.src.connection import get_session_maker
 from packages.db.src.tables import GrantTemplateRagSource
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy import select
 from testing import RESULTS_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 
 TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="2fb8fb60-4972-4a7e-ad9d-691121409d19")
 
 
-@pytest.mark.quality_assessment
-@pytest.mark.timeout(60 * 5)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
+@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
 async def test_extract_cfp_data_multi_source(
     logger: logging.Logger, organization_mapping: dict[str, dict[str, str]]
 ) -> None:
