@@ -19,36 +19,18 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
-import { useCallback, useState } from "react";
 
 import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconPreviewLogo } from "@/components/workspaces/icons";
-
-interface Objective {
-	description: string;
-	id: string;
-	tasks: string[];
-	title: string;
-}
+import { type Objective, useWizardStore } from "@/stores/wizard-store";
 
 const MAX_OBJECTIVES = 5;
 
 export function ResearchPlanStep() {
-	const [objectives, setObjectives] = useState<Objective[]>([]);
-
-	const addObjective = useCallback((objective: Objective) => {
-		setObjectives((prev) => [...prev, objective]);
-	}, []);
-
-	const removeObjective = useCallback((id: string) => {
-		setObjectives((prev) => prev.filter((obj) => obj.id !== id));
-	}, []);
-
-	const reorderObjectives = useCallback((newObjectives: Objective[]) => {
-		setObjectives(newObjectives);
-	}, []);
+	const { addObjective, applicationState, removeObjective, reorderObjectives } = useWizardStore();
+	const { objectives } = applicationState;
 
 	const sensors: SensorDescriptor<SensorOptions>[] = useSensors(
 		useSensor(PointerSensor),
@@ -103,12 +85,7 @@ export function ResearchPlanStep() {
 			const oldIndex = objectives.findIndex((obj) => obj.id === active.id);
 			const newIndex = objectives.findIndex((obj) => obj.id === over?.id);
 
-			if (oldIndex !== -1 && newIndex !== -1) {
-				const reorderedObjectives = [...objectives];
-				const [removed] = reorderedObjectives.splice(oldIndex, 1);
-				reorderedObjectives.splice(newIndex, 0, removed);
-				reorderObjectives(reorderedObjectives);
-			}
+			reorderObjectives(oldIndex, newIndex);
 		}
 	};
 

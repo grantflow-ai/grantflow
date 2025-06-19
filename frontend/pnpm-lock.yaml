@@ -7618,13 +7618,9 @@ snapshots:
 
   ts-dedent@2.2.0: {}
 
-  ts-pnp@1.2.0(typescript@5.8.3):
-        optionalDependencies:
-            typescript: 5.8.3
-
-    tsconfck@3.1.6(typescript@5.8.3):
-        optionalDependencies:
-            typescript: 5.8.3
+  tsconfck@3.1.6(typescript@5.8.3):
+    optionalDependencies:
+      typescript: 5.8.3
 
   tsconfig-paths@4.2.0:
     dependencies:
