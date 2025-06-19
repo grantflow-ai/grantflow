@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
+from dotenv import load_dotenv
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
 from packages.db.src.tables import FundingOrganization, Workspace
 from pytest_mock import MockerFixture
@@ -11,15 +13,25 @@ from testing import FIXTURES_FOLDER
 from testing.factories import GrantSectionFactory
 from testing.test_utils import create_grant_application_data, process_funding_organization
 
+rag_env_file = Path(__file__).parent.parent / ".env"
+if rag_env_file.exists():
+    load_dotenv(rag_env_file)
+
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 
-@pytest.fixture(autouse=True)
-def mock_init_llm_connection(mocker: MockerFixture) -> None:
-    mocker.patch("packages.shared_utils.src.ai.init_llm_connection")
-
-
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
+
+
+@pytest.fixture
+def organization_mapping() -> dict[str, dict[str, str]]:
+    return {
+        "e8e8b0df-d6d9-4a27-bb1a-7b8e5a5b8c8e": {"name": "Melanoma Research Alliance", "abbreviation": "MRA"},
+        "123e4567-e89b-12d3-a456-426614174000": {"name": "National Institutes of Health", "abbreviation": "NIH"},
+        "987fcdeb-51a2-4b3d-8f9e-123456789abc": {"name": "European Research Council", "abbreviation": "ERC"},
+        "456789ab-cdef-1234-5678-90abcdef1234": {"name": "Standard Awards Foundation", "abbreviation": "SAF"},
+        "789abcde-f012-3456-789a-bcdef0123456": {"name": "Innovation in Cancer Screening", "abbreviation": "ICS"},
+    }
 
 
 @pytest.fixture

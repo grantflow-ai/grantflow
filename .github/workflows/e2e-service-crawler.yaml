@@ -1,0 +1,145 @@
+name: Crawler E2E Tests
+
+on:
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/e2e-service-crawler.yaml"
+            - ".github/actions/run-python-e2e-tests/**"
+            - "packages/**"
+            - "services/crawler/**"
+            - "testing/**"
+            - "pyproject.toml"
+            - "uv.lock"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/e2e-service-crawler.yaml"
+            - ".github/actions/run-python-e2e-tests/**"
+            - "packages/**"
+            - "services/crawler/**"
+            - "testing/**"
+            - "pyproject.toml"
+            - "uv.lock"
+    workflow_dispatch:
+        inputs:
+            test_markers:
+                description: "Test markers to run (smoke, quality_assessment, e2e_full)"
+                required: false
+                default: "smoke"
+                type: choice
+                options:
+                    - smoke
+                    - quality_assessment
+                    - e2e_full
+
+jobs:
+    smoke-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_DB: grantflow
+                    POSTGRES_USER: grantflow
+                    POSTGRES_PASSWORD: grantflow
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run Crawler E2E Tests (Smoke)
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  service: crawler
+                  test_markers: smoke
+                  timeout: 120
+              env:
+                  GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+                  LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+                  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+                  GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+                  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    quality-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_DB: grantflow
+                    POSTGRES_USER: grantflow
+                    POSTGRES_PASSWORD: grantflow
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run Crawler E2E Tests (Quality Assessment)
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  service: crawler
+                  test_markers: quality_assessment
+                  timeout: 300
+              env:
+                  GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+                  LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+                  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+                  GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+                  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    full-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_markers == 'e2e_full'
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_DB: grantflow
+                    POSTGRES_USER: grantflow
+                    POSTGRES_PASSWORD: grantflow
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run Crawler E2E Tests (Full)
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  service: crawler
+                  test_markers: e2e_full
+                  timeout: 600
+              env:
+                  GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+                  LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+                  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+                  GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+                  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

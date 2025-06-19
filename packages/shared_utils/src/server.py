@@ -27,8 +27,6 @@ session_maker_provider = Provide(get_session_maker, sync_to_thread=False)
 
 
 def exception_serializer_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
-    """Process event dict to serialize custom exception types."""
-
     if event_dict.get("exc_info"):
         exc_info = event_dict["exc_info"]
         if isinstance(exc_info, tuple) and len(exc_info) >= 2:

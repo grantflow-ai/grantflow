@@ -99,18 +99,20 @@ async def process_organization_files(
                 )
                 .on_conflict_do_nothing(index_elements=["id"])
             )
+
+            child_data = {
+                k: v
+                for k, v in rag_file_data.items()
+                if k not in {"indexing_status", "text_content", "source_type", "created_at", "updated_at"}
+                and v is not None
+            }
+
+            child_data.setdefault("bucket_name", "test-bucket")
+            child_data.setdefault("object_path", f"test/{child_data.get('filename', 'unknown')}")
+
             await session.execute(
                 insert(RagFile)
-                .values(
-                    {
-                        "id": rag_source_id,
-                        **{
-                            k: v
-                            for k, v in rag_file_data.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        },
-                    }
-                )
+                .values({"id": rag_source_id, **child_data})
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
@@ -174,18 +176,30 @@ async def parse_source_file(
 
     async with async_session_maker() as session:
         file_id = await session.scalar(
-            insert(RagFile)
+            insert(RagSource)
             .values(
                 {
+                    "indexing_status": SourceIndexingStatusEnum.FINISHED,
+                    "text_content": "",
+                    "source_type": RAG_FILE,
+                }
+            )
+            .returning(RagSource.id)
+        )
+
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": file_id,
                     "filename": source_file.name,
                     "mime_type": "application/pdf"
                     if source_file.suffix == ".pdf"
                     else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     "size": len(file_content),
-                    "indexing_status": SourceIndexingStatusEnum.FINISHED,
+                    "bucket_name": "test-bucket",
+                    "object_path": f"test/{source_file.name}",
                 }
             )
-            .returning(RagFile.id)
         )
         await session.execute(
             insert(GrantApplicationRagSource).values(
@@ -288,18 +302,31 @@ async def process_application_files(
             rag_source_id = data.pop("rag_source_id")
             text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
 
+            parent_data = {
+                k: v for k, v in rag_file_data.items() if k in {"indexing_status", "text_content", "source_type"}
+            }
+            if "source_type" not in parent_data:
+                parent_data["source_type"] = RAG_FILE
+
+            await session.execute(
+                insert(RagSource)
+                .values({"id": rag_source_id, **parent_data})
+                .on_conflict_do_nothing(index_elements=["id"])
+            )
+
+            child_data = {
+                k: v
+                for k, v in rag_file_data.items()
+                if k not in {"indexing_status", "text_content", "source_type", "created_at", "updated_at"}
+                and v is not None
+            }
+
+            child_data.setdefault("bucket_name", "test-bucket")
+            child_data.setdefault("object_path", f"test/{child_data.get('filename', 'unknown')}")
+
             await session.execute(
                 insert(RagFile)
-                .values(
-                    {
-                        "id": rag_source_id,
-                        **{
-                            k: v
-                            for k, v in rag_file_data.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        },
-                    }
-                )
+                .values({"id": rag_source_id, **child_data})
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
