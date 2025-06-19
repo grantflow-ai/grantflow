@@ -51,7 +51,6 @@ export function KnowledgeBaseStep() {
 		removeFile,
 		removeUrl,
 		retrieveApplication,
-		uploadedFiles,
 		urls,
 	} = useApplicationStore();
 

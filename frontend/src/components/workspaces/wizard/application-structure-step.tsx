@@ -126,7 +126,9 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 				});
 			}, 1000);
 
-			return () => { clearInterval(interval); };
+			return () => {
+				clearInterval(interval);
+			};
 		}
 	}, [structureAnalysisStatus]);
 	return (
