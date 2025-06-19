@@ -76,13 +76,20 @@ task test
 task test:e2e
 
 # Run all linters and formatters
-task lint
+task lint               # Equivalent to task lint:all
+
+# Run linters by scope
+task lint:all           # Run all linters on all files
+task lint:frontend      # Run Biome, ESLint, and TypeScript for frontend
+task lint:python        # Run Ruff and MyPy for Python
 
 # Run specific linters
-task lint:frontend    # Run Biome and ESLint for frontend
-task lint:python      # Run MyPy, Ruff, and Codespell for Python
-task lint:biome       # Format and lint with Biome
-task lint:eslint      # Lint TypeScript/React with ESLint
+task lint:biome         # Format and lint JS/TS/JSON/CSS with Biome
+task lint:eslint        # Lint TypeScript/React with ESLint
+task lint:typescript    # Type check TypeScript code
+task lint:ruff          # Lint and format Python code
+task lint:mypy          # Type check Python code
+task lint:codespell     # Check for common misspellings
 ```
 
 ### Database Management

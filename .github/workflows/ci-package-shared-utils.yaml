@@ -1,29 +1,29 @@
 name: Shared Utils Package CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development*
-    paths:
-      - '.github/workflows/ci-package-shared-utils.yaml'
-      - 'packages/shared_utils/**'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/ci-package-shared-utils.yaml'
-      - 'packages/shared_utils/**'
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/ci-package-shared-utils.yaml"
+            - "packages/shared_utils/**"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/ci-package-shared-utils.yaml"
+            - "packages/shared_utils/**"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Run Tests
-        uses: ./.github/actions/run-python-tests
-        with:
-            target: shared_utils
+            - name: Run Tests
+              uses: ./.github/actions/run-python-tests
+              with:
+                  target: shared_utils

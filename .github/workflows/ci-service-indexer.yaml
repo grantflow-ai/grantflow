@@ -1,31 +1,31 @@
 name: Indexer Service CI
 
 on:
-  pull_request:
-    branches:
-      - main
-      - development*
-    paths:
-      - '.github/workflows/ci-service-indexer.yaml'
-      - 'packages/**'
-      - 'services/indexer/**'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/ci-service-indexer.yaml'
-      - 'packages/**'
-      - 'services/indexer/**'
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/ci-service-indexer.yaml"
+            - "packages/**"
+            - "services/indexer/**"
+    push:
+        branches:
+            - main
+        paths:
+            - ".github/workflows/ci-service-indexer.yaml"
+            - "packages/**"
+            - "services/indexer/**"
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Run Tests
-        uses: ./.github/actions/run-python-tests
-        with:
-            target: indexer
+            - name: Run Tests
+              uses: ./.github/actions/run-python-tests
+              with:
+                  target: indexer

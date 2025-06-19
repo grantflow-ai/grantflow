@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
-import { SourceIndexingStatus } from "@/enums";
+import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 
 export interface RagProcessingStatus {
@@ -77,7 +77,7 @@ export function useApplicationNotifications({
 	const [notifications, setNotifications] = useState<WebsocketMessage<unknown>[]>([]);
 
 	const getSocketUrl = useCallback(async () => {
-		if (!workspaceId || !applicationId) {
+		if (!(workspaceId && applicationId)) {
 			throw new Error("Workspace ID and Application ID are required");
 		}
 

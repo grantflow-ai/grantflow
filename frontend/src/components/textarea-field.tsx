@@ -7,6 +7,23 @@ import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 
+const getTextColorClass = (hasError: boolean, disabled?: boolean) => {
+	if (hasError) return "text-error";
+	if (disabled) return "text-input-muted";
+	return "text-input-label";
+};
+
+const calculateCount = (text: string, countType: "chars" | "words") => {
+	if (countType === "chars") {
+		return text.length;
+	}
+	return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+};
+
+const formatCount = (count: number) => {
+	return count < 10 ? `0${count}` : `${count}`;
+};
+
 export default function AppTextArea({
 	className,
 	countType = "chars",
@@ -31,23 +48,17 @@ export default function AppTextArea({
 	const [text, setText] = useState(props.value?.toString() ?? "");
 
 	const displayText = props.value === undefined ? text : props.value.toString();
-
-	const currentCount =
-		countType === "chars"
-			? displayText.length
-			: displayText.trim() === ""
-				? 0
-				: displayText.trim().split(/\s+/).length;
-
-	const formattedCount = currentCount < 10 ? `0${currentCount}` : `${currentCount}`;
-	const formattedMaxCount = maxCount ? (maxCount < 10 ? `0${maxCount}` : `${maxCount}`) : null;
+	const currentCount = calculateCount(displayText, countType);
+	const formattedCount = formatCount(currentCount);
+	const formattedMaxCount = maxCount ? formatCount(maxCount) : null;
+	const textColorClass = getTextColorClass(hasError, props.disabled);
 
 	return (
 		<div className="w-full">
 			<div className="flex items-center justify-between">
 				{label && (
 					<Label
-						className={`block text-start text-xs font-light ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
+						className={`block text-start text-xs font-light ${textColorClass}`}
 						data-testid={`${testId}-label`}
 						htmlFor={props.id ?? testId}
 					>
@@ -56,10 +67,7 @@ export default function AppTextArea({
 				)}
 
 				{showCount && (
-					<div
-						className={`ps-4 text-xs ${hasError ? "text-error" : props.disabled ? "text-input-muted" : "text-input-label"}`}
-						data-testid={`${testId}-${countType}-count`}
-					>
+					<div className={`ps-4 text-xs ${textColorClass}`} data-testid={`${testId}-${countType}-count`}>
 						{formattedCount}
 						{formattedMaxCount ? `/${formattedMaxCount}` : ""}
 					</div>

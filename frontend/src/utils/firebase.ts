@@ -1,7 +1,7 @@
 "use client";
 
-import { FirebaseApp, initializeApp } from "firebase/app";
-import { Auth, browserSessionPersistence, getAuth, setPersistence } from "firebase/auth";
+import { type FirebaseApp, initializeApp } from "firebase/app";
+import { type Auth, browserSessionPersistence, getAuth, setPersistence } from "firebase/auth";
 
 import { getEnv } from "@/utils/env";
 

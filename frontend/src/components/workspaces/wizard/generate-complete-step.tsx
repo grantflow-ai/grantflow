@@ -1,5 +1,3 @@
-import React from "react";
-
 export function GenerateCompleteStep() {
 	return (
 		<div className="p-4" data-testid="generate-complete-step">

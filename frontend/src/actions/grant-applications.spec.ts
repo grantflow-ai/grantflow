@@ -1,5 +1,3 @@
-import { HTTPError } from "ky";
-
 import {
 	ApplicationFactory,
 	CreateApplicationRequestFactory,
@@ -7,8 +5,8 @@ import {
 	UpdateApplicationRequestFactory,
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
-import { API } from "@/types/api-types";
-
+import { HTTPError } from "ky";
+import type { API } from "@/types/api-types";
 import {
 	createApplication,
 	deleteApplication,

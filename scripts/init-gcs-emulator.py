@@ -13,19 +13,15 @@ RETRY_DELAY = 1
 
 
 def wait_for_emulator() -> bool:
-    print(f"Waiting for GCS emulator at {EMULATOR_HOST}")
-    for i in range(MAX_RETRIES):
+    for _i in range(MAX_RETRIES):
         try:
             req = request.Request(f"{EMULATOR_HOST}/storage/v1/b")
             with request.urlopen(req, timeout=5) as response:
                 if response.status == 200:
-                    print("GCS emulator is ready")
                     return True
         except (URLError, OSError):
             pass
-        print(f"Waiting for emulator... ({i + 1}/{MAX_RETRIES})")
         time.sleep(RETRY_DELAY)
-    print("Timeout waiting for GCS emulator")
     return False
 
 
@@ -34,35 +30,21 @@ def create_bucket() -> bool:
         req = request.Request(f"{EMULATOR_HOST}/storage/v1/b/{BUCKET_NAME}")
         with request.urlopen(req) as response:
             if response.status == 200:
-                print(f"Bucket '{BUCKET_NAME}' already exists")
                 return True
     except URLError:
         pass
 
-    print(f"Creating bucket '{BUCKET_NAME}'")
     try:
-        data = json.dumps({"name": BUCKET_NAME}).encode('utf-8')
+        data = json.dumps({"name": BUCKET_NAME}).encode("utf-8")
         req = request.Request(
-            f"{EMULATOR_HOST}/storage/v1/b",
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method='POST'
+            f"{EMULATOR_HOST}/storage/v1/b", data=data, headers={"Content-Type": "application/json"}, method="POST"
         )
         with request.urlopen(req) as response:
             if response.status == 200:
-                print(f"Bucket '{BUCKET_NAME}' created successfully")
                 return True
-            if response.status == 409:
-                print(f"Bucket '{BUCKET_NAME}' already exists")
-                return True
-            print(f"Failed to create bucket: {response.status} - {response.read().decode()}")
-            return False
+            return bool(response.status == 409)
     except URLError as e:
-        if hasattr(e, 'code') and e.code == 409:
-            print(f"Bucket '{BUCKET_NAME}' already exists")
-            return True
-        print(f"Error creating bucket: {e}")
-        return False
+        return bool(hasattr(e, "code") and e.code == 409)
 
 
 def main() -> int:
@@ -72,7 +54,6 @@ def main() -> int:
     if not create_bucket():
         return 1
 
-    print("GCS emulator initialization complete")
     return 0
 
 

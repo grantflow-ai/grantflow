@@ -1,10 +1,8 @@
+import { RagProcessingStatusMessageFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { RagProcessingStatusMessageFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { SourceIndexingStatus } from "@/enums";
-import { WebsocketMessage } from "@/hooks/use-application-notifications";
-
+import type { WebsocketMessage } from "@/hooks/use-application-notifications";
 import CreateGrantApplicationWizardPage from "./page";
 
 // Mock dependencies

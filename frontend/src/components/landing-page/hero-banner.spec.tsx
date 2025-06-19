@@ -6,7 +6,7 @@ vi.mock("./backgrounds-animated", () => ({
 	AnimatedGradientBackground: vi
 		.fn()
 		.mockImplementation(({ className }) => (
-			<div className={className} data-testid="mock-animated-gradient-background"></div>
+			<div className={className} data-testid="mock-animated-gradient-background" />
 		)),
 }));
 
@@ -16,7 +16,7 @@ vi.mock("@/components/icons", () => ({
 
 vi.mock("@/components/app-button", () => ({
 	AppButton: vi.fn().mockImplementation(({ children, size, theme, variant }) => (
-		<button data-size={size} data-testid="mock-app-button" data-theme={theme} data-variant={variant}>
+		<button data-size={size} data-testid="mock-app-button" data-theme={theme} data-variant={variant} type="button">
 			{children}
 		</button>
 	)),
