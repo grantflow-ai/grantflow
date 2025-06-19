@@ -58,7 +58,7 @@ tasks:
     lint:
         desc: Run all linters and formatters
         cmds:
-            - pre-commit run --show-diff-on-failure --color=always --all-files
+            - task: lint:all
 
     update:
         desc: Update all dependencies (frontend and backend) and pre-commit hooks to latest versions
@@ -72,6 +72,54 @@ tasks:
         cmds:
             - PYTHONPATH={{.PYTHON_PATH}} uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
             - task: lint
+
+    lint:all:
+        desc: Run all linters (Biome, ESLint, Python linters)
+        deps:
+            - task: lint:biome
+            - task: lint:eslint
+            - task: lint:python
+
+    lint:biome:
+        desc: Format and lint code with Biome
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - pnpm biome check --write .
+
+    lint:eslint:
+        desc: Lint JavaScript/TypeScript with ESLint
+        dir: "{{.FRONTEND_DIR}}"
+        cmds:
+            - pnpm eslint . --fix --max-warnings=0
+
+    lint:python:
+        desc: Run all Python linters (ruff, mypy, codespell)
+        deps:
+            - task: lint:ruff
+            - task: lint:mypy
+            - task: lint:codespell
+
+    lint:ruff:
+        desc: Lint and format Python code with Ruff
+        cmds:
+            - uv run ruff check --fix --unsafe-fixes .
+            - uv run ruff format .
+
+    lint:mypy:
+        desc: Type check Python code with MyPy
+        cmds:
+            - uv run mypy .
+
+    lint:codespell:
+        desc: Check for common misspellings
+        cmds:
+            - uv run codespell .
+
+    lint:frontend:
+        desc: Run all frontend linters (Biome and ESLint)
+        deps:
+            - task: lint:biome
+            - task: lint:eslint
 
     # ==============================================================================
     # DATABASE COMMANDS

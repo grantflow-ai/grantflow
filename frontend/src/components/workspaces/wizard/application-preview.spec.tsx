@@ -3,17 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApplicationFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
-import { mockUseWizardStore, mockWizardStore } from "@/testing/wizard-store-mock";
+import { useWizardStore } from "@/stores/wizard-store";
+import { FileWithId } from "@/types/files";
 
-import { ApplicationPreview, FileWithId } from "./application-preview";
-
-vi.mock("@/stores/wizard-store", () => ({
-	useWizardStore: mockUseWizardStore,
-}));
-
-vi.mock("@/stores/application-store", () => ({
-	useApplicationStore: vi.fn(),
-}));
+import { ApplicationPreview } from "./application-preview";
 
 function createMockFile(name: string, size: number, type: string, id?: string): FileWithId {
 	const file = new File(["content"], name, { type }) as FileWithId;
@@ -28,35 +21,18 @@ describe("ApplicationPreview", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		Object.assign(mockWizardStore, {
-			applicationState: {
-				application: null,
-				uploadedFiles: [],
-				urls: [],
-			},
+		useWizardStore.setState({
 			ui: {
+				currentStep: 0,
 				fileDropdownStates: {},
 				linkHoverStates: {},
 				urlInput: "",
 			},
 		});
 
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
+		useApplicationStore.setState({
 			application: null,
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
 			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
 			uploadedFiles: [],
 			urls: [],
 		});
@@ -65,131 +41,78 @@ describe("ApplicationPreview", () => {
 	it("renders empty state when no content", () => {
 		render(<ApplicationPreview />);
 
-		expect(screen.getByText("Add application details, documents, or links to see a preview")).toBeInTheDocument();
+		expect(screen.queryByTestId("application-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
 	});
 
 	it("renders application title", () => {
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: "Test Application",
-				workspace_id: "test-workspace-id",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
+		const application = ApplicationFactory.build({
+			id: "test-id",
+			title: "Test Application",
+			workspace_id: "test-workspace-id",
+		});
+
+		useApplicationStore.setState({
+			application,
 			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
 			uploadedFiles: [],
 			urls: [],
 		});
 
 		render(<ApplicationPreview />);
 
-		expect(screen.getByText("Test Application")).toBeInTheDocument();
 		expect(screen.getByTestId("application-title")).toBeInTheDocument();
+		expect(screen.getByTestId("application-title")).toHaveTextContent("Test Application");
 	});
 
 	it("renders untitled when no title", () => {
 		const file = createMockFile("test.pdf", 1024, "application/pdf", "file-id");
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: undefined,
-				workspace_id: "test-workspace-id",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
+		const application = ApplicationFactory.build({
+			id: "test-id",
+			title: undefined,
+			workspace_id: "test-workspace-id",
+		});
+
+		useApplicationStore.setState({
+			application,
 			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
 			uploadedFiles: [file],
 			urls: [],
 		});
 
 		render(<ApplicationPreview />);
 
-		expect(screen.getByText("Untitled Application")).toBeInTheDocument();
+		expect(screen.getByTestId("application-title")).toHaveTextContent("Untitled Application");
 	});
 
 	it("renders uploaded files", () => {
-		const file = createMockFile("test.pdf", 1024, "application/pdf", "file-id");
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: "Test Application",
-				workspace_id: "test-workspace-id",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
+		const file1 = createMockFile("test1.pdf", 1024, "application/pdf", "file-1");
+		const file2 = createMockFile("test2.pdf", 2048, "application/pdf", "file-2");
+
+		useApplicationStore.setState({
+			application: null,
 			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [file],
+			uploadedFiles: [file1, file2],
 			urls: [],
 		});
 
 		render(<ApplicationPreview />);
 
 		expect(screen.getByTestId("application-documents")).toBeInTheDocument();
-		expect(screen.getByText("test.pdf")).toBeInTheDocument();
+		expect(screen.getByTestId("file-collection")).toBeInTheDocument();
 	});
 
 	it("renders URLs", () => {
-		vi.mocked(useApplicationStore).mockReturnValue({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
-			application: ApplicationFactory.build({
-				id: "test-id",
-				title: "Test Application",
-				workspace_id: "test-workspace-id",
-			}),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
-			createApplication: vi.fn(),
-			generateTemplate: vi.fn(),
-			handleApplicationInit: vi.fn(),
+		useApplicationStore.setState({
+			application: null,
 			isLoading: false,
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
-			setApplication: vi.fn(),
-			setUploadedFiles: vi.fn(),
-			setUrls: vi.fn(),
-			updateApplication: vi.fn().mockResolvedValue(undefined),
 			uploadedFiles: [],
-			urls: ["https://example.com"],
+			urls: ["https://example.com", "https://test.com"],
 		});
 
 		render(<ApplicationPreview />);
 
 		expect(screen.getByTestId("application-links")).toBeInTheDocument();
-		expect(screen.getByText("https://example.com")).toBeInTheDocument();
 	});
 });

@@ -33,7 +33,9 @@ def with_exponential_backoff_retry[**P, R](
         "Callable[[Callable[P, R]], Callable[P, R]]",
         retry(
             retry=retry_if_exception_type(exc),
-            wait=wait_exponential_jitter(initial=initial_wait, max=max_wait, jitter=jitter),
+            wait=wait_exponential_jitter(
+                initial=initial_wait, max=max_wait, jitter=jitter
+            ),
             stop=stop_after_attempt(max_retries),
         ),
     )

@@ -1,21 +1,29 @@
 {
 	"compilerOptions": {
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["src/*"],
-			"::testing/*": ["testing/*"]
-		},
 		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"incremental": true,
 		"isolatedModules": true,
+		"jsx": "preserve",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
+		"moduleResolution": "bundler",
 		"noEmit": true,
 		"noImplicitAny": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
+		"paths": {
+			"::testing/*": ["testing/*"],
+			"@/*": ["src/*"]
+		},
+		"plugins": [
+			{
+				"name": "next"
+			}
+		],
 		"removeComments": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
@@ -26,15 +34,7 @@
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
 		"target": "ESNext",
-		"lib": ["ESNext", "DOM", "DOM.Iterable"],
-		"jsx": "preserve",
-		"moduleResolution": "bundler",
-		"types": ["vitest/globals", "@testing-library/jest-dom"],
-		"plugins": [
-			{
-				"name": "next"
-			}
-		]
+		"types": ["vitest/globals", "@testing-library/jest-dom"]
 	},
 	"exclude": ["node_modules"],
 	"include": [

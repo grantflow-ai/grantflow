@@ -27,7 +27,6 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - [UV](https://github.com/astral-sh/uv): Package manager for Python dependencies
 - [PNPM](https://pnpm.io/): Package manager for JavaScript/TypeScript dependencies
 - [Task](https://taskfile.dev): Taskfile runner
-- [pre-commit](https://pre-commit.com/): Linting and formatting tool
 - [OpenTofu](https://opentofu.org/): Infrastructure as Code tool for managing cloud resources
 - [GCloud CLI](https://cloud.google.com/sdk/docs/install): For GCP management
 - [GCloud CLI Pub/Sub Emulator](https://cloud.google.com/pubsub/docs/emulator): For local development
@@ -54,13 +53,13 @@ You'll need environment files for the services:
 
 ### Initial Setup
 
-After installing Task and pre-commit, run:
+After installing Task, run:
 
 ```bash
 task setup
 ```
 
-This will install all dependencies and set up pre-commit hooks.
+This will install all dependencies and set up git hooks using Lefthook.
 
 ## Local Development
 
@@ -76,8 +75,14 @@ task test
 # Run end-to-end tests
 task test:e2e
 
-# Run linters and formatters
+# Run all linters and formatters
 task lint
+
+# Run specific linters
+task lint:frontend    # Run Biome and ESLint for frontend
+task lint:python      # Run MyPy, Ruff, and Codespell for Python
+task lint:biome       # Format and lint with Biome
+task lint:eslint      # Lint TypeScript/React with ESLint
 ```
 
 ### Database Management
@@ -183,6 +188,29 @@ Follow the official Ubuntu WSL guide here:
 
 Once WSL and Ubuntu are installed and configured, your environment is ready to mount and develop the repository using
 the instructions in the [Getting Started](#getting-started) section.
+
+## Code Quality and Linting
+
+This project uses multiple tools to ensure code quality:
+
+### Frontend
+
+- **[Biome](https://biomejs.dev/)**: Primary formatter and linter for JS/TS/JSON/CSS files
+- **[ESLint](https://eslint.org/)**: Additional TypeScript and React-specific rules
+- **TypeScript**: Strict type checking
+
+### Backend
+
+- **[MyPy](https://mypy-lang.org/)**: Static type checker for Python
+- **[Ruff](https://docs.astral.sh/ruff/)**: Fast Python linter and formatter
+- **[Codespell](https://github.com/codespell-project/codespell)**: Spell checker for code
+
+### Git Hooks
+
+We use [Lefthook](https://github.com/evilmartians/lefthook) to run pre-commit checks automatically:
+
+- Linters run on staged files with auto-fix
+- Commit messages are validated against conventional commits format
 
 ## Commit Conventions
 

@@ -35,7 +35,9 @@ async def handle_generate_grant_template(
     logger.info("Creating grant template", grant_template_id=grant_template_id)
 
     async with session_maker() as session:
-        grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
+        grant_template = await session.scalar(
+            select(GrantTemplate).where(GrantTemplate.id == grant_template_id)
+        )
 
         if not grant_template:
             raise ValidationException("Grant template not found")
@@ -46,21 +48,32 @@ async def handle_generate_grant_template(
             .join(RagSource)
             .where(
                 GrantTemplateRagSource.grant_template_id == grant_template_id,
-                RagSource.indexing_status.in_((SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.FINISHED)),
+                RagSource.indexing_status.in_(
+                    (
+                        SourceIndexingStatusEnum.INDEXING,
+                        SourceIndexingStatusEnum.FINISHED,
+                    )
+                ),
             )
         )
 
         if rag_sources_count == 0:
-            raise ValidationException("No rag sources found for grant template, cannot generate")
+            raise ValidationException(
+                "No rag sources found for grant template, cannot generate"
+            )
 
         try:
-            await publish_rag_task(logger=logger, parent_type="grant_template", parent_id=grant_template.id)
+            await publish_rag_task(
+                logger=logger, parent_type="grant_template", parent_id=grant_template.id
+            )
         except BackendError as e:
             logger.error("Error initiating grant template generation", exc_info=e)
             raise
         except SQLAlchemyError as e:
             logger.error("Error initiating grant template generation", exc_info=e)
-            raise DatabaseError("Error initiating grant template generation", context=str(e)) from e
+            raise DatabaseError(
+                "Error initiating grant template generation", context=str(e)
+            ) from e
 
 
 @patch(
@@ -73,16 +86,24 @@ async def handle_update_grant_template(
     data: UpdateGrantTemplateRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info("Updating grant template", grant_template_id=grant_template_id, data=data)
+    logger.info(
+        "Updating grant template", grant_template_id=grant_template_id, data=data
+    )
 
     async with session_maker() as session, session.begin():
         try:
-            grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
+            grant_template = await session.scalar(
+                select(GrantTemplate).where(GrantTemplate.id == grant_template_id)
+            )
 
             if not grant_template:
                 raise ValidationException("Grant template not found")
 
-            await session.execute(update(GrantTemplate).where(GrantTemplate.id == grant_template.id).values(**data))
+            await session.execute(
+                update(GrantTemplate)
+                .where(GrantTemplate.id == grant_template.id)
+                .values(**data)
+            )
             await session.commit()
         except ValidationException:
             await session.rollback()

@@ -5,9 +5,9 @@ skip_output:
 pre-commit:
     parallel: true
     commands:
-        prettier:
-            glob: "*.{js,jsx,ts,tsx,mjs,mts,json,yaml,yml,toml,md,css}"
-            run: pnpm --dir frontend prettier --write {staged_files}
+        biome:
+            glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts,json,css}"
+            run: pnpm --dir frontend biome check --write {staged_files}
             stage_fixed: true
 
         eslint:

@@ -174,9 +174,6 @@ describe("Type Guards", () => {
 		const { SourceIndexingStatus } = await import("@/enums");
 
 		const validNotification = {
-			type: "data",
-			event: "source_processing",
-			parent_id: "test-id",
 			data: {
 				identifier: "test.pdf",
 				indexing_status: SourceIndexingStatus.INDEXING,
@@ -184,17 +181,20 @@ describe("Type Guards", () => {
 				parent_type: "grant_template",
 				rag_source_id: "source-1",
 			},
+			event: "source_processing",
+			parent_id: "test-id",
+			type: "data",
 		};
 
 		expect(isSourceProcessingNotificationMessage(validNotification)).toBe(true);
 
 		const invalidNotification = {
-			type: "data",
-			event: "other_event",
-			parent_id: "test-id",
 			data: {
 				message: "Some other message",
 			},
+			event: "other_event",
+			parent_id: "test-id",
+			type: "data",
 		};
 
 		expect(isSourceProcessingNotificationMessage(invalidNotification)).toBe(false);
@@ -204,37 +204,37 @@ describe("Type Guards", () => {
 		const { isRagProcessingStatusMessage } = await import("./use-application-notifications");
 
 		const validNotification = {
-			type: "data",
-			event: "grant_template_extraction",
-			parent_id: "test-id",
 			data: {
+				data: { section_count: 5 },
 				event: "grant_template_extraction",
 				message: "Extracting sections...",
-				data: { section_count: 5 },
 			},
+			event: "grant_template_extraction",
+			parent_id: "test-id",
+			type: "data",
 		};
 
 		expect(isRagProcessingStatusMessage(validNotification)).toBe(true);
 
 		const validNotificationWithoutData = {
-			type: "data",
-			event: "grant_template_extraction",
-			parent_id: "test-id",
 			data: {
 				event: "grant_template_extraction",
 				message: "Processing...",
 			},
+			event: "grant_template_extraction",
+			parent_id: "test-id",
+			type: "data",
 		};
 
 		expect(isRagProcessingStatusMessage(validNotificationWithoutData)).toBe(true);
 
 		const invalidNotification = {
-			type: "data",
-			event: "source_processing",
-			parent_id: "test-id",
 			data: {
 				identifier: "test.pdf",
 			},
+			event: "source_processing",
+			parent_id: "test-id",
+			type: "data",
 		};
 
 		expect(isRagProcessingStatusMessage(invalidNotification)).toBe(false);

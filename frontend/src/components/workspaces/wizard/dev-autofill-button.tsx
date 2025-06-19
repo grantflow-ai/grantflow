@@ -6,9 +6,9 @@ import { toast } from "sonner";
 
 import { crawlTemplateUrl } from "@/actions/sources";
 import { Button } from "@/components/ui/button";
-import { FileWithId } from "@/components/workspaces/wizard/application-preview";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { FileWithId } from "@/types/files";
 import { logError } from "@/utils/logging";
 
 const TEST_FILES = [
@@ -31,14 +31,17 @@ const TEST_URLS = [
 
 export function DevAutofillButton() {
 	const params = useParams();
-	const { handleTitleChange, ui } = useWizardStore();
+	const {
+		handleTitleChange,
+		ui: { currentStep },
+	} = useWizardStore();
 	const { addUrl, application, setUploadedFiles } = useApplicationStore();
 
 	const handleAutofill = async () => {
 		try {
 			const workspaceId = params.workspaceId as string;
 
-			switch (ui.currentStep) {
+			switch (currentStep) {
 				case 0: {
 					handleTitleChange("AI-Powered Early Cancer Detection Using Novel Biomarkers");
 
@@ -99,7 +102,7 @@ export function DevAutofillButton() {
 			variant="outline"
 		>
 			<Wand2 className="size-4" />
-			Autofill Step {ui.currentStep + 1}
+			Autofill Step {currentStep + 1}
 		</Button>
 	);
 }
