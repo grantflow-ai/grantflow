@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 ANTHROPIC_API_KEY = get_env("ANTHROPIC_API_KEY", raise_on_missing=False, fallback="")
 AI_EVALUATION_ENABLED = ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != "..." and len(ANTHROPIC_API_KEY) > 10
 
-client: Any = None  # Type: anthropic.Anthropic | None
+client: Any = None
 
 if AI_EVALUATION_ENABLED:
     try:

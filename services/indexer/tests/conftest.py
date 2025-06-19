@@ -1,5 +1,6 @@
 import os
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -9,7 +10,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.indexer.src.main import app
 
-load_dotenv()
+rag_env_file = Path(__file__).parent.parent / ".env"
+if rag_env_file.exists():
+    load_dotenv(rag_env_file)
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.gcs_test_plugin"]
 
