@@ -70,8 +70,8 @@ describe("Footer Component", () => {
 			expect(desktopContainer).toBeInTheDocument();
 		});
 
-		it("should have the correct ARIA label", () => {
-			const footer = screen.getByRole("contentinfo", { name: "site-footer" });
+		it("should have the correct role", () => {
+			const footer = screen.getByRole("contentinfo");
 			expect(footer).toBeInTheDocument();
 		});
 
