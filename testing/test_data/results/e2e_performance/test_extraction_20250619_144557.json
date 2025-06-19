@@ -1,0 +1,9 @@
+{
+  "test_name": "test_extraction",
+  "test_category": "e2e_full",
+  "performance": {
+    "execution_time": 0.0662069320678711,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-19T14:45:57.920721+00:00"
+}

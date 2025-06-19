@@ -3,6 +3,7 @@ from typing import Any, cast
 
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.serialization import deserialize
+
 from testing import FIXTURES_FOLDER, TEST_DATA_SOURCES
 
 QUICK_TEST_FILES = TEST_DATA_SOURCES[:3]

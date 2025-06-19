@@ -96,8 +96,8 @@ pre-commit:
             exclude: "completion|utils|test_utils|factories"
             run: |
                 for file in {staged_files}; do
-                  if [[ ! "$file" =~ (test_.*\.py|.*_test\.py) ]]; then
-                    echo "Error: Test file '$file' does not follow naming convention (should start with 'test_' or end with '_test.py')"
+                  if [[ ! "$file" =~ .*_test\.py$ ]]; then
+                    echo "Error: Test file '$file' does not follow naming convention (should end with '_test.py', not start with 'test_')"
                     exit 1
                   fi
                 done

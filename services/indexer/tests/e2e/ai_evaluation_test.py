@@ -9,12 +9,9 @@ from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, get_anthropic_c
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError
 from testing import TEST_DATA_SOURCES
+from testing.evaluation_utils import comprehensive_quality_assessment, cosine_similarity
 
 from services.indexer.src.processing import process_source
-from services.indexer.tests.e2e.evaluation_utils import (
-    comprehensive_quality_assessment,
-    cosine_similarity,
-)
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import Chunk

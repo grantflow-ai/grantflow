@@ -1,5 +1,4 @@
 import logging
-from os import environ
 
 import pytest
 from packages.shared_utils.src.exceptions import (
@@ -7,16 +6,12 @@ from packages.shared_utils.src.exceptions import (
     UrlParsingError,
     ValidationError,
 )
+from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.crawler.src.extraction import extract_links, prepare_url_data
 
 
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
-@pytest.mark.e2e_full
-@pytest.mark.timeout(120)
+@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=120)
 @pytest.mark.parametrize(
     "test_url,expected_content",
     [
@@ -62,11 +57,7 @@ async def test_url_content_extraction(
         pytest.fail(f"Unexpected URL extraction error for {test_url}: {e}")
 
 
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"),
-    reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
-)
-@pytest.mark.e2e_full
+@e2e_test(category=E2ETestCategory.E2E_FULL)
 async def test_link_extraction_comprehensive(logger: logging.Logger) -> None:
     logger.info("Running comprehensive link extraction test")
 
