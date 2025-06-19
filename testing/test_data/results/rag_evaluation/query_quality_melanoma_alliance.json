@@ -1,0 +1,44 @@
+{
+  "test_type": "query_generation_quality",
+  "cfp_name": "melanoma_alliance",
+  "results": {
+    "query_count": 4,
+    "quality_metrics": {
+      "diversity": 0.7674418604651163,
+      "avg_length": 10.75,
+      "keyword_coverage": 33,
+      "query_count": 4
+    },
+    "ai_evaluation": {
+      "scores": {
+        "relevance": 4,
+        "diversity_coverage": 4,
+        "specificity_precision": 4,
+        "effectiveness": 4
+      },
+      "overall_score": 4,
+      "best_queries": [
+        "Innovative approaches to melanoma research: immunotherapy, targeted therapy, and early detection",
+        "Impact of Melanoma Alliance funding on melanoma research outcomes and patient care"
+      ],
+      "suggested_improvements": [
+        "Consider adding queries related to the specific CFP requirements or guidelines to ensure the queries are tailored to the context.",
+        "Expand the diversity of the queries to cover a broader range of topics within melanoma research, such as epidemiology, risk factors, or survivorship."
+      ],
+      "evaluation_enabled": true
+    },
+    "performance": {
+      "execution_time": 4.95486307144165,
+      "threshold": 10.0,
+      "within_threshold": true,
+      "performance_score": 1.0
+    },
+    "generated_queries": [
+      "Successful grant proposals for melanoma research: strategies and examples",
+      "Current challenges and unmet needs in melanoma treatment and prevention research",
+      "Innovative approaches to melanoma research: immunotherapy, targeted therapy, and early detection",
+      "Impact of Melanoma Alliance funding on melanoma research outcomes and patient care"
+    ]
+  },
+  "timestamp": "2025-06-19T13:31:04.459679+00:00"
+}

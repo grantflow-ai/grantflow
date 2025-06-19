@@ -1,10 +1,8 @@
 import logging
 from datetime import UTC, datetime
-from os import environ
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-import pytest
 from packages.db.src.tables import FundingOrganization, Workspace
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -17,10 +15,7 @@ if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 
 
-@pytest.mark.timeout(60 * 30)
-@pytest.mark.skipif(
-    not environ.get("E2E_TESTS"), reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests"
-)
+# @e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
 async def test_generate_erc_application_for_lampel(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
