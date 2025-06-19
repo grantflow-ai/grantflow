@@ -39,7 +39,9 @@ async def test_create_workspace_success(
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
-        workspace = await session.scalar(select(Workspace).where(Workspace.id == response_body["id"]))
+        workspace = await session.scalar(
+            select(Workspace).where(Workspace.id == response_body["id"])
+        )
 
         assert workspace.name == request_body["name"]
         assert workspace.description == request_body["description"]
@@ -69,7 +71,12 @@ async def test_retrieve_workspaces(
         await session.execute(
             insert(Workspace).values(
                 [
-                    {"id": value.id, "name": value.name, "description": value.description, "logo_url": value.logo_url}
+                    {
+                        "id": value.id,
+                        "name": value.name,
+                        "description": value.description,
+                        "logo_url": value.logo_url,
+                    }
                     for value in workspaces_data
                 ]
             )
@@ -124,7 +131,9 @@ async def test_retrieve_workspaces(
     assert all(value["id"] != str(workspace_without_user_access.id) for value in values)
 
 
-@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
+@pytest.mark.parametrize(
+    "user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER)
+)
 async def test_retrieve_workspace_success(
     test_client: TestingClientType,
     workspace: Workspace,
@@ -223,10 +232,18 @@ async def test_retrieve_workspace_unauthorized(
         (UpdateWorkspaceRequestBody(name="new_name"), ("name",)),
         (UpdateWorkspaceRequestBody(description="new_description"), ("description",)),
         (UpdateWorkspaceRequestBody(logo_url="new_logo_url"), ("logo_url",)),
-        (UpdateWorkspaceRequestBody(name="new_name", description="new_description"), ("name", "description")),
-        (UpdateWorkspaceRequestBody(name="new_name", logo_url="new_logo_url"), ("name", "logo_url")),
         (
-            UpdateWorkspaceRequestBody(description="new_description", logo_url="new_logo_url"),
+            UpdateWorkspaceRequestBody(name="new_name", description="new_description"),
+            ("name", "description"),
+        ),
+        (
+            UpdateWorkspaceRequestBody(name="new_name", logo_url="new_logo_url"),
+            ("name", "logo_url"),
+        ),
+        (
+            UpdateWorkspaceRequestBody(
+                description="new_description", logo_url="new_logo_url"
+            ),
             ("description", "logo_url"),
         ),
     ),
@@ -267,7 +284,9 @@ async def test_update_workspace_success(
     assert response.status_code == HTTPStatus.OK, response.text
 
     async with async_session_maker() as session, session.begin():
-        workspace = await session.scalar(select(Workspace).where(Workspace.id == workspace.id))
+        workspace = await session.scalar(
+            select(Workspace).where(Workspace.id == workspace.id)
+        )
 
     for attr in attrs:
         assert getattr(workspace, attr) == request_body[attr]  # type: ignore[literal-required]
@@ -347,7 +366,9 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
     async_session_maker: async_sessionmaker[Any],
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch("services.backend.src.utils.firebase.get_user_by_email", return_value=None)
+    mocker.patch(
+        "services.backend.src.utils.firebase.get_user_by_email", return_value=None
+    )
 
     async with async_session_maker() as session, session.begin():
         try:
@@ -363,7 +384,9 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.OWNER)
+    request_body = CreateInvitationRedirectUrlRequestBody(
+        email="test@example.com", role=UserRoleEnum.OWNER
+    )
 
     response = await test_client.post(
         f"/workspaces/{workspace.id}/create-invitation-redirect-url",
@@ -371,7 +394,10 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "role must be equal to or lower than the inviter's role" in response.json()["detail"].lower()
+    assert (
+        "role must be equal to or lower than the inviter's role"
+        in response.json()["detail"].lower()
+    )
 
 
 async def test_create_invitation_redirect_url_user_already_member(
@@ -414,7 +440,9 @@ async def test_create_invitation_redirect_url_user_already_member(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.MEMBER)
+    request_body = CreateInvitationRedirectUrlRequestBody(
+        email="test@example.com", role=UserRoleEnum.MEMBER
+    )
 
     response = await test_client.post(
         f"/workspaces/{workspace.id}/create-invitation-redirect-url",
@@ -422,7 +450,10 @@ async def test_create_invitation_redirect_url_user_already_member(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "user is already a member of this workspace" in response.json()["detail"].lower()
+    assert (
+        "user is already a member of this workspace"
+        in response.json()["detail"].lower()
+    )
 
 
 async def test_create_invitation_redirect_url_success(
@@ -451,7 +482,9 @@ async def test_create_invitation_redirect_url_success(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.MEMBER)
+    request_body = CreateInvitationRedirectUrlRequestBody(
+        email="new_user@example.com", role=UserRoleEnum.MEMBER
+    )
 
     response = await test_client.post(
         f"/workspaces/{workspace.id}/create-invitation-redirect-url",
@@ -834,7 +867,10 @@ async def test_update_invitation_role_already_accepted(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "cannot update role of an accepted invitation" in response.json()["detail"].lower()
+    assert (
+        "cannot update role of an accepted invitation"
+        in response.json()["detail"].lower()
+    )
 
 
 async def test_update_invitation_role_higher_than_inviter(
@@ -875,7 +911,10 @@ async def test_update_invitation_role_higher_than_inviter(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "role must be equal to or lower than the inviter's role" in response.json()["detail"].lower()
+    assert (
+        "role must be equal to or lower than the inviter's role"
+        in response.json()["detail"].lower()
+    )
 
 
 async def test_accept_invitation_success(
@@ -925,7 +964,9 @@ async def test_accept_invitation_success(
         assert workspace_user.role == UserRoleEnum.MEMBER
 
         updated_invitation = await session.scalar(
-            select(UserWorkspaceInvitation).where(UserWorkspaceInvitation.id == invitation.id)
+            select(UserWorkspaceInvitation).where(
+                UserWorkspaceInvitation.id == invitation.id
+            )
         )
         assert updated_invitation is not None
         assert updated_invitation.accepted_at is not None
@@ -1046,4 +1087,7 @@ async def test_accept_invitation_wrong_user(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "authenticated user does not match invitation email" in response.json()["detail"].lower()
+    assert (
+        "authenticated user does not match invitation email"
+        in response.json()["detail"].lower()
+    )

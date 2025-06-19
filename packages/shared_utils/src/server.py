@@ -34,9 +34,15 @@ def exception_serializer_processor(_: Any, __: str, event_dict: EventDict) -> Ev
         if isinstance(exc_info, tuple) and len(exc_info) >= 2:
             exc_type, exc_value, _ = exc_info
             if isinstance(exc_value, (BackendError, SQLAlchemyError)):
-                event_dict["exc_info"] = {"type": exc_type.__name__, "message": str(exc_value)}
+                event_dict["exc_info"] = {
+                    "type": exc_type.__name__,
+                    "message": str(exc_value),
+                }
         elif isinstance(exc_info, (BackendError, SQLAlchemyError)):
-            event_dict["exc_info"] = {"type": type(exc_info).__name__, "message": str(exc_info)}
+            event_dict["exc_info"] = {
+                "type": type(exc_info).__name__,
+                "message": str(exc_info),
+            }
 
     for key, value in event_dict.items():
         if key != "exc_info" and isinstance(value, (BackendError, SQLAlchemyError)):
@@ -46,10 +52,14 @@ def exception_serializer_processor(_: Any, __: str, event_dict: EventDict) -> Ev
 
 
 def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler:  # type: ignore[type-arg]
-    def handle_exception(_: Request[Any, Any, Any], exception: Exception) -> Response[Any]:
+    def handle_exception(
+        _: Request[Any, Any, Any], exception: Exception
+    ) -> Response[Any]:
         if isinstance(exception, SQLAlchemyError):
             logger.error(
-                "An unexpected sqlalchemy error occurred", exc_name=type(exception).__name__, exec_info=exception
+                "An unexpected sqlalchemy error occurred",
+                exc_name=type(exception).__name__,
+                exec_info=exception,
             )
             message = "An unexpected database error occurred"
             status_code = HTTPStatus.INTERNAL_SERVER_ERROR
@@ -95,10 +105,14 @@ async def _health_check() -> str:
     return "OK"
 
 
-def create_litestar_app(logger: FilteringBoundLogger, add_session_maker: bool = True, **kwargs: Any) -> Litestar:
+def create_litestar_app(
+    logger: FilteringBoundLogger, add_session_maker: bool = True, **kwargs: Any
+) -> Litestar:
     exception_handler = create_exception_handler(logger)
 
-    health_check = get("/health", media_type="text/plain", operation_id="HealthCheck")(_health_check)
+    health_check = get("/health", media_type="text/plain", operation_id="HealthCheck")(
+        _health_check
+    )
     if "route_handlers" in kwargs:
         kwargs["route_handlers"].append(health_check)
     else:
@@ -131,7 +145,10 @@ def create_litestar_app(logger: FilteringBoundLogger, add_session_maker: bool = 
             max_age=86400,
         ),
         debug=get_env("DEBUG", fallback="", raise_on_missing=False) == "true",
-        exception_handlers={SQLAlchemyError: exception_handler, BackendError: exception_handler},
+        exception_handlers={
+            SQLAlchemyError: exception_handler,
+            BackendError: exception_handler,
+        },
         logging_config=logging_config,
         **kwargs,
     )

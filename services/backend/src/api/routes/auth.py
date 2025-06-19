@@ -29,12 +29,16 @@ class LoginResponse(TypedDict):
 
 
 @post("/login", operation_id="Login")
-async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker[Any]) -> LoginResponse:
+async def handle_login(
+    data: LoginRequestBody, session_maker: async_sessionmaker[Any]
+) -> LoginResponse:
     decoded_token = await verify_id_token(data["id_token"])
     firebase_uid = decoded_token["uid"]
 
     async with session_maker() as session, session.begin():
-        result = await session.execute(select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid))
+        result = await session.execute(
+            select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid)
+        )
         workspace_user = result.scalars().first()
 
         if workspace_user is None:
@@ -43,7 +47,9 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             await session.flush()
 
             workspace_user = WorkspaceUser(
-                workspace_id=default_workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER
+                workspace_id=default_workspace.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.OWNER,
             )
             session.add(workspace_user)
 

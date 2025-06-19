@@ -28,7 +28,9 @@ async def test_with_retry_eventually_succeeds() -> None:
 async def test_with_retry_max_retries_exceeded() -> None:
     from tenacity import RetryError
 
-    mock_fn = Mock(side_effect=[ValueError("error"), ValueError("error"), ValueError("error")])
+    mock_fn = Mock(
+        side_effect=[ValueError("error"), ValueError("error"), ValueError("error")]
+    )
     decorated = with_retry(ValueError, max_retries=3)(mock_fn)
 
     with pytest.raises(RetryError):

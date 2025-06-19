@@ -6,7 +6,10 @@ from typing import Any
 from msgspec import MsgspecError
 from msgspec.json import decode, encode
 
-from packages.shared_utils.src.exceptions import DeserializationError, SerializationError
+from packages.shared_utils.src.exceptions import (
+    DeserializationError,
+    SerializationError,
+)
 
 
 def encode_hook(obj: Any) -> Any:
@@ -16,12 +19,23 @@ def encode_hook(obj: Any) -> Any:
     if isinstance(obj, Exception):
         return {"message": str(obj), "type": type(obj).__name__}
 
-    for key in ("to_dict", "as_dict", "dict", "model_dump", "json", "to_list", "tolist"):
+    for key in (
+        "to_dict",
+        "as_dict",
+        "dict",
+        "model_dump",
+        "json",
+        "to_list",
+        "tolist",
+    ):
         if hasattr(obj, key) and callable(getattr(obj, key)):
             return getattr(obj, key)()
 
     if is_dataclass(obj):
-        return {k: v if not isinstance(v, Enum) else v.value for (k, v) in asdict(obj).items()}  # type: ignore[arg-type]
+        return {
+            k: v if not isinstance(v, Enum) else v.value
+            for (k, v) in asdict(obj).items()
+        }  # type: ignore[arg-type]
 
     raise TypeError(f"Unsupported type: {type(obj)!r}")
 
@@ -56,7 +70,9 @@ def serialize(value: Any, **kwargs: Any) -> bytes:
         ) from e
 
 
-def fix_string_json_values(input_data: dict[str, Any] | list[Any]) -> dict[str, Any] | list[Any]:
+def fix_string_json_values(
+    input_data: dict[str, Any] | list[Any],
+) -> dict[str, Any] | list[Any]:
     if isinstance(input_data, dict):
         for key in input_data:
             if isinstance(input_data[key], str):

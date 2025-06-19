@@ -1,10 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-	RagProcessingStatusMessageFactory,
-	SourceProcessingNotificationMessageFactory,
-} from "::testing/factories";
+import { RagProcessingStatusMessageFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { SourceIndexingStatus } from "@/enums";
 import { WebsocketMessage } from "@/hooks/use-application-notifications";
 
@@ -35,7 +32,9 @@ const mockConnectionStatus = vi.fn(() => "Open");
 const mockConnectionStatusColor = vi.fn(() => "bg-green-500");
 
 vi.mock("@/hooks/use-application-notifications", async () => {
-	const actual = await vi.importActual<typeof import("@/hooks/use-application-notifications")>("@/hooks/use-application-notifications");
+	const actual = await vi.importActual<typeof import("@/hooks/use-application-notifications")>(
+		"@/hooks/use-application-notifications",
+	);
 	return {
 		...actual,
 		useApplicationNotifications: () => ({
@@ -51,27 +50,27 @@ vi.mock("@/hooks/use-application-notifications", async () => {
 // Mock stores
 vi.mock("@/stores/wizard-store", () => ({
 	useWizardStore: () => ({
+		handleTitleChange: vi.fn(),
+		polling: {
+			intervalId: null,
+			isActive: false,
+			start: vi.fn(),
+			stop: vi.fn(),
+		},
+		setCurrentStep: vi.fn(),
+		setFileDropdownOpen: vi.fn(),
+		setLinkHoverState: vi.fn(),
+		setUrlInput: vi.fn(),
 		setWorkspaceId: vi.fn(),
-		ui: { 
+		toNextStep: vi.fn(),
+		toPreviousStep: vi.fn(),
+		ui: {
 			currentStep: 0,
 			fileDropdownStates: {},
 			linkHoverStates: {},
 			urlInput: "",
 		},
-		polling: {
-			start: vi.fn(),
-			stop: vi.fn(),
-			isActive: false,
-			intervalId: null,
-		},
-		handleTitleChange: vi.fn(),
 		validateStepNext: vi.fn(() => true),
-		toNextStep: vi.fn(),
-		toPreviousStep: vi.fn(),
-		setCurrentStep: vi.fn(),
-		setFileDropdownOpen: vi.fn(),
-		setLinkHoverState: vi.fn(),
-		setUrlInput: vi.fn(),
 		workspaceId: "test-workspace-id",
 		wsConnectionStatus: undefined,
 		wsConnectionStatusColor: undefined,
@@ -85,9 +84,9 @@ vi.mock("@/stores/application-store", () => ({
 			title: "Test Application",
 			workspace_id: "test-workspace-id",
 		},
-		handleApplicationInit: vi.fn().mockResolvedValue(undefined),
 		applicationTitle: "Test Application",
 		areFilesOrUrlsIndexing: vi.fn(() => false),
+		handleApplicationInit: vi.fn().mockResolvedValue(undefined),
 		removeFile: vi.fn(),
 		removeUrl: vi.fn(),
 		retrieveApplication: vi.fn(),
@@ -118,7 +117,6 @@ describe("WebSocket Notifications Integration", () => {
 		it("shows info toast for indexing status", async () => {
 			const { toast } = await import("sonner");
 			const notification = SourceProcessingNotificationMessageFactory.build({
-				parent_id: "test-app-id",
 				data: {
 					identifier: "document.pdf",
 					indexing_status: SourceIndexingStatus.INDEXING,
@@ -126,6 +124,7 @@ describe("WebSocket Notifications Integration", () => {
 					parent_type: "grant_template",
 					rag_source_id: "source-1",
 				},
+				parent_id: "test-app-id",
 			});
 
 			mockNotifications.mockReturnValue([notification]);
@@ -139,7 +138,6 @@ describe("WebSocket Notifications Integration", () => {
 		it("shows success toast when indexing finishes", async () => {
 			const { toast } = await import("sonner");
 			const notification = SourceProcessingNotificationMessageFactory.build({
-				parent_id: "test-app-id",
 				data: {
 					identifier: "research-paper.pdf",
 					indexing_status: SourceIndexingStatus.FINISHED,
@@ -147,6 +145,7 @@ describe("WebSocket Notifications Integration", () => {
 					parent_type: "grant_template",
 					rag_source_id: "source-2",
 				},
+				parent_id: "test-app-id",
 			});
 
 			mockNotifications.mockReturnValue([notification]);
@@ -160,7 +159,6 @@ describe("WebSocket Notifications Integration", () => {
 		it("shows error toast when indexing fails", async () => {
 			const { toast } = await import("sonner");
 			const notification = SourceProcessingNotificationMessageFactory.build({
-				parent_id: "test-app-id",
 				data: {
 					identifier: "broken-file.pdf",
 					indexing_status: SourceIndexingStatus.FAILED,
@@ -168,6 +166,7 @@ describe("WebSocket Notifications Integration", () => {
 					parent_type: "grant_template",
 					rag_source_id: "source-3",
 				},
+				parent_id: "test-app-id",
 			});
 
 			mockNotifications.mockReturnValue([notification]);
@@ -183,13 +182,13 @@ describe("WebSocket Notifications Integration", () => {
 		it("shows info toast for RAG processing events", async () => {
 			const { toast } = await import("sonner");
 			const notification = RagProcessingStatusMessageFactory.build({
-				event: "grant_template_extraction",
-				parent_id: "test-app-id",
 				data: {
+					data: undefined, // Explicitly no data for this test
 					event: "grant_template_extraction",
 					message: "Extracting grant application sections from CFP content...",
-					data: undefined, // Explicitly no data for this test
 				},
+				event: "grant_template_extraction",
+				parent_id: "test-app-id",
 			});
 
 			mockNotifications.mockReturnValue([notification]);
@@ -203,16 +202,16 @@ describe("WebSocket Notifications Integration", () => {
 		it("shows info toast with description for RAG processing events with data", async () => {
 			const { toast } = await import("sonner");
 			const notification = RagProcessingStatusMessageFactory.build({
-				event: "sections_extracted",
-				parent_id: "test-app-id",
 				data: {
+					data: {
+						organization: "National Science Foundation",
+						section_count: 5,
+					},
 					event: "sections_extracted",
 					message: "Sections extracted successfully",
-					data: {
-						section_count: 5,
-						organization: "National Science Foundation",
-					},
 				},
+				event: "sections_extracted",
+				parent_id: "test-app-id",
 			});
 
 			mockNotifications.mockReturnValue([notification]);
@@ -231,16 +230,15 @@ describe("WebSocket Notifications Integration", () => {
 		it("handles multiple notifications in sequence", async () => {
 			const { toast } = await import("sonner");
 			const ragNotification = RagProcessingStatusMessageFactory.build({
-				event: "grant_template_extraction",
-				parent_id: "test-app-id",
 				data: {
+					data: undefined, // Explicitly no data
 					event: "grant_template_extraction",
 					message: "Starting extraction...",
-					data: undefined, // Explicitly no data
 				},
+				event: "grant_template_extraction",
+				parent_id: "test-app-id",
 			});
 			const sourceNotification = SourceProcessingNotificationMessageFactory.build({
-				parent_id: "test-app-id",
 				data: {
 					identifier: "file1.pdf",
 					indexing_status: SourceIndexingStatus.INDEXING,
@@ -248,6 +246,7 @@ describe("WebSocket Notifications Integration", () => {
 					parent_type: "grant_template",
 					rag_source_id: "source-4",
 				},
+				parent_id: "test-app-id",
 			});
 			const notifications: WebsocketMessage<unknown>[] = [ragNotification, sourceNotification];
 

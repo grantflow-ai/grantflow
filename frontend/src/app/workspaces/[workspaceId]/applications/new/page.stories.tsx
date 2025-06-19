@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 
+import { ApplicationFactory, ApplicationWithTemplateFactory, RagSourceFactory } from "::testing/factories";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -9,11 +10,12 @@ import {
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
+import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 
 import type { Meta, StoryObj } from "@storybook/react";
 
-// Completely static wizard page for Storybook that doesn't depend on zustand
-function StaticWizardPage({
+function WizardPage({
 	currentStep = 0,
 	hasApplication = true,
 }: {
@@ -51,8 +53,8 @@ function StaticWizardPage({
 	);
 }
 
-const meta: Meta<typeof StaticWizardPage> = {
-	component: StaticWizardPage,
+const meta: Meta<typeof WizardPage> = {
+	component: WizardPage,
 	decorators: [
 		(Story) => (
 			<div className="h-screen w-screen">
@@ -70,7 +72,7 @@ const meta: Meta<typeof StaticWizardPage> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof StaticWizardPage>;
+type Story = StoryObj<typeof WizardPage>;
 
 export const Default: Story = {
 	args: {
@@ -78,44 +80,27 @@ export const Default: Story = {
 		currentStep: 0,
 		hasApplication: true,
 	},
-	name: "Default - Step 1 (Application Details)",
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: null,
-						id: "app-123",
-						rag_sources: [],
-						title: "Untitled Application",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Untitled Application",
-					templateId: null,
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const application = ApplicationFactory.build({
+					grant_template: undefined,
+					title: "Untitled Application",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [],
 					urls: [],
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => false,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
+	name: "Default - Step 1 (Application Details)",
 };
 
 export const LoadingState: Story = {
@@ -133,45 +118,27 @@ export const Step1_ApplicationDetails: Story = {
 		currentStep: 0,
 		hasApplication: true,
 	},
-	name: "Step 1 - Application Details",
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: null,
-						id: "app-123",
-						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: null,
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const application = ApplicationFactory.build({
+					grant_template: undefined,
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [],
 					urls: [],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => true,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
+	name: "Step 1 - Application Details",
 };
 
 export const Step2_ApplicationStructure: Story = {
@@ -180,72 +147,30 @@ export const Step2_ApplicationStructure: Story = {
 		currentStep: 1,
 		hasApplication: true,
 	},
-	name: "Step 2 - Application Structure",
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [
-								{
-									description: "Overview of the project and key highlights",
-									id: "section-1",
-									order: 1,
-									title: "Executive Summary",
-								},
-								{
-									description: "Detailed description of the proposed project",
-									id: "section-2",
-									order: 2,
-									title: "Project Description",
-								},
-								{
-									description: "Financial breakdown and project timeline",
-									id: "section-3",
-									order: 3,
-									title: "Budget & Timeline",
-								},
-							],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const application = ApplicationWithTemplateFactory.build({
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [
-						{
-							file: { name: "research-proposal.pdf", size: 1_024_000 },
+						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
 							id: "file-1",
-						},
+						}),
 					],
 					urls: ["https://example.com/research-data"],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => true,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
+	name: "Step 2 - Application Structure",
 };
 
 export const Step3_KnowledgeBase: Story = {
@@ -254,73 +179,39 @@ export const Step3_KnowledgeBase: Story = {
 		currentStep: 2,
 		hasApplication: true,
 	},
-	name: "Step 3 - Knowledge Base",
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [
-								{
-									description: "Overview of the project and key highlights",
-									id: "section-1",
-									order: 1,
-									title: "Executive Summary",
-								},
-							],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [
-							{
-								id: "source-1",
-								identifier: "research-proposal.pdf",
-								indexing_status: "FINISHED",
-								type: "FILE",
-							},
-							{
-								id: "source-2",
-								identifier: "https://example.com/research-data",
-								indexing_status: "FINISHED",
-								type: "URL",
-							},
-						],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						status: "FINISHED",
+					}),
+				];
+				const application = ApplicationWithTemplateFactory.build({
+					rag_sources: ragSources,
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [
-						{
-							file: { name: "research-proposal.pdf", size: 1_024_000 },
+						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
 							id: "file-1",
-						},
+						}),
 					],
 					urls: ["https://example.com/research-data"],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => true,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 2, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
+	name: "Step 3 - Knowledge Base",
 };
 
 export const Step4_ResearchPlan: Story = {
@@ -329,73 +220,36 @@ export const Step4_ResearchPlan: Story = {
 		currentStep: 3,
 		hasApplication: true,
 	},
-	name: "Step 4 - Research Plan",
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [
-								{
-									description: "Overview of the project and key highlights",
-									id: "section-1",
-									order: 1,
-									title: "Executive Summary",
-								},
-								{
-									description: "Detailed description of the proposed project",
-									id: "section-2",
-									order: 2,
-									title: "Project Description",
-								},
-							],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [
-							{
-								id: "source-1",
-								identifier: "research-proposal.pdf",
-								indexing_status: "FINISHED",
-								type: "FILE",
-							},
-						],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						status: "FINISHED",
+					}),
+				];
+				const application = ApplicationWithTemplateFactory.build({
+					rag_sources: ragSources,
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [
-						{
-							file: { name: "research-proposal.pdf", size: 1_024_000 },
+						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
 							id: "file-1",
-						},
+						}),
 					],
 					urls: [],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 3,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => true,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 3, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
+	name: "Step 4 - Research Plan",
 };
 
 export const Step5_ResearchDeepDive: Story = {
@@ -404,79 +258,36 @@ export const Step5_ResearchDeepDive: Story = {
 		currentStep: 4,
 		hasApplication: true,
 	},
-	name: "Step 5 - Research Deep Dive",
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [
-								{
-									description: "Overview of the project and key highlights",
-									id: "section-1",
-									order: 1,
-									title: "Executive Summary",
-								},
-								{
-									description: "Detailed description of the proposed project",
-									id: "section-2",
-									order: 2,
-									title: "Project Description",
-								},
-								{
-									description: "Financial breakdown and project timeline",
-									id: "section-3",
-									order: 3,
-									title: "Budget & Timeline",
-								},
-							],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [
-							{
-								id: "source-1",
-								identifier: "research-proposal.pdf",
-								indexing_status: "FINISHED",
-								type: "FILE",
-							},
-						],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						status: "FINISHED",
+					}),
+				];
+				const application = ApplicationWithTemplateFactory.build({
+					rag_sources: ragSources,
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [
-						{
-							file: { name: "research-proposal.pdf", size: 1_024_000 },
+						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
 							id: "file-1",
-						},
+						}),
 					],
 					urls: [],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 4,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => true,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 4, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
+	name: "Step 5 - Research Deep Dive",
 };
 
 export const Step6_GenerateComplete: Story = {
@@ -485,98 +296,49 @@ export const Step6_GenerateComplete: Story = {
 		currentStep: 5,
 		hasApplication: true,
 	},
-	name: "Step 6 - Generate & Complete",
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [
-								{
-									description: "Overview of the project and key highlights",
-									id: "section-1",
-									order: 1,
-									title: "Executive Summary",
-								},
-								{
-									description: "Detailed description of the proposed project",
-									id: "section-2",
-									order: 2,
-									title: "Project Description",
-								},
-								{
-									description: "Financial breakdown and project timeline",
-									id: "section-3",
-									order: 3,
-									title: "Budget & Timeline",
-								},
-								{
-									description: "Team members and their relevant experience",
-									id: "section-4",
-									order: 4,
-									title: "Team & Qualifications",
-								},
-							],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [
-							{
-								id: "source-1",
-								identifier: "research-proposal.pdf",
-								indexing_status: "FINISHED",
-								type: "FILE",
-							},
-							{
-								id: "source-2",
-								identifier: "budget-template.xlsx",
-								indexing_status: "FINISHED",
-								type: "FILE",
-							},
-						],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: "template-456",
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						status: "FINISHED",
+					}),
+				];
+				const application = ApplicationWithTemplateFactory.build({
+					rag_sources: ragSources,
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [
-						{
-							file: { name: "research-proposal.pdf", size: 1_024_000 },
+						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
 							id: "file-1",
-						},
-						{
-							file: { name: "budget-template.xlsx", size: 512_000 },
-							id: "file-2",
-						},
+						}),
+						Object.assign(
+							new File(["content"], "budget-template.xlsx", {
+								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+							}),
+							{
+								id: "file-2",
+							},
+						),
 					],
 					urls: [],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 5,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => true,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 5, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
+	name: "Step 6 - Generate & Complete",
 };
 
-// Edge cases and error states
 export const LongApplicationTitle: Story = {
 	args: {
 		applicationTitle:
@@ -584,48 +346,29 @@ export const LongApplicationTitle: Story = {
 		currentStep: 1,
 		hasApplication: true,
 	},
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: {
-							grant_sections: [],
-							id: "template-456",
-						},
-						id: "app-123",
-						rag_sources: [],
-						title: "Comprehensive Climate Change Research and Environmental Impact Assessment Grant for Sustainable Development and Renewable Energy Solutions",
-						workspace_id: "workspace-123",
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: {
+						...ApplicationWithTemplateFactory.build().grant_template!,
+						grant_sections: [],
 					},
-					applicationId: "app-123",
-					applicationTitle:
-						"Comprehensive Climate Change Research and Environmental Impact Assessment Grant for Sustainable Development and Renewable Energy Solutions",
-					templateId: "template-456",
+					title: "Comprehensive Climate Change Research and Environmental Impact Assessment Grant for Sustainable Development and Renewable Energy Solutions",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [],
 					urls: [],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => false,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 1, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
 };
 
 export const ProcessingFiles: Story = {
@@ -634,62 +377,39 @@ export const ProcessingFiles: Story = {
 		currentStep: 2,
 		hasApplication: true,
 	},
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: null,
-						id: "app-123",
-						rag_sources: [
-							{
-								id: "source-1",
-								identifier: "research-proposal.pdf",
-								indexing_status: "INDEXING",
-								type: "FILE",
-							},
-							{
-								id: "source-2",
-								identifier: "https://example.com/research-data",
-								indexing_status: "PENDING",
-								type: "URL",
-							},
-						],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: null,
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						status: "INDEXING",
+					}),
+					RagSourceFactory.build({
+						status: "INDEXING",
+					}),
+				];
+				const application = ApplicationFactory.build({
+					grant_template: undefined,
+					rag_sources: ragSources,
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [
-						{
-							file: { name: "research-proposal.pdf", size: 1_024_000 },
+						Object.assign(new File(["content"], "research-proposal.pdf", { type: "application/pdf" }), {
 							id: "file-1",
-						},
+						}),
 					],
 					urls: ["https://example.com/research-data"],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: true,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => false,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 2, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
 };
 
 export const ConnectionError: Story = {
@@ -698,42 +418,24 @@ export const ConnectionError: Story = {
 		currentStep: 0,
 		hasApplication: true,
 	},
-	parameters: {
-		zustand: {
-			store: {
-				applicationState: {
-					application: {
-						grant_template: null,
-						id: "app-123",
-						rag_sources: [],
-						title: "Climate Change Research Grant",
-						workspace_id: "workspace-123",
-					},
-					applicationId: "app-123",
-					applicationTitle: "Climate Change Research Grant",
-					templateId: null,
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const application = ApplicationFactory.build({
+					grant_template: undefined,
+					title: "Climate Change Research Grant",
+				});
+				useApplicationStore.setState({
+					application,
+					isLoading: false,
 					uploadedFiles: [],
 					urls: [],
-					workspaceId: "workspace-123",
-				},
-				handleApplicationInit: () => Promise.resolve(),
-				isLoading: false,
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: () => undefined,
-					stop: () => undefined,
-				},
-				toNextStep: () => undefined,
-				toPreviousStep: () => undefined,
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
-				validateStepNext: () => false,
-			},
+				});
+				useWizardStore.setState({
+					ui: { currentStep: 0, fileDropdownStates: {}, linkHoverStates: {}, urlInput: "" },
+				});
+			}, []);
+			return <Story />;
 		},
-	},
+	],
 };
