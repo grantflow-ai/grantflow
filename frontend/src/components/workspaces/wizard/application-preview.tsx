@@ -145,6 +145,11 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 		}
 	};
 
+	const handleContextMenu = (e: React.MouseEvent) => {
+		e.preventDefault();
+		setDropdownOpen(true);
+	};
+
 	const FileIcon = () => {
 		const getIconComponent = () => {
 			switch (extension) {
@@ -179,32 +184,43 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 		return <div className="flex items-center justify-center">{getIconComponent()}</div>;
 	};
 
-	return (
-		<button
-			className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all"
-			onContextMenu={(e) => {
-				e.preventDefault();
-				setDropdownOpen(true);
-			}}
-			onDoubleClick={canOpenInBrowser ? handleOpen : undefined}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" && canOpenInBrowser) {
-					handleOpen();
-				}
-			}}
-			title={canOpenInBrowser ? "Double-click to open file" : undefined}
-			type="button"
-		>
+	const fileContent = (
+		<>
 			<div className="mb-1">
 				<FileIcon />
 			</div>
 			<span className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3" title={file.name}>
 				{file.name}
 			</span>
+		</>
+	);
+
+	return (
+		<div className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all">
+			{canOpenInBrowser ? (
+				<button
+					aria-label={`Open ${file.name}`}
+					className="flex flex-col items-center justify-center focus:outline-none"
+					onClick={handleOpen}
+					onContextMenu={handleContextMenu}
+					title="Click to open file"
+					type="button"
+				>
+					{fileContent}
+				</button>
+			) : (
+				<div
+					aria-label={`File ${file.name} - right click for options`}
+					onContextMenu={handleContextMenu}
+					role="img"
+				>
+					{fileContent}
+				</div>
+			)}
 
 			<DropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
-				<DropdownMenuTrigger disabled>
-					<span className="sr-only">Open menu</span>
+				<DropdownMenuTrigger className="sr-only" disabled>
+					<span>File options</span>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="w-40">
 					<DropdownMenuItem className="gap-2" disabled={!canOpenInBrowser} onClick={handleOpen}>
@@ -221,7 +237,7 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-		</button>
+		</div>
 	);
 }
 
