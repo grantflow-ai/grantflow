@@ -1,17 +1,14 @@
 "use client";
 
 import React from "react";
-import { toast } from "sonner";
 
-import { crawlTemplateUrl } from "@/actions/sources";
 import AppInput from "@/components/input-field";
 import { IconGlobe } from "@/components/workspaces/icons";
 import { useApplicationStore } from "@/stores/application-store";
-import { logError } from "@/utils/logging";
 import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
-	const { addUrl, application, urls } = useApplicationStore();
+	const { addUrl, urls } = useApplicationStore();
 
 	const [urlInput, setUrlInput] = React.useState("");
 	const [urlError, setUrlError] = React.useState<null | string>(null);
@@ -29,22 +26,8 @@ export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 			setUrlError(null);
 
 			if (!urls.includes(trimmedUrl)) {
-				if (!application?.grant_template?.id) {
-					logError({ error: "Template not found", identifier: "handleAddUrl" });
-					return;
-				}
-
-				try {
-					await crawlTemplateUrl(application.workspace_id, application.grant_template.id, trimmedUrl);
-					toast.success("URL added successfully");
-
-					addUrl(trimmedUrl);
-
-					onUrlAdded?.();
-				} catch (error) {
-					logError({ error, identifier: "crawlTemplateUrl" });
-					toast.error("Failed to process URL. Please try again.");
-				}
+				await addUrl(trimmedUrl);
+				onUrlAdded?.();
 			}
 			setUrlInput("");
 		}

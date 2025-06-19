@@ -27,7 +27,8 @@ import {
 } from "@/components/workspaces/icons";
 import { ThemeBadge } from "@/components/workspaces/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
-import { FileWithId } from "@/types/files";
+
+import type { FileWithId } from "@/types/files";
 
 interface ApplicationPreviewProps {
 	connectionStatus?: string;
@@ -179,14 +180,20 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 	};
 
 	return (
-		<div
+		<button
 			className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all"
 			onContextMenu={(e) => {
 				e.preventDefault();
 				setDropdownOpen(true);
 			}}
 			onDoubleClick={canOpenInBrowser ? handleOpen : undefined}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" && canOpenInBrowser) {
+					handleOpen();
+				}
+			}}
 			title={canOpenInBrowser ? "Double-click to open file" : undefined}
+			type="button"
 		>
 			<div className="mb-1">
 				<FileIcon />
@@ -214,7 +221,7 @@ function FilePreviewCard({ file, onRemove }: { file: FileWithId; onRemove?: (fil
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-		</div>
+		</button>
 	);
 }
 
@@ -224,33 +231,19 @@ function getFileExtension(filename: string) {
 }
 
 function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; url: string }) {
-	const [isHovered, setIsHovered] = React.useState(false);
-
 	const handleRemove = () => {
 		onRemove?.(url);
 	};
 
 	return (
-		<div
-			className="group relative flex items-center gap-2"
-			data-testid="link-preview-item"
-			onMouseEnter={() => {
-				setIsHovered(true);
-			}}
-			onMouseLeave={() => {
-				setIsHovered(false);
-			}}
-		>
+		<div className="group relative flex items-center gap-2" data-testid="link-preview-item">
 			<div className="flex size-3.5 shrink-0 items-center justify-center">
-				{isHovered ? (
-					<IconClose
-						className="cursor-pointer text-blue-600"
-						data-testid="link-remove-icon"
-						onClick={handleRemove}
-					/>
-				) : (
-					<Link className="text-primary" />
-				)}
+				<IconClose
+					className="cursor-pointer text-blue-600 opacity-0 transition-opacity group-hover:opacity-100"
+					data-testid="link-remove-icon"
+					onClick={handleRemove}
+				/>
+				<Link className="text-primary absolute opacity-100 transition-opacity group-hover:opacity-0" />
 			</div>
 			<Button asChild className="h-auto justify-start p-0.5 text-blue-600 hover:text-blue-800" variant="link">
 				<a data-testid="link-url" href={url} rel="noopener noreferrer" target="_blank">

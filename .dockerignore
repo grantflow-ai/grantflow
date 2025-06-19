@@ -7,7 +7,6 @@
 .idea/
 .husky/
 .eslintrc*
-.prettierrc*
 .editorconfig
 
 # Python files
@@ -51,7 +50,7 @@ testing/
 .github/workflows/
 
 # Root level files not needed for builds
-/.pre-commit-config.yaml
+/.biome.json
 /.commitlintrc
 /docker-compose.yaml
 /.gitignore

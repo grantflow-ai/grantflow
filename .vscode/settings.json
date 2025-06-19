@@ -1,47 +1,47 @@
 {
-	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll": "explicit"
+	"[css]": {
+		"editor.defaultFormatter": "biomejs.biome"
 	},
-	"python.linting.enabled": true,
-	"python.linting.mypyEnabled": true,
-	"python.linting.flake8Enabled": false,
-	"python.linting.pylintEnabled": false,
-	"python.formatting.provider": "none",
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
 	"[python]": {
-		"editor.defaultFormatter": "charliermarsh.ruff",
-		"editor.formatOnSave": true,
 		"editor.codeActionsOnSave": {
 			"source.fixAll": "explicit",
 			"source.organizeImports": "explicit"
 		},
+		"editor.defaultFormatter": "charliermarsh.ruff",
+		"editor.formatOnSave": true,
 		"editor.rulers": [120]
 	},
 	"[typescript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
+		"editor.defaultFormatter": "biomejs.biome"
 	},
 	"[typescriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
+		"editor.defaultFormatter": "biomejs.biome"
 	},
-	"[javascript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit"
 	},
-	"[javascriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[css]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[json]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"typescript.tsdk": "frontend/node_modules/typescript/lib",
-	"typescript.enableProjectDiagnostics": true,
-	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
-	"eslint.workingDirectories": ["./frontend"],
-	"eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-	"eslint.run": "onType",
+	"editor.formatOnSave": true,
 	"eslint.alwaysShowStatus": true,
 	"eslint.format.enable": true,
-	"eslint.lintTask.enable": true
+	"eslint.lintTask.enable": true,
+	"eslint.run": "onType",
+	"eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+	"eslint.workingDirectories": ["."],
+	"python.formatting.provider": "none",
+	"python.linting.enabled": true,
+	"python.linting.flake8Enabled": false,
+	"python.linting.mypyEnabled": true,
+	"python.linting.pylintEnabled": false,
+	"typescript.enableProjectDiagnostics": true,
+	"typescript.tsdk": "frontend/node_modules/typescript/lib",
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true
 }

@@ -8,8 +8,9 @@ import { crawlTemplateUrl } from "@/actions/sources";
 import { Button } from "@/components/ui/button";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { FileWithId } from "@/types/files";
 import { logError } from "@/utils/logging";
+
+import type { FileWithId } from "@/types/files";
 
 const TEST_FILES = [
 	{
@@ -31,8 +32,11 @@ const TEST_URLS = [
 
 export function DevAutofillButton() {
 	const params = useParams();
-	const { currentStep } = useWizardStore();
-	const { addUrl, application, setUploadedFiles, updateApplication } = useApplicationStore();
+	const {
+		handleTitleChange,
+		ui: { currentStep },
+	} = useWizardStore();
+	const { addUrl, application, setUploadedFiles } = useApplicationStore();
 
 	const handleAutofill = async () => {
 		try {
@@ -40,17 +44,13 @@ export function DevAutofillButton() {
 
 			switch (currentStep) {
 				case 0: {
-					if (application) {
-						void updateApplication(workspaceId, application.id, {
-							title: "AI-Powered Early Cancer Detection Using Novel Biomarkers",
-						});
-					}
+					handleTitleChange("AI-Powered Early Cancer Detection Using Novel Biomarkers");
 
 					for (const url of TEST_URLS) {
 						try {
 							await crawlTemplateUrl(workspaceId, application?.grant_template?.id ?? "", url);
 							toast.success(`URL added: ${url}`);
-							addUrl(url);
+							await addUrl(url);
 						} catch (error) {
 							logError({ error, identifier: "dev-autofill-crawlTemplateUrl" });
 							toast.error(`Failed to add URL: ${url}`);

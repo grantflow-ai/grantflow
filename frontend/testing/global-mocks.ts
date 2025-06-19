@@ -1,11 +1,11 @@
 import process from "node:process";
 
-import { toast } from "sonner";
-import { beforeEach, Mock, vi } from "vitest";
+import { beforeEach, type Mock, vi } from "vitest";
 
 import { PagePath } from "@/enums";
 
 import type { Env } from "@/types/env-types";
+import type { toast } from "sonner";
 
 const {
 	mockCookies,

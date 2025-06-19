@@ -23,9 +23,7 @@ vi.mock("motion/react", async () => {
 vi.mock("./backgrounds", () => ({
 	GradientBackground: vi
 		.fn()
-		.mockImplementation(({ className }) => (
-			<div className={className} data-testid="mock-gradient-background"></div>
-		)),
+		.mockImplementation(({ className }) => <div className={className} data-testid="mock-gradient-background" />),
 }));
 
 vi.mock("./waitlist-form", () => ({

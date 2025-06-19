@@ -6,7 +6,10 @@ import pytest
 from msgspec import DecodeError, EncodeError
 from pytest_mock import MockFixture
 
-from packages.shared_utils.src.exceptions import DeserializationError, SerializationError
+from packages.shared_utils.src.exceptions import (
+    DeserializationError,
+    SerializationError,
+)
 from packages.shared_utils.src.serialization import deserialize, encode_hook, serialize
 
 
