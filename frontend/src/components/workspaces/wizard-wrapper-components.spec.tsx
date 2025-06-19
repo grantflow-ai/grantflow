@@ -40,16 +40,11 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
+			currentStep: 0,
 			polling: {
 				...polling,
 				intervalId: null,
 				isActive: false,
-			},
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
 			},
 		});
 
@@ -64,12 +59,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Navigation Button Visibility", () => {
 		it("displays back button for steps after the first", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 1,
 			});
 			render(<WizardFooter />);
 
@@ -78,12 +68,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("hides back button on the first step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 			render(<WizardFooter />);
 
@@ -94,12 +79,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Action Button Configuration", () => {
 		it("displays approval action on step 2", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 1,
 			});
 			render(<WizardFooter />);
 
@@ -109,12 +89,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("displays generation action on final step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 5,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 5,
 			});
 			render(<WizardFooter />);
 
@@ -124,12 +99,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("displays standard next action on other steps", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 2,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 2,
 			});
 			render(<WizardFooter />);
 
@@ -141,12 +111,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Button State Management", () => {
 		it("enables continue button when step validation passes", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 			render(<WizardFooter />);
 
@@ -156,12 +121,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("disables continue button when step validation fails", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 
 			Object.assign(mockApplicationStoreState, {
@@ -182,16 +142,11 @@ describe("WizardHeader", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
+			currentStep: 0,
 			polling: {
 				...polling,
 				intervalId: null,
 				isActive: false,
-			},
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
 			},
 		});
 
@@ -206,12 +161,7 @@ describe("WizardHeader", () => {
 	describe("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 1,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 1,
 			});
 			render(<WizardHeader />);
 
@@ -221,12 +171,7 @@ describe("WizardHeader", () => {
 
 		it("hides application info on first step", () => {
 			useWizardStore.setState({
-				ui: {
-					currentStep: 0,
-					fileDropdownStates: {},
-					linkHoverStates: {},
-					urlInput: "",
-				},
+				currentStep: 0,
 			});
 			render(<WizardHeader />);
 

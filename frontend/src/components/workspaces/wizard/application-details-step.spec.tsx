@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApplicationFactory } from "::testing/factories";
+import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -26,17 +26,12 @@ describe("ApplicationDetailsStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
+			currentStep: 0,
 			polling: {
 				intervalId: null,
 				isActive: false,
 				start: vi.fn(),
 				stop: vi.fn(),
-			},
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
 			},
 		});
 
@@ -229,8 +224,7 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("shows uploaded files in preview", () => {
-		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
-		Object.assign(file, { id: "file-id" });
+		const file = FileWithIdFactory.build({ name: "test.pdf" });
 
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
@@ -259,8 +253,7 @@ describe("ApplicationDetailsStep", () => {
 	it("renders file dropdown with right-click", async () => {
 		const user = userEvent.setup();
 
-		const file = new File(["content"], "test.pdf", { type: "application/pdf" });
-		Object.assign(file, { id: "file-id" });
+		const file = FileWithIdFactory.build({ name: "test.pdf" });
 
 		useApplicationStore.setState({
 			application: ApplicationFactory.build({
