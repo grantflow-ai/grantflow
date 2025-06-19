@@ -9,12 +9,10 @@ import { ApplicationPreview } from "./application-preview";
 
 import type { FileWithId } from "@/types/files";
 
-function createMockFile(name: string, size: number, type: string, id?: string): FileWithId {
+function createMockFile(name: string, size: number, type: string, id: string): FileWithId {
 	const file = new File(["content"], name, { type }) as FileWithId;
 	Object.defineProperty(file, "size", { value: size, writable: false });
-	if (id) {
-		file.id = id;
-	}
+	file.id = id;
 	return file;
 }
 
@@ -23,12 +21,7 @@ describe("ApplicationPreview", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			ui: {
-				currentStep: 0,
-				fileDropdownStates: {},
-				linkHoverStates: {},
-				urlInput: "",
-			},
+			currentStep: 0,
 		});
 
 		useApplicationStore.setState({
