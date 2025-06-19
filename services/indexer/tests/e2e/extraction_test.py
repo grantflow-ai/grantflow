@@ -14,6 +14,7 @@ from testing import TEST_DATA_SOURCES
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
+@pytest.mark.e2e_full
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
     logger.info("Running end-to-end test for extracting text from %s", data_file.name)
@@ -28,6 +29,16 @@ async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
         assert isinstance(result, str), f"Expected string result, got {type(result)}"
         assert result.strip(), "Extracted text is empty"
         assert extracted_mime_type, "No MIME type returned"
+        assert len(result) >= 100, f"Extracted text too short: {len(result)} chars"
+
+        # Quality checks
+        words = result.split()
+        assert len(words) >= 20, f"Too few words extracted: {len(words)}"
+
+        # Check for reasonable character distribution
+        alpha_chars = sum(1 for c in result if c.isalpha())
+        alpha_ratio = alpha_chars / len(result) if result else 0
+        assert alpha_ratio > 0.3, f"Low alphabetic character ratio: {alpha_ratio:.2f}"
 
         logger.info(
             "Successfully extracted %d characters from %s (mime: %s -> %s)",

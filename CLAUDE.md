@@ -78,6 +78,112 @@ task --list             # Show all available tasks
 
 IMPORTANT: Always check the Taskfile.yaml for the most up-to-date commands and their exact implementations.
 
+## Testing
+
+### Test Organization and Markers
+
+The project uses pytest markers to organize tests by duration and purpose:
+
+```bash
+# Quick unit tests (default - no marker needed)
+pytest services/indexer/tests/          # Runs unit tests only (~8s)
+
+# Smoke tests - Essential functionality checks (< 1 min)
+E2E_TESTS=1 pytest -m "smoke"          # Quick e2e validation
+
+# Quality assessment tests (2-5 min)
+E2E_TESTS=1 pytest -m "quality_assessment"  # Moderate quality checks
+
+# Full e2e test suite (10+ min)
+E2E_TESTS=1 pytest -m "e2e_full"       # Complete integration testing
+
+# Specialized evaluation tests
+E2E_TESTS=1 pytest -m "semantic_evaluation"  # Semantic similarity tests
+E2E_TESTS=1 pytest -m "ai_eval"        # AI-powered evaluation tests
+
+# All slow tests
+E2E_TESTS=1 pytest -m "slow"           # Any time-intensive tests
+```
+
+### Test Categories
+
+**Unit Tests** (no markers):
+- Fast, mocked tests
+- Run by default in CI
+- Cover core logic and error paths
+- ~8-10 seconds total runtime
+
+**E2E Tests** (require `E2E_TESTS=1`):
+- Test real functionality with actual files
+- Use pytest markers for duration control
+- Include quality and semantic validation
+- Range from 1 min (smoke) to 10+ min (full)
+
+### Running Tests
+
+```bash
+# Development workflow
+task test                                    # Run all unit tests
+E2E_TESTS=1 task test                       # Run all tests including e2e
+
+# Specific services
+pytest services/indexer/tests/             # Just indexer unit tests
+E2E_TESTS=1 pytest services/indexer/tests/ # Indexer unit + e2e tests
+
+# CI-friendly patterns
+pytest                                      # Fast unit tests only
+E2E_TESTS=1 pytest -m "smoke"             # Essential e2e validation
+E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)" # Skip expensive AI tests
+```
+
+### Timeout Configuration
+
+- Default timeout: 120 seconds (set in `pyproject.toml`)
+- Individual tests can override with `@pytest.mark.timeout(300)`
+- E2E tests have longer timeouts based on complexity
+- Smoke tests: 60-120s, Quality: 180-300s, Full: 600s+
+
+### Applying Test Markers
+
+**Unit Tests**: No markers needed - they run by default
+
+**E2E Tests**: Apply appropriate markers based on test duration and purpose:
+
+```python
+# Quick smoke test (< 1 min)
+@pytest.mark.smoke
+@pytest.mark.timeout(60)
+async def test_basic_extraction():
+    ...
+
+# Quality assessment (2-5 min)
+@pytest.mark.quality_assessment
+@pytest.mark.timeout(180)
+async def test_extraction_quality():
+    ...
+
+# Full e2e test (10+ min)
+@pytest.mark.e2e_full
+@pytest.mark.timeout(600)
+async def test_comprehensive_pipeline():
+    ...
+
+# Semantic evaluation
+@pytest.mark.semantic_evaluation
+async def test_embedding_similarity():
+    ...
+
+# AI-powered evaluation
+@pytest.mark.ai_eval
+async def test_llm_quality_assessment():
+    ...
+```
+
+**Guidelines**:
+- Use `@pytest.mark.skipif(not environ.get("E2E_TESTS"))` for all e2e tests
+- Always set appropriate timeouts for longer tests
+- Unit tests should complete in seconds, not need markers
+
 ## Git Hooks (Lefthook)
 
 The project uses lefthook for git hooks. It's automatically installed during `task setup`.

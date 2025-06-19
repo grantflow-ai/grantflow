@@ -3,6 +3,10 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (auto-discovery)
+load_dotenv()
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
 from packages.db.src.tables import FundingOrganization, Workspace
 from pytest_mock import MockerFixture

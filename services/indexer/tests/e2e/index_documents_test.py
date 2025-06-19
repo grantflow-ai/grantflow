@@ -18,6 +18,7 @@ from testing import TEST_DATA_SOURCES
     not environ.get("E2E_TESTS"),
     reason="End-to-end tests are disabled. Set E2E_TESTS to execute the E2E tests",
 )
+@pytest.mark.e2e_full
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_index_chunks(
     logger: logging.Logger,
@@ -48,6 +49,10 @@ async def test_index_chunks(
 
         assert len(vector_dtos) > 0, f"No vectors generated for {data_file.name}"
 
+        # Enhanced vector validation
+        chunk_lengths = []
+        embedding_norms = []
+
         for vector in vector_dtos:
             assert vector["rag_source_id"] == str(grant_application_file.rag_source_id), "Incorrect rag_source_id"
             assert "chunk" in vector, "Missing chunk attribute"
@@ -55,7 +60,36 @@ async def test_index_chunks(
             assert "embedding" in vector, "Missing embedding attribute"
             assert len(vector["embedding"]) > 0, "Missing embedding"
 
-        logger.info("Successfully indexed %d vectors from %s", len(vector_dtos), data_file.name)
+            # Quality checks
+            chunk_content = vector["chunk"]["content"]
+            chunk_lengths.append(len(chunk_content))
+            assert len(chunk_content) >= 50, f"Chunk too short: {len(chunk_content)} chars"
+            assert len(chunk_content) <= 3000, f"Chunk too long: {len(chunk_content)} chars"
+
+            # Embedding quality checks
+            embedding = vector["embedding"]
+            assert len(embedding) == 384, f"Unexpected embedding dimension: {len(embedding)}"
+
+            import math
+
+            norm = math.sqrt(sum(x**2 for x in embedding))
+            embedding_norms.append(norm)
+            assert 0.1 <= norm <= 3.0, f"Embedding norm out of range: {norm}"
+
+        # Statistical validations
+        avg_chunk_length = sum(chunk_lengths) / len(chunk_lengths)
+        avg_embedding_norm = sum(embedding_norms) / len(embedding_norms)
+
+        assert 200 <= avg_chunk_length <= 2500, f"Average chunk length suspicious: {avg_chunk_length}"
+        assert 0.5 <= avg_embedding_norm <= 2.0, f"Average embedding norm suspicious: {avg_embedding_norm}"
+
+        logger.info(
+            "Successfully indexed %d vectors from %s (avg chunk: %d chars, avg norm: %.3f)",
+            len(vector_dtos),
+            data_file.name,
+            int(avg_chunk_length),
+            avg_embedding_norm,
+        )
 
     except (FileParsingError, ValidationError, ExternalOperationError) as e:
         logger.error("Failed to index chunks from %s: %s", data_file.name, e)

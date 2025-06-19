@@ -124,6 +124,14 @@ max_supported_python = "3.13"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 timeout = 120
+markers = [
+  "smoke: Quick smoke tests (< 1 min)",
+  "quality_assessment: Quality assessment tests (2-5 min)",
+  "e2e_full: Complete e2e tests (10+ min)",
+  "slow: All slow tests",
+  "semantic_evaluation: Semantic similarity evaluation tests",
+  "ai_eval: AI-powered evaluation tests",
+]
 filterwarnings = [
   "ignore::DeprecationWarning:pkg_resources.*",
   "ignore::DeprecationWarning:google.*",

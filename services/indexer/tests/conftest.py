@@ -3,10 +3,14 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 import pytest
+from dotenv import load_dotenv
 from litestar.testing import AsyncTestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.indexer.src.main import app
+
+# Load environment variables from .env file (auto-discovery)
+load_dotenv()
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.gcs_test_plugin"]
 
