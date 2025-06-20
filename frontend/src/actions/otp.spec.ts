@@ -1,7 +1,6 @@
-import { HTTPError } from "ky";
-
 import { OtpResponseFactory } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
+import { HTTPError } from "ky";
 
 import { getOtp } from "./otp";
 

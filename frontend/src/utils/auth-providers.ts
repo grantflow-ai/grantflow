@@ -1,10 +1,8 @@
+import type { FirebaseError } from "firebase/app";
 import { getAdditionalUserInfo, GoogleAuthProvider, OAuthProvider, signInWithPopup, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-
 import { getFirebaseAuth } from "@/utils/firebase";
 import { logError } from "@/utils/logging";
-
-import type { FirebaseError } from "firebase/app";
 
 const auth = getFirebaseAuth();
 const googleProvider = new GoogleAuthProvider();

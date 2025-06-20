@@ -5,10 +5,9 @@ import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
+import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { getEnv } from "@/utils/env";
-
-import type { API } from "@/types/api-types";
 
 export async function login(idToken: string) {
 	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);

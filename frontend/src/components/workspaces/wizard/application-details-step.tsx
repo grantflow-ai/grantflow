@@ -5,13 +5,11 @@ import { useCallback, useEffect } from "react";
 import AppTextArea from "@/components/textarea-field";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { FileWithId } from "@/types/files";
 import { useDebounce } from "@/utils/debounce";
-
 import { ApplicationPreview } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
-
-import type { FileWithId } from "@/types/files";
 
 const RETRIEVE_DEBOUNCE_MS = 1000;
 const POLLING_INTERVAL_DURATION = 3000;
