@@ -1,8 +1,7 @@
+import { SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { renderHook, waitFor } from "@testing-library/react";
 import { ReadyState } from "react-use-websocket";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import { SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { getOtp } from "@/actions/otp";
 import { getEnv } from "@/utils/env";
 

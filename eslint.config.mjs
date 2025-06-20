@@ -126,24 +126,6 @@ export default eslintTS.config(
 			"eqeqeq": "error",
 			"import-x/no-duplicates": "error",
 			"import-x/no-named-as-default-member": "off",
-			"import-x/order": [
-				"error",
-				{
-					"alphabetize": {
-						caseInsensitive: true,
-						order: "asc",
-					},
-					"groups": ["builtin", "external", "internal", ["parent", "sibling", "index"], "object", "type"],
-					"newlines-between": "always",
-					"pathGroups": [
-						{
-							group: "internal",
-							pattern: "@/**",
-						},
-					],
-					"pathGroupsExcludedImportTypes": ["type"],
-				},
-			],
 			"n/no-extraneous-import": "error",
 			"n/no-missing-import": "off",
 			"n/no-process-exit": "error",
@@ -153,13 +135,6 @@ export default eslintTS.config(
 			"object-shorthand": "error",
 			"paths/alias": "error",
 			"perfectionist/sort-imports": "off",
-			"perfectionist/sort-named-imports": [
-				"error",
-				{
-					order: "asc",
-					type: "natural",
-				},
-			],
 			"prefer-const": ["error", { destructuring: "all" }],
 			"prefer-destructuring": "error",
 			"prefer-template": "warn",

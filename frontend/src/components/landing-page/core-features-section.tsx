@@ -1,8 +1,7 @@
+import type { HTMLProps } from "react";
 import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articles-animated";
 import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
-
-import type { HTMLProps } from "react";
 
 const CORE_FEATURES = [
 	{

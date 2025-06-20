@@ -1,11 +1,7 @@
-import { HTTPError } from "ky";
-
 import { GrantSectionDetailedFactory, UpdateGrantTemplateRequestFactory } from "::testing/factories";
-
-import { generateGrantTemplate, updateGrantTemplate } from "./grant-template";
-
+import { HTTPError } from "ky";
 import type { API } from "@/types/api-types";
-
+import { generateGrantTemplate, updateGrantTemplate } from "./grant-template";
 
 const mockPost = vi.fn();
 const mockPatch = vi.fn();

@@ -1,6 +1,5 @@
-import SharedLayout from "@/components/shared-layout";
-
 import type { ReactNode } from "react";
+import SharedLayout from "@/components/shared-layout";
 
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
 	return (

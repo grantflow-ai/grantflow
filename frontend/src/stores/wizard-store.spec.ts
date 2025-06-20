@@ -1,5 +1,3 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
@@ -7,6 +5,7 @@ import {
 	GrantTemplateFactory,
 	RagSourceFactory,
 } from "::testing/factories";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as grantApplicationActions from "@/actions/grant-applications";
 import * as grantTemplateActions from "@/actions/grant-template";
 

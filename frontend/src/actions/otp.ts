@@ -1,9 +1,8 @@
 "use server";
 
+import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
-
-import type { API } from "@/types/api-types";
 
 export async function getOtp() {
 	return withAuthRedirect(
