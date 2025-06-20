@@ -15,12 +15,6 @@ vi.mock("motion/react", async () => {
 	};
 });
 
-vi.mock("./backgrounds", () => ({
-	PatternedBackground: vi
-		.fn()
-		.mockImplementation(({ className }) => <div className={className} data-testid="mock-patterned-background" />),
-}));
-
 vi.mock("./scroll-fade-element", () => ({
 	ScrollFadeElement: vi.fn().mockImplementation(({ children, className }) => (
 		<div className={className} data-testid="mock-scroll-fade-element">
@@ -38,12 +32,6 @@ describe("CoreFeaturesSection", () => {
 		render(<CoreFeaturesSection />);
 		const section = screen.getByLabelText("core-features-section");
 		expect(section).toBeInTheDocument();
-	});
-
-	it("renders the patterned background", () => {
-		render(<CoreFeaturesSection />);
-		const background = screen.getByTestId("mock-patterned-background");
-		expect(background).toBeInTheDocument();
 	});
 
 	it("renders the heading with ScrollFadeElement", () => {

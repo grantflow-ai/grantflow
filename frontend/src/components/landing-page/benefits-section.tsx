@@ -1,4 +1,4 @@
-import { PatternedBackground, PatternedBackgroundMobile } from "@/components/landing-page/backgrounds";
+import Image from "next/image";
 import { HowItWorksCard } from "@/components/landing-page/howitworks-card";
 import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
 import { ScaleElement } from "@/components/landing-page/scale-element";
@@ -40,11 +40,17 @@ const CONTENT = {
 export function BenefitsSection() {
 	return (
 		<section aria-label="benefits-section" className="relative w-full bg-white">
-			<div className="absolute inset-0 z-0 hidden sm:block">
-				<PatternedBackground aria-hidden="true" />
-			</div>
-			<div className="absolute inset-0 z-0 opacity-50 sm:hidden">
-				<PatternedBackgroundMobile aria-hidden="true" />
+			<div className="absolute inset-0 z-0">
+				<Image
+					alt="background"
+					aria-hidden="true"
+					className="size-full object-none xl:object-cover"
+					height={0}
+					priority
+					src="/assets/landing-bg-pattern.svg"
+					style={{ height: "auto", width: "100%" }}
+					width={0}
+				/>
 			</div>
 			<div className="pb-15 xl:px-30 relative z-10 flex w-full flex-col items-center px-4 pt-8 text-center md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pt-20">
 				<ScrollFadeElement className="mx-auto">

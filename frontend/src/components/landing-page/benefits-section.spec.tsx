@@ -2,19 +2,6 @@ import { render, screen } from "@testing-library/react";
 
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 
-vi.mock("./backgrounds", () => ({
-	PatternedBackground: vi
-		.fn()
-		.mockImplementation((props) => (
-			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background" />
-		)),
-	PatternedBackgroundMobile: vi
-		.fn()
-		.mockImplementation((props) => (
-			<div aria-hidden={props["aria-hidden"]} data-testid="mock-patterned-background-mobile" />
-		)),
-}));
-
 vi.mock("./scroll-fade-element", () => ({
 	ScrollFadeElement: vi.fn().mockImplementation(({ children, className, delay }) => (
 		<div className={className} data-delay={delay} data-testid="mock-scroll-fade-element">
@@ -66,16 +53,6 @@ describe("BenefitsSection", () => {
 		expect(section).toBeInTheDocument();
 		expect(section).toHaveAttribute("aria-label", "benefits-section");
 		expect(section).toHaveClass("relative w-full bg-white");
-
-		const background = screen.getByTestId("mock-patterned-background");
-		expect(background).toBeInTheDocument();
-		expect(background.parentElement).toHaveClass("absolute inset-0 z-0 hidden sm:block");
-		expect(background).toHaveAttribute("aria-hidden", "true");
-
-		const mobileBackground = screen.getByTestId("mock-patterned-background-mobile");
-		expect(mobileBackground).toBeInTheDocument();
-		expect(mobileBackground).toHaveAttribute("aria-hidden", "true");
-		expect(mobileBackground.parentElement).toHaveClass("absolute inset-0 z-0 sm:hidden opacity-50");
 
 		const contentContainer = container.querySelector(".relative.z-10.flex.flex-col");
 		expect(contentContainer).toBeInTheDocument();
