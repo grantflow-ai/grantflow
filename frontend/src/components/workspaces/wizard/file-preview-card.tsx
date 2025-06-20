@@ -1,6 +1,6 @@
 import { ExternalLink, Trash2 } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
-
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,9 +17,7 @@ import {
 	IconFilePpt,
 	IconFilePptx,
 } from "@/components/workspaces/icons";
-
 import type { FileWithId } from "@/types/files";
-import type React from "react";
 
 export default function FilePreviewCard({
 	file,

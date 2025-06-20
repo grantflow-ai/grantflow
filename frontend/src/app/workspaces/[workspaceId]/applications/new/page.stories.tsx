@@ -1,11 +1,11 @@
-import { useEffect } from "react";
-
 import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
 	FileWithIdFactory,
 	RagSourceFactory,
 } from "::testing/factories";
+import type { Meta, StoryObj } from "@storybook/react";
+import { useEffect } from "react";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -18,8 +18,6 @@ import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapp
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import type { Meta, StoryObj } from "@storybook/react";
 
 const stepComponents = {
 	[WizardStep.APPLICATION_DETAILS]: <ApplicationDetailsStep key={WizardStep.APPLICATION_DETAILS} />,

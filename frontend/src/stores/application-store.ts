@@ -11,11 +11,10 @@ import {
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
 import { useWizardStore } from "@/stores/wizard-store";
-import { createDebounce } from "@/utils/debounce";
-import { logError } from "@/utils/logging";
-
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
+import { createDebounce } from "@/utils/debounce";
+import { logError } from "@/utils/logging";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
 

@@ -22,8 +22,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
 import Image from "next/image";
+import type React from "react";
 import { useEffect, useState } from "react";
-
 import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,9 +35,7 @@ import { IconPreviewLogo } from "@/components/workspaces/icons";
 import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { useApplicationStore } from "@/stores/application-store";
-
 import type { API } from "@/types/api-types";
-import type React from "react";
 
 type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>

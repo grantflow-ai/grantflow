@@ -1,13 +1,10 @@
-import { useEffect } from "react";
-
 import { ApplicationWithTemplateFactory } from "::testing/factories";
+import type { Meta, StoryObj } from "@storybook/react";
+import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
 import { ApplicationStructureStep } from "./application-structure-step";
-
-import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof ApplicationStructureStep> = {
 	component: ApplicationStructureStep,

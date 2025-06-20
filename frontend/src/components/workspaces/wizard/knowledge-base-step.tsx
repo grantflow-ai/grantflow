@@ -12,12 +12,10 @@ import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
+import type { FileWithId } from "@/types/files";
 import { logError } from "@/utils/logging";
-
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
-
-import type { FileWithId } from "@/types/files";
 
 export function KnowledgeBaseStep() {
 	const { application, debouncedRetrieveApplication, removeFile, removeUrl } = useApplicationStore();
