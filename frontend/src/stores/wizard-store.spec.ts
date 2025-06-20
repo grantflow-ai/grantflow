@@ -8,6 +8,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as grantApplicationActions from "@/actions/grant-applications";
 import * as grantTemplateActions from "@/actions/grant-template";
+import { WizardStep } from "@/constants";
 
 import { useApplicationStore } from "./application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";
@@ -29,7 +30,7 @@ describe("wizard store", () => {
 
 		const wizardState = useWizardStore.getState();
 		useWizardStore.setState({
-			currentStep: "Application Details",
+			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				...wizardState.polling,
 				intervalId: null,
@@ -122,7 +123,7 @@ describe("wizard store", () => {
 		describe("step 0 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: "Application Details",
+					currentStep: WizardStep.APPLICATION_DETAILS,
 				});
 			});
 
@@ -214,7 +215,7 @@ describe("wizard store", () => {
 		describe("step 1 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: "Application Structure",
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			});
 
@@ -257,7 +258,7 @@ describe("wizard store", () => {
 		describe("step 2 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: "Knowledge Base",
+					currentStep: WizardStep.KNOWLEDGE_BASE,
 				});
 			});
 
@@ -329,7 +330,7 @@ describe("wizard store", () => {
 				});
 
 				useWizardStore.setState({
-					currentStep: "Research Plan",
+					currentStep: WizardStep.RESEARCH_PLAN,
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -405,42 +406,42 @@ describe("wizard store", () => {
 			const { toNextStep } = useWizardStore.getState();
 
 			toNextStep();
-			expect(useWizardStore.getState().currentStep).toBe("Application Structure");
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 
 			toNextStep();
-			expect(useWizardStore.getState().currentStep).toBe("Knowledge Base");
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.KNOWLEDGE_BASE);
 		});
 
 		it("should not navigate beyond last step", () => {
 			useWizardStore.setState({
-				currentStep: "Generate and Complete",
+				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 			});
 
 			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
-			expect(useWizardStore.getState().currentStep).toBe("Generate and Complete");
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.GENERATE_AND_COMPLETE);
 		});
 
 		it("should navigate to previous step", () => {
 			useWizardStore.setState({
-				currentStep: "Knowledge Base",
+				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
 
 			const { toPreviousStep } = useWizardStore.getState();
 
 			toPreviousStep();
-			expect(useWizardStore.getState().currentStep).toBe("Application Structure");
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 
 			toPreviousStep();
-			expect(useWizardStore.getState().currentStep).toBe("Application Details");
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
 		it("should not navigate before first step", () => {
 			const { toPreviousStep } = useWizardStore.getState();
 			toPreviousStep();
 
-			expect(useWizardStore.getState().currentStep).toBe("Application Details");
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
 		it("should trigger template generation when moving from step 0 to 1", async () => {

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApplicationFactory } from "::testing/factories";
 import { deleteApplicationSource } from "@/actions/sources";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -55,7 +56,7 @@ describe("KnowledgeBaseStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: "Knowledge Base",
+			currentStep: WizardStep.KNOWLEDGE_BASE,
 			polling: {
 				intervalId: null,
 				isActive: false,

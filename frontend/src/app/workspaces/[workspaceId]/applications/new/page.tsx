@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 import {
@@ -36,6 +36,24 @@ export default function CreateGrantApplicationWizardPage() {
 		applicationId: application?.id,
 		workspaceId: params.workspaceId,
 	});
+
+	const stepComponents = useMemo(
+		() => ({
+			"Application Details": (
+				<ApplicationDetailsStep
+					connectionStatus={connectionStatus}
+					connectionStatusColor={connectionStatusColor}
+					key="Application Details"
+				/>
+			),
+			"Application Structure": <ApplicationStructureStep key="Application Structure" />,
+			"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
+			"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
+			"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
+			"Research Plan": <ResearchPlanStep key="Research Plan" />,
+		}),
+		[connectionStatus, connectionStatusColor],
+	);
 
 	// Get or create an application on mount ~keep
 	useEffect(() => {
@@ -88,21 +106,6 @@ export default function CreateGrantApplicationWizardPage() {
 			handleRagProcessingNotification(latestNotification);
 		}
 	}, [notifications, handleSourceProcessingNotification, handleRagProcessingNotification]);
-
-	const stepComponents = {
-		"Application Details": (
-			<ApplicationDetailsStep
-				connectionStatus={connectionStatus}
-				connectionStatusColor={connectionStatusColor}
-				key="Application Details"
-			/>
-		),
-		"Application Structure": <ApplicationStructureStep key="Application Structure" />,
-		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
-		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
-		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
-		"Research Plan": <ResearchPlanStep key="Research Plan" />,
-	} as const;
 
 	if (!application) {
 		return (

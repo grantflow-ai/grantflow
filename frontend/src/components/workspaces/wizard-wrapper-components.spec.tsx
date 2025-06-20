@@ -1,6 +1,8 @@
-import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApplicationFactory } from "::testing/factories";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -39,7 +41,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			currentStep: "Application Details",
+			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				...polling,
 				intervalId: null,
@@ -58,7 +60,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Navigation Button Visibility", () => {
 		it("displays back button for steps after the first", () => {
 			useWizardStore.setState({
-				currentStep: "Application Structure",
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
 			});
 			render(<WizardFooter />);
 
@@ -67,7 +69,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("hides back button on the first step", () => {
 			useWizardStore.setState({
-				currentStep: "Application Details",
+				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
 			render(<WizardFooter />);
 
@@ -78,7 +80,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Action Button Configuration", () => {
 		it("displays approval action on step 2", () => {
 			useWizardStore.setState({
-				currentStep: "Application Structure",
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
 			});
 			render(<WizardFooter />);
 
@@ -88,7 +90,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("displays generation action on final step", () => {
 			useWizardStore.setState({
-				currentStep: "Generate and Complete",
+				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 			});
 			render(<WizardFooter />);
 
@@ -98,7 +100,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("displays standard next action on other steps", () => {
 			useWizardStore.setState({
-				currentStep: "Knowledge Base",
+				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
 			render(<WizardFooter />);
 
@@ -110,7 +112,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Button State Management", () => {
 		it("enables continue button when step validation passes", () => {
 			useWizardStore.setState({
-				currentStep: "Application Details",
+				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
 			render(<WizardFooter />);
 
@@ -120,7 +122,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		it("disables continue button when step validation fails", () => {
 			useWizardStore.setState({
-				currentStep: "Application Details",
+				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
 
 			Object.assign(mockApplicationStoreState, {
@@ -141,7 +143,7 @@ describe("WizardHeader", () => {
 	beforeEach(() => {
 		const { polling } = useWizardStore.getState();
 		useWizardStore.setState({
-			currentStep: "Application Details",
+			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				...polling,
 				intervalId: null,
@@ -160,7 +162,7 @@ describe("WizardHeader", () => {
 	describe("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
 			useWizardStore.setState({
-				currentStep: "Application Structure",
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
 			});
 			render(<WizardHeader />);
 
@@ -170,7 +172,7 @@ describe("WizardHeader", () => {
 
 		it("hides application info on first step", () => {
 			useWizardStore.setState({
-				currentStep: "Application Details",
+				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
 			render(<WizardHeader />);
 

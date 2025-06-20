@@ -14,6 +14,7 @@ import { UrlInput } from "./url-input";
 const RETRIEVE_DEBOUNCE_MS = 1000;
 const POLLING_INTERVAL_DURATION = 3000;
 const TITLE_MAX_LENGTH = 120;
+
 interface ApplicationDetailsStepProps {
 	connectionStatus?: string;
 	connectionStatusColor?: string;

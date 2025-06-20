@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY } from "@/constants";
+import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { createDebounce } from "@/utils/debounce";
 
@@ -27,12 +27,12 @@ interface WizardActions {
 }
 
 interface WizardState {
-	currentStep: (typeof WIZARD_STEP_TITLES)[number];
+	currentStep: WizardStep;
 	polling: PollingState;
 }
 
 const initialWizardState: WizardState = {
-	currentStep: "Application Details",
+	currentStep: WizardStep.APPLICATION_DETAILS,
 	polling: {
 		intervalId: null,
 		isActive: false,
@@ -112,14 +112,14 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				toNextStep: () => {
 					const { currentStep } = get();
 
-					if (currentStep === "Generate and Complete") {
+					if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
 						return;
 					}
 
 					const { application } = useApplicationStore.getState();
 
 					if (
-						currentStep === "Application Details" &&
+						currentStep === WizardStep.APPLICATION_DETAILS &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
@@ -152,16 +152,16 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return false;
 					}
 
-					if (currentStep === "Application Details") {
+					if (currentStep === WizardStep.APPLICATION_DETAILS) {
 						return (
 							applicationTitle.trim().length >= MIN_TITLE_LENGTH &&
 							(urls.length > 0 || uploadedFiles.length > 0)
 						);
 					}
-					if (currentStep === "Application Structure") {
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						return !!application.grant_template?.grant_sections.length;
 					}
-					if (currentStep === "Knowledge Base") {
+					if (currentStep === WizardStep.KNOWLEDGE_BASE) {
 						return (
 							!!application.rag_sources.length &&
 							application.rag_sources.every((source) => source.status !== "FAILED")

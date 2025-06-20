@@ -1,6 +1,8 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory, GrantSectionDetailedFactory } from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApplicationFactory, ApplicationWithTemplateFactory, GrantSectionDetailedFactory } from "::testing/factories";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -11,7 +13,7 @@ describe("ApplicationStructureStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: "Application Structure",
+			currentStep: WizardStep.APPLICATION_STRUCTURE,
 			polling: {
 				intervalId: null,
 				isActive: false,

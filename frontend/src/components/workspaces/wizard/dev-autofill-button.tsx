@@ -12,6 +12,7 @@ import {
 } from "::testing/factories";
 import { crawlTemplateUrl } from "@/actions/sources";
 import { AppButton } from "@/components/app-button";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithId } from "@/types/files";
@@ -46,7 +47,7 @@ export function DevAutofillButton() {
 			const workspaceId = params.workspaceId as string;
 
 			switch (currentStep) {
-				case "Application Details": {
+				case WizardStep.APPLICATION_DETAILS: {
 					handleTitleChange("AI-Powered Early Cancer Detection Using Novel Biomarkers");
 
 					for (const url of TEST_URLS) {
@@ -76,7 +77,7 @@ export function DevAutofillButton() {
 
 					break;
 				}
-				case "Application Structure": {
+				case WizardStep.APPLICATION_STRUCTURE: {
 					if (!application?.grant_template?.id) {
 						toast.error("No grant template found. Complete Application Details step first.");
 						break;
@@ -102,12 +103,12 @@ export function DevAutofillButton() {
 
 					break;
 				}
-				case "Generate and Complete": {
+				case WizardStep.GENERATE_AND_COMPLETE: {
 					toast.success("🎉 Application is ready for generation! Click 'Generate Application' to proceed.");
 
 					break;
 				}
-				case "Knowledge Base": {
+				case WizardStep.KNOWLEDGE_BASE: {
 					const mockRagSources = RagSourceFactory.batch(3).map((source) => ({
 						...source,
 						status: "FINISHED" as const,
@@ -135,7 +136,7 @@ export function DevAutofillButton() {
 
 					break;
 				}
-				case "Research Deep Dive": {
+				case WizardStep.RESEARCH_DEEP_DIVE: {
 					const mockFormInputs = FormInputsFactory.build();
 
 					await updateApplication({
@@ -146,7 +147,7 @@ export function DevAutofillButton() {
 
 					break;
 				}
-				case "Research Plan": {
+				case WizardStep.RESEARCH_PLAN: {
 					const mockResearchObjectives = ResearchObjectiveFactory.batch(3).map((objective, index) => ({
 						...objective,
 						number: index + 1,
@@ -188,7 +189,7 @@ export function DevAutofillButton() {
 			size="sm"
 			variant="secondary"
 		>
-			{currentStep === "Generate and Complete" ? "Ready" : "Autofill"} {currentStep}
+			{currentStep === WizardStep.GENERATE_AND_COMPLETE ? "Ready" : "Autofill"} {currentStep}
 		</AppButton>
 	);
 }

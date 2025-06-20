@@ -1,10 +1,14 @@
-import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApplicationFactory } from "::testing/factories";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import type { FileWithId } from "@/types/files";
+
 import { ApplicationPreview } from "./application-preview";
+
+import type { FileWithId } from "@/types/files";
 
 function createMockFile(name: string, size: number, type: string, id: string): FileWithId {
 	const file = new File(["content"], name, { type }) as FileWithId;
@@ -18,7 +22,7 @@ describe("ApplicationPreview", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: "Application Details",
+			currentStep: WizardStep.APPLICATION_DETAILS,
 		});
 
 		useApplicationStore.setState({

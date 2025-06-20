@@ -9,7 +9,7 @@ import {
 	IconDeadline,
 } from "@/components/workspaces/icons";
 import { DevAutofillButton } from "@/components/workspaces/wizard/dev-autofill-button";
-import { WIZARD_STEP_TITLES } from "@/constants";
+import { WIZARD_STEP_TITLES, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -44,7 +44,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 export function WizardFooter() {
 	const { currentStep, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
-	const showBack = currentStep !== "Application Details";
+	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const disabled = !validateStepNext();
 
 	return (
@@ -87,7 +87,7 @@ export function WizardFooter() {
 export function WizardHeader() {
 	const { currentStep } = useWizardStore();
 	const { application } = useApplicationStore();
-	const showHeaderInfo = currentStep !== "Application Details";
+	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
 			<div className="mb-8 flex items-center justify-between">
@@ -190,9 +190,9 @@ function Deadline() {
 	);
 }
 
-function generateFooterRightButtonProps(currentStep: (typeof WIZARD_STEP_TITLES)[number]) {
-	const isApproveStep = currentStep === "Application Structure";
-	const isGenerateStep = currentStep === "Generate and Complete";
+function generateFooterRightButtonProps(currentStep: WizardStep) {
+	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
+	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
 	return {
 		leftIcon: isApproveStep ? <IconApprove /> : isGenerateStep ? <IconButtonLogo /> : undefined,

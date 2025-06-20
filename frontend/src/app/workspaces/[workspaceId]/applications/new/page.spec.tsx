@@ -9,6 +9,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApplication } from "@/actions/grant-applications";
+import { WizardStep } from "@/constants";
 import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
@@ -67,7 +68,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(useSearchParams).mockReturnValue(mockSearchParams as any);
 
 		useWizardStore.setState({
-			currentStep: "Application Details",
+			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				intervalId: null,
 				isActive: false,
@@ -283,7 +284,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		useWizardStore.setState({
-			currentStep: "Application Details",
+			currentStep: WizardStep.APPLICATION_DETAILS,
 		});
 
 		useApplicationStore.setState({
