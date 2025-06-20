@@ -45,8 +45,8 @@ pre-commit:
         trailing-whitespace:
             run: |
                 for file in {staged_files}; do
-                  if [[ -f "$file" ]]; then
-                    sed -i '' 's/[[:space:]]*$//' "$file"
+                  if [ -f "$file" ]; then
+                    python3 -c "import sys; content = open(sys.argv[1], 'r').read(); open(sys.argv[1], 'w').write('\\n'.join(line.rstrip() for line in content.splitlines()))" "$file"
                   fi
                 done
             stage_fixed: true
@@ -54,7 +54,10 @@ pre-commit:
         end-of-file-fixer:
             run: |
                 for file in {staged_files}; do
-                  if [[ -f "$file" ]] && [[ -s "$file" ]] && [[ ! "$file" =~ \.(png|jpg|jpeg|gif|svg|ico|webp)$ ]]; then
+                  if [ -f "$file" ] && [ -s "$file" ]; then
+                    case "$file" in
+                      *.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico|*.webp) continue ;;
+                    esac
                     if [ -n "$(tail -c 1 "$file")" ]; then
                       echo >> "$file"
                     fi
@@ -85,21 +88,23 @@ pre-commit:
 
         check-case-conflict:
             run: |
-                staged_files_lower=$(echo "{staged_files}" | tr '[:upper:]' '[:lower:]')
-                if [ "$staged_files_lower" != "$(echo "$staged_files_lower" | sort -u)" ]; then
+                echo "{staged_files}" | tr ' ' '\n' | sort -f | uniq -i -d | grep -q . && {
                   echo "Error: Case conflict detected in file names"
                   exit 1
-                fi
+                } || exit 0
 
         name-tests-test:
             glob: "{packages,services}/*/tests/**/*.py"
             exclude: "completion|utils|test_utils|factories"
             run: |
                 for file in {staged_files}; do
-                  if [[ ! "$file" =~ .*_test\.py$ ]]; then
-                    echo "Error: Test file '$file' does not follow naming convention (should end with '_test.py', not start with 'test_')"
-                    exit 1
-                  fi
+                  case "$file" in
+                    *_test.py) ;;
+                    *)
+                      echo "Error: Test file '$file' does not follow naming convention (should end with '_test.py', not start with 'test_')"
+                      exit 1
+                      ;;
+                  esac
                 done
 
         tofu-fmt:
@@ -110,16 +115,20 @@ pre-commit:
         tofu-validate:
             glob: "terraform/**/*.tf"
             run: |
-                if [ -n "{staged_files}" ]; then
-                  cd terraform && tofu init -backend=false && tofu validate
-                fi
+                case "{staged_files}" in
+                  *\.tf*)
+                    cd terraform && tofu init -backend=false && tofu validate
+                    ;;
+                esac
 
         tflint:
             glob: "terraform/**/*.tf"
             run: |
-                if [ -n "{staged_files}" ]; then
-                  tflint --chdir=terraform
-                fi
+                case "{staged_files}" in
+                  *\.tf*)
+                    tflint --chdir=terraform
+                    ;;
+                esac
 
 commit-msg:
     commands:
