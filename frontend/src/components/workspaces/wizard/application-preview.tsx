@@ -8,32 +8,25 @@ import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { useApplicationStore } from "@/stores/application-store";
 
-import type { FileWithId } from "@/types/files";
-
-interface ApplicationPreviewProps {
-	connectionStatus?: string;
-	connectionStatusColor?: string;
-	onFileRemove?: (file: FileWithId) => Promise<void>;
-	onUrlRemove?: (url: string) => void;
-}
-
 export function ApplicationPreview({
 	connectionStatus,
 	connectionStatusColor,
-	onFileRemove,
-	onUrlRemove,
-}: ApplicationPreviewProps) {
+	parentId,
+}: {
+	connectionStatus?: string;
+	connectionStatusColor?: string;
+	parentId?: string;
+}) {
 	const { application, uploadedFiles, urls } = useApplicationStore();
-	const isEmpty = !application?.title && uploadedFiles.length === 0 && urls.length === 0;
+	const templateFiles = uploadedFiles.template;
+	const templateUrls = urls.template;
+	const isEmpty = !application?.title && templateFiles.length === 0 && templateUrls.length === 0;
 
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
 			{isEmpty ? (
-				<div className="flex h-full flex-col items-center justify-center">
+				<div className="flex h-full items-center justify-center">
 					<IconPreviewLogo height={180} width={180} />
-					<p className="text-muted-foreground-dark mt-6 text-center text-sm">
-						Add application details, documents, or links to see a preview
-					</p>
 				</div>
 			) : (
 				<>
@@ -58,35 +51,35 @@ export function ApplicationPreview({
 
 					<ScrollArea className="flex-1">
 						<div className="space-y-5">
-							{uploadedFiles.length > 0 && (
+							{templateFiles.length > 0 && (
 								<Card
 									className="border-app-gray-100 border p-5 shadow-none"
 									data-testid="application-documents"
 								>
 									<h4 className="font-heading mb-8 font-semibold">Application Documents</h4>
 									<div className="flex gap-3" data-testid="file-collection">
-										{uploadedFiles.map((file, index) => (
+										{templateFiles.map((file, index) => (
 											<FilePreviewCard
 												file={file}
 												key={file.name + index.toString()}
-												onRemove={onFileRemove}
+												parentId={parentId}
 											/>
 										))}
 									</div>
 								</Card>
 							)}
 
-							{urls.length > 0 && (
+							{templateUrls.length > 0 && (
 								<Card
 									className="border-app-gray-100 border p-5 shadow-none"
 									data-testid="application-links"
 								>
 									<h4 className="font-heading mb-8 font-semibold">Links</h4>
 									<div className="space-y-1">
-										{urls.map((url, index) => (
+										{templateUrls.map((url, index) => (
 											<LinkPreviewItem
 												key={url + index.toString()}
-												onRemove={onUrlRemove}
+												parentId={parentId}
 												url={url}
 											/>
 										))}

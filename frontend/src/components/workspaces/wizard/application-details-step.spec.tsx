@@ -40,8 +40,14 @@ describe("ApplicationDetailsStep", () => {
 			applicationTitle: "",
 			isLoading: false,
 			updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -162,7 +168,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			urls: ["https://example1.com", "https://example2.com"],
+			urls: {
+				application: [],
+				template: ["https://example1.com", "https://example2.com"],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -189,7 +198,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			urls: ["https://example1.com", "https://example2.com"],
+			urls: {
+				application: [],
+				template: ["https://example1.com", "https://example2.com"],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -240,7 +252,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			uploadedFiles: [file],
+			uploadedFiles: {
+				application: [],
+				template: [file],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -269,7 +284,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			uploadedFiles: [file],
+			uploadedFiles: {
+				application: [],
+				template: [file],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);

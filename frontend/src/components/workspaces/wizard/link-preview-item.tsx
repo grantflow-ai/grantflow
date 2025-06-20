@@ -2,10 +2,13 @@ import { Link } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { IconClose } from "@/components/workspaces/icons";
+import { useApplicationStore } from "@/stores/application-store";
 
-export default function LinkPreviewItem({ onRemove, url }: { onRemove?: (url: string) => void; url: string }) {
-	const handleRemove = () => {
-		onRemove?.(url);
+export default function LinkPreviewItem({ parentId, url }: { parentId?: string; url: string }) {
+	const { removeUrl } = useApplicationStore();
+
+	const handleRemove = async () => {
+		await removeUrl(url, parentId);
 	};
 
 	return (

@@ -42,8 +42,14 @@ describe("wizard store", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -111,8 +117,14 @@ describe("wizard store", () => {
 					application: null,
 					applicationTitle: "",
 					isLoading: false,
-					uploadedFiles: [],
-					urls: [],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: [],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -133,8 +145,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -147,8 +165,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [FileWithIdFactory.build()],
-					urls: [],
+					uploadedFiles: {
+						application: [],
+						template: [FileWithIdFactory.build()],
+					},
+					urls: {
+						application: [],
+						template: [],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -161,8 +185,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [FileWithIdFactory.build()],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [FileWithIdFactory.build()],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -175,8 +205,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH - 1),
 					isLoading: false,
-					uploadedFiles: [FileWithIdFactory.build()],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [FileWithIdFactory.build()],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -189,8 +225,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: `   ${"A".repeat(MIN_TITLE_LENGTH)}   `,
 					isLoading: false,
-					uploadedFiles: [],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -203,8 +245,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [],
-					urls: [],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: [],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();

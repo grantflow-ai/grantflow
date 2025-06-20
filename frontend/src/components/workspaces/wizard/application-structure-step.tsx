@@ -118,9 +118,56 @@ const ANALYZING_STEPS = [
 	},
 ];
 
+interface DragAndDropContainerProps {
+	activeId: null | string;
+	activeSection: GrantSection | undefined;
+	expandedSections: Set<string>;
+	grantSections: GrantSection[];
+	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleDragEnd: (event: DragEndEvent) => Promise<void>;
+	handleDragOver: (event: DragOverEvent) => Promise<void>;
+	handleDragStart: (event: DragStartEvent) => void;
+	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
+	mainSections: GrantSection[];
+	sensors: ReturnType<typeof useSensors>;
+	subsectionsByParent: Record<string, GrantSection[]>;
+	toggleSectionExpanded: (sectionId: string) => void;
+}
+
+interface SectionEditorProps {
+	activeId: null | string;
+	activeSection: GrantSection | undefined;
+	editingNewSection: boolean;
+	expandedSections: Set<string>;
+	grantSections: GrantSection[];
+	handleAddNewSection: (data: SectionFormData) => Promise<void>;
+	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleDragEnd: (event: DragEndEvent) => Promise<void>;
+	handleDragOver: (event: DragOverEvent) => Promise<void>;
+	handleDragStart: (event: DragStartEvent) => void;
+	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
+	mainSections: GrantSection[];
+	sensors: ReturnType<typeof useSensors>;
+	setEditingNewSection: (editing: boolean) => void;
+	subsectionsByParent: Record<string, GrantSection[]>;
+	toggleSectionExpanded: (sectionId: string) => void;
+}
+
+interface SectionListProps {
+	expandedSections: Set<string>;
+	grantSections: GrantSection[];
+	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
+	mainSections: GrantSection[];
+	subsectionsByParent: Record<string, GrantSection[]>;
+	toggleSectionExpanded: (sectionId: string) => void;
+}
+
 export function ApplicationStructureStep() {
-	const { isGeneratingTemplate, removeFile, removeUrl, uploadedFiles, urls } = useApplicationStore();
+	const { application, isGeneratingTemplate, uploadedFiles, urls } = useApplicationStore();
 	const [visibleSteps, setVisibleSteps] = useState(0);
+
+	const parentId = application?.grant_template?.id;
 
 	useEffect(() => {
 		if (isGeneratingTemplate) {
@@ -245,13 +292,13 @@ export function ApplicationStructureStep() {
 								>
 									Application Documents
 								</h3>
-								{uploadedFiles.length > 0 ? (
+								{uploadedFiles.template.length > 0 ? (
 									<div className="flex gap-3">
-										{uploadedFiles.map((file, index) => (
+										{uploadedFiles.template.map((file, index) => (
 											<FilePreviewCard
 												file={file}
 												key={file.name + index.toString()}
-												onRemove={removeFile}
+												parentId={parentId}
 											/>
 										))}
 									</div>
@@ -265,14 +312,14 @@ export function ApplicationStructureStep() {
 								)}
 							</Card>
 
-							{urls.length > 0 && (
+							{urls.template.length > 0 && (
 								<Card className="border-app-gray-100 border p-4 shadow-none">
 									<h3 className="font-heading mb-2 text-base font-semibold">Links</h3>
 									<div className="space-y-1">
-										{urls.map((url, index) => (
+										{urls.template.map((url, index) => (
 											<LinkPreviewItem
 												key={url + index.toString()}
-												onRemove={removeUrl}
+												parentId={parentId}
 												url={url}
 											/>
 										))}
@@ -441,200 +488,137 @@ function ApplicationStructurePreview() {
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
 			{hasContent ? (
 				isGeneratingTemplate ? (
-					<div className="flex h-full flex-col items-center justify-center">
-						<Image
-							alt="Analyzing data"
-							className="size-96 object-contain"
-							height={96}
-							src="/animations/analyzing-loader.gif"
-							width={96}
-						/>
-					</div>
+					<GeneratingLoader />
 				) : (
-					<div className="flex h-full flex-col">
-						<div className="mb-4 flex items-center justify-between">
-							<h4 className="font-heading font-semibold" data-testid="application-sections-title">
-								Application Sections
-							</h4>
-							<AppButton
-								data-testid="add-new-section-button"
-								leftIcon={<Plus />}
-								onClick={() => {
-									setEditingNewSection(true);
-								}}
-								size="sm"
-								variant="secondary"
-							>
-								Add New Section
-							</AppButton>
-						</div>
-						<ScrollArea className="flex-1">
-							<div className="space-y-5">
-								<Card
-									className="border-app-gray-100 border p-5 shadow-none"
-									data-testid="application-structure-sections"
-								>
-									{editingNewSection && (
-										<NewSectionForm
-											onCancel={() => {
-												setEditingNewSection(false);
-											}}
-											onSave={handleAddNewSection}
-										/>
-									)}
-									<DndContext
-										collisionDetection={closestCenter}
-										onDragEnd={handleDragEnd}
-										onDragOver={handleDragOver}
-										onDragStart={handleDragStart}
-										sensors={sensors}
-									>
-										<div className="space-y-3">
-											{grantSections.length > 0 ? (
-												<SortableContext
-													items={grantSections.map((s) => s.id)}
-													strategy={verticalListSortingStrategy}
-												>
-													{mainSections.map((section) => (
-														<div key={section.id}>
-															<SortableSection
-																isExpanded={expandedSections.has(section.id)}
-																onDelete={() => handleDeleteSection(section.id)}
-																onToggleExpand={() => {
-																	toggleSectionExpanded(section.id);
-																}}
-																onUpdate={(updates) =>
-																	handleUpdateSection(section.id, updates)
-																}
-																section={section}
-															/>
-															{(subsectionsByParent[section.id] ?? []).map(
-																(subsection) => (
-																	<SortableSection
-																		isExpanded={expandedSections.has(subsection.id)}
-																		isSubsection
-																		key={subsection.id}
-																		onDelete={() =>
-																			handleDeleteSection(subsection.id)
-																		}
-																		onToggleExpand={() => {
-																			toggleSectionExpanded(subsection.id);
-																		}}
-																		onUpdate={(updates) =>
-																			handleUpdateSection(subsection.id, updates)
-																		}
-																		section={subsection}
-																	/>
-																),
-															)}
-														</div>
-													))}
-												</SortableContext>
-											) : (
-												<>
-													<div
-														className="rounded border border-gray-200 p-3"
-														data-testid="default-section-executive-summary"
-													>
-														<h5
-															className="font-medium"
-															data-testid="section-title-executive-summary"
-														>
-															Executive Summary
-														</h5>
-														<p
-															className="text-muted-foreground-dark text-sm"
-															data-testid="section-description-executive-summary"
-														>
-															Overview of the project and key highlights
-														</p>
-													</div>
-													<div
-														className="rounded border border-gray-200 p-3"
-														data-testid="default-section-project-description"
-													>
-														<h5
-															className="font-medium"
-															data-testid="section-title-project-description"
-														>
-															Project Description
-														</h5>
-														<p
-															className="text-muted-foreground-dark text-sm"
-															data-testid="section-description-project-description"
-														>
-															Detailed description of the proposed project
-														</p>
-													</div>
-													<div
-														className="rounded border border-gray-200 p-3"
-														data-testid="default-section-budget-timeline"
-													>
-														<h5
-															className="font-medium"
-															data-testid="section-title-budget-timeline"
-														>
-															Budget & Timeline
-														</h5>
-														<p
-															className="text-muted-foreground-dark text-sm"
-															data-testid="section-description-budget-timeline"
-														>
-															Financial breakdown and project timeline
-														</p>
-													</div>
-													<div
-														className="rounded border border-gray-200 p-3"
-														data-testid="default-section-team-qualifications"
-													>
-														<h5
-															className="font-medium"
-															data-testid="section-title-team-qualifications"
-														>
-															Team & Qualifications
-														</h5>
-														<p
-															className="text-muted-foreground-dark text-sm"
-															data-testid="section-description-team-qualifications"
-														>
-															Team members and their relevant experience
-														</p>
-													</div>
-												</>
-											)}
-										</div>
-										<DragOverlay>
-											{activeId && activeSection ? (
-												<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
-													<div className="flex items-center justify-between">
-														<h5 className="font-medium">{activeSection.title}</h5>
-														{isDetailedSection(activeSection) &&
-															activeSection.max_words && (
-																<span className="text-muted-foreground-dark text-sm">
-																	{activeSection.max_words.toLocaleString()} Max words
-																</span>
-															)}
-													</div>
-												</div>
-											) : null}
-										</DragOverlay>
-									</DndContext>
-								</Card>
-							</div>
-						</ScrollArea>
-					</div>
+					<SectionEditor
+						activeId={activeId}
+						activeSection={activeSection}
+						editingNewSection={editingNewSection}
+						expandedSections={expandedSections}
+						grantSections={grantSections}
+						handleAddNewSection={handleAddNewSection}
+						handleDeleteSection={handleDeleteSection}
+						handleDragEnd={handleDragEnd}
+						handleDragOver={handleDragOver}
+						handleDragStart={handleDragStart}
+						handleUpdateSection={handleUpdateSection}
+						mainSections={mainSections}
+						sensors={sensors}
+						setEditingNewSection={setEditingNewSection}
+						subsectionsByParent={subsectionsByParent}
+						toggleSectionExpanded={toggleSectionExpanded}
+					/>
 				)
 			) : (
-				<div className="flex h-full flex-col items-center justify-center" data-testid="empty-state">
-					<IconPreviewLogo height={180} width={180} />
-					<p
-						className="text-muted-foreground-dark mt-6 text-center text-sm"
-						data-testid="empty-state-message"
-					>
-						Configure your application structure to see a preview
-					</p>
-				</div>
+				<EmptyStateView />
 			)}
+		</div>
+	);
+}
+
+function DefaultSections() {
+	return (
+		<>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-executive-summary">
+				<h5 className="font-medium" data-testid="section-title-executive-summary">
+					Executive Summary
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-executive-summary">
+					Overview of the project and key highlights
+				</p>
+			</div>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-project-description">
+				<h5 className="font-medium" data-testid="section-title-project-description">
+					Project Description
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-project-description">
+					Detailed description of the proposed project
+				</p>
+			</div>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-budget-timeline">
+				<h5 className="font-medium" data-testid="section-title-budget-timeline">
+					Budget & Timeline
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-budget-timeline">
+					Financial breakdown and project timeline
+				</p>
+			</div>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-team-qualifications">
+				<h5 className="font-medium" data-testid="section-title-team-qualifications">
+					Team & Qualifications
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-team-qualifications">
+					Team members and their relevant experience
+				</p>
+			</div>
+		</>
+	);
+}
+
+function DragAndDropContainer({
+	activeId,
+	activeSection,
+	expandedSections,
+	grantSections,
+	handleDeleteSection,
+	handleDragEnd,
+	handleDragOver,
+	handleDragStart,
+	handleUpdateSection,
+	mainSections,
+	sensors,
+	subsectionsByParent,
+	toggleSectionExpanded,
+}: DragAndDropContainerProps) {
+	return (
+		<DndContext
+			collisionDetection={closestCenter}
+			onDragEnd={handleDragEnd}
+			onDragOver={handleDragOver}
+			onDragStart={handleDragStart}
+			sensors={sensors}
+		>
+			<div className="space-y-3">
+				{grantSections.length > 0 ? (
+					<SectionList
+						expandedSections={expandedSections}
+						grantSections={grantSections}
+						handleDeleteSection={handleDeleteSection}
+						handleUpdateSection={handleUpdateSection}
+						mainSections={mainSections}
+						subsectionsByParent={subsectionsByParent}
+						toggleSectionExpanded={toggleSectionExpanded}
+					/>
+				) : (
+					<DefaultSections />
+				)}
+			</div>
+			<SectionDragOverlay activeId={activeId} activeSection={activeSection} />
+		</DndContext>
+	);
+}
+
+function EmptyStateView() {
+	return (
+		<div className="flex h-full flex-col items-center justify-center" data-testid="empty-state">
+			<IconPreviewLogo height={180} width={180} />
+			<p className="text-muted-foreground-dark mt-6 text-center text-sm" data-testid="empty-state-message">
+				Configure your application structure to see a preview
+			</p>
+		</div>
+	);
+}
+
+function GeneratingLoader() {
+	return (
+		<div className="flex h-full flex-col items-center justify-center">
+			<Image
+				alt="Analyzing data"
+				className="size-96 object-contain"
+				height={96}
+				src="/animations/analyzing-loader.gif"
+				width={96}
+			/>
 		</div>
 	);
 }
@@ -739,6 +723,152 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 				</div>
 			</div>
 		</form>
+	);
+}
+
+function SectionDragOverlay({
+	activeId,
+	activeSection,
+}: {
+	activeId: null | string;
+	activeSection: GrantSection | undefined;
+}) {
+	return (
+		<DragOverlay>
+			{activeId && activeSection ? (
+				<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
+					<div className="flex items-center justify-between">
+						<h5 className="font-medium">{activeSection.title}</h5>
+						{isDetailedSection(activeSection) && activeSection.max_words && (
+							<span className="text-muted-foreground-dark text-sm">
+								{activeSection.max_words.toLocaleString()} Max words
+							</span>
+						)}
+					</div>
+				</div>
+			) : null}
+		</DragOverlay>
+	);
+}
+
+function SectionEditor({
+	activeId,
+	activeSection,
+	editingNewSection,
+	expandedSections,
+	grantSections,
+	handleAddNewSection,
+	handleDeleteSection,
+	handleDragEnd,
+	handleDragOver,
+	handleDragStart,
+	handleUpdateSection,
+	mainSections,
+	sensors,
+	setEditingNewSection,
+	subsectionsByParent,
+	toggleSectionExpanded,
+}: SectionEditorProps) {
+	return (
+		<div className="flex h-full flex-col">
+			<SectionHeader
+				onAddSection={() => {
+					setEditingNewSection(true);
+				}}
+			/>
+			<ScrollArea className="flex-1">
+				<div className="space-y-5">
+					<Card
+						className="border-app-gray-100 border p-5 shadow-none"
+						data-testid="application-structure-sections"
+					>
+						{editingNewSection && (
+							<NewSectionForm
+								onCancel={() => {
+									setEditingNewSection(false);
+								}}
+								onSave={handleAddNewSection}
+							/>
+						)}
+						<DragAndDropContainer
+							activeId={activeId}
+							activeSection={activeSection}
+							expandedSections={expandedSections}
+							grantSections={grantSections}
+							handleDeleteSection={handleDeleteSection}
+							handleDragEnd={handleDragEnd}
+							handleDragOver={handleDragOver}
+							handleDragStart={handleDragStart}
+							handleUpdateSection={handleUpdateSection}
+							mainSections={mainSections}
+							sensors={sensors}
+							subsectionsByParent={subsectionsByParent}
+							toggleSectionExpanded={toggleSectionExpanded}
+						/>
+					</Card>
+				</div>
+			</ScrollArea>
+		</div>
+	);
+}
+
+function SectionHeader({ onAddSection }: { onAddSection: () => void }) {
+	return (
+		<div className="mb-4 flex items-center justify-between">
+			<h4 className="font-heading font-semibold" data-testid="application-sections-title">
+				Application Sections
+			</h4>
+			<AppButton
+				data-testid="add-new-section-button"
+				leftIcon={<Plus />}
+				onClick={onAddSection}
+				size="sm"
+				variant="secondary"
+			>
+				Add New Section
+			</AppButton>
+		</div>
+	);
+}
+
+function SectionList({
+	expandedSections,
+	grantSections,
+	handleDeleteSection,
+	handleUpdateSection,
+	mainSections,
+	subsectionsByParent,
+	toggleSectionExpanded,
+}: SectionListProps) {
+	return (
+		<SortableContext items={grantSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+			{mainSections.map((section) => (
+				<div key={section.id}>
+					<SortableSection
+						isExpanded={expandedSections.has(section.id)}
+						onDelete={() => handleDeleteSection(section.id)}
+						onToggleExpand={() => {
+							toggleSectionExpanded(section.id);
+						}}
+						onUpdate={(updates) => handleUpdateSection(section.id, updates)}
+						section={section}
+					/>
+					{(subsectionsByParent[section.id] ?? []).map((subsection) => (
+						<SortableSection
+							isExpanded={expandedSections.has(subsection.id)}
+							isSubsection
+							key={subsection.id}
+							onDelete={() => handleDeleteSection(subsection.id)}
+							onToggleExpand={() => {
+								toggleSectionExpanded(subsection.id);
+							}}
+							onUpdate={(updates) => handleUpdateSection(subsection.id, updates)}
+							section={subsection}
+						/>
+					))}
+				</div>
+			))}
+		</SortableContext>
 	);
 }
 

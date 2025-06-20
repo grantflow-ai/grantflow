@@ -72,8 +72,14 @@ describe("KnowledgeBaseStep", () => {
 			removeFile: vi.fn(),
 			removeUrl: vi.fn(),
 			retrieveApplication: vi.fn(),
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -124,8 +130,14 @@ describe("KnowledgeBaseStep", () => {
 		it("shows container when files are uploaded", () => {
 			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
 			useApplicationStore.setState({
-				uploadedFiles: [mockFile],
-				urls: [],
+				uploadedFiles: {
+					application: [mockFile],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -138,8 +150,14 @@ describe("KnowledgeBaseStep", () => {
 
 		it("shows container when URLs are added", () => {
 			useApplicationStore.setState({
-				uploadedFiles: [],
-				urls: ["https://example.com"],
+				uploadedFiles: {
+					application: [],
+					template: [],
+				},
+				urls: {
+					application: ["https://example.com"],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -153,8 +171,14 @@ describe("KnowledgeBaseStep", () => {
 		it("shows both sections with separator when both files and URLs exist", () => {
 			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
 			useApplicationStore.setState({
-				uploadedFiles: [mockFile],
-				urls: ["https://example.com"],
+				uploadedFiles: {
+					application: [mockFile],
+					template: [],
+				},
+				urls: {
+					application: ["https://example.com"],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -168,8 +192,14 @@ describe("KnowledgeBaseStep", () => {
 		it("does not show container when only application title exists", () => {
 			useApplicationStore.setState({
 				applicationTitle: "Test App",
-				uploadedFiles: [],
-				urls: [],
+				uploadedFiles: {
+					application: [],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -260,8 +290,14 @@ describe("KnowledgeBaseStep", () => {
 			mockDeleteApplicationSource.mockResolvedValue(undefined);
 			useApplicationStore.setState({
 				removeFile: mockRemoveFile,
-				uploadedFiles: [mockFile],
-				urls: [],
+				uploadedFiles: {
+					application: [mockFile],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -285,8 +321,14 @@ describe("KnowledgeBaseStep", () => {
 
 			mockDeleteApplicationSource.mockRejectedValue(error);
 			useApplicationStore.setState({
-				uploadedFiles: [mockFile],
-				urls: [],
+				uploadedFiles: {
+					application: [mockFile],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -302,8 +344,14 @@ describe("KnowledgeBaseStep", () => {
 			const mockFile = { name: "test.pdf", size: 1024 } as any;
 
 			useApplicationStore.setState({
-				uploadedFiles: [mockFile],
-				urls: [],
+				uploadedFiles: {
+					application: [mockFile],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -317,8 +365,14 @@ describe("KnowledgeBaseStep", () => {
 			const mockRemoveUrl = vi.fn();
 			useApplicationStore.setState({
 				removeUrl: mockRemoveUrl,
-				uploadedFiles: [],
-				urls: ["https://example.com"],
+				uploadedFiles: {
+					application: [],
+					template: [],
+				},
+				urls: {
+					application: ["https://example.com"],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -336,8 +390,14 @@ describe("KnowledgeBaseStep", () => {
 		it("displays file with correct information", () => {
 			const mockFile = { id: "file-1", name: "test-document.pdf", size: 2048 } as any;
 			useApplicationStore.setState({
-				uploadedFiles: [mockFile],
-				urls: [],
+				uploadedFiles: {
+					application: [mockFile],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -353,8 +413,14 @@ describe("KnowledgeBaseStep", () => {
 			] as any[];
 
 			useApplicationStore.setState({
-				uploadedFiles: mockFiles,
-				urls: [],
+				uploadedFiles: {
+					application: mockFiles,
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -368,8 +434,14 @@ describe("KnowledgeBaseStep", () => {
 	describe("URL Display Logic", () => {
 		it("displays URL with correct link", () => {
 			useApplicationStore.setState({
-				uploadedFiles: [],
-				urls: ["https://example.com"],
+				uploadedFiles: {
+					application: [],
+					template: [],
+				},
+				urls: {
+					application: ["https://example.com"],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -382,8 +454,14 @@ describe("KnowledgeBaseStep", () => {
 
 		it("displays multiple URLs correctly", () => {
 			useApplicationStore.setState({
-				uploadedFiles: [],
-				urls: ["https://example.com", "https://test.org"],
+				uploadedFiles: {
+					application: [],
+					template: [],
+				},
+				urls: {
+					application: ["https://example.com", "https://test.org"],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -407,8 +485,14 @@ describe("KnowledgeBaseStep", () => {
 		it("handles files without size information", () => {
 			const mockFile = { id: "file-1", name: "test.pdf" } as any;
 			useApplicationStore.setState({
-				uploadedFiles: [mockFile],
-				urls: [],
+				uploadedFiles: {
+					application: [mockFile],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -419,8 +503,14 @@ describe("KnowledgeBaseStep", () => {
 		it("does not show container when hasContent is true but no files or URLs exist", () => {
 			useApplicationStore.setState({
 				applicationTitle: "Test Title",
-				uploadedFiles: [],
-				urls: [],
+				uploadedFiles: {
+					application: [],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 
 			render(<KnowledgeBaseStep />);

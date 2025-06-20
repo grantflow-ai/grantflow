@@ -24,13 +24,10 @@ import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconPreviewLogo } from "@/components/workspaces/icons";
-import { type Objective, useWizardStore } from "@/stores/wizard-store";
-
-const MAX_OBJECTIVES = 5;
+import { MAX_OBJECTIVES, type Objective, useApplicationStore } from "@/stores/application-store";
 
 export function ResearchPlanStep() {
-	const { addObjective, applicationState, removeObjective, reorderObjectives } = useWizardStore();
-	const { objectives } = applicationState;
+	const { addNextObjective, handleObjectiveDragEnd, objectives, removeObjective } = useApplicationStore();
 
 	const sensors: SensorDescriptor<SensorOptions>[] = useSensors(
 		useSensor(PointerSensor),
@@ -38,65 +35,6 @@ export function ResearchPlanStep() {
 			coordinateGetter: sortableKeyboardCoordinates,
 		}),
 	);
-
-	const handleAddObjective = () => {
-		const exampleObjectives = [
-			{
-				description:
-					"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie. Aenean ut volutpat nisl enim. Ornare dolor cursus erat. Accumsan tempor vestibulum sapien at velit odio. Aliquam vel ornare pulvinar congue porttitor sed nisl rutrum blandit. Elit magna nulla mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus odio fermentum suspendisse mauris. Ullamcorper quis nunc mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus.",
-				title: "Dissect principles of the inhibitory crosstalk and signaling in the TME by comprehensive single-cell profiling of the tumor microenvironment and signaling in PD-1+ tumor infiltrating T cells in cancer patients",
-			},
-			{
-				description:
-					"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie.",
-				title: "Optimize therapeutic targeting strategies",
-			},
-			{
-				description:
-					"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim.",
-				title: "Develop novel biomarker identification methods",
-			},
-			{
-				description:
-					"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse.",
-				title: "Analyze immune cell interactions",
-			},
-			{
-				description: "Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus.",
-				title: "Investigate resistance mechanisms",
-			},
-		];
-
-		const currentIndex = objectives.length;
-		const exampleObj = exampleObjectives[currentIndex] || exampleObjectives[0];
-
-		addObjective({
-			description: exampleObj.description,
-			id: crypto.randomUUID(),
-			tasks: [],
-			title: exampleObj.title,
-		});
-	};
-
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
-
-		if (active.id !== over?.id) {
-			const oldIndex = objectives.findIndex((obj) => obj.id === active.id);
-			const newIndex = objectives.findIndex((obj) => obj.id === over?.id);
-
-			reorderObjectives(oldIndex, newIndex);
-		}
-	};
-
-	const getButtonText = () => {
-		if (objectives.length === 0) {
-			return "Add First Objective";
-		}
-		return "Add Objective";
-	};
-
-	const canAddObjective = objectives.length < MAX_OBJECTIVES;
 
 	return (
 		<div className="flex size-full" data-testid="research-plan-step">
@@ -115,15 +53,15 @@ export function ResearchPlanStep() {
 						<AppButton
 							className="w-full"
 							data-testid="add-objective-button"
-							disabled={!canAddObjective}
+							disabled={objectives.length >= MAX_OBJECTIVES}
 							leftIcon={<Plus size={16} />}
-							onClick={handleAddObjective}
+							onClick={addNextObjective}
 							variant="secondary"
 						>
-							{getButtonText()}
+							{objectives.length === 0 ? "Add First Objective" : "Add Objective"}
 						</AppButton>
 
-						{!canAddObjective && (
+						{objectives.length >= MAX_OBJECTIVES && (
 							<Card className="border-warning-200 bg-warning-50 p-3">
 								<p className="text-warning-800 text-sm">
 									You&apos;ve reached the maximum of {MAX_OBJECTIVES} objectives. Please refine
@@ -137,7 +75,7 @@ export function ResearchPlanStep() {
 
 			<ResearchPlanPreview
 				objectives={objectives}
-				onDragEnd={handleDragEnd}
+				onDragEnd={handleObjectiveDragEnd}
 				onRemoveObjective={removeObjective}
 				sensors={sensors}
 			/>

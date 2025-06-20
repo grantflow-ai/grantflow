@@ -153,9 +153,11 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 
 					if (currentStep === WizardStep.APPLICATION_DETAILS) {
+						const totalUrls = urls.application.length + urls.template.length;
+						const totalFiles = uploadedFiles.application.length + uploadedFiles.template.length;
 						return (
 							applicationTitle.trim().length >= MIN_TITLE_LENGTH &&
-							(urls.length > 0 || uploadedFiles.length > 0)
+							(totalUrls > 0 || totalFiles > 0)
 						);
 					}
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {

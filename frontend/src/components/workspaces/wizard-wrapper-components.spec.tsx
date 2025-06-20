@@ -27,8 +27,14 @@ const mockApplicationStoreState = {
 	updateApplication: vi.fn().mockResolvedValue(undefined),
 	updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
 	updateGrantSections: vi.fn().mockResolvedValue(undefined),
-	uploadedFiles: [],
-	urls: [],
+	uploadedFiles: {
+		application: [],
+		template: [],
+	},
+	urls: {
+		application: [],
+		template: [],
+	},
 };
 
 vi.mock("@/stores/application-store");
@@ -51,8 +57,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		Object.assign(mockApplicationStoreState, {
 			application: ApplicationFactory.build({ title: "A".repeat(20) }),
 			applicationTitle: "A".repeat(20),
-			uploadedFiles: [],
-			urls: ["https://example.com"],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: ["https://example.com"],
+			},
 		});
 	});
 
@@ -127,8 +139,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 			Object.assign(mockApplicationStoreState, {
 				application: ApplicationFactory.build({ title: "Short" }),
 				applicationTitle: "Short",
-				uploadedFiles: [],
-				urls: [],
+				uploadedFiles: {
+					application: [],
+					template: [],
+				},
+				urls: {
+					application: [],
+					template: [],
+				},
 			});
 			render(<WizardFooter />);
 
@@ -153,8 +171,14 @@ describe("WizardHeader", () => {
 		Object.assign(mockApplicationStoreState, {
 			application: ApplicationFactory.build({ title: "Test Application" }),
 			applicationTitle: "Test Application",
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 

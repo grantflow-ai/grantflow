@@ -15,8 +15,45 @@ import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { createDebounce } from "@/utils/debounce";
 import { logError } from "@/utils/logging";
+import type { DragEndEvent } from "@dnd-kit/core";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
+
+export interface Objective {
+	description: string;
+	id: string;
+	tasks: string[];
+	title: string;
+}
+
+export const MAX_OBJECTIVES = 5;
+
+export const EXAMPLE_OBJECTIVES = [
+	{
+		description:
+			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie. Aenean ut volutpat nisl enim. Ornare dolor cursus erat. Accumsan tempor vestibulum sapien at velit odio. Aliquam vel ornare pulvinar congue porttitor sed nisl rutrum blandit. Elit magna nulla mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus odio fermentum suspendisse mauris. Ullamcorper quis nunc mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus.",
+		title: "Dissect principles of the inhibitory crosstalk and signaling in the TME by comprehensive single-cell profiling of the tumor microenvironment and signaling in PD-1+ tumor infiltrating T cells in cancer patients",
+	},
+	{
+		description:
+			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie.",
+		title: "Optimize therapeutic targeting strategies",
+	},
+	{
+		description:
+			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim.",
+		title: "Develop novel biomarker identification methods",
+	},
+	{
+		description:
+			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse.",
+		title: "Analyze immune cell interactions",
+	},
+	{
+		description: "Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus.",
+		title: "Investigate resistance mechanisms",
+	},
+];
 
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 const RETRIEVE_DEBOUNCE_MS = 1000;
@@ -27,8 +64,15 @@ interface ApplicationState {
 	applicationTitle: string;
 	isGeneratingTemplate: boolean;
 	isLoading: boolean;
-	uploadedFiles: FileWithId[];
-	urls: string[];
+	objectives: Objective[];
+	uploadedFiles: {
+		application: FileWithId[];
+		template: FileWithId[];
+	};
+	urls: {
+		application: string[];
+		template: string[];
+	};
 }
 
 const initialState: ApplicationState = {
@@ -36,27 +80,37 @@ const initialState: ApplicationState = {
 	applicationTitle: "",
 	isGeneratingTemplate: false,
 	isLoading: false,
-	uploadedFiles: [],
-	urls: [],
+	objectives: [],
+	uploadedFiles: {
+		application: [],
+		template: [],
+	},
+	urls: {
+		application: [],
+		template: [],
+	},
 };
 
 interface ApplicationActions {
-	addFile: (file: FileWithId) => Promise<void>;
-	addUrl: (url: string) => Promise<void>;
+	addFile: (file: FileWithId, parentId?: string) => Promise<void>;
+	addNextObjective: () => void;
+	addObjective: (objective: Objective) => void;
+	addUrl: (url: string, parentId: string) => Promise<void>;
 	areFilesOrUrlsIndexing: () => boolean;
 	createApplication: (workspaceId: string) => Promise<void>;
 	debouncedRetrieveApplication: () => void;
-	generateTemplate: (templateId: string) => Promise<void>; // <- this signals the backend to begin the rag process for the grant template ~keep
+	generateTemplate: (templateId: string) => Promise<void>;
 	getIndexingStatus: () => Promise<boolean>;
 	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
+	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleRetrieveWithPolling: () => Promise<void>;
-	removeFile: (file: FileWithId) => Promise<void>;
-	removeUrl: (url: string) => Promise<void>;
+	removeFile: (file: FileWithId, parentId?: string) => Promise<void>;
+	removeObjective: (id: string) => void;
+	removeUrl: (url: string, parentId?: string) => Promise<void>;
+	reorderObjectives: (objectives: Objective[]) => void;
 	retrieveApplication: (workspaceId: string, applicationId: string) => Promise<void>;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
 	setApplicationTitle: (title: string) => void;
-	setUploadedFiles: (files: FileWithId[]) => void;
-	setUrls: (urls: string[]) => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
 	updateApplicationTitle: (workspaceId: string, applicationId: string, title: string) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
@@ -64,24 +118,47 @@ interface ApplicationActions {
 
 export const useApplicationStore = create<ApplicationActions & ApplicationState>((set, get) => ({
 	...initialState,
-	addFile: async (file: FileWithId) => {
+	addFile: async (file: FileWithId, parentId?: string) => {
 		const { application } = get();
+
+		if (!parentId) {
+			toast.error("Cannot upload file: Parent ID missing");
+			return;
+		}
 
 		assertIsNotNullish(application, {
 			message: "Application should not be null when calling addFile",
 		});
 
-		assertIsNotNullish(application.grant_template, {
-			message: "Grant template should not be null when calling addFile",
-		});
+		const isApplicationParent = parentId === application.id;
+		const isTemplateParent = parentId === application.grant_template?.id;
 
+		if (!(isApplicationParent || isTemplateParent)) {
+			logError({
+				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
+				identifier: "addFile",
+			});
+			return;
+		}
+
+		if (isTemplateParent) {
+			assertIsNotNullish(application.grant_template, {
+				message: "Grant template should not be null when uploading to template parent",
+			});
+		}
+
+		const parentKey = isApplicationParent ? "application" : "template";
 		set((state) => ({
-			uploadedFiles: [...state.uploadedFiles, file],
+			uploadedFiles: {
+				...state.uploadedFiles,
+				[parentKey]: [...state.uploadedFiles[parentKey], file],
+			},
 		}));
 
 		try {
 			if (process.env.NODE_ENV === "development") {
-				const objectPath = `workspace/${application.workspace_id}/grant_template/${application.grant_template.id}/${file.name}`;
+				const parentPath = isApplicationParent ? "application" : "grant_template";
+				const objectPath = `workspace/${application.workspace_id}/${parentPath}/${parentId}/${file.name}`;
 				const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
 
 				await ky(emulatorUrl, {
@@ -95,12 +172,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 				void triggerDevIndexing(objectPath);
 			} else {
-				const { createTemplateSourceUploadUrl } = await import("@/actions/sources");
-				const { url } = await createTemplateSourceUploadUrl(
-					application.workspace_id,
-					application.grant_template.id,
-					file.name,
+				const { createApplicationSourceUploadUrl, createTemplateSourceUploadUrl } = await import(
+					"@/actions/sources"
 				);
+				const createUploadUrl = isApplicationParent
+					? createApplicationSourceUploadUrl
+					: createTemplateSourceUploadUrl;
+				const { url } = await createUploadUrl(application.workspace_id, parentId, file.name);
 
 				await ky(url, {
 					body: file,
@@ -122,40 +200,85 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
 			set((state) => ({
-				uploadedFiles: state.uploadedFiles.filter((f) => f.name !== file.name),
+				uploadedFiles: {
+					...state.uploadedFiles,
+					[parentKey]: state.uploadedFiles[parentKey].filter((f) => f.name !== file.name),
+				},
 			}));
 			logError({ error, identifier: "addFile" });
 			toast.error("Failed to upload file. Please try again.");
 		}
 	},
 
-	addUrl: async (url: string) => {
+	addNextObjective: () => {
+		const { objectives } = get();
+		const currentIndex = objectives.length;
+		const exampleObj = EXAMPLE_OBJECTIVES[currentIndex] || EXAMPLE_OBJECTIVES[0];
+
+		get().addObjective({
+			description: exampleObj.description,
+			id: crypto.randomUUID(),
+			tasks: [],
+			title: exampleObj.title,
+		});
+	},
+
+	addObjective: (objective: Objective) => {
+		set((state) => ({
+			objectives: [...state.objectives, objective],
+		}));
+	},
+
+	addUrl: async (url: string, parentId: string) => {
 		const { application } = get();
 
 		assertIsNotNullish(application, {
 			message: "Application should not be null when calling addUrl",
 		});
 
-		assertIsNotNullish(application.grant_template, {
-			message: "Grant template should not be null when calling addUrl",
-		});
+		const isApplicationParent = parentId === application.id;
+		const isTemplateParent = parentId === application.grant_template?.id;
 
-		if (get().urls.includes(url)) {
+		if (!(isApplicationParent || isTemplateParent)) {
+			logError({
+				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
+				identifier: "addUrl",
+			});
+			return;
+		}
+
+		if (isTemplateParent) {
+			assertIsNotNullish(application.grant_template, {
+				message: "Grant template should not be null when adding URL to template parent",
+			});
+		}
+
+		const parentKey = isApplicationParent ? "application" : "template";
+		const currentUrls = get().urls[parentKey];
+
+		if (currentUrls.includes(url)) {
 			return;
 		}
 
 		set((state) => ({
-			urls: [...state.urls, url],
+			urls: {
+				...state.urls,
+				[parentKey]: [...state.urls[parentKey], url],
+			},
 		}));
 
 		try {
-			const { crawlTemplateUrl } = await import("@/actions/sources");
-			await crawlTemplateUrl(application.workspace_id, application.grant_template.id, url);
+			const { crawlApplicationUrl, crawlTemplateUrl } = await import("@/actions/sources");
+			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
+			await crawlUrl(application.workspace_id, parentId, url);
 			toast.success("URL added successfully");
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
 			set((state) => ({
-				urls: state.urls.filter((u) => u !== url),
+				urls: {
+					...state.urls,
+					[parentKey]: state.urls[parentKey].filter((u) => u !== url),
+				},
 			}));
 			logError({ error, identifier: "addUrl" });
 			toast.error("Failed to process URL. Please try again.");
@@ -165,11 +288,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	areFilesOrUrlsIndexing: () => {
 		const { application } = get();
 		if (!application) {
+			logError({ error: "Could not find Application", identifier: "areFilesOrUrlsIndexing" });
 			return false;
 		}
 
 		const allSources = [...application.rag_sources, ...(application.grant_template?.rag_sources ?? [])];
-		// CREATED is the status before processing begins ~keep
 		return allSources.some(
 			(source) => source.status === ("INDEXING" as const) || source.status === ("CREATED" as const),
 		);
@@ -185,7 +308,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				isLoading: false,
 			});
 		} catch (e: unknown) {
-			logError({ error: e, identifier: "application-wizard-create" });
+			logError({ error: e, identifier: "createApplication" });
 			toast.error("Failed to initialize application");
 			set({ isLoading: false });
 		}
@@ -240,6 +363,23 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
+	handleObjectiveDragEnd: (event: DragEndEvent) => {
+		const { active, over } = event;
+		const { objectives, reorderObjectives } = get();
+
+		if (active.id !== over?.id) {
+			const oldIndex = objectives.findIndex((obj) => obj.id === active.id);
+			const newIndex = objectives.findIndex((obj) => obj.id === over?.id);
+
+			if (oldIndex !== -1 && newIndex !== -1) {
+				const reorderedObjectives = [...objectives];
+				const [removed] = reorderedObjectives.splice(oldIndex, 1);
+				reorderedObjectives.splice(newIndex, 0, removed);
+				reorderObjectives(reorderedObjectives);
+			}
+		}
+	},
+
 	handleRetrieveWithPolling: async () => {
 		const { getIndexingStatus } = get();
 		const { polling } = useWizardStore.getState();
@@ -252,30 +392,47 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	removeFile: async (fileToRemove: FileWithId) => {
+	removeFile: async (fileToRemove: FileWithId, parentId?: string) => {
 		const { application } = get();
+
+		if (!parentId) {
+			toast.error("Cannot remove file: Parent ID not found");
+			return;
+		}
 
 		assertIsNotNullish(application, {
 			message: "Application should not be null when calling removeFile",
 		});
 
-		assertIsNotNullish(application.grant_template, {
-			message: "Grant template should not be null when calling removeFile",
-		});
+		const isApplicationParent = parentId === application.id;
+		const isTemplateParent = parentId === application.grant_template?.id;
+
+		if (!(isApplicationParent || isTemplateParent)) {
+			logError({
+				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
+				identifier: "removeFile",
+			});
+			return;
+		}
 
 		if (!fileToRemove.id) {
 			toast.error("Cannot remove file: File ID not found");
 			return;
 		}
 
+		const parentKey = isApplicationParent ? "application" : "template";
 		const previousFiles = get().uploadedFiles;
 		set((state) => ({
-			uploadedFiles: state.uploadedFiles.filter((f) => f.name !== fileToRemove.name),
+			uploadedFiles: {
+				...state.uploadedFiles,
+				[parentKey]: state.uploadedFiles[parentKey].filter((f) => f.name !== fileToRemove.name),
+			},
 		}));
 
 		try {
-			const { deleteTemplateSource } = await import("@/actions/sources");
-			await deleteTemplateSource(application.workspace_id, application.grant_template.id, fileToRemove.id);
+			const { deleteApplicationSource, deleteTemplateSource } = await import("@/actions/sources");
+			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
+			await deleteSource(application.workspace_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
@@ -285,31 +442,58 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	removeUrl: async (urlToRemove: string) => {
+	removeObjective: (id: string) => {
+		set((state) => ({
+			objectives: state.objectives.filter((obj) => obj.id !== id),
+		}));
+	},
+
+	removeUrl: async (urlToRemove: string, parentId?: string) => {
 		const { application } = get();
+
+		if (!parentId) {
+			toast.error("Cannot remove URL: Parent ID not found");
+			return;
+		}
 
 		assertIsNotNullish(application, {
 			message: "Application should not be null when calling removeUrl",
 		});
 
-		assertIsNotNullish(application.grant_template, {
-			message: "Grant template should not be null when calling removeUrl",
-		});
+		const isApplicationParent = parentId === application.id;
+		const isTemplateParent = parentId === application.grant_template?.id;
 
-		const ragSource = application.grant_template.rag_sources.find((source) => source.url === urlToRemove);
+		if (!(isApplicationParent || isTemplateParent)) {
+			logError({
+				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
+				identifier: "removeUrl",
+			});
+			return;
+		}
+
+		const ragSources = isApplicationParent
+			? application.rag_sources
+			: (application.grant_template?.rag_sources ?? []);
+		const ragSource = ragSources.find((source) => source.url === urlToRemove);
+
 		if (!ragSource) {
 			toast.error("Cannot remove URL: Source not found");
 			return;
 		}
 
+		const parentKey = isApplicationParent ? "application" : "template";
 		const previousUrls = get().urls;
 		set((state) => ({
-			urls: state.urls.filter((url) => url !== urlToRemove),
+			urls: {
+				...state.urls,
+				[parentKey]: state.urls[parentKey].filter((url) => url !== urlToRemove),
+			},
 		}));
 
 		try {
-			const { deleteTemplateSource } = await import("@/actions/sources");
-			await deleteTemplateSource(application.workspace_id, application.grant_template.id, ragSource.sourceId);
+			const { deleteApplicationSource, deleteTemplateSource } = await import("@/actions/sources");
+			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
+			await deleteSource(application.workspace_id, parentId, ragSource.sourceId);
 			toast.success("URL removed successfully");
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
@@ -317,6 +501,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			logError({ error, identifier: "removeUrl" });
 			toast.error("Failed to remove URL. Please try again.");
 		}
+	},
+
+	reorderObjectives: (objectives: Objective[]) => {
+		set({ objectives });
 	},
 
 	retrieveApplication: async (workspaceId: string, applicationId: string) => {
@@ -349,19 +537,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 	},
 
-	setUploadedFiles: (files: FileWithId[]) => {
-		set({ uploadedFiles: files });
-	},
-
-	setUrls: (urls: string[]) => {
-		set({ urls });
-	},
-
 	updateApplication: async (data: Partial<API.UpdateApplication.RequestBody>) => {
 		const existingApplication = get().application;
 
 		assertIsNotNullish(existingApplication, {
-			// <- this is a type assertion. It narrows down the type by throwing ~keep
 			message: "Application should not be null when calling updateApplication",
 		});
 

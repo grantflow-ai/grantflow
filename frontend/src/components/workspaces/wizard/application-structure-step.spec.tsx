@@ -25,8 +25,14 @@ describe("ApplicationStructureStep", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 

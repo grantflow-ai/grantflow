@@ -81,8 +81,14 @@ describe("CreateGrantApplicationWizardPage", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -203,8 +209,14 @@ describe("CreateGrantApplicationWizardPage", () => {
 			application: mockResponse,
 			applicationTitle: "Short",
 			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);
@@ -230,8 +242,14 @@ describe("CreateGrantApplicationWizardPage", () => {
 		useApplicationStore.setState({
 			application: mockResponse,
 			applicationTitle: "Short",
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);
@@ -259,8 +277,11 @@ describe("CreateGrantApplicationWizardPage", () => {
 		useApplicationStore.setState({
 			application: mockResponse,
 			applicationTitle: "My Application Title That Is Long Enough",
-			uploadedFiles: [],
-			urls: ["https://example.com"],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {application: [], template: ["https://example.com"]},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);
@@ -295,8 +316,14 @@ describe("CreateGrantApplicationWizardPage", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "My Grant Application",
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);

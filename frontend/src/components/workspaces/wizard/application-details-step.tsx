@@ -1,7 +1,5 @@
 "use client";
 
-import { useCallback } from "react";
-
 import AppTextArea from "@/components/textarea-field";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
@@ -20,13 +18,11 @@ interface ApplicationDetailsStepProps {
 
 export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
 	const { handleTitleChange } = useWizardStore();
-	const { applicationTitle, debouncedRetrieveApplication, removeFile, removeUrl } = useApplicationStore();
+	const { application, applicationTitle, debouncedRetrieveApplication } = useApplicationStore();
 
 	usePollingCleanup();
 
-	const handleDocumentChange = useCallback(() => {
-		debouncedRetrieveApplication();
-	}, [debouncedRetrieveApplication]);
+	const parentId = application?.grant_template?.id;
 
 	return (
 		<div className="flex size-full" data-testid="application-details-step">
@@ -72,7 +68,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileUploader onUploadComplete={handleDocumentChange} />
+						<TemplateFileUploader onUploadComplete={debouncedRetrieveApplication} parentId={parentId} />
 					</div>
 
 					<div>
@@ -82,7 +78,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							understand the funding requirements.
 						</p>
 
-						<UrlInput onUrlAdded={handleDocumentChange} />
+						<UrlInput onUrlAdded={debouncedRetrieveApplication} parentId={parentId} />
 					</div>
 				</div>
 			</div>
@@ -90,8 +86,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 			<ApplicationPreview
 				connectionStatus={connectionStatus}
 				connectionStatusColor={connectionStatusColor}
-				onFileRemove={removeFile}
-				onUrlRemove={removeUrl}
+				parentId={parentId}
 			/>
 		</div>
 	);

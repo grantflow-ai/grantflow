@@ -19,8 +19,14 @@ describe("Application Store", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		vi.clearAllMocks();
@@ -32,8 +38,14 @@ describe("Application Store", () => {
 			expect(state.application).toBeNull();
 			expect(state.applicationTitle).toBe("");
 			expect(state.isLoading).toBe(false);
-			expect(state.uploadedFiles).toEqual([]);
-			expect(state.urls).toEqual([]);
+			expect(state.uploadedFiles).toEqual({
+				application: [],
+				template: [],
+			});
+			expect(state.urls).toEqual({
+				application: [],
+				template: [],
+			});
 		});
 	});
 
@@ -253,10 +265,10 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
-			const { createTemplateSourceUploadUrl } = await import("@/actions/sources");
+			const { createApplicationSourceUploadUrl } = await import("@/actions/sources");
 			const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 
-			vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
+			vi.mocked(createApplicationSourceUploadUrl).mockResolvedValue({
 				source_id: "source-123",
 				url: "https://upload.url",
 			});
@@ -268,11 +280,11 @@ describe("Application Store", () => {
 
 			const { addFile } = useApplicationStore.getState();
 
-			await addFile(file as any);
+			await addFile(file as any, application.id);
 
 			const state = useApplicationStore.getState();
-			expect(state.uploadedFiles).toHaveLength(1);
-			expect(state.uploadedFiles[0].name).toBe("test.pdf");
+			expect(state.uploadedFiles.application).toHaveLength(1);
+			expect(state.uploadedFiles.application[0].name).toBe("test.pdf");
 		});
 
 		it("should add URLs without duplicates", async () => {
@@ -286,12 +298,12 @@ describe("Application Store", () => {
 
 			const { addUrl } = useApplicationStore.getState();
 
-			await addUrl("https://example.com");
-			await addUrl("https://example.com");
-			await addUrl("https://different.com");
+			await addUrl("https://example.com", application.grant_template!.id);
+			await addUrl("https://example.com", application.grant_template!.id);
+			await addUrl("https://different.com", application.grant_template!.id);
 
 			const state = useApplicationStore.getState();
-			expect(state.urls).toEqual(["https://example.com", "https://different.com"]);
+			expect(state.urls.template).toEqual(["https://example.com", "https://different.com"]);
 		});
 
 		it("should remove files", async () => {
@@ -303,14 +315,20 @@ describe("Application Store", () => {
 			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
-			useApplicationStore.setState({ application, uploadedFiles: [file1, file2] as any });
+			useApplicationStore.setState({ 
+				application, 
+				uploadedFiles: {
+					application: [],
+					template: [file1, file2] as any,
+				}
+			});
 
 			const { removeFile } = useApplicationStore.getState();
 
-			await removeFile(file1 as any);
+			await removeFile(file1 as any, application.grant_template!.id);
 
 			const state = useApplicationStore.getState();
-			expect(state.uploadedFiles).toEqual([file2]);
+			expect(state.uploadedFiles.template).toEqual([file2]);
 		});
 
 		it("should remove URLs", async () => {
@@ -326,14 +344,20 @@ describe("Application Store", () => {
 			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
-			useApplicationStore.setState({ application, urls: ["https://example.com", "https://different.com"] });
+			useApplicationStore.setState({ 
+				application, 
+				urls: {
+					application: [],
+					template: ["https://example.com", "https://different.com"],
+				}
+			});
 
 			const { removeUrl } = useApplicationStore.getState();
 
-			await removeUrl("https://example.com");
+			await removeUrl("https://example.com", application.grant_template!.id);
 
 			const state = useApplicationStore.getState();
-			expect(state.urls).toEqual(["https://different.com"]);
+			expect(state.urls.template).toEqual(["https://different.com"]);
 		});
 	});
 

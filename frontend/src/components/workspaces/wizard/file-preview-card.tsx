@@ -1,5 +1,4 @@
 import { ExternalLink, Trash2 } from "lucide-react";
-import type React from "react";
 import { useState } from "react";
 import {
 	DropdownMenu,
@@ -17,16 +16,26 @@ import {
 	IconFilePpt,
 	IconFilePptx,
 } from "@/components/workspaces/icons";
+import { useApplicationStore } from "@/stores/application-store";
+
 import type { FileWithId } from "@/types/files";
 
-export default function FilePreviewCard({
-	file,
-	onRemove,
-}: {
-	file: FileWithId;
-	onRemove?: (file: FileWithId) => Promise<void>;
-}) {
+const FILE_ICON_MAP = {
+	"": <IconFileGeneral height={56} width={48} />,
+	csv: <IconFileCsv height={56} width={48} />,
+	doc: <IconFileDoc height={56} width={48} />,
+	docx: <IconFileDocX height={56} width={48} />,
+	markdown: <IconFileMarkdown height={56} width={48} />,
+	md: <IconFileMarkdown height={56} width={48} />,
+	pdf: <IconFilePdf height={56} width={48} />,
+	ppt: <IconFilePpt height={56} width={48} />,
+	pptx: <IconFilePptx height={56} width={48} />,
+	unknown: <IconFileGeneral height={56} width={48} />,
+} as const;
+
+export default function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId?: string }) {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
+	const { removeFile } = useApplicationStore();
 
 	const extension = getFileExtension(file.name) ?? "";
 
@@ -43,61 +52,14 @@ export default function FilePreviewCard({
 	};
 
 	const handleRemove = async () => {
-		if (onRemove) {
-			await onRemove(file);
-			setDropdownOpen(false);
-		}
+		await removeFile(file, parentId);
+		setDropdownOpen(false);
 	};
 
 	const handleContextMenu = (e: React.MouseEvent) => {
 		e.preventDefault();
 		setDropdownOpen(true);
 	};
-
-	const FileIcon = () => {
-		const getIconComponent = () => {
-			switch (extension) {
-				case "csv": {
-					return <IconFileCsv height={56} width={48} />;
-				}
-				case "doc": {
-					return <IconFileDoc height={56} width={48} />;
-				}
-				case "docx": {
-					return <IconFileDocX height={56} width={48} />;
-				}
-				case "markdown":
-				case "md": {
-					return <IconFileMarkdown height={56} width={48} />;
-				}
-				case "pdf": {
-					return <IconFilePdf height={56} width={48} />;
-				}
-				case "ppt": {
-					return <IconFilePpt height={56} width={48} />;
-				}
-				case "pptx": {
-					return <IconFilePptx height={56} width={48} />;
-				}
-				default: {
-					return <IconFileGeneral height={56} width={48} />;
-				}
-			}
-		};
-
-		return <div className="flex items-center justify-center">{getIconComponent()}</div>;
-	};
-
-	const fileContent = (
-		<>
-			<div className="mb-1">
-				<FileIcon />
-			</div>
-			<span className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3" title={file.name}>
-				{file.name}
-			</span>
-		</>
-	);
 
 	return (
 		<div className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all">
@@ -110,7 +72,7 @@ export default function FilePreviewCard({
 					title="Click to open file"
 					type="button"
 				>
-					{fileContent}
+					<FileContent extension={extension} fileName={file.name} />
 				</button>
 			) : (
 				<div
@@ -118,7 +80,7 @@ export default function FilePreviewCard({
 					onContextMenu={handleContextMenu}
 					role="img"
 				>
-					{fileContent}
+					<FileContent extension={extension} fileName={file.name} />
 				</div>
 			)}
 
@@ -133,7 +95,7 @@ export default function FilePreviewCard({
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						className="text-destructive focus:text-destructive gap-2"
-						disabled={!onRemove}
+						disabled={!parentId}
 						onClick={handleRemove}
 					>
 						<Trash2 className="size-4" />
@@ -143,6 +105,26 @@ export default function FilePreviewCard({
 			</DropdownMenu>
 		</div>
 	);
+}
+
+function FileContent({ extension, fileName }: { extension: string; fileName: string }) {
+	return (
+		<>
+			<div className="mb-1">
+				<FileIcon extension={extension} />
+			</div>
+			<span className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3" title={fileName}>
+				{fileName}
+			</span>
+		</>
+	);
+}
+
+function FileIcon({ extension }: { extension: string }) {
+	// eslint wrongly flagging it as non-nullable - unknown filetype makes map return undefined ~keep
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	const iconComponent = FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP] ?? FILE_ICON_MAP.unknown;
+	return <div className="flex items-center justify-center">{iconComponent}</div>;
 }
 
 function getFileExtension(filename: string) {
