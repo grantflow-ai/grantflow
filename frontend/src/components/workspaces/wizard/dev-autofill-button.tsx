@@ -8,9 +8,8 @@ import { crawlTemplateUrl } from "@/actions/sources";
 import { Button } from "@/components/ui/button";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { logError } from "@/utils/logging";
-
 import type { FileWithId } from "@/types/files";
+import { logError } from "@/utils/logging";
 
 const TEST_FILES = [
 	{

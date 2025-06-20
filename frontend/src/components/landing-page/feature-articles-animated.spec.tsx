@@ -1,8 +1,6 @@
 import { render, screen } from "@testing-library/react";
-
-import { AnimatedFeatureArticle } from "./feature-articles-animated";
-
 import type { ReactNode } from "react";
+import { AnimatedFeatureArticle } from "./feature-articles-animated";
 
 vi.mock("motion/react", () => {
 	return {
