@@ -28,6 +28,15 @@ const stepComponents = {
 	[WizardStep.RESEARCH_PLAN]: <ResearchPlanStep key={WizardStep.RESEARCH_PLAN} />,
 } as const;
 
+const stepComponents = {
+	[WizardStep.APPLICATION_DETAILS]: <ApplicationDetailsStep key={WizardStep.APPLICATION_DETAILS} />,
+	[WizardStep.APPLICATION_STRUCTURE]: <ApplicationStructureStep key={WizardStep.APPLICATION_STRUCTURE} />,
+	[WizardStep.GENERATE_AND_COMPLETE]: <GenerateCompleteStep key={WizardStep.GENERATE_AND_COMPLETE} />,
+	[WizardStep.KNOWLEDGE_BASE]: <KnowledgeBaseStep key={WizardStep.KNOWLEDGE_BASE} />,
+	[WizardStep.RESEARCH_DEEP_DIVE]: <ResearchDeepDiveStep key={WizardStep.RESEARCH_DEEP_DIVE} />,
+	[WizardStep.RESEARCH_PLAN]: <ResearchPlanStep key={WizardStep.RESEARCH_PLAN} />,
+} as const;
+
 function WizardPage({
 	currentStep = WizardStep.APPLICATION_DETAILS,
 	hasApplication = true,
