@@ -1,8 +1,7 @@
+import { ApplicationFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import { ApplicationFactory } from "::testing/factories";
 import { deleteApplicationSource } from "@/actions/sources";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
@@ -10,7 +9,6 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { KnowledgeBaseStep } from "./knowledge-base-step";
 
-// Mock dependencies
 vi.mock("sonner", () => ({
 	toast: {
 		error: vi.fn(),
@@ -65,7 +63,6 @@ describe("KnowledgeBaseStep", () => {
 			},
 		});
 
-		// Set up application store with default state
 		useApplicationStore.setState({
 			addFile: vi.fn(),
 			addUrl: vi.fn(),
@@ -213,12 +210,8 @@ describe("KnowledgeBaseStep", () => {
 		it("starts polling when files are indexing", async () => {
 			const mockStart = vi.fn();
 			const mockStop = vi.fn();
-			const mockAreFilesOrUrlsIndexing = vi
-				.fn()
-				.mockReturnValueOnce(true) // First call - start polling
-				.mockReturnValueOnce(false); // Second call - stop polling
+			const mockAreFilesOrUrlsIndexing = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
 
-			// Update the wizard store's polling functions
 			const wizardState = useWizardStore.getState();
 			useWizardStore.setState({
 				...wizardState,
@@ -273,14 +266,9 @@ describe("KnowledgeBaseStep", () => {
 
 			render(<KnowledgeBaseStep />);
 
-			// Verify the file is displayed
 			expect(screen.getByText("test.pdf")).toBeInTheDocument();
 
-			// Since FilePreviewCard is complex, we'll test the removal function directly
-
-			// Mock the actual removal call
 			await waitFor(async () => {
-				// Simulate file removal behavior
 				if (mockFile.id) {
 					await mockDeleteApplicationSource("test-workspace", "test-app-id", mockFile.id);
 					mockRemoveFile(mockFile);
@@ -306,13 +294,12 @@ describe("KnowledgeBaseStep", () => {
 			try {
 				await mockDeleteApplicationSource("test-workspace", "test-app-id", "file-1");
 			} catch (e) {
-				// Error handling would be in the actual component
 				expect(e).toBe(error);
 			}
 		});
 
 		it("shows error when file has no ID", async () => {
-			const mockFile = { name: "test.pdf", size: 1024 } as any; // No ID
+			const mockFile = { name: "test.pdf", size: 1024 } as any;
 
 			useApplicationStore.setState({
 				uploadedFiles: [mockFile],
@@ -321,7 +308,6 @@ describe("KnowledgeBaseStep", () => {
 
 			render(<KnowledgeBaseStep />);
 
-			// File without ID should not trigger delete API call
 			expect(mockDeleteApplicationSource).not.toHaveBeenCalled();
 		});
 	});
@@ -337,11 +323,9 @@ describe("KnowledgeBaseStep", () => {
 
 			render(<KnowledgeBaseStep />);
 
-			// Get the URL link
 			const urlLink = screen.getByText("https://example.com");
 			expect(urlLink).toBeInTheDocument();
 
-			// Test URL removal directly by calling the store action
 			const { removeUrl } = useApplicationStore.getState();
 			removeUrl("https://example.com");
 			expect(mockRemoveUrl).toHaveBeenCalledWith("https://example.com");
@@ -412,17 +396,16 @@ describe("KnowledgeBaseStep", () => {
 	describe("Conditional Logic Edge Cases", () => {
 		it("handles empty application title correctly", () => {
 			useApplicationStore.setState({
-				applicationTitle: "   ", // Whitespace only
+				applicationTitle: "   ",
 			});
 
 			render(<KnowledgeBaseStep />);
 
-			// Should not show container for whitespace-only title
 			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();
 		});
 
 		it("handles files without size information", () => {
-			const mockFile = { id: "file-1", name: "test.pdf" } as any; // No size property
+			const mockFile = { id: "file-1", name: "test.pdf" } as any;
 			useApplicationStore.setState({
 				uploadedFiles: [mockFile],
 				urls: [],
@@ -434,7 +417,6 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("does not show container when hasContent is true but no files or URLs exist", () => {
-			// Test with title only - should not show container as it requires files or URLs
 			useApplicationStore.setState({
 				applicationTitle: "Test Title",
 				uploadedFiles: [],

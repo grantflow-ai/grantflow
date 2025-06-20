@@ -209,10 +209,9 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("renders TemplateFileContainer", () => {
-		const { container } = render(<ApplicationDetailsStep />);
+		render(<ApplicationDetailsStep />);
 
-		const templateFileContainer = container.querySelector('[data-testid="template-file-container"]');
-		expect(templateFileContainer).toBeInTheDocument();
+		expect(screen.getByTestId("template-file-container")).toBeInTheDocument();
 	});
 
 	it("renders application preview with empty state", () => {

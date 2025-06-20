@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { deleteApplicationSource } from "@/actions/sources";
@@ -10,9 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { IconPreviewLogo } from "@/components/workspaces/icons";
 import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
+import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
-import { useDebounce } from "@/utils/debounce";
 import { logError } from "@/utils/logging";
 
 import { TemplateFileUploader } from "./template-file-uploader";
@@ -20,49 +19,16 @@ import { UrlInput } from "./url-input";
 
 import type { FileWithId } from "@/types/files";
 
-const DEBOUNCE_MS = 1000;
-const POLLING_INTERVAL_DURATION = 3000;
-
 export function KnowledgeBaseStep() {
-	const { polling } = useWizardStore();
-	const { start, stop } = polling;
-	const { application, areFilesOrUrlsIndexing, removeFile, removeUrl, retrieveApplication } = useApplicationStore();
+	const { application, debouncedRetrieveApplication, removeFile, removeUrl } = useApplicationStore();
+
+	usePollingCleanup();
 
 	const applicationId = application?.id;
-	const workspaceId = application?.workspace_id;
-
-	const getIndexingStatus = useCallback(async () => {
-		if (workspaceId && applicationId) {
-			await retrieveApplication(workspaceId, applicationId);
-		}
-		return areFilesOrUrlsIndexing();
-	}, [retrieveApplication, areFilesOrUrlsIndexing, workspaceId, applicationId]);
-
-	const handleRetrieveWithPolling = useCallback(async () => {
-		const isIndexing = await getIndexingStatus();
-
-		if (isIndexing) {
-			start(handleRetrieveWithPolling, POLLING_INTERVAL_DURATION, false);
-		} else {
-			stop();
-		}
-	}, [getIndexingStatus, start, stop]);
-
-	const debouncedRetrieveApplication = useDebounce(handleRetrieveWithPolling, DEBOUNCE_MS);
 
 	const handleDocumentChange = useCallback(() => {
 		debouncedRetrieveApplication();
 	}, [debouncedRetrieveApplication]);
-
-	useEffect(() => {
-		return () => {
-			stop();
-		};
-	}, [stop]);
-
-	const handleRemoveUrl = async (urlToRemove: string) => {
-		await removeUrl(urlToRemove);
-	};
 
 	const handleFileRemove = useCallback(
 		async (fileToRemove: FileWithId) => {
@@ -136,7 +102,7 @@ export function KnowledgeBaseStep() {
 				</div>
 			</div>
 
-			<KnowledgeBasePreview onFileRemove={handleFileRemove} onUrlRemove={handleRemoveUrl} />
+			<KnowledgeBasePreview onFileRemove={handleFileRemove} onUrlRemove={removeUrl} />
 		</div>
 	);
 }

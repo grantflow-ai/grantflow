@@ -53,9 +53,9 @@ vi.mock("@/components/landing-page/scroll-fade-element", () => ({
 
 describe("TestimonialsSection", () => {
 	it("renders section with correct structure and attributes", () => {
-		const { container } = render(<TestimonialsSection />);
+		render(<TestimonialsSection />);
 
-		const section = container.querySelector("section");
+		const section = document.querySelector("section");
 		expect(section).toBeInTheDocument();
 		expect(section).toHaveAttribute("aria-labelledby", "testimonials-section");
 		expect(section).toHaveClass("relative w-full text-stone-800 bg-gray-100");

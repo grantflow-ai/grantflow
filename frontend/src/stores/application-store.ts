@@ -10,13 +10,18 @@ import {
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
+import { useWizardStore } from "@/stores/wizard-store";
+import { createDebounce } from "@/utils/debounce";
+import { logError } from "@/utils/logging";
+
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
-import { logError } from "@/utils/logging";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
 
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
+const RETRIEVE_DEBOUNCE_MS = 1000;
+const POLLING_INTERVAL_DURATION = 3000;
 
 interface ApplicationState {
 	application: ApplicationType;
@@ -41,8 +46,11 @@ interface ApplicationActions {
 	addUrl: (url: string) => Promise<void>;
 	areFilesOrUrlsIndexing: () => boolean;
 	createApplication: (workspaceId: string) => Promise<void>;
+	debouncedRetrieveApplication: () => void;
 	generateTemplate: (templateId: string) => Promise<void>; // <- this signals the backend to begin the rag process for the grant template ~keep
+	getIndexingStatus: () => Promise<boolean>;
 	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
+	handleRetrieveWithPolling: () => Promise<void>;
 	removeFile: (file: FileWithId) => Promise<void>;
 	removeUrl: (url: string) => Promise<void>;
 	retrieveApplication: (workspaceId: string, applicationId: string) => Promise<void>;
@@ -184,6 +192,16 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
+	debouncedRetrieveApplication: (() => {
+		const debouncedFn = createDebounce(() => {
+			void get().handleRetrieveWithPolling();
+		}, RETRIEVE_DEBOUNCE_MS);
+
+		return () => {
+			debouncedFn.call();
+		};
+	})(),
+
 	generateTemplate: async (templateId: string) => {
 		set({ isGeneratingTemplate: true });
 
@@ -201,6 +219,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
+	getIndexingStatus: async () => {
+		const { application, areFilesOrUrlsIndexing, retrieveApplication } = get();
+		if (application) {
+			await retrieveApplication(application.workspace_id, application.id);
+		}
+		return areFilesOrUrlsIndexing();
+	},
+
 	handleApplicationInit: async (workspaceId: string, applicationId?: string) => {
 		set({ isLoading: true });
 		try {
@@ -212,6 +238,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.error(applicationId ? "Failed to retrieve application" : "Failed to initialize application");
 		} finally {
 			set({ isLoading: false });
+		}
+	},
+
+	handleRetrieveWithPolling: async () => {
+		const { getIndexingStatus } = get();
+		const { polling } = useWizardStore.getState();
+		const isIndexing = await getIndexingStatus();
+
+		if (isIndexing) {
+			polling.start(get().handleRetrieveWithPolling, POLLING_INTERVAL_DURATION, false);
+		} else {
+			polling.stop();
 		}
 	},
 

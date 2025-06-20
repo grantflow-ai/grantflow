@@ -32,10 +32,9 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("renders the main component", () => {
-		const { container } = render(<ApplicationStructureStep />);
+		render(<ApplicationStructureStep />);
 
-		const mainComponent = container.querySelector('[data-testid="application-structure-step"]');
-		expect(mainComponent).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
 	});
 
 	it("renders the header section", () => {
@@ -135,16 +134,16 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("has correct layout structure", () => {
-		const { container } = render(<ApplicationStructureStep />);
+		render(<ApplicationStructureStep />);
 
-		const mainContainer = container.querySelector('[data-testid="application-structure-step"]');
+		const mainContainer = screen.getByTestId("application-structure-step");
 		expect(mainContainer).toBeInTheDocument();
 		expect(mainContainer).toHaveClass("flex", "size-full");
 
-		const leftPane = mainContainer?.querySelector(".w-1\\/3");
+		const leftPane = mainContainer.querySelector(".w-1\\/3");
 		expect(leftPane).toBeInTheDocument();
 
-		const previewPane = mainContainer?.querySelector(".w-\\[70\\%\\]");
+		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
 		expect(previewPane).toBeInTheDocument();
 		expect(previewPane).toHaveClass(
 			"bg-preview-bg",
