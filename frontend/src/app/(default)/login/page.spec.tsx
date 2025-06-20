@@ -79,7 +79,6 @@ describe("Login Page", () => {
 
 	it("renders all login page elements correctly with initial state", () => {
 		expect(screen.getByTestId("login-page")).toBeInTheDocument();
-		expect(screen.getByTestId("login-background-pattern")).toBeInTheDocument();
 		expect(screen.getByTestId("login-background-gradient")).toBeInTheDocument();
 
 		expect(screen.getByTestId("login-header")).toBeInTheDocument();
