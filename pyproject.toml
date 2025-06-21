@@ -133,6 +133,7 @@ markers = [
   "slow: All slow tests",
   "semantic_evaluation: Semantic similarity evaluation tests",
   "ai_eval: AI-powered evaluation tests",
+  "xdist_group(name): Mark tests to run in the same xdist worker",
 ]
 filterwarnings = [
   "ignore::DeprecationWarning:pkg_resources.*",

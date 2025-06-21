@@ -504,8 +504,10 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
 
+    mock_verify = AsyncMock(side_effect=ValidationError("No rag sources found"))
+
     with (
-        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
+        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify),
         pytest.raises(ValidationError) as exc_info,
     ):
         await grant_template_generation_pipeline_handler(
