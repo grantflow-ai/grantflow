@@ -125,9 +125,21 @@ runs:
               EOF
               fi
 
+        - name: Setup database extensions
+          shell: bash
+          run: |
+              # Install required PostgreSQL extensions
+              PGPASSWORD=grantflow psql -h localhost -U grantflow -d grantflow -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+              PGPASSWORD=grantflow psql -h localhost -U grantflow -d grantflow -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
+
         - name: Run database migrations
           shell: bash
-          run: uv run task db:migrate
+          run: |
+              # Skip Docker database setup since GitHub services provide PostgreSQL
+              # Directly run Alembic migrations against the service database
+              export PYTHONPATH="."
+              export DB_CONNECTION_STRING="postgresql+asyncpg://grantflow:grantflow@localhost:5432/grantflow"
+              uv run alembic --config ./packages/db/alembic.ini upgrade head
 
         - name: Run E2E Tests
           shell: bash
