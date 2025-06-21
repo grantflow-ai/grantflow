@@ -35,7 +35,7 @@ export function SigninForm({
 }: {
 	isLoading: boolean;
 	onSubmit: SubmitHandler<SignInFormValues>;
-	socialSignInError?: null | React.ReactNode | string | undefined;
+	socialSignInError?: null | React.ReactNode | string;
 }) {
 	const form = useForm<SignInFormValues>({
 		defaultValues: { email: "", firstName: "", lastName: "" },

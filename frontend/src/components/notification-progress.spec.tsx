@@ -1,14 +1,14 @@
+import { RagProcessingStatusFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
-import type { RagProcessingStatus } from "@/hooks/use-application-notifications";
 import { NotificationProgress } from "./notification-progress";
 
 describe("NotificationProgress", () => {
-	const mockNotification: RagProcessingStatus = {
+	const mockNotification = RagProcessingStatusFactory.build({
 		current_pipeline_stage: 4,
 		event: "generating_section_texts",
 		message: "Generating text for all grant sections...",
 		total_pipeline_stages: 9,
-	};
+	});
 
 	it("renders progress bar with correct message", () => {
 		render(<NotificationProgress notification={mockNotification} />);
@@ -34,44 +34,48 @@ describe("NotificationProgress", () => {
 	});
 
 	it("renders nothing when pipeline stages are not provided", () => {
-		const notificationWithoutStages: RagProcessingStatus = {
+		const notificationWithoutStages = RagProcessingStatusFactory.build({
+			current_pipeline_stage: undefined,
 			event: "some_event",
 			message: "Some message",
-		};
+			total_pipeline_stages: undefined,
+		});
 
 		const { container } = render(<NotificationProgress notification={notificationWithoutStages} />);
 		expect(container.firstChild).toBeNull();
 	});
 
 	it("renders nothing when only current stage is provided", () => {
-		const notificationPartialStages: RagProcessingStatus = {
+		const notificationPartialStages = RagProcessingStatusFactory.build({
 			current_pipeline_stage: 5,
 			event: "some_event",
 			message: "Some message",
-		};
+			total_pipeline_stages: undefined,
+		});
 
 		const { container } = render(<NotificationProgress notification={notificationPartialStages} />);
 		expect(container.firstChild).toBeNull();
 	});
 
 	it("renders nothing when only total stages is provided", () => {
-		const notificationPartialStages: RagProcessingStatus = {
+		const notificationPartialStages = RagProcessingStatusFactory.build({
+			current_pipeline_stage: undefined,
 			event: "some_event",
 			message: "Some message",
 			total_pipeline_stages: 10,
-		};
+		});
 
 		const { container } = render(<NotificationProgress notification={notificationPartialStages} />);
 		expect(container.firstChild).toBeNull();
 	});
 
 	it("handles complete progress correctly", () => {
-		const completeNotification: RagProcessingStatus = {
+		const completeNotification = RagProcessingStatusFactory.build({
 			current_pipeline_stage: 9,
 			event: "grant_application_generation_completed",
 			message: "Grant application text generation completed successfully.",
 			total_pipeline_stages: 9,
-		};
+		});
 
 		render(<NotificationProgress notification={completeNotification} />);
 

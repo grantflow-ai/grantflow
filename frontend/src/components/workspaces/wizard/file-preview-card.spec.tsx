@@ -1,7 +1,6 @@
+import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { FileWithIdFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 
 import FilePreviewCard from "./file-preview-card";
@@ -271,22 +270,22 @@ describe("FilePreviewCard", () => {
 
 		it("calls removeFile when Remove is clicked", async () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
-			
-			// Mock the removeFile function to avoid async issues
+
 			const mockRemoveFile = vi.fn().mockResolvedValue(undefined);
-			
-			// Set up application in store so removeFile doesn't fail
+
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-parent-id",
+				rag_sources: [],
+				title: "Test App",
+				workspace_id: "test-workspace",
+			});
+
 			useApplicationStore.setState({
-				application: {
-					id: "test-parent-id",
-					title: "Test App",
-					workspace_id: "test-workspace",
-					grant_template: null,
-					rag_sources: [],
-				},
+				application,
 				removeFile: mockRemoveFile,
 			});
-			
+
 			render(<FilePreviewCard file={file} parentId="test-parent-id" />);
 
 			const button = screen.getByRole("button", { name: "Open document.pdf" });
@@ -299,17 +298,14 @@ describe("FilePreviewCard", () => {
 			const removeMenuItem = screen.getByText("Remove");
 			fireEvent.click(removeMenuItem);
 
-			// Wait for the removeFile function to be called
 			await waitFor(() => {
 				expect(mockRemoveFile).toHaveBeenCalledWith(file, "test-parent-id");
 			});
 
-			// Wait for the dropdown to close after the operation completes
 			await waitFor(() => {
 				expect(screen.queryByText("Remove")).not.toBeInTheDocument();
 			});
 		});
-
 	});
 
 	describe("Layout and Styling", () => {
@@ -338,7 +334,6 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			// PDF files render as buttons, the FileIcon component renders a div with flex classes
 			const button = screen.getByRole("button", { name: "Open document.pdf" });
 			const iconContainerDiv = button.querySelector("div.mb-1 div.flex");
 			expect(iconContainerDiv).toHaveClass("flex", "items-center", "justify-center");

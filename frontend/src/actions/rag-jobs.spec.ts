@@ -1,3 +1,4 @@
+import { ErrorResponseFactory, RagJobResponseFactory } from "::testing/factories";
 import { HTTPError } from "ky";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -35,8 +36,7 @@ describe("rag-jobs server actions", () => {
 		it("should retrieve a rag job successfully", async () => {
 			const mockWorkspaceId = "workspace-123e4567-e89b-12d3-a456-426614174000";
 			const mockJobId = "123e4567-e89b-12d3-a456-426614174000";
-			const mockResponse = {
-				created_at: "2024-01-01T00:00:00Z",
+			const mockResponse = RagJobResponseFactory.build({
 				current_stage: 2,
 				grant_template_id: "456e7890-e89b-12d3-a456-426614174000",
 				id: mockJobId,
@@ -44,8 +44,7 @@ describe("rag-jobs server actions", () => {
 				retry_count: 0,
 				status: "PROCESSING",
 				total_stages: 4,
-				updated_at: "2024-01-01T00:01:00Z",
-			};
+			});
 
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
@@ -64,9 +63,7 @@ describe("rag-jobs server actions", () => {
 		it("should handle application generation job response", async () => {
 			const mockWorkspaceId = "workspace-789e0123-e89b-12d3-a456-426614174000";
 			const mockJobId = "789e0123-e89b-12d3-a456-426614174000";
-			const mockResponse = {
-				completed_at: "2024-01-01T00:05:00Z",
-				created_at: "2024-01-01T00:00:00Z",
+			const mockResponse = RagJobResponseFactory.build({
 				current_stage: 5,
 				generated_sections: {
 					introduction: "This is the introduction...",
@@ -78,12 +75,11 @@ describe("rag-jobs server actions", () => {
 				retry_count: 0,
 				status: "COMPLETED",
 				total_stages: 5,
-				updated_at: "2024-01-01T00:05:00Z",
 				validation_results: {
 					is_valid: true,
 					score: 0.95,
 				},
-			};
+			});
 
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
@@ -104,22 +100,19 @@ describe("rag-jobs server actions", () => {
 		it("should handle failed job with error details", async () => {
 			const mockWorkspaceId = "workspace-abc12345-e89b-12d3-a456-426614174000";
 			const mockJobId = "abc12345-e89b-12d3-a456-426614174000";
-			const mockResponse = {
-				created_at: "2024-01-01T00:00:00Z",
+			const mockResponse = RagJobResponseFactory.build({
 				current_stage: 1,
 				error_details: {
 					details: "Invalid PDF format",
 					error_type: "ExtractionError",
 				},
 				error_message: "Failed to extract sections",
-				failed_at: "2024-01-01T00:03:00Z",
 				id: mockJobId,
 				job_type: "grant_template_generation",
 				retry_count: 3,
 				status: "FAILED",
 				total_stages: 4,
-				updated_at: "2024-01-01T00:03:00Z",
-			};
+			});
 
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
@@ -143,10 +136,10 @@ describe("rag-jobs server actions", () => {
 		it("should handle 404 error when job not found", async () => {
 			const mockWorkspaceId = "workspace-nonexistent";
 			const mockJobId = "nonexistent-job-id";
-			const errorResponse = {
+			const errorResponse = ErrorResponseFactory.build({
 				detail: "RAG job not found",
 				status_code: 404,
-			};
+			});
 
 			const error = new HTTPError(
 				new Response(JSON.stringify(errorResponse), {

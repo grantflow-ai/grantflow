@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
 import eslintJS from "@eslint/js";
+import sonarjs from 'eslint-plugin-sonarjs';
+
 import biomeConfig from "eslint-config-biome";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import eslintPluginImportX from "eslint-plugin-import-x";
@@ -44,6 +46,7 @@ export default eslintTS.config(
 	...compat.extends("plugin:@next/next/core-web-vitals"),
 	eslintPluginImportX.flatConfigs.recommended,
 	eslintPluginImportX.flatConfigs.typescript,
+	sonarjs.configs.recommended,
 	{
 		ignores: ["!.storybook"],
 		languageOptions: {
@@ -142,6 +145,7 @@ export default eslintTS.config(
 			"react-perf/jsx-no-new-object-as-prop": "off",
 			"react/prop-types": "off",
 			"react/react-in-jsx-scope": "off",
+			"sonarjs/prefer-read-only-props": "off",
 			"storybook/no-renderer-packages": "off",
 			"tailwindcss/no-custom-classname": "off",
 			"unicorn/catch-error-name": "off",
@@ -219,6 +223,15 @@ export default eslintTS.config(
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/restrict-template-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
+			"sonarjs/cognitive-complexity": "off",
+			"sonarjs/function-return-type": "off",
+			"sonarjs/no-all-duplicated-branches": "off",
+			"sonarjs/no-clear-text-protocols": "off",
+			"sonarjs/no-nested-conditional": "off",
+			"sonarjs/no-nested-functions": "off",
+			"sonarjs/no-redundant-optional": "off",
+			"sonarjs/pseudo-random": "off",
+			"sonarjs/use-type-alias": "off",
 			"unicorn/error-message": "off",
 			"unicorn/no-await-expression-member": "off",
 		},
@@ -249,6 +262,13 @@ export default eslintTS.config(
 		files: ["**/*.spec.*"],
 		rules: {
 			"react-perf/jsx-no-new-array-as-prop": "off",
+		},
+	},
+	{
+		files: ["**/dev-*.{ts,tsx}"],
+		rules: {
+			"sonarjs/cognitive-complexity": "off",
+			"sonarjs/pseudo-random": "off",
 		},
 	},
 	// Add biome config to disable ESLint rules that Biome handles

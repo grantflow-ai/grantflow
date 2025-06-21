@@ -6,8 +6,10 @@ import pytest
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchObjective
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 from testing.factories import (
     GrantApplicationFactory,
     WorkspaceFactory,
@@ -492,23 +494,32 @@ async def test_pipeline_missing_work_plan_section(
     test_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session:
-        app = await session.get(GrantApplication, test_application.id)
-        assert app is not None
-        assert app.grant_template is not None
-        app.grant_template.grant_sections = [
-            s for s in app.grant_template.grant_sections if not s.get("is_detailed_workplan")
-        ]
-        await session.commit()
+    with (
+        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
+        patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
+    ):
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(GrantApplication)
+                .where(GrantApplication.id == test_application.id)
+                .options(selectinload(GrantApplication.grant_template))
+            )
+            app = result.scalar_one()
+            assert app is not None
+            assert app.grant_template is not None
+            app.grant_template.grant_sections = [
+                s for s in app.grant_template.grant_sections if not s.get("is_detailed_workplan")
+            ]
+            await session.commit()
 
-    with pytest.raises(ValidationError) as exc_info:
-        await grant_application_text_generation_pipeline_handler(
-            grant_application_id=test_application.id,
-            session_maker=async_session_maker,
-            job_manager=create_mock_job_manager(),
-        )
+        with pytest.raises(ValidationError) as exc_info:
+            await grant_application_text_generation_pipeline_handler(
+                grant_application_id=test_application.id,
+                session_maker=async_session_maker,
+                job_manager=create_mock_job_manager(),
+            )
 
-    assert "work plan section" in str(exc_info.value).lower()
+        assert "work plan section" in str(exc_info.value).lower()
 
 
 async def test_pipeline_database_error_during_save(
@@ -536,8 +547,9 @@ async def test_pipeline_database_error_during_save(
             "services.rag.src.grant_application.handler.generate_application_text",
             return_value="Complete application text",
         ),
+        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
         patch(
-            "sqlalchemy.ext.asyncio.AsyncSession.execute",
+            "services.rag.src.grant_application.handler.update",
             side_effect=SQLAlchemyError("Database connection failed"),
         ),
     ):
@@ -548,7 +560,7 @@ async def test_pipeline_database_error_during_save(
                 job_manager=mock_job_manager,
             )
 
-        assert "internal error" in str(exc_info.value).lower()
+        assert "failed to update grant application text" in str(exc_info.value).lower()
 
 
 async def test_pipeline_backend_error_during_generation(

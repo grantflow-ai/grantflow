@@ -22,7 +22,7 @@ export function FooterLinks({
 		<ul className={`flex ${isMobile ? "my-1 flex-col items-end" : ""} gap-3`}>
 			{links.map(({ href, label }, index) => (
 				<li key={index}>
-					<AppButton aria-label="Go to About Us Page" size={isMobile ? "sm" : "sm"} variant="link">
+					<AppButton aria-label="Go to About Us Page" size="sm" variant="link">
 						<Link className={isActive(href) ? "text-link-focus" : ""} href={href}>
 							{label}
 						</Link>

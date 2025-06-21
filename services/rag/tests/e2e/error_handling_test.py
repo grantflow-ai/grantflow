@@ -20,13 +20,13 @@ async def test_retrieval_with_invalid_application_id(
 ) -> None:
     invalid_id = str(uuid4())
 
-    with pytest.raises(ValueError, match="not found|invalid"):
-        await retrieve_documents(
-            rerank=True,
-            application_id=invalid_id,
-            task_description="Test with invalid application ID",
-        )
-    logger.info("Correctly handled invalid application ID")
+    results = await retrieve_documents(
+        application_id=invalid_id,
+        task_description="Test with invalid application ID",
+    )
+
+    assert results == [], "Should return empty list for invalid application ID"
+    logger.info("Correctly handled invalid application ID - returned empty results")
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=30)

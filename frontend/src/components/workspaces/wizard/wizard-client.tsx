@@ -19,8 +19,8 @@ import {
 	type SourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
-import { applicationStore } from "@/stores/application-store";
-import { wizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 
 interface WizardClientComponentProps {
@@ -29,8 +29,8 @@ interface WizardClientComponentProps {
 }
 
 export function WizardClientComponent({ application: initialApplication, workspaceId }: WizardClientComponentProps) {
-	const { currentStep } = wizardStore();
-	const { ragJobState } = applicationStore();
+	const { currentStep } = useWizardStore();
+	const { ragJobState } = useApplicationStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
@@ -56,20 +56,19 @@ export function WizardClientComponent({ application: initialApplication, workspa
 	);
 
 	useEffect(() => {
-		applicationStore.getState().reset();
-		applicationStore.setState({
+		useApplicationStore.getState().reset();
+		useApplicationStore.setState({
 			application: initialApplication,
-			applicationTitle: initialApplication.title,
 			isLoading: false,
 		});
 
-		wizardStore.getState().reset();
+		useWizardStore.getState().reset();
 
-		void applicationStore.getState().checkAndRestoreJobState();
+		void useApplicationStore.getState().checkAndRestoreJobState();
 
 		return () => {
-			wizardStore.getState().reset();
-			applicationStore.getState().clearRestoredJobState();
+			useWizardStore.getState().reset();
+			useApplicationStore.getState().clearRestoredJobState();
 		};
 	}, [initialApplication]);
 
@@ -117,7 +116,7 @@ export function WizardClientComponent({ application: initialApplication, workspa
 
 	useEffect(() => {
 		if (latestRagNotification && ragJobState.restoredJob) {
-			applicationStore.getState().clearRestoredJobState();
+			useApplicationStore.getState().clearRestoredJobState();
 		}
 	}, [latestRagNotification, ragJobState.restoredJob]);
 

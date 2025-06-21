@@ -36,6 +36,7 @@ import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
+import type { FileWithId } from "@/types/files";
 
 type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
@@ -164,10 +165,21 @@ interface SectionListProps {
 }
 
 export function ApplicationStructureStep() {
-	const { application, isGeneratingTemplate, uploadedFiles, urls } = useApplicationStore();
+	const { application, isGeneratingTemplate } = useApplicationStore();
 	const [visibleSteps, setVisibleSteps] = useState(0);
 
 	const parentId = application?.grant_template?.id;
+
+	const templateFiles: FileWithId[] = (application?.grant_template?.rag_sources ?? [])
+		.filter((source) => source.filename)
+		.map((source) => {
+			const file = new File([], source.filename!, { type: "application/octet-stream" });
+			return Object.assign(file, { id: source.sourceId });
+		});
+
+	const templateUrls = (application?.grant_template?.rag_sources ?? [])
+		.filter((source) => source.url)
+		.map((source) => source.url!);
 
 	useEffect(() => {
 		if (isGeneratingTemplate) {
@@ -292,9 +304,9 @@ export function ApplicationStructureStep() {
 								>
 									Application Documents
 								</h3>
-								{uploadedFiles.template.length > 0 ? (
+								{templateFiles.length > 0 ? (
 									<div className="flex gap-3">
-										{uploadedFiles.template.map((file, index) => (
+										{templateFiles.map((file, index) => (
 											<FilePreviewCard
 												file={file}
 												key={file.name + index.toString()}
@@ -312,11 +324,11 @@ export function ApplicationStructureStep() {
 								)}
 							</Card>
 
-							{urls.template.length > 0 && (
+							{templateUrls.length > 0 && (
 								<Card className="border-app-gray-100 border p-4 shadow-none">
 									<h3 className="font-heading mb-2 text-base font-semibold">Links</h3>
 									<div className="space-y-1">
-										{urls.template.map((url, index) => (
+										{templateUrls.map((url, index) => (
 											<LinkPreviewItem
 												key={url + index.toString()}
 												parentId={parentId}
@@ -486,10 +498,14 @@ function ApplicationStructurePreview() {
 
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
-			{hasContent ? (
-				isGeneratingTemplate ? (
-					<GeneratingLoader />
-				) : (
+			{(() => {
+				if (!hasContent) {
+					return <EmptyStateView />;
+				}
+				if (isGeneratingTemplate) {
+					return <GeneratingLoader />;
+				}
+				return (
 					<SectionEditor
 						activeId={activeId}
 						activeSection={activeSection}
@@ -508,10 +524,8 @@ function ApplicationStructurePreview() {
 						subsectionsByParent={subsectionsByParent}
 						toggleSectionExpanded={toggleSectionExpanded}
 					/>
-				)
-			) : (
-				<EmptyStateView />
-			)}
+				);
+			})()}
 		</div>
 	);
 }
@@ -739,11 +753,11 @@ function SectionDragOverlay({
 				<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
 					<div className="flex items-center justify-between">
 						<h5 className="font-medium">{activeSection.title}</h5>
-						{isDetailedSection(activeSection) && activeSection.max_words && (
+						{isDetailedSection(activeSection) && activeSection.max_words ? (
 							<span className="text-muted-foreground-dark text-sm">
 								{activeSection.max_words.toLocaleString()} Max words
 							</span>
-						)}
+						) : null}
 					</div>
 				</div>
 			) : null}
