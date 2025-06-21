@@ -40,9 +40,21 @@ tasks:
             - docker compose --profile services down
 
     test:
-        desc: Run all tests (backend services, packages, and frontend)
+        desc: Run all tests (backend services, packages, and frontend) - uses parallel execution by default
         deps:
             - task: backend:test
+            - task: frontend:test
+
+    test:serial:
+        desc: Run all tests in serial mode (no parallelization)
+        cmds:
+            - PYTHONPATH=. uv run pytest -n0
+            - task: frontend:test
+
+    test:ci:
+        desc: Run tests in CI mode (serial execution)
+        cmds:
+            - PYTHONPATH=. uv run pytest -c pytest-ci.ini
             - task: frontend:test
 
     test:e2e:
@@ -385,12 +397,20 @@ tasks:
             - uv run uvicorn services.rag.src.main:app --host 0.0.0.0 --port 8003 --log-level debug --reload --reload-dir services/rag/src
 
     service:rag:test:
-        desc: Run RAG service tests with detailed output
+        desc: Run RAG service tests with detailed output (parallel execution)
         dotenv: ["services/rag/.env"]
         env:
             PYTHONPATH: "{{.PYTHON_PATH}}"
         cmds:
             - uv run pytest services/rag/tests -v
+
+    service:rag:test:serial:
+        desc: Run RAG service tests in serial mode (no parallelization)
+        dotenv: ["services/rag/.env"]
+        env:
+            PYTHONPATH: "{{.PYTHON_PATH}}"
+        cmds:
+            - uv run pytest services/rag/tests -v -n0
 
     service:rag:test:e2e:
         desc: Run RAG service end-to-end tests

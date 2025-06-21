@@ -45,6 +45,13 @@ for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects
     logging.getLogger(logger_name).propagate = False
 
 
+@pytest.fixture(scope="session")
+def worker_id(request: Any) -> str:
+    """Get the xdist worker id, or 'master' if not running under xdist."""
+    workerinput = getattr(request.config, "workerinput", {})
+    return workerinput.get("workerid", "master") if workerinput else "master"
+
+
 def pytest_collection_modifyitems(items: list[Any]) -> None:
     pytest_asyncio_tests = (item for item in items if is_async_test(item))
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
@@ -53,8 +60,9 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 
 @pytest.fixture(scope="session")
-async def db_connection_string() -> AsyncGenerator[str]:
-    container_name = "test_postgres_container"
+async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
+    # Use worker_id to create unique container names for parallel execution
+    container_name = f"test_postgres_container_{worker_id}" if worker_id != "master" else "test_postgres_container"
 
     with socket(AF_INET, SOCK_STREAM) as s:
         s.bind(("", 0))

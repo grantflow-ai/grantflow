@@ -1,6 +1,7 @@
 import base64
 import json
 from unittest.mock import AsyncMock, patch
+from uuid import UUID
 
 import pytest
 from packages.shared_utils.src.exceptions import ValidationError
@@ -29,7 +30,7 @@ def test_handle_pubsub_message_valid_grant_template() -> None:
 
     result = handle_pubsub_message(event)
 
-    assert result["parent_id"] == data["parent_id"]
+    assert str(result["parent_id"]) == data["parent_id"]
     assert result["parent_type"] == data["parent_type"]
 
 
@@ -39,7 +40,7 @@ def test_handle_pubsub_message_valid_grant_application() -> None:
 
     result = handle_pubsub_message(event)
 
-    assert result["parent_id"] == data["parent_id"]
+    assert str(result["parent_id"]) == data["parent_id"]
     assert result["parent_type"] == data["parent_type"]
 
 
@@ -47,7 +48,7 @@ def test_handle_pubsub_message_invalid_parent_type() -> None:
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "invalid_type"}
     event = create_pubsub_event(data)
 
-    with pytest.raises(ValidationError, match="Invalid parent_type: invalid_type"):
+    with pytest.raises(ValidationError, match="Invalid pubsub message format"):
         handle_pubsub_message(event)
 
 
@@ -88,7 +89,7 @@ def test_handle_pubsub_message_missing_parent_type() -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_rag_request_invalid_message_returns_200() -> None:
+async def test_handle_rag_request_invalid_message_raises_validation_error() -> None:
     mock_session_maker = AsyncMock()
 
     event = PubSubEvent(
@@ -100,9 +101,9 @@ async def test_handle_rag_request_invalid_message_returns_200() -> None:
         subscription="test-subscription",
     )
 
-    result = await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
+    with pytest.raises(ValidationError, match="PubSub message missing data field"):
+        await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
 
-    assert result is None
     mock_session_maker.assert_not_called()
 
 
@@ -120,7 +121,7 @@ async def test_handle_rag_request_grant_template_success() -> None:
         await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
 
         mock_handler.assert_called_once_with(
-            grant_template_id=data["parent_id"],
+            grant_template_id=UUID(data["parent_id"]),
             session_maker=mock_session_maker,
         )
 
@@ -139,7 +140,7 @@ async def test_handle_rag_request_grant_application_success() -> None:
         await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
 
         mock_handler.assert_called_once_with(
-            grant_application_id=data["parent_id"],
+            grant_application_id=UUID(data["parent_id"]),
             session_maker=mock_session_maker,
         )
 

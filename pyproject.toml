@@ -25,6 +25,7 @@ dev = [
   "pytest-cov>=6.0.0",
   "pytest-mock>=3.14.0",
   "pytest-timeout>=2.3.1",
+  "pytest-xdist>=3.7.0",
   "python-dotenv>=1.0.1",
   "ruff>=0.11.1",
   "uv-bump",
@@ -124,6 +125,7 @@ max_supported_python = "3.13"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 timeout = 120
+plugins = [ "testing.xdist_config_plugin" ]
 markers = [
   "smoke: Quick smoke tests (< 1 min)",
   "quality_assessment: Quality assessment tests (2-5 min)",
@@ -131,6 +133,7 @@ markers = [
   "slow: All slow tests",
   "semantic_evaluation: Semantic similarity evaluation tests",
   "ai_eval: AI-powered evaluation tests",
+  "xdist_group(name): Mark tests to run in the same xdist worker",
 ]
 filterwarnings = [
   "ignore::DeprecationWarning:pkg_resources.*",
@@ -139,6 +142,18 @@ filterwarnings = [
   "ignore::DeprecationWarning:fake_http_header.*",
   "ignore::DeprecationWarning:importlib.resources.*",
   "ignore::DeprecationWarning:tracerite.*",
+]
+# Enable pytest-xdist for both local development and CI
+addopts = [
+  "-n",
+  "auto",             # Use all available CPU cores (2 in GitHub Actions, more locally)
+  "--dist",
+  "worksteal",        # Dynamic test distribution for better load balancing
+  "--maxprocesses",
+  "4",                # Limit to 4 workers max
+  "-x",               # Stop on first failure to get faster feedback
+  "--strict-markers", # Ensure all markers are registered
+  "--tb=short",       # Shorter traceback format for better readability in CI
 ]
 
 [tool.coverage.run]

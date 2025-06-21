@@ -15,7 +15,11 @@ from structlog.typing import EventDict, FilteringBoundLogger
 
 from packages.db.src.connection import get_session_maker
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import BackendError, DeserializationError
+from packages.shared_utils.src.exceptions import (
+    BackendError,
+    DeserializationError,
+    ValidationError,
+)
 
 
 class APIError(TypedDict):
@@ -65,6 +69,10 @@ def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler: 
             logger.error("Failed to deserialize the request body", exec_info=exception)
             message = "Failed to deserialize the request body"
             status_code = HTTPStatus.BAD_REQUEST
+        elif isinstance(exception, ValidationError):
+            logger.error("Validation error", exec_info=exception)
+            message = "Invalid pubsub message"
+            status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         else:
             logger.error("An unexpected backend error occurred.", exec_info=exception)
             message = "An unexpected backend error occurred"
@@ -146,6 +154,7 @@ def create_litestar_app(
         exception_handlers={
             SQLAlchemyError: exception_handler,
             BackendError: exception_handler,
+            ValidationError: exception_handler,
         },
         logging_config=logging_config,
         **kwargs,
