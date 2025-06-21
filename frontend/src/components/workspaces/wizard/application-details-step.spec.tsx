@@ -1,4 +1,9 @@
-import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	GrantTemplateFactory,
+	RagSourceFactory,
+} from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -37,17 +42,7 @@ describe("ApplicationDetailsStep", () => {
 
 		useApplicationStore.setState({
 			application: null,
-			applicationTitle: "",
 			isLoading: false,
-			updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
 		});
 	});
 
@@ -82,7 +77,6 @@ describe("ApplicationDetailsStep", () => {
 				title: "Test Title",
 				workspace_id: "test-workspace-id",
 			}),
-			applicationTitle: "Test Title",
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -109,7 +103,6 @@ describe("ApplicationDetailsStep", () => {
 				title: "",
 				workspace_id: "test-workspace-id",
 			}),
-			applicationTitle: "",
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -153,25 +146,29 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("displays existing URLs", () => {
-		useApplicationStore.setState({
-			application: ApplicationFactory.build({
-				grant_template: {
-					created_at: "",
-					grant_application_id: "",
-					grant_sections: [],
-					id: "test-template-id",
-					rag_sources: [],
-					updated_at: "",
-				},
-				id: "test-id",
-				title: "Test Title",
-				workspace_id: "test-workspace-id",
+		const ragSource1 = RagSourceFactory.build({
+			sourceId: "source-1",
+			status: "FINISHED",
+			url: "https://example1.com",
+		});
+		const ragSource2 = RagSourceFactory.build({
+			sourceId: "source-2",
+			status: "FINISHED",
+			url: "https://example2.com",
+		});
+
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				id: "test-template-id",
+				rag_sources: [ragSource1, ragSource2],
 			}),
-			applicationTitle: "Test Title",
-			urls: {
-				application: [],
-				template: ["https://example1.com", "https://example2.com"],
-			},
+			id: "test-id",
+			title: "Test Title",
+			workspace_id: "test-workspace-id",
+		});
+
+		useApplicationStore.setState({
+			application,
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -183,25 +180,29 @@ describe("ApplicationDetailsStep", () => {
 	it("displays URLs and shows removal on hover", async () => {
 		const user = userEvent.setup();
 
-		useApplicationStore.setState({
-			application: ApplicationFactory.build({
-				grant_template: {
-					created_at: "",
-					grant_application_id: "",
-					grant_sections: [],
-					id: "test-template-id",
-					rag_sources: [],
-					updated_at: "",
-				},
-				id: "test-id",
-				title: "Test Title",
-				workspace_id: "test-workspace-id",
+		const ragSource1 = RagSourceFactory.build({
+			sourceId: "source-1",
+			status: "FINISHED",
+			url: "https://example1.com",
+		});
+		const ragSource2 = RagSourceFactory.build({
+			sourceId: "source-2",
+			status: "FINISHED",
+			url: "https://example2.com",
+		});
+
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				id: "test-template-id",
+				rag_sources: [ragSource1, ragSource2],
 			}),
-			applicationTitle: "Test Title",
-			urls: {
-				application: [],
-				template: ["https://example1.com", "https://example2.com"],
-			},
+			id: "test-id",
+			title: "Test Title",
+			workspace_id: "test-workspace-id",
+		});
+
+		useApplicationStore.setState({
+			application,
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -235,27 +236,24 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("shows uploaded files in preview", () => {
-		const file = FileWithIdFactory.build({ name: "test.pdf" });
+		const fileSource = RagSourceFactory.build({
+			filename: "test.pdf",
+			sourceId: "file-1",
+			status: "FINISHED",
+		});
+
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				id: "test-template-id",
+				rag_sources: [fileSource],
+			}),
+			id: "test-id",
+			title: "Test Title",
+			workspace_id: "test-workspace-id",
+		});
 
 		useApplicationStore.setState({
-			application: ApplicationFactory.build({
-				grant_template: {
-					created_at: "",
-					grant_application_id: "",
-					grant_sections: [],
-					id: "test-template-id",
-					rag_sources: [],
-					updated_at: "",
-				},
-				id: "test-id",
-				title: "Test Title",
-				workspace_id: "test-workspace-id",
-			}),
-			applicationTitle: "Test Title",
-			uploadedFiles: {
-				application: [],
-				template: [file],
-			},
+			application,
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -267,27 +265,24 @@ describe("ApplicationDetailsStep", () => {
 	it("renders file dropdown with right-click", async () => {
 		const user = userEvent.setup();
 
-		const file = FileWithIdFactory.build({ name: "test.pdf" });
+		const fileSource = RagSourceFactory.build({
+			filename: "test.pdf",
+			sourceId: "file-1",
+			status: "FINISHED",
+		});
+
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				id: "test-template-id",
+				rag_sources: [fileSource],
+			}),
+			id: "test-id",
+			title: "Test Title",
+			workspace_id: "test-workspace-id",
+		});
 
 		useApplicationStore.setState({
-			application: ApplicationFactory.build({
-				grant_template: {
-					created_at: "",
-					grant_application_id: "",
-					grant_sections: [],
-					id: "test-template-id",
-					rag_sources: [],
-					updated_at: "",
-				},
-				id: "test-id",
-				title: "Test Title",
-				workspace_id: "test-workspace-id",
-			}),
-			applicationTitle: "Test Title",
-			uploadedFiles: {
-				application: [],
-				template: [file],
-			},
+			application,
 		});
 
 		render(<ApplicationDetailsStep />);

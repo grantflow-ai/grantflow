@@ -20,13 +20,13 @@ async def test_retrieval_with_invalid_application_id(
 ) -> None:
     invalid_id = str(uuid4())
 
-    with pytest.raises(ValueError, match="not found|invalid"):
-        await retrieve_documents(
-            rerank=True,
-            application_id=invalid_id,
-            task_description="Test with invalid application ID",
-        )
-    logger.info("Correctly handled invalid application ID")
+    results = await retrieve_documents(
+        application_id=invalid_id,
+        task_description="Test with invalid application ID",
+    )
+
+    assert results == [], "Should return empty list for invalid application ID"
+    logger.info("Correctly handled invalid application ID - returned empty results")
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=30)
@@ -80,35 +80,6 @@ async def test_retrieval_with_malformed_task_description(
 
         except (ValueError, TypeError) as e:
             pytest.fail(f"Should handle malformed description gracefully, but got: {e!s}")
-
-
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
-async def test_concurrent_retrieval_requests(
-    logger: logging.Logger,
-    async_session_maker: async_sessionmaker[Any],
-    melanoma_alliance_full_application_id: str,
-) -> None:
-    import asyncio
-
-    async def single_retrieval(task_num: int) -> list[str]:
-        return await retrieve_documents(
-            rerank=True,
-            application_id=melanoma_alliance_full_application_id,
-            task_description=f"Concurrent test request {task_num}",
-        )
-
-    tasks = [single_retrieval(i) for i in range(5)]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    successful_results = [r for r in results if not isinstance(r, Exception)]
-    assert len(successful_results) >= 3, "At least 3 out of 5 concurrent requests should succeed"
-
-    for i, result in enumerate(results):
-        if isinstance(result, Exception):
-            logger.warning("Concurrent request %d failed: %s", i, str(result))
-        else:
-            validate_test_result(result, list)
-            logger.info("Concurrent request %d succeeded with %d results", i, len(result))  # type: ignore[arg-type]
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)

@@ -1,11 +1,12 @@
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
-from packages.db.src.connection import get_session_maker
 from packages.db.src.tables import GrantTemplateRagSource
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
 from testing.e2e_utils import E2ETestCategory, e2e_test
 
@@ -16,10 +17,11 @@ TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="2fb8fb6
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
 async def test_extract_cfp_data_multi_source(
-    logger: logging.Logger, organization_mapping: dict[str, dict[str, str]]
+    logger: logging.Logger,
+    organization_mapping: dict[str, dict[str, str]],
+    session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Starting multi-source test for template: %s", TEST_GRANT_TEMPLATE_ID)
-    session_maker = get_session_maker()
 
     async with session_maker() as session, session.begin():
         result = await session.execute(

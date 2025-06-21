@@ -82,6 +82,7 @@ export function AppButton({
 	);
 }
 
+// eslint-disable-next-line sonarjs/function-return-type
 function resizedIcon(icon: React.ReactNode, keepIconSize = false): React.ReactNode {
 	if (!icon || keepIconSize) {
 		return icon;
@@ -91,7 +92,7 @@ function resizedIcon(icon: React.ReactNode, keepIconSize = false): React.ReactNo
 		return React.cloneElement(icon as React.ReactElement<React.HTMLProps<SVGSVGElement>>, {
 			height: 16,
 			width: 16,
-		});
+		}) as React.ReactNode;
 	}
 
 	return icon;

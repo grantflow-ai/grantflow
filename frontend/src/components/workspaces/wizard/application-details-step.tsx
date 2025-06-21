@@ -17,8 +17,9 @@ interface ApplicationDetailsStepProps {
 }
 
 export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
-	const { handleTitleChange } = useWizardStore();
-	const { application, applicationTitle, debouncedRetrieveApplication } = useApplicationStore();
+	const { debouncedRetrieveApplication, handleTitleChange } = useWizardStore();
+	const { application } = useApplicationStore();
+	const applicationTitle = application?.title ?? "";
 
 	usePollingCleanup();
 

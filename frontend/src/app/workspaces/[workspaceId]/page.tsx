@@ -1,26 +1,19 @@
 "use server";
 
-import Link from "next/link";
-
 import { getWorkspace } from "@/actions/workspace";
-import { Button } from "@/components/ui/button";
+import { CreateApplicationButton } from "@/components/workspaces/detail/create-application-button";
 import { GrantApplicationCard } from "@/components/workspaces/detail/grant-application-card";
-import { PagePath } from "@/enums";
 
 export default async function WorkspaceDetailPage({ params }: { params: Promise<{ workspaceId: string }> }) {
 	const { workspaceId } = await params;
 
 	const workspace = await getWorkspace(workspaceId);
 
-	const createApplicationUrl = PagePath.NEW_APPLICATION.toString().replace(":workspaceId", workspaceId);
-
 	return (
 		<div className="mx-auto px-4 py-8">
 			<div className="mb-6 flex items-center justify-between">
 				<h1 className="text-2xl font-bold">{workspace.name}</h1>
-				<Button asChild size="sm">
-					<Link href={createApplicationUrl}>New Application</Link>
-				</Button>
+				<CreateApplicationButton workspaceId={workspaceId} />
 			</div>
 			<div className="bg-card rounded-lg border p-6">
 				{workspace.grant_applications.length > 0 ? (
@@ -36,9 +29,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
 				) : (
 					<div className="py-12 text-center">
 						<p className="text-muted-foreground">This workspace doesn&#39;t have any applications yet.</p>
-						<Button asChild className="mt-4" size="sm">
-							<Link href={createApplicationUrl}>Create New Application</Link>
-						</Button>
+						<CreateApplicationButton className="mt-4" workspaceId={workspaceId} />
 					</div>
 				)}
 			</div>

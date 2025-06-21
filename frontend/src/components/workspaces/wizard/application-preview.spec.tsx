@@ -1,18 +1,15 @@
-import { ApplicationFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	GrantTemplateFactory,
+	RagSourceFactory,
+} from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import type { FileWithId } from "@/types/files";
 import { ApplicationPreview } from "./application-preview";
-
-function createMockFile(name: string, size: number, type: string, id: string): FileWithId {
-	const file = new File(["content"], name, { type }) as FileWithId;
-	Object.defineProperty(file, "size", { value: size, writable: false });
-	file.id = id;
-	return file;
-}
 
 describe("ApplicationPreview", () => {
 	beforeEach(() => {
@@ -25,14 +22,6 @@ describe("ApplicationPreview", () => {
 		useApplicationStore.setState({
 			application: null,
 			isLoading: false,
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
 		});
 	});
 
@@ -54,14 +43,6 @@ describe("ApplicationPreview", () => {
 		useApplicationStore.setState({
 			application,
 			isLoading: false,
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
 		});
 
 		render(<ApplicationPreview />);
@@ -71,8 +52,17 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders untitled when no title", () => {
-		const file = createMockFile("test.pdf", 1024, "application/pdf", "file-id");
-		const application = ApplicationFactory.build({
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				id: "template-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "source-1",
+						status: "FINISHED",
+					}),
+				],
+			}),
 			id: "test-id",
 			title: undefined,
 			workspace_id: "test-workspace-id",
@@ -81,14 +71,6 @@ describe("ApplicationPreview", () => {
 		useApplicationStore.setState({
 			application,
 			isLoading: false,
-			uploadedFiles: {
-				application: [],
-				template: [file],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
 		});
 
 		render(<ApplicationPreview />);
@@ -97,20 +79,24 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders uploaded files", () => {
-		const file1 = createMockFile("test1.pdf", 1024, "application/pdf", "file-1");
-		const file2 = createMockFile("test2.pdf", 2048, "application/pdf", "file-2");
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				id: "template-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "source-1",
+						status: "FINISHED",
+					}),
+				],
+			}),
+			id: "test-id",
+			workspace_id: "test-workspace-id",
+		});
 
 		useApplicationStore.setState({
-			application: null,
+			application,
 			isLoading: false,
-			uploadedFiles: {
-				application: [],
-				template: [file1, file2],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
 		});
 
 		render(<ApplicationPreview />);
@@ -120,17 +106,24 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders URLs", () => {
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				id: "template-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						sourceId: "source-1",
+						status: "FINISHED",
+						url: "https://example.com",
+					}),
+				],
+			}),
+			id: "test-id",
+			workspace_id: "test-workspace-id",
+		});
+
 		useApplicationStore.setState({
-			application: null,
+			application,
 			isLoading: false,
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: ["https://example.com", "https://test.com"],
-			},
 		});
 
 		render(<ApplicationPreview />);

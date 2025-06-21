@@ -1,47 +1,25 @@
-from asyncio import sleep
 from datetime import datetime
 from typing import Any, cast
 from uuid import UUID
 
+from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 from packages.db.src.tables import FundingOrganization, GrantTemplate, GrantTemplateRagSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from services.rag.src.constants import GRANT_TEMPLATE_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.grant_template.determine_application_sections import handle_extract_sections
 from services.rag.src.grant_template.determine_longform_metadata import handle_generate_grant_template
 from services.rag.src.grant_template.extract_cfp_data import Content, handle_extract_cfp_data_from_rag_sources
+from services.rag.src.utils.checks import verify_rag_sources_indexed
+from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
-
-
-async def verify_rag_sources_indexed(
-    grant_template_id: UUID, session_maker: async_sessionmaker[Any], total_sleep_duration: int = 0
-) -> None:
-    async with session_maker() as session:
-        try:
-            rag_sources = await session.scalars(
-                select(RagSource)
-                .join(GrantTemplateRagSource)
-                .join(GrantTemplate)
-                .where(GrantTemplateRagSource.grant_template_id == grant_template_id)
-            )
-            if not rag_sources:
-                if total_sleep_duration < 30:
-                    await sleep(10)
-                    return await verify_rag_sources_indexed(grant_template_id, session_maker, total_sleep_duration + 5)
-                raise ValidationError(
-                    "No rag sources found for grant template, cannot generate grant template",
-                    context={"grant_template_id": grant_template_id},
-                )
-
-        except SQLAlchemyError as e:
-            raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e
 
 
 async def extract_and_enrich_sections(
@@ -49,15 +27,15 @@ async def extract_and_enrich_sections(
     cfp_subject: str,
     organization: FundingOrganization | None,
     parent_id: UUID,
+    job_manager: JobManager,
 ) -> list[GrantElement | GrantLongFormSection]:
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=parent_id,
-        event="grant_template_extraction",
-        data=RagProcessingStatus(
-            event="grant_template_extraction",
-            message="Extracting grant application sections from CFP content...",
-        ),
+        event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
+        message="Extracting grant application sections from CFP content...",
+        notification_type="info",
+        current_pipeline_stage=4,
+        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
     sections = await handle_extract_sections(
         cfp_content=cfp_content,
@@ -65,30 +43,28 @@ async def extract_and_enrich_sections(
         organization=organization,
     )
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=parent_id,
-        event="sections_extracted",
-        data=RagProcessingStatus(
-            event="sections_extracted",
-            message="Sections extracted successfully",
-            data={
-                "section_count": len(sections),
-                "organization": organization.full_name if organization else None,
-            },
-        ),
+        event=NotificationEvents.SECTIONS_EXTRACTED,
+        message="Sections extracted successfully",
+        notification_type="info",
+        data={
+            "section_count": len(sections),
+            "organization": organization.full_name if organization else None,
+        },
+        current_pipeline_stage=4,
+        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=parent_id,
-        event="grant_template_metadata",
-        data=RagProcessingStatus(
-            event="grant_template_metadata",
-            message="Generating metadata for grant template sections...",
-        ),
+        event=NotificationEvents.GRANT_TEMPLATE_METADATA,
+        message="Generating metadata for grant template sections...",
+        notification_type="info",
+        current_pipeline_stage=5,
+        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
     section_metadata = await handle_generate_grant_template(
@@ -98,17 +74,16 @@ async def extract_and_enrich_sections(
         long_form_sections=[s for s in sections if not s.get("is_title_only")],
     )
 
-    await publish_notification(
-        logger=logger,
+    await job_manager.add_notification(
         parent_id=parent_id,
-        event="metadata_generated",
-        data=RagProcessingStatus(
-            event="metadata_generated",
-            message="Metadata generated successfully",
-            data={
-                "metadata_count": len(section_metadata),
-            },
-        ),
+        event=NotificationEvents.METADATA_GENERATED,
+        message="Metadata generated successfully",
+        notification_type="info",
+        data={
+            "metadata_count": len(section_metadata),
+        },
+        current_pipeline_stage=5,
+        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
@@ -147,21 +122,33 @@ async def extract_and_enrich_sections(
 
 
 async def grant_template_generation_pipeline_handler(
-    grant_template_id: UUID, session_maker: async_sessionmaker[Any]
+    grant_template_id: UUID,
+    session_maker: async_sessionmaker[Any],
+    job_manager: JobManager | None = None,
 ) -> GrantTemplate:
     logger.info("Starting grant template generation pipeline", template_id=grant_template_id)
 
-    await publish_notification(
-        logger=logger,
+    if job_manager is None:
+        job_manager = JobManager(session_maker)
+        await job_manager.create_grant_template_job(
+            grant_template_id=grant_template_id,
+            total_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        )
+
+        await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
+
+    await job_manager.add_notification(
         parent_id=grant_template_id,
-        event="grant_template_generation_started",
-        data=RagProcessingStatus(
-            event="grant_template_generation_started",
-            message="Starting grant template generation pipeline...",
-        ),
+        event=NotificationEvents.GRANT_TEMPLATE_GENERATION_STARTED,
+        message="Starting grant template generation pipeline...",
+        notification_type="info",
+        current_pipeline_stage=1,
+        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
     try:
+        await verify_rag_sources_indexed(grant_template_id, session_maker, GrantTemplate)
+
         async with session_maker() as session:
             source_ids = [
                 str(source_id)
@@ -169,6 +156,7 @@ async def grant_template_generation_pipeline_handler(
                     select(RagSource.id)
                     .join(GrantTemplateRagSource, RagSource.id == GrantTemplateRagSource.rag_source_id)
                     .where(GrantTemplateRagSource.grant_template_id == grant_template_id)
+                    .where(RagSource.indexing_status == SourceIndexingStatusEnum.FINISHED)
                 )
             ]
             funding_organizations = list(
@@ -179,14 +167,13 @@ async def grant_template_generation_pipeline_handler(
             str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
         }
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=grant_template_id,
-            event="extracting_cfp_data",
-            data=RagProcessingStatus(
-                event="extracting_cfp_data",
-                message="Extracting data from CFP content...",
-            ),
+            event=NotificationEvents.EXTRACTING_CFP_DATA,
+            message="Extracting data from CFP content...",
+            notification_type="info",
+            current_pipeline_stage=2,
+            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
         )
         extraction_result = await handle_extract_cfp_data_from_rag_sources(
             source_ids=source_ids,
@@ -208,20 +195,19 @@ async def grant_template_generation_pipeline_handler(
             else None
         )
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=grant_template_id,
-            event="cfp_data_extracted",
-            data=RagProcessingStatus(
-                event="cfp_data_extracted",
-                message="CFP data extracted successfully",
-                data={
-                    "organization": org_name,
-                    "cfp_subject": extraction_result["cfp_subject"],
-                    "content_sections": len(extraction_result["content"]),
-                    "submission_date": str(submission_date) if submission_date else None,
-                },
-            ),
+            event=NotificationEvents.CFP_DATA_EXTRACTED,
+            message="CFP data extracted successfully",
+            notification_type="info",
+            data={
+                "organization": org_name,
+                "cfp_subject": extraction_result["cfp_subject"],
+                "content_sections": len(extraction_result["content"]),
+                "submission_date": str(submission_date) if submission_date else None,
+            },
+            current_pipeline_stage=3,
+            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
         )
 
         logger.info("Extracted CFP data")
@@ -231,18 +217,18 @@ async def grant_template_generation_pipeline_handler(
             cfp_subject=extraction_result["cfp_subject"],
             organization=organization,
             parent_id=grant_template_id,
+            job_manager=job_manager,
         )
 
         logger.info("Extracted grant template sections")
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.add_notification(
             parent_id=grant_template_id,
-            event="saving_grant_template",
-            data=RagProcessingStatus(
-                event="saving_grant_template",
-                message="Saving grant template to database...",
-            ),
+            event=NotificationEvents.SAVING_GRANT_TEMPLATE,
+            message="Saving grant template to database...",
+            notification_type="info",
+            current_pipeline_stage=6,
+            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
         )
 
     except BackendError as e:
@@ -250,20 +236,29 @@ async def grant_template_generation_pipeline_handler(
 
         if isinstance(e, InsufficientContextError):
             error_message = "The uploaded document doesn't contain sufficient information about the required application sections. Please upload a complete Call for Proposals (CFP) document that includes details about application requirements and sections."
-            event_type = "insufficient_context_error"
+            event_type = NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
+        elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
+            error_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
+            event_type = NotificationEvents.INDEXING_TIMEOUT
+        elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():
+            error_message = "Document indexing failed. Please upload new documents and try again."
+            event_type = NotificationEvents.INDEXING_FAILED
         else:
-            error_message = f"Error in grant template generation: {e!s}"
-            event_type = "pipeline_error"
+            error_message = "An unexpected error occurred while processing your grant template. Please try again or contact support if this persists."
+            event_type = NotificationEvents.PIPELINE_ERROR
+            logger.error("Unexpected error in grant template pipeline", error=e, context=getattr(e, "context", None))
 
-        await publish_notification(
-            logger=logger,
+        await job_manager.update_job_status(
+            status=RagGenerationStatusEnum.FAILED,
+            error_message=error_message,
+            error_details={"error_type": e.__class__.__name__, "recoverable": event_type != "pipeline_error"},
+        )
+        await job_manager.add_notification(
             parent_id=grant_template_id,
             event=event_type,
-            data=RagProcessingStatus(
-                event=event_type,
-                message=error_message,
-                data={"error_type": e.__class__.__name__, **(e.context if hasattr(e, "context") and e.context else {})},
-            ),
+            message=error_message,
+            notification_type="error",
+            data={"error_type": e.__class__.__name__, "recoverable": event_type != "pipeline_error"},
         )
         raise
 
@@ -285,33 +280,36 @@ async def grant_template_generation_pipeline_handler(
             )
             await session.commit()
 
-            await publish_notification(
-                logger=logger,
+            await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
+            await job_manager.add_notification(
                 parent_id=grant_template_id,
-                event="grant_template_created",
-                data=RagProcessingStatus(
-                    event="grant_template_created",
-                    message="Grant template created successfully",
-                    data={
-                        "template_id": str(grant_template.id),
-                        "section_count": len(grant_sections),
-                        "organization": org_name,
-                    },
-                ),
+                event=NotificationEvents.GRANT_TEMPLATE_CREATED,
+                message="Grant template created successfully",
+                notification_type="success",
+                data={
+                    "template_id": str(grant_template.id),
+                    "section_count": len(grant_sections),
+                    "organization": org_name,
+                },
+                current_pipeline_stage=GRANT_TEMPLATE_PIPELINE_STAGES,
+                total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
             )
 
             return cast("GrantTemplate", grant_template)
         except SQLAlchemyError as e:
-            logger.error("Error generating grant template", error=e)
+            logger.error("Database error generating grant template", error=e)
             await session.rollback()
-            await publish_notification(
-                logger=logger,
+
+            await job_manager.update_job_status(
+                status=RagGenerationStatusEnum.FAILED,
+                error_message="An internal error occurred. Please try again or contact support.",
+                error_details={"error_type": "database_error"},
+            )
+            await job_manager.add_notification(
                 parent_id=grant_template_id,
-                event="database_error",
-                data=RagProcessingStatus(
-                    event="database_error",
-                    message="Error generating grant template",
-                    data={"error": str(e)},
-                ),
+                event=NotificationEvents.INTERNAL_ERROR,
+                message="An internal error occurred. Please try again or contact support.",
+                notification_type="error",
+                data={"error_type": "database_error"},
             )
             raise DatabaseError("Error generating grant template", context=str(e)) from e

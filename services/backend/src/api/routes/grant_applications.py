@@ -73,6 +73,7 @@ class GrantTemplateResponse(TypedDict):
     grant_sections: list[GrantLongFormSection | GrantElement]
     submission_date: NotRequired[str]
     rag_sources: list[SourceResponse]
+    rag_job_id: NotRequired[str]
     created_at: str
     updated_at: str
 
@@ -88,6 +89,7 @@ class ApplicationResponse(TypedDict):
     text: NotRequired[str]
     grant_template: NotRequired[GrantTemplateResponse]
     rag_sources: list[SourceResponse]
+    rag_job_id: NotRequired[str]
     created_at: str
     updated_at: str
 
@@ -155,6 +157,9 @@ async def _handle_retrieve_application(
         if grant_application.text:
             response["text"] = grant_application.text
 
+        if grant_application.rag_job_id:
+            response["rag_job_id"] = str(grant_application.rag_job_id)
+
         if grant_application.grant_template:
             template = grant_application.grant_template
             template_response: GrantTemplateResponse = {
@@ -175,6 +180,9 @@ async def _handle_retrieve_application(
                 template_response["submission_date"] = (
                     template.submission_date.isoformat()
                 )
+
+            if template.rag_job_id:
+                template_response["rag_job_id"] = str(template.rag_job_id)
 
             if template.funding_organization:
                 org = template.funding_organization
