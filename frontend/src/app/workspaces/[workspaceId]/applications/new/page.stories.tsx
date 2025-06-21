@@ -15,26 +15,36 @@ import {
 	ResearchPlanStep,
 } from "@/components/workspaces/wizard";
 import { WizardFooter, WizardHeader } from "@/components/workspaces/wizard-wrapper-components";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
+const stepComponents = {
+	[WizardStep.APPLICATION_DETAILS]: <ApplicationDetailsStep key={WizardStep.APPLICATION_DETAILS} />,
+	[WizardStep.APPLICATION_STRUCTURE]: <ApplicationStructureStep key={WizardStep.APPLICATION_STRUCTURE} />,
+	[WizardStep.GENERATE_AND_COMPLETE]: <GenerateCompleteStep key={WizardStep.GENERATE_AND_COMPLETE} />,
+	[WizardStep.KNOWLEDGE_BASE]: <KnowledgeBaseStep key={WizardStep.KNOWLEDGE_BASE} />,
+	[WizardStep.RESEARCH_DEEP_DIVE]: <ResearchDeepDiveStep key={WizardStep.RESEARCH_DEEP_DIVE} />,
+	[WizardStep.RESEARCH_PLAN]: <ResearchPlanStep key={WizardStep.RESEARCH_PLAN} />,
+} as const;
+
+const stepComponents = {
+	[WizardStep.APPLICATION_DETAILS]: <ApplicationDetailsStep key={WizardStep.APPLICATION_DETAILS} />,
+	[WizardStep.APPLICATION_STRUCTURE]: <ApplicationStructureStep key={WizardStep.APPLICATION_STRUCTURE} />,
+	[WizardStep.GENERATE_AND_COMPLETE]: <GenerateCompleteStep key={WizardStep.GENERATE_AND_COMPLETE} />,
+	[WizardStep.KNOWLEDGE_BASE]: <KnowledgeBaseStep key={WizardStep.KNOWLEDGE_BASE} />,
+	[WizardStep.RESEARCH_DEEP_DIVE]: <ResearchDeepDiveStep key={WizardStep.RESEARCH_DEEP_DIVE} />,
+	[WizardStep.RESEARCH_PLAN]: <ResearchPlanStep key={WizardStep.RESEARCH_PLAN} />,
+} as const;
+
 function WizardPage({
-	currentStep = 0,
+	currentStep = WizardStep.APPLICATION_DETAILS,
 	hasApplication = true,
 }: {
 	applicationTitle?: string;
-	currentStep?: number;
+	currentStep?: string;
 	hasApplication?: boolean;
 }) {
-	const steps = [
-		<ApplicationDetailsStep key={0} />,
-		<ApplicationStructureStep key={1} />,
-		<KnowledgeBaseStep key={2} />,
-		<ResearchPlanStep key={3} />,
-		<ResearchDeepDiveStep key={4} />,
-		<GenerateCompleteStep key={5} />,
-	];
-
 	if (!hasApplication) {
 		return (
 			<div className="flex h-screen w-screen items-center justify-center">
@@ -49,7 +59,7 @@ function WizardPage({
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
 			<WizardHeader />
 			<section className="flex-1 overflow-auto" data-testid="step-content-container">
-				{steps[currentStep]}
+				{stepComponents[currentStep as keyof typeof stepComponents]}
 			</section>
 			<WizardFooter />
 		</div>
@@ -80,7 +90,7 @@ type Story = StoryObj<typeof WizardPage>;
 export const Default: Story = {
 	args: {
 		applicationTitle: "Untitled Application",
-		currentStep: 0,
+		currentStep: WizardStep.APPLICATION_DETAILS,
 		hasApplication: true,
 	},
 	decorators: [
@@ -97,7 +107,7 @@ export const Default: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 0,
+					currentStep: WizardStep.APPLICATION_DETAILS,
 				});
 			}, []);
 			return <Story />;
@@ -109,7 +119,7 @@ export const Default: Story = {
 export const LoadingState: Story = {
 	args: {
 		applicationTitle: "",
-		currentStep: 0,
+		currentStep: WizardStep.APPLICATION_DETAILS,
 		hasApplication: false,
 	},
 	name: "Loading Application",
@@ -118,7 +128,7 @@ export const LoadingState: Story = {
 export const Step1_ApplicationDetails: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 0,
+		currentStep: WizardStep.APPLICATION_DETAILS,
 		hasApplication: true,
 	},
 	decorators: [
@@ -135,7 +145,7 @@ export const Step1_ApplicationDetails: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 0,
+					currentStep: WizardStep.APPLICATION_DETAILS,
 				});
 			}, []);
 			return <Story />;
@@ -147,7 +157,7 @@ export const Step1_ApplicationDetails: Story = {
 export const Step2_ApplicationStructure: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 1,
+		currentStep: WizardStep.APPLICATION_STRUCTURE,
 		hasApplication: true,
 	},
 	decorators: [
@@ -163,7 +173,7 @@ export const Step2_ApplicationStructure: Story = {
 					urls: ["https://example.com/research-data"],
 				});
 				useWizardStore.setState({
-					currentStep: 1,
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			}, []);
 			return <Story />;
@@ -175,7 +185,7 @@ export const Step2_ApplicationStructure: Story = {
 export const Step3_KnowledgeBase: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 2,
+		currentStep: WizardStep.KNOWLEDGE_BASE,
 		hasApplication: true,
 	},
 	decorators: [
@@ -200,7 +210,7 @@ export const Step3_KnowledgeBase: Story = {
 					urls: ["https://example.com/research-data"],
 				});
 				useWizardStore.setState({
-					currentStep: 2,
+					currentStep: WizardStep.KNOWLEDGE_BASE,
 				});
 			}, []);
 			return <Story />;
@@ -212,7 +222,7 @@ export const Step3_KnowledgeBase: Story = {
 export const Step4_ResearchPlan: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 3,
+		currentStep: WizardStep.RESEARCH_PLAN,
 		hasApplication: true,
 	},
 	decorators: [
@@ -234,7 +244,7 @@ export const Step4_ResearchPlan: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 3,
+					currentStep: WizardStep.RESEARCH_PLAN,
 				});
 			}, []);
 			return <Story />;
@@ -246,7 +256,7 @@ export const Step4_ResearchPlan: Story = {
 export const Step5_ResearchDeepDive: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 4,
+		currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 		hasApplication: true,
 	},
 	decorators: [
@@ -268,7 +278,7 @@ export const Step5_ResearchDeepDive: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 4,
+					currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				});
 			}, []);
 			return <Story />;
@@ -280,7 +290,7 @@ export const Step5_ResearchDeepDive: Story = {
 export const Step6_GenerateComplete: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 5,
+		currentStep: WizardStep.GENERATE_AND_COMPLETE,
 		hasApplication: true,
 	},
 	decorators: [
@@ -308,7 +318,7 @@ export const Step6_GenerateComplete: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 5,
+					currentStep: WizardStep.GENERATE_AND_COMPLETE,
 				});
 			}, []);
 			return <Story />;
@@ -321,7 +331,7 @@ export const LongApplicationTitle: Story = {
 	args: {
 		applicationTitle:
 			"Comprehensive Climate Change Research and Environmental Impact Assessment Grant for Sustainable Development and Renewable Energy Solutions",
-		currentStep: 1,
+		currentStep: WizardStep.APPLICATION_STRUCTURE,
 		hasApplication: true,
 	},
 	decorators: [
@@ -341,7 +351,7 @@ export const LongApplicationTitle: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 1,
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			}, []);
 			return <Story />;
@@ -352,7 +362,7 @@ export const LongApplicationTitle: Story = {
 export const ProcessingFiles: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 2,
+		currentStep: WizardStep.KNOWLEDGE_BASE,
 		hasApplication: true,
 	},
 	decorators: [
@@ -378,7 +388,7 @@ export const ProcessingFiles: Story = {
 					urls: ["https://example.com/research-data"],
 				});
 				useWizardStore.setState({
-					currentStep: 2,
+					currentStep: WizardStep.KNOWLEDGE_BASE,
 				});
 			}, []);
 			return <Story />;
@@ -389,7 +399,7 @@ export const ProcessingFiles: Story = {
 export const ConnectionError: Story = {
 	args: {
 		applicationTitle: "Climate Change Research Grant",
-		currentStep: 0,
+		currentStep: WizardStep.APPLICATION_DETAILS,
 		hasApplication: true,
 	},
 	decorators: [
@@ -406,7 +416,7 @@ export const ConnectionError: Story = {
 					urls: [],
 				});
 				useWizardStore.setState({
-					currentStep: 0,
+					currentStep: WizardStep.APPLICATION_DETAILS,
 				});
 			}, []);
 			return <Story />;

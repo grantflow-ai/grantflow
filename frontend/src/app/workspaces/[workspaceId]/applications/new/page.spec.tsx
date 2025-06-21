@@ -9,6 +9,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApplication } from "@/actions/grant-applications";
+import { WizardStep } from "@/constants";
 import {
 	isSourceProcessingNotificationMessage,
 	useApplicationNotifications,
@@ -66,9 +67,8 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(useParams).mockReturnValue(mockParams);
 		vi.mocked(useSearchParams).mockReturnValue(mockSearchParams as any);
 
-		// Reset stores to initial state
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				intervalId: null,
 				isActive: false,
@@ -81,15 +81,20 @@ describe("CreateGrantApplicationWizardPage", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
 	it("shows loading state initially", () => {
 		vi.mocked(createApplication).mockImplementation(() => new Promise<never>(() => {}));
 
-		// Set application store to show loading state
 		useApplicationStore.setState({
 			application: null,
 			isLoading: true,
@@ -97,7 +102,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		render(<CreateGrantApplicationWizardPage />);
 
-		// When no applicationId is in search params, it shows an empty loading state
 		const loadingContainer = screen.getByText((_, element) => {
 			return element?.className === "text-center";
 		});
@@ -112,7 +116,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Mock the handleApplicationInit function to set application when called
 		const mockHandleApplicationInit = vi.fn().mockImplementation(async () => {
 			useApplicationStore.setState({ application: mockResponse });
 		});
@@ -133,7 +136,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 	it("shows error and redirects when application creation fails", async () => {
 		vi.mocked(createApplication).mockRejectedValue(new Error("Failed"));
 
-		// Mock the application store with implementation that will fail
 		const mockHandleApplicationInit = vi.fn().mockImplementation(async (_workspaceId: string) => {
 			throw new Error("Failed to initialize application");
 		});
@@ -159,7 +161,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Set application directly with minimal mock for handleApplicationInit
 		useApplicationStore.setState({
 			application: mockResponse,
 			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
@@ -183,7 +184,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Set application directly with minimal mock for handleApplicationInit
 		useApplicationStore.setState({
 			application: mockResponse,
 			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
@@ -205,13 +205,18 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Set application with validation data and minimal mock for handleApplicationInit
 		useApplicationStore.setState({
 			application: mockResponse,
-			applicationTitle: "Short", // This should fail validation
+			applicationTitle: "Short",
 			handleApplicationInit: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);
@@ -234,12 +239,17 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Set application state directly - no need to mock handleApplicationInit
 		useApplicationStore.setState({
 			application: mockResponse,
-			applicationTitle: "Short", // This will fail validation
-			uploadedFiles: [], // No files uploaded
-			urls: [],
+			applicationTitle: "Short",
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);
@@ -248,12 +258,9 @@ describe("CreateGrantApplicationWizardPage", () => {
 			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 		});
 
-		// Add title only - button should still be disabled without files or urls
 		const titleInput = screen.getByTestId("application-title-textarea");
 		await user.clear(titleInput);
 		await user.type(titleInput, "Short");
-
-		// With title length < 10 chars, the button should remain disabled
 		const continueButton = screen.getByTestId("continue-button");
 		expect(continueButton).toBeDisabled();
 	});
@@ -267,12 +274,14 @@ describe("CreateGrantApplicationWizardPage", () => {
 
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
-		// Set application store with valid data directly - no need to mock handleApplicationInit
 		useApplicationStore.setState({
 			application: mockResponse,
 			applicationTitle: "My Application Title That Is Long Enough",
-			uploadedFiles: [],
-			urls: ["https://example.com"],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {application: [], template: ["https://example.com"]},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);
@@ -296,7 +305,7 @@ describe("CreateGrantApplicationWizardPage", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockResponse);
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: WizardStep.APPLICATION_DETAILS,
 		});
 
 		useApplicationStore.setState({
@@ -307,8 +316,14 @@ describe("CreateGrantApplicationWizardPage", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "My Grant Application",
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<CreateGrantApplicationWizardPage />);
@@ -317,7 +332,6 @@ describe("CreateGrantApplicationWizardPage", () => {
 			expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 		});
 
-		// App name should not be visible on first step (currentStep = 0)
 		expect(screen.queryByTestId("app-name")).not.toBeInTheDocument();
 	});
 

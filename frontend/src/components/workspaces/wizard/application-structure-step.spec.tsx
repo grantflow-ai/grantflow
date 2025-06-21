@@ -1,6 +1,7 @@
 import { ApplicationFactory, ApplicationWithTemplateFactory, GrantSectionDetailedFactory } from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -11,7 +12,7 @@ describe("ApplicationStructureStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 1,
+			currentStep: WizardStep.APPLICATION_STRUCTURE,
 			polling: {
 				intervalId: null,
 				isActive: false,
@@ -24,8 +25,14 @@ describe("ApplicationStructureStep", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -39,37 +46,23 @@ describe("ApplicationStructureStep", () => {
 		render(<ApplicationStructureStep />);
 
 		expect(screen.getByTestId("application-structure-header")).toBeInTheDocument();
-		expect(screen.getByText("Application Structure")).toBeInTheDocument();
 		expect(screen.getByTestId("application-structure-description")).toBeInTheDocument();
-		expect(screen.getByText("Review and customize the structure of your grant application.")).toBeInTheDocument();
 	});
 
-	it("renders the configuration cards", () => {
+	it("renders the application documents card", () => {
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByText("Section Configuration")).toBeInTheDocument();
-		expect(
-			screen.getByText("Configure the sections and structure of your application based on the requirements."),
-		).toBeInTheDocument();
-
-		expect(screen.getByText("Content Organization")).toBeInTheDocument();
-		expect(
-			screen.getByText("Organize your content and determine the flow of your application."),
-		).toBeInTheDocument();
-
-		expect(screen.getByText("Requirements Mapping")).toBeInTheDocument();
-		expect(
-			screen.getByText("Map application requirements to specific sections and content areas."),
-		).toBeInTheDocument();
+		expect(screen.getByTestId("application-documents-title")).toBeInTheDocument();
+		expect(screen.getByTestId("no-documents-message")).toBeInTheDocument();
 	});
 
 	it("shows empty state when no application title", () => {
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByText("Configure your application structure to see a preview")).toBeInTheDocument();
+		expect(screen.getByTestId("empty-state-message")).toBeInTheDocument();
 	});
 
-	it("shows preview when application title is present", () => {
+	it("shows preview when application is present", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			id: "test-id",
 			title: "Test Application",
@@ -83,12 +76,11 @@ describe("ApplicationStructureStep", () => {
 
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByTestId("application-structure-title")).toBeInTheDocument();
-		expect(screen.getByText("Test Application")).toBeInTheDocument();
-		expect(screen.queryByText("Configure your application structure to see a preview")).not.toBeInTheDocument();
+		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
+		expect(screen.queryByTestId("empty-state-message")).not.toBeInTheDocument();
 	});
 
-	it("displays untitled when no title is set", () => {
+	it("shows application sections when application exists", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			id: "test-id",
 			title: "",
@@ -102,9 +94,8 @@ describe("ApplicationStructureStep", () => {
 
 		render(<ApplicationStructureStep />);
 
-		const titleElement = screen.getByTestId("application-structure-title");
-		expect(titleElement).toBeInTheDocument();
-		expect(titleElement).toHaveTextContent("Untitled Application");
+		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
+		expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 	});
 
 	it("renders application sections preview", () => {
@@ -132,31 +123,30 @@ describe("ApplicationStructureStep", () => {
 
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
-		expect(screen.getByText("Application Sections")).toBeInTheDocument();
+		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
 
-		expect(screen.getByText("Executive Summary")).toBeInTheDocument();
-		expect(screen.getByText("Overview of the project and key highlights")).toBeInTheDocument();
+		expect(screen.getByTestId("section-title-executive-summary")).toBeInTheDocument();
+		expect(screen.getByTestId("section-description-executive-summary")).toBeInTheDocument();
 
-		expect(screen.getByText("Project Description")).toBeInTheDocument();
-		expect(screen.getByText("Detailed description of the proposed project")).toBeInTheDocument();
+		expect(screen.getByTestId("section-title-project-description")).toBeInTheDocument();
+		expect(screen.getByTestId("section-description-project-description")).toBeInTheDocument();
 
-		expect(screen.getByText("Budget & Timeline")).toBeInTheDocument();
-		expect(screen.getByText("Financial breakdown and project timeline")).toBeInTheDocument();
+		expect(screen.getByTestId("section-title-budget-timeline")).toBeInTheDocument();
+		expect(screen.getByTestId("section-description-budget-timeline")).toBeInTheDocument();
 
-		expect(screen.getByText("Team & Qualifications")).toBeInTheDocument();
-		expect(screen.getByText("Team members and their relevant experience")).toBeInTheDocument();
+		expect(screen.getByTestId("section-title-team-qualifications")).toBeInTheDocument();
+		expect(screen.getByTestId("section-description-team-qualifications")).toBeInTheDocument();
 	});
 
 	it("has correct layout structure", () => {
 		render(<ApplicationStructureStep />);
 
 		const mainContainer = screen.getByTestId("application-structure-step");
+		expect(mainContainer).toBeInTheDocument();
 		expect(mainContainer).toHaveClass("flex", "size-full");
 
 		const leftPane = mainContainer.querySelector(".w-1\\/3");
 		expect(leftPane).toBeInTheDocument();
-		expect(leftPane).toHaveClass("sm:w-1/2", "space-y-6", "overflow-y-auto", "p-6");
 
 		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
 		expect(previewPane).toBeInTheDocument();
@@ -171,25 +161,22 @@ describe("ApplicationStructureStep", () => {
 		);
 	});
 
-	it("handles long application titles gracefully", () => {
-		const longTitle =
-			"This is a very long application title that should be handled gracefully by the UI without breaking the layout or causing overflow issues";
-
+	it("renders with application that has grant sections", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			id: "test-id",
-			title: longTitle,
+			title: "Test Application",
 			workspace_id: "test-workspace-id",
 		});
 
 		useApplicationStore.setState({
 			application,
-			applicationTitle: longTitle,
+			applicationTitle: "Test Application",
 		});
 
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByText(longTitle)).toBeInTheDocument();
-		expect(screen.getByTestId("application-structure-title")).toBeInTheDocument();
+		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
+		expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 	});
 
 	describe("grant sections functionality", () => {
@@ -227,8 +214,7 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			const addButton = screen.getByText("Add New Section");
-			expect(addButton).toBeInTheDocument();
+			expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 		});
 
 		it("opens new section form when add button is clicked", () => {
@@ -241,12 +227,12 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			const addButton = screen.getByText("Add New Section");
+			const addButton = screen.getByTestId("add-new-section-button");
 			fireEvent.click(addButton);
 
-			expect(screen.getByText("New section")).toBeInTheDocument();
+			expect(screen.getByTestId("new-section-title")).toBeInTheDocument();
 			expect(screen.getByLabelText("Section name")).toBeInTheDocument();
-			expect(screen.getByText("Words/Characters count")).toBeInTheDocument();
+			expect(screen.getByTestId("words-characters-label")).toBeInTheDocument();
 		});
 
 		it("calls updateGrantSections when adding a new section", async () => {
@@ -264,13 +250,13 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			const addButton = screen.getByText("Add New Section");
+			const addButton = screen.getByTestId("add-new-section-button");
 			fireEvent.click(addButton);
 
 			const nameInput = screen.getByLabelText("Section name");
 			fireEvent.change(nameInput, { target: { value: "New Section Title" } });
 
-			const saveButton = screen.getByText("Save");
+			const saveButton = screen.getByTestId("save-button");
 			fireEvent.click(saveButton);
 
 			await waitFor(() => {
@@ -353,10 +339,10 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			const addButton = screen.getByText("Add New Section");
+			const addButton = screen.getByTestId("add-new-section-button");
 			fireEvent.click(addButton);
 
-			const saveButton = screen.getByText("Save");
+			const saveButton = screen.getByTestId("save-button");
 			expect(saveButton).toBeDisabled();
 
 			const nameInput = screen.getByLabelText("Section name");

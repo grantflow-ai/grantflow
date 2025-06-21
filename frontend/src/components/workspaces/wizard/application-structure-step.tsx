@@ -21,16 +21,19 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
+import Image from "next/image";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconApplication, IconPreviewLogo } from "@/components/workspaces/icons";
-import { ThemeBadge } from "@/components/workspaces/theme-badge";
+import { IconPreviewLogo } from "@/components/workspaces/icons";
+import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
+import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 
@@ -74,16 +77,6 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	};
 };
 
-interface ApplicationStructurePreviewProps {
-	connectionStatus?: string;
-	connectionStatusColor?: string;
-}
-
-interface ApplicationStructureStepProps {
-	connectionStatus?: string;
-	connectionStatusColor?: string;
-}
-
 interface SortableSectionProps {
 	isDragging?: boolean;
 	isExpanded: boolean;
@@ -94,10 +87,109 @@ interface SortableSectionProps {
 	section: GrantSection;
 }
 
-export function ApplicationStructureStep({ connectionStatus, connectionStatusColor }: ApplicationStructureStepProps) {
+const ANALYZING_STEPS = [
+	{
+		steps: [
+			"Analyzing the documents to capture every needed section and requirement.",
+			"Reviewing the guidelines in detail so no needed section is overlooked.",
+		],
+		title: "Reading the call",
+	},
+	{
+		steps: [
+			"Translating the requirements into a section-by-section framework.",
+			"Drafting a template that mirrors the grant application guidelines.",
+		],
+		title: "Building the outline",
+	},
+	{
+		steps: [
+			"Attaching description for each section to focus the draft generation.",
+			"Pairing every section with clear guidance on what it should include.",
+		],
+		title: "Adding writing cues",
+	},
+	{
+		steps: [
+			"Running a quick consistency scan to confirm coverage and flow.",
+			"Verifying the outline for gaps or overlap before displaying it.",
+		],
+		title: "Final check",
+	},
+];
+
+interface DragAndDropContainerProps {
+	activeId: null | string;
+	activeSection: GrantSection | undefined;
+	expandedSections: Set<string>;
+	grantSections: GrantSection[];
+	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleDragEnd: (event: DragEndEvent) => Promise<void>;
+	handleDragOver: (event: DragOverEvent) => Promise<void>;
+	handleDragStart: (event: DragStartEvent) => void;
+	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
+	mainSections: GrantSection[];
+	sensors: ReturnType<typeof useSensors>;
+	subsectionsByParent: Record<string, GrantSection[]>;
+	toggleSectionExpanded: (sectionId: string) => void;
+}
+
+interface SectionEditorProps {
+	activeId: null | string;
+	activeSection: GrantSection | undefined;
+	editingNewSection: boolean;
+	expandedSections: Set<string>;
+	grantSections: GrantSection[];
+	handleAddNewSection: (data: SectionFormData) => Promise<void>;
+	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleDragEnd: (event: DragEndEvent) => Promise<void>;
+	handleDragOver: (event: DragOverEvent) => Promise<void>;
+	handleDragStart: (event: DragStartEvent) => void;
+	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
+	mainSections: GrantSection[];
+	sensors: ReturnType<typeof useSensors>;
+	setEditingNewSection: (editing: boolean) => void;
+	subsectionsByParent: Record<string, GrantSection[]>;
+	toggleSectionExpanded: (sectionId: string) => void;
+}
+
+interface SectionListProps {
+	expandedSections: Set<string>;
+	grantSections: GrantSection[];
+	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
+	mainSections: GrantSection[];
+	subsectionsByParent: Record<string, GrantSection[]>;
+	toggleSectionExpanded: (sectionId: string) => void;
+}
+
+export function ApplicationStructureStep() {
+	const { application, isGeneratingTemplate, uploadedFiles, urls } = useApplicationStore();
+	const [visibleSteps, setVisibleSteps] = useState(0);
+
+	const parentId = application?.grant_template?.id;
+
+	useEffect(() => {
+		if (isGeneratingTemplate) {
+			const interval = setInterval(() => {
+				setVisibleSteps((prev) => {
+					if (prev < ANALYZING_STEPS.length) {
+						return prev + 1;
+					}
+					return prev;
+				});
+			}, 1000);
+
+			return () => {
+				clearInterval(interval);
+			};
+		}
+		setVisibleSteps(0);
+	}, [isGeneratingTemplate]);
+
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
-			<div className="w-1/3 space-y-6 overflow-y-auto p-6 sm:w-1/2">
+			<div className="w-1/3 overflow-y-auto p-6 sm:w-1/2">
 				<div className="space-y-6">
 					<div>
 						<h2
@@ -110,46 +202,143 @@ export function ApplicationStructureStep({ connectionStatus, connectionStatusCol
 							className="text-muted-foreground-dark leading-tight"
 							data-testid="application-structure-description"
 						>
-							Review and customize the structure of your grant application.
+							{isGeneratingTemplate
+								? "Analyzing your knowledge base to generate the optimal structure..."
+								: "Review and customize the structure of your grant application."}
 						</p>
 					</div>
 
-					<div className="space-y-4">
-						<Card className="border-app-gray-100 border p-4 shadow-none">
-							<h3 className="font-heading mb-2 text-base font-semibold">Section Configuration</h3>
-							<p className="text-muted-foreground-dark text-sm">
-								Configure the sections and structure of your application based on the requirements.
-							</p>
-						</Card>
+					{isGeneratingTemplate ? (
+						<div className="relative space-y-6">
+							{ANALYZING_STEPS.map((section, sectionIndex) => (
+								<div
+									className={`transition-all duration-700 ${
+										visibleSteps > sectionIndex
+											? "translate-x-0 opacity-100"
+											: "-translate-x-4 opacity-0"
+									}`}
+									key={sectionIndex}
+								>
+									<div className="relative">
+										{sectionIndex < ANALYZING_STEPS.length - 1 && (
+											<div
+												className={`absolute left-3 top-8 h-full w-0.5 transition-all duration-500 ${
+													visibleSteps > sectionIndex ? "bg-blue-200" : "bg-gray-200"
+												}`}
+											/>
+										)}
 
-						<Card className="border-app-gray-100 border p-4 shadow-none">
-							<h3 className="font-heading mb-2 text-base font-semibold">Content Organization</h3>
-							<p className="text-muted-foreground-dark text-sm">
-								Organize your content and determine the flow of your application.
-							</p>
-						</Card>
+										<div className="mb-3 flex items-center gap-3">
+											<div
+												className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+													visibleSteps > sectionIndex
+														? "border-blue-500 bg-blue-500 text-white"
+														: "border-gray-300 bg-white text-gray-400"
+												}`}
+											>
+												<span className="text-xs font-medium">{sectionIndex + 1}</span>
+											</div>
+											<h4
+												className={`font-medium transition-colors duration-300 ${
+													visibleSteps > sectionIndex ? "text-gray-900" : "text-gray-400"
+												}`}
+											>
+												{section.title}
+											</h4>
+											{visibleSteps === sectionIndex + 1 && (
+												<div className="ml-2 size-2 animate-pulse rounded-full bg-blue-500" />
+											)}
+										</div>
 
-						<Card className="border-app-gray-100 border p-4 shadow-none">
-							<h3 className="font-heading mb-2 text-base font-semibold">Requirements Mapping</h3>
-							<p className="text-muted-foreground-dark text-sm">
-								Map application requirements to specific sections and content areas.
-							</p>
-						</Card>
-					</div>
+										<div className="ml-9 space-y-2">
+											{section.steps.map((step, stepIndex) => (
+												<div
+													className={`flex items-start gap-2 text-sm transition-all duration-300 ${
+														visibleSteps > sectionIndex
+															? "translate-x-0 opacity-100"
+															: "-translate-x-2 opacity-0"
+													}`}
+													key={stepIndex}
+													style={{
+														transitionDelay: `${stepIndex * 100}ms`,
+													}}
+												>
+													<span className="text-gray-400">{stepIndex + 1}.</span>
+													<span
+														className={`transition-colors duration-300 ${
+															visibleSteps > sectionIndex
+																? "text-gray-700"
+																: "text-gray-400"
+														}`}
+													>
+														{step}
+													</span>
+												</div>
+											))}
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					) : (
+						<div className="space-y-4">
+							<Card
+								className="border-app-gray-100 border p-4 shadow-none"
+								data-testid="application-documents-card"
+							>
+								<h3
+									className="font-heading mb-2 text-base font-semibold"
+									data-testid="application-documents-title"
+								>
+									Application Documents
+								</h3>
+								{uploadedFiles.template.length > 0 ? (
+									<div className="flex gap-3">
+										{uploadedFiles.template.map((file, index) => (
+											<FilePreviewCard
+												file={file}
+												key={file.name + index.toString()}
+												parentId={parentId}
+											/>
+										))}
+									</div>
+								) : (
+									<p
+										className="text-muted-foreground-dark text-sm"
+										data-testid="no-documents-message"
+									>
+										No documents uploaded yet.
+									</p>
+								)}
+							</Card>
+
+							{urls.template.length > 0 && (
+								<Card className="border-app-gray-100 border p-4 shadow-none">
+									<h3 className="font-heading mb-2 text-base font-semibold">Links</h3>
+									<div className="space-y-1">
+										{urls.template.map((url, index) => (
+											<LinkPreviewItem
+												key={url + index.toString()}
+												parentId={parentId}
+												url={url}
+											/>
+										))}
+									</div>
+								</Card>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 
-			<ApplicationStructurePreview
-				connectionStatus={connectionStatus}
-				connectionStatusColor={connectionStatusColor}
-			/>
+			<ApplicationStructurePreview />
 		</div>
 	);
 }
 
-function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }: ApplicationStructurePreviewProps) {
-	const { application, applicationTitle, updateGrantSections } = useApplicationStore();
-	const hasContent = applicationTitle || application;
+function ApplicationStructurePreview() {
+	const { application, isGeneratingTemplate, updateGrantSections } = useApplicationStore();
+	const hasContent = application;
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -298,154 +487,138 @@ function ApplicationStructurePreview({ connectionStatus, connectionStatusColor }
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
 			{hasContent ? (
-				<>
-					<div className="mb-11 flex flex-col items-start gap-2">
-						<div className="flex items-center gap-2">
-							<ThemeBadge color="light" leftIcon={<IconApplication />}>
-								Application Structure
-							</ThemeBadge>
-							{connectionStatus && (
-								<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
-									{connectionStatus}
-								</ThemeBadge>
-							)}
-						</div>
-						<h3
-							className="font-heading text-center text-3xl font-medium"
-							data-testid="application-structure-title"
-						>
-							{applicationTitle.trim() || "Untitled Application"}
-						</h3>
-					</div>
-
-					<ScrollArea className="flex-1">
-						<div className="space-y-5">
-							<Card
-								className="border-app-gray-100 border p-5 shadow-none"
-								data-testid="application-structure-sections"
-							>
-								<div className="mb-4 flex items-center justify-between">
-									<h4 className="font-heading font-semibold">Application Sections</h4>
-									<Button
-										className="gap-2"
-										onClick={() => {
-											setEditingNewSection(true);
-										}}
-										size="sm"
-										variant="outline"
-									>
-										<Plus className="size-4" />
-										Add New Section
-									</Button>
-								</div>
-								{editingNewSection && (
-									<NewSectionForm
-										onCancel={() => {
-											setEditingNewSection(false);
-										}}
-										onSave={handleAddNewSection}
-									/>
-								)}
-								<DndContext
-									collisionDetection={closestCenter}
-									onDragEnd={handleDragEnd}
-									onDragOver={handleDragOver}
-									onDragStart={handleDragStart}
-									sensors={sensors}
-								>
-									<div className="space-y-3">
-										{grantSections.length > 0 ? (
-											<SortableContext
-												items={grantSections.map((s) => s.id)}
-												strategy={verticalListSortingStrategy}
-											>
-												{mainSections.map((section) => (
-													<div key={section.id}>
-														<SortableSection
-															isExpanded={expandedSections.has(section.id)}
-															onDelete={() => handleDeleteSection(section.id)}
-															onToggleExpand={() => {
-																toggleSectionExpanded(section.id);
-															}}
-															onUpdate={(updates) =>
-																handleUpdateSection(section.id, updates)
-															}
-															section={section}
-														/>
-														{(subsectionsByParent[section.id] ?? []).map((subsection) => (
-															<SortableSection
-																isExpanded={expandedSections.has(subsection.id)}
-																isSubsection
-																key={subsection.id}
-																onDelete={() => handleDeleteSection(subsection.id)}
-																onToggleExpand={() => {
-																	toggleSectionExpanded(subsection.id);
-																}}
-																onUpdate={(updates) =>
-																	handleUpdateSection(subsection.id, updates)
-																}
-																section={subsection}
-															/>
-														))}
-													</div>
-												))}
-											</SortableContext>
-										) : (
-											<>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Executive Summary</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Overview of the project and key highlights
-													</p>
-												</div>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Project Description</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Detailed description of the proposed project
-													</p>
-												</div>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Budget & Timeline</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Financial breakdown and project timeline
-													</p>
-												</div>
-												<div className="rounded border border-gray-200 p-3">
-													<h5 className="font-medium">Team & Qualifications</h5>
-													<p className="text-muted-foreground-dark text-sm">
-														Team members and their relevant experience
-													</p>
-												</div>
-											</>
-										)}
-									</div>
-									<DragOverlay>
-										{activeId && activeSection ? (
-											<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
-												<div className="flex items-center justify-between">
-													<h5 className="font-medium">{activeSection.title}</h5>
-													{isDetailedSection(activeSection) && activeSection.max_words && (
-														<span className="text-muted-foreground-dark text-sm">
-															{activeSection.max_words.toLocaleString()} Max words
-														</span>
-													)}
-												</div>
-											</div>
-										) : null}
-									</DragOverlay>
-								</DndContext>
-							</Card>
-						</div>
-					</ScrollArea>
-				</>
+				isGeneratingTemplate ? (
+					<GeneratingLoader />
+				) : (
+					<SectionEditor
+						activeId={activeId}
+						activeSection={activeSection}
+						editingNewSection={editingNewSection}
+						expandedSections={expandedSections}
+						grantSections={grantSections}
+						handleAddNewSection={handleAddNewSection}
+						handleDeleteSection={handleDeleteSection}
+						handleDragEnd={handleDragEnd}
+						handleDragOver={handleDragOver}
+						handleDragStart={handleDragStart}
+						handleUpdateSection={handleUpdateSection}
+						mainSections={mainSections}
+						sensors={sensors}
+						setEditingNewSection={setEditingNewSection}
+						subsectionsByParent={subsectionsByParent}
+						toggleSectionExpanded={toggleSectionExpanded}
+					/>
+				)
 			) : (
-				<div className="flex h-full flex-col items-center justify-center">
-					<IconPreviewLogo height={180} width={180} />
-					<p className="text-muted-foreground-dark mt-6 text-center text-sm">
-						Configure your application structure to see a preview
-					</p>
-				</div>
+				<EmptyStateView />
 			)}
+		</div>
+	);
+}
+
+function DefaultSections() {
+	return (
+		<>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-executive-summary">
+				<h5 className="font-medium" data-testid="section-title-executive-summary">
+					Executive Summary
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-executive-summary">
+					Overview of the project and key highlights
+				</p>
+			</div>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-project-description">
+				<h5 className="font-medium" data-testid="section-title-project-description">
+					Project Description
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-project-description">
+					Detailed description of the proposed project
+				</p>
+			</div>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-budget-timeline">
+				<h5 className="font-medium" data-testid="section-title-budget-timeline">
+					Budget & Timeline
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-budget-timeline">
+					Financial breakdown and project timeline
+				</p>
+			</div>
+			<div className="rounded border border-gray-200 p-3" data-testid="default-section-team-qualifications">
+				<h5 className="font-medium" data-testid="section-title-team-qualifications">
+					Team & Qualifications
+				</h5>
+				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-team-qualifications">
+					Team members and their relevant experience
+				</p>
+			</div>
+		</>
+	);
+}
+
+function DragAndDropContainer({
+	activeId,
+	activeSection,
+	expandedSections,
+	grantSections,
+	handleDeleteSection,
+	handleDragEnd,
+	handleDragOver,
+	handleDragStart,
+	handleUpdateSection,
+	mainSections,
+	sensors,
+	subsectionsByParent,
+	toggleSectionExpanded,
+}: DragAndDropContainerProps) {
+	return (
+		<DndContext
+			collisionDetection={closestCenter}
+			onDragEnd={handleDragEnd}
+			onDragOver={handleDragOver}
+			onDragStart={handleDragStart}
+			sensors={sensors}
+		>
+			<div className="space-y-3">
+				{grantSections.length > 0 ? (
+					<SectionList
+						expandedSections={expandedSections}
+						grantSections={grantSections}
+						handleDeleteSection={handleDeleteSection}
+						handleUpdateSection={handleUpdateSection}
+						mainSections={mainSections}
+						subsectionsByParent={subsectionsByParent}
+						toggleSectionExpanded={toggleSectionExpanded}
+					/>
+				) : (
+					<DefaultSections />
+				)}
+			</div>
+			<SectionDragOverlay activeId={activeId} activeSection={activeSection} />
+		</DndContext>
+	);
+}
+
+function EmptyStateView() {
+	return (
+		<div className="flex h-full flex-col items-center justify-center" data-testid="empty-state">
+			<IconPreviewLogo height={180} width={180} />
+			<p className="text-muted-foreground-dark mt-6 text-center text-sm" data-testid="empty-state-message">
+				Configure your application structure to see a preview
+			</p>
+		</div>
+	);
+}
+
+function GeneratingLoader() {
+	return (
+		<div className="flex h-full flex-col items-center justify-center">
+			<Image
+				alt="Analyzing data"
+				className="size-96 object-contain"
+				height={96}
+				src="/animations/analyzing-loader.gif"
+				width={96}
+			/>
 		</div>
 	);
 }
@@ -466,9 +639,15 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 	};
 
 	return (
-		<form className="mb-4 space-y-4 rounded border border-gray-200 p-4" onSubmit={handleSubmit}>
+		<form
+			className="mb-4 space-y-4 rounded border border-gray-200 p-4"
+			data-testid="new-section-form"
+			onSubmit={handleSubmit}
+		>
 			<div className="flex items-center justify-between">
-				<h5 className="font-medium">New section</h5>
+				<h5 className="font-medium" data-testid="new-section-title">
+					New section
+				</h5>
 			</div>
 
 			<div className="space-y-4">
@@ -486,7 +665,7 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 				</div>
 
 				<div>
-					<Label>Words/Characters count</Label>
+					<Label data-testid="words-characters-label">Words/Characters count</Label>
 					<p className="text-muted-foreground text-sm">
 						This helps AI generate content that fits the grant&apos;s requirements. Choose if the limit
 						applies to words or characters.
@@ -535,15 +714,161 @@ function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (d
 				</div>
 
 				<div className="flex justify-between gap-2">
-					<Button onClick={onCancel} type="button" variant="outline">
+					<Button data-testid="cancel-button" onClick={onCancel} type="button" variant="outline">
 						Cancel
 					</Button>
-					<Button disabled={!formData.title.trim()} type="submit">
+					<Button data-testid="save-button" disabled={!formData.title.trim()} type="submit">
 						Save
 					</Button>
 				</div>
 			</div>
 		</form>
+	);
+}
+
+function SectionDragOverlay({
+	activeId,
+	activeSection,
+}: {
+	activeId: null | string;
+	activeSection: GrantSection | undefined;
+}) {
+	return (
+		<DragOverlay>
+			{activeId && activeSection ? (
+				<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
+					<div className="flex items-center justify-between">
+						<h5 className="font-medium">{activeSection.title}</h5>
+						{isDetailedSection(activeSection) && activeSection.max_words && (
+							<span className="text-muted-foreground-dark text-sm">
+								{activeSection.max_words.toLocaleString()} Max words
+							</span>
+						)}
+					</div>
+				</div>
+			) : null}
+		</DragOverlay>
+	);
+}
+
+function SectionEditor({
+	activeId,
+	activeSection,
+	editingNewSection,
+	expandedSections,
+	grantSections,
+	handleAddNewSection,
+	handleDeleteSection,
+	handleDragEnd,
+	handleDragOver,
+	handleDragStart,
+	handleUpdateSection,
+	mainSections,
+	sensors,
+	setEditingNewSection,
+	subsectionsByParent,
+	toggleSectionExpanded,
+}: SectionEditorProps) {
+	return (
+		<div className="flex h-full flex-col">
+			<SectionHeader
+				onAddSection={() => {
+					setEditingNewSection(true);
+				}}
+			/>
+			<ScrollArea className="flex-1">
+				<div className="space-y-5">
+					<Card
+						className="border-app-gray-100 border p-5 shadow-none"
+						data-testid="application-structure-sections"
+					>
+						{editingNewSection && (
+							<NewSectionForm
+								onCancel={() => {
+									setEditingNewSection(false);
+								}}
+								onSave={handleAddNewSection}
+							/>
+						)}
+						<DragAndDropContainer
+							activeId={activeId}
+							activeSection={activeSection}
+							expandedSections={expandedSections}
+							grantSections={grantSections}
+							handleDeleteSection={handleDeleteSection}
+							handleDragEnd={handleDragEnd}
+							handleDragOver={handleDragOver}
+							handleDragStart={handleDragStart}
+							handleUpdateSection={handleUpdateSection}
+							mainSections={mainSections}
+							sensors={sensors}
+							subsectionsByParent={subsectionsByParent}
+							toggleSectionExpanded={toggleSectionExpanded}
+						/>
+					</Card>
+				</div>
+			</ScrollArea>
+		</div>
+	);
+}
+
+function SectionHeader({ onAddSection }: { onAddSection: () => void }) {
+	return (
+		<div className="mb-4 flex items-center justify-between">
+			<h4 className="font-heading font-semibold" data-testid="application-sections-title">
+				Application Sections
+			</h4>
+			<AppButton
+				data-testid="add-new-section-button"
+				leftIcon={<Plus />}
+				onClick={onAddSection}
+				size="sm"
+				variant="secondary"
+			>
+				Add New Section
+			</AppButton>
+		</div>
+	);
+}
+
+function SectionList({
+	expandedSections,
+	grantSections,
+	handleDeleteSection,
+	handleUpdateSection,
+	mainSections,
+	subsectionsByParent,
+	toggleSectionExpanded,
+}: SectionListProps) {
+	return (
+		<SortableContext items={grantSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+			{mainSections.map((section) => (
+				<div key={section.id}>
+					<SortableSection
+						isExpanded={expandedSections.has(section.id)}
+						onDelete={() => handleDeleteSection(section.id)}
+						onToggleExpand={() => {
+							toggleSectionExpanded(section.id);
+						}}
+						onUpdate={(updates) => handleUpdateSection(section.id, updates)}
+						section={section}
+					/>
+					{(subsectionsByParent[section.id] ?? []).map((subsection) => (
+						<SortableSection
+							isExpanded={expandedSections.has(subsection.id)}
+							isSubsection
+							key={subsection.id}
+							onDelete={() => handleDeleteSection(subsection.id)}
+							onToggleExpand={() => {
+								toggleSectionExpanded(subsection.id);
+							}}
+							onUpdate={(updates) => handleUpdateSection(subsection.id, updates)}
+							section={subsection}
+						/>
+					))}
+				</div>
+			))}
+		</SortableContext>
 	);
 }
 

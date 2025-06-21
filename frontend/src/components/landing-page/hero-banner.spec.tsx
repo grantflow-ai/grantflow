@@ -24,9 +24,9 @@ vi.mock("@/components/app-button", () => ({
 
 describe("HeroBanner", () => {
 	it("renders the component with the correct structure", () => {
-		const { container } = render(<HeroBanner />);
+		render(<HeroBanner />);
 
-		const section = container.querySelector("section");
+		const section = document.querySelector("section");
 		expect(section).toBeInTheDocument();
 
 		const heading = screen.getByRole("heading", { level: 1 });
@@ -37,7 +37,7 @@ describe("HeroBanner", () => {
 		expect(background).toBeInTheDocument();
 		expect(background).toHaveClass("absolute inset-0 z-10");
 
-		const heroPattern = container.querySelector('svg[aria-hidden="true"]');
+		const heroPattern = document.querySelector('svg[aria-hidden="true"]');
 		expect(heroPattern).toBeInTheDocument();
 		expect(heroPattern).toHaveAttribute("aria-hidden", "true");
 
@@ -65,9 +65,9 @@ describe("HeroBanner", () => {
 	});
 
 	it("renders the hero pattern SVG with correct attributes", () => {
-		const { container } = render(<HeroBanner />);
+		render(<HeroBanner />);
 
-		const heroPattern = container.querySelector('svg[aria-hidden="true"]');
+		const heroPattern = document.querySelector('svg[aria-hidden="true"]');
 		expect(heroPattern).toBeInTheDocument();
 		expect(heroPattern).toHaveClass("absolute bottom-0 right-0 z-20 h-4/5 w-[70%] md:h-[90%] md:w-auto lg:h-full");
 	});

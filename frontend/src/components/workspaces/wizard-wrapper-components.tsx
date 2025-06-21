@@ -9,7 +9,7 @@ import {
 	IconDeadline,
 } from "@/components/workspaces/icons";
 import { DevAutofillButton } from "@/components/workspaces/wizard/dev-autofill-button";
-import { WIZARD_STEP_TITLES } from "@/constants";
+import { WIZARD_STEP_TITLES, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -44,7 +44,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 export function WizardFooter() {
 	const { currentStep, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
-	const showBack = currentStep > 0;
+	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const disabled = !validateStepNext();
 
 	return (
@@ -87,7 +87,7 @@ export function WizardFooter() {
 export function WizardHeader() {
 	const { currentStep } = useWizardStore();
 	const { application } = useApplicationStore();
-	const showHeaderInfo = currentStep > 0;
+	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
 			<div className="mb-8 flex items-center justify-between">
@@ -116,7 +116,7 @@ function ApplicationProgressBar({
 	currentStep,
 	stepTitles,
 }: {
-	currentStep: number;
+	currentStep: (typeof WIZARD_STEP_TITLES)[number];
 	stepTitles: typeof WIZARD_STEP_TITLES;
 }) {
 	return (
@@ -125,6 +125,7 @@ function ApplicationProgressBar({
 				<div className="relative flex w-full justify-center px-20">
 					{stepTitles.map((title, index) => {
 						const isLastStep = index === stepTitles.length - 1;
+						const currentStepIndex = stepTitles.indexOf(currentStep);
 
 						return (
 							<div
@@ -133,9 +134,9 @@ function ApplicationProgressBar({
 								key={index}
 							>
 								<div className={`flex items-center ${isLastStep ? "" : "w-full"} relative`}>
-									{index < currentStep ? (
+									{index < currentStepIndex ? (
 										<StepIndicator isLastStep={isLastStep} type="done" />
-									) : index === currentStep ? (
+									) : index === currentStepIndex ? (
 										<StepIndicator isLastStep={isLastStep} type="active" />
 									) : (
 										<StepIndicator isLastStep={isLastStep} type="inactive" />
@@ -150,9 +151,9 @@ function ApplicationProgressBar({
 									>
 										<span
 											className={`font-heading text-center text-xs ${
-												index < currentStep
+												index < currentStepIndex
 													? "text-secondary"
-													: index === currentStep
+													: index === currentStepIndex
 														? "text-primary"
 														: "text-gray-400"
 											}`}
@@ -189,9 +190,9 @@ function Deadline() {
 	);
 }
 
-function generateFooterRightButtonProps(currentStep: number) {
-	const isApproveStep = currentStep === 1;
-	const isGenerateStep = currentStep === 5;
+function generateFooterRightButtonProps(currentStep: WizardStep) {
+	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
+	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
 	return {
 		leftIcon: isApproveStep ? <IconApprove /> : isGenerateStep ? <IconButtonLogo /> : undefined,
