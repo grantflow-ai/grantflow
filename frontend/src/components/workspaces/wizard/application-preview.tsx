@@ -7,6 +7,7 @@ import { ThemeBadge } from "@/components/workspaces/theme-badge";
 import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { useApplicationStore } from "@/stores/application-store";
+import type { FileWithId } from "@/types/files";
 
 export function ApplicationPreview({
 	connectionStatus,
@@ -17,9 +18,19 @@ export function ApplicationPreview({
 	connectionStatusColor?: string;
 	parentId?: string;
 }) {
-	const { application, uploadedFiles, urls } = useApplicationStore();
-	const templateFiles = uploadedFiles.template;
-	const templateUrls = urls.template;
+	const { application } = useApplicationStore();
+
+	const templateFiles: FileWithId[] = (application?.grant_template?.rag_sources ?? [])
+		.filter((source) => source.filename)
+		.map((source) => {
+			const file = new File([], source.filename!, { type: "application/octet-stream" });
+			return Object.assign(file, { id: source.sourceId });
+		});
+
+	const templateUrls = (application?.grant_template?.rag_sources ?? [])
+		.filter((source) => source.url)
+		.map((source) => source.url!);
+
 	const isEmpty = !application?.title && templateFiles.length === 0 && templateUrls.length === 0;
 
 	return (

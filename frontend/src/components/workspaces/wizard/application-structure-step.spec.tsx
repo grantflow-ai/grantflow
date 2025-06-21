@@ -23,16 +23,7 @@ describe("ApplicationStructureStep", () => {
 
 		useApplicationStore.setState({
 			application: null,
-			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
 		});
 	});
 
@@ -71,7 +62,6 @@ describe("ApplicationStructureStep", () => {
 
 		useApplicationStore.setState({
 			application,
-			applicationTitle: "Test Application",
 		});
 
 		render(<ApplicationStructureStep />);
@@ -89,7 +79,6 @@ describe("ApplicationStructureStep", () => {
 
 		useApplicationStore.setState({
 			application,
-			applicationTitle: "",
 		});
 
 		render(<ApplicationStructureStep />);
@@ -118,7 +107,6 @@ describe("ApplicationStructureStep", () => {
 
 		useApplicationStore.setState({
 			application,
-			applicationTitle: "Test Application",
 		});
 
 		render(<ApplicationStructureStep />);
@@ -170,7 +158,6 @@ describe("ApplicationStructureStep", () => {
 
 		useApplicationStore.setState({
 			application,
-			applicationTitle: "Test Application",
 		});
 
 		render(<ApplicationStructureStep />);
@@ -194,7 +181,6 @@ describe("ApplicationStructureStep", () => {
 
 			useApplicationStore.setState({
 				application,
-				applicationTitle: "Test Application",
 			});
 
 			render(<ApplicationStructureStep />);
@@ -209,7 +195,6 @@ describe("ApplicationStructureStep", () => {
 
 			useApplicationStore.setState({
 				application,
-				applicationTitle: "Test Application",
 			});
 
 			render(<ApplicationStructureStep />);
@@ -222,7 +207,6 @@ describe("ApplicationStructureStep", () => {
 
 			useApplicationStore.setState({
 				application,
-				applicationTitle: "Test Application",
 			});
 
 			render(<ApplicationStructureStep />);
@@ -244,7 +228,6 @@ describe("ApplicationStructureStep", () => {
 
 			useApplicationStore.setState({
 				application,
-				applicationTitle: "Test Application",
 				updateGrantSections: mockUpdateGrantSections,
 			});
 
@@ -289,7 +272,6 @@ describe("ApplicationStructureStep", () => {
 
 			useApplicationStore.setState({
 				application,
-				applicationTitle: "Test Application",
 			});
 
 			render(<ApplicationStructureStep />);
@@ -320,7 +302,6 @@ describe("ApplicationStructureStep", () => {
 
 			useApplicationStore.setState({
 				application,
-				applicationTitle: "Test Application",
 			});
 
 			render(<ApplicationStructureStep />);
@@ -334,7 +315,6 @@ describe("ApplicationStructureStep", () => {
 
 			useApplicationStore.setState({
 				application,
-				applicationTitle: "Test Application",
 			});
 
 			render(<ApplicationStructureStep />);

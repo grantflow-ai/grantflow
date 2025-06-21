@@ -23,9 +23,11 @@ export function GrantApplicationCard({
 	const router = useRouter();
 	const [isDeleting, setIsDeleting] = useState(false);
 
-	const url = PagePath.APPLICATION_DETAIL.toString()
-		.replace(":workspaceId", workspaceId)
-		.replace(":applicationId", application.id);
+	const url = application.completed_at
+		? PagePath.APPLICATION_DETAIL.toString()
+				.replace(":workspaceId", workspaceId)
+				.replace(":applicationId", application.id)
+		: `/workspaces/${workspaceId}/applications/${application.id}/wizard`;
 
 	const handleDelete = async (e: React.MouseEvent) => {
 		e.preventDefault();

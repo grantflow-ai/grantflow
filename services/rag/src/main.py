@@ -23,11 +23,18 @@ def handle_pubsub_message(message: PubSubEvent) -> RagRequest:
     try:
         encoded_data = message.message.data
         if not encoded_data:
+            logger.error("PubSub message missing data field", message_id=message.message.message_id)
             raise ValidationError("PubSub message missing data field")
         decoded_data = base64.b64decode(encoded_data).decode()
         return deserialize(decoded_data, RagRequest)
-    except (DeserializationError, ValueError, KeyError) as e:
-        raise ValidationError("Invalid pubsub message") from e
+    except DeserializationError as e:
+        logger.error(
+            "Failed to parse PubSub message",
+            error=str(e),
+            message_id=message.message.message_id,
+            error_type=type(e).__name__,
+        )
+        raise ValidationError("Invalid pubsub message format") from e
 
 
 @post("/")

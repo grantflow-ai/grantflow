@@ -10,114 +10,111 @@ import {
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
-import { useWizardStore } from "@/stores/wizard-store";
+import { retrieveRagJob } from "@/actions/rag-jobs";
+import {
+	crawlApplicationUrl,
+	crawlTemplateUrl,
+	createApplicationSourceUploadUrl,
+	createTemplateSourceUploadUrl,
+	deleteApplicationSource,
+	deleteTemplateSource,
+} from "@/actions/sources";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
-import { createDebounce } from "@/utils/debounce";
 import { logError } from "@/utils/logging";
-import type { DragEndEvent } from "@dnd-kit/core";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
 
-export interface Objective {
-	description: string;
-	id: string;
-	tasks: string[];
-	title: string;
-}
-
-export const MAX_OBJECTIVES = 5;
-
-export const EXAMPLE_OBJECTIVES = [
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie. Aenean ut volutpat nisl enim. Ornare dolor cursus erat. Accumsan tempor vestibulum sapien at velit odio. Aliquam vel ornare pulvinar congue porttitor sed nisl rutrum blandit. Elit magna nulla mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus odio fermentum suspendisse mauris. Ullamcorper quis nunc mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus.",
-		title: "Dissect principles of the inhibitory crosstalk and signaling in the TME by comprehensive single-cell profiling of the tumor microenvironment and signaling in PD-1+ tumor infiltrating T cells in cancer patients",
-	},
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie.",
-		title: "Optimize therapeutic targeting strategies",
-	},
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim.",
-		title: "Develop novel biomarker identification methods",
-	},
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse.",
-		title: "Analyze immune cell interactions",
-	},
-	{
-		description: "Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus.",
-		title: "Investigate resistance mechanisms",
-	},
-];
-
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
-const RETRIEVE_DEBOUNCE_MS = 1000;
-const POLLING_INTERVAL_DURATION = 3000;
 
 interface ApplicationState {
 	application: ApplicationType;
-	applicationTitle: string;
 	isGeneratingTemplate: boolean;
 	isLoading: boolean;
-	objectives: Objective[];
-	uploadedFiles: {
-		application: FileWithId[];
-		template: FileWithId[];
-	};
-	urls: {
-		application: string[];
-		template: string[];
+	ragJobState: {
+		isRestoring: boolean;
+		restoredJob: API.RetrieveRagJob.Http200.ResponseBody | null;
 	};
 }
 
 const initialState: ApplicationState = {
 	application: null,
-	applicationTitle: "",
 	isGeneratingTemplate: false,
 	isLoading: false,
-	objectives: [],
-	uploadedFiles: {
-		application: [],
-		template: [],
-	},
-	urls: {
-		application: [],
-		template: [],
+	ragJobState: {
+		isRestoring: false,
+		restoredJob: null,
 	},
 };
 
 interface ApplicationActions {
 	addFile: (file: FileWithId, parentId?: string) => Promise<void>;
-	addNextObjective: () => void;
-	addObjective: (objective: Objective) => void;
 	addUrl: (url: string, parentId: string) => Promise<void>;
 	areFilesOrUrlsIndexing: () => boolean;
+	checkAndRestoreJobState: () => Promise<void>;
+	clearRestoredJobState: () => void;
 	createApplication: (workspaceId: string) => Promise<void>;
-	debouncedRetrieveApplication: () => void;
 	generateTemplate: (templateId: string) => Promise<void>;
 	getIndexingStatus: () => Promise<boolean>;
-	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
-	handleObjectiveDragEnd: (event: DragEndEvent) => void;
-	handleRetrieveWithPolling: () => Promise<void>;
 	removeFile: (file: FileWithId, parentId?: string) => Promise<void>;
-	removeObjective: (id: string) => void;
 	removeUrl: (url: string, parentId?: string) => Promise<void>;
-	reorderObjectives: (objectives: Objective[]) => void;
+	reset: () => void;
 	retrieveApplication: (workspaceId: string, applicationId: string) => Promise<void>;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
-	setApplicationTitle: (title: string) => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
 	updateApplicationTitle: (workspaceId: string, applicationId: string, title: string) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
 }
 
+const uploadFileInDevelopment = async (
+	file: FileWithId,
+	application: NonNullable<ApplicationType>,
+	parentId: string,
+	isApplicationParent: boolean,
+) => {
+	const parentPath = isApplicationParent ? "application" : "grant_template";
+	const objectPath = `workspace/${application.workspace_id}/${parentPath}/${parentId}/${file.name}`;
+	const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
+
+	await ky(emulatorUrl, {
+		body: file,
+		headers: {
+			"Content-Type": file.type,
+		},
+		method: "POST",
+	});
+
+	const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
+	void triggerDevIndexing(objectPath);
+};
+
+const uploadFileInProduction = async (
+	file: FileWithId,
+	application: NonNullable<ApplicationType>,
+	parentId: string,
+	isApplicationParent: boolean,
+) => {
+	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
+	const { url } = await createUploadUrl(application.workspace_id, parentId, file.name);
+
+	await ky(url, {
+		body: file,
+		headers: {
+			"Content-Type": file.type,
+		},
+		method: "PUT",
+	});
+
+	const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
+	const objectPath = extractObjectPathFromUrl(url);
+	if (objectPath) {
+		void triggerDevIndexing(objectPath);
+	}
+};
+
 export const useApplicationStore = create<ApplicationActions & ApplicationState>((set, get) => ({
 	...initialState,
+
 	addFile: async (file: FileWithId, parentId?: string) => {
 		const { application } = get();
 
@@ -147,86 +144,17 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 		}
 
-		const parentKey = isApplicationParent ? "application" : "template";
-		set((state) => ({
-			uploadedFiles: {
-				...state.uploadedFiles,
-				[parentKey]: [...state.uploadedFiles[parentKey], file],
-			},
-		}));
-
 		try {
-			if (process.env.NODE_ENV === "development") {
-				const parentPath = isApplicationParent ? "application" : "grant_template";
-				const objectPath = `workspace/${application.workspace_id}/${parentPath}/${parentId}/${file.name}`;
-				const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
-
-				await ky(emulatorUrl, {
-					body: file,
-					headers: {
-						"Content-Type": file.type,
-					},
-					method: "POST",
-				});
-
-				const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
-				void triggerDevIndexing(objectPath);
-			} else {
-				const { createApplicationSourceUploadUrl, createTemplateSourceUploadUrl } = await import(
-					"@/actions/sources"
-				);
-				const createUploadUrl = isApplicationParent
-					? createApplicationSourceUploadUrl
-					: createTemplateSourceUploadUrl;
-				const { url } = await createUploadUrl(application.workspace_id, parentId, file.name);
-
-				await ky(url, {
-					body: file,
-					headers: {
-						"Content-Type": file.type,
-					},
-					method: "PUT",
-				});
-
-				const { extractObjectPathFromUrl } = await import("@/utils/dev-indexing-patch");
-				const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
-				const objectPath = extractObjectPathFromUrl(url);
-				if (objectPath) {
-					void triggerDevIndexing(objectPath);
-				}
-			}
+			await (process.env.NODE_ENV === "development"
+				? uploadFileInDevelopment(file, application, parentId, isApplicationParent)
+				: uploadFileInProduction(file, application, parentId, isApplicationParent));
 
 			toast.success(`File ${file.name} uploaded successfully`);
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
-			set((state) => ({
-				uploadedFiles: {
-					...state.uploadedFiles,
-					[parentKey]: state.uploadedFiles[parentKey].filter((f) => f.name !== file.name),
-				},
-			}));
 			logError({ error, identifier: "addFile" });
 			toast.error("Failed to upload file. Please try again.");
 		}
-	},
-
-	addNextObjective: () => {
-		const { objectives } = get();
-		const currentIndex = objectives.length;
-		const exampleObj = EXAMPLE_OBJECTIVES[currentIndex] || EXAMPLE_OBJECTIVES[0];
-
-		get().addObjective({
-			description: exampleObj.description,
-			id: crypto.randomUUID(),
-			tasks: [],
-			title: exampleObj.title,
-		});
-	},
-
-	addObjective: (objective: Objective) => {
-		set((state) => ({
-			objectives: [...state.objectives, objective],
-		}));
 	},
 
 	addUrl: async (url: string, parentId: string) => {
@@ -253,33 +181,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 		}
 
-		const parentKey = isApplicationParent ? "application" : "template";
-		const currentUrls = get().urls[parentKey];
-
-		if (currentUrls.includes(url)) {
-			return;
-		}
-
-		set((state) => ({
-			urls: {
-				...state.urls,
-				[parentKey]: [...state.urls[parentKey], url],
-			},
-		}));
-
 		try {
-			const { crawlApplicationUrl, crawlTemplateUrl } = await import("@/actions/sources");
 			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
 			await crawlUrl(application.workspace_id, parentId, url);
 			toast.success("URL added successfully");
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
-			set((state) => ({
-				urls: {
-					...state.urls,
-					[parentKey]: state.urls[parentKey].filter((u) => u !== url),
-				},
-			}));
 			logError({ error, identifier: "addUrl" });
 			toast.error("Failed to process URL. Please try again.");
 		}
@@ -293,9 +200,82 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 
 		const allSources = [...application.rag_sources, ...(application.grant_template?.rag_sources ?? [])];
-		return allSources.some(
-			(source) => source.status === ("INDEXING" as const) || source.status === ("CREATED" as const),
-		);
+		return allSources.some((source) => source.status === "INDEXING" || source.status === "CREATED");
+	},
+
+	checkAndRestoreJobState: async () => {
+		const { application } = get();
+
+		if (!application) {
+			return;
+		}
+
+		const ragJobId = application.rag_job_id ?? application.grant_template?.rag_job_id;
+
+		if (!ragJobId) {
+			return;
+		}
+
+		set((state) => ({
+			...state,
+			ragJobState: {
+				...state.ragJobState,
+				isRestoring: true,
+			},
+		}));
+
+		try {
+			const jobData = await retrieveRagJob(application.workspace_id, ragJobId);
+
+			const shouldRestore = jobData.status === "PROCESSING" || jobData.status === "PENDING";
+
+			if (shouldRestore) {
+				set((state) => ({
+					...state,
+					ragJobState: {
+						isRestoring: false,
+						restoredJob: jobData,
+					},
+				}));
+
+				const progressText =
+					jobData.current_stage && jobData.total_stages
+						? `Stage ${jobData.current_stage} of ${jobData.total_stages}`
+						: "In progress";
+
+				toast.info(`🔄 Restored progress: ${progressText}`, {
+					description: "Continuing from where you left off...",
+					duration: 4000,
+				});
+			} else {
+				set((state) => ({
+					...state,
+					ragJobState: {
+						isRestoring: false,
+						restoredJob: null,
+					},
+				}));
+			}
+		} catch (error) {
+			set((state) => ({
+				...state,
+				ragJobState: {
+					isRestoring: false,
+					restoredJob: null,
+				},
+			}));
+			logError({ error, identifier: "checkAndRestoreJobState" });
+		}
+	},
+
+	clearRestoredJobState: () => {
+		set((state) => ({
+			...state,
+			ragJobState: {
+				...state.ragJobState,
+				restoredJob: null,
+			},
+		}));
 	},
 
 	createApplication: async (workspaceId: string) => {
@@ -304,7 +284,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			const response = await handleCreateApplication(workspaceId, { title: DEFAULT_APPLICATION_TITLE });
 			set({
 				application: response,
-				applicationTitle: response.title,
 				isLoading: false,
 			});
 		} catch (e: unknown) {
@@ -313,16 +292,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			set({ isLoading: false });
 		}
 	},
-
-	debouncedRetrieveApplication: (() => {
-		const debouncedFn = createDebounce(() => {
-			void get().handleRetrieveWithPolling();
-		}, RETRIEVE_DEBOUNCE_MS);
-
-		return () => {
-			debouncedFn.call();
-		};
-	})(),
 
 	generateTemplate: async (templateId: string) => {
 		set({ isGeneratingTemplate: true });
@@ -347,49 +316,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			await retrieveApplication(application.workspace_id, application.id);
 		}
 		return areFilesOrUrlsIndexing();
-	},
-
-	handleApplicationInit: async (workspaceId: string, applicationId?: string) => {
-		set({ isLoading: true });
-		try {
-			await (applicationId
-				? get().retrieveApplication(workspaceId, applicationId)
-				: get().createApplication(workspaceId));
-		} catch (e: unknown) {
-			logError({ error: e, identifier: "handleApplicationInit" });
-			toast.error(applicationId ? "Failed to retrieve application" : "Failed to initialize application");
-		} finally {
-			set({ isLoading: false });
-		}
-	},
-
-	handleObjectiveDragEnd: (event: DragEndEvent) => {
-		const { active, over } = event;
-		const { objectives, reorderObjectives } = get();
-
-		if (active.id !== over?.id) {
-			const oldIndex = objectives.findIndex((obj) => obj.id === active.id);
-			const newIndex = objectives.findIndex((obj) => obj.id === over?.id);
-
-			if (oldIndex !== -1 && newIndex !== -1) {
-				const reorderedObjectives = [...objectives];
-				const [removed] = reorderedObjectives.splice(oldIndex, 1);
-				reorderedObjectives.splice(newIndex, 0, removed);
-				reorderObjectives(reorderedObjectives);
-			}
-		}
-	},
-
-	handleRetrieveWithPolling: async () => {
-		const { getIndexingStatus } = get();
-		const { polling } = useWizardStore.getState();
-		const isIndexing = await getIndexingStatus();
-
-		if (isIndexing) {
-			polling.start(get().handleRetrieveWithPolling, POLLING_INTERVAL_DURATION, false);
-		} else {
-			polling.stop();
-		}
 	},
 
 	removeFile: async (fileToRemove: FileWithId, parentId?: string) => {
@@ -420,32 +346,15 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
-		const parentKey = isApplicationParent ? "application" : "template";
-		const previousFiles = get().uploadedFiles;
-		set((state) => ({
-			uploadedFiles: {
-				...state.uploadedFiles,
-				[parentKey]: state.uploadedFiles[parentKey].filter((f) => f.name !== fileToRemove.name),
-			},
-		}));
-
 		try {
-			const { deleteApplicationSource, deleteTemplateSource } = await import("@/actions/sources");
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
 			await deleteSource(application.workspace_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
-			set({ uploadedFiles: previousFiles });
 			logError({ error, identifier: "removeFile" });
 			toast.error("Failed to remove file. Please try again.");
 		}
-	},
-
-	removeObjective: (id: string) => {
-		set((state) => ({
-			objectives: state.objectives.filter((obj) => obj.id !== id),
-		}));
 	},
 
 	removeUrl: async (urlToRemove: string, parentId?: string) => {
@@ -481,30 +390,19 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
-		const parentKey = isApplicationParent ? "application" : "template";
-		const previousUrls = get().urls;
-		set((state) => ({
-			urls: {
-				...state.urls,
-				[parentKey]: state.urls[parentKey].filter((url) => url !== urlToRemove),
-			},
-		}));
-
 		try {
-			const { deleteApplicationSource, deleteTemplateSource } = await import("@/actions/sources");
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
 			await deleteSource(application.workspace_id, parentId, ragSource.sourceId);
 			toast.success("URL removed successfully");
 			await get().retrieveApplication(application.workspace_id, application.id);
 		} catch (error) {
-			set({ urls: previousUrls });
 			logError({ error, identifier: "removeUrl" });
 			toast.error("Failed to remove URL. Please try again.");
 		}
 	},
 
-	reorderObjectives: (objectives: Objective[]) => {
-		set({ objectives });
+	reset: () => {
+		set(structuredClone(initialState));
 	},
 
 	retrieveApplication: async (workspaceId: string, applicationId: string) => {
@@ -513,7 +411,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			const response = await handleRetrieveApplication(workspaceId, applicationId);
 			set({
 				application: response,
-				applicationTitle: response.title,
 				isLoading: false,
 			});
 		} catch (e: unknown) {
@@ -524,17 +421,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	setApplication: (application: NonNullable<ApplicationType>) => {
-		set({
-			application,
-			applicationTitle: application.title,
-		});
-	},
-
-	setApplicationTitle: (title: string) => {
-		set((state) => ({
-			application: state.application ? { ...state.application, title } : state.application,
-			applicationTitle: title,
-		}));
+		set({ application });
 	},
 
 	updateApplication: async (data: Partial<API.UpdateApplication.RequestBody>) => {
@@ -548,10 +435,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		const updatedApplication = deepmerge(existingApplication, data) as NonNullable<ApplicationType>;
 
-		set({
-			application: updatedApplication,
-			applicationTitle: updatedApplication.title,
-		});
+		set({ application: updatedApplication });
 
 		try {
 			const response = await handleUpdateApplication(
@@ -559,13 +443,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				existingApplication.id,
 				data,
 			);
-			set({
-				application: response,
-			});
+			set({ application: response });
 		} catch (e) {
-			set({
-				application: existingApplication,
-			});
+			set({ application: existingApplication });
 			logError({ error: `Failed to update application: ${e}`, identifier: "updateApplication" });
 			toast.error("Failed to update application");
 		} finally {
@@ -574,22 +454,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	updateApplicationTitle: async (workspaceId: string, applicationId: string, title: string) => {
-		const { application, applicationTitle } = get();
-
-		const previousTitle = applicationTitle;
+		const { application } = get();
 		const previousApplication = application;
 
 		try {
 			const response = await handleUpdateApplication(workspaceId, applicationId, { title });
-			set({
-				application: response,
-				applicationTitle: response.title,
-			});
+			set({ application: response });
 		} catch (error) {
-			set({
-				application: previousApplication,
-				applicationTitle: previousTitle,
-			});
+			set({ application: previousApplication });
 			logError({ error, identifier: "updateApplicationTitle" });
 			toast.error("Failed to update application title");
 		}

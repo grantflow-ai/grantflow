@@ -8,7 +8,19 @@ import { useApplicationStore } from "@/stores/application-store";
 import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ onUrlAdded, parentId }: { onUrlAdded?: () => void; parentId?: string }) {
-	const { addUrl, urls } = useApplicationStore();
+	const { addUrl, application } = useApplicationStore();
+
+	const urls = React.useMemo(() => {
+		if (!application) return [];
+
+		if (parentId === application.grant_template?.id) {
+			return (application.grant_template?.rag_sources ?? [])
+				.filter((source) => source.url)
+				.map((source) => source.url!);
+		}
+
+		return application.rag_sources.filter((source) => source.url).map((source) => source.url!);
+	}, [application, parentId]);
 
 	const [urlInput, setUrlInput] = React.useState("");
 	const [urlError, setUrlError] = React.useState<null | string>(null);
@@ -30,8 +42,7 @@ export function UrlInput({ onUrlAdded, parentId }: { onUrlAdded?: () => void; pa
 
 			setUrlError(null);
 
-			const allUrls = [...urls.application, ...urls.template];
-			if (!allUrls.includes(trimmedUrl)) {
+			if (!urls.includes(trimmedUrl)) {
 				await addUrl(trimmedUrl, parentId);
 				onUrlAdded?.();
 			}

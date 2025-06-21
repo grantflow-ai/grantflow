@@ -8,14 +8,14 @@ import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
-
+import { useWizardStore } from "@/stores/wizard-store";
+import type { FileWithId } from "@/types/files";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 
-import type { FileWithId } from "@/types/files";
-
 export function KnowledgeBaseStep() {
-	const { application, debouncedRetrieveApplication } = useApplicationStore();
+	const { debouncedRetrieveApplication } = useWizardStore();
+	const { application } = useApplicationStore();
 
 	usePollingCleanup();
 
@@ -93,12 +93,22 @@ function DocumentsSection({ files, parentId }: { files: FileWithId[]; parentId?:
 }
 
 function KnowledgeBasePreview() {
-	const { application, applicationTitle, uploadedFiles, urls } = useApplicationStore();
+	const { application } = useApplicationStore();
 
 	const applicationId = application?.id;
-	const knowledgeBaseFiles = uploadedFiles.application;
-	const knowledgeBaseUrls = urls.application;
-	const hasContent = applicationTitle || knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
+
+	const knowledgeBaseFiles: FileWithId[] = (application?.rag_sources ?? [])
+		.filter((source) => source.filename)
+		.map((source) => {
+			const file = new File([], source.filename!, { type: "application/octet-stream" });
+			return Object.assign(file, { id: source.sourceId });
+		});
+
+	const knowledgeBaseUrls = (application?.rag_sources ?? [])
+		.filter((source) => source.url)
+		.map((source) => source.url!);
+
+	const hasContent = Boolean(application?.title) || knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
 	const hasFilesOrUrls = knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
 	const hasBothFilesAndUrls = knowledgeBaseFiles.length > 0 && knowledgeBaseUrls.length > 0;
 

@@ -1,8 +1,7 @@
+import { UrlResponseFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { UrlResponseFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 import * as validation from "@/utils/validation";
 
@@ -21,13 +20,10 @@ describe("UrlInput", () => {
 		mockIsValidUrl.mockReturnValue(true);
 
 		const store = useApplicationStore.getState();
-		store.objectives = [];
-		store.urls = {
-			application: [],
-			template: [],
-		};
 
 		vi.spyOn(store, "addUrl").mockResolvedValue();
+
+		useApplicationStore.setState({ application: null });
 	});
 
 	describe("Basic Rendering", () => {
@@ -277,10 +273,23 @@ describe("UrlInput", () => {
 			const existingUrl = "https://existing.com";
 
 			const store = useApplicationStore.getState();
-			store.urls = {
-				application: [existingUrl],
-				template: [],
-			};
+
+			useApplicationStore.setState({
+				application: {
+					id: "test-app-id",
+					rag_sources: [
+						{
+							filename: null,
+							parentId: defaultParentId,
+							sourceId: "existing-source-id",
+							status: "FINISHED",
+							url: existingUrl,
+						},
+					],
+					title: "Test Application",
+					workspace_id: "test-workspace",
+				} as any,
+			});
 
 			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
 
@@ -296,14 +305,32 @@ describe("UrlInput", () => {
 		it("does not add URL if it already exists in template context", async () => {
 			const user = userEvent.setup();
 			const existingUrl = "https://existing.com";
+			const templateId = "test-template-id";
 
 			const store = useApplicationStore.getState();
-			store.urls = {
-				application: [],
-				template: [existingUrl],
-			};
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			useApplicationStore.setState({
+				application: {
+					grant_template: {
+						id: templateId,
+						rag_sources: [
+							{
+								filename: null,
+								parentId: templateId,
+								sourceId: "existing-source-id",
+								status: "FINISHED",
+								url: existingUrl,
+							},
+						],
+					},
+					id: "test-app-id",
+					rag_sources: [],
+					title: "Test Application",
+					workspace_id: "test-workspace",
+				} as any,
+			});
+
+			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={templateId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -317,13 +344,32 @@ describe("UrlInput", () => {
 		it("adds URL if it does not exist in either context", async () => {
 			const user = userEvent.setup();
 			const newUrl = "https://new.com";
-			const existingUrls = ["https://existing1.com", "https://existing2.com"];
 
 			const store = useApplicationStore.getState();
-			store.urls = {
-				application: [existingUrls[0]],
-				template: [existingUrls[1]],
-			};
+
+			useApplicationStore.setState({
+				application: {
+					id: "test-app-id",
+					rag_sources: [
+						{
+							filename: null,
+							parentId: defaultParentId,
+							sourceId: "source-1",
+							status: "FINISHED",
+							url: "https://existing1.com",
+						},
+						{
+							filename: null,
+							parentId: defaultParentId,
+							sourceId: "source-2",
+							status: "FINISHED",
+							url: "https://existing2.com",
+						},
+					],
+					title: "Test Application",
+					workspace_id: "test-workspace",
+				} as any,
+			});
 
 			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
 
@@ -358,11 +404,22 @@ describe("UrlInput", () => {
 			const user = userEvent.setup();
 			const existingUrl = "https://existing.com";
 
-			const store = useApplicationStore.getState();
-			store.urls = {
-				application: [existingUrl],
-				template: [],
-			};
+			useApplicationStore.setState({
+				application: {
+					id: "test-app-id",
+					rag_sources: [
+						{
+							filename: null,
+							parentId: defaultParentId,
+							sourceId: "existing-source-id",
+							status: "FINISHED",
+							url: existingUrl,
+						},
+					],
+					title: "Test Application",
+					workspace_id: "test-workspace",
+				} as any,
+			});
 
 			render(<UrlInput parentId={defaultParentId} />);
 
@@ -429,11 +486,22 @@ describe("UrlInput", () => {
 			const user = userEvent.setup();
 			const existingUrl = "https://existing.com";
 
-			const store = useApplicationStore.getState();
-			store.urls = {
-				application: [existingUrl],
-				template: [],
-			};
+			useApplicationStore.setState({
+				application: {
+					id: "test-app-id",
+					rag_sources: [
+						{
+							filename: null,
+							parentId: defaultParentId,
+							sourceId: "existing-source-id",
+							status: "FINISHED",
+							url: existingUrl,
+						},
+					],
+					title: "Test Application",
+					workspace_id: "test-workspace",
+				} as any,
+			});
 
 			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
 
@@ -578,7 +646,6 @@ describe("UrlInput", () => {
 				unmount();
 				vi.clearAllMocks();
 
-				// Reset store spy for next iteration
 				const newStore = useApplicationStore.getState();
 				vi.spyOn(newStore, "addUrl").mockResolvedValue();
 			}
@@ -608,12 +675,8 @@ describe("UrlInput", () => {
 
 			await user.type(input, "https://example.com");
 
-			// Test that preventDefault is called by checking if the form doesn't submit
-			// Since we can't easily spy on preventDefault in this context,
-			// we'll test the behavior indirectly
 			await user.keyboard("{Enter}");
 
-			// If preventDefault works, the URL should be processed
 			const store = useApplicationStore.getState();
 			expect(store.addUrl).toHaveBeenCalled();
 		});

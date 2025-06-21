@@ -27,10 +27,7 @@ services:
         profiles:
             - all
             - gcs
-            - services
-            - indexer
-            - crawler
-            - backend
+            - e2e
         image: fsouza/fake-gcs-server:latest
         restart: always
         ports:
@@ -125,7 +122,6 @@ services:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
             GCS_BUCKET_NAME: grantflow-uploads
             DEBUG: "True"

@@ -21,6 +21,7 @@ from services.backend.src.api.routes.grant_template import (
     handle_generate_grant_template,
     handle_update_grant_template,
 )
+from services.backend.src.api.routes.rag_jobs import handle_retrieve_rag_job
 from services.backend.src.api.routes.sources import (
     handle_crawl_url,
     handle_create_upload_url,
@@ -65,6 +66,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_login,
     handle_retrieve_application,
     handle_retrieve_organizations,
+    handle_retrieve_rag_job,
     handle_retrieve_rag_sources,
     handle_retrieve_workspace,
     handle_retrieve_workspaces,
