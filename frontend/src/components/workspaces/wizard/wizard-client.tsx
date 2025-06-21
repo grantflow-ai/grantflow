@@ -1,9 +1,8 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-
+import { NotificationHandler } from "@/components/workspaces/notification-handler";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -17,27 +16,28 @@ import { SourceIndexingStatus } from "@/enums";
 import {
 	isRagProcessingStatusMessage,
 	isSourceProcessingNotificationMessage,
-	type RagProcessingStatusMessage,
 	type SourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 
-export default function CreateGrantApplicationWizardPage() {
-	const params = useParams<{ workspaceId: string }>();
-	const searchParams = useSearchParams();
-	const router = useRouter();
+interface WizardClientComponentProps {
+	application: API.RetrieveApplication.Http200.ResponseBody;
+	workspaceId: string;
+}
 
+export function WizardClientComponent({ application: initialApplication, workspaceId }: WizardClientComponentProps) {
 	const { currentStep } = useWizardStore();
-	const { application, handleApplicationInit } = useApplicationStore();
+	const { ragJobState } = useApplicationStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
-		applicationId: application?.id,
-		workspaceId: params.workspaceId,
+		applicationId: initialApplication.id,
+		workspaceId,
 	});
 
-	const stepComponents = useMemo(
+	const stepComponents: Record<string, React.ReactElement> = useMemo(
 		() => ({
 			"Application Details": (
 				<ApplicationDetailsStep
@@ -55,18 +55,22 @@ export default function CreateGrantApplicationWizardPage() {
 		[connectionStatus, connectionStatusColor],
 	);
 
-	// Get or create an application on mount ~keep
 	useEffect(() => {
-		const applicationId = searchParams.get("applicationId");
-		const handleApplication = async () => {
-			try {
-				await handleApplicationInit(params.workspaceId, applicationId ?? undefined);
-			} catch {
-				router.push(`/workspaces/${params.workspaceId}`);
-			}
+		useApplicationStore.getState().reset();
+		useApplicationStore.setState({
+			application: initialApplication,
+			isLoading: false,
+		});
+
+		useWizardStore.getState().reset();
+
+		void useApplicationStore.getState().checkAndRestoreJobState();
+
+		return () => {
+			useWizardStore.getState().reset();
+			useApplicationStore.getState().clearRestoredJobState();
 		};
-		void handleApplication();
-	}, [params.workspaceId, router, searchParams, handleApplicationInit]);
+	}, [initialApplication]);
 
 	const handleSourceProcessingNotification = useCallback((notification: SourceProcessingNotificationMessage) => {
 		const { identifier, indexing_status } = notification.data;
@@ -80,19 +84,6 @@ export default function CreateGrantApplicationWizardPage() {
 		}
 	}, []);
 
-	const handleRagProcessingNotification = useCallback((notification: RagProcessingStatusMessage) => {
-		const { data, message } = notification.data;
-
-		if (data && Object.keys(data).length > 0) {
-			const description = Object.entries(data)
-				.map(([key, value]) => `${key}: ${value}`)
-				.join(", ");
-			toast.info(message, { description });
-		} else {
-			toast.info(message);
-		}
-	}, []);
-
 	useEffect(() => {
 		if (notifications.length === 0) {
 			return;
@@ -102,22 +93,32 @@ export default function CreateGrantApplicationWizardPage() {
 
 		if (isSourceProcessingNotificationMessage(latestNotification)) {
 			handleSourceProcessingNotification(latestNotification);
-		} else if (isRagProcessingStatusMessage(latestNotification)) {
-			handleRagProcessingNotification(latestNotification);
 		}
-	}, [notifications, handleSourceProcessingNotification, handleRagProcessingNotification]);
+	}, [notifications, handleSourceProcessingNotification]);
 
-	if (!application) {
-		return (
-			<div className="flex h-screen w-screen items-center justify-center">
-				<div className="text-center">
-					<p className="text-muted-foreground">
-						{!!searchParams.get("applicationId") && "Loading application..."}
-					</p>
-				</div>
-			</div>
-		);
-	}
+	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
+
+	const restoredJobNotification = ragJobState.restoredJob
+		? {
+				data: {
+					current_pipeline_stage: ragJobState.restoredJob.current_stage,
+					event: "restored_progress",
+					message: `Resuming ${ragJobState.restoredJob.job_type === "grant_template_generation" ? "template generation" : "application generation"}...`,
+					total_pipeline_stages: ragJobState.restoredJob.total_stages,
+				},
+				event: "restored_progress",
+				parent_id: initialApplication.id,
+				type: "data" as const,
+			}
+		: null;
+
+	const notificationToShow = latestRagNotification ?? restoredJobNotification;
+
+	useEffect(() => {
+		if (latestRagNotification && ragJobState.restoredJob) {
+			useApplicationStore.getState().clearRestoredJobState();
+		}
+	}, [latestRagNotification, ragJobState.restoredJob]);
 
 	return (
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
@@ -126,6 +127,7 @@ export default function CreateGrantApplicationWizardPage() {
 				{stepComponents[currentStep]}
 			</section>
 			<WizardFooter />
+			{notificationToShow && <NotificationHandler notification={notificationToShow} />}
 		</div>
 	);
 }

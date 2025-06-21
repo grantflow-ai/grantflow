@@ -336,6 +336,7 @@ async def test_retrieve_application_success(
     assert "created_at" in data
     assert "updated_at" in data
     assert data["rag_sources"] == []
+    assert "rag_job_id" not in data
 
 
 async def test_retrieve_application_with_grant_template(
@@ -363,6 +364,7 @@ async def test_retrieve_application_with_grant_template(
     assert "funding_organization_id" in template_data
     assert "rag_sources" in template_data
     assert template_data["rag_sources"] == []
+    assert "rag_job_id" not in template_data
 
     if "funding_organization" in template_data:
         org_data = template_data["funding_organization"]
@@ -500,6 +502,58 @@ async def test_retrieve_application_with_complete_data(
     assert template_data["rag_sources"] == []
 
     assert data["rag_sources"] == []
+
+
+async def test_retrieve_application_with_rag_job_ids(
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    workspace_member_user: None,
+) -> None:
+    from testing.factories import (
+        GrantApplicationGenerationJobFactory,
+        GrantTemplateGenerationJobFactory,
+    )
+
+    async with async_session_maker() as session, session.begin():
+        app = await session.get(GrantApplication, grant_application.id)
+        template = await session.get(GrantTemplate, grant_template.id)
+
+        app_job = GrantApplicationGenerationJobFactory.build(
+            grant_application_id=app.id
+        )
+        session.add(app_job)
+        await session.flush()
+
+        template_job = GrantTemplateGenerationJobFactory.build(
+            grant_template_id=template.id
+        )
+        session.add(template_job)
+        await session.flush()
+
+        app.rag_job_id = app_job.id
+        template.rag_job_id = template_job.id
+
+        await session.commit()
+
+    response = await test_client.get(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert data["id"] == str(grant_application.id)
+    assert "rag_job_id" in data
+    assert data["rag_job_id"] == str(app_job.id)
+
+    assert "grant_template" in data
+    template_data = data["grant_template"]
+    assert "rag_job_id" in template_data
+    assert template_data["rag_job_id"] == str(template_job.id)
 
 
 async def test_retrieve_application_with_rag_sources(

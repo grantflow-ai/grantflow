@@ -1,4 +1,4 @@
-import { SourceProcessingNotificationMessageFactory } from "::testing/factories";
+import { RagProcessingStatusMessageFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { renderHook, waitFor } from "@testing-library/react";
 import { ReadyState } from "react-use-websocket";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -51,7 +51,7 @@ describe("useApplicationNotifications", () => {
 			}),
 		);
 
-		expect(mockUseWebSocket).toHaveBeenCalledWith(null);
+		expect(mockUseWebSocket).toHaveBeenCalledWith(null, expect.any(Object));
 	});
 
 	it("should connect with proper URL when both IDs are provided", async () => {
@@ -65,7 +65,7 @@ describe("useApplicationNotifications", () => {
 		);
 
 		await waitFor(() => {
-			expect(mockUseWebSocket).toHaveBeenCalledWith(expect.any(Function));
+			expect(mockUseWebSocket).toHaveBeenCalledWith(expect.any(Function), expect.any(Object));
 		});
 
 		const [[getSocketUrl]] = mockUseWebSocket.mock.calls;
@@ -165,6 +165,63 @@ describe("useApplicationNotifications", () => {
 		result.current.sendMessage("Test message");
 		expect(mockSendMessage).toHaveBeenCalledWith("Test message");
 	});
+
+	it("should configure auto-reconnection with exponential backoff", async () => {
+		const { useApplicationNotifications } = await import("./use-application-notifications");
+
+		renderHook(() =>
+			useApplicationNotifications({
+				applicationId: "app-123",
+				workspaceId: "workspace-123",
+			}),
+		);
+
+		await waitFor(() => {
+			expect(mockUseWebSocket).toHaveBeenCalled();
+		});
+
+		const [[, options]] = mockUseWebSocket.mock.calls;
+
+		expect(options.shouldReconnect({ code: 1000 })).toBe(false);
+		expect(options.shouldReconnect({ code: 1006 })).toBe(true);
+
+		expect(options.reconnectInterval(0)).toBe(1000);
+		expect(options.reconnectInterval(1)).toBe(2000);
+		expect(options.reconnectInterval(2)).toBe(4000);
+		expect(options.reconnectInterval(3)).toBe(8000);
+		expect(options.reconnectInterval(4)).toBe(16_000);
+		expect(options.reconnectInterval(5)).toBe(30_000);
+		expect(options.reconnectInterval(10)).toBe(30_000);
+	});
+
+	it("should stop reconnecting after max attempts", async () => {
+		const { useApplicationNotifications } = await import("./use-application-notifications");
+
+		renderHook(() =>
+			useApplicationNotifications({
+				applicationId: "app-123",
+				workspaceId: "workspace-123",
+			}),
+		);
+
+		await waitFor(() => {
+			expect(mockUseWebSocket).toHaveBeenCalled();
+		});
+
+		const [[, options]] = mockUseWebSocket.mock.calls;
+
+		expect(options.shouldReconnect({ code: 1006 })).toBe(true);
+
+		for (let i = 0; i < 10; i++) {
+			options.reconnectInterval(i);
+
+			if (i < 9) {
+				expect(options.shouldReconnect({ code: 1006 })).toBe(true);
+			}
+		}
+
+		expect(options.shouldReconnect({ code: 1006 })).toBe(false);
+	});
 });
 
 describe("Type Guards", () => {
@@ -172,7 +229,7 @@ describe("Type Guards", () => {
 		const { isSourceProcessingNotificationMessage } = await import("./use-application-notifications");
 		const { SourceIndexingStatus } = await import("@/enums");
 
-		const validNotification = {
+		const validNotification = SourceProcessingNotificationMessageFactory.build({
 			data: {
 				identifier: "test.pdf",
 				indexing_status: SourceIndexingStatus.INDEXING,
@@ -183,7 +240,7 @@ describe("Type Guards", () => {
 			event: "source_processing",
 			parent_id: "test-id",
 			type: "data",
-		};
+		});
 
 		expect(isSourceProcessingNotificationMessage(validNotification)).toBe(true);
 
@@ -202,7 +259,7 @@ describe("Type Guards", () => {
 	it("isRagProcessingStatusMessage should correctly identify RAG status messages", async () => {
 		const { isRagProcessingStatusMessage } = await import("./use-application-notifications");
 
-		const validNotification = {
+		const validNotification = RagProcessingStatusMessageFactory.build({
 			data: {
 				data: { section_count: 5 },
 				event: "grant_template_extraction",
@@ -211,19 +268,20 @@ describe("Type Guards", () => {
 			event: "grant_template_extraction",
 			parent_id: "test-id",
 			type: "data",
-		};
+		});
 
 		expect(isRagProcessingStatusMessage(validNotification)).toBe(true);
 
-		const validNotificationWithoutData = {
+		const validNotificationWithoutData = RagProcessingStatusMessageFactory.build({
 			data: {
+				data: undefined,
 				event: "grant_template_extraction",
 				message: "Processing...",
 			},
 			event: "grant_template_extraction",
 			parent_id: "test-id",
 			type: "data",
-		};
+		});
 
 		expect(isRagProcessingStatusMessage(validNotificationWithoutData)).toBe(true);
 
@@ -237,5 +295,23 @@ describe("Type Guards", () => {
 		};
 
 		expect(isRagProcessingStatusMessage(invalidNotification)).toBe(false);
+	});
+
+	it("isRagProcessingStatusMessage should correctly identify messages with pipeline stages", async () => {
+		const { isRagProcessingStatusMessage } = await import("./use-application-notifications");
+
+		const notificationWithStages = {
+			data: {
+				current_pipeline_stage: 4,
+				event: "generating_section_texts",
+				message: "Generating text for all grant sections...",
+				total_pipeline_stages: 9,
+			},
+			event: "generating_section_texts",
+			parent_id: "test-id",
+			type: "data",
+		};
+
+		expect(isRagProcessingStatusMessage(notificationWithStages)).toBe(true);
 	});
 });

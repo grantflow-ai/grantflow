@@ -51,6 +51,8 @@ class RagProcessingStatus(TypedDict):
     event: str
     message: str
     data: NotRequired[dict[str, Any]]
+    current_pipeline_stage: NotRequired[int]
+    total_pipeline_stages: NotRequired[int]
 
 
 class RagRequest(TypedDict):

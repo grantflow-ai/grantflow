@@ -26,13 +26,22 @@ describe("GrantApplicationCard", () => {
 		expect(screen.getByTestId(`application-draft-link-${mockApplication.id}`)).toBeInTheDocument();
 	});
 
-	it("links to the correct application detail page", () => {
+	it("links to the wizard page with applicationId for draft applications", () => {
 		render(<GrantApplicationCard application={mockApplication} workspaceId={mockWorkspaceId} />);
 
 		const link = screen.getByTestId(`application-draft-link-${mockApplication.id}`);
+		const expectedUrl = `/workspaces/${mockWorkspaceId}/applications/${mockApplication.id}/wizard`;
+
+		expect(link).toHaveAttribute("href", expectedUrl);
+	});
+
+	it("links to the application detail page for completed applications", () => {
+		render(<GrantApplicationCard application={mockCompletedApplication} workspaceId={mockWorkspaceId} />);
+
+		const link = screen.getByTestId(`application-draft-link-${mockCompletedApplication.id}`);
 		const expectedUrl = PagePath.APPLICATION_DETAIL.toString()
 			.replace(":workspaceId", mockWorkspaceId)
-			.replace(":applicationId", mockApplication.id);
+			.replace(":applicationId", mockCompletedApplication.id);
 
 		expect(link).toHaveAttribute("href", expectedUrl);
 	});

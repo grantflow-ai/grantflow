@@ -1,18 +1,14 @@
+import { UrlResponseFactory } from "::testing/factories";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { UrlResponseFactory } from "::testing/factories";
 import { useApplicationStore } from "@/stores/application-store";
 
 import LinkPreviewItem from "./link-preview-item";
 
 describe("LinkPreviewItem", () => {
 	beforeEach(() => {
-		// Reset store state if needed
 		useApplicationStore.setState({
 			application: null,
-			uploadedFiles: { application: [], template: [] },
-			urls: { application: [], template: [] },
 		});
 	});
 
@@ -138,11 +134,10 @@ describe("LinkPreviewItem", () => {
 		it("calls store removeUrl when remove icon is clicked", () => {
 			const url = "https://example.com";
 			const parentId = "test-parent-id";
-			
-			// Mock the removeUrl method
+
 			const mockRemoveUrl = vi.fn();
 			useApplicationStore.setState({ removeUrl: mockRemoveUrl });
-			
+
 			render(<LinkPreviewItem parentId={parentId} url={url} />);
 
 			const removeIcon = screen.getByTestId("link-remove-icon");
@@ -154,11 +149,10 @@ describe("LinkPreviewItem", () => {
 
 		it("calls removeUrl without parentId when not provided", () => {
 			const url = "https://example.com";
-			
-			// Mock the removeUrl method
+
 			const mockRemoveUrl = vi.fn();
 			useApplicationStore.setState({ removeUrl: mockRemoveUrl });
-			
+
 			render(<LinkPreviewItem url={url} />);
 
 			const removeIcon = screen.getByTestId("link-remove-icon");
@@ -171,12 +165,11 @@ describe("LinkPreviewItem", () => {
 		it("calls removeUrl with correct URL and parentId for different URLs", () => {
 			const urls = [
 				"https://example.com",
-				"http://test.org/path", 
+				"http://test.org/path",
 				"https://api.service.com/v1/endpoint?param=value",
 			];
 			const parentId = "test-parent-id";
-			
-			// Mock the removeUrl method
+
 			const mockRemoveUrl = vi.fn();
 			useApplicationStore.setState({ removeUrl: mockRemoveUrl });
 
@@ -281,11 +274,10 @@ describe("LinkPreviewItem", () => {
 		it("has clickable remove icon", () => {
 			const url = "https://example.com";
 			const parentId = "test-parent-id";
-			
-			// Mock the removeUrl method
+
 			const mockRemoveUrl = vi.fn();
 			useApplicationStore.setState({ removeUrl: mockRemoveUrl });
-			
+
 			render(<LinkPreviewItem parentId={parentId} url={url} />);
 
 			const removeIcon = screen.getByTestId("link-remove-icon");
@@ -338,11 +330,10 @@ describe("LinkPreviewItem", () => {
 		it("works with factory-generated URLs", () => {
 			const { url } = UrlResponseFactory.build();
 			const parentId = "test-parent-id";
-			
-			// Mock the removeUrl method
+
 			const mockRemoveUrl = vi.fn();
 			useApplicationStore.setState({ removeUrl: mockRemoveUrl });
-			
+
 			render(<LinkPreviewItem parentId={parentId} url={url} />);
 
 			expect(screen.getByTestId("link-preview-item")).toBeInTheDocument();

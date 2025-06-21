@@ -1,70 +1,44 @@
-import { ApplicationFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	GrantTemplateFactory,
+	RagSourceFactory,
+} from "::testing/factories";
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
-const mockApplicationStoreState = {
-	addFile: vi.fn(),
-	addUrl: vi.fn(),
-	application: null,
-	applicationTitle: "",
-	areFilesOrUrlsIndexing: vi.fn(() => false),
-	createApplication: vi.fn(),
-	generateTemplate: vi.fn(),
-	handleApplicationInit: vi.fn(),
-	isLoading: false,
-	removeFile: vi.fn(),
-	removeUrl: vi.fn(),
-	retrieveApplication: vi.fn(),
-	setApplication: vi.fn(),
-	setApplicationTitle: vi.fn(),
-	setUploadedFiles: vi.fn(),
-	setUrls: vi.fn(),
-	updateApplication: vi.fn().mockResolvedValue(undefined),
-	updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
-	updateGrantSections: vi.fn().mockResolvedValue(undefined),
-	uploadedFiles: {
-		application: [],
-		template: [],
-	},
-	urls: {
-		application: [],
-		template: [],
-	},
-};
-
-vi.mock("@/stores/application-store");
-
-vi.mocked(useApplicationStore).mockReturnValue(mockApplicationStoreState as any);
-vi.mocked(useApplicationStore.getState).mockReturnValue(mockApplicationStoreState as any);
-
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	beforeEach(() => {
-		const { polling } = useWizardStore.getState();
-		useWizardStore.setState({
-			currentStep: WizardStep.APPLICATION_DETAILS,
-			polling: {
-				...polling,
-				intervalId: null,
-				isActive: false,
-			},
+		useWizardStore.getState().reset();
+		useApplicationStore.getState().reset();
+
+		const ragSource = RagSourceFactory.build({
+			sourceId: "source-1",
+			status: "FINISHED",
+			url: "https://example.com",
 		});
 
-		Object.assign(mockApplicationStoreState, {
-			application: ApplicationFactory.build({ title: "A".repeat(20) }),
-			applicationTitle: "A".repeat(20),
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: ["https://example.com"],
-			},
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				grant_sections: [],
+				id: "template-id",
+				rag_sources: [ragSource],
+			}),
+			title: "A".repeat(20),
+		});
+
+		useApplicationStore.setState({
+			application,
+			isLoading: false,
+		});
+
+		useWizardStore.setState({
+			currentStep: WizardStep.APPLICATION_DETAILS,
 		});
 	});
 
@@ -132,22 +106,21 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 
 		it("disables continue button when step validation fails", () => {
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				rag_sources: [],
+				title: "Short",
+			});
+
+			useApplicationStore.setState({
+				application,
+				isLoading: false,
+			});
+
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
 
-			Object.assign(mockApplicationStoreState, {
-				application: ApplicationFactory.build({ title: "Short" }),
-				applicationTitle: "Short",
-				uploadedFiles: {
-					application: [],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
-			});
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -158,27 +131,20 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 describe("WizardHeader", () => {
 	beforeEach(() => {
-		const { polling } = useWizardStore.getState();
-		useWizardStore.setState({
-			currentStep: WizardStep.APPLICATION_DETAILS,
-			polling: {
-				...polling,
-				intervalId: null,
-				isActive: false,
-			},
+		useWizardStore.getState().reset();
+		useApplicationStore.getState().reset();
+
+		const application = ApplicationFactory.build({
+			title: "Test Application",
 		});
 
-		Object.assign(mockApplicationStoreState, {
-			application: ApplicationFactory.build({ title: "Test Application" }),
-			applicationTitle: "Test Application",
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
+		useApplicationStore.setState({
+			application,
+			isLoading: false,
+		});
+
+		useWizardStore.setState({
+			currentStep: WizardStep.APPLICATION_DETAILS,
 		});
 	});
 

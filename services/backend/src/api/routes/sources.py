@@ -16,7 +16,11 @@ from packages.db.src.tables import (
     RagUrl,
 )
 from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
-from packages.shared_utils.src.gcs import create_signed_upload_url, construct_object_uri
+from packages.shared_utils.src.gcs import (
+    create_signed_upload_url,
+    construct_object_uri,
+    delete_blob,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_url_crawling_task
 from sqlalchemy import delete as sa_delete
@@ -313,41 +317,68 @@ async def handle_delete_rag_source(
     template_id: UUID | None = None,
 ) -> None:
     async with session_maker() as session, session.begin():
+        rag_poly = with_polymorphic(RagSource, [RagFile, RagUrl])
+
         if application_id:
             statement = (
-                select(RagSource)
+                select(rag_poly)
                 .join(GrantApplicationRagSource)
-                .where(GrantApplicationRagSource.grant_application_id == application_id)
+                .where(
+                    GrantApplicationRagSource.grant_application_id == application_id,
+                    rag_poly.id == source_id,
+                )
             )
         elif template_id:
             statement = (
-                select(RagSource)
+                select(rag_poly)
                 .join(GrantTemplateRagSource)
-                .where(GrantTemplateRagSource.grant_template_id == template_id)
+                .where(
+                    GrantTemplateRagSource.grant_template_id == template_id,
+                    rag_poly.id == source_id,
+                )
             )
         else:
             statement = (
-                select(RagSource)
+                select(rag_poly)
                 .join(FundingOrganizationRagSource)
                 .where(
                     FundingOrganizationRagSource.funding_organization_id
-                    == organization_id
+                    == organization_id,
+                    rag_poly.id == source_id,
                 )
             )
 
         try:
             result = await session.execute(statement)
-            result.scalar_one()
+            source = result.scalar_one()
+
+            if isinstance(source, RagFile):
+                try:
+                    await delete_blob(source.object_path)
+                    logger.info(
+                        "Deleted file from GCS",
+                        source_id=source_id,
+                        object_path=source.object_path,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "Failed to delete file from GCS, continuing with database deletion",
+                        source_id=source_id,
+                        object_path=source.object_path,
+                        error=str(e),
+                    )
+
             await session.execute(sa_delete(RagSource).where(RagSource.id == source_id))
             await session.commit()
+
+            logger.info("Successfully deleted RAG source", source_id=source_id)
+
         except NoResultFound as e:
             raise NotFoundException from e
         except SQLAlchemyError as e:
-            logger.error("Error deleting organization file", exc_info=e)
+            logger.error("Error deleting RAG source", source_id=source_id, exc_info=e)
             await session.rollback()
-            raise DatabaseError(
-                "Error deleting organization file", context=str(e)
-            ) from e
+            raise DatabaseError("Error deleting RAG source", context=str(e)) from e
 
 
 @post(

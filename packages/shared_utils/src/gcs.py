@@ -146,6 +146,34 @@ async def create_signed_upload_url(
         source_id=source_id,
         blob_name=blob_name,
     )
+
+    # Dev bypass: return special URL for direct indexer upload ~keep
+    if get_env("DEBUG", fallback="False").lower() == "true" and not get_env(
+        "STORAGE_EMULATOR_HOST", fallback=""
+    ):
+        dev_url = f"dev://indexer/{blob_path}"
+        logger.info(
+            "Created dev bypass URL for direct indexer upload",
+            blob_name=blob_name,
+            blob_path=blob_path,
+        )
+        return dev_url
+
+    # E2E tests: use GCS emulator if configured ~keep
+    if emulator_host := get_env(
+        "STORAGE_EMULATOR_HOST", raise_on_missing=False, fallback=""
+    ):
+        bucket_name = get_env(
+            "GCS_BUCKET_NAME", raise_on_missing=False, fallback="grantflow-uploads"
+        )
+        emulator_url = f"{emulator_host}/upload/storage/v1/b/{bucket_name}/o?uploadType=media&name={blob_path}"
+        logger.info(
+            "Created emulator upload URL",
+            blob_name=blob_name,
+            url=emulator_url,
+        )
+        return emulator_url
+
     try:
         bucket = await run_sync(get_bucket)
 
@@ -193,6 +221,33 @@ async def upload_blob(blob_path: str, content: bytes) -> None:
         logger.error("Failed to upload blob", blob_path=blob_path, exc_info=e)
         raise ExternalOperationError(
             "Failed to upload blob",
+            context={
+                "blob_path": blob_path,
+                "error": str(e),
+            },
+        ) from e
+
+
+async def delete_blob(blob_path: str) -> None:
+    try:
+        bucket = await run_sync(get_bucket)
+        blob = bucket.blob(blob_path)
+
+        exists = await run_sync(blob.exists)
+        if not exists:
+            logger.info("Blob does not exist, skipping deletion", blob_path=blob_path)
+            return
+
+        await run_sync(blob.delete)
+
+        logger.info(
+            "Deleted blob",
+            blob_path=blob_path,
+        )
+    except ClientError as e:
+        logger.error("Failed to delete blob", blob_path=blob_path, exc_info=e)
+        raise ExternalOperationError(
+            "Failed to delete blob",
             context={
                 "blob_path": blob_path,
                 "error": str(e),

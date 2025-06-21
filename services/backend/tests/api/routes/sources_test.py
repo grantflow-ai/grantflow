@@ -217,6 +217,31 @@ async def test_delete_application_source(
             )
 
 
+@patch("services.backend.src.api.routes.sources.delete_blob")
+async def test_delete_application_source_deletes_from_gcs(
+    mock_delete_blob: AsyncMock,
+    test_client: TestingClientType,
+    workspace: Workspace,
+    grant_application: GrantApplication,
+    grant_application_file: GrantApplicationRagSource,
+    workspace_member_user: WorkspaceUser,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session:
+        file_source = await session.get(RagFile, grant_application_file.rag_source_id)
+        assert file_source is not None, "File source should exist"
+        object_path = file_source.object_path
+
+    response = await test_client.delete(
+        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    mock_delete_blob.assert_called_once_with(object_path)
+
+
 async def test_delete_organization_source(
     test_client: TestingClientType,
     funding_organization: FundingOrganization,
