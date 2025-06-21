@@ -1,6 +1,7 @@
 import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithId } from "@/types/files";
@@ -18,14 +19,20 @@ describe("ApplicationPreview", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: WizardStep.APPLICATION_DETAILS,
 		});
 
 		useApplicationStore.setState({
 			application: null,
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -47,8 +54,14 @@ describe("ApplicationPreview", () => {
 		useApplicationStore.setState({
 			application,
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<ApplicationPreview />);
@@ -68,8 +81,14 @@ describe("ApplicationPreview", () => {
 		useApplicationStore.setState({
 			application,
 			isLoading: false,
-			uploadedFiles: [file],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [file],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<ApplicationPreview />);
@@ -84,8 +103,14 @@ describe("ApplicationPreview", () => {
 		useApplicationStore.setState({
 			application: null,
 			isLoading: false,
-			uploadedFiles: [file1, file2],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [file1, file2],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 
 		render(<ApplicationPreview />);
@@ -98,8 +123,14 @@ describe("ApplicationPreview", () => {
 		useApplicationStore.setState({
 			application: null,
 			isLoading: false,
-			uploadedFiles: [],
-			urls: ["https://example.com", "https://test.com"],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: ["https://example.com", "https://test.com"],
+			},
 		});
 
 		render(<ApplicationPreview />);

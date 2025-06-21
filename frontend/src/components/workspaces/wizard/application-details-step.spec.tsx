@@ -2,6 +2,7 @@ import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -25,7 +26,7 @@ describe("ApplicationDetailsStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				intervalId: null,
 				isActive: false,
@@ -39,8 +40,14 @@ describe("ApplicationDetailsStep", () => {
 			applicationTitle: "",
 			isLoading: false,
 			updateApplicationTitle: vi.fn().mockResolvedValue(undefined),
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -161,7 +168,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			urls: ["https://example1.com", "https://example2.com"],
+			urls: {
+				application: [],
+				template: ["https://example1.com", "https://example2.com"],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -188,7 +198,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			urls: ["https://example1.com", "https://example2.com"],
+			urls: {
+				application: [],
+				template: ["https://example1.com", "https://example2.com"],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -207,10 +220,9 @@ describe("ApplicationDetailsStep", () => {
 	});
 
 	it("renders TemplateFileContainer", () => {
-		const { container } = render(<ApplicationDetailsStep />);
+		render(<ApplicationDetailsStep />);
 
-		const templateFileContainer = container.querySelector('[data-testid="template-file-container"]');
-		expect(templateFileContainer).toBeInTheDocument();
+		expect(screen.getByTestId("template-file-container")).toBeInTheDocument();
 	});
 
 	it("renders application preview with empty state", () => {
@@ -240,7 +252,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			uploadedFiles: [file],
+			uploadedFiles: {
+				application: [],
+				template: [file],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);
@@ -269,7 +284,10 @@ describe("ApplicationDetailsStep", () => {
 				workspace_id: "test-workspace-id",
 			}),
 			applicationTitle: "Test Title",
-			uploadedFiles: [file],
+			uploadedFiles: {
+				application: [],
+				template: [file],
+			},
 		});
 
 		render(<ApplicationDetailsStep />);

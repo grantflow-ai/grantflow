@@ -1,11 +1,17 @@
 "use client";
 
+import {
+	FormInputsFactory,
+	GrantSectionDetailedFactory,
+	RagSourceFactory,
+	ResearchObjectiveFactory,
+} from "::testing/factories";
 import { Wand2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-
 import { crawlTemplateUrl } from "@/actions/sources";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/app-button";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithId } from "@/types/files";
@@ -32,14 +38,15 @@ const TEST_URLS = [
 export function DevAutofillButton() {
 	const params = useParams();
 	const { currentStep, handleTitleChange } = useWizardStore();
-	const { addUrl, application, setUploadedFiles } = useApplicationStore();
+	const { addUrl, application, setUploadedFiles, setUrls, updateApplication, updateGrantSections } =
+		useApplicationStore();
 
 	const handleAutofill = async () => {
 		try {
 			const workspaceId = params.workspaceId as string;
 
 			switch (currentStep) {
-				case 0: {
+				case WizardStep.APPLICATION_DETAILS: {
 					handleTitleChange("AI-Powered Early Cancer Detection Using Novel Biomarkers");
 
 					for (const url of TEST_URLS) {
@@ -69,13 +76,93 @@ export function DevAutofillButton() {
 
 					break;
 				}
-				case 1: {
-					toast.info("Application structure is ready. Click 'Approve and Continue'.");
+				case WizardStep.APPLICATION_STRUCTURE: {
+					if (!application?.grant_template?.id) {
+						toast.error("No grant template found. Complete Application Details step first.");
+						break;
+					}
+
+					const mockSections = GrantSectionDetailedFactory.batch(5).map((section, index) => ({
+						...section,
+						max_words: [500, 2000, 1500, 1000, 800][index] || section.max_words,
+						order: index,
+						parent_id: null,
+						title:
+							[
+								"Executive Summary",
+								"Project Description",
+								"Research Methodology",
+								"Budget Justification",
+								"Team Qualifications",
+							][index] || section.title,
+					}));
+
+					await updateGrantSections(mockSections);
+					toast.success("🎉 Application structure populated with 5 sections!");
 
 					break;
 				}
-				case 2: {
-					toast.info("Knowledge base is ready. Click 'Next' to proceed.");
+				case WizardStep.GENERATE_AND_COMPLETE: {
+					toast.success("🎉 Application is ready for generation! Click 'Generate Application' to proceed.");
+
+					break;
+				}
+				case WizardStep.KNOWLEDGE_BASE: {
+					const mockRagSources = RagSourceFactory.batch(3).map((source) => ({
+						...source,
+						status: "FINISHED" as const,
+					}));
+
+					const mockFiles: FileWithId[] = mockRagSources
+						.filter((source) => source.filename)
+						.map((source) => {
+							const file = new File(["Mock file content for testing"], source.filename!, {
+								type: "application/pdf",
+							});
+							return Object.assign(file, {
+								id: source.sourceId,
+							});
+						});
+
+					const mockUrls = mockRagSources.filter((source) => source.url).map((source) => source.url!);
+
+					setUploadedFiles(mockFiles);
+					setUrls(mockUrls);
+
+					toast.success(
+						`🎉 Knowledge base populated with ${mockFiles.length} files and ${mockUrls.length} URLs!`,
+					);
+
+					break;
+				}
+				case WizardStep.RESEARCH_DEEP_DIVE: {
+					const mockFormInputs = FormInputsFactory.build();
+
+					await updateApplication({
+						form_inputs: mockFormInputs,
+					});
+
+					toast.success("🎉 Research deep dive form populated with comprehensive data!");
+
+					break;
+				}
+				case WizardStep.RESEARCH_PLAN: {
+					const mockResearchObjectives = ResearchObjectiveFactory.batch(3).map((objective, index) => ({
+						...objective,
+						number: index + 1,
+						title:
+							[
+								"Develop novel biomarker detection algorithms",
+								"Validate biomarkers in clinical samples",
+								"Optimize early detection protocols",
+							][index] || objective.title,
+					}));
+
+					await updateApplication({
+						research_objectives: mockResearchObjectives,
+					});
+
+					toast.success(`🎉 Research plan populated with ${mockResearchObjectives.length} objectives!`);
 
 					break;
 				}
@@ -93,15 +180,15 @@ export function DevAutofillButton() {
 	}
 
 	return (
-		<Button
-			className="absolute left-1/2 -translate-x-1/2 gap-2"
+		<AppButton
+			className="absolute left-1/2 -translate-x-1/2"
 			data-testid="dev-autofill-button"
+			leftIcon={<Wand2 />}
 			onClick={handleAutofill}
 			size="sm"
-			variant="outline"
+			variant="secondary"
 		>
-			<Wand2 className="size-4" />
-			Autofill Step {currentStep + 1}
-		</Button>
+			{currentStep === WizardStep.GENERATE_AND_COMPLETE ? "Ready" : "Autofill"} {currentStep}
+		</AppButton>
 	);
 }
