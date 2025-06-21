@@ -1,0 +1,9 @@
+{
+  "test_name": "test_query_generation_with_empty_prompt",
+  "test_category": "smoke",
+  "performance": {
+    "execution_time": 1.961958885192871,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-21T09:31:18.893466+00:00"
+}

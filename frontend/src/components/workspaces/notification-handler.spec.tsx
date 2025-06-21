@@ -2,6 +2,7 @@ import { RagProcessingStatusMessageFactory } from "::testing/factories";
 import { render, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { vi } from "vitest";
+import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
 import { NotificationHandler } from "./notification-handler";
 
 vi.mock("sonner", () => {
@@ -121,6 +122,7 @@ describe("NotificationHandler", () => {
 				message: "Some information",
 			},
 			event: "unknown_event",
+			parent_id: "test-parent-id",
 			type: "data",
 		};
 
