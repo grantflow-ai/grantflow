@@ -2,8 +2,8 @@ import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
-import { applicationStore } from "@/stores/application-store";
-import { wizardStore } from "@/stores/wizard-store";
+import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 
 import { WizardClientComponent } from "./wizard-client";
 
@@ -42,8 +42,8 @@ describe("WizardClientComponent", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		applicationStore.getState().reset();
-		wizardStore.getState().reset();
+		useApplicationStore.getState().reset();
+		useWizardStore.getState().reset();
 	});
 
 	it("should render wizard layout with header and footer", () => {
@@ -64,7 +64,7 @@ describe("WizardClientComponent", () => {
 	it("should render different steps based on wizard store state", () => {
 		const { rerender } = render(<WizardClientComponent application={mockApplication} workspaceId={workspaceId} />);
 
-		wizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+		useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
 
 		rerender(<WizardClientComponent application={mockApplication} workspaceId={workspaceId} />);
 
@@ -72,21 +72,20 @@ describe("WizardClientComponent", () => {
 	});
 
 	it("should initialize application store with provided application", () => {
-		const resetSpy = vi.spyOn(applicationStore.getState(), "reset");
-		const setStateSpy = vi.spyOn(applicationStore, "setState");
+		const resetSpy = vi.spyOn(useApplicationStore.getState(), "reset");
+		const setStateSpy = vi.spyOn(useApplicationStore, "setState");
 
 		render(<WizardClientComponent application={mockApplication} workspaceId={workspaceId} />);
 
 		expect(resetSpy).toHaveBeenCalled();
 		expect(setStateSpy).toHaveBeenCalledWith({
 			application: mockApplication,
-			applicationTitle: mockApplication.title,
 			isLoading: false,
 		});
 	});
 
 	it("should initialize wizard store", () => {
-		const resetSpy = vi.spyOn(wizardStore.getState(), "reset");
+		const resetSpy = vi.spyOn(useWizardStore.getState(), "reset");
 
 		render(<WizardClientComponent application={mockApplication} workspaceId={workspaceId} />);
 
@@ -108,7 +107,7 @@ describe("WizardClientComponent", () => {
 				<WizardClientComponent application={mockApplication} workspaceId={workspaceId} />,
 			);
 
-			wizardStore.setState({ currentStep: step });
+			useWizardStore.setState({ currentStep: step });
 			rerender(<WizardClientComponent application={mockApplication} workspaceId={workspaceId} />);
 
 			expect(screen.getByTestId(testId)).toBeInTheDocument();

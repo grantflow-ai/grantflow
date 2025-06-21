@@ -1,4 +1,4 @@
-import { ApplicationFactory } from "::testing/factories";
+import { ApplicationFactory, FileWithIdFactory, RagSourceFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,19 +67,10 @@ describe("KnowledgeBaseStep", () => {
 			addFile: vi.fn(),
 			addUrl: vi.fn(),
 			application: ApplicationFactory.build({ id: "test-app-id", workspace_id: "test-workspace" }),
-			applicationTitle: "",
 			areFilesOrUrlsIndexing: vi.fn(() => false),
 			removeFile: vi.fn(),
 			removeUrl: vi.fn(),
 			retrieveApplication: vi.fn(),
-			uploadedFiles: {
-				application: [],
-				template: [],
-			},
-			urls: {
-				application: [],
-				template: [],
-			},
 		});
 	});
 
@@ -122,23 +113,34 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("Preview Pane Logic", () => {
 		it("shows empty state when no content exists", () => {
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [],
+				workspace_id: "test-workspace",
+			});
+			useApplicationStore.setState({ application });
+
 			render(<KnowledgeBaseStep />);
 
 			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();
 		});
 
 		it("shows container when files are uploaded", () => {
-			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [mockFile],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+						url: undefined,
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -149,16 +151,20 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("shows container when URLs are added", () => {
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [],
-					template: [],
-				},
-				urls: {
-					application: ["https://example.com"],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: undefined,
+						sourceId: "url-1",
+						status: "FINISHED",
+						url: "https://example.com",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -169,17 +175,26 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("shows both sections with separator when both files and URLs exist", () => {
-			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [mockFile],
-					template: [],
-				},
-				urls: {
-					application: ["https://example.com"],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+						url: undefined,
+					}),
+					RagSourceFactory.build({
+						filename: undefined,
+						sourceId: "url-1",
+						status: "FINISHED",
+						url: "https://example.com",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -190,17 +205,13 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("does not show container when only application title exists", () => {
-			useApplicationStore.setState({
-				applicationTitle: "Test App",
-				uploadedFiles: {
-					application: [],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [],
+				workspace_id: "test-workspace",
 			});
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -284,20 +295,26 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("File Removal Logic", () => {
 		it("successfully removes file when delete is called", async () => {
+			const mockFile = FileWithIdFactory.build({ id: "file-1", name: "test.pdf", size: 1024 });
 			const mockRemoveFile = vi.fn();
-			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
+
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+					}),
+				],
+				workspace_id: "test-workspace",
+			});
 
 			mockDeleteApplicationSource.mockResolvedValue(undefined);
 			useApplicationStore.setState({
+				application,
 				removeFile: mockRemoveFile,
-				uploadedFiles: {
-					application: [mockFile],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -316,20 +333,23 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("shows error when file removal fails", async () => {
-			const mockFile = { id: "file-1", name: "test.pdf", size: 1024 } as any;
 			const error = new Error("Delete failed");
 
-			mockDeleteApplicationSource.mockRejectedValue(error);
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [mockFile],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+
+			mockDeleteApplicationSource.mockRejectedValue(error);
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -341,18 +361,20 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("shows error when file has no ID", async () => {
-			const mockFile = { name: "test.pdf", size: 1024 } as any;
-
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [mockFile],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "",
+						status: "FINISHED",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -363,16 +385,24 @@ describe("KnowledgeBaseStep", () => {
 	describe("URL Removal Logic", () => {
 		it("removes URL when called", () => {
 			const mockRemoveUrl = vi.fn();
+
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: undefined,
+						sourceId: "url-1",
+						status: "FINISHED",
+						url: "https://example.com",
+					}),
+				],
+				workspace_id: "test-workspace",
+			});
+
 			useApplicationStore.setState({
+				application,
 				removeUrl: mockRemoveUrl,
-				uploadedFiles: {
-					application: [],
-					template: [],
-				},
-				urls: {
-					application: ["https://example.com"],
-					template: [],
-				},
 			});
 
 			render(<KnowledgeBaseStep />);
@@ -388,17 +418,20 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("File Display Logic", () => {
 		it("displays file with correct information", () => {
-			const mockFile = { id: "file-1", name: "test-document.pdf", size: 2048 } as any;
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [mockFile],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test-document.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -407,21 +440,25 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("displays multiple files correctly", () => {
-			const mockFiles = [
-				{ id: "file-1", name: "doc1.pdf", size: 1024 },
-				{ id: "file-2", name: "doc2.docx", size: 2048 },
-			] as any[];
-
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: mockFiles,
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "doc1.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						filename: "doc2.docx",
+						sourceId: "file-2",
+						status: "FINISHED",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -433,16 +470,21 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("URL Display Logic", () => {
 		it("displays URL with correct link", () => {
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [],
-					template: [],
-				},
-				urls: {
-					application: ["https://example.com"],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: undefined,
+						sourceId: "url-1",
+						status: "FINISHED",
+						url: "https://example.com",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -453,16 +495,25 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("displays multiple URLs correctly", () => {
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [],
-					template: [],
-				},
-				urls: {
-					application: ["https://example.com", "https://test.org"],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						sourceId: "url-1",
+						status: "FINISHED",
+						url: "https://example.com",
+					}),
+					RagSourceFactory.build({
+						sourceId: "url-2",
+						status: "FINISHED",
+						url: "https://test.org",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -473,9 +524,14 @@ describe("KnowledgeBaseStep", () => {
 
 	describe("Conditional Logic Edge Cases", () => {
 		it("handles empty application title correctly", () => {
-			useApplicationStore.setState({
-				applicationTitle: "   ",
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [],
+				title: "",
+				workspace_id: "test-workspace",
 			});
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -483,17 +539,20 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("handles files without size information", () => {
-			const mockFile = { id: "file-1", name: "test.pdf" } as any;
-			useApplicationStore.setState({
-				uploadedFiles: {
-					application: [mockFile],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "test.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+					}),
+				],
+				workspace_id: "test-workspace",
 			});
+
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 
@@ -501,17 +560,13 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		it("does not show container when hasContent is true but no files or URLs exist", () => {
-			useApplicationStore.setState({
-				applicationTitle: "Test Title",
-				uploadedFiles: {
-					application: [],
-					template: [],
-				},
-				urls: {
-					application: [],
-					template: [],
-				},
+			const application = ApplicationFactory.build({
+				grant_template: undefined,
+				id: "test-app-id",
+				rag_sources: [],
+				workspace_id: "test-workspace",
 			});
+			useApplicationStore.setState({ application });
 
 			render(<KnowledgeBaseStep />);
 			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();

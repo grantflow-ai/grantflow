@@ -1,4 +1,4 @@
-import { SourceProcessingNotificationMessageFactory } from "::testing/factories";
+import { RagProcessingStatusMessageFactory, SourceProcessingNotificationMessageFactory } from "::testing/factories";
 import { renderHook, waitFor } from "@testing-library/react";
 import { ReadyState } from "react-use-websocket";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -229,7 +229,7 @@ describe("Type Guards", () => {
 		const { isSourceProcessingNotificationMessage } = await import("./use-application-notifications");
 		const { SourceIndexingStatus } = await import("@/enums");
 
-		const validNotification = {
+		const validNotification = SourceProcessingNotificationMessageFactory.build({
 			data: {
 				identifier: "test.pdf",
 				indexing_status: SourceIndexingStatus.INDEXING,
@@ -240,7 +240,7 @@ describe("Type Guards", () => {
 			event: "source_processing",
 			parent_id: "test-id",
 			type: "data",
-		};
+		});
 
 		expect(isSourceProcessingNotificationMessage(validNotification)).toBe(true);
 
@@ -259,7 +259,7 @@ describe("Type Guards", () => {
 	it("isRagProcessingStatusMessage should correctly identify RAG status messages", async () => {
 		const { isRagProcessingStatusMessage } = await import("./use-application-notifications");
 
-		const validNotification = {
+		const validNotification = RagProcessingStatusMessageFactory.build({
 			data: {
 				data: { section_count: 5 },
 				event: "grant_template_extraction",
@@ -268,19 +268,20 @@ describe("Type Guards", () => {
 			event: "grant_template_extraction",
 			parent_id: "test-id",
 			type: "data",
-		};
+		});
 
 		expect(isRagProcessingStatusMessage(validNotification)).toBe(true);
 
-		const validNotificationWithoutData = {
+		const validNotificationWithoutData = RagProcessingStatusMessageFactory.build({
 			data: {
+				data: undefined,
 				event: "grant_template_extraction",
 				message: "Processing...",
 			},
 			event: "grant_template_extraction",
 			parent_id: "test-id",
 			type: "data",
-		};
+		});
 
 		expect(isRagProcessingStatusMessage(validNotificationWithoutData)).toBe(true);
 

@@ -446,12 +446,15 @@ export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketM
 );
 
 interface RagProcessingStatus {
+	current_pipeline_stage?: number;
 	data?: Record<string, unknown>;
 	event: string;
 	message: string;
+	total_pipeline_stages?: number;
 }
 
 export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((factory) => ({
+	current_pipeline_stage: factory.datatype.boolean() ? factory.number.int({ max: 10, min: 1 }) : undefined,
 	data: factory.datatype.boolean()
 		? {
 				[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int(
@@ -472,6 +475,7 @@ export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((fact
 		"objectives_enriched",
 	]),
 	message: factory.lorem.sentence(),
+	total_pipeline_stages: factory.datatype.boolean() ? factory.number.int({ max: 10, min: 3 }) : undefined,
 }));
 
 export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<RagProcessingStatus>>((factory) => {
@@ -525,4 +529,80 @@ export const FileWithIdFactory = new Factory<FileWithId>((factory) => {
 	file.id = factory.string.uuid();
 
 	return file;
+});
+
+interface RagJobResponse {
+	completed_at?: string;
+	created_at: string;
+	current_stage: number;
+	error_details?: {
+		details: string;
+		error_type: string;
+	};
+	error_message?: string;
+	failed_at?: string;
+	generated_sections?: Record<string, string>;
+	grant_application_id?: string;
+	grant_template_id?: string;
+	id: string;
+	job_type: "grant_application_generation" | "grant_template_generation";
+	retry_count: number;
+	status: "COMPLETED" | "FAILED" | "PROCESSING";
+	total_stages: number;
+	updated_at: string;
+	validation_results?: {
+		is_valid: boolean;
+		score: number;
+	};
+}
+
+export const RagJobResponseFactory = new Factory<RagJobResponse>((factory) => {
+	const jobType = factory.helpers.arrayElement<"grant_application_generation" | "grant_template_generation">([
+		"grant_application_generation",
+		"grant_template_generation",
+	]);
+	const status = factory.helpers.arrayElement<"COMPLETED" | "FAILED" | "PROCESSING">([
+		"COMPLETED",
+		"FAILED",
+		"PROCESSING",
+	]);
+	const isCompleted = status === "COMPLETED";
+	const isFailed = status === "FAILED";
+
+	return {
+		completed_at: isCompleted ? factory.date.recent().toISOString() : undefined,
+		created_at: factory.date.past().toISOString(),
+		current_stage: factory.number.int({ max: 5, min: 1 }),
+		error_details: isFailed
+			? {
+					details: factory.lorem.sentence(),
+					error_type: factory.helpers.arrayElement(["ExtractionError", "ValidationError", "ProcessingError"]),
+				}
+			: undefined,
+		error_message: isFailed ? factory.lorem.sentence() : undefined,
+		failed_at: isFailed ? factory.date.recent().toISOString() : undefined,
+		generated_sections:
+			jobType === "grant_application_generation" && isCompleted
+				? {
+						[factory.lorem.word()]: factory.lorem.paragraph(),
+						introduction: factory.lorem.paragraphs(2),
+						methodology: factory.lorem.paragraphs(3),
+					}
+				: undefined,
+		grant_application_id: jobType === "grant_application_generation" ? factory.string.uuid() : undefined,
+		grant_template_id: jobType === "grant_template_generation" ? factory.string.uuid() : undefined,
+		id: factory.string.uuid(),
+		job_type: jobType,
+		retry_count: factory.number.int({ max: 3, min: 0 }),
+		status,
+		total_stages: factory.number.int({ max: 10, min: 3 }),
+		updated_at: factory.date.recent().toISOString(),
+		validation_results:
+			jobType === "grant_application_generation" && isCompleted
+				? {
+						is_valid: factory.datatype.boolean(),
+						score: factory.number.float({ max: 1, min: 0 }),
+					}
+				: undefined,
+	};
 });

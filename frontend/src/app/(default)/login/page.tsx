@@ -200,7 +200,7 @@ function LoginForm({
 }: {
 	isLoading: boolean;
 	onSubmit: (values: LoginFormValues) => void;
-	socialSignInError?: null | React.ReactNode | string | undefined;
+	socialSignInError?: null | React.ReactNode | string;
 }) {
 	const form = useForm<LoginFormValues>({
 		defaultValues: { email: "" },

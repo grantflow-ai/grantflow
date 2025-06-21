@@ -1,3 +1,4 @@
+import { FileWithIdFactory } from "::testing/factories";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { formatBytes } from "@/utils/format";
@@ -9,7 +10,7 @@ vi.mock("@/utils/format", () => ({
 }));
 
 describe("FileCard", () => {
-	const mockFile = new File(["test content"], "test-document.pdf", { type: "application/pdf" });
+	const mockFile = FileWithIdFactory.build({ name: "test-document.pdf", type: "application/pdf" });
 	const mockHandleRemoveFile = vi.fn();
 
 	beforeEach(() => {
@@ -38,8 +39,9 @@ describe("FileCard", () => {
 
 describe("FilesDisplay", () => {
 	const mockFiles = [
-		new File(["content1"], "document1.pdf", { type: "application/pdf" }),
-		new File(["content2"], "document2.docx", {
+		FileWithIdFactory.build({ name: "document1.pdf", type: "application/pdf" }),
+		FileWithIdFactory.build({
+			name: "document2.docx",
 			type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 		}),
 	];

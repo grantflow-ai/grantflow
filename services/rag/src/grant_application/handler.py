@@ -2,7 +2,6 @@ from asyncio import gather
 from typing import Any
 from uuid import UUID
 
-from packages.db.src.connection import get_session_maker
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication, GrantTemplate
@@ -272,7 +271,6 @@ async def grant_application_text_generation_pipeline_handler(
     session_maker: async_sessionmaker[Any],
     job_manager: JobManager | None = None,
 ) -> tuple[str, dict[str, str]]:
-    session_maker = get_session_maker()
     application_id = grant_application_id
     logger.info("Starting grant application text generation pipeline", application_id=application_id)
 

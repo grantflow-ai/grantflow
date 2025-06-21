@@ -31,8 +31,6 @@ export const EmptyState: Story = {
 				useApplicationStore.setState({
 					application: null,
 					isLoading: false,
-					uploadedFiles: [],
-					urls: [],
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_STRUCTURE,
@@ -58,8 +56,6 @@ export const WithApplicationTitle: Story = {
 				useApplicationStore.setState({
 					application,
 					isLoading: false,
-					uploadedFiles: [],
-					urls: [],
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_STRUCTURE,
@@ -80,8 +76,6 @@ export const WithGeneratedSections: Story = {
 				useApplicationStore.setState({
 					application,
 					isLoading: false,
-					uploadedFiles: [],
-					urls: [],
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_STRUCTURE,

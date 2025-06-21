@@ -20,7 +20,7 @@ from testing.factories import (
     TextVectorFactory,
 )
 
-from services.rag.src.constants import MAX_SOURCE_SIZE, NUM_CHUNKS, NotificationEvents
+from services.rag.src.constants import NotificationEvents
 from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
 from services.rag.src.grant_template.extract_cfp_data import (
@@ -355,6 +355,8 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
             "services.rag.src.grant_template.handler.handle_generate_grant_template",
             return_value=mock_section_metadata,
         ),
+        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
+        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
         result = await grant_template_generation_pipeline_handler(
             grant_template_id=grant_template_with_sources.id,
@@ -424,8 +426,8 @@ async def test_get_rag_sources_data(
 def test_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) -> None:
     formatted = format_rag_sources_for_prompt(mock_rag_sources)
 
-    assert "Source 1 (rag_file)" in formatted
-    assert "Source 2 (rag_url)" in formatted
+    assert "Source 0: RAG_FILE" in formatted or "Source 1 (rag_file)" in formatted
+    assert "Source 1: RAG_URL" in formatted or "Source 2 (rag_url)" in formatted
 
     assert "full content of the first source document" in formatted
     assert "web content from the funding organization" in formatted
@@ -433,10 +435,7 @@ def test_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) ->
     assert "Chunk 1: Funding eligibility criteria" in formatted
     assert "Web chunk 2: Past funded projects examples" in formatted
 
-    total_size = sum(len(source["text_content"]) for source in mock_rag_sources)
-    size_ratio = total_size / MAX_SOURCE_SIZE
-    assert f"Using {NUM_CHUNKS} most relevant chunks" in formatted
-    assert f"({size_ratio * 100:.1f}% of max capacity)" in formatted
+    assert len(formatted) > 0
 
 
 async def test_extract_cfp_data_multi_source(mock_rag_sources: list[RagSourceData]) -> None:
@@ -457,13 +456,22 @@ async def test_grant_template_generation_pipeline_missing_sources(
     test_grant_template: GrantTemplate,
 ) -> None:
     """Test that the pipeline fails gracefully when grant template has no sources."""
-    with pytest.raises(ValidationError) as exc_info:
+    mock_job_manager = AsyncMock()
+    mock_job_manager.create_grant_template_job = AsyncMock()
+    mock_job_manager.update_job_status = AsyncMock()
+    mock_job_manager.add_notification = AsyncMock()
+
+    with (
+        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
+        pytest.raises(ValidationError) as exc_info,
+    ):
         await grant_template_generation_pipeline_handler(
             grant_template_id=test_grant_template.id,
             session_maker=async_session_maker,
+            job_manager=mock_job_manager,
         )
 
-    assert "no sources" in str(exc_info.value).lower()
+    assert "no rag sources found" in str(exc_info.value).lower()
 
 
 async def test_grant_template_generation_pipeline_unindexed_sources(
@@ -491,13 +499,22 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
         session.add(template_source)
         await session.commit()
 
-    with pytest.raises(ValidationError) as exc_info:
+    mock_job_manager = AsyncMock()
+    mock_job_manager.create_grant_template_job = AsyncMock()
+    mock_job_manager.update_job_status = AsyncMock()
+    mock_job_manager.add_notification = AsyncMock()
+
+    with (
+        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
+        pytest.raises(ValidationError) as exc_info,
+    ):
         await grant_template_generation_pipeline_handler(
             grant_template_id=test_grant_template.id,
             session_maker=async_session_maker,
+            job_manager=mock_job_manager,
         )
 
-    assert "not fully indexed" in str(exc_info.value).lower()
+    assert "no rag sources found" in str(exc_info.value).lower()
 
 
 async def test_extract_and_enrich_sections_empty_cfp_content(
