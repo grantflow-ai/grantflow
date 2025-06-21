@@ -440,15 +440,36 @@ def test_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) ->
 
 async def test_extract_cfp_data_multi_source(mock_rag_sources: list[RagSourceData]) -> None:
     task_description = format_rag_sources_for_prompt(mock_rag_sources)
-    formatted = await extract_cfp_data_multi_source(task_description)
+
+    mock_response = {
+        "organization_id": "test-org-id",
+        "cfp_subject": "Test grant for researching innovative approaches",
+        "content": [
+            {"title": "Background", "subtitles": ["Introduction", "Problem Statement"]},
+            {"title": "Methodology", "subtitles": ["Approach", "Timeline"]},
+        ],
+        "submission_date": "2025-04-26",
+    }
+
+    with patch(
+        "services.rag.src.grant_template.extract_cfp_data.handle_completions_request",
+        return_value=mock_response,
+    ):
+        formatted = await extract_cfp_data_multi_source(task_description)
 
     assert "cfp_subject" in formatted
     assert "content" in formatted
+    assert "organization_id" in formatted
+    assert "submission_date" in formatted
 
     assert len(formatted["cfp_subject"]) > 0
-
     assert isinstance(formatted["content"], list)
     assert len(formatted["content"]) > 0
+
+    for item in formatted["content"]:
+        assert "title" in item
+        assert "subtitles" in item
+        assert isinstance(item["subtitles"], list)
 
 
 async def test_grant_template_generation_pipeline_missing_sources(
