@@ -8,6 +8,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as grantApplicationActions from "@/actions/grant-applications";
 import * as grantTemplateActions from "@/actions/grant-template";
+import { WizardStep } from "@/constants";
 
 import { useApplicationStore } from "./application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";
@@ -29,7 +30,7 @@ describe("wizard store", () => {
 
 		const wizardState = useWizardStore.getState();
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				...wizardState.polling,
 				intervalId: null,
@@ -41,8 +42,14 @@ describe("wizard store", () => {
 			application: null,
 			applicationTitle: "",
 			isLoading: false,
-			uploadedFiles: [],
-			urls: [],
+			uploadedFiles: {
+				application: [],
+				template: [],
+			},
+			urls: {
+				application: [],
+				template: [],
+			},
 		});
 	});
 
@@ -110,8 +117,14 @@ describe("wizard store", () => {
 					application: null,
 					applicationTitle: "",
 					isLoading: false,
-					uploadedFiles: [],
-					urls: [],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: [],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -122,7 +135,7 @@ describe("wizard store", () => {
 		describe("step 0 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: 0,
+					currentStep: WizardStep.APPLICATION_DETAILS,
 				});
 			});
 
@@ -132,8 +145,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -146,8 +165,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [FileWithIdFactory.build()],
-					urls: [],
+					uploadedFiles: {
+						application: [],
+						template: [FileWithIdFactory.build()],
+					},
+					urls: {
+						application: [],
+						template: [],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -160,8 +185,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [FileWithIdFactory.build()],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [FileWithIdFactory.build()],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -174,8 +205,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH - 1),
 					isLoading: false,
-					uploadedFiles: [FileWithIdFactory.build()],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [FileWithIdFactory.build()],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -188,8 +225,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: `   ${"A".repeat(MIN_TITLE_LENGTH)}   `,
 					isLoading: false,
-					uploadedFiles: [],
-					urls: ["https://example.com"],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: ["https://example.com"],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -202,8 +245,14 @@ describe("wizard store", () => {
 					application,
 					applicationTitle: "A".repeat(MIN_TITLE_LENGTH),
 					isLoading: false,
-					uploadedFiles: [],
-					urls: [],
+					uploadedFiles: {
+						application: [],
+						template: [],
+					},
+					urls: {
+						application: [],
+						template: [],
+					},
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -214,7 +263,7 @@ describe("wizard store", () => {
 		describe("step 1 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: 1,
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			});
 
@@ -257,7 +306,7 @@ describe("wizard store", () => {
 		describe("step 2 validation", () => {
 			beforeEach(() => {
 				useWizardStore.setState({
-					currentStep: 2,
+					currentStep: WizardStep.KNOWLEDGE_BASE,
 				});
 			});
 
@@ -329,7 +378,7 @@ describe("wizard store", () => {
 				});
 
 				useWizardStore.setState({
-					currentStep: 3,
+					currentStep: WizardStep.RESEARCH_PLAN,
 				});
 
 				const { validateStepNext } = useWizardStore.getState();
@@ -405,42 +454,42 @@ describe("wizard store", () => {
 			const { toNextStep } = useWizardStore.getState();
 
 			toNextStep();
-			expect(useWizardStore.getState().currentStep).toBe(1);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 
 			toNextStep();
-			expect(useWizardStore.getState().currentStep).toBe(2);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.KNOWLEDGE_BASE);
 		});
 
 		it("should not navigate beyond last step", () => {
 			useWizardStore.setState({
-				currentStep: 5,
+				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 			});
 
 			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
-			expect(useWizardStore.getState().currentStep).toBe(5);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.GENERATE_AND_COMPLETE);
 		});
 
 		it("should navigate to previous step", () => {
 			useWizardStore.setState({
-				currentStep: 2,
+				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
 
 			const { toPreviousStep } = useWizardStore.getState();
 
 			toPreviousStep();
-			expect(useWizardStore.getState().currentStep).toBe(1);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 
 			toPreviousStep();
-			expect(useWizardStore.getState().currentStep).toBe(0);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
 		it("should not navigate before first step", () => {
 			const { toPreviousStep } = useWizardStore.getState();
 			toPreviousStep();
 
-			expect(useWizardStore.getState().currentStep).toBe(0);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
 		it("should trigger template generation when moving from step 0 to 1", async () => {

@@ -7,7 +7,7 @@ import { IconGlobe } from "@/components/workspaces/icons";
 import { useApplicationStore } from "@/stores/application-store";
 import { isValidUrl } from "@/utils/validation";
 
-export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
+export function UrlInput({ onUrlAdded, parentId }: { onUrlAdded?: () => void; parentId?: string }) {
 	const { addUrl, urls } = useApplicationStore();
 
 	const [urlInput, setUrlInput] = React.useState("");
@@ -23,10 +23,16 @@ export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 				return;
 			}
 
+			if (!parentId) {
+				setUrlError("Cannot add URL: Parent ID missing");
+				return;
+			}
+
 			setUrlError(null);
 
-			if (!urls.includes(trimmedUrl)) {
-				await addUrl(trimmedUrl);
+			const allUrls = [...urls.application, ...urls.template];
+			if (!allUrls.includes(trimmedUrl)) {
+				await addUrl(trimmedUrl, parentId);
 				onUrlAdded?.();
 			}
 			setUrlInput("");
@@ -47,6 +53,7 @@ export function UrlInput({ onUrlAdded }: { onUrlAdded?: () => void }) {
 			}}
 			onKeyDown={handleAddUrl}
 			placeholder="Paste a link and press Enter to add"
+			testId="url-input"
 			type="url"
 			value={urlInput}
 		/>

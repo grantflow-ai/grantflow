@@ -29,7 +29,13 @@ const FILE_ACCEPTS = {
 const FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
 
-export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: () => void }) {
+export function TemplateFileUploader({
+	onUploadComplete,
+	parentId,
+}: {
+	onUploadComplete?: () => void;
+	parentId?: string;
+}) {
 	const { addFile } = useApplicationStore();
 
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
@@ -48,10 +54,10 @@ export function TemplateFileUploader({ onUploadComplete }: { onUploadComplete?: 
 	const handleUploadFile = useCallback(
 		async (file: File) => {
 			const fileWithId: FileWithId = Object.assign(file, { id: crypto.randomUUID() });
-			await addFile(fileWithId);
+			await addFile(fileWithId, parentId);
 			onUploadComplete?.();
 		},
-		[addFile, onUploadComplete],
+		[addFile, onUploadComplete, parentId],
 	);
 
 	const handleFilesAdded = useCallback(

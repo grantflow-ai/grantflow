@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { WizardStep } from "@/constants";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { TemplateFileUploader } from "./template-file-uploader";
@@ -18,7 +19,7 @@ describe("TemplateFileUploader", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			currentStep: 0,
+			currentStep: WizardStep.APPLICATION_DETAILS,
 		});
 	});
 

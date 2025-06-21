@@ -69,8 +69,8 @@ describe("FilesDisplay", () => {
 	});
 
 	it("renders nothing when files array is empty", () => {
-		const { container } = render(<FilesDisplay files={[]} onFileRemoved={mockOnFileRemoved} />);
+		render(<FilesDisplay files={[]} onFileRemoved={mockOnFileRemoved} />);
 
-		expect(container).toBeEmptyDOMElement();
+		expect(screen.queryByTestId("files-display")).not.toBeInTheDocument();
 	});
 });

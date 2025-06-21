@@ -1,74 +1,28 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
-
 import AppTextArea from "@/components/textarea-field";
+import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import type { FileWithId } from "@/types/files";
-import { useDebounce } from "@/utils/debounce";
+
 import { ApplicationPreview } from "./application-preview";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 
-const RETRIEVE_DEBOUNCE_MS = 1000;
-const POLLING_INTERVAL_DURATION = 3000;
 const TITLE_MAX_LENGTH = 120;
+
 interface ApplicationDetailsStepProps {
 	connectionStatus?: string;
 	connectionStatusColor?: string;
 }
 
 export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
-	const {
-		handleTitleChange,
-		polling: { start, stop },
-	} = useWizardStore();
-	const { application, applicationTitle, areFilesOrUrlsIndexing, removeFile, removeUrl, retrieveApplication } =
-		useApplicationStore();
+	const { handleTitleChange } = useWizardStore();
+	const { application, applicationTitle, debouncedRetrieveApplication } = useApplicationStore();
 
-	const getIndexingStatus = useCallback(async () => {
-		if (application) {
-			await retrieveApplication(application.workspace_id, application.id);
-		}
-		return areFilesOrUrlsIndexing();
-	}, [retrieveApplication, areFilesOrUrlsIndexing, application]);
+	usePollingCleanup();
 
-	const handleRetrieveWithPolling = useCallback(async () => {
-		const isIndexing = await getIndexingStatus();
-
-		if (isIndexing) {
-			start(handleRetrieveWithPolling, POLLING_INTERVAL_DURATION, false);
-		} else {
-			stop();
-		}
-	}, [getIndexingStatus, start, stop]);
-
-	const debouncedRetrieveApplication = useDebounce(handleRetrieveWithPolling, RETRIEVE_DEBOUNCE_MS);
-
-	const handleDocumentChange = useCallback(() => {
-		debouncedRetrieveApplication();
-	}, [debouncedRetrieveApplication]);
-
-	useEffect(() => {
-		return () => {
-			stop();
-		};
-	}, [stop]);
-
-	const handleRemoveUrl = useCallback(
-		async (urlToRemove: string) => {
-			await removeUrl(urlToRemove);
-		},
-		[removeUrl],
-	);
-
-	const handleFileRemove = useCallback(
-		async (fileToRemove: FileWithId) => {
-			await removeFile(fileToRemove);
-		},
-		[removeFile],
-	);
+	const parentId = application?.grant_template?.id;
 
 	return (
 		<div className="flex size-full" data-testid="application-details-step">
@@ -114,7 +68,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileUploader onUploadComplete={handleDocumentChange} />
+						<TemplateFileUploader onUploadComplete={debouncedRetrieveApplication} parentId={parentId} />
 					</div>
 
 					<div>
@@ -124,7 +78,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							understand the funding requirements.
 						</p>
 
-						<UrlInput onUrlAdded={handleDocumentChange} />
+						<UrlInput onUrlAdded={debouncedRetrieveApplication} parentId={parentId} />
 					</div>
 				</div>
 			</div>
@@ -132,8 +86,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 			<ApplicationPreview
 				connectionStatus={connectionStatus}
 				connectionStatusColor={connectionStatusColor}
-				onFileRemove={handleFileRemove}
-				onUrlRemove={handleRemoveUrl}
+				parentId={parentId}
 			/>
 		</div>
 	);

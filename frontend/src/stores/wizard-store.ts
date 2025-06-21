@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY } from "@/constants";
+import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { createDebounce } from "@/utils/debounce";
 
@@ -21,19 +21,18 @@ interface PollingState {
 interface WizardActions {
 	handleTitleChange: (title: string) => void;
 	polling: PollingActions;
-	setCurrentStep: (step: number) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	validateStepNext: () => boolean;
 }
 
 interface WizardState {
-	currentStep: number;
+	currentStep: WizardStep;
 	polling: PollingState;
 }
 
 const initialWizardState: WizardState = {
-	currentStep: 0,
+	currentStep: WizardStep.APPLICATION_DETAILS,
 	polling: {
 		intervalId: null,
 		isActive: false,
@@ -110,41 +109,36 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					},
 				},
 
-				setCurrentStep: (step: number) => {
-					set((state) => ({
-						...state,
-						currentStep: Math.max(0, Math.min(WIZARD_STEP_TITLES.length - 1, step)),
-					}));
-				},
-
 				toNextStep: () => {
 					const { currentStep } = get();
 
-					if (currentStep === WIZARD_STEP_TITLES.length - 1) {
+					if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
 						return;
 					}
 
 					const { application } = useApplicationStore.getState();
 
 					if (
-						currentStep === 0 &&
+						currentStep === WizardStep.APPLICATION_DETAILS &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
 						void useApplicationStore.getState().generateTemplate(application.grant_template.id);
 					}
+
 					set((state) => ({
 						...state,
-						currentStep: currentStep + 1,
+						currentStep: WIZARD_STEP_TITLES[WIZARD_STEP_TITLES.indexOf(currentStep) + 1],
 					}));
 				},
 
 				toPreviousStep: () => {
 					const { currentStep } = get();
+					const currentIndex = WIZARD_STEP_TITLES.indexOf(currentStep);
 
 					set((state) => ({
 						...state,
-						currentStep: Math.max(0, currentStep - 1),
+						currentStep: WIZARD_STEP_TITLES[Math.max(0, currentIndex - 1)],
 					}));
 				},
 
@@ -158,16 +152,18 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return false;
 					}
 
-					if (currentStep === 0) {
+					if (currentStep === WizardStep.APPLICATION_DETAILS) {
+						const totalUrls = urls.application.length + urls.template.length;
+						const totalFiles = uploadedFiles.application.length + uploadedFiles.template.length;
 						return (
 							applicationTitle.trim().length >= MIN_TITLE_LENGTH &&
-							(urls.length > 0 || uploadedFiles.length > 0)
+							(totalUrls > 0 || totalFiles > 0)
 						);
 					}
-					if (currentStep === 1) {
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						return !!application.grant_template?.grant_sections.length;
 					}
-					if (currentStep === 2) {
+					if (currentStep === WizardStep.KNOWLEDGE_BASE) {
 						return (
 							!!application.rag_sources.length &&
 							application.rag_sources.every((source) => source.status !== "FAILED")
