@@ -33,7 +33,7 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+@e2e_test(category=E2ETestCategory.SMOKE, timeout=180)
 async def test_retrieval_smoke(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],

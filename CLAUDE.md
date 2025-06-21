@@ -146,6 +146,47 @@ E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)" # Skip expensive AI
 - E2E tests have longer timeouts based on complexity
 - Smoke tests: 60-120s, Quality: 180-300s, Full: 600s+
 
+### Parallel Test Execution (pytest-xdist)
+
+The project uses pytest-xdist for parallel test execution to improve CI performance:
+
+**Configuration:**
+- **Auto-enabled**: Tests run with `-n auto` by default (configured in `pyproject.toml`)
+- **Worker limits**: Max 4 workers locally, 2 in CI (GitHub Actions)
+- **Load balancing**: Uses `worksteal` distribution for optimal performance
+- **Fail-fast**: Stops on first failure (`-x` flag) for faster feedback
+
+**xdist Groups:**
+Tests that conflict when run in parallel are automatically grouped using `@pytest.mark.xdist_group()`:
+
+```python
+# Automatic grouping for database tests (configured in services/conftest.py)
+# Tests using these fixtures are automatically grouped by service:
+async def test_with_database(async_session_maker, workspace): ...
+# -> Grouped as "db_rag", "db_indexer", etc.
+
+# Manual grouping for tests that need specific isolation:
+@pytest.mark.xdist_group("ai_completion")
+async def test_llm_call(): ...
+
+@pytest.mark.xdist_group("model_loading")
+async def test_embedding_model(): ...
+```
+
+**Automatic Database Grouping:**
+- Tests using database fixtures are automatically grouped by service module
+- Prevents Docker container conflicts between parallel workers
+- Configured in `services/conftest.py` - modifies test items during collection
+
+**Disabling xdist:**
+- Local development: `pytest -n 0` or `PYTEST_XDIST_WORKERS=0`
+- Single test debugging: Use `-n 0` to run sequentially
+
+**Model Preloading:**
+- SentenceTransformer and spaCy models are preloaded in session fixtures
+- Prevents timeouts during parallel test execution
+- Configured in `services/rag/tests/conftest.py`
+
 ### Writing E2E Tests
 
 **Unit Tests**: No markers needed - they run by default
