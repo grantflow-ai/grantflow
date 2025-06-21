@@ -14,12 +14,14 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
-	const IconComponent =
-		type === "done"
-			? IconApplicationStepDone
-			: type === "active"
-				? IconApplicationStepActive
-				: IconApplicationStepInActive;
+	let IconComponent: React.ComponentType;
+	if (type === "done") {
+		IconComponent = IconApplicationStepDone;
+	} else if (type === "active") {
+		IconComponent = IconApplicationStepActive;
+	} else {
+		IconComponent = IconApplicationStepInActive;
+	}
 
 	if (isLastStep) {
 		return (
@@ -134,13 +136,15 @@ function ApplicationProgressBar({
 								key={index}
 							>
 								<div className={`flex items-center ${isLastStep ? "" : "w-full"} relative`}>
-									{index < currentStepIndex ? (
-										<StepIndicator isLastStep={isLastStep} type="done" />
-									) : index === currentStepIndex ? (
-										<StepIndicator isLastStep={isLastStep} type="active" />
-									) : (
-										<StepIndicator isLastStep={isLastStep} type="inactive" />
-									)}
+									{(() => {
+										if (index < currentStepIndex) {
+											return <StepIndicator isLastStep={isLastStep} type="done" />;
+										}
+										if (index === currentStepIndex) {
+											return <StepIndicator isLastStep={isLastStep} type="active" />;
+										}
+										return <StepIndicator isLastStep={isLastStep} type="inactive" />;
+									})()}
 
 									<div
 										className="absolute -bottom-8 flex justify-center text-nowrap"
@@ -150,13 +154,15 @@ function ApplicationProgressBar({
 										}}
 									>
 										<span
-											className={`font-heading text-center text-xs ${
-												index < currentStepIndex
-													? "text-secondary"
-													: index === currentStepIndex
-														? "text-primary"
-														: "text-gray-400"
-											}`}
+											className={`font-heading text-center text-xs ${(() => {
+												if (index < currentStepIndex) {
+													return "text-secondary";
+												}
+												if (index === currentStepIndex) {
+													return "text-primary";
+												}
+												return "text-gray-400";
+											})()}`}
 											data-testid={`step-title-${index}`}
 										>
 											{title}
@@ -195,8 +201,24 @@ function generateFooterRightButtonProps(currentStep: WizardStep) {
 	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
 	return {
-		leftIcon: isApproveStep ? <IconApprove /> : isGenerateStep ? <IconButtonLogo /> : undefined,
-		rightButtonText: isApproveStep ? "Approve and Continue" : isGenerateStep ? "Generate" : "Next",
+		leftIcon: (() => {
+			if (isApproveStep) {
+				return <IconApprove />;
+			}
+			if (isGenerateStep) {
+				return <IconButtonLogo />;
+			}
+			return undefined;
+		})(),
+		rightButtonText: (() => {
+			if (isApproveStep) {
+				return "Approve and Continue";
+			}
+			if (isGenerateStep) {
+				return "Generate";
+			}
+			return "Next";
+		})(),
 		rightIcon: isGenerateStep ? undefined : <IconGoAhead />,
 	};
 }

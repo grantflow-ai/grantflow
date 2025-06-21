@@ -24,10 +24,13 @@ import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconPreviewLogo } from "@/components/workspaces/icons";
-import { MAX_OBJECTIVES, type Objective, useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores/application-store";
+import { MAX_OBJECTIVES, type Objective, useWizardStore } from "@/stores/wizard-store";
 
 export function ResearchPlanStep() {
-	const { addNextObjective, handleObjectiveDragEnd, objectives, removeObjective } = useApplicationStore();
+	const { application } = useApplicationStore();
+	const { addNextObjective, handleObjectiveDragEnd, removeObjective } = useWizardStore();
+	const objectives = application?.research_objectives ?? [];
 
 	const sensors: SensorDescriptor<SensorOptions>[] = useSensors(
 		useSensor(PointerSensor),
@@ -91,7 +94,7 @@ function ResearchPlanPreview({
 }: {
 	objectives: Objective[];
 	onDragEnd: (event: DragEndEvent) => void;
-	onRemoveObjective: (id: string) => void;
+	onRemoveObjective: (objectiveNumber: number) => void;
 	sensors: SensorDescriptor<SensorOptions>[];
 }) {
 	const hasObjectives = objectives.length > 0;
@@ -109,18 +112,18 @@ function ResearchPlanPreview({
 					<div className="flex-1">
 						<DndContext collisionDetection={closestCenter} onDragEnd={onDragEnd} sensors={sensors}>
 							<SortableContext
-								items={objectives.map((obj) => obj.id)}
+								items={objectives.map((obj) => obj.number)}
 								strategy={horizontalListSortingStrategy}
 							>
 								<div className="grid grid-cols-5 gap-4">
 									{objectives.map((objective, index) => (
 										<SortableObjectiveCard
-											id={objective.id}
+											id={objective.number}
 											index={index + 1}
-											key={objective.id}
+											key={objective.number}
 											objective={objective}
 											onRemove={() => {
-												onRemoveObjective(objective.id);
+												onRemoveObjective(objective.number);
 											}}
 										/>
 									))}
@@ -148,13 +151,14 @@ function SortableObjectiveCard({
 	id,
 	index,
 	objective,
+	onRemove,
 }: {
-	id: string;
+	id: number;
 	index: number;
 	objective: Objective;
 	onRemove: () => void;
 }) {
-	const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({ id });
+	const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({ id: String(id) });
 
 	const style = {
 		opacity: isDragging ? 0.5 : 1,
@@ -182,7 +186,13 @@ function SortableObjectiveCard({
 							<GripVertical size={20} />
 						</button>
 					</div>
-					<Button className="size-8 text-gray-400 hover:text-gray-600" size="sm" variant="ghost">
+					<Button
+						className="size-8 text-gray-400 hover:text-gray-600"
+						onClick={onRemove}
+						size="sm"
+						type="button"
+						variant="ghost"
+					>
 						<MoreHorizontal size={16} />
 					</Button>
 				</div>

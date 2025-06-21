@@ -160,8 +160,12 @@ async def create_signed_upload_url(
         return dev_url
 
     # E2E tests: use GCS emulator if configured ~keep
-    if emulator_host := get_env("STORAGE_EMULATOR_HOST", fallback=""):
-        bucket_name = get_env("GCS_BUCKET_NAME", fallback="grantflow-uploads")
+    if emulator_host := get_env(
+        "STORAGE_EMULATOR_HOST", raise_on_missing=False, fallback=""
+    ):
+        bucket_name = get_env(
+            "GCS_BUCKET_NAME", raise_on_missing=False, fallback="grantflow-uploads"
+        )
         emulator_url = f"{emulator_host}/upload/storage/v1/b/{bucket_name}/o?uploadType=media&name={blob_path}"
         logger.info(
             "Created emulator upload URL",

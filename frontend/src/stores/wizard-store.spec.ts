@@ -1,12 +1,17 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	GrantTemplateFactory,
+	RagSourceFactory,
+} from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
-import { applicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores/application-store";
 
-import { MIN_TITLE_LENGTH, wizardStore } from "./wizard-store";
+import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";
 
 vi.mock("@/stores/application-store", () => ({
-	applicationStore: {
+	useApplicationStore: {
 		getState: vi.fn(),
 	},
 }));
@@ -15,8 +20,8 @@ describe("wizard store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		const wizardState = wizardStore.getState();
-		wizardStore.setState({
+		const wizardState = useWizardStore.getState();
+		useWizardStore.setState({
 			currentStep: WizardStep.APPLICATION_DETAILS,
 			polling: {
 				...wizardState.polling,
@@ -29,7 +34,7 @@ describe("wizard store", () => {
 	describe("validateStepNext", () => {
 		describe("APPLICATION_DETAILS step validation", () => {
 			beforeEach(() => {
-				wizardStore.setState({
+				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_DETAILS,
 				});
 			});
@@ -39,11 +44,11 @@ describe("wizard store", () => {
 					title: "A".repeat(MIN_TITLE_LENGTH),
 				});
 
-				vi.mocked(applicationStore.getState).mockReturnValue({
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
 					application,
 				} as any);
 
-				const { validateStepNext } = wizardStore.getState();
+				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
 			});
 
@@ -52,20 +57,20 @@ describe("wizard store", () => {
 					title: "A".repeat(MIN_TITLE_LENGTH - 1),
 				});
 
-				vi.mocked(applicationStore.getState).mockReturnValue({
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
 					application,
 				} as any);
 
-				const { validateStepNext } = wizardStore.getState();
+				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
 			});
 
 			it("should return false when application is null", () => {
-				vi.mocked(applicationStore.getState).mockReturnValue({
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
 					application: null,
 				} as any);
 
-				const { validateStepNext } = wizardStore.getState();
+				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
 			});
 
@@ -74,11 +79,11 @@ describe("wizard store", () => {
 					title: "",
 				});
 
-				vi.mocked(applicationStore.getState).mockReturnValue({
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
 					application,
 				} as any);
 
-				const { validateStepNext } = wizardStore.getState();
+				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
 			});
 
@@ -87,39 +92,46 @@ describe("wizard store", () => {
 					title: "   ",
 				});
 
-				vi.mocked(applicationStore.getState).mockReturnValue({
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
 					application,
 				} as any);
 
-				const { validateStepNext } = wizardStore.getState();
+				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(false);
 			});
 		});
 
 		describe("other steps validation", () => {
 			it("should return true for KNOWLEDGE_BASE step", () => {
-				wizardStore.setState({
+				useWizardStore.setState({
 					currentStep: WizardStep.KNOWLEDGE_BASE,
 				});
 
-				vi.mocked(applicationStore.getState).mockReturnValue({
-					application: ApplicationFactory.build(),
+				const application = ApplicationFactory.build({
+					rag_sources: [
+						RagSourceFactory.build({ status: "FINISHED" }),
+						RagSourceFactory.build({ status: "FINISHED" }),
+					],
+				});
+
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
+					application,
 				} as any);
 
-				const { validateStepNext } = wizardStore.getState();
+				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
 			});
 
 			it("should return true for GENERATE_AND_COMPLETE step", () => {
-				wizardStore.setState({
+				useWizardStore.setState({
 					currentStep: WizardStep.GENERATE_AND_COMPLETE,
 				});
 
-				vi.mocked(applicationStore.getState).mockReturnValue({
+				vi.mocked(useApplicationStore.getState).mockReturnValue({
 					application: ApplicationFactory.build(),
 				} as any);
 
-				const { validateStepNext } = wizardStore.getState();
+				const { validateStepNext } = useWizardStore.getState();
 				expect(validateStepNext()).toBe(true);
 			});
 		});
@@ -128,13 +140,13 @@ describe("wizard store", () => {
 	describe("polling", () => {
 		it("should start polling with immediate call", () => {
 			const mockApiFunction = vi.fn();
-			const store = wizardStore.getState();
+			const store = useWizardStore.getState();
 
 			store.polling.start(mockApiFunction, 1000, true);
 
 			expect(mockApiFunction).toHaveBeenCalledTimes(1);
 
-			const updatedState = wizardStore.getState();
+			const updatedState = useWizardStore.getState();
 			expect(updatedState.polling.isActive).toBe(true);
 			expect(updatedState.polling.intervalId).not.toBe(null);
 
@@ -143,13 +155,13 @@ describe("wizard store", () => {
 
 		it("should start polling without immediate call", () => {
 			const mockApiFunction = vi.fn();
-			const store = wizardStore.getState();
+			const store = useWizardStore.getState();
 
 			store.polling.start(mockApiFunction, 1000, false);
 
 			expect(mockApiFunction).not.toHaveBeenCalled();
 
-			const updatedState = wizardStore.getState();
+			const updatedState = useWizardStore.getState();
 			expect(updatedState.polling.isActive).toBe(true);
 			expect(updatedState.polling.intervalId).not.toBe(null);
 
@@ -158,12 +170,12 @@ describe("wizard store", () => {
 
 		it("should stop polling", () => {
 			const mockApiFunction = vi.fn();
-			const store = wizardStore.getState();
+			const store = useWizardStore.getState();
 
 			store.polling.start(mockApiFunction, 1000);
 			store.polling.stop();
 
-			const updatedState = wizardStore.getState();
+			const updatedState = useWizardStore.getState();
 			expect(updatedState.polling.isActive).toBe(false);
 			expect(updatedState.polling.intervalId).toBe(null);
 		});
@@ -171,13 +183,13 @@ describe("wizard store", () => {
 		it("should not start polling if already active", () => {
 			const mockApiFunction1 = vi.fn();
 			const mockApiFunction2 = vi.fn();
-			const store = wizardStore.getState();
+			const store = useWizardStore.getState();
 
 			store.polling.start(mockApiFunction1, 1000);
-			const firstIntervalId = wizardStore.getState().polling.intervalId;
+			const firstIntervalId = useWizardStore.getState().polling.intervalId;
 
 			store.polling.start(mockApiFunction2, 1000);
-			const secondIntervalId = wizardStore.getState().polling.intervalId;
+			const secondIntervalId = useWizardStore.getState().polling.intervalId;
 
 			expect(firstIntervalId).toBe(secondIntervalId);
 			expect(mockApiFunction1).toHaveBeenCalledTimes(1);
@@ -189,45 +201,45 @@ describe("wizard store", () => {
 
 	describe("navigation", () => {
 		it("should navigate to next step", () => {
-			const { toNextStep } = wizardStore.getState();
+			const { toNextStep } = useWizardStore.getState();
 
 			toNextStep();
-			expect(wizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 
 			toNextStep();
-			expect(wizardStore.getState().currentStep).toBe(WizardStep.KNOWLEDGE_BASE);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.KNOWLEDGE_BASE);
 		});
 
 		it("should not navigate beyond last step", () => {
-			wizardStore.setState({
+			useWizardStore.setState({
 				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 			});
 
-			const { toNextStep } = wizardStore.getState();
+			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
-			expect(wizardStore.getState().currentStep).toBe(WizardStep.GENERATE_AND_COMPLETE);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.GENERATE_AND_COMPLETE);
 		});
 
 		it("should navigate to previous step", () => {
-			wizardStore.setState({
+			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
 
-			const { toPreviousStep } = wizardStore.getState();
+			const { toPreviousStep } = useWizardStore.getState();
 
 			toPreviousStep();
-			expect(wizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 
 			toPreviousStep();
-			expect(wizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
 		it("should not navigate before first step", () => {
-			const { toPreviousStep } = wizardStore.getState();
+			const { toPreviousStep } = useWizardStore.getState();
 			toPreviousStep();
 
-			expect(wizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
 		it("should trigger template generation when moving from APPLICATION_DETAILS step", () => {
@@ -239,12 +251,12 @@ describe("wizard store", () => {
 				},
 			});
 
-			vi.mocked(applicationStore.getState).mockReturnValue({
+			vi.mocked(useApplicationStore.getState).mockReturnValue({
 				application,
 				generateTemplate: mockGenerateTemplate,
 			} as any);
 
-			const { toNextStep } = wizardStore.getState();
+			const { toNextStep } = useWizardStore.getState();
 			toNextStep();
 
 			expect(mockGenerateTemplate).toHaveBeenCalledWith(application.grant_template!.id);
@@ -252,38 +264,38 @@ describe("wizard store", () => {
 	});
 
 	describe("handleTitleChange", () => {
-		it("should call applicationStore methods", () => {
-			const mockSetApplicationTitle = vi.fn();
+		it("should call useApplicationStore methods", () => {
+			const mockUpdateApplication = vi.fn();
 			const mockUpdateApplicationTitle = vi.fn();
 			const application = ApplicationFactory.build({
 				title: "Old Title",
 				workspace_id: "workspace-123",
 			});
 
-			vi.mocked(applicationStore.getState).mockReturnValue({
+			vi.mocked(useApplicationStore.getState).mockReturnValue({
 				application,
-				setApplicationTitle: mockSetApplicationTitle,
+				updateApplication: mockUpdateApplication,
 				updateApplicationTitle: mockUpdateApplicationTitle,
 			} as any);
 
-			const { handleTitleChange } = wizardStore.getState();
+			const { handleTitleChange } = useWizardStore.getState();
 			handleTitleChange("New Title");
 
-			expect(mockSetApplicationTitle).toHaveBeenCalledWith("New Title");
+			expect(mockUpdateApplication).toHaveBeenCalledWith({ title: "New Title" });
 		});
 	});
 
 	describe("reset", () => {
 		it("should reset to initial state and clear polling", () => {
 			const mockApiFunction = vi.fn();
-			const store = wizardStore.getState();
+			const store = useWizardStore.getState();
 
 			store.polling.start(mockApiFunction, 1000);
-			wizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
 
 			store.reset();
 
-			const state = wizardStore.getState();
+			const state = useWizardStore.getState();
 			expect(state.currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 			expect(state.polling.isActive).toBe(false);
 			expect(state.polling.intervalId).toBe(null);

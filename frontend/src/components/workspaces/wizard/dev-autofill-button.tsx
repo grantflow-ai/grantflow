@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	FormInputsFactory,
-	GrantSectionDetailedFactory,
-	RagSourceFactory,
-	ResearchObjectiveFactory,
-} from "::testing/factories";
+import { FormInputsFactory, GrantSectionDetailedFactory, ResearchObjectiveFactory } from "::testing/factories";
 import { Wand2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -38,9 +33,9 @@ const TEST_URLS = [
 export function DevAutofillButton() {
 	const params = useParams();
 	const { currentStep, handleTitleChange } = useWizardStore();
-	const { addUrl, application, setUploadedFiles, setUrls, updateApplication, updateGrantSections } =
-		useApplicationStore();
+	const { addFile, addUrl, application, updateApplication, updateGrantSections } = useApplicationStore();
 
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Dev hack - intentionally complex for testing
 	const handleAutofill = async () => {
 		try {
 			const workspaceId = params.workspaceId as string;
@@ -53,24 +48,24 @@ export function DevAutofillButton() {
 						try {
 							await crawlTemplateUrl(workspaceId, application?.grant_template?.id ?? "", url);
 							toast.success(`URL added: ${url}`);
-							await addUrl(url);
+							if (application?.grant_template?.id) {
+								await addUrl(url, application.grant_template.id);
+							}
 						} catch (error) {
 							logError({ error, identifier: "dev-autofill-crawlTemplateUrl" });
 							toast.error(`Failed to add URL: ${url}`);
 						}
 					}
 
-					const testFiles = TEST_FILES.map((fileInfo) => {
+					for (const fileInfo of TEST_FILES) {
 						const file = new File(["Test file content"], fileInfo.name, { type: fileInfo.type });
-
 						const fileWithId: FileWithId = Object.assign(file, {
 							id: `file-${Date.now()}-${Math.random()}`,
 						});
-
-						return fileWithId;
-					});
-
-					setUploadedFiles(testFiles);
+						if (application?.grant_template?.id) {
+							await addFile(fileWithId, application.grant_template.id);
+						}
+					}
 
 					toast.success("🎉 Step 1 autofilled! Click 'Next' to proceed.");
 
@@ -108,31 +103,34 @@ export function DevAutofillButton() {
 					break;
 				}
 				case WizardStep.KNOWLEDGE_BASE: {
-					const mockRagSources = RagSourceFactory.batch(3).map((source) => ({
-						...source,
-						status: "FINISHED" as const,
-					}));
+					const knowledgeUrls = [
+						"https://example.com/research-paper-1",
+						"https://example.com/research-paper-2",
+					];
 
-					const mockFiles: FileWithId[] = mockRagSources
-						.filter((source) => source.filename)
-						.map((source) => {
-							const file = new File(["Mock file content for testing"], source.filename!, {
-								type: "application/pdf",
-							});
-							return Object.assign(file, {
-								id: source.sourceId,
-							});
+					for (const url of knowledgeUrls) {
+						if (application?.id) {
+							await addUrl(url, application.id);
+						}
+					}
+
+					const knowledgeFiles = [
+						{ name: "research-paper.pdf", type: "application/pdf" },
+						{
+							name: "lab-results.docx",
+							type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+						},
+					];
+
+					for (const fileInfo of knowledgeFiles) {
+						const file = new File(["Mock research content"], fileInfo.name, { type: fileInfo.type });
+						const fileWithId: FileWithId = Object.assign(file, {
+							id: `file-${Date.now()}-${Math.random()}`,
 						});
+						await addFile(fileWithId, application?.id);
+					}
 
-					const mockUrls = mockRagSources.filter((source) => source.url).map((source) => source.url!);
-
-					setUploadedFiles(mockFiles);
-					setUrls(mockUrls);
-
-					toast.success(
-						`🎉 Knowledge base populated with ${mockFiles.length} files and ${mockUrls.length} URLs!`,
-					);
-
+					toast.success("🎉 Knowledge base populated!");
 					break;
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {

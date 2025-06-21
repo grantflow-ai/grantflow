@@ -14,6 +14,12 @@ import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { logError } from "@/utils/logging";
 import { analyticsIdentify } from "@/utils/segment";
 
+const getStatusTextColor = (status: string) => {
+	if (status === "success") return "text-success";
+	if (status === "error") return "text-error";
+	return "text-gray-50";
+};
+
 const showToast = (type: "error" | "success", message: string, description?: string) => {
 	if (type === "success") {
 		toast.success(message);
@@ -108,7 +114,7 @@ export function WaitlistForm() {
 					<p
 						className={`w-full px-1 text-sm transition-all duration-300 ease-in-out
 						${formState.status === "idle" ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}
-						${formState.status === "success" ? "text-success" : formState.status === "error" ? "text-error" : "text-gray-50"}`}
+						${getStatusTextColor(formState.status)}`}
 					>
 						{formState.status === "loading" ? (
 							<span className="flex items-center">

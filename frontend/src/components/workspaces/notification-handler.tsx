@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { NotificationProgress } from "@/components/notification-progress";
 import type { RagProcessingStatus, RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
 
+type ToastId = number | string | undefined;
+
 const ERROR_EVENTS = new Set([
 	"generation_error",
 	"indexing_failed",
@@ -40,7 +42,7 @@ interface NotificationHandlerProps {
 }
 
 export function NotificationHandler({ notification }: NotificationHandlerProps) {
-	const [toastId, setToastId] = useState<number | string | undefined>();
+	const [toastId, setToastId] = useState<ToastId>();
 	const previousEventRef = useRef<null | string>(null);
 
 	useEffect(() => {
@@ -58,10 +60,8 @@ export function NotificationHandler({ notification }: NotificationHandlerProps) 
 	return null;
 }
 
-function displayNotification(
-	notification: RagProcessingStatusMessage,
-	toastId: number | string | undefined,
-): number | string | undefined {
+// eslint-disable-next-line sonarjs/function-return-type
+function displayNotification(notification: RagProcessingStatusMessage, toastId: ToastId): ToastId {
 	const { current_pipeline_stage, data, event, message, total_pipeline_stages } = notification.data;
 
 	if (PROGRESS_EVENTS.has(event) && current_pipeline_stage && total_pipeline_stages) {
@@ -81,11 +81,7 @@ function displayNotification(
 	return undefined;
 }
 
-function shouldDismissToast(
-	event: string,
-	previousEvent: null | string,
-	toastId: number | string | undefined,
-): boolean {
+function shouldDismissToast(event: string, previousEvent: null | string, toastId: ToastId): boolean {
 	if (!toastId) return false;
 	const isProgressChange = PROGRESS_EVENTS.has(event) && previousEvent !== event;
 	const isCompleteEvent = SUCCESS_EVENTS.has(event) || ERROR_EVENTS.has(event);
@@ -113,7 +109,8 @@ function showInfoToast(message: string, data: Record<string, unknown> | undefine
 	toast.info(`${prefix}${message}`, { description });
 }
 
-function showProgressToast(notification: RagProcessingStatus, toastId: number | string | undefined): number | string {
+// eslint-disable-next-line sonarjs/function-return-type
+function showProgressToast(notification: RagProcessingStatus, toastId: ToastId): ToastId {
 	return toast(<NotificationProgress notification={notification} />, {
 		duration: Number.POSITIVE_INFINITY,
 		id: toastId,

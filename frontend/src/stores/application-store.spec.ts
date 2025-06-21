@@ -1,10 +1,15 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	GrantSectionDetailedFactory,
+	GrantTemplateFactory,
+} from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { retrieveApplication, updateApplication } from "@/actions/grant-applications";
 import { updateGrantTemplate } from "@/actions/grant-template";
 import { retrieveRagJob } from "@/actions/rag-jobs";
 
-import { applicationStore } from "./application-store";
+import { useApplicationStore } from "./application-store";
 
 vi.mock("@/actions/grant-applications");
 vi.mock("@/actions/grant-template");
@@ -24,16 +29,13 @@ vi.mock("sonner", () => ({
 
 describe("Application Store", () => {
 	beforeEach(() => {
-		applicationStore.setState({
+		useApplicationStore.setState({
 			application: null,
-			applicationTitle: "",
 			isLoading: false,
 			ragJobState: {
 				isRestoring: false,
 				restoredJob: null,
 			},
-			uploadedFiles: [],
-			urls: [],
 		});
 
 		vi.clearAllMocks();
@@ -41,46 +43,9 @@ describe("Application Store", () => {
 
 	describe("state management", () => {
 		it("should initialize with default state", () => {
-			const state = applicationStore.getState();
+			const state = useApplicationStore.getState();
 			expect(state.application).toBeNull();
-			expect(state.applicationTitle).toBe("");
 			expect(state.isLoading).toBe(false);
-			expect(state.uploadedFiles).toEqual([]);
-			expect(state.urls).toEqual([]);
-		});
-	});
-
-	describe("setApplicationTitle", () => {
-		it("should update application title immediately", () => {
-			const { setApplicationTitle } = applicationStore.getState();
-
-			setApplicationTitle("New Title");
-
-			const state = applicationStore.getState();
-			expect(state.applicationTitle).toBe("New Title");
-		});
-
-		it("should also update application object title optimistically", () => {
-			const application = ApplicationFactory.build({ title: "Old Title" });
-			applicationStore.setState({ application });
-
-			const { setApplicationTitle } = applicationStore.getState();
-
-			setApplicationTitle("New Title");
-
-			const state = applicationStore.getState();
-			expect(state.applicationTitle).toBe("New Title");
-			expect(state.application?.title).toBe("New Title");
-		});
-
-		it("should handle null application gracefully", () => {
-			const { setApplicationTitle } = applicationStore.getState();
-
-			setApplicationTitle("New Title");
-
-			const state = applicationStore.getState();
-			expect(state.applicationTitle).toBe("New Title");
-			expect(state.application).toBeNull();
 		});
 	});
 
@@ -91,20 +56,16 @@ describe("Application Store", () => {
 
 			vi.mocked(updateApplication).mockResolvedValue(updatedApplication);
 
-			applicationStore.setState({
-				application,
-				applicationTitle: "Old Title",
-			});
+			useApplicationStore.setState({ application });
 
-			const { updateApplicationTitle } = applicationStore.getState();
+			const { updateApplicationTitle } = useApplicationStore.getState();
 
 			await updateApplicationTitle("workspace-id", "app-id", "New Title");
 
 			expect(updateApplication).toHaveBeenCalledWith("workspace-id", "app-id", { title: "New Title" });
 
-			const state = applicationStore.getState();
+			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(updatedApplication);
-			expect(state.applicationTitle).toBe("New Title");
 		});
 
 		it("should rollback on API error", async () => {
@@ -112,18 +73,14 @@ describe("Application Store", () => {
 
 			vi.mocked(updateApplication).mockRejectedValue(new Error("API Error"));
 
-			applicationStore.setState({
-				application,
-				applicationTitle: "Old Title",
-			});
+			useApplicationStore.setState({ application });
 
-			const { updateApplicationTitle } = applicationStore.getState();
+			const { updateApplicationTitle } = useApplicationStore.getState();
 
 			await updateApplicationTitle("workspace-id", "app-id", "New Title");
 
-			const state = applicationStore.getState();
+			const state = useApplicationStore.getState();
 			expect(state.application?.title).toBe("Old Title");
-			expect(state.applicationTitle).toBe("Old Title");
 		});
 	});
 
@@ -133,50 +90,40 @@ describe("Application Store", () => {
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
 
-			const { retrieveApplication: retrieveApp } = applicationStore.getState();
+			const { retrieveApplication: retrieveApp } = useApplicationStore.getState();
 
 			await retrieveApp("workspace-id", "app-id");
 
 			expect(retrieveApplication).toHaveBeenCalledWith("workspace-id", "app-id");
 
-			const state = applicationStore.getState();
+			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(application);
-			expect(state.applicationTitle).toBe(application.title);
 			expect(state.isLoading).toBe(false);
 		});
 	});
 
 	describe("setApplication", () => {
-		it("should update both application and title", () => {
+		it("should update application", () => {
 			const application = ApplicationFactory.build({ title: "Test App" });
 
-			const { setApplication } = applicationStore.getState();
+			const { setApplication } = useApplicationStore.getState();
 
 			setApplication(application);
 
-			const state = applicationStore.getState();
+			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(application);
-			expect(state.applicationTitle).toBe("Test App");
 		});
 	});
 
 	describe("updateGrantSections", () => {
 		it("should update grant template sections", async () => {
 			const sections = [
-				{
-					depends_on: [],
-					generation_instructions: "",
+				GrantSectionDetailedFactory.build({
 					id: "1",
-					is_clinical_trial: null,
-					is_detailed_workplan: null,
-					keywords: [],
 					max_words: 500,
 					order: 0,
-					parent_id: null,
-					search_queries: [],
 					title: "Introduction",
-					topics: [],
-				},
+				}),
 			];
 
 			const application = ApplicationWithTemplateFactory.build({
@@ -188,9 +135,9 @@ describe("Application Store", () => {
 
 			vi.mocked(updateGrantTemplate).mockResolvedValue({} as any);
 
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { updateGrantSections } = applicationStore.getState();
+			const { updateGrantSections } = useApplicationStore.getState();
 
 			await updateGrantSections(sections);
 
@@ -205,9 +152,9 @@ describe("Application Store", () => {
 		it("should handle missing grant template gracefully", async () => {
 			const application = ApplicationFactory.build({ grant_template: undefined });
 
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { updateGrantSections } = applicationStore.getState();
+			const { updateGrantSections } = useApplicationStore.getState();
 
 			await updateGrantSections([]);
 
@@ -219,9 +166,9 @@ describe("Application Store", () => {
 
 			vi.mocked(updateGrantTemplate).mockRejectedValue(new Error("API Error"));
 
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { updateGrantSections } = applicationStore.getState();
+			const { updateGrantSections } = useApplicationStore.getState();
 
 			await updateGrantSections([]);
 
@@ -230,7 +177,7 @@ describe("Application Store", () => {
 	});
 
 	describe("file and URL management", () => {
-		it("should add files", async () => {
+		it("should add files with parentId", async () => {
 			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
@@ -246,53 +193,54 @@ describe("Application Store", () => {
 			vi.mocked(triggerDevIndexing).mockImplementation(() => Promise.resolve());
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { addFile } = applicationStore.getState();
+			const { addFile } = useApplicationStore.getState();
 
-			await addFile(file as any);
+			await addFile(file as any, application.grant_template?.id);
 
-			const state = applicationStore.getState();
-			expect(state.uploadedFiles).toHaveLength(1);
-			expect(state.uploadedFiles[0].name).toBe("test.pdf");
+			expect(createTemplateSourceUploadUrl).toHaveBeenCalled();
 		});
 
-		it("should add URLs without duplicates", async () => {
+		it("should add URLs with parentId", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 
 			const { crawlTemplateUrl } = await import("@/actions/sources");
 			vi.mocked(crawlTemplateUrl).mockResolvedValue({ source_id: "source-123" });
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { addUrl } = applicationStore.getState();
+			const { addUrl } = useApplicationStore.getState();
 
-			await addUrl("https://example.com");
-			await addUrl("https://example.com");
-			await addUrl("https://different.com");
+			await addUrl("https://example.com", application.grant_template?.id ?? "");
 
-			const state = applicationStore.getState();
-			expect(state.urls).toEqual(["https://example.com", "https://different.com"]);
+			expect(crawlTemplateUrl).toHaveBeenCalledWith(
+				application.workspace_id,
+				application.grant_template?.id,
+				"https://example.com",
+			);
 		});
 
-		it("should remove files", async () => {
+		it("should remove files with parentId", async () => {
 			const file1 = { id: "1", name: "test1.pdf", size: 1000 };
-			const file2 = { id: "2", name: "test2.pdf", size: 2000 };
 			const application = ApplicationWithTemplateFactory.build();
 
 			const { deleteTemplateSource } = await import("@/actions/sources");
 			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
-			applicationStore.setState({ application, uploadedFiles: [file1, file2] as any });
+			useApplicationStore.setState({ application });
 
-			const { removeFile } = applicationStore.getState();
+			const { removeFile } = useApplicationStore.getState();
 
-			await removeFile(file1 as any);
+			await removeFile(file1 as any, application.grant_template?.id);
 
-			const state = applicationStore.getState();
-			expect(state.uploadedFiles).toEqual([file2]);
+			expect(deleteTemplateSource).toHaveBeenCalledWith(
+				application.workspace_id,
+				application.grant_template?.id,
+				"1",
+			);
 		});
 
 		it("should remove URLs", async () => {
@@ -308,14 +256,17 @@ describe("Application Store", () => {
 			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
 			vi.mocked(retrieveApplication).mockResolvedValue(application);
-			applicationStore.setState({ application, urls: ["https://example.com", "https://different.com"] });
+			useApplicationStore.setState({ application });
 
-			const { removeUrl } = applicationStore.getState();
+			const { removeUrl } = useApplicationStore.getState();
 
-			await removeUrl("https://example.com");
+			await removeUrl("https://example.com", application.grant_template?.id);
 
-			const state = applicationStore.getState();
-			expect(state.urls).toEqual(["https://different.com"]);
+			expect(deleteTemplateSource).toHaveBeenCalledWith(
+				application.workspace_id,
+				application.grant_template?.id,
+				"source-1",
+			);
 		});
 	});
 
@@ -328,9 +279,9 @@ describe("Application Store", () => {
 				] as any,
 			});
 
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { areFilesOrUrlsIndexing } = applicationStore.getState();
+			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
 
 			expect(areFilesOrUrlsIndexing()).toBe(true);
 		});
@@ -343,9 +294,9 @@ describe("Application Store", () => {
 				rag_sources: [{ status: "FINISHED" }] as any,
 			});
 
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { areFilesOrUrlsIndexing } = applicationStore.getState();
+			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
 
 			expect(areFilesOrUrlsIndexing()).toBe(true);
 		});
@@ -358,15 +309,15 @@ describe("Application Store", () => {
 				rag_sources: [{ status: "FINISHED" }] as any,
 			});
 
-			applicationStore.setState({ application });
+			useApplicationStore.setState({ application });
 
-			const { areFilesOrUrlsIndexing } = applicationStore.getState();
+			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
 
 			expect(areFilesOrUrlsIndexing()).toBe(false);
 		});
 
 		it("should return false when application is null", () => {
-			const { areFilesOrUrlsIndexing } = applicationStore.getState();
+			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
 
 			expect(areFilesOrUrlsIndexing()).toBe(false);
 		});
@@ -375,25 +326,28 @@ describe("Application Store", () => {
 	describe("RAG job restoration", () => {
 		describe("checkAndRestoreJobState", () => {
 			it("should not restore when application is null", async () => {
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).not.toHaveBeenCalled();
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
 
 			it("should not restore when no rag_job_id exists", async () => {
-				const application = ApplicationFactory.build({ rag_job_id: undefined });
-				applicationStore.setState({ application });
+				const application = ApplicationFactory.build({
+					grant_template: undefined,
+					rag_job_id: undefined,
+				});
+				useApplicationStore.setState({ application });
 
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).not.toHaveBeenCalled();
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
 
@@ -414,14 +368,14 @@ describe("Application Store", () => {
 				};
 
 				vi.mocked(retrieveRagJob).mockResolvedValue(jobData);
-				applicationStore.setState({ application });
+				useApplicationStore.setState({ application });
 
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).toHaveBeenCalledWith("workspace-id", "job-123");
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 				expect(state.ragJobState.isRestoring).toBe(false);
 			});
@@ -443,14 +397,14 @@ describe("Application Store", () => {
 				};
 
 				vi.mocked(retrieveRagJob).mockResolvedValue(jobData);
-				applicationStore.setState({ application });
+				useApplicationStore.setState({ application });
 
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).toHaveBeenCalledWith("workspace-id", "job-123");
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 			});
 
@@ -471,14 +425,14 @@ describe("Application Store", () => {
 				};
 
 				vi.mocked(retrieveRagJob).mockResolvedValue(jobData);
-				applicationStore.setState({ application });
+				useApplicationStore.setState({ application });
 
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).toHaveBeenCalledWith("workspace-id", "job-123");
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
 
@@ -500,14 +454,14 @@ describe("Application Store", () => {
 				};
 
 				vi.mocked(retrieveRagJob).mockResolvedValue(jobData);
-				applicationStore.setState({ application });
+				useApplicationStore.setState({ application });
 
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).toHaveBeenCalledWith("workspace-id", "job-123");
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
 
@@ -529,14 +483,14 @@ describe("Application Store", () => {
 				};
 
 				vi.mocked(retrieveRagJob).mockResolvedValue(jobData);
-				applicationStore.setState({ application });
+				useApplicationStore.setState({ application });
 
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).toHaveBeenCalledWith("workspace-id", "template-job-123");
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 			});
 
@@ -547,14 +501,14 @@ describe("Application Store", () => {
 				});
 
 				vi.mocked(retrieveRagJob).mockRejectedValue(new Error("Job not found"));
-				applicationStore.setState({ application });
+				useApplicationStore.setState({ application });
 
-				const { checkAndRestoreJobState } = applicationStore.getState();
+				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
 
 				expect(retrieveRagJob).toHaveBeenCalledWith("workspace-id", "job-123");
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 				expect(state.ragJobState.isRestoring).toBe(false);
 			});
@@ -573,18 +527,18 @@ describe("Application Store", () => {
 					updated_at: "2023-01-01T00:30:00Z",
 				};
 
-				applicationStore.setState({
+				useApplicationStore.setState({
 					ragJobState: {
 						isRestoring: false,
 						restoredJob: jobData,
 					},
 				});
 
-				const { clearRestoredJobState } = applicationStore.getState();
+				const { clearRestoredJobState } = useApplicationStore.getState();
 
 				clearRestoredJobState();
 
-				const state = applicationStore.getState();
+				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 				expect(state.ragJobState.isRestoring).toBe(false);
 			});
