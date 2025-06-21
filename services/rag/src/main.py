@@ -1,4 +1,5 @@
 import base64
+import binascii
 from typing import Any
 
 from litestar import post
@@ -27,7 +28,7 @@ def handle_pubsub_message(message: PubSubEvent) -> RagRequest:
             raise ValidationError("PubSub message missing data field")
         decoded_data = base64.b64decode(encoded_data).decode()
         return deserialize(decoded_data, RagRequest)
-    except DeserializationError as e:
+    except (DeserializationError, binascii.Error, UnicodeDecodeError) as e:
         logger.error(
             "Failed to parse PubSub message",
             error=str(e),
