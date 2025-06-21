@@ -44,7 +44,7 @@ jobs:
         timeout-minutes: 10
         services:
             postgres:
-                image: postgres:15
+                image: pgvector/pgvector:pg17
                 env:
                     POSTGRES_DB: grantflow
                     POSTGRES_USER: grantflow
@@ -80,7 +80,7 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         services:
             postgres:
-                image: postgres:15
+                image: pgvector/pgvector:pg17
                 env:
                     POSTGRES_DB: grantflow
                     POSTGRES_USER: grantflow
@@ -116,7 +116,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_markers == 'e2e_full' || github.event.inputs.test_markers == 'semantic_evaluation')
         services:
             postgres:
-                image: postgres:15
+                image: pgvector/pgvector:pg17
                 env:
                     POSTGRES_DB: grantflow
                     POSTGRES_USER: grantflow
@@ -153,7 +153,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_markers == 'ai_eval'
         services:
             postgres:
-                image: postgres:15
+                image: pgvector/pgvector:pg17
                 env:
                     POSTGRES_DB: grantflow
                     POSTGRES_USER: grantflow

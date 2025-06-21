@@ -114,7 +114,7 @@ describe("NotificationHandler", () => {
 	});
 
 	it("shows info toast for unknown events", async () => {
-		const notification = RagProcessingStatusMessageFactory.build({
+		const notification: RagProcessingStatusMessage = {
 			data: {
 				data: { key1: "value1", key2: "value2" },
 				event: "unknown_event",
@@ -122,7 +122,7 @@ describe("NotificationHandler", () => {
 			},
 			event: "unknown_event",
 			type: "data",
-		});
+		};
 
 		render(<NotificationHandler notification={notification} />);
 
