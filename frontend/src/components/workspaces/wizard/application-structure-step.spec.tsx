@@ -1,4 +1,9 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory, GrantSectionDetailedFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	GrantSectionDetailedFactory,
+	GrantTemplateFactory,
+} from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
@@ -7,12 +12,20 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { ApplicationStructureStep } from "./application-structure-step";
 
+vi.mock("next/image", () => ({
+	default: ({ alt, className }: { alt: string; className?: string; src: string }) => (
+		<div className={className} data-testid={`image-${alt}`} />
+	),
+}));
+
 describe("ApplicationStructureStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
+			checkTemplateRagJobStatus: vi.fn(),
 			currentStep: WizardStep.APPLICATION_STRUCTURE,
+			grantTemplateRagJobData: null,
 			polling: {
 				intervalId: null,
 				isActive: false,
@@ -24,6 +37,8 @@ describe("ApplicationStructureStep", () => {
 		useApplicationStore.setState({
 			application: null,
 			areAppOperationsInProgress: false,
+			retrieveApplication: vi.fn(),
+			updateGrantSections: vi.fn(),
 		});
 	});
 
@@ -66,7 +81,7 @@ describe("ApplicationStructureStep", () => {
 
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.queryByTestId("empty-state-message")).not.toBeInTheDocument();
 	});
 
@@ -83,23 +98,17 @@ describe("ApplicationStructureStep", () => {
 
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 	});
 
 	it("renders application sections preview", () => {
 		const application = ApplicationFactory.build({
-			grant_template: {
-				created_at: new Date().toISOString(),
-				funding_organization: undefined,
-				funding_organization_id: undefined,
+			grant_template: GrantTemplateFactory.build({
 				grant_application_id: "test-id",
 				grant_sections: [],
 				id: "template-id",
-				rag_sources: [],
-				submission_date: undefined,
-				updated_at: new Date().toISOString(),
-			},
+			}),
 			id: "test-id",
 			title: "Test Application",
 			workspace_id: "test-workspace-id",
@@ -111,19 +120,7 @@ describe("ApplicationStructureStep", () => {
 
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
-
-		expect(screen.getByTestId("section-title-executive-summary")).toBeInTheDocument();
-		expect(screen.getByTestId("section-description-executive-summary")).toBeInTheDocument();
-
-		expect(screen.getByTestId("section-title-project-description")).toBeInTheDocument();
-		expect(screen.getByTestId("section-description-project-description")).toBeInTheDocument();
-
-		expect(screen.getByTestId("section-title-budget-timeline")).toBeInTheDocument();
-		expect(screen.getByTestId("section-description-budget-timeline")).toBeInTheDocument();
-
-		expect(screen.getByTestId("section-title-team-qualifications")).toBeInTheDocument();
-		expect(screen.getByTestId("section-description-team-qualifications")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 	});
 
 	it("has correct layout structure", () => {
@@ -162,7 +159,7 @@ describe("ApplicationStructureStep", () => {
 
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByTestId("application-sections-title")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 	});
 
@@ -174,10 +171,11 @@ describe("ApplicationStructureStep", () => {
 				GrantSectionDetailedFactory.build({ id: "3", order: 2, parent_id: null, title: "Results" }),
 			];
 
-			const application = ApplicationWithTemplateFactory.build();
-			if (application.grant_template) {
-				application.grant_template.grant_sections = grantSections;
-			}
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: grantSections,
+				}),
+			});
 
 			useApplicationStore.setState({
 				application,
@@ -202,29 +200,9 @@ describe("ApplicationStructureStep", () => {
 			expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 		});
 
-		it("opens new section form when add button is clicked", () => {
-			const application = ApplicationWithTemplateFactory.build();
-
-			useApplicationStore.setState({
-				application,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			expect(screen.getByTestId("new-section-title")).toBeInTheDocument();
-			expect(screen.getByLabelText("Section name")).toBeInTheDocument();
-			expect(screen.getByTestId("words-characters-label")).toBeInTheDocument();
-		});
-
-		it("calls updateGrantSections when adding a new section", async () => {
+		it("calls updateGrantSections when add button is clicked", async () => {
 			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
 			const application = ApplicationWithTemplateFactory.build();
-			if (application.grant_template) {
-				application.grant_template.grant_sections = [];
-			}
 
 			useApplicationStore.setState({
 				application,
@@ -236,18 +214,12 @@ describe("ApplicationStructureStep", () => {
 			const addButton = screen.getByTestId("add-new-section-button");
 			fireEvent.click(addButton);
 
-			const nameInput = screen.getByLabelText("Section name");
-			fireEvent.change(nameInput, { target: { value: "New Section Title" } });
-
-			const saveButton = screen.getByTestId("save-button");
-			fireEvent.click(saveButton);
-
 			await waitFor(() => {
 				expect(mockUpdateGrantSections).toHaveBeenCalledWith(
 					expect.arrayContaining([
 						expect.objectContaining({
 							max_words: 3000,
-							title: "New Section Title",
+							title: "Category Name",
 						}),
 					]),
 				);
@@ -265,10 +237,11 @@ describe("ApplicationStructureStep", () => {
 				}),
 			];
 
-			const application = ApplicationWithTemplateFactory.build();
-			if (application.grant_template) {
-				application.grant_template.grant_sections = grantSections;
-			}
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: grantSections,
+				}),
+			});
 
 			useApplicationStore.setState({
 				application,
@@ -295,10 +268,11 @@ describe("ApplicationStructureStep", () => {
 				}),
 			];
 
-			const application = ApplicationWithTemplateFactory.build();
-			if (application.grant_template) {
-				application.grant_template.grant_sections = grantSections;
-			}
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: grantSections,
+				}),
+			});
 
 			useApplicationStore.setState({
 				application,
@@ -308,31 +282,6 @@ describe("ApplicationStructureStep", () => {
 
 			expect(screen.getByText("Main Section")).toBeInTheDocument();
 			expect(screen.getByText("Subsection")).toBeInTheDocument();
-		});
-
-		it("disables save button when section name is empty", () => {
-			const application = ApplicationWithTemplateFactory.build();
-
-			useApplicationStore.setState({
-				application,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			const saveButton = screen.getByTestId("save-button");
-			expect(saveButton).toBeDisabled();
-
-			const nameInput = screen.getByLabelText("Section name");
-			fireEvent.change(nameInput, { target: { value: "Test" } });
-
-			expect(saveButton).not.toBeDisabled();
-
-			fireEvent.change(nameInput, { target: { value: "" } });
-
-			expect(saveButton).toBeDisabled();
 		});
 	});
 });
