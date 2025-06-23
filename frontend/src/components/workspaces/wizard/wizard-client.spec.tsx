@@ -80,7 +80,7 @@ describe("WizardClientComponent", () => {
 		expect(resetSpy).toHaveBeenCalled();
 		expect(setStateSpy).toHaveBeenCalledWith({
 			application: mockApplication,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 	});
 

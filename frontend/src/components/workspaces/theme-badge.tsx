@@ -25,7 +25,7 @@ const themeBadgeVariants = cva("px-2 py-0.5 text-xs font-normal leading-none", {
 export interface ThemeBadgeProps
 	extends Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
 		VariantProps<typeof themeBadgeVariants> {
-	leftIcon?: React.ReactElement<React.SVGProps<SVGSVGElement>>;
+	leftIcon?: React.ReactNode;
 }
 
 function ThemeBadge({ children, className, color, leftIcon, size, ...props }: ThemeBadgeProps) {
@@ -37,9 +37,8 @@ function ThemeBadge({ children, className, color, leftIcon, size, ...props }: Th
 			{leftIcon && (
 				<span className={size === "sm" ? "mr-0.5" : "mr-1"}>
 					{React.isValidElement(leftIcon)
-						? React.cloneElement(leftIcon, {
-								height: size === "sm" ? 6 : undefined,
-								width: size === "sm" ? 6 : undefined,
+						? React.cloneElement(leftIcon as React.ReactElement<React.SVGProps<SVGElement>>, {
+								...(size === "sm" && { height: 6, width: 6 }),
 							})
 						: leftIcon}
 				</span>

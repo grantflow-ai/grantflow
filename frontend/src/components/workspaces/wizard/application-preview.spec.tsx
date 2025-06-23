@@ -21,7 +21,7 @@ describe("ApplicationPreview", () => {
 
 		useApplicationStore.setState({
 			application: null,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 	});
 
@@ -42,7 +42,7 @@ describe("ApplicationPreview", () => {
 
 		useApplicationStore.setState({
 			application,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 
 		render(<ApplicationPreview />);
@@ -70,7 +70,7 @@ describe("ApplicationPreview", () => {
 
 		useApplicationStore.setState({
 			application,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 
 		render(<ApplicationPreview />);
@@ -96,7 +96,7 @@ describe("ApplicationPreview", () => {
 
 		useApplicationStore.setState({
 			application,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 
 		render(<ApplicationPreview />);
@@ -123,7 +123,7 @@ describe("ApplicationPreview", () => {
 
 		useApplicationStore.setState({
 			application,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 
 		render(<ApplicationPreview />);

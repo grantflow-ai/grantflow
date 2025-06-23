@@ -34,7 +34,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconPreviewLogo } from "@/components/workspaces/icons";
 import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
+import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 
@@ -165,10 +167,14 @@ interface SectionListProps {
 }
 
 export function ApplicationStructureStep() {
-	const { application, isGeneratingTemplate } = useApplicationStore();
+	const { application, retrieveApplication } = useApplicationStore();
+	const { checkTemplateRagJobStatus, grantTemplateRagJobData } = useWizardStore();
 	const [visibleSteps, setVisibleSteps] = useState(0);
 
 	const parentId = application?.grant_template?.id;
+
+	const isGeneratingTemplate =
+		grantTemplateRagJobData?.status === "PROCESSING" || grantTemplateRagJobData?.status === "PENDING";
 
 	const templateFiles: FileWithId[] = (application?.grant_template?.rag_sources ?? [])
 		.filter((source) => source.filename)
@@ -180,6 +186,20 @@ export function ApplicationStructureStep() {
 	const templateUrls = (application?.grant_template?.rag_sources ?? [])
 		.filter((source) => source.url)
 		.map((source) => source.url!);
+
+	useEffect(() => {
+		if (application?.grant_template?.rag_job_id) {
+			void checkTemplateRagJobStatus();
+		}
+	}, [application?.grant_template?.rag_job_id, checkTemplateRagJobStatus]);
+
+	useEffect(() => {
+		if (grantTemplateRagJobData?.status === "COMPLETED" && application) {
+			void retrieveApplication(application.workspace_id, application.id);
+		}
+	}, [grantTemplateRagJobData?.status, application, retrieveApplication]);
+
+	usePollingCleanup();
 
 	useEffect(() => {
 		if (isGeneratingTemplate) {
@@ -349,9 +369,13 @@ export function ApplicationStructureStep() {
 }
 
 function ApplicationStructurePreview() {
-	const { application, isGeneratingTemplate, updateGrantSections } = useApplicationStore();
+	const { application, updateGrantSections } = useApplicationStore();
+	const { grantTemplateRagJobData } = useWizardStore();
 	const hasContent = application;
 	const grantSections = application?.grant_template?.grant_sections ?? [];
+
+	const isGeneratingTemplate =
+		grantTemplateRagJobData?.status === "PROCESSING" || grantTemplateRagJobData?.status === "PENDING";
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 	const [editingNewSection, setEditingNewSection] = useState(false);
