@@ -120,7 +120,7 @@ function ResearchPlanPreview({
 										<SortableObjectiveCard
 											id={objective.number}
 											index={index + 1}
-											key={objective.number}
+											key={`${objective.title}-${objective.description}-${index}`}
 											objective={objective}
 											onRemove={() => {
 												onRemoveObjective(objective.number);

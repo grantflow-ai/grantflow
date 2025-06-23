@@ -29,8 +29,8 @@ export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 interface ApplicationState {
 	application: ApplicationType;
+	areAppOperationsInProgress: boolean;
 	isGeneratingTemplate: boolean;
-	isLoading: boolean;
 	ragJobState: {
 		isRestoring: boolean;
 		restoredJob: API.RetrieveRagJob.Http200.ResponseBody | null;
@@ -39,8 +39,8 @@ interface ApplicationState {
 
 const initialState: ApplicationState = {
 	application: null,
+	areAppOperationsInProgress: false,
 	isGeneratingTemplate: false,
-	isLoading: false,
 	ragJobState: {
 		isRestoring: false,
 		restoredJob: null,
@@ -70,10 +70,8 @@ const uploadFileInDevelopment = async (
 	file: FileWithId,
 	application: NonNullable<ApplicationType>,
 	parentId: string,
-	isApplicationParent: boolean,
 ) => {
-	const parentPath = isApplicationParent ? "application" : "grant_template";
-	const objectPath = `workspace/${application.workspace_id}/${parentPath}/${parentId}/${file.name}`;
+	const objectPath = `${application.workspace_id}/${parentId}/${file.id}/${file.name}`;
 	const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
 
 	await ky(emulatorUrl, {
@@ -146,7 +144,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			await (process.env.NODE_ENV === "development"
-				? uploadFileInDevelopment(file, application, parentId, isApplicationParent)
+				? uploadFileInDevelopment(file, application, parentId)
 				: uploadFileInProduction(file, application, parentId, isApplicationParent));
 
 			toast.success(`File ${file.name} uploaded successfully`);
@@ -279,17 +277,17 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	createApplication: async (workspaceId: string) => {
-		set({ isLoading: true });
+		set({ areAppOperationsInProgress: true });
 		try {
 			const response = await handleCreateApplication(workspaceId, { title: DEFAULT_APPLICATION_TITLE });
 			set({
 				application: response,
-				isLoading: false,
+				areAppOperationsInProgress: false,
 			});
 		} catch (e: unknown) {
 			logError({ error: e, identifier: "createApplication" });
 			toast.error("Failed to initialize application");
-			set({ isLoading: false });
+			set({ areAppOperationsInProgress: false });
 		}
 	},
 
@@ -406,17 +404,17 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	retrieveApplication: async (workspaceId: string, applicationId: string) => {
-		set({ isLoading: true });
+		set({ areAppOperationsInProgress: true });
 		try {
 			const response = await handleRetrieveApplication(workspaceId, applicationId);
 			set({
 				application: response,
-				isLoading: false,
+				areAppOperationsInProgress: false,
 			});
 		} catch (e: unknown) {
 			logError({ error: e, identifier: "retrieveApplication" });
 			toast.error("Failed to retrieve application");
-			set({ isLoading: false });
+			set({ areAppOperationsInProgress: false });
 		}
 	},
 
@@ -431,7 +429,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			message: "Application should not be null when calling updateApplication",
 		});
 
-		set({ isLoading: true });
+		set({ areAppOperationsInProgress: true });
 
 		const updatedApplication = deepmerge(existingApplication, data) as NonNullable<ApplicationType>;
 
@@ -449,7 +447,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			logError({ error: `Failed to update application: ${e}`, identifier: "updateApplication" });
 			toast.error("Failed to update application");
 		} finally {
-			set({ isLoading: false });
+			set({ areAppOperationsInProgress: false });
 		}
 	},
 

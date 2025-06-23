@@ -59,7 +59,7 @@ export function WizardClientComponent({ application: initialApplication, workspa
 		useApplicationStore.getState().reset();
 		useApplicationStore.setState({
 			application: initialApplication,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 
 		useWizardStore.getState().reset();

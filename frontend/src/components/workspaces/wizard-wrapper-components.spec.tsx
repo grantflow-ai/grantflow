@@ -34,7 +34,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 		useApplicationStore.setState({
 			application,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 
 		useWizardStore.setState({
@@ -114,7 +114,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 			useApplicationStore.setState({
 				application,
-				isLoading: false,
+				areAppOperationsInProgress: false,
 			});
 
 			useWizardStore.setState({
@@ -140,7 +140,7 @@ describe("WizardHeader", () => {
 
 		useApplicationStore.setState({
 			application,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 
 		useWizardStore.setState({
