@@ -2,10 +2,12 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { retrieveRagJob } from "@/actions/rag-jobs";
 import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
+import { logError } from "@/utils/logging";
 
 const DEBOUNCE_DELAY_MS = 500;
 const POLLING_INTERVAL_DURATION = 3000;
@@ -56,6 +58,7 @@ interface WizardActions {
 	addNextObjective: () => void;
 	addObjective: (objective: Objective) => void;
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
+	checkTemplateRagJobStatus: () => Promise<void>;
 	debouncedRetrieveApplication: () => void;
 	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
@@ -74,11 +77,13 @@ interface WizardActions {
 
 interface WizardState {
 	currentStep: WizardStep;
+	grantTemplateRagJobData: API.RetrieveRagJob.Http200.ResponseBody | null;
 	polling: PollingState;
 }
 
 const initialWizardState: WizardState = {
 	currentStep: WizardStep.APPLICATION_DETAILS,
+	grantTemplateRagJobData: null,
 	polling: {
 		intervalId: null,
 		isActive: false,
@@ -160,6 +165,43 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					});
 
 					void updateApplication({ research_objectives: updatedObjectives });
+				},
+
+				checkTemplateRagJobStatus: async () => {
+					const { application } = useApplicationStore.getState();
+					const { polling } = get();
+
+					if (!application?.grant_template?.rag_job_id) {
+						return;
+					}
+
+					const ragJobId = application.grant_template.rag_job_id;
+
+					try {
+						const jobData = await retrieveRagJob(application.workspace_id, ragJobId);
+
+						set((state) => ({
+							...state,
+							grantTemplateRagJobData: jobData,
+						}));
+
+						const isComplete =
+							jobData.status === "COMPLETED" ||
+							jobData.status === "FAILED" ||
+							jobData.status === "CANCELLED";
+
+						if (isComplete) {
+							polling.stop();
+							return;
+						}
+
+						if (!polling.isActive) {
+							polling.start(get().checkTemplateRagJobStatus, POLLING_INTERVAL_DURATION, false);
+						}
+					} catch (error) {
+						logError({ error, identifier: "checkTemplateRagJobStatus" });
+						polling.stop();
+					}
 				},
 
 				debouncedRetrieveApplication: () => {
@@ -366,6 +408,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 					set({
 						currentStep: initialWizardState.currentStep,
+						grantTemplateRagJobData: initialWizardState.grantTemplateRagJobData,
 						polling: {
 							...currentState.polling,
 							...initialWizardState.polling,
@@ -396,8 +439,12 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				toPreviousStep: () => {
-					const { currentStep } = get();
+					const { currentStep, polling } = get();
 					const currentIndex = WIZARD_STEP_TITLES.indexOf(currentStep);
+
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
+						polling.stop();
+					}
 
 					set((state) => ({
 						...state,
@@ -407,9 +454,9 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 				validateStepNext: (): boolean => {
 					const { currentStep } = get();
-					const { application, isLoading } = useApplicationStore.getState();
+					const { application, areAppOperationsInProgress } = useApplicationStore.getState();
 
-					if (!application || isLoading) {
+					if (!application || areAppOperationsInProgress) {
 						return false;
 					}
 

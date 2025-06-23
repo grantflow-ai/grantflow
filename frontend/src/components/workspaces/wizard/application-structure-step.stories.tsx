@@ -30,7 +30,7 @@ export const EmptyState: Story = {
 			useEffect(() => {
 				useApplicationStore.setState({
 					application: null,
-					isLoading: false,
+					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_STRUCTURE,
@@ -55,7 +55,7 @@ export const WithApplicationTitle: Story = {
 				});
 				useApplicationStore.setState({
 					application,
-					isLoading: false,
+					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_STRUCTURE,
@@ -75,7 +75,7 @@ export const WithGeneratedSections: Story = {
 				});
 				useApplicationStore.setState({
 					application,
-					isLoading: false,
+					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_STRUCTURE,
