@@ -42,7 +42,7 @@ describe("ApplicationDetailsStep", () => {
 
 		useApplicationStore.setState({
 			application: null,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 	});
 
