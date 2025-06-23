@@ -23,7 +23,7 @@ describe("ApplicationStructureStep", () => {
 
 		useApplicationStore.setState({
 			application: null,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 		});
 	});
 

@@ -31,7 +31,7 @@ describe("Application Store", () => {
 	beforeEach(() => {
 		useApplicationStore.setState({
 			application: null,
-			isLoading: false,
+			areAppOperationsInProgress: false,
 			ragJobState: {
 				isRestoring: false,
 				restoredJob: null,
@@ -45,7 +45,7 @@ describe("Application Store", () => {
 		it("should initialize with default state", () => {
 			const state = useApplicationStore.getState();
 			expect(state.application).toBeNull();
-			expect(state.isLoading).toBe(false);
+			expect(state.areAppOperationsInProgress).toBe(false);
 		});
 	});
 
@@ -98,7 +98,7 @@ describe("Application Store", () => {
 
 			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(application);
-			expect(state.isLoading).toBe(false);
+			expect(state.areAppOperationsInProgress).toBe(false);
 		});
 	});
 

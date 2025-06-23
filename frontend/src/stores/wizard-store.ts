@@ -407,9 +407,9 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 				validateStepNext: (): boolean => {
 					const { currentStep } = get();
-					const { application, isLoading } = useApplicationStore.getState();
+					const { application, areAppOperationsInProgress } = useApplicationStore.getState();
 
-					if (!application || isLoading) {
+					if (!application || areAppOperationsInProgress) {
 						return false;
 					}
 
