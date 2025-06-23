@@ -126,6 +126,7 @@ interface DragAndDropContainerProps {
 	activeSection: GrantSection | undefined;
 	expandedSections: Set<string>;
 	grantSections: GrantSection[];
+	grantTemplateRagJobData?: API.RetrieveRagJob.Http200.ResponseBody | null;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleDragEnd: (event: DragEndEvent) => Promise<void>;
 	handleDragOver: (event: DragOverEvent) => Promise<void>;
@@ -137,13 +138,25 @@ interface DragAndDropContainerProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
+interface SectionEditFormProps {
+	formData: SectionFormData;
+	isDragging: boolean;
+	isSubsection: boolean;
+	onCancel: () => void;
+	onSave: () => void;
+	section: GrantSection;
+	setFormData: (data: SectionFormData) => void;
+	setNodeRef: (node: HTMLElement | null) => void;
+	style: React.CSSProperties;
+}
+
 interface SectionEditorProps {
 	activeId: null | string;
 	activeSection: GrantSection | undefined;
-	editingNewSection: boolean;
 	expandedSections: Set<string>;
 	grantSections: GrantSection[];
-	handleAddNewSection: (data: SectionFormData) => Promise<void>;
+	grantTemplateRagJobData?: API.RetrieveRagJob.Http200.ResponseBody | null;
+	handleAddNewSection: () => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleDragEnd: (event: DragEndEvent) => Promise<void>;
 	handleDragOver: (event: DragOverEvent) => Promise<void>;
@@ -151,7 +164,6 @@ interface SectionEditorProps {
 	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
 	mainSections: GrantSection[];
 	sensors: ReturnType<typeof useSensors>;
-	setEditingNewSection: (editing: boolean) => void;
 	subsectionsByParent: Record<string, GrantSection[]>;
 	toggleSectionExpanded: (sectionId: string) => void;
 }
@@ -371,14 +383,12 @@ export function ApplicationStructureStep() {
 function ApplicationStructurePreview() {
 	const { application, updateGrantSections } = useApplicationStore();
 	const { grantTemplateRagJobData } = useWizardStore();
-	const hasContent = application;
-	const grantSections = application?.grant_template?.grant_sections ?? [];
 
+	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const isGeneratingTemplate =
 		grantTemplateRagJobData?.status === "PROCESSING" || grantTemplateRagJobData?.status === "PENDING";
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-	const [editingNewSection, setEditingNewSection] = useState(false);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -419,24 +429,23 @@ function ApplicationStructurePreview() {
 		});
 	};
 
-	const handleAddNewSection = async (sectionData: SectionFormData) => {
+	const handleAddNewSection = async () => {
 		const newSection: UpdateGrantSection = {
 			depends_on: [],
 			generation_instructions: "",
 			id: `new-section-${Date.now()}`,
 			is_clinical_trial: null,
-			is_detailed_workplan: sectionData.isResearchPlan ? true : null,
+			is_detailed_workplan: null,
 			keywords: [],
-			max_words: sectionData.max_words,
+			max_words: 3000,
 			order: grantSections.length,
 			parent_id: null,
 			search_queries: [],
-			title: sectionData.title,
+			title: "Category Name",
 			topics: [],
 		};
 		const updatedSections = [...grantSections.map(toUpdateGrantSection), newSection];
 		await updateGrantSections(updatedSections);
-		setEditingNewSection(false);
 	};
 
 	const handleDragStart = (event: DragStartEvent) => {
@@ -523,7 +532,7 @@ function ApplicationStructurePreview() {
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
 			{(() => {
-				if (!hasContent) {
+				if (!application) {
 					return <EmptyStateView />;
 				}
 				if (isGeneratingTemplate) {
@@ -533,9 +542,9 @@ function ApplicationStructurePreview() {
 					<SectionEditor
 						activeId={activeId}
 						activeSection={activeSection}
-						editingNewSection={editingNewSection}
 						expandedSections={expandedSections}
 						grantSections={grantSections}
+						grantTemplateRagJobData={grantTemplateRagJobData}
 						handleAddNewSection={handleAddNewSection}
 						handleDeleteSection={handleDeleteSection}
 						handleDragEnd={handleDragEnd}
@@ -544,52 +553,12 @@ function ApplicationStructurePreview() {
 						handleUpdateSection={handleUpdateSection}
 						mainSections={mainSections}
 						sensors={sensors}
-						setEditingNewSection={setEditingNewSection}
 						subsectionsByParent={subsectionsByParent}
 						toggleSectionExpanded={toggleSectionExpanded}
 					/>
 				);
 			})()}
 		</div>
-	);
-}
-
-function DefaultSections() {
-	return (
-		<>
-			<div className="rounded border border-gray-200 p-3" data-testid="default-section-executive-summary">
-				<h5 className="font-medium" data-testid="section-title-executive-summary">
-					Executive Summary
-				</h5>
-				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-executive-summary">
-					Overview of the project and key highlights
-				</p>
-			</div>
-			<div className="rounded border border-gray-200 p-3" data-testid="default-section-project-description">
-				<h5 className="font-medium" data-testid="section-title-project-description">
-					Project Description
-				</h5>
-				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-project-description">
-					Detailed description of the proposed project
-				</p>
-			</div>
-			<div className="rounded border border-gray-200 p-3" data-testid="default-section-budget-timeline">
-				<h5 className="font-medium" data-testid="section-title-budget-timeline">
-					Budget & Timeline
-				</h5>
-				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-budget-timeline">
-					Financial breakdown and project timeline
-				</p>
-			</div>
-			<div className="rounded border border-gray-200 p-3" data-testid="default-section-team-qualifications">
-				<h5 className="font-medium" data-testid="section-title-team-qualifications">
-					Team & Qualifications
-				</h5>
-				<p className="text-muted-foreground-dark text-sm" data-testid="section-description-team-qualifications">
-					Team members and their relevant experience
-				</p>
-			</div>
-		</>
 	);
 }
 
@@ -617,7 +586,7 @@ function DragAndDropContainer({
 			sensors={sensors}
 		>
 			<div className="space-y-3">
-				{grantSections.length > 0 ? (
+				{grantSections.length > 0 && (
 					<SectionList
 						expandedSections={expandedSections}
 						grantSections={grantSections}
@@ -627,8 +596,6 @@ function DragAndDropContainer({
 						subsectionsByParent={subsectionsByParent}
 						toggleSectionExpanded={toggleSectionExpanded}
 					/>
-				) : (
-					<DefaultSections />
 				)}
 			</div>
 			<SectionDragOverlay activeId={activeId} activeSection={activeSection} />
@@ -661,106 +628,19 @@ function GeneratingLoader() {
 	);
 }
 
-function NewSectionForm({ onCancel, onSave }: { onCancel: () => void; onSave: (data: SectionFormData) => void }) {
-	const [formData, setFormData] = useState<SectionFormData>({
-		isResearchPlan: false,
-		max_words: 3000,
-		title: "",
-		useWords: true,
-	});
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (formData.title.trim()) {
-			onSave(formData);
-		}
-	};
-
+function PreviewHeader({ onAddSection }: { onAddSection: () => void }) {
 	return (
-		<form
-			className="mb-4 space-y-4 rounded border border-gray-200 p-4"
-			data-testid="new-section-form"
-			onSubmit={handleSubmit}
-		>
-			<div className="flex items-center justify-between">
-				<h5 className="font-medium" data-testid="new-section-title">
-					New section
-				</h5>
-			</div>
-
-			<div className="space-y-4">
-				<div>
-					<Label htmlFor="new-section-name">Section name</Label>
-					<Input
-						className="mt-1"
-						id="new-section-name"
-						onChange={(e) => {
-							setFormData({ ...formData, title: e.target.value });
-						}}
-						placeholder="Type a name that encapsulates the essence of this section."
-						value={formData.title}
-					/>
-				</div>
-
-				<div>
-					<Label data-testid="words-characters-label">Words/Characters count</Label>
-					<p className="text-muted-foreground text-sm">
-						This helps AI generate content that fits the grant&apos;s requirements. Choose if the limit
-						applies to words or characters.
-					</p>
-					<div className="mt-2 flex gap-4">
-						<div className="flex-1">
-							<Label className="sr-only" htmlFor="new-max-count">
-								Max count
-							</Label>
-							<Input
-								id="new-max-count"
-								onChange={(e) => {
-									setFormData({ ...formData, max_words: Number.parseInt(e.target.value) || 0 });
-								}}
-								placeholder="3,000"
-								type="number"
-								value={formData.max_words}
-							/>
-						</div>
-						<div className="w-32">
-							<select
-								className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
-								onChange={(e) => {
-									setFormData({ ...formData, useWords: e.target.value === "words" });
-								}}
-								value={formData.useWords ? "words" : "characters"}
-							>
-								<option value="words">Words</option>
-								<option value="characters">Characters</option>
-							</select>
-						</div>
-					</div>
-				</div>
-
-				<div className="flex items-center space-x-2">
-					<Checkbox
-						checked={formData.isResearchPlan}
-						id="new-research-plan"
-						onCheckedChange={(checked) => {
-							setFormData({ ...formData, isResearchPlan: checked as boolean });
-						}}
-					/>
-					<Label className="text-sm font-normal" htmlFor="new-research-plan">
-						This is the main Research Plan
-					</Label>
-				</div>
-
-				<div className="flex justify-between gap-2">
-					<Button data-testid="cancel-button" onClick={onCancel} type="button" variant="outline">
-						Cancel
-					</Button>
-					<Button data-testid="save-button" disabled={!formData.title.trim()} type="submit">
-						Save
-					</Button>
-				</div>
-			</div>
-		</form>
+		<div className="mb-4 flex justify-end">
+			<AppButton
+				data-testid="add-new-section-button"
+				leftIcon={<Plus />}
+				onClick={onAddSection}
+				size="sm"
+				variant="secondary"
+			>
+				Add New Section
+			</AppButton>
+		</div>
 	);
 }
 
@@ -789,12 +669,117 @@ function SectionDragOverlay({
 	);
 }
 
+function SectionEditForm({
+	formData,
+	isDragging,
+	isSubsection,
+	onCancel,
+	onSave,
+	section,
+	setFormData,
+	setNodeRef,
+	style,
+}: SectionEditFormProps) {
+	return (
+		<div
+			className={`rounded border border-gray-200 p-4 ${isSubsection ? "ml-6" : ""} ${
+				isDragging ? "shadow-lg" : ""
+			}`}
+			ref={setNodeRef}
+			style={style}
+		>
+			<div className="space-y-4">
+				<div className="flex items-center justify-between">
+					<h5 className="font-medium">New section</h5>
+					<Button onClick={onCancel} size="sm" variant="ghost">
+						<ChevronUp className="size-4" />
+					</Button>
+				</div>
+
+				<div className="space-y-4">
+					<div>
+						<Label htmlFor={`section-name-${section.id}`}>Section name</Label>
+						<Input
+							className="mt-1"
+							id={`section-name-${section.id}`}
+							onChange={(e) => {
+								setFormData({ ...formData, title: e.target.value });
+							}}
+							placeholder="Type a name that encapsulates the essence of this section."
+							value={formData.title}
+						/>
+					</div>
+
+					<div>
+						<Label>Words/Characters count</Label>
+						<p className="text-muted-foreground text-sm">
+							This helps AI generate content that fits the grant&apos;s requirements. Choose if the limit
+							applies to words or characters.
+						</p>
+						<div className="mt-2 flex gap-4">
+							<div className="flex-1">
+								<Label className="sr-only" htmlFor={`max-count-${section.id}`}>
+									Max count
+								</Label>
+								<Input
+									id={`max-count-${section.id}`}
+									onChange={(e) => {
+										setFormData({
+											...formData,
+											max_words: Number.parseInt(e.target.value) || 0,
+										});
+									}}
+									placeholder="3,000"
+									type="number"
+									value={formData.max_words}
+								/>
+							</div>
+							<div className="w-32">
+								<select
+									className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+									onChange={(e) => {
+										setFormData({ ...formData, useWords: e.target.value === "words" });
+									}}
+									value={formData.useWords ? "words" : "characters"}
+								>
+									<option value="words">Words</option>
+									<option value="characters">Characters</option>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div className="flex items-center space-x-2">
+						<Checkbox
+							checked={formData.isResearchPlan}
+							id={`research-plan-${section.id}`}
+							onCheckedChange={(checked) => {
+								setFormData({ ...formData, isResearchPlan: checked as boolean });
+							}}
+						/>
+						<Label className="text-sm font-normal" htmlFor={`research-plan-${section.id}`}>
+							This is the main Research Plan
+						</Label>
+					</div>
+
+					<div className="flex justify-between gap-2">
+						<Button onClick={onCancel} variant="outline">
+							Cancel
+						</Button>
+						<Button onClick={onSave}>Save</Button>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 function SectionEditor({
 	activeId,
 	activeSection,
-	editingNewSection,
 	expandedSections,
 	grantSections,
+	grantTemplateRagJobData,
 	handleAddNewSection,
 	handleDeleteSection,
 	handleDragEnd,
@@ -803,36 +788,24 @@ function SectionEditor({
 	handleUpdateSection,
 	mainSections,
 	sensors,
-	setEditingNewSection,
 	subsectionsByParent,
 	toggleSectionExpanded,
 }: SectionEditorProps) {
 	return (
 		<div className="flex h-full flex-col">
-			<SectionHeader
-				onAddSection={() => {
-					setEditingNewSection(true);
-				}}
-			/>
+			<PreviewHeader onAddSection={handleAddNewSection} />
 			<ScrollArea className="flex-1">
 				<div className="space-y-5">
 					<Card
 						className="border-app-gray-100 border p-5 shadow-none"
 						data-testid="application-structure-sections"
 					>
-						{editingNewSection && (
-							<NewSectionForm
-								onCancel={() => {
-									setEditingNewSection(false);
-								}}
-								onSave={handleAddNewSection}
-							/>
-						)}
 						<DragAndDropContainer
 							activeId={activeId}
 							activeSection={activeSection}
 							expandedSections={expandedSections}
 							grantSections={grantSections}
+							grantTemplateRagJobData={grantTemplateRagJobData}
 							handleDeleteSection={handleDeleteSection}
 							handleDragEnd={handleDragEnd}
 							handleDragOver={handleDragOver}
@@ -846,25 +819,6 @@ function SectionEditor({
 					</Card>
 				</div>
 			</ScrollArea>
-		</div>
-	);
-}
-
-function SectionHeader({ onAddSection }: { onAddSection: () => void }) {
-	return (
-		<div className="mb-4 flex items-center justify-between">
-			<h4 className="font-heading font-semibold" data-testid="application-sections-title">
-				Application Sections
-			</h4>
-			<AppButton
-				data-testid="add-new-section-button"
-				leftIcon={<Plus />}
-				onClick={onAddSection}
-				size="sm"
-				variant="secondary"
-			>
-				Add New Section
-			</AppButton>
 		</div>
 	);
 }
@@ -954,123 +908,75 @@ function SortableSection({
 
 	if (isExpanded) {
 		return (
-			<div
-				className={`rounded border border-gray-200 p-4 ${isSubsection ? "ml-6" : ""} ${
-					isDragging ? "shadow-lg" : ""
-				}`}
-				ref={setNodeRef}
+			<SectionEditForm
+				formData={formData}
+				isDragging={isDragging}
+				isSubsection={isSubsection}
+				onCancel={onToggleExpand}
+				onSave={handleSave}
+				section={section}
+				setFormData={setFormData}
+				setNodeRef={setNodeRef}
 				style={style}
-			>
-				<div className="space-y-4">
-					<div className="flex items-center justify-between">
-						<h5 className="font-medium">New section</h5>
-						<Button onClick={onToggleExpand} size="sm" variant="ghost">
-							<ChevronUp className="size-4" />
-						</Button>
-					</div>
-
-					<div className="space-y-4">
-						<div>
-							<Label htmlFor={`section-name-${section.id}`}>Section name</Label>
-							<Input
-								className="mt-1"
-								id={`section-name-${section.id}`}
-								onChange={(e) => {
-									setFormData({ ...formData, title: e.target.value });
-								}}
-								placeholder="Type a name that encapsulates the essence of this section."
-								value={formData.title}
-							/>
-						</div>
-
-						<div>
-							<Label>Words/Characters count</Label>
-							<p className="text-muted-foreground text-sm">
-								This helps AI generate content that fits the grant&apos;s requirements. Choose if the
-								limit applies to words or characters.
-							</p>
-							<div className="mt-2 flex gap-4">
-								<div className="flex-1">
-									<Label className="sr-only" htmlFor={`max-count-${section.id}`}>
-										Max count
-									</Label>
-									<Input
-										id={`max-count-${section.id}`}
-										onChange={(e) => {
-											setFormData({
-												...formData,
-												max_words: Number.parseInt(e.target.value) || 0,
-											});
-										}}
-										placeholder="3,000"
-										type="number"
-										value={formData.max_words}
-									/>
-								</div>
-								<div className="w-32">
-									<select
-										className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
-										onChange={(e) => {
-											setFormData({ ...formData, useWords: e.target.value === "words" });
-										}}
-										value={formData.useWords ? "words" : "characters"}
-									>
-										<option value="words">Words</option>
-										<option value="characters">Characters</option>
-									</select>
-								</div>
-							</div>
-						</div>
-
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								checked={formData.isResearchPlan}
-								id={`research-plan-${section.id}`}
-								onCheckedChange={(checked) => {
-									setFormData({ ...formData, isResearchPlan: checked as boolean });
-								}}
-							/>
-							<Label className="text-sm font-normal" htmlFor={`research-plan-${section.id}`}>
-								This is the main Research Plan
-							</Label>
-						</div>
-
-						<div className="flex justify-between gap-2">
-							<Button onClick={onToggleExpand} variant="outline">
-								Cancel
-							</Button>
-							<Button onClick={handleSave}>Save</Button>
-						</div>
-					</div>
-				</div>
-			</div>
+			/>
 		);
 	}
 
 	return (
 		<div
-			className={`rounded border border-gray-200 p-3 ${isSubsection ? "ml-6" : ""} ${
+			className={`flex w-full items-center justify-start gap-6 rounded bg-white px-3 py-4 outline outline-1 outline-offset-[-1px] outline-blue-500 ${isSubsection ? "ml-6" : ""} ${
 				isDragging ? "shadow-lg" : ""
 			}`}
 			ref={setNodeRef}
 			style={style}
 		>
-			<div className="flex items-center gap-2">
-				<div {...attributes} {...listeners} className="cursor-move">
-					<GripVertical className="size-4 text-gray-400" />
-				</div>
-				<div className="flex flex-1 items-center justify-between">
-					<h5 className="font-medium">{section.title}</h5>
-					<div className="flex items-center gap-2">
+			<div {...attributes} {...listeners} className="relative size-6 cursor-move">
+				<GripVertical className="size-6 text-gray-400" />
+			</div>
+
+			<div className="flex flex-1 items-center justify-between gap-2">
+				<div className="flex flex-1 flex-col items-start justify-start gap-1">
+					<div className="flex w-full items-center justify-start gap-2">
+						<h3 className="text-base font-medium text-gray-900">{section.title}</h3>
 						{hasMaxWords && isDetailedSection(section) && (
-							<span className="text-muted-foreground-dark text-sm">
+							<span className="text-sm font-normal text-gray-500">
 								{section.max_words.toLocaleString()} Max words
 							</span>
 						)}
-						<Button onClick={onToggleExpand} size="sm" variant="ghost">
-							<ChevronDown className="size-4" />
-						</Button>
 					</div>
+				</div>
+				<div className="flex items-center justify-end gap-2">
+					<Button
+						className="opacity-0 transition-opacity hover:opacity-100"
+						onClick={_onDelete}
+						size="icon"
+						type="button"
+						variant="ghost"
+					>
+						<Image
+							alt="Delete"
+							className="size-4 text-red-500"
+							height={16}
+							src="/icons/delete.svg"
+							width={16}
+						/>
+					</Button>
+
+					{!isSubsection && (
+						<Button
+							className="opacity-0 transition-opacity hover:opacity-100"
+							size="icon"
+							type="button"
+							variant="ghost"
+						>
+							<Plus className="size-4 text-blue-500" />
+						</Button>
+					)}
+
+					{/* Expand/Collapse Arrow */}
+					<Button onClick={onToggleExpand} size="icon" type="button" variant="ghost">
+						<ChevronDown className="size-4" />
+					</Button>
 				</div>
 			</div>
 		</div>

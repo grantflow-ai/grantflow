@@ -1,6 +1,11 @@
 "use client";
 
-import { FormInputsFactory, GrantSectionDetailedFactory, ResearchObjectiveFactory } from "::testing/factories";
+import {
+	FileWithIdFactory,
+	FormInputsFactory,
+	GrantSectionDetailedFactory,
+	ResearchObjectiveFactory,
+} from "::testing/factories";
 import { Wand2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -9,7 +14,6 @@ import { AppButton } from "@/components/app-button";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import type { FileWithId } from "@/types/files";
 import { logError } from "@/utils/logging";
 
 const TEST_FILES = [
@@ -58,9 +62,9 @@ export function DevAutofillButton() {
 					}
 
 					for (const fileInfo of TEST_FILES) {
-						const file = new File(["Test file content"], fileInfo.name, { type: fileInfo.type });
-						const fileWithId: FileWithId = Object.assign(file, {
-							id: `file-${Date.now()}-${Math.random()}`,
+						const fileWithId = FileWithIdFactory.build({
+							name: fileInfo.name,
+							type: fileInfo.type,
 						});
 						if (application?.grant_template?.id) {
 							await addFile(fileWithId, application.grant_template.id);
@@ -77,23 +81,45 @@ export function DevAutofillButton() {
 						break;
 					}
 
-					const mockSections = GrantSectionDetailedFactory.batch(5).map((section, index) => ({
+					const mainSections = GrantSectionDetailedFactory.batch(3).map((section, index) => ({
 						...section,
-						max_words: [500, 2000, 1500, 1000, 800][index] || section.max_words,
+						max_words: [1000, 1500, 2000][index] || section.max_words,
 						order: index,
 						parent_id: null,
 						title:
-							[
-								"Executive Summary",
-								"Project Description",
-								"Research Methodology",
-								"Budget Justification",
-								"Team Qualifications",
-							][index] || section.title,
+							["Project Overview", "Research Methodology", "Implementation Plan"][index] || section.title,
 					}));
 
+					const subsections = [
+						...GrantSectionDetailedFactory.batch(2).map((section, index) => ({
+							...section,
+							max_words: [500, 750][index] || section.max_words,
+							order: index,
+							parent_id: mainSections[0].id,
+							title: ["Background & Significance", "Objectives & Aims"][index] || section.title,
+						})),
+						...GrantSectionDetailedFactory.batch(1).map((section) => ({
+							...section,
+							max_words: 800,
+							order: 0,
+							parent_id: mainSections[1].id,
+							title: "Experimental Design",
+						})),
+						...GrantSectionDetailedFactory.batch(3).map((section, index) => ({
+							...section,
+							max_words: [600, 700, 500][index] || section.max_words,
+							order: index,
+							parent_id: mainSections[2].id,
+							title:
+								["Timeline & Milestones", "Budget & Resources", "Risk Management"][index] ||
+								section.title,
+						})),
+					];
+
+					const mockSections = [...mainSections, ...subsections];
+
 					await updateGrantSections(mockSections);
-					toast.success("🎉 Application structure populated with 5 sections!");
+					toast.success("🎉 Application structure populated with 3 sections and 6 subsections!");
 
 					break;
 				}
@@ -123,11 +149,12 @@ export function DevAutofillButton() {
 					];
 
 					for (const fileInfo of knowledgeFiles) {
-						const file = new File(["Mock research content"], fileInfo.name, { type: fileInfo.type });
-						const fileWithId: FileWithId = Object.assign(file, {
-							id: `file-${Date.now()}-${Math.random()}`,
+						if (!application?.id) continue;
+						const fileWithId = FileWithIdFactory.build({
+							name: fileInfo.name,
+							type: fileInfo.type,
 						});
-						await addFile(fileWithId, application?.id);
+						await addFile(fileWithId, application.id);
 					}
 
 					toast.success("🎉 Knowledge base populated!");
