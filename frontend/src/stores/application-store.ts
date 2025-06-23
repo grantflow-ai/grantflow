@@ -1,6 +1,6 @@
 import { assertIsNotNullish } from "@tool-belt/type-predicates";
 import { deepmerge } from "deepmerge-ts";
-import ky from "ky";
+import ky, { HTTPError } from "ky";
 import { toast } from "sonner";
 import { create } from "zustand";
 
@@ -22,6 +22,7 @@ import {
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { logError } from "@/utils/logging";
+import { extractGrantTemplateValidationError } from "@/utils/validation";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
 
@@ -30,7 +31,6 @@ export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 interface ApplicationState {
 	application: ApplicationType;
 	areAppOperationsInProgress: boolean;
-	isGeneratingTemplate: boolean;
 	ragJobState: {
 		isRestoring: boolean;
 		restoredJob: API.RetrieveRagJob.Http200.ResponseBody | null;
@@ -40,11 +40,35 @@ interface ApplicationState {
 const initialState: ApplicationState = {
 	application: null,
 	areAppOperationsInProgress: false,
-	isGeneratingTemplate: false,
 	ragJobState: {
 		isRestoring: false,
 		restoredJob: null,
 	},
+};
+
+const handleGrantTemplateValidationError = async (httpError: HTTPError): Promise<void> => {
+	const errorMessage = await extractGrantTemplateValidationError(httpError);
+
+	if (!errorMessage) {
+		toast.error("Cannot generate grant template", {
+			description: "Please ensure you have added a title and at least one document source.",
+		});
+		return;
+	}
+
+	if (errorMessage.includes("Grant template not found")) {
+		toast.error("Grant template not found", {
+			description: "The grant template could not be located. Please refresh and try again.",
+		});
+	} else if (errorMessage.includes("No rag sources found")) {
+		toast.error("No documents available for generation", {
+			description: "Add at least one document or URL to the knowledge base before generating the grant template.",
+		});
+	} else {
+		toast.error("Cannot generate grant template", {
+			description: "Please ensure you have added a title and at least one document source.",
+		});
+	}
 };
 
 interface ApplicationActions {
@@ -292,8 +316,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	generateTemplate: async (templateId: string) => {
-		set({ isGeneratingTemplate: true });
-
 		const { application } = get();
 
 		assertIsNotNullish(application, {
@@ -301,10 +323,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		});
 		try {
 			await generateGrantTemplate(application.workspace_id, application.id, templateId);
-		} catch {
-			toast.error("Failed to generate grant template. Please try again.");
-		} finally {
-			set({ isGeneratingTemplate: false });
+		} catch (error: unknown) {
+			if (error instanceof HTTPError && error.response.status === 422) {
+				await handleGrantTemplateValidationError(error);
+				return;
+			}
+			toast.error("Failed to generate grant template", {
+				description: "An unexpected error occurred. Please try again.",
+			});
 		}
 	},
 
