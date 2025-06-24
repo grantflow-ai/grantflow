@@ -10,6 +10,7 @@
 
 	--color-background: var(--background);
 	--color-background-light: var(--background-light);
+	--color-popup: var(--app-popup-cover);
 
 	--color-foreground: var(--foreground);
 
@@ -48,6 +49,9 @@
 	--color-error: var(--error);
 
 	--color-preview-bg: var(--app-gray-20);
+	--color-app-black: var(--app-black);
+	--color-app-dark-blue: var(--app-dark-blue);
+	--color-app-slate-blue: var(--app-slate-blue);
 
 	--color-app-gray-100: var(--app-gray-100);
 	--color-app-gray-300: var(--app-gray-300);
@@ -105,6 +109,7 @@
 	--app-gray-600: oklch(0.5 0.0237 291.64); /* 636170 */
 	--app-gray-700: oklch(0.4085 0.0217 292.47); /* 4A4855 */
 	--app-lavender-gray: oklch(0.9462 0.0254 268.85); /* #E6EDFF */
+	--app-popup-cover: oklch(41.33% 0.07 278.62deg); /* #3F3B67 */
 
 	--background-dark: var(--app-dark-blue);
 	--background-light: oklch(1 0 0);

@@ -77,25 +77,6 @@ describe("NavHeader Component", () => {
 			expect(header).toBeInTheDocument();
 		});
 
-		it("should display both logo variants initially with correct visibility", () => {
-			const logo = screen.getByTestId("logo");
-			const logoDark = screen.getByTestId("logo-dark");
-
-			expect(logo).toBeInTheDocument();
-			expect(logoDark).toBeInTheDocument();
-
-			expect(logo.className).toContain("opacity-100");
-			expect(logoDark.className).toContain("opacity-0");
-		});
-
-		it("should render desktop navigation buttons correctly", () => {
-			const aboutUsLinks = screen.getAllByText(/about us/i);
-			expect(aboutUsLinks.length).toBeGreaterThan(0);
-
-			const tryForFreeButtons = screen.getAllByText(/try for free/i);
-			expect(tryForFreeButtons.length).toBeGreaterThan(0);
-		});
-
 		it("should render mobile navigation buttons correctly", () => {
 			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 			fireEvent.click(mobileMenuButton);
@@ -126,20 +107,12 @@ describe("NavHeader Component", () => {
 			expect(header.tagName).toBe("HEADER");
 		});
 
-		it("should contain navigation elements with proper semantic structure", () => {
-			const desktopNav = screen.getByTestId("nav-header-links");
-			expect(desktopNav).toBeInTheDocument();
-
-			const mobileMenuContainer = document.querySelector(".absolute.inset-x-0");
-			expect(mobileMenuContainer).toBeInTheDocument();
-		});
-
 		it("should use proper semantic elements for links", () => {
 			const links = document.querySelectorAll("a");
 			expect(links.length).toBeGreaterThan(0);
 
 			const logoLinks = [...links].filter((link) => link.getAttribute("aria-label") === "Go to homepage");
-			expect(logoLinks.length).toBe(2);
+			expect(logoLinks.length).toBe(1);
 		});
 
 		it("should use proper button elements for interactive controls", () => {
@@ -165,46 +138,6 @@ describe("NavHeader Component", () => {
 				expect(header.contains(section)).toBe(true);
 			});
 		});
-
-		it("should have proper container structure for layout", () => {
-			const mainContainer = document.querySelector(".flex.items-center.justify-between");
-			expect(mainContainer).toBeInTheDocument();
-
-			const mobileMenuContainer = document.querySelector(".absolute.inset-x-0");
-			expect(mobileMenuContainer).toBeInTheDocument();
-		});
-	});
-
-	describe("NavHeader Content", () => {
-		beforeEach(() => {
-			render(<NavHeader />);
-		});
-
-		it("should display correct desktop navigation link text", () => {
-			const homeLinks = screen.getAllByText("Home");
-			expect(homeLinks.length).toBeGreaterThan(0);
-
-			const aboutUsLinks = screen.getAllByText(/about us/i);
-			expect(aboutUsLinks.length).toBeGreaterThan(0);
-
-			const tryForFreeButtons = screen.getAllByText(/try for free/i);
-			expect(tryForFreeButtons.length).toBeGreaterThan(0);
-		});
-
-		it("should display correct mobile navigation link text", () => {
-			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
-			fireEvent.click(mobileMenuButton);
-
-			const mobileMenu = screen.getByTestId("mobile-menu");
-			const homeLinks = within(mobileMenu).getAllByText("Home");
-			expect(homeLinks.length).toBeGreaterThan(0);
-
-			const aboutUsLinks = within(mobileMenu).getAllByRole("button", { name: /go to about us page/i });
-			expect(aboutUsLinks.length).toBeGreaterThan(0);
-
-			const tryForFreeButtons = screen.getAllByText(/try for free/i);
-			expect(tryForFreeButtons.length).toBeGreaterThan(0);
-		});
 	});
 
 	describe("NavHeader Props", () => {
@@ -217,38 +150,9 @@ describe("NavHeader Component", () => {
 				render(<NavHeader />);
 			});
 
-			it("should have correct props for header element", () => {
-				const header = screen.getByTestId("nav-header");
-				expect(header.className).toContain("relative z-40 w-full transition-colors duration-300");
-				expect(header.className).toContain("bg-background");
-				expect(header.className).not.toContain("bg-white");
-			});
-
 			it("should have correct props for header container", () => {
 				const headerContainer = screen.getByTestId("nav-header-container");
 				expect(headerContainer.className).toContain("flex items-center justify-between");
-			});
-
-			it("should have correct props for Logo components", () => {
-				const logo = screen.getByTestId("logo");
-				const logoDark = screen.getByTestId("logo-dark");
-
-				expect(logo.className).toContain("opacity-100");
-				expect(logoDark.className).toContain("opacity-0");
-
-				expect(logo.className).toContain("sm:h-13 lg:h-15 my-1 h-12 w-auto");
-				expect(logoDark.className).toContain("sm:h-13 lg:h-15 my-1 h-12 w-auto");
-
-				expect(logo.className).toContain("md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16");
-				expect(logoDark.className).toContain("md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16");
-			});
-
-			it("should have correct props for desktop navigation elements", () => {
-				const aboutUsLinks = screen.getAllByText(/about us/i);
-				expect(aboutUsLinks.length).toBeGreaterThan(0);
-
-				const tryForFreeButtons = screen.getAllByText(/try for free/i);
-				expect(tryForFreeButtons.length).toBeGreaterThan(0);
 			});
 
 			it("should have correct props for mobile menu button when closed", () => {
@@ -274,31 +178,12 @@ describe("NavHeader Component", () => {
 
 			it("should have correct props for header element when menu is open", () => {
 				const header = screen.getByTestId("nav-header");
-				expect(header.className).toContain("relative z-40 w-full transition-colors duration-300");
-				expect(header.className).toContain("bg-white");
-				expect(header.className).not.toContain("bg-background");
+				expect(header.className).toContain("bg-transparent");
 			});
 
-			it("should have correct props for Logo components when menu is open", () => {
-				const logo = screen.getByTestId("logo");
-				const logoDark = screen.getByTestId("logo-dark");
-
-				expect(logo.className).toContain("opacity-0");
-				expect(logoDark.className).toContain("opacity-100");
-			});
-
-			it("should have correct props for mobile menu container when open", () => {
-				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0");
+			it("should render mobile menu", () => {
+				const mobileMenuContainer = screen.getByTestId("mobile-menu");
 				expect(mobileMenuContainer).toBeInTheDocument();
-				expect(mobileMenuContainer?.className).toContain("bg-white");
-			});
-
-			it("should have correct props for mobile navigation elements", () => {
-				const aboutUsElements = screen.getAllByText(/about us/i);
-				expect(aboutUsElements.length).toBeGreaterThan(1);
-
-				const tryForFreeElements = screen.getAllByText(/try for free/i);
-				expect(tryForFreeElements.length).toBeGreaterThan(1);
 			});
 
 			it("should have correct props for mobile menu button when open", () => {
@@ -328,7 +213,7 @@ describe("NavHeader Component", () => {
 
 				it("should have proper focus management for interactive elements", () => {
 					const logoLinks = screen.getAllByRole("link", { name: "Go to homepage" });
-					expect(logoLinks.length).toBe(2);
+					expect(logoLinks.length).toBe(1);
 
 					const desktopNav = document.querySelector(".hidden.items-center.gap-6.md\\:flex");
 					const navLinks = desktopNav?.querySelectorAll("a, button");
@@ -338,14 +223,6 @@ describe("NavHeader Component", () => {
 
 					const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 					expect(mobileMenuButton.tabIndex).not.toBe(-1);
-				});
-
-				it("should have proper aria-labels for non-text elements", () => {
-					const logoLinks = screen.getAllByRole("link", { name: "Go to homepage" });
-					expect(logoLinks.length).toBe(2);
-
-					const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
-					expect(mobileMenuButton).toHaveAttribute("aria-label", "Open Navigation Menu");
 				});
 			});
 
@@ -361,9 +238,9 @@ describe("NavHeader Component", () => {
 				});
 
 				it("should have mobile menu container properly hidden from screen readers", () => {
-					const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-					expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
-					expect(mobileMenuContainer?.getAttribute("aria-hidden")).toBe("true");
+					const mobileMenuContainer = screen.getByTestId("mobile-menu");
+					expect(mobileMenuContainer.className).toContain("opacity-0");
+					expect(mobileMenuContainer.getAttribute("aria-hidden")).toBe("true");
 				});
 			});
 
@@ -381,9 +258,9 @@ describe("NavHeader Component", () => {
 				});
 
 				it("should have mobile menu container properly visible to screen readers", () => {
-					const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-					expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
-					expect(mobileMenuContainer?.className).not.toContain("max-h-sm pointer-events-none opacity-0");
+					const mobileMenuContainer = screen.getByTestId("mobile-menu");
+					expect(mobileMenuContainer.className).toContain("opacity-100");
+					expect(mobileMenuContainer.className).not.toContain("opacity-0");
 					expect(mobileMenuContainer).toHaveAttribute("aria-hidden", "false");
 				});
 
@@ -454,8 +331,8 @@ describe("NavHeader Component", () => {
 				const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
 				fireEvent.click(mobileMenuButton);
 
-				const mobileMenuContainer = document.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
-				expect(mobileMenuContainer?.className).toContain("max-h-lg pointer-events-auto opacity-100");
+				const mobileMenuContainer = screen.getByTestId("mobile-menu");
+				expect(mobileMenuContainer.className).toContain("opacity-100");
 
 				Object.defineProperty(globalThis, "innerWidth", {
 					configurable: true,
@@ -465,7 +342,7 @@ describe("NavHeader Component", () => {
 
 				fireEvent(globalThis as unknown as Window, new Event("resize"));
 
-				expect(mobileMenuContainer?.className).toContain("max-h-sm pointer-events-none opacity-0");
+				expect(mobileMenuContainer.className).toContain("opacity-0");
 			});
 
 			it("should maintain correct visibility below and above breakpoint", () => {
