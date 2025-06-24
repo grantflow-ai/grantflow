@@ -5,13 +5,13 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 const gradientPath = [
-	`radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 100% 0%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 50% 0%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 0% 0%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 0% 100%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 50% 100%, var(--primary) 0%, transparent 100%)`,
-	`radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)`,
+	"radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)",
+	"radial-gradient(60% 100% at 100% 0%, var(--primary) 0%, transparent 100%)",
+	"radial-gradient(60% 100% at 50% 0%, var(--primary) 0%, transparent 100%)",
+	"radial-gradient(60% 100% at 0% 0%, var(--primary) 0%, transparent 100%)",
+	"radial-gradient(60% 100% at 0% 100%, var(--primary) 0%, transparent 100%)",
+	"radial-gradient(60% 100% at 50% 100%, var(--primary) 0%, transparent 100%)",
+	"radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)",
 ];
 
 export function AnimatedGradientBackground({ className }: React.HTMLAttributes<HTMLDivElement>) {
