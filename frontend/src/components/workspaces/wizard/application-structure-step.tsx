@@ -1,5 +1,6 @@
 "use client";
 
+import { GrantSectionUpdateRequestFactory } from "::testing/factories";
 import {
 	closestCenter,
 	DndContext,
@@ -20,10 +21,10 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppButton } from "@/components/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -59,31 +60,47 @@ interface SectionFormData {
 
 type UpdateGrantSection = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
 
+function IconButton({
+	children,
+	className = "",
+	onClick,
+}: {
+	children: React.ReactNode;
+	className?: string;
+	onClick?: () => void;
+}) {
+	return (
+		<Button
+			className={`size-6 rounded-none hover:bg-gray-50 ${className}`}
+			onClick={onClick}
+			size="icon"
+			type="button"
+			variant="ghost"
+		>
+			{children}
+		</Button>
+	);
+}
+
 const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	if (isDetailedSection(section)) {
 		return section;
 	}
 
-	return {
-		depends_on: [],
-		generation_instructions: "",
+	return GrantSectionUpdateRequestFactory.build({
 		id: section.id,
-		is_clinical_trial: null,
-		is_detailed_workplan: null,
-		keywords: [],
 		max_words: 3000,
 		order: section.order,
 		parent_id: section.parent_id,
-		search_queries: [],
 		title: section.title,
-		topics: [],
-	};
+	});
 };
 
 interface SortableSectionProps {
 	isDragging?: boolean;
 	isExpanded: boolean;
 	isSubsection?: boolean;
+	onAddSubsection?: (parentId: string) => void;
 	onDelete: () => void;
 	onToggleExpand: () => void;
 	onUpdate: (updates: Partial<GrantSection>) => void;
@@ -127,6 +144,7 @@ interface DragAndDropContainerProps {
 	expandedSections: Set<string>;
 	grantSections: GrantSection[];
 	grantTemplateRagJobData?: API.RetrieveRagJob.Http200.ResponseBody | null;
+	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleDragEnd: (event: DragEndEvent) => Promise<void>;
 	handleDragOver: (event: DragOverEvent) => Promise<void>;
@@ -156,7 +174,7 @@ interface SectionEditorProps {
 	expandedSections: Set<string>;
 	grantSections: GrantSection[];
 	grantTemplateRagJobData?: API.RetrieveRagJob.Http200.ResponseBody | null;
-	handleAddNewSection: () => Promise<void>;
+	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleDragEnd: (event: DragEndEvent) => Promise<void>;
 	handleDragOver: (event: DragOverEvent) => Promise<void>;
@@ -171,6 +189,7 @@ interface SectionEditorProps {
 interface SectionListProps {
 	expandedSections: Set<string>;
 	grantSections: GrantSection[];
+	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
 	mainSections: GrantSection[];
@@ -397,7 +416,7 @@ function ApplicationStructurePreview() {
 		}),
 	);
 
-	const toggleSectionExpanded = (sectionId: string) => {
+	const toggleSectionExpanded = useCallback((sectionId: string) => {
 		setExpandedSections((prev) => {
 			const newSet = new Set(prev);
 			if (newSet.has(sectionId)) {
@@ -407,130 +426,146 @@ function ApplicationStructurePreview() {
 			}
 			return newSet;
 		});
-	};
+	}, []);
 
-	const handleUpdateSection = async (sectionId: string, updates: Partial<GrantSection>) => {
-		const updatedSections = grantSections.map((section) => {
-			if (section.id === sectionId) {
-				return toUpdateGrantSection({ ...section, ...updates });
-			}
-			return toUpdateGrantSection(section);
-		});
-		await updateGrantSections(updatedSections);
-	};
-
-	const handleDeleteSection = async (sectionId: string) => {
-		const updatedSections = grantSections.filter((section) => section.id !== sectionId).map(toUpdateGrantSection);
-		await updateGrantSections(updatedSections);
-		setExpandedSections((prev) => {
-			const newSet = new Set(prev);
-			newSet.delete(sectionId);
-			return newSet;
-		});
-	};
-
-	const handleAddNewSection = async () => {
-		const newSection: UpdateGrantSection = {
-			depends_on: [],
-			generation_instructions: "",
-			id: `new-section-${Date.now()}`,
-			is_clinical_trial: null,
-			is_detailed_workplan: null,
-			keywords: [],
-			max_words: 3000,
-			order: grantSections.length,
-			parent_id: null,
-			search_queries: [],
-			title: "Category Name",
-			topics: [],
-		};
-		const updatedSections = [...grantSections.map(toUpdateGrantSection), newSection];
-		await updateGrantSections(updatedSections);
-	};
-
-	const handleDragStart = (event: DragStartEvent) => {
-		setActiveId(event.active.id as string);
-	};
-
-	const handleDragEnd = async (event: DragEndEvent) => {
-		const { active, over } = event;
-		setActiveId(null);
-
-		if (!over || active.id === over.id) {
-			return;
-		}
-
-		const sections = [...grantSections];
-		const activeSection = sections.find((s) => s.id === active.id);
-		const overSection = sections.find((s) => s.id === over.id);
-
-		if (!(activeSection && overSection)) {
-			return;
-		}
-
-		const oldIndex = sections.findIndex((s) => s.id === active.id);
-		const newIndex = sections.findIndex((s) => s.id === over.id);
-
-		const reorderedSections = arrayMove(sections, oldIndex, newIndex);
-
-		const updatedSections = reorderedSections.map((section, index) => ({
-			...section,
-			order: index,
-			parent_id: section.parent_id ?? null,
-		}));
-
-		await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
-	};
-
-	const handleDragOver = async (event: DragOverEvent) => {
-		const { active, over } = event;
-
-		if (!over || active.id === over.id) {
-			return;
-		}
-
-		const sections = [...grantSections];
-		const activeSection = sections.find((s) => s.id === active.id);
-		const overSection = sections.find((s) => s.id === over.id);
-
-		if (!(activeSection && overSection)) {
-			return;
-		}
-
-		const activeIsChild = activeSection.parent_id !== null;
-		const overIsChild = overSection.parent_id !== null;
-
-		if (activeIsChild !== overIsChild) {
-			const updatedSections = sections.map((section) => {
-				if (section.id === activeSection.id) {
-					return {
-						...section,
-						parent_id: overIsChild ? overSection.parent_id : null,
-					};
+	const handleUpdateSection = useCallback(
+		async (sectionId: string, updates: Partial<GrantSection>) => {
+			const updatedSections = grantSections.map((section) => {
+				if (section.id === sectionId) {
+					return toUpdateGrantSection({ ...section, ...updates });
 				}
-				return section;
+				return toUpdateGrantSection(section);
+			});
+			await updateGrantSections(updatedSections);
+		},
+		[grantSections, updateGrantSections],
+	);
+
+	const handleDeleteSection = useCallback(
+		async (sectionId: string) => {
+			const updatedSections = grantSections
+				.filter((section) => section.id !== sectionId)
+				.map(toUpdateGrantSection);
+			await updateGrantSections(updatedSections);
+			setExpandedSections((prev) => {
+				const newSet = new Set(prev);
+				newSet.delete(sectionId);
+				return newSet;
+			});
+		},
+		[grantSections, updateGrantSections],
+	);
+
+	const handleAddNewSection = useCallback(
+		async (parentId: null | string = null) => {
+			const isSubsection = parentId !== null;
+			const newSection = GrantSectionUpdateRequestFactory.build({
+				order: grantSections.length,
+				parent_id: parentId,
+				title: isSubsection ? "Secondary Category Name" : "Category Name",
 			});
 
-			await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
-		}
-	};
+			const updatedSections: UpdateGrantSection[] = [...grantSections.map(toUpdateGrantSection), newSection];
+			await updateGrantSections(updatedSections);
+		},
+		[grantSections, updateGrantSections],
+	);
 
-	const sortedSections = [...grantSections].sort((a, b) => a.order - b.order);
-	const mainSections = sortedSections.filter((section) => !section.parent_id);
-	const subsectionsByParent = sortedSections.reduce<Record<string, typeof grantSections>>((acc, section) => {
-		if (section.parent_id) {
-			if (!(section.parent_id in acc)) {
-				acc[section.parent_id] = [];
+	const handleDragStart = useCallback((event: DragStartEvent) => {
+		setActiveId(event.active.id as string);
+	}, []);
+
+	const handleDragEnd = useCallback(
+		async (event: DragEndEvent) => {
+			const { active, over } = event;
+			setActiveId(null);
+
+			if (!over || active.id === over.id) {
+				return;
 			}
-			acc[section.parent_id].push(section);
-		}
-		return acc;
-	}, {});
 
-	const activeSection = grantSections.find((s) => s.id === activeId);
+			const sections = [...grantSections];
+			const activeSection = sections.find((s) => s.id === active.id);
+			const overSection = sections.find((s) => s.id === over.id);
+
+			if (!(activeSection && overSection)) {
+				return;
+			}
+
+			const oldIndex = sections.findIndex((s) => s.id === active.id);
+			const newIndex = sections.findIndex((s) => s.id === over.id);
+
+			const reorderedSections = arrayMove(sections, oldIndex, newIndex);
+
+			const updatedSections = reorderedSections.map((section, index) => ({
+				...section,
+				order: index,
+				parent_id: section.parent_id ?? null,
+			}));
+
+			await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
+		},
+		[grantSections, updateGrantSections],
+	);
+
+	const handleDragOver = useCallback(
+		async (event: DragOverEvent) => {
+			const { active, over } = event;
+
+			if (!over || active.id === over.id) {
+				return;
+			}
+
+			const sections = [...grantSections];
+			const activeSection = sections.find((s) => s.id === active.id);
+			const overSection = sections.find((s) => s.id === over.id);
+
+			if (!(activeSection && overSection)) {
+				return;
+			}
+
+			const activeIsChild = activeSection.parent_id !== null;
+			const overIsChild = overSection.parent_id !== null;
+
+			if (activeIsChild !== overIsChild) {
+				const updatedSections = sections.map((section) => {
+					if (section.id === activeSection.id) {
+						return {
+							...section,
+							parent_id: overIsChild ? overSection.parent_id : null,
+						};
+					}
+					return section;
+				});
+
+				await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
+			}
+		},
+		[grantSections, updateGrantSections],
+	);
+
+	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
+
+	const mainSections = useMemo(() => sortedSections.filter((section) => !section.parent_id), [sortedSections]);
+
+	const subsectionsByParent = useMemo(
+		() =>
+			sortedSections.reduce<Record<string, typeof grantSections>>((acc, section) => {
+				if (section.parent_id) {
+					if (!(section.parent_id in acc)) {
+						acc[section.parent_id] = [];
+					}
+					acc[section.parent_id].push(section);
+				}
+				return acc;
+			}, {}),
+		[sortedSections],
+	);
+
+	const activeSection = useMemo(() => grantSections.find((s) => s.id === activeId), [grantSections, activeId]);
 
 	return (
-		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
+		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-6">
 			{(() => {
 				if (!application) {
 					return <EmptyStateView />;
@@ -567,6 +602,7 @@ function DragAndDropContainer({
 	activeSection,
 	expandedSections,
 	grantSections,
+	handleAddNewSection,
 	handleDeleteSection,
 	handleDragEnd,
 	handleDragOver,
@@ -585,11 +621,12 @@ function DragAndDropContainer({
 			onDragStart={handleDragStart}
 			sensors={sensors}
 		>
-			<div className="space-y-3">
+			<div className="mb-3 space-y-2 p-2">
 				{grantSections.length > 0 && (
 					<SectionList
 						expandedSections={expandedSections}
 						grantSections={grantSections}
+						handleAddNewSection={handleAddNewSection}
 						handleDeleteSection={handleDeleteSection}
 						handleUpdateSection={handleUpdateSection}
 						mainSections={mainSections}
@@ -630,7 +667,7 @@ function GeneratingLoader() {
 
 function PreviewHeader({ onAddSection }: { onAddSection: () => void }) {
 	return (
-		<div className="mb-4 flex justify-end">
+		<div className="mb-2 flex justify-end">
 			<AppButton
 				data-testid="add-new-section-button"
 				leftIcon={<Plus />}
@@ -651,20 +688,50 @@ function SectionDragOverlay({
 	activeId: null | string;
 	activeSection: GrantSection | undefined;
 }) {
+	if (!(activeId && activeSection)) {
+		return <DragOverlay />;
+	}
+
+	const isSubsection = activeSection.parent_id !== null;
+	const hasMaxWords = isDetailedSection(activeSection) && activeSection.max_words;
+
 	return (
 		<DragOverlay>
-			{activeId && activeSection ? (
-				<div className="cursor-move rounded border border-gray-200 bg-white p-3 shadow-lg">
-					<div className="flex items-center justify-between">
-						<h5 className="font-medium">{activeSection.title}</h5>
-						{isDetailedSection(activeSection) && activeSection.max_words ? (
-							<span className="text-muted-foreground-dark text-sm">
-								{activeSection.max_words.toLocaleString()} Max words
-							</span>
-						) : null}
+			<div
+				className={`flex items-center justify-start gap-5 rounded bg-red-100 shadow-lg outline outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
+			>
+				<div className="relative size-6 cursor-move bg-yellow-200">
+					<GripVertical className="size-6 text-gray-400" />
+				</div>
+
+				<div className="flex flex-1 items-center justify-between bg-green-100">
+					<div className="flex flex-1 flex-col items-start justify-start bg-blue-100">
+						<div className="flex w-full items-center justify-start gap-2 bg-purple-100">
+							<h3 className="bg-orange-100 text-base font-medium text-gray-900">{activeSection.title}</h3>
+							{hasMaxWords && (
+								<span className="bg-pink-100 text-sm font-normal text-gray-500">
+									{activeSection.max_words.toLocaleString()} Max words
+								</span>
+							)}
+						</div>
+					</div>
+					<div className="flex items-center justify-end bg-indigo-100">
+						<IconButton>
+							<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
+						</IconButton>
+
+						{!isSubsection && (
+							<IconButton className="ml-1">
+								<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
+							</IconButton>
+						)}
+
+						<IconButton className="ml-5">
+							<Image alt="Expand" height={22} src="/icons/chevron-down.svg" width={22} />
+						</IconButton>
 					</div>
 				</div>
-			) : null}
+			</div>
 		</DragOverlay>
 	);
 }
@@ -691,9 +758,9 @@ function SectionEditForm({
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
 					<h5 className="font-medium">New section</h5>
-					<Button onClick={onCancel} size="sm" variant="ghost">
-						<ChevronUp className="size-4" />
-					</Button>
+					<IconButton className="size-4 rounded" onClick={onCancel}>
+						<Image alt="Collapse" className="size-2.5" height={10} src="/icons/chevron-up.svg" width={10} />
+					</IconButton>
 				</div>
 
 				<div className="space-y-4">
@@ -791,53 +858,53 @@ function SectionEditor({
 	subsectionsByParent,
 	toggleSectionExpanded,
 }: SectionEditorProps) {
+	const handleAddMainSection = useCallback(() => handleAddNewSection(), [handleAddNewSection]);
+
 	return (
-		<div className="flex h-full flex-col">
-			<PreviewHeader onAddSection={handleAddNewSection} />
+		<>
+			<PreviewHeader onAddSection={handleAddMainSection} />
 			<ScrollArea className="flex-1">
-				<div className="space-y-5">
-					<Card
-						className="border-app-gray-100 border p-5 shadow-none"
-						data-testid="application-structure-sections"
-					>
-						<DragAndDropContainer
-							activeId={activeId}
-							activeSection={activeSection}
-							expandedSections={expandedSections}
-							grantSections={grantSections}
-							grantTemplateRagJobData={grantTemplateRagJobData}
-							handleDeleteSection={handleDeleteSection}
-							handleDragEnd={handleDragEnd}
-							handleDragOver={handleDragOver}
-							handleDragStart={handleDragStart}
-							handleUpdateSection={handleUpdateSection}
-							mainSections={mainSections}
-							sensors={sensors}
-							subsectionsByParent={subsectionsByParent}
-							toggleSectionExpanded={toggleSectionExpanded}
-						/>
-					</Card>
-				</div>
+				<DragAndDropContainer
+					activeId={activeId}
+					activeSection={activeSection}
+					expandedSections={expandedSections}
+					grantSections={grantSections}
+					grantTemplateRagJobData={grantTemplateRagJobData}
+					handleAddNewSection={handleAddNewSection}
+					handleDeleteSection={handleDeleteSection}
+					handleDragEnd={handleDragEnd}
+					handleDragOver={handleDragOver}
+					handleDragStart={handleDragStart}
+					handleUpdateSection={handleUpdateSection}
+					mainSections={mainSections}
+					sensors={sensors}
+					subsectionsByParent={subsectionsByParent}
+					toggleSectionExpanded={toggleSectionExpanded}
+				/>
 			</ScrollArea>
-		</div>
+		</>
 	);
 }
 
 function SectionList({
 	expandedSections,
 	grantSections,
+	handleAddNewSection,
 	handleDeleteSection,
 	handleUpdateSection,
 	mainSections,
 	subsectionsByParent,
 	toggleSectionExpanded,
 }: SectionListProps) {
+	const sortableContextItems = useMemo(() => grantSections.map((s) => s.id), [grantSections]);
+
 	return (
-		<SortableContext items={grantSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+		<SortableContext items={sortableContextItems} strategy={verticalListSortingStrategy}>
 			{mainSections.map((section) => (
-				<div key={section.id}>
+				<div className="space-y-2" key={section.id}>
 					<SortableSection
 						isExpanded={expandedSections.has(section.id)}
+						onAddSubsection={() => handleAddNewSection(section.id)}
 						onDelete={() => handleDeleteSection(section.id)}
 						onToggleExpand={() => {
 							toggleSectionExpanded(section.id);
@@ -868,6 +935,7 @@ function SortableSection({
 	isDragging = false,
 	isExpanded,
 	isSubsection = false,
+	onAddSubsection,
 	onDelete: _onDelete,
 	onToggleExpand,
 	onUpdate,
@@ -897,14 +965,14 @@ function SortableSection({
 
 	const hasMaxWords = isDetailedSection(section) && section.max_words;
 
-	const handleSave = () => {
+	const handleSave = useCallback(() => {
 		onUpdate({
 			max_words: formData.max_words,
 			title: formData.title,
 			...(formData.isResearchPlan !== undefined && { is_detailed_workplan: formData.isResearchPlan }),
 		});
 		onToggleExpand();
-	};
+	}, [formData, onUpdate, onToggleExpand]);
 
 	if (isExpanded) {
 		return (
@@ -924,59 +992,41 @@ function SortableSection({
 
 	return (
 		<div
-			className={`flex w-full items-center justify-start gap-6 rounded bg-white px-3 py-4 outline outline-1 outline-offset-[-1px] outline-blue-500 ${isSubsection ? "ml-6" : ""} ${
+			className={`flex items-center justify-start gap-5 rounded bg-red-100 outline outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"} ${
 				isDragging ? "shadow-lg" : ""
 			}`}
 			ref={setNodeRef}
 			style={style}
 		>
-			<div {...attributes} {...listeners} className="relative size-6 cursor-move">
+			<div {...attributes} {...listeners} className="relative size-6 cursor-move bg-yellow-200">
 				<GripVertical className="size-6 text-gray-400" />
 			</div>
 
-			<div className="flex flex-1 items-center justify-between gap-2">
-				<div className="flex flex-1 flex-col items-start justify-start gap-1">
-					<div className="flex w-full items-center justify-start gap-2">
-						<h3 className="text-base font-medium text-gray-900">{section.title}</h3>
+			<div className="flex flex-1 items-center justify-between bg-green-100">
+				<div className="flex flex-1 flex-col items-start justify-start bg-blue-100">
+					<div className="flex w-full items-center justify-start gap-2 bg-purple-100">
+						<h3 className="bg-orange-100 text-base font-medium text-gray-900">{section.title}</h3>
 						{hasMaxWords && isDetailedSection(section) && (
-							<span className="text-sm font-normal text-gray-500">
+							<span className="bg-pink-100 text-sm font-normal text-gray-500">
 								{section.max_words.toLocaleString()} Max words
 							</span>
 						)}
 					</div>
 				</div>
-				<div className="flex items-center justify-end gap-2">
-					<Button
-						className="opacity-0 transition-opacity hover:opacity-100"
-						onClick={_onDelete}
-						size="icon"
-						type="button"
-						variant="ghost"
-					>
-						<Image
-							alt="Delete"
-							className="size-4 text-red-500"
-							height={16}
-							src="/icons/delete.svg"
-							width={16}
-						/>
-					</Button>
+				<div className="flex items-center justify-end bg-indigo-100">
+					<IconButton onClick={_onDelete}>
+						<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
+					</IconButton>
 
 					{!isSubsection && (
-						<Button
-							className="opacity-0 transition-opacity hover:opacity-100"
-							size="icon"
-							type="button"
-							variant="ghost"
-						>
-							<Plus className="size-4 text-blue-500" />
-						</Button>
+						<IconButton className="ml-1" onClick={() => onAddSubsection?.(section.id)}>
+							<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
+						</IconButton>
 					)}
 
-					{/* Expand/Collapse Arrow */}
-					<Button onClick={onToggleExpand} size="icon" type="button" variant="ghost">
-						<ChevronDown className="size-4" />
-					</Button>
+					<IconButton className="ml-5" onClick={onToggleExpand}>
+						<Image alt="Expand" height={22} src="/icons/chevron-down.svg" width={22} />
+					</IconButton>
 				</div>
 			</div>
 		</div>

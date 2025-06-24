@@ -206,7 +206,6 @@ export function DevAutofillButton() {
 
 	return (
 		<AppButton
-			className="absolute left-1/2 -translate-x-1/2"
 			data-testid="dev-autofill-button"
 			leftIcon={<Wand2 />}
 			onClick={handleAutofill}
