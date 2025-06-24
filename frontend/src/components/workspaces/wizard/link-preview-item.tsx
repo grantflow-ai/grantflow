@@ -8,6 +8,7 @@ export default function LinkPreviewItem({ parentId, url }: { parentId?: string; 
 	const { removeUrl } = useApplicationStore();
 
 	const handleRemove = async () => {
+		if (!parentId) return;
 		await removeUrl(url, parentId);
 	};
 
