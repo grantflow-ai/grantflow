@@ -403,6 +403,23 @@ export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemp
 	submission_date: factory.date.future().toISOString(),
 }));
 
+type GrantSectionUpdateRequest = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
+
+export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>(() => ({
+	depends_on: [],
+	generation_instructions: "",
+	id: `section-${crypto.randomUUID()}`,
+	is_clinical_trial: null,
+	is_detailed_workplan: null,
+	keywords: [],
+	max_words: 3000,
+	order: 0,
+	parent_id: null,
+	search_queries: [],
+	title: "Category Name",
+	topics: [],
+}));
+
 interface SourceProcessingNotification {
 	identifier: string;
 	indexing_status: "FAILED" | "FINISHED" | "INDEXING";

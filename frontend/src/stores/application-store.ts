@@ -455,11 +455,15 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
-		const updatedApplication = deepmerge(application, {
+		// optimistically assume the update will succeed
+		const updatedApplication: NonNullable<ApplicationType> = {
+			...application,
 			grant_template: {
+				...application.grant_template,
 				grant_sections: sections,
 			},
-		}) as NonNullable<ApplicationType>;
+		};
+
 		set({ application: updatedApplication });
 
 		try {
@@ -467,11 +471,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				grant_sections: sections,
 			});
 		} catch (error) {
-			const restoredApplication = deepmerge(application, {
+			const restoredApplication: NonNullable<ApplicationType> = {
+				...application,
 				grant_template: {
-					grant_sections: previousGrantSections,
+					...application.grant_template,
+					grant_sections: previousGrantSections ?? [],
 				},
-			}) as NonNullable<ApplicationType>;
+			};
 			set({ application: restoredApplication });
 			logError({ error, identifier: "updateGrantSections" });
 			toast.error("Failed to update grant sections");
