@@ -1,5 +1,5 @@
 import { ApplicationWithTemplateFactory, GrantTemplateFactory, RagSourceFactory } from "::testing/factories";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useEffect } from "react";
 import { useApplicationStore } from "@/stores/application-store";
 import { ApplicationPreview } from "./application-preview";
