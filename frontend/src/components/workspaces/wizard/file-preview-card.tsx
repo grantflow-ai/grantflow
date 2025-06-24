@@ -52,6 +52,7 @@ export default function FilePreviewCard({ file, parentId }: { file: FileWithId; 
 	};
 
 	const handleRemove = async () => {
+		if (!parentId) return;
 		await removeFile(file, parentId);
 		setDropdownOpen(false);
 	};
