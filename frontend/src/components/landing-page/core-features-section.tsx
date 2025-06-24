@@ -1,5 +1,5 @@
+import Image from "next/image";
 import type { HTMLProps } from "react";
-import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articles-animated";
 import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
 
@@ -30,7 +30,16 @@ export function CoreFeaturesSection() {
 	return (
 		<section aria-label="core-features-section" className="relative w-full bg-white">
 			<div className="absolute inset-0 z-0">
-				<PatternedBackground aria-hidden="true" />
+				<Image
+					alt="background"
+					aria-hidden="true"
+					className="size-full object-none xl:object-cover"
+					height={0}
+					priority
+					src="/assets/landing-bg-pattern.svg"
+					style={{ height: "auto", width: "100%" }}
+					width={0}
+				/>
 			</div>
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center py-10 text-center text-stone-800 md:px-10 lg:px-20">
 				<ScrollFadeElement className="mx-auto">

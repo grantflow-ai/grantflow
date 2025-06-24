@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/grantflow.iml" filepath="$PROJECT_DIR$/grantflow.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/grantflow.iml" filepath="$PROJECT_DIR$/.idea/grantflow.iml" />
     </modules>
   </component>
 </project>
