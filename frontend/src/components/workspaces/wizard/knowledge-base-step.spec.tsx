@@ -411,8 +411,8 @@ describe("KnowledgeBaseStep", () => {
 			expect(urlLink).toBeInTheDocument();
 
 			const { removeUrl } = useApplicationStore.getState();
-			removeUrl("https://example.com");
-			expect(mockRemoveUrl).toHaveBeenCalledWith("https://example.com");
+			removeUrl("https://example.com", "mock-parent-id");
+			expect(mockRemoveUrl).toHaveBeenCalledWith("https://example.com", "mock-parent-id");
 		});
 	});
 

@@ -46,6 +46,25 @@ const initialState: ApplicationState = {
 	},
 };
 
+const validateStateForRagSource = (application: ApplicationType, parentId: string, actionName: string): boolean => {
+	if (!application) {
+		return false;
+	}
+
+	const isApplicationParent = parentId === application.id;
+	const isTemplateParent = parentId === application.grant_template?.id;
+
+	if (!(isApplicationParent || isTemplateParent)) {
+		logError({
+			error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
+			identifier: actionName,
+		});
+		return false;
+	}
+
+	return !(isTemplateParent && !application.grant_template);
+};
+
 const handleGrantTemplateValidationError = async (httpError: HTTPError): Promise<void> => {
 	const errorMessage = await extractGrantTemplateValidationError(httpError);
 
@@ -72,7 +91,7 @@ const handleGrantTemplateValidationError = async (httpError: HTTPError): Promise
 };
 
 interface ApplicationActions {
-	addFile: (file: FileWithId, parentId?: string) => Promise<void>;
+	addFile: (file: FileWithId, parentId: string) => Promise<void>;
 	addUrl: (url: string, parentId: string) => Promise<void>;
 	areFilesOrUrlsIndexing: () => boolean;
 	checkAndRestoreJobState: () => Promise<void>;
@@ -80,8 +99,8 @@ interface ApplicationActions {
 	createApplication: (workspaceId: string) => Promise<void>;
 	generateTemplate: (templateId: string) => Promise<void>;
 	getIndexingStatus: () => Promise<boolean>;
-	removeFile: (file: FileWithId, parentId?: string) => Promise<void>;
-	removeUrl: (url: string, parentId?: string) => Promise<void>;
+	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
+	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
 	retrieveApplication: (workspaceId: string, applicationId: string) => Promise<void>;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
@@ -137,42 +156,22 @@ const uploadFileInProduction = async (
 export const useApplicationStore = create<ApplicationActions & ApplicationState>((set, get) => ({
 	...initialState,
 
-	addFile: async (file: FileWithId, parentId?: string) => {
+	addFile: async (file: FileWithId, parentId: string) => {
 		const { application } = get();
 
-		if (!parentId) {
-			toast.error("Cannot upload file: Parent ID missing");
+		if (!validateStateForRagSource(application, parentId, "addFile")) {
 			return;
 		}
 
-		assertIsNotNullish(application, {
-			message: "Application should not be null when calling addFile",
-		});
-
-		const isApplicationParent = parentId === application.id;
-		const isTemplateParent = parentId === application.grant_template?.id;
-
-		if (!(isApplicationParent || isTemplateParent)) {
-			logError({
-				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
-				identifier: "addFile",
-			});
-			return;
-		}
-
-		if (isTemplateParent) {
-			assertIsNotNullish(application.grant_template, {
-				message: "Grant template should not be null when uploading to template parent",
-			});
-		}
+		const isApplicationParent = parentId === application!.id;
 
 		try {
 			await (process.env.NODE_ENV === "development"
-				? uploadFileInDevelopment(file, application, parentId)
-				: uploadFileInProduction(file, application, parentId, isApplicationParent));
+				? uploadFileInDevelopment(file, application!, parentId)
+				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
 
 			toast.success(`File ${file.name} uploaded successfully`);
-			await get().retrieveApplication(application.workspace_id, application.id);
+			await get().retrieveApplication(application!.workspace_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "addFile" });
 			toast.error("Failed to upload file. Please try again.");
@@ -182,32 +181,17 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	addUrl: async (url: string, parentId: string) => {
 		const { application } = get();
 
-		assertIsNotNullish(application, {
-			message: "Application should not be null when calling addUrl",
-		});
-
-		const isApplicationParent = parentId === application.id;
-		const isTemplateParent = parentId === application.grant_template?.id;
-
-		if (!(isApplicationParent || isTemplateParent)) {
-			logError({
-				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
-				identifier: "addUrl",
-			});
+		if (!validateStateForRagSource(application, parentId, "addUrl")) {
 			return;
 		}
 
-		if (isTemplateParent) {
-			assertIsNotNullish(application.grant_template, {
-				message: "Grant template should not be null when adding URL to template parent",
-			});
-		}
+		const isApplicationParent = parentId === application!.id;
 
 		try {
 			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
-			await crawlUrl(application.workspace_id, parentId, url);
+			await crawlUrl(application!.workspace_id, parentId, url);
 			toast.success("URL added successfully");
-			await get().retrieveApplication(application.workspace_id, application.id);
+			await get().retrieveApplication(application!.workspace_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "addUrl" });
 			toast.error("Failed to process URL. Please try again.");
@@ -342,26 +326,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		return areFilesOrUrlsIndexing();
 	},
 
-	removeFile: async (fileToRemove: FileWithId, parentId?: string) => {
+	removeFile: async (fileToRemove: FileWithId, parentId: string) => {
 		const { application } = get();
 
-		if (!parentId) {
-			toast.error("Cannot remove file: Parent ID not found");
-			return;
-		}
-
-		assertIsNotNullish(application, {
-			message: "Application should not be null when calling removeFile",
-		});
-
-		const isApplicationParent = parentId === application.id;
-		const isTemplateParent = parentId === application.grant_template?.id;
-
-		if (!(isApplicationParent || isTemplateParent)) {
-			logError({
-				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
-				identifier: "removeFile",
-			});
+		if (!validateStateForRagSource(application, parentId, "removeFile")) {
 			return;
 		}
 
@@ -370,43 +338,31 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
+		const isApplicationParent = parentId === application!.id;
+
 		try {
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
-			await deleteSource(application.workspace_id, parentId, fileToRemove.id);
+			await deleteSource(application!.workspace_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
-			await get().retrieveApplication(application.workspace_id, application.id);
+			await get().retrieveApplication(application!.workspace_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "removeFile" });
 			toast.error("Failed to remove file. Please try again.");
 		}
 	},
 
-	removeUrl: async (urlToRemove: string, parentId?: string) => {
+	removeUrl: async (urlToRemove: string, parentId: string) => {
 		const { application } = get();
 
-		if (!parentId) {
-			toast.error("Cannot remove URL: Parent ID not found");
+		if (!validateStateForRagSource(application, parentId, "removeUrl")) {
 			return;
 		}
 
-		assertIsNotNullish(application, {
-			message: "Application should not be null when calling removeUrl",
-		});
-
-		const isApplicationParent = parentId === application.id;
-		const isTemplateParent = parentId === application.grant_template?.id;
-
-		if (!(isApplicationParent || isTemplateParent)) {
-			logError({
-				error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
-				identifier: "removeUrl",
-			});
-			return;
-		}
+		const isApplicationParent = parentId === application!.id;
 
 		const ragSources = isApplicationParent
-			? application.rag_sources
-			: (application.grant_template?.rag_sources ?? []);
+			? application!.rag_sources
+			: (application!.grant_template?.rag_sources ?? []);
 		const ragSource = ragSources.find((source) => source.url === urlToRemove);
 
 		if (!ragSource) {
@@ -416,9 +372,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
-			await deleteSource(application.workspace_id, parentId, ragSource.sourceId);
+			await deleteSource(application!.workspace_id, parentId, ragSource.sourceId);
 			toast.success("URL removed successfully");
-			await get().retrieveApplication(application.workspace_id, application.id);
+			await get().retrieveApplication(application!.workspace_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "removeUrl" });
 			toast.error("Failed to remove URL. Please try again.");
@@ -493,16 +449,36 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 	updateGrantSections: async (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
 		const { application } = get();
+		const previousGrantSections = application?.grant_template?.grant_sections;
 
 		if (!application?.grant_template?.id) {
 			return;
 		}
+
+		// optimistically assume the update will succeed
+		const updatedApplication: NonNullable<ApplicationType> = {
+			...application,
+			grant_template: {
+				...application.grant_template,
+				grant_sections: sections,
+			},
+		};
+
+		set({ application: updatedApplication });
 
 		try {
 			await updateGrantTemplate(application.workspace_id, application.id, application.grant_template.id, {
 				grant_sections: sections,
 			});
 		} catch (error) {
+			const restoredApplication: NonNullable<ApplicationType> = {
+				...application,
+				grant_template: {
+					...application.grant_template,
+					grant_sections: previousGrantSections ?? [],
+				},
+			};
+			set({ application: restoredApplication });
 			logError({ error, identifier: "updateGrantSections" });
 			toast.error("Failed to update grant sections");
 		}

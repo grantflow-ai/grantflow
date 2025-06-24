@@ -147,7 +147,7 @@ describe("LinkPreviewItem", () => {
 			expect(mockRemoveUrl).toHaveBeenCalledWith(url, parentId);
 		});
 
-		it("calls removeUrl without parentId when not provided", () => {
+		it("does not call removeUrl when parentId is not provided", () => {
 			const url = "https://example.com";
 
 			const mockRemoveUrl = vi.fn();
@@ -158,8 +158,7 @@ describe("LinkPreviewItem", () => {
 			const removeIcon = screen.getByTestId("link-remove-icon");
 			fireEvent.click(removeIcon);
 
-			expect(mockRemoveUrl).toHaveBeenCalledTimes(1);
-			expect(mockRemoveUrl).toHaveBeenCalledWith(url, undefined);
+			expect(mockRemoveUrl).not.toHaveBeenCalled();
 		});
 
 		it("calls removeUrl with correct URL and parentId for different URLs", () => {

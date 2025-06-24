@@ -141,12 +141,14 @@ describe("Application Store", () => {
 
 			await updateGrantSections(sections);
 
-			expect(updateGrantTemplate).toHaveBeenCalledWith(
-				application.workspace_id,
-				application.id,
-				application.grant_template!.id,
-				{ grant_sections: sections },
-			);
+			if (application.grant_template?.id) {
+				expect(updateGrantTemplate).toHaveBeenCalledWith(
+					application.workspace_id,
+					application.id,
+					application.grant_template.id,
+					{ grant_sections: sections },
+				);
+			}
 		});
 
 		it("should handle missing grant template gracefully", async () => {
@@ -197,7 +199,9 @@ describe("Application Store", () => {
 
 			const { addFile } = useApplicationStore.getState();
 
-			await addFile(file as any, application.grant_template?.id);
+			if (application.grant_template?.id) {
+				await addFile(file as any, application.grant_template.id);
+			}
 
 			expect(createTemplateSourceUploadUrl).toHaveBeenCalled();
 		});
@@ -234,13 +238,15 @@ describe("Application Store", () => {
 
 			const { removeFile } = useApplicationStore.getState();
 
-			await removeFile(file1 as any, application.grant_template?.id);
+			if (application.grant_template?.id) {
+				await removeFile(file1 as any, application.grant_template.id);
 
-			expect(deleteTemplateSource).toHaveBeenCalledWith(
-				application.workspace_id,
-				application.grant_template?.id,
-				"1",
-			);
+				expect(deleteTemplateSource).toHaveBeenCalledWith(
+					application.workspace_id,
+					application.grant_template.id,
+					"1",
+				);
+			}
 		});
 
 		it("should remove URLs", async () => {
@@ -260,13 +266,15 @@ describe("Application Store", () => {
 
 			const { removeUrl } = useApplicationStore.getState();
 
-			await removeUrl("https://example.com", application.grant_template?.id);
+			if (application.grant_template?.id) {
+				await removeUrl("https://example.com", application.grant_template.id);
 
-			expect(deleteTemplateSource).toHaveBeenCalledWith(
-				application.workspace_id,
-				application.grant_template?.id,
-				"source-1",
-			);
+				expect(deleteTemplateSource).toHaveBeenCalledWith(
+					application.workspace_id,
+					application.grant_template.id,
+					"source-1",
+				);
+			}
 		});
 	});
 

@@ -9,6 +9,7 @@ import {
 	IconDeadline,
 } from "@/components/workspaces/icons";
 import { DevAutofillButton } from "@/components/workspaces/wizard/dev-autofill-button";
+import { DevResetButton } from "@/components/workspaces/wizard/dev-reset-button";
 import { WIZARD_STEP_TITLES, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -68,7 +69,10 @@ export function WizardFooter() {
 			) : (
 				<div />
 			)}
-			<DevAutofillButton />
+			<div className="absolute left-1/2 flex -translate-x-1/2 flex-col gap-2">
+				<DevAutofillButton />
+				<DevResetButton />
+			</div>
 			<AppButton
 				data-testid="continue-button"
 				disabled={disabled}
