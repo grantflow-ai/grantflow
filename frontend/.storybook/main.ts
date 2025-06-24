@@ -3,7 +3,7 @@ import { mergeConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const config: StorybookConfig = {
-	addons: ["@storybook/addon-onboarding", "@storybook/addon-docs"],
+	addons: ["@storybook/addon-docs"],
 	framework: {
 		name: "@storybook/react-vite",
 		options: {},
