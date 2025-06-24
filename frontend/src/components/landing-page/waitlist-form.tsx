@@ -191,7 +191,7 @@ function WaitListFormItem({
 							placeholder={placeholder}
 							type={type}
 							{...field}
-							className={`form-input rounded-sm bg-white p-3 text-gray-600`}
+							className={"form-input rounded-sm bg-white p-3 text-gray-600"}
 							testId={testId}
 						/>
 					</FormControl>

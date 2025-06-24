@@ -45,7 +45,7 @@ export default function AboutPage() {
 					<div
 						className="pointer-events-none absolute inset-0 z-10 size-full overflow-hidden"
 						style={{
-							background: `radial-gradient(ellipse at center, var(--primary) 0%, transparent 75%)`,
+							background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 75%)",
 							contain: "strict",
 							left: "50%",
 							pointerEvents: "none",

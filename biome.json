@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.0.5/schema.json",
 	"assist": {
 		"actions": {
 			"source": {
@@ -169,6 +169,7 @@
 			},
 			"style": {
 				"noImplicitBoolean": "off",
+				"noInferrableTypes": "error",
 				"noNegationElse": "off",
 				"noNonNullAssertion": "off",
 				"noParameterAssign": "error",
@@ -181,6 +182,7 @@
 						}
 					}
 				},
+				"noUnusedTemplateLiteral": "error",
 				"noUselessElse": "error",
 				"useAsConstAssertion": "error",
 				"useBlockStatements": "off",

@@ -128,7 +128,7 @@ export default function SignIn() {
 					<div className="relative z-20 w-4/5 text-start xl:w-3/5">
 						<StackedHighlight className="pointer-events-none absolute -bottom-1/2 -z-10 lg:-right-1/3" />
 						<LogoDark
-							className={`sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16`}
+							className={"sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16"}
 							height="auto"
 							width="auto"
 						/>
