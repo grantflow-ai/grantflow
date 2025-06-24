@@ -61,7 +61,6 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
-    # Use worker_id to create unique container names for parallel execution
     container_name = f"test_postgres_container_{worker_id}" if worker_id != "master" else "test_postgres_container"
 
     with socket(AF_INET, SOCK_STREAM) as s:

@@ -29,13 +29,11 @@ def preload_models() -> None:
     logger.info("Preloading ML models for RAG tests...")
 
     try:
-        # Preload embedding model (SentenceTransformer)
         from packages.shared_utils.src.embeddings import get_embedding_model
 
         model = get_embedding_model()
         logger.info("Successfully preloaded embedding model: %s", type(model).__name__)
 
-        # Preload spaCy model
         from packages.shared_utils.src.nlp import get_spacy_model
 
         nlp = get_spacy_model()
