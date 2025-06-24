@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { action } from "storybook/actions";
 import { useApplicationStore } from "@/stores/application-store";
