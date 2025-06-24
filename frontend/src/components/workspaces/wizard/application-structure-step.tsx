@@ -71,7 +71,7 @@ function IconButton({
 }) {
 	return (
 		<Button
-			className={`size-6 rounded-none hover:bg-gray-50 ${className}`}
+			className={`size-6 cursor-pointer rounded-none hover:bg-gray-50 ${className}`}
 			onClick={onClick}
 			size="icon"
 			type="button"
@@ -698,24 +698,24 @@ function SectionDragOverlay({
 	return (
 		<DragOverlay>
 			<div
-				className={`flex items-center justify-start gap-5 rounded bg-red-100 shadow-lg outline outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
+				className={`flex items-center justify-start gap-5 rounded bg-white shadow-lg outline outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
 			>
-				<div className="relative size-6 cursor-move bg-yellow-200">
+				<div className="relative size-6 cursor-move ">
 					<GripVertical className="size-6 text-gray-400" />
 				</div>
 
-				<div className="flex flex-1 items-center justify-between bg-green-100">
-					<div className="flex flex-1 flex-col items-start justify-start bg-blue-100">
-						<div className="flex w-full items-center justify-start gap-2 bg-purple-100">
-							<h3 className="bg-orange-100 text-base font-medium text-gray-900">{activeSection.title}</h3>
+				<div className="flex flex-1 items-center justify-between ">
+					<div className="flex flex-1 flex-col items-start justify-start ">
+						<div className="flex w-full items-center justify-start gap-2 ">
+							<h3 className=" text-base font-medium text-gray-900">{activeSection.title}</h3>
 							{hasMaxWords && (
-								<span className="bg-pink-100 text-sm font-normal text-gray-500">
+								<span className=" text-sm font-normal text-gray-500">
 									{activeSection.max_words.toLocaleString()} Max words
 								</span>
 							)}
 						</div>
 					</div>
-					<div className="flex items-center justify-end bg-indigo-100">
+					<div className="flex items-center justify-end ">
 						<IconButton>
 							<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
 						</IconButton>
@@ -992,28 +992,28 @@ function SortableSection({
 
 	return (
 		<div
-			className={`flex items-center justify-start gap-5 rounded bg-red-100 outline outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"} ${
+			className={`flex items-center justify-start gap-5 rounded bg-white outline outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"} ${
 				isDragging ? "shadow-lg" : ""
 			}`}
 			ref={setNodeRef}
 			style={style}
 		>
-			<div {...attributes} {...listeners} className="relative size-6 cursor-move bg-yellow-200">
+			<div {...attributes} {...listeners} className="relative size-6 cursor-move ">
 				<GripVertical className="size-6 text-gray-400" />
 			</div>
 
-			<div className="flex flex-1 items-center justify-between bg-green-100">
-				<div className="flex flex-1 flex-col items-start justify-start bg-blue-100">
-					<div className="flex w-full items-center justify-start gap-2 bg-purple-100">
-						<h3 className="bg-orange-100 text-base font-medium text-gray-900">{section.title}</h3>
+			<div className="flex flex-1 items-center justify-between ">
+				<div className="flex flex-1 flex-col items-start justify-start ">
+					<div className="flex w-full items-center justify-start gap-2 ">
+						<h3 className=" text-base font-medium text-gray-900">{section.title}</h3>
 						{hasMaxWords && isDetailedSection(section) && (
-							<span className="bg-pink-100 text-sm font-normal text-gray-500">
+							<span className=" text-sm font-normal text-gray-500">
 								{section.max_words.toLocaleString()} Max words
 							</span>
 						)}
 					</div>
 				</div>
-				<div className="flex items-center justify-end bg-indigo-100">
+				<div className="flex items-center justify-end ">
 					<IconButton onClick={_onDelete}>
 						<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
 					</IconButton>
