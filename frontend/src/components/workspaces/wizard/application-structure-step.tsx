@@ -861,7 +861,7 @@ function SectionEditor({
 	const handleAddMainSection = useCallback(() => handleAddNewSection(), [handleAddNewSection]);
 
 	return (
-		<>
+		<div data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={handleAddMainSection} />
 			<ScrollArea className="flex-1">
 				<DragAndDropContainer
@@ -882,7 +882,7 @@ function SectionEditor({
 					toggleSectionExpanded={toggleSectionExpanded}
 				/>
 			</ScrollArea>
-		</>
+		</div>
 	);
 }
 
