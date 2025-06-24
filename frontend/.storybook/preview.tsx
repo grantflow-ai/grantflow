@@ -10,11 +10,26 @@ const preview: Preview = {
 	decorators: [
 		(Story) => (
 			<div className={`${fontSourceSans.variable} ${fontCabin.variable} ${fontSora.variable}`}>
-				<Story />
+				<div className="bg-background text-foreground min-h-screen">
+					<Story />
+				</div>
 			</div>
 		),
 	],
 	parameters: {
+		backgrounds: {
+			default: "light",
+			values: [
+				{
+					name: "light",
+					value: "var(--background-light)",
+				},
+				{
+					name: "dark",
+					value: "var(--background-dark)",
+				},
+			],
+		},
 		controls: {
 			matchers: {
 				color: /(background|color)$/i,

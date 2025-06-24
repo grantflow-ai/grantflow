@@ -1,4 +1,5 @@
 import type { StorybookConfig } from "@storybook/experimental-nextjs-vite";
+import { mergeConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const config: StorybookConfig = {
@@ -20,9 +21,12 @@ const config: StorybookConfig = {
 	},
 	stories: ["../src/**/*.mdx", "../src/**/*.stories.@(mjs|ts|tsx)"],
 	viteFinal: (config) => {
-		config.plugins = [...(config.plugins ?? []), tsconfigPaths()];
-
-		return config;
+		return mergeConfig(config, {
+			css: {
+				postcss: "../postcss.config.mjs",
+			},
+			plugins: [tsconfigPaths()],
+		});
 	},
 };
 
