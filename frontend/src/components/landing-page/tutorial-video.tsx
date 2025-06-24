@@ -1,7 +1,4 @@
-// TutorialVideo.tsx
 "use client";
-
-import React from "react";
 
 export function TutorialVideo() {
 	return (

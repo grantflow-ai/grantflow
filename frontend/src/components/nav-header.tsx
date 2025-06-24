@@ -1,27 +1,30 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-
 import { AppButton } from "@/components/app-button";
 import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
-import { Logo, LogoDark } from "@/components/logo";
+import { LogoDark } from "@/components/logo";
 import { ScrollButton } from "@/components/scroll-button";
 import { Button } from "@/components/ui/button";
 import { PagePath } from "@/enums";
-
+import { cn } from "@/lib/utils";
+import { disableScroll, enableScroll } from "@/utils/window";
 import { IconGoAhead } from "./icons";
 
 const BREAKPOINT_MD = 768;
 
 const NavLink = ({
+	className = "",
 	href,
 	isActive,
 	label,
 	onClick,
 	theme = "light",
 }: {
+	className?: string;
 	href: string;
 	isActive: boolean;
 	label: string;
@@ -30,7 +33,7 @@ const NavLink = ({
 }) => (
 	<AppButton
 		aria-label={`Go to ${label} Page`}
-		className={isActive ? `text-link-hover-${theme}` : ""}
+		className={cn(isActive ? `text-link-hover-${theme}` : "", className)}
 		size="lg"
 		theme={theme}
 		variant="link"
@@ -41,23 +44,16 @@ const NavLink = ({
 	</AppButton>
 );
 
-const LogoSection = ({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) => (
-	<>
-		<Link aria-label="Go to homepage" href={PagePath.ROOT}>
-			<Logo
-				className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-0" : "opacity-100"}`}
-				height="auto"
-				width="auto"
-			/>
-		</Link>
-		<Link aria-label="Go to homepage" className="absolute" href={PagePath.ROOT}>
-			<LogoDark
-				className={`sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
-				height="auto"
-				width="auto"
-			/>
-		</Link>
-	</>
+const LogoSection = () => (
+	<Link aria-label="Go to homepage" href={PagePath.ROOT}>
+		<LogoDark
+			className={
+				"sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16"
+			}
+			height="auto"
+			width="auto"
+		/>
+	</Link>
 );
 
 export default function NavHeader() {
@@ -83,25 +79,53 @@ export default function NavHeader() {
 		};
 	}, [isMobileMenuOpen]);
 
+	useEffect(() => {
+		if (isMobileMenuOpen) {
+			disableScroll();
+		} else {
+			enableScroll();
+		}
+
+		return enableScroll;
+	}, [isMobileMenuOpen]);
+
 	return (
 		<header
-			className={`
-		relative z-40 w-full transition-colors duration-300
-		${isMobileMenuOpen ? "bg-white" : "bg-background"}
-		`}
+			className={"relative z-50 w-full bg-transparent transition-colors duration-300"}
 			data-testid="nav-header"
 		>
 			<div
-				className="flex items-center justify-between border-b border-b-gray-400/20 px-4 md:px-5 lg:px-6 xl:px-7"
+				className="z-50 flex items-center justify-between px-4 md:px-5 lg:px-6 xl:px-7"
 				data-testid="nav-header-container"
 			>
-				<LogoSection isMobileMenuOpen={isMobileMenuOpen} />
+				<LogoSection />
 				<div className="hidden items-center md:flex" data-testid="nav-header-links">
-					<NavLink href={PagePath.ROOT} isActive={pathname === PagePath.ROOT.toString()} label="Home" />
+					<NavLink
+						className="text-app-slate-blue"
+						href={PagePath.ROOT}
+						isActive={pathname === PagePath.ROOT.toString()}
+						label="Home"
+						theme="light"
+					/>
+					{isHomePage && (
+						<ScrollButton
+							aria-label="Prices"
+							desktopTargetId="waitlist-form-container"
+							mobileTargetId="waitlist-form-container"
+							onClick={() => {
+								setIsMobileMenuOpen(false);
+							}}
+							size="lg"
+							variant="link"
+						>
+							Prices
+						</ScrollButton>
+					)}
 					<NavLink
 						href={PagePath.ABOUT_US}
 						isActive={pathname === PagePath.ABOUT_US.toString()}
 						label="About us"
+						theme="dark"
 					/>
 					{isHomePage && (
 						<ScrollButton
@@ -111,7 +135,7 @@ export default function NavHeader() {
 							rightIcon={<IconGoAhead />}
 							size="lg"
 						>
-							Try For Free
+							Secure Priority Access
 						</ScrollButton>
 					)}
 				</div>
@@ -124,14 +148,12 @@ export default function NavHeader() {
 					size="icon"
 				>
 					<IconHamburger
-						className={`absolute transition-all duration-300 ease-in-out
-							${isMobileMenuOpen ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}
-							`}
+						className={`text-app-black absolute transition-all duration-300 ease-in-out ${isMobileMenuOpen ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"} `}
 						height={30}
 						width={30}
 					/>
 					<IconCancel
-						className={`absolute transition-all duration-300 ease-in-out
+						className={`absolute text-white transition-all duration-300 ease-in-out
 							${isMobileMenuOpen ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}
 							`}
 						height={30}
@@ -139,24 +161,56 @@ export default function NavHeader() {
 					/>
 				</Button>
 			</div>
+			{isMobileMenuOpen && (
+				<button
+					aria-label="dismiss menu"
+					className="fixed inset-0 z-0 bg-black/40"
+					onClick={() => {
+						setIsMobileMenuOpen(false);
+					}}
+					type="button"
+				/>
+			)}
 			<div
 				aria-hidden={!isMobileMenuOpen}
-				className={`absolute inset-x-0 top-full flex flex-col bg-white p-4 transition-all duration-300 ease-in-out sm:px-6
-				md:hidden
+				className={`absolute right-0 top-0 flex flex-col items-start bg-white px-3 py-6 transition-all duration-300 ease-in-out sm:px-6 md:hidden
 				${isTermsPage && isMobileMenuOpen ? "border-primary border-b" : ""}
-				${isMobileMenuOpen ? "max-h-lg pointer-events-auto opacity-100" : "max-h-sm pointer-events-none opacity-0"}
+				${isMobileMenuOpen ? "pointer-events-auto h-dvh w-2/3 min-w-min opacity-100" : "max-h-sm pointer-events-none opacity-0"}
 				`}
 				data-testid="mobile-menu"
 			>
+				<button
+					className="cursor-pointer self-end"
+					onClick={() => {
+						setIsMobileMenuOpen(false);
+					}}
+					type="button"
+				>
+					<Image alt="close" aria-hidden="false" height={16} priority src="/assets/cross.svg" width={16} />
+				</button>
 				<NavLink
+					className="text-app-slate-blue mt-3"
 					href={PagePath.ROOT}
 					isActive={pathname === PagePath.ROOT.toString()}
 					label="Home"
 					onClick={() => {
 						setIsMobileMenuOpen(false);
 					}}
-					theme="dark"
+					theme="light"
 				/>
+				{isHomePage && (
+					<ScrollButton
+						aria-label="Prices"
+						mobileTargetId="waitlist-form-container"
+						onClick={() => {
+							setIsMobileMenuOpen(false);
+						}}
+						size="lg"
+						variant="link"
+					>
+						Prices
+					</ScrollButton>
+				)}
 				<NavLink
 					href={PagePath.ABOUT_US}
 					isActive={pathname === PagePath.ABOUT_US.toString()}
@@ -169,6 +223,7 @@ export default function NavHeader() {
 				{isHomePage && (
 					<ScrollButton
 						aria-label="Go to Waitlist Form"
+						className="mt-auto w-full"
 						mobileTargetId="waitlist-form-container"
 						offset={80}
 						onClick={() => {
@@ -176,9 +231,8 @@ export default function NavHeader() {
 						}}
 						rightIcon={<IconGoAhead />}
 						size="lg"
-						variant="link"
 					>
-						Try For Free
+						Secure Priority Access
 					</ScrollButton>
 				)}
 			</div>
