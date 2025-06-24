@@ -9,7 +9,7 @@ const suppressedErrors = [
 ];
 
 export default defineConfig({
-	plugins: [tsconfigPaths(), react()],
+	plugins: [tsconfigPaths() as any, react() as any],
 	test: {
 		coverage: {
 			exclude: [
