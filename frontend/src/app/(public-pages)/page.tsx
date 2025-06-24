@@ -10,7 +10,6 @@ import { CoreFeaturesSection } from "@/components/landing-page/core-features-sec
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
-import { TutorialVideo } from "@/components/landing-page/tutorial-video";
 import { ScrollButton } from "@/components/scroll-button";
 
 const CONTENT_CTA_SECTION = {
@@ -24,7 +23,6 @@ export default async function LandingPage() {
 	return (
 		<div className="flex w-full flex-col">
 			<HeroBanner />
-			<TutorialVideo />
 			<BenefitsSection />
 			<EarlyAccessSection />
 			<CoreFeaturesSection />
@@ -62,7 +60,7 @@ function CTASection() {
 						rightIcon={<IconGoAhead />}
 						size="lg"
 					>
-						Try For Free
+						Secure Priority Access
 					</ScrollButton>
 				</div>
 			</div>
