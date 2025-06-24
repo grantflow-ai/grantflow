@@ -1,0 +1,14 @@
+/* Mock global styles for Storybook */
+@import "tailwindcss";
+
+/* Add any additional Storybook-specific styles here */
+body {
+	font-family: sans-serif;
+}
+
+/* Mock font variables */
+:root {
+	--font-heading: "Inter", sans-serif;
+	--font-button: "Inter", sans-serif;
+	--font-body: "Inter", sans-serif;
+}
