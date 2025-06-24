@@ -21,7 +21,7 @@ const config: KnipConfig = {
 		"tailwind.config.ts",
 	],
 	ignoreBinaries: ["only-allow"],
-	ignoreDependencies: ["@next/eslint-plugin-next", "eslint-plugin-react-hooks"],
+	ignoreDependencies: ["@next/eslint-plugin-next", "eslint-plugin-react-hooks", "@commitlint/cli"],
 	workspaces: {
 		frontend: {
 			entry: [
@@ -32,10 +32,8 @@ const config: KnipConfig = {
 				"src/hooks/**/*.ts",
 				"src/utils/**/*.ts",
 				"src/stores/**/*.ts",
-				"testing/utils.ts",
 			],
-			ignore: ["storybook-static/**", ".next/**", "node_modules/**"],
-			ignoreDependencies: ["tailwindcss", "tw-animate-css"],
+			ignore: ["storybook-static/**", ".next/**", "node_modules/**", "src/components/ui/**"],
 			project: ["**/*.{ts,tsx,js,jsx}"],
 		},
 		"services/backend": {
