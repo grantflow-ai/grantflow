@@ -1,11 +1,6 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from "@storybook/react-vite";
 import { mergeConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const config: StorybookConfig = {
 	addons: ["@storybook/addon-onboarding", "@storybook/addon-docs"],
@@ -26,9 +21,10 @@ const config: StorybookConfig = {
 			plugins: [tsconfigPaths()],
 			resolve: {
 				alias: {
-					"@/styles/globals.css": path.resolve(__dirname, "../storybook-mocks/globals.css"),
+					// Use relative paths from project root instead of __dirname
+					"@/styles/globals.css": "./storybook-mocks/globals.css",
 					// Mock next/font imports for Storybook
-					"@/utils/fonts": path.resolve(__dirname, "../storybook-mocks/fonts.ts"),
+					"@/utils/fonts": "./storybook-mocks/fonts.ts",
 				},
 			},
 		});
