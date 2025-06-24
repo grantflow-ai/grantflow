@@ -101,11 +101,9 @@ class TestVerifyRagSourcesIndexed:
         mock_publish_notification: AsyncMock,
     ) -> None:
         async with async_session_maker() as session:
-            # Create two finished sources
             source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
             source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
 
-            # Link them to the application
             await link_source_to_application(session, test_grant_application.id, source1.id)
             await link_source_to_application(session, test_grant_application.id, source2.id)
             await session.commit()
@@ -122,11 +120,9 @@ class TestVerifyRagSourcesIndexed:
         mock_publish_notification: AsyncMock,
     ) -> None:
         async with async_session_maker() as session:
-            # Create two finished sources
             source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
             source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
 
-            # Link them to the template
             await link_source_to_template(session, test_grant_template.id, source1.id)
             await link_source_to_template(session, test_grant_template.id, source2.id)
             await session.commit()
@@ -137,10 +133,8 @@ class TestVerifyRagSourcesIndexed:
         mock_publish_notification.assert_not_called()
 
     # TODO: Convert this complex recursive test - requires mocking the state change
-    # async def test_sources_still_indexing(...)
 
     # TODO: Convert this complex recursive test - requires mocking the state change
-    # async def test_sources_created_status(...)
 
     async def test_all_sources_failed_grant_application(
         self,
@@ -149,11 +143,9 @@ class TestVerifyRagSourcesIndexed:
         mock_publish_notification: AsyncMock,
     ) -> None:
         async with async_session_maker() as session:
-            # Create two failed sources
             source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
             source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
 
-            # Link them to the application
             await link_source_to_application(session, test_grant_application.id, source1.id)
             await link_source_to_application(session, test_grant_application.id, source2.id)
             await session.commit()
@@ -186,12 +178,10 @@ class TestVerifyRagSourcesIndexed:
         mock_publish_notification: AsyncMock,
     ) -> None:
         async with async_session_maker() as session:
-            # Create three failed sources
             source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
             source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
             source3 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
 
-            # Link them to the template
             await link_source_to_template(session, test_grant_template.id, source1.id)
             await link_source_to_template(session, test_grant_template.id, source2.id)
             await link_source_to_template(session, test_grant_template.id, source3.id)
@@ -213,13 +203,10 @@ class TestVerifyRagSourcesIndexed:
         assert exc_info.value.context["failed_sources"] == 3
 
     # TODO: Convert this test to use real database
-    # async def test_partial_failure_no_finished(...)
 
     # TODO: Convert this test to use real database
-    # async def test_database_error(...)
 
     # TODO: Convert this complex recursive test - requires mocking the recursive behavior
-    # async def test_recursive_waiting_with_timeout(...)
 
     async def test_empty_sources_list(
         self,
@@ -227,8 +214,6 @@ class TestVerifyRagSourcesIndexed:
         async_session_maker: async_sessionmaker[Any],
         mock_publish_notification: AsyncMock,
     ) -> None:
-        # No sources are linked to the application, so it should fail
-
         with (
             patch("services.rag.src.utils.checks.publish_notification", mock_publish_notification),
             pytest.raises(ValidationError),
@@ -248,12 +233,10 @@ class TestVerifyRagSourcesIndexed:
         mock_publish_notification: AsyncMock,
     ) -> None:
         async with async_session_maker() as session:
-            # Create mixed status sources
             source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
             source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
             source3 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
 
-            # Link them to the application
             await link_source_to_application(session, test_grant_application.id, source1.id)
             await link_source_to_application(session, test_grant_application.id, source2.id)
             await link_source_to_application(session, test_grant_application.id, source3.id)
