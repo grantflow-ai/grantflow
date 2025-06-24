@@ -3,17 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sendSignInLinkToEmail, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
 import { login } from "@/actions/login";
 import { AppButton } from "@/components/app-button";
 import { IconGoAhead } from "@/components/icons";
 import AppInput from "@/components/input-field";
-import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { LogoDark } from "@/components/logo";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
@@ -111,7 +110,16 @@ export default function Login() {
 	return (
 		<div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white" data-testid="login-page">
 			<div className="absolute inset-0 z-0" data-testid="login-background-container">
-				<PatternedBackground aria-hidden="true" data-testid="login-background-pattern" />
+				<Image
+					alt="background"
+					aria-hidden="true"
+					className="size-full object-none xl:object-cover"
+					height={0}
+					priority
+					src="/assets/landing-bg-pattern.svg"
+					style={{ height: "auto", width: "100%" }}
+					width={0}
+				/>
 				<OnboardingGradientBackgroundBottom
 					aria-hidden="true"
 					className="pointer-events-none absolute bottom-0 left-0"

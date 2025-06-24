@@ -2,13 +2,13 @@
 
 import { sendSignInLinkToEmail, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { login } from "@/actions/login";
 import { AppButton } from "@/components/app-button";
-import { PatternedBackground } from "@/components/landing-page/backgrounds";
 import { LogoDark } from "@/components/logo";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {
@@ -101,7 +101,16 @@ export default function SignIn() {
 			data-testid="login-container"
 		>
 			<div className="absolute inset-0 flex items-center justify-center">
-				<PatternedBackground aria-hidden="true" />
+				<Image
+					alt="background"
+					aria-hidden="true"
+					className="size-full object-none xl:object-cover"
+					height={0}
+					priority
+					src="/assets/landing-bg-pattern.svg"
+					style={{ height: "auto", width: "100%" }}
+					width={0}
+				/>
 			</div>
 
 			<OnboardingGradientBackgroundTop
