@@ -24,9 +24,11 @@ pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 def preload_models() -> None:
     """Preload ML models during test setup to avoid timeouts during execution."""
     import logging
+    import time
 
     logger = logging.getLogger(__name__)
     logger.info("Preloading ML models for RAG tests...")
+    start_time = time.time()
 
     try:
         from packages.shared_utils.src.embeddings import get_embedding_model
@@ -34,15 +36,23 @@ def preload_models() -> None:
         model = get_embedding_model()
         logger.info("Successfully preloaded embedding model: %s", type(model).__name__)
 
+        warmup_text = ["test sentence for model warmup"]
+        _ = model.encode(warmup_text, convert_to_tensor=True)
+        logger.info("Embedding model warmup completed")
+
         from packages.shared_utils.src.nlp import get_spacy_model
 
         nlp = get_spacy_model()
         logger.info("Successfully preloaded spaCy model: %s", nlp.meta.get("name", "unknown"))
 
+        _ = nlp("Test sentence for spaCy warmup.")
+        logger.info("spaCy model warmup completed")
+
     except (ImportError, OSError, RuntimeError) as e:
         logger.warning("Failed to preload some models: %s", e)
 
-    logger.info("Model preloading completed")
+    elapsed_time = time.time() - start_time
+    logger.info("Model preloading completed in %.2f seconds", elapsed_time)
 
 
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
