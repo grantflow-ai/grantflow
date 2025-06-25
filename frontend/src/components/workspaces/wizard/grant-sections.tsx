@@ -122,6 +122,7 @@ export function SortableSection({
 			className={`flex items-center justify-start gap-5 rounded bg-white outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"} ${
 				isDragging ? "shadow-lg" : ""
 			}`}
+			data-testid="section-container"
 			ref={setNodeRef}
 			style={style}
 		>
@@ -132,26 +133,32 @@ export function SortableSection({
 			<div className="flex flex-1 items-center justify-between ">
 				<div className="flex flex-1 flex-col items-start justify-start ">
 					<div className="flex w-full items-center justify-start gap-2 ">
-						<h3 className=" text-base font-medium text-gray-900">{section.title}</h3>
+						<h3 className=" text-base font-medium text-gray-900" data-testid="section-title">
+							{section.title}
+						</h3>
 						{hasMaxWords && "max_words" in section && (
-							<span className=" text-sm font-normal text-gray-500">
+							<span className=" text-sm font-normal text-gray-500" data-testid="max-words-display">
 								{section.max_words.toLocaleString()} Max words
 							</span>
 						)}
 					</div>
 				</div>
 				<div className="flex items-center justify-end ">
-					<SectionIconButton onClick={_onDelete}>
+					<SectionIconButton data-testid="delete-section-button" onClick={_onDelete}>
 						<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
 					</SectionIconButton>
 
 					{!isSubsection && (
-						<SectionIconButton className="ml-1" onClick={() => onAddSubsection?.(section.id)}>
+						<SectionIconButton
+							className="ml-1"
+							data-testid="add-subsection-button"
+							onClick={() => onAddSubsection?.(section.id)}
+						>
 							<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
 						</SectionIconButton>
 					)}
 
-					<SectionIconButton className="ml-5" onClick={onToggleExpand}>
+					<SectionIconButton className="ml-5" data-testid="expand-section-button" onClick={onToggleExpand}>
 						<Image alt="Expand" height={22} src="/icons/chevron-down.svg" width={22} />
 					</SectionIconButton>
 				</div>
@@ -177,12 +184,15 @@ function SectionEditForm({
 			className={`rounded border border-gray-200 p-4 ${isSubsection ? "ml-6" : ""} ${
 				isDragging ? "shadow-lg" : ""
 			}`}
+			data-testid="edit-form-container"
 			ref={setNodeRef}
 			style={style}
 		>
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h5 className="font-medium">New section</h5>
+					<h5 className="font-medium" data-testid="edit-form-header">
+						New section
+					</h5>
 					<SectionIconButton className="size-4 rounded" onClick={onCancel}>
 						<Image alt="Collapse" className="size-2.5" height={10} src="/icons/chevron-up.svg" width={10} />
 					</SectionIconButton>
@@ -203,7 +213,7 @@ function SectionEditForm({
 					</div>
 
 					<div>
-						<Label>Words/Characters count</Label>
+						<Label data-testid="words-characters-label">Words/Characters count</Label>
 						<p className="text-muted-foreground text-sm">
 							This helps AI generate content that fits the grant&apos;s requirements. Choose if the limit
 							applies to words or characters.
@@ -229,6 +239,7 @@ function SectionEditForm({
 							<div className="w-32">
 								<select
 									className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+									data-testid="word-character-selector"
 									onChange={(e) => {
 										setFormData({ ...formData, useWords: e.target.value === "words" });
 									}}
@@ -244,21 +255,28 @@ function SectionEditForm({
 					<div className="flex items-center space-x-2">
 						<Checkbox
 							checked={formData.isResearchPlan}
+							data-testid="research-plan-checkbox"
 							id={`research-plan-${section.id}`}
 							onCheckedChange={(checked) => {
 								setFormData({ ...formData, isResearchPlan: checked as boolean });
 							}}
 						/>
-						<Label className="text-sm font-normal" htmlFor={`research-plan-${section.id}`}>
+						<Label
+							className="text-sm font-normal"
+							data-testid="research-plan-label"
+							htmlFor={`research-plan-${section.id}`}
+						>
 							This is the main Research Plan
 						</Label>
 					</div>
 
 					<div className="flex justify-between gap-2">
-						<Button onClick={onCancel} variant="outline">
+						<Button data-testid="cancel-button" onClick={onCancel} variant="outline">
 							Cancel
 						</Button>
-						<Button onClick={onSave}>Save</Button>
+						<Button data-testid="save-button" onClick={onSave}>
+							Save
+						</Button>
 					</div>
 				</div>
 			</div>

@@ -1,5 +1,6 @@
 import { ApplicationFactory, FileWithIdFactory, RagSourceFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteApplicationSource } from "@/actions/sources";
 import { WizardStep } from "@/constants";
@@ -63,12 +64,12 @@ describe("KnowledgeBaseStep", () => {
 		});
 
 		useApplicationStore.setState({
-			addFile: vi.fn(),
-			addUrl: vi.fn(),
+			addFile: vi.fn().mockResolvedValue(undefined),
+			addUrl: vi.fn().mockResolvedValue(undefined),
 			application: ApplicationFactory.build({ id: "test-app-id", workspace_id: "test-workspace" }),
-			removeFile: vi.fn(),
-			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
+			removeFile: vi.fn().mockResolvedValue(undefined),
+			removeUrl: vi.fn().mockResolvedValue(undefined),
+			retrieveApplication: vi.fn().mockResolvedValue(undefined),
 		});
 	});
 
@@ -220,7 +221,7 @@ describe("KnowledgeBaseStep", () => {
 	describe("File Removal Logic", () => {
 		it("successfully removes file when delete is called", async () => {
 			const mockFile = FileWithIdFactory.build({ id: "file-1", name: "test.pdf", size: 1024 });
-			const mockRemoveFile = vi.fn();
+			const mockRemoveFile = vi.fn().mockResolvedValue(undefined);
 
 			const application = ApplicationFactory.build({
 				grant_template: undefined,
@@ -248,7 +249,7 @@ describe("KnowledgeBaseStep", () => {
 			await waitFor(async () => {
 				if (mockFile.id) {
 					await mockDeleteApplicationSource("test-workspace", "test-app-id", mockFile.id);
-					mockRemoveFile(mockFile);
+					await mockRemoveFile(mockFile);
 				}
 			});
 
@@ -307,8 +308,8 @@ describe("KnowledgeBaseStep", () => {
 	});
 
 	describe("URL Removal Logic", () => {
-		it("removes URL when called", () => {
-			const mockRemoveUrl = vi.fn();
+		it("removes URL when called", async () => {
+			const mockRemoveUrl = vi.fn().mockResolvedValue(undefined);
 
 			const application = ApplicationFactory.build({
 				grant_template: undefined,
@@ -335,7 +336,7 @@ describe("KnowledgeBaseStep", () => {
 			expect(urlLink).toBeInTheDocument();
 
 			const { removeUrl } = useApplicationStore.getState();
-			removeUrl("https://example.com", "mock-parent-id");
+			await removeUrl("https://example.com", "mock-parent-id");
 			expect(mockRemoveUrl).toHaveBeenCalledWith("https://example.com", "mock-parent-id");
 		});
 	});

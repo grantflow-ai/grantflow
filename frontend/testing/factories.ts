@@ -578,39 +578,13 @@ export const FileWithIdFactory = new Factory<FileWithId>((factory) => {
 	return file;
 });
 
-interface RagJobResponse {
-	completed_at?: string;
-	created_at: string;
-	current_stage: number;
-	error_details?: {
-		details: string;
-		error_type: string;
-	};
-	error_message?: string;
-	failed_at?: string;
-	generated_sections?: Record<string, string>;
-	grant_application_id?: string;
-	grant_template_id?: string;
-	id: string;
-	job_type: "grant_application_generation" | "grant_template_generation";
-	retry_count: number;
-	status: "COMPLETED" | "FAILED" | "PROCESSING";
-	total_stages: number;
-	updated_at: string;
-	validation_results?: {
-		is_valid: boolean;
-		score: number;
-	};
-}
-
-export const RagJobResponseFactory = new Factory<RagJobResponse>((factory) => {
-	const jobType = factory.helpers.arrayElement<"grant_application_generation" | "grant_template_generation">([
-		"grant_application_generation",
-		"grant_template_generation",
-	]);
-	const status = factory.helpers.arrayElement<"COMPLETED" | "FAILED" | "PROCESSING">([
+export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.ResponseBody>((factory) => {
+	const jobType = factory.helpers.arrayElement(["grant_application_generation", "grant_template_generation"]);
+	const status = factory.helpers.arrayElement<"CANCELLED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING">([
+		"CANCELLED",
 		"COMPLETED",
 		"FAILED",
+		"PENDING",
 		"PROCESSING",
 	]);
 	const isCompleted = status === "COMPLETED";
@@ -653,3 +627,9 @@ export const RagJobResponseFactory = new Factory<RagJobResponse>((factory) => {
 				: undefined,
 	};
 });
+
+export const CreateGrantApplicationRagSourceUploadUrlResponseFactory =
+	new Factory<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody>((factory) => ({
+		source_id: factory.string.uuid(),
+		url: factory.internet.url(),
+	}));
