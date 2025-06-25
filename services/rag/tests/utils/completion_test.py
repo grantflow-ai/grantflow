@@ -168,8 +168,8 @@ async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> N
     response.text = '{"key": "value"}'
 
     client.models.generate_content.side_effect = [
-        TooManyRequests("error"),
-        TooManyRequests("error"),
+        TooManyRequests("error"),  # type: ignore[no-untyped-call]
+        TooManyRequests("error"),  # type: ignore[no-untyped-call]
         response,
     ]
     mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
