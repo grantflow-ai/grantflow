@@ -1,6 +1,5 @@
 "use client";
 
-import { GrantSectionUpdateRequestFactory } from "::testing/factories";
 import {
 	closestCenter,
 	DndContext,
@@ -60,6 +59,28 @@ interface SectionFormData {
 
 type UpdateGrantSection = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
 
+const toGrantSectionRequestBody = (overrides: Partial<UpdateGrantSection> = {}): UpdateGrantSection => {
+	const defaults: UpdateGrantSection = {
+		depends_on: [],
+		generation_instructions: "",
+		id: `section-${crypto.randomUUID()}`,
+		is_clinical_trial: null,
+		is_detailed_workplan: null,
+		keywords: [],
+		max_words: 3000,
+		order: 0,
+		parent_id: null,
+		search_queries: [],
+		title: "Category Name",
+		topics: [],
+	};
+
+	return {
+		...defaults,
+		...overrides,
+	};
+};
+
 function IconButton({
 	children,
 	className = "",
@@ -87,7 +108,7 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 		return section;
 	}
 
-	return GrantSectionUpdateRequestFactory.build({
+	return toGrantSectionRequestBody({
 		id: section.id,
 		max_words: 3000,
 		order: section.order,
@@ -459,7 +480,7 @@ function ApplicationStructurePreview() {
 	const handleAddNewSection = useCallback(
 		async (parentId: null | string = null) => {
 			const isSubsection = parentId !== null;
-			const newSection = GrantSectionUpdateRequestFactory.build({
+			const newSection = toGrantSectionRequestBody({
 				order: grantSections.length,
 				parent_id: parentId,
 				title: isSubsection ? "Secondary Category Name" : "Category Name",
@@ -503,7 +524,7 @@ function ApplicationStructurePreview() {
 				parent_id: section.parent_id ?? null,
 			}));
 
-			await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
+			await updateGrantSections(updatedSections.map(toUpdateGrantSection));
 		},
 		[grantSections, updateGrantSections],
 	);
