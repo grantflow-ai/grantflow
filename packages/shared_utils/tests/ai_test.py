@@ -63,13 +63,13 @@ async def test_init_llm_connection_first_call() -> None:
         mock_get_env.side_effect = ["test-project", "us-central1"]
         mock_creds = Mock()
         mock_get_creds.return_value = mock_creds
-        mock_async_client = Mock()
-        mock_genai.AsyncClient.return_value = mock_async_client
+        mock_client = Mock()
+        mock_genai.Client.return_value = mock_client
 
         init_llm_connection()
 
-        mock_genai.AsyncClient.assert_called_once()
-        assert mock_client_ref.value == mock_async_client
+        mock_genai.Client.assert_called_once()
+        assert mock_client_ref.value == mock_client
         assert init_ref.value is True
 
 
@@ -78,7 +78,7 @@ async def test_init_llm_connection_already_initialized() -> None:
 
     with patch("packages.shared_utils.src.ai.genai") as mock_genai:
         init_llm_connection()
-        mock_genai.AsyncClient.assert_not_called()
+        mock_genai.Client.assert_not_called()
 
 
 async def test_get_google_ai_client_new() -> None:
@@ -169,9 +169,11 @@ async def test_count_tokens_anthropic_model() -> None:
 
 
 async def test_count_tokens_google_model_success() -> None:
-    mock_client = AsyncMock()
+    mock_client = Mock()
+    mock_aio_client = AsyncMock()
     mock_response = Mock(total_tokens=10)
-    mock_client.models.count_tokens.return_value = mock_response
+    mock_aio_client.models.count_tokens.return_value = mock_response
+    mock_client._aio = mock_aio_client
 
     with patch(
         "packages.shared_utils.src.ai.get_google_ai_client", return_value=mock_client
@@ -181,8 +183,10 @@ async def test_count_tokens_google_model_success() -> None:
 
 
 async def test_count_tokens_google_model_fallback() -> None:
-    mock_client = AsyncMock()
-    mock_client.models.count_tokens.side_effect = ValueError("API error")
+    mock_client = Mock()
+    mock_aio_client = AsyncMock()
+    mock_aio_client.models.count_tokens.side_effect = ValueError("API error")
+    mock_client._aio = mock_aio_client
 
     with (
         patch(
