@@ -105,7 +105,7 @@ describe("LandingPage", () => {
 		const contactButton = screen.getByRole("button", { name: /contact us/i });
 		expect(contactButton).toBeDefined();
 
-		const tryButton = screen.getByRole("button", { name: /try for free/i });
+		const tryButton = screen.getByRole("button", { name: /Secure Priority Access/i });
 		expect(tryButton).toBeDefined();
 
 		const mockOnClickContact = vi.fn();
@@ -127,7 +127,7 @@ describe("LandingPage", () => {
 		const contactButton = screen.getByRole("button", { name: /contact us/i });
 		expect(contactButton).toBeDefined();
 
-		const tryButton = screen.getByRole("button", { name: /try for free/i });
+		const tryButton = screen.getByRole("button", { name: /Secure Priority Access/i });
 		expect(tryButton).toBeDefined();
 
 		fireEvent.click(contactButton);

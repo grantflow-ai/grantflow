@@ -60,7 +60,7 @@ function CTASection() {
 						rightIcon={<IconGoAhead />}
 						size="lg"
 					>
-						Try For Free
+						Secure Priority Access
 					</ScrollButton>
 				</div>
 			</div>
