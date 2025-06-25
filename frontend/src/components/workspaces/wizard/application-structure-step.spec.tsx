@@ -202,7 +202,16 @@ describe("ApplicationStructureStep", () => {
 
 		it("calls updateGrantSections when add button is clicked", async () => {
 			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const application = ApplicationWithTemplateFactory.build();
+			const application = ApplicationFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_application_id: "test-id",
+					grant_sections: [], // Empty sections array
+					id: "template-id",
+				}),
+				id: "test-id",
+				title: "Test Application",
+				workspace_id: "test-workspace-id",
+			});
 
 			useApplicationStore.setState({
 				application,
@@ -215,14 +224,21 @@ describe("ApplicationStructureStep", () => {
 			fireEvent.click(addButton);
 
 			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith(
-					expect.arrayContaining([
-						expect.objectContaining({
-							max_words: 3000,
-							title: "Category Name",
-						}),
-					]),
-				);
+				expect(mockUpdateGrantSections).toHaveBeenCalledWith([
+					expect.objectContaining({
+						depends_on: [],
+						generation_instructions: "",
+						is_clinical_trial: null,
+						is_detailed_workplan: null,
+						keywords: [],
+						max_words: 3000,
+						order: 0,
+						parent_id: null,
+						search_queries: [],
+						title: "Category Name",
+						topics: [],
+					}),
+				]);
 			});
 		});
 
