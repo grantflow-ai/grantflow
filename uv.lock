@@ -14,6 +14,15 @@ members = [
 ]
 
 [[package]]
+name = "ai-rulez"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/a9/9f95372004e892bc089167a5287e79373e90165ea9a088cd58e573c6ca60/ai_rulez-1.0.0.tar.gz", hash = "sha256:86b50f69133702524a05e00cb0fd07a3397bc7f97114a6daa5b794dbc01e604e", size = 6350, upload-time = "2025-06-25T08:31:34.42Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f8/14/682a06f052390071b22c91a081906209dad390ac3c3f9fa8dc37a8418cd2/ai_rulez-1.0.0-py3-none-any.whl", hash = "sha256:54567cf9c9b77e378aff196ce96413427ba1e5691a5a9d50a0c27fb3fb2b579a", size = 6606, upload-time = "2025-06-25T08:31:33.577Z" },
+]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -973,6 +982,7 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "ai-rulez" },
     { name = "codespell" },
     { name = "covdefaults" },
     { name = "faker" },
@@ -988,6 +998,7 @@ dev = [
     { name = "pytest-xdist" },
     { name = "python-dotenv" },
     { name = "ruff" },
+    { name = "uncomment" },
     { name = "uv-bump" },
 ]
 
@@ -995,6 +1006,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "ai-rulez", specifier = ">=1.0.0" },
     { name = "codespell", specifier = ">=2.4.0" },
     { name = "covdefaults", specifier = ">=2.3.0" },
     { name = "faker", specifier = ">=37.0.1" },
@@ -1010,6 +1022,7 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.7.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "ruff", specifier = ">=0.11.1" },
+    { name = "uncomment", specifier = ">=2.2.3" },
     { name = "uv-bump", git = "https://github.com/Goldziher/uv-bump" },
 ]
 
@@ -3361,6 +3374,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8b/2e/c14812d3d4d9cd1773c6be938f89e5735a1f11a9f184ac3639b93cef35d5/tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd", size = 30761, upload-time = "2025-03-05T21:17:41.549Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/14/e2a54fabd4f08cd7af1c07030603c3356b74da07f7cc056e600436edfa17/tzlocal-5.3.1-py3-none-any.whl", hash = "sha256:eb1a66c3ef5847adf7a834f1be0800581b683b5608e74f86ecbcef8ab91bb85d", size = 18026, upload-time = "2025-03-05T21:17:39.857Z" },
+]
+
+[[package]]
+name = "uncomment"
+version = "2.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/c3/e00994c95b5e3a226079a7e5812331b8105df51220642a0b765de84124d7/uncomment-2.2.3.tar.gz", hash = "sha256:0ed43a2240e727a7288fd2bd3998e75022365758e40ded9632bbc5b0a9e17fd8", size = 4756, upload-time = "2025-06-25T10:17:29.309Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/05/1aba89a3d741bbcba25db1619e4381de108cb02c1de6e2a7ac4ae991f0aa/uncomment-2.2.3-py3-none-any.whl", hash = "sha256:d44b6a6374cea0b455a0343ece41b16de525fec5e5d4be65b9d47b08fe6292b3", size = 5213, upload-time = "2025-06-25T10:17:28.267Z" },
 ]
 
 [[package]]

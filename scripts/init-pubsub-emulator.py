@@ -1,11 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3  ~keep
 import contextlib
 import os
 import sys
 from typing import TypedDict
 
 from google.api_core import exceptions
-from google.cloud import pubsub_v1
+from google.cloud import pubsub_v1  # type: ignore[attr-defined]
 
 
 class SubscriptionConfig(TypedDict):

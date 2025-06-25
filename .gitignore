@@ -51,3 +51,8 @@ override.tf.json
 *_override.tf.json
 crash.log
 crash.*.log
+
+# AI tools generated files
+CLAUDE.md
+.windsurfrules
+.cursorrules
