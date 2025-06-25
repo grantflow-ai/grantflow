@@ -14,9 +14,11 @@ from services.rag.src.grant_application.handler import grant_application_text_ge
 from services.rag.src.utils.job_manager import JobManager
 
 
-def create_mock_job_manager_for_e2e(session_maker: Any) -> JobManager:
+async def create_mock_job_manager_for_e2e(session_maker: Any, grant_application_id: UUID) -> JobManager:
     """Create a JobManager for e2e tests with mocked pubsub."""
-    return JobManager(session_maker)
+    job_manager = JobManager(session_maker)
+    await job_manager.create_grant_application_job(grant_application_id=grant_application_id, total_stages=5)
+    return job_manager
 
 
 @e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
@@ -30,9 +32,10 @@ async def test_generate_full_application_text(
     logger.info("Running end-to-end test for generating a full grant application text format")
     start_time = datetime.now(UTC)
 
-    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
+    application_uuid = UUID(melanoma_alliance_full_application_id)
+    job_manager = await create_mock_job_manager_for_e2e(async_session_maker, application_uuid)
     text, section_texts = await grant_application_text_generation_pipeline_handler(
-        grant_application_id=UUID(melanoma_alliance_full_application_id),
+        grant_application_id=application_uuid,
         session_maker=async_session_maker,
         job_manager=job_manager,
     )

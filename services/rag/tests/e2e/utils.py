@@ -13,7 +13,7 @@ async def create_rag_sources_from_cfp_file(
     cfp_file_name: str,
     grant_template_id: str,
     session_maker: async_sessionmaker[Any],
-    grant_application_id: str | None = None,
+    grant_application_id: str,
 ) -> list[str]:
     cfp_content = (FIXTURES_FOLDER / "cfps" / cfp_file_name).read_text()
 
@@ -35,14 +35,12 @@ async def create_rag_sources_from_cfp_file(
             "id": grant_template_id,
             "grant_sections": [],
             "submission_date": date(2025, 12, 31),
+            "grant_application_id": grant_application_id,
         }
 
-        if grant_application_id:
-            template_values["grant_application_id"] = grant_application_id
-
-            application = await retrieve_application(application_id=grant_application_id, session=session)
-            if application.grant_template and application.grant_template.funding_organization_id:
-                template_values["funding_organization_id"] = application.grant_template.funding_organization_id
+        application = await retrieve_application(application_id=grant_application_id, session=session)
+        if application.grant_template and application.grant_template.funding_organization_id:
+            template_values["funding_organization_id"] = application.grant_template.funding_organization_id
 
         await session.execute(
             insert(GrantTemplate).values(template_values).on_conflict_do_nothing(index_elements=["id"])
