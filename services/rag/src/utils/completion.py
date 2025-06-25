@@ -55,22 +55,18 @@ SELECT_BEST_RESPONSE_USE_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ${responses}
     </responses>
 
-    Select the key (integer id) of the best response from the object.
-
-    The response should be a single key (integer) from the object, which correlates with the best response value:
-
-    ```json
-    {
-        "best_response": 1
-    }
-    ```
+    Select the key (integer id) of the best response from the object, choosing the response that best fulfills the original prompt requirements.
     """,
 )
 
 select_best_response_json_schema = {
     "type": "object",
     "properties": {
-        "best_response": {"type": "integer", "minimum": 0},
+        "best_response": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The integer key (index) of the best response from the provided candidates",
+        },
     },
     "required": ["best_response"],
 }
