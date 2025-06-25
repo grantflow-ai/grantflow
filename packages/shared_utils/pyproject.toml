@@ -22,7 +22,7 @@ dependencies = [
 
 optional-dependencies.ai = [
   "anthropic>=0.54",
-  "google-cloud-aiplatform>=1.97",
+  "google-genai>=0.1",
   "prompt-template>=1.2",
 ]
 optional-dependencies.chunking = [
