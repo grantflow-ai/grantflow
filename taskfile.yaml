@@ -15,6 +15,7 @@ tasks:
             - task: frontend:install
             - task: backend:install
             - uv run lefthook install
+            - task: generate:ai-rules
 
     dev:
         desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag)
@@ -83,6 +84,11 @@ tasks:
         cmds:
             - uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
             - task: lint:frontend
+
+    generate:ai-rules:
+        desc: Generate AI assistant configuration files (CLAUDE.md, .windsurfrules, .cursorrules) from ai-rulez.yaml
+        cmds:
+            - uv run ai-rulez generate --recursive
 
 
     # ==============================================================================

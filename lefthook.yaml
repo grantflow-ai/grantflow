@@ -29,6 +29,11 @@ pre-commit:
             glob: "*.py"
             run: uv run mypy {staged_files}
 
+        uncomment:
+            glob: "*.py"
+            run: uv run uncomment --remove-doc {staged_files}
+            stage_fixed: true
+
         codespell:
             run: uv run codespell {staged_files}
             exclude: |
