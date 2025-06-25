@@ -191,7 +191,7 @@ class TemplateSectionsResponse(TypedDict):
 def validate_template_sections(
     response: TemplateSectionsResponse, *, input_sections: list[ExtractedSectionDTO]
 ) -> None:
-    if error := response.get("error"):  # occasionally, the model suffers a stroke and returns "null" as a string
+    if error := response.get("error"):  # occasionally, the model suffers a stroke and returns "null" as a string ~keep
         raise InsufficientContextError(
             error,
             context={
