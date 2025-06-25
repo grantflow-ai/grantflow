@@ -405,19 +405,49 @@ export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemp
 
 type GrantSectionUpdateRequest = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
 
-export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>(() => ({
-	depends_on: [],
-	generation_instructions: "",
-	id: `section-${crypto.randomUUID()}`,
-	is_clinical_trial: null,
-	is_detailed_workplan: null,
-	keywords: [],
-	max_words: 3000,
-	order: 0,
-	parent_id: null,
-	search_queries: [],
-	title: "Category Name",
-	topics: [],
+export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>((factory, iteration) => ({
+	depends_on: factory.helpers.arrayElements(
+		["section-intro", "section-background", "section-methodology", "section-budget"],
+		{ max: 2, min: 0 },
+	),
+	generation_instructions: factory.lorem.sentences({ max: 3, min: 1 }),
+	id: factory.string.uuid(),
+	is_clinical_trial: factory.datatype.boolean({ probability: 0.3 }) ? factory.datatype.boolean() : null,
+	is_detailed_workplan: factory.datatype.boolean({ probability: 0.4 }) ? factory.datatype.boolean() : null,
+	keywords: factory.helpers.arrayElements(
+		["research", "innovation", "methodology", "analysis", "hypothesis", "outcomes", "implementation", "evaluation"],
+		{ max: 5, min: 0 },
+	),
+	max_words: factory.helpers.arrayElement([500, 1000, 1500, 2000, 3000, 5000]),
+	order: iteration,
+	parent_id: factory.datatype.boolean({ probability: 0.2 }) ? factory.string.uuid() : null,
+	search_queries: factory.helpers.multiple(() => factory.lorem.words({ max: 4, min: 2 }), {
+		count: { max: 3, min: 0 },
+	}),
+	title: factory.helpers.arrayElement([
+		"Executive Summary",
+		"Research Background",
+		"Methodology",
+		"Project Timeline",
+		"Budget Justification",
+		"Impact Statement",
+		"Literature Review",
+		"Technical Approach",
+		`Section ${iteration + 1}`,
+	]),
+	topics: factory.helpers.arrayElements(
+		[
+			"healthcare",
+			"technology",
+			"education",
+			"environment",
+			"social impact",
+			"economic development",
+			"sustainability",
+			"community engagement",
+		],
+		{ max: 4, min: 0 },
+	),
 }));
 
 interface SourceProcessingNotification {
