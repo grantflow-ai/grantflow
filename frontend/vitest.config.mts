@@ -14,6 +14,7 @@ export default defineConfig({
 		coverage: {
 			exclude: [
 				"**/*.spec.*",
+				"**/*.stories.*",
 				"**/*.d.ts",
 				"src/types/*",
 				"src/components/ui/*",
