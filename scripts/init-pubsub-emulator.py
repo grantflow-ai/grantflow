@@ -5,7 +5,7 @@ import sys
 from typing import TypedDict
 
 from google.api_core import exceptions
-from google.cloud import pubsub_v1  # type: ignore[attr-defined]
+from google.cloud import pubsub_v1
 
 
 class SubscriptionConfig(TypedDict):
