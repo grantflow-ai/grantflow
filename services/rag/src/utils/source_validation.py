@@ -97,12 +97,10 @@ source_validation_schema = {
             "type": "number",
             "minimum": 0,
             "maximum": 100,
-            "description": "Percentage (0-100) of required information available in sources",
         },
         "missing_information": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "List of specific missing information pieces needed for task completion",
         },
     },
     "required": ["percentage_available", "missing_information"],
