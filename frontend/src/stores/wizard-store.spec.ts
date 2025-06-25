@@ -41,6 +41,7 @@ describe("wizard store", () => {
 
 			it("should return true when title is long enough", () => {
 				const application = ApplicationFactory.build({
+					rag_sources: [RagSourceFactory.build()],
 					title: "A".repeat(MIN_TITLE_LENGTH),
 				});
 
