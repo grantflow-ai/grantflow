@@ -50,27 +50,18 @@ DIVERSE_SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     It's OK for this section to be quite long, as thorough consideration will lead to better queries.
 
-    After your thought process, provide your final output as a JSON object strictly adhering to the following structure:
+    After your thought process, provide your final output as a structured response containing an array of query objects.
 
-    ```json
-    {
-        "queries": [
-            {
-                "text": "Query 1",
-                "type": "factual|conceptual|procedural|comparative",
-                "aspect": "brief description of what aspect this query covers"
-            },
-            {
-                "text": "Query 2",
-                "type": "factual|conceptual|procedural|comparative",
-                "aspect": "brief description of what aspect this query covers"
-            },
-            // Additional queries as needed, up to 10
-        ]
-    }
-    ```
+    Each query object should contain:
+    - text: The search query text optimized for vector retrieval
+    - type: The query category (factual, conceptual, procedural, or comparative)
+    - aspect: A brief description of what specific aspect of the topic this query covers
 
-    Ensure that you generate at least 3 queries and no more than 10 queries. Each query should be designed to retrieve distinct, relevant information from the vector store.""",
+    Requirements:
+    - Generate between 3 and 10 queries
+    - Each query should target distinct, relevant information
+    - Queries must cover different semantic angles and aspects
+    - Optimize query text for cosine similarity matching in vector stores""",
 )
 
 
@@ -95,12 +86,23 @@ response_schema = {
     "properties": {
         "queries": {
             "type": "array",
+            "description": "Array of diverse search queries for vector retrieval",
             "items": {
                 "type": "object",
                 "properties": {
-                    "text": {"type": "string"},
-                    "type": {"type": "string", "enum": ["factual", "conceptual", "procedural", "comparative"]},
-                    "aspect": {"type": "string"},
+                    "text": {
+                        "type": "string",
+                        "description": "The search query text optimized for cosine similarity matching",
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": ["factual", "conceptual", "procedural", "comparative"],
+                        "description": "Category of query: factual (facts/data), conceptual (theories/principles), procedural (methods/processes), comparative (relationships/contrasts)",
+                    },
+                    "aspect": {
+                        "type": "string",
+                        "description": "Brief description of what specific aspect of the topic this query targets",
+                    },
                 },
                 "required": ["text", "type", "aspect"],
             },

@@ -98,24 +98,9 @@ GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
          * It builds upon concepts introduced in the other section
          * It provides supporting evidence for claims in the other section
 
-    ## Output Schema
+    ## Task Completion
 
-    For EACH section in the provided section list, produce the following metadata in JSON format:
-
-    ```json
-    {
-        "sections": [{                        // List of sections, if error, return empty list
-            "id": "string",                   // The ID of the section (must match input section ID)
-            "keywords": ["string"],           // 5-15 relevant scientific/technical terms
-            "topics": ["string"],             // 3-8 core topics the section must address
-            "generation_instructions": "string", // Detailed guidance for content generation
-            "depends_on": ["string"],         // IDs of sections this section depends on, if any
-            "max_words": integer,             // Recommended word limit based on analysis
-            "search_queries": ["string"],     // 3-10 queries to retrieve relevant information
-        }],
-        error: "string"                      // Error message if any, otherwise null
-    }
-    ```
+    For EACH section in the provided section list, generate comprehensive metadata following the analysis steps above.
 
     IMPORTANT:
     - Every section ID in your output MUST exactly match one of the section IDs provided in the input
@@ -132,6 +117,7 @@ grant_template_generation_json_schema: Final = {
     "properties": {
         "sections": {
             "type": "array",
+            "description": "Array of section metadata objects for grant template generation",
             "items": {
                 "type": "object",
                 "required": [
@@ -144,30 +130,57 @@ grant_template_generation_json_schema: Final = {
                     "search_queries",
                 ],
                 "properties": {
-                    "id": {"type": "string", "minLength": 1, "maxLength": 100},
+                    "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "description": "Section ID from input that must match exactly",
+                    },
                     "keywords": {
                         "type": "array",
                         "items": {"type": "string", "minLength": 2, "maxLength": 50},
                         "minItems": 3,
                         "maxItems": 20,
+                        "description": "5-15 relevant scientific/technical terms for this section",
                     },
                     "topics": {
                         "type": "array",
                         "items": {"type": "string", "minLength": 3, "maxLength": 100},
                         "minItems": 2,
                         "maxItems": 10,
+                        "description": "3-8 core topics the section must address",
                     },
-                    "generation_instructions": {"type": "string", "minLength": 50, "maxLength": 2000},
-                    "depends_on": {"type": "array", "items": {"type": "string", "minLength": 1}},
-                    "max_words": {"type": "integer", "minimum": 50, "maximum": 10000},
+                    "generation_instructions": {
+                        "type": "string",
+                        "minLength": 50,
+                        "maxLength": 2000,
+                        "description": "Detailed guidance for content generation specific to this section",
+                    },
+                    "depends_on": {
+                        "type": "array",
+                        "items": {"type": "string", "minLength": 1},
+                        "description": "Section IDs this section depends on, empty array if none",
+                    },
+                    "max_words": {
+                        "type": "integer",
+                        "minimum": 50,
+                        "maximum": 10000,
+                        "description": "Recommended word limit based on content depth and page limits",
+                    },
                     "search_queries": {
                         "type": "array",
                         "items": {"type": "string", "minLength": 5, "maxLength": 200},
                         "minItems": 3,
                         "maxItems": 10,
+                        "description": "3-10 queries to retrieve relevant information for this section",
                     },
                 },
             },
+        },
+        "error": {
+            "type": "string",
+            "nullable": True,
+            "description": "Error message if processing fails, null otherwise",
         },
     },
 }
