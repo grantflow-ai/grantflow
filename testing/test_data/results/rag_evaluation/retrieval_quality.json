@@ -2,14 +2,14 @@
   "test_type": "retrieval_quality_assessment",
   "application_id": "43b4aed5-8549-461f-9290-5ee9a630ac9a",
   "results": {
-    "document_count": 55,
-    "diversity_score": 0.9423803529547603,
+    "document_count": 60,
+    "diversity_score": 0.9369085296292373,
     "performance": {
-      "execution_time": 45.94357919692993,
+      "execution_time": 38.56553912162781,
       "threshold": 5.0,
       "within_threshold": false,
-      "performance_score": 0.10882913537424427
+      "performance_score": 0.12964942572774685
     }
   },
-  "timestamp": "2025-06-19T13:24:38.025897+00:00"
+  "timestamp": "2025-06-25T16:51:05.955490+00:00"
 }
