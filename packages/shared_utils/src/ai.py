@@ -26,29 +26,30 @@ REASONING_MODEL: Final[str] = get_env(
 
 init_ref = Ref[bool]()
 anthropic_client = Ref[AsyncAnthropic]()
-google_client = Ref[genai.AsyncClient | None](None)
+google_client = Ref[genai.Client | None](None)
 
 
 def get_vertex_credentials() -> Credentials:
     credentials = deserialize(
         get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any]
     )
-    return Credentials.from_service_account_info(credentials)  # type: ignore[no-any-return]
+
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    return Credentials.from_service_account_info(credentials, scopes=scopes)  # type: ignore[no-any-return, no-untyped-call]
 
 
 def init_llm_connection() -> None:
     if not init_ref.value:
-        google_client.value = genai.AsyncClient(
-            vertexai=genai.ClientVertexAiConfig(
-                project=get_env("GOOGLE_CLOUD_PROJECT"),
-                location=get_env("GOOGLE_CLOUD_REGION"),
-                credentials=get_vertex_credentials(),
-            )
+        google_client.value = genai.Client(
+            vertexai=True,
+            project=get_env("GOOGLE_CLOUD_PROJECT"),
+            location=get_env("GOOGLE_CLOUD_REGION"),
+            credentials=get_vertex_credentials(),
         )
         init_ref.value = True
 
 
-def get_google_ai_client() -> genai.AsyncClient:
+def get_google_ai_client() -> genai.Client:
     if not google_client.value:
         init_llm_connection()
     return google_client.value  # type: ignore[return-value]
@@ -71,11 +72,11 @@ async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
 
     try:
         client = get_google_ai_client()
-        response = await client.models.count_tokens(
+        response = await client._aio.models.count_tokens(  # noqa: SLF001
             model=model,
             contents=text,
         )
-        return int(response.total_tokens)
+        return int(response.total_tokens or 0)
     except (ValueError, KeyError, AttributeError):
         return estimate_token_count(text)
 
