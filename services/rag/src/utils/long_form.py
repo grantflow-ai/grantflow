@@ -123,14 +123,8 @@ SHORTEN_TEXT_PROMPT: Final[PromptTemplate] = PromptTemplate(
 LONG_FORM_SCHEMA = {
     "type": "object",
     "properties": {
-        "text": {
-            "type": "string",
-            "description": "The output text that was generated",
-        },
-        "is_complete": {
-            "type": "boolean",
-            "description": "Whether the text is complete or requires further prompts for generation",
-        },
+        "text": {"type": "string"},
+        "is_complete": {"type": "boolean"},
     },
     "required": ["text", "is_complete"],
 }

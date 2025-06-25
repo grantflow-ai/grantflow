@@ -62,11 +62,7 @@ SELECT_BEST_RESPONSE_USE_PROMPT: Final[PromptTemplate] = PromptTemplate(
 select_best_response_json_schema = {
     "type": "object",
     "properties": {
-        "best_response": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "The integer key (index) of the best response from the provided candidates",
-        },
+        "best_response": {"type": "integer", "minimum": 0},
     },
     "required": ["best_response"],
 }
