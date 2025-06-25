@@ -129,7 +129,7 @@ async def make_google_completions_request[T](
         if isinstance(message, str):
             message_parts.append(message)
         else:
-            message_parts.append(message)
+            message_parts.append(str(message))
 
     config = genai.types.GenerateContentConfig(
         response_mime_type=CONTENT_TYPE_JSON,
@@ -140,37 +140,48 @@ async def make_google_completions_request[T](
         candidate_count=candidate_count,
         system_instruction=system_prompt,
         safety_settings=[
-            genai.types.SafetySettings(
-                category="HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold="BLOCK_NONE"
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
             ),
-            genai.types.SafetySettings(
-                category="HARM_CATEGORY_HATE_SPEECH",
-                threshold="BLOCK_NONE"
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
             ),
-            genai.types.SafetySettings(
-                category="HARM_CATEGORY_HARASSMENT",
-                threshold="BLOCK_NONE"
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
             ),
-            genai.types.SafetySettings(
-                category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold="BLOCK_NONE"
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
             ),
         ],
     )
 
-    response = await client.models.generate_content(
+    content = "\n".join(message_parts)
+    response = await client._aio.models.generate_content(  # noqa: SLF001
         model=model,
-        contents=message_parts,
+        contents=content,
         config=config,
     )
     if not candidate_count:
-        return deserialize(response.text, response_type)
+        return deserialize(response.text or "", response_type)
 
     prompt = "\n".join([message if isinstance(message, str) else str(message) for message in messages])
 
+    candidates_list = response.candidates or []
+    candidates_dict = {}
+    for index, candidate in enumerate(candidates_list):
+        candidate_text = ""
+        if candidate.content and candidate.content.parts:
+            for part in candidate.content.parts:
+                if hasattr(part, "text") and part.text:
+                    candidate_text += part.text
+        candidates_dict[index + 1] = deserialize(candidate_text, response_type)
+
     return await select_best_response(
-        candidates={index + 1: deserialize(candidate.text, response_type) for index, candidate in enumerate(response.candidates)},
+        candidates=candidates_dict,
         prompt=prompt,
     )
 
