@@ -20,9 +20,11 @@ from services.rag.src.utils.completion import (
 
 @pytest.fixture
 def mock_google_api_response(mocker: MockerFixture) -> Mock:
-    client = AsyncMock()
+    client = Mock()
+    aio_client = AsyncMock()
     response = Mock()
-    client.models.generate_content.return_value = response
+    aio_client.models.generate_content.return_value = response
+    client._aio = aio_client  # noqa: SLF001
     mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
     return response
 
@@ -83,10 +85,19 @@ async def test_make_completions_request_with_list_message(mock_google_api_respon
 
 async def test_make_completions_request_with_multiple_candidates(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = '{"best_response": 1}'
+
     candidate1 = Mock()
-    candidate1.text = '{"key": "value1"}'
+    part1 = Mock()
+    part1.text = '{"key": "value1"}'
+    candidate1.content = Mock()
+    candidate1.content.parts = [part1]
+
     candidate2 = Mock()
-    candidate2.text = '{"key": "value2"}'
+    part2 = Mock()
+    part2.text = '{"key": "value2"}'
+    candidate2.content = Mock()
+    candidate2.content.parts = [part2]
+
     mock_google_api_response.candidates = [candidate1, candidate2]
     result = await make_google_completions_request(
         prompt_identifier="test",
@@ -163,15 +174,17 @@ async def test_handle_completions_request_success(mock_google_api_response: Mock
 
 
 async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> None:
-    client = AsyncMock()
+    client = Mock()
+    aio_client = AsyncMock()
     response = Mock()
     response.text = '{"key": "value"}'
 
-    client.models.generate_content.side_effect = [
+    aio_client.models.generate_content.side_effect = [
         TooManyRequests("error"),  # type: ignore[no-untyped-call]
         TooManyRequests("error"),  # type: ignore[no-untyped-call]
         response,
     ]
+    client._aio = aio_client  # noqa: SLF001
     mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
 
     result = await handle_completions_request(

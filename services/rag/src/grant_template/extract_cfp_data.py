@@ -149,21 +149,8 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - Accept dates in any format (e.g., "July 1, 2025", "07/01/2025", "2025-07-01"), but standardize the output to the YYYY-MM-DD format.
        - If no explicit submission date is found, return null.
 
-    ## Output Format:
-    ```jsonc
-    {
-        "organization_id": "UUID from mapping", // null if not found
-        "content": [
-            {"title": "Formatting requirement", "content": ["requirement 1", "requirement 2"]},
-            {"title": "Section title", "content": ["Subsection 1", "Subsection 2"]},
-            {"Explicit requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
-            {"Supporting documentation requirement": "Section title", "content": ["requirement 1", "requirement 2"]},
-        ],
-        "cfp_subject": "...", // can be empty if error
-        "submission_date": "2025-04-26", // null if not found
-        "error": null // or error message if extraction fails
-    }
-    ```
+    ## Task Output:
+    Extract and synthesize the CFP information according to the steps above. Focus on preserving structural integrity while filtering out administrative details.
 
     ## Guidelines - Do NOT skip any step:
     - Synthesize information from all available sources
@@ -288,21 +275,46 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 cfp_extraction_schema = {
     "type": "object",
     "properties": {
-        "organization_id": {"type": "string", "nullable": True},
-        "cfp_subject": {"type": "string"},
+        "organization_id": {
+            "type": "string",
+            "nullable": True,
+            "description": "UUID from organization mapping if the funding organization is found, null otherwise",
+        },
+        "cfp_subject": {
+            "type": "string",
+            "description": "Comprehensive summary of the funding opportunity including type, audience, objectives, and focus areas",
+        },
         "content": {
             "type": "array",
+            "description": "Array of sections and requirements extracted from the CFP",
             "items": {
                 "type": "object",
                 "properties": {
-                    "title": {"type": "string", "nullable": False},
-                    "subtitles": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                    "title": {
+                        "type": "string",
+                        "nullable": False,
+                        "description": "Section title or requirement category name",
+                    },
+                    "subtitles": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                        "description": "Array of subsection titles or individual requirements",
+                    },
                 },
                 "required": ["title", "subtitles"],
             },
         },
-        "submission_date": {"type": "string", "nullable": True},
-        "error": {"type": "string", "nullable": True},
+        "submission_date": {
+            "type": "string",
+            "nullable": True,
+            "description": "Final submission deadline in YYYY-MM-DD format if found, null otherwise",
+        },
+        "error": {
+            "type": "string",
+            "nullable": True,
+            "description": "Error message if extraction fails, null on success",
+        },
     },
     "required": ["organization_id", "cfp_subject", "content", "submission_date"],
 }
