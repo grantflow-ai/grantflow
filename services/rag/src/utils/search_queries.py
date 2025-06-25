@@ -50,12 +50,7 @@ DIVERSE_SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     It's OK for this section to be quite long, as thorough consideration will lead to better queries.
 
-    After your thought process, provide your final output as a structured response containing an array of query objects.
-
-    Each query object should contain:
-    - text: The search query text optimized for vector retrieval
-    - type: The query category (factual, conceptual, procedural, or comparative)
-    - aspect: A brief description of what specific aspect of the topic this query covers
+    After your thought process, provide your final output as a structured response.
 
     Requirements:
     - Generate between 3 and 10 queries
@@ -86,23 +81,15 @@ response_schema = {
     "properties": {
         "queries": {
             "type": "array",
-            "description": "Array of diverse search queries for vector retrieval",
             "items": {
                 "type": "object",
                 "properties": {
-                    "text": {
-                        "type": "string",
-                        "description": "The search query text optimized for cosine similarity matching",
-                    },
+                    "text": {"type": "string"},
                     "type": {
                         "type": "string",
                         "enum": ["factual", "conceptual", "procedural", "comparative"],
-                        "description": "Category of query: factual (facts/data), conceptual (theories/principles), procedural (methods/processes), comparative (relationships/contrasts)",
                     },
-                    "aspect": {
-                        "type": "string",
-                        "description": "Brief description of what specific aspect of the topic this query targets",
-                    },
+                    "aspect": {"type": "string"},
                 },
                 "required": ["text", "type", "aspect"],
             },
