@@ -64,28 +64,9 @@ RETRIEVAL_OPTIMIZATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - Recommend new query strategies
     - Suggest alternative phrasings or terminology
 
-    ## Output Format
+    ## Task Completion
 
-    Provide a JSON object with the following structure:
-
-    ```jsonc
-    {
-      "assessment": {
-        "relevance_score": 7,  // 0-10 scale
-        "comprehensiveness_score": 6,  // 0-10 scale
-        "diversity_score": 5,  // 0-10 scale
-        "depth_score": 7,  // 0-10 scale
-        "freshness_score": 8,  // 0-10 scale
-        "overall_score": 6.6,  // average of all scores
-        "explanation": "Brief explanation of the quality assessment"
-      },
-      "optimization": {
-        "information_gaps": ["Specific missing information types or aspects"],
-        "improved_queries": ["List of targeted queries to fill identified gaps"],
-        "query_strategies": "Recommendations for improving future queries"
-      }
-    }
-    ```
+    Provide your quality assessment and optimization recommendations based on the dimensions evaluated above. Include scores for each dimension, an overall assessment, and specific recommendations for improvement where needed.
     """,
 )
 
@@ -116,14 +97,45 @@ retrieval_quality_schema: Final[dict[str, Any]] = {
     "properties": {
         "assessment": {
             "type": "object",
+            "description": "Quality assessment of retrieved documents across multiple dimensions",
             "properties": {
-                "relevance_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "comprehensiveness_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "diversity_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "depth_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "freshness_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "overall_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "explanation": {"type": "string"},
+                "relevance_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "How directly the documents address the task requirements (0-10)",
+                },
+                "comprehensiveness_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "Coverage of all aspects needed for the task (0-10)",
+                },
+                "diversity_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "Variety of perspectives and approaches in the documents (0-10)",
+                },
+                "depth_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "Level of detail and technical depth provided (0-10)",
+                },
+                "freshness_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "Recency and currency of the information (0-10)",
+                },
+                "overall_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "Average of all dimension scores (0-10)",
+                },
+                "explanation": {"type": "string", "description": "Brief explanation of the quality assessment"},
             },
             "required": [
                 "relevance_score",
@@ -137,10 +149,22 @@ retrieval_quality_schema: Final[dict[str, Any]] = {
         },
         "optimization": {
             "type": "object",
+            "description": "Recommendations for improving retrieval quality",
             "properties": {
-                "information_gaps": {"type": "array", "items": {"type": "string"}},
-                "improved_queries": {"type": "array", "items": {"type": "string"}},
-                "query_strategies": {"type": "string"},
+                "information_gaps": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Specific missing information types or aspects",
+                },
+                "improved_queries": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Targeted queries to fill identified gaps",
+                },
+                "query_strategies": {
+                    "type": "string",
+                    "description": "Overall recommendations for improving future queries",
+                },
             },
             "required": ["information_gaps", "improved_queries", "query_strategies"],
         },
