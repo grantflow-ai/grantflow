@@ -19,6 +19,7 @@ async def test_extract_sections_melanoma_alliance_cfp(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -26,6 +27,7 @@ async def test_extract_sections_melanoma_alliance_cfp(
         cfp_file_name="melanoma_alliance.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -59,6 +61,7 @@ async def test_extract_sections_erc_cfp(
     erc_organization: FundingOrganization,
     organization_mapping: dict[str, dict[str, str]],
     async_session_maker: async_sessionmaker[Any],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -66,6 +69,7 @@ async def test_extract_sections_erc_cfp(
         cfp_file_name="erc.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -98,6 +102,7 @@ async def test_extract_sections_standard_awards_cfp(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -105,6 +110,7 @@ async def test_extract_sections_standard_awards_cfp(
         cfp_file_name="standard_awards.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -138,6 +144,7 @@ async def test_extract_sections_nih_cfp(
     nih_organization: FundingOrganization,
     organization_mapping: dict[str, dict[str, str]],
     async_session_maker: async_sessionmaker[Any],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -145,6 +152,7 @@ async def test_extract_sections_nih_cfp(
         cfp_file_name="nih.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -177,6 +185,7 @@ async def test_extract_sections_ics_cfp(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -184,6 +193,7 @@ async def test_extract_sections_ics_cfp(
         cfp_file_name="ics.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(

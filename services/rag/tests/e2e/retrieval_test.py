@@ -51,7 +51,9 @@ async def test_document_retrieval(
     ai_evaluation = await evaluate_retrieval_relevance(task_description, results)
 
     assert diversity_score > 0.2
-    assert performance["within_threshold"]
+    assert performance["within_threshold"], (
+        f"Retrieval took {performance['execution_time']:.2f}s, exceeded threshold of {performance['threshold']}s"
+    )
 
     evaluation_results = {
         "test_type": "document_retrieval_enhanced",
