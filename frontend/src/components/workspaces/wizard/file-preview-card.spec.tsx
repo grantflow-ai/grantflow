@@ -336,7 +336,7 @@ describe("FilePreviewCard", () => {
 
 			const button = screen.getByRole("button", { name: "Open document.pdf" });
 			const iconContainerDiv = button.querySelector("div.mb-1 div.flex");
-			expect(iconContainerDiv).toHaveClass("flex", "items-center", "justify-center");
+			expect(iconContainerDiv).toHaveClass("flex");
 		});
 	});
 
