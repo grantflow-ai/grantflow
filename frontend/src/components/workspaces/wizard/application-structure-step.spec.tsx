@@ -20,28 +20,9 @@ vi.mock("next/image", () => ({
 	),
 }));
 
-let mockSections: any[] = [];
-
-vi.mock("@/components/workspaces/wizard/drag-drop-section-manager", () => ({
-	DragDropSectionManager: () => {
-		return (
-			<div data-testid="drag-drop-section-manager">
-				{mockSections.map((section: any) => (
-					<div data-testid={`section-${section.id}`} key={section.id}>
-						<span>{section.title}</span>
-						{section.max_words && <span>{section.max_words.toLocaleString()} Max words</span>}
-					</div>
-				))}
-			</div>
-		);
-	},
-}));
-
 describe("ApplicationStructureStep", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-
-		mockSections = [];
 
 		useWizardStore.setState({
 			checkTemplateRagJobStatus: vi.fn(),
@@ -184,8 +165,6 @@ describe("ApplicationStructureStep", () => {
 				GrantSectionDetailedFactory.build({ id: "3", order: 2, parent_id: null, title: "Results" }),
 			];
 
-			mockSections = grantSections;
-
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: grantSections,
@@ -268,8 +247,6 @@ describe("ApplicationStructureStep", () => {
 				}),
 			];
 
-			mockSections = grantSections;
-
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: grantSections,
@@ -300,8 +277,6 @@ describe("ApplicationStructureStep", () => {
 					title: "Subsection",
 				}),
 			];
-
-			mockSections = grantSections;
 
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
@@ -725,8 +700,6 @@ describe("ApplicationStructureStep", () => {
 					title: "Detailed Section",
 				}),
 			];
-
-			mockSections = grantSections;
 
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({

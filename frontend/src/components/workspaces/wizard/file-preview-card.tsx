@@ -89,13 +89,19 @@ export default function FilePreviewCard({ file, parentId }: { file: FileWithId; 
 				<DropdownMenuTrigger className="sr-only" disabled>
 					<span>File options</span>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent align="start" className="w-40">
-					<DropdownMenuItem className="gap-2" disabled={!canOpenInBrowser} onClick={handleOpen}>
+				<DropdownMenuContent align="start" className="w-40" data-testid="file-context-menu">
+					<DropdownMenuItem
+						className="gap-2"
+						data-testid="file-menu-open"
+						disabled={!canOpenInBrowser}
+						onClick={handleOpen}
+					>
 						<ExternalLink className="size-4" />
 						Open
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						className="text-destructive focus:text-destructive gap-2"
+						data-testid="file-menu-remove"
 						disabled={!parentId}
 						onClick={handleRemove}
 					>
@@ -114,7 +120,11 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 			<div className="mb-1">
 				<FileIcon extension={extension} />
 			</div>
-			<span className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3" title={fileName}>
+			<span
+				className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3"
+				data-testid="file-name"
+				title={fileName}
+			>
 				{fileName}
 			</span>
 		</>
@@ -122,8 +132,6 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 }
 
 function FileIcon({ extension }: { extension: string }) {
-	// eslint wrongly flagging it as non-nullable - unknown filetype makes map return undefined ~keep
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	const iconComponent = FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP] ?? FILE_ICON_MAP.unknown;
 	return <div className="flex items-center justify-center">{iconComponent}</div>;
 }

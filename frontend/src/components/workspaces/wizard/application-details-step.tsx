@@ -61,7 +61,12 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 				</div>
 
 				<div className="space-y-6">
-					<h2 className="font-heading text-2xl font-medium leading-loose">Application Instructions</h2>
+					<h2
+						className="font-heading text-2xl font-medium leading-loose"
+						data-testid="application-instructions-header"
+					>
+						Application Instructions
+					</h2>
 
 					<div>
 						<h3 className="font-heading mb-1 text-base font-semibold leading-snug">Documents</h3>

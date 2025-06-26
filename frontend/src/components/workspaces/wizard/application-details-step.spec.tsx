@@ -66,7 +66,7 @@ describe("ApplicationDetailsStep", () => {
 	it("renders application instructions section", () => {
 		render(<ApplicationDetailsStep />);
 
-		expect(screen.getByText("Application Instructions")).toBeInTheDocument();
+		expect(screen.getByTestId("application-instructions-header")).toBeInTheDocument();
 		expect(screen.getAllByText("Documents")[0]).toBeInTheDocument();
 		expect(screen.getAllByText("Links")[0]).toBeInTheDocument();
 	});
@@ -239,7 +239,7 @@ describe("ApplicationDetailsStep", () => {
 		render(<ApplicationDetailsStep />);
 
 		expect(screen.getByTestId("application-title-textarea")).toBeInTheDocument();
-		expect(screen.getAllByText("Application Title").length).toBeGreaterThan(0);
+		expect(screen.getByTestId("application-title-header")).toBeInTheDocument();
 		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
 	});
@@ -305,9 +305,9 @@ describe("ApplicationDetailsStep", () => {
 
 		await waitFor(
 			() => {
-				expect(screen.getByRole("menu")).toBeInTheDocument();
-				expect(screen.getByText("Open")).toBeInTheDocument();
-				expect(screen.getByText("Remove")).toBeInTheDocument();
+				expect(screen.getByTestId("file-context-menu")).toBeInTheDocument();
+				expect(screen.getByTestId("file-menu-open")).toBeInTheDocument();
+				expect(screen.getByTestId("file-menu-remove")).toBeInTheDocument();
 			},
 			{ timeout: 3000 },
 		);
