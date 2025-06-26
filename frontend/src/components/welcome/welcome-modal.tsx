@@ -1,14 +1,19 @@
 /* eslint-disable sonarjs/no-nested-conditional */
-"use client"
+"use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Check } from "lucide-react";
 
 export default function WelcomeModal() {
-
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(1);
 
@@ -23,16 +28,22 @@ export default function WelcomeModal() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setStep((prev) =>
-        prev < progressBarLabels.length ? prev + 1 : 1
-      );
-    }, 3000); // Adjust speed here
+      setStep((prev) => (prev < progressBarLabels.length ? prev + 1 : 1));
+    }, 2000);
 
-    return () => { clearInterval(interval); };
+    const hasVisited = localStorage.getItem("hasVisitedWelcomeModal");
+    if (!hasVisited) {
+      setOpen(true);
+      localStorage.setItem("hasVisitedWelcomeModal", "true");
+    }
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   return (
-    <Dialog onOpenChange={setOpen} open={open} >
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogContent className="flex w-full max-w-[954px] flex-col gap-16 overflow-hidden rounded-sm border border-[#1f13f8cf] bg-white px-0 pb-8 pt-0">
         <DialogHeader className="relative flex h-[152px] w-full items-center justify-center overflow-hidden rounded-t-sm bg-[#FAF9FB]">
           <div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_#1E13F8_0%,_transparent_70%)] opacity-80" />
@@ -41,9 +52,9 @@ export default function WelcomeModal() {
             <main className="flex items-center">
               {progressBarLabels.map((_, index) => (
                 <div
-                className={`${
-                  index < progressBarLabels.length - 1 ? "w-[145px]" : ""
-                } flex items-center`}
+                  className={`${
+                    index < progressBarLabels.length - 1 ? "w-[145px]" : ""
+                  } flex items-center`}
                   key={index}
                 >
                   <motion.div
@@ -88,8 +99,8 @@ export default function WelcomeModal() {
                         >
                           <Check className="size-[7px] stroke-[5] text-white" />
                         </motion.div>
-                      // eslint-disable-next-line sonarjs/no-nested-conditional
-                      ) : index === step ? (
+                      ) : // eslint-disable-next-line sonarjs/no-nested-conditional
+                      index === step ? (
                         <motion.div
                           animate="active"
                           className="size-[3.5px] rounded-full"
@@ -121,8 +132,8 @@ export default function WelcomeModal() {
                           key={`line-${index}`}
                           transition={{ duration: 0.8, ease: "easeInOut" }}
                         />
-                      // eslint-disable-next-line sonarjs/no-nested-conditional
-                      ) : index < step - 1 ? (
+                      ) : // eslint-disable-next-line sonarjs/no-nested-conditional
+                      index < step - 1 ? (
                         <div className="absolute left-0 top-0 size-full bg-[#1E13F8]" />
                       ) : null}
                     </div>
@@ -138,8 +149,8 @@ export default function WelcomeModal() {
                   className={`text-[11px] font-semibold ${
                     index < step - 1
                       ? "text-[#211968]"
-                      // eslint-disable-next-line sonarjs/no-nested-conditional
-                      : index === step - 1
+                      : // eslint-disable-next-line sonarjs/no-nested-conditional
+                      index === step - 1
                       ? "text-[#1E13F8]"
                       : "text-gray-400"
                   }`}
@@ -184,7 +195,10 @@ export default function WelcomeModal() {
           </DialogDescription>
         </section>
         <footer className="flex w-full items-center justify-between px-10">
-          <Button onClick={() => setOpen(false)} className="w-28 cursor-pointer hover:border-2 border border-[#1E13F8] bg-white px-4 py-2 text-base font-normal text-[#1E13F8] hover:bg-white">
+          <Button
+            onClick={() => setOpen(false)}
+            className="w-28 cursor-pointer hover:border-2 border border-[#1E13F8] bg-white px-4 py-2 text-base font-normal text-[#1E13F8] hover:bg-white"
+          >
             Later
           </Button>
           <Button
@@ -199,4 +213,3 @@ export default function WelcomeModal() {
     </Dialog>
   );
 }
-
