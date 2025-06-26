@@ -5,6 +5,7 @@ metadata:
 
 outputs:
   - file: "CLAUDE.md"
+  - file: "GEMINI.md"
   - file: ".windsurfrules"
   - file: ".cursorrules"
 
