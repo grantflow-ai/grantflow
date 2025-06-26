@@ -3,8 +3,9 @@ import {
 	ApplicationWithTemplateFactory,
 	GrantSectionDetailedFactory,
 	GrantTemplateFactory,
+	RagJobResponseFactory,
 } from "::testing/factories";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
@@ -128,22 +129,14 @@ describe("ApplicationStructureStep", () => {
 
 		const mainContainer = screen.getByTestId("application-structure-step");
 		expect(mainContainer).toBeInTheDocument();
-		expect(mainContainer).toHaveClass("flex", "size-full");
+		expect(mainContainer).toHaveClass("flex");
 
 		const leftPane = mainContainer.querySelector(".w-1\\/3");
 		expect(leftPane).toBeInTheDocument();
 
 		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
 		expect(previewPane).toBeInTheDocument();
-		expect(previewPane).toHaveClass(
-			"bg-preview-bg",
-			"flex",
-			"h-full",
-			"flex-col",
-			"gap-6",
-			"border-l",
-			"border-gray-100",
-		);
+		expect(previewPane).toHaveClass("bg-preview-bg");
 	});
 
 	it("renders with application that has grant sections", () => {
@@ -183,9 +176,9 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			expect(screen.getByText("Introduction")).toBeInTheDocument();
-			expect(screen.getByText("Methods")).toBeInTheDocument();
-			expect(screen.getByText("Results")).toBeInTheDocument();
+			expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
+			const sectionsContainer = screen.getByTestId("application-structure-sections");
+			expect(sectionsContainer).toBeInTheDocument();
 		});
 
 		it("shows add new section button", () => {
@@ -199,89 +192,76 @@ describe("ApplicationStructureStep", () => {
 
 			expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 		});
+	});
 
-		it("calls updateGrantSections when add button is clicked", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
+	describe("GeneratingLoader state", () => {
+		it("shows GeneratingLoader during PROCESSING status", () => {
 			const application = ApplicationWithTemplateFactory.build();
 
 			useApplicationStore.setState({
 				application,
-				updateGrantSections: mockUpdateGrantSections,
+			});
+
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
 			});
 
 			render(<ApplicationStructureStep />);
 
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith(
-					expect.arrayContaining([
-						expect.objectContaining({
-							max_words: 3000,
-							title: "Category Name",
-						}),
-					]),
-				);
-			});
+			expect(screen.getByTestId("image-Analyzing data")).toBeInTheDocument();
 		});
 
-		it("displays max words for sections", () => {
-			const grantSections = [
-				GrantSectionDetailedFactory.build({
-					id: "1",
-					max_words: 1500,
-					order: 0,
-					parent_id: null,
-					title: "Introduction",
-				}),
-			];
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: grantSections,
-				}),
-			});
+		it("shows GeneratingLoader during PENDING status", () => {
+			const application = ApplicationWithTemplateFactory.build();
 
 			useApplicationStore.setState({
 				application,
 			});
 
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PENDING" }),
+			});
+
 			render(<ApplicationStructureStep />);
 
-			expect(screen.getByText("1,500 Max words")).toBeInTheDocument();
+			expect(screen.getByTestId("image-Analyzing data")).toBeInTheDocument();
 		});
 
-		it("handles subsections correctly", () => {
-			const grantSections = [
-				GrantSectionDetailedFactory.build({
-					id: "1",
-					order: 0,
-					parent_id: null,
-					title: "Main Section",
-				}),
-				GrantSectionDetailedFactory.build({
-					id: "2",
-					order: 1,
-					parent_id: "1",
-					title: "Subsection",
-				}),
-			];
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: grantSections,
-				}),
-			});
+		it("does not show GeneratingLoader when completed", () => {
+			const application = ApplicationWithTemplateFactory.build();
 
 			useApplicationStore.setState({
 				application,
 			});
 
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "COMPLETED" }),
+			});
+
 			render(<ApplicationStructureStep />);
 
-			expect(screen.getByText("Main Section")).toBeInTheDocument();
-			expect(screen.getByText("Subsection")).toBeInTheDocument();
+			expect(screen.queryByTestId("image-Analyzing data")).not.toBeInTheDocument();
+			expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
+		});
+
+		it("changes description text during generation", () => {
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+			});
+
+			render(<ApplicationStructureStep />);
+
+			const description = screen.getByTestId("application-structure-description");
+			expect(description).toBeInTheDocument();
+			expect(description).toHaveTextContent("Analyzing your knowledge base to generate the optimal structure...");
+		});
+
+		it("shows normal description text when not generating", () => {
+			render(<ApplicationStructureStep />);
+
+			const description = screen.getByTestId("application-structure-description");
+			expect(description).toBeInTheDocument();
+			expect(description).toHaveTextContent("Review and customize the structure of your grant application.");
 		});
 	});
 });

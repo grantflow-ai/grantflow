@@ -405,19 +405,49 @@ export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemp
 
 type GrantSectionUpdateRequest = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
 
-export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>(() => ({
-	depends_on: [],
-	generation_instructions: "",
-	id: `section-${crypto.randomUUID()}`,
-	is_clinical_trial: null,
-	is_detailed_workplan: null,
-	keywords: [],
-	max_words: 3000,
-	order: 0,
-	parent_id: null,
-	search_queries: [],
-	title: "Category Name",
-	topics: [],
+export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>((factory, iteration) => ({
+	depends_on: factory.helpers.arrayElements(
+		["section-intro", "section-background", "section-methodology", "section-budget"],
+		{ max: 2, min: 0 },
+	),
+	generation_instructions: factory.lorem.sentences({ max: 3, min: 1 }),
+	id: factory.string.uuid(),
+	is_clinical_trial: factory.datatype.boolean({ probability: 0.3 }) ? factory.datatype.boolean() : null,
+	is_detailed_workplan: factory.datatype.boolean({ probability: 0.4 }) ? factory.datatype.boolean() : null,
+	keywords: factory.helpers.arrayElements(
+		["research", "innovation", "methodology", "analysis", "hypothesis", "outcomes", "implementation", "evaluation"],
+		{ max: 5, min: 0 },
+	),
+	max_words: factory.helpers.arrayElement([500, 1000, 1500, 2000, 3000, 5000]),
+	order: iteration,
+	parent_id: factory.datatype.boolean({ probability: 0.2 }) ? factory.string.uuid() : null,
+	search_queries: factory.helpers.multiple(() => factory.lorem.words({ max: 4, min: 2 }), {
+		count: { max: 3, min: 0 },
+	}),
+	title: factory.helpers.arrayElement([
+		"Executive Summary",
+		"Research Background",
+		"Methodology",
+		"Project Timeline",
+		"Budget Justification",
+		"Impact Statement",
+		"Literature Review",
+		"Technical Approach",
+		`Section ${iteration + 1}`,
+	]),
+	topics: factory.helpers.arrayElements(
+		[
+			"healthcare",
+			"technology",
+			"education",
+			"environment",
+			"social impact",
+			"economic development",
+			"sustainability",
+			"community engagement",
+		],
+		{ max: 4, min: 0 },
+	),
 }));
 
 interface SourceProcessingNotification {
@@ -548,39 +578,13 @@ export const FileWithIdFactory = new Factory<FileWithId>((factory) => {
 	return file;
 });
 
-interface RagJobResponse {
-	completed_at?: string;
-	created_at: string;
-	current_stage: number;
-	error_details?: {
-		details: string;
-		error_type: string;
-	};
-	error_message?: string;
-	failed_at?: string;
-	generated_sections?: Record<string, string>;
-	grant_application_id?: string;
-	grant_template_id?: string;
-	id: string;
-	job_type: "grant_application_generation" | "grant_template_generation";
-	retry_count: number;
-	status: "COMPLETED" | "FAILED" | "PROCESSING";
-	total_stages: number;
-	updated_at: string;
-	validation_results?: {
-		is_valid: boolean;
-		score: number;
-	};
-}
-
-export const RagJobResponseFactory = new Factory<RagJobResponse>((factory) => {
-	const jobType = factory.helpers.arrayElement<"grant_application_generation" | "grant_template_generation">([
-		"grant_application_generation",
-		"grant_template_generation",
-	]);
-	const status = factory.helpers.arrayElement<"COMPLETED" | "FAILED" | "PROCESSING">([
+export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.ResponseBody>((factory) => {
+	const jobType = factory.helpers.arrayElement(["grant_application_generation", "grant_template_generation"]);
+	const status = factory.helpers.arrayElement<"CANCELLED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING">([
+		"CANCELLED",
 		"COMPLETED",
 		"FAILED",
+		"PENDING",
 		"PROCESSING",
 	]);
 	const isCompleted = status === "COMPLETED";
@@ -623,3 +627,9 @@ export const RagJobResponseFactory = new Factory<RagJobResponse>((factory) => {
 				: undefined,
 	};
 });
+
+export const CreateGrantApplicationRagSourceUploadUrlResponseFactory =
+	new Factory<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody>((factory) => ({
+		source_id: factory.string.uuid(),
+		url: factory.internet.url(),
+	}));
