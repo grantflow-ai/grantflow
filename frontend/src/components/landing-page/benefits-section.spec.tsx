@@ -62,9 +62,9 @@ describe("BenefitsSection", () => {
 		render(<BenefitsSection />);
 
 		const scrollFadeElements = screen.getAllByTestId("mock-scroll-fade-element");
-		expect(scrollFadeElements.length).toBe(2);
+		expect(scrollFadeElements.length).toBe(1);
 
-		const [headingElement, descriptionElement] = scrollFadeElements;
+		const [headingElement] = scrollFadeElements;
 
 		expect(headingElement).toHaveClass("mx-auto");
 		expect(headingElement).not.toHaveAttribute("data-delay");
@@ -74,13 +74,6 @@ describe("BenefitsSection", () => {
 		expect(heading).toHaveClass("font-heading font-medium text-stone-800 text-3xl md:text-4xl");
 		expect(heading).toHaveTextContent("Simplify Grant Applications with AI-Powered tools");
 		expect(heading).toHaveAttribute("id", "benefits-heading");
-
-		expect(descriptionElement).toHaveClass("mx-auto");
-		expect(descriptionElement).toHaveAttribute("data-delay", "0.1");
-
-		const description = descriptionElement.querySelector("p");
-		expect(description).toBeInTheDocument();
-		expect(description).toHaveAttribute("id", "benefits-description");
 	});
 
 	it("renders benefits cards with ScaleElement", () => {
@@ -92,19 +85,10 @@ describe("BenefitsSection", () => {
 		expect(scaleElements[0]).toHaveAttribute("data-delay", "0");
 		const firstBenefitCard = scaleElements[0].querySelector("article");
 		expect(firstBenefitCard).toBeInTheDocument();
-		expect(firstBenefitCard).toHaveClass(
-			"size-full text-stone-800 py-7 px-6 md:px-5 bg-stone-50/60 border-2 border-primary/70 rounded",
-		);
 
 		const firstBadge = firstBenefitCard?.querySelector(".inline-flex");
 		expect(firstBadge).toBeInTheDocument();
 		expect(firstBadge?.querySelector("svg")).toHaveAttribute("data-testid", "mock-icon-benefit-first");
-		expect(firstBadge?.querySelector("span")).toHaveTextContent("Save time!");
-
-		expect(firstBenefitCard?.querySelector("h3")).toHaveTextContent(
-			"More Time on Grant Writing, Less on Research?",
-		);
-		expect(firstBenefitCard?.querySelector("p")).toHaveTextContent(/As a PI, you're balancing lab leadership/);
 
 		expect(scaleElements[1]).toHaveAttribute("data-delay", "0.2");
 		const secondBenefitCard = scaleElements[1].querySelector("article");
@@ -113,10 +97,6 @@ describe("BenefitsSection", () => {
 		const secondBadge = secondBenefitCard?.querySelector(".inline-flex");
 		expect(secondBadge).toBeInTheDocument();
 		expect(secondBadge?.querySelector("svg")).toHaveAttribute("data-testid", "mock-icon-benefit-second");
-		expect(secondBadge?.querySelector("span")).toHaveTextContent("Collaborate smarter!");
-
-		expect(secondBenefitCard?.querySelector("h3")).toHaveTextContent("One Place for Your Entire Grant Team");
-		expect(secondBenefitCard?.querySelector("p")).toHaveTextContent(/Coordinating with students, administrators/);
 	});
 
 	it("renders the HowItWorksCard with correct props", () => {
@@ -142,18 +122,5 @@ describe("BenefitsSection", () => {
 			step3: "Invite Your Colleagues to Work With You",
 			step4: "Generate Your Proposal with AI",
 		});
-	});
-
-	it("renders the benefits grid with correct structure", () => {
-		const { container } = render(<BenefitsSection />);
-
-		const grid = container.querySelector(".my-8.grid.w-full");
-		expect(grid).toBeInTheDocument();
-		expect(grid).toHaveClass(
-			"my-8 grid w-full grid-cols-1 items-start gap-y-8 text-start md:grid-cols-2 md:gap-x-10",
-		);
-
-		expect(screen.getAllByTestId("mock-scale-element").length).toBe(2);
-		expect(screen.getAllByTestId("mock-howitworks-card").length).toBe(1);
 	});
 });

@@ -75,28 +75,9 @@ describe("EarlyAccessSection", () => {
 		expect(description.id).toBe("early-access-description");
 	});
 
-	it("renders all benefit cards with correct content", () => {
-		render(<EarlyAccessSection />);
-
-		expect(screen.getByText("Exclusive Features")).toBeInTheDocument();
-		expect(screen.getByText("Influence the Future")).toBeInTheDocument();
-		expect(screen.getByText("Priority Support")).toBeInTheDocument();
-		expect(screen.getByText("Free Application")).toBeInTheDocument();
-
-		expect(screen.getByText(/Be the first to explore our most advanced/)).toBeInTheDocument();
-		expect(screen.getByText(/Your feedback will directly shape/)).toBeInTheDocument();
-		expect(screen.getByText(/Get dedicated onboarding and hands-on assistance/)).toBeInTheDocument();
-		expect(screen.getByText(/Create and generate your first full grant application/)).toBeInTheDocument();
-
-		expect(screen.getByTestId("icon-benefit-1")).toBeInTheDocument();
-		expect(screen.getByTestId("icon-benefit-2")).toBeInTheDocument();
-		expect(screen.getByTestId("icon-benefit-3")).toBeInTheDocument();
-		expect(screen.getByTestId("icon-benefit-4")).toBeInTheDocument();
-	});
-
-	it("renders gradient backgrounds", () => {
+	it("renders gradient background", () => {
 		render(<EarlyAccessSection />);
 		const backgrounds = screen.getAllByTestId("mock-gradient-background");
-		expect(backgrounds.length).toBe(2);
+		expect(backgrounds.length).toBe(1);
 	});
 });

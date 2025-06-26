@@ -9,12 +9,13 @@ import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 import { HeroBanner } from "@/components/landing-page/hero-banner";
+import { PaymentPlans } from "@/components/landing-page/payment-plans/payment-plans";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 import { ScrollButton } from "@/components/scroll-button";
 
 const CONTENT_CTA_SECTION = {
 	description:
-		"Join leading research teams who are saving time, improving collaboration, and securing more funds with GrantFlow.",
+		"Join leading research teams who are saving time, improving collaboration, and securing more funding with GrantFlow",
 	heading: "Ready to Transform Your Grant Writing Process?",
 };
 
@@ -25,6 +26,7 @@ export default async function LandingPage() {
 			<HeroBanner />
 			<BenefitsSection />
 			<EarlyAccessSection />
+			<PaymentPlans />
 			<CoreFeaturesSection />
 			<TestimonialsSection />
 			<CTASection />
@@ -34,23 +36,23 @@ export default async function LandingPage() {
 
 function CTASection() {
 	return (
-		<section aria-label="cta-section" className="relative w-full" data-testid="cta-section">
-			<GradientBackground className="absolute inset-0 z-0" />
+		<section aria-label="cta-section" className="relative w-full bg-white" data-testid="cta-section">
+			<GradientBackground className="absolute inset-0 z-0" position="bottom-center" />
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center justify-between gap-10 px-6 py-8 md:flex-row md:p-10 lg:p-20">
 				<div className="flex w-fit flex-1 flex-col text-white">
 					<h2
 						aria-label="cta-heading"
-						className="font-heading text-2xl md:text-[1.775rem] md:leading-none"
+						className="font-heading text-app-black text-xl font-medium md:text-[1.75rem] md:leading-none"
 						id="cta-heading"
 					>
 						{CONTENT_CTA_SECTION.heading}
 					</h2>
-					<p className="mt-4 max-w-lg text-xl leading-tight md:text-base md:font-light">
+					<p className="text-app-black mt-2 max-w-lg leading-tight md:mt-3">
 						{CONTENT_CTA_SECTION.description}
 					</p>
 				</div>
-				<div className="flex w-full flex-row-reverse items-center justify-between gap-6 md:w-auto md:flex-row md:justify-end">
-					<AppButton size="lg" theme="light" variant="secondary">
+				<div className="flex w-full items-center justify-between gap-6 md:w-auto  md:justify-end">
+					<AppButton className="bg-white" size="lg" theme="dark" variant="secondary">
 						<Link href="mailto:contact@grantflow.ai">Contact us</Link>
 					</AppButton>
 					<ScrollButton

@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 
 import { cn } from "@/lib/utils";
+import { TutorialVideo } from "./tutorial-video";
 
 const containerVariants = {
 	hidden: { opacity: 0 },
@@ -87,12 +88,15 @@ export function HowItWorksCard({
 } & React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<motion.div
-			className={cn("w-full h-auto flex px-10 py-6 md:py-10 flex-col items-center justify-center", className)}
+			className={cn(
+				"w-full h-auto flex px-5 lg:px-10 py-5 lg:py-15 flex-col items-center justify-center",
+				className,
+			)}
 			initial="hidden"
 			variants={containerVariants}
 			whileInView="visible"
 		>
-			<motion.h2 className={cn(headerStyle, "font-bold md:m-4")} variants={headingVariants}>
+			<motion.h2 className={cn(headerStyle, "font-medium md:m-4")} variants={headingVariants}>
 				{heading}
 			</motion.h2>
 			<div className="relative my-8 grid w-full grid-cols-1 gap-y-12 p-2 md:grid-cols-4 md:gap-x-20">
@@ -105,6 +109,9 @@ export function HowItWorksCard({
 				{Object.entries(steps).map(([, content], index) => (
 					<AnimatedTimelineStep key={index} label={content} />
 				))}
+			</div>
+			<div className="lg:max-w-1/2 mt-12 flex w-full items-center justify-center">
+				<TutorialVideo />
 			</div>
 		</motion.div>
 	);
@@ -119,7 +126,7 @@ function AnimatedTimelineStep({ label }: { label: React.ReactNode }) {
 			<div className="relative z-10 me-6 flex place-items-center md:mb-6 md:me-0">
 				<StepIndicator />
 			</div>
-			<motion.p className="font-heading text-background text-2xl font-bold" variants={textVariants}>
+			<motion.p className="font-heading text-background font-medium" variants={textVariants}>
 				{label}
 			</motion.p>
 		</motion.div>
