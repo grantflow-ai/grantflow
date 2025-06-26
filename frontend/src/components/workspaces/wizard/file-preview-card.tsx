@@ -132,6 +132,7 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 }
 
 function FileIcon({ extension }: { extension: string }) {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	const iconComponent = FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP] ?? FILE_ICON_MAP.unknown;
 	return <div className="flex items-center justify-center">{iconComponent}</div>;
 }
