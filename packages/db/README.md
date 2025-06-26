@@ -42,7 +42,7 @@ The database package is organized as follows:
 
 The database schema includes the following primary models:
 
-1. **Workspace**: Research workspaces for organizing grant applications
+1. **Project**: Research projects for organizing grant applications
 2. **GrantApplication**: Grant application data and metadata
 3. **GrantTemplate**: Structured template for grant applications
 4. **FundingOrganization**: Information about funding organizations
@@ -78,17 +78,17 @@ task db:migrate
 The database package is designed to be imported by other services:
 
 ```python
-from db.tables import Workspace, GrantApplication
+from db.tables import Project, GrantApplication
 from db.connection import get_async_session_maker
 from sqlalchemy import select
 
-async def get_workspace(workspace_id: UUID) -> Workspace:
+async def get_project(project_id: UUID) -> Project:
     async_session_maker = get_async_session_maker()
     async with async_session_maker() as session:
-        workspace = await session.scalar(
-            select(Workspace).where(Workspace.id == workspace_id)
+        project = await session.scalar(
+            select(Project).where(Project.id == project_id)
         )
-        return workspace
+        return project
 ```
 
 ## Development

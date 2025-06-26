@@ -12,7 +12,7 @@ erDiagram
         timestamp updated_at
     }
 
-    WORKSPACES {
+    PROJECTS {
         uuid id PK
         text name
         text description
@@ -21,9 +21,9 @@ erDiagram
         timestamp updated_at
     }
 
-    WORKSPACE_USERS {
+    PROJECT_USERS {
         varchar128 firebase_uid
-        uuid workspace_id FK
+        uuid project_id FK
         userroleenum role
         timestamp created_at
         timestamp updated_at
@@ -31,7 +31,7 @@ erDiagram
 
     GRANT_APPLICATIONS {
         uuid id PK
-        uuid workspace_id FK
+        uuid project_id FK
         varchar255 title
         text text
         applicationstatusenum status
@@ -107,8 +107,8 @@ erDiagram
         timestamp updated_at
     }
 
-    WORKSPACES ||--o{ WORKSPACE_USERS : has
-    WORKSPACES ||--o{ GRANT_APPLICATIONS : contains
+    PROJECTS ||--o{ PROJECT_USERS : has
+    PROJECTS ||--o{ GRANT_APPLICATIONS : contains
     GRANT_APPLICATIONS ||--o{ GRANT_TEMPLATES : has
     FUNDING_ORGANIZATIONS ||--o{ GRANT_TEMPLATES : provides
 

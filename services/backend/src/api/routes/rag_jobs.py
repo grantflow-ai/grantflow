@@ -42,16 +42,16 @@ class RagJobResponse(TypedDict):
 
 
 @get(
-    "/workspaces/{workspace_id:uuid}/rag-jobs/{job_id:uuid}",
+    "/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="RetrieveRagJob",
 )
 async def handle_retrieve_rag_job(
-    workspace_id: UUID,
+    project_id: UUID,
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> RagJobResponse:
-    logger.info("Retrieving RAG job", workspace_id=workspace_id, job_id=job_id)
+    logger.info("Retrieving RAG job", project_id=project_id, job_id=job_id)
 
     async with session_maker() as session:
         job = await session.scalar(
@@ -61,7 +61,7 @@ async def handle_retrieve_rag_job(
         if not job:
             raise NotFoundException("RAG job not found")
 
-        workspace_match = False
+        project_match = False
         if job.job_type == "grant_template_generation":
             template_job = await session.scalar(
                 select(GrantTemplateGenerationJob).where(
@@ -74,10 +74,10 @@ async def handle_retrieve_rag_job(
                     .join(GrantApplication)
                     .where(
                         GrantTemplate.id == template_job.grant_template_id,
-                        GrantApplication.workspace_id == workspace_id,
+                        GrantApplication.project_id == project_id,
                     )
                 )
-                workspace_match = template is not None
+                project_match = template is not None
         elif job.job_type == "grant_application_generation":
             app_job = await session.scalar(
                 select(GrantApplicationGenerationJob).where(
@@ -88,12 +88,12 @@ async def handle_retrieve_rag_job(
                 application = await session.scalar(
                     select(GrantApplication).where(
                         GrantApplication.id == app_job.grant_application_id,
-                        GrantApplication.workspace_id == workspace_id,
+                        GrantApplication.project_id == project_id,
                     )
                 )
-                workspace_match = application is not None
+                project_match = application is not None
 
-        if not workspace_match:
+        if not project_match:
             raise NotFoundException("RAG job not found")
 
         response: RagJobResponse = {

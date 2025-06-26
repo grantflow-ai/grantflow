@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
-    Workspace,
-    WorkspaceUser,
+    Project,
+    ProjectUser,
 )
 from testing.factories import (
     GrantApplicationGenerationJobFactory,
@@ -20,10 +20,10 @@ from services.backend.tests.conftest import TestingClientType
 
 async def test_retrieve_grant_template_job_success(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
@@ -39,7 +39,7 @@ async def test_retrieve_grant_template_job_success(
         job_id = job.id
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/rag-jobs/{job_id}",
+        f"/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -61,10 +61,10 @@ async def test_retrieve_grant_template_job_success(
 
 async def test_retrieve_grant_application_job_success(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
@@ -80,7 +80,7 @@ async def test_retrieve_grant_application_job_success(
         job_id = job.id
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/rag-jobs/{job_id}",
+        f"/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -99,10 +99,10 @@ async def test_retrieve_grant_application_job_success(
 
 async def test_retrieve_job_with_error_details(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
@@ -120,7 +120,7 @@ async def test_retrieve_job_with_error_details(
         job_id = job.id
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/rag-jobs/{job_id}",
+        f"/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -138,13 +138,13 @@ async def test_retrieve_job_with_error_details(
 
 async def test_retrieve_job_not_found(
     test_client: TestingClientType,
-    workspace: Workspace,
-    workspace_member_user: WorkspaceUser,
+    project: Project,
+    project_member_user: ProjectUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/rag-jobs/{non_existent_id}",
+        f"/projects/{project.id}/rag-jobs/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -153,7 +153,7 @@ async def test_retrieve_job_not_found(
 
 async def test_retrieve_job_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -165,6 +165,6 @@ async def test_retrieve_job_unauthorized(
         await session.commit()
         job_id = job.id
 
-    response = await test_client.get(f"/workspaces/{workspace.id}/rag-jobs/{job_id}")
+    response = await test_client.get(f"/projects/{project.id}/rag-jobs/{job_id}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text

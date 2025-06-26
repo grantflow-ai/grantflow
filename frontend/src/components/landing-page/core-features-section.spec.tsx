@@ -49,12 +49,12 @@ describe("CoreFeaturesSection", () => {
 
 		const platformFeatures = screen.getAllByText("A Platform Built for Researchers");
 		const studioFeatures = screen.getAllByText("Grant Applications Studio");
-		const workspaceFeatures = screen.getAllByText("Collaborative Workspace");
+		const projectFeatures = screen.getAllByText("Collaborative Project");
 		const proposalFeatures = screen.getAllByText("Customizable Proposals");
 
 		expect(platformFeatures.length).toBe(2);
 		expect(studioFeatures.length).toBe(2);
-		expect(workspaceFeatures.length).toBe(2);
+		expect(projectFeatures.length).toBe(2);
 		expect(proposalFeatures.length).toBe(2);
 	});
 
@@ -63,17 +63,17 @@ describe("CoreFeaturesSection", () => {
 
 		const platformTitles = screen.getAllByText("A Platform Built for Researchers");
 		const studioTitles = screen.getAllByText("Grant Applications Studio");
-		const workspaceTitles = screen.getAllByText("Collaborative Workspace");
+		const projectTitles = screen.getAllByText("Collaborative Project");
 		const proposalTitles = screen.getAllByText("Customizable Proposals");
 
 		expect(platformTitles).toHaveLength(2);
 		expect(studioTitles).toHaveLength(2);
-		expect(workspaceTitles).toHaveLength(2);
+		expect(projectTitles).toHaveLength(2);
 		expect(proposalTitles).toHaveLength(2);
 
 		platformTitles.forEach((title) => expect(title).toBeInTheDocument());
 		studioTitles.forEach((title) => expect(title).toBeInTheDocument());
-		workspaceTitles.forEach((title) => expect(title).toBeInTheDocument());
+		projectTitles.forEach((title) => expect(title).toBeInTheDocument());
 		proposalTitles.forEach((title) => expect(title).toBeInTheDocument());
 	});
 
@@ -81,18 +81,18 @@ describe("CoreFeaturesSection", () => {
 		render(<CoreFeaturesSection />);
 
 		const platformDescriptions = screen.getAllByText(/GrantFlow was built with researchers' unique needs in mind/);
-		const studioDescriptions = screen.getAllByText(/Organize all your research projects in one workspace/);
-		const workspaceDescriptions = screen.getAllByText(/Easily integrate feedback from collaborators/);
+		const studioDescriptions = screen.getAllByText(/Organize all your research projects in one project/);
+		const projectDescriptions = screen.getAllByText(/Easily integrate feedback from collaborators/);
 		const proposalDescriptions = screen.getAllByText(/Create proposals customized to any funding opportunity/);
 
 		expect(platformDescriptions).toHaveLength(2);
 		expect(studioDescriptions).toHaveLength(2);
-		expect(workspaceDescriptions).toHaveLength(2);
+		expect(projectDescriptions).toHaveLength(2);
 		expect(proposalDescriptions).toHaveLength(2);
 
 		platformDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
 		studioDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
-		workspaceDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
+		projectDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
 		proposalDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
 	});
 

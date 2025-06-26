@@ -41,13 +41,13 @@ describe("useApplicationNotifications", () => {
 		vi.resetModules();
 	});
 
-	it("should not connect when workspaceId or applicationId is missing", async () => {
+	it("should not connect when projectId or applicationId is missing", async () => {
 		const { useApplicationNotifications } = await import("./use-application-notifications");
 
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
-				workspaceId: undefined,
+				projectId: undefined,
 			}),
 		);
 
@@ -60,7 +60,7 @@ describe("useApplicationNotifications", () => {
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
-				workspaceId: "workspace-123",
+				projectId: "project-123",
 			}),
 		);
 
@@ -72,7 +72,7 @@ describe("useApplicationNotifications", () => {
 		const url = await getSocketUrl();
 
 		expect(url).toBe(
-			"ws://localhost:8000/workspaces/workspace-123/applications/app-123/notifications?otp=test-otp-token",
+			"ws://localhost:8000/projects/project-123/applications/app-123/notifications?otp=test-otp-token",
 		);
 	});
 
@@ -99,7 +99,7 @@ describe("useApplicationNotifications", () => {
 		const { rerender, result } = renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
-				workspaceId: "workspace-123",
+				projectId: "project-123",
 			}),
 		);
 
@@ -144,7 +144,7 @@ describe("useApplicationNotifications", () => {
 		const { result } = renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
-				workspaceId: "workspace-123",
+				projectId: "project-123",
 			}),
 		);
 
@@ -158,7 +158,7 @@ describe("useApplicationNotifications", () => {
 		const { result } = renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
-				workspaceId: "workspace-123",
+				projectId: "project-123",
 			}),
 		);
 
@@ -172,7 +172,7 @@ describe("useApplicationNotifications", () => {
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
-				workspaceId: "workspace-123",
+				projectId: "project-123",
 			}),
 		);
 
@@ -200,7 +200,7 @@ describe("useApplicationNotifications", () => {
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
-				workspaceId: "workspace-123",
+				projectId: "project-123",
 			}),
 		);
 

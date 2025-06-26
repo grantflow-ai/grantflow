@@ -17,10 +17,10 @@ from packages.db.src.tables import (
     GrantApplicationRagSource,
     GrantTemplate,
     GrantTemplateRagSource,
+    Project,
+    ProjectUser,
     RagFile,
     RagUrl,
-    Workspace,
-    WorkspaceUser,
 )
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
@@ -34,10 +34,10 @@ from testing.factories import (
     GrantApplicationSourceFactory,
     GrantTemplateFactory,
     GrantTemplateSourceFactory,
+    ProjectFactory,
+    ProjectUserFactory,
     RagFileFactory,
     RagUrlFactory,
-    WorkspaceFactory,
-    WorkspaceUserFactory,
 )
 
 for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
@@ -134,17 +134,17 @@ async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None
 
 
 @pytest.fixture
-async def workspace(async_session_maker: async_sessionmaker[Any]) -> Workspace:
-    workspace_data = WorkspaceFactory.build()
+async def project(async_session_maker: async_sessionmaker[Any]) -> Project:
+    project_data = ProjectFactory.build()
     async with async_session_maker() as session, session.begin():
-        session.add(workspace_data)
+        session.add(project_data)
         await session.commit()
-    return workspace_data
+    return project_data
 
 
 @pytest.fixture
-async def workspace_user(async_session_maker: async_sessionmaker[Any], workspace: Workspace) -> WorkspaceUser:
-    user_data = WorkspaceUserFactory.build(workspace_id=workspace.id)
+async def project_user(async_session_maker: async_sessionmaker[Any], project: Project) -> ProjectUser:
+    user_data = ProjectUserFactory.build(project_id=project.id)
     async with async_session_maker() as session, session.begin():
         session.add(user_data)
         await session.commit()
@@ -152,36 +152,36 @@ async def workspace_user(async_session_maker: async_sessionmaker[Any], workspace
 
 
 @pytest.fixture
-async def workspace_member_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, workspace: Workspace
-) -> WorkspaceUser:
+async def project_member_user(
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
+) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
-        session.add(workspace_user)
+        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
+        session.add(project_user)
         await session.commit()
-    return workspace_user
+    return project_user
 
 
 @pytest.fixture
-async def workspace_admin_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, workspace: Workspace
-) -> WorkspaceUser:
+async def project_admin_user(
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
+) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
-        session.add(workspace_user)
+        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
+        session.add(project_user)
         await session.commit()
-    return workspace_user
+    return project_user
 
 
 @pytest.fixture
-async def workspace_owner_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, workspace: Workspace
-) -> WorkspaceUser:
+async def project_owner_user(
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
+) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        workspace_user = WorkspaceUser(workspace_id=workspace.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
-        session.add(workspace_user)
+        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
+        session.add(project_user)
         await session.commit()
-    return workspace_user
+    return project_user
 
 
 @pytest.fixture
@@ -238,9 +238,9 @@ async def funding_organization_url(
 
 
 @pytest.fixture
-async def grant_application(async_session_maker: async_sessionmaker[Any], workspace: Workspace) -> GrantApplication:
+async def grant_application(async_session_maker: async_sessionmaker[Any], project: Project) -> GrantApplication:
     application_data = GrantApplicationFactory.build(
-        workspace_id=workspace.id,
+        project_id=project.id,
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)

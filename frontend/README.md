@@ -14,7 +14,7 @@ The frontend follows a modern Next.js App Router architecture:
     /ui          # shadcn/ui components
     /landing-page    # Components for landing page
     /sign-in         # Authentication components
-    /workspaces      # Workspace related components
+    /projects        # Project related components
   /lib           # Shared utilities and schemas
   /styles        # Global styles
   /types         # TypeScript type definitions

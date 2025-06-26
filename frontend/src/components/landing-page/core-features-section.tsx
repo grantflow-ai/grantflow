@@ -11,13 +11,13 @@ const CORE_FEATURES = [
 	},
 	{
 		description:
-			"Organize all your research projects in one workspace. Easily curate a knowledge base for each proposal and develop multiple proposal iterations in mere minutes.",
+			"Organize all your research projects in one project. Easily curate a knowledge base for each proposal and develop multiple proposal iterations in mere minutes.",
 		title: "Grant Applications Studio",
 	},
 	{
 		description:
 			"Easily integrate feedback from collaborators, turning individual insights into powerful applications without complex coordination. Seamlessly manage who can participate in the application process, ensuring everyone from administrators to researchers can contribute efficiently.",
-		title: "Collaborative Workspace",
+		title: "Collaborative Project",
 	},
 	{
 		description:

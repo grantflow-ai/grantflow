@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Any
 
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Workspace, WorkspaceUser
+from packages.db.src.tables import Project, ProjectUser
 from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -11,7 +11,7 @@ from services.backend.src.api.routes.auth import LoginRequestBody
 from services.backend.tests.conftest import TestingClientType
 
 
-async def test_login_new_user_creates_workspace(
+async def test_login_new_user_creates_project(
     test_client: TestingClientType,
     mocker: MockerFixture,
     async_session_maker: async_sessionmaker[Any],
@@ -31,20 +31,20 @@ async def test_login_new_user_creates_workspace(
     assert response_body["jwt_token"] == "jwt_token"
 
     async with async_session_maker() as session:
-        workspace_user = await session.scalar(
-            select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid)
+        project_user = await session.scalar(
+            select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid)
         )
-        assert workspace_user is not None
-        assert workspace_user.role == UserRoleEnum.OWNER
+        assert project_user is not None
+        assert project_user.role == UserRoleEnum.OWNER
 
-        workspace = await session.scalar(
-            select(Workspace).where(Workspace.id == workspace_user.workspace_id)
+        project = await session.scalar(
+            select(Project).where(Project.id == project_user.project_id)
         )
-        assert workspace is not None
-        assert workspace.name == "default"
+        assert project is not None
+        assert project.name == "default"
 
 
-async def test_login_existing_user_keeps_workspace(
+async def test_login_existing_user_keeps_project(
     test_client: TestingClientType,
     mocker: MockerFixture,
     async_session_maker: async_sessionmaker[Any],
@@ -59,11 +59,11 @@ async def test_login_existing_user_keeps_workspace(
     await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
 
     async with async_session_maker() as session:
-        workspace_user = await session.scalar(
-            select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid)
+        project_user = await session.scalar(
+            select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid)
         )
-        assert workspace_user is not None
-        original_workspace_id = workspace_user.workspace_id
+        assert project_user is not None
+        original_project_id = project_user.project_id
 
     response = await test_client.post(
         "/login", json=LoginRequestBody(id_token="123jeronimo")
@@ -73,8 +73,8 @@ async def test_login_existing_user_keeps_workspace(
     assert response_body["jwt_token"] == "jwt_token"
 
     async with async_session_maker() as session:
-        workspace_user = await session.scalar(
-            select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid)
+        project_user = await session.scalar(
+            select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid)
         )
-        assert workspace_user is not None
-        assert workspace_user.workspace_id == original_workspace_id
+        assert project_user is not None
+        assert project_user.project_id == original_project_id

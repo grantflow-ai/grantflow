@@ -15,8 +15,8 @@ from packages.db.src.tables import (
     RagFile,
     RagSource,
     RagUrl,
-    Workspace,
-    WorkspaceUser,
+    Project,
+    ProjectUser,
 )
 from pytest_mock import MockerFixture
 from sqlalchemy.exc import NoResultFound
@@ -31,16 +31,16 @@ if TYPE_CHECKING:
 
 async def test_retrieve_application_sources(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_application_file: GrantApplicationRagSource,
     grant_application_url: GrantApplicationRagSource,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     rag_file: RagFile,
     rag_url: RagUrl,
 ) -> None:
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -67,13 +67,13 @@ async def test_retrieve_application_sources(
 
 async def test_retrieve_application_sources_empty(
     test_client: TestingClientType,
-    workspace: Workspace,
-    workspace_member_user: WorkspaceUser,
+    project: Project,
+    project_member_user: ProjectUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session, session.begin():
         new_application = GrantApplicationFactory.build(
-            workspace_id=workspace.id,
+            project_id=project.id,
             title="Test Application Without Sources",
         )
         session.add(new_application)
@@ -82,7 +82,7 @@ async def test_retrieve_application_sources_empty(
         application_id = new_application.id
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{application_id}/sources",
+        f"/projects/{project.id}/applications/{application_id}/sources",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -128,16 +128,16 @@ async def test_retrieve_organization_sources(
 
 async def test_retrieve_template_sources(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
     grant_template_file: GrantTemplateRagSource,
     grant_template_url: GrantTemplateRagSource,
     rag_file: RagFile,
     rag_url: RagUrl,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/grant_templates/{grant_template.id}/sources",
+        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -164,11 +164,11 @@ async def test_retrieve_template_sources(
 
 async def test_retrieve_grant_application_sources_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
 ) -> None:
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -177,11 +177,11 @@ async def test_retrieve_grant_application_sources_unauthorized(
 
 async def test_retrieve_grant_template_sources_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
 ) -> None:
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/grant_templates/{grant_template.id}/sources",
+        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -190,14 +190,14 @@ async def test_retrieve_grant_template_sources_unauthorized(
 
 async def test_delete_application_source(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_application_file: GrantApplicationRagSource,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -221,10 +221,10 @@ async def test_delete_application_source(
 async def test_delete_application_source_deletes_from_gcs(
     mock_delete_blob: AsyncMock,
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_application_file: GrantApplicationRagSource,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session:
@@ -233,7 +233,7 @@ async def test_delete_application_source_deletes_from_gcs(
         object_path = file_source.object_path
 
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -272,14 +272,14 @@ async def test_delete_organization_source(
 
 async def test_delete_template_source(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
     grant_template_file: GrantTemplateRagSource,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/grant_templates/{grant_template.id}/sources/{grant_template_file.rag_source_id}",
+        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_template_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -301,12 +301,12 @@ async def test_delete_template_source(
 
 async def test_delete_grant_application_source_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_application_file: GrantApplicationRagSource,
 ) -> None:
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -315,12 +315,12 @@ async def test_delete_grant_application_source_unauthorized(
 
 async def test_delete_grant_application_source_not_found(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/{UUID('00000000-0000-0000-0000-000000000000')}",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/{UUID('00000000-0000-0000-0000-000000000000')}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -329,14 +329,14 @@ async def test_delete_grant_application_source_not_found(
 
 async def test_delete_source_from_wrong_entity(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     grant_application_file: GrantApplicationRagSource,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/grant_templates/{grant_template.id}/sources/{grant_application_file.rag_source_id}",
+        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -345,9 +345,9 @@ async def test_delete_source_from_wrong_entity(
 
 async def test_create_upload_url(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     mocker: MockerFixture,
 ) -> None:
     mock_signed_url = "https://storage.googleapis.com/test-bucket/test-signed-url"
@@ -358,7 +358,7 @@ async def test_create_upload_url(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -368,7 +368,7 @@ async def test_create_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        workspace_id=workspace.id,
+        project_id=project.id,
         parent_id=grant_application.id,
         source_id=ANY,
         blob_name=test_blob_name,
@@ -399,7 +399,7 @@ async def test_create_organization_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        workspace_id=None,
+        project_id=None,
         parent_id=funding_organization.id,
         source_id=ANY,
         blob_name=test_blob_name,
@@ -408,9 +408,9 @@ async def test_create_organization_upload_url(
 
 async def test_create_template_upload_url(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     mocker: MockerFixture,
 ) -> None:
     mock_signed_url = "https://storage.googleapis.com/test-bucket/test-signed-url"
@@ -421,7 +421,7 @@ async def test_create_template_upload_url(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/grant_templates/{grant_template.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -431,7 +431,7 @@ async def test_create_template_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        workspace_id=workspace.id,
+        project_id=project.id,
         parent_id=grant_template.id,
         source_id=ANY,
         blob_name=test_blob_name,
@@ -440,7 +440,7 @@ async def test_create_template_upload_url(
 
 async def test_create_upload_url_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     mocker: MockerFixture,
 ) -> None:
@@ -452,7 +452,7 @@ async def test_create_upload_url_unauthorized(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -473,14 +473,14 @@ def mock_publish_url_crawling_task() -> Generator[AsyncMock]:
 async def test_handle_crawl_url_grant_application(
     test_client: TestingClientType,
     mock_publish_url_crawling_task: AsyncMock,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/crawl-url",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -493,7 +493,7 @@ async def test_handle_crawl_url_grant_application(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        workspace_id=workspace.id,
+        project_id=project.id,
         parent_id=grant_application.id,
     )
 
@@ -520,7 +520,7 @@ async def test_handle_crawl_url_funding_organization(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        workspace_id=None,
+        project_id=None,
         parent_id=funding_organization.id,
     )
 
@@ -528,14 +528,14 @@ async def test_handle_crawl_url_funding_organization(
 async def test_handle_crawl_url_grant_template(
     test_client: TestingClientType,
     mock_publish_url_crawling_task: AsyncMock,
-    workspace: Workspace,
+    project: Project,
     grant_template: GrantTemplate,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/grant_templates/{grant_template.id}/sources/crawl-url",
+        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -548,20 +548,20 @@ async def test_handle_crawl_url_grant_template(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        workspace_id=workspace.id,
+        project_id=project.id,
         parent_id=grant_template.id,
     )
 
 
 async def test_handle_crawl_url_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
 ) -> None:
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/crawl-url",
+        f"/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "Bearer invalid_token"},
     )
@@ -571,9 +571,9 @@ async def test_handle_crawl_url_unauthorized(
 
 async def test_handle_crawl_url_pubsub_error(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
 ) -> None:
     with patch(
         "services.backend.src.api.routes.sources.publish_url_crawling_task"
@@ -583,7 +583,7 @@ async def test_handle_crawl_url_pubsub_error(
         request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
         response = await test_client.post(
-            f"/workspaces/{workspace.id}/applications/{grant_application.id}/sources/crawl-url",
+            f"/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
             json=request_data,
             headers={"Authorization": "Bearer some_token"},
         )

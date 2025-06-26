@@ -9,10 +9,10 @@ from services.backend.src.api.routes.auth import (
 from services.backend.src.api.routes.funding_organizations import (
     CreateOrganizationRequestBody,
 )
-from services.backend.src.api.routes.workspaces import (
-    CreateWorkspaceRequestBody,
-    UpdateWorkspaceRequestBody,
-    WorkspaceBaseResponse,
+from services.backend.src.api.routes.projects import (
+    CreateProjectRequestBody,
+    UpdateProjectRequestBody,
+    ProjectBaseResponse,
 )
 from services.backend.src.common_types import TableIdResponse
 from services.rag.src.grant_template.determine_application_sections import (
@@ -27,12 +27,12 @@ class CreateOrganizationRequestBodyFactory(
     __model__ = CreateOrganizationRequestBody
 
 
-class CreateWorkspaceRequestBodyFactory(TypedDictFactory[CreateWorkspaceRequestBody]):
-    __model__ = CreateWorkspaceRequestBody
+class CreateProjectRequestBodyFactory(TypedDictFactory[CreateProjectRequestBody]):
+    __model__ = CreateProjectRequestBody
 
 
-class UpdateWorkspaceRequestBodyFactory(TypedDictFactory[UpdateWorkspaceRequestBody]):
-    __model__ = UpdateWorkspaceRequestBody
+class UpdateProjectRequestBodyFactory(TypedDictFactory[UpdateProjectRequestBody]):
+    __model__ = UpdateProjectRequestBody
 
 
 class LoginRequestBodyFactory(TypedDictFactory[LoginRequestBody]):
@@ -43,8 +43,8 @@ class TableIdResponseFactory(TypedDictFactory[TableIdResponse]):
     __model__ = TableIdResponse
 
 
-class WorkspaceBaseResponseFactory(TypedDictFactory[WorkspaceBaseResponse]):
-    __model__ = WorkspaceBaseResponse
+class ProjectBaseResponseFactory(TypedDictFactory[ProjectBaseResponse]):
+    __model__ = ProjectBaseResponse
 
 
 class OTPResponseFactory(TypedDictFactory[OTPResponse]):

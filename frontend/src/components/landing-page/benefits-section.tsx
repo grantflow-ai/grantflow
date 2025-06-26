@@ -22,7 +22,7 @@ const CONTENT = {
 			badge: "Collaborate smarter!",
 			badgeIcon: IconBenefitSecond,
 			description:
-				"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared workspace to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
+				"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared project to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
 			heading: "One Place for Your Entire Grant Team",
 		},
 	],

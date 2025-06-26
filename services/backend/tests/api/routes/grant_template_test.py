@@ -10,7 +10,7 @@ from packages.db.src.tables import (
     GrantTemplate,
     GrantTemplateRagSource,
     RagFile,
-    Workspace,
+    Project,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -20,10 +20,10 @@ from services.backend.tests.conftest import TestingClientType
 
 async def test_update_grant_template_success(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
@@ -63,7 +63,7 @@ async def test_update_grant_template_success(
     }
 
     response = await test_client.patch(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -95,13 +95,13 @@ async def test_update_grant_template_success(
 
 async def test_update_grant_template_not_found(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     non_existent_template_id = UUID("00000000-0000-0000-0000-000000000000")
     response = await test_client.patch(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template/{non_existent_template_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{non_existent_template_id}",
         json={"submission_date": "2024-12-31"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -117,10 +117,10 @@ async def test_update_grant_template_not_found(
 async def test_generate_grant_template_success(
     mock_publish_rag_task: AsyncMock,
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
@@ -151,7 +151,7 @@ async def test_generate_grant_template_success(
         grant_template_id = grant_template.id
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -163,10 +163,10 @@ async def test_generate_grant_template_success(
 
 async def test_generate_grant_template_no_sources(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
@@ -179,7 +179,7 @@ async def test_generate_grant_template_no_sources(
         grant_template_id = grant_template.id
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -189,10 +189,10 @@ async def test_generate_grant_template_no_sources(
 
 async def test_generate_grant_template_failed_sources_only(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     grant_template_id = None
     async with async_session_maker() as session, session.begin():
@@ -223,7 +223,7 @@ async def test_generate_grant_template_failed_sources_only(
         grant_template_id = grant_template.id
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -233,7 +233,7 @@ async def test_generate_grant_template_failed_sources_only(
 
 async def test_update_grant_template_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -247,9 +247,9 @@ async def test_update_grant_template_unauthorized(
         await session.commit()
         grant_template_id = grant_template.id
 
-    different_workspace_id = UUID("00000000-0000-0000-0000-000000000000")
+    different_project_id = UUID("00000000-0000-0000-0000-000000000000")
     response = await test_client.patch(
-        f"/workspaces/{different_workspace_id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/projects/{different_project_id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         json={"submission_date": "2024-12-31"},
         headers={"Authorization": "Bearer some_token"},
     )

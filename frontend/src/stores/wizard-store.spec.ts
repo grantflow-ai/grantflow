@@ -208,7 +208,7 @@ describe("wizard store", () => {
 			const { checkTemplateRagJobStatus } = useWizardStore.getState();
 			await checkTemplateRagJobStatus();
 
-			expect(retrieveRagJob).toHaveBeenCalledWith(application.workspace_id, "job-123");
+			expect(retrieveRagJob).toHaveBeenCalledWith(application.project_id, "job-123");
 
 			const state = useWizardStore.getState();
 			expect(state.grantTemplateRagJobData).toEqual(jobData);
@@ -465,8 +465,8 @@ describe("wizard store", () => {
 		it("should call updateApplication on application store", () => {
 			const mockUpdateApplication = vi.fn();
 			const application = ApplicationFactory.build({
+				project_id: "project-123",
 				title: "Old Title",
-				workspace_id: "workspace-123",
 			});
 
 			useApplicationStore.setState({ application });
@@ -482,7 +482,7 @@ describe("wizard store", () => {
 			const mockUpdateApplication = vi.fn().mockRejectedValue(new Error("Update failed"));
 			const application = ApplicationFactory.build({
 				title: "Old Title",
-				workspace_id: "workspace-123",
+				project_id: "project-123",
 			});
 
 			useApplicationStore.setState({ application });
