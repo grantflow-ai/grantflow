@@ -92,62 +92,54 @@ ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ## Output Structure
 
-    Respond with a JSON object adhering to the following format:
+    Provide enriched content for the research objective and its tasks with the following structure:
 
-    ```json
-    {
-        "research_objective": {
-            "instructions": "Detailed instructions for text generation",
-            "description": "Detailed description of the research objective",
-            "guiding_questions": [
-                "Question 1",
-                "Question 2",
-                "Question 3",
-                "..."
-            ],
-            "search_queries": [
-                "Query 1",
-                "Query 2",
-                "Query 3",
-                "..."
-            ]
-        },
-        "research_tasks": [
-            {
-                "instructions": "Detailed instructions for text generation",
-                "description": "Detailed description of the research task",
-                "guiding_questions": [
-                    "Question 1",
-                    "Question 2",
-                    "Question 3",
-                    "..."
-                ],
-                "search_queries": [
-                    "Query 1",
-                    "Query 2",
-                    "Query 3",
-                    "..."
-                ]
-            }
-        ]
-    }
-    ```
+    **For the research objective:**
+    - Instructions: Detailed guidance for AI text generation including writing style, technical depth, and formatting requirements
+    - Description: Comprehensive scientific description covering purpose, methodology, expected results, dependencies, risks, and innovation
+    - Guiding questions: 3-10 questions addressing core purpose, methodology, outcomes, challenges, and implications
+    - Search queries: 3-10 concise queries (3-7 words) using precise scientific terminology for optimal retrieval
 
-    Important:
-        - The objects in the research_tasks array must correspond exactly to the tasks of the input research objective.
-        - Each task in the array represents a specific component of the overall research objective.
-        - All text fields should be substantial (minimum 50 characters) and scientifically meaningful.
-        - Search queries should be concise, specific, and focused on retrieving high-quality scientific information.
+    **For each research task:**
+    - The same four components as above, but specific to each individual task
+    - Tasks must correspond exactly to those in the input objective
+    - Each task represents a specific component of the overall research objective
+
+    Important requirements:
+    - All text fields must be substantial (minimum 50 characters) and scientifically meaningful
+    - Search queries should be concise, specific phrases optimized for vector retrieval
+    - Content must be grounded in provided keywords and topics
+    - Maintain consistency across objective and task descriptions
     """,
 )
 
 enriched_object_schema = {
     "type": "object",
     "properties": {
-        "instructions": {"type": "string", "minLength": 50},
-        "description": {"type": "string", "minLength": 50},
-        "guiding_questions": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
-        "search_queries": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
+        "instructions": {
+            "type": "string",
+            "minLength": 50,
+            "description": "Detailed instructions for AI text generation including style, technical depth, and formatting",
+        },
+        "description": {
+            "type": "string",
+            "minLength": 50,
+            "description": "Comprehensive description covering purpose, methodology, expected results, dependencies, risks, and innovation",
+        },
+        "guiding_questions": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 3,
+            "maxItems": 10,
+            "description": "Questions addressing core purpose, methodology, outcomes, challenges, and broader implications",
+        },
+        "search_queries": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 3,
+            "maxItems": 10,
+            "description": "Concise queries (3-7 words) using precise scientific terminology for vector retrieval",
+        },
     },
     "required": ["instructions", "description", "guiding_questions", "search_queries"],
 }
@@ -159,6 +151,7 @@ research_objective_enrichment_schema = {
         "research_tasks": {
             "type": "array",
             "items": enriched_object_schema,
+            "description": "Array of enriched content for each research task, must match input tasks exactly",
         },
     },
     "required": ["research_objective", "research_tasks"],

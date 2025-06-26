@@ -73,22 +73,14 @@ VALIDATE_SOURCES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     Important: The calculation MUST be relative to the max length of the expected text. A shorter max length means fewer details are required, while a longer max length requires more comprehensive information.
 
-    ## Output Format
+    ## Task Completion
 
-    Provide your assessment as a JSON object with the following structure:
+    Provide your assessment with:
+    - A percentage (0-100) indicating how much of the required information is available in the sources
+    - A list of specific missing information pieces, each clearly describing what's missing and why it's required
+    - If all necessary information is present (100%), provide an empty list for missing information
 
-    ```json
-    {
-        "percentage_available": 0-100,
-        "missing_information": ["Missing information 1", "Missing information 2", ...]
-    }
-    ```
-
-    - "percentage_available" should be a number between 0 and 100 indicating the percentage of required information that is available in the sources
-    - "missing_information" should be an array of strings, each describing a specific piece of missing information
-    - If all necessary information is present (100%), return an empty array for "missing_information"
-
-    Each missing information entry should identify a specific piece of missing information and explain why it's required for task completion. Be specific, actionable, and clear about what information is needed. Avoid generic statements - precisely identify what's missing and why it matters.
+    Each missing information entry should be specific, actionable, and clear about what information is needed. Avoid generic statements - precisely identify what's missing and why it matters for task completion.
     """,
 )
 
@@ -101,8 +93,15 @@ class SourceValidationResult(TypedDict):
 source_validation_schema = {
     "type": "object",
     "properties": {
-        "percentage_available": {"type": "number", "minimum": 0, "maximum": 100},
-        "missing_information": {"type": "array", "items": {"type": "string"}},
+        "percentage_available": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+        },
+        "missing_information": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
     },
     "required": ["percentage_available", "missing_information"],
 }

@@ -64,28 +64,9 @@ RETRIEVAL_OPTIMIZATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - Recommend new query strategies
     - Suggest alternative phrasings or terminology
 
-    ## Output Format
+    ## Task Completion
 
-    Provide a JSON object with the following structure:
-
-    ```jsonc
-    {
-      "assessment": {
-        "relevance_score": 7,  // 0-10 scale
-        "comprehensiveness_score": 6,  // 0-10 scale
-        "diversity_score": 5,  // 0-10 scale
-        "depth_score": 7,  // 0-10 scale
-        "freshness_score": 8,  // 0-10 scale
-        "overall_score": 6.6,  // average of all scores
-        "explanation": "Brief explanation of the quality assessment"
-      },
-      "optimization": {
-        "information_gaps": ["Specific missing information types or aspects"],
-        "improved_queries": ["List of targeted queries to fill identified gaps"],
-        "query_strategies": "Recommendations for improving future queries"
-      }
-    }
-    ```
+    Provide your quality assessment and optimization recommendations based on the dimensions evaluated above. Include scores for each dimension, an overall assessment, and specific recommendations for improvement where needed.
     """,
 )
 

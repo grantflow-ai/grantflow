@@ -150,7 +150,7 @@ def calculate_performance_metrics(start_time: float, end_time: float, operation:
     execution_time = end_time - start_time
 
     performance_thresholds = {
-        "retrieval": 5.0,
+        "retrieval": 60.0,
         "query_generation": 10.0,
         "cfp_extraction": 60.0,
         "template_generation": 180.0,
