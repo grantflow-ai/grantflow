@@ -7,9 +7,10 @@ import {
 	GrantTemplateFactory,
 	RagJobResponseFactory,
 } from "::testing/factories";
+import type { HTTPError } from "ky";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApplication, retrieveApplication, updateApplication } from "@/actions/grant-applications";
-import { updateGrantTemplate } from "@/actions/grant-template";
+import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
 import { retrieveRagJob } from "@/actions/rag-jobs";
 
 import { useApplicationStore } from "./application-store";
@@ -19,9 +20,13 @@ vi.mock("@/actions/grant-template");
 vi.mock("@/actions/rag-jobs");
 vi.mock("@/actions/sources");
 vi.mock("@/utils/dev-indexing-patch");
-vi.mock("ky", () => ({
-	default: vi.fn(() => Promise.resolve({ ok: true })),
-}));
+vi.mock("ky", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("ky")>();
+	return {
+		...actual,
+		default: vi.fn(() => Promise.resolve({ ok: true })),
+	};
+});
 vi.mock("sonner", () => ({
 	toast: {
 		error: vi.fn(),
@@ -174,24 +179,6 @@ describe("Application Store", () => {
 		});
 	});
 
-	describe("retrieveApplication", () => {
-		it("should fetch application and update state", async () => {
-			const application = ApplicationFactory.build();
-
-			vi.mocked(retrieveApplication).mockResolvedValue(application);
-
-			const { retrieveApplication: retrieveApp } = useApplicationStore.getState();
-
-			await retrieveApp("workspace-id", "app-id");
-
-			expect(retrieveApplication).toHaveBeenCalledWith("workspace-id", "app-id");
-
-			const state = useApplicationStore.getState();
-			expect(state.application).toEqual(application);
-			expect(state.areAppOperationsInProgress).toBe(false);
-		});
-	});
-
 	describe("setApplication", () => {
 		it("should update application", () => {
 			const application = ApplicationFactory.build({ title: "Test App" });
@@ -304,6 +291,117 @@ describe("Application Store", () => {
 		});
 	});
 
+	describe("createApplication", () => {
+		it("should handle errors during application creation", async () => {
+			vi.mocked(createApplication).mockRejectedValue(new Error("Creation failed"));
+
+			const { createApplication: createApp } = useApplicationStore.getState();
+
+			await createApp("workspace-id");
+
+			expect(createApplication).toHaveBeenCalledWith("workspace-id", { title: "Untitled Application" });
+
+			const state = useApplicationStore.getState();
+			expect(state.areAppOperationsInProgress).toBe(false);
+			expect(state.application).toBeNull();
+		});
+	});
+
+	describe("retrieveApplication", () => {
+		it("should fetch application and update state", async () => {
+			const application = ApplicationFactory.build();
+
+			vi.mocked(retrieveApplication).mockResolvedValue(application);
+
+			const { retrieveApplication: retrieveApp } = useApplicationStore.getState();
+
+			await retrieveApp("workspace-id", "app-id");
+
+			expect(retrieveApplication).toHaveBeenCalledWith("workspace-id", "app-id");
+
+			const state = useApplicationStore.getState();
+			expect(state.application).toEqual(application);
+			expect(state.areAppOperationsInProgress).toBe(false);
+		});
+
+		it("should handle errors during application retrieval", async () => {
+			vi.mocked(retrieveApplication).mockRejectedValue(new Error("Retrieval failed"));
+
+			const { retrieveApplication: retrieveApp } = useApplicationStore.getState();
+
+			await retrieveApp("workspace-id", "app-id");
+
+			const state = useApplicationStore.getState();
+			expect(state.areAppOperationsInProgress).toBe(false);
+		});
+	});
+
+	describe("updateApplication", () => {
+		it("should handle errors and rollback state", async () => {
+			const application = ApplicationFactory.build({ title: "Original Title" });
+			vi.mocked(updateApplication).mockRejectedValue(new Error("Update failed"));
+
+			useApplicationStore.setState({ application });
+			const { updateApplication: updateApp } = useApplicationStore.getState();
+
+			await updateApp({ title: "New Title" });
+
+			const state = useApplicationStore.getState();
+			expect(state.application?.title).toBe("Original Title");
+			expect(state.areAppOperationsInProgress).toBe(false);
+		});
+	});
+
+	describe("generateTemplate", () => {
+		it("should handle HTTP 422 validation errors", async () => {
+			const application = ApplicationFactory.build();
+			const httpError = Object.assign(new Error("Validation error"), {
+				response: { json: () => Promise.resolve({ message: "Grant template not found" }), status: 422 },
+			}) as HTTPError;
+
+			vi.mocked(generateGrantTemplate).mockRejectedValue(httpError);
+			useApplicationStore.setState({ application });
+
+			const { generateTemplate } = useApplicationStore.getState();
+
+			await generateTemplate("template-id");
+
+			expect(generateGrantTemplate).toHaveBeenCalledWith(application.workspace_id, application.id, "template-id");
+		});
+
+		it("should handle general errors during template generation", async () => {
+			const application = ApplicationFactory.build();
+			vi.mocked(generateGrantTemplate).mockRejectedValue(new Error("General error"));
+			useApplicationStore.setState({ application });
+
+			const { generateTemplate } = useApplicationStore.getState();
+
+			await generateTemplate("template-id");
+
+			expect(generateGrantTemplate).toHaveBeenCalled();
+		});
+
+		it("should handle progress text when stage info is available", async () => {
+			const application = ApplicationFactory.build({
+				rag_job_id: "job-123",
+			});
+			const jobData = RagJobResponseFactory.build({
+				current_stage: 2,
+				status: "PROCESSING",
+				total_stages: 5,
+			});
+
+			vi.mocked(retrieveRagJob).mockResolvedValue(jobData);
+			useApplicationStore.setState({ application });
+
+			const { checkAndRestoreJobState } = useApplicationStore.getState();
+			await checkAndRestoreJobState();
+
+			const state = useApplicationStore.getState();
+			expect(state.ragJobState.restoredJob).toEqual(jobData);
+		});
+	});
+
 	describe("file and URL management", () => {
 		it("should add files with parentId", async () => {
 			const fileWithId = FileWithIdFactory.build();
@@ -329,6 +427,34 @@ describe("Application Store", () => {
 			expect(createTemplateSourceUploadUrl).toHaveBeenCalled();
 		});
 
+		it("should handle file upload errors", async () => {
+			const fileWithId = FileWithIdFactory.build();
+			const application = ApplicationWithTemplateFactory.build();
+
+			const { createTemplateSourceUploadUrl } = await mockSourcesActions();
+			vi.mocked(createTemplateSourceUploadUrl).mockRejectedValue(new Error("Upload failed"));
+
+			useApplicationStore.setState({ application });
+			const { addFile } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await addFile(fileWithId, application.grant_template.id);
+			}
+
+			expect(createTemplateSourceUploadUrl).toHaveBeenCalled();
+		});
+
+		it("should skip file upload when validation fails", async () => {
+			const fileWithId = FileWithIdFactory.build();
+			useApplicationStore.setState({ application: null });
+
+			const { addFile } = useApplicationStore.getState();
+			await addFile(fileWithId, "invalid-parent");
+
+			const { createTemplateSourceUploadUrl } = await mockSourcesActions();
+			expect(createTemplateSourceUploadUrl).not.toHaveBeenCalled();
+		});
+
 		it("should add URLs with parentId", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -347,6 +473,32 @@ describe("Application Store", () => {
 				application.grant_template?.id,
 				"https://example.com",
 			);
+		});
+
+		it("should handle URL processing errors", async () => {
+			const application = ApplicationWithTemplateFactory.build();
+
+			const { crawlTemplateUrl } = await mockSourcesActions();
+			vi.mocked(crawlTemplateUrl).mockRejectedValue(new Error("URL processing failed"));
+
+			useApplicationStore.setState({ application });
+			const { addUrl } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await addUrl("https://example.com", application.grant_template.id);
+			}
+
+			expect(crawlTemplateUrl).toHaveBeenCalled();
+		});
+
+		it("should skip URL processing when validation fails", async () => {
+			useApplicationStore.setState({ application: null });
+
+			const { addUrl } = useApplicationStore.getState();
+			await addUrl("https://example.com", "invalid-parent");
+
+			const { crawlTemplateUrl } = await mockSourcesActions();
+			expect(crawlTemplateUrl).not.toHaveBeenCalled();
 		});
 
 		it("should remove files with parentId", async () => {
@@ -370,6 +522,49 @@ describe("Application Store", () => {
 					"1",
 				);
 			}
+		});
+
+		it("should skip file removal when validation fails", async () => {
+			const file = FileWithIdFactory.build({ id: "1" });
+			useApplicationStore.setState({ application: null });
+
+			const { removeFile } = useApplicationStore.getState();
+			await removeFile(file, "invalid-parent");
+
+			const { deleteTemplateSource } = await mockSourcesActions();
+			expect(deleteTemplateSource).not.toHaveBeenCalled();
+		});
+
+		it("should skip file removal when file ID is missing", async () => {
+			const file = FileWithIdFactory.build({ id: undefined });
+			const application = ApplicationWithTemplateFactory.build();
+			useApplicationStore.setState({ application });
+
+			const { removeFile } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await removeFile(file, application.grant_template.id);
+			}
+
+			const { deleteTemplateSource } = await mockSourcesActions();
+			expect(deleteTemplateSource).not.toHaveBeenCalled();
+		});
+
+		it("should handle file removal errors", async () => {
+			const file = FileWithIdFactory.build({ id: "1" });
+			const application = ApplicationWithTemplateFactory.build();
+
+			const { deleteTemplateSource } = await mockSourcesActions();
+			vi.mocked(deleteTemplateSource).mockRejectedValue(new Error("Deletion failed"));
+
+			useApplicationStore.setState({ application });
+			const { removeFile } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await removeFile(file, application.grant_template.id);
+			}
+
+			expect(deleteTemplateSource).toHaveBeenCalled();
 		});
 
 		it("should remove URLs", async () => {
@@ -398,6 +593,74 @@ describe("Application Store", () => {
 					"source-1",
 				);
 			}
+		});
+
+		it("should skip URL removal when validation fails", async () => {
+			useApplicationStore.setState({ application: null });
+
+			const { removeUrl } = useApplicationStore.getState();
+			await removeUrl("https://example.com", "invalid-parent");
+
+			const { deleteTemplateSource } = await mockSourcesActions();
+			expect(deleteTemplateSource).not.toHaveBeenCalled();
+		});
+
+		it("should skip URL removal when source not found", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...GrantTemplateFactory.build(),
+					rag_sources: [],
+				},
+			});
+			useApplicationStore.setState({ application });
+
+			const { removeUrl } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await removeUrl("https://nonexistent.com", application.grant_template.id);
+			}
+
+			const { deleteTemplateSource } = await mockSourcesActions();
+			expect(deleteTemplateSource).not.toHaveBeenCalled();
+		});
+
+		it("should handle URL removal errors", async () => {
+			const ragSource = { id: "source-1", sourceId: "source-1", status: "FINISHED", url: "https://example.com" };
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...GrantTemplateFactory.build(),
+					rag_sources: [ragSource] as any,
+				},
+			});
+
+			const { deleteTemplateSource } = await mockSourcesActions();
+			vi.mocked(deleteTemplateSource).mockRejectedValue(new Error("Deletion failed"));
+
+			useApplicationStore.setState({ application });
+			const { removeUrl } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await removeUrl("https://example.com", application.grant_template.id);
+			}
+
+			expect(deleteTemplateSource).toHaveBeenCalled();
+		});
+
+		it("should handle template parent sources correctly", async () => {
+			const ragSource = { id: "source-1", sourceId: "source-1", status: "FINISHED", url: "https://example.com" };
+			const application = ApplicationFactory.build({
+				rag_sources: [ragSource] as any,
+			});
+
+			const { deleteApplicationSource } = await mockSourcesActions();
+			vi.mocked(deleteApplicationSource).mockResolvedValue(undefined);
+
+			useApplicationStore.setState({ application });
+			const { removeUrl } = useApplicationStore.getState();
+
+			await removeUrl("https://example.com", application.id);
+
+			expect(deleteApplicationSource).toHaveBeenCalledWith(application.workspace_id, application.id, "source-1");
 		});
 	});
 
