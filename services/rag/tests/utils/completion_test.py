@@ -7,7 +7,6 @@ from google.cloud.exceptions import TooManyRequests
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import RagError, ValidationError
 from pytest_mock import MockerFixture
-from vertexai.generative_models import Part
 
 from services.rag.src.utils.completion import (
     BestResponseSelection,
@@ -21,9 +20,11 @@ from services.rag.src.utils.completion import (
 
 @pytest.fixture
 def mock_google_api_response(mocker: MockerFixture) -> Mock:
-    client = AsyncMock()
+    client = Mock()
+    aio_client = AsyncMock()
     response = Mock()
-    client.generate_content_async.return_value = response
+    aio_client.models.generate_content.return_value = response
+    client._aio = aio_client  # noqa: SLF001
     mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
     return response
 
@@ -70,12 +71,12 @@ async def test_make_completions_request_with_string_message(mock_google_api_resp
     assert result == {"key": "value"}
 
 
-async def test_make_completions_request_with_part_message(mock_google_api_response: Mock) -> None:
+async def test_make_completions_request_with_list_message(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     result = await make_google_completions_request(
         prompt_identifier="test",
         response_type=dict[str, str],
-        messages=[Part.from_text("test message")],
+        messages=["test message"],
         candidate_count=None,
         system_prompt="You are a helpful assistant.",
     )
@@ -84,10 +85,19 @@ async def test_make_completions_request_with_part_message(mock_google_api_respon
 
 async def test_make_completions_request_with_multiple_candidates(mock_google_api_response: Mock) -> None:
     mock_google_api_response.text = '{"best_response": 1}'
+
     candidate1 = Mock()
-    candidate1.text = '{"key": "value1"}'
+    part1 = Mock()
+    part1.text = '{"key": "value1"}'
+    candidate1.content = Mock()
+    candidate1.content.parts = [part1]
+
     candidate2 = Mock()
-    candidate2.text = '{"key": "value2"}'
+    part2 = Mock()
+    part2.text = '{"key": "value2"}'
+    candidate2.content = Mock()
+    candidate2.content.parts = [part2]
+
     mock_google_api_response.candidates = [candidate1, candidate2]
     result = await make_google_completions_request(
         prompt_identifier="test",
@@ -163,13 +173,19 @@ async def test_handle_completions_request_success(mock_google_api_response: Mock
     assert result == {"key": "value"}
 
 
-async def test_handle_completions_request_with_retry(mock_google_api_response: Mock) -> None:
-    mock_google_api_response.text = '{"key": "value"}'
-    mock_google_api_response.generate_content_async.side_effect = [
+async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> None:
+    client = Mock()
+    aio_client = AsyncMock()
+    response = Mock()
+    response.text = '{"key": "value"}'
+
+    aio_client.models.generate_content.side_effect = [
         TooManyRequests("error"),  # type: ignore[no-untyped-call]
         TooManyRequests("error"),  # type: ignore[no-untyped-call]
-        mock_google_api_response,
+        response,
     ]
+    client._aio = aio_client  # noqa: SLF001
+    mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
 
     result = await handle_completions_request(
         prompt_identifier="test",

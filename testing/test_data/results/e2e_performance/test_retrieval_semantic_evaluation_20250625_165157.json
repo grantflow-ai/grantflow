@@ -1,0 +1,9 @@
+{
+  "test_name": "test_retrieval_semantic_evaluation",
+  "test_category": "semantic_evaluation",
+  "performance": {
+    "execution_time": 38.82048010826111,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-25T16:51:57.038950+00:00"
+}

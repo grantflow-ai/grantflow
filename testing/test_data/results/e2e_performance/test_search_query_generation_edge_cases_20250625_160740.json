@@ -1,0 +1,9 @@
+{
+  "test_name": "test_search_query_generation_edge_cases",
+  "test_category": "smoke",
+  "performance": {
+    "execution_time": 14.892662048339844,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-25T16:07:40.257943+00:00"
+}

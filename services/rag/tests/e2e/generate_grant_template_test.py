@@ -17,9 +17,13 @@ from services.rag.src.utils.job_manager import JobManager
 from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 
 
-def create_mock_job_manager_for_e2e(session_maker: Any) -> JobManager:
+async def create_mock_job_manager_for_e2e(session_maker: Any, grant_application_id: str) -> JobManager:
     """Create a JobManager for e2e tests with mocked pubsub."""
-    return JobManager(session_maker)
+    from uuid import UUID
+
+    job_manager = JobManager(session_maker)
+    await job_manager.create_grant_application_job(grant_application_id=UUID(grant_application_id), total_stages=5)
+    return job_manager
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
@@ -29,6 +33,7 @@ async def test_handle_generate_grant_template_melanoma_alliance(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -36,6 +41,7 @@ async def test_handle_generate_grant_template_melanoma_alliance(
         cfp_file_name="melanoma_alliance.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -47,7 +53,7 @@ async def test_handle_generate_grant_template_melanoma_alliance(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
+    job_manager = await create_mock_job_manager_for_e2e(async_session_maker, melanoma_alliance_full_application_id)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
@@ -74,6 +80,7 @@ async def test_handle_generate_grant_template_standard_aware(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -81,6 +88,7 @@ async def test_handle_generate_grant_template_standard_aware(
         cfp_file_name="standard_awards.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -92,7 +100,7 @@ async def test_handle_generate_grant_template_standard_aware(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
+    job_manager = await create_mock_job_manager_for_e2e(async_session_maker, melanoma_alliance_full_application_id)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
@@ -119,6 +127,7 @@ async def test_handle_generate_grant_template_nih(
     nih_organization: FundingOrganization,
     organization_mapping: dict[str, dict[str, str]],
     async_session_maker: async_sessionmaker[Any],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -126,6 +135,7 @@ async def test_handle_generate_grant_template_nih(
         cfp_file_name="nih.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -137,7 +147,7 @@ async def test_handle_generate_grant_template_nih(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
+    job_manager = await create_mock_job_manager_for_e2e(async_session_maker, melanoma_alliance_full_application_id)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
@@ -163,6 +173,7 @@ async def test_handle_generate_grant_template_ics(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -170,6 +181,7 @@ async def test_handle_generate_grant_template_ics(
         cfp_file_name="ics.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -181,7 +193,7 @@ async def test_handle_generate_grant_template_ics(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
+    job_manager = await create_mock_job_manager_for_e2e(async_session_maker, melanoma_alliance_full_application_id)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
@@ -208,6 +220,7 @@ async def test_handle_generate_grant_template_erc(
     organization_mapping: dict[str, dict[str, str]],
     erc_organization: FundingOrganization,
     async_session_maker: async_sessionmaker[Any],
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -215,6 +228,7 @@ async def test_handle_generate_grant_template_erc(
         cfp_file_name="erc.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -226,7 +240,7 @@ async def test_handle_generate_grant_template_erc(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(UTC)
 
-    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
+    job_manager = await create_mock_job_manager_for_e2e(async_session_maker, melanoma_alliance_full_application_id)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],
@@ -256,6 +270,7 @@ async def test_handle_generate_grant_template(
     nih_organization: FundingOrganization,
     organization_mapping: dict[str, dict[str, str]],
     source_file_name: str,
+    melanoma_alliance_full_application_id: str,
 ) -> None:
     template_id = str(uuid4())
 
@@ -263,6 +278,7 @@ async def test_handle_generate_grant_template(
         cfp_file_name=f"{source_file_name}.md",
         grant_template_id=template_id,
         session_maker=async_session_maker,
+        grant_application_id=melanoma_alliance_full_application_id,
     )
 
     result = await handle_extract_cfp_data_from_rag_sources(
@@ -274,7 +290,7 @@ async def test_handle_generate_grant_template(
     logger.info("Running end-to-end test for complete grant template generation")
     start_time = datetime.now(tz=UTC)
 
-    job_manager = create_mock_job_manager_for_e2e(async_session_maker)
+    job_manager = await create_mock_job_manager_for_e2e(async_session_maker, melanoma_alliance_full_application_id)
     sections = await extract_and_enrich_sections(
         cfp_content=result["content"],
         cfp_subject=result["cfp_subject"],

@@ -78,25 +78,18 @@ EXTRACT_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ## Output Structure
 
-    Respond with a JSON object adhering to the following format:
+    Provide a structured output containing an array of relationships. Each relationship should be represented as a three-element array:
+    - First element: The identifier for the source research element (objective or task)
+    - Second element: The identifier for the target research element (objective or task)
+    - Third element: A detailed description of the relationship (100-200 words)
 
-    ```json
-    {
-        "relationships": [
-            ["1", "2", "Objective 1 provides the foundational data required for Objective 2. Specifically, the analytical methods developed in Objective 1 enable the interventions planned in Objective 2. In turn, Objective 2 will provide feedback to refine the experimental design in Objective 1."],
-            ["1.1", "1.2", "Task 1.1 will generate preliminary data needed to optimize the protocols in Task 1.2. Both tasks form an iterative cycle where results from Task 1.2 may necessitate refinements to the methods in Task 1.1."],
-            ["1.2", "2.1", "The methodology developed in Task 1.2 will be directly applied to Task 2.1. The results from Task 2.1 will then inform further optimization of the methodology in Task 1.2."],
-            ["2", "3", "The intervention strategies developed in Objective 2 provide the foundation for the translational applications explored in Objective 3. This sequential relationship ensures that applied work builds on validated mechanisms."]
-        ]
-    }
-    ```
+    The description should explain:
+    - The nature and type of the relationship (sequential, causal, complementary, etc.)
+    - How the elements interact and influence each other
+    - The significance of this connection for the overall research plan
+    - Any bidirectional aspects or feedback mechanisms
 
-    Each relationship entry in the array should contain exactly three elements:
-        1. The identifier for the first research element (objective or task)
-        2. The identifier for the second research element (objective or task)
-        3. A detailed description of the relationship that explains the nature, type, and significance of the connection (100-200 words)
-
-        Focus on identifying the most significant and meaningful relationships rather than attempting to connect every possible pair of research elements. Quality is more important than quantity - each relationship should be substantive and contribute to understanding the research plan.
+    Focus on identifying the most significant and meaningful relationships rather than attempting to connect every possible pair of research elements. Quality is more important than quantity - each relationship should be substantive and contribute to understanding the research plan.
     """,
 )
 relationships_schema = {
@@ -104,10 +97,13 @@ relationships_schema = {
     "properties": {
         "relationships": {
             "type": "array",
+            "description": "Array of relationships between research objectives and tasks",
             "items": {
                 "type": "array",
+                "description": "A three-element array representing a relationship: [source_id, target_id, description]",
                 "items": {
                     "type": "string",
+                    "description": "Element 0: source identifier (e.g., '1', '2.3'), Element 1: target identifier, Element 2: detailed relationship description (100-200 words)",
                 },
                 "minItems": 3,
                 "maxItems": 3,

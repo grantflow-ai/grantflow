@@ -1,0 +1,9 @@
+{
+  "test_name": "test_genai_anthropic_fallback",
+  "test_category": "smoke",
+  "performance": {
+    "execution_time": 3.488079786300659,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-25T15:43:03.216791+00:00"
+}
