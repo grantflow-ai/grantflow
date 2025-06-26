@@ -46,6 +46,11 @@ pre-commit:
             run: uv run uncomment --remove-doc {staged_files}
             stage_fixed: true
 
+        ai-rulez:
+            glob: "ai_rulez.yaml"
+            run: uv run ai-rulez
+            stage_fixed: true
+
         codespell:
             run: uv run codespell {staged_files}
             exclude: |
