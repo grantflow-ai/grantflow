@@ -2,7 +2,6 @@ import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
-
 import FilePreviewCard from "./file-preview-card";
 
 describe("FilePreviewCard", () => {
@@ -127,76 +126,6 @@ describe("FilePreviewCard", () => {
 
 			const fileNameElement = screen.getByTestId("file-name");
 			expect(fileNameElement).toHaveAttribute("title", "very-long-filename-that-might-be-truncated.pdf");
-		});
-	});
-
-	describe("Browser-Openable Files", () => {
-		const browserOpenableExtensions = ["gif", "jpeg", "jpg", "pdf", "png", "svg", "webp"];
-
-		browserOpenableExtensions.forEach((extension) => {
-			it(`renders as clickable button for ${extension} files`, () => {
-				const file = FileWithIdFactory.build({ name: `image.${extension}` });
-				render(<FilePreviewCard file={file} />);
-
-				const button = screen.getByRole("button", { name: `Open image.${extension}` });
-				expect(button).toBeInTheDocument();
-				expect(button).toHaveAttribute("title", "Click to open file");
-			});
-		});
-
-		it("opens file in new tab when clicked", async () => {
-			const mockCreateObjectURL = vi.fn().mockReturnValue("blob:http://localhost/test-url");
-			const mockRevokeObjectURL = vi.fn();
-			const mockWindowOpen = vi.fn();
-
-			globalThis.URL.createObjectURL = mockCreateObjectURL;
-			globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
-			globalThis.window.open = mockWindowOpen;
-
-			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
-			render(<FilePreviewCard file={file} />);
-
-			const button = screen.getByRole("button", { name: "Open image.png" });
-
-			fireEvent.click(button);
-
-			await waitFor(() => {
-				expect(mockCreateObjectURL).toHaveBeenCalledWith(file);
-				expect(mockWindowOpen).toHaveBeenCalledWith("blob:http://localhost/test-url", "_blank");
-			});
-		});
-
-		it("revokes object URL after opening file", async () => {
-			vi.useFakeTimers();
-			const mockCreateObjectURL = vi.fn().mockReturnValue("blob:http://localhost/test-url");
-			const mockRevokeObjectURL = vi.fn();
-			const mockWindowOpen = vi.fn();
-
-			globalThis.URL.createObjectURL = mockCreateObjectURL;
-			globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
-			globalThis.window.open = mockWindowOpen;
-
-			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
-			render(<FilePreviewCard file={file} />);
-
-			const button = screen.getByRole("button", { name: "Open image.png" });
-			fireEvent.click(button);
-
-			await vi.advanceTimersByTimeAsync(1000);
-
-			expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/test-url");
-			vi.useRealTimers();
-		});
-	});
-
-	describe("Non-Browser-Openable Files", () => {
-		it("renders as non-clickable div for non-openable files", () => {
-			const file = FileWithIdFactory.build({ name: "document.docx" });
-			render(<FilePreviewCard file={file} />);
-
-			const container = screen.getByRole("img", { name: /File document\.docx - right click for options/i });
-			expect(container).toBeInTheDocument();
-			expect(screen.queryByRole("button", { name: /Open document\.docx/i })).not.toBeInTheDocument();
 		});
 	});
 

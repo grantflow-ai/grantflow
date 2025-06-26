@@ -28,34 +28,19 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 		return section;
 	}
 
-	return toGrantSectionRequestBody({
-		id: section.id,
-		max_words: 3000,
-		order: section.order,
-		parent_id: section.parent_id,
-		title: section.title,
-	});
-};
-
-const toGrantSectionRequestBody = (overrides: Partial<UpdateGrantSection> = {}): UpdateGrantSection => {
-	const defaults: UpdateGrantSection = {
+	return {
 		depends_on: [],
 		generation_instructions: "",
-		id: `section-${crypto.randomUUID()}`,
+		id: section.id,
 		is_clinical_trial: null,
 		is_detailed_workplan: null,
 		keywords: [],
 		max_words: 3000,
-		order: 0,
-		parent_id: null,
+		order: section.order,
+		parent_id: section.parent_id,
 		search_queries: [],
-		title: "Category Name",
+		title: section.title,
 		topics: [],
-	};
-
-	return {
-		...defaults,
-		...overrides,
 	};
 };
 
@@ -90,16 +75,7 @@ const ANALYZING_STEPS = [
 	},
 ];
 
-export function ApplicationStructureStep() {
-	return (
-		<div className="flex size-full" data-testid="application-structure-step">
-			<ApplicationStructureLeftPane />
-			<ApplicationStructurePreview />
-		</div>
-	);
-}
-
-function ApplicationStructureLeftPane() {
+export function ApplicationStructureLeftPane() {
 	const { application, retrieveApplication } = useApplicationStore();
 	const { checkTemplateRagJobStatus, grantTemplateRagJobData } = useWizardStore();
 
@@ -282,7 +258,12 @@ function ApplicationStructureLeftPane() {
 
 						{templateUrls.length > 0 && (
 							<Card className="border-app-gray-100 border p-4 shadow-none">
-								<h3 className="font-heading mb-2 text-base font-semibold">Links</h3>
+								<h3
+									className="font-heading mb-2 text-base font-semibold"
+									data-testid="template-links-title"
+								>
+									Links
+								</h3>
 								<div className="space-y-1">
 									{templateUrls.map((url, index) => (
 										<LinkPreviewItem key={url + index.toString()} parentId={parentId} url={url} />
@@ -293,6 +274,15 @@ function ApplicationStructureLeftPane() {
 					</div>
 				)}
 			</div>
+		</div>
+	);
+}
+
+export function ApplicationStructureStep() {
+	return (
+		<div className="flex size-full" data-testid="application-structure-step">
+			<ApplicationStructureLeftPane />
+			<ApplicationStructurePreview />
 		</div>
 	);
 }
@@ -309,11 +299,20 @@ function ApplicationStructurePreview() {
 	const handleAddNewSection = useCallback(
 		async (parentId: null | string = null) => {
 			const isSubsection = parentId !== null;
-			const newSection = toGrantSectionRequestBody({
+			const newSection: UpdateGrantSection = {
+				depends_on: [],
+				generation_instructions: "",
+				id: `section-${crypto.randomUUID()}`,
+				is_clinical_trial: null,
+				is_detailed_workplan: null,
+				keywords: [],
+				max_words: 3000,
 				order: grantSections.length,
 				parent_id: parentId,
+				search_queries: [],
 				title: isSubsection ? "Secondary Category Name" : "Category Name",
-			});
+				topics: [],
+			};
 
 			const updatedSections: UpdateGrantSection[] = [...grantSections.map(toUpdateGrantSection), newSection];
 			await updateGrantSections(updatedSections);
