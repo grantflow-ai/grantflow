@@ -29,6 +29,7 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
+                  version: packageManager
                   run_install: false
 
             - name: Setup Node.js
@@ -54,6 +55,7 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
+                  version: packageManager
                   run_install: false
 
             - name: Setup Node.js
@@ -93,6 +95,7 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
+                  version: packageManager
                   run_install: false
 
             - name: Setup Node.js
