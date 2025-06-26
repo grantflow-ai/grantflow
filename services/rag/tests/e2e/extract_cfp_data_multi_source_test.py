@@ -19,11 +19,11 @@ TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="2fb8fb6
 async def test_extract_cfp_data_multi_source(
     logger: logging.Logger,
     organization_mapping: dict[str, dict[str, str]],
-    session_maker: async_sessionmaker[Any],
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Starting multi-source test for template: %s", TEST_GRANT_TEMPLATE_ID)
 
-    async with session_maker() as session, session.begin():
+    async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(GrantTemplateRagSource.rag_source_id).where(
                 GrantTemplateRagSource.grant_template_id == TEST_GRANT_TEMPLATE_ID
@@ -43,7 +43,7 @@ async def test_extract_cfp_data_multi_source(
         extraction_result = await handle_extract_cfp_data_from_rag_sources(
             source_ids=source_ids,
             organization_mapping=organization_mapping,
-            session_maker=session_maker,
+            session_maker=async_session_maker,
         )
 
         execution_time = (datetime.now(UTC) - start_time).total_seconds()

@@ -1,6 +1,5 @@
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from json import dumps
 from textwrap import dedent
 from typing import Any, Final, TypedDict, cast
 
@@ -83,15 +82,11 @@ async def evaluate_prompt_output(
         {criterion.evaluation_instructions}
         """
 
-    obj = dumps({v.name: {"score": 90, "instructions": "Update the output..."} for v in criteria}, indent=2)
-
-    criteria_text += f"""
+    criteria_text += """
 
     ## Output Instructions:
 
-    Respond with a JSON object like the following:
-
-    {obj}
+    Respond with a structured evaluation for each criterion.
     """
 
     json_schema = {

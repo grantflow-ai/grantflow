@@ -1,0 +1,9 @@
+{
+  "test_name": "test_extract_cfp_data_multi_source",
+  "test_category": "quality_assessment",
+  "performance": {
+    "execution_time": 0.03151416778564453,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-25T16:00:55.357042+00:00"
+}

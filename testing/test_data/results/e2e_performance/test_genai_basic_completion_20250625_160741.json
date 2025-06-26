@@ -1,0 +1,9 @@
+{
+  "test_name": "test_genai_basic_completion",
+  "test_category": "smoke",
+  "performance": {
+    "execution_time": 0.8206861019134521,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-25T16:07:41.153593+00:00"
+}

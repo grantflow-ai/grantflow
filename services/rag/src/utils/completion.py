@@ -6,6 +6,7 @@ from typing import Any, Final, TypedDict
 from anthropic import NOT_GIVEN, RateLimitError
 from anthropic import InternalServerError as AnthropicInternalServerError
 from anthropic.types import ToolParam, ToolUseBlock
+from google import genai
 from google.api_core.exceptions import InternalServerError as GoogleInternalServerError
 from google.api_core.exceptions import ServiceUnavailable
 from google.cloud.exceptions import TooManyRequests
@@ -26,13 +27,6 @@ from packages.shared_utils.src.exceptions import (
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.retry import with_exponential_backoff_retry
 from packages.shared_utils.src.serialization import deserialize, fix_string_json_values, serialize
-from vertexai.generative_models import (
-    Content,
-    GenerationConfig,
-    HarmBlockThreshold,
-    HarmCategory,
-    Part,
-)
 
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -61,15 +55,7 @@ SELECT_BEST_RESPONSE_USE_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ${responses}
     </responses>
 
-    Select the key (integer id) of the best response from the object.
-
-    The response should be a single key (integer) from the object, which correlates with the best response value:
-
-    ```json
-    {
-        "best_response": 1
-    }
-    ```
+    Select the key (integer id) of the best response from the object, choosing the response that best fulfills the original prompt requirements.
     """,
 )
 
@@ -115,52 +101,79 @@ async def select_best_response[T](
 async def make_google_completions_request[T](
     *,
     model: str = GENERATION_MODEL,
-    prompt_identifier: str,
+    prompt_identifier: str,  # noqa: ARG001
     response_type: type[T],
     system_prompt: str,
     response_schema: dict[str, Any] | None = None,
-    messages: str | Part | list[str | Part],
+    messages: str | list[str],
     temperature: float = 0,
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
 ) -> T:
-    client = get_google_ai_client(prompt_identifier=prompt_identifier, system_instructions=system_prompt, model=model)
+    client = get_google_ai_client()
 
     if not isinstance(messages, list):
         messages = [messages]
 
-    contents = [
-        Content(
-            role=USER_MESSAGE_ROLE,
-            parts=[message if isinstance(message, Part) else Part.from_text(message) for message in messages],
-        )
-    ]
-    safety_settings = {
-        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-    }
-    response = await client.generate_content_async(
-        contents=contents,
-        generation_config=GenerationConfig(
-            response_mime_type=CONTENT_TYPE_JSON,
-            response_schema=response_schema,
-            temperature=temperature,
-            top_p=top_p,
-            top_k=top_k,
-            candidate_count=candidate_count,
-        ),
-        safety_settings=safety_settings,
+    message_parts = []
+    for message in messages:
+        if isinstance(message, str):
+            message_parts.append(message)
+        else:
+            message_parts.append(str(message))
+
+    config = genai.types.GenerateContentConfig(
+        response_mime_type=CONTENT_TYPE_JSON,
+        response_schema=response_schema,
+        temperature=temperature,
+        top_p=top_p,
+        top_k=top_k,
+        candidate_count=candidate_count,
+        system_instruction=system_prompt,
+        safety_settings=[
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+        ],
+    )
+
+    content = "\n".join(message_parts)
+    response = await client._aio.models.generate_content(  # noqa: SLF001
+        model=model,
+        contents=content,
+        config=config,
     )
     if not candidate_count:
-        return deserialize(response.text, response_type)
+        return deserialize(response.text or "", response_type)
 
-    prompt = "\n".join([message.text if isinstance(message, Part) else message for message in messages])
+    prompt = "\n".join([message if isinstance(message, str) else str(message) for message in messages])
+
+    candidates_list = response.candidates or []
+    candidates_dict = {}
+    for index, candidate in enumerate(candidates_list):
+        candidate_text = ""
+        if candidate.content and candidate.content.parts:
+            for part in candidate.content.parts:
+                if hasattr(part, "text") and part.text:
+                    candidate_text += part.text
+        candidates_dict[index + 1] = deserialize(candidate_text, response_type)
 
     return await select_best_response(
-        candidates={index + 1: deserialize(r.text, response_type) for index, r in enumerate(response.candidates)},
+        candidates=candidates_dict,
         prompt=prompt,
     )
 
@@ -235,7 +248,7 @@ def format_error_for_llm(error: Exception) -> str:
 async def handle_completions_request[T](
     *,
     max_attempts: int = 3,
-    messages: str | Part | list[str | Part],
+    messages: str | list[str],
     model: str = GENERATION_MODEL,
     prompt_identifier: str,
     response_schema: dict[str, Any] | None = None,

@@ -3,9 +3,8 @@ from functools import lru_cache
 from typing import Any, Final
 
 from anthropic import AsyncAnthropic
-from google.cloud.aiplatform import init
+from google import genai
 from google.oauth2.service_account import Credentials
-from vertexai.generative_models import GenerativeModel
 
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import BackendError
@@ -27,35 +26,33 @@ REASONING_MODEL: Final[str] = get_env(
 
 init_ref = Ref[bool]()
 anthropic_client = Ref[AsyncAnthropic]()
-google_clients: dict[str, GenerativeModel] = {}
+google_client = Ref[genai.Client | None](None)
 
 
 def get_vertex_credentials() -> Credentials:
     credentials = deserialize(
         get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any]
     )
-    return Credentials.from_service_account_info(credentials)  # type: ignore[no-any-return,no-untyped-call]
+
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    return Credentials.from_service_account_info(credentials, scopes=scopes)  # type: ignore[no-any-return, no-untyped-call]
 
 
 def init_llm_connection() -> None:
     if not init_ref.value:
-        init(
-            credentials=get_vertex_credentials(),
-            location=get_env("GOOGLE_CLOUD_REGION"),
+        google_client.value = genai.Client(
+            vertexai=True,
             project=get_env("GOOGLE_CLOUD_PROJECT"),
+            location=get_env("GOOGLE_CLOUD_REGION"),
+            credentials=get_vertex_credentials(),
         )
         init_ref.value = True
 
 
-def get_google_ai_client(
-    *, prompt_identifier: str, system_instructions: str, model: str
-) -> GenerativeModel:
-    if prompt_identifier not in google_clients:
+def get_google_ai_client() -> genai.Client:
+    if not google_client.value:
         init_llm_connection()
-        google_clients[prompt_identifier] = GenerativeModel(
-            model, system_instruction=system_instructions
-        )
-    return google_clients[prompt_identifier]
+    return google_client.value  # type: ignore[return-value]
 
 
 def get_anthropic_client() -> AsyncAnthropic:
@@ -74,11 +71,12 @@ async def count_tokens(text: str, model: str = ANTHROPIC_SONNET_MODEL) -> int:
         return estimate_token_count(text)
 
     try:
-        client = get_google_ai_client(
-            prompt_identifier="", system_instructions="", model=model
+        client = get_google_ai_client()
+        response = await client._aio.models.count_tokens(  # noqa: SLF001
+            model=model,
+            contents=text,
         )
-        response = client.count_tokens(text)
-        return int(response.total_tokens)
+        return int(response.total_tokens or 0)
     except (ValueError, KeyError, AttributeError):
         return estimate_token_count(text)
 

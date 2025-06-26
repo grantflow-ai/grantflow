@@ -72,18 +72,10 @@ LONG_FORM_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - When critical information is missing, use this exact format: `**[MISSING INFORMATION: specific description]**`
        - Cite sources accurately if citation formats are provided in source materials
 
-    ## Output Format
-    Respond with a valid JSON object following this schema:
-    ```json
-    {
-        "text": "The generated text segment with academic formatting and appropriate paragraph breaks",
-        "is_complete": true or false
-    }
-    ```
-
-    Set "is_complete" to:
-    - true: When the section is finished, even if it contains missing information markers
-    - false: When more generation is needed to complete the full text
+    ## Task Completion
+    Generate the text segment following the guidelines above. Indicate completion status:
+    - Mark as complete when the section is finished, even if it contains missing information markers
+    - Mark as incomplete when more generation is needed to complete the full text
 
     Note: Missing information markers do not make a text incomplete - they simply highlight gaps in the source materials.
 """,
@@ -131,14 +123,8 @@ SHORTEN_TEXT_PROMPT: Final[PromptTemplate] = PromptTemplate(
 LONG_FORM_SCHEMA = {
     "type": "object",
     "properties": {
-        "text": {
-            "type": "string",
-            "description": "The output text that was generated",
-        },
-        "is_complete": {
-            "type": "boolean",
-            "description": "Whether the text is complete or requires further prompts for generation",
-        },
+        "text": {"type": "string"},
+        "is_complete": {"type": "boolean"},
     },
     "required": ["text", "is_complete"],
 }

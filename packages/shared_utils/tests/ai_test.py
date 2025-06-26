@@ -55,68 +55,53 @@ async def test_init_llm_connection_first_call() -> None:
     init_ref.value = False
 
     with (
-        patch("packages.shared_utils.src.ai.init") as mock_init,
+        patch("packages.shared_utils.src.ai.genai") as mock_genai,
         patch("packages.shared_utils.src.ai.get_vertex_credentials") as mock_get_creds,
         patch("packages.shared_utils.src.ai.get_env") as mock_get_env,
+        patch("packages.shared_utils.src.ai.google_client") as mock_client_ref,
     ):
-        mock_get_env.side_effect = ["us-central1", "test-project"]
+        mock_get_env.side_effect = ["test-project", "us-central1"]
         mock_creds = Mock()
         mock_get_creds.return_value = mock_creds
+        mock_client = Mock()
+        mock_genai.Client.return_value = mock_client
 
         init_llm_connection()
 
-        mock_init.assert_called_once_with(
-            credentials=mock_creds,
-            location="us-central1",
-            project="test-project",
-        )
+        mock_genai.Client.assert_called_once()
+        assert mock_client_ref.value == mock_client
         assert init_ref.value is True
 
 
 async def test_init_llm_connection_already_initialized() -> None:
     init_ref.value = True
 
-    with patch("packages.shared_utils.src.ai.init") as mock_init:
+    with patch("packages.shared_utils.src.ai.genai") as mock_genai:
         init_llm_connection()
-        mock_init.assert_not_called()
+        mock_genai.Client.assert_not_called()
 
 
 async def test_get_google_ai_client_new() -> None:
     with (
-        patch("packages.shared_utils.src.ai.init_llm_connection") as mock_init,
-        patch("packages.shared_utils.src.ai.GenerativeModel") as mock_model_class,
+        patch("packages.shared_utils.src.ai.init_llm_connection"),
+        patch("packages.shared_utils.src.ai.google_client") as mock_client_ref,
     ):
-        mock_model = Mock()
-        mock_model_class.return_value = mock_model
+        mock_client = Mock()
+        mock_client_ref.value = mock_client
 
-        client = get_google_ai_client(
-            prompt_identifier="test_prompt",
-            system_instructions="Test instructions",
-            model="test-model",
-        )
+        client = get_google_ai_client()
 
-        mock_init.assert_called_once()
-        mock_model_class.assert_called_once_with(
-            "test-model", system_instruction="Test instructions"
-        )
-        assert client == mock_model
+        assert client == mock_client
 
 
 async def test_get_google_ai_client_existing() -> None:
-    from packages.shared_utils.src.ai import google_clients
+    with patch("packages.shared_utils.src.ai.google_client") as mock_client_ref:
+        mock_client = Mock()
+        mock_client_ref.value = mock_client
 
-    mock_model = Mock()
-    google_clients["existing_prompt"] = mock_model
+        client = get_google_ai_client()
 
-    with patch("packages.shared_utils.src.ai.init_llm_connection") as mock_init:
-        client = get_google_ai_client(
-            prompt_identifier="existing_prompt",
-            system_instructions="Test instructions",
-            model="test-model",
-        )
-
-        mock_init.assert_not_called()
-        assert client == mock_model
+        assert client == mock_client
 
 
 async def test_get_anthropic_client_new() -> None:
@@ -185,7 +170,10 @@ async def test_count_tokens_anthropic_model() -> None:
 
 async def test_count_tokens_google_model_success() -> None:
     mock_client = Mock()
-    mock_client.count_tokens.return_value = Mock(total_tokens=10)
+    mock_aio_client = AsyncMock()
+    mock_response = Mock(total_tokens=10)
+    mock_aio_client.models.count_tokens.return_value = mock_response
+    mock_client._aio = mock_aio_client
 
     with patch(
         "packages.shared_utils.src.ai.get_google_ai_client", return_value=mock_client
@@ -196,7 +184,9 @@ async def test_count_tokens_google_model_success() -> None:
 
 async def test_count_tokens_google_model_fallback() -> None:
     mock_client = Mock()
-    mock_client.count_tokens.side_effect = ValueError("API error")
+    mock_aio_client = AsyncMock()
+    mock_aio_client.models.count_tokens.side_effect = ValueError("API error")
+    mock_client._aio = mock_aio_client
 
     with (
         patch(

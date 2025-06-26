@@ -1,0 +1,9 @@
+{
+  "test_name": "test_retrieval_quality_assessment",
+  "test_category": "quality_assessment",
+  "performance": {
+    "execution_time": 38.572081089019775,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-25T16:51:05.956897+00:00"
+}

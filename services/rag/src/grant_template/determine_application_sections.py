@@ -251,27 +251,9 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
         - Include empty sections array
       - Otherwise, proceed with your best interpretation of the requirements, using standard grant structures when specific guidance is lacking
 
-    ## Output
+    ## Task Completion
 
-    Respond with a JSON object adhering to the following format:
-
-    ```json
-    {
-       "sections": [{                           // List of sections, empty if insufficient information
-           "id": "string",                      // Unique snake_case identifier, e.g. 'abstract'
-           "is_clinical_trial": "boolean",      // Whether the section is a clinical trial section, nullable
-           "is_detailed_workplan": "boolean",   // Whether the section is the work plan, nullable
-           "is_long_form": "boolean",           // Whether the section is a long form section, required
-           "is_title_only": "boolean",          // Whether the section contains only a title, nullable
-           "order": "integer"                   // Order of the section in the grant application, starts at 1
-           "parent_id": "string",               // ID of parent section, nullable
-           "title": "string",                   // Section title as appears in source
-       }],
-       "error": "string"                 // Error message if applicable, leave as empty string or json null if no error
-    }
-    ```
-
-    **Important**: The response object MUST BE a JSON object, not a string! This also applies to any nested object or array within it!
+    Analyze the sources and determine the grant application structure following the instructions above. If confidence is below 50% or no reasonable sections can be identified, provide a detailed error message explaining the issue.
     """,
 )
 
@@ -279,25 +261,59 @@ section_extraction_json_schema = {
     "type": "object",
     "required": ["sections"],
     "properties": {
-        "error": {"type": "string", "nullable": True},
+        "error": {
+            "type": "string",
+            "nullable": True,
+            "description": "Error message if sections cannot be determined, null otherwise",
+        },
         "sections": {
             "type": "array",
+            "description": "Array of section objects representing the grant application structure",
             "items": {
                 "type": "object",
                 "required": ["title", "id", "parent_id", "is_long_form"],
                 "properties": {
-                    "title": {"type": "string", "minLength": 1, "maxLength": 255},
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "Section title as it appears in the source",
+                    },
                     "id": {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 100,
+                        "description": "Unique snake_case identifier for the section",
                     },
-                    "order": {"type": "integer", "minimum": 1},
-                    "parent_id": {"type": "string", "nullable": True},
-                    "is_detailed_workplan": {"type": "boolean", "nullable": True},
-                    "is_title_only": {"type": "boolean", "nullable": True},
-                    "is_long_form": {"type": "boolean"},
-                    "is_clinical_trial": {"type": "boolean", "nullable": True},
+                    "order": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Section order in the application, starting at 1",
+                    },
+                    "parent_id": {
+                        "type": "string",
+                        "nullable": True,
+                        "description": "ID of parent section if nested, null for top-level sections",
+                    },
+                    "is_detailed_workplan": {
+                        "type": "boolean",
+                        "nullable": True,
+                        "description": "Whether this is the detailed workplan/methodology section",
+                    },
+                    "is_title_only": {
+                        "type": "boolean",
+                        "nullable": True,
+                        "description": "Whether section contains only a title and subsections",
+                    },
+                    "is_long_form": {
+                        "type": "boolean",
+                        "description": "Whether this is a research content section written by applicants",
+                    },
+                    "is_clinical_trial": {
+                        "type": "boolean",
+                        "nullable": True,
+                        "description": "Whether this is a clinical trial section",
+                    },
                 },
             },
         },
