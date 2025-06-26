@@ -7,7 +7,15 @@
     <option name="show" value="ASK" />
     <option name="description" value="" />
   </component>
+<<<<<<< Updated upstream
   <component name="ProjectRootManager" version="2" languageLevel="JDK_24" default="true" project-jdk-name="openjdk-24" project-jdk-type="JavaSDK">
+=======
+<<<<<<< Updated upstream
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_23" default="true" project-jdk-name="openjdk-24" project-jdk-type="JavaSDK">
+=======
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_24" default="true" project-jdk-name="Python 3.13 (grantflow)" project-jdk-type="Python SDK">
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="PythonCompatibilityInspectionAdvertiser">

@@ -21,6 +21,7 @@ import {
 } from "@/actions/sources";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
+import { getEnv } from "@/utils/env";
 import { logError } from "@/utils/logging";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
 
@@ -113,20 +114,37 @@ const uploadFileInDevelopment = async (
 	file: FileWithId,
 	application: NonNullable<ApplicationType>,
 	parentId: string,
+	isApplicationParent: boolean,
 ) => {
-	const objectPath = `${application.workspace_id}/${parentId}/${file.id}/${file.name}`;
-	const emulatorUrl = `http://localhost:4443/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
+	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
+	const { url } = await createUploadUrl(application.workspace_id, parentId, file.name);
 
-	await ky(emulatorUrl, {
-		body: file,
-		headers: {
-			"Content-Type": file.type,
-		},
-		method: "POST",
-	});
+	const { extractObjectPathFromUrl } = await import("@/utils/dev-indexing-patch");
+	const objectPath = extractObjectPathFromUrl(url);
+
+	if (!objectPath) {
+		throw new Error("Failed to extract object path from upload URL");
+	}
+
+	const env = getEnv();
+
+	if (env.NEXT_PUBLIC_GCS_EMULATOR_URL) {
+		const emulatorUrl = `${env.NEXT_PUBLIC_GCS_EMULATOR_URL}/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
+
+		await ky(emulatorUrl, {
+			body: file,
+			headers: {
+				"Content-Type": file.type,
+			},
+			method: "POST",
+		});
+	}
 
 	const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
-	void triggerDevIndexing(objectPath);
+	// Add a delay to ensure the database transaction has committed
+	setTimeout(() => {
+		void triggerDevIndexing(objectPath);
+	}, 500);
 };
 
 const uploadFileInProduction = async (
@@ -167,7 +185,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			await (process.env.NODE_ENV === "development"
-				? uploadFileInDevelopment(file, application!, parentId)
+				? uploadFileInDevelopment(file, application!, parentId, isApplicationParent)
 				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
 
 			toast.success(`File ${file.name} uploaded successfully`);

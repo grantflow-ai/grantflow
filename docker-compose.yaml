@@ -93,6 +93,7 @@ services:
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             PYTHONPATH: .
             DEBUG: "True"
         env_file:
@@ -123,6 +124,7 @@ services:
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             GCS_BUCKET_NAME: grantflow-uploads
             DEBUG: "True"
             MODEL_DIR: /app/hf
@@ -154,6 +156,7 @@ services:
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             DEBUG: "True"
             MODEL_DIR: /app/hf
         env_file:
@@ -184,6 +187,7 @@ services:
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
             DEBUG: "True"
             MODEL_DIR: /app/hf
         env_file:
