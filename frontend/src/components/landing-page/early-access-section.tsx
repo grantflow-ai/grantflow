@@ -1,4 +1,5 @@
-import { GradientBackground } from "@/components/landing-page/backgrounds";
+import Image from "next/image";
+
 import {
 	IconEarlyAccessBenefit1,
 	IconEarlyAccessBenefit2,
@@ -16,34 +17,35 @@ import {
 	MotionUnorderedList,
 } from "@/components/landing-page/motion-components";
 import { WaitlistForm } from "@/components/landing-page/waitlist-form";
+import { GradientBackground } from "./backgrounds";
 
 const SECTION_HEADERS = {
 	badge: "Early Access Registration Now Open!",
 	description:
-		"Be among the first to experience GrantFlow. Sign up now to unlock exclusive features, provide valuable feedback, and enjoy priority support.",
-	heading: "Save Time, Amplify Your Impact.",
+		"Be among the first 50 research teams to unlock Priority Access to GrantFlow. Get early entry to powerful AI tools, personalized support, and submit your first grant applications  for free.",
+	heading: "Priority Access - Limited to the First 50 Teams",
 };
 
 const CONTENT_BENEFITS = {
 	earlyAccessBenefits: [
 		{
-			description: "Be the first to explore our most advanced, AI-powered tools.",
+			description: "Be the first to explore our most advanced, AI-powered grant tools.",
 			heading: "Exclusive Features",
 			icon: IconEarlyAccessBenefit1,
 		},
 		{
-			description: "Your feedback will directly shape how GrantFlow.ai evolves.",
+			description: "Your feedback will shape how GrantFlow evolves.",
 			heading: "Influence the Future",
 			icon: IconEarlyAccessBenefit2,
 		},
 		{
-			description: "Get dedicated onboarding and hands-on assistance from our team.",
-			heading: "Priority Support",
+			description: "Enjoy personalized onboarding and expert assistance from our team.",
+			heading: "Dedicated Support",
 			icon: IconEarlyAccessBenefit3,
 		},
 		{
 			description: "Create and generate your first full grant application for FREE!",
-			heading: "Free Application",
+			heading: "Free Grant Submission",
 			icon: IconEarlyAccessBenefit4,
 		},
 	],
@@ -52,7 +54,7 @@ const CONTENT_BENEFITS = {
 };
 
 const sectionVariants = {
-	hidden: { opacity: 0 },
+	hidden: { opacity: 1 },
 	visible: {
 		opacity: 1,
 		transition: {
@@ -167,25 +169,35 @@ export function EarlyAccessSection() {
 	return (
 		<MotionSection
 			aria-label="early-access-section"
-			className="relative"
+			className="relative bg-white"
 			id="waitlist"
 			initial="hidden"
 			variants={sectionVariants}
 			viewport={{ amount: 0.1, once: true }}
 			whileInView="visible"
 		>
-			<GradientBackground className="inset-0 z-0 hidden md:absolute md:block" />
-			<GradientBackground className="absolute inset-0 z-0 md:hidden" position="bottom-left" />
+			<GradientBackground className="absolute inset-0 z-0" position="bottom-left" />
+			<div className="absolute bottom-0 left-0 z-0">
+				<Image
+					alt="background"
+					aria-hidden="true"
+					height={0}
+					priority
+					src="/assets/arrow-design.svg"
+					style={{ height: "100%", width: "100%" }}
+					width={0}
+				/>
+			</div>
 			<div className="lg:py-15 xl:px-30 relative z-10 flex flex-col px-4 py-10 md:px-10 md:py-12 lg:px-20 xl:py-20">
 				<MotionDiv
-					className="text-background max-w-fit rounded-full bg-white px-2 pt-0.5 text-lg md:text-sm"
+					className="bg-app-dark-blue max-w-fit rounded-full px-2 pt-0.5 text-sm text-white"
 					id="early-access-badge"
 					variants={badgeVariants}
 				>
 					{SECTION_HEADERS.badge}
 				</MotionDiv>
 				<MotionHeading2
-					className="font-heading leading-14 mt-4 text-5xl md:mt-3 md:text-4xl md:leading-10"
+					className="font-heading text-app-black mt-3 text-4xl font-medium leading-10"
 					data-testid="early-access-heading"
 					id="early-access-heading"
 					variants={textVariants}
@@ -193,7 +205,7 @@ export function EarlyAccessSection() {
 					{SECTION_HEADERS.heading}
 				</MotionHeading2>
 				<MotionParagraph
-					className="mt-1 text-xl antialiased md:text-white/80"
+					className="text-app-black mt-1 leading-5 antialiased"
 					data-testid="early-access-description"
 					id="early-access-description"
 					variants={textVariants}
@@ -209,7 +221,7 @@ export function EarlyAccessSection() {
 function BenefitsAndWaitlistForm() {
 	return (
 		<MotionDiv
-			className="mt-10 flex flex-col gap-8 rounded bg-violet-200/15 p-7 lg:mt-7 lg:flex-row lg:gap-0 lg:px-11"
+			className="mt-8 flex flex-col gap-8 rounded bg-[#F6F5F9]/15 p-5 md:border md:border-gray-100 lg:flex-row lg:gap-0 lg:px-11"
 			variants={contentContainerVariants}
 		>
 			<MotionSection
@@ -218,14 +230,14 @@ function BenefitsAndWaitlistForm() {
 				variants={benefitsContainerVariants}
 			>
 				<MotionHeading3
-					className="font-heading text-[1.5rem] md:text-[1.75rem]"
+					className="text-app-black font-heading text-xl font-medium md:text-[1.75rem]"
 					id="benefits-list-header"
 					variants={textVariants}
 				>
 					{CONTENT_BENEFITS.listHeading}
 				</MotionHeading3>
 				<MotionUnorderedList
-					className="mt-7 flex flex-wrap justify-start gap-4 gap-y-12 py-3 ps-3 md:gap-12 md:p-3"
+					className="text-app-black mt-7 flex flex-wrap justify-start gap-4 gap-y-12 py-3 ps-3 md:gap-12 md:p-3"
 					variants={benefitsContainerVariants}
 				>
 					{CONTENT_BENEFITS.earlyAccessBenefits.map((benefits, index) => (
@@ -246,11 +258,14 @@ function BenefitsAndWaitlistForm() {
 			</MotionSection>
 			<MotionAside
 				aria-label="waitlist-form"
-				className="flex shrink-0 flex-col space-y-2"
+				className="flex shrink-0 flex-col space-y-3"
 				id="waitlist-form-container"
 				variants={formContainerVariants}
 			>
-				<MotionHeading3 className="font-heading text-2xl" variants={textVariants}>
+				<MotionHeading3
+					className="font-heading text-app-black text-xl font-medium md:text-2xl"
+					variants={textVariants}
+				>
 					{CONTENT_BENEFITS.formHeading}
 				</MotionHeading3>
 				<WaitlistForm />
@@ -271,15 +286,15 @@ function EarlyAccessBenefitsCard({
 	return (
 		<article id="early-access-benefits-card">
 			<MotionDiv variants={benefitIconVariants}>
-				<BadgeIcon className="size-6 md:size-5" />
+				<BadgeIcon className="text-app-black size-5" />
 			</MotionDiv>
-			<MotionHeading3 className="font-heading mb-1 mt-4 text-xl md:mt-2 md:text-base" variants={textVariants}>
-				{heading}
-			</MotionHeading3>
-			<MotionParagraph
-				className="text-lg leading-tight text-white/80 md:text-sm md:font-light md:text-white"
+			<MotionHeading3
+				className="font-heading mb-1 mt-2.5 font-semibold md:mt-2 md:text-base"
 				variants={textVariants}
 			>
+				{heading}
+			</MotionHeading3>
+			<MotionParagraph className="text-app-black mt-1 text-sm leading-tight" variants={textVariants}>
 				{description}
 			</MotionParagraph>
 		</article>

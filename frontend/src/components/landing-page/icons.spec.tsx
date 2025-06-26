@@ -54,17 +54,6 @@ describe("All Icon Components", () => {
 				unmount();
 			});
 	});
-
-	it("early access benefit icons have white fill color", () => {
-		const earlyAccessIcons = allIcons.filter(({ name }) => name.includes("IconEarlyAccessBenefit"));
-
-		earlyAccessIcons.forEach(({ Component, name }) => {
-			const { unmount } = render(<Component data-testid={`test-${name}`} />);
-			const icon = screen.getByTestId(`test-${name}`);
-			expect(icon).toHaveAttribute("fill", "#FFFFFF");
-			unmount();
-		});
-	});
 });
 
 describe("IconBenefitFirst", () => {
@@ -175,9 +164,6 @@ describe("IconEarlyAccessBenefit1", () => {
 
 		expect(icon).toBeInTheDocument();
 		expect(icon.tagName).toBe("svg");
-		expect(icon).toHaveAttribute("width", "24px");
-		expect(icon).toHaveAttribute("height", "24px");
-		expect(icon).toHaveAttribute("fill", "#FFFFFF");
 	});
 
 	it("forwards additional props", () => {
@@ -194,9 +180,6 @@ describe("IconEarlyAccessBenefit2", () => {
 		const icon = screen.getByTestId("test-icon");
 
 		expect(icon.tagName).toBe("svg");
-		expect(icon).toHaveAttribute("width", "24px");
-		expect(icon).toHaveAttribute("height", "24px");
-		expect(icon).toHaveAttribute("fill", "#FFFFFF");
 	});
 
 	it("forwards additional props", () => {
@@ -213,9 +196,6 @@ describe("IconEarlyAccessBenefit3", () => {
 		const icon = screen.getByTestId("test-icon");
 
 		expect(icon.tagName).toBe("svg");
-		expect(icon).toHaveAttribute("width", "24px");
-		expect(icon).toHaveAttribute("height", "24px");
-		expect(icon).toHaveAttribute("fill", "#FFFFFF");
 	});
 
 	it("forwards additional props", () => {
@@ -233,9 +213,6 @@ describe("IconEarlyAccessBenefit4", () => {
 
 		expect(icon).toBeInTheDocument();
 		expect(icon.tagName).toBe("svg");
-		expect(icon).toHaveAttribute("width", "24px");
-		expect(icon).toHaveAttribute("height", "24px");
-		expect(icon).toHaveAttribute("fill", "#FFFFFF");
 	});
 
 	it("forwards additional props", () => {

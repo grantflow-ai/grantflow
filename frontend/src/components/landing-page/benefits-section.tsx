@@ -15,19 +15,17 @@ const CONTENT = {
 			badge: "Save time!",
 			badgeIcon: IconBenefitFirst,
 			description:
-				"As a PI, you're balancing lab leadership, publishing demands, and the constant pressure to secure funding. Much of the grant writing process is not only time-consuming, it pulls your focus away from advancing groundbreaking research. GrantFlow seamlessly converts your documents into proposal drafts, freeing you to focus solely on highlighting what makes your research innovative.",
+				"As a PI, you balance lab leadership, publishing demands, and funding pressure. GrantFlow converts your documents into proposal drafts, allowing you to focus on your innovative research.",
 			heading: "More Time on Grant Writing, Less on Research?",
 		},
 		{
 			badge: "Collaborate smarter!",
 			badgeIcon: IconBenefitSecond,
 			description:
-				"Coordinating with students, administrators, and co-investigators can slow everything down. GrantFlow gives your team a shared project to work on proposals efficiently, track progress, and keep everyone aligned without endless email threads or version chaos.",
+				"Coordinating with students and admins can slow things. GrantFlow offers a workspace for proposals, tracking progress, and keeping everyone aligned without endless emails.",
 			heading: "One Place for Your Entire Grant Team",
 		},
 	],
-	description:
-		"GrantFlow transforms the complex grant application process into a fast, intelligent workflow. From generating draft proposals in one quick session instead of weeks to managing documents effortlessly, our AI does the heavy lifting, so you can focus on your research.",
 	heading: "Simplify Grant Applications with AI-Powered tools",
 	stepByStepProcess: {
 		step1: "Describe Your Research",
@@ -59,13 +57,7 @@ export function BenefitsSection() {
 					</h2>
 				</ScrollFadeElement>
 
-				<ScrollFadeElement className="mx-auto" delay={0.1}>
-					<p className="m-3 text-xl text-stone-800" id="benefits-description">
-						{CONTENT.description}
-					</p>
-				</ScrollFadeElement>
-
-				<div className="my-8 grid w-full grid-cols-1 items-start gap-y-8 text-start md:grid-cols-2 md:gap-x-10">
+				<div className="mb-8 mt-12 grid w-full grid-cols-1 items-start gap-y-8 text-start md:grid-cols-2 md:gap-x-10">
 					{CONTENT.benefits.map((benefit, index) => (
 						<ScaleElement delay={index * 0.2} key={index}>
 							<BenefitsCard
@@ -102,13 +94,17 @@ function BenefitsCard({
 }) {
 	return (
 		<article
-			className={cn("size-full text-stone-800 py-7 px-6 md:px-5", benefitsCardBackground, benefitsCardBorder)}
+			className={cn(
+				"size-full text-stone-800 py-8 px-6 md:px-[22px]",
+				benefitsCardBackground,
+				benefitsCardBorder,
+			)}
 		>
 			<div className="bg-background inline-flex items-center gap-1 rounded-2xl px-2.5 py-0.5 text-white">
 				<BadgeIcon className="size-5 md:size-4" />
-				<span className="font-button align-bottom font-light md:text-sm">{badge}</span>
+				<span className="font-button align-bottom md:text-sm">{badge}</span>
 			</div>
-			<h3 className="font-heading my-3 text-2xl font-semibold md:my-2">{heading}</h3>
+			<h3 className="font-heading my-3 text-2xl font-medium md:my-2">{heading}</h3>
 			<p className="max-w-xl text-xl leading-tight md:text-base">{description}</p>
 		</article>
 	);
