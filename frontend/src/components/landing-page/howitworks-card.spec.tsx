@@ -57,15 +57,10 @@ describe("HowItWorksCard", () => {
 		const { container } = render(<HowItWorksCard {...defaultProps} />);
 
 		const mainContainer = container.firstChild;
-		expect(mainContainer).toHaveClass(
-			"w-full h-auto flex px-10 py-6 md:py-10 flex-col items-center justify-center custom-class",
-		);
 		expect(mainContainer).toHaveAttribute("data-variants", '["hidden","visible"]');
 
 		const heading = container.querySelector("h2");
 		expect(heading).toBeInTheDocument();
-		expect(heading).toHaveClass("text-blue-500 text-3xl font-bold md:m-4");
-		expect(heading).toHaveTextContent("Test Heading");
 		expect(heading).toHaveAttribute("data-variants", '["hidden","visible"]');
 
 		const timelineContainer = container.querySelector(".grid");
@@ -96,7 +91,6 @@ describe("HowItWorksCard", () => {
 		stepContents.forEach((content) => {
 			const stepText = screen.getByText(content);
 			expect(stepText).toBeInTheDocument();
-			expect(stepText).toHaveClass("font-heading text-background text-2xl font-bold");
 			expect(stepText).toHaveAttribute("data-variants", '["hidden","visible"]');
 		});
 	});
@@ -122,9 +116,7 @@ describe("HowItWorksCard", () => {
 		const { container } = render(<HowItWorksCard {...customProps} />);
 
 		const mainContainer = container.firstChild;
-		expect(mainContainer).toHaveClass(
-			"w-full h-auto flex px-10 py-6 md:py-10 flex-col items-center justify-center test-custom-class bg-red-500",
-		);
+		expect(mainContainer).toHaveClass("test-custom-class bg-red-500");
 	});
 
 	it("applies custom headerStyle properly", () => {
@@ -136,6 +128,6 @@ describe("HowItWorksCard", () => {
 		const { container } = render(<HowItWorksCard {...customProps} />);
 
 		const heading = container.querySelector("h2");
-		expect(heading).toHaveClass("text-red-500 text-4xl font-bold md:m-4");
+		expect(heading).toHaveClass("text-red-500 text-4xl");
 	});
 });

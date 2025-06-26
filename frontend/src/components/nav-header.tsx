@@ -56,7 +56,7 @@ const LogoSection = () => (
 	</Link>
 );
 
-export default function NavHeader() {
+export function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const pathname = usePathname();
 	const isHomePage = pathname === PagePath.ROOT.toString();
@@ -110,8 +110,8 @@ export default function NavHeader() {
 					{isHomePage && (
 						<ScrollButton
 							aria-label="Prices"
-							desktopTargetId="waitlist-form-container"
-							mobileTargetId="waitlist-form-container"
+							desktopTargetId="payment-plans"
+							mobileTargetId="payment-plans"
 							onClick={() => {
 								setIsMobileMenuOpen(false);
 							}}
@@ -121,12 +121,7 @@ export default function NavHeader() {
 							Prices
 						</ScrollButton>
 					)}
-					<NavLink
-						href={PagePath.ABOUT_US}
-						isActive={pathname === PagePath.ABOUT_US.toString()}
-						label="About us"
-						theme="dark"
-					/>
+					<NavLink href={PagePath.ABOUT_US} isActive={false} label="About us" theme="dark" />
 					{isHomePage && (
 						<ScrollButton
 							aria-label="Go to Waitlist Form"
@@ -201,7 +196,7 @@ export default function NavHeader() {
 				{isHomePage && (
 					<ScrollButton
 						aria-label="Prices"
-						mobileTargetId="waitlist-form-container"
+						mobileTargetId="payment-plans"
 						onClick={() => {
 							setIsMobileMenuOpen(false);
 						}}
