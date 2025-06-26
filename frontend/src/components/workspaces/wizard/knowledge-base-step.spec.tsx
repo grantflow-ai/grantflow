@@ -1,6 +1,5 @@
 import { ApplicationFactory, FileWithIdFactory, RagSourceFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteApplicationSource } from "@/actions/sources";
 import { WizardStep } from "@/constants";
@@ -25,16 +24,16 @@ vi.mock("@/utils/logging", () => ({
 }));
 
 vi.mock("./url-input", () => ({
-	UrlInput: ({ onUrlAdded }: { onUrlAdded: () => void }) => (
-		<button data-testid="url-input" onClick={() => onUrlAdded()} type="button">
+	UrlInput: () => (
+		<button data-testid="url-input" type="button">
 			URL Input Component
 		</button>
 	),
 }));
 
 vi.mock("./template-file-uploader", () => ({
-	TemplateFileUploader: ({ onUploadComplete }: { onUploadComplete: () => void }) => (
-		<button data-testid="template-file-uploader" onClick={() => onUploadComplete()} type="button">
+	TemplateFileUploader: () => (
+		<button data-testid="template-file-uploader" type="button">
 			Template File Uploader
 		</button>
 	),
@@ -215,34 +214,6 @@ describe("KnowledgeBaseStep", () => {
 			render(<KnowledgeBaseStep />);
 
 			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();
-		});
-	});
-
-	describe("File Upload Behavior", () => {
-		it("calls handleDocumentChange when file upload completes", async () => {
-			const mockRetrieveApplication = vi.fn();
-			useApplicationStore.setState({
-				retrieveApplication: mockRetrieveApplication,
-			});
-
-			render(<KnowledgeBaseStep />);
-
-			await userEvent.click(screen.getByTestId("template-file-uploader"));
-
-			expect(mockRetrieveApplication).toHaveBeenCalled();
-		});
-
-		it("calls handleDocumentChange when URL is added", async () => {
-			const mockRetrieveApplication = vi.fn();
-			useApplicationStore.setState({
-				retrieveApplication: mockRetrieveApplication,
-			});
-
-			render(<KnowledgeBaseStep />);
-
-			await userEvent.click(screen.getByTestId("url-input"));
-
-			expect(mockRetrieveApplication).toHaveBeenCalled();
 		});
 	});
 

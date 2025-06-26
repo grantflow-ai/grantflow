@@ -27,8 +27,24 @@ class JobManager:
         self.job_id = job_id
 
     async def create_grant_template_job(self, grant_template_id: UUID, total_stages: int) -> GrantTemplateGenerationJob:
-        """Create a new grant template generation job."""
+        """Create a new grant template generation job or return existing one."""
         async with self.session_maker() as session:
+            existing_job_result = await session.execute(
+                select(GrantTemplateGenerationJob).where(
+                    GrantTemplateGenerationJob.grant_template_id == grant_template_id
+                )
+            )
+            existing_job = cast("GrantTemplateGenerationJob | None", existing_job_result.scalar_one_or_none())
+
+            if existing_job:
+                logger.info(
+                    "Job already exists for template, returning existing job",
+                    template_id=str(grant_template_id),
+                    job_id=str(existing_job.id),
+                )
+                self.job_id = existing_job.id
+                return existing_job
+
             job = GrantTemplateGenerationJob(
                 grant_template_id=grant_template_id,
                 total_stages=total_stages,
@@ -45,13 +61,30 @@ class JobManager:
 
             await session.commit()
             self.job_id = job.id
+            logger.info("Created new job for template", template_id=str(grant_template_id), job_id=str(job.id))
             return job
 
     async def create_grant_application_job(
         self, grant_application_id: UUID, total_stages: int
     ) -> GrantApplicationGenerationJob:
-        """Create a new grant application generation job."""
+        """Create a new grant application generation job or return existing one."""
         async with self.session_maker() as session:
+            existing_job_result = await session.execute(
+                select(GrantApplicationGenerationJob).where(
+                    GrantApplicationGenerationJob.grant_application_id == grant_application_id
+                )
+            )
+            existing_job = cast("GrantApplicationGenerationJob | None", existing_job_result.scalar_one_or_none())
+
+            if existing_job:
+                logger.info(
+                    "Job already exists for application, returning existing job",
+                    application_id=str(grant_application_id),
+                    job_id=str(existing_job.id),
+                )
+                self.job_id = existing_job.id
+                return existing_job
+
             job = GrantApplicationGenerationJob(
                 grant_application_id=grant_application_id,
                 total_stages=total_stages,
@@ -68,6 +101,7 @@ class JobManager:
 
             await session.commit()
             self.job_id = job.id
+            logger.info("Created new job for application", application_id=str(grant_application_id), job_id=str(job.id))
             return job
 
     async def update_job_status(

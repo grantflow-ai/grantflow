@@ -6,13 +6,25 @@ pre-commit:
     parallel: true
     commands:
         biome:
-            glob: "*.{js,jsx,ts,tsx,mjs,mts,json,jsonc,css}"
-            run: pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+            glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts,json,jsonc,css}"
+            run: |
+                # Convert absolute paths to relative paths from frontend directory
+                relative_files=""
+                for file in {staged_files}; do
+                    relative_files="$relative_files ${file#frontend/}"
+                done
+                cd frontend && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $relative_files
             stage_fixed: true
 
         eslint:
             glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts}"
-            run: pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache {staged_files}
+            run: |
+                # Convert absolute paths to relative paths from frontend directory
+                relative_files=""
+                for file in {staged_files}; do
+                    relative_files="$relative_files ${file#frontend/}"
+                done
+                cd frontend && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $relative_files
             stage_fixed: true
 
         typescript:
@@ -138,4 +150,10 @@ pre-commit:
 commit-msg:
     commands:
         commitlint:
-            run: pnpm commitlint --edit {1}
+            run: |
+                if command -v commitlint >/dev/null 2>&1; then
+                    commitlint --edit {1}
+                else
+                    npm install -g @commitlint/cli @commitlint/config-conventional
+                    commitlint --edit {1}
+                fi
