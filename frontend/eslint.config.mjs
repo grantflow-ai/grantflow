@@ -18,7 +18,6 @@ import eslintPluginPromise from "eslint-plugin-promise";
 import eslintPluginReact from "eslint-plugin-react";
 import reactPerfPlugin from "eslint-plugin-react-perf";
 import eslintPluginStorybook from "eslint-plugin-storybook";
-import eslintPluginTailwind from "eslint-plugin-tailwindcss";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import eslintPluginUnusedImports from "eslint-plugin-unused-imports";
 import eslintPluginVitest from "eslint-plugin-vitest";
@@ -41,7 +40,6 @@ export default eslintTS.config(
 	reactPerfPlugin.configs.flat.recommended,
 	eslintPluginJsxA11y.flatConfigs.recommended,
 	...eslintPluginStorybook.configs["flat/recommended"],
-	...eslintPluginTailwind.configs["flat/recommended"],
 	...compat.extends("plugin:react-hooks/recommended"),
 	...compat.extends("plugin:@next/next/core-web-vitals"),
 	eslintPluginImportX.flatConfigs.recommended,
@@ -147,7 +145,6 @@ export default eslintTS.config(
 			"react/react-in-jsx-scope": "off",
 			"sonarjs/prefer-read-only-props": "off",
 			"storybook/no-renderer-packages": "off",
-			"tailwindcss/no-custom-classname": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
 			"unicorn/no-array-callback-reference": "off",
@@ -166,7 +163,7 @@ export default eslintTS.config(
 			"import-x/resolver-next": [
 				createTypeScriptImportResolver({
 					alwaysTryTypes: true,
-					project: ["./frontend/tsconfig.json"],
+					project: ["./tsconfig.json"],
 				}),
 			],
 			"react": {
