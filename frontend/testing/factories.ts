@@ -3,39 +3,25 @@ import { Factory } from "interface-forge";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 
-interface ErrorResponse {
-	detail: string;
-	extra?: null | Record<string, unknown> | unknown[];
-	status_code: number;
-}
+// Common HTTP Error Response type used by all endpoints
+type HttpErrorResponse = API.Login.Http400.ResponseBody; // All error responses have the same shape
 
-interface MessageResponse {
-	message: string;
-}
-
-interface TokenResponse {
-	token: string;
-}
-
-interface UrlResponse {
-	url: string;
-}
-
-export const ErrorResponseFactory = new Factory<ErrorResponse>((factory) => ({
+export const ErrorResponseFactory = new Factory<HttpErrorResponse>((factory) => ({
 	detail: factory.lorem.sentence(),
 	extra: factory.datatype.boolean() ? { error: factory.lorem.word() } : null,
 	status_code: factory.helpers.arrayElement([400, 401, 403, 404, 422, 500]),
 }));
 
-export const TokenResponseFactory = new Factory<TokenResponse>((factory) => ({
+// Generic response factories for common patterns
+export const TokenResponseFactory = new Factory<API.AcceptInvitation.Http200.ResponseBody>((factory) => ({
 	token: factory.string.alphanumeric(64),
 }));
 
-export const MessageResponseFactory = new Factory<MessageResponse>((factory) => ({
+export const MessageResponseFactory = new Factory<{ message: string }>((factory) => ({
 	message: factory.lorem.sentence(),
 }));
 
-export const UrlResponseFactory = new Factory<UrlResponse>((factory) => ({
+export const UrlResponseFactory = new Factory<{ url: string }>((factory) => ({
 	url: factory.internet.url(),
 }));
 
@@ -47,35 +33,20 @@ export const OtpResponseFactory = new Factory<API.GenerateOtp.Http200.ResponseBo
 	otp: factory.string.numeric(6),
 }));
 
-interface IdResponse {
-	id: string;
-}
-
-interface Organization {
-	abbreviation: null | string;
-	full_name: string;
-	id: string;
-}
-
-interface ProjectBase {
-	description: null | string;
-	id: string;
-	logo_url: null | string;
-	name: string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
-}
-
-export const OrganizationFactory = new Factory<Organization>((factory) => ({
+// Organization factories using API types
+export const OrganizationFactory = new Factory<API.CreateOrganization.Http201.ResponseBody>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
 	full_name: factory.company.name(),
 	id: factory.string.uuid(),
 }));
 
-export const IdResponseFactory = new Factory<IdResponse>((factory) => ({
+// Common ID response factory
+export const IdResponseFactory = new Factory<API.CreateProject.Http201.ResponseBody>((factory) => ({
 	id: factory.string.uuid(),
 }));
 
-export const ProjectBaseFactory = new Factory<ProjectBase>((factory) => ({
+// Project list item factory
+export const ProjectListItemFactory = new Factory<API.ListProjects.Http200.ResponseBody[0]>((factory) => ({
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	id: factory.string.uuid(),
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
@@ -84,7 +55,7 @@ export const ProjectBaseFactory = new Factory<ProjectBase>((factory) => ({
 }));
 
 export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((factory) => ({
-	...ProjectBaseFactory.build(),
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	grant_applications: factory.helpers.multiple(
 		() => ({
 			completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : null,
@@ -93,24 +64,22 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 		}),
 		{ count: { max: 5, min: 0 } },
 	),
+	id: factory.string.uuid(),
+	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+	name: factory.company.name(),
+	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
 }));
 
-export const ProjectListItemFactory = ProjectBaseFactory;
-
-type IndexingStatus = "FAILED" | "FINISHED" | "INDEXING";
-
-interface RagSource {
-	filename?: string;
-	sourceId: string;
-	status: "FAILED" | "FINISHED" | "INDEXING";
-	url?: string;
-}
+type IndexingStatus = RagSource["status"];
+// Use the RAG source type from the API
+type RagSource = NonNullable<API.CreateApplication.Http201.ResponseBody["rag_sources"]>[0];
 
 export const RagSourceFactory = new Factory<RagSource>((factory) => {
 	const isFile = factory.datatype.boolean();
+	const status = factory.helpers.arrayElement<IndexingStatus>(["CREATED", "FAILED", "FINISHED", "INDEXING"]);
 	return {
 		sourceId: factory.string.uuid(),
-		status: factory.helpers.arrayElement<IndexingStatus>(["FAILED", "FINISHED", "INDEXING"]),
+		status,
 		...(isFile
 			? {
 					filename: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`,
@@ -119,28 +88,22 @@ export const RagSourceFactory = new Factory<RagSource>((factory) => {
 	};
 });
 
-type FundingOrganization = {
-	abbreviation?: string;
-	created_at: string;
-	updated_at: string;
-} & Organization;
+// Funding organization type from API
+type FundingOrganization = NonNullable<
+	API.CreateApplication.Http201.ResponseBody["grant_template"]
+>["funding_organization"];
 
-export const FundingOrganizationFactory = new Factory<FundingOrganization>((factory) => ({
-	...OrganizationFactory.build(),
-	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : (null as any),
+export const FundingOrganizationFactory = new Factory<NonNullable<FundingOrganization>>((factory) => ({
+	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : undefined,
 	created_at: factory.date.past().toISOString(),
+	full_name: factory.company.name(),
+	id: factory.string.uuid(),
 	updated_at: factory.date.recent().toISOString(),
 }));
 
-type ResearchObjective = {
-	research_tasks: ResearchTask[];
-} & ResearchTask;
-
-interface ResearchTask {
-	description?: string;
-	number: number;
-	title: string;
-}
+// Research objectives and tasks from API
+type ResearchObjective = NonNullable<API.CreateApplication.Http201.ResponseBody["research_objectives"]>[0];
+type ResearchTask = ResearchObjective["research_tasks"][0];
 
 export const ResearchTaskFactory = new Factory<ResearchTask>((factory) => ({
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
@@ -155,17 +118,8 @@ export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory)
 	title: factory.lorem.sentence(),
 }));
 
-interface FormInputs {
-	background_context: string;
-	hypothesis: string;
-	impact: string;
-	novelty_and_innovation: string;
-	preliminary_data: string;
-	rationale: string;
-	research_feasibility: string;
-	scientific_infrastructure: string;
-	team_excellence: string;
-}
+// Form inputs from API
+type FormInputs = NonNullable<API.CreateApplication.Http201.ResponseBody["form_inputs"]>;
 
 export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
 	background_context: factory.lorem.paragraphs(2),
@@ -179,23 +133,13 @@ export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
 	team_excellence: factory.lorem.paragraph(),
 }));
 
-interface GrantSectionBase {
-	id: string;
-	order: number;
-	parent_id: null | string;
-	title: string;
-}
-
-type GrantSectionDetailed = {
-	depends_on: string[];
-	generation_instructions: string;
-	is_clinical_trial: boolean | null;
-	is_detailed_workplan: boolean | null;
-	keywords: string[];
-	max_words: number;
-	search_queries: string[];
-	topics: string[];
-} & GrantSectionBase;
+type GrantSectionBase = Extract<
+	GrantSections[0],
+	{ id: string; order: number; parent_id: null | string; title: string }
+>;
+type GrantSectionDetailed = Extract<GrantSections[0], { depends_on: string[] }>;
+// Grant sections from API - they come in two forms in the union type
+type GrantSections = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["grant_sections"];
 
 export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) => ({
 	id: factory.string.uuid(),
@@ -205,43 +149,34 @@ export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) =
 }));
 
 export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((factory) => ({
-	...GrantSectionBaseFactory.build(),
 	depends_on: factory.helpers.multiple(() => factory.string.uuid(), {
 		count: { max: 3, min: 0 },
 	}),
 	generation_instructions: factory.lorem.paragraph(),
-	// eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary
-	is_clinical_trial: factory.datatype.boolean() ? factory.datatype.boolean() : null,
-	// eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary
-	is_detailed_workplan: factory.datatype.boolean() ? factory.datatype.boolean() : null,
+	id: factory.string.uuid(),
+	is_clinical_trial: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
+	is_detailed_research_plan: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
 	keywords: factory.helpers.multiple(() => factory.lorem.word(), {
 		count: { max: 5, min: 1 },
 	}),
 	max_words: factory.number.int({ max: 5000, min: 100 }),
+	order: factory.number.int({ max: 20, min: 0 }),
+	parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
 	search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), {
 		count: { max: 3, min: 0 },
 	}),
+	title: factory.lorem.sentence(),
 	topics: factory.helpers.multiple(() => factory.lorem.word(), {
 		count: { max: 5, min: 1 },
 	}),
 }));
 
-interface GrantTemplate {
-	created_at: string;
-	funding_organization?: FundingOrganization;
-	funding_organization_id?: string;
-	grant_application_id: string;
-	grant_sections: (GrantSectionBase | GrantSectionDetailed)[];
-	id: string;
-	rag_job_id?: string;
-	rag_sources: RagSource[];
-	submission_date?: string;
-	updated_at: string;
-}
+// Grant template type from API
+type GrantTemplate = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
 
 export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
 	created_at: factory.date.past().toISOString(),
-	funding_organization: factory.datatype.boolean() ? (FundingOrganizationFactory.build() as any) : undefined,
+	funding_organization: factory.datatype.boolean() ? FundingOrganizationFactory.build() : undefined,
 	funding_organization_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	grant_application_id: factory.string.uuid(),
 	grant_sections: factory.helpers.multiple(
@@ -274,29 +209,16 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 	updated_at: factory.date.recent().toISOString(),
 }));
 
-interface RagSourceBase {
-	created_at: string;
-	id: string;
-	indexing_status: IndexingStatus;
-}
-
-type RagSourceFile = {
-	filename: string;
-	mime_type: string;
-	size: number;
-} & RagSourceBase;
-
-type RagSourceUrl = {
-	description: null | string;
-	title: null | string;
-	url: string;
-} & RagSourceBase;
+type RagSourceFile = Extract<RagSourceResponse, { filename: string }>;
+// RAG source types from API - these are union types for files vs URLs
+type RagSourceResponse = API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[0];
+type RagSourceUrl = Extract<RagSourceResponse, { url: string }>;
 
 export const RagSourceUrlFactory = new Factory<RagSourceUrl>((factory) => ({
 	created_at: factory.date.past().toISOString(),
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	id: factory.string.uuid(),
-	indexing_status: factory.helpers.arrayElement<IndexingStatus>(["FAILED", "FINISHED", "INDEXING"]),
+	indexing_status: factory.helpers.arrayElement(["CREATED", "FAILED", "FINISHED", "INDEXING"]),
 	title: factory.datatype.boolean() ? factory.lorem.sentence() : null,
 	url: factory.internet.url(),
 }));
@@ -305,7 +227,7 @@ export const RagSourceFileFactory = new Factory<RagSourceFile>((factory) => ({
 	created_at: factory.date.past().toISOString(),
 	filename: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt", "rtf"])}`,
 	id: factory.string.uuid(),
-	indexing_status: factory.helpers.arrayElement<IndexingStatus>(["FAILED", "FINISHED", "INDEXING"]),
+	indexing_status: factory.helpers.arrayElement(["CREATED", "FAILED", "FINISHED", "INDEXING"]),
 	mime_type: factory.helpers.arrayElement([
 		"application/pdf",
 		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -315,23 +237,17 @@ export const RagSourceFileFactory = new Factory<RagSourceFile>((factory) => ({
 	size: factory.number.int({ max: 10_485_760, min: 1024 }),
 }));
 
-interface Invitation {
-	email: string;
-	role: UserRole;
-}
+// User role type used across the API
+type UserRole = API.CreateInvitationRedirectUrl.RequestBody["role"];
 
-type UserRole = "ADMIN" | "MEMBER" | "OWNER";
-
-export const InvitationFactory = new Factory<Invitation>((factory) => ({
+// Invitation request factory
+export const InvitationFactory = new Factory<API.CreateInvitationRedirectUrl.RequestBody>((factory) => ({
 	email: factory.internet.email(),
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
 }));
 
-interface TitleRequest {
-	title: string;
-}
-
-export const TitleRequestFactory = new Factory<TitleRequest>((factory) => ({
+// Title request factory
+export const TitleRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) => ({
 	title: factory.lorem.sentence(),
 }));
 
@@ -344,43 +260,38 @@ export const UpdateApplicationRequestFactory = new Factory<API.UpdateApplication
 	title: factory.lorem.sentence(),
 }));
 
-interface ProjectRequest {
-	description: null | string;
-	logo_url?: null | string;
-	name: string;
-}
-
-export const ProjectRequestFactory = new Factory<ProjectRequest>((factory) => ({
+// Project request factories
+export const ProjectRequestFactory = new Factory<API.CreateProject.RequestBody>((factory) => ({
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
 	name: factory.company.name(),
 }));
 
 export const CreateProjectRequestFactory = ProjectRequestFactory;
-export const UpdateProjectRequestFactory = ProjectRequestFactory;
+export const UpdateProjectRequestFactory = new Factory<API.UpdateProject.RequestBody>((factory) => ({
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+	name: factory.company.name(),
+}));
 
-interface OrganizationRequest {
-	abbreviation: null | string;
-	full_name: string;
-}
-
-export const OrganizationRequestFactory = new Factory<OrganizationRequest>((factory) => ({
+// Organization request factories
+export const OrganizationRequestFactory = new Factory<API.CreateOrganization.RequestBody>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
 	full_name: factory.company.name(),
 }));
 
 export const CreateOrganizationRequestFactory = OrganizationRequestFactory;
-export const UpdateOrganizationRequestFactory = OrganizationRequestFactory;
+export const UpdateOrganizationRequestFactory = new Factory<API.UpdateOrganization.RequestBody>((factory) => ({
+	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
+	full_name: factory.company.name(),
+}));
 
 export const LoginRequestFactory = new Factory<API.Login.RequestBody>((factory) => ({
 	id_token: factory.string.alphanumeric(256),
 }));
 
-interface UrlRequest {
-	url: string;
-}
-
-export const UrlRequestFactory = new Factory<UrlRequest>((factory) => ({
+// URL request factories
+export const UrlRequestFactory = new Factory<API.CrawlGrantApplicationUrl.RequestBody>((factory) => ({
 	url: factory.internet.url(),
 }));
 
@@ -388,20 +299,33 @@ export const CrawlUrlRequestFactory = UrlRequestFactory;
 
 export const CreateInvitationRequestFactory = InvitationFactory;
 
-interface RoleRequest {
-	role: UserRole;
-}
-
-export const RoleRequestFactory = new Factory<RoleRequest>((factory) => ({
+// Role request factory
+export const RoleRequestFactory = new Factory<API.UpdateInvitationRole.RequestBody>((factory) => ({
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
 }));
 
 export const UpdateInvitationRoleRequestFactory = RoleRequestFactory;
 
-export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemplate.RequestBody>((factory) => ({
-	grant_sections: GrantSectionDetailedFactory.batch(factory.number.int({ max: 10, min: 1 })),
-	submission_date: factory.date.future().toISOString(),
-}));
+export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemplate.RequestBody>((factory) => {
+	const sectionCount = factory.number.int({ max: 10, min: 1 });
+	return {
+		grant_sections: Array.from({ length: sectionCount }, (_, index) => ({
+			depends_on: factory.helpers.multiple(() => factory.string.uuid(), { count: { max: 2, min: 0 } }),
+			generation_instructions: factory.lorem.paragraph(),
+			id: factory.string.uuid(),
+			is_clinical_trial: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
+			is_detailed_research_plan: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
+			keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+			max_words: factory.number.int({ max: 5000, min: 100 }),
+			order: index,
+			parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
+			search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), { count: { max: 3, min: 0 } }),
+			title: factory.lorem.sentence(),
+			topics: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+		})),
+		submission_date: factory.date.future().toISOString(),
+	};
+});
 
 type GrantSectionUpdateRequest = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
 
@@ -410,7 +334,7 @@ export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRe
 	generation_instructions: "",
 	id: `section-${crypto.randomUUID()}`,
 	is_clinical_trial: null,
-	is_detailed_workplan: null,
+	is_detailed_research_plan: null,
 	keywords: [],
 	max_words: 3000,
 	order: 0,
@@ -420,9 +344,10 @@ export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRe
 	topics: [],
 }));
 
+// WebSocket notification types - these are not API types but internal frontend types
 interface SourceProcessingNotification {
 	identifier: string;
-	indexing_status: "FAILED" | "FINISHED" | "INDEXING";
+	indexing_status: IndexingStatus;
 	parent_id: string;
 	parent_type: string;
 	rag_source_id: string;
@@ -437,7 +362,7 @@ interface WebsocketMessage<T> {
 
 export const SourceProcessingNotificationFactory = new Factory<SourceProcessingNotification>((factory) => ({
 	identifier: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`,
-	indexing_status: factory.helpers.arrayElement<IndexingStatus>(["INDEXING", "FINISHED", "FAILED"]),
+	indexing_status: factory.helpers.arrayElement<IndexingStatus>(["CREATED", "INDEXING", "FINISHED", "FAILED"]),
 	parent_id: factory.string.uuid(),
 	parent_type: factory.helpers.arrayElement(["grant_application", "grant_template"]),
 	rag_source_id: factory.string.uuid(),
@@ -505,11 +430,8 @@ export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<Ra
 	};
 });
 
-interface ApplicationListItem {
-	completed_at: null | string;
-	id: string;
-	title: string;
-}
+// Application list item type from API
+type ApplicationListItem = API.GetProject.Http200.ResponseBody["grant_applications"][0];
 
 export const ApplicationListItemFactory = new Factory<ApplicationListItem>((factory) => ({
 	completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : null,
@@ -521,7 +443,7 @@ export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.
 	const baseApplication = ApplicationFactory.build();
 	const grantTemplate = GrantTemplateFactory.build({
 		grant_application_id: baseApplication.id,
-	}) as NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
+	});
 	return {
 		...baseApplication,
 		grant_template: grantTemplate,
@@ -548,78 +470,38 @@ export const FileWithIdFactory = new Factory<FileWithId>((factory) => {
 	return file;
 });
 
-interface RagJobResponse {
-	completed_at?: string;
-	created_at: string;
-	current_stage: number;
-	error_details?: {
-		details: string;
-		error_type: string;
-	};
-	error_message?: string;
-	failed_at?: string;
-	generated_sections?: Record<string, string>;
-	grant_application_id?: string;
-	grant_template_id?: string;
-	id: string;
-	job_type: "grant_application_generation" | "grant_template_generation";
-	retry_count: number;
-	status: "COMPLETED" | "FAILED" | "PROCESSING";
-	total_stages: number;
-	updated_at: string;
-	validation_results?: {
-		is_valid: boolean;
-		score: number;
-	};
-}
-
-export const RagJobResponseFactory = new Factory<RagJobResponse>((factory) => {
-	const jobType = factory.helpers.arrayElement<"grant_application_generation" | "grant_template_generation">([
-		"grant_application_generation",
-		"grant_template_generation",
-	]);
-	const status = factory.helpers.arrayElement<"COMPLETED" | "FAILED" | "PROCESSING">([
+export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.ResponseBody>((factory) => {
+	const jobType = factory.helpers.arrayElement(["grant_application_generation", "grant_template_generation"]);
+	const status = factory.helpers.arrayElement<"CANCELLED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING">([
+		"CANCELLED",
 		"COMPLETED",
 		"FAILED",
+		"PENDING",
 		"PROCESSING",
 	]);
 	const isCompleted = status === "COMPLETED";
 	const isFailed = status === "FAILED";
+	const isPending = status === "PENDING";
 
 	return {
 		completed_at: isCompleted ? factory.date.recent().toISOString() : undefined,
 		created_at: factory.date.past().toISOString(),
 		current_stage: factory.number.int({ max: 5, min: 1 }),
-		error_details: isFailed
-			? {
-					details: factory.lorem.sentence(),
-					error_type: factory.helpers.arrayElement(["ExtractionError", "ValidationError", "ProcessingError"]),
-				}
-			: undefined,
+		error_details: isFailed ? {} : undefined,
 		error_message: isFailed ? factory.lorem.sentence() : undefined,
+		extracted_metadata: undefined,
+		extracted_sections: undefined,
 		failed_at: isFailed ? factory.date.recent().toISOString() : undefined,
-		generated_sections:
-			jobType === "grant_application_generation" && isCompleted
-				? {
-						[factory.lorem.word()]: factory.lorem.paragraph(),
-						introduction: factory.lorem.paragraphs(2),
-						methodology: factory.lorem.paragraphs(3),
-					}
-				: undefined,
+		generated_sections: isCompleted ? {} : undefined,
 		grant_application_id: jobType === "grant_application_generation" ? factory.string.uuid() : undefined,
 		grant_template_id: jobType === "grant_template_generation" ? factory.string.uuid() : undefined,
 		id: factory.string.uuid(),
 		job_type: jobType,
 		retry_count: factory.number.int({ max: 3, min: 0 }),
+		started_at: isPending ? undefined : factory.date.recent().toISOString(),
 		status,
 		total_stages: factory.number.int({ max: 10, min: 3 }),
 		updated_at: factory.date.recent().toISOString(),
-		validation_results:
-			jobType === "grant_application_generation" && isCompleted
-				? {
-						is_valid: factory.datatype.boolean(),
-						score: factory.number.float({ max: 1, min: 0 }),
-					}
-				: undefined,
+		validation_results: isCompleted ? {} : undefined,
 	};
 });

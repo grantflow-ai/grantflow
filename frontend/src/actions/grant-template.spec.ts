@@ -72,7 +72,7 @@ describe("Grant Template Actions", () => {
 						generation_instructions: "Write an introduction",
 						id: "section1",
 						is_clinical_trial: false,
-						is_detailed_workplan: false,
+						is_detailed_research_plan: false,
 						keywords: ["intro", "background"],
 						max_words: 500,
 						order: 1,

@@ -47,7 +47,7 @@ def mock_extracted_sections() -> list[ExtractedSectionDTO]:
             "title": "Abstract",
             "order": 1,
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "is_title_only": None,
             "is_clinical_trial": None,
@@ -57,7 +57,7 @@ def mock_extracted_sections() -> list[ExtractedSectionDTO]:
             "title": "Research Plan",
             "order": 2,
             "parent_id": None,
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_long_form": True,
             "is_title_only": None,
             "is_clinical_trial": None,
@@ -67,7 +67,7 @@ def mock_extracted_sections() -> list[ExtractedSectionDTO]:
             "title": "Impact",
             "order": 3,
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "is_title_only": None,
             "is_clinical_trial": None,
@@ -320,9 +320,9 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
         assert isinstance(section["max_words"], int)
         assert isinstance(section["search_queries"], list)
 
-    workplan_sections = [s for s in long_form_sections if s.get("is_detailed_workplan")]
-    assert len(workplan_sections) == 1, "Exactly one section should be marked as a detailed workplan"
-    assert workplan_sections[0]["id"] == "research_plan"
+    research_plan_sections = [s for s in long_form_sections if s.get("is_detailed_research_plan")]
+    assert len(research_plan_sections) == 1, "Exactly one section should be marked as a detailed research_plan"
+    assert research_plan_sections[0]["id"] == "research_plan"
 
 
 async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
@@ -386,9 +386,9 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
         assert "max_words" in section
         assert "search_queries" in section
 
-    workplan_sections = [s for s in long_form_sections if s.get("is_detailed_workplan")]
-    assert len(workplan_sections) == 1
-    assert workplan_sections[0]["id"] == "research_plan"
+    research_plan_sections = [s for s in long_form_sections if s.get("is_detailed_research_plan")]
+    assert len(research_plan_sections) == 1
+    assert research_plan_sections[0]["id"] == "research_plan"
 
 
 async def test_get_rag_sources_data(

@@ -14,7 +14,7 @@ def create_section(
     *,
     section_id: str,
     parent_section_id: str | None = None,
-    is_detailed_workplan: bool | None = None,
+    is_detailed_research_plan: bool | None = None,
     is_long_form: bool = True,
     title: str = "Test Section",
     order: int = 1,
@@ -23,7 +23,7 @@ def create_section(
         "id": section_id,
         "title": title,
         "parent_id": parent_section_id,
-        "is_detailed_workplan": is_detailed_workplan,
+        "is_detailed_research_plan": is_detailed_research_plan,
         "is_long_form": is_long_form,
         "order": order,
     }
@@ -42,12 +42,12 @@ def test_validate_empty_sections() -> None:
 def test_validate_snake_case_ids() -> None:
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
-            {"sections": [create_section(section_id="notSnakeCase", is_detailed_workplan=True, order=1)]}
+            {"sections": [create_section(section_id="notSnakeCase", is_detailed_research_plan=True, order=1)]}
         )
     assert "Invalid section ID format" in str(exc.value)
 
     validate_section_extraction(
-        {"sections": [create_section(section_id="valid_snake_case", is_detailed_workplan=True, order=1)]}
+        {"sections": [create_section(section_id="valid_snake_case", is_detailed_research_plan=True, order=1)]}
     )
 
 
@@ -57,7 +57,9 @@ def test_validate_unique_ids() -> None:
             {
                 "sections": [
                     create_section(section_id="duplicate_id", order=1, title="Section One"),
-                    create_section(section_id="duplicate_id", order=2, title="Section Two", is_detailed_workplan=True),
+                    create_section(
+                        section_id="duplicate_id", order=2, title="Section Two", is_detailed_research_plan=True
+                    ),
                 ]
             }
         )
@@ -70,7 +72,9 @@ def test_validate_order_values() -> None:
         validate_section_extraction(
             {
                 "sections": [
-                    create_section(section_id="section_one", order=1, title="Section One", is_detailed_workplan=True),
+                    create_section(
+                        section_id="section_one", order=1, title="Section One", is_detailed_research_plan=True
+                    ),
                     create_section(section_id="section_two", order=1, title="Section Two"),
                 ]
             }
@@ -81,7 +85,9 @@ def test_validate_order_values() -> None:
         validate_section_extraction(
             {
                 "sections": [
-                    create_section(section_id="section_one", order=1, title="Section One", is_detailed_workplan=True),
+                    create_section(
+                        section_id="section_one", order=1, title="Section One", is_detailed_research_plan=True
+                    ),
                     create_section(section_id="section_two", order=3, title="Section Two"),
                 ]
             }
@@ -97,7 +103,7 @@ def test_validate_parent_references() -> None:
                     create_section(
                         section_id="test_child_section",
                         parent_section_id="nonexistent_parent",
-                        is_detailed_workplan=True,
+                        is_detailed_research_plan=True,
                         order=1,
                         title="Child Section",
                     )
@@ -113,7 +119,7 @@ def test_validate_parent_references() -> None:
                 create_section(
                     section_id="test_child_section",
                     parent_section_id="test_parent_section",
-                    is_detailed_workplan=True,
+                    is_detailed_research_plan=True,
                     order=2,
                     title="Child Section",
                 ),
@@ -122,28 +128,38 @@ def test_validate_parent_references() -> None:
     )
 
 
-def test_validate_workplan_children() -> None:
+def test_validate_research_plan_children() -> None:
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
                 "sections": [
-                    create_section(section_id="workplan_section", is_detailed_workplan=True, order=1, title="Workplan"),
                     create_section(
-                        section_id="child_section", parent_section_id="workplan_section", order=2, title="Child Section"
+                        section_id="research_plan_section",
+                        is_detailed_research_plan=True,
+                        order=1,
+                        title="Research Plan",
+                    ),
+                    create_section(
+                        section_id="child_section",
+                        parent_section_id="research_plan_section",
+                        order=2,
+                        title="Child Section",
                     ),
                 ]
             }
         )
-    assert "The workplan section cannot have any sub-sections" in str(exc.value)
-    assert "workplan_id" in str(exc.value)
+    assert "The research_plan section cannot have any sub-sections" in str(exc.value)
+    assert "research_plan_id" in str(exc.value)
 
 
-def test_workplan_must_be_longform() -> None:
+def test_research_plan_must_be_longform() -> None:
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
                 "sections": [
-                    create_section(section_id="workplan_section", is_detailed_workplan=True, is_long_form=False),
+                    create_section(
+                        section_id="research_plan_section", is_detailed_research_plan=True, is_long_form=False
+                    ),
                 ]
             }
         )
@@ -168,7 +184,9 @@ def test_duplicate_section_titles() -> None:
             {
                 "sections": [
                     create_section(section_id="section_one", title="Same Title", order=1),
-                    create_section(section_id="section_two", title="Same Title", order=2, is_detailed_workplan=True),
+                    create_section(
+                        section_id="section_two", title="Same Title", order=2, is_detailed_research_plan=True
+                    ),
                 ]
             }
         )
@@ -184,7 +202,9 @@ def test_validate_nesting_depth() -> None:
             create_section(section_id="level_four", parent_section_id="level_three", order=4, title="Level Four"),
             create_section(section_id="level_five", parent_section_id="level_four", order=5, title="Level Five"),
             create_section(section_id="level_six", parent_section_id="level_five", order=6, title="Level Six"),
-            create_section(section_id="workplan_section", is_detailed_workplan=True, order=7, title="Workplan"),
+            create_section(
+                section_id="research_plan_section", is_detailed_research_plan=True, order=7, title="Research Plan"
+            ),
         ],
         "error": None,
     }
@@ -206,14 +226,19 @@ def test_validate_circular_dependencies() -> None:
                     create_section(section_id="section_a", parent_section_id="section_b", order=1, title="Section A"),
                     create_section(section_id="section_b", parent_section_id="section_c", order=2, title="Section B"),
                     create_section(section_id="section_c", parent_section_id="section_a", order=3, title="Section C"),
-                    create_section(section_id="workplan_section", is_detailed_workplan=True, order=4, title="Workplan"),
+                    create_section(
+                        section_id="research_plan_section",
+                        is_detailed_research_plan=True,
+                        order=4,
+                        title="Research Plan",
+                    ),
                 ]
             }
         )
     assert "Circular dependency detected" in str(exc.value)
 
 
-def test_exactly_one_workplan_section() -> None:
+def test_exactly_one_research_plan_section() -> None:
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
@@ -223,24 +248,28 @@ def test_exactly_one_workplan_section() -> None:
                 ]
             }
         )
-    assert "Exactly one section must be marked as detailed workplan" in str(exc.value)
+    assert "Exactly one section must be marked as detailed research_plan" in str(exc.value)
 
     with pytest.raises(ValidationError) as exc:
         validate_section_extraction(
             {
                 "sections": [
-                    create_section(section_id="section_one", is_detailed_workplan=True, order=1, title="Section One"),
-                    create_section(section_id="section_two", is_detailed_workplan=True, order=2, title="Section Two"),
+                    create_section(
+                        section_id="section_one", is_detailed_research_plan=True, order=1, title="Section One"
+                    ),
+                    create_section(
+                        section_id="section_two", is_detailed_research_plan=True, order=2, title="Section Two"
+                    ),
                 ]
             }
         )
-    assert "Exactly one section must be marked as detailed workplan" in str(exc.value)
+    assert "Exactly one section must be marked as detailed research_plan" in str(exc.value)
 
     validate_section_extraction(
         {
             "sections": [
                 create_section(section_id="section_one", order=1, title="Section One"),
-                create_section(section_id="section_two", is_detailed_workplan=True, order=2, title="Section Two"),
+                create_section(section_id="section_two", is_detailed_research_plan=True, order=2, title="Section Two"),
             ]
         }
     )

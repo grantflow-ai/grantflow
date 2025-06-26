@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
 import FilePreviewCard from "@/components/projects/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/projects/wizard/link-preview-item";
+import { Card } from "@/components/ui/card";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";

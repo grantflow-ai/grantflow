@@ -251,7 +251,7 @@ describe("SortableSection", () => {
 		it("handles research plan checkbox toggle", () => {
 			const sectionWithResearchPlan = GrantSectionDetailedFactory.build({
 				id: "research-section",
-				is_detailed_workplan: false,
+				is_detailed_research_plan: false,
 				title: "Research Section",
 			});
 

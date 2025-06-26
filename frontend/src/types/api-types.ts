@@ -84,8 +84,8 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	template_id: null | string;
 	project_id: null | string;
+	template_id: null | string;
 };
 
 	export type RequestBody = {
@@ -125,7 +125,7 @@ export namespace API {
 	generation_instructions: string;
 	id: string;
 	is_clinical_trial: boolean | null;
-	is_detailed_workplan: boolean | null;
+	is_detailed_research_plan: boolean | null;
 	keywords: string[];
 	max_words: number;
 	order: number;
@@ -151,6 +151,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
@@ -172,7 +173,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	project_id: string;
 };
 };
 
@@ -281,8 +281,8 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	template_id: null | string;
 	project_id: null | string;
+	template_id: null | string;
 };
 
 	export interface QueryParameters {
@@ -413,8 +413,8 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	source_id: string;
 	project_id: string;
+	source_id: string;
 };
 };
 
@@ -432,9 +432,9 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	project_id: string;
 	source_id: string;
 	template_id: null | string;
-	project_id: string;
 };
 };
 
@@ -629,7 +629,7 @@ export namespace API {
 	generation_instructions: string;
 	id: string;
 	is_clinical_trial: boolean | null;
-	is_detailed_workplan: boolean | null;
+	is_detailed_research_plan: boolean | null;
 	keywords: string[];
 	max_words: number;
 	order: number;
@@ -655,6 +655,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
@@ -676,7 +677,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	project_id: string;
 };
 };
 
@@ -787,8 +787,8 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	template_id: null | string;
 	project_id: string;
+	template_id: null | string;
 };
 };
 
@@ -873,7 +873,7 @@ export namespace API {
 	generation_instructions: string;
 	id: string;
 	is_clinical_trial: boolean | null;
-	is_detailed_workplan: boolean | null;
+	is_detailed_research_plan: boolean | null;
 	keywords: string[];
 	max_words: number;
 	order: number;
@@ -899,6 +899,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
@@ -920,7 +921,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	project_id: string;
 };
 };
 
@@ -981,7 +981,7 @@ export namespace API {
 	generation_instructions: string;
 	id: string;
 	is_clinical_trial: boolean | null;
-	is_detailed_workplan: boolean | null;
+	is_detailed_research_plan: boolean | null;
 	keywords: string[];
 	max_words: number;
 	order: number;

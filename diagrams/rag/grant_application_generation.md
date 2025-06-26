@@ -9,16 +9,16 @@ flowchart TD
     B --> C(Validate Grant Template & Research Objectives)
     B --> Z2(Error: Missing Application or Template)
 
-    C --> D{Workplan Section Present?}
+    C --> D{Research Plan Section Present?}
     C --> Z3(Error: Invalid Template Structure)
 
     D -- Yes --> E(Generate Work Plan Text)
-    D -- No --> Z1(Error: Missing Workplan Section)
+    D -- No --> Z1(Error: Missing Research Plan Section)
 
     E --> F(Extract Relationships)
     F --> G(Enrich Objectives and Tasks)
     G --> H(Generate Text for Objectives and Tasks)
-    H --> I(Build Workplan Text)
+    H --> I(Build Research Plan Text)
 
     I --> J(Generate Other Grant Section Texts)
 

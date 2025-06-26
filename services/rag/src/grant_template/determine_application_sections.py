@@ -140,7 +140,7 @@ EXCLUDE_CATEGORIES = [
 
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
-    "detailed workplan research plan experimental approach specific aims methodology protocols",
+    "detailed research_plan research plan experimental approach specific aims methodology protocols",
     "research strategy experimental design technical approach methods procedures protocols",
     "project timeline milestones tasks deliverables research objectives implementation",
     "grant application structure required sections template organization format",
@@ -153,14 +153,14 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
     "expected outcomes anticipated results impact advancement knowledge",
     "scientific methodology data analysis findings implementation relationship between sections",
     "clinical trial requirements intervention protocol human subjects research",
-    "section hierarchical relationships parent child dependencies workplan",
-    "distinguishing features workplan background significance innovation approach methodology",
+    "section hierarchical relationships parent child dependencies research_plan",
+    "distinguishing features research_plan background significance innovation approach methodology",
 ]
 
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT: Final[str] = """
 You are a specialized system designed to analyze STEM grant application requirements and generate structured specifications.
-You excel at identifying section hierarchies and distinguishing between different section types, especially workplan sections which contain the actual research methodology and experimental approach.
+You excel at identifying section hierarchies and distinguishing between different section types, especially research_plan sections which contain the actual research methodology and experimental approach.
 You understand the nuances of different funding organizations' requirements and can correctly identify mandatory sections even when they use different terminology.
 """
 
@@ -210,21 +210,21 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
         - Top-level sections correlate with H2 headings, child sections with H3 to H6 headers.
         - Be detailed in identifying all sections and subsections within nesting limit.
 
-    3. Identify and flag the workplan details section:
-        - Identify all the sections that are potential candidates to be the detailed workplan:
-            - The detailed workplan is a section that includes the specific detailed planned experimental and analytical steps of the project.
+    3. Identify and flag the research_plan details section:
+        - Identify all the sections that are potential candidates to be the detailed research_plan:
+            - The detailed research_plan is a section that includes the specific detailed planned experimental and analytical steps of the project.
             - It contains the actual methodologies, techniques, procedures, and protocols that will be used to conduct the research.
             - It does not include in itself or as subsections: significance, innovation, impact, background, etc.
             - It could be a top-level or child section depending on the grant structure.
             - It does not have child sections.
             - It is typically one of the longest and most detailed sections in the grant application.
             - Common names for this section include: Work Plan, Research Plan, Research Strategy, Research Design, Research Details, Project Details, Experimental Design, Methods, Approach, Methodology, Technical Approach, Experimental Plan, etc.
-            - Some organizations may split the workplan across multiple sections (e.g., "Methods" and "Approach") - in this case, identify the section that contains the most detailed experimental procedures.
-        - Select the most fitting candidate and flag exactly one section as the detailed workplan.
-        - Pay special attention to distinguishing between "Specific Aims" (which lists objectives) and the actual workplan (which details how those aims will be achieved).
-        - The workplan must contain specific experimental procedures, not just goals or outcomes.
-        - The workplan section MUST ALWAYS be marked as a long-form section.
-        - If no clear workplan section is identified in the sources, use "Methods/Approach" or "Project Narrative" as the workplan section.
+            - Some organizations may split the research_plan across multiple sections (e.g., "Methods" and "Approach") - in this case, identify the section that contains the most detailed experimental procedures.
+        - Select the most fitting candidate and flag exactly one section as the detailed research_plan.
+        - Pay special attention to distinguishing between "Specific Aims" (which lists objectives) and the actual research_plan (which details how those aims will be achieved).
+        - The research_plan must contain specific experimental procedures, not just goals or outcomes.
+        - The research_plan section MUST ALWAYS be marked as a long-form section.
+        - If no clear research_plan section is identified in the sources, use "Methods/Approach" or "Project Narrative" as the research_plan section.
 
     4. Identify and flag all sections that belong to the research long form sections:
       - Research long form sections are sections that the applicants write (i.e. not external materials, letters of support, etc.).
@@ -295,10 +295,10 @@ section_extraction_json_schema = {
                         "nullable": True,
                         "description": "ID of parent section if nested, null for top-level sections",
                     },
-                    "is_detailed_workplan": {
+                    "is_detailed_research_plan": {
                         "type": "boolean",
                         "nullable": True,
-                        "description": "Whether this is the detailed workplan/methodology section",
+                        "description": "Whether this is the detailed research_plan/methodology section",
                     },
                     "is_title_only": {
                         "type": "boolean",
@@ -326,7 +326,7 @@ class ExtractedSectionDTO(TypedDict):
     id: str
     order: int
     parent_id: NotRequired[str | None]
-    is_detailed_workplan: NotRequired[bool | None]
+    is_detailed_research_plan: NotRequired[bool | None]
     is_title_only: NotRequired[bool | None]
     is_clinical_trial: NotRequired[bool | None]
     is_long_form: bool
@@ -379,17 +379,17 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             "Duplicate section IDs found. Section IDs must be unique.", context={"duplicate_ids": duplicate_ids}
         )
 
-    workplan_sections = [s for s in response["sections"] if s.get("is_detailed_workplan")]
-    if len(workplan_sections) != 1:
+    research_plan_sections = [s for s in response["sections"] if s.get("is_detailed_research_plan")]
+    if len(research_plan_sections) != 1:
         raise ValidationError(
-            f"Exactly one section must be marked as detailed workplan. Found {len(workplan_sections)}.",
-            context={"workplan_sections": [s["id"] for s in workplan_sections]},
+            f"Exactly one section must be marked as detailed research_plan. Found {len(research_plan_sections)}.",
+            context={"research_plan_sections": [s["id"] for s in research_plan_sections]},
         )
 
-    if workplan_sections and not workplan_sections[0].get("is_long_form"):
+    if research_plan_sections and not research_plan_sections[0].get("is_long_form"):
         raise ValidationError(
-            "The detailed workplan section must be marked as a long-form section",
-            context={"workplan_id": workplan_sections[0]["id"], "title": workplan_sections[0]["title"]},
+            "The detailed research_plan section must be marked as a long-form section",
+            context={"research_plan_id": research_plan_sections[0]["id"], "title": research_plan_sections[0]["title"]},
         )
 
     long_form_sections = [s for s in response["sections"] if s.get("is_long_form")]
@@ -427,10 +427,10 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                 raise ValidationError(
                     f"Invalid parent section reference. The section {section['id']} defines a parent section {section['parent_id']} that does not exist in the sections list.",
                 )
-            if mapped_sections[section["parent_id"]].get("is_detailed_workplan"):
+            if mapped_sections[section["parent_id"]].get("is_detailed_research_plan"):
                 raise ValidationError(
-                    "The workplan section cannot have any sub-sections as children",
-                    context={"workplan_id": section["parent_id"], "child_id": section["id"]},
+                    "The research_plan section cannot have any sub-sections as children",
+                    context={"research_plan_id": section["parent_id"], "child_id": section["id"]},
                 )
 
         depth = 1
@@ -452,7 +452,7 @@ def _should_keep_section(
     threshold: float,
     exclude_embeddings: list[float],
 ) -> bool:
-    if section.get("is_detailed_workplan"):
+    if section.get("is_detailed_research_plan"):
         return True
 
     has_long_form_children = any(s.get("parent_id") == section["id"] and s.get("is_long_form") for s in sections)
@@ -507,21 +507,21 @@ async def filter_extracted_sections(
             section for section, should_keep in zip(sections, sections_to_keep, strict=True) if should_keep
         ]
 
-        has_workplan = any(s.get("is_detailed_workplan") for s in filtered_sections)
+        has_research_plan = any(s.get("is_detailed_research_plan") for s in filtered_sections)
 
         has_long_form = any(s.get("is_long_form") for s in filtered_sections)
 
-        if has_workplan and has_long_form:
+        if has_research_plan and has_long_form:
             return _maintain_hierarchy_integrity(filtered_sections)
 
         threshold += 0.05
 
     fallback_sections = [
-        section for section in sections if section.get("is_detailed_workplan") or section.get("is_long_form")
+        section for section in sections if section.get("is_detailed_research_plan") or section.get("is_long_form")
     ]
 
     if not fallback_sections:
-        fallback_sections = [section for section in sections if section.get("is_detailed_workplan")]
+        fallback_sections = [section for section in sections if section.get("is_detailed_research_plan")]
 
     return _maintain_hierarchy_integrity(fallback_sections or sections)
 
@@ -580,12 +580,12 @@ evaluation_criteria = [
         name="Work Plan Identification",
         evaluation_instructions="""
         Verify Work plan section identification:
-            - Exactly one section is marked as detailed workplan
-            - The correct section is identified as the workplan given the available sources
-            - Workplan contains research objectives and experimental steps
-            - Workplan section is appropriately placed in hierarchy
-            - Workplan doesn't contain ineligible content (background, significance, etc.)
-            - Workplan section is positioned appropriately in relation to other sections
+            - Exactly one section is marked as detailed research_plan
+            - The correct section is identified as the research_plan given the available sources
+            - Research Plan contains research objectives and experimental steps
+            - Research Plan section is appropriately placed in hierarchy
+            - Research Plan doesn't contain ineligible content (background, significance, etc.)
+            - Research Plan section is positioned appropriately in relation to other sections
         """,
         weight=1.5,
     ),

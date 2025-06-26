@@ -159,7 +159,7 @@ def mock_grant_sections() -> list[GrantElement | GrantLongFormSection]:
             "depends_on": [],
             "max_words": 300,
             "search_queries": ["research summary", "project overview"],
-            "is_detailed_workplan": False,
+            "is_detailed_research_plan": False,
             "is_clinical_trial": False,
         },
         {  # type: ignore[typeddict-unknown-key]
@@ -173,7 +173,7 @@ def mock_grant_sections() -> list[GrantElement | GrantLongFormSection]:
             "depends_on": [],
             "max_words": 1500,
             "search_queries": ["research methodology", "experimental design"],
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_clinical_trial": False,
         },
         {  # type: ignore[typeddict-unknown-key]
@@ -187,7 +187,7 @@ def mock_grant_sections() -> list[GrantElement | GrantLongFormSection]:
             "depends_on": ["research_plan"],
             "max_words": 500,
             "search_queries": ["research impact", "project significance"],
-            "is_detailed_workplan": False,
+            "is_detailed_research_plan": False,
             "is_clinical_trial": False,
         },
     ]
@@ -226,7 +226,7 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
                     "depends_on": [],
                     "max_words": 300,
                     "search_queries": ["research summary", "project overview"],
-                    "is_detailed_workplan": False,
+                    "is_detailed_research_plan": False,
                     "is_clinical_trial": False,
                 },
                 {
@@ -240,7 +240,7 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
                     "depends_on": [],
                     "max_words": 1500,
                     "search_queries": ["research methodology", "experimental design"],
-                    "is_detailed_workplan": True,
+                    "is_detailed_research_plan": True,
                     "is_clinical_trial": False,
                 },
                 {
@@ -254,7 +254,7 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
                     "depends_on": ["research_plan"],
                     "max_words": 500,
                     "search_queries": ["research impact", "project significance"],
-                    "is_detailed_workplan": False,
+                    "is_detailed_research_plan": False,
                     "is_clinical_trial": False,
                 },
             ],
@@ -304,8 +304,8 @@ async def test_generate_work_plan_text_with_mocked_llm(
     mock_work_plan_component_text: str,
     mock_grant_sections: list[GrantElement | GrantLongFormSection],
 ) -> None:
-    workplan_section = next(
-        s for s in mock_grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
+    research_plan_section = next(
+        s for s in mock_grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_research_plan")
     )
 
     mock_job_manager = AsyncMock()
@@ -327,7 +327,7 @@ async def test_generate_work_plan_text_with_mocked_llm(
     ):
         result = await generate_work_plan_text(
             application_id=str(UUID("550e8400-e29b-41d4-a716-446655440000")),
-            work_plan_section=workplan_section,
+            work_plan_section=research_plan_section,
             form_inputs={"background_context": "Test project summary"},
             research_objectives=mock_research_objectives,
             job_manager=mock_job_manager,
@@ -345,11 +345,11 @@ async def test_generate_work_plan_text_with_mocked_llm(
     assert NotificationEvents.EXTRACTING_RELATIONSHIPS in notification_events
     assert NotificationEvents.ENRICHING_OBJECTIVES in notification_events
     assert NotificationEvents.OBJECTIVES_ENRICHED in notification_events
-    assert NotificationEvents.GENERATING_WORKPLAN in notification_events
+    assert NotificationEvents.GENERATING_RESEARCH_PLAN in notification_events
     assert NotificationEvents.GENERATING_OBJECTIVE in notification_events
     assert NotificationEvents.GENERATING_TASKS in notification_events
     assert NotificationEvents.OBJECTIVE_COMPLETED in notification_events
-    assert NotificationEvents.WORKPLAN_COMPLETED in notification_events
+    assert NotificationEvents.RESEARCH_PLAN_COMPLETED in notification_events
 
 
 async def test_generate_grant_section_texts_with_mocked_llm(
@@ -508,7 +508,7 @@ async def test_pipeline_missing_work_plan_section(
             assert app is not None
             assert app.grant_template is not None
             app.grant_template.grant_sections = [
-                s for s in app.grant_template.grant_sections if not s.get("is_detailed_workplan")
+                s for s in app.grant_template.grant_sections if not s.get("is_detailed_research_plan")
             ]
             await session.commit()
 
@@ -595,8 +595,8 @@ async def test_generate_work_plan_text_normalizes_markdown(
     mock_relationships: dict[str, list[tuple[str, str, str]]],
     mock_grant_sections: list[GrantElement | GrantLongFormSection],
 ) -> None:
-    workplan_section = next(
-        s for s in mock_grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
+    research_plan_section = next(
+        s for s in mock_grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_research_plan")
     )
 
     messy_text = """
@@ -631,7 +631,7 @@ async def test_generate_work_plan_text_normalizes_markdown(
     ):
         result = await generate_work_plan_text(
             application_id=str(UUID("550e8400-e29b-41d4-a716-446655440000")),
-            work_plan_section=workplan_section,
+            work_plan_section=research_plan_section,
             form_inputs={"background_context": "Test project summary"},
             research_objectives=mock_research_objectives,
             job_manager=mock_job_manager,

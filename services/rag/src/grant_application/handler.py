@@ -135,7 +135,7 @@ async def generate_work_plan_text(
 
     await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event=NotificationEvents.GENERATING_WORKPLAN,
+        event=NotificationEvents.GENERATING_RESEARCH_PLAN,
         message="Generating work plan text for research objectives and tasks...",
         notification_type="info",
     )
@@ -200,7 +200,7 @@ async def generate_work_plan_text(
 
     await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event=NotificationEvents.WORKPLAN_COMPLETED,
+        event=NotificationEvents.RESEARCH_PLAN_COMPLETED,
         message="Work plan generation completed",
         notification_type="info",
         data={
@@ -221,24 +221,24 @@ async def generate_grant_section_texts(
     job_manager: JobManager,
 ) -> dict[str, str]:
     section_texts: dict[str, str] = {}
-    workplan_section = next(
-        s for s in grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_workplan")
+    research_plan_section = next(
+        s for s in grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_research_plan")
     )
-    workplan_text = await generate_work_plan_text(
+    research_plan_text = await generate_work_plan_text(
         application_id=application_id,
-        work_plan_section=workplan_section,
+        work_plan_section=research_plan_section,
         research_objectives=research_objectives,
         form_inputs=form_inputs,
         job_manager=job_manager,
     )
-    section_texts[workplan_section["id"]] = workplan_text
+    section_texts[research_plan_section["id"]] = research_plan_text
 
     long_form_sections = [
-        s for s in grant_sections if is_grant_long_form_section(s) and not s.get("is_detailed_workplan")
+        s for s in grant_sections if is_grant_long_form_section(s) and not s.get("is_detailed_research_plan")
     ]
     for section in long_form_sections:
-        # we inject the workplan text into all sections regardless of dependencies ~keep
-        section["depends_on"] = [v for v in section["depends_on"] if v != workplan_section["id"]]
+        # we inject the research_plan text into all sections regardless of dependencies ~keep
+        section["depends_on"] = [v for v in section["depends_on"] if v != research_plan_section["id"]]
 
     generation_groups = create_generation_groups(sections=long_form_sections)
     for generation_group in generation_groups:
@@ -253,7 +253,7 @@ async def generate_grant_section_texts(
                             texts=section_texts,
                         ),
                         form_input=form_inputs,
-                        workplan_text=workplan_text,
+                        research_plan_text=research_plan_text,
                     )
                 )
                 for section in generation_group
@@ -355,7 +355,7 @@ async def grant_application_text_generation_pipeline_handler(
             work_plan_sections = [
                 section
                 for section in grant_application.grant_template.grant_sections
-                if is_grant_long_form_section(section) and section.get("is_detailed_workplan")
+                if is_grant_long_form_section(section) and section.get("is_detailed_research_plan")
             ]
 
         if not work_plan_sections:
@@ -385,14 +385,14 @@ async def grant_application_text_generation_pipeline_handler(
                         {
                             "id": section["id"],
                             "title": section["title"],
-                            "is_detailed_workplan": section.get("is_detailed_workplan", False),
+                            "is_detailed_research_plan": section.get("is_detailed_research_plan", False),
                         }
                         for section in grant_application.grant_template.grant_sections
                         if is_grant_long_form_section(section)
                     ]
                     if grant_application.grant_template.grant_sections
                     else [],
-                    "recovery_instruction": "Add a detailed work plan section to the grant template with is_detailed_workplan=True.",
+                    "recovery_instruction": "Add a detailed work plan section to the grant template with is_detailed_research_plan=True.",
                 },
             )
 
