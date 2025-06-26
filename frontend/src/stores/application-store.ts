@@ -94,12 +94,10 @@ const handleGrantTemplateValidationError = async (httpError: HTTPError): Promise
 interface ApplicationActions {
 	addFile: (file: FileWithId, parentId: string) => Promise<void>;
 	addUrl: (url: string, parentId: string) => Promise<void>;
-	areFilesOrUrlsIndexing: () => boolean;
 	checkAndRestoreJobState: () => Promise<void>;
 	clearRestoredJobState: () => void;
 	createApplication: (workspaceId: string) => Promise<void>;
 	generateTemplate: (templateId: string) => Promise<void>;
-	getIndexingStatus: () => Promise<boolean>;
 	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
 	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
@@ -216,17 +214,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	areFilesOrUrlsIndexing: () => {
-		const { application } = get();
-		if (!application) {
-			logError({ error: "Could not find Application", identifier: "areFilesOrUrlsIndexing" });
-			return false;
-		}
-
-		const allSources = [...application.rag_sources, ...(application.grant_template?.rag_sources ?? [])];
-		return allSources.some((source) => source.status === "INDEXING" || source.status === "CREATED");
-	},
-
 	checkAndRestoreJobState: async () => {
 		const { application } = get();
 
@@ -334,14 +321,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				description: "An unexpected error occurred. Please try again.",
 			});
 		}
-	},
-
-	getIndexingStatus: async () => {
-		const { application, areFilesOrUrlsIndexing, retrieveApplication } = get();
-		if (application) {
-			await retrieveApplication(application.workspace_id, application.id);
-		}
-		return areFilesOrUrlsIndexing();
 	},
 
 	removeFile: async (fileToRemove: FileWithId, parentId: string) => {
