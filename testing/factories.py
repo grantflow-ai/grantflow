@@ -21,14 +21,14 @@ from packages.db.src.tables import (
     GrantTemplate,
     GrantTemplateGenerationJob,
     GrantTemplateRagSource,
+    Project,
+    ProjectUser,
     RagFile,
     RagGenerationJob,
     RagGenerationNotification,
     RagSource,
     RagUrl,
     TextVector,
-    Workspace,
-    WorkspaceUser,
 )
 from pgvector.utils import Vector
 from polyfactory.factories import TypedDictFactory
@@ -118,12 +118,12 @@ class FundingOrganizationSourceFactory(SQLAlchemyFactory[FundingOrganizationRagS
     source_type = choice([RAG_FILE, RAG_URL])
 
 
-class WorkspaceFactory(SQLAlchemyFactory[Workspace]):
-    __model__ = Workspace
+class ProjectFactory(SQLAlchemyFactory[Project]):
+    __model__ = Project
 
 
-class WorkspaceUserFactory(SQLAlchemyFactory[WorkspaceUser]):
-    __model__ = WorkspaceUser
+class ProjectUserFactory(SQLAlchemyFactory[ProjectUser]):
+    __model__ = ProjectUser
 
 
 class RagGenerationJobFactory(SQLAlchemyFactory[RagGenerationJob]):

@@ -36,7 +36,7 @@ class PubSubEvent(msgspec.Struct, rename="camel"):
 
 class CrawlingRequest(TypedDict):
     source_id: UUID
-    workspace_id: UUID | None
+    project_id: UUID | None
     parent_id: UUID
     url: str
 
@@ -88,7 +88,7 @@ async def publish_url_crawling_task(
     logger: "FilteringBoundLogger",
     url: str,
     source_id: str | UUID,
-    workspace_id: str | UUID | None,
+    project_id: str | UUID | None,
     parent_id: str | UUID,
 ) -> str:
     client = get_publisher_client()
@@ -96,7 +96,7 @@ async def publish_url_crawling_task(
     data = CrawlingRequest(
         url=url,
         source_id=UUID(str(source_id)),
-        workspace_id=UUID(str(workspace_id)) if workspace_id else None,
+        project_id=UUID(str(project_id)) if project_id else None,
         parent_id=UUID(str(parent_id)),
     )
 

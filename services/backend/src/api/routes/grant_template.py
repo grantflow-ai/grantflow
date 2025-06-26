@@ -24,7 +24,7 @@ class UpdateGrantTemplateRequestBody(TypedDict):
 
 
 @post(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="CreateGrantTemplate",
 )
@@ -77,7 +77,7 @@ async def handle_generate_grant_template(
 
 
 @patch(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="UpdateGrantTemplate",
 )

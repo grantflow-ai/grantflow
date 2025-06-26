@@ -66,44 +66,42 @@ class BaseWithUUIDPK(Base):
     id: Mapped[UUID] = mapped_column(SA_UUID(), primary_key=True, insert_default=uuid4)
 
 
-class Workspace(BaseWithUUIDPK):
-    __tablename__ = "workspaces"
+class Project(BaseWithUUIDPK):
+    __tablename__ = "projects"
 
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     name: Mapped[str] = mapped_column(Text, index=True)
 
     grant_applications: Relationship[list["GrantApplication"]] = relationship(
-        "GrantApplication", back_populates="workspace", cascade="all, delete-orphan"
+        "GrantApplication", back_populates="project", cascade="all, delete-orphan"
     )
-    workspace_users: Relationship[list["WorkspaceUser"]] = relationship(
-        "WorkspaceUser", back_populates="workspace", cascade="all, delete-orphan"
+    project_users: Relationship[list["ProjectUser"]] = relationship(
+        "ProjectUser", back_populates="project", cascade="all, delete-orphan"
     )
 
 
-class WorkspaceUser(Base):
-    __tablename__ = "workspace_users"
+class ProjectUser(Base):
+    __tablename__ = "project_users"
 
     firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
     role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum))
 
-    workspace_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True
-    )
+    project_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
 
-    workspace: Relationship["Workspace"] = relationship("Workspace", back_populates="workspace_users")
+    project: Relationship["Project"] = relationship("Project", back_populates="project_users")
 
 
-class UserWorkspaceInvitation(BaseWithUUIDPK):
-    __tablename__ = "user_workspace_invitations"
+class UserProjectInvitation(BaseWithUUIDPK):
+    __tablename__ = "user_project_invitations"
 
-    workspace_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
     email: Mapped[str] = mapped_column(String(255), index=True)
     role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum))
     invitation_sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    workspace: Relationship["Workspace"] = relationship("Workspace")
+    project: Relationship["Project"] = relationship("Project")
 
 
 class RagSource(BaseWithUUIDPK):
@@ -222,7 +220,7 @@ class GrantApplication(BaseWithUUIDPK):
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
     title: Mapped[str] = mapped_column(Text)
 
-    workspace_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
     rag_job_id: Mapped[UUID | None] = mapped_column(
         SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -233,7 +231,7 @@ class GrantApplication(BaseWithUUIDPK):
     grant_template: Relationship["GrantTemplate | None"] = relationship(
         "GrantTemplate", back_populates="grant_application", cascade="all, delete-orphan", uselist=False
     )
-    workspace: Relationship[Workspace] = relationship("Workspace", back_populates="grant_applications")
+    project: Relationship[Project] = relationship("Project", back_populates="grant_applications")
     rag_job: Relationship["GrantApplicationGenerationJob | None"] = relationship(
         "GrantApplicationGenerationJob",
         back_populates="grant_application",

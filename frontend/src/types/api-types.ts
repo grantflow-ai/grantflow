@@ -60,7 +60,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	workspace_id: null | string;
+	project_id: null | string;
 };
 
 	export type RequestBody = {
@@ -85,7 +85,7 @@ export namespace API {
 
 	export interface PathParameters {
 	template_id: null | string;
-	workspace_id: null | string;
+	project_id: null | string;
 };
 
 	export type RequestBody = {
@@ -172,7 +172,7 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -185,7 +185,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	workspace_id: string;
+	project_id: string;
 };
 
 	export type RequestBody = {
@@ -236,7 +236,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	workspace_id: null | string;
+	project_id: null | string;
 };
 
 	export interface QueryParameters {
@@ -260,7 +260,7 @@ export namespace API {
 	export interface PathParameters {
 	application_id: string;
 	grant_template_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -282,7 +282,7 @@ export namespace API {
 
 	export interface PathParameters {
 	template_id: null | string;
-	workspace_id: null | string;
+	project_id: null | string;
 };
 
 	export interface QueryParameters {
@@ -306,7 +306,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	workspace_id: string;
+	project_id: string;
 };
 
 	export type RequestBody = {
@@ -338,7 +338,7 @@ export namespace API {
 };
 };
 
-	export namespace CreateWorkspace {
+	export namespace CreateProject {
 	export namespace Http201 {
 	export type ResponseBody = {
 	id: string;
@@ -375,7 +375,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -414,7 +414,7 @@ export namespace API {
 	export interface PathParameters {
 	application_id: null | string;
 	source_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -434,7 +434,7 @@ export namespace API {
 	export interface PathParameters {
 	source_id: string;
 	template_id: null | string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -453,7 +453,7 @@ export namespace API {
 
 	export interface PathParameters {
 	invitation_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -475,7 +475,7 @@ export namespace API {
 };
 };
 
-	export namespace DeleteWorkspace {
+	export namespace DeleteProject {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
 };
@@ -489,7 +489,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -508,7 +508,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -520,7 +520,7 @@ export namespace API {
 };
 };
 
-	export namespace GetWorkspace {
+	export namespace GetProject {
 	export namespace Http200 {
 	export type ResponseBody = {
 	description: null | string;
@@ -545,7 +545,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -565,7 +565,7 @@ export namespace API {
 };
 };
 
-	export namespace ListWorkspaces {
+	export namespace ListProjects {
 	export namespace Http200 {
 	export type ResponseBody = {
 	description: null | string;
@@ -676,7 +676,7 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -690,7 +690,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -755,7 +755,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -788,7 +788,7 @@ export namespace API {
 
 	export interface PathParameters {
 	template_id: null | string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -837,7 +837,7 @@ export namespace API {
 
 	export interface PathParameters {
 	job_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -920,7 +920,7 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	workspace_id: string;
+	project_id: string;
 };
 };
 
@@ -934,7 +934,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 
 	export type RequestBody = {
@@ -972,7 +972,7 @@ export namespace API {
 	export interface PathParameters {
 	application_id: string;
 	grant_template_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 
 	export type RequestBody = {
@@ -1011,7 +1011,7 @@ export namespace API {
 
 	export interface PathParameters {
 	invitation_id: string;
-	workspace_id: string;
+	project_id: string;
 };
 
 	export type RequestBody = {
@@ -1046,7 +1046,7 @@ export namespace API {
 };
 };
 
-	export namespace UpdateWorkspace {
+	export namespace UpdateProject {
 	export namespace Http200 {
 	export type ResponseBody = {
 	description: null | string;
@@ -1066,7 +1066,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	workspace_id: string;
+	project_id: string;
 };
 
 	export type RequestBody = {

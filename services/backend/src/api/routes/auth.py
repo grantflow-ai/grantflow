@@ -4,7 +4,7 @@ from typing import Any, TypedDict
 from litestar import get, post
 from litestar.exceptions import NotAuthorizedException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Workspace, WorkspaceUser
+from packages.db.src.tables import Project, ProjectUser
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -37,21 +37,21 @@ async def handle_login(
 
     async with session_maker() as session, session.begin():
         result = await session.execute(
-            select(WorkspaceUser).where(WorkspaceUser.firebase_uid == firebase_uid)
+            select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid)
         )
-        workspace_user = result.scalars().first()
+        project_user = result.scalars().first()
 
-        if workspace_user is None:
-            default_workspace = Workspace(name="default")
-            session.add(default_workspace)
+        if project_user is None:
+            default_project = Project(name="default")
+            session.add(default_project)
             await session.flush()
 
-            workspace_user = WorkspaceUser(
-                workspace_id=default_workspace.id,
+            project_user = ProjectUser(
+                project_id=default_project.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,
             )
-            session.add(workspace_user)
+            session.add(project_user)
 
     jwt = create_jwt(firebase_uid)
     return LoginResponse(jwt_token=jwt)

@@ -5,13 +5,13 @@ import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 export async function crawlApplicationUrl(
-	workspaceId: string,
+	projectId: string,
 	applicationId: string,
 	url: string,
 ): Promise<API.CrawlGrantApplicationUrl.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/applications/${applicationId}/sources/crawl-url`, {
+			.post(`projects/${projectId}/applications/${applicationId}/sources/crawl-url`, {
 				headers: await createAuthHeaders(),
 				json: { url } satisfies API.CrawlGrantApplicationUrl.RequestBody,
 			})
@@ -20,13 +20,13 @@ export async function crawlApplicationUrl(
 }
 
 export async function crawlTemplateUrl(
-	workspaceId: string,
+	projectId: string,
 	templateId: string,
 	url: string,
 ): Promise<API.CrawlGrantTemplateUrl.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/grant_templates/${templateId}/sources/crawl-url`, {
+			.post(`projects/${projectId}/grant_templates/${templateId}/sources/crawl-url`, {
 				headers: await createAuthHeaders(),
 				json: { url } satisfies API.CrawlGrantTemplateUrl.RequestBody,
 			})
@@ -35,13 +35,13 @@ export async function crawlTemplateUrl(
 }
 
 export async function createApplicationSourceUploadUrl(
-	workspaceId: string,
+	projectId: string,
 	applicationId: string,
 	fileName: string,
 ): Promise<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/applications/${applicationId}/sources/upload-url?blob_name=${fileName}`, {
+			.post(`projects/${projectId}/applications/${applicationId}/sources/upload-url?blob_name=${fileName}`, {
 				headers: await createAuthHeaders(),
 			})
 			.json<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody>(),
@@ -49,49 +49,49 @@ export async function createApplicationSourceUploadUrl(
 }
 
 export async function createTemplateSourceUploadUrl(
-	workspaceId: string,
+	projectId: string,
 	templateId: string,
 	fileName: string,
 ): Promise<API.CreateGrantTemplateRagSourceUploadUrl.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/grant_templates/${templateId}/sources/upload-url?blob_name=${fileName}`, {
+			.post(`projects/${projectId}/grant_templates/${templateId}/sources/upload-url?blob_name=${fileName}`, {
 				headers: await createAuthHeaders(),
 			})
 			.json<API.CreateGrantTemplateRagSourceUploadUrl.Http201.ResponseBody>(),
 	);
 }
 
-export async function deleteApplicationSource(workspaceId: string, applicationId: string, sourceId: string) {
+export async function deleteApplicationSource(projectId: string, applicationId: string, sourceId: string) {
 	await withAuthRedirect(
-		getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}/sources/${sourceId}`, {
+		getClient().delete(`projects/${projectId}/applications/${applicationId}/sources/${sourceId}`, {
 			headers: await createAuthHeaders(),
 		}),
 	);
 }
 
-export async function deleteTemplateSource(workspaceId: string, templateId: string, sourceId: string) {
+export async function deleteTemplateSource(projectId: string, templateId: string, sourceId: string) {
 	await withAuthRedirect(
-		getClient().delete(`workspaces/${workspaceId}/grant_templates/${templateId}/sources/${sourceId}`, {
+		getClient().delete(`projects/${projectId}/grant_templates/${templateId}/sources/${sourceId}`, {
 			headers: await createAuthHeaders(),
 		}),
 	);
 }
 
-export async function getApplicationSources(workspaceId: string, applicationId: string) {
+export async function getApplicationSources(projectId: string, applicationId: string) {
 	return withAuthRedirect(
 		getClient()
-			.get(`workspaces/${workspaceId}/applications/${applicationId}/sources`, {
+			.get(`projects/${projectId}/applications/${applicationId}/sources`, {
 				headers: await createAuthHeaders(),
 			})
 			.json<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[]>(),
 	);
 }
 
-export async function getTemplateSources(workspaceId: string, templateId: string) {
+export async function getTemplateSources(projectId: string, templateId: string) {
 	return withAuthRedirect(
 		getClient()
-			.get(`workspaces/${workspaceId}/grant_templates/${templateId}/sources`, {
+			.get(`projects/${projectId}/grant_templates/${templateId}/sources`, {
 				headers: await createAuthHeaders(),
 			})
 			.json<API.RetrieveGrantTemplateRagSources.Http200.ResponseBody[]>(),

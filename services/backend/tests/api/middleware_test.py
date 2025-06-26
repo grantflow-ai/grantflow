@@ -155,11 +155,11 @@ async def test_authenticate_with_allowed_roles(
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
-    workspace_user: MagicMock = MagicMock()
-    workspace_user.role = UserRoleEnum.ADMIN
+    project_user: MagicMock = MagicMock()
+    project_user.role = UserRoleEnum.ADMIN
 
     session_result = MagicMock()
-    session_result.scalar_one_or_none.return_value = workspace_user
+    session_result.scalar_one_or_none.return_value = project_user
 
     session = AsyncMock()
     session.execute.return_value = session_result
@@ -172,9 +172,9 @@ async def test_authenticate_with_allowed_roles(
     app.state.session_maker = session_maker
 
     connection = MockASGIConnection(
-        url_path="/workspaces/test-workspace-id/something",
+        url_path="/projects/test-project-id/something",
         headers={"Authorization": "Bearer test-token"},
-        path_params={"workspace_id": "test-workspace-id"},
+        path_params={"project_id": "test-project-id"},
         route_handler_opt={"allowed_roles": [UserRoleEnum.ADMIN, UserRoleEnum.OWNER]},
         app=app,
     )
@@ -187,7 +187,7 @@ async def test_authenticate_with_allowed_roles(
     session.execute.assert_called_once()
 
 
-async def test_authenticate_with_allowed_roles_no_workspace_id(
+async def test_authenticate_with_allowed_roles_no_project_id(
     app: MagicMock, mock_verify_jwt_token: MagicMock
 ) -> None:
     middleware = AuthMiddleware(app=app)
@@ -211,9 +211,9 @@ async def test_authenticate_with_allowed_roles_no_firebase_uid(
     mock_verify_jwt_token.side_effect = NotAuthorizedException("Invalid token")
 
     connection = MockASGIConnection(
-        url_path="/workspaces/test-workspace-id/something",
+        url_path="/projects/test-project-id/something",
         headers={"Authorization": "Bearer invalid-token"},
-        path_params={"workspace_id": "test-workspace-id"},
+        path_params={"project_id": "test-project-id"},
         route_handler_opt={"allowed_roles": [UserRoleEnum.ADMIN]},
         app=app,
     )
@@ -242,9 +242,9 @@ async def test_authenticate_with_allowed_roles_user_not_found(
     app.state.session_maker = session_maker
 
     connection = MockASGIConnection(
-        url_path="/workspaces/test-workspace-id/something",
+        url_path="/projects/test-project-id/something",
         headers={"Authorization": "Bearer test-token"},
-        path_params={"workspace_id": "test-workspace-id"},
+        path_params={"project_id": "test-project-id"},
         route_handler_opt={"allowed_roles": [UserRoleEnum.ADMIN]},
         app=app,
     )

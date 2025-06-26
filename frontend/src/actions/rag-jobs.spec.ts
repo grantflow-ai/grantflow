@@ -34,7 +34,7 @@ describe("rag-jobs server actions", () => {
 
 	describe("retrieveRagJob", () => {
 		it("should retrieve a rag job successfully", async () => {
-			const mockWorkspaceId = "workspace-123e4567-e89b-12d3-a456-426614174000";
+			const mockProjectId = "project-123e4567-e89b-12d3-a456-426614174000";
 			const mockJobId = "123e4567-e89b-12d3-a456-426614174000";
 			const mockResponse = RagJobResponseFactory.build({
 				current_stage: 2,
@@ -49,10 +49,10 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			const result = await retrieveRagJob(mockWorkspaceId, mockJobId);
+			const result = await retrieveRagJob(mockProjectId, mockJobId);
 
 			expect(mockGet).toHaveBeenCalledWith(
-				`workspaces/${mockWorkspaceId}/rag-jobs/${mockJobId}`,
+				`projects/${mockProjectId}/rag-jobs/${mockJobId}`,
 				expect.objectContaining({
 					headers: undefined,
 				}),
@@ -61,7 +61,7 @@ describe("rag-jobs server actions", () => {
 		});
 
 		it("should handle application generation job response", async () => {
-			const mockWorkspaceId = "workspace-789e0123-e89b-12d3-a456-426614174000";
+			const mockProjectId = "project-789e0123-e89b-12d3-a456-426614174000";
 			const mockJobId = "789e0123-e89b-12d3-a456-426614174000";
 			const mockResponse = RagJobResponseFactory.build({
 				current_stage: 5,
@@ -84,10 +84,10 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			const result = await retrieveRagJob(mockWorkspaceId, mockJobId);
+			const result = await retrieveRagJob(mockProjectId, mockJobId);
 
 			expect(mockGet).toHaveBeenCalledWith(
-				`workspaces/${mockWorkspaceId}/rag-jobs/${mockJobId}`,
+				`projects/${mockProjectId}/rag-jobs/${mockJobId}`,
 				expect.objectContaining({
 					headers: undefined,
 				}),
@@ -98,7 +98,7 @@ describe("rag-jobs server actions", () => {
 		});
 
 		it("should handle failed job with error details", async () => {
-			const mockWorkspaceId = "workspace-abc12345-e89b-12d3-a456-426614174000";
+			const mockProjectId = "project-abc12345-e89b-12d3-a456-426614174000";
 			const mockJobId = "abc12345-e89b-12d3-a456-426614174000";
 			const mockResponse = RagJobResponseFactory.build({
 				current_stage: 1,
@@ -117,10 +117,10 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			const result = await retrieveRagJob(mockWorkspaceId, mockJobId);
+			const result = await retrieveRagJob(mockProjectId, mockJobId);
 
 			expect(mockGet).toHaveBeenCalledWith(
-				`workspaces/${mockWorkspaceId}/rag-jobs/${mockJobId}`,
+				`projects/${mockProjectId}/rag-jobs/${mockJobId}`,
 				expect.objectContaining({
 					headers: undefined,
 				}),
@@ -134,7 +134,7 @@ describe("rag-jobs server actions", () => {
 		});
 
 		it("should handle 404 error when job not found", async () => {
-			const mockWorkspaceId = "workspace-nonexistent";
+			const mockProjectId = "project-nonexistent";
 			const mockJobId = "nonexistent-job-id";
 			const errorResponse = ErrorResponseFactory.build({
 				detail: "RAG job not found",
@@ -153,7 +153,7 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockRejectedValue(error) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			await expect(retrieveRagJob(mockWorkspaceId, mockJobId)).rejects.toThrow(HTTPError);
+			await expect(retrieveRagJob(mockProjectId, mockJobId)).rejects.toThrow(HTTPError);
 		});
 	});
 });

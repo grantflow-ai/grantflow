@@ -72,13 +72,13 @@ def mock_construct_object_uri() -> Generator[Mock]:
 
         def side_effect(
             *,
-            workspace_id: str | None = None,
+            project_id: str | None = None,
             parent_id: str | None = None,
             source_id: str | None = None,
             blob_name: str | None = None,
         ) -> str:
-            if workspace_id:
-                return f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+            if project_id:
+                return f"{project_id}/{parent_id}/{source_id}/{blob_name}"
             else:
                 return f"{parent_id}/{source_id}/{blob_name}"
 
@@ -97,13 +97,13 @@ def create_crawling_request(
     parent_id: UUID,
     source_id: UUID,
     url: str = "https://example.org/docs",
-    workspace_id: UUID | None = None,
+    project_id: UUID | None = None,
 ) -> dict[str, str]:
     request: dict[str, str] = {
         "parent_id": str(parent_id),
         "source_id": str(source_id),
         "url": url,
-        "workspace_id": str(workspace_id) if workspace_id else str(parent_id),
+        "project_id": str(project_id) if project_id else str(parent_id),
     }
 
     return request
@@ -113,13 +113,13 @@ def create_pubsub_event(
     parent_id: UUID,
     source_id: UUID,
     url: str = "https://example.org/docs",
-    workspace_id: UUID | None = None,
+    project_id: UUID | None = None,
 ) -> PubSubEvent:
     message_data = {
         "parent_id": str(parent_id),
         "source_id": str(source_id),
         "url": url,
-        "workspace_id": str(workspace_id) if workspace_id else str(parent_id),
+        "project_id": str(project_id) if project_id else str(parent_id),
     }
 
     return PubSubEvent(
@@ -141,7 +141,7 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> None:
-    workspace_id = uuid4()
+    project_id = uuid4()
 
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -179,7 +179,7 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
     pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
         source_id=source_id,
-        workspace_id=workspace_id,
+        project_id=project_id,
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -275,7 +275,7 @@ async def test_handle_url_crawling_grant_template(
     async_session_maker: async_sessionmaker[Any],
     grant_template: GrantTemplate,
 ) -> None:
-    workspace_id = uuid4()
+    project_id = uuid4()
 
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -313,7 +313,7 @@ async def test_handle_url_crawling_grant_template(
     pubsub_event = create_pubsub_event(
         parent_id=grant_template.id,
         source_id=source_id,
-        workspace_id=workspace_id,
+        project_id=project_id,
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -606,7 +606,7 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    workspace_id = uuid4()
+    project_id = uuid4()
 
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -644,7 +644,7 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
         source_id=source_id,
-        workspace_id=workspace_id,
+        project_id=project_id,
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -652,7 +652,7 @@ async def test_handle_upload_blob_called_with_correct_parameters(
 
     assert mock_construct_object_uri.call_count == 2
     first_call_kwargs = mock_construct_object_uri.call_args_list[0][1]
-    assert first_call_kwargs["workspace_id"] == workspace_id
+    assert first_call_kwargs["project_id"] == project_id
     assert first_call_kwargs["parent_id"] == grant_application.id
     assert "source_id" in first_call_kwargs
     assert "blob_name" in first_call_kwargs
@@ -661,19 +661,19 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     first_upload_call_args = mock_upload_blob.call_args_list[0][0]
     assert len(first_upload_call_args) >= 1
     blob_path = first_upload_call_args[0]
-    assert str(workspace_id) in blob_path
+    assert str(project_id) in blob_path
 
 
 async def test_decode_pubsub_message(
     test_client: AsyncTestClient[Any],
     grant_application: GrantApplication,
 ) -> None:
-    workspace_id = uuid4()
+    project_id = uuid4()
     source_id = uuid4()
     pubsub_event = create_pubsub_event(
         parent_id=grant_application.id,
         source_id=source_id,
-        workspace_id=workspace_id,
+        project_id=project_id,
         url="https://example.com/test",
     )
 
@@ -681,7 +681,7 @@ async def test_decode_pubsub_message(
         mock_decode.return_value = CrawlingRequest(
             parent_id=grant_application.id,
             source_id=source_id,
-            workspace_id=workspace_id,
+            project_id=project_id,
             url="https://example.com/test",
         )
 

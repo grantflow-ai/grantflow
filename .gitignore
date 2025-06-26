@@ -54,5 +54,6 @@ crash.*.log
 
 # AI tools generated files
 CLAUDE.md
+GEMINI.md
 .windsurfrules
 .cursorrules

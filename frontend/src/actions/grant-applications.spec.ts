@@ -45,7 +45,7 @@ vi.mock("@/utils/server-side", async () => {
 	};
 });
 
-const mockWorkspaceId = "mock-workspace-id";
+const mockProjectId = "mock-project-id";
 const mockApplicationId = "mock-application-id";
 const mockTemplateId = "mock-template-id";
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
@@ -108,9 +108,9 @@ describe("Grant Application Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const applicationData = CreateApplicationRequestFactory.build();
 
-			const result = await createApplication(mockWorkspaceId, applicationData);
+			const result = await createApplication(mockProjectId, applicationData);
 
-			expect(mockPost).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications`, {
+			expect(mockPost).toHaveBeenCalledWith(`projects/${mockProjectId}/applications`, {
 				headers: mockAuthHeaders,
 				json: applicationData,
 			});
@@ -122,9 +122,9 @@ describe("Grant Application Actions", () => {
 
 	describe("retrieveApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			const result = await retrieveApplication(mockWorkspaceId, mockApplicationId);
+			const result = await retrieveApplication(mockProjectId, mockApplicationId);
 
-			expect(mockGet).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+			expect(mockGet).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -137,7 +137,7 @@ describe("Grant Application Actions", () => {
 			const mockError = new HTTPError(
 				mockResponse,
 				{
-					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
+					path: `projects/${mockProjectId}/applications/${mockApplicationId}`,
 				} as never,
 				{} as never,
 			);
@@ -147,7 +147,7 @@ describe("Grant Application Actions", () => {
 			});
 			mockWithAuthRedirect.mockRejectedValue(mockError);
 
-			await expect(retrieveApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow();
+			await expect(retrieveApplication(mockProjectId, mockApplicationId)).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 
@@ -161,13 +161,13 @@ describe("Grant Application Actions", () => {
 					status: 404,
 				},
 			);
-			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+			const httpError = new HTTPError(mockResponse, { path: "projects/applications" } as any, {} as any);
 
 			mockGet.mockReturnValue({
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(retrieveApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow(HTTPError);
+			await expect(retrieveApplication(mockProjectId, mockApplicationId)).rejects.toThrow(HTTPError);
 		});
 	});
 
@@ -175,9 +175,9 @@ describe("Grant Application Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const updateData = UpdateApplicationRequestFactory.build();
 
-			await updateApplication(mockWorkspaceId, mockApplicationId, updateData);
+			await updateApplication(mockProjectId, mockApplicationId, updateData);
 
-			expect(mockPatch).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
 				headers: mockAuthHeaders,
 				json: updateData,
 			});
@@ -190,9 +190,9 @@ describe("Grant Application Actions", () => {
 				title: "Updated Title Only",
 			} as API.UpdateApplication.RequestBody;
 
-			await updateApplication(mockWorkspaceId, mockApplicationId, partialUpdateData);
+			await updateApplication(mockProjectId, mockApplicationId, partialUpdateData);
 
-			expect(mockPatch).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
 				headers: mockAuthHeaders,
 				json: partialUpdateData,
 			});
@@ -223,10 +223,10 @@ describe("Grant Application Actions", () => {
 				submission_date: "2024-12-31",
 			};
 
-			await updateGrantTemplate(mockWorkspaceId, mockApplicationId, mockTemplateId, updateData);
+			await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, updateData);
 
 			expect(mockPatch).toHaveBeenCalledWith(
-				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
 					headers: mockAuthHeaders,
 					json: updateData,
@@ -241,10 +241,10 @@ describe("Grant Application Actions", () => {
 				submission_date: "2024-12-31",
 			} as API.UpdateGrantTemplate.RequestBody;
 
-			await updateGrantTemplate(mockWorkspaceId, mockApplicationId, mockTemplateId, updateData);
+			await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, updateData);
 
 			expect(mockPatch).toHaveBeenCalledWith(
-				`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
 					headers: mockAuthHeaders,
 					json: updateData,
@@ -257,9 +257,9 @@ describe("Grant Application Actions", () => {
 
 	describe("generateApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			await generateApplication(mockWorkspaceId, mockApplicationId);
+			await generateApplication(mockProjectId, mockApplicationId);
 
-			expect(mockPost).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+			expect(mockPost).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -271,7 +271,7 @@ describe("Grant Application Actions", () => {
 			const mockError = new HTTPError(
 				mockResponse,
 				{
-					path: `workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`,
+					path: `projects/${mockProjectId}/applications/${mockApplicationId}`,
 				} as never,
 				{} as never,
 			);
@@ -279,16 +279,16 @@ describe("Grant Application Actions", () => {
 			mockPost.mockRejectedValue(mockError);
 			mockWithAuthRedirect.mockRejectedValue(mockError);
 
-			await expect(generateApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow();
+			await expect(generateApplication(mockProjectId, mockApplicationId)).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 	});
 
 	describe("deleteApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			await deleteApplication(mockWorkspaceId, mockApplicationId);
+			await deleteApplication(mockProjectId, mockApplicationId);
 
-			expect(mockDelete).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+			expect(mockDelete).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -305,12 +305,12 @@ describe("Grant Application Actions", () => {
 
 			mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-			await expect(createApplication(mockWorkspaceId, { title: "Test" })).rejects.toThrow("API Error");
+			await expect(createApplication(mockProjectId, { title: "Test" })).rejects.toThrow("API Error");
 		});
 
 		it("should redirect to sign-in page on 401 errors", async () => {
 			const mockResponse = new Response(null, { status: 401 });
-			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+			const httpError = new HTTPError(mockResponse, { path: "projects/applications" } as any, {} as any);
 
 			mockPost.mockReturnValueOnce({
 				json: vi.fn().mockRejectedValue(httpError),
@@ -326,7 +326,7 @@ describe("Grant Application Actions", () => {
 				});
 			});
 
-			await createApplication(mockWorkspaceId, { title: "Test" });
+			await createApplication(mockProjectId, { title: "Test" });
 
 			expect(mockRedirect).toHaveBeenCalledWith("/signin");
 		});
@@ -342,13 +342,13 @@ describe("Grant Application Actions", () => {
 					status: 400,
 				},
 			);
-			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+			const httpError = new HTTPError(mockResponse, { path: "projects/applications" } as any, {} as any);
 
 			mockPost.mockReturnValueOnce({
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(createApplication(mockWorkspaceId, { title: "" })).rejects.toThrow(HTTPError);
+			await expect(createApplication(mockProjectId, { title: "" })).rejects.toThrow(HTTPError);
 		});
 
 		it("should handle 403 forbidden errors", async () => {
@@ -356,11 +356,11 @@ describe("Grant Application Actions", () => {
 				headers: { "Content-Type": "application/json" },
 				status: 403,
 			});
-			const httpError = new HTTPError(mockResponse, { path: "workspaces/applications" } as any, {} as any);
+			const httpError = new HTTPError(mockResponse, { path: "projects/applications" } as any, {} as any);
 
 			mockDelete.mockRejectedValueOnce(httpError);
 
-			await expect(deleteApplication(mockWorkspaceId, mockApplicationId)).rejects.toThrow(HTTPError);
+			await expect(deleteApplication(mockProjectId, mockApplicationId)).rejects.toThrow(HTTPError);
 		});
 	});
 
@@ -369,7 +369,7 @@ describe("Grant Application Actions", () => {
 			mockCreateAuthHeaders.mockRejectedValueOnce(new Error("Failed to get auth token"));
 			mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
 
-			await expect(createApplication(mockWorkspaceId, { title: "Test" })).rejects.toThrow(
+			await expect(createApplication(mockProjectId, { title: "Test" })).rejects.toThrow(
 				"Failed to get auth token",
 			);
 		});
@@ -382,9 +382,9 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue({ id: mockApplicationId }),
 			});
 
-			await createApplication(mockWorkspaceId, { title: "Test" });
+			await createApplication(mockProjectId, { title: "Test" });
 
-			expect(mockPost).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications`, {
+			expect(mockPost).toHaveBeenCalledWith(`projects/${mockProjectId}/applications`, {
 				headers: null,
 				json: { title: "Test" },
 			});
@@ -398,9 +398,9 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
 			});
 
-			await updateApplication(mockWorkspaceId, mockApplicationId, { title: "Updated" });
+			await updateApplication(mockProjectId, mockApplicationId, { title: "Updated" });
 
-			expect(mockPatch).toHaveBeenCalledWith(`workspaces/${mockWorkspaceId}/applications/${mockApplicationId}`, {
+			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
 				headers: {},
 				json: { title: "Updated" },
 			});
@@ -414,7 +414,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(expectedResponse),
 			});
 
-			const result = await createApplication(mockWorkspaceId, { title: "Test App" });
+			const result = await createApplication(mockProjectId, { title: "Test App" });
 
 			expect(result).toEqual(expectedResponse);
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
@@ -425,7 +425,7 @@ describe("Grant Application Actions", () => {
 
 			mockPatch.mockResolvedValueOnce(undefined);
 
-			const result = await updateGrantTemplate(mockWorkspaceId, mockApplicationId, mockTemplateId, {
+			const result = await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, {
 				submission_date: "2024-12-31",
 			} as any);
 

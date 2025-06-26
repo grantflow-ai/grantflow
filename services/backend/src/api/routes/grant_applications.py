@@ -80,7 +80,7 @@ class GrantTemplateResponse(TypedDict):
 
 class ApplicationResponse(TypedDict):
     id: str
-    workspace_id: str
+    project_id: str
     title: str
     status: ApplicationStatusEnum
     completed_at: NotRequired[str]
@@ -117,11 +117,11 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
 
 
 async def _handle_retrieve_application(
-    workspace_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
     logger.info(
         "Retrieving application",
-        workspace_id=workspace_id,
+        project_id=project_id,
         application_id=application_id,
     )
     async with session_maker() as session:
@@ -132,12 +132,12 @@ async def _handle_retrieve_application(
         except ValidationError as e:
             raise NotFoundException("Application not found") from e
 
-        if grant_application.workspace_id != workspace_id:
+        if grant_application.project_id != project_id:
             raise NotFoundException("Application not found")
 
         response: ApplicationResponse = {
             "id": str(grant_application.id),
-            "workspace_id": str(grant_application.workspace_id),
+            "project_id": str(grant_application.project_id),
             "title": grant_application.title,
             "status": grant_application.status,
             "rag_sources": [],
@@ -214,16 +214,16 @@ async def _handle_retrieve_application(
 
 
 @post(
-    "/workspaces/{workspace_id:uuid}/applications",
+    "/projects/{project_id:uuid}/applications",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="CreateApplication",
 )
 async def handle_create_application(
-    workspace_id: UUID,
+    project_id: UUID,
     data: CreateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info("Creating application", workspace_id=workspace_id, title=data["title"])
+    logger.info("Creating application", project_id=project_id, title=data["title"])
 
     async with session_maker() as session, session.begin():
         try:
@@ -231,7 +231,7 @@ async def handle_create_application(
                 insert(GrantApplication)
                 .values(
                     {
-                        "workspace_id": workspace_id,
+                        "project_id": project_id,
                         "title": data["title"],
                         "status": ApplicationStatusEnum.DRAFT,
                     }
@@ -259,25 +259,25 @@ async def handle_create_application(
             ) from e
 
     return await _handle_retrieve_application(
-        workspace_id=workspace_id,
+        project_id=project_id,
         application_id=application.id,
         session_maker=session_maker,
     )
 
 
 @patch(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="UpdateApplication",
 )
 async def handle_update_application(
-    workspace_id: UUID,
+    project_id: UUID,
     application_id: UUID,
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
     logger.info(
-        "Updating application", workspace_id=workspace_id, application_id=application_id
+        "Updating application", project_id=project_id, application_id=application_id
     )
 
     async with session_maker() as session, session.begin():
@@ -285,7 +285,7 @@ async def handle_update_application(
             application = await session.scalar(
                 select(GrantApplication)
                 .where(GrantApplication.id == application_id)
-                .where(GrantApplication.workspace_id == workspace_id)
+                .where(GrantApplication.project_id == project_id)
             )
 
             if not application:
@@ -306,14 +306,14 @@ async def handle_update_application(
             raise DatabaseError("Error updating application", context=str(e)) from e
 
     return await _handle_retrieve_application(
-        workspace_id=workspace_id,
+        project_id=project_id,
         application_id=application_id,
         session_maker=session_maker,
     )
 
 
 @delete(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="DeleteApplication",
 )
@@ -335,7 +335,7 @@ async def handle_delete_application(
 
 
 @post(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="GenerateApplication",
 )
@@ -394,13 +394,11 @@ async def handle_generate_application(
 
 
 @get(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}",
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
     operation_id="RetrieveApplication",
 )
 async def handle_retrieve_application(
-    workspace_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    return await _handle_retrieve_application(
-        workspace_id, application_id, session_maker
-    )
+    return await _handle_retrieve_application(project_id, application_id, session_maker)

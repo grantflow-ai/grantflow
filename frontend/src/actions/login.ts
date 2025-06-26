@@ -27,5 +27,5 @@ export async function login(idToken: string) {
 		value: jwt_token,
 	});
 
-	redirect(PagePath.WORKSPACES);
+	redirect(PagePath.PROJECTS);
 }

@@ -73,9 +73,9 @@ describe("login", () => {
 		);
 	});
 
-	it("should redirect to workspaces page after successful login", async () => {
+	it("should redirect to projects page after successful login", async () => {
 		await login(loginRequest.id_token);
 
-		expect(mockRedirect).toHaveBeenCalledWith(PagePath.WORKSPACES);
+		expect(mockRedirect).toHaveBeenCalledWith(PagePath.PROJECTS);
 	});
 });

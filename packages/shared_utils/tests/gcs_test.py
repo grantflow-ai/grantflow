@@ -226,44 +226,44 @@ async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) 
 
 
 def test_construct_object_uri() -> None:
-    workspace_id = "workspace-123"
+    project_id = "project-123"
     parent_id = "parent-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        workspace_id=workspace_id,
+        project_id=project_id,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
     )
 
-    assert uri == f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+    assert uri == f"{project_id}/{parent_id}/{source_id}/{blob_name}"
 
 
 def test_construct_object_uri_with_uuids() -> None:
-    workspace_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
     parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        workspace_id=workspace_id,
+        project_id=project_id,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
     )
 
-    assert uri == f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+    assert uri == f"{project_id}/{parent_id}/{source_id}/{blob_name}"
 
 
-def test_construct_object_uri_with_none_workspace() -> None:
+def test_construct_object_uri_with_none_project() -> None:
     parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        workspace_id=None,
+        project_id=None,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
@@ -273,15 +273,15 @@ def test_construct_object_uri_with_none_workspace() -> None:
 
 
 def test_parse_object_uri_valid() -> None:
-    workspace_id = "123e4567-e89b-12d3-a456-426614174000"
+    project_id = "123e4567-e89b-12d3-a456-426614174000"
     parent_id = "223e4567-e89b-12d3-a456-426614174001"
     source_id = "323e4567-e89b-12d3-a456-426614174002"
     blob_name = "test-file.pdf"
-    object_path = f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+    object_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
 
     result = parse_object_uri(object_path=object_path)
 
-    assert result["workspace_id"] == UUID(workspace_id)
+    assert result["project_id"] == UUID(project_id)
     assert result["parent_id"] == UUID(parent_id)
     assert result["source_id"] == UUID(source_id)
     assert result["blob_name"] == blob_name
@@ -290,11 +290,11 @@ def test_parse_object_uri_valid() -> None:
 async def test_create_signed_upload_url(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    workspace_id = "workspace-123"
+    project_id = "project-123"
     parent_id = "parent-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
-    expected_blob_path = f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+    expected_blob_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
@@ -311,7 +311,7 @@ async def test_create_signed_upload_url(
         mock_get_bucket.return_value = mock_bucket
 
         url = await create_signed_upload_url(
-            workspace_id=workspace_id,
+            project_id=project_id,
             parent_id=parent_id,
             source_id=source_id,
             blob_name=blob_name,
@@ -329,11 +329,11 @@ async def test_create_signed_upload_url(
 async def test_create_signed_upload_url_with_uuids(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    workspace_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
     parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
-    expected_blob_path = f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+    expected_blob_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
@@ -350,7 +350,7 @@ async def test_create_signed_upload_url_with_uuids(
         mock_get_bucket.return_value = mock_bucket
 
         url = await create_signed_upload_url(
-            workspace_id=workspace_id,
+            project_id=project_id,
             parent_id=parent_id,
             source_id=source_id,
             blob_name=blob_name,
@@ -368,11 +368,11 @@ async def test_create_signed_upload_url_with_uuids(
 async def test_create_signed_upload_url_error(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    workspace_id = "workspace-123"
+    project_id = "project-123"
     parent_id = "parent-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
-    expected_blob_path = f"{workspace_id}/{parent_id}/{source_id}/{blob_name}"
+    expected_blob_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
 
     mock_blob = MagicMock()
     mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
@@ -390,7 +390,7 @@ async def test_create_signed_upload_url_error(
         mock_get_bucket.return_value = mock_bucket
 
         await create_signed_upload_url(
-            workspace_id=workspace_id,
+            project_id=project_id,
             parent_id=parent_id,
             source_id=source_id,
             blob_name=blob_name,
@@ -402,7 +402,7 @@ async def test_create_signed_upload_url_error(
 
 
 async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) -> None:
-    blob_path = "workspace/workspace-123/test-file.pdf"
+    blob_path = "project/project-123/test-file.pdf"
     content = b"test content"
 
     mock_blob = MagicMock()
@@ -424,7 +424,7 @@ async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) 
 
 
 async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
-    blob_path = "workspace/workspace-123/test-file.pdf"
+    blob_path = "project/project-123/test-file.pdf"
     content = b"test content"
 
     mock_blob = MagicMock()
@@ -457,14 +457,14 @@ def test_parse_object_uri_valid_three_components() -> None:
 
     result = parse_object_uri(object_path=object_path)
 
-    assert result["workspace_id"] is None
+    assert result["project_id"] is None
     assert result["parent_id"] == UUID(parent_id)
     assert result["source_id"] == UUID(source_id)
     assert result["blob_name"] == blob_name
 
 
 def test_parse_object_uri_invalid_three_components_bad_uuid() -> None:
-    object_path = "workspace-123/parent-456/test-file.pdf"
+    object_path = "project-123/parent-456/test-file.pdf"
 
     with pytest.raises(ValueError) as exc_info:
         parse_object_uri(object_path=object_path)
@@ -473,28 +473,28 @@ def test_parse_object_uri_invalid_three_components_bad_uuid() -> None:
 
 
 def test_parse_object_uri_invalid_five_components() -> None:
-    object_path = "workspace/ws-123/grant_application/app-456/test-file.pdf"
+    object_path = "project/ws-123/grant_application/app-456/test-file.pdf"
 
     with pytest.raises(ValidationError) as exc_info:
         parse_object_uri(object_path=object_path)
 
     assert "Invalid object path format" in str(exc_info.value)
     assert (
-        "Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
+        "Expected format: <project_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
         in str(exc_info.value)
     )
     assert exc_info.value.context["object_path"] == object_path
 
 
 def test_parse_object_uri_invalid_two_components() -> None:
-    object_path = "workspace-123/test-file.pdf"
+    object_path = "project-123/test-file.pdf"
 
     with pytest.raises(ValidationError) as exc_info:
         parse_object_uri(object_path=object_path)
 
     assert "Invalid object path format" in str(exc_info.value)
     assert (
-        "Expected format: <workspace_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
+        "Expected format: <project_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
         in str(exc_info.value)
     )
     assert exc_info.value.context["object_path"] == object_path
@@ -510,13 +510,13 @@ def test_parse_object_uri_invalid_uuid() -> None:
 
 
 def test_construct_and_parse_round_trip() -> None:
-    workspace_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
     parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        workspace_id=workspace_id,
+        project_id=project_id,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
@@ -524,7 +524,7 @@ def test_construct_and_parse_round_trip() -> None:
 
     result = parse_object_uri(object_path=uri)
 
-    assert result["workspace_id"] == workspace_id
+    assert result["project_id"] == project_id
     assert result["parent_id"] == parent_id
     assert result["source_id"] == source_id
     assert result["blob_name"] == blob_name
